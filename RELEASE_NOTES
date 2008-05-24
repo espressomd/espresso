@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6i (Ydalir)                                                                     *
+* v2.0.6j (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6i -
+- v2.0.6j -
 -----------
 
+(j) May   23rd, 2008.
 (i) May   22nd, 2008.
 (h) May   12th, 2008.
 (g) May    9th, 2008.
@@ -32,7 +33,11 @@ New Features:
 (c) ljangle_cap_force implemented for directional LJ.
 (a) version 2.0.6
 
+Changes:
+(j) more verbose and useful error messages for virtual sites
+
 Bugfixes:
+(j) fixed compile error due to missing ifdef in ghosts.h
 (g) make virtual sites work with mpi
 (f) isVirtual was printed double in the part command
 (d) wrong code_info for dpd_mass
