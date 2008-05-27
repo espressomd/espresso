@@ -21,9 +21,7 @@
 
 #ifdef ELECTROSTATICS
 
-#ifdef RF_WITH_MOL_CUT
-#include "virtual_sites.h"
-#endif
+#include "mol_cut.h"
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {
@@ -136,13 +134,7 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 {
   int j;
   double fac;
-#ifdef RF_WITH_MOL_CUT
-  double com_dist;
-  com_dist=get_mol_dist(p1,p2);
-  if (com_dist < rf_params.r_cut)
-#else
   if (dist < rf_params.r_cut)
-#endif
   {
      fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      fac *= coulomb.prefactor * p1->p.q * p2->p.q;
@@ -158,13 +150,7 @@ MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
 MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
   double  fac;
-#ifdef RF_WITH_MOL_CUT
-  double com_dist;
-  com_dist=get_mol_dist(p1,p2);
-  if (com_dist < rf_params.r_cut)
-#else
   if (dist < rf_params.r_cut)
-#endif
   {
      fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
      //cut off part
@@ -218,7 +204,7 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
   int rf_on;
   int change;
 
-  /* get lennard-jones interaction type */
+  /* get reaction_field interaction type */
   if (argc < 2) {
     Tcl_AppendResult(interp, "inter_rf needs 1 parameter: "
 		     "<rf_on>",
@@ -226,7 +212,7 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
     return 0;
   }
 
-  /* copy lennard-jones parameters */
+  /* copy reaction_field parameters */
   if (! ARG_IS_I(1, rf_on)) {
     Tcl_AppendResult(interp, "<rf_on> must be int",
 		     (char *) NULL);
@@ -248,7 +234,7 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
 MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
-  if (ia_params->rf_on == 1 ) {
+  if CUTOFF_CHECK(ia_params->rf_on == 1 ) {
      add_rf_coulomb_pair_force(p1,p2,d, dist,force);
   }
 
@@ -259,7 +245,7 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
 MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
   double val;
-  if (ia_params->rf_on == 1 ) {
+  if CUTOFF_CHECK(ia_params->rf_on == 1 ) {
      val=rf_coulomb_pair_energy(p1,p2,dist);
      return val;
   }

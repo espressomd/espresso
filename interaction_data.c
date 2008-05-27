@@ -243,6 +243,11 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef INTER_RF
   params->rf_on = 0;
 #endif
+
+#ifdef MOL_CUT
+  params->mol_cut_type = 0;
+  params->mol_cut_cutoff = 0.0;
+#endif
 }
 
 /** Copy interaction parameters. */
@@ -398,6 +403,10 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->rf_on = src->rf_on;
 #endif
 
+#ifdef MOL_CUT
+  dst->mol_cut_type = src->mol_cut_type;
+  dst->mol_cut_cutoff = src->mol_cut_cutoff;
+#endif
 }
 
 /** returns non-zero if particles of type i and j have a nonbonded interaction */
@@ -471,6 +480,11 @@ int checkIfParticlesInteract(int i, int j) {
 
 #ifdef INTER_RF
   if (data->rf_on == 1)
+    return 1;
+#endif
+
+#ifdef MOL_CUT
+  if (data->mol_cut_type != 0)
     return 1;
 #endif
 
@@ -804,9 +818,6 @@ void calc_maximal_cutoff()
 
   /* make max_cut the maximal cutoff of both bonded and non-bonded interactions */
   if ( max_cut_non_bonded > max_cut) max_cut = max_cut_non_bonded;
-#ifdef MOL_CUT
-  if (max_cut_bonded > 0 ) max_cut += max_cut_bonded;
-#endif
 }
 
 int check_obs_calc_initialized()
@@ -1132,6 +1143,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   if (data->rf_on == 1) printinterrfIAToResult(interp,i,j);
 #endif
   
+#ifdef MOL_CUT
+  if (data->mol_cut_type != 0) printmolcutIAToResult(interp,i,j);
+#endif
   return (TCL_OK);
 }
 
@@ -1447,6 +1461,9 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #endif
 #ifdef INTER_RF
     REGISTER_NONBONDED("inter_rf", interrf_parser);
+#endif
+#ifdef MOL_CUT
+    REGISTER_NONBONDED("molcut", molcut_parser);
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],

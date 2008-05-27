@@ -19,10 +19,7 @@
 */
 
 #ifdef LENNARD_JONES
-
-#ifdef LJ_WITH_MOL_CUT
-#include "virtual_sites.h"
-#endif
+#include "mol_cut.h"
 
 MDINLINE int printljIAToResult(Tcl_Interp *interp, int i, int j)
 {
@@ -182,13 +179,7 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 {
   int j;
   double r_off, frac2, frac6, fac=0.0;
-#ifdef LJ_WITH_MOL_CUT
-  double com_dist;
-  com_dist=get_mol_dist(p1,p2);
-  if(com_dist < ia_params->LJ_cut+ia_params->LJ_offset)
-#else
-  if(dist < ia_params->LJ_cut+ia_params->LJ_offset)
-#endif
+  if CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset)
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
@@ -238,13 +229,7 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 				double d[3], double dist)
 {
   double r_off, frac2, frac6;
-#ifdef LJ_WITH_MOL_CUT
-  double com_dist;
-  com_dist=get_mol_dist(p1,p2);
-  if(com_dist < ia_params->LJ_cut+ia_params->LJ_offset)
-#else
-  if(dist < ia_params->LJ_cut+ia_params->LJ_offset)
-#endif
+  if CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset)
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */

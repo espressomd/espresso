@@ -78,6 +78,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
 
+#ifdef MOL_CUT
+   //You may want to put a correction factor for smoothing function else then theta
+   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==0) return;
+#endif
+
 #ifdef LENNARD_JONES
   /* lennard jones */
   ret += lj_pair_energy(p1,p2,ia_params,d,dist);

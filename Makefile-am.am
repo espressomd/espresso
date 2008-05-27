@@ -62,6 +62,7 @@ Espresso_bin_SOURCES = \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
 	maggs.c maggs.h \
+	mol_cut.h \
 	rattle.c rattle.h \
 	molforces.c molforces.h \
 	virtual_sites.c virtual_sites.h \

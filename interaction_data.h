@@ -329,6 +329,11 @@ typedef struct {
   int rf_on;
 #endif
 
+#ifdef MOL_CUT
+  int mol_cut_type;
+  double mol_cut_cutoff;
+#endif
+
 } IA_parameters;
 
 /** \name Compounds for Coulomb interactions */

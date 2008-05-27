@@ -96,6 +96,7 @@ extern nptiso_struct nptiso;
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "mmm1d.h"
+#include "mol_cut.h"
 
 
 /** \name Exported Variables */
@@ -139,6 +140,10 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
+#ifdef MOL_CUT
+   //You may want to put a correction factor and correction term for smoothing function else then theta
+   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==0) return;
 #endif
   /* lennard jones */
 #ifdef LENNARD_JONES
