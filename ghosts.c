@@ -203,7 +203,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
       GHOST_TRACE(fprintf(stderr, "%d: reallocating cell %p to size %d, assigned to node %d\n",
 			  this_node, gc->part_lists[pl], *(int *)retrieve, gc->node));
       realloc_particlelist(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
-#ifdef VIRTUAL_SITES
+#ifdef GHOST_FLAG
       //init ghost variable
       int i;
       for (i=0;i<gc->part_lists[pl]->n;i++){

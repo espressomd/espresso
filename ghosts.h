@@ -186,7 +186,7 @@ void ghost_communicator(GhostCommunicator *gc);
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
 void invalidate_ghosts();
 
-#ifdef VIRTUAL_SITES
+#ifdef GHOST_FLAG
 MDINLINE int ifParticleIsGhost(Particle *p){
    return p->l.ghost;
 }
