@@ -562,7 +562,7 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
    if (ARG0_IS_S("total")){
       calc_total_dipolmoment_mol(type,dipole);
       sprintf(buffer,"%i ",type);
-      Tcl_AppendResult(interp,"{ dipolemoment_mol total",buffer,(char *)NULL);
+      Tcl_AppendResult(interp,"{ dipolemoment_mol total ",buffer,(char *)NULL);
       for (k=0;k<3;k++)
       {
             sprintf(buffer,"%e ",dipole[k]);
@@ -574,7 +574,7 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
    else if (ARG0_IS_S("absolute")){
       calc_absolute_dipolmoment_mol(type,dipole);
       sprintf(buffer,"%i ",type);
-      Tcl_AppendResult(interp,"{ dipolemoment_mol absolute",buffer,(char *)NULL);
+      Tcl_AppendResult(interp,"{ dipolemoment_mol absolute ",buffer,(char *)NULL);
       sprintf(buffer,"%e ",dipole[0]);
       Tcl_AppendResult(interp, buffer,(char *)NULL);
       sprintf(buffer,"%e",dipole[1]);
