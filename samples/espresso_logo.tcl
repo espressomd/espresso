@@ -251,14 +251,24 @@ puts "Start with minimal distance $act_min_dist"
 #  Fixed Integration                                       #
 #############################################################
 
+# find free port for IMD
+if { $vmd_online == "yes" } then {
+    for {set port 10000} { $port < 65000 } { incr port } {
+	catch {imd connect $port} res
+	if {$res == ""} break
+    }
+    if {$port == 65000} {
+	error "could not open a port for IMD, please try offline"
+    }
+}
+
 # create VMD start script
 if { $vmd_offline == "yes" || $vmd_online == "yes" } then {
     puts "Creating $vmd_script..."
     set vmdout_file [open $vmd_script "w"]
-
     if { $vmd_online == "yes" } then {
 	puts $vmdout_file "mol load vtf espresso_logo_online.vtf"
-	puts $vmdout_file "imd connect $HOSTNAME $port"
+	puts $vmdout_file "imd connect localhost $port"
     } elseif { $vmd_offline == "yes" } then {
 	puts $vmdout_file "mol load vtf espresso_logo.vtf"
     }
@@ -296,7 +306,7 @@ mol modmaterial 1 0 Glass2
     puts "$vmd_script finished."
 }
 
-# open vmd connection and start vmd
+# start vmd
 if { $vmd_online == "yes" } then {
     set vtf_file [open "espresso_logo_online.vtf" w]
     writevsf $vtf_file
@@ -304,13 +314,10 @@ if { $vmd_online == "yes" } then {
     writevcf $vtf_file
     close $vtf_file
 
-    for {set port 10000} { $port < 65000 } { incr port } {
-	catch {imd connect $port} res
-	if {$res == ""} break
-    }
-
     # start VMD
-    exec vmd -e vmd_start.script &
+    exec vmd -e $vmd_script &
+    # wait for VMD to connect
+    imd listen 100000
 }
 
 
