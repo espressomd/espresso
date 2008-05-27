@@ -44,7 +44,7 @@ MDINLINE int ifParticleIsVirtual(Particle *p){
    }
 }
 
-void update_mol_pos_cfg();
+int update_mol_pos_cfg();
 int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
 int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
 int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv);

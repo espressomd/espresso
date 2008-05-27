@@ -31,7 +31,7 @@ void update_mol_pos_particle(Particle *p);
 
 void calc_mol_vel(int mol_id,double v_com[3]);
 void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]);
-void calc_mol_pos_cfg(int mol_id,double r_com[3]);
+int calc_mol_pos_cfg(int mol_id,double r_com[3]);
 void put_mol_force_on_parts(Particle *p_com);
 
 Particle *get_mol_com_particle(Particle *calling_p);
@@ -101,7 +101,7 @@ void update_mol_pos_particle(Particle *p){
    }
 }
 
-void update_mol_pos_cfg(){
+int update_mol_pos_cfg(){
   Particle *p;
   int i,j,mol_id;
   double r_com[3];
@@ -109,12 +109,15 @@ void update_mol_pos_cfg(){
      p=&partCfg[i];
      if (ifParticleIsVirtual(p)){
          mol_id = p->p.mol_id;
-         calc_mol_pos_cfg(mol_id,r_com);
+         if (calc_mol_pos_cfg(mol_id,r_com)==0){
+            return 0;
+         }
          for (j=0;j<3;j++){
             p->r.p[j] = r_com[j];
          }
      }
   }
+  return 1;
 }
 
 void distribute_mol_force()
@@ -246,7 +249,7 @@ void calc_mol_pos(int mol_id,double r_com[3],int box_i[3]){
 #endif
 }
 
-void calc_mol_pos_cfg(int mol_id,double r_com[3]){
+int calc_mol_pos_cfg(int mol_id,double r_com[3]){
    int i,j;
    double M=0;
    Particle *p;
@@ -273,9 +276,10 @@ void calc_mol_pos_cfg(int mol_id,double r_com[3]){
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
       fprintf(stderr,"There is more than one COM in calc_mol_pos_cfg! mol_id=%i\n",mol_id);
-      exit(182);
+      return 0;
    }
 #endif
+   return 1;
 }
 
 void put_mol_force_on_parts(Particle *p_com){
@@ -395,7 +399,9 @@ double calc_pressure_mol(int type1,int type2);
 double calc_energy_kinetic_mol(int type);
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]);
 #ifdef ELECTROSTATICS
-void calc_dipole_mol(int type,double dipole[4]);
+void calc_total_dipolmoment_mol(int type,double total_dipole[4]);
+void calc_absolute_dipolmoment_mol(int type,double total_dipole[2]);
+void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 #endif
 
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
@@ -537,33 +543,50 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
       ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
-   if (argc < 1) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-
-   if (!ARG0_IS_I(type)) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   argc-=1; argv+=1;
-
    if (n_molecules==0) {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "No molecules defined !", (char *)NULL);
       return (TCL_ERROR);
    }
-   calc_dipole_mol(type,dipole);
-   Tcl_AppendResult(interp,"{ dipolemoment_mol ",(char *)NULL);
-   for (k=0;k<3;k++)
-   {
-       sprintf(buffer,"%e ",dipole[k]);
-       Tcl_AppendResult(interp, buffer,(char *)NULL);
+   if (argc < 2) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
+      return (TCL_ERROR);
    }
-   sprintf(buffer,"%e",dipole[3]);
-   Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
+
+   if (!ARG1_IS_I(type)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   if (ARG0_IS_S("total")){
+      calc_total_dipolmoment_mol(type,dipole);
+      sprintf(buffer,"%i ",type);
+      Tcl_AppendResult(interp,"{ dipolemoment_mol total",buffer,(char *)NULL);
+      for (k=0;k<3;k++)
+      {
+            sprintf(buffer,"%e ",dipole[k]);
+            Tcl_AppendResult(interp, buffer,(char *)NULL);
+      }
+      sprintf(buffer,"%e",dipole[3]);
+      Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
+   }
+   else if (ARG0_IS_S("absolute")){
+      calc_absolute_dipolmoment_mol(type,dipole);
+      sprintf(buffer,"%i ",type);
+      Tcl_AppendResult(interp,"{ dipolemoment_mol absolute",buffer,(char *)NULL);
+      sprintf(buffer,"%e ",dipole[0]);
+      Tcl_AppendResult(interp, buffer,(char *)NULL);
+      sprintf(buffer,"%e",dipole[1]);
+      Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
+   }
+   else
+   {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "Feature not implemented", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   argc-=2; argv+=2;
    return TCL_OK;
 #endif
 }
@@ -609,30 +632,59 @@ double calc_energy_kinetic_mol(int type){
 }
 
 #ifdef ELECTROSTATICS
-void calc_dipole_mol(int type,double dipole[4]){
-   int i,j,k;
-   Particle *p,*p_first;
-   double vec12[3];
-   dipole[0]=dipole[1]=dipole[2]=dipole[3]=0;
+void calc_absolute_dipolmoment_mol(int type,double average_dipole[2]){
+   int i,j,count=0;;
+   double dipole[4],tmp;
+   average_dipole[0]=average_dipole[1]=0.0;
    for (i=0;i<n_molecules;i++){
       if (topology[i].type == type){
-         p_first=NULL;
-         for (j=0;j<topology[i].part.n;j++){
-             p=&partCfg[topology[i].part.e[j]];
-             if (ifParticleIsVirtual(p)) continue;
-             if (p_first==NULL){
-                p_first=p;
-             }
-             else
-             {
-                get_mi_vector(vec12,p->r.p, p_first->r.p);
-                for (k=0;k<3;k++){
-                    dipole[k] += p->p.q*vec12[k];
-                }
-             }
-             dipole[3]+=p->p.q;
+         count++;
+         calc_dipole_of_molecule(i,dipole);
+         tmp=0.0;
+         for (j=0;j<3;j++){
+            tmp+=dipole[j]*dipole[j];
+         }
+         average_dipole[0]+=tmp;
+         average_dipole[1]+=dipole[3];
+      }
+   }
+   average_dipole[0]/=count;
+   average_dipole[1]/=count;
+}
+
+void calc_total_dipolmoment_mol(int type,double total_dipole[4]){
+   int i,j;
+   double dipole[4];
+   total_dipole[0]=total_dipole[1]=total_dipole[2]=total_dipole[3]=0.0;
+   for (i=0;i<n_molecules;i++){
+      if (topology[i].type == type){
+         calc_dipole_of_molecule(i,dipole);
+         for (j=0;j<4;j++){
+            total_dipole[j]+=dipole[j];
          }
       }
+   }
+}
+
+void calc_dipole_of_molecule(int mol_id,double dipole[4]){
+   int j,k;
+   Particle *p,*p_first=NULL;
+   double vec12[3];
+   dipole[0]=dipole[1]=dipole[2]=dipole[3]=0.0;
+   for (j=0;j<topology[mol_id].part.n;j++){
+      p=&partCfg[topology[mol_id].part.e[j]];
+      if (ifParticleIsVirtual(p)) continue;
+      if (p_first==NULL){
+         p_first=p;
+      }
+      else
+      {
+         get_mi_vector(vec12,p->r.p, p_first->r.p);
+         for (k=0;k<3;k++){
+            dipole[k] += p->p.q*vec12[k];
+         }
+      }
+      dipole[3]+=p->p.q;
    }
 }
 #endif

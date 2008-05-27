@@ -375,6 +375,7 @@ void integrate_vv(int n_steps)
 #ifdef VIRTUAL_SITES
     update_mol_vel_pos();
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    if (check_runtime_errors()) return;
 #endif
 
     force_calc();
@@ -384,6 +385,7 @@ void integrate_vv(int n_steps)
    ghost_communicator(&cell_structure.collect_ghost_force_comm);
    init_forces_ghosts();
    distribute_mol_force();
+   if (check_runtime_errors()) return;
 #endif
 
     thermo_cool_down();
@@ -459,6 +461,7 @@ void integrate_vv(int n_steps)
 #ifdef VIRTUAL_SITES
    update_mol_vel_pos();
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+   if (check_runtime_errors()) break;
 #endif
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:
@@ -474,6 +477,7 @@ void integrate_vv(int n_steps)
    ghost_communicator(&cell_structure.collect_ghost_force_comm);
    init_forces_ghosts();
    distribute_mol_force();
+   if (check_runtime_errors()) break;
 #endif
 
     /* Communication step: ghost forces */
@@ -495,6 +499,7 @@ void integrate_vv(int n_steps)
 #ifdef VIRTUAL_SITES
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
    update_mol_vel();
+   if (check_runtime_errors()) break;
 #endif
 
 #ifdef LB

@@ -192,13 +192,14 @@ void updatePartCfg(int bonds_flag)
     mpi_get_particles(partCfg, NULL);
   else
     mpi_get_particles(partCfg,&partCfg_bl);
- 
+
   for(j=0; j<n_total_particles; j++)
     unfold_position(partCfg[j].r.p,partCfg[j].l.i);
   partCfgSorted = 0;
 #ifdef VIRTUAL_SITES
-  sortPartCfg();
-  update_mol_pos_cfg();
+  if ((sortPartCfg()==0)||(update_mol_pos_cfg()==0)){
+     freePartCfg();
+  }
 #endif
 }
 
