@@ -181,6 +181,7 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
     if { [has_feature "EXTERNAL_FORCES"] } { lappend part_write ext_force  }
     blockfile $f write particles "$part_write"
     if { $COMPACT_CHK != 1 } { blockfile $f write bonds }
+    if { $COMPACT_CHK != 1 && [has_feature "EXCLUSIONS"]} { blockfile $f write exclusions }
     if { "$ran" != "-" } { blockfile $f write random }
     if { "$ran" != "-" } { blockfile $f write bitrandom }
 #   if { $COMPACT_CHK && [set n_configs [analyze stored]] > 0 } { set all_configs [analyze configs]; analyze remove [expr $n_configs-1] }

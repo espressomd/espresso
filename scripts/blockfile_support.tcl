@@ -16,6 +16,7 @@ proc blockfile_write_particles {channel write particles {info "id pos v q"} {ran
     if {![regexp "pos" $info]} {set info "pos $info"}
     if {![regexp "id" $info]} {set info "id $info"}
     if {[regexp "bond" $info]} { error "bonding information cannot be written" }
+    if {[regexp "exclusions" $info]} { error "exclusions cannot be written here, use 'blockfile write exclusions'" }
 
     puts $channel "{$info} "
     foreach list $range {
@@ -200,6 +201,63 @@ proc blockfile_read_auto_interactions {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "inter $d" }
     return "interactions"
+}
+
+######################################
+# exclusions support
+######################################
+
+proc blockfile_write_exclusions {channel write exclusions {range "0-end"}} {
+    blockfile $channel write start "exclusions"
+
+    puts $channel " "
+    foreach list $range {
+	set list [split $list "-"]
+	set len [llength $list]
+	if {$len == 1} {
+	    if {$list == "all"} {
+		set start 0
+		set end [setmd max_part]
+	    } {
+		if {$list == "end"} {set list [setmd max_part]}
+		set start $list
+		set end   $list
+	    }
+	} {
+	    if {$len != 2} {
+		error "list must have form \"<a>-<b> <c>-end...\""
+		exit
+	    }
+	    set start [lindex $list 0]
+	    if {$start == "end"} {set start [setmd max_part]}
+	    set end [lindex $list 1]
+	    if {$end == "end"} {set end [setmd max_part]}
+	}
+	if {![string is integer $start] || ![string is integer $end]} {error "list boundaries must be integers"}
+	for {set p $start} {$p <= $end} {incr p} {
+	    set d [eval "part $p pr exclusions"]
+	    if {$d != "na" && $d != "{}"} {puts $channel "\t{$p $d}"}
+	}
+    }
+    puts $channel "\}"
+}
+
+proc blockfile_read_auto_exclusions {channel read auto} {
+    while {1} {
+	set line [blockfile $channel read auto]
+	if {[lindex $line 0] != "usertag"} {
+	    if {$line != "illstring \}"} { error "particle block ill formed (\"[lindex $line 1]\" unexpected)" }
+	    break
+	}
+	set pid [lindex $line 1]
+	set len [expr [llength $line] -1]
+	for {set i 2} {$i <= $len} {incr i} {
+	    set excid [lindex $line $i]
+	    eval [concat { part $pid exclude $excid} ]
+	}
+    }
+
+    return "exclusions"
 }
 
 ######################################
