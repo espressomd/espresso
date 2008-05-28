@@ -152,7 +152,7 @@ typedef struct {
   double ext_force[3];
 #endif
 
-#ifdef VIRTUAL_SITES
+#ifdef GHOST_FLAG
   /** check whether a particle is a ghost or not */
   int ghost;
 #endif
