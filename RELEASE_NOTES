@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6j (Ydalir)                                                                     *
+* v2.0.6k (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6j -
+- v2.0.6k -
 -----------
 
+(k) May   27th, 2008.
 (j) May   23rd, 2008.
 (i) May   22nd, 2008.
 (h) May   12th, 2008.
@@ -23,6 +24,8 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(k) blockfile/checkpoint support for exclusions
+    thanks to Mehmet Sayar.
 (i) added feature LJ_WITH_MOL_CUT
 (h) added analyze dipmom_mol
 (g) allows writepdb with atom names and length scale
@@ -34,9 +37,14 @@ New Features:
 (a) version 2.0.6
 
 Changes:
+(k) molcut is now a normal interaction LJ_WITH_MOL_CUT and RF_WITH_MOL_CUT was
+    removed
+(k) ghost_flags has now ifdef GHOST_FLAG, virtual sites does not need it
+    anymore
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(k) espresso_logo.tcl now also works with online visualization.
 (j) fixed compile error due to missing ifdef in ghosts.h
 (g) make virtual sites work with mpi
 (f) isVirtual was printed double in the part command
