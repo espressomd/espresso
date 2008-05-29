@@ -495,13 +495,6 @@ void integrate_vv(int n_steps)
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
 
-//VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-   ghost_communicator(&cell_structure.update_ghost_pos_comm);
-   update_mol_vel();
-   if (check_runtime_errors()) break;
-#endif
-
 #ifdef LB
   if (lattice_switch & LATTICE_LB) lb_propagate();
   if (check_runtime_errors()) break;
@@ -510,6 +503,13 @@ void integrate_vv(int n_steps)
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     correct_vel_shake();
+#endif
+
+//VIRTUAL_SITES update vel
+#ifdef VIRTUAL_SITES
+   ghost_communicator(&cell_structure.update_ghost_pos_comm);
+   update_mol_vel();
+   if (check_runtime_errors()) break;
 #endif
 
 #ifdef ELECTROSTATICS
