@@ -816,6 +816,9 @@ void calc_maximal_cutoff()
   }
 #endif
 
+#ifdef MOL_CUT
+  max_cut_non_bonded += max_cut_bonded;
+#endif
   /* make max_cut the maximal cutoff of both bonded and non-bonded interactions */
   if ( max_cut_non_bonded > max_cut) max_cut = max_cut_non_bonded;
 }
