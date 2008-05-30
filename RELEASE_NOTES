@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6k (Ydalir)                                                                     *
+* v2.0.6l (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6k -
+- v2.0.6l -
 -----------
 
+(l) May   29th, 2008.
 (k) May   27th, 2008.
 (j) May   23rd, 2008.
 (i) May   22nd, 2008.
@@ -44,6 +45,7 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(l) too short max_cut for mol_cut
 (k) espresso_logo.tcl now also works with online visualization.
 (j) fixed compile error due to missing ifdef in ghosts.h
 (g) make virtual sites work with mpi
