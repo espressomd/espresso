@@ -141,10 +141,6 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id==p2->p.mol_id) return;
 #endif
-#ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==0) return;
-#endif
   /* lennard jones */
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
@@ -195,10 +191,16 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #endif
 }
 
-MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+MDINLINE void calc_non_bonded_pair_force_pressure(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
    IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
    double t1[3],t2[3];
-   calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+#ifdef MOL_CUT
+   //You may want to put a correction factor and correction term for smoothing function else then theta
+   if (checkIfParticlesInteractViaMolCut_cfg(p1,p2,ia_params)==1)
+#endif
+   {
+      calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+   }
 }
 
 /** Calculate non bonded energies between a pair of particles.
@@ -215,7 +217,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 #ifdef ELECTROSTATICS
   double ret;
 #endif
-  calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
+  calc_non_bonded_pair_force_pressure(p1, p2,d, dist, dist2,force);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
 

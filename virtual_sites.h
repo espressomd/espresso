@@ -34,6 +34,7 @@ void update_mol_pos();
 void distribute_mol_force();
 
 double get_mol_dist(Particle *p1,Particle *p2);
+double get_mol_dist_cfg(Particle *p1,Particle *p2);
 
 MDINLINE int ifParticleIsVirtual(Particle *p){
    if (p->p.isVirtual == 0) {

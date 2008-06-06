@@ -380,6 +380,17 @@ void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]);
 
+
+double get_mol_dist_cfg(Particle *p1,Particle *p2){
+   double dist[3],dist2;
+   int mol_id1,mol_id2;
+   mol_id1=p1->p.mol_id;
+   mol_id2=p2->p.mol_id;
+   get_mol_dist_vector_from_molid_cfg(mol_id1,mol_id2,dist);
+   dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
+   return sqrt(dist2);
+}
+
 int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
@@ -577,7 +588,7 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
          get_mi_vector(vec12,p1->r.p, p2->r.p);
          dist2=sqrlen(vec12);
          dist=sqrt(dist2);
-         calc_non_bonded_pair_force_simple(p1,p2,vec12,dist,dist2,force);
+         calc_non_bonded_pair_force_pressure(p1,p2,vec12,dist,dist2,force);
       }
    }
 }
