@@ -125,13 +125,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* non bonded pair potentials                  */
   /***********************************************/
 
-#ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
-#endif
-   {
-      calc_non_bonded_pair_force_parts(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
-   }
+   calc_non_bonded_pair_force_cell(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
 
   /***********************************************/
   /* short range electrostatics                  */

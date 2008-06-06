@@ -588,7 +588,7 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
          get_mi_vector(vec12,p1->r.p, p2->r.p);
          dist2=sqrlen(vec12);
          dist=sqrt(dist2);
-         calc_non_bonded_pair_force_pressure(p1,p2,vec12,dist,dist2,force);
+         calc_non_bonded_pair_force_cfg(p1,p2,vec12,dist,dist2,force);
       }
    }
 }

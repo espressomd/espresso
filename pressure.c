@@ -750,7 +750,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
     get_mi_vector(d, p1->r.p, p2->r.p);
     dist2 = SQR(d[0]) + SQR(d[1]) + SQR(d[2]);
     dist  = sqrt(dist2);
-    calc_non_bonded_pair_force_pressure(p1,p2,d,dist,dist2,force);
+    calc_non_bonded_pair_force_cell_simple(p1,p2,d,dist,dist2,force);
 #ifdef ELECTROSTATICS
     int i;
     double eforce[3];
