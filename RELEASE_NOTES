@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6l (Ydalir)                                                                     *
+* v2.0.6m (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6l -
+- v2.0.6m -
 -----------
 
+(m) June   6th, 2008.
 (l) May   29th, 2008.
 (k) May   27th, 2008.
 (j) May   23rd, 2008.
@@ -38,6 +39,7 @@ New Features:
 (a) version 2.0.6
 
 Changes:
+(m) seperate force calc for cfg and cells
 (k) molcut is now a normal interaction LJ_WITH_MOL_CUT and RF_WITH_MOL_CUT was
     removed
 (k) ghost_flags has now ifdef GHOST_FLAG, virtual sites does not need it
@@ -45,6 +47,8 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(m) molcut is a non-local feature, so calc_force must be different for pressure.h
+    and forces.h
 (l) too short max_cut for mol_cut
 (k) espresso_logo.tcl now also works with online visualization.
 (j) fixed compile error due to missing ifdef in ghosts.h
