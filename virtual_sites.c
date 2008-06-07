@@ -355,13 +355,40 @@ void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]){
       return;
    }
    #endif
+   vecsub(p1_com->r.p,p2_com->r.p,dist);
+}
+
+void get_mol_dist_vector_per(Particle *p1,Particle *p2,double dist[3]){
+   Particle *p1_com,*p2_com;
+   p1_com=get_mol_com_particle(p1);
+   p2_com=get_mol_com_particle(p2);
+   #ifdef VIRTUAL_SITES_DEBUG
+   if (p1_com==NULL){
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector_per id=%i\n",p1->p.identity);
+      dist[0]=dist[1]=dist[2]=0.0;
+      return;
+   }
+   if (p2_com==NULL){
+      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector_per id=%i\n",p2->p.identity);
+      dist[0]=dist[1]=dist[2]=0.0;
+      return;
+   }
+   #endif
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
-   //vecsub(p1_com->r.p,p2_com->r.p,dist);
 }
 
 double get_mol_dist(Particle *p1,Particle *p2){
    double dist[3],dist2;
    get_mol_dist_vector(p1,p2,dist);
+   dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
+   return sqrt(dist2);
+}
+
+double get_mol_dist_per(Particle *p1,Particle *p2){
+   double dist[3],dist2;
+   get_mol_dist_vector_per(p1,p2,dist);
    dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
    return sqrt(dist2);
 }

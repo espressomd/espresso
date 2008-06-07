@@ -191,9 +191,7 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #endif
 }
 
-MDINLINE void calc_non_bonded_pair_force_cell_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
+MDINLINE void calc_non_bonded_pair_force_cell(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
 #ifdef MOL_CUT
    //You may want to put a correction factor and correction term for smoothing function else then theta
    if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
@@ -203,14 +201,26 @@ MDINLINE void calc_non_bonded_pair_force_cell_simple(Particle *p1,Particle *p2,d
    }
 }
 
-MDINLINE void calc_non_bonded_pair_force_cell(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+MDINLINE void calc_non_bonded_pair_force_cell_per(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
 #ifdef MOL_CUT
    //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
+   if (checkIfParticlesInteractViaMolCut_per(p1,p2,ia_params)==1)
 #endif
    {
       calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
    }
+}
+
+MDINLINE void calc_non_bonded_pair_force_cell_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+   double t1[3],t2[3];
+   calc_non_bonded_pair_force_cell(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+}
+
+MDINLINE void calc_non_bonded_pair_force_cell_per_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+   double t1[3],t2[3];
+   calc_non_bonded_pair_force_cell_per(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
 }
 
 MDINLINE void calc_non_bonded_pair_force_cfg(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
