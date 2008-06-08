@@ -341,6 +341,8 @@ void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]){
    Particle *p1_com,*p2_com;
    p1_com=get_mol_com_particle(p1);
    p2_com=get_mol_com_particle(p2);
+   int i;
+   double dist1[3],dist2[3];
    #ifdef VIRTUAL_SITES_DEBUG
    if (p1_com==NULL){
       char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
@@ -355,7 +357,14 @@ void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]){
       return;
    }
    #endif
-   vecsub(p1_com->r.p,p2_com->r.p,dist);
+   //this is a workaround due to the fact that local_particle maybe give you the wrong part
+   //but as the mol is small than box_l/2 this will help
+   get_mi_vector(dist1,p1_com->r.p, p1->r.p);
+   get_mi_vector(dist2,p2_com->r.p, p2->r.p);
+   //add the starting point again and do difference
+   for (i=0;i<3;i++){
+     dist[i]=dist1[i]+p1->r.p[i]-(dist2[i]+p2->r.p[i]);
+   }
 }
 
 void get_mol_dist_vector_per(Particle *p1,Particle *p2,double dist[3]){
