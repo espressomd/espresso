@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6m (Ydalir)                                                                     *
+* v2.0.6n (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6m -
+- v2.0.6n -
 -----------
 
+(n) June   7th, 2008.
 (m) June   6th, 2008.
 (l) May   29th, 2008.
 (k) May   27th, 2008.
@@ -39,6 +40,8 @@ New Features:
 (a) version 2.0.6
 
 Changes:
+(n) get_nonbonded_interaction needs periodical version of
+    calc_non_bonded_pair_force_cell
 (m) seperate force calc for cfg and cells
 (k) molcut is now a normal interaction LJ_WITH_MOL_CUT and RF_WITH_MOL_CUT was
     removed
