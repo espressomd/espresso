@@ -443,10 +443,10 @@ the file are ignored and only included for human readability.
 \label{sec:forcecap}
 
 \begin{essyntax}
-  \variant{1} inter ljforcecap \var{F_\mathrm{max}}
-  \variant{2} inter morseforcecap \var{F_\mathrm{max}}
-  \variant{3} inter buckforcecap \var{F_\mathrm{max}}
-  \variant{4} inter tabforcecap \var{F_\mathrm{max}}
+  \variant{1} inter ljforcecap \var{F_\mathrm{max}}|individual
+  \variant{2} inter morseforcecap \var{F_\mathrm{max}}|individual
+  \variant{3} inter buckforcecap \var{F_\mathrm{max}}|individual
+  \variant{4} inter tabforcecap \var{F_\mathrm{max}}|individual
   \begin{features}
     \required[\variant{1}]{LENNARD_JONES}
     \required[\variant{2}]{MORSE}
@@ -480,6 +480,12 @@ The force capping is switched off by setting $\var{F_\mathrm{max}}=0$.
 Note that force capping always applies to all interactions of the
 corresponding type (\eg all Lennard-Jones interactions) regardless of
 the particle types.
+
+If instead of a force capping value, the string ``individual'' is
+given, the force capping can be set individually for each
+interaction. The capping radius is in this case not derived from the
+potential parameters, but is given by an additional signal floating
+point parameter to the interaction.
 
 \section{Bonded interactions}
 \label{sec:inter-bonded}

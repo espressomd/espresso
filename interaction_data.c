@@ -1238,7 +1238,7 @@ int inter_print_all(Tcl_Interp *interp)
     else
       Tcl_AppendResult(interp, " {", (char *)NULL);
     if (lj_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljforcecap individual");
+      Tcl_AppendResult(interp, "ljforcecap individual", (char *)NULL);
     else {
       Tcl_PrintDouble(interp, lj_force_cap, buffer);
       Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
@@ -1257,7 +1257,7 @@ int inter_print_all(Tcl_Interp *interp)
     else
       Tcl_AppendResult(interp, " {", (char *)NULL);
     if (ljangle_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljangleforcecap individual");
+      Tcl_AppendResult(interp, "ljangleforcecap individual", (char *)NULL);
     else {
       Tcl_PrintDouble(interp, ljangle_force_cap, buffer);
       Tcl_AppendResult(interp, "ljangleforcecap ", buffer, (char *) NULL);
@@ -1277,7 +1277,7 @@ if(morse_force_cap != 0.0) {
     else
       Tcl_AppendResult(interp, " {", (char *)NULL);
     if (morse_force_cap == -1.0)
-      Tcl_AppendResult(interp, "morseforcecap individual");
+      Tcl_AppendResult(interp, "morseforcecap individual", (char *)NULL);
     else {
       Tcl_PrintDouble(interp, morse_force_cap, buffer);
       Tcl_AppendResult(interp, "morseforcecap ", buffer, (char *) NULL);
@@ -1298,7 +1298,7 @@ if(morse_force_cap != 0.0) {
       Tcl_AppendResult(interp, " {", (char *)NULL);
 
     if (lj_force_cap == -1.0)
-      Tcl_AppendResult(interp, "buckforcecap individual");
+      Tcl_AppendResult(interp, "buckforcecap individual", (char *)NULL);
     else {
       Tcl_PrintDouble(interp, buck_force_cap, buffer);
       Tcl_AppendResult(interp, "buckforcecap ", buffer, (char *) NULL);
@@ -1317,7 +1317,7 @@ if(morse_force_cap != 0.0) {
     else
       Tcl_AppendResult(interp, " {", (char *)NULL);
     if (tab_force_cap == -1.0)
-      Tcl_AppendResult(interp, "tabforcecap individual");
+      Tcl_AppendResult(interp, "tabforcecap individual", (char *)NULL);
     else {
       Tcl_PrintDouble(interp, tab_force_cap, buffer);
       Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
