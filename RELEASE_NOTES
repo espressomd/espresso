@@ -2,15 +2,17 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6n (Ydalir)                                                                     *
+* v2.0.6p (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6n -
+- v2.0.6p -
 -----------
 
+(p) June   9th, 2008.
+(o) June   8th, 2008.
 (n) June   7th, 2008.
 (m) June   6th, 2008.
 (l) May   29th, 2008.
@@ -27,6 +29,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(p) Added minimal documentation for individual force capping.
 (k) blockfile/checkpoint support for exclusions
     thanks to Mehmet Sayar.
 (i) added feature LJ_WITH_MOL_CUT
@@ -50,6 +53,10 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(p) Fixed a crash when printing out the interactions with individual force capping
+    switched on.
+(o) get_mol_dist gives the wrong value on 1,2 cpus, due to a problem with
+    local_particles
 (m) molcut is a non-local feature, so calc_force must be different for pressure.h
     and forces.h
 (l) too short max_cut for mol_cut
