@@ -35,7 +35,8 @@ int calc_mol_pos_cfg(Particle *p_com,double r_com[3]);
 void put_mol_force_on_parts(Particle *p_com);
 
 Particle *get_mol_com_particle(Particle *calling_p);
-void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]);
+
+void get_mol_dist_vector_cfg(Particle *p1,Particle *p2,double dist[3]);
 
 void update_mol_vel_pos()
 {
@@ -337,67 +338,24 @@ Particle *get_mol_com_particle(Particle *calling_p){
    return calling_p;
 }
 
-void get_mol_dist_vector(Particle *p1,Particle *p2,double dist[3]){
+double get_mol_dist(Particle *p1,Particle *p2){
    Particle *p1_com,*p2_com;
    p1_com=get_mol_com_particle(p1);
    p2_com=get_mol_com_particle(p2);
-   int i;
-   double dist1[3],dist2[3];
+   double dist[3],dist2;
    #ifdef VIRTUAL_SITES_DEBUG
    if (p1_com==NULL){
       char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector id=%i\n",p1->p.identity);
+      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist id=%i\n",p1->p.identity);
       dist[0]=dist[1]=dist[2]=0.0;
-      return;
    }
    if (p2_com==NULL){
       char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector id=%i\n",p2->p.identity);
+      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist id=%i\n",p2->p.identity);
       dist[0]=dist[1]=dist[2]=0.0;
-      return;
-   }
-   #endif
-   //this is a workaround due to the fact that local_particle maybe give you the wrong part
-   //but as the mol is small than box_l/2 this will help
-   get_mi_vector(dist1,p1_com->r.p, p1->r.p);
-   get_mi_vector(dist2,p2_com->r.p, p2->r.p);
-   //add the starting point again and do difference
-   for (i=0;i<3;i++){
-     dist[i]=dist1[i]+p1->r.p[i]-(dist2[i]+p2->r.p[i]);
-   }
-}
-
-void get_mol_dist_vector_per(Particle *p1,Particle *p2,double dist[3]){
-   Particle *p1_com,*p2_com;
-   p1_com=get_mol_com_particle(p1);
-   p2_com=get_mol_com_particle(p2);
-   #ifdef VIRTUAL_SITES_DEBUG
-   if (p1_com==NULL){
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector_per id=%i\n",p1->p.identity);
-      dist[0]=dist[1]=dist[2]=0.0;
-      return;
-   }
-   if (p2_com==NULL){
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"COM Particle not found for particle in get_mol_dist_vector_per id=%i\n",p2->p.identity);
-      dist[0]=dist[1]=dist[2]=0.0;
-      return;
    }
    #endif
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
-}
-
-double get_mol_dist(Particle *p1,Particle *p2){
-   double dist[3],dist2;
-   get_mol_dist_vector(p1,p2,dist);
-   dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
-   return sqrt(dist2);
-}
-
-double get_mol_dist_per(Particle *p1,Particle *p2){
-   double dist[3],dist2;
-   get_mol_dist_vector_per(p1,p2,dist);
    dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
    return sqrt(dist2);
 }
@@ -415,17 +373,6 @@ void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]);
-
-
-double get_mol_dist_cfg(Particle *p1,Particle *p2){
-   double dist[3],dist2;
-   int mol_id1,mol_id2;
-   mol_id1=p1->p.mol_id;
-   mol_id2=p2->p.mol_id;
-   get_mol_dist_vector_from_molid_cfg(mol_id1,mol_id2,dist);
-   dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
-   return sqrt(dist2);
-}
 
 int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
 {
@@ -624,7 +571,7 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
          get_mi_vector(vec12,p1->r.p, p2->r.p);
          dist2=sqrlen(vec12);
          dist=sqrt(dist2);
-         calc_non_bonded_pair_force_cfg(p1,p2,vec12,dist,dist2,force);
+         calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
       }
    }
 }
@@ -722,6 +669,16 @@ Particle *get_mol_com_particle_from_molid_cfg(int mol_id){
    fprintf(stderr,"No com found in get_mol_com_particle_from_molid_cfg ! mol_id=%i\n",mol_id);
 #endif
    return NULL;
+}
+
+double get_mol_dist_partcfg(Particle *p1,Particle *p2){
+   double dist[3],dist2;
+   int mol_id1,mol_id2;
+   mol_id1=p1->p.mol_id;
+   mol_id2=p2->p.mol_id;
+   get_mol_dist_vector_from_molid_cfg(mol_id1,mol_id2,dist);
+   dist2=SQR(dist[0])+SQR(dist[1])+SQR(dist[2]);
+   return sqrt(dist2);
 }
 
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){

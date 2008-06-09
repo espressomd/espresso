@@ -23,6 +23,9 @@ MDINLINE int checkIfParticlesInteractViaMolCut(Particle *p1, Particle *p2,IA_par
    if (data->mol_cut_type==0){
       return 1;
    }
+   else if (p1->p.mol_id == p2->p.mol_id) {
+      return 1;
+   }
    else{
       double com_dist=get_mol_dist(p1,p2);
       if (com_dist < data->mol_cut_cutoff) return 1;
@@ -30,23 +33,15 @@ MDINLINE int checkIfParticlesInteractViaMolCut(Particle *p1, Particle *p2,IA_par
    return 0;
 }
 
-MDINLINE int checkIfParticlesInteractViaMolCut_per(Particle *p1, Particle *p2,IA_parameters *data){
+MDINLINE int checkIfParticlesInteractViaMolCut_partcfg(Particle *p1, Particle *p2,IA_parameters *data){
    if (data->mol_cut_type==0){
       return 1;
    }
-   else{
-      double com_dist=get_mol_dist_per(p1,p2);
-      if (com_dist < data->mol_cut_cutoff) return 1;
-   }
-   return 0;
-}
-
-MDINLINE int checkIfParticlesInteractViaMolCut_cfg(Particle *p1, Particle *p2,IA_parameters *data){
-   if (data->mol_cut_type==0){
+   else if (p1->p.mol_id == p2->p.mol_id) {
       return 1;
    }
    else{
-      double com_dist=get_mol_dist_cfg(p1,p2);
+      double com_dist=get_mol_dist_partcfg(p1,p2);
       if (com_dist < data->mol_cut_cutoff) return 1;
    }
    return 0;

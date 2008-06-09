@@ -125,7 +125,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* non bonded pair potentials                  */
   /***********************************************/
 
-   calc_non_bonded_pair_force_cell(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
+   calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,torque1,torque2);
 
   /***********************************************/
   /* short range electrostatics                  */
