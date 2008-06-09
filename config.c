@@ -40,6 +40,9 @@
 int version_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION ", Last Change: " LAST_CHANGE, (char *) NULL);
+#ifdef CVS_INFO
+  Tcl_AppendResult(interp, ",CVS Version from: $Date$",(char *) NULL);
+#endif
   return (TCL_OK);
 }
 
