@@ -217,6 +217,8 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
   /* normalize the normal vector */
   for (i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
 
+  make_particle_type_exist(con->part_rep.p.type);
+
   return (TCL_OK);
 }
 
@@ -285,6 +287,8 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
+
+  make_particle_type_exist(con->part_rep.p.type);
 
   return (TCL_OK);
 }
@@ -387,10 +391,12 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   }
 
   /*normalize the axis vector */
-      axis_len = sqrt (axis_len);
-      for (i=0;i<3;i++) {
-	con->c.cyl.axis[i] /= axis_len;
-      }
+  axis_len = sqrt (axis_len);
+  for (i=0;i<3;i++) {
+    con->c.cyl.axis[i] /= axis_len;
+  }
+
+  make_particle_type_exist(con->part_rep.p.type);
       
   return (TCL_OK);
 }
@@ -484,6 +490,8 @@ int constraint_pore(Constraint *con, Tcl_Interp *interp,
     con->c.pore.axis[i] /= axis_len;
   }
   
+  make_particle_type_exist(con->part_rep.p.type);
+
   return (TCL_OK);
 }
 
@@ -629,8 +637,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
     return (TCL_ERROR);    
   }
 
-  // KG: Is this line neccessary???
-  make_particle_type_exist(con->type);
+  make_particle_type_exist(con->part_rep.p.type);
 
   return (TCL_OK);
 }
