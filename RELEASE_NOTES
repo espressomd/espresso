@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6p (Ydalir)                                                                     *
+* v2.0.6q (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6p -
+- v2.0.6q -
 -----------
 
+(q) June  10th, 2008.
 (p) June   9th, 2008.
 (o) June   8th, 2008.
 (n) June   7th, 2008.
@@ -53,6 +54,8 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(q) Fixed a crash when constraints have the largest type in the system and no
+    interaction is defined for them
 (p) Fixed a crash when printing out the interactions with individual force capping
     switched on.
 (o) get_mol_dist gives the wrong value on 1,2 cpus, due to a problem with
