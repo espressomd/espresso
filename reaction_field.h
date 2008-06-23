@@ -122,6 +122,20 @@ MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int meth
   return TCL_OK;
 }
 
+MDINLINE void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
+{
+   int j;
+   double fac;
+   fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
+   fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+   
+   for (j=0;j<3;j++)
+         force[j] += fac * d[j];
+   
+   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
+   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
+}
+
 /** Computes the Reaction Field pair force and adds this
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.
@@ -132,31 +146,27 @@ MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int meth
 */
 MDINLINE void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
-  int j;
-  double fac;
-  if (dist < rf_params.r_cut)
-  {
-     fac = 1.0 / (dist*dist*dist)  +  rf_params.B / (rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
-     fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+   if (dist < rf_params.r_cut)
+   {
+      add_rf_coulomb_pair_force_no_cutoff(p1,p2,d,dist,force);
+   }
+}
 
-     for (j=0;j<3;j++)
-         force[j] += fac * d[j];
-
-     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
-     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac));
-  }
+MDINLINE double rf_coulomb_pair_energy_no_cutoff(Particle *p1, Particle *p2, double dist)
+{
+   double  fac;
+   fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
+   //cut off part
+   fac -= (1-rf_params.B/2)  / rf_params.r_cut;
+   fac *= coulomb.prefactor * p1->p.q * p2->p.q;
+   return fac;
 }
 
 MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 {
-  double  fac;
   if (dist < rf_params.r_cut)
   {
-     fac = 1.0 / dist  -  (rf_params.B*dist*dist) / (2*rf_params.r_cut*rf_params.r_cut*rf_params.r_cut);
-     //cut off part
-     fac -= (1-rf_params.B/2)  / rf_params.r_cut;
-     fac *= coulomb.prefactor * p1->p.q * p2->p.q;
-     return fac;
+     return rf_coulomb_pair_energy_no_cutoff(p1,p2,dist);
   }
   return 0.0;
 }
@@ -234,8 +244,8 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
 MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
-  if CUTOFF_CHECK(ia_params->rf_on == 1 ) {
-     add_rf_coulomb_pair_force(p1,p2,d, dist,force);
+  if ((ia_params->rf_on ==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {
+     add_rf_coulomb_pair_force_no_cutoff(p1,p2,d, dist,force);
   }
 
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: INTER_RF   f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac));
@@ -245,8 +255,8 @@ MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *
 MDINLINE double interrf_pair_energy(Particle *p1, Particle *p2,IA_parameters *ia_params, double dist)
 {
   double val;
-  if CUTOFF_CHECK(ia_params->rf_on == 1 ) {
-     val=rf_coulomb_pair_energy(p1,p2,dist);
+  if ((ia_params->rf_on==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {
+     val=rf_coulomb_pair_energy_no_cutoff(p1,p2,dist);
      return val;
   }
   return 0.0;
