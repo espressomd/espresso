@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6q (Ydalir)                                                                     *
+* v2.0.6r (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6q -
+- v2.0.6r -
 -----------
 
+(r) June  23rd, 2008.
 (q) June  10th, 2008.
 (p) June   9th, 2008.
 (o) June   8th, 2008.
@@ -54,6 +55,8 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(r) CUTOFF_CHECK was in the wrong place for inter_rf, make a wrapper to use the
+    same functions for rf and inter_rf
 (q) Fixed a crash when constraints have the largest type in the system and no
     interaction is defined for them
 (p) Fixed a crash when printing out the interactions with individual force capping
