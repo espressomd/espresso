@@ -51,9 +51,9 @@ LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0} };
 
 /** The DnQm model to be used. */
 LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, 1./3. };
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! MAKE SURE THAT D3Q19 is #undefined WHEN USING OTHER MODELS !
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+#ifdef D3Q18
+#error Only D3Q19 is implemented!
+#endif
 
 /** The underlying lattice structure */
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
