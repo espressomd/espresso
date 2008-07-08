@@ -54,6 +54,7 @@
 #include "lattice.h"
 #include "lb-boundaries.h"
 #include "iccp3m.h" /* -iccp3m- */
+#include "adresso.h"
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -582,6 +583,8 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("iccp3m", iccp3m);
 #endif 
 #endif 
+  /* in adresso.h */
+  REGISTER_COMMAND("adress", adress_tcl);
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

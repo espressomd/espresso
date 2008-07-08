@@ -40,6 +40,7 @@
 /* #define MODES */
 /* #define BOND_VIRTUAL */
 /* #define VIRTUAL_SITES */
+/* #define ADRESS*/
 
 /**********************************************************************/
 /*                        integrator features                         */

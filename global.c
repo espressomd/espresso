@@ -32,6 +32,7 @@
 #include "pressure.h"
 #include "rattle.h"
 #include "lattice.h"
+#include "adresso.h"
 
 /**********************************************
  * description of variables
@@ -89,8 +90,9 @@ const Datafield fields[] = {
 #endif
   {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    ro_callback,     6 },         /* 38 from thermostat.c */
   {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",    ro_callback,     6 },         /* 39 from thermostat.c */
-  {&dpd_twf,          TYPE_INT, 1, "dpd_twf",    ro_callback,     6 },         /* 40 from thermostat.c */
+  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",    ro_callback,     6 },         /* 40 from thermostat.c */
   {&dpd_wf,             TYPE_INT, 1, "dpd_wf",    ro_callback,     5 },         /* 41 from thermostat.c */
+  {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",ro_callback,  1 },         /* 42  from adresso.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

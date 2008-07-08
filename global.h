@@ -161,6 +161,8 @@ extern const Datafield fields[];
 #define FIELD_DPD_TWF          40
 /** index of \ref dpd_wf in \ref #fields */
 #define FIELD_DPD_WF           41
+/** index of \ref address_var in \ref #fields */
+#define FIELD_ADRESS           42
 /*@}*/
 
 /**********************************************
