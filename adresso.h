@@ -17,6 +17,7 @@
 */
 
 #include <tcl.h>
+#include "particle_data.h"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -30,6 +31,22 @@ extern double adress_vars[7];
 /** Implements the Tcl command \ref tcl_adress. This allows for seetings for adress
 */
 int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+#ifdef ADRESS
+/** Calc adress weight function of a vector
+    @param x[3] vector
+    @return weight of the vector
+*/
+double adress_wf_vector(double x[3]);
+
+/** Calc adress weight function of a particle
+    @param x[3] vector
+    @return weight of the particle
+*/
+MDINLINE double adress_wf_particle(Particle *p){
+   return adress_wf_vector(p->r.p);
+}
+#endif
 /*@}*/
 
 #endif

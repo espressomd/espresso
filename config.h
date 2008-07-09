@@ -76,6 +76,11 @@
 #include MYCONFIG_H
 #endif
 
+//inter_rf needs ELECTROSTATICS
+#ifdef INTER_RF
+#define ELECTROSTATICS
+#endif
+
 /* activate P3M only with FFTW */
 #if defined(ELECTROSTATICS) && defined(FFTW)
 #define ELP3M
@@ -88,9 +93,16 @@
 //#define ALTERNATIVE_INTEGRATOR
 #endif
 
+//adress needs mol_cut
+#ifdef ADRESS
+#define MOL_CUT
+#endif
+
+//mol_cut needs virtual sites
 #ifdef MOL_CUT
 #define VIRTUAL_SITES
 #endif
+
 
 #if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
 #define DPD_MASS
@@ -104,10 +116,6 @@
 /*Transversal DPD -> needs normal DPD*/
 #ifdef TRANS_DPD
 #define DPD
-#endif
-
-#ifdef INTER_RF
-#define ELECTROSTATICS
 #endif
 
 /* If any bond angle potential is activated, actiavte the whole bond angle code */
