@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6r (Ydalir)                                                                     *
+* v2.0.6s (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6r -
+- v2.0.6s -
 -----------
 
+(s) July   8th, 2008.
 (r) June  23rd, 2008.
 (q) June  10th, 2008.
 (p) June   9th, 2008.
@@ -31,6 +32,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(s) initial commit to add address feature
 (p) Added minimal documentation for individual force capping.
 (k) blockfile/checkpoint support for exclusions
     thanks to Mehmet Sayar.
