@@ -43,6 +43,7 @@
 #include "lattice.h"
 #include "lb.h"
 #include "virtual_sites.h"
+#include "adresso.h"
 
 /************************************************
  * DEFINES
@@ -371,11 +372,15 @@ void integrate_vv(int n_steps)
     transfer_momentum = 0;
 #endif
 
-//VIRTUAL_SITES pos (annd vel for DPD) update for security reason !!!
+//VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     update_mol_vel_pos();
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (check_runtime_errors()) return;
+#ifdef ADRESS
+   adress_update_weights();
+   if (check_runtime_errors()) return;
+#endif
 #endif
 
     force_calc();
@@ -462,6 +467,10 @@ void integrate_vv(int n_steps)
    update_mol_vel_pos();
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
    if (check_runtime_errors()) break;
+#ifdef ADRESS
+   adress_update_weights();
+   if (check_runtime_errors()) break;
+#endif
 #endif
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:

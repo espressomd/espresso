@@ -33,6 +33,8 @@ void update_mol_vel();
 void update_mol_pos();
 void distribute_mol_force();
 
+Particle *get_mol_com_particle(Particle *calling_p);
+
 double get_mol_dist(Particle *p1,Particle *p2);
 double get_mol_dist_partcfg(Particle *p1,Particle *p2);
 

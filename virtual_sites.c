@@ -34,8 +34,6 @@ void calc_mol_pos(Particle *p_com,double r_com[3]);
 int calc_mol_pos_cfg(Particle *p_com,double r_com[3]);
 void put_mol_force_on_parts(Particle *p_com);
 
-Particle *get_mol_com_particle(Particle *calling_p);
-
 void get_mol_dist_vector_cfg(Particle *p1,Particle *p2,double dist[3]);
 
 void update_mol_vel_pos()

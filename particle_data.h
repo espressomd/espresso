@@ -80,6 +80,11 @@ typedef struct {
       else = virual particle */
   int isVirtual;
 #endif
+
+#ifdef ADRESS
+  /** particles adress weight */
+  int adress_weight;
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is

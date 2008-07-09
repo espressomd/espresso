@@ -14,6 +14,8 @@
 #include "adresso.h"
 #include "communication.h"
 #include "parser.h"
+#include "cells.h"
+
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -317,5 +319,31 @@ double adress_wf(double dist){
          return 1+2*tmp*tmp-3*tmp*tmp*tmp;
       }
    }
+}
+
+void adress_update_weights(){
+  Particle *p;
+  int i, np, c;
+  Cell *cell;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      if (ifParticleIsVirtual(&p[i])) {
+         p[i].p.adress_weight=adress_wf_particle(&p[i]);
+      }
+    }
+  }
+  for (c = 0; c < local_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      if (ifParticleIsVirtual(&p[i])) {
+         p[i].p.adress_weight=adress_wf_particle(&p[i]);
+      }
+    }
+  }
 }
 #endif

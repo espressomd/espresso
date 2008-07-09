@@ -57,6 +57,8 @@
 #include "molforces.h"
 #include "morse.h"
 #include "elc.h"
+#include "adresso.h"
+#include "virtual_sites.h"
 
 /** \name Exported Functions */
 /************************************************************/
@@ -105,6 +107,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
   int j;
+
+#ifdef ADRESS
+  double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
+  if (force_weight<ROUND_ERROR_PREC) return;
+#endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
 
@@ -216,12 +223,18 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* add total nonbonded forces to particle      */
   /***********************************************/
 
-  for (j = 0; j < 3; j++) { 
+  for (j = 0; j < 3; j++) {
+#ifdef ADRESS
+    tmp=force_weight;
+    p1->f.f[j] += tmp;
+    p2->f.f[j] -= tmp;
+#else
     p1->f.f[j] += force[j];
     p2->f.f[j] -= force[j];
+#endif
 #ifdef ROTATION
     p1->f.torque[j] += torque1[j];
-    p2->f.torque[j] += torque2[j];
+    p2->f.torque[j] -= torque2[j];
 #endif
   }
 }
@@ -236,6 +249,11 @@ MDINLINE void add_bonded_force(Particle *p1)
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
   int i, j, type_num, type, n_partners, bond_broken;
+
+#ifdef ADRESS
+  double tmp,force_weight=adress_bonded_force_weight(p1);
+  if (force_weight<ROUND_ERROR_PREC) return;
+#endif
 
   i = 0;
   while(i<p1->bl.n) {
@@ -350,8 +368,14 @@ MDINLINE void add_bonded_force(Particle *p1)
       }
       
       for (j = 0; j < 3; j++) {
+#ifdef ADRESS
+        tmp=force_weight*force[j];
+	p1->f.f[j] += tmp;
+	p2->f.f[j] -= tmp;
+#else
 	p1->f.f[j] += force[j];
 	p2->f.f[j] -= force[j];
+#endif
 #ifdef NPT
 	if(integ_switch == INTEG_METHOD_NPT_ISO)
 	  nptiso.p_vir[j] += force[j] * dx[j];
@@ -367,9 +391,15 @@ MDINLINE void add_bonded_force(Particle *p1)
       }
 
       for (j = 0; j < 3; j++) {
+#ifdef ADRESS
+	p1->f.f[j] += force_weight*force[j];
+	p2->f.f[j] += force_weight*force2[j];
+	p3->f.f[j] -= force_weight*(force[j] + force2[j]);
+#else
 	p1->f.f[j] += force[j];
 	p2->f.f[j] += force2[j];
 	p3->f.f[j] -= (force[j] + force2[j]);
+#endif
       }
       break;
     case 3:
@@ -381,10 +411,17 @@ MDINLINE void add_bonded_force(Particle *p1)
       }
 
       for (j = 0; j < 3; j++) {
+#ifdef ADRESS
+	p1->f.f[j] += force_weight*force[j];
+	p2->f.f[j] += force_weight*force2[j];
+	p3->f.f[j] += force_weight*force3[j];
+	p4->f.f[j] -= force_weight*(force[j] + force2[j] + force3[j]);
+#else
 	p1->f.f[j] += force[j];
 	p2->f.f[j] += force2[j];
 	p3->f.f[j] += force3[j];
 	p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+#endif
       }
       break;
     }
