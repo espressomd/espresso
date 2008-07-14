@@ -373,6 +373,11 @@ void on_parameter_change(int field)
     nptiso.invalidate_p_vel = 1;  
 #endif
 
+#ifdef ADRESS
+//   if (field == FIELD_BOXL)
+//    adress_changed_box_l();
+#endif
+
 #ifdef ELECTROSTATICS
   cc = 0;
   switch (coulomb.method) {
