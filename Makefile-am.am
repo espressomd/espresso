@@ -96,7 +96,9 @@ Espresso_bin_SOURCES = \
 	soft_sphere.h \
 	subt_lj.h \
 	tab.h \
+	ljangle.h \
 	adresso.c adresso.h
+
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
 
