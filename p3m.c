@@ -1514,6 +1514,8 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
     if (p3m_sum_q2 > 0) {
     /* Force preparation */
     ind = 0;
+
+    /* apply the influence function */
     for(i=0; i<fft_plan[3].new_size; i++) {
       ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
       ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
@@ -1536,7 +1538,7 @@ double P3M_calc_kspace_forces(int force_flag, int energy_flag)
 	  }
 	}
       }
-      /* Back FFT force componenet mesh */
+      /* Back FFT force component mesh */
       fft_perform_back(rs_mesh);
       /* redistribute force component mesh */
       spread_force_grid(rs_mesh);
