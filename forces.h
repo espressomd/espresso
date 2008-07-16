@@ -234,7 +234,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 #ifdef ROTATION
     p1->f.torque[j] += torque1[j];
-    p2->f.torque[j] -= torque2[j];
+    p2->f.torque[j] += torque2[j];
 #endif
   }
 }
