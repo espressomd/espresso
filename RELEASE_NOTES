@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6s (Ydalir)                                                                     *
+* v2.0.6t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6s -
+- v2.0.6t -
 -----------
 
+(t) July  16th, 2008.
 (s) July   8th, 2008.
 (r) June  23rd, 2008.
 (q) June  10th, 2008.
@@ -57,6 +58,7 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(t) wrong sign for torgue2
 (r) CUTOFF_CHECK was in the wrong place for inter_rf, make a wrapper to use the
     same functions for rf and inter_rf
 (q) Fixed a crash when constraints have the largest type in the system and no
