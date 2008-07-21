@@ -116,6 +116,8 @@ MDINLINE int calc_angle_force(Particle *p_mid, Particle *p_left, Particle *p_rig
 #ifdef BOND_ANGLE_HARMONIC
   {
     double phi,sinphi;
+    if ( cosine >  TINY_COS_VALUE) cosine = TINY_COS_VALUE;
+    if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
     phi =  acos(-cosine);
     sinphi = sin(phi);
     if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
@@ -167,6 +169,8 @@ MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
+  if ( cosine >  TINY_COS_VALUE)  cosine = TINY_COS_VALUE;
+  if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
 #ifdef BOND_ANGLE_HARMONIC
   {
