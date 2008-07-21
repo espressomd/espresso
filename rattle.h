@@ -21,6 +21,7 @@
 #include "parser.h"
 #include "global.h"
 #include "particle_data.h"
+#include "integrate.h"
 
 /** number of rigid bonds */
 extern int n_rigidbonds;
@@ -54,6 +55,11 @@ MDINLINE int inter_parse_rigid_bonds(Tcl_Interp *interp, int bond_type, int argc
   if ((! ARG_IS_D(1, d)) || (! ARG_IS_D(2, p_tol)) || (! ARG_IS_D(3, v_tol)) ) {
     Tcl_AppendResult(interp, "rigid bond needs 3 DOUBLE parameters: "
 		     "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  if (time_step < 0. ) {
+    Tcl_AppendResult(interp, "set time_step before declaring rigid_bond" , (char *) NULL);
     return TCL_ERROR;
   }
 

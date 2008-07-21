@@ -11,6 +11,7 @@ Current working revision.
 - v2.0.6t -
 -----------
 
+(v) July  21th, 2008.
 (u) July  21th, 2008.
 (t) July  16th, 2008.
 (s) July   8th, 2008.
@@ -59,6 +60,8 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(v) Added a check to rattle.h to make sure that time_step is defined before
+defining a rigid_bond.
 (u) Added a check to angle.h for dot product exceeding 1.0 due to floating
 point arithmetic
 (t) wrong sign for torgue2
