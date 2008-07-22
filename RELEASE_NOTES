@@ -2,17 +2,82 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.5w (Ydalir)                                                                     *
+* v2.0.6t (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-****************************************************************************************
-* v2.0.6                                                                               *
-****************************************************************************************
+- v2.0.6t -
+-----------
 
-point arithmetic
+(t) July  16th, 2008.
+(s) July   8th, 2008.
+(r) June  23rd, 2008.
+(q) June  10th, 2008.
+(p) June   9th, 2008.
+(o) June   8th, 2008.
+(n) June   7th, 2008.
+(m) June   6th, 2008.
+(l) May   29th, 2008.
+(k) May   27th, 2008.
+(j) May   23rd, 2008.
+(i) May   22nd, 2008.
+(h) May   12th, 2008.
+(g) May    9th, 2008.
+(f) May    7th, 2008.
+(e) May    6th, 2008.
+(d) May    5th, 2008.
+(c) May    2nd, 2008.
+(b) May    1st, 2008.
+(a) April 30th, 2008.
+
+New Features:
+(s) initial commit to add address feature
+(p) Added minimal documentation for individual force capping.
+(k) blockfile/checkpoint support for exclusions
+    thanks to Mehmet Sayar.
+(i) added feature LJ_WITH_MOL_CUT
+(h) added analyze dipmom_mol
+(g) allows writepdb with atom names and length scale
+(f) added anaylze dipmon
+(e) virtual sites are now possible
+(e) allow reaction field with molecular cutoff to avoid dipoles
+(d) make temperature of inter_dpd global
+(c) ljangle_cap_force implemented for directional LJ.
+(a) version 2.0.6
+
+Changes:
+(n) get_nonbonded_interaction needs periodical version of
+    calc_non_bonded_pair_force_cell
+(m) seperate force calc for cfg and cells
+(k) molcut is now a normal interaction LJ_WITH_MOL_CUT and RF_WITH_MOL_CUT was
+    removed
+(k) ghost_flags has now ifdef GHOST_FLAG, virtual sites does not need it
+    anymore
+(j) more verbose and useful error messages for virtual sites
+
+Bugfixes:
+(t) wrong sign for torgue2
+(r) CUTOFF_CHECK was in the wrong place for inter_rf, make a wrapper to use the
+    same functions for rf and inter_rf
+(q) Fixed a crash when constraints have the largest type in the system and no
+    interaction is defined for them
+(p) Fixed a crash when printing out the interactions with individual force capping
+    switched on.
+(o) get_mol_dist gives the wrong value on 1,2 cpus, due to a problem with
+    local_particles
+(m) molcut is a non-local feature, so calc_force must be different for pressure.h
+    and forces.h
+(l) too short max_cut for mol_cut
+(k) espresso_logo.tcl now also works with online visualization.
+(j) fixed compile error due to missing ifdef in ghosts.h
+(g) make virtual sites work with mpi
+(f) isVirtual was printed double in the part command
+(d) wrong code_info for dpd_mass
+(d) mass was missing in anaylze energy_kinetic
+(b) ONEPART_DEBUG would not compile with LJ_ANGLE because of an undefined variable.
+    Fixed.
 
 
 ****************************************************************************************
