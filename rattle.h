@@ -47,7 +47,7 @@ MDINLINE int inter_parse_rigid_bonds(Tcl_Interp *interp, int bond_type, int argc
   double d, p_tol, v_tol;
     
   if (argc != 4) {
-    Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
+     Tcl_AppendResult(interp, "rigid bond needs 3 parameters: "
 		     "<constrained_bond_distance> <Positional_tolerance> <Velocity_tolerance>", (char *) NULL);
     return TCL_ERROR;
   }
