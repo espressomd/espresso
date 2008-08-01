@@ -1218,7 +1218,7 @@ int printELCToResult(Tcl_Interp *interp)
     Tcl_AppendResult(interp, " noneutralization", (char *) NULL);
   if (elc_params.dielectric_contrast_on) {
     Tcl_PrintDouble(interp, elc_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric", buffer, (char *) NULL);
+    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, elc_params.di_mid, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, elc_params.di_bot, buffer);
