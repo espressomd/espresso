@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6u (Ydalir)                                                                     *
+* v2.0.6v (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6u -
+- v2.0.6v -
 -----------
 
+(v) August 1st, 2008.
 (u) July  28th, 2008.
 (t) July  16th, 2008.
 (s) July   8th, 2008.
@@ -34,6 +35,8 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(v) a python version of the trace_memory.tcl script, which allows to trace down
+    memory leaks. _Much_faster.
 (s) initial commit to add address feature
 (p) Added minimal documentation for individual force capping.
 (k) blockfile/checkpoint support for exclusions
@@ -59,6 +62,7 @@ Changes:
 (j) more verbose and useful error messages for virtual sites
 
 Bugfixes:
+(v) fixed output of ELC parameters
 (u) Added a check to rattle.h to make sure that time_step is defined before
     defining a rigid_bond.
 (u) Added a check to angle.h for dot product exceeding 1.0 due to floating point
