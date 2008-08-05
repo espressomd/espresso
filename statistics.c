@@ -294,7 +294,7 @@ void centermass(int type, double *com)
    	
   updatePartCfg(WITHOUT_BONDS);
   for (j=0; j<n_total_particles; j++) {
-    if (type == partCfg[j].p.type) {
+    if ((partCfg[j].p.type == type) || (type == -1)) {
       for (i=0; i<3; i++) {
       	com[i] += partCfg[j].r.p[i]*PMASS(partCfg[j]);
       }
