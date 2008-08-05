@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.0.6v (Ydalir)                                                                     *
+* v2.0.6w (Ydalir)                                                                     *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.0.6v -
+- v2.0.6w -
 -----------
 
+(w) August 4th, 2008.
 (v) August 1st, 2008.
 (u) July  28th, 2008.
 (t) July  16th, 2008.
@@ -35,6 +36,7 @@ Current working revision.
 (a) April 30th, 2008.
 
 New Features:
+(w) support for Quad-Core AMD in config.guess
 (v) a python version of the trace_memory.tcl script, which allows to trace down
     memory leaks. _Much_faster.
 (s) initial commit to add address feature
