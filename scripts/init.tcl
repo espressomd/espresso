@@ -23,25 +23,33 @@
 
 # here do everything you want to do upon initialization.
 # e. g.
-puts ""
-puts "*******************************************************"
-puts "*                                                     *"
-puts "*                    - Espresso -                     *"
-puts "*                    ============                     *"
-puts "*      A MPI Parallel Molecular Dynamics Program      *"
-puts "*                                                     *"
-puts "*                                                     *"
-puts "* (c) 2002-2006                                       *"
-puts "* Max-Planck-Institute for Polymer Research           *"
-puts "* Mainz, Germany                                      *"
-puts "*                                                     *"
-puts "*******************************************************"
-puts ""
+
 # Read user defined settings
 if { [file exists "~/.espressorc" ] } {
     source ~/.espressorc
 }
 
+# see whether the user wants the startup
+# message. Can also be permanently switched off
+# in "~/.espressorc"
+foreach arg $argv { if {$arg == "-quiet"} { set quiet 1 } }
+
+if {![info exists quiet] || !$quiet} {
+    puts ""
+    puts "*******************************************************"
+    puts "*                                                     *"
+    puts "*                    - Espresso -                     *"
+    puts "*                    ============                     *"
+    puts "*      A MPI Parallel Molecular Dynamics Program      *"
+    puts "*                                                     *"
+    puts "*                                                     *"
+    puts "* (c) 2002-2006                                       *"
+    puts "* Max-Planck-Institute for Polymer Research           *"
+    puts "* Mainz, Germany                                      *"
+    puts "*                                                     *"
+    puts "*******************************************************"
+    puts ""
+}
 
 # Check to see if the user specified a packages directory
 if { [ catch { set dummy $env(ESPRESSO_PACKAGES)} ] } {
