@@ -2,15 +2,26 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.0  (Alsheim)                                                                    *
+* v2.1.0a (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.0  -
+- v2.1.0a -
 -----------
 
+(a) August 5th, 2008.
+
+New Features:
+(a) added a command line option -quiet that switches off the startup
+    message.
+(a) Alternatively, it is possible to specify "set quiet 1" in the
+    .espressorc
+(a) to permanently get rid of the output.
+
+Changes:
+(a) analyze centermass works for all particle types with -1 option
 
 
 ****************************************************************************************
