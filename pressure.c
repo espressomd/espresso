@@ -725,8 +725,8 @@ int whichbin(double pos[3], int bins[3], double centre[3], double range[3], int 
 /*calculates which bin a particle is in for local_stress_tensor */
 {
   int reducedpos[3];
-  reducepos(pos, bins, centre, range, reducedpos);
   int i;
+  reducepos(pos, bins, centre, range, reducedpos);
   for (i=0;i<3;i++) {
     if ((reducedpos[i] < 0) || (reducedpos[i] >= bins[i])) {
       *bin = -1;
@@ -743,7 +743,13 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 
   double dist2, dist;
   double d[3];
+#ifdef ELECTROSTATICS
+  int i;
+  double eforce[3];
+#endif
+
   force[0]=0; force[1]=0; force[2]=0; 
+  
 
   if ((p1->p.identity != p2->p.identity)&&(checkIfParticlesInteract(p1->p.type, p2->p.type))) {
     /* distance calculation */
@@ -752,8 +758,6 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
     dist  = sqrt(dist2);
     calc_non_bonded_pair_force_simple(p1,p2,d,dist,dist2,force);
 #ifdef ELECTROSTATICS
-    int i;
-    double eforce[3];
     if (coulomb.method != COULOMB_NONE) {
       switch (coulomb.method) {
 #ifdef ELP3M
@@ -1473,21 +1477,22 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
 
 int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
 {
-  PTENSOR_TRACE(fprintf(stderr,"%d: Running parse_local_stress_tensor\n",this_node));
-  /* 'analyze stress profile ' */
   char buffer[TCL_DOUBLE_SPACE];
-  if (argc != 12) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "local_stress_tensor requires 12 inputs: x_periodic, y_periodic, z_periodic, x_range_start, y_range_start, z_range_start, x_range, y_range, z_range, x_bins, y_bins, z_bins", (char *)NULL);
-    return(TCL_ERROR);
-  }
-  char *usage = "usage: analyse local_stress_tensor <x_periodic> <y_periodic> <z_periodic> <x_range_start> <y_range_start> <z_range_start> <x_range> <y_range> <z_range> <x_bins> <y_bins> <z_bins>";
+  char* usage;
   int periodic[3];
   double range_start[3];
   double range[3];
   int bins[3];
   int i,j,k,l;
   DoubleList *TensorInBin;
+  PTENSOR_TRACE(fprintf(stderr,"%d: Running parse_local_stress_tensor\n",this_node));
+  /* 'analyze stress profile ' */
+  if (argc != 12) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "local_stress_tensor requires 12 inputs: x_periodic, y_periodic, z_periodic, x_range_start, y_range_start, z_range_start, x_range, y_range, z_range, x_bins, y_bins, z_bins", (char *)NULL);
+    return(TCL_ERROR);
+  }
+  usage = "usage: analyse local_stress_tensor <x_periodic> <y_periodic> <z_periodic> <x_range_start> <y_range_start> <z_range_start> <x_range> <y_range> <z_range> <x_bins> <y_bins> <z_bins>";
  
   for (i=0;i<3;i++) {
     if ( !ARG0_IS_I(periodic[i]) ) {

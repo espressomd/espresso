@@ -44,13 +44,15 @@ void sigint_handler(int sig)
    * NOTE: mpirun installs its own handler for SIGINT/SIGTERM
    *       and takes care of proper cleanup and exit */
 
+  char *errtxt;
+
   static int numcalls = 0;
   if (numcalls++ > 0) exit(sig); // catch sig only once
 
   /* we use runtime_error to indicate that sig was called;
    * upon next call of mpi_gather_runtime_errors all nodes 
    * will clean up and exit. */
-  char *errtxt = runtime_error(64);
+  errtxt = runtime_error(64);
   ERROR_SPRINTF(errtxt, "{000 caught signal %d} ",sig);
 }
 

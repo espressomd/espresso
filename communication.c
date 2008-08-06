@@ -1327,13 +1327,13 @@ void mpi_gather_stats_slave(int ana_num, int job)
 /*************** REQ_GET_LOCAL_STRESS_TENSOR ************/
 void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]) {
   
+  int i,j;
+  DoubleList *TensorInBin_;
   PTENSOR_TRACE(fprintf(stderr,"%d: mpi_local_stress_tensor: Broadcasting local_stress_tensor parameters\n",this_node));
 
-  int i,j;
 
   mpi_issue(REQ_GET_LOCAL_STRESS_TENSOR,-1,0);
 
-  DoubleList *TensorInBin_;
   TensorInBin_ = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
     init_doublelist(&TensorInBin_[i]);
