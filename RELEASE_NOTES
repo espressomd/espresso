@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.0a (Alsheim)                                                                    *
+* v2.1.0b (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.0a -
+- v2.1.0b -
 -----------
 
+(b) August 6th, 2008.
 (a) August 5th, 2008.
 
 New Features:
@@ -22,6 +23,9 @@ New Features:
 
 Changes:
 (a) analyze centermass works for all particle types with -1 option
+
+Bugfixes:
+(b) fixed compiling problem with gcc on IBM machines
 
 
 ****************************************************************************************
