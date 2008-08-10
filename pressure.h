@@ -146,6 +146,10 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #ifdef LENNARD_JONES
   add_lj_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
+  /* lennard jones generic */
+#ifdef LENNARD_JONES_GENERIC
+  add_ljgen_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
   /* Directional LJ */
 #ifdef LJ_ANGLE
   /* The forces are propagated within the function */
