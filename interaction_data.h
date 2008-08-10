@@ -676,7 +676,14 @@ void calc_maximal_cutoff();
 /** check whether all force calculation routines are properly initialized. */
 int check_obs_calc_initialized();
 
-int checkIfParticlesInteract(int i, int j);
+/**  check if a non bonded interaction is defined */
+int checkIfInteraction(IA_parameters *data);
+
+/** check if the types of particles i and j have any non bonded
+    interaction defined. */
+MDINLINE int checkIfParticlesInteract(int i, int j) {
+  return checkIfInteraction(get_ia_param(i, j));
+}
 
 char *get_name_of_bonded_ia(int i);
 #endif

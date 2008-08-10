@@ -409,9 +409,8 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 #endif
 }
 
-/** returns non-zero if particles of type i and j have a nonbonded interaction */
-int checkIfParticlesInteract(int i, int j) {
-  IA_parameters *data = get_ia_param(i, j);
+/** returns non-zero if there is a nonbonded interaction defined */
+int checkIfInteraction(IA_parameters *data) {
 
 #ifdef LENNARD_JONES
   if (data->LJ_cut != 0)

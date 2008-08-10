@@ -521,15 +521,12 @@ successfully connected.
   \end{features}
 \end{essyntax}
 
-\todo{Does this command really work only with the LJ potential, or
-  with any short-ranged potential?}
 The \codebox{constraint} command offers a variety of surfaces that can be
 defined to interact with desired particles. Variants \variant{1} to \variant{5}
-create interactions via a
-Lennard-Jones potential. \[4 \epsilon \left(\left(\frac{\sigma}{r}\right)^{12} -
-  \left(\frac{\sigma}{r}\right)^6 + shift\right)\] with r being the
-distance of the center of the particle to the surface. The constraints are identified like a particle via its
-type for the lennard-jones force calculation. 
+create interactions via a non-bonded interaction potential, where the distance
+between the two particles is replaced by the
+distance of the center of the particle to the surface. The constraints are
+identified like a particle via its type for the non-bonded interaction. 
 After a type is defined for each constraint one has
 to define
 the interaction of all different particle types with the constraint using

@@ -65,22 +65,25 @@ void energy_calc(double *result);
 /** Calculate non bonded energies between a pair of particles.
     @param p1        pointer to particle 1.
     @param p2        pointer to particle 2.
+    @param ia_params the interaction parameters between the two particles
     @param d         vector between p1 and p2. 
     @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2. */
-MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
-					 double dist, double dist2)
+    @param dist2     distance squared between p1 and p2.
+    @return the short ranged interaction energy between the two particles
+*/
+MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
+					    IA_parameters *ia_params,
+					    double d[3], double dist, double dist2)
 {
-  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
   double ret = 0;
 
 #ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
+  if (p1->p.mol_id==p2->p.mol_id) return 0;
 #endif
 
 #ifdef MOL_CUT
-   //You may want to put a correction factor for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==0) return;
+  //You may want to put a correction factor for smoothing function else then theta
+  if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==0) return 0;
 #endif
 
 #ifdef LENNARD_JONES
@@ -142,11 +145,28 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   /* Gay-Berne */
   ret += gb_pair_energy(p1,p2,ia_params,d,dist);
 #endif
-  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) += ret;
 
 #ifdef INTER_RF
   ret += interrf_pair_energy(p1,p2,ia_params,dist);
 #endif
+
+  return ret;
+}
+
+/** Add non bonded energies and short range coulomb between a pair of particles.
+    @param p1        pointer to particle 1.
+    @param p2        pointer to particle 2.
+    @param d         vector between p1 and p2. 
+    @param dist      distance between p1 and p2.
+    @param dist2     distance squared between p1 and p2. */
+MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
+					 double dist, double dist2)
+{
+  IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+  double ret = 0;
+
+  *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
+    calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
