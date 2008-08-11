@@ -2,19 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.0b (Alsheim)                                                                    *
+* v2.1.0c (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.0b -
+- v2.1.0c -
 -----------
 
-(b) August 6th, 2008.
-(a) August 5th, 2008.
+(c) August 10th, 2008.
+(b) August  6th, 2008.
+(a) August  5th, 2008.
 
 New Features:
+(c) The interactions of constraints can now be any non-bonded
+(c) potential, not just Lennard-Jones
 (a) added a command line option -quiet that switches off the startup
     message.
 (a) Alternatively, it is possible to specify "set quiet 1" in the
@@ -25,6 +28,9 @@ Changes:
 (a) analyze centermass works for all particle types with -1 option
 
 Bugfixes:
+(c) added a testcase for generic Lennard-Jones, and fixed a bug
+    that
+(c) generic LJ forces/pressure were ignored.
 (b) fixed compiling problem with gcc on IBM machines
 
 
