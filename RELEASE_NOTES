@@ -17,20 +17,17 @@ Current working revision.
 
 New Features:
 (c) The interactions of constraints can now be any non-bonded
-(c) potential, not just Lennard-Jones
+    potential, not just Lennard-Jones
 (a) added a command line option -quiet that switches off the startup
-    message.
-(a) Alternatively, it is possible to specify "set quiet 1" in the
-    .espressorc
-(a) to permanently get rid of the output.
+    message. Alternatively, it is possible to specify "set quiet 1"
+    in the .espressorc to permanently get rid of the output.
 
 Changes:
 (a) analyze centermass works for all particle types with -1 option
 
 Bugfixes:
 (c) added a testcase for generic Lennard-Jones, and fixed a bug
-    that
-(c) generic LJ forces/pressure were ignored.
+    that generic LJ forces/pressure were ignored.
 (b) fixed compiling problem with gcc on IBM machines
 
 
