@@ -8,11 +8,12 @@
 \variant{1} setmd \var{variable}
 \variant{2} setmd \var{variable} \opt{\var{value}}+
 \end{essyntax}
-\todo{Explain '+' in intro.}
 
 Variant \variant{1} returns the value of the \es global variable
 \var{variable}, variant \variant{2} can be used to set the variable
-\var{variable} to \var{value}. The following global variables can be
+\var{variable} to \var{value}. The '+' in variant \variant{2} means
+that for some variables more than one \var{value} can be given
+(example: setmd boxl 5 5 5). The following global variables can be
 set:
 
 %% List-environment for the description of the global variables
@@ -144,10 +145,46 @@ degrees of freedom are also coupled to the thermostat.
 
 \subsection{Dissipative Particle Dynamics (DPD) thermostat}
 \begin{essyntax}
-  thermostat dpd \var{temperature} \var{gamma} \var{r\_cut}
+  thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF \var{wf} }
 \end{essyntax}
 
-Consists of a friction and noise term coupled via the fluctuation-
+\es implements the DPD thermostat exactly as it is described in \cite{soddeman03a}.
+We use the standard {\it Velocity-Verlet} integration scheme, e.g. the DPD
+only influences the calculation of the forces. No special measurements
+have been taken into account to selfconsistently determine the velocities and
+the dissipative forces as it is for example described in \cite{Nikunen03}.
+DPD adds a velocity dependent dissipative force and a random force to
+the usual conservative pairforces (e.g. Lennard-Jones).
+
+The dissipative force is calculated by
+
+$$ \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij} $$
+
+The random force by
+
+$$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij} $$
+
+where $ \Theta_{ij} \in [ -0.5 , 0.5 [ $ is a uniformly distributed random number.
+The constants $\sigma $ and $\zeta $ are calculated in the following way:
+
+$$ \zeta = \frac{\var{gamma}}{\var{time\_step}} \; \; \; , \; \; \; \; \; \; \sigma = \sqrt{\var{temperature} \; \zeta} $$
+
+According to the optional parameter WF (can be set to 0 or 1, default is 0) of the thermostat command
+the functions $w^D$ and $w^R$ are chosen in the following way ( $ r_{ij} < \var{r\_cut} $ ) :
+
+$$ 
+w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
+   \left\{
+   \begin{array}{clcr} 
+             1 - \frac{r_{ij}}{r_c} & , \; WF = 0 \\
+             1                      & , \; WF = 1
+   \end{array}
+   \right.
+$$
+
+For $ r_{ij} \ge \var{r\_cut} $  $w^D$ and $w^R$ are identical to 0 in both cases.
+
+The friction (dissipative) and noise (random) term are coupled via the fluctuation-
 dissipation theorem. The friction term is a function of the relative
 velocity of particle pairs.  The DPD thermostat is better for dynamics
 than the Langevin thermostat, since it mimics hydrodynamics in the
