@@ -1037,8 +1037,8 @@ all the forces acting on particles of type \var{typeid1} are
 calculated. These include all the forces due to other interaction
 types and also the thermostat. Next a force equal in magnitude, but in
 the oppositte direction is applied on the particles. This force is
-divided equally on all the particles of type \var{typeid1}, since
-currently there is no mass concept in \es. Note that the syntax of the
+divided, corresponding to their mass, on all the particles of type \var{typeid1}. 
+Note that the syntax of the
 declaration of comfixed interaction requires the same particle type to
 be input twice. If different particle types are given in the input,
 the program exits with an error message. \var{flag} can be set to 1
