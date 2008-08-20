@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.0c (Alsheim)                                                                    *
+* v2.1.0d (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.0c -
+- v2.1.0d -
 -----------
 
+(d) August 19th, 2008.
 (c) August 10th, 2008.
 (b) August  6th, 2008.
 (a) August  5th, 2008.
@@ -26,6 +27,7 @@ Changes:
 (a) analyze centermass works for all particle types with -1 option
 
 Bugfixes:
+(d) ran autogen to fix version number in make dist
 (c) added a testcase for generic Lennard-Jones, and fixed a bug
     that generic LJ forces/pressure were ignored.
 (b) fixed compiling problem with gcc on IBM machines
