@@ -98,7 +98,7 @@ extern nptiso_struct nptiso;
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mol_cut.h"
-
+#include "tunable_slip.h"
 
 /** \name Exported Variables */
 /************************************************************/

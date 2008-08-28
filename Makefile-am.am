@@ -97,7 +97,8 @@ Espresso_bin_SOURCES = \
 	subt_lj.h \
 	tab.h \
 	ljangle.h \
-	adresso.c adresso.h
+	adresso.c adresso.h \
+        tunable_slip.h
 
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)

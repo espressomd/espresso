@@ -76,7 +76,7 @@
 /* #define INTER_DPD */
 /* #define INTER_RF */
 /* #define MOL_CUT */
-
+/* #define TUNABLE_SLIP */
 /* #define NO_INTRA_NB */
 
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */

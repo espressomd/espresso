@@ -255,6 +255,30 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
   }
 }
 
+MDINLINE void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
+{
+  int i;
+  double c_dist_sqr,c_dist;
+  
+  c_dist_sqr=0.0;
+  for(i=0;i<3;i++) {
+    if(c->pos[i] >= 0) {
+      vec[i] = c->pos[i] - ppos[i];
+      c_dist_sqr += SQR(vec[i]);
+    }else{
+      vec[i] = 0.0;
+      c_dist += SQR(vec[i]);
+    }
+  }
+  c_dist = sqrt(c_dist_sqr);
+  *dist = c_dist;
+
+  
+  for(i=0;i<3;i++) {
+    vec[i] *= -1;
+  }
+}
+
 MDINLINE void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
 #ifdef ELECTROSTATICS
@@ -457,8 +481,25 @@ MDINLINE void add_constraints_forces(Particle *p1)
         add_ext_magn_field_force(p1, &constraints[n].c.emfield);
         break;
     //end ER
+    
+    case CONSTRAINT_PLANE:
+     if(checkIfInteraction(ia_params)) {
+	calculate_plane_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
+	if (dist > 0) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				       ia_params,vec,dist,dist*dist, force,
+				       torque1, torque2);
+#ifdef TUNABLE_SLIP
+	    add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
+#endif
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 plane constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
     }
-
     for (j = 0; j < 3; j++) {
       p1->f.f[j] += force[j];
       constraints[n].part_rep.f.f[j] -= force[j];

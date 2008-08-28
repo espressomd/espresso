@@ -183,7 +183,8 @@ tests = \
 	rotation.tcl \
 	constraints.tcl \
 	mass.tcl \
-	lb.tcl
+	lb.tcl \
+        tunable_slip.tcl
 
 
 # add data files for the tests here

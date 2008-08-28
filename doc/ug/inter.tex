@@ -439,6 +439,60 @@ $r_\mathrm{max}$ with a fixed distance of
 $(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)$; the distance values $r$ in
 the file are ignored and only included for human readability.
 
+\subsection{Tunable-slip boundary interaction}
+\index{Tunable-slip boundary interaction|mainindex}
+\index{interactions!Tunable-slip boundary interactions|mainindex}
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  tunable_slip \var{T} \var{\gamma_L} \var{r_\mathrm{cut}} \var{\delta t}
+  \var{v_x} \var{v_y} \var{v_z}
+  \begin{features}
+    \required{TUNABLE_SLIP and CONSTRAINT PLANE CELL}
+  \end{features}
+\end{essyntax}
+Simulating microchannel flow phenomena like the Plane Poiseuille and the Plane
+Couette Flow require accurate boundary conditions. There are two main
+boundary conditions in use:\\
+1.) {\em No-slip boundary condition} which means that the flow velocity at the
+the hydrodynamic boundaries is zero.\\
+2.) {\em Partial-slip boundary condition} which means that the flow velocity
+at the hydrodynamic boundaries does not vanish.\\
+In recent years, experiments have indicated that
+the no-slip boundary condition is indeed usually not valid on the micrometer
+scale. Instead, it has to be replaced by the {\em {partial-slip
+boundary condition}}
+\begin{displaymath}
+\delta_B \: \: \partial_{{\bf n}} v_{\parallel}|_{{\bf r}_B} =
+v_{\parallel}|_{{\bf r}_B},
+\end{displaymath}
+where $v_{\parallel}$ denotes the tangential component of the velocity and
+$\partial_{{\bf n}} v_{\parallel}$ its spatial derivative normal to the surface, both
+evaluated at the position ${\bf r}_B$ of the so-called {\em hydrodynamic boundary}.
+This boundary condition is characterized by two effective parameters, namely
+(i) the slip length $\delta_B$ and (ii) the hydrodynamic
+boundary ${\bf r}_B$.\\
+Within the approach of the tunable-slip boundary interactions it is possible
+to tune the slip length systematically from full-slip to no-slip.
+A coordinate-dependent Langevin-equation describes a viscous layer in the
+vicinity of the channel walls which exerts an additional friction on the fluid
+particles.
+\var{T} is the temperature, \var{\gamma_L} the friction coefficient and
+\var{r_\mathrm{cut}} is the cut-off radius of this layer. \var{\delta t} is
+the timestep of the integration scheme. With \var{v_x} \var{v_y} and \var{v_z}
+it is possible to give the layer a reference velocity to create a Plane
+Couette Flow.
+Make sure that the cutoff radius \var{r_\mathrm{cut}} is larger than the
+cutoff radius of the constraint Lennard-Jones interactions. Otherwise there is
+no possibility that the particles feel the viscous layer.\\
+This method was tested for Dissipative Particle Dynamics but it is intended
+for mesoscopic simulation methods in general. For using tunable-slip boundary
+interactions you have to apply {\bf two} plane cell constraints with
+Lennard-Jones in addition to the tunable-slip interaction. Make sure that the
+cutoff radius \var{r_\mathrm{cut}} is larger than the cutoff radius of the 
+constraint Lennard-Jones interactions. Otherwise there is
+no possibility that the particles feel the viscous layer.
+Please read reference \cite{smiatek08a} before using this interaction.
+
 \subsection{Capping the force during warmup}
 \label{sec:forcecap}
 
@@ -1037,8 +1091,8 @@ all the forces acting on particles of type \var{typeid1} are
 calculated. These include all the forces due to other interaction
 types and also the thermostat. Next a force equal in magnitude, but in
 the oppositte direction is applied on the particles. This force is
-divided, corresponding to their mass, on all the particles of type \var{typeid1}. 
-Note that the syntax of the
+divided equally on all the particles of type \var{typeid1}, since
+currently there is no mass concept in \es. Note that the syntax of the
 declaration of comfixed interaction requires the same particle type to
 be input twice. If different particle types are given in the input,
 the program exits with an error message. \var{flag} can be set to 1

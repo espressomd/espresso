@@ -60,29 +60,16 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
 \item[\opt{q \var{charge}}] Sets the charge of this praticle to $q$.
-\item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}]
-  If ROTATION is switched on, the rotational degrees of freedom are integrated
-  using a quaternion integrator. The \var{quat} command can be used to access
-  (read and write) the quaternions of a particle. You typically do not need to
-  access these quaternion variables directly (the integrator takes care of this).
-  You typically would access the rotational degrees of freedom by using the
-  following to commands: \var{omega} and \var{torque}.
-\item[\opt{omega \var{x} \var{y} \var{z}}]
-  If ROTATION is switched on, particles have additionally 3 rotational degrees of freedom.
-  This command can be used to initialize these or to read them. 
-\item[\opt{torque \var{x} \var{y} \var{z}}]
-  This command can be used to access the torques acting on the rotational degrees of
-  freedom of particles (ROTATION must be switched on).
+\item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] \todo{Docs required (JC?).} 
+  \item[\opt{omega \var{x} \var{y} \var{z}}] \todo{Docs
+  required (JC?).} 
+  \item[\opt{torque \var{x} \var{y} \var{z}}] \todo{Docs
+  required (JC?).}
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For
-  example \var{fix} 0 0 1 will fix motion only in z. Note that
-  \var{fix} without arguments is equivalent to \var{fix} 1 1 1.
-  Fixing a particle means, that after the force calculation the velocities
-  and the forces of the fixed particles are simply set to zero again.
-  When calculating the temperature of your system bye summing up the 
-  squared velocities, you have to take into account the reduced number
-  of degrees of freedom yourself. \es does not do this for you.
+  example \var{fix 0 0 1} will fix motion only in z. Note that
+  \var{fix} without arguments is equivalent to \var{fix 1 1 1}.
 \item[\opt{ext_force \var{x} \var{y} \var{z}}]
   An additional external force is applied to the particle.
 \item[\opt{unfix}] Release any external influence from the particle.
@@ -525,12 +512,19 @@ successfully connected.
     \variant{8}
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
+  
+  \require{4}{%
+    \variant{9} 
+    constraint plane cell \var{x} \var{y} \var{z} 
+    type \var{id}
+  }
 
   \begin{features}
     \required{CONSTRAINTS}
     \required[1]{ELECTROSTATICS}
     \required[2]{ROTATION}
     \required[3]{DIPOLES}
+    \required[4]{Essential for TUNABLE_SLIP boundary interactions} 
   \end{features}
 \end{essyntax}
 
@@ -552,6 +546,10 @@ surface and applies to all charged particles.
 Variant \variant{8} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
 with a dipol moment.
+
+Variant \variant{9} is essential for the use of tunable-slip boundary
+interactions for microchannel flows like the Plane Poiseuille or Plane Couette
+Flow.
 
 \textbf{Note that constraints are not saved to checkpoints and that they have to
 be reset upon restarting a simulation.}
@@ -601,6 +599,16 @@ height \var{h}. The plate carries a charge density of \var{sigma}.
   
 Variant \variant{8} specifies the dipolar coupling of particles with a dipolar
 moment to an external field \var{f_x} \var{f_y} \var{f_z}. 
+
+Variant \variant{9} creates an infinite plane at a fixed position. For
+non-initializing a direction of the constraint values of the positions 
+have to be negative. For the tunable-slip boundary
+interactions you have to set {\bf two} constraints.\\
+{\em Example:} 
+\var{x}=-10.0,
+\var{y}=-10.0,
+\var{z}=20.0
+creates an infinite plane in $z$-direction at $z=20.0$.
 
 \subsection{Deleting a constraint}
 \begin{essyntax}

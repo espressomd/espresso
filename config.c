@@ -182,6 +182,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef MOL_CUT
   Tcl_AppendResult(interp, "{ MOL_CUT } ", (char *) NULL);
 #endif
+#ifdef TUNABLE_SLIP
+  Tcl_AppendResult(interp, "{ TUNABLE_SLIP } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
 }

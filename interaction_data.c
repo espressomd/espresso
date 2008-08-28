@@ -42,6 +42,7 @@
 #include "comfixed.h"
 #include "morse.h"
 #include "dpd.h"
+//#include "tunable_slip.h"
 
 /****************************************
  * variables
@@ -248,6 +249,16 @@ void initialize_ia_params(IA_parameters *params) {
   params->mol_cut_type = 0;
   params->mol_cut_cutoff = 0.0;
 #endif
+
+#ifdef TUNABLE_SLIP
+  params->TUNABLE_SLIP_temp  = 0.0;
+  params->TUNABLE_SLIP_gamma = 0.0;
+  params->TUNABLE_SLIP_r_cut = 0.0;
+  params->TUNABLE_SLIP_time  = 0.0;
+  params->TUNABLE_SLIP_vx  = 0.0;
+  params->TUNABLE_SLIP_vy  = 0.0;
+  params->TUNABLE_SLIP_vz  = 0.0;
+#endif
 }
 
 /** Copy interaction parameters. */
@@ -407,6 +418,17 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->mol_cut_type = src->mol_cut_type;
   dst->mol_cut_cutoff = src->mol_cut_cutoff;
 #endif
+
+#ifdef TUNABLE_SLIP
+  dst->TUNABLE_SLIP_temp  = src->TUNABLE_SLIP_temp;
+  dst->TUNABLE_SLIP_gamma  = src->TUNABLE_SLIP_gamma;
+  dst->TUNABLE_SLIP_r_cut  = src->TUNABLE_SLIP_r_cut;
+  dst->TUNABLE_SLIP_time  = src->TUNABLE_SLIP_time;
+  dst->TUNABLE_SLIP_vx  = src->TUNABLE_SLIP_vx;
+  dst->TUNABLE_SLIP_vy  = src->TUNABLE_SLIP_vy;
+  dst->TUNABLE_SLIP_vz  = src->TUNABLE_SLIP_vz;
+#endif
+
 }
 
 /** returns non-zero if there is a nonbonded interaction defined */
@@ -484,6 +506,11 @@ int checkIfInteraction(IA_parameters *data) {
 
 #ifdef MOL_CUT
   if (data->mol_cut_type != 0)
+    return 1;
+#endif
+
+#ifdef TUNABLE_SLIP
+if (data->TUNABLE_SLIP_r_cut != 0)
     return 1;
 #endif
 
@@ -761,6 +788,13 @@ void calc_maximal_cutoff()
 	 if (data->TAB_maxval != 0){
 	   if(max_cut_non_bonded < (data->TAB_maxval ))
 	     max_cut_non_bonded = data->TAB_maxval;
+	 }
+#endif
+
+#ifdef TUNABLE_SLIP
+	 if (data->TUNABLE_SLIP_r_cut != 0){
+	   if(max_cut_non_bonded < (data->TUNABLE_SLIP_r_cut ))
+	     max_cut_non_bonded = data->TUNABLE_SLIP_r_cut;
 	 }
 #endif
        }
@@ -1148,6 +1182,11 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef MOL_CUT
   if (data->mol_cut_type != 0) printmolcutIAToResult(interp,i,j);
 #endif
+
+#ifdef TUNABLE_SLIP
+  if (data->TUNABLE_SLIP_r_cut != 0) printtunable_slipIAToResult(interp,i,j);
+#endif
+
   return (TCL_OK);
 }
 
@@ -1463,6 +1502,9 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #endif
 #ifdef INTER_RF
     REGISTER_NONBONDED("inter_rf", interrf_parser);
+#endif
+#ifdef TUNABLE_SLIP
+    REGISTER_NONBONDED("tunable_slip", tunable_slip_parser);
 #endif
 #ifdef MOL_CUT
     REGISTER_NONBONDED("molcut", molcut_parser);

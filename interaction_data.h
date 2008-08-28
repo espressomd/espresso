@@ -119,7 +119,8 @@
 /** External magnetic field constraint applied */
 #define CONSTRAINT_EXT_MAGN_FIELD 8
 //end ER
-
+/** Constraint for tunable-lsip boundary conditions */
+#define CONSTRAINT_PLANE 9
 /*@}*/
 
 /* Data Types */
@@ -334,6 +335,16 @@ typedef struct {
   double mol_cut_cutoff;
 #endif
 
+#ifdef TUNABLE_SLIP
+  double TUNABLE_SLIP_temp;
+  double TUNABLE_SLIP_gamma;
+  double TUNABLE_SLIP_r_cut;
+  double TUNABLE_SLIP_time;
+  double TUNABLE_SLIP_vx;
+  double TUNABLE_SLIP_vy;
+  double TUNABLE_SLIP_vz;
+#endif
+
 } IA_parameters;
 
 /** \name Compounds for Coulomb interactions */
@@ -522,6 +533,12 @@ typedef struct{
 } Constraint_ext_magn_field;
 //end ER
 
+/** Parameters for a plane constraint which is needed for tunable-slip boundary conditions. */
+typedef struct {
+  /** Position of the plain. Negative values mean non-existing in that direction. */
+  double pos[3];
+} Constraint_plane;
+
 /** Structure to specify a constraint. */
 typedef struct {
   /** type of the constraint. */
@@ -538,6 +555,7 @@ typedef struct {
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
+    Constraint_plane plane;
   } c;
 
   /** particle representation of this constraint. Actually needed are only the identity,

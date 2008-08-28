@@ -116,6 +116,17 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     break; 
 //end ER
+  case CONSTRAINT_PLANE:
+    Tcl_PrintDouble(interp, con->c.plane.pos[0], buffer);
+    Tcl_AppendResult(interp, "plane cell ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.plane.pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.plane.pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.p.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    break;
+
   default:
     sprintf(buffer, "%d", con->type);
     Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
@@ -666,6 +677,51 @@ int constraint_ext_magn_field(Constraint *con, Tcl_Interp *interp,
 }
 //end ER
 
+int constraint_plane(Constraint *con, Tcl_Interp *interp,
+                      int argc, char **argv)
+{
+  con->type = CONSTRAINT_PLANE;
+
+  /* invalid entries to start of */
+  con->c.plane.pos[0] = 
+    con->c.plane.pos[1] = 
+    con->c.plane.pos[2] = 0;
+  con->part_rep.p.type = -1;
+
+  while (argc > 0) {
+    if(!strncmp(argv[0], "cell", strlen(argv[0]))) {
+      if(argc < 4) {
+        Tcl_AppendResult(interp, "constraint plane cell <x> <y> <z> expected", (char *) NULL);
+        return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.plane.pos[0])) == TCL_ERROR ||
+          Tcl_GetDouble(interp, argv[2], &(con->c.plane.pos[1])) == TCL_ERROR ||
+          Tcl_GetDouble(interp, argv[3], &(con->c.plane.pos[2])) == TCL_ERROR)
+        return (TCL_ERROR);
+      argc -= 4; argv += 4;
+    }
+    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+      if (argc < 1) {
+        Tcl_AppendResult(interp, "constraint plane cell type <t> expected", (char *) NULL);
+        return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
+        return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if (con->part_rep.p.type < 0) {
+    Tcl_AppendResult(interp, "usage: constraint plane cell <x> <y> <z> type <t>",
+                     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  return (TCL_OK);
+}
+
 #endif
 
 
@@ -708,6 +764,10 @@ int constraint(ClientData _data, Tcl_Interp *interp,
   //ER
   else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
     status = constraint_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+  }
+  else if(!strncmp(argv[1], "plane cell", strlen(argv[1]))) {
+    status = constraint_plane(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   //end ER
