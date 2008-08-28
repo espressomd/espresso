@@ -2,16 +2,20 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1  (Alsheim)                                                                    *
+* v2.1.1a (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-
-- v2.1.1  -
+- v2.1.1a -
 -----------
 
+(a) August 28th, 2008.
+
+New Features:
+(a) The tunable slip boundary module has been included into the main ESPResSo
+    branch
 
 
 - v2.1.0d -
