@@ -82,6 +82,13 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   double massf;
 #endif
 
+#ifdef EXTERNAL_FORCES
+  // if any of the two particles is fixed in some direction then
+  // do not add any dissipative or stochastic dpd force part
+  // because dissipation-fluctuation theorem is violated
+  if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
+#endif
+
 #ifdef DPD_MASS_RED
   massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
 #endif
@@ -89,6 +96,7 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef DPD_MASS_LIN
   massf=0.5*(PMASS(*p1)+PMASS(*p2));
 #endif
+
 
   dist_inv = 1.0/dist;
 
@@ -197,6 +205,13 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
   double tmp;
 #ifdef DPD_MASS
   double massf;
+#endif
+
+#ifdef EXTERNAL_FORCES
+  // if any of the two particles is fixed in some direction then
+  // do not add any dissipative or stochastic dpd force part
+  // because dissipation-fluctuation theorem is violated
+  if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
 #endif
 
 #ifdef DPD_MASS_RED

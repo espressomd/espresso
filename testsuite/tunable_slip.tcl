@@ -59,6 +59,11 @@ puts "----------------------------------------"
 puts "- Testcase tunable_slip.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "----------------------------------------"
 
+set errf [lindex $argv 1]
+
+require_feature "TUNABLE_SLIP"
+require feature "DPD"
+
 # System parameters 
 set box_l                10.0
 

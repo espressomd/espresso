@@ -154,7 +154,7 @@ only influences the calculation of the forces. No special measurements
 have been taken into account to selfconsistently determine the velocities and
 the dissipative forces as it is for example described in \cite{Nikunen03}.
 DPD adds a velocity dependent dissipative force and a random force to
-the usual conservative pairforces (e.g. Lennard-Jones).
+the usual conservative pairforces (e.g. Lennard-Jones). 
 
 The dissipative force is calculated by
 
@@ -197,7 +197,7 @@ cutoffs including next nearest neighbors or even more are unphysical.
 
 \var{gamma} is basically an inverse timescale on which the system
 thermally equilibrates.  Values between $0.1$ and $1$ are o.k, but you
-propably want to try yourself to get a feeling for how fast
+propably want to try this out yourself to get a feeling for how fast
 temperature jumps during a simulation are. The dpd thermostat does not
 act on the system center of mass motion.  Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you
@@ -206,6 +206,18 @@ can achieve by using the command \keyword{galileiTransformParticles}
 repeated once in a while for long runs due to round off errors (check
 this with the command \keyword{system_com_vel} from section
 \vref{tcl:system-com-vel}).
+
+Two restrictions apply for the dpd implementation of \es:
+
+\begin{itemize}
+\item As soon as at least one of the two interacting particles is fixed
+      (see~\ref{chap:part} on how to fix a particle in space) the dissipative and the
+      stochastic force part is set to zero for both particles (you should only change
+      this hardcoded behaviour if you are sure not to violate the dissipation fluctuation theorem). 
+\item DPD does not take into account any internal rotational degrees of freedom of the particles
+      if  ROTATION is switched on. Up to the current version DPD only acts on the translatorial
+      degrees of freedom.
+\end{itemize}
 
 \subsection{Isotropic NPT thermostat}
 \begin{essyntax}
