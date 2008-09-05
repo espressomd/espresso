@@ -153,6 +153,8 @@ typedef struct {
   double LJGEN_capradius;
   int LJGEN_a1;
   int LJGEN_a2;
+  double LJGEN_b1;
+  double LJGEN_b2;
   /*@}*/
 #endif
 

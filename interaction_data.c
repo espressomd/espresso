@@ -111,7 +111,9 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_offset =
     params->LJGEN_capradius =
     params->LJGEN_a1 =
-    params->LJGEN_a2 = 0;
+    params->LJGEN_a2 = 
+    params->LJGEN_b1 =
+    params->LJGEN_b2 = 0;
 #endif
 
 #ifdef LJ_ANGLE
@@ -281,6 +283,8 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJGEN_capradius = src->LJGEN_capradius;
   dst->LJGEN_a1 = src->LJGEN_a1;
   dst->LJGEN_a2 = src->LJGEN_a2;
+  dst->LJGEN_b1 = src->LJGEN_b1;
+  dst->LJGEN_b2 = src->LJGEN_b2;
 #endif
 
 #ifdef LJ_ANGLE

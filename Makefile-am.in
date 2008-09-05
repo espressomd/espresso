@@ -91,9 +91,9 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	lb-boundaries.h utils.c utils.h angle.h buckingham.h \
 	comfixed.h comforce.h debye_hueckel.h reaction_field.h \
 	dihedral.h fene.h gb.h harmonic.h ljcos2.h ljcos.h lj.h \
-	ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h soft_sphere.h \
-	subt_lj.h tab.h ljangle.h adresso.c adresso.h tunable_slip.h \
-	mpifake/mpi.h mpifake/mpi.c
+	ljgen.c ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h \
+	soft_sphere.h subt_lj.h tab.h ljangle.h adresso.c adresso.h \
+	tunable_slip.h mpifake/mpi.h mpifake/mpi.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @MPI_FAKE_TRUE@am__objects_1 = mpifake/mpi.$(OBJEXT)
 am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
@@ -117,7 +117,8 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	rattle.$(OBJEXT) molforces.$(OBJEXT) virtual_sites.$(OBJEXT) \
 	lb.$(OBJEXT) bin.$(OBJEXT) lattice.$(OBJEXT) halo.$(OBJEXT) \
 	statistics_fluid.$(OBJEXT) lb-boundaries.$(OBJEXT) \
-	utils.$(OBJEXT) adresso.$(OBJEXT) $(am__objects_1)
+	utils.$(OBJEXT) ljgen.$(OBJEXT) adresso.$(OBJEXT) \
+	$(am__objects_1)
 Espresso_bin_OBJECTS = $(am_Espresso_bin_OBJECTS)
 Espresso_bin_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -313,9 +314,9 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	lb-boundaries.h utils.c utils.h angle.h buckingham.h \
 	comfixed.h comforce.h debye_hueckel.h reaction_field.h \
 	dihedral.h fene.h gb.h harmonic.h imd.h ljcos2.h ljcos.h lj.h \
-	ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h soft_sphere.h \
-	subt_lj.h tab.h ljangle.h adresso.c adresso.h tunable_slip.h \
-	$(am__append_1)
+	ljgen.c ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h \
+	soft_sphere.h subt_lj.h tab.h ljangle.h adresso.c adresso.h \
+	tunable_slip.h $(am__append_1)
 
 #################################################################
 # Handling of local configure headers
@@ -440,6 +441,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/layered.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lb-boundaries.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ljgen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/maggs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mmm-common.Po@am__quote@
