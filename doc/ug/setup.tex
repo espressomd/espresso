@@ -145,9 +145,9 @@ degrees of freedom are also coupled to the thermostat.
 
 \subsection{Dissipative Particle Dynamics (DPD) thermostat}
 \begin{essyntax}
-  thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF \var{wf} }
+  thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
 \end{essyntax}
-
+\subsubsection{Standard DPD thermostat}
 \es implements the DPD thermostat exactly as it is described in \cite{soddeman03a}.
 We use the standard {\it Velocity-Verlet} integration scheme, e.g. the DPD
 only influences the calculation of the forces. No special measurements
@@ -165,9 +165,11 @@ The random force by
 $$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij} $$
 
 where $ \Theta_{ij} \in [ -0.5 , 0.5 [ $ is a uniformly distributed random number.
-The constants $\sigma $ and $\zeta $ are calculated in the following way:
+The connection of $\sigma $ and $\zeta $ is given by the dissipation fluctuation theorem:
+ 
+$$ (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T $$
 
-$$ \zeta = \frac{\var{gamma}}{\var{time\_step}} \; \; \; , \; \; \; \; \; \; \sigma = \sqrt{\var{temperature} \; \zeta} $$
+The parameters \var{gamma} \var{r\_cut} define the strength of the friction $\zeta$ and the cutoff radius.
 
 According to the optional parameter WF (can be set to 0 or 1, default is 0) of the thermostat command
 the functions $w^D$ and $w^R$ are chosen in the following way ( $ r_{ij} < \var{r\_cut} $ ) :
@@ -218,6 +220,38 @@ Two restrictions apply for the dpd implementation of \es:
       if  ROTATION is switched on. Up to the current version DPD only acts on the translatorial
       degrees of freedom.
 \end{itemize}
+\subsubsection{Transverse DPD thermostat}
+This is an extension of the above thermostat\cite{junghans2008}, which dampes the degrees of freedom
+perpendicular on the axis between two particles.
+The dissipative force is calculated by
+
+$$ \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}$$
+
+The random force by
+
+$$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}$$
+
+The parameters \var{tgamma} \var{tr\_cut} define the strength of the friction and the cutoff in the same way as above.
+NOTE: That this thermostat does NOT conserve angular momentum!!!!
+\subsubsection{Interaction DPD thermostat}
+The DPD thermostat can also be set up as a normal interaction to make friction between different particle types different.
+\begin{essyntax}
+  thermostat inter_dpd \var{temperature}
+\end{essyntax}
+and
+\begin{essyntax}
+  inter \var{type1} \var{type2} inter_dpd \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
+\end{essyntax}
+\subsubsection{Other DPD extension}
+The feature DPD_MASS make the friction constant mass dependent:
+$$ \zeta \to \zeta M_{ij} $$ 
+and 
+$$ \zeta \to \zeta M_{ij} $$
+There are two case implemented DPD_MASS_RED uses the reduced mass:
+$$ M_{ij}=2\frac{m_i m_j}{m_i+m_j} $$
+There are two case implemented DPD_MASS_LIN uses the reduced mass:
+$$ M_{ij}=\frac{m_i+m_j}{2} $$
+The prefactor are due to make equal masses have a factor 1.
 
 \subsection{Isotropic NPT thermostat}
 \begin{essyntax}
