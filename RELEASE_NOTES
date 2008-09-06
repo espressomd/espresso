@@ -2,19 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1b (Alsheim)                                                                    *
+* v2.1.1c (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1b -
+- v2.1.1c -
 -----------
 
-(b) August 29th, 2008.
-(a) August 28th, 2008.
+(c) September 5th, 2008.
+(b) August   29th, 2008.
+(a) August   28th, 2008.
 
 New Features:
+(c) included extended LJGEN potential in main cvs trunk
+(c) updated generic lennard-jones interaction in users guide
 (a) The tunable slip boundary module has been included into the main ESPResSo
     branch
 
