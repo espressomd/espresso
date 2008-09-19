@@ -225,7 +225,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   for (j = 0; j < 3; j++) {
 #ifdef ADRESS
-    tmp=force_weight;
+    tmp=force_weight*force[j];
     p1->f.f[j] += tmp;
     p2->f.f[j] -= tmp;
 #else
