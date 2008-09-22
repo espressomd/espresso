@@ -185,6 +185,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef TUNABLE_SLIP
   Tcl_AppendResult(interp, "{ TUNABLE_SLIP } ", (char *) NULL);
 #endif
+#ifdef ADRESS
+  Tcl_AppendResult(interp, "{ ADRESS } ", (char *) NULL);
+#endif
   Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
 }
