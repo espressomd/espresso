@@ -2,18 +2,19 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1c (Alsheim)                                                                    *
+* v2.1.1d (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1c -
+- v2.1.1d -
 -----------
 
-(c) September 5th, 2008.
-(b) August   29th, 2008.
-(a) August   28th, 2008.
+(d) September 22nd, 2008.
+(c) September  5th, 2008.
+(b) August    29th, 2008.
+(a) August    28th, 2008.
 
 New Features:
 (c) included extended LJGEN potential in main cvs trunk
@@ -22,6 +23,7 @@ New Features:
     branch
 
 Bugfixes:
+(d) forgotten adress flag
 (b) In order to satisfy the dissipation-fluctuation theorem, DPD is not applied to
     fixed particles or particles that interact with fixed particles any
     more.
