@@ -79,6 +79,13 @@ DoubleList tabulated_forces;
 /** Corresponding array containing all tabulated energies*/
 DoubleList tabulated_energies;
 
+#ifdef ADRESS
+/** Array containing all adress tabulated forces*/
+DoubleList adress_tab_forces;
+/** Corresponding array containing all adress tabulated energies*/
+DoubleList adress_tab_energies;
+#endif
+
 ///
 int printCoulombIAToResult(Tcl_Interp *interp);
 
@@ -91,6 +98,16 @@ void force_and_energy_tables_init() {
   init_doublelist(&tabulated_forces);
   init_doublelist(&tabulated_energies);
 }
+
+#ifdef ADRESS
+/** Initialize adress force and energy tables */
+void adress_force_and_energy_tables_init() {
+  init_doublelist(&adress_tab_forces);
+  init_doublelist(&adress_tab_energies);
+}
+#endif
+
+
 
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
@@ -250,6 +267,18 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef MOL_CUT
   params->mol_cut_type = 0;
   params->mol_cut_cutoff = 0.0;
+#endif
+
+#ifdef ADRESS
+  params->ADRESS_IC_npoints = 0;
+  params->ADRESS_TAB_npoints = 0;
+  params->ADRESS_TAB_startindex = 0;
+  params->ADRESS_TAB_minval = 0.0;
+  params->ADRESS_TAB_minval2 = 0.0;
+  params->ADRESS_TAB_maxval = 0.0;
+  params->ADRESS_TAB_maxval2 = 0.0;
+  params->ADRESS_TAB_stepsize = 0.0;
+  strcpy(params->ADRESS_TAB_filename,"");
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -423,6 +452,18 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->mol_cut_cutoff = src->mol_cut_cutoff;
 #endif
 
+#ifdef ADRESS
+  dst->ADRESS_IC_npoints = src->ADRESS_IC_npoints;
+  dst->ADRESS_TAB_npoints = src->ADRESS_TAB_npoints;
+  dst->ADRESS_TAB_startindex = src->ADRESS_TAB_startindex;
+  dst->ADRESS_TAB_minval = src->ADRESS_TAB_minval;
+  dst->ADRESS_TAB_minval2 = src->ADRESS_TAB_minval2;
+  dst->ADRESS_TAB_maxval = src->ADRESS_TAB_maxval;
+  dst->ADRESS_TAB_maxval2 = src->ADRESS_TAB_maxval2;
+  dst->ADRESS_TAB_stepsize = src->ADRESS_TAB_stepsize;
+  strcpy(dst->ADRESS_TAB_filename,src->ADRESS_TAB_filename);
+#endif
+
 #ifdef TUNABLE_SLIP
   dst->TUNABLE_SLIP_temp  = src->TUNABLE_SLIP_temp;
   dst->TUNABLE_SLIP_gamma  = src->TUNABLE_SLIP_gamma;
@@ -510,6 +551,11 @@ int checkIfInteraction(IA_parameters *data) {
 
 #ifdef MOL_CUT
   if (data->mol_cut_type != 0)
+    return 1;
+#endif
+
+#ifdef ADRESS
+  if(data->ADRESS_TAB_maxval != 0)
     return 1;
 #endif
 
@@ -792,6 +838,13 @@ void calc_maximal_cutoff()
 	 if (data->TAB_maxval != 0){
 	   if(max_cut_non_bonded < (data->TAB_maxval ))
 	     max_cut_non_bonded = data->TAB_maxval;
+	 }
+#endif
+	 
+#ifdef ADRESS
+	 if (data->ADRESS_TAB_maxval !=0){
+	   if(max_cut_non_bonded < (data->ADRESS_TAB_maxval ))
+	     max_cut_non_bonded = data->ADRESS_TAB_maxval;
 	 }
 #endif
 
@@ -1167,6 +1220,10 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   if (data->TAB_maxval != 0)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
 #endif
+#ifdef ADRESS
+  if(data->ADRESS_TAB_maxval !=0)
+    Tcl_AppendResult(interp, "adress \"", data->ADRESS_TAB_filename,"\"", (char *) NULL);
+#endif
 #ifdef COMFORCE
   if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
 #endif
@@ -1512,6 +1569,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 #endif
 #ifdef MOL_CUT
     REGISTER_NONBONDED("molcut", molcut_parser);
+#endif
+    
+#ifdef ADRESS 
+    REGISTER_NONBONDED("adress_tab", adress_tab_parser);
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],

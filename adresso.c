@@ -38,6 +38,8 @@ double adress_wf(double dist);
 
 double adress_vars[7]       = {0, 0, 0, 0, 0, 0, 0};
 
+DoubleList ic_correction;
+
 int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv){
    int err = TCL_OK;
 #ifndef ADRESS
@@ -346,4 +348,64 @@ void adress_update_weights(){
     }
   }
 }
+
+int ic_read_params(char * filename){
+  FILE* fp;
+  int token = 0;
+  int i, temp;
+  double dummr;
+  fp = fopen(filename, "r");
+  /*Look for a line starting with # */
+  while ( token != EOF) {
+    token = fgetc(fp);
+    if ( token == 35 ) { break; } // magic number for # symbol
+  }
+  
+  /* Read the only parameter : number of points, includic x=0 and x=1 */
+  fscanf(fp, "%d", &temp);
+  /* Allocate the array */
+  alloc_doublelist(&ic_correction, temp);
+  
+  /* Read the data */
+  for (i=0;i<temp;i++){
+    fscanf(fp, "%lf", &dummr);
+    fscanf(fp, "%lf", &ic_correction.e[i]);
+  }
+  
+  fclose(fp);
+  return 0;
+}
+
+int ic_parse(Tcl_Interp * interp, int argc, char ** argv) {
+ char *filename = NULL;
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "Correction function requires a filename: "
+		     "<filename>",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  filename = argv[0];
+  
+  if(!ic_read_params(filename))
+    return TCL_OK;
+  else
+    return TCL_ERROR;
+}
+
+int ic(ClientData _data, Tcl_Interp *interp, int argc, char **argv){
+  int err_code;
+  Tcl_ResetResult(interp);
+  if(argc == 2){
+    err_code =ic_parse(interp, argc-1, argv+1);
+  }
+  else {
+    printf("Wrong number of parameters for interface pressure correction.\n");
+    err_code = TCL_ERROR;
+  }
+  
+  return err_code;
+  
+}
+
 #endif

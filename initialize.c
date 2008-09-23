@@ -590,7 +590,9 @@ static void init_tcl(Tcl_Interp *interp)
 #endif 
   /* in adresso.h */
   REGISTER_COMMAND("adress", adress_tcl);
-
+#ifdef ADRESS
+  REGISTER_COMMAND("correction_function", ic);
+#endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   fprintf(stderr,"%d: Script directory: %s\n",this_node,scriptdir);

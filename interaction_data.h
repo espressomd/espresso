@@ -336,6 +336,23 @@ typedef struct {
   int mol_cut_type;
   double mol_cut_cutoff;
 #endif
+  
+#ifdef ADRESS
+  /** \name Tabulated potential */
+  /*@{*/
+  int ADRESS_TAB_npoints;
+  int ADRESS_TAB_startindex;
+  int ADRESS_IC_npoints;
+  double ADRESS_TAB_minval;
+  double ADRESS_TAB_minval2;
+  double ADRESS_TAB_maxval;
+  double ADRESS_TAB_maxval2;
+  double ADRESS_TAB_stepsize;
+  /** The maximum allowable filename length for a tabulated potential file*/
+#define MAXLENGTH_ADRESSTABFILE_NAME 256
+  char ADRESS_TAB_filename[MAXLENGTH_ADRESSTABFILE_NAME];
+  /*@}*/    
+#endif
 
 #ifdef TUNABLE_SLIP
   double TUNABLE_SLIP_temp;
@@ -590,6 +607,13 @@ extern DoubleList tabulated_forces;
 /** Array containing all tabulated energies*/
 extern DoubleList tabulated_energies;
 
+#ifdef ADRESS
+/** Array containing all adress tabulated forces*/
+extern DoubleList adress_tab_forces;
+/** Array containing all adress tabulated energies*/
+extern DoubleList adress_tab_energies;
+#endif
+
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions). */
@@ -644,6 +668,11 @@ extern int ia_excl;
  ************************************************/
 /** Function for initializing force and energy tables */
 void force_and_energy_tables_init();
+
+#ifdef ADRESS
+/** Function for initializing adress force and energy tables */
+void adress_force_and_energy_tables_init();
+#endif
 
 /** Implementation of the tcl command \ref tcl_inter. This function
     allows the interaction parameters to be modified.
