@@ -20,6 +20,7 @@
 #include "particle_data.h"
 #include "virtual_sites.h"
 #include "interaction_data.h"
+#include "communication.h"
 
 /** \name Exported Variables */
 /************************************************************/

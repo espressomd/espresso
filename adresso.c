@@ -333,7 +333,7 @@ void adress_update_weights(){
     np = cell->n;
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
-         p[i].p.adress_weight=adress_wf_particle(&p[i]);
+         p[i].p.adress_weight=adress_wf_vector((&p[i])->r.p);
       }
     }
   }
@@ -343,7 +343,7 @@ void adress_update_weights(){
     np = cell->n;
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
-         p[i].p.adress_weight=adress_wf_particle(&p[i]);
+         p[i].p.adress_weight=adress_wf_vector((&p[i])->r.p);
       }
     }
   }
