@@ -978,7 +978,10 @@ For $\kappa = 0$, this corresponds to the plain coulomb potential.
 \index{interactions!MMM2D|mainindex}
 
 \begin{essyntax}
- inter coulomb mmm2d \var{maximal\_pairwise\_error} \opt{\var{fixed\_far\_cutoff}}
+ inter coulomb mmm2d \var{maximal\_pairwise\_error}
+ \opt{\var{fixed\_far\_cutoff}}
+ \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
+ \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
 \end{essyntax}
 MMM2D coulomb method for systems with periodicity 1 1 0. Needs the
 layered cell system. The performance of the method depends on the
@@ -989,6 +992,19 @@ testing reasons, otherwise you are more safe with the automatical
 tuning. If you even don't know what it is, do not even think of
 touching the far cutoff. For details on the MMM family of algorithms,
 refer to appendix \vref{chap:mmm}.
+
+The last two, mutually exclusive arguments ``dielectric'' and
+``dielectric-constants'' allow to specify dielectric contrasts at the
+upper and lower boundaries of the simulation box. The first form
+specifies the respective dielectric constants in the media, which
+however is only used to calculate the contrasts. That is, specifying 
+$\epsilon_t=\epsilon_m=\epsilon_b=\text{const}$ is always identical to
+$\epsilon_t=\epsilon_m=\epsilon_b=1$. The second form specifies only
+the dielectric contrasts at the boundaries, that is
+$\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}$ and
+$\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}$. Using
+this form allows to choose $\Delta_{t/b}=-1$, corresponding to
+metallic boundary conditions.
 
 \subsection{MMM1D}
 \index{MMM1D method|mainindex}

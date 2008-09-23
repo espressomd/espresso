@@ -182,15 +182,6 @@ static double *gblcblk = NULL;
 /** contribution from the image charges */
 static double lclimge[8]; 
 
-/** charge prefactor for image charges from the primary box in the lower region */
-static double delta_mid_top;
-/** charge prefactor for image charges from the primary box in the upper region */
-static double delta_mid_bot;
-/** charge prefactor for image charges between the outer regions */
-static double delta_mult;
-/** factor for infinite image sum, i.e. 1-delta_mult */
-static double delta_fac;
-
 typedef struct {
   double s, c;
 } SCCache;
@@ -262,13 +253,6 @@ void MMM2D_setup_constants()
   uy  = 1/box_l[1];
   uy2 = uy*uy;  
   uz  = 1/box_l[2];
-
-  if (mmm2d_params.dielectric_contrast_on) {
-    delta_mid_top = (mmm2d_params.di_mid-mmm2d_params.di_top)/(mmm2d_params.di_mid+mmm2d_params.di_top);
-    delta_mid_bot = (mmm2d_params.di_mid-mmm2d_params.di_bot)/(mmm2d_params.di_mid+mmm2d_params.di_bot);
-    delta_mult    = delta_mid_top*delta_mid_bot;
-    delta_fac     = 1/(1-delta_mult);
-  }
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
@@ -553,10 +537,18 @@ static void setup_z_force()
   double *lclimgebot=NULL,*lclimgetop=NULL;
   int e_size=1,size = 2;
   double e, e_di_l, e_di_h;
-  double fac_imgsum = 1/(1 - delta_mult);
-  double fac_delta_mid_bot = delta_mid_bot*fac_imgsum; 
-  double fac_delta_mid_top = delta_mid_top*fac_imgsum;
-  double fac_delta         = delta_mult*fac_imgsum;
+
+  double fac_imgsum;
+
+  /* in case of metallic boundary conditions on both sides, we get an infinite array,
+     which only exists for charge neutral systems. But in this case, we can as well
+     not sum up the force array, as the net force per image is 0 */
+  if (mmm2d_params.delta_mult == 1.0) {
+    fac_imgsum = 1/(1 - mmm2d_params.delta_mult);
+  }
+  else {
+    fac_imgsum = 0;
+  }
 
   if (mmm2d_params.dielectric_contrast_on) 
     clear_vec(lclimge, size); 
@@ -582,24 +574,28 @@ static void setup_z_force()
       lclcblk[size*c] += part[i].p.q;
       
       if (mmm2d_params.dielectric_contrast_on) {
+	e_di_l = (mmm2d_params.delta_mult*mmm2d_params.delta_mid_bot
+		  + mmm2d_params.delta_mult)*fac_imgsum;
 	if (c==1 && this_node==0) {
-	  e_di_l = (delta_mid_bot+1)*fac_delta;	  
-	  e =delta_mid_bot;	  
+	  e = mmm2d_params.delta_mid_bot;  
 	  lclimgebot[QQEQQP] += part[i].p.q*e;
 	}
 	else
-	  e_di_l = (1+delta_mid_top)*fac_delta_mid_bot;  	
+	  e_di_l += mmm2d_params.delta_mid_bot;
+
+	e_di_h = (mmm2d_params.delta_mult*mmm2d_params.delta_mid_top
+		  + mmm2d_params.delta_mult)*fac_imgsum;
+
 	if (c==n_layers && this_node==n_nodes-1) {
-	  e_di_h = (delta_mid_top+1)*fac_delta;
-	  e = delta_mid_top;
+	  e = mmm2d_params.delta_mid_top;
 	  lclimgetop[QQEQQP] += part[i].p.q*e;
 	}
 	else
-	  e_di_h = (1+delta_mid_bot)*fac_delta_mid_top;	
+	  e_di_h += mmm2d_params.delta_mid_top;
 
 	lclimge[QQEQQP] += part[i].p.q*e_di_l;
        	lclimge[QQEQQM] += part[i].p.q*e_di_h;
-      }      
+      }   
     }
     lclcblk[size*c] *= pref;
     lclcblk[size*c+1] = lclcblk[size*c];   
@@ -697,10 +693,10 @@ static void setup_P(int p, double omega, double fac)
   Particle *part;
   double pref = coulomb.prefactor*4*M_PI*ux*uy*fac*fac;
   double h = box_l[2];
-  double fac_imgsum = 1/(1 - delta_mult*exp(-omega*2*h));
-  double fac_delta_mid_bot = delta_mid_bot*fac_imgsum; 
-  double fac_delta_mid_top = delta_mid_top*fac_imgsum;
-  double fac_delta         = delta_mult*fac_imgsum;
+  double fac_imgsum = 1/(1 - mmm2d_params.delta_mult*exp(-omega*2*h));
+  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot*fac_imgsum; 
+  double fac_delta_mid_top = mmm2d_params.delta_mid_top*fac_imgsum;
+  double fac_delta         = mmm2d_params.delta_mult*fac_imgsum;
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
@@ -744,10 +740,10 @@ static void setup_P(int p, double omega, double fac)
 	if (c==1 && this_node==0) {
 	  /* There are image charges at -(2h+z) and -(2h-z) etc. layer_h included due to the shift
 	     in z */
-	  e_di_l = ( exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*delta_mid_bot +
-		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))                 )*fac_delta;
+	  e_di_l = ( exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_bot +
+		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))                   )*fac_delta;
 
-	  e = exp(omega*(-part[i].r.p[2]))*delta_mid_bot;
+	  e = exp(omega*(-part[i].r.p[2]))*mmm2d_params.delta_mid_bot;
 
 	  lclimgebot[POQESP] += part[i].p.q*scxcache[o + ic].s*e;
 	  lclimgebot[POQECP] += part[i].p.q*scxcache[o + ic].c*e;
@@ -755,16 +751,16 @@ static void setup_P(int p, double omega, double fac)
 	else
 	  /* There are image charges at -(z) and -(2h-z) etc. layer_h included due to the shift in z */
 	  e_di_l = ( exp(omega*(-part[i].r.p[2]       + layer_h)) +
-		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*delta_mid_top )*fac_delta_mid_bot;    
+		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_top )*fac_delta_mid_bot;    
 
 	if (c==n_layers && this_node==n_nodes-1) {
 	  /* There are image charges at (3h-z) and (h+z) from the top layer etc. layer_h included
 	     due to the shift in z */
-	  e_di_h = ( exp(omega*( part[i].r.p[2] - 3*h + 2*layer_h))*delta_mid_top +
+	  e_di_h = ( exp(omega*( part[i].r.p[2] - 3*h + 2*layer_h))*mmm2d_params.delta_mid_top +
 		     exp(omega*(-part[i].r.p[2] -   h + 2*layer_h))                 )*fac_delta;
 	  
 	  /* There are image charges at (h-z) layer_h included due to the shift in z */
-	  e = exp(omega*(part[i].r.p[2] - h + layer_h))*delta_mid_top;
+	  e = exp(omega*(part[i].r.p[2] - h + layer_h))*mmm2d_params.delta_mid_top;
 	  
 	  lclimgetop[POQESM]+= part[i].p.q*scxcache[o + ic].s*e;
 	  lclimgetop[POQECM]+= part[i].p.q*scxcache[o + ic].c*e;
@@ -773,7 +769,7 @@ static void setup_P(int p, double omega, double fac)
 	  /* There are image charges at (h-z) and (h+z) from the top layer etc. layer_h included due
 	     to the shift in z */
 	  e_di_h = ( exp(omega*( part[i].r.p[2] - h + 2*layer_h)) +
-		     exp(omega*(-part[i].r.p[2] - h + 2*layer_h))*delta_mid_bot )*fac_delta_mid_top;
+		     exp(omega*(-part[i].r.p[2] - h + 2*layer_h))*mmm2d_params.delta_mid_bot )*fac_delta_mid_top;
 
 	lclimge[POQESP] += part[i].p.q*scxcache[o + ic].s*e_di_l;
 	lclimge[POQECP] += part[i].p.q*scxcache[o + ic].c*e_di_l;
@@ -806,10 +802,10 @@ static void setup_Q(int q, double omega, double fac)
   Particle *part;
   double pref = coulomb.prefactor*4*M_PI*ux*uy*fac*fac;
   double h = box_l[2];
-  double fac_imgsum = 1/(1 - delta_mult*exp(-omega*2*h));
-  double fac_delta_mid_bot = delta_mid_bot*fac_imgsum; 
-  double fac_delta_mid_top = delta_mid_top*fac_imgsum;
-  double fac_delta         = delta_mult*fac_imgsum;
+  double fac_imgsum = 1/(1 - mmm2d_params.delta_mult*exp(-omega*2*h));
+  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot*fac_imgsum; 
+  double fac_delta_mid_top = mmm2d_params.delta_mid_top*fac_imgsum;
+  double fac_delta         = mmm2d_params.delta_mult*fac_imgsum;
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
@@ -848,30 +844,30 @@ static void setup_Q(int q, double omega, double fac)
 
       if (mmm2d_params.dielectric_contrast_on) {
 	if(c==1 && this_node==0) {
-	  e_di_l = ( exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*delta_mid_bot +
+	  e_di_l = ( exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_bot +
 		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))                 )*fac_delta;
 	
-	  e = exp(omega*(-part[i].r.p[2]))*delta_mid_bot;
+	  e = exp(omega*(-part[i].r.p[2]))*mmm2d_params.delta_mid_bot;
 
 	  lclimgebot[POQESP] += part[i].p.q*scycache[o + ic].s*e;
 	  lclimgebot[POQECP] += part[i].p.q*scycache[o + ic].c*e;
 	}
 	else
 	  e_di_l = ( exp(omega*(-part[i].r.p[2]       + layer_h)) +
-		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*delta_mid_top )*fac_delta_mid_bot;    
+		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_top )*fac_delta_mid_bot;    
 
 	if(c==n_layers && this_node==n_nodes-1) {
-	  e_di_h = (exp(omega*( part[i].r.p[2] - 3*h + 2*layer_h))*delta_mid_top +
+	  e_di_h = (exp(omega*( part[i].r.p[2] - 3*h + 2*layer_h))*mmm2d_params.delta_mid_top +
 		    exp(omega*(-part[i].r.p[2] -   h + 2*layer_h))                 )*fac_delta;
 	  	  
-	  e = exp(omega*(part[i].r.p[2] - h + layer_h))*delta_mid_top;
+	  e = exp(omega*(part[i].r.p[2] - h + layer_h))*mmm2d_params.delta_mid_top;
 	  
 	  lclimgetop[POQESM] += part[i].p.q*scycache[o + ic].s*e;
 	  lclimgetop[POQECM] += part[i].p.q*scycache[o + ic].c*e;
 	}
 	else
 	  e_di_h = ( exp(omega*( part[i].r.p[2] - h + 2*layer_h)) +
-		     exp(omega*(-part[i].r.p[2] - h + 2*layer_h))*delta_mid_bot )*fac_delta_mid_top;
+		     exp(omega*(-part[i].r.p[2] - h + 2*layer_h))*mmm2d_params.delta_mid_bot )*fac_delta_mid_top;
 
 	lclimge[POQESP] += part[i].p.q*scycache[o + ic].s*e_di_l;
 	lclimge[POQECP] += part[i].p.q*scycache[o + ic].c*e_di_l;
@@ -1013,10 +1009,10 @@ static void setup_PQ(int p, int q, double omega, double fac)
   Particle *part;
   double pref = coulomb.prefactor*8*M_PI*ux*uy*fac*fac;
   double h = box_l[2];
-  double fac_imgsum = 1/(1 - delta_mult*exp(-omega*2*h));
-  double fac_delta_mid_bot = delta_mid_bot*fac_imgsum; 
-  double fac_delta_mid_top = delta_mid_top*fac_imgsum;
-  double fac_delta         = delta_mult*fac_imgsum;
+  double fac_imgsum = 1/(1 - mmm2d_params.delta_mult*exp(-omega*2*h));
+  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot*fac_imgsum; 
+  double fac_delta_mid_top = mmm2d_params.delta_mid_top*fac_imgsum;
+  double fac_delta         = mmm2d_params.delta_mult*fac_imgsum;
   double layer_top;
   double e, e_di_l, e_di_h;
   double *llclcblk;
@@ -1060,10 +1056,10 @@ static void setup_PQ(int p, int q, double omega, double fac)
 
       if (mmm2d_params.dielectric_contrast_on) {
 	if(c==1 && this_node==0) {	
-	  e_di_l = (exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*delta_mid_bot +
+	  e_di_l = (exp(omega*(-part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_bot +
 		    exp(omega*( part[i].r.p[2] - 2*h + layer_h))                 )*fac_delta;
 
-	  e = exp(omega*(-part[i].r.p[2]))*delta_mid_bot;
+	  e = exp(omega*(-part[i].r.p[2]))*mmm2d_params.delta_mid_bot;
 	
 	  lclimgebot[PQESSP] += scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q*e;
 	  lclimgebot[PQESCP] += scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q*e;
@@ -1072,13 +1068,13 @@ static void setup_PQ(int p, int q, double omega, double fac)
 	}
 	else	
 	  e_di_l = ( exp(omega*(-part[i].r.p[2]       + layer_h)) +
-		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*delta_mid_top )*fac_delta_mid_bot;     
+		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_top )*fac_delta_mid_bot;     
 	
 	if(c==n_layers && this_node==n_nodes-1) {
-	  e_di_h = ( exp(omega*( part[i].r.p[2] - 3*h + layer_h))*delta_mid_top +
+	  e_di_h = ( exp(omega*( part[i].r.p[2] - 3*h + layer_h))*mmm2d_params.delta_mid_top +
 		     exp(omega*(-part[i].r.p[2] -   h + layer_h))                 )*fac_delta;
 	  
-	  e = exp(omega*(part[i].r.p[2]-h+layer_h))*delta_mid_top;
+	  e = exp(omega*(part[i].r.p[2]-h+layer_h))*mmm2d_params.delta_mid_top;
 	
 	  lclimgetop[PQESSM] += scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q*e;
 	  lclimgetop[PQESCM] += scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q*e;
@@ -1087,7 +1083,7 @@ static void setup_PQ(int p, int q, double omega, double fac)
 	}
 	else
 	  e_di_h = ( exp(omega*( part[i].r.p[2] - h + 2*layer_h)) +
-		     exp(omega*(-part[i].r.p[2] - h + 2*layer_h))*delta_mid_bot )*fac_delta_mid_top;  
+		     exp(omega*(-part[i].r.p[2] - h + 2*layer_h))*mmm2d_params.delta_mid_bot )*fac_delta_mid_top;  
       
         lclimge[PQESSP] += scxcache[ox + ic].s*scycache[oy + ic].s*part[i].p.q*e_di_l;
 	lclimge[PQESCP] += scxcache[ox + ic].s*scycache[oy + ic].c*part[i].p.q*e_di_l;
@@ -1828,11 +1824,9 @@ int printMMM2DToResult(Tcl_Interp *interp)
   Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
 
   if (mmm2d_params.dielectric_contrast_on) {
-    Tcl_PrintDouble(interp, mmm2d_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, mmm2d_params.di_mid, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, mmm2d_params.di_bot, buffer);
+    Tcl_PrintDouble(interp, mmm2d_params.delta_mid_top, buffer);
+    Tcl_AppendResult(interp, " dielectric-contrasts ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, mmm2d_params.delta_mid_bot, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   }
 
@@ -1845,10 +1839,11 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
   double maxPWerror;
   double far_cut = -1;
   double top = 1, mid = 1, bot = 1;
+  double delta_top = 0, delta_bot = 0;
 
   if (argc < 1) {
     Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm2d <maximal pairwise error> "
-		     "{<fixed far cutoff>} {dielectric <e1> <e2> <e3>}", (char *) NULL);
+		     "{<fixed far cutoff>} {dielectric <e1> <e2> <e3>} | {dielectric-contrasts <d1> <d2>}", (char *) NULL);
     return TCL_ERROR;
   }
   
@@ -1865,13 +1860,21 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (argc != 0) {
-    if (argc != 4 || !ARG0_IS_S("dielectric")) {
+    if (argc == 4 && ARG0_IS_S("dielectric")) {
+      if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
+	return TCL_ERROR;
+
+      delta_top = (mid - top)/(mid + top);
+      delta_bot = (mid - bot)/(mid + bot);
+    }
+    else if (argc == 3 && ARG0_IS_S("dielectric-contrasts")) {
+      if (!ARG_IS_D(1,delta_top) || !ARG_IS_D(2,delta_bot))
+	return TCL_ERROR;
+    } else {
       Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm2d <maximal pairwise error> "
-		       "{<fixed far cutoff>} {dielectric <e1> <e2> <e3>}", (char *) NULL);
+		       "{<fixed far cutoff>} {dielectric <e1> <e2> <e3>} | {dielectric-contrasts <d1> <d2>}", (char *) NULL);
       return TCL_ERROR;
     }
-    if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
-      return TCL_ERROR;
   }
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
@@ -1880,14 +1883,14 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  if ((err = MMM2D_set_params(maxPWerror, far_cut, top, mid, bot)) > 0) {
+  if ((err = MMM2D_set_params(maxPWerror, far_cut, delta_top, delta_bot)) > 0) {
     Tcl_AppendResult(interp, mmm2d_errors[err], (char *)NULL);
     return TCL_ERROR;
   }
   return TCL_OK;
 }
 
-int MMM2D_set_params(double maxPWerror, double far_cut, double top, double mid, double bot)
+int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot)
 {
   int err;
 
@@ -1897,12 +1900,20 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double top, double mid, 
   }
 
   mmm2d_params.maxPWerror = maxPWerror;
-  mmm2d_params.di_top = top;
-  mmm2d_params.di_mid = mid;
-  mmm2d_params.di_bot = bot;
-  if (mmm2d_params.di_mid != mmm2d_params.di_top || mmm2d_params.di_mid != mmm2d_params.di_bot)
-    mmm2d_params.dielectric_contrast_on = 1;
     
+  if (delta_top != 0.0 || delta_bot != 0.0) {
+    mmm2d_params.dielectric_contrast_on = 1;
+    mmm2d_params.delta_mid_top = delta_top;
+    mmm2d_params.delta_mid_bot = delta_bot;
+    mmm2d_params.delta_mult = delta_top*delta_bot;
+  }
+  else {
+    mmm2d_params.dielectric_contrast_on = 0;
+    mmm2d_params.delta_mid_top = 0;
+    mmm2d_params.delta_mid_bot = 0;
+    mmm2d_params.delta_mult = 0;
+  }
+
   MMM2D_setup_constants();
 
   if ((err = MMM2D_tune_near(maxPWerror)))
@@ -2022,7 +2033,7 @@ void  MMM2D_dielectric_layers_force_contribution()
 	a[0]=pl[j].r.p[0]; a[1]=pl[j].r.p[1];a[2]=-pl[j].r.p[2];
        	layered_get_mi_vector(d, p1->r.p, a);
        	dist2 = sqrlen(d);
-	charge_factor=p1->p.q*pl[j].p.q*delta_mid_bot;
+	charge_factor=p1->p.q*pl[j].p.q*mmm2d_params.delta_mid_bot;
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
       }
       for (j = 0; j < 3; j++) { 
@@ -2044,7 +2055,7 @@ void  MMM2D_dielectric_layers_force_contribution()
 	a[0]=pl[j].r.p[0];  a[1]=pl[j].r.p[1]; a[2]=2*box_l[2]-pl[j].r.p[2];
 	layered_get_mi_vector(d, p1->r.p, a);
 	dist2 = sqrlen(d);
-	charge_factor=p1->p.q*pl[j].p.q*delta_mid_top; 
+	charge_factor=p1->p.q*pl[j].p.q*mmm2d_params.delta_mid_top; 
 	add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2, force);
       }
       for (j = 0; j < 3; j++) { 
@@ -2080,7 +2091,7 @@ double  MMM2D_dielectric_layers_energy_contribution()
 	a[0]=pl[j].r.p[0];  a[1]=pl[j].r.p[1];a[2]=-pl[j].r.p[2];
        	layered_get_mi_vector(d, p1->r.p, a);
        	dist2 = sqrlen(d);
-	charge_factor = delta_mid_bot*p1->p.q*pl[j].p.q;
+	charge_factor = mmm2d_params.delta_mid_bot*p1->p.q*pl[j].p.q;
 	eng+=mmm2d_coulomb_pair_energy(charge_factor, d, dist2, sqrt(dist2)) + corr_pref*charge_factor*d[2];
       }
     }
@@ -2097,7 +2108,7 @@ double  MMM2D_dielectric_layers_energy_contribution()
 	a[0]=pl[j].r.p[0];  a[1]=pl[j].r.p[1]; a[2]=2*box_l[2]-pl[j].r.p[2];
 	layered_get_mi_vector(d, p1->r.p, a);
 	dist2 = sqrlen(d);
-	charge_factor=delta_mid_top*p1->p.q*pl[j].p.q;
+	charge_factor=mmm2d_params.delta_mid_top*p1->p.q*pl[j].p.q;
 	eng+=mmm2d_coulomb_pair_energy(charge_factor, d, dist2, sqrt(dist2)) - corr_pref*charge_factor*d[2];
       }
     }

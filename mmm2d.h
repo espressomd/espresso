@@ -31,8 +31,8 @@ typedef struct {
   int far_calculated;
   /// whether there is dielectric contrast
   int dielectric_contrast_on;
-  /** three dielectric constants, above, in and below the simulation cell */
-  double di_top, di_mid, di_bot;
+  /** dielectric contrasts at the bottom and top of the simulation cell */
+  double delta_mid_top, delta_mid_bot, delta_mult;
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
 
@@ -49,12 +49,12 @@ int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
                         potential and force components. The potential is therefore
                         always slightly more precise
     @param far_cut      sets the cutoff for the far formula in inverse lengths.
-    @param top          dielectric above the simulation box
-    @param mid          dielectric in the simulation box
-    @param bot          dielectric below the simulation box
-    if -1, the far cutoff is determined by maxPWerror. Probably only good for testing
+                        If -1, the far cutoff is determined by maxPWerror.
+			Manual setting is probably only good for testing
+    @param delta_top    dielectric contrast at top of the simulation box
+    @param delta_bot    dielectric contrast at bottom of the simulation box
 */
-int MMM2D_set_params(double maxPWerror, double far_cut, double top, double mid, double bot);
+int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_mid);
 
 /** the general long range force/energy calculation */
 double MMM2D_add_far(int f, int e);
