@@ -528,12 +528,12 @@ MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
     row1=0;
     do {
       row1++;
-    } while ((A_x1[ind3][row1]==0) && (row1<3));
+    } while ((row1<3) && (A_x1[ind3][row1]==0));
 
     /* okay, if one whole column is empty then we can take this 
        direction as the eigenvector
        remember : {eigenvectors} = kernel(A_x1) */
-    if (A_x1[ind3][row1]==0) {
+    if (row1 == 3) {
       eve[row1]=1.0;
       eve[(row1+1) % 3]=0.0;
       eve[(row1+2) % 3]=0.0;

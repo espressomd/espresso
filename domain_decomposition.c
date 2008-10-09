@@ -866,8 +866,8 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	cell = local_cells.cell[0];
 	for (p = 0; p < cell->n; p++) {
 	  part = &cell->part[p];
-	  for (i = 0; i < 3; i++)
-	    if(part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir])
+	  if(dir < 3 && (part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir]))
+	    for (i = 0; i < 3; i++)
 	      part->r.p[i] = 0;
 	}
       }

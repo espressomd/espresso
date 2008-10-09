@@ -341,7 +341,7 @@ int does_line_go_through_cube(double pos1[3], double pos2[3], double range_start
   int i;
 
   int doesntenter = 0;          /* boolean that indicates whether we have already determined that the line does not enter the cube at all */
-  double intersection1, intersection2;
+  double intersection1 = 0.0, intersection2 = 0.0;
   int found_entry = 0;          /* boolean that indicates whether we have determined where the line enters */
   int found_exit = 0;           /* boolean that indicates whether we have determined where the line exits */
   int i1, i2;

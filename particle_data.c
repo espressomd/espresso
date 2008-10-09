@@ -889,7 +889,10 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("connections")) {
       int distance = 1;
       if (argc ==2) {
-	ARG1_IS_I(distance);
+	if (!ARG1_IS_I(distance)) {
+	  free_particle(&part);
+	  return TCL_ERROR;
+	}
 	argc--; argv++;
       }
       part_print_bond_partners(&part, buffer, interp, distance);
