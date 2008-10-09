@@ -83,7 +83,7 @@ typedef struct {
 
 #ifdef ADRESS
   /** particles adress weight */
-  int adress_weight;
+  double adress_weight;
 #endif
 } ParticleProperties;
 
