@@ -543,7 +543,7 @@ static void setup_z_force()
   /* in case of metallic boundary conditions on both sides, we get an infinite array,
      which only exists for charge neutral systems. But in this case, we can as well
      not sum up the force array, as the net force per image is 0 */
-  if (mmm2d_params.delta_mult == 1.0) {
+  if (mmm2d_params.delta_mult != 1.0) {
     fac_imgsum = 1/(1 - mmm2d_params.delta_mult);
   }
   else {
@@ -1071,8 +1071,8 @@ static void setup_PQ(int p, int q, double omega, double fac)
 		     exp(omega*( part[i].r.p[2] - 2*h + layer_h))*mmm2d_params.delta_mid_top )*fac_delta_mid_bot;     
 	
 	if(c==n_layers && this_node==n_nodes-1) {
-	  e_di_h = ( exp(omega*( part[i].r.p[2] - 3*h + layer_h))*mmm2d_params.delta_mid_top +
-		     exp(omega*(-part[i].r.p[2] -   h + layer_h))                 )*fac_delta;
+	  e_di_h = ( exp(omega*( part[i].r.p[2] - 3*h + 2*layer_h))*mmm2d_params.delta_mid_top +
+		     exp(omega*(-part[i].r.p[2] -   h + 2*layer_h))                 )*fac_delta;
 	  
 	  e = exp(omega*(part[i].r.p[2]-h+layer_h))*mmm2d_params.delta_mid_top;
 	
