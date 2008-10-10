@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1e (Alsheim)                                                                    *
+* v2.1.1f (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1e -
+- v2.1.1f -
 -----------
 
+(f) October    9th, 2008.
 (e) September 23rd, 2008.
 (d) September 22nd, 2008.
 (c) September  5th, 2008.
@@ -28,6 +29,11 @@ New Features:
     branch
 
 Bugfixes:
+(f) calc_eigenvector_3x3 was accessing out-of-bounds stack memory for singular
+    matrizes
+(f) fixed several (justified) warnings of gcc-4.3
+(f) fixed two bugs in mmm2d with dielectric interfaces. Calculations in the top
+    layer were wrong so far
 (e) the documentation now points out the dielectric features.
 (d) forgotten adress flag
 (b) In order to satisfy the dissipation-fluctuation theorem, DPD is not applied to
