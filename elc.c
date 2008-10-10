@@ -563,16 +563,14 @@ static void add_z_force()
     fac_delta_mid_bot=elc_params.di_mid_bot*fac_elc; 
     fac_delta_mid_top=elc_params.di_mid_top*fac_elc; 
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
-  }
 
-  clear_vec(gblcblk, size);
-  ic = 0;
-  for (c = 0; c < local_cells.n; c++) {
-    np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++) {
-      gblcblk[0] += part[i].p.q; 
-      if(elc_params.dielectric_contrast_on) {
+    clear_vec(gblcblk, size);
+    ic = 0;
+    for (c = 0; c < local_cells.n; c++) {
+      np   = local_cells.cell[c]->n;
+      part = local_cells.cell[c]->part;
+      for (i = 0; i < np; i++) {
+	gblcblk[0] += part[i].p.q; 
 	if(part[i].r.p[2]<elc_params.space_layer)
 	  gblcblk[1] += fac_delta*(1+elc_params.di_mid_bot)*part[i].p.q; 
 	else
@@ -586,22 +584,20 @@ static void add_z_force()
 	  gblcblk[1] -= fac_delta_mid_top*(1+elc_params.di_mid_bot)*part[i].p.q; 
 	}
       }
-      
     }
-    
-  }
-  gblcblk[0] *= pref;
-  gblcblk[1] *= pref;
-  distribute(2);
+
+    gblcblk[0] *= pref;
+    gblcblk[1] *= pref;
+
+    distribute(2);
   
-  for (c = 0; c < local_cells.n; c++) {
-    np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
-    for (i = 0; i < np; i++)
-      {
-	part[i].f.f[2] += gblcblk[0]*part[i].p.q*(fac_delta_mid_top-fac_delta_mid_bot); 
+    for (c = 0; c < local_cells.n; c++) {
+      np   = local_cells.cell[c]->n;
+      part = local_cells.cell[c]->part;
+      for (i = 0; i < np; i++) {
 	part[i].f.f[2] += gblcblk[1]*part[i].p.q; 
       }
+    }
   }
 }
 
@@ -1170,33 +1166,34 @@ double ELC_energy()
 int ELC_tune(double error)
 {
   double err;
-  double h = box_l[2] - elc_params.minimal_dist,
-    dst1 = elc_params.minimal_dist,
-    dst2 = 2*box_l[2] - elc_params.minimal_dist;
+  double h = elc_params.h, lz = box_l[2];
   double min_inv_boxl = dmin(ux, uy);
+  
+  if (elc_params.dielectric_contrast_on) {
+    // adjust lz according to dielectric layer method
+    lz = elc_params.h + elc_params.space_layer;
+  }
 
   if (h < 0)
     return TCL_ERROR;
 
-  if (elc_params.far_cut < 0) {
-    elc_params.far_calculated = 1;    
+  elc_params.far_cut = min_inv_boxl;
+  do {
+    err = 0.5*(exp(2*M_PI*elc_params.far_cut*h)/(lz - h)*
+	       (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/(lz - h))/
+	       (exp(2*M_PI*elc_params.far_cut*lz)- 1) +
+	       exp(-2*M_PI*elc_params.far_cut*h)/(lz + 1)*
+	       (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/(lz + h))/
+	       (exp(2*M_PI*elc_params.far_cut*lz)- 1));
 
-    elc_params.far_cut = min_inv_boxl;
-    do {
-      err = 0.5*(exp(2*M_PI*elc_params.far_cut*h)/dst1*
-		 (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst1)/
-		 (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1) +
-		 exp(-2*M_PI*elc_params.far_cut*h)/dst2*
-		 (C_2PI*elc_params.far_cut + 2*(ux + uy) + 1/dst2)/
-		 (exp(2*M_PI*elc_params.far_cut*box_l[2])- 1));
-      elc_params.far_cut += min_inv_boxl;
-    }
-    while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
-    if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
-      return TCL_ERROR;
-    elc_params.far_cut -= min_inv_boxl;
-    elc_params.far_cut2 = SQR(elc_params.far_cut);
+    elc_params.far_cut += min_inv_boxl;
   }
+  while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
+  if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
+    return TCL_ERROR;
+  elc_params.far_cut -= min_inv_boxl;
+  elc_params.far_cut2 = SQR(elc_params.far_cut);
+
   return TCL_OK;
 }
 
@@ -1210,7 +1207,7 @@ int printELCToResult(Tcl_Interp *interp)
 
   Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
   Tcl_AppendResult(interp, "} {coulomb elc ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, elc_params.minimal_dist, buffer);
+  Tcl_PrintDouble(interp, elc_params.gap_size, buffer);
   Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
   Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
@@ -1223,6 +1220,8 @@ int printELCToResult(Tcl_Interp *interp)
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
     Tcl_PrintDouble(interp, elc_params.di_bot, buffer);
     Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, elc_params.space_layer, buffer);
+    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   }
   return TCL_OK;
 }
@@ -1230,7 +1229,7 @@ int printELCToResult(Tcl_Interp *interp)
 int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
 {
   double pwerror;
-  double minimal_distance;
+  double gap_size;
   double far_cut = -1;
   double top = 1, mid = 1, bot = 1;
   int neutralize = 1;
@@ -1242,7 +1241,7 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
   }
   if (!ARG0_IS_D(pwerror))
     return TCL_ERROR;
-  if (!ARG1_IS_D(minimal_distance))
+  if (!ARG1_IS_D(gap_size))
     return TCL_ERROR;
 
   argc -= 2; argv += 2;
@@ -1260,10 +1259,18 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
 	neutralize = 0;
 	argc--; argv++;
       }
-      else if (ARG0_IS_S("dielectric")) {
+      else if (argc >= 4 && ARG0_IS_S("dielectric")) {
+	// just a dummy, not used, as it is only printed for information
+	// purposes. We need to calculate it
+	double space_layer_dummy;
+
 	if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
 	  return TCL_ERROR;
 	argc -= 4; argv += 4;
+
+	if (argc > 0 && ARG_IS_D(4, space_layer_dummy)) {
+	  argc--; argv++;
+	}
       }
       else {
 	Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
@@ -1272,7 +1279,7 @@ int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
       }
     }
   }
-  CHECK_VALUE(ELC_set_params(pwerror, minimal_distance, far_cut, neutralize, top, mid, bot),
+  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, top, mid, bot),
 	      "choose a 3d electrostatics method prior to ELC");
 }
 
@@ -1301,6 +1308,9 @@ void ELC_init()
     // but make sure we leave enough space to not have to bother with overlapping
     // realspace P3M
     maxsl = elc_params.gap_size - p3m.r_cut;
+    // and make sure the space layer is not bigger than half the actual simulation box,
+    // to avoid overlaps
+    if (maxsl > .5*elc_params.h) maxsl = .5*elc_params.h;
     if (elc_params.space_layer > maxsl) {
       if (maxsl <= 0) {
 	errtxt = runtime_error(128);
@@ -1316,14 +1326,14 @@ void ELC_init()
     elc_params.minimal_dist = dmin(elc_params.space_box, elc_params.space_layer);
   }
 
-  if (elc_params.far_calculated ||
+  if (elc_params.far_calculated &&
       (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
       errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, gap size too small} ");
     }
   }
-  if (coulomb.method == COULOMB_ELC_P3M) {
+  if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
     p3m.additional_mesh[0] = p3m.additional_mesh[1] = 0;
     p3m.additional_mesh[2] = elc_params.space_layer; 
   }
@@ -1360,7 +1370,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
     elc_params.di_mid_top = (elc_params.di_mid-elc_params.di_top)/(elc_params.di_mid+elc_params.di_top);
     elc_params.di_mid_bot = (elc_params.di_mid-elc_params.di_bot)/(elc_params.di_mid+elc_params.di_bot);   
 
-    // cannot neutralize with dielectric contrast
+    // neutralize is automatical with dielectric contrast
     elc_params.neutralize = 0;
     // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer
