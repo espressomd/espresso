@@ -75,9 +75,9 @@ if { [catch {
     # just test that the standard LJ can be reproduced
     # there is nothing special about those exponents,
     # so should be enough of a test
-    inter 0 0 lj-gen 1.0 1.0 1.12246 0.25 0.0 12 6
-    inter 1 1 lj-gen 1.3 0.5 2 0.0 0.0 12 6
-    inter 0 1 lj-gen 2.2 1.0 1.12246 0.0 0.5 12 6
+    inter 0 0 lj-gen 1.0 1.0 1.12246 0.25 0.0 12 6 4.0 4.0
+    inter 1 1 lj-gen 1.3 0.5 2 0.0 0.0 12 6 4.0 4.0
+    inter 0 1 lj-gen 2.2 1.0 1.12246 0.0 0.5 12 6 4.0 4.0
     integrate 0
 
     # here you can create the necessary snapshot
