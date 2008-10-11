@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1f (Alsheim)                                                                    *
+* v2.1.1g (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1f -
+- v2.1.1g -
 -----------
 
+(g) October   10th, 2008.
 (f) October    9th, 2008.
 (e) September 23rd, 2008.
 (d) September 22nd, 2008.
@@ -28,7 +29,15 @@ New Features:
 (a) The tunable slip boundary module has been included into the main ESPResSo
     branch
 
+Changes:
+(g) ELC with dielectric contrast now also prints out the space layer, and the out
+    output can actually be fed back into inter coulomb as intended
+
 Bugfixes:
+(g) ELC tuning now also works for ELC with dielectric contrast, and an stray
+    constant force proportional to the charge sum was removed.
+(g) Adjusted lj-generic test to new format of the lj-generic
+    command
 (f) calc_eigenvector_3x3 was accessing out-of-bounds stack memory for singular
     matrizes
 (f) fixed several (justified) warnings of gcc-4.3
