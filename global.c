@@ -84,10 +84,7 @@ const Datafield fields[] = {
   {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 34 from imd.c */
   {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 35 from verlet.c */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 36 from integrate.c */
-#ifdef LATTICE
-  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },
-  /* 37 from lattice.c */
-#endif
+  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },          /* 37 from lattice.c */
   {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    ro_callback,     6 },         /* 38 from thermostat.c */
   {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",    ro_callback,     6 },         /* 39 from thermostat.c */
   {&dpd_twf,            TYPE_INT, 1, "dpd_twf",    ro_callback,     6 },         /* 40 from thermostat.c */

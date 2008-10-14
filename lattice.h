@@ -24,8 +24,6 @@
 #include "grid.h"
 #include "particle_data.h"
 
-#ifdef LATTICE
-
 /** Lattice off */
 #define LATTICE_OFF  0
 
@@ -38,6 +36,8 @@
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 extern int lattice_switch ;
+
+#ifdef LATTICE
 
 /** Data structure describing a lattice.
  *  Contains the lattice layout and pointers to the data fields.
