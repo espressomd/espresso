@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1g (Alsheim)                                                                    *
+* v2.1.1h (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1g -
+- v2.1.1h -
 -----------
 
+(h) October   14th, 2008.
 (g) October   10th, 2008.
 (f) October    9th, 2008.
 (e) September 23rd, 2008.
@@ -34,6 +35,9 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(h) dpd and adress global parameters have not been broadcasted correctly, when
+    lattice was not defined.
+(h) - fixed default weight for init_particle in particle_data.c
 (g) ELC tuning now also works for ELC with dielectric contrast, and an stray
     constant force proportional to the charge sum was removed.
 (g) Adjusted lj-generic test to new format of the lj-generic
