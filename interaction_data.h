@@ -409,7 +409,7 @@ typedef struct {
     struct {
       double k;
       double r;
-      double r2;
+      double r_cut;
     } harmonic;
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle

@@ -20,7 +20,7 @@
 /************************************************************/
 
 /// set the parameters for the harmonic potential
-MDINLINE int harmonic_set_params(int bond_type, double k, double r)
+MDINLINE int harmonic_set_params(int bond_type, double k, double r,double r_cut)
 {
   if(bond_type < 0)
     return TCL_ERROR;
@@ -29,8 +29,8 @@ MDINLINE int harmonic_set_params(int bond_type, double k, double r)
 
   bonded_ia_params[bond_type].p.harmonic.k = k;
   bonded_ia_params[bond_type].p.harmonic.r = r;
+  bonded_ia_params[bond_type].p.harmonic.r_cut = r_cut;
   bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
-  bonded_ia_params[bond_type].p.harmonic.r2 = SQR(bonded_ia_params[bond_type].p.harmonic.r);
   bonded_ia_params[bond_type].num  = 1;
 
   /* broadcast interaction parameters */
@@ -42,21 +42,28 @@ MDINLINE int harmonic_set_params(int bond_type, double k, double r)
 /// parse parameters for the harmonic potential
 MDINLINE int inter_parse_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
-  double k, r;
+  double k, r,r_cut;
 
-  if (argc != 3) {
-    Tcl_AppendResult(interp, "harmonic needs 2 parameters: "
-		     "<k_harmonic> <r_harmonic>", (char *) NULL);
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "harmonic needs at least 2 parameters: "
+		     "<k_harmonic> <r_harmonic> [r_cut]", (char *) NULL);
     return TCL_ERROR;
   }
 
   if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-    Tcl_AppendResult(interp, "harmonic needs 2 DOUBLE parameters: "
-		     "<k_harmonic> <r_harmonic>", (char *) NULL);
+    Tcl_AppendResult(interp, "harmonic needs at least 2 DOUBLE parameters: "
+		     "<k_harmonic> <r_harmonic> [r_cut]", (char *) NULL);
     return TCL_ERROR;
   }
 
-  CHECK_VALUE(harmonic_set_params(bond_type, k, r), "bond type must be nonnegative");
+  if (argc<4) {
+    r_cut=2*r;
+  } else if (! ARG_IS_D(3, r_cut))  {
+    Tcl_AppendResult(interp, "r_cut should be DOUBLE", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  CHECK_VALUE(harmonic_set_params(bond_type, k, r,r_cut), "bond type must be nonnegative");
 }
 
 /** Computes the HARMONIC pair force and adds this
@@ -75,12 +82,15 @@ MDINLINE int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_para
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  fac = -iaparams->p.harmonic.k*(dist - iaparams->p.harmonic.r);
-  fac /= dist;
+  if ((iaparams->p.harmonic.r_cut<0)||(dist<iaparams->p.harmonic.r_cut)){
+     fac = -iaparams->p.harmonic.k*(dist - iaparams->p.harmonic.r);
+     fac /= dist;
 
-  for(i=0;i<3;i++)
-    force[i] = fac*dx[i];
-
+     for(i=0;i<3;i++)
+        force[i] = fac*dx[i];
+  } else {
+     force[0] = force[1] = force[2] = 0.0;
+  }
   ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist2,fac));
   ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: HARMONIC f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist2,fac));
 
@@ -92,7 +102,10 @@ MDINLINE int harmonic_pair_energy(Particle *p1, Particle *p2, Bonded_ia_paramete
 {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  *_energy = 0.5*iaparams->p.harmonic.k*SQR(dist - iaparams->p.harmonic.r);
+  if ((iaparams->p.harmonic.r_cut<0)||(dist<iaparams->p.harmonic.r_cut)){
+     *_energy = 0.5*iaparams->p.harmonic.k*SQR(dist - iaparams->p.harmonic.r);
+  }
+  //else do notthing _energy is by default 0 in energy.h
   return 0;
 }
 

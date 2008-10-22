@@ -681,8 +681,8 @@ void calc_maximal_cutoff()
 	max_cut_bonded = max_cut_tmp;
       break;
     case BONDED_IA_HARMONIC:
-      if(max_cut_bonded < bonded_ia_params[i].p.harmonic.r)
-	max_cut_bonded = bonded_ia_params[i].p.harmonic.r;
+      if((bonded_ia_params[i].p.harmonic.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
+	max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
       break;
     case BONDED_IA_SUBT_LJ:
       if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
@@ -713,7 +713,7 @@ void calc_maximal_cutoff()
      potentials (both normal and tabulated ones) it follows, that the
      cutoff is TWO TIMES the maximal cutoff! That's what the following
      lines assure. */
-  max_cut_tmp = 2.0*max_cut;
+  max_cut_tmp = 2.0*max_cut_bonded;
   for (i = 0; i < n_bonded_ia; i++) {
     switch (bonded_ia_params[i].type) {
     case BONDED_IA_DIHEDRAL:
@@ -1104,6 +1104,8 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);
     Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
+    Tcl_AppendResult(interp, buffer," ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.harmonic.r_cut, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
   case BONDED_IA_ANGLE:
