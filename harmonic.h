@@ -57,7 +57,7 @@ MDINLINE int inter_parse_harmonic(Tcl_Interp *interp, int bond_type, int argc, c
   }
 
   if (argc<4) {
-    r_cut=2*r;
+    r_cut=-1;
   } else if (! ARG_IS_D(3, r_cut))  {
     Tcl_AppendResult(interp, "r_cut should be DOUBLE", (char *) NULL);
     return TCL_ERROR;
