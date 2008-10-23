@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1i (Alsheim)                                                                    *
+* v2.1.1j (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1i -
+- v2.1.1j -
 -----------
 
+(j) October   22nd, 2008.
 (i) October   20th, 2008.
 (h) October   14th, 2008.
 (g) October   10th, 2008.
@@ -22,6 +23,7 @@ Current working revision.
 (a) August    28th, 2008.
 
 New Features:
+(j) harmonic spring now has a cutoff
 (e) added tabulated adress force, tabulated correction function
 (e) mmm2d with dielectric contrast now uses internally dielectric contrasts, which
     allows to specify metallic boundary conditions also. To set the contrasts
