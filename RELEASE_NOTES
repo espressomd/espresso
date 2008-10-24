@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1j (Alsheim)                                                                    *
+* v2.1.1k (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1j -
+- v2.1.1k -
 -----------
 
+(k) October   23rd, 2008.
 (j) October   22nd, 2008.
 (i) October   20th, 2008.
 (h) October   14th, 2008.
@@ -34,6 +35,7 @@ New Features:
     branch
 
 Changes:
+(k) harmonic cutoff is by default off, but still possible to set
 (g) ELC with dielectric contrast now also prints out the space layer, and the out
     output can actually be fed back into inter coulomb as intended
 
