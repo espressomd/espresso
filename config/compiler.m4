@@ -147,6 +147,7 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	case $target_cpu in
 	i*86)		type=ia; m=32; arch=$target_cpu ;;
 	Pentium_III)	type=ia; m=32; arch=pentium3; sse=yes ;;
+	Atom)		type=ia; m=32; arch=pentiumpro; sse2=yes ;;
 	Celeron)	type=ia; m=32; arch=pentium4; sse2=yes ;;
 	Pentium_4)	type=ia; m=32; arch=pentium4; sse2=yes ;;
 	Pentium_M)	type=ia; m=32; arch=pentium-m; sse2=yes ;;
