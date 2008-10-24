@@ -17,7 +17,7 @@ if HAVE_LATEX
 	  test -e $$file || \
 	    $(LN_S) $(srcdir)/$$file .; \
 	done
-	test -e common.tex || $(LN_S) $(srcdir)/../common/common.tex .; \
+	test -e common.tex || $(LN_S) $(srcdir)/../common/common.tex .
 	$(PDFLATEX) tut2.tex
 	$(PDFLATEX) tut2.tex
 else
