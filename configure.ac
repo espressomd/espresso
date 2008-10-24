@@ -128,7 +128,10 @@ AC_CONFIG_HEADERS([acconfig.h])
 AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
 	Makefile-am scripts/Makefile testsuite/Makefile
-	doc/Makefile doc/ug/Makefile doc/ug/figures/Makefile 
+	doc/Makefile
+	doc/ug/Makefile doc/ug/figures/Makefile 
+	doc/tutorials/Makefile
+	doc/tutorials/tut2/Makefile doc/tutorials/tut2/figures/Makefile 
 	doc/dg/Makefile
 	config/$myconfig:config/myconfig-default.h.in
 	chooser/Espresso mpiwrap/Espresso

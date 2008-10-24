@@ -939,8 +939,8 @@ dist-hook:
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc ug dg
-doc ug dg: FORCE
+.PHONY: FORCE doc ug dg tutorials
+doc ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
 

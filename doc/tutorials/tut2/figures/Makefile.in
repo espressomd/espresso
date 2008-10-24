@@ -32,7 +32,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = doc
+subdir = doc/tutorials/tut2/figures
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/Espresso.m4 \
@@ -166,6 +166,8 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+tut2_FIGURES = nacl-rdf.pdf salt.png
+EXTRA_DIST = $(tut2_FIGURES)
 all: all-am
 
 .SUFFIXES:
@@ -178,9 +180,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  doc/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  doc/tutorials/tut2/figures/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  doc/Makefile
+	  $(AUTOMAKE) --foreign  doc/tutorials/tut2/figures/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -325,14 +327,17 @@ uninstall-am:
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-generic pdf pdf-am ps ps-am uninstall uninstall-am
 
-.PHONY: FORCE doc dg ug tutorials
-doc: ug dg tutorials
-dg: FORCE
-	cd dg; $(MAKE) --print-directory $@
-ug: FORCE
-	cd ug; $(MAKE) --print-directory $@
-tutorials: FORCE
-	cd tutorials; $(MAKE) --print-directory $@
+
+.PHONY: tut2.pdf
+
+tut2.pdf: FORCE
+@HAVE_LATEX_TRUE@	for file in $(tut2_FIGURES); do \
+@HAVE_LATEX_TRUE@	  test -e $$file || \
+@HAVE_LATEX_TRUE@	    $(LN_S) $(srcdir)/$$file .; \
+@HAVE_LATEX_TRUE@	done
+@HAVE_LATEX_TRUE@	test -e logo.png || \
+@HAVE_LATEX_TRUE@		$(LN_S) $(srcdir)/../../../ug/figures/logo.png .;
+
 FORCE:
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
