@@ -167,7 +167,7 @@ MDINLINE int bonded_tabulated_set_params(int bond_type, int tab_type, char * fil
   }
   if ( token == EOF ) { 
     fclose(fp);
-    return 4;
+    return 3;
   }
 
   /* set types */
