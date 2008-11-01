@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1l (Alsheim)                                                                    *
+* v2.1.1m (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1l -
+- v2.1.1m -
 -----------
 
+(m) October   31st, 2008.
 (l) October   24th, 2008.
 (k) October   23rd, 2008.
 (j) October   22nd, 2008.
@@ -43,6 +44,9 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(m) fixed the distribution to also contain the sources for the
+    tutorial
+(m) fixed error message in case the hash line is missing
 (i) fixed the harmonic-testcase to set a skin of 1 so that the bonding partners are
     always on the same node.
 (h) dpd and adress global parameters have not been broadcasted correctly, when
