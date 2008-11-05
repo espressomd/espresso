@@ -168,6 +168,7 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
     contact_num = (int *) 0; /* Just to keep the compiler happy */
   }
 
+  on_observable_calc();
   build_verlet_lists();
 
   for (i = s_mol_id; i <= f_mol_id; i++) {
