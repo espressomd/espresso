@@ -31,6 +31,7 @@
 #include "verlet.h"
 #include "lb.h"
 #include "virtual_sites.h"
+#include "initialize.h"
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
