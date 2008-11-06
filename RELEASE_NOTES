@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1m (Alsheim)                                                                    *
+* v2.1.1n (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1m -
+- v2.1.1n -
 -----------
 
+(n) November   5th, 2008.
 (m) October   31st, 2008.
 (l) October   24th, 2008.
 (k) October   23rd, 2008.
@@ -44,6 +45,8 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(n) Another bugfix on aggregation routine
+(n) fixed a bug in aggregation routine
 (m) fixed the distribution to also contain the sources for the
     tutorial
 (m) fixed error message in case the hash line is missing
