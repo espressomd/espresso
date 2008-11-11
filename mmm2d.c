@@ -120,6 +120,8 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 1, 1, 1 };
 #define ERROR_FARC 5
 /** cell too small */
 #define ERROR_SMALL 6
+/** IC layer requirement */
+#define ERROR_ICL 7
 /*@}*/
 
 /** error messages, see above */
@@ -131,6 +133,7 @@ static char *mmm2d_errors[] = {
   "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
   "Far cutoff too large, decrease the error bound",
   "Layer height too small for MMM2D far formula, decrease n_layers or skin",
+  "IC requires layered cellsystem with more than 3 layers",
 };
 
 /****************************************
@@ -1921,8 +1924,12 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
 
   /* if we cannot do the far formula, force off */
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
-      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
+      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3)) {
     mmm2d_params.far_cut = 0.0;
+    if (mmm2d_params.dielectric_contrast_on) {
+      return ERROR_ICL;
+    }
+  }
   else {
     mmm2d_params.far_cut = far_cut;
     mmm2d_params.far_cut2 = SQR(far_cut);
@@ -1976,8 +1983,13 @@ void MMM2D_init()
     return;
   }
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
-      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3))
+      (cell_structure.type == CELL_STRUCTURE_LAYERED && n_nodes*n_layers < 3)) {
     mmm2d_params.far_cut = 0.0;
+    if (mmm2d_params.dielectric_contrast_on) {
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{027 MMM2D auto-retuning: IC requires layered cellsystem with > 3 layers} ");
+    }
+  }
   else {
     if (mmm2d_params.far_calculated) {
       if ((err = MMM2D_tune_far(mmm2d_params.maxPWerror))) {
