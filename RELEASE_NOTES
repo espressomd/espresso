@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1n (Alsheim)                                                                    *
+* v2.1.1o (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1n -
+- v2.1.1o -
 -----------
 
+(o) November  11th, 2008.
 (n) November   5th, 2008.
 (m) October   31st, 2008.
 (l) October   24th, 2008.
@@ -45,6 +46,8 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(o) added a security warning for image charge correction, which requires the far
+    formula to work
 (n) Another bugfix on aggregation routine
 (n) fixed a bug in aggregation routine
 (m) fixed the distribution to also contain the sources for the
