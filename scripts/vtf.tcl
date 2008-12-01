@@ -144,7 +144,7 @@ proc writevsf { file args } {
 
     # Print bond data
     for { set from 0 } { $from <= $max_pid } { incr from } {
-	if { [part $pid] != "na" } then {
+	if { [part $from] != "na" } then {
 	    set bonds [lindex [part $from print bond] 0]
 	    for { set i 0 } { $i < [llength $bonds] } { incr i } {
 		set to [lindex $bonds $i 1]
