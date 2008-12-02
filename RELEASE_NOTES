@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1o (Alsheim)                                                                    *
+* v2.1.1p (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1o -
+- v2.1.1p -
 -----------
 
+(p) December   1st, 2008.
 (o) November  11th, 2008.
 (n) November   5th, 2008.
 (m) October   31st, 2008.
@@ -46,6 +47,7 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(p) Fixed a bug in writevsf related to the bond information.
 (o) added a security warning for image charge correction, which requires the far
     formula to work
 (n) Another bugfix on aggregation routine
