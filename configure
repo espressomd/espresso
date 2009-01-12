@@ -4,7 +4,7 @@ subconfigure=configure-ac
 
 echo -n "Testing whether we are in the source directory..."
 # Test if we are in the srcdir
-if test -f $subconfigure; then
+if test -f configure-ac; then
 # if we are, switch to the object dir and rerun configure
     echo "yes"
     objdir="obj-`config/config.guess`"
@@ -15,8 +15,8 @@ if test -f $subconfigure; then
     cd $objdir
     echo "Running configure-ac..."
     case $# in
-	0) ../configure-ac --enable-chooser;;
-	*) ../configure-ac --enable-chooser "$@";;
+	0) /bin/sh ../configure-ac --enable-chooser;;
+	*) /bin/sh ../configure-ac --enable-chooser "$@";;
     esac
     ec=$?
     cd ..
@@ -27,8 +27,8 @@ else
     echo "no"
     echo "Running configure-ac..."
     case $# in
-	0) $0-ac;;
-	*) $0-ac "$@";;
+	0) /bin/sh $0-ac;;
+	*) /bin/sh $0-ac "$@";;
     esac
     echo $cmd
     $cmd
