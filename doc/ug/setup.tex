@@ -95,7 +95,7 @@ set:
 \item[periodicity] (bool[3]) Specifies periodicity for the three
   directions. If the feature PARTIAL_PERIODIC is set, this variable
   can be set to (1,1,1) or (0,0,0) at the moment.  If not it is
-  readonly and gives the default setting (1,1,1).\todo{Correct?}
+  readonly and gives the default setting (1,1,1).
 \item[skin] (double) Skin for the Verlet list.
 \item [temperature] (double, \ro) Temperature of the
   simulation.
@@ -103,8 +103,7 @@ set:
   to use. 
 \item[time] (double) The simulation time.
 \item[time_step] (double) Time step for MD integration.
-\item[timings] (int) Number of timing samples to take into account if
-  set.\todo{???}
+\item[timings] (int) Number of samples to (time-)average over.
 \item[transfer_rate] (int, \ro) Transfer rate for VMD connection. You
   can use this to transfer any integer value to the simulation from
   VMD.
@@ -289,7 +288,7 @@ Returns the thermostat parameters. \todo{Document return format.}
   \variant{5}nemd profile
   \variant{6}nemd viscosity
 \end{essyntax}
-\todo{Put \texttt{nemd profile|viscosity} into \texttt{analyze}?}  
+
 Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system
 under shear with help of an unphysical momentum change in two slabs in
 the system.
@@ -301,10 +300,9 @@ shear in x direction.  The shear is applied in the top and the middle
 slabs. Note, that the methods should be used with a DPD thermostat or
 in an NVE ensemble.  Furthermore, you should not use other special
 features like \keyword{part fix} or \keyword{constraints} inside the
-top and middle slabs.
+top and middle slabs. For further reference on how NEMD is implemented
+into \es see \cite{soddeman01a}.
 
-\todo{Why should NEMD only be used with DPD or in NVE?}
-\todo{References for the methods}
 
 \index{momentum exchange method}
 Variant \variant{1} chooses the momentum exchange method.  In this
@@ -327,10 +325,8 @@ x-velocities and the target x-velocities are added to the x-component
 of the velocities of the particles in the respective slabs. 
 
 Variant \variant{3} will turn off NEMD, variant \variant{4} will
-return the parameters of NEMD. Variant \variant{5} will return the
-velocity profile of the system in x-direction.
-
-\todo{Describe return format of variants 4 and 5.}
+print usage information of the parameters of NEMD. Variant \variant{5} will return the
+velocity profile of the system in x-direction (mean velocity per slab).
 
 Variant \variant{6} will return the viscosity of the system, that is
 computed via
@@ -338,8 +334,7 @@ computed via
   \eta = \frac{F}{\dot{\gamma} L_x L_y}
 \end{equation}
 where $F$ is the mean force (momentum transfer per unit time) acting
-on the slab and $L_x L_y$ is the area of the slab.
-\todo{What is $\dot{\gamma}$?}
+on the slab, $L_x L_y$ is the area of the slab and $\dot{\gamma}$ is the shearrate. 
 
 
 \section{\texttt{cellsystem}: Setting up the cell system}
