@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1q (Alsheim)                                                                    *
+* v2.1.1r (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1q -
+- v2.1.1r -
 -----------
 
+(r) January   19th, 2009.
 (q) January   12th, 2009.
 (p) December   1st, 2008.
 (o) November  11th, 2008.
@@ -48,6 +49,13 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(r) Re-added configure-ac and Makefile-am.in after dead revision
+(r) Re-added acconfig.h.in to CVS
+(r) included Makefile.in files again into CVS (this matter is still discussed and
+    may change again in future)
+(r) Resurrecting and re-adding several Makefile.in after dead
+    revision
+(r) Re-added scripts/Makefile.in after dead revision
 (q) Configure can handle the situation when configure-ac is not
     executable.
 (q) Fix in the LJ documenatation (thanks to David Sean and Antoine)
