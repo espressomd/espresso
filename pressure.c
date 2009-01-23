@@ -1162,8 +1162,8 @@ int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **ar
     }
     else if( ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
-      value = total_pressure.coulomb[0];
-      for (i = 1; i < total_pressure.n_coulomb; i++)
+      value = 0;
+      for (i = 0; i < total_pressure.n_coulomb; i++)
 	value += total_pressure.coulomb[i];
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);

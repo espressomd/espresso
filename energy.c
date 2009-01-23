@@ -287,8 +287,8 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
     }
     else if( ARG0_IS_S("coulomb")) {
 #ifdef ELECTROSTATICS
-      value = total_energy.coulomb[0];
-      for (i = 1; i < total_energy.n_coulomb; i++)
+      value = 0;
+      for (i = 0; i < total_energy.n_coulomb; i++)
 	value += total_energy.coulomb[i];
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
