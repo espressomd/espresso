@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1r (Alsheim)                                                                    *
+* v2.1.1s (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1r -
+- v2.1.1s -
 -----------
 
+(s) January   23rd, 2009.
 (r) January   19th, 2009.
 (q) January   12th, 2009.
 (p) December   1st, 2008.
@@ -49,6 +50,8 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(s) fixed a bug in "analyze energy coulomb" which would report a random
+    energy/pressure if no electrostatics method is switched on.
 (r) Re-added configure-ac and Makefile-am.in after dead revision
 (r) Re-added acconfig.h.in to CVS
 (r) included Makefile.in files again into CVS (this matter is still discussed and
