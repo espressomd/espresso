@@ -438,6 +438,7 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
 #define EWALD_COUNT_CHARGES 4
+#define P3M_COUNT_DIPOLES   5
 /*@}*/
 
 #endif

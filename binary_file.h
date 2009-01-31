@@ -83,6 +83,13 @@ struct MDHeader {
 #define Q     10
 /** Row contains the type. */
 #define TYPE  11
+ /** Row contains the x component of the magnetic moment. */
+ #define MX    12
+ /** Row contains the y component of the magnetic moment. */
+ #define MY    13
+ /** Row contains the z component of the magnetic moment. */
+ #define MZ    14
+
 /*@}*/
 
 /**************************************************************

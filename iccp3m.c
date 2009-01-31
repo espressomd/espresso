@@ -44,7 +44,7 @@
 #include "global.h"
 #include "elc.h"
 
-#ifdef ELP3M
+#if defined(ELP3M) && defined(ELECTROSTATICS)
 
 iccp3m_struct iccp3m_cfg;
 
@@ -214,9 +214,14 @@ int iccp3m_iteration() {
 
 void force_calc_iccp3m() {
 
+/*  I don´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
+
 #ifdef DIPOLES
    convert_quat_to_dip_all();
 #endif
+
+*/
+
   init_forces_iccp3m();
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:

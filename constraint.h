@@ -476,11 +476,12 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_PLATE:
       add_plate_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
-    //ER
+      
+#ifdef MAGNETOSTATICS 
     case CONSTRAINT_EXT_MAGN_FIELD:
-        add_ext_magn_field_force(p1, &constraints[n].c.emfield);
-        break;
-    //end ER
+      add_ext_magn_field_force(p1, &constraints[n].c.emfield);
+      break;
+#endif
     
     case CONSTRAINT_PLANE:
      if(checkIfInteraction(ia_params)) {

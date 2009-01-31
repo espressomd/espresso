@@ -29,6 +29,7 @@
 /* #define ELECTROSTATICS */
 /* #define ROTATION */
 /* #define DIPOLES */
+/* #define MAGNETOSTATICS */
 /* #define EXTERNAL_FORCES */
 /* #define CONSTRAINTS */
 /* #define MASS */

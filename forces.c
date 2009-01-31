@@ -109,7 +109,7 @@ void calc_long_range_forces()
     else
       P3M_charge_assign();
 
-    P3M_calc_kspace_forces(1,0);
+    P3M_calc_kspace_forces_for_charges(1,0);
 
     if (elc_params.dielectric_contrast_on)
       ELC_P3M_restore_p3m_sums();
@@ -121,10 +121,10 @@ void calc_long_range_forces()
     P3M_charge_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += P3M_calc_kspace_forces(1,1);
+      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_charges(1,1);
     else
 #endif
-      P3M_calc_kspace_forces(1,0);
+      P3M_calc_kspace_forces_for_charges(1,0);
     break;
 #endif
   case COULOMB_EWALD:
@@ -142,7 +142,29 @@ void calc_long_range_forces()
     MMM2D_add_far_force();
     MMM2D_dielectric_layers_force_contribution();
   }
+#endif  /*ifdef ELECTROSTATICS */
+
+#ifdef MAGNETOSTATICS  
+  /* calculate k-space part of the magnetostatic interaction. */
+  switch (coulomb.Dmethod) {
+#ifdef ELP3M
+  case DIPOLAR_DLC_P3M:
+    fprintf(stderr,"dipolar_DLC_P3M_to_be_done \n");    
+    break;
+  case DIPOLAR_P3M:
+    P3M_dipole_assign();
+#ifdef NPT
+    if(integ_switch == INTEG_METHOD_NPT_ISO) {
+      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_dipoles(1,1);
+      fprintf(stderr,"dipolar_P3M at this moment is added to p_vir[0]\n");    
+    } else
 #endif
+      P3M_calc_kspace_forces_for_dipoles(1,0);
+
+      break;
+#endif
+  }
+#endif  /*ifdef MAGNETOSTATICS */
 }
 
 /************************************************************/

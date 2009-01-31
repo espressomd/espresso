@@ -86,6 +86,15 @@
 #define ELP3M
 #endif
 
+
+/* activate dipolar P3M only with FFTW */
+#if defined(MAGNETOSTATICS) && defined(FFTW)
+ #define ELP3M
+ #define DIPOLES
+#endif
+
+
+
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY

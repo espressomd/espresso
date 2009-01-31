@@ -1173,17 +1173,19 @@ void analyze_activate(int ind) {
  ****************************************************************************************/
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
-			       int n_coulomb, int c_size)
+			       int n_coulomb, int n_dipolar, int c_size)
 {
-  int i, total = c_size*(n_pre + n_bonded_ia + n_non_bonded + n_coulomb);
+  int i, total = c_size*(n_pre + n_bonded_ia + n_non_bonded + n_coulomb + n_dipolar);
 
   realloc_doublelist(&(stat->data), stat->data.n = total);
   stat->chunk_size = c_size;
   stat->n_coulomb    = n_coulomb;
+  stat->n_dipolar    = n_dipolar;
   stat->n_non_bonded = n_non_bonded;
   stat->bonded     = stat->data.e + c_size*n_pre;
   stat->non_bonded = stat->bonded + c_size*n_bonded_ia;
   stat->coulomb    = stat->non_bonded + c_size*n_non_bonded;
+  stat->dipolar    = stat->coulomb    + c_size*n_coulomb;
 
   for(i = 0; i < total; i++)
     stat->data.e[i] = 0.0;

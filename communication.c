@@ -566,6 +566,13 @@ void mpi_bcast_event_slave(int node, int event)
     check_particles();
     break;
 #endif
+
+#ifdef MAGNETOSTATICS
+  case P3M_COUNT_DIPOLES:
+    P3M_count_magnetic_particles();
+    break;
+#endif 
+
   default:;
   }
 }
@@ -1467,6 +1474,14 @@ void mpi_get_particles(Particle *result, IntList *bi)
   });
 #endif
 
+#ifdef MAGNETOSTATICS
+  COMM_TRACE(for(i = 0; i < tot_size; i++) {
+    printf("%d: %d -> %d %d  (%f, %f, %f) (%f, %f, %f)\n", this_node, i, result[i].p.identity, result[i].p.type,
+	   result[i].r.p[0], result[i].r.p[1], result[i].r.p[2], result[i].r.dip[0],
+	   result[i].r.dip[1], result[i].r.dip[2]);
+  });
+#endif
+
   /* gather bonding information */
   if (bi) {
     int *bonds;
@@ -1597,7 +1612,7 @@ void mpi_set_time_step_slave(int node, int i)
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
 {
-#ifdef ELECTROSTATICS
+#if  defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
   mpi_issue(REQ_BCAST_COULOMB, 1, 0);
   mpi_bcast_coulomb_params_slave(-1, 0);
 #endif
@@ -1605,8 +1620,10 @@ void mpi_bcast_coulomb_params()
 
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
-#ifdef ELECTROSTATICS
+#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
+
+#ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
@@ -1642,6 +1659,27 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast coulomb params for unknown method %d\n", this_node, coulomb.method);
     errexit();
   }
+#endif
+
+#ifdef MAGNETOSTATICS
+  switch (coulomb.Dmethod) {
+  case DIPOLAR_NONE:
+    break;
+#ifdef ELP3M
+  /*case DIPOLAR_DLC_P3M:
+    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    // fall through*/
+  case DIPOLAR_P3M:
+    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    break;
+#endif
+  default:
+    fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast dipolar params for unknown method %d\n", this_node, coulomb.Dmethod);
+    errexit();
+  }
+
+#endif  
+  
   on_coulomb_change();
   on_short_range_ia_change();
 #endif

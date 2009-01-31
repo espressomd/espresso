@@ -37,6 +37,8 @@ typedef struct {
 
   /** number of coulomb interactions */
   int n_coulomb;
+  /** number of coulomb interactions */
+  int n_dipolar;
   /** number of non bonded interactions */
   int n_non_bonded;
 
@@ -46,6 +48,8 @@ typedef struct {
   double *non_bonded;
   /** start of observables for coulomb interaction. */
   double *coulomb;
+  /** start of observables for coulomb interaction. */
+  double *dipolar;
 
   /** number of doubles per data item */
   int chunk_size;
@@ -389,7 +393,7 @@ MDINLINE double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p
 void invalidate_obs();
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
-			       int n_coulomb, int chunk_size);
+			       int n_coulomb, int n_dipolar, int chunk_size);
 
 void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb, int n_nonbonded, int chunk_size_nb);
 

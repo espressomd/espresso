@@ -15,7 +15,7 @@
 #ifndef ELC_H
 #define ELC_H
 
-#ifdef ELP3M
+#if defined(ELP3M)  && defined(ELECTROSTATICS)
 
 /** parameters for the ELC method */
 typedef struct {

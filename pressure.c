@@ -169,9 +169,10 @@ void calc_long_range_virials()
   case COULOMB_P3M: {
     int k;
     P3M_charge_assign();
-    virials.coulomb[1] = P3M_calc_kspace_forces(0,1);
+    virials.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+    
     for(k=0;k<3;k++)
-      p_tensor.coulomb[9+ k*3 + k] = P3M_calc_kspace_forces(0,1)/3.;
+      p_tensor.coulomb[9+ k*3 + k] = virials.coulomb[1]/3.;
     fprintf(stderr, "WARNING: stress tensor calculated, but P3M stress tensor not implemented\n");
     break;
   }
@@ -183,19 +184,43 @@ void calc_long_range_virials()
     fprintf(stderr, "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
     break;
   }
+#endif /*ifdef ELECTROSTATICS */  
+  
+#ifdef MAGNETOSTATICS
+  /* calculate k-space part of magnetostatic interaction. */
+  switch (coulomb.Dmethod) {
+#ifdef ELP3M
+  case DIPOLAR_DLC_P3M:
+    fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
+    break;
+  case DIPOLAR_P3M: {
+    int k;
+    P3M_dipole_assign();
+    virials.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+     
+    for(k=0;k<3;k++)
+      p_tensor.coulomb[9+ k*3 + k] = virials.dipolar[1]/3.;
+    fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress tensor not implemented\n");
+    fprintf(stderr, "WARNING: things have been added to the coulomb virial and p_tensor arrays !!!!!!!\n");
+    
+    break;
+  }
 #endif
+ } 
+#endif /*ifdef MAGNETOSTATICS */
 }
 
 /* Initialize the virials used in the calculation of the scalar pressure */
 /************************************************************/
 void init_virials(Observable_stat *stat)
 {
-  int n_pre, n_non_bonded, n_coulomb;
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar;
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb    = 0;
+  n_dipolar    = 0;
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE: n_coulomb = 0; break;
@@ -203,8 +228,16 @@ void init_virials(Observable_stat *stat)
   default: n_coulomb  = 1;
   }
 #endif
+#ifdef MAGNETOSTATICS
+  switch (coulomb.Dmethod) {
+  case DIPOLAR_NONE:  n_dipolar = 0; break;
+  case DIPOLAR_P3M:   n_dipolar = 2; break;
+  }
+#endif
+
+
   
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 1);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 1);
   stat->init_status = 0;
 }
 
@@ -223,10 +256,13 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb)
 /***************************/
 void init_p_tensor(Observable_stat *stat)
 {
-  int n_pre, n_non_bonded, n_coulomb;
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar;
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
+
+  n_coulomb = 0;
+  n_dipolar = 0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -234,11 +270,16 @@ void init_p_tensor(Observable_stat *stat)
   case COULOMB_P3M:  n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
-#else
-  n_coulomb = 0;
+#endif
+  
+#ifdef MAGNETOSTATICS
+  switch (coulomb.Dmethod) {
+  case DIPOLAR_NONE: n_dipolar = 0; break;
+  case DIPOLAR_P3M:  n_dipolar = 2; break;
+  }
 #endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, 9);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 9);
   stat->init_status = 0;
 }
 
@@ -788,8 +829,24 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this electrostatic interaction\n");  
       }
     }
+#endif /*ifdef ELECTROSTATICS */
+
+#ifdef MAGNETOSTATICS
+    if (coulomb.Dmethod != DIPOLAR_NONE) {
+      switch (coulomb.Dmethod) {
+#ifdef ELP3M
+      case DIPOLAR_P3M:
+    	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
+	break;
 #endif
-  }
+      default:
+	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
+      }
+    }
+#endif /*ifdef MAGNETOSTATICS */
+
+
+  } /*if p1-> ... */
   return 0;
 }
 
@@ -1014,14 +1071,37 @@ static void print_detailed_pressure(Tcl_Interp *interp)
       }
     } 
   
+#if  defined(ELECTROSTATICS) || defined (MAGNETOSTATICS)
+  if( 
 #ifdef ELECTROSTATICS
-  if(coulomb.method != COULOMB_NONE) {
+      coulomb.method != COULOMB_NONE
+#else
+      0
+#endif
+      ||
+#ifdef MAGNETOSTATICS
+      coulomb.Dmethod != DIPOLAR_NONE
+#else
+      0
+#endif     
+   ) {
     /* total Coulomb pressure */
     value = total_pressure.coulomb[0];
     for (i = 1; i < total_pressure.n_coulomb; i++)
       value += total_pressure.coulomb[i];
+    for (i = 0; i < total_pressure.n_dipolar; i++)
+      value += total_pressure.dipolar[i];
     Tcl_PrintDouble(interp, value, buffer);
+#if  defined(ELECTROSTATICS) && defined (MAGNETOSTATICS)
+    Tcl_AppendResult(interp, "{ coulomb+magdipoles ", buffer, (char *)NULL);
+#else
+#if defined(ELECTROSTATICS)
     Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
+#endif	
+#if defined(MAGNETOSTATICS)
+    Tcl_AppendResult(interp, "{ magdipoles ", buffer, (char *)NULL);
+#endif		
+#endif
 
     /* if it is split up, then print the split up parts */
     if (total_pressure.n_coulomb > 1) {
@@ -1167,6 +1247,15 @@ int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **ar
 	value += total_pressure.coulomb[i];
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+#endif
+    }
+    else if( ARG0_IS_S("dipolar")) {
+#ifdef MAGNETOSTATICS
+      value = 0;
+      for (i = total_pressure.n_coulomb-1; i < total_pressure.n_coulomb; i++)  /*when DLC will be installed this has to be changed */
+        value += total_pressure.coulomb[i];
+#else
+      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
     else if (ARG0_IS_S("total")) {
@@ -1317,6 +1406,13 @@ static void print_detailed_stress_tensor(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "} ", (char *)NULL);
   }
 #endif
+
+#ifdef MAGNETOSTATICS
+  if(coulomb.Dmethod != DIPOLAR_NONE) {
+    fprintf(stderr,"tensor magnetostatics, something should go here, file pressure.c ... \n");
+  }  
+#endif
+
   
 }
 
@@ -1450,6 +1546,14 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
       for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
 #else
       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+#endif
+    }
+    else if( ARG0_IS_S("dipolar")) {
+#ifdef MAGNETOSTATICS
+      /* for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];*/
+      fprintf(stderr," stress tensor, magnetostatics, something should go here, file pressure.c ");
+#else
+      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
     else if (ARG0_IS_S("total")) {

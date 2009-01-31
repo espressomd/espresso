@@ -61,7 +61,7 @@ typedef struct {
   int nptgeom_dir[3];
   /** The number of dimensions in which npt boxlength motion is coupled to particles */
   int dimension;
-  /** Set this flag if you want all box dimensions to be identical. Needed for electrostatics.  
+  /** Set this flag if you want all box dimensions to be identical. Needed for electrostatics and magnetostatics.  
       If the value of dimension is less than 3 then box length motion in one or more
       directions will be decoupled from the particle motion */
   int cubic_box;
@@ -249,8 +249,8 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 {
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
-#ifdef ELECTROSTATICS
-  double ret;
+#if defined(ELECTROSTATICS)  || defined(MAGNETOSTATICS)
+  double ret=0;
 #endif
   calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
 
@@ -329,7 +329,25 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   if (coulomb.method == COULOMB_INTER_RF) {
      //this is done elsewhere
   }
+#endif /*ifdef ELECTROSTATICS */
+
+#ifdef MAGNETOSTATICS
+  /* real space magnetic dipole-dipole */
+  if (coulomb.Dmethod != DIPOLAR_NONE) {
+    switch (coulomb.Dmethod) {
+#ifdef ELP3M
+    case  DIPOLAR_P3M:
+        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+	fprintf(stderr,"virials Not working for dipoles .... pressure.h \n");
+	ret=0;
+        break; 
 #endif
+      default:
+      ret = 0;
+    }
+    virials.dipolar[0] += ret;
+  }  
+#endif /*ifdef MAGNETOSTATICS */
 }
 
 MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {

@@ -34,9 +34,25 @@ int writemd(ClientData data, Tcl_Interp *interp,
   Tcl_Channel channel;
 
   if (argc < 3) {
-    Tcl_AppendResult(interp, "wrong # args:  should be \"",
-		     argv[0], " <file> ?posx|posy|posz|q|vx|vy|vz|fx|fy|fz|type?* ...\"",
-		     (char *) NULL);
+    #if defined(ELECTROSTATICS) && defined(DIPOLES)
+      Tcl_AppendResult(interp, "wrong # args:  should be \"",
+	  	       argv[0], " <file> ?posx|posy|posz|q|mx|my|mz|vx|vy|vz|fx|fy|fz|type?* ...\"",
+		       (char *) NULL);
+    #else
+      #ifdef ELECTROSTATICS
+      Tcl_AppendResult(interp, "wrong # args:  should be \"",
+	  	       argv[0], " <file> ?posx|posy|posz|q|vx|vy|vz|fx|fy|fz|type?* ...\"",
+		       (char *) NULL);
+      #endif
+      
+      #ifdef DIPOLES
+      Tcl_AppendResult(interp, "wrong # args:  should be \"",
+	  	       argv[0], " <file> ?posx|posy|posz|mx|my|mz|vx|vy|vz|fx|fy|fz|type?* ...\"",
+		       (char *) NULL);
+      #endif
+    
+    #endif		       
+   		     
     return (TCL_ERROR);
   }
 
@@ -72,6 +88,17 @@ int writemd(ClientData data, Tcl_Interp *interp,
     else if (!strncmp(*argv, "q", strlen(*argv))) {
       row[i] = Q;
     }
+#ifdef DIPOLES    
+    else if (!strncmp(*argv, "mx", strlen(*argv))) {
+      row[i] = MX;
+    }
+    else if (!strncmp(*argv, "my", strlen(*argv))) {
+      row[i] = MY;
+    }
+    else if (!strncmp(*argv, "mz", strlen(*argv))) {
+      row[i] = MZ;
+    }    
+#endif    
     else if (!strncmp(*argv, "vx", strlen(*argv))) {
       row[i] = VX;
     }
@@ -136,6 +163,11 @@ int writemd(ClientData data, Tcl_Interp *interp,
 #ifdef ELECTROSTATICS
 	case Q:    Tcl_Write(channel, (char *)&data.p.q, sizeof(double)); break;
 #endif
+#ifdef DIPOLES
+	case MX:   Tcl_Write(channel, (char *)&data.r.dip[0], sizeof(double)); break;
+	case MY:   Tcl_Write(channel, (char *)&data.r.dip[1], sizeof(double)); break;
+	case MZ:   Tcl_Write(channel, (char *)&data.r.dip[2], sizeof(double)); break;
+#endif
 	case TYPE: Tcl_Write(channel, (char *)&data.p.type, sizeof(int)); break;
 	}
       }
@@ -152,8 +184,18 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 	   int argc, char **argv)
 {
   char *row;
-  int pos_row[3] = { -1 }, v_row[3] = { -1 }, f_row[3] = { -1 };
-  int av_pos = 0, av_v = 0, av_mass=0, av_f = 0, av_q = 0, av_type = 0;
+  int pos_row[3] = { -1 }, v_row[3] = { -1 }, 
+  #ifdef DIPOLES 
+  dip_row[3] = { -1 }, 
+  #endif
+  f_row[3] = { -1 };
+  
+  int av_pos = 0, av_v = 0, 
+  #ifdef DIPOLES 
+  av_dip=0, 
+  #endif
+  av_mass=0, av_f = 0, av_q = 0, av_type = 0;
+  
   int node, i;
   struct MDHeader header;
   Particle data;
@@ -196,6 +238,11 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
     case   VX:   v_row[0] = i; break;
     case   VY:   v_row[1] = i; break;
     case   VZ:   v_row[2] = i; break;
+#ifdef DIPOLES
+    case   MX:   dip_row[0] = i; break;
+    case   MY:   dip_row[1] = i; break;
+    case   MZ:   dip_row[2] = i; break;
+#endif
     case   FX:   f_row[0] = i; break;
     case   FY:   f_row[1] = i; break;
     case   FZ:   f_row[2] = i; break;
@@ -216,6 +263,13 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
   if (f_row[0] != -1 && f_row[1] != -1 && f_row[2] != -1) {
     av_f = 1;
   }
+  
+  #ifdef DIPOLES
+  if (dip_row[0] != -1 && dip_row[1] != -1 && dip_row[2] != -1) {
+    av_dip = 1;
+  }
+  #endif
+
 
   while (!Tcl_Eof(channel)) {
     Tcl_Read(channel, (char *)&data.p.identity, sizeof(int));
@@ -255,6 +309,12 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 #ifdef ELECTROSTATICS
       case    Q: Tcl_Read(channel, (char *)&data.p.q, sizeof(double)); break;
 #endif
+#ifdef DIPOLES
+      case   MX: Tcl_Read(channel, (char *)&data.r.dip[0], sizeof(double)); break;
+      case   MY: Tcl_Read(channel, (char *)&data.r.dip[1], sizeof(double)); break;
+      case   MZ: Tcl_Read(channel, (char *)&data.r.dip[2], sizeof(double)); break;
+#endif
+
       case TYPE: Tcl_Read(channel, (char *)&data.p.type, sizeof(int)); break;
       }
     }
@@ -278,6 +338,10 @@ int readmd(ClientData dummy, Tcl_Interp *interp,
 #ifdef ELECTROSTATICS
     if (av_q)
       set_particle_q(data.p.identity, data.p.q);
+#endif
+#ifdef DIPOLES
+    if (av_dip)
+      set_particle_dip(data.p.identity, data.r.dip);
 #endif
     if (av_v)
       set_particle_v(data.p.identity, data.m.v);

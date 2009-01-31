@@ -246,6 +246,17 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     nptiso.cubic_box = 1;
   }
 #endif
+
+#ifdef MAGNETOSTATICS     
+  if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0 ){
+    fprintf(stderr,"WARNING: If magnetostatics is being used you must use the -cubic_box option!\n");
+    fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
+    fprintf(stderr,"Be aware though that all of the magnetostatic pressure is added to the x-direction only!\n");
+    nptiso.cubic_box = 1;
+  }
+#endif
+
+
   if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
     Tcl_AppendResult(interp, "You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!", (char *)NULL);
     Tcl_AppendResult(interp, "Cannot proceed with npt_isotropic, reverting to nvt integration... \n", (char *)NULL);

@@ -67,30 +67,51 @@
 /************************************************************/
 /*@{*/
 
-/** Coulomb interation switched off (NONE). */
-#define COULOMB_NONE    0
-/** Coulomb method is Debye-Hueckel. */
-#define COULOMB_DH      1
-/** Coulomb method is Debye-Hueckel with parallel separate calculation. */
-#define COULOMB_DH_PW   2
-/** Coulomb method is P3M. */
-#define COULOMB_P3M     3
-/** Coulomb method is one-dimensional MMM */
-#define COULOMB_MMM1D   4
-/** Coulomb method is two-dimensional MMM */
-#define COULOMB_MMM2D   5
-/** Coulomb method is "Maggs" */
-#define COULOMB_MAGGS   6
-/** Coulomb method is standard Ewald */
-#define COULOMB_EWALD   7
-/** Coulomb method is P3M plus ELC. */
-#define COULOMB_ELC_P3M 8
-/** Coulomb method is Reaction-Field. */
-#define COULOMB_RF 9
-/** Coulomb method is Reaction-Field BUT as interactions */
-#define COULOMB_INTER_RF 10
-
+#ifdef ELECTROSTATICS
+  /** Coulomb interation switched off (NONE). */
+  #define COULOMB_NONE    0
+  /** Coulomb method is Debye-Hueckel. */
+  #define COULOMB_DH      1
+  /** Coulomb method is Debye-Hueckel with parallel separate calculation. */
+  #define COULOMB_DH_PW   2
+  /** Coulomb method is P3M. */
+  #define COULOMB_P3M     3
+  /** Coulomb method is one-dimensional MMM */
+  #define COULOMB_MMM1D   4
+ /** Coulomb method is two-dimensional MMM */
+  #define COULOMB_MMM2D   5
+  /** Coulomb method is "Maggs" */
+  #define COULOMB_MAGGS   6
+  /** Coulomb method is standard Ewald */
+  #define COULOMB_EWALD   7
+  /** Coulomb method is P3M plus ELC. */
+  #define COULOMB_ELC_P3M 8
+  /** Coulomb method is Reaction-Field. */
+  #define COULOMB_RF 9
+  /** Coulomb method is Reaction-Field BUT as interactions */
+  #define COULOMB_INTER_RF 10
+#endif
 /*@}*/
+
+
+#ifdef  MAGNETOSTATICS
+  /** \name Type codes for the type of dipolar interaction
+    Enumeration of implemented methods for the magnetostatic
+    interaction.
+   */
+  /************************************************************/
+  /*@{*/
+
+  /** dipolar interation switched off (NONE). */
+   #define DIPOLAR_NONE       0
+   /** dipolar method is P3M. */
+   #define DIPOLAR_P3M        1
+   /** Coulomb method is P3M plus ELC. */
+   #define DIPOLAR_DLC_P3M    2
+
+   /*@}*/
+#endif 
+
 
 
 /** \name Type codes for constraints
@@ -372,6 +393,8 @@ typedef struct {
 /** field containing the interaction parameters for
  *  the coulomb  interaction.  */
 typedef struct {
+
+ #ifdef ELECTROSTATICS
   /** Bjerrum length. */
   double bjerrum;
   /** bjerrum length times temperature. */
@@ -379,6 +402,14 @@ typedef struct {
   
   /** Method to treat coulomb interaction. See \ref COULOMB_NONE "Type codes for Coulomb" */
   int method;
+ #endif
+
+ #ifdef MAGNETOSTATICS
+  double Dbjerrum;
+  double Dprefactor;
+  int    Dmethod;
+ #endif
+
 
 } Coulomb_parameters;
 

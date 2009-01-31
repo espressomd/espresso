@@ -110,7 +110,15 @@ typedef struct {
  * NOTE: FFT numbering starts with 1 for technical reasons (because we
  *       have 4 node grids, the index 0 is used for the real space
  *       charge assignment grid).  */
+
+#ifdef ELECTROSTATICS
 extern fft_forw_plan fft_plan[4];
+#endif
+
+#ifdef MAGNETOSTATICS
+extern fft_forw_plan Dfft_plan[4];
+#endif
+
 
 /*@}*/
 
@@ -118,6 +126,7 @@ extern fft_forw_plan fft_plan[4];
 /************************************************************/
 /*@{*/
 
+#ifdef ELECTROSTATICS
 /** Initialize some arrays connected to the 3D-FFT. */
 void  fft_pre_init();
 
@@ -143,6 +152,39 @@ void fft_perform_forw(double *data);
     \param data Mesh.
 */
 void fft_perform_back(double *data);
+
+#endif
+
+#ifdef MAGNETOSTATICS
+/** Initialize everything connected to the 3D-FFT related to the dipole-dipole.
+
+ * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
+ * \param data           Pointer Pounter to data array.
+ * \param ca_mesh_dim    Pointer to CA mesh dimensions.
+ * \param ca_mesh_margin Pointer to CA mesh margins.
+ * \param ks_pnum        Pointer to number of permutations in k-space.
+ */
+int Dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
+
+/** perform the forward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
+    The assigned charges are in \a data. The result is also stored in \a data.
+    \warning The content of \a data is overwritten.
+    \param data DMesh.
+*/
+void Dfft_perform_forw(double *data);
+
+/** perform the backward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
+    \warning The content of \a data is overwritten.
+    \param data DMesh.
+*/
+void Dfft_perform_back(double *data);
+
+#endif
+
+
+
+
+
 
 /** pack a block (size[3] starting at start[3]) of an input 3d-grid
  *  with dimension dim[3] into an output 3d-block with dimension size[3].

@@ -294,7 +294,7 @@ Requires the feature LENNARD_JONES.  \todo{I think there is still a
 
 \begin{essyntax}
   \variant{1} analyze energy
-  \variant{2} analyze energy \alt{total \asep kinetic \asep coulomb}
+  \variant{2} analyze energy \alt{total \asep kinetic \asep coulomb \asep magnetic}
   \variant{3} analyze energy bonded \var{bondid}
   \variant{4} analyze energy nonbonded \var{typeid1} \var{typeid2}
 \end{essyntax}
@@ -302,7 +302,7 @@ Requires the feature LENNARD_JONES.  \todo{I think there is still a
   different commands!}
 Returns the energies of the system. Variant \variant{1} returns all
 the contributions to the total energy. Variant \variant{2} returns the
-numerical value of the total energy or its kinetic or Coulomb
+numerical value of the total energy or its kinetic or Coulomb or magnetic
 contributions only. Variants \variant{3} and \variant{4} return the
 energy contributions of the bonded resp. non-bonded interactions.
 

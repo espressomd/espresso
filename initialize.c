@@ -59,6 +59,7 @@
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
+static int reinit_magnetostatics = 0;
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -209,7 +210,23 @@ void on_observable_calc()
     }
     reinit_electrostatics = 0;
   }
-#endif
+#endif /*ifdef ELECTROSTATICS */
+
+#ifdef MAGNETOSTATICS
+  if(reinit_magnetostatics) {
+    EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
+    switch (coulomb.Dmethod) {
+    #ifdef ELP3M
+    case DIPOLAR_DLC_P3M:
+    case DIPOLAR_P3M:
+      P3M_count_magnetic_particles();
+      break;
+    #endif
+    default: break;
+    }
+    reinit_magnetostatics = 0;
+  }
+#endif /*ifdef ELECTROSTATICS */
 }
 
 void on_particle_change()
@@ -217,6 +234,7 @@ void on_particle_change()
   // EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
   resort_particles = 1;
   reinit_electrostatics = 1;
+  reinit_magnetostatics = 1;
   rebuild_verletlist = 1;
 
   invalidate_obs();
@@ -241,7 +259,7 @@ void on_coulomb_change()
     ELC_init();
     // fall through
   case COULOMB_P3M:
-    P3M_init();
+    P3M_init_charges();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -264,7 +282,31 @@ void on_coulomb_change()
   }
 
   recalc_forces = 1;
+#endif  /* ifdef ELECTROSTATICS */
+
+#ifdef MAGNETOSTATICS
+  if(temperature > 0.0)
+    coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
+  else
+    coulomb.Dprefactor = coulomb.Dbjerrum;
+  
+  switch (coulomb.Dmethod) {
+#ifdef ELP3M
+    case DIPOLAR_DLC_P3M:
+      fprintf(stderr," DLC still not done... \n");
+    // fall through
+  case DIPOLAR_P3M:
+    P3M_init_dipoles();
+    integrate_vv_recalc_maxrange();
+    on_parameter_change(FIELD_MAXRANGE);
+    break;
 #endif
+  default: break;
+  }
+
+  recalc_forces = 1;
+#endif  /* ifdef MAGNETOSTATICS */
+
 }
 
 void on_short_range_ia_change()
@@ -318,7 +360,21 @@ void on_resort_particles()
     break;
   default: break;
   }
+#endif /* ifdef ELECTROSTATICS */
+
+
+#ifdef MAGNETOSTATICS
+  switch (coulomb.Dmethod) {
+#ifdef ELP3M
+  case DIPOLAR_DLC_P3M:
+    /* ELC_on_resort_particles(); */
+    fprintf(stderr, "DLC still to be done ... \n");
+    break;
 #endif
+ default: break;
+  }
+#endif /* ifdef MAGNETOSTATICS*/
+
 }
 
 #ifdef NPT
@@ -329,7 +385,7 @@ void on_NpT_boxl_change(double scal1) {
   switch(coulomb.method) {
 #ifdef ELP3M
   case COULOMB_P3M:
-    P3M_scaleby_box_l();
+    P3M_scaleby_box_l_charges();
     integrate_vv_recalc_maxrange();
     break;
 #endif
@@ -337,6 +393,18 @@ void on_NpT_boxl_change(double scal1) {
     EWALD_scaleby_box_l();
     integrate_vv_recalc_maxrange();
     break;
+  default: break;
+  }
+#endif
+
+#ifdef MAGNETOSTATICS
+  switch(coulomb.Dmethod) {
+  #ifdef ELP3M
+  case DIPOLAR_P3M:
+    P3M_scaleby_box_l_dipoles();
+    integrate_vv_recalc_maxrange();
+    break;
+  #endif
   default: break;
   }
 #endif
@@ -349,8 +417,8 @@ void on_NpT_boxl_change(double scal1) {
 void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
-#ifdef ELECTROSTATICS
-  int cc;
+#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+  int cc = 0;
 #endif
 
   EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
@@ -379,7 +447,6 @@ void on_parameter_change(int field)
 #endif
 
 #ifdef ELECTROSTATICS
-  cc = 0;
   switch (coulomb.method) {
 #ifdef ELP3M
   case COULOMB_ELC_P3M:
@@ -390,7 +457,7 @@ void on_parameter_change(int field)
     if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
       cc = 1;
     else if (field == FIELD_BOXL) {
-      P3M_scaleby_box_l();
+      P3M_scaleby_box_l_charges();
       integrate_vv_recalc_maxrange(); 
     }
     break;
@@ -427,6 +494,30 @@ void on_parameter_change(int field)
     break;
   default: break;
   }
+#endif /*ifdef ELECTROSTATICS */
+
+#ifdef MAGNETOSTATICS
+  switch (coulomb.Dmethod) {
+   #ifdef ELP3M
+    case DIPOLAR_DLC_P3M:
+     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
+       cc = 1;
+       fprintf(stderr,"dipolar dlc p3m still not done ... \n");
+      // fall through
+    case DIPOLAR_P3M:
+      if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
+        cc = 1;
+      else if (field == FIELD_BOXL) {
+        P3M_scaleby_box_l_dipoles();
+        integrate_vv_recalc_maxrange(); 
+      }
+      break;
+   #endif
+  default: break;
+  }
+#endif /*ifdef MAGNETOSTATICS */
+
+#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
   if (cc)
     on_coulomb_change();
 #endif

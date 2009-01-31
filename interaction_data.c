@@ -51,8 +51,18 @@ int n_particle_types = 0;
 int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
+#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+Coulomb_parameters coulomb = { 
 #ifdef ELECTROSTATICS
-Coulomb_parameters coulomb = { 0.0, 0.0, COULOMB_NONE };
+  0.0, 0.0, COULOMB_NONE,
+#endif
+#ifdef MAGNETOSTATICS
+  0.0, 0.0, DIPOLAR_NONE,
+#endif
+};
+#endif
+
+#ifdef ELECTROSTATICS
 Debye_hueckel_params dh_params = { 0.0, 0.0 };
 Reaction_field_params rf_params = { 0.0, 0.0 };
 #endif
@@ -88,6 +98,10 @@ DoubleList adress_tab_energies;
 
 ///
 int printCoulombIAToResult(Tcl_Interp *interp);
+
+#ifdef MAGNETOSTATICS
+int printDipolarIAToResult(Tcl_Interp *interp);
+#endif
 
 /*****************************************
  * general lowlevel functions
@@ -856,10 +870,11 @@ void calc_maximal_cutoff()
 #endif
        }
      }
+
 #ifdef ELECTROSTATICS
   /* real space electrostatic */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef ELP3M 
   case COULOMB_ELC_P3M:
     if (max_cut_non_bonded < elc_params.space_layer)
       max_cut_non_bonded = elc_params.space_layer;
@@ -904,7 +919,25 @@ void calc_maximal_cutoff()
       max_cut = maggs.a;  
     break;
   }
-#endif
+#endif /*ifdef ELECTROSTATICS */
+
+  
+#if  defined(MAGNETOSTATICS) && defined(ELP3M) 
+  switch (coulomb.Dmethod) {
+  case DIPOLAR_DLC_P3M:
+       fprintf(stderr,"DLC still not implemented ...\n");
+/*    if (max_cut_non_bonded < Delc_params.space_layer)
+      max_cut_non_bonded = Delc_params.space_layer;
+    // fall through
+*/    
+  case DIPOLAR_P3M:
+    if (max_cut_non_bonded < p3m.Dr_cut)
+      max_cut_non_bonded = p3m.Dr_cut;
+    break;
+  }       
+#endif /*ifdef MAGNETOSTATICS */
+  
+  
 
 #ifdef MOL_CUT
   max_cut_non_bonded += max_cut_bonded;
@@ -929,7 +962,16 @@ int check_obs_calc_initialized()
   case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   case COULOMB_MAGGS: if (Maggs_sanity_checks()) state = 0; break;
   }
-#endif
+#endif /* ifdef ELECTROSTATICS */
+
+#if  defined(MAGNETOSTATICS) && defined(ELP3M) 
+  switch (coulomb.Dmethod) {
+/*
+  case DIPOLAR_DLC_P3M: if (DELC_sanity_checks()) state = 0; // fall through
+*/
+  case DIPOLAR_P3M: if (DP3M_sanity_checks()) state = 0; break;
+  }
+#endif /* ifdef  MAGNETOSTATICS */
 
   return state;
 }
@@ -1077,7 +1119,127 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   
   return TCL_ERROR;
 }
+
+/* =========================================================
+   ========================================================= */
+#endif /*ifdef ELECTROSTATICS */
+
+
+#ifdef MAGNETOSTATICS
+
+
+int dipolar_set_Dbjerrum(double bjerrum)
+{
+  if (bjerrum < 0.0)
+    return TCL_ERROR;
+  
+  coulomb.Dbjerrum = bjerrum;
+
+  if (coulomb.Dbjerrum == 0.0) {
+    switch (coulomb.Dmethod) {
+#ifdef ELP3M
+    case DIPOLAR_DLC_P3M:
+    case DIPOLAR_P3M:
+      coulomb.Dbjerrum = bjerrum;
+      p3m.Dalpha    = 0.0;
+      p3m.Dalpha_L  = 0.0;
+      p3m.Dr_cut    = 0.0;
+      p3m.Dr_cut_iL = 0.0;
+      p3m.Dmesh[0]  = 0;
+      p3m.Dmesh[1]  = 0;
+      p3m.Dmesh[2]  = 0;
+      p3m.Dcao      = 0;
+      break;
 #endif
+    }
+ 
+    mpi_bcast_coulomb_params();
+    coulomb.Dmethod = DIPOLAR_NONE;
+    mpi_bcast_coulomb_params();
+
+  }
+
+  return TCL_OK;
+}
+
+int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
+{
+  double d1;
+
+  Tcl_ResetResult(interp);
+
+  if(argc == 0) {
+    printDipolarIAToResult(interp);
+    return TCL_OK;
+  }
+  
+  if (! ARG0_IS_D(d1)) {
+#ifdef ELP3M
+    Tcl_ResetResult(interp);
+/*
+    if (ARG0_IS_S("dlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_DLC_P3M)))
+      return inter_parse_dlc_params(interp, argc - 1, argv + 1);
+*/
+    if (coulomb.Dmethod == DIPOLAR_P3M)
+      return Dinter_parse_p3m_opt_params(interp, argc, argv);
+    else {
+      Tcl_AppendResult(interp, "expect: inter dipolar <Dbjerrum>",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+#else
+    return TCL_ERROR;
+#endif
+  }
+
+  if (dipolar_set_Dbjerrum(d1) == TCL_ERROR) {
+    Tcl_AppendResult(interp, argv[0], "Dbjerrum length must be positive",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+    
+  argc -= 1;
+  argv += 1;
+
+  if (d1 == 0.0 && argc == 0) {
+    mpi_bcast_coulomb_params();
+    return TCL_OK;
+  }
+
+  if(argc < 1) {
+    Tcl_AppendResult(interp, "wrong # args for inter dipolar.",
+		     (char *) NULL);
+    mpi_bcast_coulomb_params();
+    return TCL_ERROR;
+  }
+
+  /* check method */
+
+#define REGISTER_DIPOLAR(name, parser)			\
+  if(ARG0_IS_S(name))					\
+    return parser(interp, argc-1, argv+1);
+
+#ifdef ELP3M
+  REGISTER_DIPOLAR("p3m", Dinter_parse_p3m);
+#endif
+
+  /* fallback */
+  coulomb.Dmethod  = DIPOLAR_NONE;
+  coulomb.Dbjerrum = 0.0;
+
+  mpi_bcast_coulomb_params();
+
+  Tcl_AppendResult(interp, "do not know dipolar method \"",argv[0],
+		   "\": dipolar switched off", (char *) NULL);
+  
+  return TCL_ERROR;
+}
+
+
+#endif   /* ifdef  MAGNETOSTATICS */
+
+
+
 
 /********************************************************************************/
 /*                                       printing                               */
@@ -1288,6 +1450,35 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
+#ifdef MAGNETOSTATICS
+int printDipolarIAToResult(Tcl_Interp *interp) 
+{
+  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  if (coulomb.Dmethod == DIPOLAR_NONE) {
+    Tcl_AppendResult(interp, "dipolar 0.0", (char *) NULL);
+    return (TCL_OK);
+  }
+ 
+  Tcl_PrintDouble(interp, coulomb.Dbjerrum, buffer);
+  Tcl_AppendResult(interp, "{dipolar ", buffer, " ", (char *) NULL);
+  switch (coulomb.Dmethod) {
+    #ifdef ELP3M
+     /*
+      case DIPOLAR_DLC_P3M:
+        printP3MToResult(interp);
+        printDLCToResult(interp);
+        break;
+     */   
+    case DIPOLAR_P3M: printP3MToResult(interp); break;
+   #endif
+    default: break;
+  }
+  Tcl_AppendResult(interp, "}",(char *) NULL);
+
+  return (TCL_OK);
+}
+#endif
+
 int inter_print_all(Tcl_Interp *interp)
 {
   int i, j, start = 1;
@@ -1329,6 +1520,21 @@ int inter_print_all(Tcl_Interp *interp)
     printCoulombIAToResult(interp);
   }
 #endif
+
+#ifdef MAGNETOSTATICS
+  if(coulomb.Dmethod != DIPOLAR_NONE) {
+    if (start) 
+      start = 0;
+    else
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+    /* here the curled braces will be set inside \ref printDipolarIAToResult
+       because magnetostatics might be using several lists */
+    printDipolarIAToResult(interp);
+  }
+#endif
+
+
+
   if(lj_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     
@@ -1712,12 +1918,22 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 #endif
 
   if(ARG0_IS_S("coulomb")) {
-#ifdef ELECTROSTATICS
-    return inter_parse_coulomb(interp, argc-1, argv+1);
-#else
-    Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
-#endif
+    #ifdef ELECTROSTATICS
+      return inter_parse_coulomb(interp, argc-1, argv+1);
+   #else
+       Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
+    #endif
   }
+  
+  if(ARG0_IS_S("magnetic")) {
+   #ifdef MAGNETOSTATICS
+      return inter_parse_dipolar(interp, argc-1, argv+1);
+    #else
+      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)", (char *) NULL);
+    #endif
+  }
+  
+  
   Tcl_AppendResult(interp, "unknown interaction type \"", argv[0],
 		   "\"", (char *) NULL);
 
