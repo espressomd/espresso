@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1s (Alsheim)                                                                    *
+* v2.1.1t (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1s -
+- v2.1.1t -
 -----------
 
+(t) January   31st, 2009.
 (s) January   23rd, 2009.
 (r) January   19th, 2009.
 (q) January   12th, 2009.
@@ -32,6 +33,11 @@ Current working revision.
 (a) August    28th, 2008.
 
 New Features:
+(t) separated electro- and magnetostatics. Instead of configuring for either
+    electrostatics or magnetostatics using the DIPOLES switch, there is now a
+    switch MAGNETOSTATICS to activate magnetic dipolar interactions. Using both
+    ELECTROSTATICS and MAGNETOSTATICS, it is now possible to run systems with
+    charges and magnetic dipoles simulataneously.
 (l) started a new documentation section "tutorials"
 (l) added detection and compiler flags for Intel Atom CPU.
 (j) harmonic spring now has a cutoff
