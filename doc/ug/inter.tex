@@ -67,6 +67,7 @@ subsection~\ref{sec:forcecap} for details.
   lennard-jones 
   \var{\epsilon} \var{\sigma} 
   \var{r_\mathrm{cut}} \var{c_\mathrm{shift}} \var{r_\mathrm{off}}
+  [\var{r_\mathrm{cap}}=0 \var{r_\mathrm{min}}=0]
   
   \variant{2}%
   inter \var{type1} 
@@ -89,7 +90,7 @@ types \var{type1} and \var{type2}.  The potential is defined by
     \begin{array}{ll}
       4\epsilon(\var{b_1}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
       -\var{b_2}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^{e_2}+\var{c_\mathrm{shift}}) 
-      & \mathrm{, if~} \var{r} < \var{r_\mathrm{cut}}+\var{r_\mathrm{off}}\\
+      & \mathrm{, if~} \var{r_\mathrm{min}}+\var{r_\mathrm{off}} < \var{r} < \var{r_\mathrm{cut}}+\var{r_\mathrm{off}}\\
       \mathit{0} 
       & \mathrm{, otherwise}\\
     \end{array}.
@@ -120,6 +121,14 @@ putting the cutoff into the minimum, \ie choosing
 $\var{r_\mathrm{cut}}=2^\frac{1}{6}\var{\sigma}$ and
 $\var{c_\mathrm{shift}}=\frac{1}{4}$. The WCA potential is purely
 repulsive, and is often used to mimick hard sphere repulsion.
+
+The capping can be defined using the \var{r_\mathrm{cap}} variable, set to 0
+by default (no capping).
+
+An additional parameter can be used to restrict the interaction from a
+\emph{minimal} distance \var{r_{\mathrm min}}. This is an optional parameter,
+set to 0 by default. (Note: \var{r_{\mathrm min}} has only been implemented for 
+\verb lennard-jones .) 
 
 \subsection{Lennard-Jones cosine interaction}
 \index{Lennard-Jones cosine interaction|mainindex}

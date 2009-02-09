@@ -152,14 +152,15 @@
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
 #ifdef LENNARD_JONES
-  /** \name Lennard-Jones with shift */
-  /*@{*/
-  double LJ_eps;
-  double LJ_sig;
-  double LJ_cut;
-  double LJ_shift;
-  double LJ_offset;
-  double LJ_capradius;
+	/** \name Lennard-Jones with shift */
+	/*@{*/
+	double LJ_eps;
+	double LJ_sig;
+	double LJ_cut;
+	double LJ_shift;
+	double LJ_offset;
+	double LJ_capradius;
+	double LJ_min;
   /*@}*/
 #endif
 

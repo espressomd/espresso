@@ -38,6 +38,9 @@ MDINLINE int printljIAToResult(Tcl_Interp *interp, int i, int j)
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->LJ_capradius, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
+  Tcl_PrintDouble(interp, data->LJ_min, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
+
   
   return TCL_OK;
 }
@@ -57,7 +60,7 @@ MDINLINE int ljforcecap_set_params(double ljforcecap)
 MDINLINE int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double cut,
 				      double shift, double offset,
-				      double cap_radius)
+				      double cap_radius, double min)
 {
   IA_parameters *data, *data_sym;
 
@@ -82,6 +85,12 @@ MDINLINE int lennard_jones_set_params(int part_type_a, int part_type_b,
     data->LJ_capradius = cap_radius;
     data_sym->LJ_capradius = cap_radius;
   }
+
+  if (min > 0) {
+	  data->LJ_min = min;
+	  data_sym->LJ_min = min;	  
+  }
+  
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -133,7 +142,7 @@ MDINLINE int lj_parser(Tcl_Interp * interp,
 		       int argc, char ** argv)
 {
   /* parameters needed for LJ */
-  double eps, sig, cut, shift, offset, cap_radius;
+  double eps, sig, cut, shift, offset, cap_radius, min;
   int change;
 
   /* get lennard-jones interaction type */
@@ -158,14 +167,18 @@ MDINLINE int lj_parser(Tcl_Interp * interp,
   change = 6;
 	
   cap_radius = -1.0;
+  min = 0.;  
   /* check wether there is an additional double, cap radius, and parse in */
-  if (argc >= 7 && ARG_IS_D(6, cap_radius))
-    change++;
+  if (argc >= 7 && ARG_IS_D(6, cap_radius)){
+	  change++;
+	  if (argc >= 8 && ARG_IS_D(7, min))
+		  change++;	  
+  }
   else
     Tcl_ResetResult(interp);
   if (lennard_jones_set_params(part_type_a, part_type_b,
 			       eps, sig, cut, shift, offset,
-			       cap_radius) == TCL_ERROR) {
+			       cap_radius, min) == TCL_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
@@ -179,7 +192,8 @@ MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 {
   int j;
   double r_off, frac2, frac6, fac=0.0;
-  if CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset)
+  if (CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
+	  CUTOFF_CHECK(dist > ia_params->LJ_min+ia_params->LJ_offset))
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */
@@ -229,7 +243,8 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 				double d[3], double dist)
 {
   double r_off, frac2, frac6;
-  if CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset)
+  if (CUTOFF_CHECK(dist < ia_params->LJ_cut+ia_params->LJ_offset) &&
+	  CUTOFF_CHECK(dist > ia_params->LJ_min+ia_params->LJ_offset))
   {
     r_off = dist - ia_params->LJ_offset;
     /* normal case: resulting force/energy smaller than capping. */

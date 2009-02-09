@@ -126,12 +126,13 @@ void adress_force_and_energy_tables_init() {
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
 #ifdef LENNARD_JONES
-  params->LJ_eps =
-    params->LJ_sig =
-    params->LJ_cut =
-    params->LJ_shift =
-    params->LJ_offset =
-    params->LJ_capradius = 0;
+	params->LJ_eps =
+		params->LJ_sig =
+		params->LJ_cut =
+		params->LJ_shift =
+		params->LJ_offset =
+		params->LJ_capradius = 0;
+	params->LJ_min = 0;  
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
