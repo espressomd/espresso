@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1t (Alsheim)                                                                    *
+* v2.1.1u (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1t -
+- v2.1.1u -
 -----------
 
+(u) February   9th, 2009.
 (t) January   31st, 2009.
 (s) January   23rd, 2009.
 (r) January   19th, 2009.
@@ -33,6 +34,7 @@ Current working revision.
 (a) August    28th, 2008.
 
 New Features:
+(u) r_min for lennard-jones
 (t) separated electro- and magnetostatics. Instead of configuring for either
     electrostatics or magnetostatics using the DIPOLES switch, there is now a
     switch MAGNETOSTATICS to activate magnetic dipolar interactions. Using both
