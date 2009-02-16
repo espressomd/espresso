@@ -105,14 +105,17 @@ section~\ref{sec:forcecap}.
 
 The traditional Lennard--Jones potential is the ``work--horse''
 potential for particle--particle interactions in coarse--grained
-simulations. It is a simple model of the van--der--Waals interaction,
+simulations.  It is a simple model of the van--der--Waals interaction,
 and is attractive at large distance, but strongly repulsive at short
-distances. $\var{r_\mathrm{off}} + \var{\sigma}$ corresponds to the sum
-of the radii of the interaction particles; at this radius, the
-potential equals to $\var{\epsilon}(1+\var{c_\mathrm{shift}})$. The
-attractive part starts beyond $\var{r} = \var{r_\mathrm{off}} +
-\sqrt[6]{\var{\sigma}}$.  \var{r_\mathrm{cut}} determines the radius where
-the potential is cut off. Typically, one will choose the shift such
+distances.  $\var{r_\mathrm{off}} + \var{\sigma}$ corresponds to the
+sum of the radii of the interaction particles; at this radius,
+$V_\mathrm{LJ}(\var{r}) = 4 \var{\epsilon} \var{c_\mathrm{shift}}$.
+The minimum of the potential is at $\var{r} = \var{r_\mathrm{off}} +
+2^\frac{1}{6}\var{\sigma}$.  At this value of $r$, $V_\mathrm{LJ}(r) =
+-\var{\epsilon} + 4 \var{\epsilon} \var{c_\mathrm{shift}}$. The
+attractive part starts beyond this value of $\var{r}$.
+$\var{r_\mathrm{cut}}$ determines the radius where the potential is
+cut off. Typically, one will choose the $\var{c_\mathrm{shift}}$ such,
 that the potential is continuous at the cutoff radius.
 
 A special case of the Lennard--Jones potential is the
@@ -126,9 +129,9 @@ The capping can be defined using the \var{r_\mathrm{cap}} variable, set to 0
 by default (no capping).
 
 An additional parameter can be used to restrict the interaction from a
-\emph{minimal} distance \var{r_{\mathrm min}}. This is an optional parameter,
-set to 0 by default. (Note: \var{r_{\mathrm min}} has only been implemented for 
-\verb lennard-jones .) 
+\emph{minimal} distance $\var{r_\mathrm{min}}$. This is an optional
+parameter, set to 0 by default. (Note: $\var{r_\mathrm{ min}}$ has
+only been implemented for \verb lennard-jones .)
 
 \subsection{Lennard-Jones cosine interaction}
 \index{Lennard-Jones cosine interaction|mainindex}
