@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.1u (Alsheim)                                                                    *
+* v2.1.1v (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.1u -
+- v2.1.1v -
 -----------
 
+(v) February  16th, 2009.
 (u) February   9th, 2009.
 (t) January   31st, 2009.
 (s) January   23rd, 2009.
@@ -58,6 +59,8 @@ Changes:
     output can actually be fed back into inter coulomb as intended
 
 Bugfixes:
+(v) Fixed some documentation errors in the Lennard-Jones description. Thanks to
+    Ahmad A. J. Agung!
 (s) fixed a bug in "analyze energy coulomb" which would report a random
     energy/pressure if no electrostatics method is switched on.
 (r) Re-added configure-ac and Makefile-am.in after dead revision
