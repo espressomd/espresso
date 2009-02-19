@@ -513,18 +513,15 @@ successfully connected.
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
   
-  \require{4}{%
-    \variant{9} 
-    constraint plane cell \var{x} \var{y} \var{z} 
-    type \var{id}
-  }
+  \variant{9} 
+  constraint plane cell \var{x} \var{y} \var{z} 
+  type \var{id}
 
   \begin{features}
     \required{CONSTRAINTS}
     \required[1]{ELECTROSTATICS}
     \required[2]{ROTATION}
     \required[3]{DIPOLES}
-    \required[4]{Essential for TUNABLE_SLIP boundary interactions} 
   \end{features}
 \end{essyntax}
 
@@ -579,36 +576,36 @@ symmetry. The spheres are distributed evenly by dividing the
 \var{d}: 0 for one dimensional, 1 for two dimensional and 2 for three
 dimensional maze.
 
-Variant \variant{5} sets up a cylindrical pore similar to variant \variant{3} 
-with a center
-\var{c_x}
-\var{c_y}
-\var{c_z} and radius \var{rad}. The \var{length} parameter is \textbf{half} 
-of the cylinder length. The \var{axis} is a
-vector along the cylinder axis, which is normalized in the program.
-\todo{Is this command obsolete? Cylinder?}
+Variant \variant{5} sets up a cylindrical pore similar to variant
+\variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
+\var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
+length. The \var{axis} is a vector along the cylinder axis, which is
+normalized in the program.
 
-Variant \variant{6} specifies an electrostatic interaction between the charged
-particles in the system to an infinitely long rod with a
-line charge of \var{lambda} which is alinge along the z-axis and centered at
-\var{c_x} and \var{c_y}.
+Variant \variant{6} specifies an electrostatic interaction between the
+charged particles in the system to an infinitely long rod with a line
+charge of \var{lambda} which is alinge along the z-axis and centered
+at \var{c_x} and \var{c_y}.
 
-Variant \variant{7} specifies the electrostatic interactinos between the charged
-particles in the system and an inifinitely large plate in the x-y-plane at
-height \var{h}. The plate carries a charge density of \var{sigma}.
+Variant \variant{7} specifies the electrostatic interactinos between
+the charged particles in the system and an inifinitely large plate in
+the x-y-plane at height \var{h}. The plate carries a charge density of
+\var{sigma}.
   
-Variant \variant{8} specifies the dipolar coupling of particles with a dipolar
-moment to an external field \var{f_x} \var{f_y} \var{f_z}. 
+Variant \variant{8} specifies the dipolar coupling of particles with a
+dipolar moment to an external field \var{f_x} \var{f_y} \var{f_z}.
 
 Variant \variant{9} creates an infinite plane at a fixed position. For
-non-initializing a direction of the constraint values of the positions 
-have to be negative. For the tunable-slip boundary
-interactions you have to set {\bf two} constraints.\\
-{\em Example:} 
-\var{x}=-10.0,
-\var{y}=-10.0,
-\var{z}=20.0
-creates an infinite plane in $z$-direction at $z=20.0$.
+non-initializing a direction of the constraint values of the positions
+have to be negative. For the tunable-slip boundary interactions you
+have to set \emph{two} constraints.
+
+\minisec{Example}
+To create an infinite plane in $z$-direction at $z=20.0$ of type id 1,
+use:
+\begin{code}
+  constraint plane cell -10 -10 20 type 1
+\end{code}
 
 \subsection{Deleting a constraint}
 \begin{essyntax}
