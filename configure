@@ -25,7 +25,7 @@ else
 # otherwise, start subconfigure from the same directory 
 # this was called from
     echo "no"
-    echo "Running configure-ac..."
+    echo "Running $0-ac..."
     case $# in
 	0) /bin/sh $0-ac;;
 	*) /bin/sh $0-ac "$@";;
