@@ -28,17 +28,20 @@ Features can be activated in the configuration header
 \item \newfeature{ELECTROSTATICS} This switches on the various
   electrostatics algorithms, such as P3M. See section
   \vref{sec:inter-electrostatics} for details on these algorithms.
+\item \newfeature{MAGNETOSTATICS} In analogy to ELECTROSTATICS, this
+  switches on the various magnetostatics algorithms, such as P3M.  See
+  section \vref{sec:inter-electrostatics} for details on these
+  algorithms.  Requires \texttt{DIPOLES} and \texttt{ROTATION}.
+\item \newfeature{DIPOLES} This activates the dipole-moment property of
+  particles; you probably also want to activate MAGNETOSTATICS to get any
+  interactions for the dipoles. Requires \texttt{ROTATION}.
 \item \newfeature{ROTATION} Switch on rotational degrees of freedom for
   the particles, as well as the corresponding quaternion integrator.
   See section \vref{sec:rotation} for details. Note, that when the
   feature is activated, every particle has three additional degrees of
-  freedom, which might severely influence the temperature
-  measurements.
+  freedom, which for example means that the kinetic energy changes at
+  constant temperature is twice as large.
   \todo{Docs for rotation missing}
-\item \newfeature{DIPOLES} This activates the dipole support in P$^3$M.
-  Currently, a mixing of dipoles and charges is not possible, \ie all
-  particles have to have charge $q=0$.  Requires
-  \texttt{ELECTROSTATICS} and \texttt{ROTATION}.
 \item \newfeature{EXTERNAL\_FORCES} Allows to define an arbitrary
   constant force for each particle individually. Also allows to fix
   individual coordinates of particles, \eg keep them at a fixed
@@ -48,6 +51,9 @@ Features can be activated in the configuration header
   the particles through regular short ranged potentials such as the
   Lennard--Jones potential. See section \vref{tcl:constraint} for
   possible constraint forms.
+\item \newfeature{TUNABLE\_SLIP} Switch on tunable slip conditions for
+  planar wall boundary conditions. See section \vref{sec:tunableSlip}
+  for details.
 \item \newfeature{MASS} Allows particles to have individual masses. Note
   that some analysis procedures have not yet been adapted to take the
   masses into account correctly.
@@ -58,17 +64,30 @@ Features can be activated in the configuration header
 \item \newfeature{MOLFORCES} \todo{Docs missing}
 \item \newfeature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which
   allows for fixed lengths bonds between particles. \todo{How to use it?}
+\item \newfeature{OLD_RW_VERSION} This switches back to the old,
+\emph{wrong} random walk code of the polymer. Only use this if you
+rely on the old behaviour and \emph{know what you are doing}.
 \end{itemize}
 
 In addition, there are switches that enable additional features in the
-integrator:
+integrator or thermostat:
 \begin{itemize}
 \item \newfeature{NEMD} Enables the non-equilbrium (shear) MD support
   (see section \vref{sec:NEMD}).\todo{Docs missing}
 \item \newfeature{NPT} Enables an on--the--fly NPT integration scheme
   (see section \vref{sec:NPT}).\todo{Docs missing}
 \item \newfeature{DPD} Enables the dissipative particle dynamics
-  thermostat (see section \vref{sec:DPD}).\todo{Docs missing}
+  thermostat (see section \vref{sec:DPD}).
+\item \newfeature{TRANS\_DPD} Enables the transversal dissipative
+  particle dynamics thermostat (see section \vref{sec:transDPD}).
+\item \newfeature{INTER\_DPD} Enables the dissipative
+  particle dynamics thermostat implemented as an interaction,
+  allowing to choose different parameters between different particle
+  types (see section \vref{sec:interDPD}).
+\item \newfeature{DPD\_MASS\_RED} Enables masses in DPD using reduced,
+  dimensionless mass units.
+\item \newfeature{DPD\_MASS\_LIN} Enables masses in DPD using absolute
+  mass units.
 \item \newfeature{LB} Enables the lattice-Boltzmann fluid code (see
   section \vref{sec:LB}).\todo{Docs missing}
 \end{itemize}
@@ -81,14 +100,30 @@ The following switches turn on various short ranged interactions (see section
 \item \newfeature{TABULATED} Enable support for user--defined
   interactions.
 \item \newfeature{LENNARD\_JONES} Enable the Lennard--Jones potential.
-\item \newfeature{LJ\_WARN\_WHEN\_CLOSE} This adds an additional check to
-  the Lennard--Jones potential that prints a warning of particles come
-  too close so that the simulation becomes unphysical.
-\item \newfeature{MORSE} Enable the Morse potential.
+\item \newfeature{LENNARD\_JONES\_GENERIC} Enable the generic
+  Lennard--Jones potential with configurable exponents and individual
+  prefactors for the two terms.
 \item \newfeature{LJCOS} Enable the Lennard--Jones potential with a cosine--tail.
-\item \newfeature{LJCOS2}
+\item \newfeature{LJCOS2} Same as LJCOS, but using a slightly different way of
+  smoothing the connection to 0.
+\item \newfeature{LJ\_ANGLE} Enable the directional Lennard--Jones potential.
+\item \newfeature{MORSE} Enable the Morse potential.
 \item \newfeature{BUCKINGHAM} Enable the Buckingham potential.
 \item \newfeature{SOFT\_SPHERE} Enable the soft sphere potential.
+\item \newfeature{SMOOTH\_STEP} Enable the smooth step potential, a
+  step potential with two length scales.
+\item \newfeature{BMHTF_NACL} Enable the Born-Meyer-Huggins-Tosi-Fumi potential,
+  which can be used to model salt melts.
+\end{itemize}
+
+Some of the short range interactions have additional features:
+\begin{itemize}
+\item \newfeature{LJ\_WARN\_WHEN\_CLOSE} This adds an additional check to
+  the Lennard--Jones potentials that prints a warning if particles come
+  too close so that the simulation becomes unphysical.
+\item \newfeature{OLD_DIHEDRAL} Switch the interface of the dihedral potential
+  to its old, less flexible form. Use this for older scripts that are not yet
+  adapted to the new interface of the dihedral potential.
 \end{itemize}
 
 If you want to use bondangle potentials, you currently need to choose
@@ -143,6 +178,7 @@ looking directly at the code.
 \item \newfeature{MAGGS\_DEBUG}
 \item \newfeature{RANDOM\_DEBUG}
 \item \newfeature{FORCE\_DEBUG} Output from the force calculation loops.
+\item \newfeature{PTENSOR\_DEBUG} Output from the pressure tensor calculation loops.
 \item \newfeature{THERMO\_DEBUG} Output from the thermostats.
 \item \newfeature{LJ\_DEBUG} Output from the Lennard--Jones code.
 \item \newfeature{MORSE\_DEBUG} Output from the Morse code.

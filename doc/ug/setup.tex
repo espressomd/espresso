@@ -219,9 +219,11 @@ Two restrictions apply for the dpd implementation of \es:
       if  ROTATION is switched on. Up to the current version DPD only acts on the translatorial
       degrees of freedom.
 \end{itemize}
-\subsubsection{Transverse DPD thermostat}
+
+\subsubsection{Transverse DPD thermostat}\label{sec:transDPD}
 This is an extension of the above thermostat\cite{junghans2008}, which dampes the degrees of freedom
-perpendicular on the axis between two particles.
+perpendicular on the axis between two particles. To switch it on, the feature TRANS_DPD is required.
+
 The dissipative force is calculated by
 
 $$ \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}$$
@@ -232,25 +234,31 @@ $$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdo
 
 The parameters \var{tgamma} \var{tr\_cut} define the strength of the friction and the cutoff in the same way as above.
 NOTE: That this thermostat does NOT conserve angular momentum!!!!
-\subsubsection{Interaction DPD thermostat}
+
+\subsubsection{Interaction DPD thermostat}\label{sec:interDPD}
 The DPD thermostat can also be set up as a normal interaction to make friction between different particle types different.
+
 \begin{essyntax}
   thermostat inter_dpd \var{temperature}
 \end{essyntax}
 and
 \begin{essyntax}
   inter \var{type1} \var{type2} inter_dpd \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
+  \begin{features}
+    \required{INTER_DPD}
+  \end{features}
 \end{essyntax}
-\subsubsection{Other DPD extension}
-The feature DPD_MASS make the friction constant mass dependent:
+
+\subsubsection{Other DPD extensions}
+The features DPD_MASS_RED or DPD_MASS_LIN make the friction constant mass dependent:
 $$ \zeta \to \zeta M_{ij} $$ 
 and 
 $$ \zeta \to \zeta M_{ij} $$
-There are two case implemented DPD_MASS_RED uses the reduced mass:
+There are two cases implemented. DPD_MASS_RED uses the reduced mass:
 $$ M_{ij}=2\frac{m_i m_j}{m_i+m_j} $$
-There are two case implemented DPD_MASS_LIN uses the reduced mass:
+while DPD_MASS_LIN uses the real mass mass:
 $$ M_{ij}=\frac{m_i+m_j}{2} $$
-The prefactor are due to make equal masses have a factor 1.
+The prefactors are such that equal masses result in a factor 1.
 
 \subsection{Isotropic NPT thermostat}
 \begin{essyntax}
