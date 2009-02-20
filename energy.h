@@ -219,8 +219,8 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     case DIPOLAR_P3M:
       ret = p3m_dipolar_pair_energy(p1,p2,d,dist2,dist); 
       break;
-    }
 #endif 
+    }
     energy.dipolar[0] += ret;
   }
 #endif

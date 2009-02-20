@@ -568,9 +568,11 @@ void mpi_bcast_event_slave(int node, int event)
 #endif
 
 #ifdef MAGNETOSTATICS
+#ifdef ELP3M
   case P3M_COUNT_DIPOLES:
     P3M_count_magnetic_particles();
     break;
+#endif
 #endif 
 
   default:;

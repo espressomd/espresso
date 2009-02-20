@@ -216,12 +216,12 @@ void on_observable_calc()
   if(reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
     switch (coulomb.Dmethod) {
-    #ifdef ELP3M
+#ifdef ELP3M
     case DIPOLAR_DLC_P3M:
     case DIPOLAR_P3M:
       P3M_count_magnetic_particles();
       break;
-    #endif
+#endif
     default: break;
     }
     reinit_magnetostatics = 0;
@@ -292,8 +292,8 @@ void on_coulomb_change()
   
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-    case DIPOLAR_DLC_P3M:
-      fprintf(stderr," DLC still not done... \n");
+  case DIPOLAR_DLC_P3M:
+    fprintf(stderr," DLC still not done... \n");
     // fall through
   case DIPOLAR_P3M:
     P3M_init_dipoles();
@@ -399,12 +399,12 @@ void on_NpT_boxl_change(double scal1) {
 
 #ifdef MAGNETOSTATICS
   switch(coulomb.Dmethod) {
-  #ifdef ELP3M
+#ifdef ELP3M
   case DIPOLAR_P3M:
     P3M_scaleby_box_l_dipoles();
     integrate_vv_recalc_maxrange();
     break;
-  #endif
+#endif
   default: break;
   }
 #endif
@@ -498,7 +498,7 @@ void on_parameter_change(int field)
 
 #ifdef MAGNETOSTATICS
   switch (coulomb.Dmethod) {
-   #ifdef ELP3M
+#ifdef ELP3M
     case DIPOLAR_DLC_P3M:
      if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
        cc = 1;
@@ -512,7 +512,7 @@ void on_parameter_change(int field)
         integrate_vv_recalc_maxrange(); 
       }
       break;
-   #endif
+#endif
   default: break;
   }
 #endif /*ifdef MAGNETOSTATICS */
