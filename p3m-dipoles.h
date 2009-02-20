@@ -290,7 +290,10 @@ MDINLINE double add_p3m_dipolar_pair_force(Particle *p1, Particle *p2,
 					   double *d,double dist2,double dist,double force[3])
 {
   int j;
-  double fac1, adist, erfc_part_ri, coeff, exp_adist2, dist2i;
+#ifdef NPT
+  double fac1;
+#endif
+  double adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r, D_r;
   double alpsq = p3m.Dalpha * p3m.Dalpha;
