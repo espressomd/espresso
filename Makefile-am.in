@@ -74,6 +74,7 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	statistics.c statistics.h statistics_chain.c \
 	statistics_chain.h energy.c energy.h pressure.c pressure.h \
 	vmdsock.c vmdsock.h imd.c imd.h iccp3m.c iccp3m.h p3m.c p3m.h \
+	magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h \
 	ewald.c ewald.h fft.c fft.h random.c random.h blockfile.c \
 	blockfile.h blockfile_tcl.c blockfile_tcl.h polymer.c \
 	polymer.h specfunc.c specfunc.h tuning.c tuning.h uwerr.c \
@@ -82,6 +83,7 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	mmm-common.c mmm-common.h mmm1d.c mmm1d.h mmm2d.c mmm2d.h \
 	modes.c modes.h topology.c topology.h nemd.c nemd.h \
 	statistics_cluster.c statistics_cluster.h elc.c elc.h \
+	mdlc_correction.c mdlc_correction.h \
 	statistics_molecule.c statistics_molecule.h errorhandling.c \
 	errorhandling.h constraint.c constraint.h maggs.c maggs.h \
 	mol_cut.h rattle.c rattle.h molforces.c molforces.h \
@@ -105,6 +107,7 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	thermostat.$(OBJEXT) dpd.$(OBJEXT) statistics.$(OBJEXT) \
 	statistics_chain.$(OBJEXT) energy.$(OBJEXT) pressure.$(OBJEXT) \
 	vmdsock.$(OBJEXT) imd.$(OBJEXT) iccp3m.$(OBJEXT) p3m.$(OBJEXT) \
+	magnetic_non_p3m__methods.$(OBJEXT) \
 	ewald.$(OBJEXT) fft.$(OBJEXT) random.$(OBJEXT) \
 	blockfile.$(OBJEXT) blockfile_tcl.$(OBJEXT) polymer.$(OBJEXT) \
 	specfunc.$(OBJEXT) tuning.$(OBJEXT) uwerr.$(OBJEXT) \
@@ -113,6 +116,7 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	mmm1d.$(OBJEXT) mmm2d.$(OBJEXT) modes.$(OBJEXT) \
 	topology.$(OBJEXT) nemd.$(OBJEXT) statistics_cluster.$(OBJEXT) \
 	elc.$(OBJEXT) statistics_molecule.$(OBJEXT) \
+	mdlc_correction.$(OBJEXT) \
 	errorhandling.$(OBJEXT) constraint.$(OBJEXT) maggs.$(OBJEXT) \
 	rattle.$(OBJEXT) molforces.$(OBJEXT) virtual_sites.$(OBJEXT) \
 	lb.$(OBJEXT) bin.$(OBJEXT) lattice.$(OBJEXT) halo.$(OBJEXT) \

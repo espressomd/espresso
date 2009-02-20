@@ -433,6 +433,30 @@ convert_torques_body_to_space(part, torque);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
+/* part_print_torque_body_frame: function to have the possiblility of
+   printing also the torques in the body_frame to make compatible the
+   manual recovery of saved configurations with the use of the instruction  
+   part $i torque tx,ty,tz  to assign torques in the new run. The torques in
+   the body frame can be printed using "part $i print torquebf" */ 
+ void part_print_torque_body_frame(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  double torque[3];
+
+// Directly without conversion because we want the body-frame torques, not the body-space torques
+
+  torque[0]=part->f.torque[0];
+  torque[1]=part->f.torque[1];
+  torque[2]=part->f.torque[2];
+
+  Tcl_PrintDouble(interp, torque[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, torque[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, torque[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+
+
 void part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->r.quat[0], buffer);
@@ -862,6 +886,8 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       part_print_omega(&part, buffer, interp);
     else if (ARG0_IS_S("torque"))
       part_print_torque(&part, buffer, interp);
+    else if (ARG0_IS_S("tbf"))
+      part_print_torque_body_frame(&part, buffer, interp);
 #endif
 
 #ifdef DIPOLES
@@ -1026,7 +1052,9 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double dip[3];
+  #ifdef ROTATION
   double quat[4];
+  #endif
   double dipm;
   *change = 3;
 
@@ -1052,8 +1080,9 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
     return TCL_ERROR;
   }
 
+#ifdef ROTATION
   convert_dip_to_quat_one(dip, quat);
-
+#endif
   if (set_particle_dip(part_num, dip) == TCL_ERROR) {
    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
 
@@ -1065,13 +1094,13 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
 
       return TCL_ERROR;
    }
-
+#ifdef ROTATION
   if (set_particle_quat(part_num, quat) == TCL_ERROR) {
    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
 
     return TCL_ERROR;
   }
-
+#endif
   return TCL_OK;
 }
 
@@ -1972,8 +2001,10 @@ int set_particle_dipm(int part, double dipm)
 int set_particle_dip(int part, double dip[3])
 {
   int pnode;
+  #ifdef ROTATION
   double quat[4];
-
+  #endif
+  
   if (!particle_node)
     build_particle_node();
 
@@ -1984,9 +2015,10 @@ int set_particle_dip(int part, double dip[3])
   if (pnode == -1)
     return TCL_ERROR;
   mpi_send_dip(pnode, part, dip);
-
+#ifdef ROTATION
   convert_dip_to_quat_one(dip, quat);
   mpi_send_quat(pnode, part, quat);
+#endif
   return TCL_OK;
 }
 

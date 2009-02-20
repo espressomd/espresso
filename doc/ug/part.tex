@@ -64,7 +64,11 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   \item[\opt{omega \var{x} \var{y} \var{z}}] \todo{Docs
   required (JC?).} 
   \item[\opt{torque \var{x} \var{y} \var{z}}] \todo{Docs
-  required (JC?).}
+  required (JC?).} When printing the values, unsing {\em part id_particle print} there is an alternative named
+  \opt{tbf} which gives you the values of the torque in the body frame.  Be aware: the values obtained when printing using \opt{torque}
+  are computed in the frame laboratory and are the ones one should usually look at. Nonetheless,  in case you 
+  introduce torques using \opt{torque} option, espresso will assume they are given  in the body-frame. Thus \opt{tbf} is useful
+  to know which should be the numerical values you should reintroduce in order to have exactly the same conformation.
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For

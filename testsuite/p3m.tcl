@@ -19,8 +19,8 @@ set errf [lindex $argv 1]
 proc error_exit {error} {
     global errf
     set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
+   puts $f "Error occured: $error"
+   close $f
     exit -666
 }
 
@@ -53,7 +53,7 @@ if { [regexp "MAGNETOSTATICS" [code_info]]} {
 	puts "magnetostatics only runs on 1 CPU currently"
     }
 } else {
-    puts "NO MAGNETOSTATICS"  
+    puts "NO MAGNETOSTATICS "  
 }
 
 

@@ -19,9 +19,18 @@ puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
 # test-1:  compute trajectories for a dipolar system of two particles using the dipolar P3M-algorithm 
 #          and compare against well-know trajectories:
 #          aim: discover errors in MAGNETOSTATICS, DIPOLES, ROTATION, INTEGRATION and
-#               CONTRAINT for MAGNETIC FIELD
+#               CONSTRAINT for MAGNETIC FIELD
+#
+# NB:      In this first test, we also test the ability of changing epsilon to metallic BC, which
+#          has no sense for true magnetic simulations but is a nice feature for future electic dipoles
 #=======================================================================================================
-   
+
+if { ![regexp "CONSTRAINTS " [code_info]]} { 
+ 	puts "test-1 needs the flag   CONSTRAINTS on. Test-1 Skipped."
+	puts "Enabling the flag CONSTRAINTS for checking purposes is strongly recommended"
+	error_exit $res
+ }  
+    
 if { [catch {
 
     set tcl_precision 15
@@ -43,15 +52,16 @@ if { [catch {
     part 0 torque 0 0 0
     part 1 torque 0 0 0
 
-    puts "Imposing magnetostatics (can take some time)"
+    puts "Imposing magnetostatics (epsilon changed on purpose, disregard warning message about epsilon)"
 
  
     inter magnetic 1 p3m 5 32 7  0.3
     inter magnetic n_interpol  0
     inter magnetic mesh_off 0 0 0
+    inter magnetic epsilon metallic    ;#see reasons above
  
     constraint ext_magn_field 0 0 15
-
+   
 
     #------ create the trajectory of the two particles --------   
     puts "Start integration of the 2-particle system ..." 
@@ -79,6 +89,7 @@ if { [catch {
 	      set a1 [lindex $k1 $j]
 	      set diff [expr abs($a-$a1)]
 	       if {$diff > 1.0e-8} {
+	           puts "mismatch in the trajectories $i_step $i $j >>> $diff"
 	           error "mismatch in the trajectories $i_step $i $j"
 	       }
 	  }

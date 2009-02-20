@@ -19,7 +19,10 @@
  NB: In general the magnetic dipole-dipole functions bear the same name than the charge-charge but,
      adding in front of the name a D   and replacing where "charge" appears by "dipole". In this way
      one can recognize the similarity of the functions but avoiding nasty confusions in their use.
- 
+
+ PS: By default the magnetic epsilon is 1, it has no sense to change the epsilon in magnetic cases, 
+     but we left along the code the epsilon handling because in this way in the future it will be
+     easier to map to the electrical dipoles. Please do not get rid of the epsilon along the code.  
 */
 
 #ifdef MAGNETOSTATICS
@@ -104,6 +107,10 @@
   
   /** Allocation size of Dsend_grid and Drecv_grid. */
    int Dsend_recv_grid_size=0;
+   
+   /**Flag to know if we should calculate the constants for the energy 
+    (If you neither compute the energy, is a waste of time spendig circa 3 or 4 min computing such constants **/
+   int  Dflag_constants_energy_dipolar=0;
 
 
 /** \name Private Functions */
@@ -188,6 +195,9 @@ void Dcalc_influence_function_force();
 /** Calculates the influence function optimized for the dipolar energy and torques. */
 void Dcalc_influence_function_energy();
 
+/** Calculates the constants necessary to correct the dipolar energy to minimize the error. */
+ void compute_constants_energy_dipolar();
+ 
 /** Calculates the aliasing sums for the optimal influence function.
  *
  * Calculates the aliasing sums in the nominator and denominator of
@@ -347,7 +357,7 @@ double P3M_Average_dipolar_SelfEnergy(double box_l, int mesh) {
      phi*=PI/3./box_l/pow(mesh,3);
      
 
-   return phi*p3m_sum_mu2 ;
+   return phi ;
 }
 
 
@@ -472,11 +482,15 @@ int Dp3m_set_mesh_offset(double x, double y, double z)
 
 
 /*****************************************************************************/
-
+/* We left the handling of the epsilon, duer to portability reasons in the future for the electrical dipoles,
+or if people wants to do electrical dipoles alone using the magnetic code .. */
 
 int Dp3m_set_eps(double eps)
 {
   p3m.Depsilon = eps;
+
+  fprintf(stderr,">> p3m.Depsilon =%lf\n",p3m.Depsilon);
+  fprintf(stderr,"if you are doing true MAGNETIC CALCULATIONS the value of Depsilon should be 1, if you change it, you go on your own risk ...\n");
 
   mpi_bcast_coulomb_params();
 
@@ -584,7 +598,7 @@ int Dinter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
   double r_cut, alpha, accuracy = -1.0;
   int mesh, cao, i;
 
-  if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_DLC_P3M)
+  if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
     coulomb.Dmethod = DIPOLAR_P3M;
     
 #ifdef PARTIAL_PERIODIC
@@ -809,7 +823,7 @@ void interpolate_dipole_assignment_function()
 /*****************************************************************************/
 
 
-/* assign the charges */
+/* assign the dipoles */
 void P3M_dipole_assign()
 {
   Cell *cell;
@@ -843,7 +857,7 @@ void P3M_dipole_assign()
 
 
 
-
+#ifdef ROTATION
 /* assign the torques obtained from k-space */
 static void P3M_assign_torques(double prefac, int d_rs)
 {
@@ -901,7 +915,7 @@ Since the torque is the dipole moment cross-product with E, we have:
     }
   }
 }
-
+#endif
 /*****************************************************************************/
 
 
@@ -1011,7 +1025,13 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
     node_k_space_energy_dip *= dipole_prefac * PI / box_l[0];
     MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
    
+   if (Dflag_constants_energy_dipolar==0) {Dflag_constants_energy_dipolar=1;}
+   compute_constants_energy_dipolar(); 
+   
     k_space_energy_dip+= coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+   
+   /*fprintf(stderr,"p3m.Depsilon=%lf\n", p3m.Depsilon);
+   fprintf(stderr,"*Dipolar_energy_correction=%20.15lf\n",Dipolar_energy_correction);*/
    
     if(this_node==0) {
       /* self energy correction */
@@ -1025,11 +1045,12 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 
   /* === K Space Force Calculation  === */
   if(force_flag) {
- /***************************        
+  /***************************        
    DIPOLAR TORQUES (k-space)
 ****************************/
   if (p3m_sum_mu2 > 0) {
-    P3M_TRACE(fprintf(stderr,"%d: dipolar p3m start torques calculation: k-Space\n",this_node));
+ #ifdef ROTATION
+   P3M_TRACE(fprintf(stderr,"%d: dipolar p3m start torques calculation: k-Space\n",this_node));
 
     /* fill in ks_mesh array for torque calculation */
     ind=0;
@@ -1081,7 +1102,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       /* Assign force component from mesh to particle */
       P3M_assign_torques(dipole_prefac*(2*PI/box_l[0]), d_rs);
     }
-    
+ #endif  /*if def ROTATION */ 
     
 /***************************
    DIPOLAR FORCES (k-space)
@@ -1153,20 +1174,10 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
  } /* of if (p3m_sum_mu2>0 */
 } /* of if(force_flag) */
 
+ 
   if (p3m.Depsilon != P3M_EPSILON_METALLIC) {
-
-
     k_space_energy_dip += calc_surface_term(force_flag, energy_flag);
-    fprintf(stderr," dipolar P3M: using non-metallic boundary condition, TRIAL VERSION BY JJ, BE CAREFUL \n");
-    fprintf(stderr," surface dipolar torques contributions more or less tested, surface dipolar energy contribution not tested \n");
-    
-    //Warning: I'm not sure about the sign minus in the next line, I think should be a plus, but by analogy
-    //with how sb do it for the electrostatic case I left it in the same way ... To be tested
-    
-    k_space_energy_dip -= calc_surface_term(force_flag, energy_flag);//Inserted by JJCP on 10/8/06 
-
-
-  }
+   }
 
 
   return k_space_energy_dip;
@@ -1270,7 +1281,7 @@ double calc_surface_term(int force_flag, int energy_flag)
   	 //    fprintf(stderr,"part %d, correccions torque  x:%le, y:%le, z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
          // }
 	      
-	      
+          #ifdef ROTATION	      
           for (c = 0; c < local_cells.n; c++) {
              np	= local_cells.cell[c]->n;
              part = local_cells.cell[c]->part;
@@ -1280,15 +1291,14 @@ double calc_surface_term(int force_flag, int energy_flag)
 		
 	        // fprintf(stderr,"part %d, torque abans %le %le %le\n",ip,part[i].f.torque[0],part[i].f.torque[1],part[i].f.torque[2]);
 	      
-	      
 		part[i].f.torque[0] -= pref*sumix[ip];
 		part[i].f.torque[1] -= pref*sumiy[ip];
 		part[i].f.torque[2] -= pref*sumiz[ip];
 		
 	       // fprintf(stderr,"part %d, torque despres %le %le %le\n",ip,part[i].f.torque[0],part[i].f.torque[1],part[i].f.torque[2]);
-
-	     }	
+ 	     }	
           }
+          #endif
 	     
 	  free(sumix);     
   	  free(sumiy);     
@@ -1937,11 +1947,11 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   *_r_cut_iL = r_cut_iL = r_cut_iL_max;
 
   /* check whether we are running P3M+DLC, and whether we leave a reasonable gap space */
-  if (coulomb.Dmethod == DIPOLAR_DLC_P3M)   fprintf(stderr, "tunning when dlc needs to be fixed, p3m-dipoles.c \n");
+  if (coulomb.Dmethod == DIPOLAR_MDLC_P3M)   fprintf(stderr, "tunning when dlc needs to be fixed, p3m-dipoles.c \n");
   
   /*
   needs to be fixed
-  if (coulomb.method == DIPOLAR_DLC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
+  if (coulomb.method == DIPOLAR_MDLC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
     P3M_TRACE(fprintf(stderr, "Dp3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
 		      2*r_cut_iL*box_l[0], elc_params.gap_size));
     // print result 
@@ -2701,7 +2711,43 @@ void P3M_scaleby_box_l_dipoles() {
   DP3M_init_a_ai_cao_cut();
   Dcalc_lm_ld_pos();
   DP3M_sanity_checks_boxl();
+  Dflag_constants_energy_dipolar=0; /* to ensure constants will be computed in case you want to calculate the energy */
 }
+
+/*****************************************************************************/
+ 
+ 
+ /* fucntion to give the dipolar-P3M energy  correction -------*/
+ void compute_constants_energy_dipolar() {
+      double  Eself, Ukp3m;
+      double volume;
+ 
+       if(Dflag_constants_energy_dipolar==1) { 
+ 
+ /*             double sumi1_value,sumi2_value, Eself, Ukp3m, Uk, Ur_cut;
+                sumi1_value=JJ_sumi1(p3m.Dalpha_L);
+            sumi2_value=JJ_sumi2(p3m.Dalpha_L);
+             Eself=-1.*(*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
+	     Ukp3m=P3M_Average_dipolar_SelfEnergy(box_l[0],p3m.Dmesh[0]);
+	     Uk=4.*PI*p3m_sum_mu2/6./pow(box_l[0],3)*sumi1_value;
+	     Ur_cut=-p3m_sum_mu2*4.*pow(p3m.Dalpha_L*box_l_i[0],3)*wupii/6.*sumi2_value;	
+	     Dipolar_energy_correction= Eself + Uk - Ukp3m + Ur_cut;
+	     */
+	     
+	     Ukp3m=P3M_Average_dipolar_SelfEnergy(box_l[0],p3m.Dmesh[0]);
+             Eself=-(2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
+             volume=box_l[0]*box_l[1]*box_l[2];
+
+       	     Dipolar_energy_correction= - p3m_sum_mu2*(Ukp3m+Eself+2.*PI/(3.*volume));
+	     
+	     /*fprintf(stderr,"p3m_sum_mu2=%lf\n",p3m_sum_mu2);
+	     fprintf(stderr,"Ukp3m=%lf\n",Ukp3m);
+	     fprintf(stderr,"Eself=%lf\n",Eself);
+	     fprintf(stderr,"2.*PI/(3.*volume)=%lf\n",2.*PI/(3.*volume));*/
+	 
+	    Dflag_constants_energy_dipolar=2;
+        }
+  } 
 
 /*****************************************************************************/
 
@@ -2784,27 +2830,8 @@ void   P3M_init_dipoles() {
 
     P3M_count_magnetic_particles();
     
-    
-    
-       
-    /* ------------- Beginning correction of the dipolar-P3M energy -------*/
- 	 { 
-	    double sumi1_value,sumi2_value, Eself, Ukp3m, Uk, Ur_cut;
-
-            sumi1_value=JJ_sumi1(p3m.Dalpha_L);
-            sumi2_value=JJ_sumi2(p3m.Dalpha_L);
-             Eself=-1.*(p3m_sum_mu2*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
-	     Ukp3m=P3M_Average_dipolar_SelfEnergy(box_l[0],p3m.Dmesh[0]);
-	     Uk=4.*PI*p3m_sum_mu2/6./pow(box_l[0],3)*sumi1_value;
-	     Ur_cut=-p3m_sum_mu2*4.*pow(p3m.Dalpha_L*box_l_i[0],3)*wupii/6.*sumi2_value;	
-
-       	     Dipolar_energy_correction= Eself + Uk - Ukp3m + Ur_cut;
-         }    
-    /* ------------- End of the correction of the dipolar-P3M energy -----*/
+    Dflag_constants_energy_dipolar=0; /* to ensure constants will be computed in case you want to calculate the energy */
    
- 
-
-
     P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
   }
 

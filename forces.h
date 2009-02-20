@@ -222,10 +222,10 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-  case  DIPOLAR_DLC_P3M: {
-    fprintf(stderr,"real space magnetic dipole-dipole DLC to be done ...\n");
-    break;
-  }
+#ifdef MDLC
+  case  DIPOLAR_MDLC_P3M: 
+   //fall trough 
+#endif
   case DIPOLAR_P3M: {
 #ifdef NPT
     double eng = add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);

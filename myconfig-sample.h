@@ -42,7 +42,9 @@
 /* #define BOND_VIRTUAL */
 /* #define VIRTUAL_SITES */
 /* #define ADRESS*/
-
+/* #define DAWAANR */
+/* #define MAGNETIC_DIPOLAR_DIRECT_SUM */
+/* #define MDLC */
 /**********************************************************************/
 /*                        integrator features                         */
 /**********************************************************************/

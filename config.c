@@ -37,6 +37,42 @@
 
 #endif
 
+
+#ifdef DAWAANR
+
+#ifndef MAGNETOSTATICS 
+#error  DAWAANR  needs MAGNETOSTATICS in order to work
+#endif
+
+#endif
+
+
+#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+
+#ifndef MAGNETOSTATICS 
+#error  MAGNETIC DIRECT SUM  needs MAGNETOSTATICS in order to work
+#endif
+
+#endif
+
+
+#ifdef MDLC
+  
+  #ifndef MAGNETOSTATICS
+  #error MDLC needs MAGNETOSTATICS
+  #endif
+  
+  #if !(defined(MAGNETIC_DIPOLAR_DIRECT_SUM)  || defined( ELP3M) )
+   #error MDLC  needs either direct sum or P3M to be active
+  #endif 
+
+  #ifndef DIPOLES
+  #error MDLC has no sense without the magnetic dipoles 
+  #endif
+
+#endif
+
+
 int version_callback(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION ", Last Change: " LAST_CHANGE, (char *) NULL);
@@ -191,6 +227,15 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef ADRESS
   Tcl_AppendResult(interp, "{ ADRESS } ", (char *) NULL);
 #endif
-  Tcl_AppendResult(interp, "}", (char *) NULL);
+#ifdef MDLC
+  Tcl_AppendResult(interp, "{ MDLC } ", (char *) NULL);
+#endif
+#ifdef DAWAANR
+  Tcl_AppendResult(interp, "{ DAWAANR } ", (char *) NULL);
+#endif
+#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+  Tcl_AppendResult(interp, "{ MAGNETIC_DIPOLAR_DIRECT_SUM } ", (char *) NULL);
+#endif
+ Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);
 }

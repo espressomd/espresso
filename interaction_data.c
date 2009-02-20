@@ -43,6 +43,8 @@
 #include "morse.h"
 #include "dpd.h"
 //#include "tunable_slip.h"
+#include "magnetic_non_p3m__methods.h"
+#include "mdlc_correction.h"
 
 /****************************************
  * variables
@@ -925,12 +927,6 @@ void calc_maximal_cutoff()
   
 #if  defined(MAGNETOSTATICS) && defined(ELP3M) 
   switch (coulomb.Dmethod) {
-  case DIPOLAR_DLC_P3M:
-       fprintf(stderr,"DLC still not implemented ...\n");
-/*    if (max_cut_non_bonded < Delc_params.space_layer)
-      max_cut_non_bonded = Delc_params.space_layer;
-    // fall through
-*/    
   case DIPOLAR_P3M:
     if (max_cut_non_bonded < p3m.Dr_cut)
       max_cut_non_bonded = p3m.Dr_cut;
@@ -965,12 +961,23 @@ int check_obs_calc_initialized()
   }
 #endif /* ifdef ELECTROSTATICS */
 
-#if  defined(MAGNETOSTATICS) && defined(ELP3M) 
+#if  defined(MAGNETOSTATICS)
   switch (coulomb.Dmethod) {
-/*
-  case DIPOLAR_DLC_P3M: if (DELC_sanity_checks()) state = 0; // fall through
-*/
+#ifdef ELP3M
+#ifdef MDLC
+  case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
+#endif
   case DIPOLAR_P3M: if (DP3M_sanity_checks()) state = 0; break;
+#endif
+#ifdef DAWAANR  
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: if (DAWAANR_sanity_checks()) state = 0; break;
+#endif
+#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+#ifdef MDLC
+  case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
+#endif
+  case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
+#endif
   }
 #endif /* ifdef  MAGNETOSTATICS */
 
@@ -1139,7 +1146,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
   if (coulomb.Dbjerrum == 0.0) {
     switch (coulomb.Dmethod) {
 #ifdef ELP3M
-    case DIPOLAR_DLC_P3M:
+    case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
       p3m.Dalpha    = 0.0;
@@ -1175,23 +1182,29 @@ int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (! ARG0_IS_D(d1)) {
-#ifdef ELP3M
+  #ifdef ELP3M
     Tcl_ResetResult(interp);
-/*
-    if (ARG0_IS_S("dlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_DLC_P3M)))
-      return inter_parse_dlc_params(interp, argc - 1, argv + 1);
-*/
-    if (coulomb.Dmethod == DIPOLAR_P3M)
+    
+    #ifdef MDLC  
+    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
+      return inter_parse_mdlc_params(interp, argc - 1, argv + 1);
+
+     if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
+      return inter_parse_mdlc_params(interp, argc - 1, argv + 1);
+   #endif 
+      
+   if (coulomb.Dmethod == DIPOLAR_P3M)
       return Dinter_parse_p3m_opt_params(interp, argc, argv);
     else {
-      Tcl_AppendResult(interp, "expect: inter dipolar <Dbjerrum>",
+      Tcl_AppendResult(interp, "expect: inter magnetic <Dbjerrum>",
 		       (char *) NULL);
       return TCL_ERROR;
     }
 #else
     return TCL_ERROR;
-#endif
+ #endif
   }
+
 
   if (dipolar_set_Dbjerrum(d1) == TCL_ERROR) {
     Tcl_AppendResult(interp, argv[0], "Dbjerrum length must be positive",
@@ -1208,7 +1221,7 @@ int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   if(argc < 1) {
-    Tcl_AppendResult(interp, "wrong # args for inter dipolar.",
+    Tcl_AppendResult(interp, "wrong # args for inter magnetic.",
 		     (char *) NULL);
     mpi_bcast_coulomb_params();
     return TCL_ERROR;
@@ -1224,14 +1237,23 @@ int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("p3m", Dinter_parse_p3m);
 #endif
 
+#ifdef DAWAANR
+  REGISTER_DIPOLAR("dawaanr", Dinter_parse_dawaanr);
+#endif
+
+#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+  REGISTER_DIPOLAR("mdds", Dinter_parse_magnetic_dipolar_direct_sum);
+#endif
+
+
   /* fallback */
   coulomb.Dmethod  = DIPOLAR_NONE;
   coulomb.Dbjerrum = 0.0;
 
   mpi_bcast_coulomb_params();
 
-  Tcl_AppendResult(interp, "do not know dipolar method \"",argv[0],
-		   "\": dipolar switched off", (char *) NULL);
+  Tcl_AppendResult(interp, "do not know magnetic method \"",argv[0],
+		   "\": magnetic switched off", (char *) NULL);
   
   return TCL_ERROR;
 }
@@ -1464,14 +1486,26 @@ int printDipolarIAToResult(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "{dipolar ", buffer, " ", (char *) NULL);
   switch (coulomb.Dmethod) {
     #ifdef ELP3M
-     /*
-      case DIPOLAR_DLC_P3M:
-        printP3MToResult(interp);
-        printDLCToResult(interp);
+     #ifdef MDLC
+       case DIPOLAR_MDLC_P3M:
+        printP3MToResult(interp);   
+        printMDLCToResult(interp);
         break;
-     */   
+     #endif	
     case DIPOLAR_P3M: printP3MToResult(interp); break;
    #endif
+   #if  defined(MDLC) && defined(MAGNETIC_DIPOLAR_DIRECT_SUM)
+     case DIPOLAR_MDLC_DS:
+        printMagnetic_dipolar_direct_sum_ToResult(interp);
+        printMDLCToResult(interp);
+        break;
+  #endif
+  #ifdef DAWAANR	
+    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: printDAWAANRToResult(interp); break;
+ #endif
+ #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+    case DIPOLAR_DS: printMagnetic_dipolar_direct_sum_ToResult(interp); break;
+#endif
     default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);

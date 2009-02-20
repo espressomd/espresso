@@ -343,12 +343,12 @@ MDINLINE double add_p3m_dipolar_pair_force(Particle *p1, Particle *p2,
   mjxr[2] = p2->r.dip[0]*d[1] - p2->r.dip[1]*d[0];
 
   // Calculate real-space torques
-
+#ifdef ROTATION
   for(j=0;j<3;j++){
     p1->f.torque[j] += coulomb.Dprefactor *(-mixmj[j]*B_r + mixr[j]*mjr*C_r);
     p2->f.torque[j] += coulomb.Dprefactor *( mixmj[j]*B_r + mjxr[j]*mir*C_r);
   }
-
+#endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
   fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm * exp(-adist*adist);

@@ -18,6 +18,8 @@
 #include "nsquare.h"
 #include "layered.h"
 #include "elc.h"
+#include "magnetic_non_p3m__methods.h"
+#include "mdlc_correction.h"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};
 Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
@@ -130,10 +132,31 @@ void calc_long_range_energies()
     P3M_dipole_assign(); 
     energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
     break;
-  case DIPOLAR_DLC_P3M:
-    fprintf(stderr,"dipolar_DLC_P3M_to_be_done be patient \n"); exit(1);
+#ifdef MDLC
+  case DIPOLAR_MDLC_P3M:
+     P3M_dipole_assign(); 
+    energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    energy.dipolar[2] =add_mdlc_energy_corrections();
     break;
+#endif
  #endif
+ #ifdef DAWAANR
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
+     energy.dipolar[1] = dawaanr_calculations(0,1);
+    break;
+  #endif
+ #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+#ifdef MDLC
+   case DIPOLAR_MDLC_DS:
+     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
+    energy.dipolar[2] =add_mdlc_energy_corrections();
+    break;
+#endif    
+  case DIPOLAR_DS:
+     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
+    break;
+  #endif
+  
   } 
 #endif /* ifdef MAGNETOSTATICS */
 
@@ -167,8 +190,15 @@ void init_energies(Observable_stat *stat)
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:  n_dipolar = 0; break;
 #ifdef ELP3M
-      /*case DIPOLAR_DLC_P3M: n_dipolar=3; break;*/
+  case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
+#endif
+#ifdef DAWAANR
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:   n_dipolar = 2; break;
+#endif
+#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+ case DIPOLAR_MDLC_DS: n_dipolar=3; break;
+ case DIPOLAR_DS:   n_dipolar = 2; break;
 #endif
   }
 
@@ -244,8 +274,8 @@ static void print_detailed_energies(Tcl_Interp *interp)
 #endif 
       ) {
     /* total Coulomb energy */
-    value = total_energy.coulomb[0];
-    for (i = 1; i < total_energy.n_coulomb; i++)
+    value = 0;
+    for (i = 0; i < total_energy.n_coulomb; i++)
       value += total_energy.coulomb[i];
     for (i = 0; i < total_energy.n_dipolar; i++)
       value += total_energy.dipolar[i];
@@ -273,8 +303,10 @@ static void print_detailed_energies(Tcl_Interp *interp)
 	Tcl_PrintDouble(interp, total_energy.coulomb[i], buffer);
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
+     } 
+    if (total_energy.n_dipolar > 1) {
       for (i = 0; i < total_energy.n_dipolar; i++) {
-	Tcl_PrintDouble(interp, total_energy.dipolar[i], buffer);
+ 	Tcl_PrintDouble(interp, total_energy.dipolar[i], buffer);
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }

@@ -71,7 +71,7 @@ p3m_struct p3m = {
 #ifdef MAGNETOSTATICS
   0.0, 0.0, 
   {0,0,0}, {P3M_MESHOFF, P3M_MESHOFF, P3M_MESHOFF}, 
-  0, P3M_N_INTERPOL, 0.0, P3M_EPSILON, 
+  0, P3M_N_INTERPOL, 0.0, P3M_EPSILON_MAGNETIC, 
   {0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0}, 0.0, 0.0, 0, 0, {0, 0, 0},
 #endif
 };

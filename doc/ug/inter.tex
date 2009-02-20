@@ -1195,6 +1195,73 @@ boundary conditions. For details, see appendix \vref{chap:mmm}.
 Make sure that you read the papers on ELC before using it !!!
 \todo{references}
 
+\subsection{DLC}
+\index{DLC method|mainindex}
+\index{interactions!DLC method|mainindex}
+
+\begin{essyntax}
+  inter magnetic mdlc \var{accuracy} \var{gap\_size}
+  \opt{\var{far\_cutoff}}
+\end{essyntax}
+Like ELC but applied to the case of magnetic dipoles, but here the
+accuracy is the one you wish for computing the energy.  The far-cutoff is
+set to a value that, assuming all dipoles to be as larger as the largest of
+the dipoles in the system, the error for the energy would be smaller thant the
+value given by accuracy. At this moment you cannot compute the accuracy for
+the forces, or torques, nonetheless, usually you will have an error for forces and
+torques smaller than for energies. Thus, the error for the energies is an upper boundary
+to all errors in the calculations.
+
+At present, the program assumes that the gap wihtout particles is along the z-direction.
+The gap-size is the length along the z-direction of the volume where particles are not
+allowed to enter.
+
+As a reference for DLC-method, see:  A.Brodka, Chem. Phys. Let. 400, 62-67, (2004).
+
+
+\subsection{MDDS}
+\index{MDDS method|mainindex}
+\index{interactions!MDDS method|mainindex}
+
+\begin{essyntax}
+  inter magnetic   \var{l_Bm} mdds n\_cut \var{value\_n\_cut}
+  \opt{\var{far\_cutoff}}
+\end{essyntax}
+The command enables the magnetic dipolar direct sum. This method is
+not intendeed to do simulations, rahter to check the results you get 
+from Espresso. It is the exact calculation all the other magnetic methods 
+with PBC try to mimic but doing the calculation faster.  The value-n-cut is
+the number of replicas that should be taken into account in each direction
+If  Periodic Boundaries are not in 3 dimensions, the mehtod takes only replicas
+in those directions which are periodic. Thus, using partially periodic boundaries, 
+ once can easily calculate the values for 2D+h and 1D+h systems.
+  
+  
+ 
+\subsection{DAWAANR}
+\index{MDDS method|mainindex}
+\index{interactions!MDDS method|mainindex}
+
+\begin{essyntax}
+  inter magnetic   \var{l_Bm} dawaanr
+  \opt{\var{far\_cutoff}}
+\end{essyntax}
+The command enables the "dipolar all-with-all and no replicas" method. It is a very 
+special method intended to calculations when you have a single magnetic 
+polymer chain inside and infinite volume where no replicas of the system exist
+along any of the directions in the space.  You should setup formally a box length
+large enough for the initial conformation to be in, but after that, the box has no use.
+No minimum image convention is used. You compute the interactions from the positions
+where the particles has diffused to at each moment. You can use for particles not
+linked, but the method only makes sense in the case you want to study the evolution
+of a single chain in the space. 
+
+Notice that P3M and any other methods that assumes PBC is of no practical use here.  A rough way  to 
+mimic it with P3M would be assigning  a very long box, but  it  would be a waste of time
+and resources. 
+
+ 
+
 \section{Other interaction types}
 \label{sec:inter-other}
 

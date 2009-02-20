@@ -126,10 +126,10 @@ extern fft_forw_plan Dfft_plan[4];
 /************************************************************/
 /*@{*/
 
-#ifdef ELECTROSTATICS
 /** Initialize some arrays connected to the 3D-FFT. */
 void  fft_pre_init();
 
+#ifdef ELECTROSTATICS
 /** Initialize everything connected to the 3D-FFT.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).

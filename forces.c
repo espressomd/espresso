@@ -33,6 +33,8 @@
 #include "nsquare.h"
 #include "layered.h"
 #include "domain_decomposition.h"
+#include "magnetic_non_p3m__methods.h"
+#include "mdlc_correction.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -51,7 +53,7 @@ void force_calc()
 {
   
 
-#ifdef DIPOLES
+#if defined(DIPOLES) && defined(ROTATION)
   convert_quat_to_dip_all();
 #endif
 
@@ -148,9 +150,11 @@ void calc_long_range_forces()
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-  case DIPOLAR_DLC_P3M:
-    fprintf(stderr,"dipolar_DLC_P3M_to_be_done \n");    
-    break;
+#ifdef MDLC
+  case DIPOLAR_MDLC_P3M:
+     add_mdlc_force_corrections();
+    //fall through 
+#endif
   case DIPOLAR_P3M:
     P3M_dipole_assign();
 #ifdef NPT
@@ -163,6 +167,22 @@ void calc_long_range_forces()
 
       break;
 #endif
+#ifdef DAWAANR
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
+      dawaanr_calculations(1,0);
+      break;
+#endif
+#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
+#ifdef MDLC
+  case DIPOLAR_MDLC_DS:
+     add_mdlc_force_corrections();
+    //fall through 
+#endif
+  case DIPOLAR_DS: 
+        magnetic_dipolar_direct_sum_calculations(1,0);
+      break;
+#endif
+
   }
 #endif  /*ifdef MAGNETOSTATICS */
 }

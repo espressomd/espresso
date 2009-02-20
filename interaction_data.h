@@ -106,8 +106,14 @@
    #define DIPOLAR_NONE       0
    /** dipolar method is P3M. */
    #define DIPOLAR_P3M        1
-   /** Coulomb method is P3M plus ELC. */
-   #define DIPOLAR_DLC_P3M    2
+   /** Dipolar method is P3M plus DLC. */
+   #define DIPOLAR_MDLC_P3M    2
+   /** Dipolar method is all with all and no replicas */
+   #define DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA  3
+   /** Dipolar method is magnetic dipolar direct sum */
+   #define DIPOLAR_DS  4
+   /** Dipolar method is direct sum plus DLC. */
+   #define DIPOLAR_MDLC_DS  5
 
    /*@}*/
 #endif 

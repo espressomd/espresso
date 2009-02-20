@@ -40,6 +40,7 @@ Espresso_bin_SOURCES = \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
 	p3m.c p3m.h \
+	magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h \
 	ewald.c ewald.h \
 	fft.c fft.h \
 	random.c random.h \
@@ -61,6 +62,7 @@ Espresso_bin_SOURCES = \
 	nemd.c nemd.h \
 	statistics_cluster.c statistics_cluster.h \
 	elc.c elc.h \
+	dlc_correction.c  dlc_correction.h \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \

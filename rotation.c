@@ -380,7 +380,7 @@ void convert_dip_to_quat_all()
   Particle *p;
   Cell *cell;
   int c,i, np;
-  double dip[3], quat[4];
+  double dip[3], quat[4]={0,0,0,0};
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];

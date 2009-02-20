@@ -39,6 +39,9 @@
     medium. */
 #define P3M_EPSILON 0.0
 
+/** P3M: Default for boundary condition in magnetic calculations */
+#define P3M_EPSILON_MAGNETIC 1.0
+
 /** P3M: Default for offset of first mesh point from the origin (left
     down corner of the simulation box. */
 #define P3M_MESHOFF 0.5
@@ -91,6 +94,12 @@
 #if defined(MAGNETOSTATICS) && defined(FFTW)
 #define ELP3M
 #define DIPOLES
+#endif
+
+
+/* MAGNETOSTATICS implies the use of DIPOLES */
+#if defined(MAGNETOSTATICS)
+ #define DIPOLES
 #endif
 
 #ifdef DIPOLES

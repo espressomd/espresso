@@ -46,6 +46,7 @@
 #include "morse.h"
 #include "ewald.h"
 #include "elc.h"
+#include "mdlc_correction.h"
 
 /** \name Exported Variables */
 /************************************************************/
@@ -216,6 +217,8 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     ret=0;
     switch (coulomb.Dmethod) {
 #ifdef ELP3M
+    case DIPOLAR_MDLC_P3M:  
+      //fall trough
     case DIPOLAR_P3M:
       ret = p3m_dipolar_pair_energy(p1,p2,d,dist2,dist); 
       break;
