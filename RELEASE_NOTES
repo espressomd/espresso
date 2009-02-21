@@ -2,19 +2,27 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2a (Alsheim)                                                                    *
+* v2.1.2b (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2a -
+- v2.1.2b -
 -----------
 
+(b) February 20th, 2009.
 (a) February 19th, 2009.
 
 Changes:
 (a) Improvement of the documentation.
+
+Bugfixes:
+(b) fixed some #ifdef's, if MAGNETOSTATICS is on, but FFTW not
+(b) fixed some missing feature dependencies like DIPOLES->ROTATION
+(b) fixed a warning about fac1 being unused
+(b) updated the documentation of features and fixed the documentation of some of
+    them.
 
 
 - v2.1.1v -
