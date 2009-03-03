@@ -135,7 +135,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int j;
 #endif
 
-  if (argc < 4) { Tcl_AppendResult(interp, "Wrong # of args! Usage: polymer <N_P> <MPC> <bond_length> [options]", (char *)NULL); return (TCL_ERROR); }
+  if (argc < 4) { Tcl_AppendResult(interp, "Wrong # of args! Usage: polymer <N_P> <MPC> <bond_length> [start <n> | pos <x> <y> <z> | mode | charge | distance | types | bond | angle | constraints]", (char *)NULL); return (TCL_ERROR); }
   if (!ARG_IS_I(1, N_P)) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "Number of polymers must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
@@ -310,7 +310,7 @@ int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 }
 
 if(type_bond<0 || type_bond>=n_bonded_ia){
-  Tcl_AppendResult(interp, "Please define an interaction before setting up polymers!", (char *)NULL);
+  Tcl_AppendResult(interp, "Please define a bonded interaction before setting up polymers!", (char *)NULL);
   return(TCL_ERROR);
  }
 
@@ -389,7 +389,11 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	     int type_nM, int type_cM, int type_bond, 
 	     double angle, double angle2, double *posed2, int constr) {
   int p,n, cnt1,cnt2,max_cnt, bond_size, *bond, i;
+#ifdef OLD_RW_VERSION
   double theta,phi;
+#else
+  double phi,zz,rr;
+#endif
   double *poly;
   double pos[3];
   double poz[3];
@@ -451,15 +455,20 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       } else {
 	/* randomly place 2nd monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
-	  theta  = PI*d_random();
 #ifdef OLD_RW_VERSION
+	  theta  = PI*d_random();
 	  phi    = 2.0*PI*d_random();
-#else
-	  phi    = acos(2.0*d_random()-1);
-#endif
 	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
 	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
 	  pos[2] = poz[2]+bond_length*cos(theta);
+#else
+	  zz     = (2.0*d_random()-1.0)*bond_length;
+          rr     = sqrt(SQR(bond_length)-SQR(zz));
+	  phi    = 2.0*PI*d_random();
+	  pos[0] = poz[0]+rr*cos(phi);
+	  pos[1] = poz[1]+rr*sin(phi);
+	  pos[2] = poz[2]+zz;
+#endif
 #ifdef CONSTRAINTS
 	  if(constr==0 || constraint_collision(pos,poly+3*(n-1))==0){
 #endif
@@ -543,15 +552,20 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	    pos[2] += b[2];
 
 	  } else {
-	    theta  = PI*d_random();
 #ifdef OLD_RW_VERSION
-	  phi    = 2.0*PI*d_random();
+            theta  = PI*d_random();
+            phi    = 2.0*PI*d_random();
+            pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
+            pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
+            pos[2] = poz[2]+bond_length*cos(theta);
 #else
-	  phi    = acos(2.0*d_random()-1);
+            zz     = (2.0*d_random()-1.0)*bond_length;
+            rr     = sqrt(SQR(bond_length)-SQR(zz));
+            phi    = 2.0*PI*d_random();
+            pos[0] = poz[0]+rr*cos(phi);
+            pos[1] = poz[1]+rr*sin(phi);
+            pos[2] = poz[2]+zz;
 #endif
-	    pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
-	    pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
-	    pos[2] = poz[2]+bond_length*cos(theta);
 	  }
 	  
 	  POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
@@ -1469,7 +1483,7 @@ int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
 
 if(0 == n_bonded_ia){
-  Tcl_AppendResult(interp, "Please define an interaction before setting up polymers!", (char *)NULL);
+  Tcl_AppendResult(interp, "Please define a bonded interaction before setting up polymers!", (char *)NULL);
   return(TCL_ERROR);
  }
  else{
@@ -1594,7 +1608,7 @@ int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
 
 if(0 == n_bonded_ia){
-  Tcl_AppendResult(interp, "Please define an interaction before setting up polymers!", (char *)NULL);
+  Tcl_AppendResult(interp, "Please define a bonded interaction before setting up polymers!", (char *)NULL);
   return(TCL_ERROR);
  }
  else{
