@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2b (Alsheim)                                                                    *
+* v2.1.2c (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2b -
+- v2.1.2c -
 -----------
 
+(c) March     3rd, 2009.
 (b) February 20th, 2009.
 (a) February 19th, 2009.
 
@@ -18,6 +19,10 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(c) fixed bug in polymer command - creates correct RW by default
+    now
+    [add] added samples/polymer_RW_sphere.tcl to demonstrate correct distribution
+    of points on sphere surface
 (b) fixed some #ifdef's, if MAGNETOSTATICS is on, but FFTW not
 (b) fixed some missing feature dependencies like DIPOLES->ROTATION
 (b) fixed a warning about fac1 being unused
