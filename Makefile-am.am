@@ -62,7 +62,7 @@ Espresso_bin_SOURCES = \
 	nemd.c nemd.h \
 	statistics_cluster.c statistics_cluster.h \
 	elc.c elc.h \
-	dlc_correction.c  dlc_correction.h \
+	mdlc_correction.c  mdlc_correction.h \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
