@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2c (Alsheim)                                                                    *
+* v2.1.2d (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2c -
+- v2.1.2d -
 -----------
 
+(d) March     5th, 2009.
 (c) March     3rd, 2009.
 (b) February 20th, 2009.
 (a) February 19th, 2009.
@@ -19,6 +20,7 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(d) fixed dlc->mdlc in Makefiles
 (c) fixed bug in polymer command - creates correct RW by default
     now
     [add] added samples/polymer_RW_sphere.tcl to demonstrate correct distribution
