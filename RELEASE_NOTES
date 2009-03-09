@@ -2,24 +2,33 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2d (Alsheim)                                                                    *
+* v2.1.2e (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2d -
+- v2.1.2e -
 -----------
 
+(e) March     9th, 2009.
 (d) March     5th, 2009.
 (c) March     3rd, 2009.
 (b) February 20th, 2009.
 (a) February 19th, 2009.
 
+New Features:
+(e) extended the Electrostatics tutorial 2 to cover also constrained electrostatics
+    with MMM2D
+
 Changes:
+(e) In mmm2d, added a warning if particles are out of bounds
 (a) Improvement of the documentation.
 
 Bugfixes:
+(e) fixed a bug, that first appeared in CVS version of 2009-02-10. Attention: due
+    to this bug all simulations that involved Lennard-Jones interactions produced
+    wrong results.
 (d) fixed dlc->mdlc in Makefiles
 (c) fixed bug in polymer command - creates correct RW by default
     now
