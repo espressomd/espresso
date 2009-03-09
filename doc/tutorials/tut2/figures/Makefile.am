@@ -1,4 +1,4 @@
-tut2_FIGURES=nacl-rdf.pdf salt.png
+tut2_FIGURES=neutral-rho.pdf nonneutral-rho.pdf nacl-rdf.pdf salt.png
 
 EXTRA_DIST=$(tut2_FIGURES)
 
