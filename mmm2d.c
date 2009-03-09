@@ -1593,8 +1593,13 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
       zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
       zet2_i = 2*zeta_r*zeta_i;
 
-      end = complexCutoff[(int)ceil(COMPLEX_FAC*uy2*rho2)];
-      if (end > COMPLEX_STEP) end = COMPLEX_STEP;
+      end = (int)ceil(COMPLEX_FAC*uy2*rho2);
+      if (end > COMPLEX_STEP) {
+	end = COMPLEX_STEP;
+	fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
+      }
+      end = complexCutoff[end];
+
       for (n = 0; n < end; n++) {
 	F[1] -= bon.e[n]*ztn_i;
 	F[2] += bon.e[n]*ztn_r;
@@ -1726,7 +1731,12 @@ MDINLINE double calc_mmm2d_copy_pair_energy(double d[3])
     ztn_r = zet2_r;
     ztn_i = zet2_i;
 
-    end = complexCutoff[(int)ceil(COMPLEX_FAC*uy2*rho2)];
+    end = (int)ceil(COMPLEX_FAC*uy2*rho2);
+    if (end > COMPLEX_STEP) {
+	end = COMPLEX_STEP;
+	fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
+    }
+    end = complexCutoff[end];
     for (n = 1; n <= end; n++) {
       eng -= box_l[1]/(2*n)*bon.e[n-1]*ztn_r;
  
