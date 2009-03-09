@@ -318,6 +318,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJ_shift = src->LJ_shift;
   dst->LJ_offset = src->LJ_offset;
   dst->LJ_capradius = src->LJ_capradius;
+  dst->LJ_min = src->LJ_min;
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
