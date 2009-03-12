@@ -16,6 +16,17 @@ AC_DEFUN([ES_CHECK_MPI],[
 			),
 		,with_mpi=yes)
 
+	AC_ARG_WITH(mpicommand,
+		AC_HELP_STRING([--with-mpicommand=COMMAND],
+			[choose the command to execute parallel jobs
+			(that is, mpirun, poe, dmpirun or similar.
+			It has to fit to your MPI environment
+			chosen by --with-mpi. If not specified,
+			configure will try to guess the location and
+			name.]
+			),
+		,with_mpicommand=)
+
 	AC_ARG_ENABLE(mpi,,
 		[
 		with_mpi=$enable_mpi
@@ -118,6 +129,14 @@ AC_DEFUN([ES_MPI_GUESS_ENV],[
 ])
 
 AC_DEFUN([ES_MPI_SETUP_FAKE],[
+	if test "$with_mpicommand" != ""; then
+	   AC_MSG_ERROR([--with-mpicommand cannot be specified.
+	   Espresso is configured to use the fake MPI environment, which does not
+	   need a command to run mpi programs. Either you specify your MPI
+	   environment using --with-mpi, or you do not specify --with-mpicommand.
+	   In this case, the fake MPI-Implementation for a single processor is
+	   used])
+	fi
 	MPI_INVOCATION="\$ESPRESSO_CALL"
 ])
 
@@ -138,9 +157,13 @@ AC_DEFUN([ES_MPI_FIND_GENERIC],[
 	if test .$mpicc_works != .yes; then
 		generic_found=no
 	else
-		AC_PATH_PROG(generic_bin, mpirun, mpirun, [])
-		if test .$generic_bin = .; then
+		if test "$with_mpicommand" != ""; then
+		   generic_bin=$with_mpicommand
+		else
+		   AC_PATH_PROG(generic_bin, mpirun, mpirun, [$PATH])
+		   if test .$generic_bin = .; then
 			generic_found=no
+		   fi
 		fi
 	fi
 	if test $generic_found = yes; then
@@ -202,11 +225,16 @@ AC_DEFUN([ES_MPI_FIND_LAM],[
 		LIBS=$save_libs
 	fi
 	dnl last but not least the invocation, checking for mpirun
-	AC_PATH_PROG(lam_bin, mpirun, mpirun, $PATH:$lam_lib_prf/bin:$lam_hdr_prf/bin)
+	if test "$with_mpicommand" != ""; then
+	   lam_bin=$with_mpicommand
+	else
+	   AC_PATH_PROG(lam_bin, mpirun, mpirun, [$PATH:$lam_lib_prf/bin:$lam_hdr_prf/bin])
+	fi
 	dnl check the program that it actually belongs to LAM
 	$lam_bin -h > conftmp.log 2>&1
 	if ! grep LAM conftmp.log >/dev/null 2>&1; then
-		AC_MSG_NOTICE([mpirun binary for LAM not found, if you want to use LAM, please add it to your PATH])
+		AC_MSG_NOTICE([mpirun binary does not belong to LAM or was not found,
+  if you want to use LAM, please add specify the location of mpirun using --with-mpicommand])
 		lam_found=no
 	fi
 	rm -f conftmp.log
@@ -288,11 +316,17 @@ AC_DEFUN([ES_MPI_FIND_MPICH],[
 	LIBS=$save_libs
 
 	dnl last but not least the invocation, checking for mpirun
-	AC_PATH_PROG(mpich_bin, mpirun, mpirun, $mpich_lib_prf/bin:$mpich_hdr_prf/bin:$PATH)
+	if test "$with_mpicommand" != ""; then
+	   mpich_bin=$with_mpicommand
+	else
+	   AC_PATH_PROG(mpich_bin, mpirun, mpirun, [$PATH:$mpich_lib_prf/bin:$mpich_hdr_prf/bin])
+	fi
+
 	dnl check the program that it actually belongs to MPICH
 	$mpich_bin -h > conftmp.log 2>&1
 	if ! grep mpich conftmp.log >/dev/null 2>&1; then
-		AC_MSG_NOTICE([mpirun not found or not from MPICH, please make it first in your PATH])
+		AC_MSG_NOTICE([mpirun binary does not belong to MPICH or was not found,
+  if you want to use MPICH, please add specify the location of mpirun using --with-mpicommand])
 		mpich_found=no
 	fi
 	rm -f conftmp.log
@@ -312,7 +346,11 @@ AC_DEFUN([ES_MPI_FIND_POE],[
 		poe_found=no
 	fi
 	if test .$poe_found = .yes; then
-		AC_PATH_PROG(poe_bin, poe, poe, $PATH)
+		if test "$with_mpicommand" != ""; then
+		   poe_bin=$with_mpicommand
+		else
+		   AC_PATH_PROG(poe_bin, poe, poe, [$PATH])
+		fi
 		MPI_INVOCATION="$poe_bin \$ESPRESSO_CALL -procs \$NP"
 	fi
 ])
@@ -326,7 +364,11 @@ AC_DEFUN([ES_MPI_FIND_DMPI],[
 	AC_LINK_IFELSE([AC_LANG_FUNC_LINK_TRY(MPI_Init)],
     			[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); dmpi_found=no])
 	if test .$dmpi_found = .yes; then
-		AC_PATH_PROG(dmpi_bin, dmpirun, dmpirun, $PATH)
+		if test "$with_mpicommand" != ""; then
+		   dmpi_bin=$with_mpicommand
+		else
+		   AC_PATH_PROG(dmpi_bin, dmpirun, dmpirun, [$PATH])
+		fi
 		MPI_INVOCATION="$dmpi_bin -np \$NP \$ESPRESSO_CALL"
 	fi
 ])

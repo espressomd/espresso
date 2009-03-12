@@ -163,9 +163,6 @@ using profiling flags	= $enable_profiling
 inline			= $MDINLINE
 EOF
 
-if test .$with_mpi = .generic; then
-   echo "WARNING: a generic MPI version may or may not work, look at the Espresso script in $builddir"
-fi
 if test "$issue_fake_warning"; then cat <<EOF
 ********************************************************************
 * Could neither detect LAM nor MPICH nor a native MPI environment, *
