@@ -87,7 +87,6 @@ exact solution of the electrostatic problem. We find a particular solution of Ga
 the result of the following recursive procedure (see
 Fig.~\ref{fig:initialization_E}):
 \begin{enumerate}
-
 \item The charge in the plane $z=z_{plane}$ is 
 \begin{equation}
 q_{plane}=\frac{1}{N}\sum_iq(\vect r_i)\delta(z_i-z_{plane}),
@@ -97,7 +96,7 @@ $z$-field according to the formula
 \begin{equation}
 E_z^2=E_z^1+\frac{q_{plane}}{\epsilon_0a^2};
 \end{equation}
- \item Subtract the
+\item Subtract the
 charge $q_{plane}$ from the each charge on sites of $z_{plane}$. The
 charge of the wire $y=y_{wire}, z=z_{plane}$ is
 \begin{equation}
@@ -113,6 +112,7 @@ $(y_{wire},z_{plane})$. Update $x$ field
 \begin{equation}
 E_x^2=E_x^1+\frac{q_{vertex}}{\epsilon_0a^2}
 \end{equation}
+\end{enumerate}
 
 \begin{figure}
  \centering \includegraphics[scale=0.74]{figs/initializationE.eps}
@@ -233,5 +233,6 @@ Pasichnyk I \emph{Novel simulation methods for Coulomb and hydrodynamic interact
 Rottler J and Maggs A~C \emph{A Continuum, {$\cal O(N)$} Monte-Carlo algorithm for charged particles}, Journal of Chemical Physics, 120, 3119-3129, 2004
 \bibitem{espressowebsite}
 See web site http://www.espresso.mpg.de
+\end{thebibliography}
 
 \end{document}
