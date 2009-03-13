@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2e (Alsheim)                                                                    *
+* v2.1.2f (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2e -
+- v2.1.2f -
 -----------
 
+(f) March    12th, 2009.
 (e) March     9th, 2009.
 (d) March     5th, 2009.
 (c) March     3rd, 2009.
@@ -18,14 +19,20 @@ Current working revision.
 (a) February 19th, 2009.
 
 New Features:
+(f) added option --with-mpicommand to configure to specify the command used to
+    invoke a parallel program (typically mpirun, sometimes poe or
+    dmpirun).
 (e) extended the Electrostatics tutorial 2 to cover also constrained electrostatics
     with MMM2D
 
 Changes:
+(f) all MPI environments respect now the PATH environment variable when looking for
+    the mpi-command.
 (e) In mmm2d, added a warning if particles are out of bounds
 (a) Improvement of the documentation.
 
 Bugfixes:
+(f) made maggs-documentation compile again
 (e) fixed a bug, that first appeared in CVS version of 2009-02-10. Attention: due
     to this bug all simulations that involved Lennard-Jones interactions produced
     wrong results.
