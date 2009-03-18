@@ -68,11 +68,10 @@ proc ::mbtools::system_generation::random::create_random { args } {
 
 	}
 
-	# Now choose a random orientation vector.  Actually it's not
-	# strictly random if we do it like this (fix)
-	lappend orient [expr [t_random]]
-	lappend orient [expr [t_random]]
-	lappend orient [expr [t_random]] 
+	# Now choose a random orientation vector.  
+	lappend orient [expr 2*[t_random]-1]
+	lappend orient [expr 2*[t_random]-1]
+	lappend orient [expr 2*[t_random]-1] 
 
 	
 	::mbtools::system_generation::placemol $mol $tailpos -orient $orient -bondl $params(bondl)
