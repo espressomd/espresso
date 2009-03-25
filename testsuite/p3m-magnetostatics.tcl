@@ -6,15 +6,30 @@
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-
-# check the dipole-dipole P3M  algorithm
-
-puts " "
-puts " "
-puts "Tests for magnetic P3M dipole-dipole interaction:"
+puts "--------------------------------------------------------------------------------------------------------"
+puts "- Testcase p3m-magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"
+puts "--------------------------------------------------------------------------------------------------------"
 puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
-   
-  
+set errf [lindex $argv 1]
+
+proc error_exit {error} {
+    global errf
+    set f [open $errf "w"]
+   puts $f "Error occured: $error"
+   close $f
+    exit -666
+}
+
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
 #=======================================================================================================
 # test-1:  compute trajectories for a dipolar system of two particles using the dipolar P3M-algorithm 
 #          and compare against well-know trajectories:
@@ -25,12 +40,9 @@ puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
 #          has no sense for true magnetic simulations but is a nice feature for future electic dipoles
 #=======================================================================================================
 
-if { ![regexp "CONSTRAINTS " [code_info]]} { 
- 	puts "test-1 needs the flag   CONSTRAINTS on. Test-1 Skipped."
-	puts "Enabling the flag CONSTRAINTS for checking purposes is strongly recommended"
-	error_exit $res
- }  
-    
+require_feature "MAGNETOSTATICS" 
+require_feature "CONSTRAINTS"
+
 if { [catch {
 
     set tcl_precision 15
@@ -132,5 +144,5 @@ if { [catch {
 # TO BE DONE
 #end of test-3
 
-  
-   
+exec rm -f $errf
+exit 0
