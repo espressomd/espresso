@@ -6,9 +6,9 @@
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-puts "--------------------------------------------------------------------------------------------------------"
+puts "--------------------------------------------------------------------"
 puts "- Testcase p3m-magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"
-puts "--------------------------------------------------------------------------------------------------------"
+puts "--------------------------------------------------------------------"
 puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
 set errf [lindex $argv 1]
 

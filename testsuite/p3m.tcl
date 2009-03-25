@@ -8,9 +8,9 @@
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 
 # check the charge-charge P3M  algorithm
-puts "--------------------------------------------------------------------------------------------------------"
+puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
-puts "--------------------------------------------------------------------------------------------------------"
+puts "---------------------------------------------------------------"
 set errf [lindex $argv 1]
 
 proc error_exit {error} {
