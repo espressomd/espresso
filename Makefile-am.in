@@ -74,28 +74,29 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	statistics.c statistics.h statistics_chain.c \
 	statistics_chain.h energy.c energy.h pressure.c pressure.h \
 	vmdsock.c vmdsock.h imd.c imd.h iccp3m.c iccp3m.h p3m.c p3m.h \
-	magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h \
-	ewald.c ewald.h fft.c fft.h random.c random.h blockfile.c \
-	blockfile.h blockfile_tcl.c blockfile_tcl.h polymer.c \
-	polymer.h specfunc.c specfunc.h tuning.c tuning.h uwerr.c \
-	uwerr.h parser.c parser.h domain_decomposition.c \
-	domain_decomposition.h nsquare.c nsquare.h layered.c layered.h \
-	mmm-common.c mmm-common.h mmm1d.c mmm1d.h mmm2d.c mmm2d.h \
-	modes.c modes.h topology.c topology.h nemd.c nemd.h \
-	statistics_cluster.c statistics_cluster.h elc.c elc.h \
-	mdlc_correction.c mdlc_correction.h statistics_molecule.c \
-	statistics_molecule.h errorhandling.c errorhandling.h \
-	constraint.c constraint.h maggs.c maggs.h mol_cut.h rattle.c \
-	rattle.h molforces.c molforces.h virtual_sites.c \
-	virtual_sites.h lb.c lb.h lb-d3q18.h lb-d3q19.h bin.c bin.h \
-	lattice.c lattice.h halo.c halo.h statistics_fluid.c \
-	statistics_fluid.h lb-boundaries.c lb-boundaries.h utils.c \
-	utils.h angle.h buckingham.h comfixed.h comforce.h \
-	debye_hueckel.h reaction_field.h dihedral.h fene.h gb.h \
-	harmonic.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h steppot.h \
-	bmhtf-nacl.h morse.h polynom.h soft_sphere.h subt_lj.h tab.h \
-	ljangle.h adresso.c adresso.h tunable_slip.h mpifake/mpi.h \
-	mpifake/mpi.c
+	p3m-charges.c p3m-charges.h p3m-dipoles.c p3m-dipoles.h \
+	p3m-assignment.c magnetic_non_p3m__methods.c \
+	magnetic_non_p3m__methods.h ewald.c ewald.h fft.c fft.h \
+	random.c random.h blockfile.c blockfile.h blockfile_tcl.c \
+	blockfile_tcl.h polymer.c polymer.h specfunc.c specfunc.h \
+	tuning.c tuning.h uwerr.c uwerr.h parser.c parser.h \
+	domain_decomposition.c domain_decomposition.h nsquare.c \
+	nsquare.h layered.c layered.h mmm-common.c mmm-common.h \
+	mmm1d.c mmm1d.h mmm2d.c mmm2d.h modes.c modes.h topology.c \
+	topology.h nemd.c nemd.h statistics_cluster.c \
+	statistics_cluster.h elc.c elc.h mdlc_correction.c \
+	mdlc_correction.h statistics_molecule.c statistics_molecule.h \
+	errorhandling.c errorhandling.h constraint.c constraint.h \
+	maggs.c maggs.h mol_cut.h rattle.c rattle.h molforces.c \
+	molforces.h virtual_sites.c virtual_sites.h lb.c lb.h \
+	lb-d3q18.h lb-d3q19.h bin.c bin.h lattice.c lattice.h halo.c \
+	halo.h statistics_fluid.c statistics_fluid.h lb-boundaries.c \
+	lb-boundaries.h utils.c utils.h angle.h buckingham.h \
+	comfixed.h comforce.h debye_hueckel.h reaction_field.h \
+	dihedral.h fene.h gb.h harmonic.h ljcos2.h ljcos.h lj.h \
+	ljgen.c ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h \
+	soft_sphere.h subt_lj.h tab.h ljangle.h adresso.c adresso.h \
+	tunable_slip.h mpifake/mpi.h mpifake/mpi.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @MPI_FAKE_TRUE@am__objects_1 = mpifake/mpi.$(OBJEXT)
 am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
@@ -107,18 +108,20 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	thermostat.$(OBJEXT) dpd.$(OBJEXT) statistics.$(OBJEXT) \
 	statistics_chain.$(OBJEXT) energy.$(OBJEXT) pressure.$(OBJEXT) \
 	vmdsock.$(OBJEXT) imd.$(OBJEXT) iccp3m.$(OBJEXT) p3m.$(OBJEXT) \
-	magnetic_non_p3m__methods.$(OBJEXT) ewald.$(OBJEXT) \
-	fft.$(OBJEXT) random.$(OBJEXT) blockfile.$(OBJEXT) \
-	blockfile_tcl.$(OBJEXT) polymer.$(OBJEXT) specfunc.$(OBJEXT) \
-	tuning.$(OBJEXT) uwerr.$(OBJEXT) parser.$(OBJEXT) \
-	domain_decomposition.$(OBJEXT) nsquare.$(OBJEXT) \
-	layered.$(OBJEXT) mmm-common.$(OBJEXT) mmm1d.$(OBJEXT) \
-	mmm2d.$(OBJEXT) modes.$(OBJEXT) topology.$(OBJEXT) \
-	nemd.$(OBJEXT) statistics_cluster.$(OBJEXT) elc.$(OBJEXT) \
-	mdlc_correction.$(OBJEXT) statistics_molecule.$(OBJEXT) \
-	errorhandling.$(OBJEXT) constraint.$(OBJEXT) maggs.$(OBJEXT) \
-	rattle.$(OBJEXT) molforces.$(OBJEXT) virtual_sites.$(OBJEXT) \
-	lb.$(OBJEXT) bin.$(OBJEXT) lattice.$(OBJEXT) halo.$(OBJEXT) \
+	p3m-charges.$(OBJEXT) p3m-dipoles.$(OBJEXT) \
+	p3m-assignment.$(OBJEXT) magnetic_non_p3m__methods.$(OBJEXT) \
+	ewald.$(OBJEXT) fft.$(OBJEXT) random.$(OBJEXT) \
+	blockfile.$(OBJEXT) blockfile_tcl.$(OBJEXT) polymer.$(OBJEXT) \
+	specfunc.$(OBJEXT) tuning.$(OBJEXT) uwerr.$(OBJEXT) \
+	parser.$(OBJEXT) domain_decomposition.$(OBJEXT) \
+	nsquare.$(OBJEXT) layered.$(OBJEXT) mmm-common.$(OBJEXT) \
+	mmm1d.$(OBJEXT) mmm2d.$(OBJEXT) modes.$(OBJEXT) \
+	topology.$(OBJEXT) nemd.$(OBJEXT) statistics_cluster.$(OBJEXT) \
+	elc.$(OBJEXT) mdlc_correction.$(OBJEXT) \
+	statistics_molecule.$(OBJEXT) errorhandling.$(OBJEXT) \
+	constraint.$(OBJEXT) maggs.$(OBJEXT) rattle.$(OBJEXT) \
+	molforces.$(OBJEXT) virtual_sites.$(OBJEXT) lb.$(OBJEXT) \
+	bin.$(OBJEXT) lattice.$(OBJEXT) halo.$(OBJEXT) \
 	statistics_fluid.$(OBJEXT) lb-boundaries.$(OBJEXT) \
 	utils.$(OBJEXT) ljgen.$(OBJEXT) adresso.$(OBJEXT) \
 	$(am__objects_1)
@@ -301,28 +304,29 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	statistics.c statistics.h statistics_chain.c \
 	statistics_chain.h energy.c energy.h pressure.c pressure.h \
 	vmdsock.c vmdsock.h imd.c imd.h iccp3m.c iccp3m.h p3m.c p3m.h \
-	magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h \
-	ewald.c ewald.h fft.c fft.h random.c random.h blockfile.c \
-	blockfile.h blockfile_tcl.c blockfile_tcl.h polymer.c \
-	polymer.h specfunc.c specfunc.h tuning.c tuning.h uwerr.c \
-	uwerr.h parser.c parser.h domain_decomposition.c \
-	domain_decomposition.h nsquare.c nsquare.h layered.c layered.h \
-	mmm-common.c mmm-common.h mmm1d.c mmm1d.h mmm2d.c mmm2d.h \
-	modes.c modes.h topology.c topology.h nemd.c nemd.h \
-	statistics_cluster.c statistics_cluster.h elc.c elc.h \
-	mdlc_correction.c mdlc_correction.h statistics_molecule.c \
-	statistics_molecule.h errorhandling.c errorhandling.h \
-	constraint.c constraint.h maggs.c maggs.h mol_cut.h rattle.c \
-	rattle.h molforces.c molforces.h virtual_sites.c \
-	virtual_sites.h lb.c lb.h lb-d3q18.h lb-d3q19.h bin.c bin.h \
-	lattice.c lattice.h halo.c halo.h statistics_fluid.c \
-	statistics_fluid.h lb-boundaries.c lb-boundaries.h utils.c \
-	utils.h angle.h buckingham.h comfixed.h comforce.h \
-	debye_hueckel.h reaction_field.h dihedral.h fene.h gb.h \
-	harmonic.h imd.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h \
-	steppot.h bmhtf-nacl.h morse.h polynom.h soft_sphere.h \
-	subt_lj.h tab.h ljangle.h adresso.c adresso.h tunable_slip.h \
-	$(am__append_1)
+	p3m-charges.c p3m-charges.h p3m-dipoles.c p3m-dipoles.h \
+	p3m-assignment.c magnetic_non_p3m__methods.c \
+	magnetic_non_p3m__methods.h ewald.c ewald.h fft.c fft.h \
+	random.c random.h blockfile.c blockfile.h blockfile_tcl.c \
+	blockfile_tcl.h polymer.c polymer.h specfunc.c specfunc.h \
+	tuning.c tuning.h uwerr.c uwerr.h parser.c parser.h \
+	domain_decomposition.c domain_decomposition.h nsquare.c \
+	nsquare.h layered.c layered.h mmm-common.c mmm-common.h \
+	mmm1d.c mmm1d.h mmm2d.c mmm2d.h modes.c modes.h topology.c \
+	topology.h nemd.c nemd.h statistics_cluster.c \
+	statistics_cluster.h elc.c elc.h mdlc_correction.c \
+	mdlc_correction.h statistics_molecule.c statistics_molecule.h \
+	errorhandling.c errorhandling.h constraint.c constraint.h \
+	maggs.c maggs.h mol_cut.h rattle.c rattle.h molforces.c \
+	molforces.h virtual_sites.c virtual_sites.h lb.c lb.h \
+	lb-d3q18.h lb-d3q19.h bin.c bin.h lattice.c lattice.h halo.c \
+	halo.h statistics_fluid.c statistics_fluid.h lb-boundaries.c \
+	lb-boundaries.h utils.c utils.h angle.h buckingham.h \
+	comfixed.h comforce.h debye_hueckel.h reaction_field.h \
+	dihedral.h fene.h gb.h harmonic.h imd.h ljcos2.h ljcos.h lj.h \
+	ljgen.c ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h \
+	soft_sphere.h subt_lj.h tab.h ljangle.h adresso.c adresso.h \
+	tunable_slip.h $(am__append_1)
 
 #################################################################
 # Handling of local configure headers
@@ -459,6 +463,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/molforces.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nemd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nsquare.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p3m-assignment.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p3m-charges.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p3m-dipoles.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/p3m.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/particle_data.Po@am__quote@
