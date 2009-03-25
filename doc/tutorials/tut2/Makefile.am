@@ -1,3 +1,5 @@
+SUBDIRS = figures
+
 tut2_TEXFILES=\
 	tut2.tex
 

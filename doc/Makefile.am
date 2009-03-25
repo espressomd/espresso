@@ -1,3 +1,5 @@
+SUBDIRS = dg ug tutorials maggs_doc
+
 .PHONY: FORCE doc dg ug tutorials
 doc: ug dg tutorials
 dg: FORCE

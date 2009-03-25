@@ -27,36 +27,26 @@ AC_DEFUN([ES_CHECK_MPI],[
 			),
 		,with_mpicommand=)
 
-	AC_ARG_ENABLE(mpi,,
-		[
-		with_mpi=$enable_mpi
-		AC_MSG_WARN([
-********************************************************************************
-* The option --enable-mpi is deprecated and will be removed in a future        *
-* version of Espresso! Please use --with-mpi instead!                          *
-********************************************************************************\
-		])])
-
-dnl "no" is equivalent to "fake", "yes" means to guess
-	if test .$with_mpi = .fake; then
+	# "no" is equivalent to "fake", "yes" means to guess
+	if test x$with_mpi = xfake; then
 		ES_MPI_SETUP_FAKE
-	elif test .$with_mpi = .no; then
+	elif test x$with_mpi = xno; then
 		with_mpi=fake
 		ES_MPI_SETUP_FAKE
 	else
-		if test .$with_mpi = .yes; then
+		if test x$with_mpi = xyes; then
 			ES_MPI_GUESS_ENV
 		else
 			ES_MPI_SETUP($with_mpi)
 		fi
 	fi
 	AC_DEFINE_UNQUOTED(MPI,"$with_mpi",[Which MPI implementation to use?])
-	AM_CONDITIONAL(MPI_FAKE, test .$with_mpi = .fake)
+	AM_CONDITIONAL(MPI_FAKE, [test x$with_mpi = xfake])
 	AC_SUBST(MPI_INVOCATION)
 ])
 
 AC_DEFUN([ES_MPI_SETUP],[
-	if test .$1 = .; then ES_MPI_GUESS_ENV
+	if test x$1 = x; then ES_MPI_GUESS_ENV
 	else
 		case $1 in
 		poe)	ES_MPI_FIND_MPICC
@@ -97,27 +87,27 @@ AC_DEFUN([ES_MPI_GUESS_ENV],[
 
 	dnl always check for generic, LAM/MPI and MPICH, as they are multiplatform
 
-	if test .$with_mpi = .guess; then
-		if test .$mpicc_done = .; then
+	if test x$with_mpi = xguess; then
+		if test x$mpicc_done = x; then
 			ES_MPI_FIND_MPICC
 		fi
 		ES_MPI_FIND_LAM
-		if test .$lam_found = .yes; then with_mpi=lam; fi
+		if test x$lam_found = xyes; then with_mpi=lam; fi
 	fi
 
-	if test .$with_mpi = .guess; then
+	if test x$with_mpi = xguess; then
 		ES_MPI_FIND_MPICH
 		if test .$mpich_found = .yes; then with_mpi=mpich; fi
 	fi
 
 	dnl generic last, since here we just assume how to run mpirun
 
-	if test .$with_mpi = .guess; then
-		if test .$mpicc_done = .; then
+	if test x$with_mpi = xguess; then
+		if test x$mpicc_done = x; then
 			ES_MPI_FIND_MPICC
 		fi
 		ES_MPI_FIND_GENERIC
-		if test .$generic_found = .yes; then with_mpi=generic; fi
+		if test x$generic_found = xyes; then with_mpi=generic; fi
 	fi
 
 	dnl out of guesses
@@ -154,19 +144,19 @@ AC_DEFUN([ES_MPI_FIND_MPICC],[
 AC_DEFUN([ES_MPI_FIND_GENERIC],[
 	AC_MSG_NOTICE([trying to find a generic MPI])
 	generic_found=yes
-	if test .$mpicc_works != .yes; then
+	if test x$mpicc_works != xyes; then
 		generic_found=no
 	else
-		if test "$with_mpicommand" != ""; then
+		if test x$with_mpicommand != x; then
 		   generic_bin=$with_mpicommand
 		else
 		   AC_PATH_PROG(generic_bin, mpirun, mpirun, [$PATH])
-		   if test .$generic_bin = .; then
+		   if test x$generic_bin = x; then
 			generic_found=no
 		   fi
 		fi
 	fi
-	if test $generic_found = yes; then
+	if test x$generic_found = xyes; then
 		MPI_INVOCATION="$generic_bin -np \$NP \$ESPRESSO_CALL"
 		AC_MSG_NOTICE([found a generic MPI environment])
 	fi

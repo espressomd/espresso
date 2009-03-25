@@ -1,3 +1,5 @@
+SUBDIRS = figures
+
 ug_TEXFILES=\
 	ug.tex \
 	introduction.tex \
@@ -18,12 +20,9 @@ ug_TEXFILES=\
 	deserno.tex \
         mbtools.tex
 
-
 ug_FILES=$(ug_TEXFILES) \
 	underscore.sty \
 	bibliography.bib
-
-#data_DATA=ug.pdf
 
 EXTRA_DIST= $(ug_FILES) \
 	ug.pdf \

@@ -1,7 +1,4 @@
-SUBDIRS = . scripts testsuite doc \
-	doc/ug doc/ug/figures doc/dg \
-	doc/tutorials \
-	doc/tutorials/tut2 doc/tutorials/tut2/figures
+SUBDIRS = . scripts testsuite doc
 
 # List files that should go into the distribution but are not required
 # by any other means
