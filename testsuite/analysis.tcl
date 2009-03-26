@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 # 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
@@ -33,6 +30,8 @@ proc require_feature {feature} {
 	exit -42
     }
 }
+
+require_feature "LENNARD_JONES"
 
 proc rewrite {in out} {
     global observables listables
@@ -295,5 +294,3 @@ if { [catch {
     error_exit $res
 }
 
-exec rm -f $errf
-exit 0

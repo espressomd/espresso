@@ -7,7 +7,10 @@ EXTRA_DIST = Makefile GPL.TXT LICENSE.TXT RELEASE_NOTES darwinlink.sh \
 	$(extra)
 
 # List headers that are not used by the program here
-noinst_HEADERS = myconfig-sample.h
+noinst_HEADERS = myconfig-sample.h \
+	p3m-charges.c p3m-dipoles.h \
+	p3m-dipoles.c p3m-charges.h \
+	p3m-assignment.c
 
 # List the sources of the Espresso binary here
 Espresso_bin_SOURCES = \
@@ -37,9 +40,6 @@ Espresso_bin_SOURCES = \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
 	p3m.c p3m.h \
-	p3m-charges.c p3m-charges.h \
-	p3m-dipoles.c p3m-dipoles.h \
-	p3m-assignment.c \
 	magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h \
 	ewald.c ewald.h \
 	fft.c fft.h \

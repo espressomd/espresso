@@ -1,9 +1,3 @@
-#!/bin/sh
-#
-# tricking... the line after this comment is interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-#
-#
 # This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 # It is therefore subject to the ESPResSo license agreement which you
 # accepted upon receiving the distribution and by which you are
@@ -53,7 +47,6 @@ proc require_feature {feature} {
         exit -42
     }
 }
-
 
 puts "----------------------------------------"
 puts "- Testcase tunable_slip.tcl running on [format %02d [setmd n_nodes]] nodes  -"
@@ -246,5 +239,3 @@ for {set step 0} {$step < $int_loops} {incr step} {
 measure_kinetic_energy
 
 puts "Tunable-slip boundary conditions with constraints are ready..."
-exit 0
-#############################################################

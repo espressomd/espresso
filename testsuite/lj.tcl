@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -21,10 +17,21 @@ proc error_exit {error} {
     exit -666
 }
 
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
 puts "----------------------------------------"
 puts "- Testcase lj.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
+require_feature "LENNARD_JONES"
 
 set epsilon 1e-4
 thermostat off

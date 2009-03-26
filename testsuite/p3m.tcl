@@ -16,8 +16,8 @@ set errf [lindex $argv 1]
 proc error_exit {error} {
     global errf
     set f [open $errf "w"]
-   puts $f "Error occured: $error"
-   close $f
+    puts $f "Error occured: $error"
+    close $f
     exit -666
 }
 
@@ -31,6 +31,7 @@ proc require_feature {feature} {
     }
 }
 
+require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 
 set epsilon 1e-3
@@ -129,4 +130,3 @@ if { [catch {
     error_exit $res
 }
 
- 

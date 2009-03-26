@@ -65,55 +65,83 @@ for file in `ls $srcdir/`; do
     fi
 done
 
-# here go the error messages
-errf=_test.sh_error.$$
 
 # execute the tests
 for np in $processors; do
     failed=
     ignored=
+    succeeded=
     for testcase in $testcases; do
+        # here go the error messages of the testcases
+	errf=$testcase.err
 	CMD="$ESPRESSO $srcdir/$testcase $np $errf"
 	echo "Running \"$CMD\""
 	$CMD
 	case $? in
-	    (0) ;;
-	    (214) ignored="$ignored $testcase(${np}p)";;
-	    (*) failed="$failed $testcase(${np}p)";;
+	    (0) 
+	    succeeded="$succeeded $testcase"
+	    rm -f $errf
+	    ;;
+	    (214) 
+	    # 214 corresponds to "exit -42" in Tcl
+	    ignored="$ignored $testcase"
+	    rm -f $errf
+	    ;;
+	    (*) failed="$failed $testcase";;
 	esac
     done
-    if test -n "$failed"; then break; fi
+    # interrupt if not all test cases on a certain processor number
+    # were successful
+    if test "x$failed" != "x"; then break; fi
 done
 
-echo ""
-echo "***************"
-echo "**  SUMMARY  **"
-echo "***************"
+echo 
+echo "************************************"
+echo "**  SUMMARY (Using $np processors)  **"
+echo "************************************"
 
-if test "$blacklisted"; then
+if test "x$blacklisted" != "x"; then
     echo "BLACKLISTED TESTS:"
     for testcase in $blacklisted; do
 	echo "  $testcase"
     done
 fi
 
-if test "$ignored"; then
+if test "x$ignored" != "x"; then
     echo "IGNORED TESTS:"
     for testcase in $ignored; do
 	echo "  $testcase"
     done
 fi
 
-if test "$failed"; then
+if test "x$succeeded" != "x"; then
+    echo "SUCEEDED TESTS:"
+    for testcase in $succeeded; do
+	echo "  $testcase"
+    done
+fi
+
+if test "x$failed" != "x"; then
     echo "FAILED TESTS:"
     for testcase in $failed; do
 	echo "  $testcase"
     done
+
+    echo
+    echo "**************************************************"
+    echo "Not all test cases were successful!"
+    echo "Have a look at the files testsuite/*.err for error"
+    echo "messages of the failed testcases."
+    echo "**************************************************"
+    echo
+
+    exit 1
 else
+    echo
+    echo "**************************************************"
     echo "All tests were successful!"
+    echo "**************************************************"
+    echo
 fi
 
-if test -n "$failed"; then
-    exit 1
-fi
 

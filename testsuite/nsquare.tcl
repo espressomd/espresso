@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 # 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
@@ -11,6 +8,9 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 # 
+puts "----------------------------------------"
+puts "- Testcase nsquare.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "----------------------------------------"
 set errf [lindex $argv 1]
 
 proc error_exit {error} {
@@ -21,9 +21,17 @@ proc error_exit {error} {
     exit -666
 }
 
-puts "----------------------------------------"
-puts "- Testcase nsquare.tcl running on [format %02d [setmd n_nodes]] nodes: -"
-puts "----------------------------------------"
+proc require_feature {feature} {
+    global errf
+    if { ! [regexp $feature [code_info]]} {
+	set f [open $errf "w"]
+	puts $f "not compiled in: $feature"
+	close $f
+	exit -42
+    }
+}
+
+require_feature "LENNARD_JONES"
 
 cellsystem nsquare
 
@@ -145,6 +153,3 @@ if { [catch {
 } res ] } {
     error_exit $res
 }
-
-exec rm -f $errf
-exit 0

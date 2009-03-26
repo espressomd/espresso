@@ -143,6 +143,3 @@ if { [catch {
 
 # TO BE DONE
 #end of test-3
-
-exec rm -f $errf
-exit 0
