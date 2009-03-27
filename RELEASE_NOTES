@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2f (Alsheim)                                                                    *
+* v2.1.2g (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2f -
+- v2.1.2g -
 -----------
 
+(g) March    26th, 2009.
 (f) March    12th, 2009.
 (e) March     9th, 2009.
 (d) March     5th, 2009.
@@ -26,6 +27,8 @@ New Features:
     with MMM2D
 
 Changes:
+(g) Some changes on the testsuite that make using the testsuite
+    easier.
 (f) all MPI environments respect now the PATH environment variable when looking for
     the mpi-command.
 (e) In mmm2d, added a warning if particles are out of bounds
