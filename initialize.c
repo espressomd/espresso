@@ -606,6 +606,10 @@ void on_ghost_flags_change()
   //maybe we have to add a new global to differ between compile in and acctual use.
   ghosts_have_v = 1;
 #endif
+#ifdef VIRTUAL_SITES 
+  //VIRUTAL_SITES need v to update v of virtual sites
+  ghosts_have_v = 1;
+#endif
 }
 
 static void init_tcl(Tcl_Interp *interp)
