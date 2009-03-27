@@ -89,6 +89,10 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
   if ( (p1->l.ext_flag | p2->l.ext_flag) & COORDS_FIX_MASK) return;
 #endif
 
+#ifdef VIRTUAL_SITES
+    if (ifParticleIsVirtual(p1) || ifParticleIsVirtual(p2)) return;
+#endif	  
+
 #ifdef DPD_MASS_RED
   massf=2*PMASS(*p1)*PMASS(*p2)/(PMASS(*p1)+PMASS(*p2));
 #endif

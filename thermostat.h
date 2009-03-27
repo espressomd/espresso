@@ -128,6 +128,9 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 #endif
 
   for ( j = 0 ; j < 3 ; j++) {
+#ifdef VIRTUAL_SITES
+    if (ifParticleIsVirtual(p)) continue;
+#endif	  
 #ifdef EXTERNAL_FORCES
     if (!(p->l.ext_flag & COORD_FIXED(j)))
 #endif
