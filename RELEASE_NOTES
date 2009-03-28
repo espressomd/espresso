@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2g (Alsheim)                                                                    *
+* v2.1.2h (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2g -
+- v2.1.2h -
 -----------
 
+(h) March    27th, 2009.
 (g) March    26th, 2009.
 (f) March    12th, 2009.
 (e) March     9th, 2009.
@@ -35,6 +36,8 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(h) virtual sites should be ignored by the standard thermostats
+(h) VIRTUAL_SITES should have v to calv v of the virtual sites
 (f) made maggs-documentation compile again
 (e) fixed a bug, that first appeared in CVS version of 2009-02-10. Attention: due
     to this bug all simulations that involved Lennard-Jones interactions produced
