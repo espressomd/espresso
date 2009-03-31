@@ -9,7 +9,7 @@ CYGWIN*)
     ;;
 Linux)
     # determines the type of CPU 0
-    CPUINFO=/tmp/kde-aarnold/mycpuinfo.txt #/proc/cpuinfo
+    CPUINFO=/proc/cpuinfo
 
     MODEL=`awk '\
         /cpu.*/ { if ($1 == "cpu") { \
