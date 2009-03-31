@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2h (Alsheim)                                                                    *
+* v2.1.2i (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2h -
+- v2.1.2i -
 -----------
 
+(i) March    30th, 2009.
 (h) March    27th, 2009.
 (g) March    26th, 2009.
 (f) March    12th, 2009.
@@ -21,6 +22,8 @@ Current working revision.
 (a) February 19th, 2009.
 
 New Features:
+(i) added arch-detection for IA-64, in case processor model name is
+    missing.
 (f) added option --with-mpicommand to configure to specify the command used to
     invoke a parallel program (typically mpirun, sometimes poe or
     dmpirun).
