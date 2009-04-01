@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2i (Alsheim)                                                                    *
+* v2.1.2j (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2i -
+- v2.1.2j -
 -----------
 
+(j) March    31st, 2009.
 (i) March    30th, 2009.
 (h) March    27th, 2009.
 (g) March    26th, 2009.
@@ -39,6 +40,7 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(j) fixed broken CPU guessing in config.guess
 (h) virtual sites should be ignored by the standard thermostats
 (h) VIRTUAL_SITES should have v to calv v of the virtual sites
 (f) made maggs-documentation compile again
