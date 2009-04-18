@@ -2,10 +2,6 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
-EAPI="1"
-
-LIBTOOLIZE="true"
-
 inherit autotools savedconfig
 
 DESCRIPTION="Extensible Simulation Package for Research on Soft matter"
@@ -14,12 +10,11 @@ SRC_URI="http://espressowiki.mpip-mainz.mpg.de/wiki/uploads/4/43/Espresso-2.1.2j
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="x86"
+KEYWORDS="~x86"
 IUSE="X doc examples fftw mpi test packages"
 
 DEPEND="dev-lang/tcl
-	X? ( x11-libs/libX11 
-		tk? ( dev-lang/tk ) )
+	X? ( x11-libs/libX11 )
 	doc? ( app-doc/doxygen
 		virtual/tex-base
 		virtual/latex-base )
@@ -38,13 +33,13 @@ src_unpack() {
 src_compile() {
 	restore_config myconfig.h
 
-	#disable tk bug #225999, add tk to IUSE when fixed
-
+	#disable processor-optimization, we have make.conf
+	#disable tk bug #225999, add tk back to IUSE when fixed
 	econf \
-		--enable-processor-optimization \
+		--disable-processor-optimization \
 		$(use_with fftw) \
 		$(use_with mpi) \
-		$(use_with tk) \
+		--without-tk \
 		$(use_with X x)
 
 	emake || die "emake failed"
@@ -60,18 +55,23 @@ src_install() {
 	insinto /usr/share/${PN}
 	doins myconfig-sample.h
 
-	save_config config/myconfig.h
+	if [ -f myconfig.h ]; then
+		save_config myconfig.h
+	else
+		save_config config/myconfig.h
+	fi
 
 	if use doc; then
-		dodoc doc/ug/ug.pdf
+		newdoc doc/ug/ug.pdf user_guide.pdf
 		dohtml -r doc/dg/html/*
+		newdoc doc/tutorials/tut2/tut2.pdf tutorial.pdf
 	fi
 
 	if use examples; then
 		insinto /usr/share/${PN}/examples
 		doins samples/*
 		#the testsuite are also good examples
-		rm testsuite/Makefile*
+		rm testsuite/Makefile* testsuite/test.sh.in
 		insinto /usr/share/${PN}/testsuite
 		doins testsuite/*
 	fi
@@ -84,9 +84,17 @@ src_install() {
 	echo "ESPRESSO_SOURCE=/usr/bin" > "${T}/80${PN}"
 	echo "ESPRESSO_SCRIPTS=/usr/share/espresso/scripts" >> "${T}/80${PN}"
 	doenvd "${T}/80${PN}"
+
+	cd "${D}"
+	#remove Espresso_wrapper
+	rm -f usr/bin/Espresso
+	#install Espresso directly
+	newbin usr/libexec/Espresso_bin Espresso
+	rm -f usr/libexec/Espresso_bin
 }
 
 pkg_postinst() {
+	env-update && source /etc/profile
 	elog
 	elog Please read and cite:
 	elog ESPResSo, Comput. Phys. Commun. 174\(9\) ,704, 2006.
