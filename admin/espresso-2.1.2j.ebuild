@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
+EAPI="2"
+
 inherit autotools savedconfig
 
 DESCRIPTION="Extensible Simulation Package for Research on Soft matter"
@@ -18,21 +20,17 @@ DEPEND="dev-lang/tcl
 	doc? ( app-doc/doxygen
 		virtual/tex-base
 		virtual/latex-base )
-	fftw? ( >=sci-libs/fftw-3.0.1 )
+	fftw? ( sci-libs/fftw:3.0 )
 	mpi? ( virtual/mpi )"
 
 RDEPEND="${DEPEND}"
 
-src_unpack() {
-	unpack ${A}
-	cd "${S}"
-
+src_prepare() {
 	AT_M4DIR="config" eautoreconf
+	restore_config myconfig.h
 }
 
-src_compile() {
-	restore_config myconfig.h
-
+src_configure() {
 	#disable processor-optimization, we have make.conf
 	#disable tk bug #225999, add tk back to IUSE when fixed
 	econf \
@@ -41,7 +39,9 @@ src_compile() {
 		$(use_with mpi) \
 		--without-tk \
 		$(use_with X x)
+}
 
+src_compile() {
 	emake || die "emake failed"
 	use doc && emake doc || die "emake doc failed"
 }
