@@ -74,6 +74,7 @@ proc create_chain { part_id rvec p_length b_length} {
 
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
+require_feature "FFTW"
 require_feature "BOND_ANGLE_COSINE"
 require_feature "EXTERNAL_FORCES"
 

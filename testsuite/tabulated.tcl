@@ -38,7 +38,6 @@ puts "- Testcase tabulated.tcl running on [format %02d [setmd n_nodes]] nodes: -
 puts "----------------------------------------"
 
 set epsilon 1e-6
-#set tab_epsilon 1000
 thermostat off
 setmd time_step 1
 setmd skin 0
@@ -133,6 +132,7 @@ if { [catch {
     set maxpy 0
     set maxdz 0
     set maxpz 0
+    set maxForce 0
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 	set resF [part $i print force]
 
@@ -141,6 +141,11 @@ if { [catch {
 	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
 	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
 	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
+
+	set force [veclen $resF]
+	if {$force > $maxForce} {
+		set maxForce $force
+	}
 
 	if { $dx > $maxdx} {
 	    set maxdx $dx
@@ -158,8 +163,10 @@ if { [catch {
 	    set maxpz $i
 	}
     }
+    set maxForce [expr sqrt($maxForce)]
+
     puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
-    if { $maxdx > $epsilon || $maxdy > $epsilon || $maxdz > $epsilon } {
+    if { $maxdx/$maxForce > $epsilon || $maxdy/$maxForce > $epsilon || $maxdz/$maxForce > $epsilon } {
 	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
 	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
 	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}

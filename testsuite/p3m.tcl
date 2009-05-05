@@ -33,6 +33,7 @@ proc require_feature {feature} {
 
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
+require_feature "FFTW"
 
 set epsilon 1e-3
 thermostat off

@@ -24,6 +24,10 @@ proc error_exit {error} {
     exit -666
 }
 
+proc check_feature {feature} {
+    return [regexp $feature [code_info]]
+}
+
 proc require_feature {feature} {
     global errf
     if { ! [regexp $feature [code_info]]} {
@@ -149,56 +153,58 @@ if { [catch {
 
     inter coulomb 0.0
 
-    #########################################
-    ####      check P3M + ELC first
-    #########################################
+    if {[check_feature "FFTW"]} {
+	#########################################
+	####      check P3M + ELC
+	#########################################
 
-    cellsystem domain_decomposition 
+	cellsystem domain_decomposition
 
-    eval setmd node_grid $balance_ng
-    puts -nonewline "P3M+ELC node_grid=[setmd node_grid]  "
-    flush stdout
+	eval setmd node_grid $balance_ng
+	puts -nonewline "P3M+ELC node_grid=[setmd node_grid]  "
+	flush stdout
 
-    setmd periodic 1 1 1
-    setmd box_l $box_l $box_l $box_l
-    inter coulomb 1.0 p3m 20.0 32 3 0.106218531447 7.62417115511e-05
-    inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
-    inter coulomb elc 1e-4 [expr 0.2*[lindex [setmd box_l] 2]] dielectric 1.5 1.2 2.0
-    # to ensure force recalculation
-    invalidate_system
-    integrate 0
+	setmd periodic 1 1 1
+	setmd box_l $box_l $box_l $box_l
+	inter coulomb 1.0 p3m 20.0 32 3 0.106218531447 7.62417115511e-05
+	inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
+	inter coulomb elc 1e-4 [expr 0.2*[lindex [setmd box_l] 2]] dielectric 1.5 1.2 2.0
+	# to ensure force recalculation
+	invalidate_system
+	integrate 0
 
-    ############## RMS force error for P3M + ELC
+	############## RMS force error for P3M + ELC
 
-    set rmsf 0
-    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	set resF [part $i pr f]
-	set tgtF $F($i)
-	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
-	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
-	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
+	set rmsf 0
+	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+	    set resF [part $i pr f]
+	    set tgtF $F($i)
+	    set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
+	    set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
+	    set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
+	    
+	    set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
+	}
+	set rmsf [expr sqrt($rmsf/[setmd n_part])]
+	puts "rms force deviation $rmsf"
+	if { $rmsf > $epsilon } {
+	    error "P3M+ELC force error too large"
+	}
 
-	set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
-    }
-    set rmsf [expr sqrt($rmsf/[setmd n_part])]
-    puts "rms force deviation $rmsf"
-    if { $rmsf > $epsilon } {
-	error "P3M+ELC force error too large"
-    }
+	set cureng [lindex [analyze energy coulomb] 0]
+	set toteng [analyze energy total]
 
-    set cureng [lindex [analyze energy coulomb] 0]
-    set toteng [analyze energy total]
+	puts [analyze energy]
 
-    puts [analyze energy]
+	if { [expr abs($toteng - $cureng)] > $epsilon } {
+	    error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
+	}
 
-    if { [expr abs($toteng - $cureng)] > $epsilon } {
-	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
-    }
-
-    set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
-    puts "relative energy deviations: $rel_eng_error"
-    if { $rel_eng_error > [expr 3*$epsilon] } {
-	error "relative energy error too large"
+	set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
+	puts "relative energy deviations: $rel_eng_error"
+	if { $rel_eng_error > [expr 3*$epsilon] } {
+	    error "relative energy error too large"
+	}
     }
 } res ] } {
     error_exit $res

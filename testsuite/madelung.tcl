@@ -45,6 +45,7 @@ proc require_feature {feature} {
 }
 
 require_feature "ELECTROSTATICS"
+require_feature "FFTW"
 
 if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
     puts "Testcase madelung.tcl does not run on 3 or 6 nodes"
