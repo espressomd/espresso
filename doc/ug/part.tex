@@ -168,9 +168,13 @@ will delete all currently defined exclusions.
 \subsection{Exclusions}
 
 \begin{essyntax}
-  \variant{1} part auto_exclusions \opt{\var{range}}
-  \variant{2} part delete_exclusions
+  \variant{1} part auto\_exclusions \opt{\var{range}}
+  \variant{2} part delete\_exclusions
+  \begin{features}
+    \required{EXCLUSIONS} 
+  \end{features}
 \end{essyntax}
+
 
 Variant \variant{1} will create exclusions for all particles pairs
 connected by not more than \var{range} bonds (\var{range} defaults to
