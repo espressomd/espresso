@@ -139,6 +139,3 @@ if { [catch {
 } res ] } {
     error_exit $res
 }
-
-exec rm -f $errf
-exit 0

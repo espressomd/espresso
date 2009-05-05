@@ -150,9 +150,9 @@ proc writevsf { file args } {
 		set to [lindex $bonds $i 1]
 		
 		if { $short } then {
-		    puts $file "b [vtfpid($from)]:[vtfpid($to)]"
+		    puts $file "b [vtfpid $from]:[vtfpid $to]"
 		} else {
-		    puts $file "bond [vtfpid($from)]:[vtfpid($to)]"
+		    puts $file "bond [vtfpid $from]:[vtfpid $to]"
 		}
 	    }
 	}
@@ -226,9 +226,9 @@ proc writevcf { file args } {
 	foreach pid $pids {
 	    if {[part $pid] != "na"} then {
 		if { $folded } then {
-		    puts $file "[vtfpid($pid)] [part $pid print folded_pos]"
+		    puts $file "[vtfpid $pid] [part $pid print folded_pos]"
 		} else {
-		    puts $file "[vtfpid($pid)] [part $pid print pos]"
+		    puts $file "[vtfpid $pid] [part $pid print pos]"
 		}
 	    }
 	}
