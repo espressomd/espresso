@@ -63,7 +63,7 @@ AC_DEFUN([ES_CHECK_FFTW],[
 	fi
 
 	# now save the result
-	if test x$use_fftw = xguess; then
+	if test x$with_fftw = xguess; then
 	   use_fftw=none
 	else
 	   AC_DEFINE_UNQUOTED(FFTW, $use_fftw, [Whether to use the FFTW library, and which version to use])
