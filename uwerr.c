@@ -318,8 +318,7 @@ int UWerr_proj(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 
   if (n < len && n >= 0) {
     Tcl_PrintDouble(interp, a[n], ret);
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, ret, (char *)NULL);
+    Tcl_SetResult(interp, ret, TCL_VOLATILE);
     return TCL_OK;
   }
 
@@ -549,14 +548,14 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
   if (cmdInfo->proc(cmdInfo->clientData, interp, argc+1, my_argv) != TCL_OK)
     goto err_exit;
 
-  Fbb = strtod(interp->result,0);
+  Fbb = strtod(Tcl_GetStringResult(interp),0);
   for (k = 0; k < len; ++k) {
     uwerr_write_tcl_vector(interp, abr[k], cols, tcl_vector);
     Tcl_ResetResult(interp);
 
     if (cmdInfo->proc(cmdInfo->clientData, interp, argc+1, my_argv) != TCL_OK)
       goto err_exit;
-    Fbr[k] = strtod(interp->result,0);
+    Fbr[k] = strtod(Tcl_GetStringResult(interp),0);
   }
 
   Fb  = UWerr_dsum_int(n_rep, Fbr, len);
@@ -584,7 +583,7 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
       Tcl_ResetResult(interp);
       if (cmdInfo->proc(cmdInfo->clientData, interp, argc+1, my_argv) != TCL_OK)
 	goto err_exit;
-      fgrad[a] = strtod(interp->result,0);
+      fgrad[a] = strtod(Tcl_GetStringResult(interp),0);
 
       abb[a] = tmp - std_a;
 
@@ -592,7 +591,7 @@ int UWerr_f(Tcl_Interp *interp, Tcl_CmdInfo * cmdInfo, int argc, char ** argv,
       Tcl_ResetResult(interp);
       if (cmdInfo->proc(cmdInfo->clientData, interp, argc+1, my_argv) != TCL_OK)
 	goto err_exit;
-      fgrad[a] -= strtod(interp->result,0);
+      fgrad[a] -= strtod(Tcl_GetStringResult(interp),0);
 
       abb[a] = tmp;
       fgrad[a] /= 2*std_a;
@@ -763,9 +762,15 @@ int UWerr(Tcl_Interp * interp,
   argv[1] = (char*)malloc(TCL_INTEGER_SPACE*sizeof(char));
   sprintf(argv[1], "%d", col_to_analyze);
 
-  Tcl_CreateCommand(interp, name, UWerr_proj, 0, NULL);
-  Tcl_GetCommandInfo(interp, name, &cmdInfo);
-  
+  if (Tcl_CreateCommand(interp, name, UWerr_proj, 0, NULL) == NULL) {
+      Tcl_AppendResult(interp, "could not create command \"", name, "\"", (char *)NULL);
+      return TCL_ERROR;
+  }
+  if (Tcl_GetCommandInfo(interp, name, &cmdInfo) == 0) {
+      Tcl_AppendResult(interp, "could not access command \"", name, "\"", (char *)NULL);
+      return TCL_ERROR;
+  }
+
   res = UWerr_f(interp, &cmdInfo, 2, argv,
 		data, rows, cols, n_rep, len, s_tau, plot);
 
