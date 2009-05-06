@@ -857,6 +857,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
+      /*      sprintf(buffer, "WE ARE HERE!!!\n");*/
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("molecule_id")) {
@@ -1609,6 +1610,11 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
     n_partners = bonded_ia_params[type_num].num;
     if(argc < 1+n_partners) {
       char buffer[256 + 2*TCL_INTEGER_SPACE];
+      printf("\nIn particle_data.c\n \n");
+      printf("bonded_ia_params[%d].num=%d   ",type_num,bonded_ia_params[type_num].num);
+      printf("bonded_ia_params[%d].type=%d  ",type_num,bonded_ia_params[type_num].type);
+      printf("n_partners=%d  ",n_partners);
+      printf("argc=%d\n",argc);
       sprintf(buffer, "bond type %d requires %d arguments.",
 	      type_num, n_partners+1);
       Tcl_AppendResult(interp, buffer, (char *) NULL);

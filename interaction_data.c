@@ -591,6 +591,8 @@ char *get_name_of_bonded_ia(int i) {
     return "FENE";
   case BONDED_IA_ANGLE:
     return "angle";
+  case BONDED_IA_ANGLEDIST:
+    return "angledist";
   case BONDED_IA_DIHEDRAL:
     return "dihedral";
   case BONDED_IA_HARMONIC:
@@ -1300,6 +1302,18 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
+  case BONDED_IA_ANGLEDIST:
+    Tcl_PrintDouble(interp, params->p.angledist.bend, buffer);
+    Tcl_AppendResult(interp, "angledist ", buffer," ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angledist.phimin, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angledist.distmin, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angledist.phimax, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.angledist.distmax, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
   case BONDED_IA_DIHEDRAL:  
     sprintf(buffer, "%d", (int)(params->p.dihedral.mult));
     Tcl_AppendResult(interp, "dihedral ", buffer, " ", (char *) NULL);
@@ -1909,6 +1923,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef BOND_ANGLE
   REGISTER_BONDED("angle", inter_parse_angle);
+#endif
+#ifdef BOND_ANGLEDIST
+  REGISTER_BONDED("angledist", inter_parse_angledist);
 #endif
   REGISTER_BONDED("dihedral", inter_parse_dihedral);
 #ifdef TABULATED

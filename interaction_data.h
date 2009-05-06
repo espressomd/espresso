@@ -51,6 +51,8 @@
 #define BONDED_IA_RIGID_BOND  6
 /** Type of a virtual bond*/
 #define BONDED_IA_VIRTUAL_BOND  7
+/** Type of bonded interaction is a bond angle -- constraint distance potential. */
+#define BONDED_IA_ANGLEDIST     8
 
 /* Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -501,6 +503,27 @@ typedef struct {
       /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
       double v_tol;
     } rigid_bond;
+    /** Parameters for three body angular potential (bond-angle potentials) that 
+        depends on distance to wall constraint.
+	ATTENTION: Note that there are different implementations of the bond angle
+	potential which you may chose with a compiler flag in the file \ref config.h !
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi)
+	dist0 - equilibrium distance (no default) */
+    struct {
+      double bend;
+      double phimin;
+      double distmin;
+      double phimax;
+      double distmax;
+#ifdef BOND_ANGLE_COSINE
+      double cos_phi0;
+      double sin_phi0;
+#endif
+#ifdef BOND_ANGLE_COSSQUARE
+      double cos_phi0;
+#endif
+    } angledist;
   } p;
 } Bonded_ia_parameters;
 

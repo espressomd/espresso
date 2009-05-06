@@ -143,6 +143,12 @@
 #define BOND_ANGLE
 #endif
 
+/* If any bond angledist potential is activated, activate the whole bond angle code and constraints */
+#if defined(BOND_ANGLEDIST_HARMONIC)
+#define BOND_ANGLEDIST
+#define CONSTRAINTS
+#endif
+
 /********************************************/
 /* \name exported functions of config.c     */
 /********************************************/

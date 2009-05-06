@@ -93,6 +93,7 @@ extern nptiso_struct nptiso;
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
 #include "reaction_field.h"
@@ -391,6 +392,8 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
 #endif
       /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
     case BONDED_IA_ANGLE:
+      (*i)++; force[0] = force[1] = force[2] = 0; break;
+    case BONDED_IA_ANGLEDIST:
       (*i)++; force[0] = force[1] = force[2] = 0; break;
     case BONDED_IA_DIHEDRAL:
       (*i)+=2; force[0] = force[1] = force[2] = 0; break;

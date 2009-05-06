@@ -37,6 +37,7 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
 #include "reaction_field.h"
@@ -298,6 +299,11 @@ MDINLINE void add_bonded_energy(Particle *p1)
 #ifdef BOND_ANGLE
     case BONDED_IA_ANGLE:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
+      break;
+#endif
+#ifdef BOND_ANGLEDIST
+    case BONDED_IA_ANGLEDIST:
+      bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
     case BONDED_IA_DIHEDRAL:
