@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2k (Alsheim)                                                                    *
+* v2.1.2l (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2k -
+- v2.1.2l -
 -----------
 
+(l) May       5th, 2009.
 (k) April    16th, 2009.
 (j) March    31st, 2009.
 (i) March    30th, 2009.
@@ -42,6 +43,14 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(l) Fixed error in bond output to vtf files.
+(l) fixed deprecated direct access to interp->result which breaks with Tcl
+    8.5
+(l) uwerr now complains if it cannot allocate its internal
+    function(s)
+(l) Tests that require P3M now also check for FFTW
+(l) tabulated now checks relative error to avoid problems with different numerical
+    precision in Tcl 8.5
 (j) fixed broken CPU guessing in config.guess
 (h) virtual sites should be ignored by the standard thermostats
 (h) VIRTUAL_SITES should have v to calv v of the virtual sites
