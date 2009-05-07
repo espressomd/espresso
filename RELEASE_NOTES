@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2l (Alsheim)                                                                    *
+* v2.1.2m (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2l -
+- v2.1.2m -
 -----------
 
+(m) May       6th, 2009.
 (l) May       5th, 2009.
 (k) April    16th, 2009.
 (j) March    31st, 2009.
@@ -25,6 +26,7 @@ Current working revision.
 (a) February 19th, 2009.
 
 New Features:
+(m) added new distance dependent (from wall) angular potential
 (k) added ebuild for gentoo and spec file for rpm
 (i) added arch-detection for IA-64, in case processor model name is
     missing.
