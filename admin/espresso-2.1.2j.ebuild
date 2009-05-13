@@ -13,7 +13,7 @@ SRC_URI="http://espressowiki.mpip-mainz.mpg.de/wiki/uploads/4/43/Espresso-2.1.2j
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86"
-IUSE="X doc examples fftw mpi test packages"
+IUSE="X doc examples fftw mpi packages test tk"
 
 DEPEND="dev-lang/tcl
 	X? ( x11-libs/libX11 )
@@ -21,7 +21,8 @@ DEPEND="dev-lang/tcl
 		virtual/tex-base
 		virtual/latex-base )
 	fftw? ( sci-libs/fftw:3.0 )
-	mpi? ( virtual/mpi )"
+	mpi? ( virtual/mpi )
+	tk? ( >=dev-lang/tk-8.4.18-r1 )"
 
 RDEPEND="${DEPEND}"
 
@@ -32,12 +33,11 @@ src_prepare() {
 
 src_configure() {
 	#disable processor-optimization, we have make.conf
-	#disable tk bug #225999, add tk back to IUSE when fixed
 	econf \
 		--disable-processor-optimization \
 		$(use_with fftw) \
 		$(use_with mpi) \
-		--without-tk \
+		$(use_with tk) \
 		$(use_with X x)
 }
 
