@@ -29,6 +29,7 @@
 #include "pressure.h"
 #include "lb.h"
 #include "dpd.h"
+#include "virtual_sites.h"
 
 /** \name Thermostat switches*/
 /************************************************************/
