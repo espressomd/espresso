@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2m (Alsheim)                                                                    *
+* v2.1.2n (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2m -
+- v2.1.2n -
 -----------
 
+(n) May      20th, 2009.
 (m) May       6th, 2009.
 (l) May       5th, 2009.
 (k) April    16th, 2009.
@@ -45,6 +46,7 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(n) Espresso did not build with VIRTUAL_SITES enabled
 (l) Fixed error in bond output to vtf files.
 (l) fixed deprecated direct access to interp->result which breaks with Tcl
     8.5
