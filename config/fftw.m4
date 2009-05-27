@@ -13,7 +13,7 @@ AC_DEFUN([ES_CHECK_FFTW],[
         LIBS=" $LIBS -lm "
 
 	if test x$with_fftw = xguess || test x$with_fftw = xyes; then
-     		# search for FFTW
+     		# determine fftw automatically
 		ES_CHECK_FFTW3
 		if test x$fftw3_found = xyes; then
 		   use_fftw=3
@@ -21,9 +21,13 @@ AC_DEFUN([ES_CHECK_FFTW],[
 		  ES_CHECK_FFTW2
 		  if test x$fftw2_found = xyes; then
 		     use_fftw=2
-		  elif test x$with_fftw = xyes; then
-		       ES_NOTE_64BIT
-		       AC_MSG_FAILURE([
+		  elif test x$with_fftw = xguess; then
+		      # no fftw was found, and none was requested
+		      use_fftw=none
+		  else
+                      # no fftw was found, but the user wanted one (--with-fftw)
+		      ES_NOTE_64BIT
+		      AC_MSG_FAILURE([
 ********************************************************************************
 * Could not find FFTW!                                                         *
 ********************************************************************************
@@ -58,15 +62,16 @@ AC_DEFUN([ES_CHECK_FFTW],[
 ********************************************************************************
 ])
 		fi
-	elif test x$with_fftw != xno; then
+	elif test x$with_fftw = xno; then
+	     use_fftw=none
+	else
 	  AC_MSG_ERROR([specified bad FFTW version ($with_fftw)])
 	fi
 
-	# now save the result
-	if test x$with_fftw = xguess; then
-	   use_fftw=none
-	else
-	   AC_DEFINE_UNQUOTED(FFTW, $use_fftw, [Whether to use the FFTW library, and which version to use])
+	# after this, use_fftw should be set correctly
+	if test x$use_fftw != xnone; then
+		# save the result
+		AC_DEFINE_UNQUOTED(FFTW, $use_fftw, [Whether to use the FFTW library, and which version to use])
 	fi
 ])
 
