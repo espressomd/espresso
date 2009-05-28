@@ -55,15 +55,15 @@ double adress_wf_vector(double x[3]);
     @return weight of the particle
 */
 MDINLINE double adress_wf_particle(Particle *p){
-   if (p==NULL) return 0.0;
-   if (ifParticleIsVirtual(p)){
-      return p->p.adress_weight;
+  if (p==NULL) return 0.0;
+  if (ifParticleIsVirtual(p)){
+    return p->p.adress_weight;
    }
-   else{
-      return adress_wf_particle(get_mol_com_particle(p));
+  else{
+    return adress_wf_particle(get_mol_com_particle(p));
    }
 }
-
+ 
 /** Update adress weight of all particles
 */
 void adress_update_weights();
@@ -71,14 +71,14 @@ void adress_update_weights();
 MDINLINE double adress_non_bonded_force_weight(Particle *p1,Particle *p2){
   double adress_weight_1,adress_weight_2,force_weight;
   int virtual_1,virtual_2;
-
+  
   //NOTE this is in order of probability to appear
   adress_weight_1=adress_wf_particle(p1);
   virtual_1=ifParticleIsVirtual(p1);
-
-   //if particles 1 is ex, but in the cg regime
+  
+  //if particles 1 is ex, but in the cg regime
   if ( (adress_weight_1<ROUND_ERROR_PREC) && (virtual_1==0) ) return 0.0;
-
+  
   adress_weight_2=adress_wf_particle(p2);
   virtual_2=ifParticleIsVirtual(p2);
 
@@ -89,36 +89,40 @@ MDINLINE double adress_non_bonded_force_weight(Particle *p1,Particle *p2){
   if ((virtual_1+virtual_2)==1) return 0.0;
 
   force_weight=adress_weight_1*adress_weight_2;
-
+  
   //both are cg
   if ((virtual_1+virtual_2)==2) {
      //both are in ex regime
      if (force_weight>1-ROUND_ERROR_PREC) return 0.0;
      force_weight=1-force_weight;
+     
   }
   //both are ex -> force_weight is already set
   //if ((virtual_1+virtual_2)==0) force_weight=force_weight;
-
+  //(ifParticleIsVirtual(p1) ==0 || ifParticleIsVirtual(p2) ==0)
+  //  printf(" particle %d %d  virtual %d %d  weights  %f  %f  product %f\n", p1->p.identity, p2->p.identity, ifParticleIsVirtual(p1), ifParticleIsVirtual(p2), adress_weight_1, adress_weight_2, force_weight); 
   return force_weight;
 }
 
 MDINLINE double adress_bonded_force_weight(Particle *p1){
-  double adress_weight_1=adress_wf_particle(p1);
-  double force_weight;
+  //for the moment, the bonds are kept and integrated everywhere
+  return 1;
+  //double adress_weight_1=adress_wf_particle(p1);
+  //double force_weight;
   //NOTE only ex particles have bonded interations and bonded interactions are only inside a molecule
 
   //particle is cg
-  if (adress_weight_1<ROUND_ERROR_PREC) return 0.0;
+  //if (adress_weight_1<ROUND_ERROR_PREC) return 0.0;
 
   //both
-  force_weight=adress_weight_1*adress_weight_1;
-  return force_weight;
+  //force_weight=adress_weight_1*adress_weight_1;
+  //return force_weight;
 }
 
 /** Adress scheme for tabulated forces 
     - useful for particles that DO NOT 
-    coarse-grain and also for interface
-    pressure correction-
+    change their number of degrees of freedom
+    and for interface pressure correction as well-
 */
 
 MDINLINE void adress_interpolation( IA_parameters *ia_params,
