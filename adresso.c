@@ -286,26 +286,37 @@ double adress_wf_vector(double x[3]){
          return 0.0;
          break;
       case 1:
-         return adress_vars[1];
-         break;
-      case 2:
-         dim=(int)adress_vars[3];
-         dist=fabs(x[dim]-adress_vars[4]);
-         return adress_wf(dist);
-         break;
-      case 3:
-         dist=distance(x,&(adress_vars[3]));
-         return adress_wf(dist);
-         break;
-      default:
-         return 0.0;
-         break;
+	return adress_vars[1];
+	break;
+   case 2:
+     dim=(int)adress_vars[3];
+     //dist=fabs(x[dim]-adress_vars[4]);
+     dist = x[dim]-adress_vars[4];
+     if(dist>0)
+       while(dist>box_l[dim]/2.0)
+	 dist = dist - box_l[dim];
+     else if(dist < 0)
+       while(dist< -box_l[dim]/2.0)
+	 dist = dist + box_l[dim];
+     dist = fabs(dist);
+     return adress_wf(dist);
+     break;
+   case 3:
+     dist=distance(x,&(adress_vars[3]));
+     return adress_wf(dist);
+     break;
+   default:
+     return 0.0;
+     break;
    }
 }
 
 double adress_wf(double dist){
    int wf;
    double tmp;
+   
+   //  printf("%f %f        %f %f %f %f\n", adress_vars[1], adress_vars[2], adress_vars[3], adress_vars[4]);
+   
    //explicit region
    if (dist < adress_vars[1]) return 1;
    //cg regime
@@ -334,6 +345,7 @@ void adress_update_weights(){
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
          p[i].p.adress_weight=adress_wf_vector((&p[i])->r.p);
+	 //printf("%f %f\n", p[i].r.p[0], p[i].p.adress_weight);
       }
     }
   }
@@ -344,6 +356,7 @@ void adress_update_weights(){
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
          p[i].p.adress_weight=adress_wf_vector((&p[i])->r.p);
+	 //printf("%f %f\n", p[i].r.p[0], p[i].p.adress_weight);
       }
     }
   }
