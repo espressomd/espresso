@@ -883,6 +883,57 @@ void calc_structurefactor(int type, int order, double **_ff) {
   }
 }
 
+//calculates average density profile in dir direction over last n_conf configurations
+void density_profile_av(int n_conf, int n_bin, double density, int dir, double *rho_ave, int type)
+{
+  int i,j,k,m,n;
+  double r;
+  double r_bin;
+  double pos[3];
+  int  image_box[3];
+  
+  //calculation over last n_conf configurations  
+  
+  //bin width
+  r_bin = box_l[dir]/(double)(n_bin);
+  
+  for (i=0; i<n_bin; i++)
+    rho_ave[i]=0;
+  
+  k=n_configs-n_conf;
+  
+  while(k<n_configs) {
+    r = 0;
+    j = 0;
+    while (r < box_l[dir]) { 
+      n = 0;
+      for(i=0; i<n_total_particles; i++) {
+	//com particles
+	if(partCfg[i].p.type == type) {
+	  for(m=0; m<3; m++) {
+	    pos[m] = configs[k][3*i+m];
+	    image_box[m] = 0;
+	  }
+	  fold_coordinate(pos, image_box, dir);
+	  if (pos[dir] <= r+r_bin && pos[dir] > r)
+	    n++;
+	}
+      }
+      
+      rho_ave[j] += (double)(n)/(box_l[1]*box_l[2]*r_bin)/density;
+      j++;
+      r += r_bin;
+    }     
+    k++;
+  } //k loop
+  
+  // normalization
+  for (i=0; i<n_bin; i++)
+    rho_ave[i]/=n_conf;
+}
+
+
+
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
   int i,j,t;
   int pi,bi;
@@ -2611,6 +2662,72 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
+static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
+{
+   /* 'analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]' */
+  int n_conf;
+  int n_bin;
+  double density;
+  int dir; 
+  double *rho_ave;
+  int type;
+  int i;
+  char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
+  
+  /* parse arguments */
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "usage: analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  if (!ARG0_IS_I(n_bin)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  if (!ARG1_IS_D(density)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  argc-=2; argv+=2;
+
+  if( argc>0 ) { if (!ARG0_IS_I(dir)) return (TCL_ERROR); argc--; argv++; }
+  if ( argc>0 ) 
+     { if (!ARG0_IS_I(n_conf)) return (TCL_ERROR); argc--; argv++; }
+  else 
+    n_conf  = n_configs;
+  
+  if (!ARG0_IS_I(type)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  rho_ave = malloc(n_bin*sizeof(double));
+  for(i=0;i<n_bin;i++)
+    rho_ave[i]=0.0;
+  updatePartCfg(WITHOUT_BONDS);
+  density_profile_av(n_conf, n_bin, density, dir, rho_ave, type);
+  /* append result */
+  double r_bin, r;
+  r_bin = box_l[dir]/(double)(n_bin);
+  r=r_bin/2.0;
+  Tcl_AppendResult(interp, " {\n", (char *)NULL);
+  for(i=0; i<n_bin; i++) {
+    sprintf(buffer,"%f %f",r,rho_ave[i]);
+    Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
+    r += r_bin;
+  }
+  Tcl_AppendResult(interp, "}\n", (char *)NULL);
+  
+  free(rho_ave);
+  
+  return TCL_OK;
+}
+
+
 static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze vanhove' (van Hove Auto correlation function) */
@@ -3318,6 +3435,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("cwvac", parse_cwvac);
 #endif
   REGISTER_ANALYSIS("structurefactor", parse_structurefactor);
+  REGISTER_ANALYSIS("<density_profile>", parse_density_profile_av);
   REGISTER_ANALYSIS("vanhove", parse_vanhove);
   REGISTER_ANALYZE_STORAGE("append", parse_append);
   REGISTER_ANALYZE_STORAGE("push", parse_push);
