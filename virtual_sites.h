@@ -37,7 +37,6 @@ Particle *get_mol_com_particle(Particle *calling_p);
 
 double get_mol_dist(Particle *p1,Particle *p2);
 double get_mol_dist_partcfg(Particle *p1,Particle *p2);
-
 MDINLINE int ifParticleIsVirtual(Particle *p){
    if (p->p.isVirtual == 0) {
       return 0;

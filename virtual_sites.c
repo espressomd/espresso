@@ -258,7 +258,7 @@ void put_mol_force_on_parts(Particle *p_com){
    int i,j,mol_id;
    Particle *p;
    double force[3],M;
- #ifdef VIRTUAL_SITES_DEBUG
+#ifdef VIRTUAL_SITES_DEBUG
    int count=0;
 #endif
   mol_id=p_com->p.mol_id;
@@ -467,29 +467,30 @@ int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
 }
 
 double calc_pressure_mol(int type1,int type2){
-   double force[3],com_dist[3],psum=0;
-   int i,j,k,start;
-
-   for (i=0;i<n_molecules;i++){
-      if (topology[i].type == type1){
-         if (type1==type2){
-            start=i+1;
-         } else {
-            start=0;
-         }
-         for (j=start;j<n_molecules;j++){
-            if (topology[j].type == type2){
-               get_mol_dist_vector_from_molid_cfg(i,j,com_dist);
-               calc_force_between_mol(i,j,force);
-               for (k=0;k<3;k++){
-                   psum+=force[k]*com_dist[k];
-               }
-            }
-         }
+  double force[3], com_dist[3],psum=0;
+  int i,j,k,l,start;
+  for (i=0;i<n_molecules;i++){
+    if (topology[i].type == type1){
+      if (type1==type2){
+	start=i+1;
+      } else {
+	start=0;
       }
-   }
-   psum/=3.0;
-   return psum;
+      for (j=start;j<n_molecules;j++){
+	for(l=0;l<3;l++)
+	  force[l]=0;
+	if (topology[j].type == type2){
+	  get_mol_dist_vector_from_molid_cfg(i,j,com_dist);
+	  calc_force_between_mol(i,j,force);
+	  for (k=0;k<3;k++){
+	    psum+=force[k]*com_dist[k];
+	  }
+	}
+      }
+    }
+  }
+  psum/=3.0;
+  return psum;
 }
 
 int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
@@ -557,21 +558,37 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
 }
 
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
-   int i,j;
-   Particle *p1,*p2;
-   double vec12[3],dist2,dist;
-
-   force[0]=force[1]=force[2]=0.0;
-   for (i=0;i<topology[mol_id1].part.n;i++){
-      p1=&partCfg[topology[mol_id1].part.e[i]];
-      for (j=0;j<topology[mol_id2].part.n;j++){
-         p2=&partCfg[topology[mol_id2].part.e[j]];
-         get_mi_vector(vec12,p1->r.p, p2->r.p);
-         dist2=sqrlen(vec12);
-         dist=sqrt(dist2);
-         calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
-      }
-   }
+  int i,j,l;
+  Particle *p1,*p2;
+  double vec12[3],dist2,dist;
+#ifdef ADRESS
+  double weight;
+  double temp_force[3]={0,0,0};
+#endif
+  force[0]=force[1]=force[2]=0.0;
+  for (i=0;i<topology[mol_id1].part.n;i++){
+    p1=&partCfg[topology[mol_id1].part.e[i]];
+    for (j=0;j<topology[mol_id2].part.n;j++){
+      p2=&partCfg[topology[mol_id2].part.e[j]];
+      
+      get_mi_vector(vec12,p1->r.p, p2->r.p);
+      dist2=sqrlen(vec12);
+      dist=sqrt(dist2);
+#ifdef ADRESS
+      for(l=0;l<3;l++)
+	temp_force[l]=0;
+      
+      calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,temp_force);
+      weight = adress_non_bonded_force_weight(p1,p2);
+      for(l=0;l<3;l++)
+	force[l] += weight*temp_force[l];
+#else
+      calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
+#endif
+      
+    }
+  }
+  
 }
 
 double calc_energy_kinetic_mol(int type){
