@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2n (Alsheim)                                                                    *
+* v2.1.2o (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2n -
+- v2.1.2o -
 -----------
 
+(o) May      28th, 2009.
 (n) May      20th, 2009.
 (m) May       6th, 2009.
 (l) May       5th, 2009.
@@ -27,6 +28,8 @@ Current working revision.
 (a) February 19th, 2009.
 
 New Features:
+(o) added anaylze density profile function
+(o) make mol pressure work with adress
 (m) added new distance dependent (from wall) angular potential
 (k) added ebuild for gentoo and spec file for rpm
 (i) added arch-detection for IA-64, in case processor model name is
@@ -38,6 +41,7 @@ New Features:
     with MMM2D
 
 Changes:
+(o) address should have a bigger skin
 (g) Some changes on the testsuite that make using the testsuite
     easier.
 (f) all MPI environments respect now the PATH environment variable when looking for
@@ -46,6 +50,8 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(o) use folded pos for adress weight
+(o) bonded interaction have weight 1
 (n) Espresso did not build with VIRTUAL_SITES enabled
 (l) Fixed error in bond output to vtf files.
 (l) fixed deprecated direct access to interp->result which breaks with Tcl
