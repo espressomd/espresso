@@ -212,7 +212,10 @@ extern p3m_struct p3m;
 /*@{*/
 
 /// print the p3m parameters to the interpreters result
-int printP3MToResult(Tcl_Interp *interp);
+int printChargeP3MToResult(Tcl_Interp *interp);
+
+/// print the p3m parameters to the interpreters result
+int printDipolarP3MToResult(Tcl_Interp *interp);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm.

@@ -1466,10 +1466,10 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   switch (coulomb.method) {
 #ifdef ELP3M
   case COULOMB_ELC_P3M:
-    printP3MToResult(interp);
+    printChargeP3MToResult(interp);
     printELCToResult(interp);
     break;
-  case COULOMB_P3M: printP3MToResult(interp); break;
+  case COULOMB_P3M: printChargeP3MToResult(interp); break;
 #endif
   case COULOMB_EWALD: printEWALDToResult(interp); break;
   case COULOMB_DH: printdhToResult(interp); break;
@@ -1493,21 +1493,21 @@ int printDipolarIAToResult(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   if (coulomb.Dmethod == DIPOLAR_NONE) {
-    Tcl_AppendResult(interp, "dipolar 0.0", (char *) NULL);
+	    Tcl_AppendResult(interp, "magnetic 0.0", (char *) NULL);
     return (TCL_OK);
   }
  
   Tcl_PrintDouble(interp, coulomb.Dbjerrum, buffer);
-  Tcl_AppendResult(interp, "{dipolar ", buffer, " ", (char *) NULL);
+  Tcl_AppendResult(interp, "{magnetic ", buffer, " ", (char *) NULL);
   switch (coulomb.Dmethod) {
     #ifdef ELP3M
      #ifdef MDLC
        case DIPOLAR_MDLC_P3M:
-        printP3MToResult(interp);   
+        printDipolarP3MToResult(interp);   
         printMDLCToResult(interp);
         break;
      #endif	
-    case DIPOLAR_P3M: printP3MToResult(interp); break;
+    case DIPOLAR_P3M: printDipolarP3MToResult(interp); break;
    #endif
    #if  defined(MDLC) && defined(MAGNETIC_DIPOLAR_DIRECT_SUM)
      case DIPOLAR_MDLC_DS:
