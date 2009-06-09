@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2o (Alsheim)                                                                    *
+* v2.1.2p (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2o -
+- v2.1.2p -
 -----------
 
+(p) June      8th, 2009.
 (o) May      28th, 2009.
 (n) May      20th, 2009.
 (m) May       6th, 2009.
@@ -50,6 +51,8 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(p) Fixed the output of inter coulomb/magnetic in the case that magnetostatics are
+    switched on.
 (o) use folded pos for adress weight
 (o) bonded interaction have weight 1
 (n) Espresso did not build with VIRTUAL_SITES enabled
