@@ -205,6 +205,7 @@ void build_verlet_lists_and_calc_verlet_ia()
     cell = local_cells.cell[c];
     p1   = cell->part;
     np1  = cell->n;
+    
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
       neighbor = &dd.cell_inter[c].nList[n];

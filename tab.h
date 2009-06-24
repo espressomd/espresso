@@ -55,7 +55,6 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   int token;
   double dummr;
   token = 0;
-
   make_particle_type_exist(part_type_a);
   make_particle_type_exist(part_type_b);
     
@@ -332,7 +331,7 @@ MDINLINE int tab_parser(Tcl_Interp * interp,
 
   /* copy tabulated parameters */
   filename = argv[1];
-
+  
   switch (tabulated_set_params(part_type_a, part_type_b, filename)) {
   case 1:
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);

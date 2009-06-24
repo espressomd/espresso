@@ -229,7 +229,7 @@ MDINLINE void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,
    if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
 #endif
    {
-      calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+     calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
    }
 }
 

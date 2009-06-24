@@ -31,6 +31,9 @@
 void update_mol_vel_pos();
 void update_mol_vel();
 void update_mol_pos();
+void update_mol_pos_particle(Particle *);
+void update_mol_vel_particle(Particle *);
+
 void distribute_mol_force();
 
 Particle *get_mol_com_particle(Particle *calling_p);

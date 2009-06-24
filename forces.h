@@ -108,7 +108,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque1[3] = { 0., 0., 0. };
   double torque2[3] = { 0., 0., 0. };
   int j;
-
+  
+  //printf("%f %f \n %f %f\n", p1->r.p[0], adress_wf_particle(p1), p2->r.p[0], adress_wf_particle(p2));
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;

@@ -396,6 +396,27 @@ typedef struct {
 
 } IA_parameters;
 
+/** thermodynamic force parameters */
+
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+typedef struct{
+  int TF_TAB_npoints;
+  int TF_TAB_startindex;
+  
+  double TF_prefactor;
+  double TF_TAB_minval;
+  double TF_TAB_maxval;
+  double TF_TAB_stepsize;
+#define MAXLENGTH_TF_FILENAME 256
+  char TF_TAB_filename[MAXLENGTH_TF_FILENAME];
+  
+} TF_parameters;
+/** #endif */
+#endif
+
+
+
 /** \name Compounds for Coulomb interactions */
 /*@{*/
 
@@ -673,6 +694,12 @@ extern DoubleList tabulated_energies;
 extern DoubleList adress_tab_forces;
 /** Array containing all adress tabulated energies*/
 extern DoubleList adress_tab_energies;
+
+/** #ifdef THERMODYNAMIC_FORCE */
+extern DoubleList thermodynamic_forces;
+
+extern DoubleList thermodynamic_f_energies;
+/** #endif */
 #endif
 
 /** Maximal interaction cutoff (real space/short range interactions). */
@@ -733,6 +760,10 @@ void force_and_energy_tables_init();
 #ifdef ADRESS
 /** Function for initializing adress force and energy tables */
 void adress_force_and_energy_tables_init();
+/** #ifdef THERMODYNAMIC_FORCE */
+void tf_tables_init();
+/** #endif */
+
 #endif
 
 /** Implementation of the tcl command \ref tcl_inter. This function
@@ -757,6 +788,13 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
   return &ia_params[i*n_particle_types + j];
 }
 
+#ifdef ADRESS 
+MDINLINE TF_parameters *get_tf_param(int i) {
+  extern TF_parameters *tf_params;
+  return &tf_params[i];
+}
+#endif
+
 /** Makes sure that ia_params is large enough to cover interactions
     for this particle type. The interactions are initialized with values
     such that no physical interaction occurs. */
@@ -773,6 +811,10 @@ void make_bond_type_exist(int type);
     \ref make_particle_type_exist since it takes care of
     the other nodes.  */
 void realloc_ia_params(int nsize);
+
+#ifdef ADRESS
+void realloc_tf_params(int nsize);
+#endif
 
 /** calculates the maximal cutoff of all real space
     interactions. these are: bonded, non bonded + real space
@@ -794,6 +836,10 @@ int checkIfInteraction(IA_parameters *data);
 MDINLINE int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
+
+#ifdef ADRESS
+int checkIfTF(TF_parameters *data);
+#endif
 
 char *get_name_of_bonded_ia(int i);
 #endif

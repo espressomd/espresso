@@ -80,7 +80,12 @@ int on_program_start(Tcl_Interp *interp)
   ghost_init();
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
-
+#ifdef ADRESS
+  adress_force_and_energy_tables_init();
+  /** #ifdef THERMODYNAMIC_FORCE */
+  tf_tables_init();
+  /** #endif */
+#endif
 #ifdef ELP3M
   fft_pre_init();
 #endif
@@ -91,7 +96,7 @@ int on_program_start(Tcl_Interp *interp)
   if (this_node == 0) {
     /* interaction_data.c: make sure 0<->0 ia always exists */
     make_particle_type_exist(0);
-
+    
     init_tcl(interp);
   }
   return TCL_OK;
@@ -684,6 +689,10 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("adress", adress_tcl);
 #ifdef ADRESS
   REGISTER_COMMAND("correction_function", ic);
+  /** #ifdef THERMODYNAMIC_FORCE */
+  REGISTER_COMMAND("thermodynamic_force", tf_tcl);
+  /** #endif */
+  REGISTER_COMMAND("update_adress_weights", manual_update_weights);
 #endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

@@ -35,6 +35,7 @@
 #include "domain_decomposition.h"
 #include "magnetic_non_p3m__methods.h"
 #include "mdlc_correction.h"
+#include "virtual_sites.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -58,6 +59,7 @@ void force_calc()
 #endif
 
   init_forces();
+  
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
@@ -76,7 +78,7 @@ void force_calc()
     nsq_calculate_ia();
     
   }
-
+  
   calc_long_range_forces();
 
 #ifdef LB
@@ -192,6 +194,14 @@ void calc_long_range_forces()
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force(Particle *part)
 {
+  //  if (part->p.identity == 9)
+  // {
+  //  printf("particle 9 local, weight %f  ", part->p.adress_weight);
+#ifdef ADRESS
+  if (ifParticleIsVirtual(part)) {
+    part->p.adress_weight=adress_wf_vector(part->r.p);
+  }
+#endif
   if ( thermo_switch & THERMO_LANGEVIN )
     friction_thermo_langevin(part);
   else {
@@ -225,11 +235,28 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->r.quat[3]/= scale;
   }
 #endif
+
+#ifdef ADRESS
+  /** #ifdef THERMODYNAMIC_FORCE */
+  if(ifParticleIsVirtual(part))
+    if(part->p.adress_weight > 0 && part->p.adress_weight < 1)
+      add_thermodynamic_force(part);
+  /** #endif */  
+#endif
 }
 
 /** initialize the forces for a ghost particle */
 MDINLINE void init_ghost_force(Particle *part)
 {
+  //if (part->p.identity == 9)
+  // {
+  //  printf("particle 9 ghost, weight %f  ", part->p.adress_weight);
+  #ifdef ADRESS
+  if (ifParticleIsVirtual(part)) {
+    part->p.adress_weight=adress_wf_vector(part->r.p);
+  }
+  #endif
+  
   part->f.f[0] = 0;
   part->f.f[1] = 0;
   part->f.f[2] = 0;

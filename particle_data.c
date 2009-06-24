@@ -171,7 +171,7 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef ADRESS
-  part->p.adress_weight = 1.0;
+  part->p.adress_weight = 0.0;
 #endif
 }
 
@@ -2067,7 +2067,6 @@ int set_particle_q(int part, double q)
 int set_particle_type(int part, int type)
 {
   int pnode;
-
   make_particle_type_exist(type);
 
   if (!particle_node)

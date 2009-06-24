@@ -42,6 +42,14 @@ int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 int ic(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 int ic_parse(Tcl_Interp * interp, int argc, char ** argv);
 int ic_read_params(char * filename);
+
+/** #ifdef THERMODYNAMIC_FORCE */
+int tf_parse(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
+int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
+/** #endif */
+
+int manual_update_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
+
 #ifdef ADRESS
 /** Calc adress weight function of a vector
     @param x[3] vector
@@ -415,7 +423,205 @@ MDINLINE void add_adress_tab_pair_force(Particle *p1, Particle *p2, IA_parameter
       return;
   }
 }
+
+/** #ifdef THERMODYNAMIC_FORCE */
+
+MDINLINE double inverse_weight(double w){
+  if(adress_vars[0] == 2) {
+    return 2/M_PI*asin(sqrt(w));
+  } else {
+    fprintf(stderr, "Thermodynamic force not implemented for this topology.\n");
+    errexit();
+  }
+  return 0;
+}
+
+MDINLINE double adress_dw_dir(double pos[3], double dir[3]){
+  int topo=(int)adress_vars[0];
+  double dist, mod=0;
+  int i, dim;
   
+  for(i=0;i<3;i++)
+    dir[i]=0.0;
+  
+  switch (topo) {
+  case 0:
+    return 0.0;
+    break;
+  case 1:
+    return 0.0;
+    break;
+  case 2:
+    dim=(int)adress_vars[3];
+    //dist=fabs(x[dim]-adress_vars[4]);
+    dist = pos[dim]-adress_vars[4];
+    if(dist>0)
+      while(dist>box_l[dim]/2.0)
+	dist = dist - box_l[dim];
+    else if(dist < 0)
+      while(dist< -box_l[dim]/2.0)
+	dist = dist + box_l[dim];
+    dir[dim]=1;
+    if(dist>0)
+      return -1;
+    else return 1;
+    
+    break;
+  case 3:
+    /* NOT TESTED */
+    dist=distance(pos,&(adress_vars[3]));
+    for(i=0;i<3;i++)
+      mod += (pos[i]-adress_vars[3+i])*(pos[i]-adress_vars[3+i]);
+    if(mod == 0){
+      fprintf(stderr,"Particle located at the center of the box: Thermodynamic force not defined.\n");
+      errexit();
+    }
+    for(i=0;i<3;i++)
+      dir[i]=(pos[i]-adress_vars[3+i])/mod;
+    if(dist < adress_vars[1]+adress_vars[2])
+      return -1;
+    else return 1;
+    break;
+  default:
+    return 0.0;
+    break;
+  }
+}
+
+MDINLINE int tf_set_params(int part_type, double prefactor, char * filename){
+  TF_parameters *data;
+  FILE *fp;
+  int npoints;
+  double minval, maxval;
+  int i, newsize;
+  int token = 0;
+  double dummr;
+  
+  make_particle_type_exist(part_type);
+  data = get_tf_param(part_type);
+  if (!data)
+    return 1;
+  
+  if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 )
+    return 2;
+  
+  /*Open the file containing force and energy tables */
+  fp = fopen( filename , "r");
+  if ( !fp )
+    return 3;
+  
+  /*Look for a line starting with # */
+  while ( token != EOF) {
+    token = fgetc(fp);
+    if ( token == 35 ) { break; } // magic number for # symbol
+  }
+  if ( token == EOF ) {
+    fclose(fp);
+    return 4;
+  }
+  
+  /* First read two important parameters we read in the data later*/
+  fscanf( fp , "%d ", &npoints);
+  fscanf( fp, "%lf ", &minval);
+  fscanf( fp, "%lf ", &maxval);
+  // Set the newsize to the same as old size : only changed if a new force table is being added.
+  newsize = thermodynamic_forces.max;
+  if ( data->TF_TAB_npoints == 0){
+    // A new potential will be added so set the number of points, the startindex and newsize
+    data->TF_TAB_npoints = npoints;
+    data->TF_TAB_startindex = thermodynamic_forces.max;
+    newsize += npoints;
+  } else {
+    // We have existing data for this pair of monomer type check array sizing
+    if ( data->TF_TAB_npoints != npoints ) {
+      fclose(fp);
+      return 5;
+    }
+  }
+  
+  /* Update parameters */
+  data->TF_TAB_maxval = maxval;
+  data->TF_TAB_minval = minval;
+  strcpy(data->TF_TAB_filename, filename);
+  data->TF_prefactor = prefactor;
+  
+  data->TF_TAB_stepsize = (maxval-minval)/(double)(data->TF_TAB_npoints - 1);
+  
+  /* Allocate space for new data */
+  realloc_doublelist(&thermodynamic_forces, newsize);
+  realloc_doublelist(&thermodynamic_f_energies, newsize);
+  
+  /* Read in the new force and energy table data */
+  for (i = 0 ; i < npoints ; i++){
+    fscanf(fp, "%lf", &dummr);
+    fscanf(fp, "%lf", &(thermodynamic_forces.e[i+data->TF_TAB_startindex]));
+    fscanf(fp, "%lf", &(thermodynamic_f_energies.e[i+data->TF_TAB_startindex]));
+    if(i==0 && dummr !=0) {
+      fprintf(stderr, "First point of the thermodynamic force has to be zero.\n");
+      errexit();
+    }
+    else if (i== npoints-1 && dummr != 1){
+      fprintf(stderr, "Last point of the thermodynamic force has to be one.\n");
+      errexit();
+    }
+  }
+  
+  fclose(fp);
+  
+  /* broadcast interaction parameters including force and energy tables */
+  mpi_bcast_tf_params(part_type);
+  
+  return TCL_OK;
+}
+
+MDINLINE double tf_profile(double x_com, int type, TF_parameters * tf_params){
+  double phi, dindex, force, pol;
+  int tablepos, table_start;
+  //double maxval = tf_params->TF_TAB_maxval;
+  double minval = tf_params->TF_TAB_minval;
+  
+  //if(weight == 0 || weight == 1)
+  //force = 0.0;
+  //else {
+    table_start = tf_params->TF_TAB_startindex;
+    dindex = (x_com-minval)/tf_params->TF_TAB_stepsize;
+    tablepos = (int)(floor(dindex));
+    phi = dindex - tablepos;
+    pol = thermodynamic_forces.e[table_start + tablepos]*(1-phi) + thermodynamic_forces.e[table_start + tablepos+1]*phi;
+    
+    /* THERE IS NO EXTRAPOLATION!
+       the table has to start and end ALWAYS at zero and one respectively
+    */
+    force = pol;
+    //}
+  
+  return force;
+}
+
+MDINLINE void add_thermodynamic_force(Particle * p){
+  TF_parameters *tf_params = get_tf_param(p->p.type);
+  double pref   = tf_params->TF_prefactor;
+  if (pref !=0){
+    double weight, width, force, sign;
+    int i, type;
+    double dir[3] = {0,0,0};
+    
+    weight = p->p.adress_weight;
+    if(weight>0 && weight < 1){
+      type   = p->p.type;
+      width  = adress_vars[2];
+      sign   = adress_dw_dir(p->r.p, dir);
+      
+      
+      force = pref*sign*tf_profile(inverse_weight(weight), type, tf_params)/width;
+      
+      for(i=0;i<3;i++)
+	p->f.f[i] += force*dir[i];
+    }
+  }
+}
+
+/** #endif */
 
 #endif
 /*@}*/

@@ -171,8 +171,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_LAFC 49
 /** Action number for \ref mpi_send_isVirtual. */
 #define REQ_SET_ISVI 50
+/** ADRESS - Action number for \ref mpi_bcast_tf_params. */
+#define REQ_BCAST_TF  51
+
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 51
+#define REQ_MAXIMUM 52
 
 /*@}*/
 
@@ -232,6 +235,7 @@ void mpi_recv_fluid_slave(int node, int parm);
 void mpi_local_stress_tensor_slave(int node, int parm);
 void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_isVirtual_slave(int node, int parm);
+void mpi_bcast_tf_params_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -288,6 +292,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
   mpi_ljangle_cap_forces_slave,     /* 49: REQ_BCAST_LAFC */
   mpi_send_isVirtual_slave,         /* 50: REQ_SET_ISVI */
+  mpi_bcast_tf_params_slave,        /* 51: REQ_BCAST_TF */
+
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -350,6 +356,7 @@ char *names[] = {
   "GET_FLUID",      /* 47 */
 
   "BCAST_LAFC",     /* 49 */
+  "REQ_BCAST_TF",   /* 51 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1246,14 +1253,73 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+void mpi_bcast_tf_params(int i)
+{
+  int tablesize=0;
+  
+  mpi_issue(REQ_BCAST_TF, i, i);
+  tablesize = thermodynamic_forces.max;
+  
+  /* thermodynamic force parameters */
+  /* non-bonded interaction parameters */
+  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+  MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
+	    0, MPI_COMM_WORLD);
+  
+  /* If there are tabulated forces broadcast those as well */
+  if ( get_tf_param(i)->TF_TAB_maxval > 0) {
+    /* First let all nodes know the new size for force and energy tables */
+    MPI_Bcast(&tablesize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); // Don't do anything until all nodes have this information
+    
+    /* Communicate the data */
+    MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    //MPI_Bcast(TF_prefactor, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  }
+  
+  //on_short_range_ia_change();
+}
+
+void mpi_bcast_tf_params_slave(int i, int j)
+{
+  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
+  MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
+	    0, MPI_COMM_WORLD);
+  int tablesize=0;
+  /* If there are tabulated forces broadcast those as well */
+  if ( get_tf_param(i)->TF_TAB_maxval > 0) {
+    /* Determine the new size for force and energy tables */
+    MPI_Bcast(&tablesize,1,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    /* Allocate sizes accordingly */
+    realloc_doublelist(&thermodynamic_forces, tablesize);
+    realloc_doublelist(&thermodynamic_f_energies, tablesize);
+    /* Now communicate the data */
+    MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+  }
+}
+
+/** #endif */
+#endif
+
 void mpi_bcast_n_particle_types(int ns)
 {
   mpi_issue(REQ_BCAST_IA_SIZE, -1, ns);
   mpi_bcast_n_particle_types_slave(-1, ns);
+
 }
 
 void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 {
+#ifdef ADRESS
+  /** #ifdef THERMODYNAMIC_FORCE */
+  realloc_tf_params(ns);
+  /** #endif */
+#endif
   realloc_ia_params(ns);
 }
 

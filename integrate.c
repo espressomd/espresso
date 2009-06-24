@@ -389,14 +389,14 @@ void integrate_vv(int n_steps)
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (check_runtime_errors()) return;
 #ifdef ADRESS
-   adress_update_weights();
+    //    adress_update_weights();
    if (check_runtime_errors()) return;
 #endif
 #endif
-
-    force_calc();
-
-//VIRTUAL_SITES distribute forces
+   
+   force_calc();
+   
+   //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
    ghost_communicator(&cell_structure.collect_ghost_force_comm);
    init_forces_ghosts();
@@ -479,7 +479,7 @@ void integrate_vv(int n_steps)
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
    if (check_runtime_errors()) break;
 #ifdef ADRESS
-   adress_update_weights();
+   //adress_update_weights();
    if (check_runtime_errors()) break;
 #endif
 #endif

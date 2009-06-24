@@ -53,6 +53,12 @@ int n_particle_types = 0;
 int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+TF_parameters *tf_params = NULL;
+/** #endif */
+#endif
+
 #if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
 Coulomb_parameters coulomb = { 
 #ifdef ELECTROSTATICS
@@ -96,6 +102,13 @@ DoubleList tabulated_energies;
 DoubleList adress_tab_forces;
 /** Corresponding array containing all adress tabulated energies*/
 DoubleList adress_tab_energies;
+
+
+/** #ifdef THERMODYNAMIC_FORCE */
+/** Array containing the thermodynamic forces **/
+DoubleList thermodynamic_forces;
+DoubleList thermodynamic_f_energies;
+/** #endif */
 #endif
 
 ///
@@ -121,6 +134,13 @@ void adress_force_and_energy_tables_init() {
   init_doublelist(&adress_tab_forces);
   init_doublelist(&adress_tab_energies);
 }
+
+/** #ifdef THERMODYNAMIC_FORCE */
+void tf_tables_init() {
+  init_doublelist(&thermodynamic_forces);
+  init_doublelist(&thermodynamic_f_energies);
+}
+/** #endif */
 #endif
 
 
@@ -309,6 +329,22 @@ void initialize_ia_params(IA_parameters *params) {
 #endif
 }
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+void initialize_tf_params(TF_parameters *params){
+  params->TF_TAB_npoints = 0;
+  params->TF_TAB_startindex = 0;
+  
+  params->TF_prefactor = 0.0;
+  params->TF_TAB_minval = 0.0;
+  params->TF_TAB_maxval = 0.0;
+  params->TF_TAB_stepsize = 0.0;
+  strcpy(params->TF_TAB_filename, "");
+}
+/** endif */
+#endif
+
+
 /** Copy interaction parameters. */
 void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 #ifdef LENNARD_JONES
@@ -494,6 +530,20 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 
 }
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+void copy_tf_params(TF_parameters *dst, TF_parameters *src){
+  dst->TF_TAB_npoints = src->TF_TAB_npoints;
+  dst->TF_TAB_startindex = src->TF_TAB_startindex;
+  dst->TF_prefactor = src->TF_prefactor;
+  dst->TF_TAB_minval = src->TF_TAB_minval;
+  dst->TF_TAB_maxval = src->TF_TAB_maxval;
+  dst->TF_TAB_stepsize = src->TF_TAB_stepsize;
+  strcpy(dst->TF_TAB_filename,src->TF_TAB_filename);
+}
+/** #endif */
+#endif
+
 /** returns non-zero if there is a nonbonded interaction defined */
 int checkIfInteraction(IA_parameters *data) {
 
@@ -585,6 +635,16 @@ if (data->TUNABLE_SLIP_r_cut != 0)
   return 0;
 }
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+int checkIfTF(TF_parameters *data){
+  if (data->TF_TAB_maxval !=0)
+    return 1;
+  return 0;
+}
+/** #endif */
+#endif
+
 char *get_name_of_bonded_ia(int i) {
   switch (i) {
   case BONDED_IA_FENE:
@@ -623,7 +683,6 @@ void realloc_ia_params(int nsize)
 {
   int i, j;
   IA_parameters *new_params;
-
   if (nsize <= n_particle_types)
     return;
 
@@ -651,19 +710,53 @@ void realloc_ia_params(int nsize)
   ia_params = new_params;
 }
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+void realloc_tf_params(int nsize)
+{
+  int i;
+  TF_parameters *new_params;
+
+  if (nsize <= n_particle_types)
+    return;
+
+  new_params = (TF_parameters *) malloc(nsize*sizeof(TF_parameters));
+  if (tf_params) {
+    /* if there is an old field, copy entries and delete */
+    for (i = 0; i < nsize; i++)
+      {
+	if (i < n_particle_types)
+	  copy_tf_params(&new_params[i],
+			 &tf_params[i]);
+	else
+	  initialize_tf_params(&new_params[i]);
+      }
+    free(tf_params);
+  }
+  else {
+    /* new field, just init */
+    for (i = 0; i < nsize; i++)
+      initialize_tf_params(&new_params[i]);
+  }
+  
+  tf_params = new_params;
+}
+/** #endif */
+#endif
+
 void make_particle_type_exist(int type)
 {
   int ns = type + 1;
   if (ns <= n_particle_types)
     return;
-
+  
   mpi_bcast_n_particle_types(ns);
 }
 
 void make_bond_type_exist(int type)
 {
   int i, ns = type + 1;
-
+  
   if(ns <= n_bonded_ia) {
 #ifdef TABULATED
     if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
@@ -1371,6 +1464,30 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
   return (TCL_ERROR);
 }
 
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+int printTFToResult(Tcl_Interp *interp, int i)
+{
+  char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
+  TF_parameters *data = get_tf_param(i);
+  
+  if (!data) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "thermodynamic force does not exist",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+  sprintf(buffer, "%d ", i);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+  
+  if(data->TF_TAB_maxval !=0)
+    Tcl_AppendResult(interp, "thermodynamic_force \"", data->TF_TAB_filename,"\"", (char *) NULL);
+  
+  return(TCL_OK);
+}
+/** #endif */
+#endif
+
 int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -1716,7 +1833,6 @@ int inter_print_non_bonded(Tcl_Interp * interp,
   IA_parameters *data, *data_sym;
 
   Tcl_ResetResult(interp);
-
   make_particle_type_exist(part_type_a);
   make_particle_type_exist(part_type_b);
     
@@ -1731,6 +1847,23 @@ int inter_print_non_bonded(Tcl_Interp * interp,
 
   return printNonbondedIAToResult(interp, part_type_a, part_type_b);
 }
+
+#ifdef ADRESS
+/** #ifdef THERMODYNAMIC_FORCE */
+int tf_print(Tcl_Interp * interp, int part_type)
+{
+  TF_parameters *data;
+  Tcl_ResetResult(interp);
+    
+    make_particle_type_exist(part_type);
+    
+    data = get_tf_param(part_type);
+    
+    return printTFToResult(interp, part_type);
+}
+/** #endif */
+#endif
+
 
 int inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,

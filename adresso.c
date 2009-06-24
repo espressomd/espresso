@@ -123,8 +123,10 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
       Tcl_AppendResult(interp, "        1 - constant (weight will be first value of width)\n", (char *)NULL);
       Tcl_AppendResult(interp, "        2 - divided in one direction (default x, or give a negative center coordinate\n", (char *)NULL);
       Tcl_AppendResult(interp, "        3 - spherical topology\n", (char *)NULL);
-      Tcl_AppendResult(interp, "width:  X.X  - size of ex zone \n", (char *)NULL);
-      Tcl_AppendResult(interp, "        Y.Y  - size of ex and hybrid zone \n", (char *)NULL);
+      //Tcl_AppendResult(interp, "width:  X.X  - size of ex zone \n", (char *)NULL);
+      Tcl_AppendResult(interp, "width:  X.X  - half of size of ex zone \n", (char *)NULL);
+      //Tcl_AppendResult(interp, "        Y.Y  - size of ex and hybrid zone \n", (char *)NULL);
+      Tcl_AppendResult(interp, "        Y.Y  - size of hybrid zone \n", (char *)NULL);
       Tcl_AppendResult(interp, "        Note: Only one value need for topo 1 \n", (char *)NULL);
       Tcl_AppendResult(interp, "center: center of the ex zone (default middle of the box) \n", (char *)NULL);
       Tcl_AppendResult(interp, "        Note: x|y|x X.X for topo 2  \n", (char *)NULL);
@@ -175,11 +177,11 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
             return (TCL_ERROR);
          }
          argv+=3;argc-=3;
-         if ( width[0] >= width[1] ) {
-            Tcl_ResetResult(interp);
-            Tcl_AppendResult(interp, "Second value of width must be bigger than the first", (char *)NULL);
-            return (TCL_ERROR);
-         }
+         //if ( width[0] >= width[1] ) {
+	 //Tcl_ResetResult(interp);
+	 //Tcl_AppendResult(interp, "Second value of width must be bigger than the first", (char *)NULL);
+	 //return (TCL_ERROR);
+	 //}
       }
    }
    else{
@@ -207,7 +209,7 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
                return (TCL_ERROR);
             }
             if (ARG1_IS_S("x")) center[0]=0;
-            else if  (ARG1_IS_S("x")) center[0]=1;
+            else if  (ARG1_IS_S("y")) center[0]=1;
             else center[0]=2;
             if ( (center[1]<0) || (center[1]>box_l[(int)center[0]]) ) {
                Tcl_ResetResult(interp);
@@ -282,12 +284,12 @@ double adress_wf_vector(double x[3]){
    double dist;
    int dim;
    switch (topo) {
-      case 0:
-         return 0.0;
-         break;
-      case 1:
-	return adress_vars[1];
-	break;
+   case 0:
+     return 0.0;
+     break;
+   case 1:
+     return adress_vars[1];
+     break;
    case 2:
      dim=(int)adress_vars[3];
      //dist=fabs(x[dim]-adress_vars[4]);
@@ -345,7 +347,7 @@ void adress_update_weights(){
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
          p[i].p.adress_weight=adress_wf_vector((&p[i])->r.p);
-	 //printf("%f %f\n", p[i].r.p[0], p[i].p.adress_weight);
+	 //printf("LOCAL %f %f\n", p[i].r.p[0], p[i].p.adress_weight);
       }
     }
   }
@@ -356,7 +358,7 @@ void adress_update_weights(){
     for(i = 0; i < np; i++) {
       if (ifParticleIsVirtual(&p[i])) {
          p[i].p.adress_weight=adress_wf_vector((&p[i])->r.p);
-	 //printf("%f %f\n", p[i].r.p[0], p[i].p.adress_weight);
+	 //printf("GHOST %f %f\n", p[i].r.p[0], p[i].p.adress_weight);
       }
     }
   }
@@ -421,4 +423,67 @@ int ic(ClientData _data, Tcl_Interp *interp, int argc, char **argv){
   
 }
 
+/** #ifdef THERMODYNAMIC_FORCE */
+int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
+{
+  int i, part_type, err_code;
+  double j, prefactor;
+  
+  Tcl_ResetResult(interp);
+  
+  if(argc != 4){
+    Tcl_AppendResult(interp, "wrong # args:  should be \"",
+		     "thermodynamic_force <type> <filename> <prefactor>\"",
+		     (char *) NULL);
+    err_code = TCL_ERROR;
+  }
+  else {
+    i=ARG_IS_I(1, part_type);
+    j=ARG_IS_D(3,prefactor);
+    if(i && j)
+      err_code =  tf_parse(interp, part_type, prefactor, argc-2, argv+2);
+    else 
+      err_code = TCL_ERROR;
+  }
+  
+  return err_code;
+}
+
+
+int tf_parse(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv){
+  char * filename = NULL;
+  
+  filename = argv[0];
+  
+  switch(tf_set_params(type, prefactor, filename)){
+    case 1:
+    Tcl_AppendResult(interp, "particle type must be non-negative", (char *) NULL);
+    return 0;
+  case 2:
+    Tcl_AppendResult(interp, "the length of the filename must be less than 256 characters,"
+		     "but is \"", filename, "\"", (char *)NULL);
+    return 0;
+  case 3:
+    Tcl_AppendResult(interp, "cannot open \"", filename, "\"", (char *)NULL);
+    return 0;
+  case 4:
+    Tcl_AppendResult(interp, "attempt to read file \"", filename,
+		     "\" failed, could not find start the start token <#>", (char *)NULL);
+    return 0;
+  case 5:
+    Tcl_AppendResult(interp, "number of data points does not match the existing table", (char *)NULL);
+    return 0;
+  }
+  return TCL_OK;
+}
+/** #endif */
+
+int manual_update_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
+{
+  int  err_code = TCL_OK;
+  
+  adress_update_weights();
+  
+  return err_code;
+}
 #endif
