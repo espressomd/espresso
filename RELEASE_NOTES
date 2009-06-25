@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2p (Alsheim)                                                                    *
+* v2.1.2q (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2p -
+- v2.1.2q -
 -----------
 
+(q) June     24th, 2009.
 (p) June      8th, 2009.
 (o) May      28th, 2009.
 (n) May      20th, 2009.
@@ -51,6 +52,7 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(q) initialization of adress vars fixed
 (p) Fixed the output of inter coulomb/magnetic in the case that magnetostatics are
     switched on.
 (o) use folded pos for adress weight
