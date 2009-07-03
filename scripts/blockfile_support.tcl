@@ -71,6 +71,8 @@ proc blockfile_read_auto_particles {channel read auto} {
 	    "^q$"     { set q $idx; incr idx }
 	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
 		set v $idx; incr idx 3 }
+	    "^di"      { if {![regexp "^$i" "dip"]} { error " $i is not a particle property" }
+		set dip $idx; incr idx 3 }
 	    "^qu"     { if {![regexp "^$i" "quat"]} { error " $i is not a particle property" }
 		set quat $idx; incr idx 4 }
 	    "^o"      { if {![regexp "^$i" "omega"]} { error " $i is not a particle property" }
@@ -91,6 +93,9 @@ proc blockfile_read_auto_particles {channel read auto} {
              pos \[lindex \$line $pos \] \[lindex \$line [expr $pos + 1]\] \[lindex \$line [expr $pos + 2]\]"
     if {[info exists q]} { set cmd "$cmd \
              q \[lindex \$line $q\]" }
+    if {[info exists dip]} { set cmd "$cmd \
+             dip  \[lindex \$line $dip\] \[lindex \$line [expr $dip + 1]\] \[lindex \$line [expr $dip + 2]\]"
+    }
     if {[info exists type]} { set cmd "$cmd \
              type \[lindex \$line $type\]" }
     if {[info exists mol]} { set cmd "$cmd \
