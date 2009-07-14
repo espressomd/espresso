@@ -1253,10 +1253,10 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
-#ifdef ADRESS
 /** #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i)
 {
+#ifdef ADRESS
   int tablesize=0;
   
   mpi_issue(REQ_BCAST_TF, i, i);
@@ -1281,10 +1281,12 @@ void mpi_bcast_tf_params(int i)
   }
   
   //on_short_range_ia_change();
+#endif
 }
 
 void mpi_bcast_tf_params_slave(int i, int j)
 {
+#ifdef ADRESS
   /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
   MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
 	    0, MPI_COMM_WORLD);
@@ -1301,10 +1303,9 @@ void mpi_bcast_tf_params_slave(int i, int j)
     MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
   }
+#endif
 }
 
-/** #endif */
-#endif
 
 void mpi_bcast_n_particle_types(int ns)
 {
