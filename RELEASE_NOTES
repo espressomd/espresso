@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2q (Alsheim)                                                                    *
+* v2.1.2r (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2q -
+- v2.1.2r -
 -----------
 
+(r) July     14th, 2009.
 (q) June     24th, 2009.
 (p) June      8th, 2009.
 (o) May      28th, 2009.
@@ -52,6 +53,7 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(r) compiles again without ADRESS being enabled
 (q) initialization of adress vars fixed
 (p) Fixed the output of inter coulomb/magnetic in the case that magnetostatics are
     switched on.
