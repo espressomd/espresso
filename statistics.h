@@ -303,7 +303,8 @@ void calc_structurefactor(int type, int order, double **sf);
 /** Calculates the density profile in dir direction */
 void density_profile_av(int n_conf, int n_bin, double density, int dir, double *rho_ave, int type);
 
-    
+void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_part, int n_conf, int time, int type, double *bins) ;  
+
 /** returns the minimal squared distance between two positions in the perhaps periodic
     simulation box.
  *  \param pos1  Position one.

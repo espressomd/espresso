@@ -932,6 +932,67 @@ void density_profile_av(int n_conf, int n_bin, double density, int dir, double *
     rho_ave[i]/=n_conf;
 }
 
+void calc_diffusion_profile(int dir, double xmin, double xmax, int nbins, int n_part, int n_conf, int time, int type, double *bins) 
+{
+  int i,t, count,index;
+  double tcount=0;
+  double xpos;
+  double tpos[3];
+  int img_box[3] = {0,0,0};
+  //double delta_x = (box_l[0])/((double) nbins);
+  
+  /* create and initialize the array of bins */
+  
+  // double *bins;
+  
+  int *label;
+  label = malloc(n_part*sizeof(int));
+  
+  /* calculation over last n_conf configurations */
+  t=n_configs-n_conf;
+  
+  while (t<n_configs-time) {
+    /* check initial condition */
+    count = 0;
+    
+    for (i=0;i<n_total_particles;i++) {
+      if(partCfg[i].p.type == type) {
+	tpos[0] = configs[t][3*i];
+	tpos[1] = configs[t][3*i+1];
+	tpos[2] = configs[t][3*i+2];
+	fold_coordinate(tpos, img_box,dir);
+	xpos = tpos[dir];
+	if(xpos > xmin && xpos < xmax) {
+	  label[count] = i;
+	}
+	else label[count] = -1;
+	count ++;
+      }
+    }
+    
+    /* check at time 'time' */
+    for (i=0;i<n_part;i++) {
+      if (label[i]>0) {
+	tpos[0] = configs[t+time][3*label[i]];
+	tpos[1] = configs[t+time][3*label[i]+1];
+	tpos[2] = configs[t+time][3*label[i]+2];
+	fold_coordinate(tpos, img_box,dir);
+	xpos = tpos[dir];
+	
+	index = (int)(xpos/box_l[dir]*nbins);
+	bins[index]++;
+      }
+    }
+    t++;
+    tcount++;
+  }
+  
+  /* normalization */
+  for (i=0;i<nbins;i++) {
+    bins[i]=bins[i]/(tcount);
+  }
+  free(label);
+}
 
 
 int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,double yrange, double axis[3], double center[3], IntList *beadids, DoubleList *density_map, DoubleList *density_profile) {
@@ -2675,7 +2736,7 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
   
   /* parse arguments */
-  if (argc < 3) {
+  if (argc < 5) {
     Tcl_AppendResult(interp, "usage: analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]", (char *)NULL);
     return (TCL_ERROR);
   }
@@ -2726,6 +2787,65 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   
   return TCL_OK;
 }
+
+
+static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
+{
+  int i;
+  int nbins, n_part, n_conf, time, type, dir;
+  double xmin, xmax;
+  double *bins;  
+  char buffer[TCL_DOUBLE_SPACE];
+  
+  /* parse arguments */
+  if (argc < 8) {
+    Tcl_AppendResult(interp, "usage: analyze <diffusion_profile> [ <dir> <xmin> <xmax> <nbins> <n_part> <n_conf> <time> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  if (!ARG0_IS_I(dir)) {
+    Tcl_AppendResult(interp, "usage: analyze <diffusion_profile> [ <dir> <xmin> <xmax> <nbins> <n_part> <n_conf> <time> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  if (!ARG1_IS_D(xmin)) {
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, "usage: analyze <diffusion_profile> [ <dir> <xmin> <xmax> <nbins> <n_part> <n_conf> <time> <type>]", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  //if(!ARG1_IS_D(xmax)) {
+  //Tcl_ResetResult(interp);
+  //Tcl_AppendResult(interp, "usage: analyze <diffusion_profile> [<xmin> <xmax> <nbins> <n_part> <n_conf> <time> <type>]", (char *)NULL);
+  //return (TCL_ERROR);
+  //}
+  argc-=2; argv+=2;
+  if(argc>0){if(!ARG0_IS_D(xmax)) return (TCL_ERROR); argc--;argv++;}
+  if(argc>0){if(!ARG0_IS_I(nbins)) return (TCL_ERROR); argc--;argv++;}
+  if(argc>0){if(!ARG0_IS_I(n_part)) return (TCL_ERROR); argc--;argv++;}
+  if(argc>0){if(!ARG0_IS_I(n_conf)) return (TCL_ERROR); argc--;argv++;}
+  if(argc>0){if(!ARG0_IS_I(time)) return (TCL_ERROR); argc--;argv++;}
+  if(argc>0){if(!ARG0_IS_I(type)) return (TCL_ERROR); argc--;argv++;}
+  
+  updatePartCfg(WITHOUT_BONDS);
+  
+  bins = malloc(nbins*sizeof(double));
+  for (i =0; i<nbins;i++) { bins[i]=0; }
+  
+  calc_diffusion_profile(dir, xmin, xmax, nbins, n_part, n_conf, time, type, bins);
+  
+  double r_bin, r=0;
+  r_bin = box_l[0]/(double)(nbins);
+  Tcl_AppendResult(interp, " {\n", (char *)NULL);
+  for(i=0; i<nbins; i++) {
+    sprintf(buffer,"%f %f",r,bins[i]);
+    Tcl_AppendResult(interp, "{ ",buffer," }\n", (char *)NULL);
+    r += r_bin;
+  }
+  Tcl_AppendResult(interp, "}\n", (char *)NULL);
+  
+  free(bins);
+  return TCL_OK;
+}
+
+
 
 
 static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
@@ -3436,6 +3556,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #endif
   REGISTER_ANALYSIS("structurefactor", parse_structurefactor);
   REGISTER_ANALYSIS("<density_profile>", parse_density_profile_av);
+  REGISTER_ANALYSIS("<diffusion_profile>", parse_diffusion_profile);
   REGISTER_ANALYSIS("vanhove", parse_vanhove);
   REGISTER_ANALYZE_STORAGE("append", parse_append);
   REGISTER_ANALYZE_STORAGE("push", parse_push);
