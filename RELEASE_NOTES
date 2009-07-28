@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2r (Alsheim)                                                                    *
+* v2.1.2s (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2r -
+- v2.1.2s -
 -----------
 
+(s) July     27th, 2009.
 (r) July     14th, 2009.
 (q) June     24th, 2009.
 (p) June      8th, 2009.
@@ -31,6 +32,7 @@ Current working revision.
 (a) February 19th, 2009.
 
 New Features:
+(s) Implementation of diffusion profiles
 (o) added anaylze density profile function
 (o) make mol pressure work with adress
 (m) added new distance dependent (from wall) angular potential
