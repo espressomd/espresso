@@ -116,9 +116,9 @@ double analytic_cotangent_sum(int n, double mesh_i, int cao);
 
 int printChargeP3MToResult(Tcl_Interp *interp)
 {
+#ifdef ELECTROSTATICS
   char buffer[TCL_DOUBLE_SPACE];
 
-#ifdef ELECTROSTATICS
   Tcl_PrintDouble(interp, p3m.r_cut, buffer);
   Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
   sprintf(buffer,"%d",p3m.mesh[0]);
@@ -152,9 +152,9 @@ int printChargeP3MToResult(Tcl_Interp *interp)
 
 int printDipolarP3MToResult(Tcl_Interp *interp)
 {
+#ifdef MAGNETOSTATICS
   char buffer[TCL_DOUBLE_SPACE];
 
-#ifdef MAGNETOSTATICS
   Tcl_PrintDouble(interp, p3m.Dr_cut, buffer);
   Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
   sprintf(buffer,"%d",p3m.Dmesh[0]);
