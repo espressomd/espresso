@@ -2831,8 +2831,9 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
   
   calc_diffusion_profile(dir, xmin, xmax, nbins, n_part, n_conf, time, type, bins);
   
-  double r_bin, r=0;
-  r_bin = box_l[0]/(double)(nbins);
+  double r_bin, r;
+  r_bin = box_l[dir]/(double)(nbins);
+  r=r_bin/2.0;
   Tcl_AppendResult(interp, " {\n", (char *)NULL);
   for(i=0; i<nbins; i++) {
     sprintf(buffer,"%f %f",r,bins[i]);
