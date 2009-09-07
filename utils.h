@@ -103,7 +103,7 @@ MDINLINE void *prealloc(void *old, int size)
     free(old);
     return NULL;
   }
-  return realloc(old, size);
+  return (void *)realloc(old, size);
 }
 
 /** used instead of malloc.
@@ -113,7 +113,7 @@ MDINLINE void *pmalloc(int size)
   if (size <= 0) {
     return NULL;
   }
-  return malloc(size);
+  return (void *)malloc(size);
 }
 
 /** use our own realloc which makes sure that realloc(0) is actually a free. */
