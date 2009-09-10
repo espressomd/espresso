@@ -68,6 +68,9 @@
 #define TINY_SIN_VALUE 1e-10
 /** Tiny angle cutoff for cosine calculations */
 #define TINY_COS_VALUE 0.9999999999
+/** Tiny length cutoff */
+#define TINY_LENGTH_VALUE 0.0001
+
 
 /** maximal number of iterations in the RATTLE algorithm before it bails out. */
 #define SHAKE_MAX_ITERATIONS 1000

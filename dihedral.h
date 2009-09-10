@@ -88,7 +88,7 @@ MDINLINE void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3, Part
   *l_bXc = sqrt(sqrlen(bXc));
 
   /* catch case of undefined dihedral angle */
-  if ( *l_aXb == 0.0 || *l_bXc == 0.0 ) { *phi = -1.0; *cosphi = 0; return;}
+   if ( *l_aXb <= TINY_LENGTH_VALUE || *l_bXc <= TINY_LENGTH_VALUE ) { *phi = -1.0; *cosphi = 0; return;}
 
   for (i=0;i<3;i++) {
     aXb[i] /= *l_aXb;
