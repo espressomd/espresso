@@ -123,13 +123,12 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
       Tcl_AppendResult(interp, "        1 - constant (weight will be first value of width)\n", (char *)NULL);
       Tcl_AppendResult(interp, "        2 - divided in one direction (default x, or give a negative center coordinate\n", (char *)NULL);
       Tcl_AppendResult(interp, "        3 - spherical topology\n", (char *)NULL);
-      //Tcl_AppendResult(interp, "width:  X.X  - size of ex zone \n", (char *)NULL);
-      Tcl_AppendResult(interp, "width:  X.X  - half of size of ex zone \n", (char *)NULL);
-      //Tcl_AppendResult(interp, "        Y.Y  - size of ex and hybrid zone \n", (char *)NULL);
-      Tcl_AppendResult(interp, "        Y.Y  - size of hybrid zone \n", (char *)NULL);
+      Tcl_AppendResult(interp, "width:  X.X  - half of size of ex zone(r0/2 in the papers)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "        Y.Y  - size of hybrid zone (d in the papers)\n", (char *)NULL);
       Tcl_AppendResult(interp, "        Note: Only one value need for topo 1 \n", (char *)NULL);
       Tcl_AppendResult(interp, "center: center of the ex zone (default middle of the box) \n", (char *)NULL);
       Tcl_AppendResult(interp, "        Note: x|y|x X.X for topo 2  \n", (char *)NULL);
+      Tcl_AppendResult(interp, "        Note: X.X Y.Y Z.Z for topo 3  \n", (char *)NULL);
       Tcl_AppendResult(interp, "wf:     0 - cos weighting function (default)\n", (char *)NULL);
       Tcl_AppendResult(interp, "        1 - polynom weighting function\n", (char *)NULL);
       Tcl_AppendResult(interp, "ALWAYS set box_l first !!!", (char *)NULL);
@@ -177,11 +176,6 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
             return (TCL_ERROR);
          }
          argv+=3;argc-=3;
-         //if ( width[0] >= width[1] ) {
-	 //Tcl_ResetResult(interp);
-	 //Tcl_AppendResult(interp, "Second value of width must be bigger than the first", (char *)NULL);
-	 //return (TCL_ERROR);
-	 //}
       }
    }
    else{
@@ -249,18 +243,18 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
 
    //width check
    if (topo==2){
-      if (width[1]>box_l[(int)center[0]]/2){
+      if (width[0]+width[1]>box_l[(int)center[0]]/2){
          Tcl_ResetResult(interp);
-         Tcl_AppendResult(interp, "width must smaller than box_l/2\n", (char *)NULL);
+         Tcl_AppendResult(interp, "The width of ex+hy must smaller than box_l/2\n", (char *)NULL);
          return (TCL_ERROR);
       }
    }
    else if (topo==3){
       for (i=0;i<3;i++){
-         if (width[1]>box_l[i]/2){
+         if (width[0]+width[1]>box_l[i]/2){
             Tcl_ResetResult(interp);
             sprintf(buffer,"%i",i);
-            Tcl_AppendResult(interp, "The width  must smaller than box_l/2 in dim " ,buffer,"\n", (char *)NULL);
+            Tcl_AppendResult(interp, "The width of ex+hy must smaller than box_l/2 in dim " ,buffer,"\n", (char *)NULL);
             return (TCL_ERROR);
          }
       }
@@ -316,8 +310,6 @@ double adress_wf_vector(double x[3]){
 double adress_wf(double dist){
    int wf;
    double tmp;
-   
-   //  printf("%f %f        %f %f %f %f\n", adress_vars[1], adress_vars[2], adress_vars[3], adress_vars[4]);
    
    //explicit region
    if (dist < adress_vars[1]) return 1;
