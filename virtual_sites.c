@@ -314,6 +314,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
    int mol_id;
    int i;
    Particle *p;
+   char *errtxt;
    mol_id=calling_p->p.mol_id;
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
@@ -329,7 +330,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
        }
    }
 #ifdef VIRTUAL_SITES_DEBUG
-   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
    ERROR_SPRINTF(errtxt,"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr=%i\n",calling_p->p.identity);
    return NULL;
 #endif
@@ -338,9 +339,9 @@ Particle *get_mol_com_particle(Particle *calling_p){
 
 double get_mol_dist(Particle *p1,Particle *p2){
    Particle *p1_com,*p2_com;
+   double dist[3],dist2;
    p1_com=get_mol_com_particle(p1);
    p2_com=get_mol_com_particle(p2);
-   double dist[3],dist2;
    #ifdef VIRTUAL_SITES_DEBUG
    if (p1_com==NULL){
       char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
@@ -615,7 +616,7 @@ double calc_energy_kinetic_mol(int type){
 
 #ifdef ELECTROSTATICS
 void calc_absolute_dipolmoment_mol(int type,double average_dipole[2]){
-   int i,j,count=0;;
+   int i,j,count=0;
    double dipole[4],tmp;
    average_dipole[0]=average_dipole[1]=0.0;
    for (i=0;i<n_molecules;i++){

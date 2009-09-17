@@ -593,9 +593,10 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
 {
    int i,j,p_count,dist_count,ind;
    double min,max,bin_width,inv_bin_width,com[3],vel;
-   long distribution[bins];
+   long *distribution;
    char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
 
+   distribution=malloc(bins*sizeof(long));
    max=given_max*time_step;
    min=-given_max*time_step;
    p_count=0;
@@ -651,6 +652,7 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
       vel += bin_width;
    }
    Tcl_AppendResult(interp, "}\n", (char *)NULL);
+   free(distribution);
 }
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
@@ -2133,8 +2135,11 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   int p1;
   double dist;
   int i,j,max_cluster_number,size;
-  int cluster_number[n_total_particles];//cluster number of particle number
-  int cluster_size[n_total_particles+1]; //number of clusters with some size
+  int *cluster_number;//cluster number of particle number
+  int *cluster_size; //number of clusters with some size
+
+  cluster_number=malloc(sizeof(int)*n_total_particles);
+  cluster_size=malloc(sizeof(int)*(n_total_particles+1));
 
   /* parse arguments */
   if (argc != 2) {
@@ -2199,6 +2204,8 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   }
   Tcl_AppendResult(interp, "}",(char *)NULL);
 
+  free(cluster_size);
+  free(cluster_number);
   return TCL_OK;
 }
 
@@ -2734,6 +2741,7 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   int type;
   int i;
   char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
+  double r_bin, r;
   
   /* parse arguments */
   if (argc < 5) {
@@ -2772,7 +2780,6 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   updatePartCfg(WITHOUT_BONDS);
   density_profile_av(n_conf, n_bin, density, dir, rho_ave, type);
   /* append result */
-  double r_bin, r;
   r_bin = box_l[dir]/(double)(n_bin);
   r=r_bin/2.0;
   Tcl_AppendResult(interp, " {\n", (char *)NULL);
@@ -2796,6 +2803,7 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
   double xmin, xmax;
   double *bins;  
   char buffer[TCL_DOUBLE_SPACE];
+  double r_bin, r;
   
   /* parse arguments */
   if (argc < 8) {
@@ -2831,7 +2839,6 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
   
   calc_diffusion_profile(dir, xmin, xmax, nbins, n_part, n_conf, time, type, bins);
   
-  double r_bin, r;
   r_bin = box_l[dir]/(double)(nbins);
   r=r_bin/2.0;
   Tcl_AppendResult(interp, " {\n", (char *)NULL);
@@ -3282,12 +3289,17 @@ void centermass_conf(int k, int type_1, double *com)
 double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf)
 {
   int i,j,k;
-  double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
-  double MSD[n_configs],MSD_time;
+  double  p1[3],p2[3],p_com[3],*p_x,*p_y,*p_z;
+  double *MSD,MSD_time;
   double D;
   char buffer[TCL_DOUBLE_SPACE];
   int MSD_particles=0;
   int start_value=n_configs-n_conf;
+
+  p_x=malloc(sizeof(double)*n_configs);
+  p_y=malloc(sizeof(double)*n_configs);
+  p_z=malloc(sizeof(double)*n_configs);
+  MSD=malloc(sizeof(double)*n_configs);
 
   updatePartCfg(WITHOUT_BONDS);
   for(i=start_value;i<n_configs;i++)
@@ -3335,6 +3347,10 @@ double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n
   {
       D=0;
   }
+  free(p_x);
+  free(p_y);
+  free(p_z);
+  free(MSD);
   return D;
 }
 

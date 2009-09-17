@@ -204,7 +204,7 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
   double friction, noise;
   //Projection martix
   int i;
-  double P_times_dist_sqr[3][3]={{dist2,0,0},{0,dist2,0},{0,0,dist2}},noise_vec[3];
+  double P_times_dist_sqr[3][3]={{0,0,0},{0,0,0},{0,0,0}},noise_vec[3];
   double f_D[3],f_R[3];
   double tmp;
 #ifdef DPD_MASS
@@ -226,6 +226,9 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
   massf=0.5*(PMASS(*p1)+PMASS(*p2));
 #endif
 
+  P_times_dist_sqr[0][0]=dist2;
+  P_times_dist_sqr[1][1]=dist2;
+  P_times_dist_sqr[2][2]=dist2;
   dist_inv = 1.0/dist;
   if((dist < ia_params->dpd_r_cut)&&(ia_params->dpd_gamma > 0.0)) {
     if ( dpd_wf == 1 )

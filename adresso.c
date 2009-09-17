@@ -111,9 +111,11 @@ int adress_print(Tcl_Interp *interp,int argc, char **argv){
 
 int adress_set(Tcl_Interp *interp,int argc, char **argv){
    int topo=-1,i,wf=0,set_center=0;
-   double width[2],center[3]={box_l[0]/2,box_l[1]/2,box_l[2]/2};
+   double width[2],center[3];
    char buffer[3*TCL_DOUBLE_SPACE];
    argv+=2;argc-=2;
+
+   for(i=0;i<3;i++) center[i]=box_l[i]/2;
 
    if (argc < 2) {
       Tcl_ResetResult(interp);

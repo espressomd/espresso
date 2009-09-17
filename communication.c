@@ -1287,10 +1287,11 @@ void mpi_bcast_tf_params(int i)
 void mpi_bcast_tf_params_slave(int i, int j)
 {
 #ifdef ADRESS
+  int tablesize;
   /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
   MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
 	    0, MPI_COMM_WORLD);
-  int tablesize=0;
+  tablesize=0;
   /* If there are tabulated forces broadcast those as well */
   if ( get_tf_param(i)->TF_TAB_maxval > 0) {
     /* Determine the new size for force and energy tables */

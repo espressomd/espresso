@@ -178,7 +178,8 @@ MDINLINE void adress_interpolation( IA_parameters *ia_params,
 
 MDINLINE double correction_function(double x, int ic_points){
   /* correction function goes between zero and one */
-  double ic_s;
+  double ic_s,step,dindex,phi;
+  int tablepos;
   if(ic_points == 0)
     ic_s = 1;
   else {
@@ -193,11 +194,11 @@ MDINLINE double correction_function(double x, int ic_points){
     x_com = (x_com+ic_step)/ic_step;
     
     /* and we interpolate using the table , that includes the extreme points */
-    double step = 1.0/((double)ic_correction.max - 1.0);
-    double dindex = x_com/step;
-    int tablepos = (int)(floor(dindex));
+    step = 1.0/((double)ic_correction.max - 1.0);
+    dindex = x_com/step;
+    tablepos = (int)(floor(dindex));
     
-    double phi = dindex - tablepos;
+    phi = dindex - tablepos;
     ic_s = ic_correction.e[tablepos]*(1.0-phi) + ic_correction.e[tablepos+1]*phi;
   }
   

@@ -435,7 +435,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       poly[0] = pos[0]; poly[1] = pos[1]; poly[2] = pos[2];
       max_cnt=imax(cnt1, max_cnt);
       POLY_TRACE(printf("S"); fflush(NULL));
-      POLY_TRACE(/* printf("placed Monomer 0 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
+      //POLY_TRACE(/* printf("placed Monomer 0 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
 
       poz[0]=pos[0]; poz[1]=pos[1]; poz[2]=pos[2];
 
@@ -451,7 +451,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	poz[0]=pos[0]+(poz[0]-pos[0])*bond_length/absc;
 	poz[1]=pos[1]+(poz[1]-pos[1])*bond_length/absc;
 	poz[2]=pos[2]+(poz[2]-pos[2])*bond_length/absc;
-	POLY_TRACE(/* printf("virtually shifted position of first monomer to (%f,%f,%f)\n",poz[0],poz[1],poz[2]) */);
+	//POLY_TRACE(/* printf("virtually shifted position of first monomer to (%f,%f,%f)\n",poz[0],poz[1],poz[2]) */);
       } else {
 	/* randomly place 2nd monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
@@ -495,7 +495,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       poly[3*n] = pos[0]; poly[3*n+1] = pos[1]; poly[3*n+2] = pos[2];
       max_cnt=imax(cnt1, max_cnt);
       POLY_TRACE(printf("M"); fflush(NULL));
-      POLY_TRACE(/* printf("placed Monomer 1 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
+      //POLY_TRACE(/* printf("placed Monomer 1 at (%f,%f,%f)\n",pos[0],pos[1],pos[2]) */);
       
       /* place remaining monomers */
       for (n=2; n<MPC; n++) { 
@@ -568,8 +568,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 #endif
 	  }
 	  
-	  POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
-	  POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
+	  //POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
+	  //POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
 
 #ifdef CONSTRAINTS
 	  if(constr==0 || constraint_collision(pos,poly+3*(n-1))==0){
@@ -615,7 +615,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	  { free(poly); return (-3); }
       }
       part_id++;
-      POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
+      //POLY_TRACE(/* printf("placed Monomer %d at (%f,%f,%f)\n",n,pos[0],pos[1],pos[2]) */);
     }
   }
   free(poly);
