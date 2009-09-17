@@ -2,34 +2,36 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.2s (Alsheim)                                                                    *
+* v2.1.2u (Alsheim)                                                                    *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.2s -
+- v2.1.2u -
 -----------
 
-(s) July     27th, 2009.
-(r) July     14th, 2009.
-(q) June     24th, 2009.
-(p) June      8th, 2009.
-(o) May      28th, 2009.
-(n) May      20th, 2009.
-(m) May       6th, 2009.
-(l) May       5th, 2009.
-(k) April    16th, 2009.
-(j) March    31st, 2009.
-(i) March    30th, 2009.
-(h) March    27th, 2009.
-(g) March    26th, 2009.
-(f) March    12th, 2009.
-(e) March     9th, 2009.
-(d) March     5th, 2009.
-(c) March     3rd, 2009.
-(b) February 20th, 2009.
-(a) February 19th, 2009.
+(u) September 10th, 2009.
+(t) September  7th, 2009.
+(s) July      27th, 2009.
+(r) July      14th, 2009.
+(q) June      24th, 2009.
+(p) June       8th, 2009.
+(o) May       28th, 2009.
+(n) May       20th, 2009.
+(m) May        6th, 2009.
+(l) May        5th, 2009.
+(k) April     16th, 2009.
+(j) March     31st, 2009.
+(i) March     30th, 2009.
+(h) March     27th, 2009.
+(g) March     26th, 2009.
+(f) March     12th, 2009.
+(e) March      9th, 2009.
+(d) March      5th, 2009.
+(c) March      3rd, 2009.
+(b) February  20th, 2009.
+(a) February  19th, 2009.
 
 New Features:
 (s) Implementation of diffusion profiles
@@ -55,6 +57,9 @@ Changes:
 (a) Improvement of the documentation.
 
 Bugfixes:
+(u) fixed a bug in dihedral angle, when lengths were very small (done by Christine
+    already years ago!!!)
+(t) Diffusion profiles can be calculated in directions x,y and z
 (r) compiles again without ADRESS being enabled
 (q) initialization of adress vars fixed
 (p) Fixed the output of inter coulomb/magnetic in the case that magnetostatics are
