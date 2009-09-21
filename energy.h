@@ -381,6 +381,10 @@ MDINLINE void add_bonded_energy(Particle *p1)
 */
 MDINLINE void add_kinetic_energy(Particle *p1)
 {
+#ifdef VIRTUAL_SITES
+  if (ifParticleIsVirtual(p1)) return;
+#endif
+
   /* kinetic energy */
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
