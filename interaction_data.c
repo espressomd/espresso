@@ -1033,7 +1033,8 @@ void calc_maximal_cutoff()
   
 
 #ifdef MOL_CUT
-  max_cut_non_bonded +=2.0* max_cut_bonded;
+  if(max_cut_bonded > 0)
+    max_cut_non_bonded +=2.0* max_cut_bonded;
 #endif
   /* make max_cut the maximal cutoff of both bonded and non-bonded interactions */
   if ( max_cut_non_bonded > max_cut) max_cut = max_cut_non_bonded;
