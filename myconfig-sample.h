@@ -53,6 +53,7 @@
 /* #define NPT */ 
 /* #define DPD */
 /* #define TRANS_DPD */
+/* #define INTER_DPD */
 
 /*Note: Activate ONLY ONE dpd mass  out of the following! */
 /* #define DPD_MASS_RED */

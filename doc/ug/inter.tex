@@ -571,6 +571,24 @@ constraint Lennard-Jones interactions. Otherwise there is no
 possibility that the particles feel the viscous layer.  Please read
 reference \cite{smiatek08a} before using this interaction.
 
+\subsection{DPD interaction}\label{sec:DPDinter}
+\index{DPD interaction|mainindex}
+\index{interactions!DPD|mainindex}
+\index{DPD}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2} inter_dpd \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
+  \begin{features}
+    \required{INTER_DPD}
+  \end{features}
+\end{essyntax}
+
+This is a special interaction that is to be used in conjunction with
+the Dissipative Particle Dynamics algorithm \ref{sec:DPD} when the
+\texttt{INTER_DPD} implementation is used. The parameters correspond
+to the parameters of the DPD thermostat \vref{sec:DPDthermostat}, but
+can be set individually for the different interactions.
+
 \subsection{Capping the force during warmup}
 \label{sec:forcecap}
 
@@ -740,7 +758,7 @@ No description so far.
   inter \var{bondid}
   angle \var{K} \opt{\var{\phi_0}}
   \begin{features}
-    \required{BOND_ANGLE_HARMONIC} \required{BOND_ANGLE_COSINE} or
+    \required{BOND_ANGLE_HARMONIC}, \required{BOND_ANGLE_COSINE} or
     \required{BOND_ANGLE_COSSQUARE}
   \end{features}
 \end{essyntax}
@@ -896,7 +914,6 @@ The potential is calculated as follows:
 \end{itemize}
 
 \subsection{Virtual bonds}
-
 \begin{essyntax}
   inter \var{bondid} virtual_bond
 \end{essyntax}
@@ -1276,7 +1293,7 @@ As a reference for DLC-method, see \cite{brodka04a}.
 \index{interactions!MDDS method|mainindex}
 
 \begin{essyntax}
-  inter magnetic   \var{l_Bm} mdds n\_cut \var{value\_n\_cut}
+  inter magnetic \var{l_{Bm}} mdds n\_cut \var{value\_n\_cut}
   \opt{\var{far\_cutoff}}
   \begin{features}
     \required{MAGNETOSTATICS}
@@ -1292,8 +1309,6 @@ dimensions, the mehtod takes only replicas in those directions which
 are periodic. Thus, using partially periodic boundaries, once can
 easily calculate the values for 2D+h and 1D+h systems.
   
-  
- 
 \subsection{DAWAANR}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
@@ -1305,21 +1320,22 @@ easily calculate the values for 2D+h and 1D+h systems.
     \required{MAGNETOSTATICS}
   \end{features}
 \end{essyntax}
-The command enables the "dipolar all-with-all and no replicas" method. It is a very 
-special method intended to calculations when you have a single magnetic 
-polymer chain inside and infinite volume where no replicas of the system exist
-along any of the directions in the space.  You should setup formally a box length
-large enough for the initial conformation to be in, but after that, the box has no use.
-No minimum image convention is used. You compute the interactions from the positions
-where the particles has diffused to at each moment. You can use for particles not
-linked, but the method only makes sense in the case you want to study the evolution
-of a single chain in the space. 
+The command enables the "dipolar all-with-all and no replicas"
+method. It is a very special method intended to calculations when you
+have a single magnetic polymer chain inside and infinite volume where
+no replicas of the system exist along any of the directions in the
+space.  You should setup formally a box length large enough for the
+initial conformation to be in, but after that, the box has no use.  No
+minimum image convention is used. You compute the interactions from
+the positions where the particles has diffused to at each moment. You
+can use for particles not linked, but the method only makes sense in
+the case you want to study the evolution of a single chain in the
+space.
 
-Notice that P3M and any other methods that assumes PBC is of no practical use here.  A rough way  to 
-mimic it with P3M would be assigning  a very long box, but  it  would be a waste of time
-and resources. 
-
- 
+Notice that P3M and any other methods that assumes PBC are of no
+practical use here.  A rough way to mimic it with P3M would be
+assigning a very long box, but it would be a waste of time and
+resources.
 
 \section{Other interaction types}
 \label{sec:inter-other}
@@ -1327,6 +1343,9 @@ and resources.
 \subsection{Fixing the center of mass}
 \begin{essyntax}
   inter \var{typeid1} \var{typeid1} comfixed \var{flag}
+  \begin{features}
+    \required{COMFIXED}
+  \end{features}
 \end{essyntax}
 This interaction type applies a constraint on particles of type
 \var{typeid1} such that during the integration the center of mass of
@@ -1346,6 +1365,9 @@ the program exits with an error message. \var{flag} can be set to 1
 \begin{essyntax}
   inter \var{typeid1} \var{typeid2}
   comforce \var{flag} \var{dir} \var{force} \var{fratio}
+  \begin{features}
+    \required{COMFORCE}
+  \end{features}
 \end{essyntax}
 The comforce interaction type enables one to pull away particle groups
 of two different types. It is mainly designed for pulling experiments

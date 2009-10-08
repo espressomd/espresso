@@ -142,18 +142,32 @@ function of the particle velocities.  \todo{Reference}
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.
 
-\subsection{Dissipative Particle Dynamics (DPD) thermostat}
+\subsection{Dissipative Particle Dynamics (DPD) } \label{sec:DPD}
+\index{DPD|mainindex}
+
+\es implements Dissipative Particle Dynamics (DPD) either via a global
+thermostat, or via a thermostat and a special DPD interaction between
+particle types.  The latter allows the user to specify friction
+coefficients on a per-interaction basis.
+
+\subsubsection{Thermostat DPD}\index{sec:DPDthermostat}
+
 \begin{essyntax}
-  thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
+  thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF
+    \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
+  \begin{features}
+    \required{DPD} or \required{TRANS_DPD}
+  \end{features}
 \end{essyntax}
-\subsubsection{Standard DPD thermostat}
-\es implements the DPD thermostat exactly as it is described in \cite{soddeman03a}.
-We use the standard {\it Velocity-Verlet} integration scheme, e.g. the DPD
-only influences the calculation of the forces. No special measurements
-have been taken into account to selfconsistently determine the velocities and
-the dissipative forces as it is for example described in \cite{Nikunen03}.
-DPD adds a velocity dependent dissipative force and a random force to
-the usual conservative pairforces (e.g. Lennard-Jones). 
+
+\es's standard DPD thermostat implements the thermostat exactly as
+described in \cite{soddeman03a}.  We use the standard
+\textit{Velocity-Verlet} integration scheme, \eg DPD only influences
+the calculation of the forces. No special measures have been taken to
+self-consistently determine the velocities and the dissipative forces
+as it is for example described in \cite{Nikunen03}.  DPD adds a
+velocity dependent dissipative force and a random force to the usual
+conservative pair forces (e.g. Lennard-Jones).
 
 The dissipative force is calculated by
 
@@ -168,10 +182,12 @@ The connection of $\sigma $ and $\zeta $ is given by the dissipation fluctuation
  
 $$ (\sigma w^R (r_{ij})^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T $$
 
-The parameters \var{gamma} \var{r\_cut} define the strength of the friction $\zeta$ and the cutoff radius.
+The parameters \var{gamma} \var{r\_cut} define the strength of the
+friction $\zeta$ and the cutoff radius.
 
-According to the optional parameter WF (can be set to 0 or 1, default is 0) of the thermostat command
-the functions $w^D$ and $w^R$ are chosen in the following way ( $ r_{ij} < \var{r\_cut} $ ) :
+According to the optional parameter WF (can be set to 0 or 1, default
+is 0) of the thermostat command the functions $w^D$ and $w^R$ are
+chosen in the following way ( $ r_{ij} < \var{r\_cut} $ ) :
 
 $$ 
 w^D (r_{ij}) = ( w^R (r_{ij})) ^2 = 
@@ -185,16 +201,17 @@ $$
 
 For $ r_{ij} \ge \var{r\_cut} $  $w^D$ and $w^R$ are identical to 0 in both cases.
 
-The friction (dissipative) and noise (random) term are coupled via the fluctuation-
-dissipation theorem. The friction term is a function of the relative
-velocity of particle pairs.  The DPD thermostat is better for dynamics
-than the Langevin thermostat, since it mimics hydrodynamics in the
-system.  
+The friction (dissipative) and noise (random) term are coupled via the
+fluctuation- dissipation theorem. The friction term is a function of
+the relative velocity of particle pairs.  The DPD thermostat is better
+for dynamics than the Langevin thermostat, since it mimics
+hydrodynamics in the system.
 
-When using a Lennard-Jones interaction, $\var{r\_cut} = 2^{\frac{1}{6}}
-\sigma$ is a good value to choose, so that the thermostat acts on the
-relative velocities between nearest neighbor particles.  Larger
-cutoffs including next nearest neighbors or even more are unphysical.
+When using a Lennard-Jones interaction, $\var{r\_cut} =
+2^{\frac{1}{6}} \sigma$ is a good value to choose, so that the
+thermostat acts on the relative velocities between nearest neighbor
+particles.  Larger cutoffs including next nearest neighbors or even
+more are unphysical.
 
 \var{gamma} is basically an inverse timescale on which the system
 thermally equilibrates.  Values between $0.1$ and $1$ are o.k, but you
@@ -211,18 +228,23 @@ this with the command \keyword{system_com_vel} from section
 Two restrictions apply for the dpd implementation of \es:
 
 \begin{itemize}
-\item As soon as at least one of the two interacting particles is fixed
-      (see~\ref{chap:part} on how to fix a particle in space) the dissipative and the
-      stochastic force part is set to zero for both particles (you should only change
-      this hardcoded behaviour if you are sure not to violate the dissipation fluctuation theorem). 
-\item DPD does not take into account any internal rotational degrees of freedom of the particles
-      if  ROTATION is switched on. Up to the current version DPD only acts on the translatorial
-      degrees of freedom.
+\item As soon as at least one of the two interacting particles is
+  fixed (see~\ref{chap:part} on how to fix a particle in space) the
+  dissipative and the stochastic force part is set to zero for both
+  particles (you should only change this hardcoded behaviour if you
+  are sure not to violate the dissipation fluctuation theorem).
+\item \texttt{DPD} does not take into account any internal rotational
+  degrees of freedom of the particles if \texttt{ROTATION} is switched
+  on. Up to the current version DPD only acts on the translatorial
+  degrees of freedom.
 \end{itemize}
 
-\subsubsection{Transverse DPD thermostat}\label{sec:transDPD}
-This is an extension of the above thermostat\cite{junghans2008}, which dampes the degrees of freedom
-perpendicular on the axis between two particles. To switch it on, the feature TRANS_DPD is required.
+\paragraph{Transverse DPD thermostat}\label{sec:transDPD}
+This is an extension of the above standard DPD thermostat
+\cite{junghans2008}, which dampens the degrees of freedom
+perpendicular on the axis between two particles. To switch it on, the
+feature \texttt{TRANS_DPD} is required instead of the feature
+\texttt{DPD}.
 
 The dissipative force is calculated by
 
@@ -232,37 +254,46 @@ The random force by
 
 $$ \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}$$
 
-The parameters \var{tgamma} \var{tr\_cut} define the strength of the friction and the cutoff in the same way as above.
-NOTE: That this thermostat does NOT conserve angular momentum!!!!
+The parameters \var{tgamma} \var{tr\_cut} define the strength of the
+friction and the cutoff in the same way as above.  Note: This
+thermostat does \emph{not} conserve angular momentum.
 
-\subsubsection{Interaction DPD thermostat}\label{sec:interDPD}
-The DPD thermostat can also be set up as a normal interaction to make friction between different particle types different.
+\subsubsection{Interaction DPD}\label{sec:interDPD}
+\index{Interaction DPD}
 
 \begin{essyntax}
   thermostat inter_dpd \var{temperature}
-\end{essyntax}
-and
-\begin{essyntax}
-  inter \var{type1} \var{type2} inter_dpd \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
   \begin{features}
     \required{INTER_DPD}
   \end{features}
 \end{essyntax}
 
+Another way to use DPD is by using the interaction DPD. In this case,
+DPD is implemented via a thermostat and corresponding interactions.
+The above command will set the global temperature of the system, while
+the friction and other parameters have to be set via the command
+\texttt{inter inter_dpd} (see \vref{sec:DPDinter}).  This allows to
+set the friction on a per-interaction basis.
+
 \subsubsection{Other DPD extensions}
-The features DPD_MASS_RED or DPD_MASS_LIN make the friction constant mass dependent:
+The features \texttt{DPD_MASS_RED} or \texttt{DPD_MASS_LIN} make the
+friction constant mass dependent:
 $$ \zeta \to \zeta M_{ij} $$ 
 and 
 $$ \zeta \to \zeta M_{ij} $$
-There are two cases implemented. DPD_MASS_RED uses the reduced mass:
+There are two cases implemented. \texttt{DPD_MASS_RED} uses the
+reduced mass:
 $$ M_{ij}=2\frac{m_i m_j}{m_i+m_j} $$
-while DPD_MASS_LIN uses the real mass mass:
+while \texttt{DPD_MASS_LIN} uses the real mass mass:
 $$ M_{ij}=\frac{m_i+m_j}{2} $$
 The prefactors are such that equal masses result in a factor 1.
 
 \subsection{Isotropic NPT thermostat}
 \begin{essyntax}
   thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
+  \begin{features}
+    \required{NPT}
+  \end{features}
 \end{essyntax}
 
 This theormstat is based on the Anderson thermostat and will
@@ -295,6 +326,9 @@ Returns the thermostat parameters. \todo{Document return format.}
   \variant{4}nemd
   \variant{5}nemd profile
   \variant{6}nemd viscosity
+  \begin{features}
+    \required{NEMD}
+  \end{features}
 \end{essyntax}
 
 Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system
