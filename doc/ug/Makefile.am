@@ -18,6 +18,7 @@ ug_TEXFILES=\
 	features.tex \
 	examples.tex \
 	deserno.tex \
+	mmm.tex \
         mbtools.tex
 
 ug_FILES=$(ug_TEXFILES) \
