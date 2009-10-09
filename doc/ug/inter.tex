@@ -206,7 +206,8 @@ Only the second variant allows capping the force using \lit{inter
   inter \var{type1} \var{type2} lj-angle
   \var{\epsilon} \var{\sigma}
   \var{r_\mathrm{cut}} \var{b1_a} \var{b1_b}
-  \var{b2_a} \var{b2_b}
+  \var{b2_a} \var{b2_b} \opt{\var{r_\mathrm{cap}} 
+    \var{z_0} \var{\delta z} \var{\kappa} \var{\epsilon'}}
   \begin{features}
     \required{LJ_ANGLE}
   \end{features}
@@ -216,54 +217,63 @@ Only the second variant allows capping the force using \lit{inter
   \includegraphics[height=8em]{figures/hbond}
 \end{center}
 
-Specifies a 12-10 Lennard-Jones interaction with angular dependence
-between particles of the types \var{type1} and \var{type2}. These two
-particles need two bonded partners oriented in a symmetric way. They
-define an orientation for the central particle. The purpose of using
-bonded partners is to avoid dealing with torques, therefore the
-interaction does \emph{not} need the ROTATION feature. The angular
-part of the potential minimizes the system when the two central beads
-are oriented along the vector formed by these two particles. The
-shaded beads on the image are virtual particles that are formed from
-the orientation of the bonded partners, connected to the central
+Specifies a 12-10 Lennard-Jones interaction with angular dependence between
+particles of the types \var{type1} and \var{type2}. These two particles need
+two bonded partners oriented in a symmetric way. They define an orientation
+for the central particle. The purpose of using bonded partners is to avoid
+dealing with torques, therefore the interaction does \emph{not} need the
+ROTATION feature. The angular part of the potential minimizes the system when
+the two central beads are oriented along the vector formed by these two
+particles. The shaded beads on the image are virtual particles that are formed
+from the orientation of the bonded partners, connected to the central
 beads. They are used to define angles. The potential is of the form
 \begin{equation}
   U(r_{ik},\theta_{jik},\theta_{ikn})=\epsilon\left[5\left(\frac{\sigma}r\right)^{12}-6\left(\frac{\sigma}{r}\right)^{10}\right]\cos^2\theta_{jik}\cos^2\theta_{ikn},
 \end{equation}
-where $r_{ik}$ is the distance between the two central beads, and each
-angle defines the orientation between the direction of a central bead
-(determined from the two bonded partners) and the vector
-$\mathbf{r_{ik}}$. Note that the potential is turned off if one of the
-angle is more than $\pi/2$. This way we don't end up creating a
-minimum for an anti-parallel configuration.
+where $r_{ik}$ is the distance between the two central beads, and each angle
+defines the orientation between the direction of a central bead (determined
+from the two bonded partners) and the vector $\mathbf{r_{ik}}$. Note that the
+potential is turned off if one of the angle is more than $\pi/2$. This way we
+don't end up creating a minimum for an anti-parallel configuration.
 
-Unfortunately, the bonded partners are not seeked dynamically. One has
-to keep track of the relative positions of the particle IDs. This can
-be done by setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a},
-and \var{b2_b}. Say the first bead \var{type1} has particle ID
-\var{n}, then one should set the simulation such as its two bonded
-partners have particle IDs \var{n+b1_a} and \var{n+b1_b},
-respectively. On a linear chain, for example, one would typically have
-\var{b1_a=1} and \var{b1_b=-1} such that the central bead and its two
-bonded partners have position IDs \var{n}, \var{n+1}, and \var{n-1},
-respectively. This is surely not optimized, but once the simulation is
-set correctly the algorithm is very fast.
+Unfortunately, the bonded partners are not seeked dynamically. One has to keep
+track of the relative positions of the particle IDs. This can be done by
+setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a}, and \var{b2_b}. Say
+the first bead \var{type1} has particle ID \var{n}, then one should set the
+simulation such as its two bonded partners have particle IDs \var{n+b1_a} and
+\var{n+b1_b}, respectively. On a linear chain, for example, one would
+typically have \var{b1_a=1} and \var{b1_b=-1} such that the central bead and
+its two bonded partners have position IDs \var{n}, \var{n+1}, and \var{n-1},
+respectively. This is surely not optimized, but once the simulation is set
+correctly the algorithm is very fast.
 
-The force can be capped using \lit{inter ljangleforcecap}. It might
-turn out to be useful in some cases to keep this capping during the
-whole simulation. This is due to the very sharp angular dependence for
-small distance, compared to $\sigma$. Two beads might come very close
-to each other while having unfavorable angles such that the
-interaction is turned off. Then a change in the angle might suddenly
-turn on the interaction and the system will blow up (the potential is
-so steep that one would need extremely small time steps to deal with
-it, which is not very clever for such rare events).
+The force can be capped using \lit{inter ljangleforcecap}. It might turn out
+to be useful in some cases to keep this capping during the whole
+simulation. This is due to the very sharp angular dependence for small
+distance, compared to $\sigma$. Two beads might come very close to each other
+while having unfavorable angles such that the interaction is turned off. Then
+a change in the angle might suddenly turn on the interaction and the system
+will blow up (the potential is so steep that one would need extremely small
+time steps to deal with it, which is not very clever for such rare events).
 
 For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid
-simulating hydrogens and oxygens by using this potential. This comes
-down to implementing a HBond potential between N and C atoms.
+simulating hydrogens and oxygens by using this potential. This comes down to
+implementing a HBond potential between N and C atoms.
 
-\todo{The contribution to the pressure is not yet implemented.}
+The optional parameter \var{r_\mathrm{cap}} is the usual cap radius. The four
+other optional parameters (\var{z_0}, \var{\delta z}, \var{\kappa},
+\var{\epsilon'}) describe a different interaction strength \var{\epsilon'} for
+a subset of the simulation box. The box is divided through the \var{z} plane
+in two different regions: region 1 which creates an interaction with strength
+\var{\epsilon}, region 2 with interaction strength \var{\epsilon'}. The 2nd
+region is defined by its \var{z}-midplane \var{z_0}, its total thickness
+\var{\delta z}, and the interface width \var{\kappa}. Therefore, the
+interaction strength is \var{\epsilon} everywhere except for the region of the
+box $z_0-\delta z/2<z<z_0+\delta z/2$. The interface width smoothly
+interpolates between the two regions to avoid discontinuities. As an example,
+one can think of modeling hydrogen bonds in two different environments: water,
+where the interaction is rather weak, and in a lipid bilayer, where it is
+comparatively stronger.
 
 \subsection{Smooth step interaction}
 \index{smooth-step interaction|mainindex}
