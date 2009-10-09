@@ -180,6 +180,10 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJANGLE_bonded2pos = 
     params->LJANGLE_bonded2neg = 
     params->LJANGLE_capradius = 0;
+  params->LJANGLE_z0 = 0.;
+  params->LJANGLE_dz = -1.;
+  params->LJANGLE_kappa = 0.;
+  params->LJANGLE_epsprime = 0.;
 #endif
 
 #ifdef SMOOTH_STEP
@@ -380,6 +384,10 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJANGLE_bonded2pos = src->LJANGLE_bonded2pos;
   dst->LJANGLE_bonded2neg = src->LJANGLE_bonded2neg;
   dst->LJANGLE_capradius = src->LJANGLE_capradius;
+  dst->LJANGLE_z0 = src->LJANGLE_z0;
+  dst->LJANGLE_dz = src->LJANGLE_dz;
+  dst->LJANGLE_kappa = src->LJANGLE_kappa;
+  dst->LJANGLE_epsprime = src->LJANGLE_epsprime;
 #endif
 
 #ifdef SMOOTH_STEP

@@ -202,6 +202,11 @@ typedef struct {
   int LJANGLE_bonded2neg;
   /* Cap */
   double LJANGLE_capradius;
+  /* Optional 2nd environment */
+  double LJANGLE_z0;
+  double LJANGLE_dz;
+  double LJANGLE_kappa;
+  double LJANGLE_epsprime;
   /*@}*/
 #endif
 
