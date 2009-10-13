@@ -540,8 +540,6 @@ MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
 	  }
 	}  
 
-	printf("%f \t %f\n", z_middle, effective_eps);
-
 	/* normal case: resulting force/energy smaller than capping. */
 	if(dist > ia_params->LJANGLE_capradius) {
 	  frac2  = SQR(ia_params->LJANGLE_sig/dist);
