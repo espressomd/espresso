@@ -29,7 +29,7 @@
 /*@{*/
 
 /** CELLS: Default value for the maximal number of cells per node. */
-#define CELLS_MAX_NUM_CELLS 216
+#define CELLS_MAX_NUM_CELLS 32768
 
 /** P3M: Default for number of interpolation points of the charge
     assignment function. */

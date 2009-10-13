@@ -68,6 +68,9 @@ done
 
 # execute the tests
 for np in $processors; do
+    echo
+    echo "**************************************************"
+    echo "**** RUNNING TESTSUITE FOR $np tasks"
     failed=
     ignored=
     succeeded=
@@ -75,30 +78,47 @@ for np in $processors; do
         # here go the error messages of the testcases
 	errf=$testcase.err
 	CMD="$ESPRESSO $srcdir/$testcase $np $errf"
-	echo "Running \"$CMD\""
+	echo "**************************************************"
+	echo "** $testcase"
+	echo "Executing: \"$CMD\""
 	$CMD
-	case $? in
+	rc=$?
+	echo
+	case $rc in
 	    (0) 
+	    echo "SUCCESS: $testcase"
 	    succeeded="$succeeded $testcase"
 	    rm -f $errf
 	    ;;
 	    (214) 
 	    # 214 corresponds to "exit -42" in Tcl
+	    echo "IGNORED: $testcase"
 	    ignored="$ignored $testcase"
 	    rm -f $errf
 	    ;;
-	    (*) failed="$failed $testcase";;
+	    (*) 
+	    echo "FAILED: $testcase"
+	    echo "FOR ERROR MESSAGES, SEE $errf."
+	    failed="$failed $testcase"
+	    ;;
 	esac
     done
     # interrupt if not all test cases on a certain processor number
     # were successful
-    if test "x$failed" != "x"; then break; fi
+    if test "x$failed" != "x"; then 
+	echo "**************************************************"
+	echo "Some test cases failed with $np tasks, interrupting test suite."
+	break
+    fi
 done
 
 echo 
 echo "************************************"
-echo "**  SUMMARY (Using $np processors)  **"
 echo "************************************"
+echo "************ SUMMARY ***************"
+echo "************************************"
+echo "************************************"
+echo "$np TASKS"
 
 if test "x$blacklisted" != "x"; then
     echo "BLACKLISTED TESTS:"
@@ -129,9 +149,9 @@ if test "x$failed" != "x"; then
 
     echo
     echo "**************************************************"
-    echo "Not all test cases were successful!"
-    echo "Have a look at the files testsuite/*.err for error"
-    echo "messages of the failed testcases."
+    echo "** Not all test cases were successful!"
+    echo "** Have a look at the files testsuite/*.err for error"
+    echo "** messages of the failed testcases."
     echo "**************************************************"
     echo
 
@@ -139,7 +159,7 @@ if test "x$failed" != "x"; then
 else
     echo
     echo "**************************************************"
-    echo "All tests were successful!"
+    echo "** All tests were successful!"
     echo "**************************************************"
     echo
 fi
