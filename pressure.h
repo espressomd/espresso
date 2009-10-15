@@ -195,6 +195,11 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
 #ifdef INTER_RF
   add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
 #endif
+#ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
+  add_adress_tab_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+#endif
 }
 
 MDINLINE void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
@@ -215,7 +220,7 @@ MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double
   double force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;
 #endif
-   calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+  calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
 #ifdef ADRESS
    for (j=0;j<3;j++){
       force[j]*=force_weight;
