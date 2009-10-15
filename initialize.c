@@ -688,7 +688,6 @@ static void init_tcl(Tcl_Interp *interp)
   /* in adresso.h */
   REGISTER_COMMAND("adress", adress_tcl);
 #ifdef ADRESS
-  REGISTER_COMMAND("correction_function", ic);
   /** #ifdef THERMODYNAMIC_FORCE */
   REGISTER_COMMAND("thermodynamic_force", tf_tcl);
   /** #endif */
