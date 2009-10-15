@@ -285,10 +285,7 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
 	}
     }
   fclose(fp);
-  printf("NPOINTS = %d\n", npoints);
-  for(i=0;i<npoints; i++)
-    printf("%f   %f\n", adress_tab_forces.e[i], adress_tab_forces.e[i+npoints]);
-
+  
   /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
   mpi_bcast_ia_params(part_type_b, part_type_a);
