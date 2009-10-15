@@ -81,7 +81,9 @@ int on_program_start(Tcl_Interp *interp)
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
   adress_force_and_energy_tables_init();
+#endif
   /** #ifdef THERMODYNAMIC_FORCE */
   tf_tables_init();
   /** #endif */

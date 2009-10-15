@@ -638,8 +638,10 @@ int checkIfInteraction(IA_parameters *data) {
 #endif
 
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
   if(data->ADRESS_TAB_maxval != 0)
     return 1;
+#endif
 #endif
 
 #ifdef TUNABLE_SLIP
