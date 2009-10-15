@@ -229,6 +229,12 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef ADRESS
   Tcl_AppendResult(interp, "{ ADRESS } ", (char *) NULL);
+#ifdef ADRESS_INIT
+  Tcl_AppendResult(interp, "{ ADRESS_INIT } ", (char *) NULL);
+#endif
+#ifdef INTERFACE_CORRECTION
+  Tcl_AppendResult(interp, "{ INTERFACE_CORRECTION } ", (char *) NULL);
+#endif
 #endif
 #ifdef MDLC
   Tcl_AppendResult(interp, "{ MDLC } ", (char *) NULL);
