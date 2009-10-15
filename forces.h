@@ -113,7 +113,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;
-  //add_adress_tab_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
@@ -274,8 +273,9 @@ MDINLINE void add_bonded_force(Particle *p1)
   int i, j, type_num, type, n_partners, bond_broken;
 
 #ifdef ADRESS
-  double tmp,force_weight=adress_bonded_force_weight(p1);
-  if (force_weight<ROUND_ERROR_PREC) return;
+  double tmp, force_weight=1;
+  //double tmp,force_weight=adress_bonded_force_weight(p1);
+  //if (force_weight<ROUND_ERROR_PREC) return;
 #endif
 
   i = 0;
@@ -398,6 +398,12 @@ MDINLINE void add_bonded_force(Particle *p1)
 	continue;
       }
       
+#ifdef ADRESS
+      if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity)
+	force_weight = 1.0;
+      else 
+	force_weight = adress_non_bonded_force_weight(p1,p2);
+#endif
       for (j = 0; j < 3; j++) {
 #ifdef ADRESS
         tmp=force_weight*force[j];
