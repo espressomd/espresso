@@ -373,11 +373,11 @@ typedef struct {
 #endif
   
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
   /** \name Tabulated potential */
   /*@{*/
   int ADRESS_TAB_npoints;
   int ADRESS_TAB_startindex;
-  int ADRESS_IC_npoints;
   double ADRESS_TAB_minval;
   double ADRESS_TAB_minval2;
   double ADRESS_TAB_maxval;
@@ -387,6 +387,7 @@ typedef struct {
 #define MAXLENGTH_ADRESSTABFILE_NAME 256
   char ADRESS_TAB_filename[MAXLENGTH_ADRESSTABFILE_NAME];
   /*@}*/    
+#endif
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -695,11 +696,12 @@ extern DoubleList tabulated_forces;
 extern DoubleList tabulated_energies;
 
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
 /** Array containing all adress tabulated forces*/
 extern DoubleList adress_tab_forces;
 /** Array containing all adress tabulated energies*/
 extern DoubleList adress_tab_energies;
-
+#endif
 /** #ifdef THERMODYNAMIC_FORCE */
 extern DoubleList thermodynamic_forces;
 
@@ -763,8 +765,10 @@ extern int ia_excl;
 void force_and_energy_tables_init();
 
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
 /** Function for initializing adress force and energy tables */
 void adress_force_and_energy_tables_init();
+#endif
 /** #ifdef THERMODYNAMIC_FORCE */
 void tf_tables_init();
 /** #endif */

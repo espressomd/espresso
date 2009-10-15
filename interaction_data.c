@@ -98,11 +98,12 @@ DoubleList tabulated_forces;
 DoubleList tabulated_energies;
 
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
 /** Array containing all adress tabulated forces*/
 DoubleList adress_tab_forces;
 /** Corresponding array containing all adress tabulated energies*/
 DoubleList adress_tab_energies;
-
+#endif
 
 /** #ifdef THERMODYNAMIC_FORCE */
 /** Array containing the thermodynamic forces **/
@@ -129,11 +130,13 @@ void force_and_energy_tables_init() {
 }
 
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
 /** Initialize adress force and energy tables */
 void adress_force_and_energy_tables_init() {
   init_doublelist(&adress_tab_forces);
   init_doublelist(&adress_tab_energies);
 }
+#endif
 
 /** #ifdef THERMODYNAMIC_FORCE */
 void tf_tables_init() {
@@ -311,7 +314,8 @@ void initialize_ia_params(IA_parameters *params) {
 #endif
 
 #ifdef ADRESS
-  params->ADRESS_IC_npoints = 0;
+#ifdef INTERFACE_CORRECTION
+  //params->ADRESS_IC_npoints = 0;
   params->ADRESS_TAB_npoints = 0;
   params->ADRESS_TAB_startindex = 0;
   params->ADRESS_TAB_minval = 0.0;
@@ -320,6 +324,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->ADRESS_TAB_maxval2 = 0.0;
   params->ADRESS_TAB_stepsize = 0.0;
   strcpy(params->ADRESS_TAB_filename,"");
+#endif
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -515,7 +520,8 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 #endif
 
 #ifdef ADRESS
-  dst->ADRESS_IC_npoints = src->ADRESS_IC_npoints;
+#ifdef INTERFACE_CORRECTION
+  //dst->ADRESS_IC_npoints = src->ADRESS_IC_npoints;
   dst->ADRESS_TAB_npoints = src->ADRESS_TAB_npoints;
   dst->ADRESS_TAB_startindex = src->ADRESS_TAB_startindex;
   dst->ADRESS_TAB_minval = src->ADRESS_TAB_minval;
@@ -524,6 +530,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->ADRESS_TAB_maxval2 = src->ADRESS_TAB_maxval2;
   dst->ADRESS_TAB_stepsize = src->ADRESS_TAB_stepsize;
   strcpy(dst->ADRESS_TAB_filename,src->ADRESS_TAB_filename);
+#endif
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -963,10 +970,12 @@ void calc_maximal_cutoff()
 #endif
 	 
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
 	 if (data->ADRESS_TAB_maxval !=0){
 	   if(max_cut_non_bonded < (data->ADRESS_TAB_maxval ))
 	     max_cut_non_bonded = data->ADRESS_TAB_maxval;
 	 }
+#endif
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -1549,8 +1558,10 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
 #endif
 #ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
   if(data->ADRESS_TAB_maxval !=0)
     Tcl_AppendResult(interp, "adress \"", data->ADRESS_TAB_filename,"\"", (char *) NULL);
+#endif
 #endif
 #ifdef COMFORCE
   if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
@@ -1971,8 +1982,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("molcut", molcut_parser);
 #endif
     
-#ifdef ADRESS 
+#ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
     REGISTER_NONBONDED("adress_tab", adress_tab_parser);
+#endif
 #endif
     else {
       Tcl_AppendResult(interp, "excessive parameter/unknown interaction type \"", argv[0],
