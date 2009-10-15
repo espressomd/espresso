@@ -1169,7 +1169,10 @@ void mpi_bcast_ia_params(int i, int j)
 
   mpi_issue(REQ_BCAST_IA, i, j);
   tablesize = tabulated_forces.max;
-
+#ifdef INTERFACE_CORRECTION
+  int adress_tablesize = adress_tab_forces.max;
+#endif
+  
   if (j>=0) {
     /* non-bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1188,7 +1191,18 @@ void mpi_bcast_ia_params(int i, int j)
       MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     }    
 #endif
-  }
+#ifdef INTERFACE_CORRECTION
+    if(get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
+      MPI_Bcast(&adress_tablesize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD); // Don't do anything until all nodes have this information
+      
+      /* Communicate the data */
+      MPI_Bcast(adress_tab_forces.e, adress_tablesize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Bcast(adress_tab_energies.e, adress_tablesize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
+    /* NO IC FOR TABULATED BONDED INTERACTIONS YET!! */
+#endif
+}
   else {
     /* bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1203,7 +1217,7 @@ void mpi_bcast_ia_params(int i, int j)
     }
 #endif
   }
-
+  
   on_short_range_ia_change();
 }
 
@@ -1227,6 +1241,19 @@ void mpi_bcast_ia_params_slave(int i, int j)
 	/* Now communicate the data */
 	MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
 	MPI_Bcast(tabulated_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      }
+    }
+#endif
+#ifdef INTERFACE_CORRECTION 
+    {
+      int adress_tabsize=0;
+      if ( get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
+	MPI_Bcast(&adress_tabsize,1,MPI_INT,0,MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+	realloc_doublelist(&adress_tab_forces, adress_tabsize);
+	realloc_doublelist(&adress_tab_energies, adress_tabsize);
+	MPI_Bcast(adress_tab_forces.e,adress_tabsize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(adress_tab_energies.e,adress_tabsize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
       }
     }
 #endif
