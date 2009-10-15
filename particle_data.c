@@ -171,7 +171,7 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef ADRESS
-  part->p.adress_weight = 0.0;
+  part->p.adress_weight = 1.0;
 #endif
 }
 
