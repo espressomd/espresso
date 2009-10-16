@@ -5,15 +5,12 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 
 /** \file domain_decomposition.c
  *
  *  This file contains everything related to the cell system: domain decomposition.
  *  See also \ref domain_decomposition.h
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  */
 
 #include "domain_decomposition.h"
