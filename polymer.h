@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef POLYMER_H
 #define POLYMER_H
 /** \file polymer.h
@@ -16,9 +16,6 @@
     particles and crosslinking the polymers if necessary.
  
     For more information on polymer, see \ref polymer.c "polymer.c"
-  
-    <b>Responsible:</b>
-    <a href="mailto:mann@mpip-mainz.mpg.de">BAM</a>
 */
 
 #include <tcl.h>

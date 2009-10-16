@@ -5,16 +5,13 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef RATTLE_H
 #define RATTLE_H
 
 /** \file rattle.h    RATTLE Algorithm (Rattle: A "Velocity" Version of the Shake
  *                    Algorithm for Molecular Dynamics Calculations, H.C Andersen,
  *                    J Comp Phys, 52, 24-34, 1983)
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:arijitmaitra@uni-muenster.de">Arijit</a>
  *
  *  For more information see \ref rattle.c "rattle.c".
 */

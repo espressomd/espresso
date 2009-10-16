@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef INITIALZE_H
 #define INITIALZE_H
 /** \file initialize.h
@@ -18,9 +18,6 @@
     on_short_range_ia_change, if a short ranged interaction has been changed.
     In turn procedures that depend on particle properties or the box size, should react to such changes in the
     corresponding hook procedure.
-
-    <b>Responsible:</b>
-    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
  */
 
 #include <tcl.h>

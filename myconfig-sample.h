@@ -15,11 +15,7 @@
     If you add a new feature to Espresso, you also have to add the
     corresponding lines in the function \ref compilation_callback and
     to add documentation in <tt>doc/text/features.doc</tt>.
- 
-    <b>Responsible:</b> 
-    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
-
-*/
+ */
 
 /**********************************************************************/
 /*                       general core features                        */

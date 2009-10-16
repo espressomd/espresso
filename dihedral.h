@@ -5,16 +5,13 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef DIHEDRAL_H
 #define DIHEDRAL_H
 /** \file dihedral.h Routines to calculate the dihedral energy or/and
  *  and force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
  *  the maximal bond length!  \ref forces.c
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
 */
 
 #define ANGLE_NOT_DEFINED -100

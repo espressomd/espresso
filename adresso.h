@@ -5,15 +5,13 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 
 #ifndef ADRESSO_H
 #define ADRESSO_H
 /** \file adresso.h
     This is the place for adaptive resolution scheme (adress)
     Implementation of adresso.h
-    <b>Responsible:</b>
-    <a href="mailto:junghans@mpip-mainz.mpg.de">Axel</a>
 */
 
 #include <tcl.h>

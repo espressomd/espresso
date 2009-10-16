@@ -5,9 +5,6 @@
  *  Routines to generate tunable-slip boundary conditions.
  *  J.Smiatek, M.P. Allen, F. Schmid:
  *  "Tunable-slip boundaries for coarse-grained simulations of fluid flow", Europ. Phys. J. E 26, 115 (2008) 
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:smiatek@physik.uni-bielefeld.de">Jens Smiatek</a>
 */
 
 

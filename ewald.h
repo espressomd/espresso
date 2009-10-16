@@ -10,9 +10,6 @@
 #define EWALD_H
 /** \file ewald.h   Ewald algorithm for long range coulomb interaction.
  *
- *  <b>Responsible:</b>
- *  <a href="mailto:stuehn@mpip-mainz.mpg.de">Torsten</a>
- *
  *  Implementation of the standard Ewald-Summation
  *
  *  Further reading: 

@@ -11,9 +11,6 @@
 /** \file rotation.h
     This file contains all subroutines required to process rotational motion.
 
-    <b>Responsible:</b>
-    <a href="mailto:antypov@mpip-mainz.mpg.de">Dmytro</a>
-
 */
 
 #include <tcl.h>

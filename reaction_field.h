@@ -14,8 +14,6 @@
  *  M. Neumann, J. Chem. Phys 82, 5663 (1985)
  *  \ref forces.c
  *
- *  <b>Responsible:</b>
- *  <a href="mailto:junghans@mpip-mainz.mpg.de">Christoph</a>
     stolen form Matej's ACG version of Espresso
 */
 

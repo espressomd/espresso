@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef LJ_ANGLE_H
 #define LJ_ANGLE_H
 
@@ -25,9 +25,6 @@
  *  environment must be *stronger* than of the first one.
  *
  *  \ref forces.c
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:bereau@cmu.edu">Tristan</a>
  */
 
 #ifdef LJ_ANGLE

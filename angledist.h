@@ -5,16 +5,13 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef ANGLEDIST_H
 #define ANGLEDIST_H
 /** \file angledist.h
  *  Routines to calculate the angle and distance dependent (from a constraint) energy or/and and force
  *  for a particle triple.
  *  \ref forces.c
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:stuehn@mpip-mainz.mpg.de">Torsten Stuehn</a>
 */
 
 #ifdef BOND_ANGLEDIST

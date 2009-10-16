@@ -5,16 +5,13 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef STATISTICS_CHAIN_H
 #define STATISTICS_CHAIN_H
 /** \file statistics_chain.h 
 
     This file contains the code for statistics on the data using the
     molecule information set with analyse set chains.
-
-    <b>Responsible:</b>
-    <a href="mailto:mann@mpip-mainz.mpg.de">BAM</a>
 */
 
 /** \name Exported Functions */

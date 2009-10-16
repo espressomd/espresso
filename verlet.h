@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef VERLET_H
 #define VERLET_H
 /** \file verlet.h   
@@ -36,9 +36,6 @@
  *
  *  For energy and pressure calculations using verlet pair lists use
  *  \ref calculate_verlet_energies and \ref calculate_verlet_virials.
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:limbach@mpip-mainz.mpg.de">Hanjo</a>
  *
  *  For more information see \ref verlet.c "verlet.c".
  */

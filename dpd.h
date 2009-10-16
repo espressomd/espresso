@@ -12,9 +12,6 @@
  *  Routines to use dpd as thermostat or pair force
  *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
  *  \ref forces.c
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:junghans@mpip-mainz.mpg.de">Christoph</a>
 */
 
 #include <tcl.h>

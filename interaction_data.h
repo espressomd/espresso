@@ -5,14 +5,11 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef IA_DATA_H
 #define IA_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
-
-    <b>Responsible:</b>
-    <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 
     interaction_data.h contains the parser \ref #inter for the
     \ref tcl_inter Tcl command. Therefore the parsing of bonded and nonbonded

@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 #ifndef BMHTF_NACL_H
 #define BMHTF_NACL_H
 
@@ -13,9 +13,6 @@
  *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi energy and/or force 
  *  for a particle pair.
  *  \ref forces.c
- *
- *  <b>Responsible:</b>
- *  <a href="mailto:arnolda@mpip-mainz.mpg.de">Axel</a>
 */
 
 #ifdef BMHTF_NACL
