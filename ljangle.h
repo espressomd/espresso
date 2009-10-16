@@ -353,7 +353,7 @@ MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *
 	  } else if (z_middle > localz0 && z_middle < localz0 + localdz2) {
 	    z_ref = z_middle - localz0 - localdz2;
 	    z_ref5 = pow(z_ref,5);
-	    effective_eps += (ia_params->LJANGLE_epsprime - ia_params->LJANGLE_eps) *
+	    effective_eps -= (ia_params->LJANGLE_epsprime - ia_params->LJANGLE_eps) *
 	      localkappa6*z_ref5*fabs(z_ref) / 
 	      (1 + localkappa6*z_ref5*z_ref);
 	  }
