@@ -378,7 +378,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
 
 #ifdef ADRESS
   int j;
-  double tmp, force_weight=1;
+  double force_weight=1;
   //adress_bonded_force_weight(p1);
   if (force_weight<ROUND_ERROR_PREC) return;
 #endif
