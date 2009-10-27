@@ -593,10 +593,9 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
 {
    int i,j,p_count,dist_count,ind;
    double min,max,bin_width,inv_bin_width,com[3],vel;
-   long *distribution;
+   long distribution[bins];
    char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
 
-   distribution=malloc(bins*sizeof(long));
    max=given_max*time_step;
    min=-given_max*time_step;
    p_count=0;
@@ -652,7 +651,6 @@ void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
       vel += bin_width;
    }
    Tcl_AppendResult(interp, "}\n", (char *)NULL);
-   free(distribution);
 }
 
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
@@ -842,6 +840,85 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
   free(rdf_tmp);
 
 }
+
+/*addes this line*/
+void calc_rdf_adress(int *p1_types, int n_p1, int *p2_types, int n_p2,
+			   double x_min, double x_max, double r_min, double r_max, int r_bins, double *rdf, int n_conf)
+{
+  int i,j,k,l,t1,t2,ind,cnt=0,cnt_conf=1;
+  int mixed_flag=0,start;
+  double inv_bin_width=0.0,bin_width=0.0, dist;
+  double volume, bin_volume, r_in, r_out;
+  double *rdf_tmp, p1[3],p2[3];
+
+  rdf_tmp = malloc(r_bins*sizeof(double));
+
+  if(n_p1 == n_p2) {
+    for(i=0;i<n_p1;i++)
+      if( p1_types[i] != p2_types[i] ) mixed_flag=1;
+  }
+  else mixed_flag=1;
+  bin_width     = (r_max-r_min) / (double)r_bins;
+  inv_bin_width = 1.0 / bin_width;
+  volume = (x_max-x_min)*box_l[1]*box_l[2];
+  //volume = box_l[0]*box_l[1]*box_l[2];
+  for(l=0;l<r_bins;l++) rdf_tmp[l]=rdf[l] = 0.0;
+
+  while(cnt_conf<=n_conf) {
+    for(l=0;l<r_bins;l++) rdf_tmp[l]=0.0;
+    cnt=0;
+    k=n_configs-cnt_conf;
+    for(i=0; i<n_total_particles; i++) {
+      for(t1=0; t1<n_p1; t1++) {
+	if(partCfg[i].p.type == p1_types[t1]) {
+          //accepts particles i's contained in explicit region 
+          if(configs[k][3*i]<x_max && configs[k][3*i]>=x_min) {
+	  // distinguish mixed and identical rdf's
+	  if(mixed_flag == 1) start = 0;
+	  else                start = (i+1);
+	  //particle loop: p2_types
+	  for(j=start; j<n_total_particles; j++) {
+	    for(t2=0; t2<n_p2; t2++) {
+	      if(partCfg[j].p.type == p2_types[t2]) {
+                //accepts particles j's contained in explicit region 
+                if(configs[k][3*j]<x_max && configs[k][3*j]>=x_min) {
+		/*see if particles i and j belong to different molecules*/
+		if(partCfg[i].p.mol_id!=partCfg[j].p.mol_id) {
+		  p1[0]=configs[k][3*i  ];p1[1]=configs[k][3*i+1];p1[2]=configs[k][3*i+2];
+		  p2[0]=configs[k][3*j  ];p2[1]=configs[k][3*j+1];p2[2]=configs[k][3*j+2];
+		  dist =min_distance(p1, p2);
+		  if(dist > r_min && dist < r_max) {
+		    ind = (int) ( (dist - r_min)*inv_bin_width );
+		    rdf_tmp[ind]++;
+		  }
+		  cnt++;
+		}
+	      }
+             }
+	    }
+	  }
+	}
+        }
+      }
+    }
+    // normalization
+
+    for(i=0; i<r_bins; i++) {
+      r_in       = i*bin_width + r_min;
+      r_out      = r_in + bin_width;
+      bin_volume = (4.0/3.0) * PI * ((r_out*r_out*r_out) - (r_in*r_in*r_in));
+      rdf[i] += rdf_tmp[i]*volume / (bin_volume * cnt);
+    }
+
+    cnt_conf++;
+  } //cnt_conf loop
+  for(i=0; i<r_bins; i++) {
+    rdf[i] /= (cnt_conf-1);
+  }
+  free(rdf_tmp);
+
+}
+/*Up to here*/
 
 void calc_structurefactor(int type, int order, double **_ff) {
   int i, j, k, n, qi, p, order2;
@@ -2135,11 +2212,8 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   int p1;
   double dist;
   int i,j,max_cluster_number,size;
-  int *cluster_number;//cluster number of particle number
-  int *cluster_size; //number of clusters with some size
-
-  cluster_number=malloc(sizeof(int)*n_total_particles);
-  cluster_size=malloc(sizeof(int)*(n_total_particles+1));
+  int cluster_number[n_total_particles];//cluster number of particle number
+  int cluster_size[n_total_particles+1]; //number of clusters with some size
 
   /* parse arguments */
   if (argc != 2) {
@@ -2204,8 +2278,6 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   }
   Tcl_AppendResult(interp, "}",(char *)NULL);
 
-  free(cluster_size);
-  free(cluster_number);
   return TCL_OK;
 }
 
@@ -2594,6 +2666,9 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
   char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
   IntList p1,p2;
   double r_min=0, r_max=-1.0;
+/* added */
+  double x_min=0, x_max=-1.0;
+/*Up to here*/  
   int r_bins=-1, n_conf=1, i;
   double *rdf;
 
@@ -2601,25 +2676,33 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
 
   if (argc < 2) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol>} [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol> [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze <rdf-adress> [<type_list> <type_list>] [x_min] [x_max]", (char *)NULL);
     return (TCL_ERROR);
   }
-
   if (!ARG0_IS_INTLIST(p1)) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol>} [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze <rdf-adress> [<type_list> <type_list>] [x_min] [x_max]", (char *)NULL);
     return (TCL_ERROR);
   }
   if (!ARG1_IS_INTLIST(p2)) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol>} [<type_list> <type_list>]", (char *)NULL);
+    Tcl_AppendResult(interp, "usage: analyze <rdf-adress> [<type_list> <type_list>] [x_min] [x_max]", (char *)NULL);
     return (TCL_ERROR);
   }
   argc-=2; argv+=2;
 
+  if( average==3 ) {
+    if( argc>0 ) { if (!ARG0_IS_D(x_min)) return (TCL_ERROR); argc--; argv++; }
+    if( argc>0 ) { if (!ARG0_IS_D(x_max)) return (TCL_ERROR); argc--; argv++; }
+  }
+
   if( argc>0 ) { if (!ARG0_IS_D(r_min)) return (TCL_ERROR); argc--; argv++; }
   if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
   if( argc>0 ) { if (!ARG0_IS_I(r_bins)) return (TCL_ERROR); argc--; argv++; }
+
   if(average)
     {
       if (n_configs == 0) {
@@ -2637,6 +2720,10 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
   /* if not given use default */
   if(r_max  == -1.0)  r_max = min_box_l/2.0;
   if(r_bins == -1  )  r_bins = n_total_particles / 20;
+/* added */
+  if(x_max  == -1.0)  x_max = min_box_l/2.0;
+  if(r_bins == -1  )  r_bins = n_total_particles / 20;
+/*Up to here*/
 
   /* give back what you do */
   if(average==0)
@@ -2645,6 +2732,10 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     Tcl_AppendResult(interp, "{ analyze <rdf> { ", (char *)NULL);
   else if(average==2)
     Tcl_AppendResult(interp, "{ analyze <rdf-intermol> { ", (char *)NULL);
+/* added */
+  else if(average==3)
+    Tcl_AppendResult(interp, "{ analyze <rdf-adress> { ", (char *)NULL);
+/*Up to here*/
   else
     {
       Tcl_AppendResult(interp, "WRONG PARAMETER PASSED ", (char *)NULL);
@@ -2661,6 +2752,11 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   sprintf(buffer,"} %f %f %d",r_min,r_max,r_bins);
+/* added */
+  if(average==3) {
+  sprintf(buffer,"} %f %f %f %f %d",x_min,x_max,r_min,r_max,r_bins);
+  }
+/*Up to here*/
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   if(average) {
     sprintf(buffer," %d",n_conf);
@@ -2678,6 +2774,11 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     calc_rdf_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
   else if(average==2)
     calc_rdf_intermol_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
+/* added */
+  else if(average==3)
+    calc_rdf_adress(p1.e, p1.max, p2.e, p2.max, x_min, x_max, r_min, r_max, r_bins, rdf, n_conf);
+/*Up to here*/
+
   else ;
 
   /* append result */
@@ -2741,7 +2842,6 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   int type;
   int i;
   char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
-  double r_bin, r;
   
   /* parse arguments */
   if (argc < 5) {
@@ -2780,6 +2880,7 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   updatePartCfg(WITHOUT_BONDS);
   density_profile_av(n_conf, n_bin, density, dir, rho_ave, type);
   /* append result */
+  double r_bin, r;
   r_bin = box_l[dir]/(double)(n_bin);
   r=r_bin/2.0;
   Tcl_AppendResult(interp, " {\n", (char *)NULL);
@@ -2803,7 +2904,6 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
   double xmin, xmax;
   double *bins;  
   char buffer[TCL_DOUBLE_SPACE];
-  double r_bin, r;
   
   /* parse arguments */
   if (argc < 8) {
@@ -2839,8 +2939,8 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
   
   calc_diffusion_profile(dir, xmin, xmax, nbins, n_part, n_conf, time, type, bins);
   
-  r_bin = box_l[dir]/(double)(nbins);
-  r=r_bin/2.0;
+  double r_bin, r=0;
+  r_bin = box_l[0]/(double)(nbins);
   Tcl_AppendResult(interp, " {\n", (char *)NULL);
   for(i=0; i<nbins; i++) {
     sprintf(buffer,"%f %f",r,bins[i]);
@@ -3289,17 +3389,12 @@ void centermass_conf(int k, int type_1, double *com)
 double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf)
 {
   int i,j,k;
-  double  p1[3],p2[3],p_com[3],*p_x,*p_y,*p_z;
-  double *MSD,MSD_time;
+  double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
+  double MSD[n_configs],MSD_time;
   double D;
   char buffer[TCL_DOUBLE_SPACE];
   int MSD_particles=0;
   int start_value=n_configs-n_conf;
-
-  p_x=malloc(sizeof(double)*n_configs);
-  p_y=malloc(sizeof(double)*n_configs);
-  p_z=malloc(sizeof(double)*n_configs);
-  MSD=malloc(sizeof(double)*n_configs);
 
   updatePartCfg(WITHOUT_BONDS);
   for(i=start_value;i<n_configs;i++)
@@ -3347,10 +3442,6 @@ double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n
   {
       D=0;
   }
-  free(p_x);
-  free(p_y);
-  free(p_z);
-  free(MSD);
   return D;
 }
 
@@ -3567,6 +3658,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
   REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
   REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
+#ifdef ADOLFO
+  REGISTER_ANALYSIS_W_ARG("<rdf-adress>", parse_rdf, 3);
+#endif
   REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
 #ifdef ELECTROSTATICS
   REGISTER_ANALYSIS("cwvac", parse_cwvac);
