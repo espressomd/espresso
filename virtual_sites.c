@@ -480,9 +480,11 @@ double calc_pressure_mol(int type1,int type2){
 	if (topology[j].type == type2){
 	  get_mol_dist_vector_from_molid_cfg(i,j,com_dist);
 	  calc_force_between_mol(i,j,force);
+	  
 	  for (k=0;k<3;k++){
 	    psum+=force[k]*com_dist[k];
 	  }
+	  
 	}
       }
     }
@@ -575,13 +577,20 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
 #ifdef ADRESS
       for(l=0;l<3;l++)
 	temp_force[l]=0;
-      
-      calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,temp_force);
-      weight = adress_non_bonded_force_weight(p1,p2);
-      for(l=0;l<3;l++)
-	force[l] += weight*temp_force[l];
+#ifdef EXCLUSIONS
+      if(do_nonbonded(p1,p2))
+#endif
+	{
+	  calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,temp_force);
+	  weight = adress_non_bonded_force_weight(p1,p2);
+	  for(l=0;l<3;l++)
+	    force[l] += weight*temp_force[l];
+	}
 #else
-      calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
+#ifdef EXCLUSIONS
+      if(do_nonbonbded(p1,p2))
+#endif
+	calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
 #endif
       
     }
