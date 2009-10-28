@@ -177,8 +177,17 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	sparclet)	type=sparc; cpu=sparclet ;;
 	*)	AC_MSG_WARN([could not recognize your cpu type, relying on generic optimization])
 	esac
-	# first try wether the compiler accepts -fast (Apple)
-	ES_TRY_ADD_CFLAG(-fast, accept_fast)
+
+	# first see if the compiler can autotune
+
+	# try whether the compiler accepts -fastsse (PGI)
+	ES_TRY_ADD_CFLAG(-fastsse, accept_fastsse)
+	if test .$accept_fastsse = .yes; then
+		accept_fast=yes;
+	else
+		# try just -fast (Apple/PGI)
+		ES_TRY_ADD_CFLAG(-fast, accept_fast)
+	fi
 
 	# on a 64bit machine, set a flag to test for
 	if test .$m = .64; then
