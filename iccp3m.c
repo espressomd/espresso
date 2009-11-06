@@ -6,223 +6,343 @@
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-/** \file iccp3m.c 
 
-    <b>ICCP3M: A novel iterative scheme for  </b>
-   This file contains function needed to compute induced charges on the dielectric
-   interface for any geometry. Method utilizes idea of ICC (Boda et al PRE 69,046702, 2004) 
-   and here we are using p3m to compute forces for determining induced charges by an iterative scheme
-   which is proposed by Sandeep Tyagi, for matrix equation Ah=c (refer to original paper) rather then
-   converting whole A matrix. Induced charge grids are point charges which is defined as first set of particles
-   (id has to be specified in the options of iccp3m command)
+/** \file iccp3m.c
+    Detailed Information about the method is included in the corresponding header file \ref iccp3m.h.
 
-   For more information about the iccp3m algorithm
-   The corresponding header file is \ref iccp3m.h "iccp3m.h".
-
-*/
-
+ */
 #include <stdlib.h>
 #include <stdio.h>
-/* #define _GNU_SOURCE  */
 #include <string.h>
 #include <stddef.h>
 #include <math.h>
 #include <time.h>
+
 #include "iccp3m.h"
+#include "p3m.h"
+#include "elc.h"
+#include "mmm2d.h"
+#include "mmm1d.h"
+
+#include "communication.h"
+
+#include "utils.h"
 #include "tcl.h"
 #include "parser.h"
-#include "p3m.h"
 #include "verlet.h"
-#include "utils.h"
 #include "cells.h"
 #include "particle_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
 #include "forces.h"
-#include "maggs.h"
 #include "config.h"
 #include "global.h"
-#include "elc.h"
 
-#if defined(ELP3M) && defined(ELECTROSTATICS)
+#ifdef ELECTROSTATICS
 
+enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_EXTFIELD } ;
 iccp3m_struct iccp3m_cfg;
 
-/* p3m functions that is used in iccp3m to avoid short range forces computation! */
+int iccp3m_initialized = 0;
+/* functions that are used in icc* to compute the electric field acting on the induced charges,
+ * excluding forces other than the electrostatic ones */
 void init_forces_iccp3m();
 void calc_long_range_forces_iccp3m();
 MDINLINE void add_pair_iccp3m(PairList *pl, Particle *p1, Particle *p2);
 void resize_verlet_list_iccp3m(PairList *pl);
 MDINLINE void init_local_particle_force_iccp3m(Particle *part);
 MDINLINE void init_ghost_force_iccp3m(Particle *part);
+extern void on_particle_change();
 
 Cell *local_icc;
 CellPList me_do_ghosts_icc;
 
-/* other iccp3m functions */
-int parse_normal(Tcl_Interp *interp,int normal_args, char *string);
-int parse_area(Tcl_Interp *interp,int normal_args, char *string);
+/* other icc*  functions */
+static int parse_vector(Tcl_Interp *interp,int normal_args, char *string, int flag);
 int imod(int x,int y);
 void iccp3m_revive_forces();
 void iccp3m_store_forces();
 
-/* Granularity of the verlet list */
+/** Granularity of the verlet list */
 #define LIST_INCREMENT 20
 
-int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int last_ind_id,num_iteration,normal_args,normal_check=0,area_args,area_check,update;
-  char buffer[TCL_DOUBLE_SPACE];
-  double e1,e2,convergence,relax;
-    iccp3m_cfg.selection=1;  /* now it is selected */
-    /* printf("Warning: iccp3m command update option has no effect for now (reserved option for future )!\n"); */
-   if(argc != 10) { 
-  Tcl_AppendResult(interp, "Wrong # of args! Usage: iccp3m <last_ind_id> <e1> <e2> <num_iteration> <convergence> <relaxation> <area> <normal_components> <update>", (char *)NULL); 
-      return (TCL_ERROR); 
-     }
-     if(!ARG_IS_I(1, last_ind_id)) {
-       Tcl_ResetResult(interp);
-       Tcl_AppendResult(interp, "Last induced id must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
-       } else if(last_ind_id < 2) { 
-       Tcl_ResetResult(interp);
-       Tcl_AppendResult(interp, "Last induced id can not be smaller then 2 (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
-      }
-     if(!ARG_IS_D(2, e1)) {
-       Tcl_ResetResult(interp);
-       Tcl_AppendResult(interp, "Dielectric constant e1(inner) must be double(got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
-      }
-     if(!ARG_IS_D(3, e2)) {
-       Tcl_ResetResult(interp);
-       Tcl_AppendResult(interp, "Dielectric constant e2(outer) must be double (got: ", argv[3],")!", (char *)NULL); return (TCL_ERROR);
-      }
-     if(!ARG_IS_I(4, num_iteration)) {
-       Tcl_ResetResult(interp);
-       Tcl_AppendResult(interp, "Number of maximum iterations must be integer (got: ", argv[4],")!", (char *)NULL); return (TCL_ERROR);
-      }
-     if(!ARG_IS_D(5, convergence)) {
-       Tcl_ResetResult(interp);
-       Tcl_AppendResult(interp, "Convergence criterion must be double (got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
-       } else if( (convergence < 1e-10) || (convergence > 1e-1) ) { 
-         Tcl_ResetResult(interp);
-         Tcl_AppendResult(interp, "Convergence criterion can not be smaller then 1e-10 and greater then 1e-2(got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
-      }
-       if(!ARG_IS_D(6, relax)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Relaxation parameter must be double (got: ", argv[6],")!", (char *)NULL); return (TCL_ERROR);
-        }
-
-       if(!ARG_IS_I(9, update)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "iccp3m Update must be integer (got: ", argv[9],")!", (char *)NULL); return (TCL_ERROR);
-          } else if(update < 1) { 
-           Tcl_ResetResult(interp);
-           Tcl_AppendResult(interp, "iccp3m Update not be smaller then 1 (got: ", argv[9],")!", (char *)NULL); return (TCL_ERROR);
-        }
-
-  iccp3m_cfg.last_ind_id=last_ind_id;      /* Assign needed options */
-  iccp3m_cfg.num_iteration=num_iteration; /* maximum number of iterations to go */
-  iccp3m_cfg.e1=e1;
-  iccp3m_cfg.e2=e2;
-  iccp3m_cfg.convergence=convergence;
-  iccp3m_cfg.relax=relax;
-  iccp3m_cfg.update=update;
-
-   normal_args=(iccp3m_cfg.last_ind_id+1)*3;
-   /* Now get Normal Vectors components consecutively */
-     normal_check=parse_normal(interp,normal_args,argv[8]);
-         if(normal_check == 1) { 
-           Tcl_ResetResult(interp);
-           Tcl_AppendResult(interp, "Error in number of normal vectors", argv[8],")!", (char *)NULL); return (TCL_ERROR);
-          }
-     area_args=(iccp3m_cfg.last_ind_id+1);
-     /* Now get area of the boundary elements */
-     area_check=parse_area(interp,area_args,argv[7]);
-          if(area_check == 1) {
-           Tcl_ResetResult(interp);
-           Tcl_AppendResult(interp, "Error in number of area vectors", argv[7],")!", (char *)NULL); return (TCL_ERROR);
-          }
-   Tcl_PrintDouble(interp,iccp3m_iteration(),buffer); 
-   Tcl_AppendResult(interp, buffer, (char *) NULL);
-  return TCL_OK;
+void iccp3m_init(void){
+   iccp3m_cfg.set_flag=0;
+   iccp3m_cfg.areas = NULL;
+   iccp3m_cfg.ein = NULL;
+   iccp3m_cfg.nvectorx = NULL;
+   iccp3m_cfg.nvectory = NULL;
+   iccp3m_cfg.nvectorz = NULL;
+   iccp3m_cfg.extx = NULL;
+   iccp3m_cfg.exty = NULL;
+   iccp3m_cfg.extz = NULL;
+   iccp3m_cfg.fx = NULL;
+   iccp3m_cfg.fy = NULL;
+   iccp3m_cfg.fz = NULL;
 }
-int iccp3m_iteration() {
-   double fdot,hold,hnew,del_eps,diff=0.0,difftemp=0.0,qold;
-   Cell *cell;
-   int c,i,np;
-   Particle *part;
-   int j;
 
- /* allocate force arrays for getting for interface particles */
-  iccp3m_cfg.fx=malloc(sizeof(double)*n_total_particles);
-  iccp3m_cfg.fy=malloc(sizeof(double)*n_total_particles);
-  iccp3m_cfg.fz=malloc(sizeof(double)*n_total_particles);
+/** Parses the ICCP3M command.
+ */
+int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  int last_ind_id,num_iteration,normal_args,area_args;
+  char buffer[TCL_DOUBLE_SPACE];
+  double e1,convergence,relax;
+  if(iccp3m_initialized==0){
+      iccp3m_init();
+      iccp3m_initialized=1;
+  }
 
-    iccp3m_store_forces(); /* Not to over-write previous forces */
-  /* Now iterate for getting charges */
-      if((iccp3m_cfg.e1 == 0) && (iccp3m_cfg.e2 ==0)) {
-          del_eps=0.0;
-         } else {
-          del_eps=(iccp3m_cfg.e1-iccp3m_cfg.e2)/(iccp3m_cfg.e2+iccp3m_cfg.e1);
-        }
-      iccp3m_cfg.citeration=0;
-  for(j=0;j<iccp3m_cfg.num_iteration;j++) {
-         force_calc_iccp3m(); /* Calculate electrostatic forces excluding source source interaction and short range contributions*/
-      diff=0; 
-    for(c = 0; c < local_cells.n; c++) {
-      cell = local_cells.cell[c];
-      part = cell->part;
-      np   = cell->n;
-      for(i=0 ; i < np; i++) {
-          if(part[i].p.identity <= iccp3m_cfg.last_ind_id) {   /* interface grids */
-               fdot=part[i].f.f[0]*iccp3m_cfg.nvectorx[part[i].p.identity]+
-                part[i].f.f[1]*iccp3m_cfg.nvectory[part[i].p.identity]+part[i].f.f[2]*iccp3m_cfg.nvectorz[part[i].p.identity];
-                hold=part[i].p.q/iccp3m_cfg.areas[part[i].p.identity];
-                qold=part[i].p.q;
-		hnew=hold;
-              if(fabs(hold) > 1e-7) {
-                fdot=fdot/(6.283185307); /* divide fdot with 2pi */
-                hnew=hold + iccp3m_cfg.relax*((del_eps*fdot)/qold-hold);
-              }
-                difftemp=fabs(hold-hnew);
-                if(difftemp > diff) { diff=difftemp; } /* Take the largest error for convergence */
-                part[i].p.q=hnew*iccp3m_cfg.areas[part[i].p.identity];
-                  if(fabs(part[i].p.q) > 100) { /* this is kind a arbitraru measure but, does a good job spotting divergence !*/
-                    char *errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-      	            ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >100 , normal vectors or computed forces might be wrong or too big! assigned charge= %f } \n",part[i].p.q);
-                     break;
-                   }
+  if(argc != 9 && argc != 2 && argc != 10) { 
+         Tcl_AppendResult(interp, "Wrong # of args! Usage: iccp3m { iterate | <last_ind_id> <e1> <num_iteration> <convergence> <relaxation> <area> <normal_components> <e_in/e_out>  [<ext_field>] }", (char *)NULL); 
+         return (TCL_ERROR); 
+   }
+   if (argc == 2 ){
+      if(ARG_IS_S(1,"iterate")) { 
+           if (iccp3m_cfg.set_flag==0) {
+                 Tcl_AppendResult(interp, "iccp3m parameters not set!", (char *)NULL);
+                 return (TCL_ERROR);
            }
-       }  /* cell particles */
-    } /* local cells */
-      /* printf(" iccp3m iteration j= %d convergence_cre = %f \r",j,diff);*/
-      iccp3m_cfg.citeration++;
-      if(diff < iccp3m_cfg.convergence) { 
-	/* printf("ICCP3M converged step=%d \n",j); */
-	break;
+           else{ 
+              Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
+              Tcl_AppendResult(interp, buffer, (char *) NULL);
+              return TCL_OK;
+	   }
       }
+   }
+   else {
+      if(!ARG_IS_I(1, last_ind_id)) {
+          Tcl_ResetResult(interp);
+          Tcl_AppendResult(interp, "Last induced id must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+          } else if(last_ind_id < 2) { 
+          Tcl_ResetResult(interp);
+          Tcl_AppendResult(interp, "Last induced id can not be smaller then 2 (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
+       }
+       if(!ARG_IS_D(2, e1)) {
+          Tcl_ResetResult(interp);
+          Tcl_AppendResult(interp, "Dielectric constant e1(inner) must be double(got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
+       }
+       if(!ARG_IS_I(3, num_iteration)) {
+          Tcl_ResetResult(interp);
+          Tcl_AppendResult(interp, "Number of maximum iterations must be integer (got: ", argv[4],")!", (char *)NULL); return (TCL_ERROR);
+       }
+       if(!ARG_IS_D(4, convergence)) {
+          Tcl_ResetResult(interp);
+          Tcl_AppendResult(interp, "Convergence criterion must be double (got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
+          } else if( (convergence < 1e-10) || (convergence > 1e-1) ) { 
+            Tcl_ResetResult(interp);
+            Tcl_AppendResult(interp, "Convergence criterion can not be smaller then 1e-10 and greater then 1e-2(got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
+         }
+          if(!ARG_IS_D(5, relax)) {
+             Tcl_ResetResult(interp);
+             Tcl_AppendResult(interp, "Relaxation parameter must be double (got: ", argv[6],")!", (char *)NULL); return (TCL_ERROR);
+       }
+   
+       iccp3m_cfg.last_ind_id = last_ind_id;      /* Assign needed options */
+       iccp3m_cfg.num_iteration = num_iteration; /* maximum number of iterations to go */
+       iccp3m_cfg.eout = e1;
+       iccp3m_cfg.convergence = convergence;
+       iccp3m_cfg.relax = relax;
+       iccp3m_cfg.update = 0;
+       iccp3m_cfg.set_flag = 1;
+       
+       normal_args = (iccp3m_cfg.last_ind_id+1)*3;
+       /* Now get Normal Vectors components consecutively */
+       
+       if( parse_vector(interp,normal_args,argv[7],ICCP3M_NORMAL) == 1) { 
+              Tcl_ResetResult(interp);
+              Tcl_AppendResult(interp, "ICCP3M: Error in following normal vectors\n", argv[7],"\nICCP3M: Error in previous normal vectors\n", (char *)NULL); 
+              return (TCL_ERROR);
+       }      
+
+       area_args=(iccp3m_cfg.last_ind_id+1);
+       /* Now get area of the boundary elements */
+       
+       if ( parse_vector(interp,area_args,argv[6],ICCP3M_AREA) == 1 ){
+             Tcl_ResetResult(interp);
+             Tcl_AppendResult(interp, "ICCP3M: Error in following areas\n", argv[6],"\nICCP3M: Error in previous areas\n", (char *)NULL); return (TCL_ERROR);
+       }
+       /* Now get the ration ein/eout for each element. 
+          It's the user's duty to make sure that only disconnected 
+          regions have different ratios */
+      if ( parse_vector(interp,area_args,argv[8],ICCP3M_EPSILON) == 1 ) {
+             Tcl_ResetResult(interp);
+             Tcl_AppendResult(interp, "ICCP3M: Error in following dielectric constants\n", argv[8],"\nICCP3M:  Error in previous dielectric constants\n", (char *)NULL); return (TCL_ERROR);
+       } 
+
+       if( argc == 10 ) {
+         if( parse_vector(interp,normal_args,argv[9],ICCP3M_EXTFIELD) == 1) { 
+              Tcl_ResetResult(interp);
+              Tcl_AppendResult(interp, "ICCP3M: Error in following external field vectors\n", argv[9],"\nICCP3M: Error in previous external field vectors\n", (char *)NULL); return (TCL_ERROR);
+         }      
+       }
+       else {
+         printf("allocating zeroes for external field \n");
+         iccp3m_cfg.extx = (double*)calloc((last_ind_id +1), sizeof(double));
+         iccp3m_cfg.exty = (double*)calloc((last_ind_id +1), sizeof(double));
+         iccp3m_cfg.extz = (double*)calloc((last_ind_id +1), sizeof(double));
+       }
+      
+       mpi_iccp3m_init(0);
+       Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
+       Tcl_AppendResult(interp, buffer, (char *) NULL);
+       return TCL_OK;
+   } /* else (argc==10) */
+   return TCL_OK;
+}
+
+
+int bcast_iccp3m_cfg(void){
+  int i;
+
+
+  MPI_Bcast((int*)&iccp3m_cfg.last_ind_id, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+
+  /* allocates Memory on slave nodes 
+   * Master node allocates the memory when parsing tcl arguments
+   * */
+  if (this_node != 0) {
+    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.extx       = (double*) realloc (iccp3m_cfg.extx      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.exty       = (double*) realloc (iccp3m_cfg.exty      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.extz       = (double*) realloc (iccp3m_cfg.extz      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+  }
+
+
+  MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+  MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast((int*)&iccp3m_cfg.update, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  
+  /* broadcast the vectors element by element. This is slow
+   * but safe and only performed at the beginning of each simulation*/
+  for ( i = 0; i < iccp3m_cfg.last_ind_id +1; i++) {
+    MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.extx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.exty[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.extz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  }
+
+  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  printf("node %d: no iterations: %d\n", this_node, iccp3m_cfg.num_iteration);
+  return 0 ;
+    
+}
+
+int iccp3m_iteration() {
+   double fdot,hold,hnew,hmax,del_eps,diff=0.0,difftemp=0.0,qold, ex, ey, ez, l_b;
+   Cell *cell;
+   int c,np;
+   Particle *part;
+   int i, j,id;
+   char* errtxt;
+   double globalmax;
+
+   l_b = coulomb.bjerrum;
+   if((iccp3m_cfg.eout <= 0)) {
+     	errtxt = runtime_error(128);
+	    ERROR_SPRINTF(errtxt, "ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n");
+   }
+
+   
+   iccp3m_cfg.citeration=0;
+   for(j=0;j<iccp3m_cfg.num_iteration;j++) {
+       hmax=0.;
+       force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding source source interaction*/
+       diff=0;
+       for(c = 0; c < local_cells.n; c++) {
+            cell = local_cells.cell[c];
+            part = cell->part;
+            np   = cell->n;
+            for(i=0 ; i < np; i++) {
+                id = part[i].p.identity ;
+                if( id <= iccp3m_cfg.last_ind_id) {
+           /* the dielectric-related prefactor: */                     
+                      del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
+           /* calculate the electric field at the certain position */
+                      ex=part[i].f.f[0]/part[i].p.q;
+                      ey=part[i].f.f[1]/part[i].p.q;
+                      ez=part[i].f.f[2]/part[i].p.q;
+
+          /* let's add the contribution coming from the external field */
+                      ex += iccp3m_cfg.extx[id]; 
+                      ey += iccp3m_cfg.exty[id]; 
+                      ez += iccp3m_cfg.extz[id];
+                      
+                      if (ex == 0 && ey == 0 && ez == 0) {
+                        	errtxt = runtime_error(128);
+                        	ERROR_SPRINTF(errtxt, "ICCP3M found zero electric field on a charge. This must never happen");
+                      }
+           /* the dot product   */
+                      fdot = ex*iccp3m_cfg.nvectorx[id]+
+                             ey*iccp3m_cfg.nvectory[id]+
+                             ez*iccp3m_cfg.nvectorz[id];
+
+           /* recalculate the old charge density */
+                      hold=part[i].p.q/iccp3m_cfg.areas[id];
+                      qold=part[i].p.q;
+          /* determine if it is higher than the previously highest charge density */            
+                      if(hold>fabs(hmax))hmax=fabs(hold); 
+
+                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*del_eps*fdot/l_b;
+                      difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
+                                                                              an estimator which can be negative
+                                                                              here */
+//                      printf("(%d) difftemp = %f diff = %f\n",this_node,difftemp,diff);
+                      if(difftemp > diff && part[i].p.q > 1e-5)
+                      {
+//                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
+                        diff=difftemp;  /* Take the largest error to check for convergence */
+                      }
+                      part[i].p.q = hnew * iccp3m_cfg.areas[id];
+         /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
+         /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
+                      if(fabs(part[i].p.q) > 1e6) { 
+                        errtxt = runtime_error(128);
+            	          ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >1e6 , \
+                               assigned charge= %f } \n",part[i].p.q);
+                        diff = 1e90; /* A very high value is used as error code */
+                        break;
+                      }
+                 }
+             }  /* cell particles */
+           // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
+       } /* local cells */
+       iccp3m_cfg.citeration++;
+       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+       if (globalmax < iccp3m_cfg.convergence) 
+         break; 
+       if ( diff > 1e89 ) /* Error happened */
+         return iccp3m_cfg.citeration++;
+
   } /* iteration */
-         free(iccp3m_cfg.areas);
-    iccp3m_revive_forces(); /* revive originally computed forces by Espresso */
-         free(iccp3m_cfg.fx);
-         free(iccp3m_cfg.fy);
-         free(iccp3m_cfg.fz); 
-         free(iccp3m_cfg.nvectorx);
-         free(iccp3m_cfg.nvectory);
-         free(iccp3m_cfg.nvectorz);
-      /* printf("ICCP3M_ITERATION iccp3m iteration finished \n");*/
+
+  on_particle_change();
   return iccp3m_cfg.citeration++;
 }
 
 void force_calc_iccp3m() {
+/* The following ist mostly copied from forces.c */
 
-/*  I don´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
-
+/*  I donÂ´t see the point of this part until there are electrical dipoles in Espresso, BTW, it generates a warning .. JJCP
 #ifdef DIPOLES
    convert_quat_to_dip_all();
 #endif
 
 */
 
-  init_forces_iccp3m();
+  init_forces_iccp3m(); 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia_iccp3m();
@@ -241,17 +361,8 @@ void force_calc_iccp3m() {
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia_iccp3m();
   }
-
+  
   calc_long_range_forces_iccp3m();
-#ifdef COMFORCE
- calc_comforce();
-#endif
-
-/* this must be the last force to be calculated (Mehmet)*/
-#ifdef COMFIXED
- calc_comfixed();
-#endif
-
 }
 
 /** nonbonded and bonded force calculation using the verlet list */
@@ -280,7 +391,7 @@ void layered_calculate_ia_iccp3m()
       if (rebuild_verletlist)
         memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      /* cell itself and bonded / constraints */
+      /* cell itself. No bonded / constraints considered in ICCP3M */
       for(j = i+1; j < npl; j++) {
         layered_get_mi_vector(d, p1->r.p, pl[j].r.p);
         dist2 = sqrlen(d);
@@ -353,12 +464,8 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
       /* Loop cell particles */
       for(i=0; i < np1; i++) {
 	j_start = 0;
-	/* Tasks within cell: bonded forces, store old position, avoid double counting */
+	/* Tasks within cell: (no bonded forces) store old position, avoid double counting */
 	if(n == 0) {
-          add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-          add_constraints_forces(&p1[i]);
-#endif
 	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
@@ -379,9 +486,10 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	    /* calc non bonded interactions */ 
            if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) {
 	       add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                } else {
-                   printf("Ever here \n");
-             }
+                } 
+/*           else {
+             printf("Ever here \n");
+             }*/
              /* avoid source-source computation */ 
 	  }
 	 }
@@ -410,24 +518,17 @@ void calculate_verlet_ia_iccp3m()
     cell = local_cells.cell[c];
     p1   = cell->part;
     np  = cell->n;
-    /* calculate bonded interactions (loop local particles) */
-    for(i = 0; i < np; i++)  {
-      add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-      add_constraints_forces(&p1[i]);
-#endif
-    }
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
       pairs = dd.cell_inter[c].nList[n].vList.pair;
       np    = dd.cell_inter[c].nList[n].vList.n;
       /* verlet list loop */
       for(i=0; i<2*np; i+=2) {
-	p1 = pairs[i];                    /* pointer to particle 1 */
-	p2 = pairs[i+1];                  /* pointer to particle 2 */
-	dist2 = distance2vec(p1->r.p, p2->r.p, vec21); 
-       if(!(p1->p.identity > iccp3m_cfg.last_ind_id && p2->p.identity >iccp3m_cfg.last_ind_id))  /* avoid source-source computation */
-	  add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
+	      p1 = pairs[i];                    /* pointer to particle 1 */
+	      p2 = pairs[i+1];                  /* pointer to particle 2 */
+	      dist2 = distance2vec(p1->r.p, p2->r.p, vec21); 
+          if(!(p1->p.identity > iccp3m_cfg.last_ind_id && p2->p.identity >iccp3m_cfg.last_ind_id))  /* avoid source-source computation */
+	          add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
   }
@@ -457,10 +558,6 @@ void calc_link_cell_iccp3m()
         j_start = 0;
         /* Tasks within cell: bonded forces */
         if(n == 0) {
-          add_bonded_force(&p1[i]);
-#ifdef CONSTRAINTS
-          add_constraints_forces(&p1[i]);
-#endif
           j_start = i+1;
         }
 	/* Loop neighbor cell particles */
@@ -525,6 +622,7 @@ void nsq_calculate_ia_iccp3m()
 
 void init_forces_iccp3m()
 {
+  /* copied from forces.c */
   Cell *cell;
   Particle *p;
   int np, c, i;
@@ -533,11 +631,13 @@ void init_forces_iccp3m()
      thermodynamic ensemble */
 
 #ifdef NPT
+  char* errtxt;
   /* reset virial part of instantaneous pressure */
-  if(integ_switch == INTEG_METHOD_NPT_ISO)
-    nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+  if(integ_switch == INTEG_METHOD_NPT_ISO){
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{ICCP3M cannot be used with pressure coupling} ");
+  }
 #endif
-
 
   /* initialize forces with langevin thermostat forces
      or zero depending on the thermostat
@@ -567,16 +667,41 @@ void init_forces_iccp3m()
 void calc_long_range_forces_iccp3m()
 {
 #ifdef ELECTROSTATICS
+  char* errtxt;
   /* calculate k-space part of electrostatic interaction. */
+  if (!(coulomb.method == COULOMB_ELC_P3M || 
+        coulomb.method == COULOMB_P3M     || 
+        coulomb.method == COULOMB_MMM2D   ||
+        coulomb.method == COULOMB_MMM1D)  ) { 
+                errtxt = runtime_error(128);
+                ERROR_SPRINTF(errtxt, "{ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ");
+     }
   switch (coulomb.method) {
-  case COULOMB_P3M:
-      P3M_charge_assign();
- #ifdef NPT
-     if(integ_switch == INTEG_METHOD_NPT_ISO) 
-       nptiso.p_vir[0] += P3M_calc_kspace_forces(1,1);
-#endif
-      P3M_calc_kspace_forces(1,0);
+#ifdef ELC_P3M
+    case COULOMB_ELC_P3M:
+       if (elc_params.dielectric_contrast_on) {
+                errtxt = runtime_error(128);
+                ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
+       }
+       P3M_charge_assign();
+       P3M_calc_kspace_forces(1,0);
+       ELC_add_force(); 
     break;
+#endif
+
+#ifdef ELP3M
+    case COULOMB_P3M:
+         P3M_charge_assign();
+
+#ifdef NPT
+        if(integ_switch == INTEG_METHOD_NPT_ISO) exit(0);
+#endif
+        P3M_calc_kspace_forces(1,0);
+    break;
+#endif
+    case COULOMB_MMM2D:
+        MMM2D_add_far_force();
+        MMM2D_dielectric_layers_force_contribution();
   }
 
 #endif
@@ -644,69 +769,75 @@ int imod(int x,int y) {
   return z;
 }
 
-int parse_area(Tcl_Interp *interp,int normal_args, char *string) {
+static int parse_vector(Tcl_Interp *interp,int normal_args, char *string, int flag) {
+  /* This function parses a vector give as C-String */
+  /* It currently is not too elegant. But works. */
+  int size,i,k=0;
+  int scan_succes;
+  static double *numbers=NULL;
+  const char delimiters[] = " ";
+  char *token,*cp;
+  float temp;
 
-   int size,i;
-   const char delimiters[] = " ";
-   char *token,*cp;
-   float temp;
+  size= normal_args;
+  numbers = malloc((size)*sizeof(double));
 
-   size= normal_args;
-   iccp3m_cfg.areas=malloc((size+1)*sizeof(double));
-   cp = strdup(string);                /* Make writable copy.  */
-   token = strtok (cp, delimiters);
-     sscanf(token,"%f",&temp);
-     iccp3m_cfg.areas[0]=temp;
+  cp = strdup(string);                /* Make writable copy.  */
+  token = strtok (cp, delimiters);
+  scan_succes = sscanf(token,"%f",&temp);
+  if (scan_succes < 1) 
+    return 1;
 
-    for(i=1;i<size;i++) {
-      token = strtok (NULL, delimiters);
-          if(token == NULL){
-             return(1);
-            }
-       sscanf(token,"%f",&temp);
-      iccp3m_cfg.areas[i]=temp;
-    }
-  return(0);
+  numbers[0]=temp;
+    
+  for(i=1;i<size;i++) {
+    token = strtok (NULL, delimiters);
+    if(token == NULL)
+      return 1;
+    scan_succes = sscanf(token,"%lf",&(numbers[i]));
+    if (scan_succes < 1 ) 
+      return 1;
+  }
+
+  switch(flag) {
+    case ICCP3M_AREA: 
+      iccp3m_cfg.areas = (double*) realloc(iccp3m_cfg.areas, (size+1)*sizeof(double)); 
+      for( i = 0 ; i < size ; i++ )  
+        iccp3m_cfg.areas[i]=numbers[i];
+      break;
+    case ICCP3M_EPSILON:
+      iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size+1)*sizeof(double));
+      for( i = 0 ; i < size; i++)  
+        iccp3m_cfg.ein[i]=numbers[i];
+    break;
+    case ICCP3M_NORMAL:
+      iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
+      iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
+      iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
+      for(i=0;i<size;i++) {
+        if( i%3 == 0 ) { iccp3m_cfg.nvectorx[k] = numbers[i]; } 
+        if( i%3 == 1 ) { iccp3m_cfg.nvectory[k] = numbers[i]; }
+        if( i%3 == 2 ) { iccp3m_cfg.nvectorz[k] = numbers[i];  k++; } 
+       }
+    break;
+
+    case ICCP3M_EXTFIELD:
+      iccp3m_cfg.extx = (double*) realloc(iccp3m_cfg.extx,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
+      iccp3m_cfg.exty = (double*) realloc(iccp3m_cfg.exty,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
+      iccp3m_cfg.extz = (double*) realloc(iccp3m_cfg.extz,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
+      for(i=0;i<size;i++) {
+        if( i%3 == 0 ) { iccp3m_cfg.extx[k] = numbers[i]; } 
+        if( i%3 == 1 ) { iccp3m_cfg.exty[k] = numbers[i]; }
+        if( i%3 == 2 ) { iccp3m_cfg.extz[k] = numbers[i];  k++; } 
+      }
+    break;
+  }
+
+  free(numbers);
+  return (0);
 }
 
-int parse_normal(Tcl_Interp *interp,int normal_args, char *string) {
 
-   int size,i,k;
-   double *numbers;
-   const char delimiters[] = " ";
-   char *token,*cp;
-   float temp;
-
-   size= normal_args;
-   numbers=malloc((size+1)*sizeof(double));
-   cp = strdup(string);                /* Make writable copy.  */
-   token = strtok (cp, delimiters);
-    sscanf(token,"%f",&temp);
-     numbers[0]=temp;
-     
-    for(i=1;i<size;i++) {
-      token = strtok (NULL, delimiters);
-          if(token == NULL){
-             return(1);
-            }
-       sscanf(token,"%f",&temp);
-      numbers[i]=temp;
-    }
-    iccp3m_cfg.nvectorx=malloc(sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-    iccp3m_cfg.nvectory=malloc(sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-    iccp3m_cfg.nvectorz=malloc(sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-
-   /* assign normal vectors */
-     k=0;
-    for(i=0;i<size;i++) {
-       if( (i == 0) || (imod(i,3) == 0) ) {iccp3m_cfg.nvectorx[k]=numbers[i]; } /* assign components */
-       if( (i == 1) || (imod(i,3) == 1) ) {iccp3m_cfg.nvectory[k]=numbers[i]; }
-       if( (i == 2) || (imod(i,3) == 2) ) {iccp3m_cfg.nvectorz[k]=numbers[i];  k++; } 
-     }
-
-   free(numbers);
-  return(0);
-}
 void reset_forces() {
      Cell *cell;    
      int c,i,np;
@@ -755,11 +886,15 @@ void iccp3m_store_forces() {
 }
 
 int inter_parse_iccp3m(Tcl_Interp * interp, int argc, char ** argv) {
-   char buffer[TCL_DOUBLE_SPACE];
-   Tcl_PrintDouble(interp, iccp3m_cfg.citeration, buffer);
-   Tcl_AppendResult(interp, buffer,(char *) NULL);
+  char buffer[TCL_DOUBLE_SPACE];
+
+  Tcl_PrintDouble(interp, iccp3m_cfg.citeration, buffer);
+  Tcl_AppendResult(interp, buffer,(char *) NULL);
+
   return TCL_OK;
 }
+
+
 int gettime(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
     char buffer[TCL_DOUBLE_SPACE];
     clock_t cputime;
@@ -772,3 +907,4 @@ int gettime(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 }
 
 #endif
+
