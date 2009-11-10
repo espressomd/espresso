@@ -42,6 +42,7 @@
 #include "mmm2d.h"
 #include "maggs.h"
 #include "elc.h"
+#include "iccp3m.h"
 #include "statistics_chain.h"
 #include "statistics_fluid.h"
 #include "topology.h"
@@ -173,9 +174,13 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_ISVI 50
 /** ADRESS - Action number for \ref mpi_bcast_tf_params. */
 #define REQ_BCAST_TF  51
+/** Action number for \ref mpi_iccp3m_iteration. */
+#define REQ_ICCP3M_ITERATION 52
+/** Action number for \ref mpi_iccp3m_init. */
+#define REQ_ICCP3M_INIT 53
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 52
+#define REQ_MAXIMUM 54
 
 /*@}*/
 
@@ -197,6 +202,8 @@ void mpi_send_type_slave(int node, int parm);
 void mpi_send_bond_slave(int node, int parm);
 void mpi_recv_part_slave(int node, int parm);
 void mpi_integrate_slave(int node, int parm);
+void mpi_iccp3m_iteration_slave(int node, int parm);
+void mpi_iccp3m_init_slave(int node, int parm);
 void mpi_bcast_ia_params_slave(int node, int parm);
 void mpi_bcast_n_particle_types_slave(int node, int parm);
 void mpi_gather_stats_slave(int node, int parm);
@@ -293,6 +300,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_ljangle_cap_forces_slave,     /* 49: REQ_BCAST_LAFC */
   mpi_send_isVirtual_slave,         /* 50: REQ_SET_ISVI */
   mpi_bcast_tf_params_slave,        /* 51: REQ_BCAST_TF */
+  mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
+  mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
 
 };
 
@@ -351,12 +360,20 @@ char *names[] = {
   "BCAST_MFC" ,     /* 42 */
   "BCAST_LB",       /* 43 */
   "SET_DIP",        /* 44 */
+
   "SET_DIPM",       /* 45 */
   "SET_FLUID",      /* 46 */
   "GET_FLUID",      /* 47 */
-
+  "GET_LOCAL_STRESS_TENSOR", /* 48 */
   "BCAST_LAFC",     /* 49 */
+
+  "SET_ISVI",     /* 50 */
   "REQ_BCAST_TF",   /* 51 */
+  "REQ_ICCP3M_ITERATION",   /* 52 */
+  "REQ_ICCP3M_INIT",   /* 53 */
+
+  "DUMMY1                           ",   /* 53 */
+  "DUMMY2                           ",   /* 53 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -2440,6 +2457,92 @@ void mpi_recv_fluid_slave(int node, int index) {
 #endif
 }
 
+/********************* REQ_ICCP3M_ITERATION ********/
+int mpi_iccp3m_iteration(int dummy)
+{
+#ifdef ELECTROSTATICS
+  
+  printf("(%d) requesting callback %d\n", this_node, REQ_ICCP3M_ITERATION);
+
+  mpi_issue(REQ_ICCP3M_ITERATION, -1, 0);
+
+  printf("(%d) performing ICC iteration \n", this_node );
+  iccp3m_iteration();
+  printf("(%d) performed ICC iteration \n", this_node );
+
+  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node, dummy));
+
+  return check_runtime_errors();
+#else
+  return 0;
+#endif
+
+}
+
+void mpi_iccp3m_iteration_slave(int dummy, int dummy2)
+{
+#ifdef ELECTROSTATICS
+
+  printf("(%d) recieving callback %d\n", this_node, REQ_ICCP3M_ITERATION);
+
+  printf("(%d) performing ICC iteration \n", this_node );
+  iccp3m_iteration();
+  printf("(%d) performed ICC iteration \n", this_node );
+  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
+
+  check_runtime_errors();
+#endif
+}
+
+
+/********************* REQ_ICCP3M_INIT********/
+int mpi_iccp3m_init(int n_induced_charges)
+{
+#ifdef ELECTROSTATICS
+  /* nothing has to be done on the master node, this 
+   * passes only the number of induced charges, in order for
+   * slaves to allocate memory */
+  
+  printf("(%d) requesting callback %d\n", this_node, REQ_ICCP3M_INIT);
+
+  mpi_issue(REQ_ICCP3M_INIT, -1, n_induced_charges);
+   
+  printf("(%d) broadcasting the ICC configuration\n", this_node);
+  bcast_iccp3m_cfg();
+  printf("(%d) broadcasted ICC configuration\n", this_node);
+
+  COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node, n_induced_charges));
+
+  return check_runtime_errors();
+#else
+  return 0;
+#endif
+
+}
+
+void mpi_iccp3m_init_slave(int node, int dummy)
+{
+#ifdef ELECTROSTATICS
+
+  printf("(%d) accepting iccp3m_init callback %d\n", this_node, REQ_ICCP3M_INIT);
+  COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node, dummy));
+
+  if(iccp3m_initialized==0){
+    iccp3m_init();
+    iccp3m_initialized=1;
+ }
+
+  printf("(%d) recieving the ICC configuration\n", this_node);
+  
+  bcast_iccp3m_cfg();
+  
+  printf("(%d) recieved ICC configuration\n", this_node);
+
+  check_runtime_errors();
+#endif
+}
+
+
 /*********************** MAIN LOOP for slaves ****************/
 
 void mpi_loop()
@@ -2451,7 +2554,8 @@ void mpi_loop()
     MPI_Bcast(request, 3, MPI_INT, 0, MPI_COMM_WORLD);
     COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
 		       names[request[0]], request[1]));
-
+    if(request[0]>50) fprintf(stdout, "%d (%d): processing %s %d...\n", this_node,request[0],
+                               names[request[0]], request[1]);
     if ((request[0] < 0) || (request[0] >= REQ_MAXIMUM)) {
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();

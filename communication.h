@@ -419,6 +419,18 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
+/** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
+    @return nonzero on error
+*/
+int mpi_iccp3m_iteration(int dummy);
+
+/** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
+    @return nonzero on error
+*/
+int mpi_iccp3m_init(int dummy);
+
+
+
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.
     The errors are append to the result, if ret_state == TCL_ERROR, otherwise the result is overwritten.
