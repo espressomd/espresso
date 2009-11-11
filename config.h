@@ -149,6 +149,10 @@
 #define CONSTRAINTS
 #endif
 
+#if defined(BOND_ENDANGLEDIST_HARMONIC)
+#define BOND_ENDANGLEDIST
+#define CONSTRAINTS
+#endif
 /********************************************/
 /* \name exported functions of config.c     */
 /********************************************/

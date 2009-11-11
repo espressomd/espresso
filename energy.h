@@ -40,6 +40,7 @@
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "endangledist.h"
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -304,6 +305,11 @@ MDINLINE void add_bonded_energy(Particle *p1)
 #ifdef BOND_ANGLEDIST
     case BONDED_IA_ANGLEDIST:
       bond_broken = angledist_energy(p1, p2, p3, iaparams, &ret);
+      break;
+#endif
+#ifdef BOND_ENDANGLEDIST
+    case BONDED_IA_ENDANGLEDIST:
+      bond_broken = endangledist_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
     case BONDED_IA_DIHEDRAL:

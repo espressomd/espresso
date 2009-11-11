@@ -184,6 +184,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef BOND_ANGLEDIST_HARMONIC
   Tcl_AppendResult(interp, "{ BOND_ANGLEDIST_HARMONIC } ", (char *) NULL);
 #endif
+#ifdef BOND_ENDANGLEDIST_HARMONIC
+  Tcl_AppendResult(interp, "{ BOND_ENDANGLEDIST_HARMONIC } ", (char *) NULL);
+#endif
 #ifdef NEMD
   Tcl_AppendResult(interp, "{ NEMD } ", (char *) NULL);
 #endif

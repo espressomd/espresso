@@ -672,6 +672,8 @@ char *get_name_of_bonded_ia(int i) {
     return "angledist";
   case BONDED_IA_DIHEDRAL:
     return "dihedral";
+  case BONDED_IA_ENDANGLEDIST:
+    return "endangledist";
   case BONDED_IA_HARMONIC:
     return "HARMONIC";
   case BONDED_IA_SUBT_LJ:
@@ -1435,6 +1437,16 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, params->p.dihedral.phase, buffer);
     Tcl_AppendResult(interp, buffer, (char *) NULL);
     return (TCL_OK);
+  case BONDED_IA_ENDANGLEDIST:
+    Tcl_PrintDouble(interp, params->p.endangledist.bend, buffer);
+    Tcl_AppendResult(interp, "endangledist ", buffer," ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.endangledist.phi0, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.endangledist.distmin, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, params->p.endangledist.distmax, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    return (TCL_OK);
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     switch (params->p.tab.type) {
@@ -2064,7 +2076,7 @@ int inter_parse_bonded(Tcl_Interp *interp,
     if (argc == 1)
       return inter_print_partner_num(interp, bond_type);
     else {
-	Tcl_AppendResult(interp, "to manny parameters",
+	Tcl_AppendResult(interp, "too many parameters",
 			 (char *) NULL);
 	return TCL_ERROR;
     }
@@ -2085,6 +2097,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
   REGISTER_BONDED("angledist", inter_parse_angledist);
 #endif
   REGISTER_BONDED("dihedral", inter_parse_dihedral);
+#ifdef BOND_ENDANGLEDIST
+  REGISTER_BONDED("endangledist", inter_parse_endangledist);
+#endif
 #ifdef TABULATED
   REGISTER_BONDED("tabulated", inter_parse_bonded_tabulated);
 #endif

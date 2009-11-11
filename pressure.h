@@ -96,6 +96,7 @@ extern nptiso_struct nptiso;
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "endangledist.h"
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mol_cut.h"

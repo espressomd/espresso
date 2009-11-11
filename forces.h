@@ -46,6 +46,7 @@
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
+#include "endangledist.h"
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -345,6 +346,11 @@ MDINLINE void add_bonded_force(Particle *p1)
       bond_broken = calc_angledist_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
+#ifdef BOND_ENDANGLEDIST
+    case BONDED_IA_ENDANGLEDIST:
+      bond_broken = calc_endangledist_pair_force(p1, p2, iaparams, dx, force, force2);
+      break;
+#endif
     case BONDED_IA_DIHEDRAL:
       bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
       break;
@@ -406,10 +412,28 @@ MDINLINE void add_bonded_force(Particle *p1)
         tmp=force_weight*force[j];
 	p1->f.f[j] += tmp;
 	p2->f.f[j] -= tmp;
-#else
-	p1->f.f[j] += force[j];
-	p2->f.f[j] -= force[j];
-#endif
+#else // ADRESS
+#ifdef BOND_ENDANGLEDIST
+        //         switch (type) {
+        //case BONDED_IA_ENDANGLEDIST:
+        if (type == BONDED_IA_ENDANGLEDIST) {
+          /* In this case the forces are not conserved */
+          p1->f.f[j] += force[j];
+          p2->f.f[j] += force2[j];
+         } else {
+            p1->f.f[j] += force[j];
+            p2->f.f[j] -= force[j];
+            //break;
+          }
+          //break;
+#endif // BOND_ENDANGLEDIST
+          //case default:
+         {
+            p1->f.f[j] += force[j];
+            p2->f.f[j] -= force[j];
+            //break;
+          }
+#endif // ADRESS
 #ifdef NPT
 	if(integ_switch == INTEG_METHOD_NPT_ISO)
 	  nptiso.p_vir[j] += force[j] * dx[j];

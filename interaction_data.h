@@ -50,6 +50,8 @@
 #define BONDED_IA_VIRTUAL_BOND  7
 /** Type of bonded interaction is a bond angle -- constraint distance potential. */
 #define BONDED_IA_ANGLEDIST     8
+/** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
+#define BONDED_IA_ENDANGLEDIST    9
 
 /* Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -548,6 +550,15 @@ typedef struct {
       double cos_phi0;
 #endif
     } angledist;
+#ifdef BONDED_IA_ENDANGLEDIST
+    /** Parameters for chainend angular potential with wall  */
+    struct {
+      double bend;
+      double phi0;
+      double distmin;
+      double distmax;
+    } endangledist;
+#endif
   } p;
 } Bonded_ia_parameters;
 

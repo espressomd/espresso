@@ -80,7 +80,9 @@ Espresso_bin_SOURCES = \
 	lb-boundaries.c lb-boundaries.h \
 	utils.c utils.h \
 	angle.h \
+        pwdist.h \
 	angledist.h \
+	endangledist.h \
 	buckingham.h \
 	comfixed.h \
 	comforce.h \

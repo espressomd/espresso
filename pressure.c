@@ -1197,7 +1197,8 @@ int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **ar
 	     ARG0_IS_S("subt_lj_harm") ||
 	     ARG0_IS_S("subt_lj_fene") ||
 	     ARG0_IS_S("subt_lj") ||
-	     ARG0_IS_S("harmonic")) {
+	     ARG0_IS_S("harmonic") ||
+	     ARG0_IS_S("endangledist")) {
       if(argc<2 || ! ARG1_IS_I(i)) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure bonded <type_num>",
@@ -1498,7 +1499,8 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
 	     ARG0_IS_S("subt_lj_harm") ||
 	     ARG0_IS_S("subt_lj_fene") ||
 	     ARG0_IS_S("subt_lj") ||
-	     ARG0_IS_S("harmonic")) {
+	     ARG0_IS_S("harmonic") ||
+	     ARG0_IS_S("endangledist")) {
       if(argc<2 || ! ARG1_IS_I(i)) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure bonded <type_num>",
