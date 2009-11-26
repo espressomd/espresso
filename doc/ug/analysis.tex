@@ -357,7 +357,9 @@ when the ROTATION option is turned off and
  $w_{i}$ is the angular velocity.
 
 Care should be taken when using constraints of any kind, since these are not accounted for
-in the pressure calculations.
+in the pressure calculations. . Concerning bonded interactions
+only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
+For all electrostatic interactions only the real space part is included.
 
 The command is implemented in parallel.
 
@@ -411,7 +413,9 @@ means that when the ROTATION option is compiled in the instantaneous pressure ca
 the stress tensor.  However, the time averages should be in agreement.
 
 If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
-stress tensor.  The DH and RF methods, in contrast, are included.
+stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
+only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
+For all electrostatic interactions only the real space part is included.
 
 Care should be taken when using constraints of any kind, since these are not accounted for
 in the stress tensor calculations.
@@ -455,10 +459,12 @@ towards the stress tensor in a bin proportional to the fraction of the line conn
 particles that is within the bin.
 
 If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
-local stress tensor.  The DH and RF methods, in contrast, are included.
+local stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
+only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
+For all electrostatic interactions only the real space part is included.
 
 Care should be taken when using constraints of any kind, since these are not accounted for
-in the local stress tensor calculations.
+in the local stress tensor calculations. 
 
 The command is implemented in parallel.
 
