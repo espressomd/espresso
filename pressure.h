@@ -447,6 +447,46 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
     }
 #endif
 }
+
+
+/* calc_three_body_bonded_forces is called by add_three_body_bonded_stress. This
+   routine is only entered for angular potentials. */
+MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle *p3,
+              Bonded_ia_parameters *iaparams, double force1[3], double force2[3], double force3[3]) {
+
+#ifdef TABULATED
+  char* errtxt;
+#endif
+
+  switch(iaparams->type) {
+  case BONDED_IA_ANGLE:
+
+    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
+    calc_angle_3body_forces(p1, p2, p3, iaparams, force1, force2, force3);
+
+    break;
+
+#ifdef TABULATED
+  case BONDED_IA_TABULATED:
+    switch(iaparams->p.tab.type) {
+      case TAB_BOND_ANGLE:
+        break;
+      default:
+        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
+        return;
+      }
+      break;
+#endif
+  default :
+    fprintf(stderr,"calc_three_body_bonded_forces: \
+            WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n", \
+            iaparams->type, p1->p.identity, p2->p.identity);
+    break;
+  }
+}
+
+
 /** Calculate bonded virials for one particle.
     For performance reasons the force routines add their values directly to the particles.
     So here we do some tricks to get the value out without changing the forces.
@@ -489,6 +529,116 @@ MDINLINE void add_bonded_virials(Particle *p1)
 	obsstat_bonded(&p_tensor, type_num)[k*3 + l] += force[k]*dx[l];
 
   }
+}
+
+/** Calculate the contribution to the stress tensor from angular potentials.
+    The central particle of the three-particle interaction is responsible
+    for the contribution of the entire interaction - this is the coding
+    not the physics.
+*/
+MDINLINE void add_three_body_bonded_stress(Particle *p1) {
+  double dx12[3]; // espresso notation
+  double dx21[3];
+  double dx31[3];
+  double force1[3];
+  double force2[3];
+  double force3[3];
+
+  char *errtxt;
+  Particle *p2;
+  Particle *p3;
+  Bonded_ia_parameters *iaparams;
+
+  int i, k, j, l;
+  int type_num;
+  int type;
+
+  i = 0;
+  while(i < p1->bl.n) {
+    /* scan bond list for angular interactions */
+    type_num = p1->bl.e[i];
+    iaparams = &bonded_ia_params[type_num];
+    type = iaparams->type;
+
+    if(type == BONDED_IA_ANGLE) {
+      p2 = local_particles[p1->bl.e[++i]];
+      p3 = local_particles[p1->bl.e[++i]];
+
+      get_mi_vector(dx12, p1->r.p, p2->r.p);
+      for(j = 0; j < 3; j++)
+        dx21[j] = -dx12[j];
+
+      get_mi_vector(dx31, p3->r.p, p1->r.p);
+
+      for(j = 0; j < 3; j++) {
+        force1[j] = 0.0;
+        force2[j] = 0.0;
+        force3[j] = 0.0;
+      }
+
+      calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
+
+      /* uncomment the next line to see that the virial is indeed zero */
+      //printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
+
+      /* three-body bonded interactions contribute to the stress but not the scalar pressure */
+      for(k = 0; k < 3; k++) {
+        for(l = 0; l < 3; l++) {
+          obsstat_bonded(&p_tensor, type_num)[3 * k + l] += force2[k] * dx21[l] + force3[k] * dx31[l];
+        }
+      }
+      i = i + 1;
+    }
+    // skip over non-angular interactions
+    else if(type == BONDED_IA_FENE) {
+      i = i + 2;
+    }
+    else if(type == BONDED_IA_HARMONIC) {
+      i = i + 2;
+    }
+#ifdef LENNARD_JONES
+    else if(type == BONDED_IA_SUBT_LJ) {
+      i = i + 2;
+    }
+#endif
+    else if(type == BONDED_IA_ANGLEDIST) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_DIHEDRAL) {
+      i = i + 4;
+    }
+#ifdef TABULATED
+    else if(type == BONDED_IA_TABULATED) {
+      if(iaparams->p.tab.type == TAB_BOND_LENGTH) {
+        i = i + 2;
+      }
+      else if(iaparams->p.tab.type == TAB_BOND_ANGLE) {
+        i = i + 3;
+      }
+      else if (iaparams->p.tab.type == TAB_BOND_DIHEDRAL) {
+        i = i + 4;
+      }
+      else {
+        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        ERROR_SPRINTF(errtxt,"add_three_body_bonded_stress: match not found for particle %d.\n", p1->p.identity);
+      }
+    }
+#endif
+#ifdef BOND_CONSTRAINT
+    else if(type == BONDED_IA_RIGID_BOND) {
+      i = i + 2;
+    }
+#endif
+#ifdef BOND_VIRTUAL
+    else if(type == BONDED_IA_VIRTUAL_BOND) {
+      i = i + 2;
+    }
+#endif
+    else {
+      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt,"add_three_body_bonded_stress: match not found for particle %d.\n", p1->p.identity);
+    }
+  } 
 }
  
 /** Calculate kinetic pressure (aka energy) for one particle.
