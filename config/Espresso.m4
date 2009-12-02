@@ -81,7 +81,7 @@ AC_DEFUN([ES_CHECK_TCL],[
 	if test .$with_tcl = .no; then
 	   AC_MSG_ERROR([Tcl is required by ESPResSo!])
 	elif test .$with_tcl = .yes; then
-		for version in $TCL_VERSION tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
+		for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 			ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
 			if test .$use_tcl != .; then break; fi
 		done

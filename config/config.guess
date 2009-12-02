@@ -33,6 +33,7 @@ Linux)
         else if ($4 == "Genuine" && $5 == "Intel(R)" && $6 == "CPU") print "Pentium_4"; \
 	else { \
 	    if      ($4 == "Intel(R)" && $5 == "Pentium(R)")  model="Pentium"; \
+	    if      ($4 == "Intel(R)" && $5 == "Core(TM)")  model="Core"; \
 	    else if ($4 == "AMD"      && $5 == "Athlon(TM)")  model="Athlon"; \
 	    else if ($4 == "AMD"      && $5 == "Athlon(tm)")  model="Athlon"; \
 	    else                                              model="unknown"; \

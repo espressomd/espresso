@@ -188,7 +188,7 @@ FFTW version		= $use_fftw
 efence			= $with_efence
 EOF
 
-if test .$use_tcl != .tcl8.5 && test .$use_tcl != .tcl8.4; then
+if test .$use_tcl != .tcl8.6 && .$use_tcl != .tcl8.5 && test .$use_tcl != .tcl8.4; then
    echo "WARNING: Not all supplied scripts work properly with Tcl version before 8.4, consider upgrading"
 fi 
 
