@@ -460,16 +460,15 @@ MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle
 
   switch(iaparams->type) {
   case BONDED_IA_ANGLE:
-
     // p1 is *p_mid, p2 is *p_left, p3 is *p_right
     calc_angle_3body_forces(p1, p2, p3, iaparams, force1, force2, force3);
-
     break;
-
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     switch(iaparams->p.tab.type) {
       case TAB_BOND_ANGLE:
+        // p1 is *p_mid, p2 is *p_left, p3 is *p_right
+        calc_angle_3body_tabulated_forces(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       default:
         errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
@@ -613,7 +612,33 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
         i = i + 2;
       }
       else if(iaparams->p.tab.type == TAB_BOND_ANGLE) {
-        i = i + 3;
+        p2 = local_particles[p1->bl.e[++i]];
+        p3 = local_particles[p1->bl.e[++i]];
+
+        get_mi_vector(dx12, p1->r.p, p2->r.p);
+        for(j = 0; j < 3; j++)
+          dx21[j] = -dx12[j];
+
+        get_mi_vector(dx31, p3->r.p, p1->r.p);
+
+        for(j = 0; j < 3; j++) {
+          force1[j] = 0.0;
+          force2[j] = 0.0;
+          force3[j] = 0.0;
+        }
+
+        calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
+
+        /* uncomment the next line to see that the virial is indeed zero */
+        //printf("W = %g\n", scalar(force2, dx21) + scalar(force3, dx31));
+
+        /* three-body bonded interactions contribute to the stress but not the scalar pressure */
+        for(k = 0; k < 3; k++) {
+          for(l = 0; l < 3; l++) {
+            obsstat_bonded(&p_tensor, type_num)[3 * k + l] += force2[k] * dx21[l] + force3[k] * dx31[l];
+          }
+        }
+        i = i + 1;
       }
       else if (iaparams->p.tab.type == TAB_BOND_DIHEDRAL) {
         i = i + 4;
