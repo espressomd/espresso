@@ -158,7 +158,8 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   double vec31_magn;
   double fj[3];
   double fk[3];
-  double K, sin_phi0, cos_phi0;
+  double fac;
+  double K, phi, phi0, sin_phi0, cos_phi0;
 
   get_mi_vector(vec12, p_mid->r.p, p_left->r.p);
   for(j = 0; j < 3; j++)
@@ -177,13 +178,29 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE; 
   phi = acos(cos_phi);
   */
+#ifdef BOND_ANGLE_HARMONIC
 
+  if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
+  if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
+  phi = acos(cos_phi);
+
+  K = iaparams->p.angle.bend;
+  phi0 = iaparams->p.angle.phi0;
+
+  // potential dependent term [dU/dphi = K * (phi - phi0)]
+  pot_dep = K * (phi - phi0);
+#endif
+#ifdef BOND_ANGLE_COSINE
   K = iaparams->p.angle.bend;
   sin_phi0 = iaparams->p.angle.sin_phi0;
   cos_phi0 = iaparams->p.angle.cos_phi0;
 
-  // potential dependent term (dU/dphi * 1 / sin(phi))
-  pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
+  // potential dependent term [dU/dphi = K * sin(phi - phi0)]
+  // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b) 
+  pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
+#endif
+
+  fac = pot_dep / sin_phi;
 
   for(j = 0; j < 3; j++) {
     fj[j] = vec31[j] / (vec21_magn * vec31_magn) - cos_phi * vec21[j] / vec21_sqr;
@@ -192,9 +209,9 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
 
   // note that F1 = -(F2 + F3)
   for(j = 0; j < 3; j++) {
-    force1[j] = force1[j] - pot_dep * (fj[j] + fk[j]);
-    force2[j] = force2[j] + pot_dep * fj[j];
-    force3[j] = force3[j] + pot_dep * fk[j];
+    force1[j] = force1[j] - fac * (fj[j] + fk[j]);
+    force2[j] = force2[j] + fac * fj[j];
+    force3[j] = force3[j] + fac * fk[j];
   }
 }
 

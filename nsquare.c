@@ -335,6 +335,9 @@ void nsq_calculate_virials()
     pt1 = &partl[p];
     add_kinetic_virials(pt1,0);
     add_bonded_virials(pt1);
+#ifdef BOND_ANGLE_HARMONIC
+    add_three_body_bonded_stress(pt1);
+#endif
 #ifdef BOND_ANGLE_COSINE
     add_three_body_bonded_stress(pt1);
 #endif
