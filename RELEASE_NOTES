@@ -1,11 +1,65 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
+- v2.2.0  -
+-----------
+
+
+
 ****************************************************************************************
-* v2.1.2u (Alsheim)                                                                    *
+* v2.2.0   (Alsheim)                                                                   *
 ****************************************************************************************
 
 Current working revision.
+
+
+
+- v2.1.4  -
+-----------
+
+
+
+- v2.1.3k -
+-----------
+
+(k) December   2nd, 2009.
+(j) October   28th, 2009.
+(i) October   27th, 2009.
+(h) October   21st, 2009.
+(g) October   16th, 2009.
+(f) October   15th, 2009.
+(e) October   13th, 2009.
+(d) October    9th, 2009.
+(c) September 28th, 2009.
+(b) September 21st, 2009.
+(a) September 17th, 2009.
+
+New Features:
+(k) Added gcc support for Core i7
+(k) Added correct detection for tcl8.6
+(j) added -fastsse flag for tuning using the PGI compiler
+(h) AdResS bonded virial implemented
+(f) AdResS: Random initialization implemented.
+(f) AdResS: Implementation of bond-forces interpolation.
+(d) more arguments for LJANGLE
+(d) optional 2nd environment with local change in interaction
+    strength
+
+Changes:
+(g) Updated copyright notices. Removed "Responsible" people.
+(e) Increased MAX_NUM_CELLS from 216 to 32768. This will make many simulations
+    faster when using the default settings.
+
+Bugfixes:
+(i) Molecular pressure now supports EXCLUSIONS
+(g) removed a bug in ljangle (wrong sign in the force calculation).
+(f) 
+(f) AdResS: Initial weight has to be 1.
+(e) removed a debug printf command for ljangle.
+(c) When MOL_CUT is included, max_cut is well defined independent of the bonded
+    interactions
+(b) virtual sites should not contribute to 'analyze energy kinetic'
+(a) make espresso compile on power4
 
 
 - v2.1.2u -
