@@ -2766,7 +2766,7 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
     Tcl_AppendResult(interp, " }", (char *)NULL);
   rdf = malloc(r_bins*sizeof(double));
 
-  updatePartCfg(WITHOUT_BONDS);
+  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
 
   if(average==0)
     calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
@@ -2877,7 +2877,9 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
   rho_ave = malloc(n_bin*sizeof(double));
   for(i=0;i<n_bin;i++)
     rho_ave[i]=0.0;
-  updatePartCfg(WITHOUT_BONDS);
+
+  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
+
   density_profile_av(n_conf, n_bin, density, dir, rho_ave, type);
   /* append result */
   double r_bin, r;
@@ -2932,7 +2934,7 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
   if(argc>0){if(!ARG0_IS_I(time)) return (TCL_ERROR); argc--;argv++;}
   if(argc>0){if(!ARG0_IS_I(type)) return (TCL_ERROR); argc--;argv++;}
   
-  updatePartCfg(WITHOUT_BONDS);
+  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
   
   bins = malloc(nbins*sizeof(double));
   for (i =0; i<nbins;i++) { bins[i]=0; }
@@ -2983,6 +2985,8 @@ static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, "no configurations found! (This is a dynamic quantity!)", (char *)NULL);
 	return TCL_ERROR;
   }
+
+  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
 
   /* allocate space */
   vanhove = (double **) malloc((n_configs)*sizeof(double *));
@@ -3396,7 +3400,8 @@ double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n
   int MSD_particles=0;
   int start_value=n_configs-n_conf;
 
-  updatePartCfg(WITHOUT_BONDS);
+  if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
+
   for(i=start_value;i<n_configs;i++)
   {
       MSD[i]=0.0;//MSD for all saved confs
