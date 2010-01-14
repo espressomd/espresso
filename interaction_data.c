@@ -1998,7 +1998,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
-    REGISTER_NONBONDED("adress_tab", adress_tab_parser);
+    REGISTER_NONBONDED("adress_tab_ic", adress_tab_parser);
 #endif
 #endif
     else {
