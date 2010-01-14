@@ -678,11 +678,8 @@ void layered_calculate_virials()
       add_kinetic_virials(p1,0);
 
       add_bonded_virials(p1);
-#ifdef BOND_ANGLE_HARMONIC
-      add_three_body_bonded_stress(&p1[i]);
-#endif
-#ifdef BOND_ANGLE_COSINE
-      add_three_body_bonded_stress(&p1[i]);
+#ifdef BOND_ANGLE
+      add_three_body_bonded_stress(p1);
 #endif
 
       /* cell itself and bonded / constraints */

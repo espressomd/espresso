@@ -322,10 +322,7 @@ void calculate_verlet_virials(int v_comp)
     for(i = 0; i < np; i++)  {
       add_kinetic_virials(&p1[i],v_comp);
       add_bonded_virials(&p1[i]);
-#ifdef BOND_ANGLE_HARMONIC
-      add_three_body_bonded_stress(&p1[i]);
-#endif
-#ifdef BOND_ANGLE_COSINE
+#ifdef BOND_ANGLE
       add_three_body_bonded_stress(&p1[i]);
 #endif
 
