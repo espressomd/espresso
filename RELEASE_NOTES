@@ -2,15 +2,21 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.4                                                                               *
+* v2.1.4a                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.4  -
+- v2.1.4a -
 -----------
 
+(a) January 13th, 2010.
+
+Bugfixes:
+(a) averaging analyze commands (e.G. <rdf>, <re>, ...) give correct results now
+    also if called after "integrate" without "analyze append" in
+    between.
 
 
 - v2.1.3k -
