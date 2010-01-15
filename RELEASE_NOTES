@@ -2,18 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.4a                                                                              *
+* v2.1.4b                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.4a -
+- v2.1.4b -
 -----------
 
+(b) January 14th, 2010.
 (a) January 13th, 2010.
 
+Changes:
+(b) Interface correction force is now called adress_tab_ic at Tcl
+    level.
+
 Bugfixes:
+(b) three body potentials again work with layered decomposition
 (a) averaging analyze commands (e.G. <rdf>, <re>, ...) give correct results now
     also if called after "integrate" without "analyze append" in
     between.
