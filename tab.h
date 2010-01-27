@@ -609,7 +609,11 @@ MDINLINE int calc_tab_angle_force(Particle *p_mid, Particle *p_left,
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
+#ifdef TABANGLEMINUS
   phi = acos(-cosine);
+#else
+  phi = acos(cosine);
+#endif
   invsinphi = sin(phi);
   if(invsinphi < TINY_SIN_VALUE) invsinphi = TINY_SIN_VALUE;
   invsinphi = 1.0/invsinphi;
