@@ -86,7 +86,7 @@ void integrate_vv(int n_steps);
 
 /** function that rescales all velocities on one node according to a
     new time step. */
-void rescale_velocities(); 
+void rescale_velocities(double scale); 
 
 /** Callback for setmd skin.
     \return TCL status.
