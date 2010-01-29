@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.4b                                                                              *
+* v2.1.4c                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.4b -
+- v2.1.4c -
 -----------
 
+(c) January 28th, 2010.
 (b) January 14th, 2010.
 (a) January 13th, 2010.
 
@@ -19,6 +20,8 @@ Changes:
     level.
 
 Bugfixes:
+(c) added missing guard for bond angles
+(c) fixed exported header of rescale_velocities
 (b) three body potentials again work with layered decomposition
 (a) averaging analyze commands (e.G. <rdf>, <re>, ...) give correct results now
     also if called after "integrate" without "analyze append" in
