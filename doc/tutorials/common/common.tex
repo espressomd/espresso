@@ -1,0 +1,66 @@
+\usepackage[draft]{varioref}    % defines \vref
+\usepackage{hyperref}           % automatically creates links when
+                                % using pdflatex, defines \url
+\usepackage{ifpdf}              % defines \ifpdf
+\usepackage{graphicx}           % handles graphics
+\usepackage{color}              % use colors
+
+\usepackage{amsmath}
+
+\usepackage{verbatim}           % required for \verbatim and \endverbatim
+\usepackage{fancyvrb}
+\usepackage{calc}               % compute length
+\usepackage{ifthen}             % provide ifthen
+\usepackage{xspace}
+\usepackage{units}
+
+\newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\etal}{\textit{et al.}\xspace}
+
+\newcommand{\codebox}[1]%
+{\texttt{#1}}
+
+\DefineVerbatimEnvironment{code}{Verbatim}%
+{commandchars=\\\{\}}
+\makeatletter
+\newenvironment{tclcode}
+{%
+  \addtolength{\linewidth}{-2em}% set the line length
+  \@minipagetrue%%%DPC%%%
+  \@tempswatrue%%%DPC%%%
+  \hsize=\linewidth%
+  \setbox0=\vbox\bgroup\verbatim
+}{\endverbatim
+  \unskip\setbox0=\lastbox%%%DPC%%%
+  \egroup
+  \par%
+  \noindent\hspace{1em}%
+  \codebox{\box0}%
+  \par\noindent%
+}
+\makeatother
+
+\newcommand{\todo}[1]{
+  \marginpar{%
+    \setlength{\fboxrule}{1pt}
+    \fcolorbox{red}{yellow}{%
+      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
+        \bf\raggedright\scriptsize #1%
+      }%
+    }%
+  }%
+}
+
+\makeatletter
+\renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
+  {\parindent \z@
+    \raggedsection\normalfont\sffamily\itshape\nobreak#1\par\nobreak}%
+  \@afterheading}
+\makeatother
+
+\newcommand{\esptitlehead}{
+  \titlehead{\begin{center}
+      \includegraphics[width=5cm]{figures/logo}
+    \end{center}}}
