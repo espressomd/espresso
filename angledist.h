@@ -101,13 +101,14 @@ MDINLINE int inter_parse_angledist(Tcl_Interp *interp, int bond_type, int argc, 
 MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle *p_right, 
                        Bonded_ia_parameters *iaparams)
 {
-  double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist1=0.0, dist2=0.0, fac=0.0, phi0=0.0;
-  double pwdist=0.0, pwdist0=0.0, pwdist1=0.0, normal, force[3], folded_pos[3], phimn=0.0, distmn=0.0, phimx=0.0, distmx=0.0, drange=0.0;
+  double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist1=0.0, dist2=0.0, phi0=0.0;
+  //  double pwdist=0.0, pwdist0=0.0, pwdist1=0.0;
+  double normal, force[3], folded_pos[3], phimn=0.0, distmn=0.0, phimx=0.0, distmx=0.0, drange=0.0;
+  double pwdist[n_constraints],pwdistmin=0.0;
   Constraint_wall wall;
   int j, k;
   int img[3];
 
-  cosine=0.0;
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   dist1 = sqrlen(vec1);
@@ -122,7 +123,7 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
   cosine = scalar(vec1, vec2);
   if ( cosine >  TINY_COS_VALUE)  cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac    = iaparams->p.angledist.bend; /* spring constant from .tcl file */
+  //  fac    = iaparams->p.angledist.bend; /* spring constant from .tcl file */
   phimn  = iaparams->p.angledist.phimin;
   distmn = iaparams->p.angledist.distmin;
   phimx  = iaparams->p.angledist.phimax;
@@ -135,11 +136,14 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
 
   /* Calculates distance between p_mid and constraint */
   for(k=0;k<n_constraints;k++) {
+    pwdist[k]=0.0;
+  }
+  for(k=0;k<n_constraints;k++) {
     for (j=0; j<3; j++) {
       force[j] = 0;
     }
     switch(constraints[k].type) {
-    case CONSTRAINT_WAL: 
+      case CONSTRAINT_WAL: 
 
       /* dist is distance of wall from origin */
       wall=constraints[k].c.wal;
@@ -152,35 +156,36 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
       }
 
       /* pwdist is distance of wall from p_mid */
-      pwdist0=-1.0 * constraints[0].c.wal.d;
+      pwdist[k]=-1.0 * constraints[k].c.wal.d;
       for(j=0;j<3;j++) {
-        pwdist0 += folded_pos[j] * constraints[0].c.wal.n[j];
+        pwdist[k] += folded_pos[j] * constraints[k].c.wal.n[j];
       }
-      pwdist1=-1.0 * constraints[1].c.wal.d;
-      for(j=0;j<3;j++) {
-        pwdist1 += folded_pos[j] * constraints[1].c.wal.n[j];
+      if (k==0) {
+        pwdistmin=pwdist[k];
       }
-      if (pwdist0 <= pwdist1) {
-        pwdist = pwdist0;
-      }
-      else {
-        pwdist = pwdist1;
-      }
-
-      /*get phi0(z)*/
-      if (pwdist <= distmn) {
-        phi0 = phimn;
-      }
-      else if (pwdist >= distmx && pwdist <= box_l[2]-wall.d-distmx) {
-          phi0 = phimx;
-      }
-      else {
-        drange = (pwdist-distmn)*PI/(distmx-distmn);
-        phi0 = ((cos(drange-PI)+1.0)*(phimx-phimn))*0.5+phimn;
+      if (pwdist[k] <= pwdistmin) {
+        pwdistmin = pwdist[k];
       }
       break;
     }
   }
+
+  /*get phi0(z)*/
+  if (pwdistmin <= distmn) {
+    phi0 = phimn;
+    //    fprintf(stdout,"\nIn angledist_set_params:  z_p_mid=%f  pwdistmin=%f  distmn=%f  ",folded_pos[2],pwdistmin,distmn);
+    //    fprintf(stdout,"  phi0=%f\n",phi0*180.0/PI);
+  }
+  else if (pwdistmin >= distmx && pwdistmin <= box_l[2]-wall.d-distmx) {
+    phi0 = phimx;
+  }
+  else {
+    drange = (pwdistmin-distmn)*PI/(distmx-distmn);
+    phi0 = ((cos(drange-PI)+1.0)*(phimx-phimn))*0.5+phimn;
+  //  fprintf(stdout,"\nIn angledist_set_params:  z_p_mid=%f  pwdistmin=%f  box_lz/2=%f  ",folded_pos[2],pwdistmin,box_l[2]/2.0);
+  //  fprintf(stdout,"  phi0=%f\n",phi0*180.0/PI);
+  }
+
   return phi0;
 }
 
@@ -201,20 +206,22 @@ MDINLINE int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p
   dist2 = sqrlen(vec2);
   d2i = 1.0 / sqrt(dist2);
   for(j=0;j<3;j++) vec2[j] *= d2i;
-  /* scalar produvt of vec1 and vec2 */
+  /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
+  fac    = iaparams->p.angledist.bend;
   /* NOTE The angledist is ONLY implemented for the HARMONIC case */
   phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
 
 #ifdef BOND_ANGLEDIST_HARMONIC
   {
-    double phi=0.0,sinphi=0.0;
+    double phi,sinphi;
     if ( cosine >  TINY_COS_VALUE) cosine =  TINY_COS_VALUE;
     if ( cosine < -TINY_COS_VALUE) cosine = -TINY_COS_VALUE;
     phi =  acos(-cosine);
     sinphi = sin(phi);
     if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
     fac *= (phi - phi0)/sinphi;
+    //    fprintf(stdout,"\n force:  z_pmid=%f, phi0=%f  phi=%f fac=%f",p_mid->r.p[2],phi0*180.0/PI,phi*180.0/PI,fac);
   }
 #endif
 
@@ -255,7 +262,9 @@ MDINLINE int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_rig
   double vec1[3], vec2[3];
 
   phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
-  /*  fprintf(stdout,"\nIn angledist_energy:  phi0=%f\n",phi0*180.0/PI);*/
+  //  if (phi0 < PI) {
+  //    fprintf(stdout,"\nIn angledist_energy:  z_p_mid=%f, phi0=%f\n",p_mid->r.p[2],phi0*180.0/PI);
+  //  }
 
   /* vector from p_mid to p_left */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
@@ -278,6 +287,8 @@ MDINLINE int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_rig
     double phi;
     phi =  acos(-cosine);
     *_energy = 0.5*iaparams->p.angledist.bend*SQR(phi - phi0);
+    //    fprintf(stdout,"\n energy:  z_pmid=%f  bend=%f  phi0=%f  phi=%f energy=%f",p_mid->r.p[2],iaparams->p.angledist.bend,phi0*180.0/PI,phi*180.0/PI,0.5*iaparams->p.angledist.bend*SQR(phi - phi0));
+
   }
 #endif
 #ifdef BOND_ANGLEDIST_COSINE
