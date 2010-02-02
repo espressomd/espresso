@@ -146,20 +146,21 @@ AC_DEFUN([ES_TRYLINK_ADD_CFLAG],[
 AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	case $target_cpu in
 	i*86)		type=ia; m=32; arch=$target_cpu ;;
-	Core_i7)	type=ia; m=64; arch=core2; sse2=yes ;;
-	Pentium_III)	type=ia; m=32; arch=pentium3; sse=yes ;;
-	Atom)		type=ia; m=32; arch=pentiumpro; sse2=yes ;;
-	Celeron)	type=ia; m=32; arch=pentium4; sse2=yes ;;
-	Pentium_4)	type=ia; m=32; arch=pentium4; sse2=yes ;;
-	Pentium_M)	type=ia; m=32; arch=pentium-m; sse2=yes ;;
-	Xeon)		type=ia; m=32; arch=pentium4; sse2=yes ;;
-	Pentium_4_64)	type=ia; m=64; arch=nocona; sse2=yes ;;
-	Xeon_64)	type=ia; m=64; arch=noconamo; sse2=yes ;;
+	Core*)		type=ia; m=64; arch=core2; sse=3 ;;
+	Pentium_III)	type=ia; m=32; arch=pentium3; sse=1 ;;
+	Atom)		type=ia; m=32; arch=pentiumpro; sse=2 ;;
+	Celeron)	type=ia; m=32; arch=pentium4; sse=2 ;;
+	Pentium_4)	type=ia; m=32; arch=pentium4; sse=2 ;;
+	Pentium_M)	type=ia; m=32; arch=pentium-m; sse=2 ;;
+	Xeon)		type=ia; m=32; arch=pentium4; sse=2 ;;
+	Pentium_4_64)	type=ia; m=64; arch=nocona; sse=2 ;;
+	Xeon_64)	type=ia; m=64; arch=nocona; sse=2 ;;
 	Athlon)		type=ia; m=32; arch=athlon ;;
-	Athlon_MP)	type=ia; m=32; arch=athlon-mp; sse=yes ;;
-	Athlon_XP)	type=ia; m=32; arch=athlon-xp; sse=yes ;;
-	Opteron)	type=ia; m=64; arch=opteron; sse2=yes ;;
-	Athlon_64)	type=ia; m=64; arch=athlon64; sse2=yes;;
+	Athlon_MP)	type=ia; m=32; arch=athlon-mp; sse=1 ;;
+	Athlon_XP)	type=ia; m=32; arch=athlon-xp; sse=1 ;;
+	Opteron)	type=ia; m=64; arch=opteron; sse=2 ;;
+	Phenom)i	type=ia; m=64; arch=barcelona; sse=3 ;;
+	Athlon_64)	type=ia; m=64; arch=athlon64; sse=2;;
 	x86_64)		type=ia; m=64; arch=k8 ;;
 	Power)		type=pwr; cpu=power ;;
 	Power2)		type=pwr; cpu=power2 ;;
@@ -212,11 +213,12 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	if test .$altivec != .; then
 		ES_TRY_ADD_CFLAG(-maltivec)
 	fi
-	if test .$sse != .; then
+	if test .$sse = .1; then
 		ES_TRY_ADD_CFLAG([-msse -mfpmath=sse])
-	fi
-	if test .$sse2 != .; then
-		ES_TRY_ADD_CFLAG([-msse2 -mfpmath=sse])
+	else
+		if test .$sse != .; then
+			ES_TRY_ADD_CFLAG([-msse$sse -mfpmath=sse])
+		fi
 	fi
 	if test .$type = .ia; then
 		ES_TRY_ADD_CFLAG(-malign-double)

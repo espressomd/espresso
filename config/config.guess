@@ -20,6 +20,7 @@ Linux)
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
 	else if ($4 == "AMD" && $5 == "Sempron(tm)")   print "Athlon_XP"; \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
+	else if ($4 == "AMD" && $5 == "Phenom(tm)")   print "Phenom"; \
 	else if ($4 == "AMD" && $5 == "Opteron" && $6 == "(tm)")   print "Opteron"; \
 	else if ($4 == "Dual-Core" && $5 == "AMD" && $6 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "Quad-Core" && $5 == "AMD" && $6 == "Opteron(tm)")   print "Opteron"; \
@@ -28,7 +29,7 @@ Linux)
 	else if ($4 == "Intel(R)" && $5 == "Xeon(TM)") print "Xeon"; \
 	else if ($4 == "Intel(R)" && $5 == "Xeon(R)") print "Xeon"; \
         else if ($4 == "Intel(R)" && $5 == "Celeron(R)") print "Celeron"; \
-        else if ($4 == "Intel(R)" && $5 == "Core(TM)2") print "Pentium_4"; \
+        else if ($4 == "Intel(R)" && $5 == "Core(TM)2") print "Core"; \
 	else if ($4 == "Mobile"   && $5 == "Intel(R)" && $6 == "Pentium(R)") print "Pentium_"$7; \
         else if ($4 == "Genuine" && $5 == "Intel(R)" && $6 == "CPU") print "Pentium_4"; \
 	else { \
