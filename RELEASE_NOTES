@@ -2,18 +2,22 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.4c                                                                              *
+* v2.1.4d                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.4c -
+- v2.1.4d -
 -----------
 
+(d) February 2nd, 2010.
 (c) January 28th, 2010.
 (b) January 14th, 2010.
 (a) January 13th, 2010.
+
+New Features:
+(d) compiler flags for AMD Phenom, use SSE3 if possible
 
 Changes:
 (b) Interface correction force is now called adress_tab_ic at Tcl
