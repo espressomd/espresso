@@ -48,7 +48,7 @@ proc SPEEDOFLIGHT { } {
     return 2.99792458e8
 }
 
-proc ESPSLION0 { } {
+proc EPSILON0 { } {
     # Returns dielectric constant of vaccum in Coulomb^2/(Joule meter)
     return 8.854187817e-12
 }
