@@ -5,7 +5,7 @@
 // You should have received a copy of that license along with this program;
 // if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 /** \file p3m.c  P3M algorithms, main file to handle all the long range interactions via P3M algorithms.
  *               Charge-Charge and magnetic dipole-dipole interactions are installed at this moment.
  *               Coming soon: charge-electrical dipole interaction.
