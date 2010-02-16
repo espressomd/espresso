@@ -545,6 +545,7 @@ whole simulation.
   \opt{\alt{short \asep verbose}}
   \opt{\alt{folded \asep absolute}}
   \opt{pids \alt{\var{pids} \asep all}}
+  \opt{userdata \var{userdata}}
 \end{essyntax}
 Writes a coordinate (or timestep) block that contains all coordinates
 of the system's particles to the channel given by \var{channelId}.
@@ -568,7 +569,13 @@ return value of an invocation of \keyword{open}.
   Otherwise, \var{pids} has to be a Tcl-list specifying the pids of
   the particles. The default is \keyword{all}.\\
   Example: \verb!pids {0 23 42}!
-  
+
+\item[\opt{userdata \var{userdata}}] Specify arbitrary user data for
+  the particles. \var{userdata} has to be a Tcl list containing the
+  user data for every particle. The user data is appended to the
+  coordinate line and can be read into VMD via the VMD plugin
+  \texttt{VTFTools}. The default is to provide no userdata.\\
+  Example: \verb!userdata {"red" "blue" "green"}!
 \end{arguments}
 
 \subsection{\texttt{vtfpid}: Translating \es particles ids to VMD

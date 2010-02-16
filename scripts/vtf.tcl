@@ -171,6 +171,7 @@ proc writevcf { file args } {
     set folded 0
     set short 0
     set pids "all"
+    set userdata 0
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
@@ -182,6 +183,7 @@ proc writevcf { file args } {
 	    "verbose" { set short 0 }
 	    "short" { set short 1 }
 	    "pids" { set pids $val; incr argnum }
+	    "userdata" { set userdata $val; incr argnum }
 	    default { 
 		puts "unknown option to writevcf: $arg"
 		return 
@@ -216,9 +218,14 @@ proc writevcf { file args } {
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
 	    if {[part $pid] != "na"} then {
 		if { $folded } then {
-		    puts $file [part $pid print folded_pos]
+		    puts -nonewline $file [part $pid print folded_pos]
 		} else {
-		    puts $file [part $pid print pos]
+		    puts -nonewline $file [part $pid print pos]
+		}
+		if { $userdata } then {
+		    puts $file [ lindex $userdata $pid ]
+		} else {
+		    puts $file ""
 		}
 	    }
 	}
@@ -226,9 +233,14 @@ proc writevcf { file args } {
 	foreach pid $pids {
 	    if {[part $pid] != "na"} then {
 		if { $folded } then {
-		    puts $file "[vtfpid $pid] [part $pid print folded_pos]"
+		    puts -nonewline $file "[vtfpid $pid] [part $pid print folded_pos]"
 		} else {
-		    puts $file "[vtfpid $pid] [part $pid print pos]"
+		    puts -nonewline $file "[vtfpid $pid] [part $pid print pos]"
+		}
+		if { $userdata } then {
+		    puts $file [ lindex $userdata $pid ]
+		} else {
+		    puts $file ""
 		}
 	    }
 	}
