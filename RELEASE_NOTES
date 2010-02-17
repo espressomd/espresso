@@ -2,21 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.4d                                                                              *
+* v2.1.4e                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.4d -
+- v2.1.4e -
 -----------
 
-(d) February 2nd, 2010.
-(c) January 28th, 2010.
-(b) January 14th, 2010.
-(a) January 13th, 2010.
+(e) February 16th, 2010.
+(d) February  2nd, 2010.
+(c) January  28th, 2010.
+(b) January  14th, 2010.
+(a) January  13th, 2010.
 
 New Features:
+(e) writevcf now allows to write arbitrary userdata into a file that can be read
+    via the VMD plugin VTFTools.
 (d) compiler flags for AMD Phenom, use SSE3 if possible
 
 Changes:
