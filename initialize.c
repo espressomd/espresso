@@ -141,6 +141,10 @@ void on_integration_start()
     char *errtext = runtime_error(128);
     ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
   }
+  if(cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
+    char *errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{014 npt requires domain decomposition cellsystem} ");
+  }
 #endif
 
   if (!check_obs_calc_initialized()) return;

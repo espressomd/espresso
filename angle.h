@@ -159,7 +159,7 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   double fj[3];
   double fk[3];
   double fac;
-  double K, phi, phi0, sin_phi0, cos_phi0;
+  double K, sin_phi0, cos_phi0;
 
   get_mi_vector(vec12, p_mid->r.p, p_left->r.p);
   for(j = 0; j < 3; j++)
@@ -179,16 +179,18 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   phi = acos(cos_phi);
   */
 #ifdef BOND_ANGLE_HARMONIC
+  {
+    double phi, phi0;
+    if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
+    if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
+    phi = acos(cos_phi);
 
-  if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
-  if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
-  phi = acos(cos_phi);
+    K = iaparams->p.angle.bend;
+    phi0 = iaparams->p.angle.phi0;
 
-  K = iaparams->p.angle.bend;
-  phi0 = iaparams->p.angle.phi0;
-
-  // potential dependent term [dU/dphi = K * (phi - phi0)]
-  pot_dep = K * (phi - phi0);
+    // potential dependent term [dU/dphi = K * (phi - phi0)]
+    pot_dep = K * (phi - phi0);
+  }
 #endif
 #ifdef BOND_ANGLE_COSINE
   K = iaparams->p.angle.bend;
