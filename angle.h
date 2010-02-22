@@ -201,6 +201,9 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b) 
   pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
 #endif
+#ifdef BOND_ANGLE_COSSQUARE
+  fprintf(stderr, "WARNING: calc_angle_3body_forces not implemented for cossquare potential, cannot calculate stress tensor");
+#endif
 
   fac = pot_dep / sin_phi;
 
