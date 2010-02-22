@@ -228,8 +228,7 @@ proc prepare_vmd_connection_special { {filename "vmd"} {wait "0"} {start "1" } }
     puts $vmdout_file "rotate z by 180"
     puts $vmdout_file "rotate stop"
     puts $vmdout_file "scale 0.7"
-    puts $vmdout_file "display resize 1000 1000"
-    puts $vmdout_file "display reposition 300 300"
+    puts $vmdout_file "display resize 400 400"
     puts $vmdout_file "display distance 4"
 #    puts $vmdout_file "logfile vmd.log"
 #    puts $vmdout_file "rotate x by 0"
@@ -240,18 +239,18 @@ proc prepare_vmd_connection_special { {filename "vmd"} {wait "0"} {start "1" } }
     puts $vmdout_file "mol selection {segname T001}"
     puts $vmdout_file "mol representation CPK"
     puts $vmdout_file "mol addrep 0"
+    puts $vmdout_file "mol color SegName      "
 
     puts $vmdout_file "mol selection {segname T002}"
     puts $vmdout_file "mol representation CPK"
     puts $vmdout_file "mol addrep 0"
+    puts $vmdout_file "mol color SegName      "
 
     puts $vmdout_file "mol selection {segname T004}"
     puts $vmdout_file "mol representation Lines"
     puts $vmdout_file "mol addrep 0"
-    
-#    puts $vmdout_file "mol delrep 0 top     "
-#    puts $vmdout_file "mol representation CPK 4.000000 0.400000 10.000000 10.000000  "
-#    puts $vmdout_file "mol color SegName      "
+    puts $vmdout_file "mol color SegName      "
+
 #    puts $vmdout_file "mol selection {segname T001}     "
 #    puts $vmdout_file "mol material Opaque      "
 #    puts $vmdout_file "mol addrep top      "
