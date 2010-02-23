@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.4e                                                                              *
+* v2.1.4f                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.4e -
+- v2.1.4f -
 -----------
 
+(f) February 22nd, 2010.
 (e) February 16th, 2010.
 (d) February  2nd, 2010.
 (c) January  28th, 2010.
@@ -27,6 +28,14 @@ Changes:
     level.
 
 Bugfixes:
+(f) added warning in angle.h that pressure tensor cannot be calculated for
+    cossquare
+(f) fixed a bug in NPT integrator that did check that the domain decomposition
+    cellsystem is used
+(f) fixed a warning in angle.h if the bond potential was not chosen as
+    harmonic
+(f) fixed bug in npt integrator, that didn't check that electrostatics needs to be
+    P3M or Ewald
 (c) added missing guard for bond angles
 (c) fixed exported header of rescale_velocities
 (b) three body potentials again work with layered decomposition
