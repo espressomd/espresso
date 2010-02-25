@@ -137,30 +137,33 @@ void on_integration_start()
     }
   
 #ifdef NPT
-  if((integ_switch == INTEG_METHOD_NPT_ISO) && (nptiso.piston <= 0.0)) {
-    char *errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
-  }
-  if(cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
-    char *errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{014 npt requires domain decomposition cellsystem} ");
-  }
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    if (nptiso.piston <= 0.0) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
+    }
+    if(cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{014 npt requires domain decomposition cellsystem} ");
+    }
   
 #ifdef ELECTROSTATICS
 
-  switch(coulomb.method) {
+    switch(coulomb.method) {
+      case COULOMB_NONE:  break;
 #ifdef ELP3M
-  case COULOMB_P3M:   break;
-#endif
-  case COULOMB_EWALD: break;
-  default: {
-    char *errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
+      case COULOMB_P3M:   break;
+#endif /*ELP3M*/
+      case COULOMB_EWALD: break;
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
+      }
+    }
+#endif /*ELECTROSTATICS*/
+  
+#endif /*NPT*/
   }
-  }
-#endif
-
-#endif
 
   if (!check_obs_calc_initialized()) return;
 
