@@ -3567,9 +3567,6 @@ static int parse_and_print_energy_kinetic(Tcl_Interp *interp,int argc, char **ar
   return TCL_OK;
 }
 
-
-#include "mystatistics.c"
-
 /****************************************************************************************
  *                                 main parser for analyze
  ****************************************************************************************/
@@ -3598,12 +3595,6 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   /* for the elses below */
   if (0);
-
-  REGISTER_ANALYSIS("wallstuff", parse_wallstuff);
-  REGISTER_ANALYSIS("dipol", parse_dipol);
-  REGISTER_ANALYSIS("current", parse_current);
-  REGISTER_ANALYSIS("sqr", parse_sqr);
-  REGISTER_ANALYSIS("pairpot", parse_pairpot);
 
   REGISTER_ANALYZE_OPTION("set", parse_analyze_set_topology);
 #ifdef LB
