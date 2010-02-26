@@ -1,9 +1,14 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5  -
+- v2.1.5a -
 -----------
 
+(a) February 25th, 2010.
+
+Bugfixes:
+(a) fixed some broken sanity checks connected to npt
+(a) repaired broken statistics.c file
 
 
 ****************************************************************************************
