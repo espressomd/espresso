@@ -87,6 +87,10 @@ int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int last_ind_id,num_iteration,normal_args,area_args;
   char buffer[TCL_DOUBLE_SPACE];
   double e1,convergence,relax;
+
+  Tcl_AppendResult(interp, "The ICCP3M algorithm is still experimental. Function can not be guaranteed, therefore it is still disabled.\n", (char *)NULL);
+  return (TCL_ERROR);
+
   if(iccp3m_initialized==0){
       iccp3m_init();
       iccp3m_initialized=1;
