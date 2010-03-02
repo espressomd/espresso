@@ -161,9 +161,9 @@ void on_integration_start()
       }
     }
 #endif /*ELECTROSTATICS*/
+  }
   
 #endif /*NPT*/
-  }
 
   if (!check_obs_calc_initialized()) return;
 
