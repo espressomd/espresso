@@ -1,12 +1,14 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5a -
+- v2.1.5b -
 -----------
 
+(b) March     2nd, 2010.
 (a) February 25th, 2010.
 
 Bugfixes:
+(b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
 (a) repaired broken statistics.c file
 
