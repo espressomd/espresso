@@ -112,9 +112,9 @@ proc writevsf { file args } {
     ##################################################
     # Print unitcell data
     if { $short } then { 
-	puts $file "u [setmd box_l]"
+	puts $file "p [setmd box_l]"
     } else { 
-	puts $file "unitcell [setmd box_l]"
+	puts $file "pbc [setmd box_l]"
     }
 
     # Print atom data
@@ -207,7 +207,7 @@ proc writevcf { file args } {
     # unitcell
     if { [lindex [integrate] 0 1] eq "npt_isotropic" } then {
 	if { $short } then { 
-	    puts $file "u [setmd box_l]"
+	    puts $file "p [setmd box_l]"
 	} else { 
 	    puts $file "pbc [setmd box_l]"
 	}
