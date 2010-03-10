@@ -209,7 +209,7 @@ proc writevcf { file args } {
 	if { $short } then { 
 	    puts $file "u [setmd box_l]"
 	} else { 
-	    puts $file "unitcell [setmd box_l]"
+	    puts $file "pbc [setmd box_l]"
 	}
     }
 
