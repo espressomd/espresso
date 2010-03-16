@@ -143,13 +143,15 @@ the types \var{type1} and \var{type2}.  The potential is defined by
   \label{eq:lj}
   V_\mathrm{LJ}(r) = \Biggl\{
     \begin{array}{ll}
-      4\epsilon(\var{b_1}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
+      \epsilon(\var{b_1}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
       -\var{b_2}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^{e_2}+\var{c_\mathrm{shift}}) 
       & \mathrm{, if~} \var{r_\mathrm{min}}+\var{r_\mathrm{off}} < \var{r} < \var{r_\mathrm{cut}}+\var{r_\mathrm{off}}\\
       \mathit{0} 
       & \mathrm{, otherwise}\\
     \end{array}.
 \end{equation}
+Note that the prefactor 4 of the standard LJ potential is missing, so the normal
+LJ potential is recovered for $b_1=b_2=4$, $e_1=12$ and $e_2=6$.
 
 The total force on a particle can be capped by using the command
 \lit{inter ljforcecap}, see section~\ref{sec:forcecap}, or on an
