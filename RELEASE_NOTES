@@ -1,13 +1,15 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5b -
+- v2.1.5c -
 -----------
 
+(c) March    16th, 2010.
 (b) March     2nd, 2010.
 (a) February 25th, 2010.
 
 Bugfixes:
+(c) Fixed documentation of LJ-generic potential.
 (b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
 (a) repaired broken statistics.c file
