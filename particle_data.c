@@ -170,9 +170,6 @@ void init_particle(Particle *part)
   part->l.ghost        = 0;
 #endif
 
-#ifdef ADRESS
-  part->p.adress_weight = 1.0;
-#endif
 }
 
 void free_particle(Particle *part) {

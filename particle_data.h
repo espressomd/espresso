@@ -79,10 +79,6 @@ typedef struct {
   int isVirtual;
 #endif
 
-#ifdef ADRESS
-  /** particles adress weight */
-  double adress_weight;
-#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is

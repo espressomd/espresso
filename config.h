@@ -114,9 +114,6 @@
 #endif
 
 //adress needs mol_cut
-#ifdef ADRESS
-#define MOL_CUT
-#endif
 
 //mol_cut needs virtual sites
 #ifdef MOL_CUT

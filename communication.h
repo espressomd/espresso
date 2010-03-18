@@ -266,11 +266,6 @@ int mpi_integrate(int n_steps);
                if negative: flag for bonded interaction */
 void mpi_bcast_ia_params(int i, int j);
 
-#ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
-void mpi_bcast_tf_params(int i);
-/** #endif */
-#endif
 
 
 /** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.

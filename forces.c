@@ -194,62 +194,6 @@ void calc_long_range_forces()
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force(Particle *part)
 {
-#ifdef ADRESS
-  double new_weight;
-  if (ifParticleIsVirtual(part)) {
-    new_weight = adress_wf_vector(part->r.p);
-#ifdef ADRESS_INIT
-    double old_weight = part->p.adress_weight;
-    
-    if(new_weight>0 && old_weight==0){
-      double rand_cm_pos[3], rand_cm_vel[3], rand_weight, new_pos, old_pos;
-      int it, dim, this_mol_id=part->p.mol_id, rand_mol_id, rand_type;
-      int n_ats_this_mol=topology[this_mol_id].part.n, n_ats_rand_mol;
-      
-      //look for a random explicit particle
-      rand_type=-1;
-      rand_weight=-1;
-      rand_mol_id=-1;
-      n_ats_rand_mol=-1;
-      
-      while(rand_type != part->p.type || rand_weight != 1 || n_ats_rand_mol != n_ats_this_mol){
-	rand_mol_id = i_random(n_molecules);
-	rand_type   = local_particles[(topology[rand_mol_id].part.e[0])]->p.type;
-	rand_weight = local_particles[(topology[rand_mol_id].part.e[0])]->p.adress_weight;
-	n_ats_rand_mol = topology[rand_mol_id].part.n;
-	
-	if(!ifParticleIsVirtual(local_particles[(topology[rand_mol_id].part.e[0])]))
-	  fprintf(stderr,"No virtual site found on molecule %d, with %d total molecules.\n",rand_mol_id, n_molecules);
-      }
-      
-      //store CM position and velocity
-      for(dim=0;dim<3;dim++){
-	rand_cm_pos[dim]=local_particles[(topology[rand_mol_id].part.e[0])]->r.p[dim];
-	rand_cm_vel[dim]=local_particles[(topology[rand_mol_id].part.e[0])]->m.v[dim];
-      }
-      
-      //assign new positions and velocities to the atoms
-      for(it=0;it<n_ats_this_mol;it++){
-	if (!ifParticleIsVirtual(local_particles[topology[rand_mol_id].part.e[it]])) {
-	  for(dim=0;dim<3;dim++){
-	    old_pos = local_particles[topology[this_mol_id].part.e[it]]->r.p[dim];
-	    new_pos = local_particles[topology[rand_mol_id].part.e[it]]->r.p[dim]-rand_cm_pos[dim]+part->r.p[dim];
-	    //MAKE SURE THEY ARE IN THE SAME BOX
-	    while(new_pos-old_pos>box_l[dim]*0.5)
-	      new_pos=new_pos-box_l[dim];
-	    while(new_pos-old_pos<-box_l[dim]*0.5)
-	      new_pos=new_pos+box_l[dim];
-	    
-	    local_particles[(topology[this_mol_id].part.e[it])]->r.p[dim] = new_pos;
-	    local_particles[(topology[this_mol_id].part.e[it])]->m.v[dim] = local_particles[(topology[rand_mol_id].part.e[it])]->m.v[dim]-rand_cm_vel[dim]+part->m.v[dim];
-	  }   
-	}
-      }
-    }
-#endif
-    part->p.adress_weight=new_weight;
-  }
-#endif
   if ( thermo_switch & THERMO_LANGEVIN )
     friction_thermo_langevin(part);
   else {
@@ -284,23 +228,11 @@ MDINLINE void init_local_particle_force(Particle *part)
   }
 #endif
 
-#ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
-  if(ifParticleIsVirtual(part))
-    if(part->p.adress_weight > 0 && part->p.adress_weight < 1)
-      add_thermodynamic_force(part);
-  /** #endif */  
-#endif
 }
 
 /** initialize the forces for a ghost particle */
 MDINLINE void init_ghost_force(Particle *part)
 {
-#ifdef ADRESS
-  if (ifParticleIsVirtual(part)) {
-    part->p.adress_weight=adress_wf_vector(part->r.p);
-  }
-#endif
   
   part->f.f[0] = 0;
   part->f.f[1] = 0;
@@ -353,13 +285,6 @@ void init_forces()
       init_local_particle_force(&p[i]);
   }
   
-#ifdef ADRESS
-#ifdef ADRESS_INIT
-  /* update positions of atoms reinitialized when crossing from CG to hybrid zone
-     done previously in init_local_particle_force */
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
-#endif
-#endif
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions

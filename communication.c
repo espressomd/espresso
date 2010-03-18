@@ -1300,55 +1300,10 @@ void mpi_bcast_ia_params_slave(int i, int j)
 /** #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i)
 {
-#ifdef ADRESS
-  int tablesize=0;
-  
-  mpi_issue(REQ_BCAST_TF, i, i);
-  tablesize = thermodynamic_forces.max;
-  
-  /* thermodynamic force parameters */
-  /* non-bonded interaction parameters */
-  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
-	    0, MPI_COMM_WORLD);
-  
-  /* If there are tabulated forces broadcast those as well */
-  if ( get_tf_param(i)->TF_TAB_maxval > 0) {
-    /* First let all nodes know the new size for force and energy tables */
-    MPI_Bcast(&tablesize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD); // Don't do anything until all nodes have this information
-    
-    /* Communicate the data */
-    MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-    MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-    //MPI_Bcast(TF_prefactor, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  }
-  
-  //on_short_range_ia_change();
-#endif
 }
 
 void mpi_bcast_tf_params_slave(int i, int j)
 {
-#ifdef ADRESS
-  int tablesize;
-  /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
-  MPI_Bcast(get_tf_param(i), sizeof(TF_parameters), MPI_BYTE,
-	    0, MPI_COMM_WORLD);
-  tablesize=0;
-  /* If there are tabulated forces broadcast those as well */
-  if ( get_tf_param(i)->TF_TAB_maxval > 0) {
-    /* Determine the new size for force and energy tables */
-    MPI_Bcast(&tablesize,1,MPI_INT,0,MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-    /* Allocate sizes accordingly */
-    realloc_doublelist(&thermodynamic_forces, tablesize);
-    realloc_doublelist(&thermodynamic_f_energies, tablesize);
-    /* Now communicate the data */
-    MPI_Bcast(thermodynamic_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-    MPI_Bcast(thermodynamic_f_energies.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-  }
-#endif
 }
 
 
@@ -1361,11 +1316,6 @@ void mpi_bcast_n_particle_types(int ns)
 
 void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 {
-#ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
-  realloc_tf_params(ns);
-  /** #endif */
-#endif
   realloc_ia_params(ns);
 }
 

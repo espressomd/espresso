@@ -388,10 +388,6 @@ void integrate_vv(int n_steps)
     update_mol_vel_pos();
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (check_runtime_errors()) return;
-#ifdef ADRESS
-    //    adress_update_weights();
-   if (check_runtime_errors()) return;
-#endif
 #endif
    
    force_calc();
@@ -478,10 +474,6 @@ void integrate_vv(int n_steps)
    update_mol_vel_pos();
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
    if (check_runtime_errors()) break;
-#ifdef ADRESS
-   //adress_update_weights();
-   if (check_runtime_errors()) break;
-#endif
 #endif
 
     /* Integration Step: Step 3 of Velocity Verlet scheme:

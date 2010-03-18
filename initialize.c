@@ -80,14 +80,6 @@ int on_program_start(Tcl_Interp *interp)
   ghost_init();
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  adress_force_and_energy_tables_init();
-#endif
-  /** #ifdef THERMODYNAMIC_FORCE */
-  tf_tables_init();
-  /** #endif */
-#endif
 #ifdef ELP3M
   fft_pre_init();
 #endif
@@ -468,10 +460,6 @@ void on_parameter_change(int field)
     nptiso.invalidate_p_vel = 1;  
 #endif
 
-#ifdef ADRESS
-//   if (field == FIELD_BOXL)
-//    adress_changed_box_l();
-#endif
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -711,12 +699,6 @@ static void init_tcl(Tcl_Interp *interp)
 #endif 
   /* in adresso.h */
   REGISTER_COMMAND("adress", adress_tcl);
-#ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
-  REGISTER_COMMAND("thermodynamic_force", tf_tcl);
-  /** #endif */
-  REGISTER_COMMAND("update_adress_weights", manual_update_weights);
-#endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   fprintf(stderr,"%d: Script directory: %s\n",this_node,scriptdir);
