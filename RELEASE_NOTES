@@ -1,14 +1,16 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5c -
+- v2.1.5d -
 -----------
 
+(d) March    23rd, 2010.
 (c) March    16th, 2010.
 (b) March     2nd, 2010.
 (a) February 25th, 2010.
 
 Bugfixes:
+(d) fixed wrong DPD formula in Users Guide (C source was correct)
 (c) Fixed documentation of LJ-generic potential.
 (b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
