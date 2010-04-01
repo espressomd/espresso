@@ -19,6 +19,7 @@ Linux)
     	/model name/ { if ($1 != "model") { next; }\
 	if ($4 == "Pentium") { if ($5 != "") print $4"_"$5; else print $4; } \
 	else if ($4 == "AMD" && $5 == "Sempron(tm)")   print "Athlon_XP"; \
+	else if ($4 == "Mobile" && $5 == "AMD" && $6 == "Sempron(tm)")   print "Athlon_XP"; \
 	else if ($4 == "AMD" && $5 == "Opteron(tm)")   print "Opteron"; \
 	else if ($4 == "AMD" && $5 == "Phenom(tm)")   print "Phenom"; \
 	else if ($4 == "AMD" && $5 == "Opteron" && $6 == "(tm)")   print "Opteron"; \
