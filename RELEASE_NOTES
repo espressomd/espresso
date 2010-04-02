@@ -1,13 +1,17 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5d -
+- v2.1.5e -
 -----------
 
+(e) April     1st, 2010.
 (d) March    23rd, 2010.
 (c) March    16th, 2010.
 (b) March     2nd, 2010.
 (a) February 25th, 2010.
+
+New Features:
+(e) added detection for Mobile Sempron
 
 Bugfixes:
 (d) fixed wrong DPD formula in Users Guide (C source was correct)
