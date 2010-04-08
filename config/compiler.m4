@@ -159,7 +159,7 @@ AC_DEFUN([ES_CHECK_GCC_FLAGS],[
 	Athlon_MP)	type=ia; m=32; arch=athlon-mp; sse=1 ;;
 	Athlon_XP)	type=ia; m=32; arch=athlon-xp; sse=1 ;;
 	Opteron)	type=ia; m=64; arch=opteron; sse=2 ;;
-	Phenom)i	type=ia; m=64; arch=barcelona; sse=3 ;;
+	Phenom)		type=ia; m=64; arch=barcelona; sse=3 ;;
 	Athlon_64)	type=ia; m=64; arch=athlon64; sse=2;;
 	x86_64)		type=ia; m=64; arch=k8 ;;
 	Power)		type=pwr; cpu=power ;;
