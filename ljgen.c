@@ -99,7 +99,6 @@ static int ljgen_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-
 int ljgen_parser(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
@@ -149,10 +148,12 @@ int ljgen_parser(Tcl_Interp * interp,
 }
 
 
-/** double**integer power function.  */
+/** double**integer power function.
+    Not used anymore, libc-pow is faster and works also for n<0
 MDINLINE double powi (double x, int n)
 {
-  double y = n % 2 ? x : 1;
+  double y;
+  y = n % 2 ? x : 1;
   while (n >>= 1)
     {
       x = x * x;
@@ -161,7 +162,7 @@ MDINLINE double powi (double x, int n)
     }
   return y;
 }
-
+*/
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -175,8 +176,8 @@ void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
     if(r_off > ia_params->LJGEN_capradius) {
       frac = ia_params->LJGEN_sig/r_off;
       fac   = ia_params->LJGEN_eps 
-	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * powi(frac, ia_params->LJGEN_a1) 
-	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * powi(frac, ia_params->LJGEN_a2))
+	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ (r_off * dist);
       for(j=0;j<3;j++)
 	force[j] += fac * d[j];
@@ -190,8 +191,8 @@ void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
     else if(dist > 0.0) {
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
       fac   = ia_params->LJGEN_eps 
-	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * powi(frac, ia_params->LJGEN_a1) 
-	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * powi(frac, ia_params->LJGEN_a2))
+	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ (ia_params->LJGEN_capradius * dist);
       for(j=0;j<3;j++)
 	/* vector d is rescaled to length LJGEN_capradius */
@@ -203,8 +204,8 @@ void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
       fac   = ia_params->LJGEN_eps 
-	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * powi(frac, ia_params->LJGEN_a1) 
-	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * powi(frac, ia_params->LJGEN_a2))
+	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ ia_params->LJGEN_capradius;
 
       force[0] += fac * ia_params->LJGEN_capradius;
@@ -230,24 +231,24 @@ double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
     if(r_off > ia_params->LJGEN_capradius) {
       frac = ia_params->LJGEN_sig/r_off;
       return ia_params->LJGEN_eps*(
-	      ia_params->LJGEN_b1 * powi(frac, ia_params->LJGEN_a1) 
-	      - ia_params->LJGEN_b2 * powi(frac, ia_params->LJGEN_a2)
+	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+	      - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
       return ia_params->LJGEN_eps*(
-	      ia_params->LJGEN_b1 * powi(frac, ia_params->LJGEN_a1) 
-	      - ia_params->LJGEN_b2 * powi(frac, ia_params->LJGEN_a2)
+	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+	      - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
     /* this should not happen! */
     else {
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
       return ia_params->LJGEN_eps*(
-	      ia_params->LJGEN_b1 * powi(frac, ia_params->LJGEN_a1) 
-	       - ia_params->LJGEN_b2 * powi(frac, ia_params->LJGEN_a2)
+	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+	       - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
   }
@@ -274,8 +275,8 @@ void calc_ljgen_cap_radii(double force_cap)
 	while(step != 0) {
 	  frac = params->LJGEN_sig/rad;
 	  force =  params->LJGEN_eps 
-	    * (params->LJGEN_b1 * params->LJGEN_a1 * powi(frac, params->LJGEN_a1) 
-	       - params->LJGEN_b2 * params->LJGEN_a2 * powi(frac, params->LJGEN_a2))/rad;
+	    * (params->LJGEN_b1 * params->LJGEN_a1 * pow(frac, params->LJGEN_a1) 
+	       - params->LJGEN_b2 * params->LJGEN_a2 * pow(frac, params->LJGEN_a2))/rad;
 	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
 	    step = - (step/2.0); 
 	  }
