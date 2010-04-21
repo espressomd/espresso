@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5e -
+- v2.1.5f -
 -----------
 
+(f) April    20th, 2010.
 (e) April     1st, 2010.
 (d) March    23rd, 2010.
 (c) March    16th, 2010.
@@ -14,6 +15,8 @@ New Features:
 (e) added detection for Mobile Sempron
 
 Bugfixes:
+(f) ljgen now uses the libc-pow function, which also allows for negative exponents,
+    and is in general faster
 (d) fixed wrong DPD formula in Users Guide (C source was correct)
 (c) Fixed documentation of LJ-generic potential.
 (b) fixed the fix so that compiling without NPT works again
