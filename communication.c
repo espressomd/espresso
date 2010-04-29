@@ -178,9 +178,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_ICCP3M_ITERATION 52
 /** Action number for \ref mpi_iccp3m_init. */
 #define REQ_ICCP3M_INIT 53
+/** Action number for \ref mpi_send_rotational_inertia. */
+#define REQ_SET_RINERTIA  54
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 54
+#define REQ_MAXIMUM 55
 
 /*@}*/
 
@@ -243,6 +245,7 @@ void mpi_local_stress_tensor_slave(int node, int parm);
 void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_isVirtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
+void mpi_send_rotational_inertia_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -302,7 +305,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_bcast_tf_params_slave,        /* 51: REQ_BCAST_TF */
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
-
+  mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -367,13 +370,11 @@ char *names[] = {
   "GET_LOCAL_STRESS_TENSOR", /* 48 */
   "BCAST_LAFC",     /* 49 */
 
-  "SET_ISVI",     /* 50 */
+  "SET_ISVI",       /* 50 */
   "REQ_BCAST_TF",   /* 51 */
-  "REQ_ICCP3M_ITERATION",   /* 52 */
-  "REQ_ICCP3M_INIT",   /* 53 */
-
-  "DUMMY1                           ",   /* 53 */
-  "DUMMY2                           ",   /* 53 */
+  "REQ_ICCP3M_ITERATION", /* 52 */
+  "REQ_ICCP3M_INIT",      /* 53 */
+  "SET_RINERTIA",   /* 54 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -758,6 +759,41 @@ void mpi_send_mass_slave(int pnode, int part)
 #endif
 }
 
+/********************* REQ_SET_RINERTIA ********/
+
+void mpi_send_rotational_inertia(int pnode, int part, double rinertia[3])
+{
+#ifdef ROTATIONAL_INERTIA
+  mpi_issue(REQ_SET_RINERTIA, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.rinertia[0] = rinertia[0];
+    p->p.rinertia[1] = rinertia[1];
+    p->p.rinertia[2] = rinertia[2];
+  }
+  else {
+    MPI_Send(rinertia, 3, MPI_DOUBLE, pnode, REQ_SET_RINERTIA, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_rotational_inertia_slave(int pnode, int part)
+{
+#ifdef ROTATIONAL_INERTIA
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(p->p.rinertia, 3, MPI_DOUBLE, 0, REQ_SET_RINERTIA,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
 /********************* REQ_SET_TYPE ********/
 void mpi_send_type(int pnode, int part, int type)
 {
@@ -824,7 +860,11 @@ void mpi_send_quat(int pnode, int part, double quat[4])
     p->r.quat[0] = quat[0];
     p->r.quat[1] = quat[1];
     p->r.quat[2] = quat[2];
-    p->r.quat[3] = quat[3];    
+    p->r.quat[3] = quat[3];
+    convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
   }
   else {
     MPI_Send(quat, 4, MPI_DOUBLE, pnode, REQ_SET_QUAT, MPI_COMM_WORLD);
@@ -842,6 +882,10 @@ void mpi_send_quat_slave(int pnode, int part)
     MPI_Status status;
     MPI_Recv(p->r.quat, 4, MPI_DOUBLE, 0, REQ_SET_QUAT,
 	     MPI_COMM_WORLD, &status);
+    convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#ifdef DIPOLES
+    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
   }
 
   on_particle_change();
@@ -931,6 +975,10 @@ void mpi_send_dip(int pnode, int part, double dip[3])
     p->r.dip[0] = dip[0];
     p->r.dip[1] = dip[1];
     p->r.dip[2] = dip[2];
+#ifdef ROTATION
+    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
+    convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#endif
   }
   else {
     MPI_Send(dip, 3, MPI_DOUBLE, pnode, REQ_SET_DIP, MPI_COMM_WORLD);
@@ -948,6 +996,10 @@ void mpi_send_dip_slave(int pnode, int part)
     MPI_Status status;
     MPI_Recv(p->r.dip, 3, MPI_DOUBLE, 0, REQ_SET_DIP,
 	     MPI_COMM_WORLD, &status);
+#ifdef ROTATION
+    convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
+    convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#endif
   }
 
   on_particle_change();
@@ -964,6 +1016,9 @@ void mpi_send_dipm(int pnode, int part, double dipm)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     p->p.dipm = dipm;
+#ifdef ROTATION
+    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
   }
   else {
     MPI_Send(&dipm, 1, MPI_DOUBLE, pnode, REQ_SET_DIPM, MPI_COMM_WORLD);
@@ -981,6 +1036,9 @@ void mpi_send_dipm_slave(int pnode, int part)
     MPI_Status status;
     MPI_Recv(&p->p.dipm, 1, MPI_DOUBLE, 0, REQ_SET_DIPM,
 	     MPI_COMM_WORLD, &status);
+#ifdef ROTATION
+    convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+#endif
   }
 
   on_particle_change();
@@ -2554,8 +2612,6 @@ void mpi_loop()
     MPI_Bcast(request, 3, MPI_INT, 0, MPI_COMM_WORLD);
     COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
 		       names[request[0]], request[1]));
-    if(request[0]>50) fprintf(stdout, "%d (%d): processing %s %d...\n", this_node,request[0],
-                               names[request[0]], request[1]);
     if ((request[0] < 0) || (request[0] >= REQ_MAXIMUM)) {
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();

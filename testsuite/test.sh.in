@@ -18,6 +18,9 @@ ESPRESSO=@top_builddir@/Espresso
 #ESPRESSO_SCRIPTS=@top_srcdir@/scripts
 #export ESPRESSO_SCRIPTS
 
+# tests need to be run from the directory where this script is located
+cd ${0%test.sh}
+
 # handle processors
 processors=$PROCESSORS
 if test $1 = "-p"; then
@@ -77,7 +80,7 @@ for np in $processors; do
     for testcase in $testcases; do
         # here go the error messages of the testcases
 	errf=$testcase.err
-	CMD="$ESPRESSO $srcdir/$testcase $np $errf"
+	CMD="$ESPRESSO $srcdir/$testcase $np $errf -quiet"
 	echo "**************************************************"
 	echo "** $testcase"
 	echo "Executing: \"$CMD\""

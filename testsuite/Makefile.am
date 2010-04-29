@@ -19,6 +19,7 @@ tests= \
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) \
+	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
 	analysis_system.data.04.gz analysis_system.data.05.gz \

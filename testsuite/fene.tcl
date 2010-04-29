@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -14,23 +10,19 @@
 #
 # To generate the test system, use gen_fene.tcl.
 #
+set errf [lindex $argv 1]
+
+source "tests_common.tcl"
+
 puts "------------------------------------------"
 puts "- Testcase fene.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------"
+
 setmd time_step 0.001
 setmd skin      0.0
 thermostat off
 
 set epsilon 1e-4
-
-set errf [lindex $argv 1]
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
 
 proc read_data {file} {
     if { [string compare [lindex [split $file "."] end] "gz"]==0 } { set f [open "|gzip -cd $file" r]

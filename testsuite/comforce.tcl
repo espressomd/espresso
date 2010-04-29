@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -13,40 +9,19 @@
 # 
 set errf [lindex $argv 1]
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
+source "tests_common.tcl"
 
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
+require_feature "COMFORCE"
+require_max_nodes_per_side 1
 
 puts "----------------------------------------"
 puts "- Testcase comforce.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
 
-require_feature "COMFORCE"
-
 set epsilon 1e-4
 thermostat off
 setmd time_step 1
 setmd skin 0
-
-if { [setmd n_nodes] != 1 } {
-    puts "Testcase comforce.tcl does not run on more than one node"
-    exec rm -f $errf
-    exit 0
-}
 
 proc read_data {file} {
     set f [open $file "r"]

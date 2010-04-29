@@ -146,17 +146,9 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
    FikX,FikY,FikZ,			/*  help for forces        */
    Gx,Gy,Gz;			/*  help for torques       */
  
- if (dist < ia_params->GB_cut) {  
-     
-   u1x = 2*(p1->r.quat[1]*p1->r.quat[3] + p1->r.quat[0]*p1->r.quat[2]);	     
-   u1y = 2*(p1->r.quat[2]*p1->r.quat[3] - p1->r.quat[0]*p1->r.quat[1]);
-   u1z =    p1->r.quat[0]*p1->r.quat[0] - p1->r.quat[1]*p1->r.quat[1] -
-     p1->r.quat[2]*p1->r.quat[2] + p1->r.quat[3]*p1->r.quat[3] ;
-	   
-   u2x = 2*(p2->r.quat[1]*p2->r.quat[3] + p2->r.quat[0]*p2->r.quat[2]);	     
-   u2y = 2*(p2->r.quat[2]*p2->r.quat[3] - p2->r.quat[0]*p2->r.quat[1]);
-   u2z =    p2->r.quat[0]*p2->r.quat[0] - p2->r.quat[1]*p2->r.quat[1] -
-     p2->r.quat[2]*p2->r.quat[2] + p2->r.quat[3]*p2->r.quat[3] ;   
+  if (dist < ia_params->GB_cut) {  
+   u1x = p1->r.quatu[0]; u1y = p1->r.quatu[1]; u1z = p1->r.quatu[2];
+   u2x = p2->r.quatu[0]; u2y = p2->r.quatu[1]; u2z = p2->r.quatu[2]; 
     
    a = d[0]*u1x + d[1]*u1y + d[2]*u1z;
    b = d[0]*u2x + d[1]*u2y + d[2]*u2z;
@@ -253,15 +245,8 @@ MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 	
  if (dist < ia_params->GB_cut) {  
     
-   u1x = 2*(p1->r.quat[1]*p1->r.quat[3] + p1->r.quat[0]*p1->r.quat[2]);	     
-   u1y = 2*(p1->r.quat[2]*p1->r.quat[3] - p1->r.quat[0]*p1->r.quat[1]);
-   u1z =    p1->r.quat[0]*p1->r.quat[0] - p1->r.quat[1]*p1->r.quat[1] -
-     p1->r.quat[2]*p1->r.quat[2] + p1->r.quat[3]*p1->r.quat[3] ;
-	   
-   u2x = 2*(p2->r.quat[1]*p2->r.quat[3] + p2->r.quat[0]*p2->r.quat[2]);	     
-   u2y = 2*(p2->r.quat[2]*p2->r.quat[3] - p2->r.quat[0]*p2->r.quat[1]);
-   u2z =    p2->r.quat[0]*p2->r.quat[0] - p2->r.quat[1]*p2->r.quat[1] -
-     p2->r.quat[2]*p2->r.quat[2] + p2->r.quat[3]*p2->r.quat[3] ;   
+   u1x = p1->r.quatu[0]; u1y = p1->r.quatu[1]; u1z = p1->r.quatu[2];
+   u2x = p2->r.quatu[0]; u2y = p2->r.quatu[1]; u2z = p2->r.quatu[2]; 
     
    a = d[0]*u1x + d[1]*u1y + d[2]*u1z;
    b = d[0]*u2x + d[1]*u2y + d[2]*u2z;

@@ -142,6 +142,16 @@ void mpi_send_mass(int node, int part, double mass);
 */
 void mpi_send_q(int node, int part, double q);
 
+#ifdef ROTATIONAL_INERTIA
+/** Issue REQ_SET_ROTATIONAL_INERTIA: send particle rotational inertia.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param rinertia its new rotational inertia.
+*/
+void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
+#endif
+
 #ifdef ROTATION
 /** Issue REQ_SET_QUAT: send particle orientation.
     Also calls \ref on_particle_change.

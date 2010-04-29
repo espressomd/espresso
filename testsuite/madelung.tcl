@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -21,37 +17,17 @@
 #                                                           #
 #############################################################
 
-puts "----------------------------------------------"
-puts "- Testcase madelung.tcl running on [format %02d [setmd n_nodes]] nodes: -"
-puts "----------------------------------------------"
 set errf [lindex $argv 1]
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
+source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
+require_max_nodes_per_side 2
 
-if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
-    puts "Testcase madelung.tcl does not run on 3 or 6 nodes"
-    exec rm -f $errf
-    exit 0
-}
+puts "----------------------------------------------"
+puts "- Testcase madelung.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "----------------------------------------------"
 
 #############################################################
 #  Parameters                                               #

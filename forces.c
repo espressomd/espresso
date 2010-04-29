@@ -52,12 +52,6 @@ void init_forces();
 
 void force_calc()
 {
-  
-
-#if defined(DIPOLES) && defined(ROTATION)
-  convert_quat_to_dip_all();
-#endif
-
   init_forces();
   
   switch (cell_structure.type) {

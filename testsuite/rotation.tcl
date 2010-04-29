@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -13,28 +9,14 @@
 # 
 set errf [lindex $argv 1]
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
+source "tests_common.tcl"
 
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
+require_feature "ROTATION"
 
 puts "----------------------------------------------"
 puts "- Testcase rotation.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
-require_feature "ROTATION"
+
 set epsilon 5e-4
 thermostat off
 
@@ -60,8 +42,11 @@ if { [catch {
     if { [expr abs($toteng_0 - $GBeng_0)] > $epsilon } {
 	error "system has unwanted energy contribution, i.e. U_GB != U_total"
     }
+    puts "energy before integration: [analyze energy]"
   
     integrate 50
+
+    puts "energy after integration: [analyze energy]"
 
     # check the conservation of the total energy
     set toteng [analyze energy total]

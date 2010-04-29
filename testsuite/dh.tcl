@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -11,43 +7,27 @@
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 # 
-puts "----------------------------------------"
-puts "- Testcase dh.tcl running on [format %02d [setmd n_nodes]] nodes: -"
-puts "----------------------------------------"
 set errf [lindex $argv 1]
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
+source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
+require_max_nodes_per_side 2
+
+if { [setmd n_nodes] != 1} {
+    # MOL_CUT increases the short ranged radius so much that this test's box is too small
+    require_feature "MOL_CUT" off
+}
+
+puts "----------------------------------------"
+puts "- Testcase dh.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "----------------------------------------"
 
 set epsilon 1e-4
 thermostat off
 setmd time_step 1
 setmd skin 0
-
-if { [setmd n_nodes] != 1 && [setmd n_nodes] != 2 &&
-     [setmd n_nodes] != 4 && [setmd n_nodes] != 8 } {
-    puts "Testcase dh.tcl does not run on odd numbers of nodes"
-    exec rm -f $errf
-    exit 0
-}
 
 proc read_data {file} {
     set f [open $file "r"]

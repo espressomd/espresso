@@ -99,11 +99,7 @@
 
 /* MAGNETOSTATICS implies the use of DIPOLES */
 #if defined(MAGNETOSTATICS)
- #define DIPOLES
-#endif
-
-#ifdef DIPOLES
-#define ROTATION
+#define DIPOLES
 #endif
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
@@ -153,6 +149,11 @@
 #define BOND_ENDANGLEDIST
 #define CONSTRAINTS
 #endif
+
+#if defined(ADRESS) && defined(ROTATION)
+#error "ADRESS does not work with rotational degrees of freedom."
+#endif
+
 /********************************************/
 /* \name exported functions of config.c     */
 /********************************************/

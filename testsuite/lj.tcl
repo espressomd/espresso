@@ -9,29 +9,13 @@
 # 
 set errf [lindex $argv 1]
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
+source "tests_common.tcl"
 
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
+require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
 puts "- Testcase lj.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"
-
-require_feature "LENNARD_JONES"
 
 set epsilon 1e-4
 thermostat off

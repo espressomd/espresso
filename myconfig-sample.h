@@ -24,6 +24,7 @@
 /* #define PARTIAL_PERIODIC */
 /* #define ELECTROSTATICS */
 /* #define ROTATION */
+/* #define ROTATIONAL_INTERIA */
 /* #define DIPOLES */
 /* #define MAGNETOSTATICS */
 /* #define EXTERNAL_FORCES */
@@ -41,6 +42,7 @@
 /* #define DAWAANR */
 /* #define MAGNETIC_DIPOLAR_DIRECT_SUM */
 /* #define MDLC */
+
 /**********************************************************************/
 /*                        integrator features                         */
 /**********************************************************************/
@@ -83,6 +85,9 @@
 /* #define BOND_ANGLE_HARMONIC */
 /* #define BOND_ANGLE_COSINE */
 /* #define BOND_ANGLE_COSSQUARE */
+
+/* #define BOND_ANGLEDIST */
+/* #define BOND_ENDANGLEDIST */
 
 /* activate the old dihedral form. Only uncomment this if you need
    to run old code using the previous phase definition. */

@@ -1,7 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 #  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 #  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
 #  and by which you are legally bound while utilizing this file in any form or way.
@@ -19,30 +15,20 @@
 #  Created:       14.09.2003 by MS                          #
 #                                                           #
 #############################################################
-puts "Program Information: \n[code_info]\n"
+set errf [lindex $argv 1]
+
+source "tests_common.tcl"
+
+require_feature "LENNARD_JONES"
+require_feature "ELECTROSTATICS"
+require_feature "FFTW"
+require_feature "BOND_ANGLE_COSINE"
+require_feature "EXTERNAL_FORCES"
+require_feature "MOL_CUT" off
 
 puts "----------------------------------------------"
 puts "- Testcase nve_pe.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------------"
-set errf [lindex $argv 1]
-
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
 
 proc hexconvert { vec shift_vec d_space} {
     set hvec {{1. 0.5 0.5} {0.0 0.8660254 0.28867513} {0. 0. 0.81649658}}
@@ -71,12 +57,6 @@ proc create_chain { part_id rvec p_length b_length} {
     }
     return $part_id
 }
-
-require_feature "LENNARD_JONES"
-require_feature "ELECTROSTATICS"
-require_feature "FFTW"
-require_feature "BOND_ANGLE_COSINE"
-require_feature "EXTERNAL_FORCES"
 
 if { [setmd n_nodes] == 3 || [setmd n_nodes] == 6 } {
     puts "Testcase nve_pe.tcl does not run on 3 or 6 nodes"

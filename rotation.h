@@ -38,23 +38,14 @@ void convert_initial_torques();
 /** convert torques from the body-fixed frames to space-fixed coordinates */
 void convert_torques_body_to_space(Particle *p, double torque[3]);
 
-/** convert omega to the body-fixed frames */
-void convert_initial_omega(Particle *p, double omega[3]);
+/** convert quaternions to the director */
+void convert_quat_to_quatu(double quat[4], double quatu[3]);
 
-/** convert omega from the body-fixed frames to space-fixed coordinates */
-void convert_omega_body_to_space(Particle *p, double omega[3]);
+/** convert dipole moment of one particle to the quaternions. Returns 1 if
+    everything is ok, or 0 if the dipole vector was too small. */
+int convert_dip_to_quat(double dip[3], double quat[4], double *dipm);
 
-/** convert dipole moment of one particle to the quaternions  */
-int convert_dip_to_quat_one(double dip[3], double quat[4]);
-
-/** convert dipole moments of particles to the quaternions  */
-void convert_dip_to_quat_all();
-
-/** convert quaternions to the dipole moment of the particle  */
-void convert_quat_to_dip_one(double dip[3], double dipm, double quat[4]);
-
-/** convert quaternions to the dipole moments of particles  */
-void convert_quat_to_dip_all();
-
+/** convert quaternion director to the dipole moment */
+void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]);
 
 #endif

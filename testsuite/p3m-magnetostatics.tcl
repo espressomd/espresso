@@ -6,30 +6,7 @@
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-puts "--------------------------------------------------------------------"
-puts "- Testcase p3m-magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"
-puts "--------------------------------------------------------------------"
-puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
-set errf [lindex $argv 1]
-
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-   puts $f "Error occured: $error"
-   close $f
-    exit -666
-}
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
-
+#
 #=======================================================================================================
 # test-1:  compute trajectories for a dipolar system of two particles using the dipolar P3M-algorithm 
 #          and compare against well-know trajectories:
@@ -39,14 +16,26 @@ proc require_feature {feature} {
 # NB:      In this first test, we also test the ability of changing epsilon to metallic BC, which
 #          has no sense for true magnetic simulations but is a nice feature for future electic dipoles
 #=======================================================================================================
+set errf [lindex $argv 1]
+
+source "tests_common.tcl"
 
 require_feature "MAGNETOSTATICS" 
 require_feature "CONSTRAINTS"
+require_feature "ROTATION"
+
+require_max_nodes_per_side 1
+
+puts "--------------------------------------------------------------------"
+puts "- Testcase p3m-magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"
+puts "--------------------------------------------------------------------"
+puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
 
 if { [catch {
 
     set tcl_precision 15
- 
+    set accuracy 1e-8
+
     puts "Creating the magnetic system"
  
     setmd time_step 0.003
@@ -100,7 +89,7 @@ if { [catch {
 	      set a  [lindex $k  $j]
 	      set a1 [lindex $k1 $j]
 	      set diff [expr abs($a-$a1)]
-	       if {$diff > 1.0e-8} {
+	       if {$diff > $accuracy} {
 	           puts "mismatch in the trajectories $i_step $i $j >>> $diff"
 	           error "mismatch in the trajectories $i_step $i $j"
 	       }

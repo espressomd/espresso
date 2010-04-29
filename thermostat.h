@@ -15,6 +15,7 @@
 #include <tcl.h>
 #include <math.h>
 #include "utils.h"
+#include "virtual_sites.h"
 #include "particle_data.h"
 #include "parser.h"
 #include "random.h"
@@ -25,7 +26,6 @@
 #include "pressure.h"
 #include "lb.h"
 #include "dpd.h"
-#include "virtual_sites.h"
 
 /** \name Thermostat switches*/
 /************************************************************/

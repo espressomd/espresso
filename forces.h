@@ -107,7 +107,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque2[3] = { 0., 0., 0. };
   int j;
   
-  //printf("%f %f \n %f %f\n", p1->r.p[0], adress_wf_particle(p1), p2->r.p[0], adress_wf_particle(p2));
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;
@@ -264,7 +263,14 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 */
 MDINLINE void add_bonded_force(Particle *p1)
 {
-  double dx[3], force[3], force2[3], force3[3];
+  double dx[3]     = { 0., 0., 0. };
+  double force[3]  = { 0., 0., 0. };
+  double force2[3] = { 0., 0., 0. };
+  double force3[3] = { 0., 0., 0. };
+#ifdef ROTATION
+  double torque1[3] = { 0., 0., 0. };
+  double torque2[3] = { 0., 0., 0. };
+#endif
   char *errtxt;
   Particle *p2, *p3 = NULL, *p4 = NULL;
   Bonded_ia_parameters *iaparams;
@@ -407,33 +413,31 @@ MDINLINE void add_bonded_force(Particle *p1)
       else 
 	force_weight = adress_non_bonded_force_weight(p1,p2);
 #endif
+
       for (j = 0; j < 3; j++) {
 #ifdef ADRESS
         tmp=force_weight*force[j];
 	p1->f.f[j] += tmp;
 	p2->f.f[j] -= tmp;
 #else // ADRESS
+
+	switch (type) {
 #ifdef BOND_ENDANGLEDIST
-        //         switch (type) {
-        //case BONDED_IA_ENDANGLEDIST:
-        if (type == BONDED_IA_ENDANGLEDIST) {
-          /* In this case the forces are not conserved */
+	case BONDED_IA_ENDANGLEDIST:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
-         } else {
-            p1->f.f[j] += force[j];
-            p2->f.f[j] -= force[j];
-            //break;
-          }
-          //break;
+	  break;
 #endif // BOND_ENDANGLEDIST
-          //case default:
-         {
-            p1->f.f[j] += force[j];
-            p2->f.f[j] -= force[j];
-            //break;
-          }
-#endif // ADRESS
+	default:
+	  p1->f.f[j] += force[j];
+	  p2->f.f[j] -= force[j];
+#ifdef ROTATION
+	  p1->f.torque[j] += torque1[j];
+	  p2->f.torque[j] += torque2[j];
+#endif
+	}
+#endif // NOT ADRESS
+
 #ifdef NPT
 	if(integ_switch == INTEG_METHOD_NPT_ISO)
 	  nptiso.p_vir[j] += force[j] * dx[j];

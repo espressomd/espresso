@@ -93,6 +93,12 @@ void init_particle(Particle *part)
   part->p.mass     = 1.0;
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+  part->p.rinertia[0] = 1.0;
+  part->p.rinertia[1] = 1.0;
+  part->p.rinertia[2] = 1.0;
+#endif
+
 #ifdef ELECTROSTATICS
   part->p.q        = 0.0;
 #endif
@@ -113,6 +119,10 @@ void init_particle(Particle *part)
   part->r.quat[1]  = 0.0;
   part->r.quat[2]  = 0.0;
   part->r.quat[3]  = 0.0;
+
+  part->r.quatu[0]  = 0.0;
+  part->r.quatu[1]  = 0.0;
+  part->r.quatu[2]  = 1.0;
 #endif
 
 #ifdef DIPOLES
@@ -408,6 +418,23 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   return dst;
 }
 
+#ifdef ROTATIONAL_INERTIA
+void part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *interp)
+  {double rinertia[3];
+
+  rinertia[0]=part->p.rinertia[0];
+  rinertia[1]=part->p.rinertia[1];
+  rinertia[2]=part->p.rinertia[2];
+
+  Tcl_PrintDouble(interp, rinertia[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, rinertia[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, rinertia[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 #ifdef ROTATION
 void part_print_omega(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -423,7 +450,7 @@ void part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double torque[3];
 //in Espresso torques are in body-fixed frames. We should convert they to the space-fixed coordinates.
-convert_torques_body_to_space(part, torque);
+  convert_torques_body_to_space(part, torque);
 
   Tcl_PrintDouble(interp, torque[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -466,6 +493,16 @@ void part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_PrintDouble(interp, part->r.quat[2], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part->r.quat[3], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+
+void part_print_quatu(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  Tcl_PrintDouble(interp, part->r.quatu[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part->r.quatu[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part->r.quat[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 #endif
@@ -751,13 +788,16 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   part_print_torque(&part, buffer, interp);
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+  /* print information about rotational inertia */
+  Tcl_AppendResult(interp, " rinertia ", (char *)NULL);
+  part_print_rotational_inertia(&part, buffer, interp);
+#endif
+
 #ifdef DIPOLES
   /* print information about dipoles */
   Tcl_AppendResult(interp, " dip ", (char *)NULL);
   part_print_dip(&part, buffer, interp);
-  Tcl_AppendResult(interp, " dipm ", (char *)NULL);
-  Tcl_PrintDouble(interp, part.p.dipm, buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -857,7 +897,6 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
-      /*      sprintf(buffer, "WE ARE HERE!!!\n");*/
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("molecule_id")) {
@@ -883,12 +922,19 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef ROTATION
     else if (ARG0_IS_S("quat"))
       part_print_quat(&part, buffer, interp);
+   else if (ARG0_IS_S("quatu"))
+      part_print_quat(&part, buffer, interp);
     else if (ARG0_IS_S("omega"))
       part_print_omega(&part, buffer, interp);
     else if (ARG0_IS_S("torque"))
       part_print_torque(&part, buffer, interp);
     else if (ARG0_IS_S("tbf"))
       part_print_torque_body_frame(&part, buffer, interp);
+#endif
+
+#ifdef ROTATIONAL_INERTIA
+    else if (ARG0_IS_S("rinertia"))
+      part_print_rotational_inertia(&part, buffer, interp);
 #endif
 
 #ifdef DIPOLES
@@ -1023,6 +1069,33 @@ int part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
 }
 #endif
 
+#ifdef  ROTATIONAL_INERTIA
+int part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
+				  int part_num, int * change)
+{
+  double rinertia[3];
+
+  *change = 3;
+
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "rotational inertia requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* set rotational inertia */
+  if (! ARG_IS_D(0, rinertia[0]) || ! ARG_IS_D(1, rinertia[1]) || ! ARG_IS_D(2, rinertia[2]))
+    return TCL_ERROR;
+
+  if (set_particle_rotational_inertia(part_num, rinertia) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#endif
+
 #ifdef DIPOLES
 int part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
@@ -1053,9 +1126,6 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double dip[3];
-  #ifdef ROTATION
-  double quat[4];
-  #endif
   double dipm;
   *change = 3;
 
@@ -1073,35 +1143,18 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
   if (! ARG_IS_D(2, dip[2]))
     return TCL_ERROR;
 
-  dipm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
-
-  if (dipm == 0) {
-     Tcl_AppendResult(interp, "cannot set dipole with zero length", (char *)NULL);
-
+  /* convenience error message, dipm is not used otherwise. */
+  dipm = dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2];
+  if (dipm < ROUND_ERROR_PREC) {
+    Tcl_AppendResult(interp, "cannot set dipole with zero length", (char *)NULL);
     return TCL_ERROR;
   }
 
-#ifdef ROTATION
-  convert_dip_to_quat_one(dip, quat);
-#endif
   if (set_particle_dip(part_num, dip) == TCL_ERROR) {
-   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     return TCL_ERROR;
   }
-
-   if (set_particle_dipm(part_num, dipm) == TCL_ERROR) {
-     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
-      return TCL_ERROR;
-   }
-#ifdef ROTATION
-  if (set_particle_quat(part_num, quat) == TCL_ERROR) {
-   Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-
-    return TCL_ERROR;
-  }
-#endif
+  
   return TCL_OK;
 }
 
@@ -1763,6 +1816,11 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+    else if (ARG0_IS_S("rinertia"))
+      err = part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
+#endif
+
 #ifdef DIPOLES
 
     else if (ARG0_IS_S("dip"))
@@ -1987,6 +2045,24 @@ int set_particle_mass(int part, double mass)
 }
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+int set_particle_rotational_inertia(int part, double rinertia[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_rotational_inertia(pnode, part, rinertia);
+  return TCL_OK;
+}
+#endif
+
 #ifdef DIPOLES
 int set_particle_dipm(int part, double dipm)
 {
@@ -2007,9 +2083,6 @@ int set_particle_dipm(int part, double dipm)
 int set_particle_dip(int part, double dip[3])
 {
   int pnode;
-  #ifdef ROTATION
-  double quat[4];
-  #endif
   
   if (!particle_node)
     build_particle_node();
@@ -2021,10 +2094,7 @@ int set_particle_dip(int part, double dip[3])
   if (pnode == -1)
     return TCL_ERROR;
   mpi_send_dip(pnode, part, dip);
-#ifdef ROTATION
-  convert_dip_to_quat_one(dip, quat);
-  mpi_send_quat(pnode, part, quat);
-#endif
+
   return TCL_OK;
 }
 

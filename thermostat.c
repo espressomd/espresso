@@ -62,7 +62,7 @@ int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv)
   dpd_parse_off(interp,argc,argv);
 #endif
 #ifdef INTER_DPD
-  interdpd_parse_off(interp,argc,argv);
+  interdpd_parse_off();
 #endif
 #ifdef NPT
   /* npt isotropic thermostat */

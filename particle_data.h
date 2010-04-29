@@ -62,6 +62,11 @@ typedef struct {
   double mass;
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+  /** rotational inertia */
+  double rinertia[3];
+#endif
+
 #ifdef ELECTROSTATICS
   /** charge. */
   double q;
@@ -94,16 +99,18 @@ typedef struct {
 #ifdef ROTATION
   /** quaternions to define particle orientation */
   double quat[4];
+  /** unit director calculated from the quaternions */
+  double quatu[3];
+#endif
+
+#ifdef DIPOLES
+  /** dipol moment. This is synchronized with quatu and quat. */
+  double dip[3];
 #endif
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   double p_old[3];
-#endif
-
-#ifdef DIPOLES
-  /** dipol moment */
-  double dip[3];
 #endif
 
 } ParticlePosition;
@@ -393,6 +400,15 @@ int set_particle_f(int part, double F[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_mass(int part, double mass);
+
+#ifdef ROTATIONAL_INERTIA
+/** Call only on the master node: set particle rotational inertia.
+    @param part the particle.
+    @param rinertia its new inertia.
+    @return TCL_OK if particle existed
+*/
+int set_particle_rotational_inertia(int part, double rinertia[3]);
+#endif
 
 /** Call only on the master node: set particle charge.
     @param part the particle.

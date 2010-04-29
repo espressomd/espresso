@@ -1,10 +1,3 @@
-#!/bin/sh
-#
-# tricking... the line after this comment is interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-#
-# $Id$
-#
 # This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
 # It is therefore subject to the ESPResSo license agreement which you
 # accepted upon receiving the distribution and by which you are
@@ -17,7 +10,7 @@
 # Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 
 # 55021 Mainz, Germany.
 # Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-
+#
 #############################################################
 #                                                           #
 # Basic tests of the Lattice Boltzmann implementation       #
@@ -28,6 +21,12 @@
 #                                                           #
 #############################################################
 
+set errf [lindex $argv 1]
+
+source "tests_common.tcl"
+
+require_feature "LB"
+
 puts "----------------------------------------"
 puts "- Testcase lb.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "----------------------------------------"
@@ -35,13 +34,6 @@ puts "----------------------------------------"
 #############################################################
 # Procedures                                                #
 #############################################################
-proc error_exit {error} {
-    global errf
-    #set f [open $errf "w"]
-    puts "Error occured: $error"
-    #close $f
-    exit -666
-}
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -56,23 +48,6 @@ proc write_data {file} {
     blockfile $f write bonds
     close $f
 }
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
-
-#############################################################
-# Parameters                                                #
-#############################################################
-set errf [lindex $argv 1]
-
-require_feature "LB"
 
 # Integration parameters
 #############################################################

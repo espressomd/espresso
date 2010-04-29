@@ -8,32 +8,17 @@
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 
 # check the charge-charge P3M  algorithm
-puts "---------------------------------------------------------------"
-puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
-puts "---------------------------------------------------------------"
 set errf [lindex $argv 1]
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
-}
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
-}
+source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
+
+puts "---------------------------------------------------------------"
+puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "---------------------------------------------------------------"
 
 set epsilon 1e-3
 thermostat off

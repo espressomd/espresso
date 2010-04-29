@@ -159,7 +159,6 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   double fj[3];
   double fk[3];
   double fac;
-  double K, sin_phi0, cos_phi0;
 
   get_mi_vector(vec12, p_mid->r.p, p_left->r.p);
   for(j = 0; j < 3; j++)
@@ -180,7 +179,7 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   */
 #ifdef BOND_ANGLE_HARMONIC
   {
-    double phi, phi0;
+    double K, phi, phi0;
     if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
     if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
     phi = acos(cos_phi);
@@ -193,13 +192,16 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   }
 #endif
 #ifdef BOND_ANGLE_COSINE
-  K = iaparams->p.angle.bend;
-  sin_phi0 = iaparams->p.angle.sin_phi0;
-  cos_phi0 = iaparams->p.angle.cos_phi0;
+  {
+    double K, sin_phi0, cos_phi0;
+    K = iaparams->p.angle.bend;
+    sin_phi0 = iaparams->p.angle.sin_phi0;
+    cos_phi0 = iaparams->p.angle.cos_phi0;
 
-  // potential dependent term [dU/dphi = K * sin(phi - phi0)]
-  // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b) 
-  pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
+    // potential dependent term [dU/dphi = K * sin(phi - phi0)]
+    // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b) 
+    pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
+  }
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
   fprintf(stderr, "WARNING: calc_angle_3body_forces not implemented for cossquare potential, cannot calculate stress tensor");

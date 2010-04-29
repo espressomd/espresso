@@ -311,7 +311,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
    int mol_id;
    int i;
    Particle *p;
-   char *errtxt;
+
    mol_id=calling_p->p.mol_id;
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
@@ -558,10 +558,11 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
 }
 
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
-  int i,j,l;
+  int i,j;
   Particle *p1,*p2;
   double vec12[3],dist2,dist;
 #ifdef ADRESS
+  int l;
   double weight;
   double temp_force[3]={0,0,0};
 #endif
@@ -588,7 +589,7 @@ void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
 	}
 #else
 #ifdef EXCLUSIONS
-      if(do_nonbonbded(p1,p2))
+      if(do_nonbonded(p1,p2))
 #endif
 	calc_non_bonded_pair_force_from_partcfg_simple(p1,p2,vec12,dist,dist2,force);
 #endif
