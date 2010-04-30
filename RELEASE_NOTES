@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5f -
+- v2.1.5g -
 -----------
 
+(g) April    29th, 2010.
 (f) April    20th, 2010.
 (e) April     1st, 2010.
 (d) March    23rd, 2010.
@@ -12,9 +13,16 @@ What's new, what's been changed, what's been fixed
 (a) February 25th, 2010.
 
 New Features:
+(g) common testsuite infrastructure for testing features and nprocs
+    etc
+(g) rotational particles now also store the director for faster computation of
+    GB
+(g) rotational inertia code by MJW
 (e) added detection for Mobile Sempron
 
 Bugfixes:
+(g) removed temporary static variables from rotation code
+(g) removed debug printfs
 (f) ljgen now uses the libc-pow function, which also allows for negative exponents,
     and is in general faster
 (d) fixed wrong DPD formula in Users Guide (C source was correct)
