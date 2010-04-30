@@ -15,7 +15,7 @@
  *  \ref forces.c
 */
 
-#ifdef ROTATION
+#ifdef GAY_BERNE
 
 MDINLINE int gay_berne_set_params(int part_type_a, int part_type_b,
 				  double eps, double sig, double cut,

@@ -13,67 +13,14 @@
 #ifndef PRESSURE_H
 #define PRESSURE_H
 
-
 #include "utils.h"
 #include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"
 #include "communication.h"
 #include "adresso.h"
-
-/************************************************
- * data types
- ************************************************/
-
-/** Structure to hold all variables related to the isotropic NpT-integration scheme. */
-typedef struct { 
-  /** mass of a virtual piston representing the shaken box */
-  double piston;
-  /** inverse of piston */
-  double inv_piston;
-  /** isotropic volume.  Note that we use the term volume throughout
-      although for a 2d or 1d system we mean Area and Length
-      respectively */
-  double volume;
-
-  /** desired pressure to which the algorithm strives to */
-  double p_ext;
-  /** instantaneous pressure the system currently has */
-  double p_inst;
-  /** instantaneous pressure averaged over current integration cycle */
-  double p_inst_av;
-  /** difference between \ref p_ext and \ref p_inst */
-  double p_diff;
-  /** virial (short-range) components of \ref p_inst */
-  double p_vir[3];
-  /** ideal gas components of \ref p_inst, derived from the velocities */
-  double p_vel[3];
-  /** flag which indicates if \ref p_vel may (0) or may not (1) be used
-      in offline pressure calculations such as 'analyze p_inst' */ 
-  int invalidate_p_vel;
-  /** geometry information for the npt integrator.  Holds the vector
-      <dir, dir ,dir> where a positive value for dir indicates that
-      box movement is allowed in that direction. To check whether a
-      given direction is turned on use bitwise comparison with \ref
-      nptgeom_dir */
-  int geometry;
-  /** bitwise comparison values corresponding to different directions*/
-  int nptgeom_dir[3];
-  /** The number of dimensions in which npt boxlength motion is coupled to particles */
-  int dimension;
-  /** Set this flag if you want all box dimensions to be identical. Needed for electrostatics and magnetostatics.  
-      If the value of dimension is less than 3 then box length motion in one or more
-      directions will be decoupled from the particle motion */
-  int cubic_box;
-  /** An index to one of the non_constant dimensions. handy if you just want the variable box_l */
-  int non_const_dim;
-} nptiso_struct;
-extern nptiso_struct nptiso;
-
-/** Allowable values for nptiso.geometry*/
-#define NPTGEOM_XDIR 1
-#define NPTGEOM_YDIR 2
-#define NPTGEOM_ZDIR 4
+#include "forces.h"
+#include "npt.h"
 
 /* include the potential files */
 #include "p3m.h"
@@ -100,7 +47,7 @@ extern nptiso_struct nptiso;
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mol_cut.h"
-#include "tunable_slip.h"
+/* end of potential files */
 
 /** \name Exported Variables */
 /************************************************************/
@@ -137,113 +84,6 @@ int p_diff_callback(Tcl_Interp *interp, void *_data);
 		  therefore doesn't make sense to use it without NpT.
 */
 void pressure_calc(double *result, double *result_t, double *result_nb, double *result_t_nb, int v_comp);
-
-MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
-					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
-{
-#ifdef NO_INTRA_NB
-  if (p1->p.mol_id==p2->p.mol_id) return;
-#endif
-  /* lennard jones */
-#ifdef LENNARD_JONES
-  add_lj_pair_force(p1,p2,ia_params,d,dist, force);
-#endif
-  /* lennard jones generic */
-#ifdef LENNARD_JONES_GENERIC
-  add_ljgen_pair_force(p1,p2,ia_params,d,dist, force);
-#endif
-  /* Directional LJ */
-#ifdef LJ_ANGLE
-  /* The forces are propagated within the function */
-  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
-#endif
-  /* smooth step */
-#ifdef SMOOTH_STEP
-  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
-#endif
-  /* BMHTF NaCl */
-#ifdef BMHTF_NACL
-  add_BMHTF_pair_force(p1,p2,ia_params,d,dist,dist2, force);
-#endif
-  /* buckingham*/
-#ifdef BUCKINGHAM
-  add_buck_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-  /* morse*/
-#ifdef MORSE
-  add_morse_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
- /*soft-sphere potential*/
-#ifdef SOFT_SPHERE
-  add_soft_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-  /* lennard jones cosine */
-#ifdef LJCOS
-  add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-  /* lennard jones cosine */
-#ifdef LJCOS2
-  add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-  /* tabulated */
-#ifdef TABULATED
-  add_tabulated_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-  /* Gay-Berne */
-#ifdef ROTATION
-  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torgue1,torgue2);
-#endif
-#ifdef INTER_RF
-  add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
-#endif
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  add_adress_tab_pair_force(p1,p2,ia_params,d,dist,force);
-#endif
-#endif
-}
-
-MDINLINE void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
-#ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
-#endif
-   {
-      calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
-   }
-}
-
-MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
-#ifdef ADRESS
-  int j;
-  double force_weight=adress_non_bonded_force_weight(p1,p2);
-  if (force_weight<ROUND_ERROR_PREC) return;
-#endif
-  calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
-#ifdef ADRESS
-   for (j=0;j<3;j++){
-      force[j]*=force_weight;
-   }
-#endif
-}
-
-MDINLINE void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
-#ifdef MOL_CUT
-   //You may want to put a correction factor and correction term for smoothing function else then theta
-   if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
-#endif
-   {
-     calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
-   }
-}
-
-MDINLINE void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
-   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
-   double t1[3],t2[3];
-   calc_non_bonded_pair_force_from_partcfg(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
-}
 
 /** Calculate non bonded energies between a pair of particles.
     @param p1        pointer to particle 1.

@@ -16,6 +16,9 @@
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "forces.h"
+#include "pressure.h"
+#include "energy.h"
+#include "constraint.h"
 
 /************************************************/
 /** \name Defines */

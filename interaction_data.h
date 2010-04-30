@@ -298,7 +298,7 @@ typedef struct {
   /*@}*/
 #endif
   
-#ifdef ROTATION
+#ifdef GAY_BERNE
   /** \name Gay-Berne potential */
   /*@{*/
   double GB_eps;

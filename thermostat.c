@@ -12,6 +12,7 @@
 #include "thermostat.h"
 #include "communication.h"
 #include "lattice.h"
+#include "npt.h"
 
 /* thermostat switch */
 int thermo_switch = THERMO_OFF;

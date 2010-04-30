@@ -16,9 +16,6 @@
 #include "statistics.h"
 #include "thermostat.h"
 #include "communication.h"
-#ifdef NPT
-#include "pressure.h"
-#endif
 
 /* include the energy files */
 #include "p3m.h"
@@ -144,7 +141,7 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
   ret += ljcos_pair_energy(p1,p2,ia_params,d,dist);
 #endif
   
-#ifdef ROTATION
+#ifdef GAY_BERNE
   /* Gay-Berne */
   ret += gb_pair_energy(p1,p2,ia_params,d,dist);
 #endif

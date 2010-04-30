@@ -36,6 +36,7 @@
 #include "magnetic_non_p3m__methods.h"
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
+#include "constraint.h"
 
 /************************************************************/
 /* local prototypes                                         */

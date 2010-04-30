@@ -24,6 +24,7 @@
 #include "energy.h"
 #include "pressure.h"
 #include "domain_decomposition.h"
+#include "constraint.h"
 
 /** Granularity of the verlet list */
 #define LIST_INCREMENT 20

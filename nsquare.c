@@ -20,6 +20,7 @@
 #include "forces.h"
 #include "pressure.h"
 #include "energy.h"
+#include "constraint.h"
 
 Cell *local;
 CellPList me_do_ghosts;

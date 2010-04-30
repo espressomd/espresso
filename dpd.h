@@ -14,8 +14,9 @@
  *  \ref forces.c
 */
 
-#include <tcl.h>
+#include "utils.h"
 #include "thermostat.h"
+#include "interaction_data.h"
 
 /** DPD Friction coefficient gamma. */
 extern double dpd_gamma;

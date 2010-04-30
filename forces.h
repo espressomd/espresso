@@ -18,15 +18,17 @@
 #include <tcl.h>
 #include "utils.h"
 #include "thermostat.h"
-#ifdef NPT
-#include "pressure.h"
-#endif
 #include "communication.h"
 #ifdef MOLFORCES
 #include "topology.h"
 #endif
+#include "npt.h"
+#include "adresso.h"
+#include "virtual_sites.h"
+
 /* include the force files */
 #include "p3m.h"
+#include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
@@ -50,14 +52,12 @@
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
-#include "constraint.h"
 #include "comforce.h"
 #include "comfixed.h"
 #include "molforces.h"
 #include "morse.h"
 #include "elc.h"
-#include "adresso.h"
-#include "virtual_sites.h"
+/* end of force files */
 
 /** \name Exported Functions */
 /************************************************************/
@@ -91,6 +91,113 @@ void force_calc();
 /** Set forces of all ghosts to zero
 */
 void init_forces_ghosts();
+
+MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
+					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
+{
+#ifdef NO_INTRA_NB
+  if (p1->p.mol_id==p2->p.mol_id) return;
+#endif
+  /* lennard jones */
+#ifdef LENNARD_JONES
+  add_lj_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
+  /* lennard jones generic */
+#ifdef LENNARD_JONES_GENERIC
+  add_ljgen_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
+  /* Directional LJ */
+#ifdef LJ_ANGLE
+  /* The forces are propagated within the function */
+  add_ljangle_pair_force(p1,p2,ia_params,d,dist);
+#endif
+  /* smooth step */
+#ifdef SMOOTH_STEP
+  add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
+  /* BMHTF NaCl */
+#ifdef BMHTF_NACL
+  add_BMHTF_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
+  /* buckingham*/
+#ifdef BUCKINGHAM
+  add_buck_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* morse*/
+#ifdef MORSE
+  add_morse_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*soft-sphere potential*/
+#ifdef SOFT_SPHERE
+  add_soft_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* lennard jones cosine */
+#ifdef LJCOS
+  add_ljcos_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* lennard jones cosine */
+#ifdef LJCOS2
+  add_ljcos2_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* tabulated */
+#ifdef TABULATED
+  add_tabulated_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+  /* Gay-Berne */
+#ifdef GAY_BERNE
+  add_gb_pair_force(p1,p2,ia_params,d,dist,force,torgue1,torgue2);
+#endif
+#ifdef INTER_RF
+  add_interrf_pair_force(p1,p2,ia_params,d,dist, force);
+#endif
+#ifdef ADRESS
+#ifdef INTERFACE_CORRECTION
+  add_adress_tab_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+#endif
+}
+
+MDINLINE void calc_non_bonded_pair_force(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+#ifdef MOL_CUT
+   //You may want to put a correction factor and correction term for smoothing function else then theta
+   if (checkIfParticlesInteractViaMolCut(p1,p2,ia_params)==1)
+#endif
+   {
+      calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+   }
+}
+
+MDINLINE void calc_non_bonded_pair_force_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+   double t1[3],t2[3];
+#ifdef ADRESS
+  int j;
+  double force_weight=adress_non_bonded_force_weight(p1,p2);
+  if (force_weight<ROUND_ERROR_PREC) return;
+#endif
+  calc_non_bonded_pair_force(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+#ifdef ADRESS
+   for (j=0;j<3;j++){
+      force[j]*=force_weight;
+   }
+#endif
+}
+
+MDINLINE void calc_non_bonded_pair_force_from_partcfg(Particle *p1,Particle *p2,IA_parameters *ia_params,double d[3],double dist,double dist2,double force[3],double t1[3],double t2[3]){
+#ifdef MOL_CUT
+   //You may want to put a correction factor and correction term for smoothing function else then theta
+   if (checkIfParticlesInteractViaMolCut_partcfg(p1,p2,ia_params)==1)
+#endif
+   {
+     calc_non_bonded_pair_force_parts(p1, p2, ia_params,d, dist, dist2,force,t1,t2);
+   }
+}
+
+MDINLINE void calc_non_bonded_pair_force_from_partcfg_simple(Particle *p1,Particle *p2,double d[3],double dist,double dist2,double force[3]){
+   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
+   double t1[3],t2[3];
+   calc_non_bonded_pair_force_from_partcfg(p1,p2,ia_params,d,dist,dist2,force,t1,t2);
+}
 
 /** Calculate non bonded forces between a pair of particles.
     @param p1        pointer to particle 1.

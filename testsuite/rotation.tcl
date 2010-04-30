@@ -12,6 +12,7 @@ set errf [lindex $argv 1]
 source "tests_common.tcl"
 
 require_feature "ROTATION"
+require_feature "GAY_BERNE"
 
 puts "----------------------------------------------"
 puts "- Testcase rotation.tcl running on [format %02d [setmd n_nodes]] nodes: -"

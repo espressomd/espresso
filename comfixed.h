@@ -7,6 +7,9 @@
 // write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
 // Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 
+#ifndef COMFIXED_H
+#define COMFIXED_H
+
 #include "utils.h"
 
 /** \file comfixed.h
@@ -158,4 +161,6 @@ MDINLINE void calc_comfixed()
     }
   }  
 }
+#endif
+
 #endif

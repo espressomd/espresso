@@ -10,8 +10,10 @@
 #define CONSTRAINT_H
 #include "statistics.h"
 #include "energy.h"
+#include "forces.h"
 #include "grid.h"
 #include "errorhandling.h"
+#include "tunable_slip.h"
 
 /** \file constraint.h
  *  Routines for handling of constraints.

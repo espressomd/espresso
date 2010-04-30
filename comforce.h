@@ -9,6 +9,10 @@
 /** \file comforce.h
  *  Routines to enable comforce
 */
+
+#ifndef COMFORCE_H
+#define COMFORCE_H
+
 #include "utils.h"
 #include "particle_data.h"
 #include "statistics.h"
@@ -169,4 +173,6 @@ MDINLINE void calc_comforce()
   }
 
 }
+#endif
+
 #endif

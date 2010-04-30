@@ -23,7 +23,6 @@
 #include "communication.h"
 #include "integrate.h"
 #include "cells.h"
-#include "pressure.h"
 #include "lb.h"
 #include "dpd.h"
 

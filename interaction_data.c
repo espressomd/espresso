@@ -42,7 +42,7 @@
 #include "comfixed.h"
 #include "morse.h"
 #include "dpd.h"
-//#include "tunable_slip.h"
+#include "tunable_slip.h"
 #include "magnetic_non_p3m__methods.h"
 #include "mdlc_correction.h"
 
@@ -257,7 +257,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJCOS2_capradius = 0 ;
 #endif
 
-#ifdef ROTATION
+#ifdef GAY_BERNE
   params->GB_eps =
     params->GB_sig =
     params->GB_cut =
@@ -463,7 +463,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->LJCOS2_capradius = src->LJCOS2_capradius;
 #endif
   
-#ifdef ROTATION
+#ifdef GAY_BERNE
   dst->GB_eps = src->GB_eps;
   dst->GB_sig = src->GB_sig;
   dst->GB_cut = src->GB_cut;
@@ -612,7 +612,7 @@ int checkIfInteraction(IA_parameters *data) {
     return 1;
 #endif
 
-#ifdef ROTATION
+#ifdef GAY_BERNE
   if (data->GB_cut != 0)
     return 1;
 #endif
@@ -959,7 +959,7 @@ void calc_maximal_cutoff()
 	 }
 #endif
 
-#ifdef ROTATION
+#ifdef GAY_BERNE
 	 if (data->GB_cut != 0) {
 	   if(max_cut_non_bonded < (data->GB_cut) )
 	     max_cut_non_bonded = (data->GB_cut);
@@ -1564,7 +1564,7 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef LJCOS2
   if (data->LJCOS2_cut != 0) printljcos2IAToResult(interp,i,j);
 #endif
-#ifdef ROTATION
+#ifdef GAY_BERNE
   if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
 #endif
 #ifdef TABULATED
@@ -1976,7 +1976,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("comfixed", comfixed_parser);
 #endif
 
-#ifdef ROTATION
+#ifdef GAY_BERNE
     REGISTER_NONBONDED("gay-berne", gb_parser);
 #endif
 

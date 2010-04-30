@@ -84,6 +84,10 @@
 #define ELECTROSTATICS
 #endif
 
+#ifdef GAY_BERNE
+#define ROTATION
+#endif
+
 /* activate P3M only with FFTW */
 #if defined(ELECTROSTATICS) && defined(FFTW)
 #define ELP3M
@@ -148,10 +152,6 @@
 #if defined(BOND_ENDANGLEDIST_HARMONIC)
 #define BOND_ENDANGLEDIST
 #define CONSTRAINTS
-#endif
-
-#if defined(ADRESS) && defined(ROTATION)
-#error "ADRESS does not work with rotational degrees of freedom."
 #endif
 
 /********************************************/

@@ -20,6 +20,12 @@
 #endif
 #endif
 
+#ifdef ADRESS
+#ifdef ROTATION
+#error ADRESS and ROTATION currently do not work together
+#endif
+#endif
+
 /* errors for all modules that require fftw if not present */
 #ifndef FFTW
 
@@ -147,6 +153,9 @@ int compilation_callback(Tcl_Interp *interp)
 #endif
 #ifdef LENNARD_JONES_GENERIC
   Tcl_AppendResult(interp, "{ LENNARD_JONES_GENERIC } ", (char *) NULL);
+#endif
+#ifdef GAY_BERNE
+  Tcl_AppendResult(interp, "{ GAY_BERNE } ", (char *) NULL);
 #endif
 #ifdef LJ_ANGLE
   Tcl_AppendResult(interp, "{ LJ_ANGLE } ", (char *) NULL);
