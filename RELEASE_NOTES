@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5g -
+- v2.1.5h -
 -----------
 
+(h) April    30th, 2010.
 (g) April    29th, 2010.
 (f) April    20th, 2010.
 (e) April     1st, 2010.
@@ -21,6 +22,10 @@ New Features:
 (e) added detection for Mobile Sempron
 
 Bugfixes:
+(h) moved force calculations back from pressure.h to forces.h. This required to
+    introduce npt.h, so that the holographic pressure.h could be removed from most
+    headers.
+(h) separated Gay-Berne interaction from ROTATION feature
 (g) removed temporary static variables from rotation code
 (g) removed debug printfs
 (f) ljgen now uses the libc-pow function, which also allows for negative exponents,
