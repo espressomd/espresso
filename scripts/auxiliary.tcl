@@ -555,10 +555,10 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } } {
     if { $start == 0 } {
 	puts "Start VMD in the same directory on the machine you with :"
 	puts "vmd -e vmd_start.script &"
-	imd listen $wait
     } else {
 	exec vmd -e vmd_start.script &
     }
+    imd listen $wait
 }
 
 #
@@ -639,4 +639,100 @@ proc degrees_of_freedom {} {
      set dgf 3
  }
  return $dgf
+}
+
+#
+# copy_particles 
+# ---------------
+# 
+# Copy a group of particles including their bonds. Positions can be shifted by an offset.
+# The particles can be given as a combination of lists or a ranges. The new particles in
+# any case obtain consecutive identities after the largest current identity. Bonds within
+# the particle set are copied, but not bonds with particles outside the list. That is,
+# if the particle set corresponds to a molecule, intramolecular bonds are preserved, but
+# not intermolecular ones.
+# 
+# Example:
+# copy_particles set {1 2 3 4} shift 0.0 0.0 0.0
+# copy_particles set {1 2} set {3 4}
+# copy_particles range 1 4
+# 
+# Created:       03.05.2010 by AA
+# 
+#############################################################
+
+proc copy_particles { args } {
+    set shift {0 0 0}
+    set parts {}
+
+    # parse arguments
+    while { $args != "" } {
+	switch [lindex $args 0] {
+	    "set" {
+		set parts [concat $parts [lindex $args 1]]
+		set args [lrange $args 2 end]
+	    }
+	    "range" {
+		for {set id [lindex $args 1]} {$id <= [lindex $args 2]} {incr id} {
+		    lappend parts $id
+		}
+		set args [lrange $args 3 end]
+	    }
+	    "shift" {
+		set shift [lrange $args 1 3]
+		set args [lrange $args 4 end]
+	    }
+	    default {
+		error "copy_particles: wrong argument [lindex $args 0]"
+	    }
+	}
+    }
+    set parts [lsort -unique $parts]
+
+    # copy loop.
+    # step 1: all except bonds
+    set newid [setmd max_part]
+    foreach id $parts {
+	incr newid
+	set newids($id) $newid
+
+	# new shifted position
+        set pos [vecadd [part $id print pos] $shift]
+
+	# parameters of the particle for creating a copy
+	set partcmd [lrange [part $id] 1 end]
+	# look for the position and fix it up
+	set p [lsearch $partcmd "pos"]
+	set partcmd [eval lreplace {$partcmd} [expr $p + 1] [expr $p + 3] $pos]
+
+	# remove bonds
+	set p [lsearch $partcmd "bond"]
+	if {$p != -1} { set partcmd [lreplace $partcmd $p [expr $p + 1]] }
+
+	# and set the new particle
+	eval part $newid $partcmd
+    }
+
+    # step 2: bonds. This makes sure all bonding partners exist
+    foreach id $parts {
+	set newid $newids($id)
+
+	# new bond list
+	set bonds {}
+	foreach bond [lindex [part $id print bonds] 0] {
+	    set newbond [lindex $bond 0]
+	    # check whether partners are in the molecule and translate
+	    foreach partner [lrange $bond 1 end] {
+		if {[array names newids -exact $partner] != ""} {
+		    lappend newbond $newids($partner)
+		} {
+		    # this bond has a partner outside, ignore
+		    set newbond {}; break
+		}
+	    }
+	    if {$newbond != {}} {
+		eval part $newid bond $newbond
+	    }
+	}
+    }
 }
