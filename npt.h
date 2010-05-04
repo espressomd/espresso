@@ -15,8 +15,6 @@
 
 #include "utils.h"
 
-#ifdef NPT
-
 /************************************************
  * data types
  ************************************************/
@@ -70,7 +68,5 @@ extern nptiso_struct nptiso;
 #define NPTGEOM_XDIR 1
 #define NPTGEOM_YDIR 2
 #define NPTGEOM_ZDIR 4
-
-#endif
 
 #endif

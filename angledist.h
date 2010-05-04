@@ -109,6 +109,8 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
   int j, k;
   int img[3];
 
+  wall.d = 0;
+
   /* vector from p_left to p_mid */
   get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
   dist1 = sqrlen(vec1);
