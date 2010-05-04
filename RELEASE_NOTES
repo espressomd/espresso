@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5h -
+- v2.1.5i -
 -----------
 
+(i) May       3rd, 2010.
 (h) April    30th, 2010.
 (g) April    29th, 2010.
 (f) April    20th, 2010.
@@ -22,6 +23,9 @@ New Features:
 (e) added detection for Mobile Sempron
 
 Bugfixes:
+(i) fixed a missing GB_sigma and corrected indendation in gb.h
+(i) unfolding the coordinates for the DAWAANR dipolar interaction, added missing
+    prefactor
 (h) moved force calculations back from pressure.h to forces.h. This required to
     introduce npt.h, so that the holographic pressure.h could be removed from most
     headers.
