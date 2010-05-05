@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5i -
+- v2.1.5j -
 -----------
 
+(j) May       4th, 2010.
 (i) May       3rd, 2010.
 (h) April    30th, 2010.
 (g) April    29th, 2010.
@@ -15,6 +16,8 @@ What's new, what's been changed, what's been fixed
 (a) February 25th, 2010.
 
 New Features:
+(j) added routine copy_particles to make a shifted copy of a set of particles (e.g.
+    a molecule)
 (g) common testsuite infrastructure for testing features and nprocs
     etc
 (g) rotational particles now also store the director for faster computation of
