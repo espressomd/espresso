@@ -2547,12 +2547,12 @@ int DP3M_sanity_checks_boxl() {
     /* check k-space cutoff */
     if(p3m.Dcao_cut[i] >= 0.5*box_l[i]) {
       errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{039 dipolar P3M_init: k-space cutoff %f is larger than half of box dimension %f} ",p3m.Dcao_cut[i],box_l[i]);
+      ERROR_SPRINTF(errtxt,"{039 dipolar P3M_init: k-space cutoff %g is larger than half of box dimension %g} ",p3m.Dcao_cut[i],box_l[i]);
       ret = 1;
     }
     if(p3m.Dcao_cut[i] >= local_box_l[i]) {
       errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-      ERROR_SPRINTF(errtxt,"{040 dipolar P3M_init: k-space cutoff %f is larger than local box dimension %f} ",p3m.Dcao_cut[i],local_box_l[i]);
+      ERROR_SPRINTF(errtxt,"{040 dipolar P3M_init: k-space cutoff %g is larger than local box dimension %g} ",p3m.Dcao_cut[i],local_box_l[i]);
       ret = 1;
     }
   }

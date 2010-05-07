@@ -319,7 +319,7 @@ void layered_topology_init(CellPList *old)
       n_layers = (int)floor(local_box_l[2]/max_range);
       if (n_layers < 1) {
 	char *errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtxt, "{017 layered: maximal interaction range %f larger than local box length %f} ", max_range, local_box_l[2]);
+	ERROR_SPRINTF(errtxt, "{017 layered: maximal interaction range %g larger than local box length %g} ", max_range, local_box_l[2]);
 	n_layers = 1;
       }
       if (n_layers > max_num_cells - 2)
@@ -342,7 +342,7 @@ void layered_topology_init(CellPList *old)
 
   if (layer_h < max_range) {
     char *errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-    ERROR_SPRINTF(errtxt, "{018 layered: maximal interaction range %f larger than layer height %f} ", max_range, layer_h);
+    ERROR_SPRINTF(errtxt, "{018 layered: maximal interaction range %g larger than layer height %g} ", max_range, layer_h);
   }
 
   /* check wether node is top and/or bottom */

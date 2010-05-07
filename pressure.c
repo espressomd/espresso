@@ -359,7 +359,7 @@ int getintersection(double pos1[3], double pos2[3],int given, int get, double va
     *answer =  drem_down(value + pos1[given],box_size[given]);;
   } else if (0==p2r[given]) {
     char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{analyze stress_profile: getintersection: intersection is a line, not a point - value is %f same as %f and %f\n",value,0.0,p2r[given]);
+    ERROR_SPRINTF(errtxt, "{analyze stress_profile: getintersection: intersection is a line, not a point - value is %g same as %g and %g\n",value,0.0,p2r[given]);
     return 0;   
   } else {
     *answer =  drem_down(pos1[get]+p2r[get]/p2r[given]*value,box_size[get]);
@@ -931,7 +931,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
       char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{analyze stress_profile: Analyzed box (%f) with skin+max_cut(%f) is larger than simulation box (%f).\n",range[i],skin+max_cut,box_l[i]);
+      ERROR_SPRINTF(errtxt, "{analyze stress_profile: Analyzed box (%g) with skin+max_cut(%g) is larger than simulation box (%g).\n",range[i],skin+max_cut,box_l[i]);
       return 0;
     }
     range_start[i] = drem_down(range_start[i],box_l[i]);

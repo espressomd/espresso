@@ -112,7 +112,7 @@ void dd_create_cell_grid()
 	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
 	if ( dd.cell_grid[i] < 1 ) {
 	  char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
-	  ERROR_SPRINTF(error_msg, "{002 interaction range %f in direction %d is larger than the local box size %f} ",
+	  ERROR_SPRINTF(error_msg, "{002 interaction range %g in direction %d is larger than the local box size %g} ",
 			max_range, i, local_box_l[i]);
 	  dd.cell_grid[i] = 1;
 	}
@@ -478,8 +478,8 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC) {
-	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
 #endif
     }
@@ -487,8 +487,8 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC) {
-	char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + 3*TCL_DOUBLE_SPACE);
-	ERROR_SPRINTF(errtext, "{005 particle @ (%f, %f, %f) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
+	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
 #endif
     }

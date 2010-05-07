@@ -51,8 +51,8 @@ void init_lattice(Lattice *lattice, double agrid, double tau) {
   for (dir=0;dir<3;dir++) {
     /* check if local_box_l is compatible with lattice spacing */
     if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid) > ROUND_ERROR_PREC) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",agrid,dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
+      char *errtxt = runtime_error(128 + 4*TCL_DOUBLE_SPACE + 4*TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid=%g is incompatible with local_box_l[%d]=%g (box_l[%d]=%g node_grid[%d]=%d) %g} ",agrid,dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
       return;
     }
   }
