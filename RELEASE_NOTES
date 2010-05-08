@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5j -
+- v2.1.5k -
 -----------
 
+(k) May       7th, 2010.
 (j) May       4th, 2010.
 (i) May       3rd, 2010.
 (h) April    30th, 2010.
@@ -26,6 +27,8 @@ New Features:
 (e) added detection for Mobile Sempron
 
 Bugfixes:
+(k) fixed runtime errors that potential can cause segfaults when
+    raised.
 (i) fixed a missing GB_sigma and corrected indendation in gb.h
 (i) unfolding the coordinates for the DAWAANR dipolar interaction, added missing
     prefactor
