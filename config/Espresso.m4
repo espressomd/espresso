@@ -108,7 +108,8 @@ there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 	fi
 	case $target_os in
 	*darwin*) extrapaths=/Library/Frameworks/Tcl.framework/Headers ;;
-	*) ;;
+	*linux*)  # path used by *buntu
+		  extrapaths=/usr/include/$version ;;
 	esac
 	ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
 		[AC_MSG_FAILURE([
@@ -184,7 +185,9 @@ AC_DEFUN([ES_CHECK_TK],[
 			fi
 		fi
 		case $target_os in
-		(*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
+		*darwin*) extrapaths=/Library/Frameworks/Tk.framework/Headers ;;
+		*linux*)  # path used by *buntu
+			  extrapaths="/usr/include/$version /usr/include/$use_tcl" ;;
 		(*) ;;
 		esac
 		ES_ADDPATH_CHECK_HEADER(tk.h, [], 
