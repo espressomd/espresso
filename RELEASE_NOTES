@@ -1,9 +1,10 @@
 What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
-- v2.1.5k -
+- v2.1.5l -
 -----------
 
+(l) May      25th, 2010.
 (k) May       7th, 2010.
 (j) May       4th, 2010.
 (i) May       3rd, 2010.
@@ -17,6 +18,7 @@ What's new, what's been changed, what's been fixed
 (a) February 25th, 2010.
 
 New Features:
+(l) added automated search for Tcl paths in Ubuntu
 (j) added routine copy_particles to make a shifted copy of a set of particles (e.g.
     a molecule)
 (g) common testsuite infrastructure for testing features and nprocs
@@ -27,6 +29,7 @@ New Features:
 (e) added detection for Mobile Sempron
 
 Bugfixes:
+(l) detection for some Pentium 4 was broken
 (k) fixed runtime errors that potential can cause segfaults when
     raised.
 (i) fixed a missing GB_sigma and corrected indendation in gb.h
