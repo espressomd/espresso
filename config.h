@@ -123,6 +123,10 @@
 #define VIRTUAL_SITES
 #endif
 
+/* Metadynamics needs external forces to bias sampling */
+#ifdef METADYNAMICS
+#define EXTERNAL_FORCES
+#endif
 
 #if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
 #define DPD_MASS

@@ -43,6 +43,7 @@
 #include "lattice.h"
 #include "lb.h"
 #include "virtual_sites.h"
+#include "metadynamics.h"
 #include "adresso.h"
 
 /************************************************
@@ -393,6 +394,7 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 #endif
+
    
    force_calc();
    
@@ -431,6 +433,14 @@ void integrate_vv(int n_steps)
   /* Integration loop */
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
+
+#ifdef METADYNAMICS
+    /* Metadynamics main function */
+    meta_calc_xi();
+    meta_update_bias();
+    meta_apply_force(); 
+#endif
+
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
@@ -571,6 +581,7 @@ void integrate_vv(int n_steps)
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 #endif
+
 }
 
 /************************************************************/

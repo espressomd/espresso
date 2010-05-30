@@ -229,6 +229,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef VIRTUAL_SITES
   Tcl_AppendResult(interp, "{ VIRTUAL_SITES } ", (char *) NULL);
 #endif
+#ifdef METADYNAMICS
+  Tcl_AppendResult(interp, "{ METADYNAMICS } ", (char *) NULL);
+#endif
 #ifdef MOL_CUT
   Tcl_AppendResult(interp, "{ MOL_CUT } ", (char *) NULL);
 #endif

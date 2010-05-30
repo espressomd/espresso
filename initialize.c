@@ -55,6 +55,7 @@
 #include "lb-boundaries.h"
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
+#include "metadynamics.h"
 
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
@@ -186,6 +187,10 @@ void on_integration_start()
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
   }
+#endif
+
+#ifdef METADYNAMICS
+  meta_init();
 #endif
 
   /********************************************/
@@ -716,6 +721,10 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("thermodynamic_force", tf_tcl);
   /** #endif */
   REGISTER_COMMAND("update_adress_weights", manual_update_weights);
+#endif
+#ifdef METADYNAMICS
+  /* in metadynamics.c */
+  REGISTER_COMMAND("metadynamics", metadynamics);
 #endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

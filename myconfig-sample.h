@@ -42,6 +42,7 @@
 /* #define DAWAANR */
 /* #define MAGNETIC_DIPOLAR_DIRECT_SUM */
 /* #define MDLC */
+/* #define METADYNAMICS */
 
 /**********************************************************************/
 /*                        integrator features                         */

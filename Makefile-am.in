@@ -87,15 +87,16 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	statistics_molecule.h errorhandling.c errorhandling.h \
 	constraint.c constraint.h maggs.c maggs.h mol_cut.h rattle.c \
 	rattle.h molforces.c molforces.h virtual_sites.c \
-	virtual_sites.h lb.c lb.h lb-d3q18.h lb-d3q19.h bin.c bin.h \
-	lattice.c lattice.h halo.c halo.h statistics_fluid.c \
-	statistics_fluid.h lb-boundaries.c lb-boundaries.h utils.c \
-	utils.h angle.h pwdist.h angledist.h endangledist.h \
-	buckingham.h comfixed.h comforce.h debye_hueckel.h \
-	reaction_field.h dihedral.h fene.h gb.h harmonic.h ljcos2.h \
-	ljcos.h lj.h ljgen.c ljgen.h steppot.h bmhtf-nacl.h morse.h \
-	polynom.h soft_sphere.h subt_lj.h tab.h ljangle.h adresso.c \
-	adresso.h tunable_slip.h mpifake/mpi.h mpifake/mpi.c
+	virtual_sites.h metadynamics.c metadynamics.h lb.c lb.h \
+	lb-d3q18.h lb-d3q19.h bin.c bin.h lattice.c lattice.h halo.c \
+	halo.h statistics_fluid.c statistics_fluid.h lb-boundaries.c \
+	lb-boundaries.h utils.c utils.h angle.h pwdist.h angledist.h \
+	endangledist.h buckingham.h comfixed.h comforce.h \
+	debye_hueckel.h reaction_field.h dihedral.h fene.h gb.h \
+	harmonic.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h steppot.h \
+	bmhtf-nacl.h morse.h polynom.h soft_sphere.h subt_lj.h tab.h \
+	ljangle.h adresso.c adresso.h tunable_slip.h mpifake/mpi.h \
+	mpifake/mpi.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @MPI_FAKE_TRUE@am__objects_1 = mpifake/mpi.$(OBJEXT)
 am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
@@ -118,10 +119,10 @@ am_Espresso_bin_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) \
 	mdlc_correction.$(OBJEXT) statistics_molecule.$(OBJEXT) \
 	errorhandling.$(OBJEXT) constraint.$(OBJEXT) maggs.$(OBJEXT) \
 	rattle.$(OBJEXT) molforces.$(OBJEXT) virtual_sites.$(OBJEXT) \
-	lb.$(OBJEXT) bin.$(OBJEXT) lattice.$(OBJEXT) halo.$(OBJEXT) \
-	statistics_fluid.$(OBJEXT) lb-boundaries.$(OBJEXT) \
-	utils.$(OBJEXT) ljgen.$(OBJEXT) adresso.$(OBJEXT) \
-	$(am__objects_1)
+	metadynamics.$(OBJEXT) lb.$(OBJEXT) bin.$(OBJEXT) \
+	lattice.$(OBJEXT) halo.$(OBJEXT) statistics_fluid.$(OBJEXT) \
+	lb-boundaries.$(OBJEXT) utils.$(OBJEXT) ljgen.$(OBJEXT) \
+	adresso.$(OBJEXT) $(am__objects_1)
 Espresso_bin_OBJECTS = $(am_Espresso_bin_OBJECTS)
 Espresso_bin_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -319,15 +320,16 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	statistics_molecule.h errorhandling.c errorhandling.h \
 	constraint.c constraint.h maggs.c maggs.h mol_cut.h rattle.c \
 	rattle.h molforces.c molforces.h virtual_sites.c \
-	virtual_sites.h lb.c lb.h lb-d3q18.h lb-d3q19.h bin.c bin.h \
-	lattice.c lattice.h halo.c halo.h statistics_fluid.c \
-	statistics_fluid.h lb-boundaries.c lb-boundaries.h utils.c \
-	utils.h angle.h pwdist.h angledist.h endangledist.h \
-	buckingham.h comfixed.h comforce.h debye_hueckel.h \
-	reaction_field.h dihedral.h fene.h gb.h harmonic.h imd.h \
-	ljcos2.h ljcos.h lj.h ljgen.c ljgen.h steppot.h bmhtf-nacl.h \
-	morse.h polynom.h soft_sphere.h subt_lj.h tab.h ljangle.h \
-	adresso.c adresso.h tunable_slip.h $(am__append_1)
+	virtual_sites.h metadynamics.c metadynamics.h lb.c lb.h \
+	lb-d3q18.h lb-d3q19.h bin.c bin.h lattice.c lattice.h halo.c \
+	halo.h statistics_fluid.c statistics_fluid.h lb-boundaries.c \
+	lb-boundaries.h utils.c utils.h angle.h pwdist.h angledist.h \
+	endangledist.h buckingham.h comfixed.h comforce.h \
+	debye_hueckel.h reaction_field.h dihedral.h fene.h gb.h \
+	harmonic.h imd.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h \
+	steppot.h bmhtf-nacl.h morse.h polynom.h soft_sphere.h \
+	subt_lj.h tab.h ljangle.h adresso.c adresso.h tunable_slip.h \
+	$(am__append_1)
 
 #################################################################
 # Handling of local configure headers
@@ -457,6 +459,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/magnetic_non_p3m__methods.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mdlc_correction.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/metadynamics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mmm-common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mmm1d.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mmm2d.Po@am__quote@

@@ -274,6 +274,118 @@ can be used at any time {\em by the master process} to specify additional data t
 all processes of the parallel_tempering simulation. The data is accessible from all processes as
 {\tt parallel_tempering::shareddata}.
 
+\section{Metadynamics}
+\newescommand[metadynamics]{metadynamics}
+
+\begin{essyntax}
+  \variant{1} metadynamics 
+  \variant{2} metadynamics set off
+  \variant{3} metadynamics set distance \var{pid_1} \var{pid_2} \
+  \var{d_\mathrm{min}} \var{d_\mathrm{max}} \var{b_\mathrm{height}} \
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{d_\mathrm{bins}}
+  \variant{4} metadynamics set relative_z \var{pid_1} \var{pid_2} \
+  \var{z_\mathrm{min}} \var{z_\mathrm{max}} \var{b_\mathrm{height}} \
+  \var{b_\mathrm{width}} \var{f_\mathrm{bound}} \var{z_\mathrm{bins}}
+  \variant{5} metadynamics print_stat current_coord
+  \variant{6} metadynamics print_stat coord_values
+  \variant{7} metadynamics print_stat profile
+  \variant{8} metadynamics print_stat force
+  \variant{9} metadynamics load_stat \var{profile\_list} \
+  \var{force\_list}
+
+  Required features: METADYNAMICS, EXTERNAL_FORCES
+\end{essyntax}
+Performs metadynamics sampling. Metadynamics is an efficient scheme to
+calculate the potential of mean force of a system as a function of a
+given reaction coordinate from a canonical simulation. The user first
+chooses a reaction coordinate (\eg \texttt{distance}) between two
+particles (\var{pid_1} and \var{pid_2}). As the system samples values
+along this reaction coordinate (here the distance between \var{pid_1}
+and \var{pid_2}), an iterative biased force pulls the system away from
+the values of the reaction coordinate most sampled. Ultimately, the
+system is driven in such a way that it self-diffuses along the
+reaction coordinate between the two boundaries (here
+\var{d_\mathrm{min}} and \var{d_\mathrm{max}}). The potential of mean
+force (or free energy profile) can be extracted by reading the
+\texttt{profile}. 
+
+\begin{arguments}
+\item[\var{pid_1}] ID of the first particle involved in the
+  metadynamics scheme.
+\item[\var{pid_2}] ID of the second particle involved in the
+  metadynamics scheme.
+\item[\var{d_\mathrm{min}}, \var{z_\mathrm{min}}]: minimum value of
+  the reaction coordinate. While \var{d_\mathrm{min}} must be positive
+  (it's a distance), \var{z_\mathrm{min}} can be negative since it's
+  the relative height of \var{pid_1} with respect to \var{pid_2}.
+\item[\var{d_\mathrm{max}}, \var{z_\mathrm{max}}]: maximum value of
+  the reaction coordinate. 
+\item[\var{b_\mathrm{height}}] height of the bias function.
+\item[\var{b_\mathrm{width}}] width of the bias function.
+\item[\var{f_\mathrm{bound}}] strength of the ramping force at the
+  boundaries of the reaction coordinate interval.
+\item[\var{d_\mathrm{bins}}, \var{z_\mathrm{bins}}]: number of bins of
+  the reaction coordinate.
+\item[\var{profile\_list}] Tcl list of a previous metadynamics
+  profile.
+\item[\var{force\_list}] Tcl list of a previous metadynamics force.
+\end{arguments}
+
+\subsubsection{Details on usage}
+
+Variant \variant{1} returns the status of the metadynamics
+routine. Variant \variant{2} turns metadynamics off (default
+value). Variant \variant{3} sets a metadynamics scheme with the
+reaction coordinate \texttt{distance}, which corresponds to the
+distance between any two particles of the system (\eg calculate the
+potential of mean force of the end-to-end distance of a
+polymer). Variant \variant{4} sets a metadynamics scheme with the
+reaction coordinate \texttt{relative_z}: relative height (\ie z
+coordinate) of particle \var{pid_1} with respect to \var{pid_2} (\eg
+calculate the potential of mean force of inserting one particle
+\var{pid_1} through an interface with center of mass
+\var{pid_2}). Variant \variant{5} prints the current value of the
+reaction coordinate. Variant \variant{6} prints a list of the binned
+values of the reaction coordinate (\eg \var{d_\mathrm{bins}} values
+between \var{d_\mathrm{min}} and \var{d_\mathrm{max}}). Variant
+\variant{7} prints the current potential of mean force for all values
+of the reaction coordinate considered. Variant \variant{8} prints the
+current force (norm rather than vector) for all values of the reaction
+coordinate considered. Variant \variant{9} loads a previous
+metadynamics sampling by reading a Tcl list of the potential of mean
+force and applied force. This is especially useful to restart a
+simulation.
+
+Note that the metadynamics scheme works seamlessly with the
+VIRTUAL_SITES feature, allowing to define centers of mass of groups of
+particles as end points of the reaction coordinate. One can therefore
+measure the potential of mean force of the distance between a particle
+and a \emph{molecule} or \emph{interface}.
+
+The metadynamics scheme has (as of now) only been implemented for one
+processor: MPI usage is \emph{not} supported. However, one can speed up
+sampling by communicating the \texttt{profile} and \texttt{force}
+between independent simulations (denoted \emph{walkers}). The
+\texttt{print_stat} and \texttt{load_stat} can be used to input/output
+metadynamics information between walkers at regular
+intervals. Warning: the information extracted from \texttt{print_stat}
+contains the entire history of the simulation, while only the
+\emph{last} increment of sampling should be communicated between
+walkers in order to avoid counting the same samples multiple times.
+
+\subsubsection{Details on implementation}
+
+As of now, only two reaction coordinates have been implemented:
+\texttt{distance} and \texttt{relative_z}. Many different reaction
+coordinates can be set up, and it is rather easy to implement new
+ones. See the code in \texttt{metadynamics.\{h,c\}} for further
+details. 
+
+The bias functions that are applied to the potential of mean force and
+the biased force are not gaussian function (as in many metadynamics
+codes) but so-called Lucy functions. See \cite{marsili09} for more
+details. These avoid the calculation of exponentials.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"
