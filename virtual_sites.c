@@ -327,7 +327,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
        }
    }
 #ifdef VIRTUAL_SITES_DEBUG
-   errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
    ERROR_SPRINTF(errtxt,"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr=%i\n",calling_p->p.identity);
    return NULL;
 #endif
