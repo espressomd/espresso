@@ -8,13 +8,6 @@ What's new, what's been changed, what's been fixed
 Current working revision.
 
 
-****************************************************************************************
-* v2.1.5                                                                               *
-****************************************************************************************
-
-Current working revision.
-
-
 - v2.1.5l -
 -----------
 
@@ -62,13 +55,6 @@ Bugfixes:
 (b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
 (a) repaired broken statistics.c file
-
-
-****************************************************************************************
-* v2.1.5                                                                               *
-****************************************************************************************
-
-Current working revision.
 
 
 - v2.1.5m -
@@ -121,6 +107,20 @@ Bugfixes:
 (b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
 (a) repaired broken statistics.c file
+
+
+****************************************************************************************
+* v2.1.5                                                                               *
+****************************************************************************************
+
+Current working revision.
+
+
+****************************************************************************************
+* v2.1.5                                                                               *
+****************************************************************************************
+
+Current working revision.
 
 
 - v2.1.5l -
