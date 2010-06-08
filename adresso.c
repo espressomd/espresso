@@ -274,37 +274,47 @@ int adress_set(Tcl_Interp *interp,int argc, char **argv){
 }
 
 double adress_wf_vector(double x[3]){
-   int topo=(int)adress_vars[0];
-   double dist;
-   int dim;
-   switch (topo) {
-   case 0:
-     return 0.0;
-     break;
-   case 1:
-     return adress_vars[1];
-     break;
-   case 2:
-     dim=(int)adress_vars[3];
-     //dist=fabs(x[dim]-adress_vars[4]);
-     dist = x[dim]-adress_vars[4];
-     if(dist>0)
-       while(dist>box_l[dim]/2.0)
-	 dist = dist - box_l[dim];
-     else if(dist < 0)
-       while(dist< -box_l[dim]/2.0)
-	 dist = dist + box_l[dim];
-     dist = fabs(dist);
-     return adress_wf(dist);
-     break;
-   case 3:
-     dist=distance(x,&(adress_vars[3]));
-     return adress_wf(dist);
-     break;
-   default:
-     return 0.0;
-     break;
-   }
+  int topo=(int)adress_vars[0];
+  double dist;
+  int dim;
+  
+  int img_box[3];
+  double temp_pos[3];
+  
+  switch (topo) {
+  case 0:
+    return 0.0;
+    break;
+  case 1:
+    return adress_vars[1];
+    break;
+  case 2:
+    dim=(int)adress_vars[3];
+    //dist=fabs(x[dim]-adress_vars[4]);
+    dist = x[dim]-adress_vars[4];
+    if(dist>0)
+      while(dist>box_l[dim]/2.0)
+	dist = dist - box_l[dim];
+    else if(dist < 0)
+      while(dist< -box_l[dim]/2.0)
+	dist = dist + box_l[dim];
+    dist = fabs(dist);
+    return adress_wf(dist);
+    break;
+  case 3:
+    for(dim=0;dim<3;dim++){
+      img_box[dim]=0;
+      temp_pos[dim]=x[dim];
+    }
+    fold_position(temp_pos,img_box);
+    dist=distance(temp_pos,&(adress_vars[3]));
+    //printf("%f %f \n", dist, adress_wf(dist));
+    return adress_wf(dist);
+    break;
+  default:
+    return 0.0;
+    break;
+  }
 }
 
 double adress_wf(double dist){
