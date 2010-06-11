@@ -17,7 +17,6 @@
 #define EXCLUSIONS
 #define COMFORCE
 #define COMFIXED
-#define ROTATION
 #define NPT
 
 /* potentials */
