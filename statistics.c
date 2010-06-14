@@ -3663,9 +3663,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
   REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
   REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
-#ifdef ADOLFO
   REGISTER_ANALYSIS_W_ARG("<rdf-adress>", parse_rdf, 3);
-#endif
   REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
 #ifdef ELECTROSTATICS
   REGISTER_ANALYSIS("cwvac", parse_cwvac);
