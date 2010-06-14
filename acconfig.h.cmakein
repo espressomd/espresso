@@ -1,5 +1,5 @@
 /* Define the inline keywork */
-#define MDINLINE @INLINE_KEYWORD@
+#cmakedefine MDINLINE @MDINLINE@
 
 /* Name of package (translate from cmake to autoconf macro name) */
 #define PACKAGE_NAME  "@PROJECT_NAME@"

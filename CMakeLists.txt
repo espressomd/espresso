@@ -63,7 +63,7 @@ else(WITH_MPI)
 endif(WITH_MPI)
 
 include(EspTestInline)
-esp_test_inline(INLINE_KEYWORD)
+esp_test_inline(MDINLINE)
 
 include(EspGenerateVersionInfo)
 esp_generate_version_info(PACKAGE_VERSION LAST_CHANGE)
