@@ -1,0 +1,35 @@
+/* This is the default file @myconfig@.
+   DO NOT MODIFY THIS FILE! 
+   Instead, copy the file 
+   @CMAKE_CURRENT_SOURCE_DIR@/myconfig-sample.h 
+   to
+   @CMAKE_CURRENT_BINARY_DIR@/@myconfig@
+   or 
+   @CMAKE_CURRENT_SOURCE_DIR@/@myconfig@
+   and modify it there!
+*/
+/* global features */
+#define PARTIAL_PERIODIC
+#define ELECTROSTATICS
+#define EXTERNAL_FORCES
+#define CONSTRAINTS
+#define MASS
+#define EXCLUSIONS
+#define COMFORCE
+#define COMFIXED
+#define ROTATION
+#define NPT
+
+/* potentials */
+#define TABULATED
+#define LENNARD_JONES
+#define LENNARD_JONES_GENERIC
+#define MORSE
+#define LJCOS
+#define LJCOS2
+#define BUCKINGHAM
+#define SOFT_SPHERE
+#define BOND_ANGLE_COSINE
+
+#define MPI_CORE
+#define FORCE_CORE

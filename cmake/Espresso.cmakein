@@ -1,0 +1,5 @@
+#!/bin/sh
+# This is the MPI wrapper for Espresso
+ESPRESSO_SCRIPTS="@ESPRESSO_SCRIPTS@"
+export ESPRESSO_SCRIPTS
+@ESPRESSO_BIN@ $*
