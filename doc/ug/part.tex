@@ -17,7 +17,8 @@
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
-  \require{2}{\opt{torque \var{x} \var{y} \var{z}}}\\
+  \require{2}{\opt{torque \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{rinertia \var{x} \var{y} \var{z}}}
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
   \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
   \require{4}{\opt{exclude \var{pid2}\dots}}
@@ -59,16 +60,19 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   be an existing particle.  The \var{bondid} is used for
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
-\item[\opt{q \var{charge}}] Sets the charge of this praticle to $q$.
-\item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] \todo{Docs required (JC?).} 
-  \item[\opt{omega \var{x} \var{y} \var{z}}] \todo{Docs
-  required (JC?).} 
-  \item[\opt{torque \var{x} \var{y} \var{z}}] \todo{Docs
-  required (JC?).} When printing the values, unsing {\em part id_particle print} there is an alternative named
+\item[\opt{q \var{charge}}] Sets the charge of this particle to $q$.
+\item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
+  quaternion representation of the rotational position of this
+  particle.
+\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational velocity of this particle in global frame.
+\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force of this particle, in global frame.
+  When printing the values using {\em part id_particle print}, there is an alternative named
   \opt{tbf} which gives you the values of the torque in the body frame.  Be aware: the values obtained when printing using \opt{torque}
   are computed in the frame laboratory and are the ones one should usually look at. Nonetheless,  in case you 
-  introduce torques using \opt{torque} option, espresso will assume they are given  in the body-frame. Thus \opt{tbf} is useful
+  introduce torques using \opt{torque} option, espresso will assume they are given in the body-frame. Thus \opt{tbf} is useful
   to know which should be the numerical values you should reintroduce in order to have exactly the same conformation.
+\item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
+    elements of this particles rotational inertia.
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For
@@ -473,6 +477,33 @@ successfully connected.
 \item[\opt{trials \var{try_\mathrm{max}}}] If not specified,
   \var{try_\mathrm{max}} defaults to $30000$.
 \end{arguments}
+
+\subsection{\texttt{copy\_particles}: copying a set of particles}
+\newescommand[copy-particles]{copy\_particles}
+\begin{essyntax}
+  copy_particles
+  \opt{set \var{id1} \var{id2} \dots \asep range \var{from} {to} \dots} 
+  \opt{shift \var{s\_x} \var{s\_y} \var{s\_z}}
+\end{essyntax}
+
+Copy a group of particles including their bonds. Positions can be
+\opt{shift}ed by an offset $(\var{s\_x}, \var{s\_y}, \var{s\_z})$,
+otherwise the copied set is at exactly the same position as the
+original set. The particles can be given as a combination of
+\opt{list}s or \opt{range}s. The new particles obtain in any case
+consecutive identities after the largest current identity. Bonds
+within the defined particle set are copied with translated identities,
+but not bonds with particles outside the list. That is, if the
+particle set corresponds to a molecule, intramolecular bonds are
+preserved, but not intermolecular ones.
+
+Examples of use:\\
+\begin{tclcode}
+  copy_particles set {1 2 3 4} shift 0.0 0.0 0.0
+  copy_particles set {1 2} set {3 4}
+  copy_particles range 1 4
+\end{tclcode}
+All these examples do the same - making exact copies of particles 1 through 4.
 
 \section{\texttt{constraint}: Setting up constraints}\label{sec:constraint}
 \newescommand{constraint}
