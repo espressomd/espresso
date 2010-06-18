@@ -1009,10 +1009,10 @@ method, \eg
 \index{interactions!P3M|mainindex}
 
 \begin{essyntax}
-  \variant{1}inter coulomb p3m 
+  \variant{1}inter coulomb \var{l_B} p3m 
   \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
 
-  \variant{2}inter magnetic p3m 
+  \variant{2}inter magnetic \var{l_B} p3m 
   \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
   \begin{features}
     \required[1]{ELECTROSTATICS}
@@ -1027,16 +1027,16 @@ interactions (magnetic dipole-dipole) (aka dipolar P3M).
 
 For electrostatics the interaction is:
 \begin{equation}
-  U^{C-P3M} = \ell_B k_B T \frac{q_1 q_2}{r}
+  U^{C-P3M} = l_B k_B T \frac{q_1 q_2}{r}
 \end{equation}
-Here $\ell_B = e_o^2 / (4 \pi \epsilon k_B T)$ is the Bjerrum length.
+Here $l_B = e_o^2 / (4 \pi \epsilon k_B T)$ is the Bjerrum length.
 
 For magnetostatics the interaction is:
 \begin{equation}
-  U^{D-P3M} = \ell_{Bm} k_B T \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
+  U^{D-P3M} = l_{B} k_B T \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
   - \frac{3  (\vec{\mu}_i \cdot \vec{r}_{ij})  (\vec{\mu}_j \cdot \vec{r}_{ij}) }{r^5} \right)
 \end{equation}
-Here $\vec{r}_{ij}=\vec{r}_{i}-\vec{r}_{j}$, and $\ell_{Bm}$ is a non
+Here $\vec{r}_{ij}=\vec{r}_{i}-\vec{r}_{j}$, and $l_{B}$ is a non
 dimensional parameter similar to the Bjerrum length in electrostatics
 which can help to tune the effect of the medium on the magnetic
 interaction between two magnetic dipoles.
@@ -1048,14 +1048,14 @@ using P3M! If you are not sure, read the following references
 
 \subsubsection{Tuning P3M}
 \begin{essyntax}
-  \variant{1}inter coulomb p3m \alt{tune \asep tunev2}
+  \variant{1}inter coulomb \var{l_B} p3m \alt{tune \asep tunev2}
   accuracy \var{accuracy}\\
   \opt{r_cut \var{r_\mathrm{cut}}}
   \opt{mesh \var{mesh}}
   \opt{cao \var{cao}}
   \opt{alpha \var{\alpha}}
 
-  \variant{2}inter magnetic p3m \alt{tune \asep tunev2}
+  \variant{2}inter magnetic \var{l_B} p3m \alt{tune \asep tunev2}
   accuracy \var{accuracy}\\
   \opt{r_cut \var{r_\mathrm{cut}}}
   \opt{mesh \var{mesh}}
@@ -1147,7 +1147,7 @@ the desired accuracy.
 \todo{How is the cutoff handled? Why is this not a normal short-raged
   potential?}
 \begin{essyntax}
-  inter coulomb dh \var{\kappa} \var{r_\mathrm{cut}}
+  inter coulomb \var{l_B} dh \var{\kappa} \var{r_\mathrm{cut}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1155,7 +1155,7 @@ the desired accuracy.
 
 Defines the electrostatic potential by
 \begin{equation}
-  U^{C-DH} = \ell_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}
+  U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}
 \end{equation}
 
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
@@ -1165,7 +1165,7 @@ For $\kappa = 0$, this corresponds to the plain coulomb potential.
 \index{interactions!MMM2D|mainindex}
 
 \begin{essyntax}
- inter coulomb mmm2d \var{maximal\_pairwise\_error}
+ inter coulomb \var{l_B} mmm2d \var{maximal\_pairwise\_error}
  \opt{\var{fixed\_far\_cutoff}}
  \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
  \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
@@ -1202,11 +1202,11 @@ metallic boundary conditions.
 
 \begin{essyntax}
   \variant{1}
-  inter coulomb mmm1d \var{switch\_radius}
+  inter coulomb \var{l_B} mmm1d \var{switch\_radius}
   \opt{\var{bessel\_cutoff}} \var{maximal\_pairwise\_error}
 
   \variant{2}
-  inter coulomb mmm1d tune \var{maximal\_pairwise\_error}
+  inter coulomb \var{l_B} mmm1d tune \var{maximal\_pairwise\_error}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1229,7 +1229,7 @@ refer to appendix \vref{chap:mmm}.
 \index{interactions!Maggs' method|mainindex}
 
 \begin{essyntax}
-  inter coulomb
+  inter coulomb \var{l_B}
   maggs \var{f\_mass} \var{mesh} \var{field\_friction}
   \opt{yukawa \var{kappa} \var{r_\mathrm{cut}}}
   \begin{features}
@@ -1239,7 +1239,7 @@ refer to appendix \vref{chap:mmm}.
 
 This is an implementation of the instantaneous 1/r Coulomb interaction
 \begin{equation}
-  U = \ell_B k_B T \frac{q_1 q_2}{r}
+  U = l_B k_B T \frac{q_1 q_2}{r}
 \end{equation}
 as the potential of mean force between charges which are dynamically
 coupled to a local electromagnetic field.
@@ -1302,7 +1302,7 @@ Make sure that you read the papers on ELC before using it!!!
 \index{interactions!DLC method|mainindex}
 
 \begin{essyntax}
-  inter magnetic mdlc \var{accuracy} \var{gap\_size}
+  inter magnetic \var{l_B} mdlc \var{accuracy} \var{gap\_size}
   \opt{\var{far\_cutoff}}
   \begin{features}
     \required{MAGNETOSTATICS}
@@ -1330,7 +1330,7 @@ As a reference for DLC-method, see \cite{brodka04a}.
 \index{interactions!MDDS method|mainindex}
 
 \begin{essyntax}
-  inter magnetic \var{l_{Bm}} mdds n\_cut \var{value\_n\_cut}
+  inter magnetic \var{l_{B}} mdds n\_cut \var{value\_n\_cut}
   \opt{\var{far\_cutoff}}
   \begin{features}
     \required{MAGNETOSTATICS}
@@ -1351,7 +1351,7 @@ easily calculate the values for 2D+h and 1D+h systems.
 \index{interactions!MDDS method|mainindex}
 
 \begin{essyntax}
-  inter magnetic \var{l_{Bm}} dawaanr
+  inter magnetic \var{l_{B}} dawaanr
   \opt{\var{far\_cutoff}}
   \begin{features}
     \required{MAGNETOSTATICS}
