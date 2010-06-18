@@ -163,6 +163,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef SMOOTH_STEP
   Tcl_AppendResult(interp, "{ SMOOTH_STEP } ", (char *) NULL);
 #endif
+#ifdef HERTZIAN
+  Tcl_AppendResult(interp, "{ HERTZIAN } ", (char *) NULL);
+#endif
 #ifdef BMHTF_NACL
   Tcl_AppendResult(interp, "{ BMHTF_NACL } ", (char *) NULL);
 #endif

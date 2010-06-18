@@ -30,6 +30,7 @@
 #include "ljgen.h"
 #include "ljangle.h"
 #include "steppot.h"
+#include "hertzian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "tab.h"
@@ -196,6 +197,11 @@ void initialize_ia_params(IA_parameters *params) {
     params->SmSt_d =
     params->SmSt_n =
     params->SmSt_k0 = 0;
+#endif
+
+#ifdef HERTZIAN
+  params->Hertzian_eps =
+    params->Hertzian_sig = 0;
 #endif
 
 #ifdef BMHTF_NACL
@@ -404,6 +410,11 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
   dst->SmSt_k0 = src->SmSt_k0;
 #endif
 
+#ifdef HERTZIAN
+  dst->Hertzian_eps = src->Hertzian_eps;
+  dst->Hertzian_sig = src->Hertzian_sig;
+#endif
+
 #ifdef BMHTF_NACL
   dst->BMHTF_A = src->BMHTF_A;
   dst->BMHTF_B = src->BMHTF_B;
@@ -579,6 +590,11 @@ int checkIfInteraction(IA_parameters *data) {
 
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0)
+    return 1;
+#endif
+  
+#ifdef HERTZIAN
+  if (data->Hertzian_sig != 0)
     return 1;
 #endif
   
@@ -914,6 +930,13 @@ void calc_maximal_cutoff()
          if (data->SmSt_cut != 0) {
            if(max_cut_non_bonded < data->SmSt_cut)
              max_cut_non_bonded = data->SmSt_cut;
+         }
+#endif
+
+#ifdef HERTZIAN
+         if (data->Hertzian_sig != 0) {
+           if(max_cut_non_bonded < data->Hertzian_sig)
+             max_cut_non_bonded = data->Hertzian_sig;
          }
 #endif
 
@@ -1546,6 +1569,9 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #ifdef SMOOTH_STEP
   if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
 #endif
+#ifdef HERTZIAN
+  if (data->Hertzian_sig != 0) printHertzianIAToResult(interp,i,j);
+#endif
 #ifdef BMHTF_NACL
   if (data->BMHTF_cut != 0) printBMHTFIAToResult(interp,i,j);
 #endif
@@ -1942,6 +1968,10 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef SMOOTH_STEP
     REGISTER_NONBONDED("smooth-step", SmSt_parser);
+#endif
+
+#ifdef HERTZIAN
+    REGISTER_NONBONDED("hertzian", hertzian_parser);
 #endif
 
 #ifdef BMHTF_NACL

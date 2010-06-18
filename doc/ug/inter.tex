@@ -414,6 +414,30 @@ implemented currently, which means that the potential is discontinuous
 at $r=\var{r_\mathrm{cut}}$. Therefore energy calculations should be
 used with great caution.
 
+\subsection{Hertzian interaction}
+\index{Hertzian interaction|mainindex}
+\index{interactions!hertzian|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  hertzian \var{\sigma} \var{\epsilon}
+  \begin{features}
+    \required{HERTZIAN}
+  \end{features}
+\end{essyntax}
+This defines an interaction according to the Hertzian potential
+between particles of the types \var{type1} and \var{type2}. The
+Hertzian potential is defined by
+\begin{equation}
+  V(r)=
+  \begin{cases} \epsilon\left(1-\frac{r}{\sigma}\right)^{5/2} & r < \sigma\\
+    0 & r \ge \sigma.
+  \end{cases}
+\end{equation}
+The potential has no singularity and is defined everywhere; the
+potential has nondifferentiable maximum at $r=0$, where the force is
+undefined.
+
 \subsection{Gay-Berne interaction}
 \index{Gay-Berne interaction|mainindex}
 \index{interactions!Gay-Berne|mainindex}
@@ -424,6 +448,7 @@ used with great caution.
   \var{k1} \var{k2} \var{\mu} \var{\nu}
   \begin{features}
     \required{ROTATION}
+    \required{GAY_BERNE}
   \end{features}
 \end{essyntax}
 This defines a Gay-Berne potential for prolate and oblate particles

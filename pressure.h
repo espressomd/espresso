@@ -22,33 +22,6 @@
 #include "forces.h"
 #include "npt.h"
 
-/* include the potential files */
-#include "p3m.h"
-#include "lj.h"
-#include "ljgen.h"
-#include "ljangle.h"
-#include "steppot.h"
-#include "bmhtf-nacl.h"
-#include "buckingham.h"
-#include "morse.h"
-#include "soft_sphere.h"
-#include "ljcos.h"
-#include "ljcos2.h"
-#include "tab.h"
-#include "gb.h"
-#include "fene.h"
-#include "harmonic.h"
-#include "subt_lj.h"
-#include "angle.h"
-#include "angledist.h"
-#include "dihedral.h"
-#include "debye_hueckel.h"
-#include "endangledist.h"
-#include "reaction_field.h"
-#include "mmm1d.h"
-#include "mol_cut.h"
-/* end of potential files */
-
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/

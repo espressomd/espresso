@@ -22,6 +22,7 @@
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
+#include "hertzian.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -104,6 +105,11 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef SMOOTH_STEP
   /* smooth step */
   ret += SmSt_pair_energy(p1,p2,ia_params,d,dist,dist2);
+#endif
+
+#ifdef HERTZIAN
+  /* Hertzian potential */
+  ret += hertzian_pair_energy(p1,p2,ia_params,d,dist,dist2);
 #endif
 
 #ifdef BMHTF_NACL

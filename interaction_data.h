@@ -221,6 +221,14 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef HERTZIAN
+  /** \name Hertzian potential */
+  /*@{*/
+  double Hertzian_eps;
+  double Hertzian_sig;
+  /*@}*/
+#endif
+
 #ifdef BMHTF_NACL
   /** \name BMHTF NaCl potential */
   /*@{*/

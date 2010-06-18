@@ -73,6 +73,7 @@
 /* #define LJ_ANGLE */
 /* #define GAY_BERNE */
 /* #define SMOOTH_STEP */
+/* #define HERTZIAN */
 /* #define BMHTF_NACL */
 /* #define MORSE */
 /* #define BUCKINGHAM */

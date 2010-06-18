@@ -32,6 +32,7 @@
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
+#include "hertzian.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -114,6 +115,10 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
   /* smooth step */
 #ifdef SMOOTH_STEP
   add_SmSt_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
+  /* Hertzian force */
+#ifdef HERTZIAN
+  add_hertzian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
 #endif
   /* BMHTF NaCl */
 #ifdef BMHTF_NACL
