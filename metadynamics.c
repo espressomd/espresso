@@ -52,12 +52,6 @@ double *meta_acc_force   =     NULL;
 /** Accumulated free energy profile */
 double *meta_acc_fprofile=     NULL;
 
-double *meta_prev_extf_1 =     NULL;
-double *meta_prev_extf_2 =     NULL;
-
-double *meta_prev_bias_1 =     NULL;
-double *meta_prev_bias_2 =     NULL;
-
 
 double *meta_cur_xi      =     NULL;
 double meta_val_xi       =       0.;
@@ -411,14 +405,6 @@ void meta_init(){
   if (meta_acc_force == NULL || meta_acc_fprofile == NULL) {
     meta_acc_force       = calloc(meta_xi_num_bins * sizeof *meta_acc_force, sizeof *meta_acc_force);
     meta_acc_fprofile    = calloc(meta_xi_num_bins * sizeof *meta_acc_fprofile, sizeof *meta_acc_fprofile);
-    meta_prev_extf_1     = calloc(3 * sizeof *meta_prev_extf_1, sizeof *meta_prev_extf_1);
-    meta_prev_extf_1[0]  = meta_prev_extf_1[1] = meta_prev_extf_1[2] = 0.;
-    meta_prev_extf_2     = calloc(3 * sizeof *meta_prev_extf_2, sizeof *meta_prev_extf_2);
-    meta_prev_extf_2[0]  = meta_prev_extf_2[1] = meta_prev_extf_2[2] = 0.;
-    meta_prev_bias_1     = calloc(3 * sizeof *meta_prev_bias_1, sizeof *meta_prev_bias_1);
-    meta_prev_bias_1[0]  = meta_prev_bias_1[1] = meta_prev_bias_1[2] = 0.;
-    meta_prev_bias_2     = calloc(3 * sizeof *meta_prev_bias_2, sizeof *meta_prev_bias_2);
-    meta_prev_bias_2[0]  = meta_prev_bias_2[1] = meta_prev_bias_2[2] = 0.;
     meta_cur_xi          = calloc(3 * sizeof *meta_cur_xi, sizeof *meta_cur_xi);
     meta_apply_direction = calloc(3 * sizeof *meta_apply_direction, sizeof *meta_apply_direction);   
   }
@@ -435,15 +421,18 @@ void meta_init(){
 }
 
 
-/** Calculate reaction coordinate 
- *  Store result in meta_cur_xi */
-void meta_calc_xi()
+/** Metadynamics main function:
+ * - Calculate reaction coordinate
+ * - Update profile and biased force
+ * - apply external force
+ */
+void meta_perform()
 {
   if(meta_switch == META_OFF)  return;
 
-  double ppos1[3], ppos2[3];
+  double ppos1[3], ppos2[3], factor;
   int img1[3], img2[3], c, i, np, flag1 = 0, flag2 = 0;
-  Particle *p;
+  Particle *p, *p1 = NULL, *p2 = NULL;
   Cell *cell;
   
   for (c = 0; c < local_cells.n; c++) {
@@ -453,25 +442,27 @@ void meta_calc_xi()
     for(i = 0; i < np; i++) {
       if (p[i].p.identity == meta_pid1) {
 	flag1 = 1;
+	p1 = &p[i];
 	memcpy(ppos1, p[i].r.p, 3*sizeof(double));
 	memcpy(img1, p[i].l.i, 3*sizeof(int));
 	unfold_position(ppos1, img1);
-	memcpy(meta_prev_bias_1,p[i].l.ext_force, 3*sizeof(double));
-	/* vector r2-r1 - Not a minimal image! Unfolded position */
-	vector_subt(meta_cur_xi,ppos2,ppos1);
-	if (flag1 && flag2) 
-	  return;
+	if (flag1 && flag2) {
+	  /* vector r2-r1 - Not a minimal image! Unfolded position */
+	  vector_subt(meta_cur_xi,ppos2,ppos1);
+	  break;
+	}
       }
       if (p[i].p.identity == meta_pid2) {
 	flag2 = 1;
+	p2 = &p[i];
 	memcpy(ppos2, p[i].r.p, 3*sizeof(double));
 	memcpy(img2, p[i].l.i, 3*sizeof(int));
 	unfold_position(ppos2, img2);
-	memcpy(meta_prev_bias_2,p[i].l.ext_force, 3*sizeof(double));
-	/* vector r2-r1 - Not a minimal image! Unfolded position */
-	vector_subt(meta_cur_xi,ppos2,ppos1);
-	if (flag1 && flag2)
-	  return;
+	if (flag1 && flag2) {
+	  /* vector r2-r1 - Not a minimal image! Unfolded position */
+	  vector_subt(meta_cur_xi,ppos2,ppos1);
+	  break;
+	}
       }
     }
   }
@@ -481,26 +472,19 @@ void meta_calc_xi()
       ERROR_SPRINTF(errtxt,"Metadynamics: can't find pid1 or pid2.\n");
       return;
   }
-}
-/** Update free energy profile and biased force */
-void meta_update_bias()
-{
-  if(meta_switch == META_OFF)  return;
-
-  int j;
 
   /* Now update free energy profile 
    * Here, we're following the functional form of 
    * Marsili etal., J Comp. Chem, 31 (2009).
    * Instead of gaussians, we use so-called Lucy's functions */
 
-  for (j = 0; j < meta_xi_num_bins; ++j) {
+  for (i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
       meta_val_xi = sqrt(sqrlen(meta_cur_xi));
       // Update free energy profile and biased force
-      meta_acc_fprofile[j] -= calculate_lucy(meta_xi_min+j*meta_xi_step,meta_val_xi);
-      meta_acc_force[j] -= calculate_deriv_lucy(meta_xi_min+j*meta_xi_step,meta_val_xi);
+      meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+      meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
 
       // direction of the bias force
       unit_vector(meta_cur_xi,meta_apply_direction);
@@ -508,8 +492,9 @@ void meta_update_bias()
       // reaction coordinate value: relative height of z_pid1 with respect to z_pid2
       meta_val_xi = -1.*meta_cur_xi[2];
       // Update free energy profile and biased force
-      meta_acc_fprofile[j] -= calculate_lucy(meta_xi_min+j*meta_xi_step,meta_val_xi);
-      meta_acc_force[j] -= calculate_deriv_lucy(meta_xi_min+j*meta_xi_step,meta_val_xi);
+      meta_acc_fprofile[i] -= calculate_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+      meta_acc_force[i] -= calculate_deriv_lucy(meta_xi_min+i*meta_xi_step,meta_val_xi);
+
       // direction of the bias force (-1 to be consistent with META_DIST: from 1 to 2)
       meta_apply_direction[0] = meta_apply_direction[1] = 0.;
       meta_apply_direction[2] = -1.;
@@ -519,15 +504,8 @@ void meta_update_bias()
       return;      
     }
   }
-}
-/** Apply force */
-void meta_apply_force()
-{
-  if(meta_switch == META_OFF)  return;
 
-  double factor;
-  double ext_force1[3], ext_force2[3], tmp1[3], tmp2[3];
-  int j = 0;
+  /** Apply force */
 
   // Calculate the strength of the applied force
   if (meta_val_xi < meta_xi_min) {
@@ -538,25 +516,19 @@ void meta_apply_force()
     factor = meta_f_bound * (meta_val_xi-meta_xi_max)/meta_xi_step;
   } else {
     // within the RC interval
-    j = (int) dround((meta_val_xi-meta_xi_min)/meta_xi_step);
-    if (j < 0) j = 0;
-    if (j >= meta_xi_num_bins) j=meta_xi_num_bins-1;
-    factor = meta_acc_force[j];
+    i = (int) dround((meta_val_xi-meta_xi_min)/meta_xi_step);
+    if (i < 0) i = 0;
+    if (i >= meta_xi_num_bins) i=meta_xi_num_bins-1;
+    factor = meta_acc_force[i];
   }
 
   /* cancel previous force to external force of particle */
-  for (j = 0; j<3; ++j) {
-    tmp1[j] =      factor * meta_apply_direction[j];
-    tmp2[j] = -1.* factor * meta_apply_direction[j];    
-    ext_force1[j] = tmp1[j] + meta_prev_bias_1[j] - meta_prev_extf_1[j];
-    ext_force2[j] = tmp2[j] + meta_prev_bias_2[j] - meta_prev_extf_2[j];
-    meta_prev_extf_1[j] = tmp1[j];
-    meta_prev_extf_2[j] = tmp2[j];  
+  for (i = 0; i<3; ++i) {
+    p1->f.f[i] +=       factor * meta_apply_direction[i];
+    p2->f.f[i] += -1. * factor * meta_apply_direction[i];
   }
-
-  set_particle_ext(meta_pid1, 1, ext_force1);
-  set_particle_ext(meta_pid2, 1, ext_force2);
 }
+
 
 /** Calculate Lucy's function */
 double calculate_lucy(double xi, double xi_0)

@@ -25,6 +25,7 @@
 #include "npt.h"
 #include "adresso.h"
 #include "virtual_sites.h"
+#include "metadynamics.h"
 
 /* include the force files */
 #include "p3m.h"

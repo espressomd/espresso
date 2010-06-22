@@ -78,13 +78,6 @@ extern double *meta_acc_force;
 /** Accumulated free energy profile */
 extern double *meta_acc_fprofile;
 
-/* Store previous external force on pid1 and pid2 */
-extern double *meta_prev_extf_1;
-extern double *meta_prev_extf_2;
-/* Store previous bias on pid1 and pid2 */
-extern double *meta_prev_bias_1;
-extern double *meta_prev_bias_2;
-
 /* Current vector of the reaction coordinate */
 extern double *meta_cur_xi;
 /* Current value of the reaction coordinate (scalar) */
@@ -113,12 +106,13 @@ int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv);
 /** Initialize metadynamics on start of integration 
  *  Create arrays if necessary. */
 void meta_init();
-/** Calculate reaction coordinate */
-void meta_calc_xi();
-/** Update free energy profile and bias force */
-void meta_update_bias();
-/** Apply force */
-void meta_apply_force();
+/** Metadynamics main function:
+ * - Calculate reaction coordinate 
+ * - Update profile and biased force 
+ * - apply external force
+*/
+void meta_perform();
+
 /** Calculate Lucy function */
 double calculate_lucy(double xi, double xi_0);
 /** Calculate derivative of Lucy function */

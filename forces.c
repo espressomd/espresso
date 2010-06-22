@@ -84,6 +84,11 @@ void force_calc()
   calc_comforce();
 #endif
 
+#ifdef METADYNAMICS
+    /* Metadynamics main function */
+    meta_perform();
+#endif
+
 /* this must be the last force to be calculated (Mehmet)*/
 #ifdef COMFIXED
   calc_comfixed();
