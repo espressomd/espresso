@@ -2,15 +2,84 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.5o                                                                              *
+* v2.1.5m                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.1.5o -
+****************************************************************************************
+* v2.1.5                                                                               *
+****************************************************************************************
+
+Current working revision.
+
+
+- v2.1.5m -
 -----------
 
+(m) June     11th, 2010.
+(l) May      25th, 2010.
+(k) May       7th, 2010.
+(j) May       4th, 2010.
+(i) May       3rd, 2010.
+(h) April    30th, 2010.
+(g) April    29th, 2010.
+(f) April    20th, 2010.
+(e) April     1st, 2010.
+(d) March    23rd, 2010.
+(c) March    16th, 2010.
+(b) March     2nd, 2010.
+(a) February 25th, 2010.
+
+New Features:
+(l) added automated search for Tcl paths in Ubuntu
+(j) added routine copy_particles to make a shifted copy of a set of particles (e.g.
+    a molecule)
+(g) common testsuite infrastructure for testing features and nprocs
+    etc
+(g) rotational particles now also store the director for faster computation of
+    GB
+(g) rotational inertia code by MJW
+(e) added detection for Mobile Sempron
+
+Changes:
+(m) Removed ROTATION from default configuration. The default caused strange
+    temperature computation.
+
+Bugfixes:
+(l) detection for some Pentium 4 was broken
+(k) fixed runtime errors that potential can cause segfaults when
+    raised.
+(i) fixed a missing GB_sigma and corrected indendation in gb.h
+(i) unfolding the coordinates for the DAWAANR dipolar interaction, added missing
+    prefactor
+(h) moved force calculations back from pressure.h to forces.h. This required to
+    introduce npt.h, so that the holographic pressure.h could be removed from most
+    headers.
+(h) separated Gay-Berne interaction from ROTATION feature
+(g) removed temporary static variables from rotation code
+(g) removed debug printfs
+(f) ljgen now uses the libc-pow function, which also allows for negative exponents,
+    and is in general faster
+(d) fixed wrong DPD formula in Users Guide (C source was correct)
+(c) Fixed documentation of LJ-generic potential.
+(b) fixed the fix so that compiling without NPT works again
+(a) fixed some broken sanity checks connected to npt
+(a) repaired broken statistics.c file
+
+
+****************************************************************************************
+* v2.1.5                                                                               *
+****************************************************************************************
+
+Current working revision.
+
+
+- v2.1.5p -
+-----------
+
+(p) June     22nd, 2010.
 (o) June     18th, 2010.
 (n) June     14th, 2010.
 (m) May      30th, 2010.
@@ -42,6 +111,9 @@ New Features:
     GB
 (g) rotational inertia code by MJW
 (e) added detection for Mobile Sempron
+
+Changes:
+(p) Metadynamics no longer relies on EXTERNAL forces.
 
 Bugfixes:
 (o) fixed documentation on Coulomb interaction, which was missing the Bjerrum
@@ -118,74 +190,6 @@ Bugfixes:
 (b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
 (a) repaired broken statistics.c file
-
-
-****************************************************************************************
-* v2.1.5                                                                               *
-****************************************************************************************
-
-Current working revision.
-
-
-- v2.1.5m -
------------
-
-(m) June     11th, 2010.
-(l) May      25th, 2010.
-(k) May       7th, 2010.
-(j) May       4th, 2010.
-(i) May       3rd, 2010.
-(h) April    30th, 2010.
-(g) April    29th, 2010.
-(f) April    20th, 2010.
-(e) April     1st, 2010.
-(d) March    23rd, 2010.
-(c) March    16th, 2010.
-(b) March     2nd, 2010.
-(a) February 25th, 2010.
-
-New Features:
-(l) added automated search for Tcl paths in Ubuntu
-(j) added routine copy_particles to make a shifted copy of a set of particles (e.g.
-    a molecule)
-(g) common testsuite infrastructure for testing features and nprocs
-    etc
-(g) rotational particles now also store the director for faster computation of
-    GB
-(g) rotational inertia code by MJW
-(e) added detection for Mobile Sempron
-
-Changes:
-(m) Removed ROTATION from default configuration. The default caused strange
-    temperature computation.
-
-Bugfixes:
-(l) detection for some Pentium 4 was broken
-(k) fixed runtime errors that potential can cause segfaults when
-    raised.
-(i) fixed a missing GB_sigma and corrected indendation in gb.h
-(i) unfolding the coordinates for the DAWAANR dipolar interaction, added missing
-    prefactor
-(h) moved force calculations back from pressure.h to forces.h. This required to
-    introduce npt.h, so that the holographic pressure.h could be removed from most
-    headers.
-(h) separated Gay-Berne interaction from ROTATION feature
-(g) removed temporary static variables from rotation code
-(g) removed debug printfs
-(f) ljgen now uses the libc-pow function, which also allows for negative exponents,
-    and is in general faster
-(d) fixed wrong DPD formula in Users Guide (C source was correct)
-(c) Fixed documentation of LJ-generic potential.
-(b) fixed the fix so that compiling without NPT works again
-(a) fixed some broken sanity checks connected to npt
-(a) repaired broken statistics.c file
-
-
-****************************************************************************************
-* v2.1.5                                                                               *
-****************************************************************************************
-
-Current working revision.
 
 
 - v2.1.4f -
