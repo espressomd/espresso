@@ -34,6 +34,7 @@
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "tab.h"
+#include "overlap.h"
 #include "ljcos.h"
 #include "ljcos2.h"
 #include "gb.h"
@@ -696,6 +697,8 @@ char *get_name_of_bonded_ia(int i) {
     return "SUBT_LJ";
   case BONDED_IA_TABULATED:
     return "tabulated";
+  case BONDED_IA_OVERLAPPED:
+    return "overlapped";
   case BONDED_IA_RIGID_BOND:
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
@@ -800,6 +803,14 @@ void make_bond_type_exist(int type)
       free(bonded_ia_params[type].p.tab.e);
     }
 #endif 
+#ifdef OVERLAPPED
+    if ( bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
+         bonded_ia_params[type].p.overlap.noverlaps > 0 ) {
+      free(bonded_ia_params[type].p.overlap.para_a);
+      free(bonded_ia_params[type].p.overlap.para_b);
+      free(bonded_ia_params[type].p.overlap.para_c);
+    }
+#endif
     return;
   }
   /* else allocate new memory */
@@ -847,6 +858,14 @@ void calc_maximal_cutoff()
 	max_cut_bonded = bonded_ia_params[i].p.tab.maxval;
       break;
 #endif
+#ifdef OVERLAPPED 
+    case BONDED_IA_OVERLAPPED:
+      /* in UNIT Angstrom */
+      if(bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_LENGTH &&
+         max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
+        max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
+      break;
+#endif
     default:
      break;
     }
@@ -871,6 +890,12 @@ void calc_maximal_cutoff()
     case BONDED_IA_TABULATED:
       if(bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
 	max_cut_bonded = max_cut_tmp;
+      break;
+#endif
+#ifdef OVERLAPPED 
+    case BONDED_IA_OVERLAPPED:
+      if(bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_DIHEDRAL)
+        max_cut_bonded = max_cut_tmp;
       break;
 #endif
     default:
@@ -1481,6 +1506,20 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
       return (TCL_OK);
     case TAB_BOND_DIHEDRAL:
       Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    }
+#endif
+#ifdef OVERLAPPED
+  case BONDED_IA_OVERLAPPED:
+    switch (params->p.overlap.type) {
+    case OVERLAP_BOND_LENGTH:
+      Tcl_AppendResult(interp, "overlapped bond \"",params->p.overlap.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    case OVERLAP_BOND_ANGLE:
+      Tcl_AppendResult(interp, "overlapped angle \"",params->p.overlap.filename,"\"",(char *) NULL);
+      return (TCL_OK);
+    case OVERLAP_BOND_DIHEDRAL:
+      Tcl_AppendResult(interp, "overlapped dihedral \"",params->p.overlap.filename,"\"",(char *) NULL);
       return (TCL_OK);
     }
 #endif
@@ -2132,6 +2171,9 @@ int inter_parse_bonded(Tcl_Interp *interp,
 #endif
 #ifdef TABULATED
   REGISTER_BONDED("tabulated", inter_parse_bonded_tabulated);
+#endif
+#ifdef OVERLAPPED
+  REGISTER_BONDED("overlapped", inter_parse_bonded_overlapped);
 #endif
 #ifdef BOND_CONSTRAINT
   REGISTER_BONDED("rigid_bond", inter_parse_rigid_bonds);

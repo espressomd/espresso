@@ -39,6 +39,7 @@
 #include "soft_sphere.h"
 #include "maggs.h"
 #include "tab.h"
+#include "overlap.h"
 #include "ljcos.h"
 #include "ljcos2.h"
 #include "ljangle.h"
@@ -496,6 +497,25 @@ MDINLINE void add_bonded_force(Particle *p1)
 	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
+      }
+      break;
+#endif
+#ifdef OVERLAPPED
+    case BONDED_IA_OVERLAPPED:
+      switch(iaparams->p.overlap.type) {
+      case OVERLAP_BOND_LENGTH:
+        bond_broken = calc_overlap_bond_force(p1, p2, iaparams, dx, force);
+        break;
+      case OVERLAP_BOND_ANGLE:
+        bond_broken = calc_overlap_angle_force(p1, p2, p3, iaparams, force, force2);
+        break;
+      case OVERLAP_BOND_DIHEDRAL:
+        bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
+        break;
+      default:
+        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
+        return;
       }
       break;
 #endif

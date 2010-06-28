@@ -35,6 +35,7 @@
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
+#include "overlap.h"
 #include "ljcos.h"
 #include "ljangle.h"
 #include "gb.h"
@@ -1291,6 +1292,15 @@ void mpi_bcast_ia_params(int i, int j)
       MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     }
 #endif
+#ifdef OVERLAPPED
+    /* For overlapped potentials we have to send the ovelapped-functions extra */
+    if(bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
+      int size = bonded_ia_params[i].p.overlap.noverlaps;
+      MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    }
+#endif
   }
   
   on_short_range_ia_change();
@@ -1346,6 +1356,19 @@ void mpi_bcast_ia_params_slave(int i, int j)
       bonded_ia_params[i].p.tab.e = (double*)malloc(size*sizeof(double));
       MPI_Bcast(bonded_ia_params[i].p.tab.f, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
       MPI_Bcast(bonded_ia_params[i].p.tab.e, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    }
+#endif
+#ifdef OVERLAPPED
+    /* For overlapped potentials we have to send the ovelapped-functions extra */
+    if(bonded_ia_params[i].type == BONDED_IA_OVERLAPPED) {
+      int size = bonded_ia_params[i].p.overlap.noverlaps;
+      /* alloc overlapped parameter arrays on slave nodes! */
+      bonded_ia_params[i].p.overlap.para_a = (double*)malloc(size*sizeof(double));
+      bonded_ia_params[i].p.overlap.para_b = (double*)malloc(size*sizeof(double));
+      bonded_ia_params[i].p.overlap.para_c = (double*)malloc(size*sizeof(double));
+      MPI_Bcast(bonded_ia_params[i].p.overlap.para_a, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(bonded_ia_params[i].p.overlap.para_b, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+      MPI_Bcast(bonded_ia_params[i].p.overlap.para_c, size, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     }
 #endif
   }

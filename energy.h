@@ -30,6 +30,7 @@
 #include "ljcos2.h"
 #include "ljangle.h"
 #include "tab.h"
+#include "overlap.h"
 #include "gb.h"
 #include "fene.h"
 #include "harmonic.h"
@@ -340,6 +341,25 @@ MDINLINE void add_bonded_energy(Particle *p1)
 	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
+      }
+      break;
+#endif
+#ifdef OVERLAPPED
+    case BONDED_IA_OVERLAPPED:
+      switch(iaparams->p.overlap.type) {
+      case OVERLAP_BOND_LENGTH:
+        bond_broken = overlap_bond_energy(p1, p2, iaparams, dx, &ret);
+        break;
+      case OVERLAP_BOND_ANGLE:
+        bond_broken = overlap_angle_energy(p1, p2, p3, iaparams, &ret);
+        break;
+      case OVERLAP_BOND_DIHEDRAL:
+        bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+        break;
+      default :
+        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: overlapped bond type of atom %d unknown\n", p1->p.identity);
+        return;
       }
       break;
 #endif

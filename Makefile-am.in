@@ -94,7 +94,7 @@ am__Espresso_bin_SOURCES_DIST = main.c config.c config.h initialize.c \
 	endangledist.h buckingham.h comfixed.h comforce.h \
 	debye_hueckel.h reaction_field.h dihedral.h fene.h gb.h \
 	harmonic.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h steppot.h \
-	bmhtf-nacl.h morse.h polynom.h soft_sphere.h subt_lj.h tab.h \
+	bmhtf-nacl.h morse.h polynom.h soft_sphere.h subt_lj.h tab.h overlap.h \
 	ljangle.h adresso.c adresso.h tunable_slip.h mpifake/mpi.h \
 	mpifake/mpi.c
 am__dirstamp = $(am__leading_dot)dirstamp
@@ -328,7 +328,7 @@ Espresso_bin_SOURCES = main.c config.c config.h initialize.c \
 	debye_hueckel.h reaction_field.h dihedral.h fene.h gb.h \
 	harmonic.h imd.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h \
 	steppot.h bmhtf-nacl.h morse.h polynom.h soft_sphere.h \
-	subt_lj.h tab.h ljangle.h adresso.c adresso.h tunable_slip.h \
+	subt_lj.h tab.h overlap.h ljangle.h adresso.c adresso.h tunable_slip.h \
 	$(am__append_1)
 
 #################################################################

@@ -105,6 +105,7 @@ Espresso_bin_SOURCES = \
 	soft_sphere.h \
 	subt_lj.h \
 	tab.h \
+	overlap.h \
 	ljangle.h \
 	adresso.c adresso.h \
         tunable_slip.h

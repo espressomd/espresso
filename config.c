@@ -148,6 +148,9 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef TABULATED
   Tcl_AppendResult(interp, "{ TABULATED } ", (char *) NULL);
 #endif
+#ifdef OVERLAPPED 
+  Tcl_AppendResult(interp, "{ OVERLAPPED } ", (char *) NULL);
+#endif
 #ifdef LENNARD_JONES
   Tcl_AppendResult(interp, "{ LENNARD_JONES } ", (char *) NULL);
 #endif

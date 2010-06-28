@@ -131,6 +131,6 @@ add_executable(Espresso_bin
   lb.c lb.h lb-d3q18.h lb-d3q19.h bin.c bin.h lattice.c lattice.h halo.c halo.h statistics_fluid.c statistics_fluid.h lb-boundaries.c 
   lb-boundaries.h utils.c utils.h angle.h pwdist.h angledist.h endangledist.h buckingham.h comfixed.h comforce.h debye_hueckel.h reaction_field.h
   dihedral.h fene.h gb.h harmonic.h imd.h ljcos2.h ljcos.h lj.h ljgen.c ljgen.h steppot.h bmhtf-nacl.h morse.h polynom.h soft_sphere.h subt_lj.h 
-  tab.h ljangle.h adresso.c adresso.h tunable_slip.h ${MYCONFIG} ${EXTRA_SOURCE})
+  tab.h overlap.h ljangle.h adresso.c adresso.h tunable_slip.h ${MYCONFIG} ${EXTRA_SOURCE})
 
 target_link_libraries(Espresso_bin ${LIBRARIES})

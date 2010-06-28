@@ -52,12 +52,21 @@
 #define BONDED_IA_ANGLEDIST     8
 /** Type of bonded interaction is a bond angle -- chain ends have angle with wall constraint */
 #define BONDED_IA_ENDANGLEDIST    9
+/** Type of overlapped bonded interaction potential, 
+    may be of bond length, of bond angle or of dihedral type. */
+#define BONDED_IA_OVERLAPPED 10 
 
 /* Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
 #define TAB_BOND_LENGTH      1
 #define TAB_BOND_ANGLE       2
 #define TAB_BOND_DIHEDRAL    3
+
+/* Specify overlapped bonded interactions  */
+#define OVERLAP_UNKNOWN          0
+#define OVERLAP_BOND_LENGTH      1
+#define OVERLAP_BOND_ANGLE       2
+#define OVERLAP_BOND_DIHEDRAL    3
 
 /*@}*/
 
@@ -519,6 +528,18 @@ typedef struct {
       double *f;
       double *e;
     } tab;
+#endif
+#ifdef OVERLAPPED 
+    /** Parameters for n-body overlapped potential (n=2,3,4). */
+    struct {
+      char   *filename;
+      int    type;
+      double maxval;
+      int    noverlaps;
+      double *para_a;
+      double *para_b;
+      double *para_c;
+    } overlap;
 #endif
     /** Dummy parameters for -LJ Potential */
     struct {
