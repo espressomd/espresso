@@ -43,6 +43,7 @@
 /* #define MAGNETIC_DIPOLAR_DIRECT_SUM */
 /* #define MDLC */
 /* #define METADYNAMICS */
+/* #define OVERLAPPED */
 
 /**********************************************************************/
 /*                        integrator features                         */
