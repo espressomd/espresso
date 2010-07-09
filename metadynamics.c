@@ -300,7 +300,7 @@ int meta_print_stat(Tcl_Interp *interp, int argc, char **argv)
   } else if ( ARG1_IS_S("force") ) {
     /* Values of the biased force */
     for (j = 0; j < meta_xi_num_bins; ++j) {
-      Tcl_PrintDouble(interp, meta_acc_force[j], buffer);
+      Tcl_PrintDouble(interp, -1.*meta_acc_force[j], buffer);
       Tcl_AppendResult(interp,buffer," ", (char *)NULL);
     }
   } else {
@@ -330,7 +330,7 @@ int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv){
   }
 							       
   // load free energy profile
-  int i, tmp_argc, parse_error = 0;
+  int i, tmp_argc, parse_error = 0, empty_line=0;
   const char  **tmp_argv;
   DoubleList profile, force;
   
@@ -338,15 +338,19 @@ int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv){
   Tcl_ResetResult(interp);
   Tcl_SplitList(interp, argv[1], &tmp_argc, &tmp_argv);
   realloc_doublelist(&profile, profile.n = tmp_argc);
+  printf("profile.n %d, meta_xi_num_bins %d\n",profile.n,meta_xi_num_bins);
   /* Now check that the number of items parsed is equal to the number of bins */
-  if (profile.n != meta_xi_num_bins) {
-    Tcl_AppendResult(interp, "Size of profile list loaded is different than expected from number of bins", (char *)NULL);
-    return (TCL_ERROR);
+  /* If there's one extra line, assume it's an empty line */
+  if (profile.n == meta_xi_num_bins+1)
+      empty_line = 1;
+  else if (profile.n != meta_xi_num_bins) {
+      Tcl_AppendResult(interp, "Size of profile list loaded is different than expected from number of bins", (char *)NULL);
+      return (TCL_ERROR);
   }
   /* call meta_init() in case it has been loaded yet */
   meta_init();
   
-  for(i = 0 ; i < tmp_argc; i++) {
+  for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
     const char  **tmp_argv2;
     Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
@@ -371,11 +375,13 @@ int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv){
   Tcl_SplitList(interp, argv[1], &tmp_argc, &tmp_argv);
   realloc_doublelist(&force, force.n = tmp_argc);
   /* Now check that the number of items parsed is equal to the number of bins */
-  if (profile.n != meta_xi_num_bins) {
+  if (profile.n == meta_xi_num_bins+1)
+      empty_line = 1;
+  else if (profile.n != meta_xi_num_bins) {
     Tcl_AppendResult(interp, "Size of force list loaded is different than expected from number of bins", (char *)NULL);
     return (TCL_ERROR);
   }
-  for(i = 0 ; i < tmp_argc; i++) {
+  for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
     const char  **tmp_argv2;
     Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
@@ -385,7 +391,7 @@ int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv){
     }
     if (Tcl_GetDouble(interp, tmp_argv2[0], &(force.e[i])) == TCL_ERROR) { parse_error = 1; break; }
     /* Load data into meta_acc_fprofile */
-    meta_acc_force[i] = force.e[i];
+    meta_acc_force[i] = -1.*force.e[i];
     
     Tcl_Free((char *)tmp_argv2);
   }
