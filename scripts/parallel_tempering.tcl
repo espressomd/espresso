@@ -382,6 +382,10 @@ namespace eval parallel_tempering {
 	variable values; variable load;	variable info
 	variable init; variable swap; variable perform
 
+	set init ""
+	set values ""
+	set master ""
+
 	while {$args != ""} {
 	    set arg [lindex $args 0]
 	    switch -- $arg {
