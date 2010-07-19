@@ -27,7 +27,7 @@
 #include "utils.h"
 
 #ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
 
 /** Initializes the constrains in the system. 
  *  This function determines the lattice sited which belong to boundaries

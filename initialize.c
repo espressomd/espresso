@@ -93,6 +93,11 @@ int on_program_start(Tcl_Interp *interp)
   fft_pre_init();
 #endif
 
+#ifdef LB
+  lb_pre_init();
+#endif
+
+
   /*
     call all initializations to do only on the master node here.
   */
@@ -357,14 +362,6 @@ void on_constraint_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
-
-#ifdef LB
-#ifdef CONSTRAINTS
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_constraints();
-  }
-#endif
-#endif
 
   recalc_forces = 1;
 }

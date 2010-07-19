@@ -26,7 +26,7 @@
 #include "lb-boundaries.h"
 
 #ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
 
 /** Initialize a planar boundary specified by a wall constraint.
  * @param plane The \ref Constraint_wall struct describing the boundary.

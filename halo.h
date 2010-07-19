@@ -7,7 +7,7 @@
  * You should have received a copy of that license along with this program;
  * if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
  * write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
- * Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+ * Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
  */
 
 /** \file halo.h 
@@ -57,7 +57,8 @@
  * is similar to MPI datatypes but a bit more compact. See \ref
  * halo_create_fieldtype, \ref halo_create_field_vector and \ref
  * halo_dtcopy to understand how it works. */
-typedef struct _Fieldtype {
+typedef struct _Fieldtype *Fieldtype;
+struct _Fieldtype {
   int count;    /**< number of subtypes in fieldtype */
   int *disps;   /**< displacements of the subtypes */
   int *lengths; /**< lengths of the subtypes */
@@ -65,21 +66,30 @@ typedef struct _Fieldtype {
   int vblocks;  /**< number of blocks in field vectors */
   int vstride;  /**< size of strides in field vectors */
   int vskip;    /**< displacement between strides in field vectors */
-} *Fieldtype;
+  int vflag;
+  Fieldtype subtype;
+};
+
+/** Predefined fieldtypes */
+extern struct _Fieldtype fieldtype_double;
+#define FIELDTYPE_DOUBLE (&fieldtype_double)
 
 /** Structure describing a Halo region */
 typedef struct {
 
-  int type;              /**< type of halo communication */
+  int type;               /**< type of halo communication */
 
-  int source_node;       /**< index of processor which sends halo data */
-  int dest_node;         /**< index of processor receiving halo data */
+  int source_node;        /**< index of processor which sends halo data */
+  int dest_node;          /**< index of processor receiving halo data */
 
-  void *send_buffer;     /**< pointer to data being sent */
-  void *recv_buffer;     /**< pointer to data being received */
+  //void *send_buffer;      /**< pointer to data being sent */
+  //void *recv_buffer;      /**< pointer to data being received */
 
-  Fieldtype fieldtype;   /**< type layout of the data beeing exchanged */
-  MPI_Datatype datatype; /**< MPI datatype of data beeing communicated */
+  unsigned long s_offset; /**< offset for send buffer */
+  unsigned long r_offset; /**< offset for receive buffer */
+
+  Fieldtype fieldtype;    /**< type layout of the data beeing exchanged */
+  MPI_Datatype datatype;  /**< MPI datatype of data beeing communicated */
 
 } HaloInfo ;
 
@@ -110,6 +120,7 @@ void halo_create_fieldtype(int count, int *lens, int *disps, int extent, Fieldty
  *  @param newtype newly created fieldtype (Input/Output)
  */
 void halo_create_field_vector(int vblocks, int vstride, int vskip, Fieldtype oldtype, Fieldtype *newtype);
+void halo_create_field_hvector(int vblocks, int vstride, int vskip, Fieldtype oldtype, Fieldtype *newtype);
 
 /** Frees a fieldtype
  * @param ftype pointer to the type to be freed (Input)
@@ -134,7 +145,7 @@ void release_halo_communication(HaloCommunicator *hc);
  *  described by the halo communicator
  * @param hc halo communicator describing the parallelization scheme
  */
-void halo_communication(HaloCommunicator *hc);
+void halo_communication(HaloCommunicator *hc, void *base);
 
 #endif /* LATTICE */
 
