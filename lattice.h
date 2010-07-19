@@ -24,6 +24,8 @@
 #include "grid.h"
 #include "particle_data.h"
 
+extern int lattice_switch;
+
 #ifdef LATTICE
 
 #define index_t long
@@ -39,7 +41,6 @@
  *  combined by or'ing the respective flags.
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
-extern int lattice_switch;
 
 /** Data structure describing a lattice.
  *  Contains the lattice layout and pointers to the data fields.
