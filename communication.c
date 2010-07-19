@@ -32,6 +32,7 @@
 #include "random.h"
 #include "lj.h"
 #include "lb.h"
+#include "lb-boundaries.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -181,9 +182,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_ICCP3M_INIT 53
 /** Action number for \ref mpi_send_rotational_inertia. */
 #define REQ_SET_RINERTIA  54
+/** Action number for \ref mpi_bcast_constraint */
+#define REQ_BCAST_LBBOUNDARY 55
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 55
+#define REQ_MAXIMUM 56
 
 /*@}*/
 
@@ -216,6 +219,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm);
 void mpi_send_ext_slave(int node, int parm);
 void mpi_remove_particle_slave(int node, int parm);
 void mpi_bcast_constraint_slave(int node, int parm);
+void mpi_bcast_lb_boundary_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
@@ -307,6 +311,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
+  mpi_bcast_lb_boundary_slave       /* 55: REQ_BCAST_LBBOUNDARY */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -376,6 +381,7 @@ char *names[] = {
   "REQ_ICCP3M_ITERATION", /* 52 */
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
+  "REQ_BCAST_LBBOUNDARY", /* 55 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1987,6 +1993,58 @@ void mpi_bcast_constraint_slave(int node, int parm)
   }
 
   on_constraint_change();
+#endif
+}
+
+/*************** REQ_BCAST_LBBOUNDARY ************/
+void mpi_bcast_lb_boundary(int del_num)
+{
+#ifdef LB
+#ifdef CONSTRAINTS
+  mpi_issue(REQ_BCAST_LBBOUNDARY, 0, del_num);
+
+  if (del_num == -1) {
+    /* bcast new boundaries */
+    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (del_num == -2) {
+    /* delete all boundaries */
+    n_lb_boundaries = 0;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+  }
+  else {
+    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_boundary));
+    n_lb_boundaries--;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+  }
+
+  on_lb_boundary_change();
+#endif
+#endif
+}
+
+void mpi_bcast_lb_boundary_slave(int node, int parm)
+{   
+#ifdef LB
+#ifdef CONSTRAINTS
+  if(parm == -1) {
+    n_lb_boundaries++;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (parm == -2) {
+    /* delete all boundaries */
+    n_lb_boundaries = 0;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+  }
+  else {
+    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_boundary));
+    n_lb_boundaries--;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));    
+  }
+
+  on_lb_boundary_change();
+#endif
 #endif
 }
 

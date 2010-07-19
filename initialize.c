@@ -363,6 +363,30 @@ void on_constraint_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
+#ifdef LB
+#ifdef CONSTRAINTS
+  if(lattice_switch & LATTICE_LB) {
+    lb_init_boundaries();
+  }
+#endif
+#endif
+
+  recalc_forces = 1;
+}
+
+void on_lb_boundary_change()
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_lb_boundary_change\n", this_node));
+  invalidate_obs();
+
+#ifdef LB_BOUNDARIES
+  printf("executing on_lb_boundary_change on node %d\n", this_node);
+  
+  if(lattice_switch & LATTICE_LB) {
+    lb_init_boundaries();
+  }
+#endif
+
   recalc_forces = 1;
 }
 
@@ -693,6 +717,8 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("blockfile", blockfile);
   /* in constraint.c */
   REGISTER_COMMAND("constraint", constraint);
+  /* in lb-boundaries.c */
+  REGISTER_COMMAND("lb_boundary", lb_boundary);
   /* in uwerr.c */
   REGISTER_COMMAND("uwerr", uwerr);
   /* in nemd.c */

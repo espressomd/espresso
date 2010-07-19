@@ -115,7 +115,7 @@ typedef struct {
   /** local force density TODO: FORCE DENSITY or  FORCE?*/
   double force[3];
 
-#ifdef LB_BOUNDARIES
+#ifdef CONSTRAINTS
    /** flag indicating whether this site belongs to a boundary */
    int boundary;
 

@@ -80,6 +80,9 @@ void on_ghost_flags_change();
 
 void on_lb_params_change(int field);
 
+/** called every time the walls for the lb fluid are changed */
+void on_lb_boundary_change();
+
 /*@}*/
 
 #endif
