@@ -3,7 +3,8 @@ SUBDIRS = . scripts testsuite doc
 # List files that should go into the distribution but are not required
 # by any other means
 EXTRA_DIST = Makefile GPL.TXT LICENSE.TXT RELEASE_NOTES darwinlink.sh \
-	autogen.sh configure-ac copyright.sh samples packages Espresso \
+	autogen.sh configure-ac copyright.sh samples cmake CMakeLists.txt \
+        acconfig.h.cmakein packages Espresso \
 	$(extra)
 
 # List headers that are not used by the program here
@@ -72,6 +73,7 @@ Espresso_bin_SOURCES = \
 	molforces.c molforces.h \
 	virtual_sites.c virtual_sites.h \
 	metadynamics.c metadynamics.h \
+        npt.c \
 	lb.c lb.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
@@ -93,6 +95,7 @@ Espresso_bin_SOURCES = \
 	fene.h \
 	gb.h \
 	harmonic.h \
+        hertzian.h \
 	imd.h \
 	ljcos2.h \
 	ljcos.h \
