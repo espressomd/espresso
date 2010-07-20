@@ -2,6 +2,7 @@
 tests= \
 	nve_pe.tcl npt.tcl \
 	madelung.tcl p3m.tcl el2d.tcl \
+        madelung_ewald.tcl \
 	p3m-magnetostatics.tcl \
 	el2d_nonneutral.tcl el2d_die.tcl mmm1d.tcl dh.tcl \
 	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
@@ -28,6 +29,7 @@ EXTRA_DIST = $(tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
+        p3m-magnetostatics-t1.dat \
 	p3m_system.data el2d_system.data el2d_system_die.data\
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
