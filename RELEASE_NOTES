@@ -2,24 +2,15 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.1.5n                                                                              *
+* v2.1.5l                                                                              *
 ****************************************************************************************
 
 Current working revision.
 
 
-****************************************************************************************
-* v2.1.5                                                                               *
-****************************************************************************************
-
-Current working revision.
-
-
-- v2.1.5n -
+- v2.1.5l -
 -----------
 
-(n) July     11th, 2010.
-(m) June     11th, 2010.
 (l) May      25th, 2010.
 (k) May       7th, 2010.
 (j) May       4th, 2010.
@@ -44,13 +35,7 @@ New Features:
 (g) rotational inertia code by MJW
 (e) added detection for Mobile Sempron
 
-Changes:
-(m) Removed ROTATION from default configuration. The default caused strange
-    temperature computation.
-
 Bugfixes:
-(n) fixed some initialization that prevented parallel tempering from being
-    restarted
 (l) detection for some Pentium 4 was broken
 (k) fixed runtime errors that potential can cause segfaults when
     raised.
@@ -70,13 +55,6 @@ Bugfixes:
 (b) fixed the fix so that compiling without NPT works again
 (a) fixed some broken sanity checks connected to npt
 (a) repaired broken statistics.c file
-
-
-****************************************************************************************
-* v2.1.5                                                                               *
-****************************************************************************************
-
-Current working revision.
 
 
 - v2.1.5q -
@@ -148,9 +126,25 @@ Bugfixes:
 (a) repaired broken statistics.c file
 
 
-- v2.1.5l -
+****************************************************************************************
+* v2.1.5                                                                               *
+****************************************************************************************
+
+Current working revision.
+
+
+****************************************************************************************
+* v2.1.5                                                                               *
+****************************************************************************************
+
+Current working revision.
+
+
+- v2.1.5n -
 -----------
 
+(n) July     11th, 2010.
+(m) June     11th, 2010.
 (l) May      25th, 2010.
 (k) May       7th, 2010.
 (j) May       4th, 2010.
@@ -175,7 +169,13 @@ New Features:
 (g) rotational inertia code by MJW
 (e) added detection for Mobile Sempron
 
+Changes:
+(m) Removed ROTATION from default configuration. The default caused strange
+    temperature computation.
+
 Bugfixes:
+(n) fixed some initialization that prevented parallel tempering from being
+    restarted
 (l) detection for some Pentium 4 was broken
 (k) fixed runtime errors that potential can cause segfaults when
     raised.
