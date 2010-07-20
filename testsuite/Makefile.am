@@ -2,7 +2,6 @@
 tests= \
 	nve_pe.tcl npt.tcl \
 	madelung.tcl p3m.tcl el2d.tcl \
-        madelung_ewald.tcl \
 	p3m-magnetostatics.tcl \
 	el2d_nonneutral.tcl el2d_die.tcl mmm1d.tcl dh.tcl \
 	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
