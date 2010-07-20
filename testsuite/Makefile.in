@@ -203,6 +203,7 @@ EXTRA_DIST = $(tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
+        p3m-magnetostatics-t1.dat \
 	p3m_system.data el2d_system.data el2d_system_die.data\
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \

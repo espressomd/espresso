@@ -210,6 +210,7 @@ dist_scripts_DATA = \
 	pdb.tcl \
 	polymer.tcl \
 	pov.tcl \
+        set_features \
 	statistics.tcl \
 	vmd_plg.tcl \
 	vtf.tcl \
