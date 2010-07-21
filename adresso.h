@@ -12,6 +12,14 @@
 /** \file adresso.h
     This is the place for adaptive resolution scheme (adress)
     Implementation of adresso.h
+
+    For more details about adress see:
+    - M. Praprotnik, L. Delle Site and K. Kremer, JCP 123, 224106, 2005. 
+    - M. Praprotnik, L. Delle Site and K. Kremer, Annu. Rev. Phys. Chem. 59, 545-571, 2008. 
+    - S. Poblete, M. Praprotnik, K. Kremer and L. Delle Site, J. Chem. Phys. 132, 114101, 2010. 
+
+    For more detail about the implementation here see:
+    - C. Junghans and S. Poblete, Comp. Phys. Comm. 181, 1449, 2010.
 */
 
 #include <tcl.h>

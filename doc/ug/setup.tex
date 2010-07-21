@@ -461,7 +461,7 @@ N*\var{n\_layers} layers along the z axis. Since in x and y direction
 there are no processor boundaries, the implementation is basically
 just a stripped down version of the domain decomposition cellsystem.
 
-\subsection{AdResS}
+\section{AdResS}
 \begin{essyntax}
 adress set topo \var{kind} width \var{width} \var{hybrid\_width} center x \var{R\_x} wf \var{wf}
 \begin{features}
@@ -482,8 +482,8 @@ where \var{kind} determines the type of AdResS simulation:\newline
 1&user defined
 \end{tabular}\newline
 \var{width} and \var{hybrid\_width} are the widths of the explicit and hybrid regions respectively and \var{R\_x} is the $x$ position of the center of the explicit zone.
-
-For further information see \cite{junghans10}
+For more details on the method itself see \cite{praprotnik05,praprotnik08,poblete10}.
+And for further information about the technical implementation see \cite{junghans10}.
 
 %%% Local Variables: 
 %%% mode: latex
