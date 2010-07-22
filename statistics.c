@@ -1254,8 +1254,8 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd,
   for(c1=0; c1<n_configs; c1++) { 
     for(c3=(c1+1); c3<n_configs; c3++) { 
       for(i=0; i<p.n; i++) {
-	p1[0]=configs[c1][3*i  ]; p1[1]=configs[c1][3*i+1]; p1[2]=configs[c1][3*i+2];
-	p2[0]=configs[c3][3*i  ]; p2[1]=configs[c3][3*i+1]; p2[2]=configs[c3][3*i+2];
+        p1[0]=configs[c1][3*p.e[i] ]; p1[1]=configs[c1][3*p.e[i]+1]; p1[2]=configs[c1][3*p.e[i]+2];
+        p2[0]=configs[c3][3*p.e[i]  ]; p2[1]=configs[c3][3*p.e[i]+1]; p2[2]=configs[c3][3*p.e[i]+2];
 	dist = distance(p1, p2);
 	if(dist > rmin && dist < rmax) {
 	  ind = (int) ( (dist - rmin)*inv_bin_width );
