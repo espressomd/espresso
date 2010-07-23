@@ -144,6 +144,7 @@ The output corresponds to the blockfile format (see section
 \analyzeindex{van Hove autocorrelation function $G(r,t)$}
 \begin{essyntax}
   analyze vanhove \var{type} \var{rmin} \var{rmax} \var{rbins}
+  \opt{\var{tmax}}
 \end{essyntax}
 Returns the van Hove auto correlation function $G(r,t)$ and the mean
 square displacement $msd(t)$ for particles of type \var{ptype} for the
@@ -153,7 +154,10 @@ configurations stored with \codebox{analyze append} (see section
 $G(r,t)$ is calculated for each multiple of this time intervals. For
 each time t the distribution of particle displacements is calculated
 acoording to the specification given by \var{rmin}, \var{rmax} and
-\var{rbins}. If the particles perform a random walk (\ie a normal
+\var{rbins}. Optional argument \var{tmax} defines the maximum value
+of $t$ for which $G(r,t)$ is calculated. If it is omitted or set to
+zero, maximum possible value is used.
+If the particles perform a random walk (\ie a normal
 diffusion process) $G(r,t)/r^2$ is a gaussian distribution for all
 times.  Deviations of this behavior hint on another diffusion process
 or on the fact that your system has not reached the diffusive regime.

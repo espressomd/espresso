@@ -270,11 +270,12 @@ void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
     @param rmin     minimal distance for G(r,t)
     @param rmax     maximal distance for G(r,t)
     @param rbins    number of bins for the r distribution in G(r,t)
+    @param tmax     max time, for which G(r,t) is computed, if omitted or set to zero, default tmax=n_configs-1 is used
     @param msd      array to store the mean square displacement (size n_configs-1)
     @param vanhove  array to store G(r,t) (size (n_configs-1)*(rbins))
 
 */
-double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd, double **vanhove);
+double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, double *msd, double **vanhove);
 
 
 /** Calculates the spherically averaged structure factor.

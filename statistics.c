@@ -1232,9 +1232,9 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
   return TCL_OK;
 }
 
-double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd, double **vanhove) 
+double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, double *msd, double **vanhove) 
 {
-  int i, c1, c3, ind, np=0;
+  int i, c1, c3, c3_max, ind, np=0;
   double p1[3],p2[3],dist;
   double bin_width, inv_bin_width;
   IntList p;
@@ -1252,10 +1252,11 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd,
  
   /* calculate msd and store distribution in vanhove */
   for(c1=0; c1<n_configs; c1++) { 
-    for(c3=(c1+1); c3<n_configs; c3++) { 
+    c3_max=(c1+tmax+1)>n_configs ? n_configs : c1+tmax+1;
+    for(c3=(c1+1); c3<c3_max; c3++) { 
       for(i=0; i<p.n; i++) {
-        p1[0]=configs[c1][3*p.e[i] ]; p1[1]=configs[c1][3*p.e[i]+1]; p1[2]=configs[c1][3*p.e[i]+2];
-        p2[0]=configs[c3][3*p.e[i]  ]; p2[1]=configs[c3][3*p.e[i]+1]; p2[2]=configs[c3][3*p.e[i]+2];
+	p1[0]=configs[c1][3*p.e[i] ]; p1[1]=configs[c1][3*p.e[i]+1]; p1[2]=configs[c1][3*p.e[i]+2];
+	p2[0]=configs[c3][3*p.e[i]  ]; p2[1]=configs[c3][3*p.e[i]+1]; p2[2]=configs[c3][3*p.e[i]+2];
 	dist = distance(p1, p2);
 	if(dist > rmin && dist < rmax) {
 	  ind = (int) ( (dist - rmin)*inv_bin_width );
@@ -1267,7 +1268,7 @@ double calc_vanhove(int ptype, double rmin, double rmax, int rbins, double *msd,
   }
 
   /* normalize */
-  for(c1=0; c1<(n_configs-1); c1++) { 
+  for(c1=0; c1<(tmax); c1++) { 
     for(i=0; i<rbins; i++) { vanhove[c1][i] /= (double) (n_configs-c1-1)*p.n; }
     msd[c1] /= (double) (n_configs-c1-1)*p.n;
   }
@@ -2964,7 +2965,7 @@ static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
   /**********************************************************/
 
   char buffer[2*TCL_DOUBLE_SPACE+4];
-  int c,i,ptype=0, rbins=0, np=0;
+  int c,i,ptype=0, rbins=0, np=0, tmax=0;
   double rmin=0, rmax=0;
   double **vanhove=NULL;
   double *msd=NULL;
@@ -2972,7 +2973,7 @@ static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
   /* checks */
   if (argc < 4) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze vanhove <part_type> <r_min> <r_max> <r_bins>", (char *)NULL);
+    Tcl_AppendResult(interp, "Wrong # of args! usage: analyze vanhove <part_type> <r_min> <r_max> <r_bins> [<t_max>]", (char *)NULL);
     return (TCL_ERROR);
   }
   
@@ -2980,37 +2981,51 @@ static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
   if (!ARG0_IS_D(rmin))  return (TCL_ERROR); argc--; argv++;
   if (!ARG0_IS_D(rmax))  return (TCL_ERROR); argc--; argv++;
   if (!ARG0_IS_I(rbins)) return (TCL_ERROR); argc--; argv++;
+  if (argc==1) {
+    if (!ARG0_IS_I(tmax)) return (TCL_ERROR); argc--; argv++;
+  } else if (argc>1) {
+    Tcl_ResetResult(interp);
+    sprintf(buffer, "%d", argc);
+    Tcl_AppendResult(interp, "Wrong # of args! usage: analyze vanhove <part_type> <r_min> <r_max> <r_bins> [<t_max>]",(char *)NULL);
+    return (TCL_ERROR);
+  }
 
   if (n_configs == 0) {
-	Tcl_AppendResult(interp, "no configurations found! (This is a dynamic quantity!)", (char *)NULL);
+	Tcl_AppendResult(interp, "analyze vanhove: no configurations found! (This is a dynamic quantity!)", (char *)NULL);
 	return TCL_ERROR;
   }
+
+  if (tmax>=n_configs) { 
+     Tcl_ResetResult(interp);
+     Tcl_AppendResult(interp, "analyze vanhove: setting tmax >= n_configs is not allowed", (char *)NULL);
+     return (TCL_ERROR);
+  } else if (tmax==0) { tmax=n_configs-1; }
 
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
 
   /* allocate space */
-  vanhove = (double **) malloc((n_configs)*sizeof(double *));
-  for(c=0; c<n_configs; c++) { 
+  vanhove = (double **) malloc((tmax)*sizeof(double *));
+  for(c=0; c<(tmax); c++) { 
     vanhove[c] = (double *) malloc(rbins*sizeof(double));
     for(i=0; i<rbins; i++) { vanhove[c][i] = 0; }
   }
-  msd = (double *) malloc(n_configs*sizeof(double));
-  for(i=0; i<n_configs; i++) { msd[i] = 0; }
+  msd = (double *) malloc((tmax)*sizeof(double));
+  for(i=0; i<(tmax); i++) { msd[i] = 0; }
  
   /* calculation */
-  np = calc_vanhove(ptype,rmin,rmax,rbins,msd,vanhove);
+  np = calc_vanhove(ptype,rmin,rmax,rbins,tmax,msd,vanhove);
  
   /* return results */
   if(np==0) {
     Tcl_AppendResult(interp, "{ no particles }", (char *)NULL);
   } else {
     Tcl_AppendResult(interp, "{ msd { ", (char *)NULL);
-    for(c=0; c<(n_configs-1); c++) {
+    for(c=0; c<(tmax); c++) {
       sprintf(buffer,"%f ",msd[c]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     Tcl_AppendResult(interp, "} } { vanhove { ", (char *)NULL);
-    for(c=0; c<(n_configs-1); c++) {
+    for(c=0; c<(tmax); c++) {
       Tcl_AppendResult(interp, "{ ", (char *)NULL);
       for(i=0; i<rbins; i++) {
 	sprintf(buffer,"%f ",vanhove[c][i]);
@@ -3023,7 +3038,7 @@ static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
 
 
   // free space of times and vanhove
-  for(c=0; c<n_configs; c++) { free(vanhove[c]); } 
+  for(c=0; c<(tmax); c++) { free(vanhove[c]); } 
   free(vanhove);
   free(msd);
 
