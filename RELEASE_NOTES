@@ -2,19 +2,23 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.2.0a (Walaskialf)                                                                 *
+* v2.2.0b (Walaskialf)                                                                 *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.2.0a -
+- v2.2.0b -
 -----------
 
+(b) July 25th, 2010.
 (a) July 21st, 2010.
 
 Changes:
 (a) added more reference to original adress papers
+
+Bugfixes:
+(b) removed duplicated file in scripts/Makefile.am
 
 
 - v2.1.5q -
