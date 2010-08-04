@@ -107,7 +107,7 @@ void init_lattice(Lattice *lattice, double agrid, double tau);
  *
  * \param  lattice pointer to the lattice
  * \param  ind     global coordinates of the lattice site (Input)
- * \param  ind     local coordinates of the lattice site (Output)
+ * \param  grid     local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
 MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
@@ -126,6 +126,22 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
 
   /* return linear index into node array */
   return map_array_node(grid);
+}
+
+/** Map a local lattice site to the global position.
+ *
+ *  This function determines the processor responsible for
+ *  the specified lattice site. The coordinates of the site are
+ *  taken as global coordinates andcoordinates of the site are
+ *  taken as global coordinates and are returned as local coordinates.
+ *
+ * \param  lattice pointer to the lattice
+ * \param  ind     global coordinates of the lattice site (Input)
+ * \param  ind     local coordinates of the lattice site (Output)
+ * \return         index of the node for the lattice site
+ */
+MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
+  return 0;
 }
 
 /** Map a spatial position to the surrounding lattice sites.

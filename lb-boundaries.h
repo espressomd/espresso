@@ -24,24 +24,44 @@
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
 
+#include <tcl.h>
 #include "utils.h"
 #include "halo.h"
+#include "constraint.h"
+#include "config.h"
+#include "lb.h"
 
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
 
+/** No constraint applied */
 #define LB_BOUNDARY_NONE                0
 #define LB_BOUNDARY_BOUNCE_BACK         1
 #define LB_BOUNDARY_SPECULAR_REFLECTION 2
 #define LB_BOUNDARY_SLIP_REFLECTION     3
 #define LB_BOUNDARY_PARTIAL_SLIP        4
 
+/** wall constraint applied */
+#define LB_BOUNDARY_WAL 1
+/** spherical constraint applied */
+#define LB_BOUNDARY_SPH 2
+/** (finite) cylinder shaped constraint applied */
+#define LB_BOUNDARY_CYL 3
+
+/** Structure to specify a boundary. */
 typedef struct {
+  /** type of the boundary. */
   int type;
   double slip_pref;
-} LB_Boundary;
 
-extern LB_Boundary lb_boundary_par;
+  union {
+    Constraint_wall wal;
+    Constraint_sphere sph;
+    Constraint_cylinder cyl;
+  } c;
+} LB_Boundary;
+/*@}*/
+
+//extern LB_Boundary lb_boundary_par;
 
 MDINLINE void lb_calc_modes();
 
@@ -49,7 +69,9 @@ MDINLINE void lb_calc_modes();
  *  This function determines the lattice sited which belong to boundaries
  *  and marks them with a corresponding flag. 
  */
-void lb_init_constraints();
+void lb_init_boundaries();
+int lb_boundary(ClientData _data, Tcl_Interp *interp,
+	       int argc, char **argv);
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
@@ -229,7 +251,7 @@ MDINLINE void lb_specular_reflections() {
 
 /* slip reflection boundary condition */
 MDINLINE void lb_slip_reflection() {
-
+#if 0 //problem with slip_pref
 #ifdef D3Q19
 #ifndef PULL
   int k;
@@ -258,7 +280,7 @@ MDINLINE void lb_slip_reflection() {
   //int reflect[] = { 0, 1, 2, 3, 4, 6, 5, 7, 8, 9, 10, 13, 14, 11, 12, 17, 18, 15, 16 };
   //int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
 
-  double s = lb_boundary_par.slip_pref;
+  double s = lb_boundary_par.slip_pref; //doesnt work like that any more. slip_pref has to be coded in lbfields (georg, 03.08.10)
   double r = 1.0 - s;
 
   double **n = lbfluid[1];
@@ -314,6 +336,7 @@ MDINLINE void lb_slip_reflection() {
 #else
 #error Slip reflections are only implemented for D3Q19!
 #endif
+#endif //if 0
 }
 
 MDINLINE void lb_local_reflection(int index) {
@@ -597,6 +620,7 @@ MDINLINE void lb_boundary_push(index_t index) {
 }
 
 MDINLINE void lb_boundary_forces(index_t index, double *mode) {
+#if 0 //problem with slip_pref (georg, 03.08.10)
   int i;
   double (*coeff)[4]=lbmodel.coeff, (*c)[3]=lbmodel.c;
   double rho=mode[0]+lbpar.rho, *j=&mode[1], *f=lbfields[index].force;
@@ -681,7 +705,7 @@ MDINLINE void lb_boundary_forces(index_t index, double *mode) {
   lb_calc_local_j(index,j);
   
 //  fprintf(stderr,"rho=%f j=(%f,%f,%f) f=(%f,%f,%f)\n",rho,j[0],j[1],j[2],f[0],f[1],f[2]);
-
+#endif //if 0
 }
 
 MDINLINE void lb_boundary_equilibrium(int index, double rho, double *v, double *pi, int df) {
@@ -1074,6 +1098,7 @@ MDINLINE void lb_boundary_calc_modes(int index, double *mode, double *pi) {
 }
 
 MDINLINE void lb_boundary_bb_neq_BGK(index_t index, double *mode) {
+#if 0 //problem with slip pref (georg, 03.08.10)
   int i;
 
 //  fprintf(stderr,"lb_boundary_bb_neq_BGK(%+.0f)\n",lbfields[index].nvec[2]);
@@ -1219,7 +1244,7 @@ MDINLINE void lb_boundary_bb_neq_BGK(index_t index, double *mode) {
 
   lb_calc_local_j(index, &mode[1]);
 //  fprintf(stderr,"j=(%e,%f,%f)\n",mode[1],mode[2],mode[3]);
-
+#endif //if 0
 }
 
 MDINLINE void lb_boundary_bb_neq_BGK2(index_t index, double *mode) {
@@ -1491,7 +1516,7 @@ MDINLINE void lb_boundary_relax_modes(index_t index, double *mode, double *pi) {
 }
 
 MDINLINE void lb_boundary_apply_forces(index_t index, double *mode) {
-
+#if 0 //problem with slip_pref (georg, 03.08.10)
   double *f = lbfields[index].force;
   double rho = mode[0] + lbpar.rho;
   double u[3];
@@ -1533,7 +1558,7 @@ MDINLINE void lb_boundary_apply_forces(index_t index, double *mode) {
   //mode[7] += C[1];
   //mode[8] += C[3];
   //mode[9] += C[4];
-
+#endif //if 0
 }
 
 MDINLINE void lb_boundary_calc_n_push(index_t index, double *m) {
@@ -3639,7 +3664,7 @@ MDINLINE void lb_boundary_equilibrium2(LB_FluidNode *node, const double local_rh
 #endif
 
 MDINLINE void lb_set_boundary_node(int index, double rho, double *v, double *pi) {
-
+#if 0 //problems with slip_pref (georg, 03.08.10)
   switch (lb_boundary_par.type) {
 
   case LB_BOUNDARY_NONE:
@@ -3655,12 +3680,12 @@ MDINLINE void lb_set_boundary_node(int index, double rho, double *v, double *pi)
     break;
 
   }
-
+#endif //if 0
 }
 
 /** Apply boundary conditions to the LB fluid. */
 MDINLINE void lb_boundary_conditions() {
-
+#if 0 //problems with slip_pref (georg, 03.08.10)
   switch (lb_boundary_par.type) {
 
   case LB_BOUNDARY_NONE:
@@ -3679,14 +3704,17 @@ MDINLINE void lb_boundary_conditions() {
     break;
 
   }
-
+#endif //if 0
 }
 
-#endif /* CONSTRAINTS */
 
 /** Parser for the \ref lbfluid command. */
 int lbboundaries_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-#endif /* LB */
+
+extern int n_lb_boundaries;
+extern LB_Boundary *lb_boundaries;
+
+#endif /* LB_BOUNDARIES */
 
 #endif /* LB_BOUNDARIES_H */

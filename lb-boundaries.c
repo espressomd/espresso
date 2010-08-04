@@ -25,14 +25,14 @@
 #include "constraint.h"
 #include "lb-boundaries.h"
 #include "lb.h"
+#include "interaction_data.h"
 
 int n_lb_boundaries       = 0;
-LB_boundary *lb_boundaries = NULL;
+LB_Boundary *lb_boundaries = NULL;
 
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
 
-LB_Boundary lb_boundary_par = { LB_BOUNDARY_NONE, 0.0 }; //do we need this?
+//    LB_Boundary lb_boundary_par = { LB_BOUNDARY_NONE, 0.0 }; //do we need this?
 
 /** Initialize a planar boundary specified by a wall constraint.
  * @param plane The \ref Constraint_wall struct describing the boundary.
@@ -40,7 +40,7 @@ LB_Boundary lb_boundary_par = { LB_BOUNDARY_NONE, 0.0 }; //do we need this?
 
 int printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {
-  LB_boundary *lbb = &lb_boundaries[i];
+  LB_Boundary *lbb = &lb_boundaries[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   sprintf(buffer, "%d ", i);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -125,16 +125,16 @@ int lb_boundary_print_all(Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 }*/
 
-LB_boundary *generate_lb_boundary()
+LB_Boundary *generate_lb_boundary()
 {
   n_lb_boundaries++;
-  lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+  lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_NONE;
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
 
-int lb_boundary_wall(LB_boundary *lbb, Tcl_Interp *interp,
+int lb_boundary_wall(LB_Boundary *lbb, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
   int i;
@@ -189,7 +189,7 @@ int lb_boundary_wall(LB_boundary *lbb, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int lb_boundary_sphere(LB_boundary *lbb, Tcl_Interp *interp,
+int lb_boundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp,
 		      int argc, char **argv)
 {
   lbb->type = LB_BOUNDARY_SPH;
@@ -255,7 +255,7 @@ int lb_boundary_sphere(LB_boundary *lbb, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int lb_boundary_cylinder(LB_boundary *lbb, Tcl_Interp *interp,
+int lb_boundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp,
 			int argc, char **argv)
 {
   double axis_len;
@@ -411,14 +411,50 @@ int lb_boundary(ClientData _data, Tcl_Interp *interp,
   return mpi_gather_runtime_errors(interp, status);
 
 #else /* !defined(LB_BOUNDARIES) */
-  Tcl_AppendResult(interp, "lb_boundaries not compiled in!" ,(char *) NULL);
+  Tcl_AppendResult(interp, "LB_BOUNDARIES not compiled in!" ,(char *) NULL);
   return (TCL_ERROR);
-#endif
+#endif /* LB_BOUNDARIES */
 }
 
 #ifdef LB_BOUNDARIES
 
-static void lb_init_boundary_wall(LB_boundary_wall* plane) {
+static void lb_init_boundary_wall(Constraint_wall* wall) {
+  int x, y, z, index, node_domain_position[3], offset[3];
+  double pos[3], dist, dist_vec[3];
+  
+	printf("executing lb_init_boundary_wall on node %d\n", this_node);
+	
+	map_node_array(this_node, node_domain_position);
+	printf("Position of domain of node %d: (%d, %d, %d)\n", this_node, node_domain_position[0], node_domain_position[1], node_domain_position[2]);
+	printf("Size of domain of node %d: (%d, %d, %d)\n", this_node, lblattice.grid[0], lblattice.grid[1], lblattice.grid[2]);
+	
+	offset[0] = node_domain_position[0]*lblattice.grid[0];
+	offset[1] = node_domain_position[1]*lblattice.grid[1];
+	offset[2] = node_domain_position[2]*lblattice.grid[2];
+	
+	printf("Node %d coordinate system offset: (%d, %d, %d)\n", this_node, offset[0], offset[1], offset[2]);
+  
+  for (z=1; z<=lblattice.grid[2]; z++) {
+    for (y=1; y<=lblattice.grid[1]; y++) {
+	    for (x=1; x<=lblattice.grid[0]; x++) {
+	    
+	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
+	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
+	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
+	      
+        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, wall, &dist, dist_vec); //wall contains MD coordinates
+        
+        printf("Distance of node (%d, %d, %d) at position (%.1f, %.1f, %.1f) to wall: %.2f\n", x, y, z, pos[0], pos[1], pos[2], dist);
+        
+  	    if (dist <= 0) {
+   	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;
+ 	      }
+      }
+    }
+  }
+}
+
+static void lb_init_boundary_sphere(Constraint_sphere* sphere) {
 /*
   int x, y, z;
   double pos[3], dist;
@@ -444,33 +480,7 @@ static void lb_init_boundary_wall(LB_boundary_wall* plane) {
 */
 }
 
-static void lb_init_boundary_sphere(LB_boundary_wall* plane) {
-/*
-  int x, y, z;
-  double pos[3], dist;
-
-  for (x=0;x<lblattice.halo_grid[0];x++) {
-    for (y=0;y<lblattice.halo_grid[1];y++) {
-      for (z=0;z<lblattice.halo_grid[2];z++) {
-
-	pos[0] = my_left[0] + (x-1)*lblattice.agrid;
-	pos[1] = my_left[1] + (y-1)*lblattice.agrid;
-	pos[2] = my_left[2] + (z-1)*lblattice.agrid;
-
-	dist = scalar(pos,plane->n) - plane->d;
-
-	if (fabs(dist) < lblattice.agrid) {
-	  //printf("%d %d %d\n",x,y,z);
-	  lbfluid[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;
-	}
-
-      }
-    }
-  }
-*/
-}
-
-static void lb_init_boundary_cylinder(LB_boundary_wall* plane) {
+static void lb_init_boundary_cylinder(Constraint_cylinder* cylinder) {
 /*
   int x, y, z;
   double pos[3], dist;
@@ -498,12 +508,13 @@ static void lb_init_boundary_cylinder(LB_boundary_wall* plane) {
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
-/*
   int n;
   char *errtxt;
+  
+  printf("executing lb_init_boundaries on node %d\n", this_node);
 
   for (n=0;n<lblattice.halo_grid_volume;n++) {
-    lbfluid[n].boundary = 0;
+    lbfields[n].boundary = 0; //so net
   }
 
   for (n=0;n<n_lb_boundaries;n++) {
@@ -522,12 +533,11 @@ void lb_init_boundaries() {
       ERROR_SPRINTF(errtxt, "{109 lb_boundary type %d not implemented in lb_init_constraints()\n",lb_boundaries[n].type);
     }
   }
-*/
 }
 
 
 static int lbboundaries_parse_slip_reflection(Tcl_Interp *interp, int argc, char **argv) {
-
+#if 0 //problems with slip_pref (georg, 03.08.10)
   if (argc <1) {
     Tcl_AppendResult(interp, "lbboundaries slip_reflection requires 1 argument", (char *)NULL);
     return TCL_ERROR;
@@ -539,14 +549,14 @@ static int lbboundaries_parse_slip_reflection(Tcl_Interp *interp, int argc, char
   
   lb_boundary_par.type = LB_BOUNDARY_SLIP_REFLECTION;
 
-  mpi_bcast_lb_params(LBPAR_BOUNDARY);
+//  mpi_bcast_lb_params(LBPAR_BOUNDARY);
   
   return TCL_OK;
-
+#endif //if 0
 }
 
 static int lbboundaries_parse_partial_slip(Tcl_Interp *interp, int argc, char **argv) {
-
+#if 0 //problems with slip_pref (georg, 03.08.10)
   if (argc <1) {
     Tcl_AppendResult(interp, "lbboundaries slip requires 1 argument", (char *)NULL);
     return TCL_ERROR;
@@ -558,17 +568,18 @@ static int lbboundaries_parse_partial_slip(Tcl_Interp *interp, int argc, char **
   
   lb_boundary_par.type = LB_BOUNDARY_PARTIAL_SLIP;
 
-  mpi_bcast_lb_params(LBPAR_BOUNDARY);
+//  mpi_bcast_lb_params(LBPAR_BOUNDARY);
   
   return TCL_OK;
-
+#endif //if 0
 }
 
-#endif /* CONSTRAINTS */
+#endif /* LB_BOUNDARIES */
 
 /** Parser for the \ref lbfluid command. */
 int lbboundaries_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-#ifdef CONSTRAINTS
+#if 0 //problems with slip_pref (georg, 03.08.10)
+#ifdef LB_BOUNDARIES
   int err = TCL_ERROR;
 
   if (argc < 2) {
@@ -600,10 +611,10 @@ int lbboundaries_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   //mpi_bcast_lb_boundaries();
 
   return err;
-#else /* !defined CONSTRAINTS */
-  Tcl_AppendResult(interp, "CONSTRAINTS not compiled in!", NULL);
+#else /* !defined LB_BOUNDARIES */
+  Tcl_AppendResult(interp, "LB_BOUNDARIES not compiled in!", NULL);
   return TCL_ERROR;
-#endif
+#endif /* LB_BOUNDARIES */
+#endif //if 0
 }
 
-#endif /* LB */

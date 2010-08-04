@@ -1257,7 +1257,7 @@ void lb_init() {
 
 #ifdef LB_BOUNDARIES
   /* setup boundaries of constraints */
-  lb_init_constraints();
+//  lb_init_constraints();
 #endif
 
   /* setup the initial particle velocity distribution */

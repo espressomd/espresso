@@ -359,12 +359,10 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
 
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
 void mpi_bcast_lb_boundary(int del_num);
 #endif
-#emdif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
 void mpi_random_seed(int cnt, long *seed);

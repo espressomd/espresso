@@ -150,7 +150,7 @@ typedef void (SlaveCallback)(int node, int param);
 /** Action number for \ref mpi_send_mass. */
 #define REQ_SET_MASS  38
 /** Action number for \ref mpi_buck_cap_forces. */
-#define REQ_BCAST_BFC 39
+#define REQ_BCAST_BFC 39lb_init_boundaries
 
 /** Action number for \ref mpi_gather_runtime_errors  */
 #define REQ_GET_ERRS  40
@@ -1999,52 +1999,48 @@ void mpi_bcast_constraint_slave(int node, int parm)
 /*************** REQ_BCAST_LBBOUNDARY ************/
 void mpi_bcast_lb_boundary(int del_num)
 {
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
   mpi_issue(REQ_BCAST_LBBOUNDARY, 0, del_num);
 
   if (del_num == -1) {
     /* bcast new boundaries */
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   else if (del_num == -2) {
     /* delete all boundaries */
     n_lb_boundaries = 0;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
   else {
-    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_boundary));
+    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 
   on_lb_boundary_change();
-#endif
 #endif
 }
 
 void mpi_bcast_lb_boundary_slave(int node, int parm)
 {   
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
   if(parm == -1) {
     n_lb_boundaries++;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
-    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
   }
   else if (parm == -2) {
     /* delete all boundaries */
     n_lb_boundaries = 0;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
   else {
-    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_boundary));
+    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_boundary));    
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
 
   on_lb_boundary_change();
-#endif
 #endif
 }
 
