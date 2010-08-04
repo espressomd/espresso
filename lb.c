@@ -1035,6 +1035,8 @@ void lb_pre_init() {
 static void lb_realloc_fluid() {
   int i;
 
+  LB_TRACE(printf("reallocating fluid\n"));
+
   lbfluid[0]    = realloc(*lbfluid,2*lbmodel.n_veloc*sizeof(double *));
   lbfluid[0][0] = realloc(**lbfluid,2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
   lbfluid[1]    = (double **)lbfluid[0] + lbmodel.n_veloc;
@@ -1619,27 +1621,27 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
 
     /* stress modes */
-    mode[4] += (fluct[0] = rootrho*lb_phi[4]*gaussian_random());
-    mode[5] += (fluct[1] = rootrho*lb_phi[5]*gaussian_random());
-    mode[6] += (fluct[2] = rootrho*lb_phi[6]*gaussian_random());
-    mode[7] += (fluct[3] = rootrho*lb_phi[7]*gaussian_random());
-    mode[8] += (fluct[4] = rootrho*lb_phi[8]*gaussian_random());
-    mode[9] += (fluct[5] = rootrho*lb_phi[9]*gaussian_random());
+    mode[4] += (fluct[0] = rootrho*lb_phi[4]*(d_random()-0.5));
+    mode[5] += (fluct[1] = rootrho*lb_phi[5]*(d_random()-0.5));
+    mode[6] += (fluct[2] = rootrho*lb_phi[6]*(d_random()-0.5));
+    mode[7] += (fluct[3] = rootrho*lb_phi[7]*(d_random()-0.5));
+    mode[8] += (fluct[4] = rootrho*lb_phi[8]*(d_random()-0.5));
+    mode[9] += (fluct[5] = rootrho*lb_phi[9]*(d_random()-0.5));
     //if (index == lblattice.halo_offset) {
     //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
     //}
     
 #ifndef OLD_FLUCT
     /* ghost modes */
-    mode[10] += rootrho*lb_phi[10]*gaussian_random();
-    mode[11] += rootrho*lb_phi[11]*gaussian_random();
-    mode[12] += rootrho*lb_phi[12]*gaussian_random();
-    mode[13] += rootrho*lb_phi[13]*gaussian_random();
-    mode[14] += rootrho*lb_phi[14]*gaussian_random();
-    mode[15] += rootrho*lb_phi[15]*gaussian_random();
-    mode[16] += rootrho*lb_phi[16]*gaussian_random();
-    mode[17] += rootrho*lb_phi[17]*gaussian_random();
-    mode[18] += rootrho*lb_phi[18]*gaussian_random();
+    mode[10] += rootrho*lb_phi[10]*(d_random()-0.5);
+    mode[11] += rootrho*lb_phi[11]*(d_random()-0.5);
+    mode[12] += rootrho*lb_phi[12]*(d_random()-0.5);
+    mode[13] += rootrho*lb_phi[13]*(d_random()-0.5);
+    mode[14] += rootrho*lb_phi[14]*(d_random()-0.5);
+    mode[15] += rootrho*lb_phi[15]*(d_random()-0.5);
+    mode[16] += rootrho*lb_phi[16]*(d_random()-0.5);
+    mode[17] += rootrho*lb_phi[17]*(d_random()-0.5);
+    mode[18] += rootrho*lb_phi[18]*(d_random()-0.5);
 #endif
 
 #ifdef ADDITIONAL_CHECKS
@@ -2366,9 +2368,12 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-	p[i].lc.f_random[0] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
-	p[i].lc.f_random[1] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
-	p[i].lc.f_random[2] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+//	p[i].lc.f_random[0] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+//	p[i].lc.f_random[1] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+//	p[i].lc.f_random[2] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+	p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
+	p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
+	p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);
 
 #ifdef ADDITIONAL_CHECKS
 	rancounter += 3;
@@ -2615,36 +2620,15 @@ MDINLINE void lbnode_print_pi_neq(Tcl_Interp *interp, double rho, double *j, dou
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   index_t index;
   int node, grid[3];
   double rho, j[3], pi[6];
+
+  if ( ind[0] >= lblattice.grid[0] ||  ind[1] >= lblattice.grid[1] ||  ind[2] >= lblattice.grid[2] ) {
+      Tcl_AppendResult(interp, "requested position not in the LB lattice", (char *)NULL);
+    return TCL_ERROR;
+  }
 
   node = map_lattice_to_node(&lblattice,ind,grid);
   index = get_linear_index(ind[0],ind[1],ind[2],lblattice.halo_grid);
@@ -2856,6 +2840,12 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
    int coord[3];
 
    --argc; ++argv;
+  
+   if (lbfluid[0][0]==0) {
+     Tcl_AppendResult(interp, "lbnode: lbfluid not correctly initialized", (char *)NULL);
+     return TCL_ERROR;
+   }
+
    
    if (argc < 3) {
      Tcl_AppendResult(interp, "too few arguments for lbnode", (char *)NULL);

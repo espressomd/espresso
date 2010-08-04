@@ -20,12 +20,13 @@
  * Header file for \ref lb-boundaries.h.
  *
  */
-
 #include "utils.h"
 #include "constraint.h"
 #include "lb-boundaries.h"
 #include "lb.h"
 #include "interaction_data.h"
+
+#ifdef LB_BOUNDARIES
 
 int n_lb_boundaries       = 0;
 LB_Boundary *lb_boundaries = NULL;
@@ -617,4 +618,5 @@ int lbboundaries_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #endif /* LB_BOUNDARIES */
 #endif //if 0
 }
+#endif /* LB_BOUNDARIES */
 
