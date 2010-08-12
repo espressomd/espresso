@@ -324,7 +324,7 @@ MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle
 */
 MDINLINE void add_bonded_virials(Particle *p1)
 {
-  double dx[3], force[3];
+  double dx[3], force[3] = {0,0,0};
   char *errtxt;
   Particle *p2;
   Bonded_ia_parameters *iaparams;

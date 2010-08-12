@@ -399,7 +399,8 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
   double poz[3];
   double poy[3] = {0, 0, 0};
   double pox[3] = {0, 0, 0};
-  double a[3],b[3],c[3]={0., 0., 0.},d[3];
+  double a[3] = {0, 0, 0};
+  double b[3],c[3]={0., 0., 0.},d[3];
   double absc;
   poly = malloc(3*MPC*sizeof(double));
 
