@@ -1562,10 +1562,10 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[
 }
 
 void mpi_local_stress_tensor_slave(int ana_num, int job) {
-  int bins[3];
-  int periodic[3];
-  double range_start[3];
-  double range[3];
+  int bins[3] = {0,0,0};
+  int periodic[3]= {0,0,0};
+  double range_start[3]= {0,0,0};
+  double range[3]= {0,0,0};
   DoubleList *TensorInBin;
   int i, j;
 

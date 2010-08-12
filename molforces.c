@@ -218,8 +218,10 @@ void calc_local_mol_info (IntList *local_trapped_mols)
 
 void mpi_comm_mol_info(IntList *local_trapped_mols) {
   int i, j, k, mol, count;
-  double com[3], v[3], f[3];
-  double mass;
+  double com[3] = {0,0,0};
+  double v[3] = {0,0,0};
+  double f[3] = {0,0,0};
+  double mass = 0;
   /* number of trapped molecules on each node */
   int *n_local_mols;
   /* sum of all elements of n_local_mols */
