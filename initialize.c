@@ -378,7 +378,7 @@ void on_lb_boundary_change()
   invalidate_obs();
 
 #ifdef LB_BOUNDARIES
-  printf("executing on_lb_boundary_change on node %d\n", this_node);
+  //printf("executing on_lb_boundary_change on node %d\n", this_node);
   
   if(lattice_switch & LATTICE_LB) {
     lb_init_boundaries();

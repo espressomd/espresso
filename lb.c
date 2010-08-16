@@ -2624,9 +2624,10 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   index_t index;
   int node, grid[3];
   double rho, j[3], pi[6];
-
-  if ( ind[0] >= lblattice.grid[0] ||  ind[1] >= lblattice.grid[1] ||  ind[2] >= lblattice.grid[2] ) {
-      Tcl_AppendResult(interp, "requested position not in the LB lattice", (char *)NULL);
+  int boundary;
+  
+  if ( ind[0] >=  node_grid[0]*lblattice.grid[0] ||  ind[1] >= node_grid[1]*lblattice.grid[1] ||  ind[2] >= node_grid[2]*lblattice.grid[2] ) {
+      Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -2644,6 +2645,8 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
       lbnode_print_pi(interp, pi);
     else if (ARG0_IS_S("pi_neq")) /* this has to come after pi */
       lbnode_print_pi_neq(interp, rho, j, pi);
+    else if (ARG0_IS_S("boundary")) /* this has to come after pi */
+      {}//lbnode_print_boundary(interp, &boundary); //lbnode_print_boundary not implemented yet (georg, 16.08.10)
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown fluid data \"", argv[0], "\" requested", (char *)NULL);
@@ -2840,6 +2843,7 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
    int coord[3];
 
    --argc; ++argv;
+   int i;
   
    if (lbfluid[0][0]==0) {
      Tcl_AppendResult(interp, "lbnode: lbfluid not correctly initialized", (char *)NULL);
@@ -2859,7 +2863,7 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
    argc-=3; argv+=3;
 
    if (argc == 0 ) { 
-     Tcl_AppendResult(interp, "lbnode syntax: lbnode X Y Z print [ rho | u | pi | pi_neq ]", (char *)NULL);
+     Tcl_AppendResult(interp, "lbnode syntax: lbnode X Y Z print [ rho | u | pi | pi_neq | boundary ]", (char *)NULL);
      return TCL_ERROR;
    }
    if (ARG0_IS_S("print"))
