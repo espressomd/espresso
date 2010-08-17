@@ -450,7 +450,7 @@ static void lb_init_boundary_wall(Constraint_wall* wall) {
         
   	    if (dist <= 0) {
 
-	      printf("%3f %3f %3f is boundary w dist %3f\n", pos[0], pos[1], pos[2], dist);
+	      //printf("%3f %3f %3f is boundary w dist %3f\n", pos[0], pos[1], pos[2], dist);
    	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;
    	      lbfluid[0][1][get_linear_index(x,y,z,lblattice.halo_grid)] = 0.;   	      
  	      }

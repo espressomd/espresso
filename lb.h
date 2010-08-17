@@ -121,7 +121,7 @@ typedef struct {
    int boundary;
 
   /** normal vector of the boundary surface */
-  double *nvec;
+  double *nvec; //doesn't work like that any more, I think (georg, 17.08.10)
 #endif
 
 } LB_FluidNode;
@@ -495,6 +495,10 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
   j[2] += 0.5*lbpar.ext_force[2];
 #endif
 
+}
+
+MDINLINE void lb_local_fields_get_border_flag(index_t index, int *border) {
+  *border = lbfields[index].boundary; //TODO (georg, 17.08.10)
 }
 
 #endif /* LB */

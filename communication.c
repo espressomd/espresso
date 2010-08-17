@@ -184,9 +184,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_RINERTIA  54
 /** Action number for \ref mpi_bcast_constraint */
 #define REQ_BCAST_LBBOUNDARY 55
+/** Action number for \ref mpi_recv_fluid_border_flag */
+#define REQ_LB_GET_BORDER_FLAG 56
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 56
+#define REQ_MAXIMUM 57
 
 /*@}*/
 
@@ -246,6 +248,7 @@ void mpi_send_dip_slave(int node, int parm);
 void mpi_send_dipm_slave(int node, int parm);
 void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
+void mpi_recv_fluid_border_flag_slave(int node, int parm);
 void mpi_local_stress_tensor_slave(int node, int parm);
 void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_isVirtual_slave(int node, int parm);
@@ -311,7 +314,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
-  mpi_bcast_lb_boundary_slave       /* 55: REQ_BCAST_LBBOUNDARY */
+  mpi_bcast_lb_boundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
+  mpi_recv_fluid_border_flag_slave  /* 56: REQ_LB_GET_BORDER_FLAG */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -382,6 +386,7 @@ char *names[] = {
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
   "REQ_BCAST_LBBOUNDARY", /* 55 */
+  "REQ_LB_GET_BORDER_FLAG" /* 56 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -2588,6 +2593,31 @@ void mpi_recv_fluid_slave(int node, int index) {
     double data[10];
     lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
     MPI_Send(data, 10, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
+  }
+#endif
+}
+
+/************** REQ_LB_GET_BORDER_FLAG **************/
+void mpi_recv_fluid_border_flag(int node, int index, int *border) {
+#ifdef LB
+  if (node==this_node) {
+    lb_local_fields_get_border_flag(index, border);
+  } else {
+    int data;
+    mpi_issue(REQ_LB_GET_BORDER_FLAG, node, index);
+    MPI_Status status;
+    MPI_Recv(&data, 1, MPI_INTEGER, node, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD, &status);
+    *border = data;
+  }
+#endif
+}
+
+void mpi_recv_fluid_border_flag_slave(int node, int index) {
+#ifdef LB
+  if (node==this_node) {
+    double data;
+    lb_local_fields_get_border_flag(index, &data);
+    MPI_Send(&data, 1, MPI_INTEGER, 0, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD);
   }
 #endif
 }

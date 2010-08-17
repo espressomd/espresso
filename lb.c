@@ -2556,6 +2556,7 @@ static int lb_print_local_fields(Tcl_Interp *interp, int argc, char **argv, int 
   return TCL_OK ;
 
 }
+
 MDINLINE void lbnode_print_rho(Tcl_Interp *interp, double rho) {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -2620,11 +2621,17 @@ MDINLINE void lbnode_print_pi_neq(Tcl_Interp *interp, double rho, double *j, dou
 
 }
 
+MDINLINE void lbnode_print_boundary(Tcl_Interp *interp, int boundary) {
+  char buffer[TCL_INTEGER_SPACE];
+
+  sprintf(buffer, "%d", boundary);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+
 static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   index_t index;
-  int node, grid[3];
+  int node, grid[3], boundary;
   double rho, j[3], pi[6];
-  int boundary;
   
   if ( ind[0] >=  node_grid[0]*lblattice.grid[0] ||  ind[1] >= node_grid[1]*lblattice.grid[1] ||  ind[2] >= node_grid[2]*lblattice.grid[2] ) {
       Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
@@ -2635,6 +2642,7 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   index = get_linear_index(ind[0],ind[1],ind[2],lblattice.halo_grid);
   
   mpi_recv_fluid(node,index,&rho,j,pi);
+  mpi_recv_fluid_border_flag(node,index,&boundary);
 
   while (argc > 0) {
     if (ARG0_IS_S("rho") || ARG0_IS_S("density")) 
@@ -2646,7 +2654,7 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
     else if (ARG0_IS_S("pi_neq")) /* this has to come after pi */
       lbnode_print_pi_neq(interp, rho, j, pi);
     else if (ARG0_IS_S("boundary")) /* this has to come after pi */
-      {}//lbnode_print_boundary(interp, &boundary); //lbnode_print_boundary not implemented yet (georg, 16.08.10)
+      lbnode_print_boundary(interp, boundary);
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown fluid data \"", argv[0], "\" requested", (char *)NULL);
