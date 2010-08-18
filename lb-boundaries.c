@@ -366,8 +366,6 @@ int lb_boundary(ClientData _data, Tcl_Interp *interp,
 {
 #ifdef LB_BOUNDARIES
   int status, c_num;
-  
-  //printf("initialising lb boundary\n");
 
 
   if (argc < 2) return lb_boundary_print_all(interp);
@@ -379,7 +377,6 @@ int lb_boundary(ClientData _data, Tcl_Interp *interp,
   else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
     status = lb_boundary_sphere(generate_lb_boundary(),interp, argc - 2, argv + 2);
     mpi_bcast_lb_boundary(-1);
-    printf("created sphere on node %d with center %.1f %.1f %.1f, radius %.1f, direction %.1f\n", this_node, lb_boundaries[n_lb_boundaries-1].c.sph.pos[0], lb_boundaries[n_lb_boundaries-1].c.sph.pos[1], lb_boundaries[n_lb_boundaries-1].c.sph.pos[2], lb_boundaries[n_lb_boundaries-1].c.sph.rad, lb_boundaries[n_lb_boundaries-1].c.sph.direction);
   }
   else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
     status = lb_boundary_cylinder(generate_lb_boundary(),interp, argc - 2, argv + 2);
@@ -423,18 +420,12 @@ int lb_boundary(ClientData _data, Tcl_Interp *interp,
 static void lb_init_boundary_wall(Constraint_wall* wall) {
   int x, y, z, index, node_domain_position[3], offset[3];
   double pos[3], dist, dist_vec[3];
-  
-	//printf("executing lb_init_boundary_wall on node %d\n", this_node);
 	
-	map_node_array(this_node, node_domain_position);
-	//printf("Position of domain of node %d: (%d, %d, %d)\n", this_node, node_domain_position[0], node_domain_position[1], node_domain_position[2]);
-	//printf("Size of domain of node %d: (%d, %d, %d)\n", this_node, lblattice.grid[0], lblattice.grid[1], lblattice.grid[2]);
+	map_node_array(this_node, node_domain_position); //constraint contains MD coordinates, therefore the conversion
 	
 	offset[0] = node_domain_position[0]*lblattice.grid[0];
 	offset[1] = node_domain_position[1]*lblattice.grid[1];
 	offset[2] = node_domain_position[2]*lblattice.grid[2];
-	
-	//printf("Node %d coordinate system offset: (%d, %d, %d)\n", this_node, offset[0], offset[1], offset[2]);
   
   for (z=1; z<=lblattice.grid[2]; z++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
@@ -443,15 +434,10 @@ static void lb_init_boundary_wall(Constraint_wall* wall) {
 	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
-
        
-        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, wall, &dist, dist_vec); //wall contains MD coordinates
-        
-        //printf("Distance of node (%d, %d, %d) at position (%.1f, %.1f, %.1f) to wall: %.2f\n", x, y, z, pos[0], pos[1], pos[2], dist);
-        
+        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, wall, &dist, dist_vec);
+                
   	    if (dist <= 0) {
-
-	      //printf("%3f %3f %3f is boundary w dist %3f\n", pos[0], pos[1], pos[2], dist);
    	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;     
  	      }
       }
@@ -462,18 +448,12 @@ static void lb_init_boundary_wall(Constraint_wall* wall) {
 static void lb_init_boundary_sphere(Constraint_sphere* sphere) {
   int x, y, z, index, node_domain_position[3], offset[3];
   double pos[3], dist, dist_vec[3];
-  
-	printf("executing lb_init_boundary_sphere on node %d\n", this_node);
 	
-	map_node_array(this_node, node_domain_position);
-	//printf("Position of domain of node %d: (%d, %d, %d)\n", this_node, node_domain_position[0], node_domain_position[1], node_domain_position[2]);
-	//printf("Size of domain of node %d: (%d, %d, %d)\n", this_node, lblattice.grid[0], lblattice.grid[1], lblattice.grid[2]);
+	map_node_array(this_node, node_domain_position); //constraint contains MD coordinates, therefore the conversion
 	
 	offset[0] = node_domain_position[0]*lblattice.grid[0];
 	offset[1] = node_domain_position[1]*lblattice.grid[1];
 	offset[2] = node_domain_position[2]*lblattice.grid[2];
-	
-	//printf("Node %d coordinate system offset: (%d, %d, %d)\n", this_node, offset[0], offset[1], offset[2]);
   
   for (z=1; z<=lblattice.grid[2]; z++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
@@ -482,9 +462,7 @@ static void lb_init_boundary_sphere(Constraint_sphere* sphere) {
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
        
-        calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, sphere, &dist, dist_vec); //wall contains MD coordinates
-        
-        //printf("Distance of node (%d, %d, %d) at position (%.1f, %.1f, %.1f) to sphere: %.2f\n", x, y, z, pos[0], pos[1], pos[2], dist);
+        calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, sphere, &dist, dist_vec);
         
   	    if (dist <= 0)
    	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;   
@@ -496,16 +474,12 @@ static void lb_init_boundary_sphere(Constraint_sphere* sphere) {
 static void lb_init_boundary_cylinder(Constraint_cylinder* cylinder) {
   int x, y, z, index, node_domain_position[3], offset[3];
   double pos[3], dist, dist_vec[3];
-  
-	printf("executing lb_init_boundary_cylinder on node %d\n", this_node);
 	
 	map_node_array(this_node, node_domain_position);
 	
 	offset[0] = node_domain_position[0]*lblattice.grid[0];
 	offset[1] = node_domain_position[1]*lblattice.grid[1];
 	offset[2] = node_domain_position[2]*lblattice.grid[2];
-	
-	//printf("Node %d coordinate system offset: (%d, %d, %d)\n", this_node, offset[0], offset[1], offset[2]);
   
   for (z=1; z<=lblattice.grid[2]; z++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
@@ -514,12 +488,11 @@ static void lb_init_boundary_cylinder(Constraint_cylinder* cylinder) {
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
        
-        calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, sphere, &dist, dist_vec); //wall contains MD coordinates
+        calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, cylinder, &dist, dist_vec);
         
-        //printf("Distance of node (%d, %d, %d) at position (%.1f, %.1f, %.1f) to sphere: %.2f\n", x, y, z, pos[0], pos[1], pos[2], dist);
-        
-  	    if (dist <= 0)
+  	    if (dist <= 0) {
    	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;   
+        }
       }
     }
   }

@@ -506,7 +506,7 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 }
 
 MDINLINE void lb_local_fields_get_border_flag(index_t index, int *border) {
-  *border = lbfields[index].boundary; //TODO (georg, 17.08.10)
+  *border = lbfields[index].boundary;
 }
 
 #endif /* LB */
