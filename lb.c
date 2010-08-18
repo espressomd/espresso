@@ -1984,8 +1984,6 @@ MDINLINE void lb_collide_stream() {
     //lbfluid[0] = tmp;
 
 
-    /* exchange halo regions */
-    halo_push_communication();
 
     //index = 193;
     //tmp = lbfluid[0];
@@ -2011,8 +2009,11 @@ MDINLINE void lb_collide_stream() {
 
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
-    //lb_boundary_conditions();
+    lb_boundary_conditions();
 #endif
+    
+    /* exchange halo regions */
+    halo_push_communication();
 
    /* swap the pointers for old and new population fields */
     //fprintf(stderr,"swapping pointers\n");

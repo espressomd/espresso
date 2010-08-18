@@ -392,6 +392,14 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
 #ifdef D3Q19
+#ifdef LB_BOUNDARIES
+  if ( lbfields[index].boundary ) {
+    *rho = avg_rho;
+    j[0] = 0.; j[1] = 0.;  j[2] = 0.;
+    pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;
+    return;
+  }
+#endif
   *rho =   avg_rho
          + lbfluid[0][0][index]  
          + lbfluid[0][1][index]  + lbfluid[0][2][index]  
