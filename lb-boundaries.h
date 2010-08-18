@@ -84,6 +84,7 @@ MDINLINE void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL
+  printf("%f performing bounce back step\n", sim_time);
   int k;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
@@ -1793,6 +1794,7 @@ MDINLINE void lb_boundary_collisions(int index, double *modes) {
   double pi[6];
 
   lb_boundary_bb_neq_BGK(index, modes);
+  return;
 
   //lb_boundary_calc_modes(index, modes, pi);
 
@@ -3685,6 +3687,7 @@ MDINLINE void lb_set_boundary_node(int index, double rho, double *v, double *pi)
 
 /** Apply boundary conditions to the LB fluid. */
 MDINLINE void lb_boundary_conditions() {
+    lb_bounce_back();
 #if 0 //problems with slip_pref (georg, 03.08.10)
   switch (lb_boundary_par.type) {
 

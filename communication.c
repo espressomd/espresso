@@ -150,7 +150,7 @@ typedef void (SlaveCallback)(int node, int param);
 /** Action number for \ref mpi_send_mass. */
 #define REQ_SET_MASS  38
 /** Action number for \ref mpi_buck_cap_forces. */
-#define REQ_BCAST_BFC 39lb_init_boundaries
+#define REQ_BCAST_BFC 39
 
 /** Action number for \ref mpi_gather_runtime_errors  */
 #define REQ_GET_ERRS  40
