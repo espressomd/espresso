@@ -251,7 +251,7 @@ void calc_particle_lattice_ia();
  * @param local_node The local lattice site (Input).
  */
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
-
+  // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
 #ifdef D3Q19

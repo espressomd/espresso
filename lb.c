@@ -415,7 +415,8 @@ MDINLINE void lb_check_mode_transformation(index_t index, double *mode) {
   double sum_n=0.0, sum_m=0.0;
   double n_eq[19];
   double m_eq[19];
-  double avg_rho = lbpar.rho;
+  // unit conversion: mass density
+  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
   double (*c)[3] = lbmodel.c;
 
   m_eq[0] = mode[0];
@@ -1112,12 +1113,14 @@ void lb_reinit_parameters() {
 
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    // unit conversion: viscosity
     gamma_shear = 1. - 2./(6.*lbpar.viscosity*tau/(agrid*agrid)+1.);
     //gamma_shear = 0.0;    
   }
 
   if (lbpar.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    // unit conversion: viscosity
     gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity*tau/(agrid*agrid)+1.);
   }
   
@@ -1182,9 +1185,10 @@ void lb_reinit_forces() {
   for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 #ifdef EXTERNAL_FORCES
-      lbfields[index].force[0] = lbpar.ext_force[0];
-      lbfields[index].force[1] = lbpar.ext_force[1];
-      lbfields[index].force[2] = lbpar.ext_force[2];
+    // unit conversion: force density
+      lbfields[index].force[0] = lbpar.ext_force[0]*lbpar.agrid*lbpar.agrid*tau*tau;
+      lbfields[index].force[1] = lbpar.ext_force[1]*lbpar.agrid*lbpar.agrid*tau*tau;
+      lbfields[index].force[2] = lbpar.ext_force[2]*lbpar.agrid*lbpar.agrid*tau*tau;
 #else
       lbfields[index].force[0] = 0.0;
       lbfields[index].force[1] = 0.0;
@@ -1202,6 +1206,7 @@ void lb_reinit_fluid() {
     index_t index;
 
     /* default values for fields in lattice units */
+    /* here the conversion to lb units is performed */
     double rho = lbpar.rho*agrid*agrid*agrid;
     double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
@@ -1305,6 +1310,7 @@ void lb_release() {
 void lb_calc_n_equilibrium(const index_t index, const double rho, const double *v, double *pi) {
 
   const double rhoc_sq = rho*lbmodel.c_sound_sq;
+  // unit conversion: mass density
   const double avg_rho = lbpar.rho*agrid*agrid*agrid;
 
   double local_rho, local_j[3], *local_pi, trace;
@@ -1727,9 +1733,10 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
 
   /* reset force */
 #ifdef EXTERNAL_FORCES
-  lbfields[index].force[0] = lbpar.ext_force[0];
-  lbfields[index].force[1] = lbpar.ext_force[1];
-  lbfields[index].force[2] = lbpar.ext_force[2];
+  // unit conversion: force density
+  lbfields[index].force[0] = lbpar.ext_force[0]*lbpar.agrid*lbpar.agrid*tau*tau;
+  lbfields[index].force[1] = lbpar.ext_force[1]*lbpar.agrid*lbpar.agrid*tau*tau;
+  lbfields[index].force[2] = lbpar.ext_force[2]*lbpar.agrid*lbpar.agrid*tau*tau;
 #else
   lbfields[index].force[0] = 0.0;
   lbfields[index].force[1] = 0.0;
@@ -2225,8 +2232,8 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 //          local_node->has_force = 1;
 //        }
 //        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
-
-        local_rho = lbpar.rho + modes[0];
+        // unit conversion: mass density
+        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
         local_j[0] = modes[1];
         local_j[1] = modes[2];
         local_j[2] = modes[3];
@@ -2465,6 +2472,7 @@ void lb_calc_average_rho() {
   MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   /* calculate average density in MD units */
+  // TODO!!!
   lbpar.rho = sum_rho / (box_l[0]*box_l[1]*box_l[2]);
 
 }
@@ -2540,6 +2548,7 @@ static int lb_print_local_fields(Tcl_Interp *interp, int argc, char **argv, int 
   mpi_recv_fluid(node,index,&rho,j,pi) ;
 
   /* transform to MD units */
+  /* unit conversion */
   rho  *= 1./(agrid*agrid*agrid);
   j[0] *= agrid/tau;
   j[1] *= agrid/tau;
@@ -2644,6 +2653,16 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   
   mpi_recv_fluid(node,index,&rho,j,pi);
   mpi_recv_fluid_border_flag(node,index,&boundary);
+  // unit conversion
+  rho *= 1/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+  j[0] *= 1/lbpar.agrid/lbpar.agrid/tau;
+  j[1] *= 1/lbpar.agrid/lbpar.agrid/tau;
+  j[2] *= 1/lbpar.agrid/lbpar.agrid/tau;
+  pi[0] *= 1/lbpar.agrid/tau/tau;
+  pi[1] *= 1/lbpar.agrid/tau/tau;
+  pi[2] *= 1/lbpar.agrid/tau/tau;
+  pi[3] *= 1/lbpar.agrid/tau/tau;
+  pi[5] *= 1/lbpar.agrid/tau/tau;
 
   while (argc > 0) {
     if (ARG0_IS_S("rho") || ARG0_IS_S("density")) 
@@ -2831,9 +2850,11 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     *change = 3;
 
     /* external force density is stored in lattice units */
-    lbpar.ext_force[0] = ext_f[0]*agrid*agrid*tau*tau;
-    lbpar.ext_force[1] = ext_f[1]*agrid*agrid*tau*tau;
-    lbpar.ext_force[2] = ext_f[2]*agrid*agrid*tau*tau;
+    // WHY? We should do that consistently!
+    // Removed! Now in MD units
+    lbpar.ext_force[0] = ext_f[0];
+    lbpar.ext_force[1] = ext_f[1];
+    lbpar.ext_force[2] = ext_f[2];
     
     mpi_bcast_lb_params(LBPAR_EXTFORCE);
  
