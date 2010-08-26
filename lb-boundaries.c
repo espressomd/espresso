@@ -500,13 +500,67 @@ static void lb_init_boundary_cylinder(Constraint_cylinder* cylinder) {
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
+  int n, x, y, z, index, node_domain_position[3], offset[3];
+  char *errtxt;
+  double pos[3], dist, dist_tmp, dist_vec[3];
+	
+	map_node_array(this_node, node_domain_position);
+	
+	offset[0] = node_domain_position[0]*lblattice.grid[0];
+	offset[1] = node_domain_position[1]*lblattice.grid[1];
+	offset[2] = node_domain_position[2]*lblattice.grid[2];
+
+  for (n=0;n<lblattice.halo_grid_volume;n++) {
+    lbfields[n].boundary = 0;
+  }
+  
+  for (z=1; z<=lblattice.grid[2]; z++) {
+    for (y=1; y<=lblattice.grid[1]; y++) {
+	    for (x=1; x<=lblattice.grid[0]; x++) {	    
+	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
+	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
+	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
+	      
+	      dist = 0.;
+
+        for (n=0;n<n_lb_boundaries;n++) {
+          switch (lb_boundaries[n].type) {
+            case LB_BOUNDARY_WAL:
+              calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_SPH:
+              calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_CYL:
+              calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist_tmp, dist_vec);
+              break;
+            default:
+              errtxt = runtime_error(128);
+              ERROR_SPRINTF(errtxt, "{109 lb_boundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+          }
+          
+          if (abs(dist) > abs(dist_tmp) || n == 0) {
+            dist = dist_tmp;
+          }
+        }       
+        
+  	    if (dist <= 0 && n_lb_boundaries > 0) {
+   	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;   
+        }
+      }
+    }
+  }
+}
+
+/** Initialize boundary conditions for all constraints in the system. */
+/*void lb_init_boundaries() {
   int n;
   char *errtxt;
   
   //printf("executing lb_init_boundaries on node %d\n", this_node);
 
   for (n=0;n<lblattice.halo_grid_volume;n++) {
-    lbfields[n].boundary = 0; //so net
+    lbfields[n].boundary = 0;
   }
 
   for (n=0;n<n_lb_boundaries;n++) {
@@ -525,7 +579,7 @@ void lb_init_boundaries() {
       ERROR_SPRINTF(errtxt, "{109 lb_boundary type %d not implemented in lb_init_boundaries()\n",lb_boundaries[n].type);
     }
   }
-}
+}*/
 
 
 static int lbboundaries_parse_slip_reflection(Tcl_Interp *interp, int argc, char **argv) {

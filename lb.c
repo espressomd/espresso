@@ -2198,6 +2198,8 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
 #endif
+
+  if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2))) {
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
@@ -2306,6 +2308,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
     }
   }
 #endif
+}
 }
 
 /** Calculate particle lattice interactions.

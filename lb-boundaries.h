@@ -84,7 +84,7 @@ MDINLINE void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL
-  printf("%f performing bounce back step\n", sim_time);
+  //printf("%f performing bounce back step\n", sim_time);
   int k;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
