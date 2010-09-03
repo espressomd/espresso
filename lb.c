@@ -1125,7 +1125,8 @@ void lb_reinit_parameters() {
   }
   
   //gamma_odd = gamma_even = gamma_bulk = gamma_shear;
-  //gamma_odd = 0.9;
+  gamma_odd = -0.8;
+  gamma_even = -.8;
 
   //fprintf(stderr,"%f %f %f %f\n",gamma_shear,gamma_bulk,gamma_even,gamma_odd);
 
@@ -1169,7 +1170,7 @@ void lb_reinit_parameters() {
     lb_coupl_pref = 0.0;
   }
 
-  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu));
+  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity));
 
   //LB_TRACE(fprintf(stderr,"%d: phi[4]=%f phi[5]=%f phi[6]=%f phi[7]=%f phi[8]=%f phi[9]=%f\n",this_node,lb_phi[4],lb_phi[5],lb_phi[6],lb_phi[7],lb_phi[8],lb_phi[9]));
 
@@ -1725,8 +1726,10 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
 
   /* update stress modes */
   mode[4] += C[0] + C[2] + C[5];
-  mode[5] += 2.*C[0] - C[2] - C[5];
-  mode[6] += C[2] - C[5];
+//  mode[5] += 2.*C[0] - C[2] - C[5];
+//  mode[6] += C[2] - C[5];
+  mode[5] += C[0] - C[2];
+  mode[6] += C[0] + C[2] - 2.*C[5];
   mode[7] += C[1];
   mode[8] += C[3];
   mode[9] += C[4];
@@ -2956,6 +2959,7 @@ int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       argc -= (change + 1);
       argv += (change + 1);
   }
+  lbpar.rho_lb_units =  lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
   lattice_switch = (lattice_switch | LATTICE_LB) ;
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH) ;

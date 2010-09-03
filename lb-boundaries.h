@@ -23,7 +23,6 @@
 
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
-
 #include <tcl.h>
 #include "utils.h"
 #include "halo.h"
@@ -84,8 +83,7 @@ MDINLINE void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL
-  //printf("%f performing bounce back step\n", sim_time);
-  int k;
+  int k,i;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
   int next[19];
@@ -114,47 +112,50 @@ MDINLINE void lb_bounce_back() {
   for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
 
     if (lbfields[k].boundary) {
+      for (i=0; i<19; i++) {
+        lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+      }
 
-      /* bounce back to lower indices */
-      lbfluid[1][reverse[5]][k-next[5]]   = lbfluid[1][5][k];
-      lbfluid[1][reverse[11]][k-next[11]] = lbfluid[1][11][k];
-      lbfluid[1][reverse[14]][k-next[14]] = lbfluid[1][14][k];
-      lbfluid[1][reverse[15]][k-next[15]] = lbfluid[1][15][k];
-      lbfluid[1][reverse[18]][k-next[18]] = lbfluid[1][18][k];
-
-      /* delete populations in the wall */
-      lbfluid[1][5][k]  = - lbmodel.coeff[5][0]*lbpar.rho; 
-      lbfluid[1][11][k] = - lbmodel.coeff[11][0]*lbpar.rho;
-      lbfluid[1][14][k] = - lbmodel.coeff[14][0]*lbpar.rho;
-      lbfluid[1][15][k] = - lbmodel.coeff[15][0]*lbpar.rho;
-      lbfluid[1][18][k] = - lbmodel.coeff[18][0]*lbpar.rho;
+//      /* bounce back to lower indices */
+//      lbfluid[1][reverse[5]][k-next[5]]   = lbfluid[1][5][k];
+//      lbfluid[1][reverse[11]][k-next[11]] = lbfluid[1][11][k];
+//      lbfluid[1][reverse[14]][k-next[14]] = lbfluid[1][14][k];
+//      lbfluid[1][reverse[15]][k-next[15]] = lbfluid[1][15][k];
+//      lbfluid[1][reverse[18]][k-next[18]] = lbfluid[1][18][k];
+//
+//      /* delete populations in the wall */
+//      lbfluid[1][5][k]  = - lbmodel.coeff[5][0]*lbpar.rho_lb_units; 
+//      lbfluid[1][11][k] = - lbmodel.coeff[11][0]*lbpar.rho_lb_units;
+//      lbfluid[1][14][k] = - lbmodel.coeff[14][0]*lbpar.rho_lb_units;
+//      lbfluid[1][15][k] = - lbmodel.coeff[15][0]*lbpar.rho_lb_units;
+//      lbfluid[1][18][k] = - lbmodel.coeff[18][0]*lbpar.rho_lb_units;
 
     }
 
   }
   
   /* top-down sweep */
-  for (k=lblattice.halo_grid_volume-lblattice.halo_offset-1;k>=0;k--) {
-
-    if (lbfields[k].boundary) {
-
-      /* bounce back to higher indices */
-      lbfluid[1][reverse[6]][k-next[6]]   = lbfluid[1][6][k];
-      lbfluid[1][reverse[12]][k-next[12]] = lbfluid[1][12][k];
-      lbfluid[1][reverse[13]][k-next[13]] = lbfluid[1][13][k];
-      lbfluid[1][reverse[16]][k-next[16]] = lbfluid[1][16][k];
-      lbfluid[1][reverse[17]][k-next[17]] = lbfluid[1][17][k];
-      
-      /* delete populations in the wall */
-      lbfluid[1][6][k]  = - lbmodel.coeff[6][0]*lbpar.rho;
-      lbfluid[1][12][k] = - lbmodel.coeff[12][0]*lbpar.rho;
-      lbfluid[1][13][k] = - lbmodel.coeff[13][0]*lbpar.rho;
-      lbfluid[1][16][k] = - lbmodel.coeff[16][0]*lbpar.rho;
-      lbfluid[1][17][k] = - lbmodel.coeff[17][0]*lbpar.rho;
-
-    }
-
-  }
+//  for (k=lblattice.halo_grid_volume-lblattice.halo_offset-1;k>=0;k--) {
+//
+//    if (lbfields[k].boundary) {
+//
+//      /* bounce back to higher indices */
+//      lbfluid[1][reverse[6]][k-next[6]]   = lbfluid[1][6][k];
+//      lbfluid[1][reverse[12]][k-next[12]] = lbfluid[1][12][k];
+//      lbfluid[1][reverse[13]][k-next[13]] = lbfluid[1][13][k];
+//      lbfluid[1][reverse[16]][k-next[16]] = lbfluid[1][16][k];
+//      lbfluid[1][reverse[17]][k-next[17]] = lbfluid[1][17][k];
+//      
+//      /* delete populations in the wall */
+//      lbfluid[1][6][k]  = - lbmodel.coeff[6][0]*lbpar.rho_lb_units;
+//      lbfluid[1][12][k] = - lbmodel.coeff[12][0]*lbpar.rho_lb_units;
+//      lbfluid[1][13][k] = - lbmodel.coeff[13][0]*lbpar.rho_lb_units;
+//      lbfluid[1][16][k] = - lbmodel.coeff[16][0]*lbpar.rho_lb_units;
+//      lbfluid[1][17][k] = - lbmodel.coeff[17][0]*lbpar.rho_lb_units;
+//
+//    }
+//
+//  }
 #else
 #error Bounce back boundary conditions are only implemented for PUSH scheme!
 #endif
@@ -210,11 +211,11 @@ MDINLINE void lb_specular_reflections() {
       lbfluid[1][reflect[18]][k-next[18]] = lbfluid[1][18][k];
 
       /* delete populations in the wall */
-      lbfluid[1][5][k] = -lbmodel.coeff[5][0]*lbpar.rho;
-      lbfluid[1][11][k] = -lbmodel.coeff[11][0]*lbpar.rho;
-      lbfluid[1][14][k] = -lbmodel.coeff[14][0]*lbpar.rho;
-      lbfluid[1][15][k] = -lbmodel.coeff[15][0]*lbpar.rho;
-      lbfluid[1][18][k] = -lbmodel.coeff[18][0]*lbpar.rho;
+      lbfluid[1][5][k] = -lbmodel.coeff[5][0]*lbpar.rho_lb_units;
+      lbfluid[1][11][k] = -lbmodel.coeff[11][0]*lbpar.rho_lb_units;
+      lbfluid[1][14][k] = -lbmodel.coeff[14][0]*lbpar.rho_lb_units;
+      lbfluid[1][15][k] = -lbmodel.coeff[15][0]*lbpar.rho_lb_units;
+      lbfluid[1][18][k] = -lbmodel.coeff[18][0]*lbpar.rho_lb_units;
 
     }
     
@@ -233,11 +234,11 @@ MDINLINE void lb_specular_reflections() {
       lbfluid[1][reflect[17]][k-next[17]] = lbfluid[1][17][k];
 
       /* delete populations in the wall */
-      lbfluid[1][6][k] = -lbmodel.coeff[6][0]*lbpar.rho;
-      lbfluid[1][12][k] = -lbmodel.coeff[12][0]*lbpar.rho;
-      lbfluid[1][13][k] = -lbmodel.coeff[13][0]*lbpar.rho;
-      lbfluid[1][16][k] = -lbmodel.coeff[16][0]*lbpar.rho;
-      lbfluid[1][17][k] = -lbmodel.coeff[17][0]*lbpar.rho;
+      lbfluid[1][6][k] = -lbmodel.coeff[6][0]*lbpar.rho_lb_units;
+      lbfluid[1][12][k] = -lbmodel.coeff[12][0]*lbpar.rho_lb_units;
+      lbfluid[1][13][k] = -lbmodel.coeff[13][0]*lbpar.rho_lb_units;
+      lbfluid[1][16][k] = -lbmodel.coeff[16][0]*lbpar.rho_lb_units;
+      lbfluid[1][17][k] = -lbmodel.coeff[17][0]*lbpar.rho_lb_units;
 
     }
     
@@ -299,11 +300,11 @@ MDINLINE void lb_slip_reflection() {
       n[17][k-zperiod] = s*n[15][k] + r*n[18][k-zperiod+next[18]];
 
       /* delete upgoing velocities (take care to delete the right ones!) */
-      n[5][k]                   = -lbmodel.coeff[5][0]*lbpar.rho;
-      n[11][k]                  = -lbmodel.coeff[11][0]*lbpar.rho;
-      n[14][k-zperiod+next[14]] = -lbmodel.coeff[14][0]*lbpar.rho;
-      n[15][k]                  = -lbmodel.coeff[15][0]*lbpar.rho;
-      n[18][k-zperiod+next[18]] = -lbmodel.coeff[18][0]*lbpar.rho;
+      n[5][k]                   = -lbmodel.coeff[5][0]*lbpar.rho_lb_units;
+      n[11][k]                  = -lbmodel.coeff[11][0]*lbpar.rho_lb_units;
+      n[14][k-zperiod+next[14]] = -lbmodel.coeff[14][0]*lbpar.rho_lb_units;
+      n[15][k]                  = -lbmodel.coeff[15][0]*lbpar.rho_lb_units;
+      n[18][k-zperiod+next[18]] = -lbmodel.coeff[18][0]*lbpar.rho_lb_units;
 
     }
 
@@ -322,11 +323,11 @@ MDINLINE void lb_slip_reflection() {
       n[18][k+zperiod] = s*n[16][k] + r*n[17][k+zperiod+next[17]];
 
       /* delete downgoing velocities (take care to delete the right ones!) */
-      n[6][k]                   = -lbmodel.coeff[6][0]*lbpar.rho;
-      n[12][k]                  = -lbmodel.coeff[12][0]*lbpar.rho;
-      n[13][k+zperiod+next[13]] = -lbmodel.coeff[13][0]*lbpar.rho;
-      n[16][k]                  = -lbmodel.coeff[16][0]*lbpar.rho;
-      n[17][k+zperiod+next[17]] = -lbmodel.coeff[17][0]*lbpar.rho;
+      n[6][k]                   = -lbmodel.coeff[6][0]*lbpar.rho_lb_units;
+      n[12][k]                  = -lbmodel.coeff[12][0]*lbpar.rho_lb_units;
+      n[13][k+zperiod+next[13]] = -lbmodel.coeff[13][0]*lbpar.rho_lb_units;
+      n[16][k]                  = -lbmodel.coeff[16][0]*lbpar.rho_lb_units;
+      n[17][k+zperiod+next[17]] = -lbmodel.coeff[17][0]*lbpar.rho_lb_units;
 
     }
 
@@ -390,7 +391,7 @@ MDINLINE void lb_modified_bounce_back(int index) {
   //int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
   int reverse[] = { 0, 1, 2, 3, 4, 6, 5, 7, 8, 9, 10, 13, 14, 11, 12, 17, 18, 15, 16 };
 
-  double rho, j[3], n_eq[19], avg_rho=lbpar.rho;
+  double rho, j[3], n_eq[19], avg_rho=lbpar.rho_lb_units;
   double (*coeff)[4]=lbmodel.coeff, (*c)[3]=lbmodel.c;
 
   lb_calc_local_j(index,j);
@@ -624,7 +625,7 @@ MDINLINE void lb_boundary_forces(index_t index, double *mode) {
 #if 0 //problem with slip_pref (georg, 03.08.10)
   int i;
   double (*coeff)[4]=lbmodel.coeff, (*c)[3]=lbmodel.c;
-  double rho=mode[0]+lbpar.rho, *j=&mode[1], *f=lbfields[index].force;
+  double rho=mode[0]+lbpar.rho_lb_units, *j=&mode[1], *f=lbfields[index].force;
   double u[3], C[6];
 
   lb_calc_local_j(index,j);
@@ -754,11 +755,11 @@ MDINLINE void lb_boundary_equilibrium(int index, double rho, double *v, double *
 			     + w[i] * rho * ( c0 
 					      + scalar(lsum,c[i]) 
 					      + 0.5*SQR(scalar(lambda1,c[i])) )
-	- lbmodel.coeff[i][0]*lbpar.rho;
+	- lbmodel.coeff[i][0]*lbpar.rho_lb_units;
 
     } else {
 
-      lbfluid[0][i][index] = -lbmodel.coeff[i][0]*lbpar.rho;
+      lbfluid[0][i][index] = -lbmodel.coeff[i][0]*lbpar.rho_lb_units;
 
     }
 
@@ -784,7 +785,7 @@ MDINLINE void lb_boundary_equilibrium(int index, double rho, double *v, double *
     //fprintf(stderr,"chi1 = %e chi2 = %f lambda1 = (%e,%e,%e) lambda2 = (%e,%e,%e)\n",chi1,chi2,lambda1[0],lambda1[1],lambda1[2],lambda2[0],lambda2[1],lambda2[2]);
     //fprintf(stderr,"rho = %e j = (%e,%e,%e) pi = (%e,%e,%e,%e,%e,%e)\n",rho,j[0],j[1],j[2],pi[0],pi[1],pi[2],pi[3],pi[4],pi[5]);
     //for (i=0; i<lbmodel.n_veloc; i++) {      
-    //  fprintf(stderr,"[%d] %e\n",i,lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //  fprintf(stderr,"[%d] %e\n",i,lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho_lb_units);
     //}
   }
 #else
@@ -1288,7 +1289,7 @@ MDINLINE void lb_boundary_bb_neq_BGK2(index_t index, double *mode) {
 #endif
 
   /* bb_neq and relax the new ones (leaps a bit ahead then?) */
-  mode[0] = lbpar.rho;
+  mode[0] = lbpar.rho_lb_units;
   for (i=0;i<lbmodel.n_veloc; i++) {
     mode[0] += lbfluid[1][i][index];
   }
@@ -1519,7 +1520,7 @@ MDINLINE void lb_boundary_relax_modes(index_t index, double *mode, double *pi) {
 MDINLINE void lb_boundary_apply_forces(index_t index, double *mode) {
 #if 0 //problem with slip_pref (georg, 03.08.10)
   double *f = lbfields[index].force;
-  double rho = mode[0] + lbpar.rho;
+  double rho = mode[0] + lbpar.rho_lb_units;
   double u[3];
 
   f[0] = lbpar.ext_force[0];
@@ -1734,7 +1735,7 @@ MDINLINE void lb_boundary_equilibrium_push(int index, double *mode) {
   double chi1, chi2, lambda1[3], lambda2[3], lsum[3];
   double c0;
 
-  double rho = mode[0] + lbpar.rho;
+  double rho = mode[0] + lbpar.rho_lb_units;
 
   lambda1[0] = (mode[1]+A*nvec[0]) / (lbmodel.c_sound_sq*rho);
   lambda1[1] = (mode[2]+A*nvec[1]) / (lbmodel.c_sound_sq*rho);
@@ -1768,18 +1769,18 @@ MDINLINE void lb_boundary_equilibrium_push(int index, double *mode) {
 			     + w[i] * rho * ( c0 
 					      + scalar(lsum,c[i]) 
 					      + 0.5*SQR(scalar(lambda1,c[i])) )
-	- lbmodel.coeff[i][0]*lbpar.rho;
+	- lbmodel.coeff[i][0]*lbpar.rho_lb_units;
 
       if ((index == get_linear_index(1,1,21,lblattice.halo_grid))
 	   || (index == get_linear_index(1,1,1,lblattice.halo_grid))) {
-	//fprintf(stderr,"[%d] %e\n",i,lbfluid[1][i][next[i]]+lbmodel.coeff[i][0]*lbpar.rho);
+	//fprintf(stderr,"[%d] %e\n",i,lbfluid[1][i][next[i]]+lbmodel.coeff[i][0]*lbpar.rho_lb_units);
       }
 
     } else {
 
       /* nothing streams through the wall 
        * this is important for the halo regions */
-      lbfluid[1][i][next[i]] = -lbmodel.coeff[i][0]*lbpar.rho;
+      lbfluid[1][i][next[i]] = -lbmodel.coeff[i][0]*lbpar.rho_lb_units;
 
     }
 
@@ -1798,7 +1799,7 @@ MDINLINE void lb_boundary_collisions(int index, double *modes) {
 
   //lb_boundary_calc_modes(index, modes, pi);
 
-  //rho = modes[0];// + lbpar.rho;
+  //rho = modes[0];// + lbpar.rho_lb_units;
   //v[0] = modes[1]/rho;
   //v[1] = modes[2]/rho;
   //v[2] = modes[3]/rho;
@@ -2866,7 +2867,7 @@ MDINLINE void lb_boundary_equilibrium1(LB_FluidNode *node, const double local_rh
   for (i=0; i<lbmodel.n_veloc; i++) {
     //if(scalar(c[i],nvec) < 0.0)
     {
-      fprintf(stderr,"local_n[%d]=%.24e\n",i,local_n[i]+lbmodel.coeff[i][0]*lbpar.rho);
+      fprintf(stderr,"local_n[%d]=%.24e\n",i,local_n[i]+lbmodel.coeff[i][0]*lbpar.rho_lb_units);
     }
   }
 
@@ -2911,7 +2912,7 @@ MDINLINE void lb_boundary_equilibrium1(LB_FluidNode *node, const double local_rh
   //return;
   
   double rho = local_rho;
-  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+  double avg_rho = lbpar.rho_lb_units;
 
   double v[3] = { 0., 0., 0. };
   v[0] = local_j[0];
@@ -3390,7 +3391,7 @@ MDINLINE void lb_boundary_equilibrium2(LB_FluidNode *node, const double local_rh
   LB_TRACE(fprintf(stderr,"Start: local_rho=%f local_j=(%e,%e,%e) Pi=(%.12e,%e,%.12e,%e,%f,%.12e)\n",local_rho,local_j[0],local_j[1],local_j[2],local_pi[0],local_pi[1],local_pi[2],local_pi[3],local_pi[4],local_pi[5]));
   
   double rho = local_rho;
-  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+  double avg_rho = lbpar.rho_lb_units;
 
   double v[3] = { 0., 0., 0. };
   v[0] = local_j[0];
@@ -3687,7 +3688,11 @@ MDINLINE void lb_set_boundary_node(int index, double rho, double *v, double *pi)
 
 /** Apply boundary conditions to the LB fluid. */
 MDINLINE void lb_boundary_conditions() {
+<<<<<<< lb-boundaries.h
+   lb_bounce_back();
+=======
     lb_bounce_back();
+>>>>>>> 2.3.6.5
 #if 0 //problems with slip_pref (georg, 03.08.10)
   switch (lb_boundary_par.type) {
 

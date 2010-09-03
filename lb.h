@@ -152,6 +152,7 @@ typedef struct {
 
   /** external force applied to the fluid at each lattice site (MD units) */
   double ext_force[3]; /* TODO: local force or global force? */
+  double rho_lb_units;
           
 } LB_Parameters;
 
