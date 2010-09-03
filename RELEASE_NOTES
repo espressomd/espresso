@@ -2,22 +2,24 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.2.0b (Walaskialf)                                                                 *
+* v2.2.0c (Walaskialf)                                                                 *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.2.0b -
+- v2.2.0c -
 -----------
 
-(b) July 25th, 2010.
-(a) July 21st, 2010.
+(c) September 2nd, 2010.
+(b) July     25th, 2010.
+(a) July     21st, 2010.
 
 Changes:
 (a) added more reference to original adress papers
 
 Bugfixes:
+(c) fixed sign of charged plate energy
 (b) removed duplicated file in scripts/Makefile.am
 
 
