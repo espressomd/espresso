@@ -162,7 +162,9 @@ proc ::mbtools::analysis::setup_analysis { commands args } {
     set mgrid $params(g)
     set stray_cut_off $params(str)
     # Setup the grid just in case we need it
-    analyze set_bilayer grid $mgrid $mgrid 0 stray $stray_cut_off
+    if { [has_feature MODES] } {
+	analyze set_bilayer grid $mgrid $mgrid 0 stray $stray_cut_off
+    } 
 
 
     # Calculate the total number of particles from topology
