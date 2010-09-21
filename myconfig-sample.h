@@ -60,6 +60,7 @@
 /* #define DPD_MASS_LIN */
 
 /* #define LB */
+/* #define LB_ELECTROHYDRODYNAMICS */
 
 /**********************************************************************/
 /*                           interactions                             */

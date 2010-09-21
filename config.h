@@ -106,6 +106,11 @@
 #define DIPOLES
 #endif
 
+/* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
+#ifdef LB_ELECTROHYDRODYNAMICS
+#define LB
+#endif
+
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY
