@@ -3688,11 +3688,7 @@ MDINLINE void lb_set_boundary_node(int index, double rho, double *v, double *pi)
 
 /** Apply boundary conditions to the LB fluid. */
 MDINLINE void lb_boundary_conditions() {
-<<<<<<< lb-boundaries.h
    lb_bounce_back();
-=======
-    lb_bounce_back();
->>>>>>> 2.3.6.5
 #if 0 //problems with slip_pref (georg, 03.08.10)
   switch (lb_boundary_par.type) {
 
