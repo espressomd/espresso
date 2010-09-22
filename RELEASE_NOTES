@@ -2,18 +2,38 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.2.0c (Walaskialf)                                                                 *
+* v2.2.0d (Walaskialf)                                                                 *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.2.0c -
+- v2.2.0d -
 -----------
 
-(c) September 2nd, 2010.
-(b) July     25th, 2010.
-(a) July     21st, 2010.
+(d) September 21st, 2010.
+(c) September  2nd, 2010.
+(b) July      25th, 2010.
+(a) July      21st, 2010.
+
+New Features:
+(d) = LB_ELECTROHYDRODYNAMICS: charge coupling scheme for Lattice-Boltzmann
+    simulations. See publication Hickey et. al. (2010)
+    
+    Added new feature:
+    LB_ELECTROHYDRODYNAMICS
+    
+    With this, you can use a coupling scheme to simulate electrostatics and
+    hydrodynamics
+    for electrophoresis without long-range interactions, simply in
+    Lattice-Boltzmann.
+    
+    For each particle, a new 3D-parameter mu_E can be set and is stored in Variable
+    p->p.mu_E[3]
+    
+    This parameter is added to the LB-force routine.
+    
+    Documentation yet to come.
 
 Changes:
 (a) added more reference to original adress papers
