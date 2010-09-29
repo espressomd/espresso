@@ -7,7 +7,7 @@
  * You should have received a copy of that license along with this program;
  * if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
  * write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
- * Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+ * Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
  */
 
 /** \file lattice.c 
@@ -20,14 +20,14 @@
 #include "grid.h"
 #include "lattice.h"
 
+#ifdef LATTICE
+
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be
  *  combined by or'ing the respective flags.
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 int lattice_switch = LATTICE_OFF ;
-
-#ifdef LATTICE
 
 /** Initialize lattice.
  *
@@ -51,8 +51,8 @@ void init_lattice(Lattice *lattice, double agrid, double tau) {
   for (dir=0;dir<3;dir++) {
     /* check if local_box_l is compatible with lattice spacing */
     if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid) > ROUND_ERROR_PREC) {
-      char *errtxt = runtime_error(128 + 4*TCL_DOUBLE_SPACE + 4*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid=%g is incompatible with local_box_l[%d]=%g (box_l[%d]=%g node_grid[%d]=%d) %g} ",agrid,dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",agrid,dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
       return;
     }
   }

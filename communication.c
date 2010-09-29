@@ -32,6 +32,7 @@
 #include "random.h"
 #include "lj.h"
 #include "lb.h"
+#include "lb-boundaries.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -181,11 +182,13 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_ICCP3M_INIT 53
 /** Action number for \ref mpi_send_rotational_inertia. */
 #define REQ_SET_RINERTIA  54
-/** Action number for \ref mpi_send_mu_E. */
-#define REQ_SET_MU_E     55
+/** Action number for \ref mpi_bcast_constraint */
+#define REQ_BCAST_LBBOUNDARY 55
+/** Action number for \ref mpi_recv_fluid_border_flag */
+#define REQ_LB_GET_BORDER_FLAG 56
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 56
+#define REQ_MAXIMUM 57
 
 /*@}*/
 
@@ -203,7 +206,6 @@ void mpi_place_particle_slave(int node, int parm);
 void mpi_send_v_slave(int node, int parm);
 void mpi_send_f_slave(int node, int parm);
 void mpi_send_q_slave(int node, int parm);
-void mpi_send_mu_E_slave(int node, int parm);
 void mpi_send_type_slave(int node, int parm);
 void mpi_send_bond_slave(int node, int parm);
 void mpi_recv_part_slave(int node, int parm);
@@ -219,6 +221,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm);
 void mpi_send_ext_slave(int node, int parm);
 void mpi_remove_particle_slave(int node, int parm);
 void mpi_bcast_constraint_slave(int node, int parm);
+void mpi_bcast_lb_boundary_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
@@ -245,6 +248,7 @@ void mpi_send_dip_slave(int node, int parm);
 void mpi_send_dipm_slave(int node, int parm);
 void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
+void mpi_recv_fluid_border_flag_slave(int node, int parm);
 void mpi_local_stress_tensor_slave(int node, int parm);
 void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_isVirtual_slave(int node, int parm);
@@ -310,7 +314,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
-  mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
+  mpi_bcast_lb_boundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
+  mpi_recv_fluid_border_flag_slave  /* 56: REQ_LB_GET_BORDER_FLAG */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -380,6 +385,8 @@ char *names[] = {
   "REQ_ICCP3M_ITERATION", /* 52 */
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
+  "REQ_BCAST_LBBOUNDARY", /* 55 */
+  "REQ_LB_GET_BORDER_FLAG" /* 56 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -731,39 +738,6 @@ void mpi_send_q_slave(int pnode, int part)
 #endif
 }
 
-/********************* REQ_SET_MU_E ********/
-void mpi_send_mu_E(int pnode, int part, double mu_E[3])
-{
-#ifdef LB_ELECTROHYDRODYNAMICS
-  mpi_issue(REQ_SET_MU_E, pnode, part);
-
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    p->p.mu_E[0] = mu_E[0];
-    p->p.mu_E[1] = mu_E[1];
-    p->p.mu_E[2] = mu_E[2];
-  }
-  else {
-    MPI_Send(&mu_E, 3, MPI_DOUBLE, pnode, REQ_SET_MU_E, MPI_COMM_WORLD);
-  }
-
-  on_particle_change();
-#endif
-}
-
-void mpi_send_mu_E_slave(int pnode, int part)
-{
-#ifdef LB_ELECTROHYDRODYNAMICS
-  if (pnode == this_node) {
-    Particle *p = local_particles[part];
-    MPI_Status status;
-    MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, REQ_SET_MU_E,
-	     MPI_COMM_WORLD, &status);
-  }
-
-  on_particle_change();
-#endif
-}
 
 /********************* REQ_SET_M ********/
 void mpi_send_mass(int pnode, int part, double mass)
@@ -1599,10 +1573,10 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[
 }
 
 void mpi_local_stress_tensor_slave(int ana_num, int job) {
-  int bins[3] = {0,0,0};
-  int periodic[3]= {0,0,0};
-  double range_start[3]= {0,0,0};
-  double range[3]= {0,0,0};
+  int bins[3];
+  int periodic[3];
+  double range_start[3];
+  double range[3];
   DoubleList *TensorInBin;
   int i, j;
 
@@ -2024,6 +1998,54 @@ void mpi_bcast_constraint_slave(int node, int parm)
   }
 
   on_constraint_change();
+#endif
+}
+
+/*************** REQ_BCAST_LBBOUNDARY ************/
+void mpi_bcast_lb_boundary(int del_num)
+{
+#ifdef LB_BOUNDARIES
+  mpi_issue(REQ_BCAST_LBBOUNDARY, 0, del_num);
+
+  if (del_num == -1) {
+    /* bcast new boundaries */
+    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (del_num == -2) {
+    /* delete all boundaries */
+    n_lb_boundaries = 0;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  }
+  else {
+    memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
+    n_lb_boundaries--;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  }
+
+  on_lb_boundary_change();
+#endif
+}
+
+void mpi_bcast_lb_boundary_slave(int node, int parm)
+{   
+#ifdef LB_BOUNDARIES
+  if(parm == -1) {
+    n_lb_boundaries++;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
+  }
+  else if (parm == -2) {
+    /* delete all boundaries */
+    n_lb_boundaries = 0;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  }
+  else {
+    memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
+    n_lb_boundaries--;
+    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
+  }
+
+  on_lb_boundary_change();
 #endif
 }
 
@@ -2520,7 +2542,7 @@ void mpi_send_exclusion_slave(int part1, int part2)
 void mpi_send_fluid(int node, int index, double rho, double *j, double *pi) {
 #ifdef LB
   if (node==this_node) {
-    lb_set_local_fields(index, rho, j, pi);
+    lb_calc_n_equilibrium(index, rho, j, pi);
   } else {
     double data[10] = { rho, j[0], j[1], j[2], pi[0], pi[1], pi[2], pi[3], pi[4], pi[5] };
     mpi_issue(REQ_SET_FLUID, node, index);
@@ -2535,7 +2557,7 @@ void mpi_send_fluid_slave(int node, int index) {
     double data[10];
     MPI_Status status;
     MPI_Recv(data, 10, MPI_DOUBLE, 0, REQ_SET_FLUID, MPI_COMM_WORLD, &status);
-    lb_set_local_fields(index, data[0], &data[1], &data[4]);
+    lb_calc_n_equilibrium(index, data[0], &data[1], &data[4]);
   }
 #endif
 }
@@ -2544,7 +2566,7 @@ void mpi_send_fluid_slave(int node, int index) {
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
 #ifdef LB
   if (node==this_node) {
-    lb_get_local_fields(index, rho, j, pi);
+    lb_calc_local_fields(index, rho, j, pi);
   } else {
     double data[10];
     mpi_issue(REQ_GET_FLUID, node, index);
@@ -2569,8 +2591,33 @@ void mpi_recv_fluid_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
     double data[10];
-    lb_get_local_fields(index, &data[0], &data[1], &data[4]);
+    lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
     MPI_Send(data, 10, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
+  }
+#endif
+}
+
+/************** REQ_LB_GET_BORDER_FLAG **************/
+void mpi_recv_fluid_border_flag(int node, int index, int *border) {
+#ifdef LB
+  if (node==this_node) {
+    lb_local_fields_get_border_flag(index, border);
+  } else {
+    int data;
+    mpi_issue(REQ_LB_GET_BORDER_FLAG, node, index);
+    MPI_Status status;
+    MPI_Recv(&data, 1, MPI_INTEGER, node, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD, &status);
+    *border = data;
+  }
+#endif
+}
+
+void mpi_recv_fluid_border_flag_slave(int node, int index) {
+#ifdef LB
+  if (node==this_node) {
+    double data;
+    lb_local_fields_get_border_flag(index, &data);
+    MPI_Send(&data, 1, MPI_INTEGER, 0, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD);
   }
 #endif
 }

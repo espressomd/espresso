@@ -33,9 +33,6 @@
 #error MODES requires the fftw
 #endif
 
-#ifdef LB
-#error LB requires the fftw
-#endif
 
 #endif
 

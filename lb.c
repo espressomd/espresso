@@ -50,38 +50,45 @@ int transfer_momentum = 0;
 LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0} };
 
 /** The DnQm model to be used. */
-LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, 1./3. };
-#ifdef D3Q18
-#error Only D3Q19 is implemented!
+LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3. };
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * ! MAKE SURE THAT D3Q19 is #undefined WHEN USING OTHER MODELS !
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+/* doesn't work yet */
+#ifndef D3Q19
+#error The implementation only works for D3Q19 so far!
 #endif
 
 /** The underlying lattice structure */
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
 
-/** Pointer to the fluid nodes
- * This variable is used for convenience instead of having to type lattice.fields everywhere */
-LB_FluidNode *lbfluid=NULL;
+/** Pointer to the velocity populations of the fluid nodes */
+double **lbfluid[2] = { NULL, NULL };
+
+/** Pointer to the hydrodynamic fields of the fluid nodes */
+LB_FluidNode *lbfields = NULL;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = { 0, NULL };
 
-/** The number of field variables on a local lattice site (counted in doubles). */
-static int n_fields;
+/** Flag indicating whether the halo region is up to date */
+static int resend_halo = 0;
 
 /** \name Derived parameters */
 /*@{*/
 /** Flag indicating whether fluctuations are present. */
 static int fluct;
-/** eigenvalue of the collision operator for relaxation of shear modes */
-static double lblambda = -1;
-/** eigenvalue of the collision operator for relaxation of bulk modes */
-static double lblambda_bulk = -1;
-/** amplitude of the fluctuations in the fluid stress tensor */
-static double lb_fluct_pref = 0.0;
-/** amplitude of the bulk fluctuations of the stress tensor */
-static double lb_fluct_pref_bulk = 0.0;
+
+/** relaxation rate of shear modes */
+static double gamma_shear = 0.0;
+/** relaxation rate of bulk modes */
+static double gamma_bulk = 0.0;
+static double gamma_odd  = 0.0;
+static double gamma_even = 0.0;
+/** amplitudes of the fluctuations of the modes */
+static double lb_phi[19];
 /** amplitude of the fluctuations in the viscous coupling */
-static double lb_coupl_pref;
+static double lb_coupl_pref = 0.0;
 /*@}*/
 
 /** The number of velocities of the LB model.
@@ -127,18 +134,21 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
  * halo regions have been exchanged correctly. */
 static void lb_check_halo_regions() {
 
-  int x,y,z, index, s_node, r_node, count=n_veloc;
+  index_t index;
+  int i,x,y,z, s_node, r_node, count=n_veloc;
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
 
   r_buffer = malloc(count*sizeof(double));
+  s_buffer = malloc(count*sizeof(double));
 
   if (PERIODIC(0)) {
     for (z=0;z<lblattice.halo_grid[2];++z) {
       for (y=0;y<lblattice.halo_grid[1];++y) {
 
 	index  = get_linear_index(0,y,z,lblattice.halo_grid);
-	s_buffer = lbfluid[index].n;
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+
 	s_node = node_neighbors[1];
 	r_node = node_neighbors[0];
 	if (n_nodes > 1) {
@@ -146,15 +156,19 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
-	  compare_buffers(lbfluid[index].n,r_buffer,count*sizeof(double));
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
-	  if (compare_buffers(lbfluid[index].n,s_buffer,count*sizeof(double)))
-	    fprintf(stderr,"buffers differ in dir=%d at index=%d y=%d z=%d\n",0,index,y,z);
+	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
+	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);
+	  }
 	}
 
 	index = get_linear_index(lblattice.grid[0]+1,y,z,lblattice.halo_grid); 
-	s_buffer = lbfluid[index].n;
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+
 	s_node = node_neighbors[0];
 	r_node = node_neighbors[1];
 	if (n_nodes > 1) {
@@ -162,11 +176,14 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(1,y,z,lblattice.halo_grid);
-	  compare_buffers(lbfluid[index].n,r_buffer,count*sizeof(double));
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(1,y,z,lblattice.halo_grid);
-	  if (compare_buffers(lbfluid[index].n,s_buffer,count*sizeof(double)))
-	    fprintf(stderr,"buffers differ in dir=%d at index=%d y=%d z=%d\n",0,index,y,z);	  
+	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
+	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);	  
+	  }
 	}
 
       }      
@@ -178,7 +195,8 @@ static void lb_check_halo_regions() {
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,0,z,lblattice.halo_grid);
-	s_buffer = lbfluid[index].n;
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+
 	s_node = node_neighbors[3];
 	r_node = node_neighbors[2];
 	if (n_nodes > 1) {
@@ -186,18 +204,22 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
-	  compare_buffers(lbfluid[index].n,r_buffer,count*sizeof(double));
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
-	  if (compare_buffers(lbfluid[index].n,s_buffer,count*sizeof(double)))
-	    fprintf(stderr,"buffers differ in dir=%d at index=%d x=%d z=%d\n",1,index,x,z);
+	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
+	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d z=%d\n",1,index,x,z);
+	  }
 	}
 
       }
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,lblattice.grid[1]+1,z,lblattice.halo_grid);
-	s_buffer = lbfluid[index].n;
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+
 	s_node = node_neighbors[2];
 	r_node = node_neighbors[3];
 	if (n_nodes > 1) {
@@ -205,11 +227,14 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,1,z,lblattice.halo_grid);
-	  compare_buffers(lbfluid[index].n,r_buffer,count*sizeof(double));
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,1,z,lblattice.halo_grid);
-	  if (compare_buffers(lbfluid[index].n,s_buffer,count*sizeof(double)))
-	    fprintf(stderr,"buffers differ in dir=%d at index=%d x=%d z=%d\n",1,index,x,z);
+	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
+	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d z=%d\n",1,index,x,z);
+	  }
 	}
 
       }
@@ -221,7 +246,8 @@ static void lb_check_halo_regions() {
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,y,0,lblattice.halo_grid);
-	s_buffer = lbfluid[index].n;
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+
 	s_node = node_neighbors[5];
 	r_node = node_neighbors[4];
 	if (n_nodes > 1) {
@@ -229,11 +255,14 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
-	  compare_buffers(lbfluid[index].n,r_buffer,count*sizeof(double));
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
-	  if (compare_buffers(lbfluid[index].n,s_buffer,count*sizeof(double)))
-	    fprintf(stderr,"buffers differ in dir=%d at index=%d x=%d y=%d z=%d\n",2,index,x,y,lblattice.grid[2]);  
+	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
+	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d y=%d z=%d\n",2,index,x,y,lblattice.grid[2]);  
+	  }
 	}
 
       }
@@ -242,7 +271,8 @@ static void lb_check_halo_regions() {
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,y,lblattice.grid[2]+1,lblattice.halo_grid);
-	s_buffer = lbfluid[index].n;
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+
 	s_node = node_neighbors[4];
 	r_node = node_neighbors[5];
 	if (n_nodes > 1) {
@@ -250,11 +280,14 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,y,1,lblattice.halo_grid);
-	  compare_buffers(lbfluid[index].n,r_buffer,count*sizeof(double));
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,y,1,lblattice.halo_grid);
-	  if(compare_buffers(lbfluid[index].n,s_buffer,count*sizeof(double)))
-	    fprintf(stderr,"buffers differ in dir=%d at index=%d x=%d y=%d\n",2,index,x,y);
+	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  if(compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
+	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d y=%d\n",2,index,x,y);
+	  }
 	}
       
       }
@@ -262,9 +295,704 @@ static void lb_check_halo_regions() {
   }
 
   free(r_buffer);
+  free(s_buffer);
+
+  //if (check_runtime_errors());
+  //else fprintf(stderr,"halo check successful\n");
 
 }
 #endif /* ADDITIONAL_CHECKS */
+
+#ifdef ADDITIONAL_CHECKS
+MDINLINE void lb_lattice_sum() {
+
+    int n_veloc = lbmodel.n_veloc;
+    double *w   = lbmodel.w;
+    double (*v)[3]  = lbmodel.c;
+    
+    //int n_veloc = 14;
+    //double w[14]    = { 7./18., 
+    //                    1./12., 1./12., 1./12., 1./12., 1./18.,
+    //                    1./36., 1./36., 1./36., 1./36., 
+    //                    1./36., 1./36., 1./36., 1./36. };
+    //double v[14][3] = { { 0., 0., 0. },
+    //                    { 1., 0., 0. },
+    //                    {-1., 0., 0. },
+    //                    { 0., 1., 0. },
+    //		        { 0.,-1., 0. },
+    //                    { 0., 0., 1. },
+    //                    { 1., 1., 0. },
+    //                    {-1.,-1., 0. },
+    //                    { 1.,-1., 0. },
+    //                    {-1., 1., 0. },
+    //                    { 1., 0., 1. },
+    //                    {-1., 0., 1. },
+    //                    { 0., 1., 1. },
+    //                    { 0.,-1., 1. } };
+
+    int i,a,b,c,d,e;
+    double sum1,sum2,sum3,sum4,sum5;
+    int count=0;
+
+    for (a=0; a<3; a++) 
+      {
+	sum1 = 0.0;
+	for (i=0; i<n_veloc; ++i) {
+	  if (v[i][2] < 0) sum1 += w[i]*v[i][a];      
+	}
+	if (fabs(sum1) > ROUND_ERROR_PREC) {
+	  count++; fprintf(stderr,"(%d) %f\n",a,sum1);
+	}
+      }
+
+    for (a=0; a<3; a++)
+      for (b=0; b<3; b++) 
+	{
+	  sum2 = 0.0;
+	  for (i=0; i<n_veloc; ++i) {
+	    if (v[i][2] < 0) sum2 += w[i]*v[i][a]*v[i][b];      
+	  }
+	  if (sum2!=0.0) {
+	    count++; fprintf(stderr,"(%d,%d) %f\n",a,b,sum2);
+	  }
+	}
+
+    for (a=0; a<3; a++)
+      for (b=0; b<3; b++) 
+	for (c=0; c<3; c++) 
+	  {
+	    sum3 = 0.0;
+	    for (i=0; i<n_veloc; ++i) {
+	      if (v[i][2] < 0) sum3 += w[i]*v[i][a]*v[i][b]*v[i][c];      
+	    }
+	    if (sum3!=0.0) {
+	      count++; fprintf(stderr,"(%d,%d,%d) %f\n",a,b,c,sum3);
+	    }
+	  }
+
+    for (a=0; a<3; a++)
+      for (b=0; b<3; b++)
+	for (c=0; c<3; c++)
+	  for (d=0; d<3; d++)
+	    {
+	      sum4 = 0.0;
+	      for (i=0; i<n_veloc; ++i) {
+		if (v[i][2] < 0) sum4 += w[i]*v[i][a]*v[i][b]*v[i][c]*v[i][d];      
+	      }
+	      if (fabs(sum4) > ROUND_ERROR_PREC) { 
+		  count++; fprintf(stderr,"(%d,%d,%d,%d) %f\n",a,b,c,d,sum4); 
+	      }
+	    }
+
+    for (a=0; a<3; a++)
+      for (b=0; b<3; b++)
+	for (c=0; c<3; c++)
+	  for (d=0; d<3; d++)
+	    for (e=0; e<3; e++) 
+	      {
+		sum5 = 0.0;
+		for (i=0; i<n_veloc; ++i) {
+		  if (v[i][2] < 0) sum5 += w[i]*v[i][a]*v[i][b]*v[i][c]*v[i][d]*v[i][e];      
+		}
+		if (fabs(sum5) > ROUND_ERROR_PREC) { 
+		  count++; fprintf(stderr,"(%d,%d,%d,%d,%d) %f\n",a,b,c,d,e,sum5);
+		}
+	      }
+
+    fprintf(stderr,"%d non-null entries\n",count);
+
+}
+#endif
+
+#ifdef ADDITIONAL_CHECKS
+MDINLINE void lb_check_mode_transformation(index_t index, double *mode) {
+
+  /* check if what I think is right */
+
+  int i;
+  double *w = lbmodel.w;
+  double (*e)[19] = d3q19_modebase;
+  double sum_n=0.0, sum_m=0.0;
+  double n_eq[19];
+  double m_eq[19];
+  // unit conversion: mass density
+  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+  double (*c)[3] = lbmodel.c;
+
+  m_eq[0] = mode[0];
+  m_eq[1] = mode[1];
+  m_eq[2] = mode[2];
+  m_eq[3] = mode[3];
+
+  double rho = mode[0] + avg_rho;
+  double *j  = mode+1;
+
+  /* equilibrium part of the stress modes */
+  /* remember that the modes have (\todo not?) been normalized! */
+  m_eq[4] = /*1./6.*/scalar(j,j)/rho;
+  m_eq[5] = /*1./4.*/(SQR(j[0])-SQR(j[1]))/rho;
+  m_eq[6] = /*1./12.*/(scalar(j,j) - 3.0*SQR(j[2]))/rho;
+  m_eq[7] = j[0]*j[1]/rho;
+  m_eq[8] = j[0]*j[2]/rho;
+  m_eq[9] = j[1]*j[2]/rho;
+
+  for (i=10;i<n_veloc;i++) {
+    m_eq[i] = 0.0;
+  }
+
+  for (i=0;i<n_veloc;i++) {
+    n_eq[i] = w[i]*((rho-avg_rho) + 3.*scalar(j,c[i]) + 9./2.*SQR(scalar(j,c[i]))/rho - 3./2.*scalar(j,j)/rho);
+  } 
+
+  for (i=0;i<n_veloc;i++) {
+    sum_n += SQR(lbfluid[0][i][index]-n_eq[i])/w[i];
+    sum_m += SQR(mode[i]-m_eq[i])/e[19][i];
+  }
+
+  if (fabs(sum_n-sum_m)>ROUND_ERROR_PREC) {    
+    fprintf(stderr,"Attention: sum_n=%f sum_m=%f %e\n",sum_n,sum_m,fabs(sum_n-sum_m));
+  }
+
+}
+
+MDINLINE void lb_init_mode_transformation() {
+
+#ifdef D3Q19
+  int i, j, k, l;
+  int n_veloc = 14;
+  double w[14]    = { 7./18., 
+                      1./12., 1./12., 1./12., 1./12., 1./18.,
+                      1./36., 1./36., 1./36., 1./36., 
+                      1./36., 1./36., 1./36., 1./36. };
+  double c[14][3] = { { 0., 0., 0. },
+                      { 1., 0., 0. },
+                      {-1., 0., 0. },
+                      { 0., 1., 0. },
+		      { 0.,-1., 0. },
+                      { 0., 0., 1. },
+                      { 1., 1., 0. },
+                      {-1.,-1., 0. },
+                      { 1.,-1., 0. },
+                      {-1., 1., 0. },
+                      { 1., 0., 1. },
+                      {-1., 0., 1. },
+                      { 0., 1., 1. },
+                      { 0.,-1., 1. } };
+
+  double b[19][14];
+  double e[14][14];
+  double proj, norm[14];
+
+  /* construct polynomials from the discrete velocity vectors */
+  for (i=0;i<n_veloc;i++) {
+    b[0][i]  = 1;
+    b[1][i]  = c[i][0];
+    b[2][i]  = c[i][1];
+    b[3][i]  = c[i][2];
+    b[4][i]  = scalar(c[i],c[i]);
+    b[5][i]  = c[i][0]*c[i][0]-c[i][1]*c[i][1];
+    b[6][i]  = scalar(c[i],c[i])-3*c[i][2]*c[i][2];
+    //b[5][i]  = 3*c[i][0]*c[i][0]-scalar(c[i],c[i]);
+    //b[6][i]  = c[i][1]*c[i][1]-c[i][2]*c[i][2];
+    b[7][i]  = c[i][0]*c[i][1];
+    b[8][i]  = c[i][0]*c[i][2];
+    b[9][i]  = c[i][1]*c[i][2];
+    b[10][i] = 3*scalar(c[i],c[i])*c[i][0];
+    b[11][i] = 3*scalar(c[i],c[i])*c[i][1];
+    b[12][i] = 3*scalar(c[i],c[i])*c[i][2];
+    b[13][i] = (c[i][1]*c[i][1]-c[i][2]*c[i][2])*c[i][0];
+    b[14][i] = (c[i][0]*c[i][0]-c[i][2]*c[i][2])*c[i][1];
+    b[15][i] = (c[i][0]*c[i][0]-c[i][1]*c[i][1])*c[i][2];
+    b[16][i] = 3*scalar(c[i],c[i])*scalar(c[i],c[i]);
+    b[17][i] = 2*scalar(c[i],c[i])*b[5][i];
+    b[18][i] = 2*scalar(c[i],c[i])*b[6][i];
+  }
+
+  for (i=0;i<n_veloc;i++) {
+    b[0][i]  = 1;
+    b[1][i]  = c[i][0];
+    b[2][i]  = c[i][1];
+    b[3][i]  = c[i][2];
+    b[4][i]  = scalar(c[i],c[i]);
+    b[5][i]  = SQR(c[i][0])-SQR(c[i][1]);
+    b[6][i]  = c[i][0]*c[i][1];
+    b[7][i]  = c[i][0]*c[i][2];
+    b[8][i]  = c[i][1]*c[i][2];
+    b[9][i]  = scalar(c[i],c[i])*c[i][0];
+    b[10][i] = scalar(c[i],c[i])*c[i][1];
+    b[11][i] = scalar(c[i],c[i])*c[i][2];
+    b[12][i] = (c[i][0]*c[i][0]-c[i][1]*c[i][1])*c[i][2];
+    b[13][i] = scalar(c[i],c[i])*scalar(c[i],c[i]);
+  }
+
+  /* Gram-Schmidt orthogonalization procedure */
+  for (j=0;j<n_veloc;j++) {
+    for (i=0;i<n_veloc;i++) e[j][i] = b[j][i];
+    for (k=0;k<j;k++) {
+      proj = 0.0;
+      for (l=0;l<n_veloc;l++) {
+	proj += w[l]*e[k][l]*b[j][l];
+      }
+      if (j==13) fprintf(stderr,"%d %f\n",k,proj/norm[k]);
+      for (i=0;i<n_veloc;i++) e[j][i] -= proj/norm[k]*e[k][i];
+    }
+    norm[j] = 0.0;
+    for (i=0;i<n_veloc;i++) norm[j] += w[i]*SQR(e[j][i]);
+  }
+  
+  fprintf(stderr,"e[%d][%d] = {\n",n_veloc,n_veloc);
+  for (i=0;i<n_veloc;i++) {
+    fprintf(stderr,"{ % .3f",e[i][0]);
+    for (j=1;j<n_veloc;j++) {
+      fprintf(stderr,", % .3f",e[i][j]);
+    }
+    fprintf(stderr," } %.9f\n",norm[i]);
+  }
+  fprintf(stderr,"};\n");
+
+  /* projections on lattice tensors */
+  for (i=0;i<n_veloc;i++) {
+    proj = 0.0;
+    for (k=0;k<n_veloc;k++) {
+      proj += e[i][k] * w[k] * 1;
+    }
+    fprintf(stderr, "%.6f",proj);
+    
+    for (j=0;j<3;j++) {
+      proj = 0.0;
+      for (k=0;k<n_veloc;k++) {
+	proj += e[i][k] * w[k] * c[k][j];
+      }
+      fprintf(stderr, " %.6f",proj);
+    }
+
+    for (j=0;j<3;j++) {
+      for (k=0;k<3;k++) {
+	proj=0.0;
+	for (l=0;l<n_veloc;l++) {
+	  proj += e[i][l] * w[l] * c[l][j] * c[l][k];
+	}
+	fprintf(stderr, " %.6f",proj);
+      }
+    }
+
+    fprintf(stderr,"\n");
+
+  }
+
+  //proj = 0.0;
+  //for (k=0;k<n_veloc;k++) {
+  //  proj += c[k][2] * w[k] * 1;
+  //}
+  //fprintf(stderr,"%.6f",proj);
+  //
+  //proj = 0.0;
+  //for (k=0;k<n_veloc;k++) {
+  //  proj += c[k][2] * w[k] * c[k][2];
+  //}
+  //fprintf(stderr," %.6f",proj);
+  //
+  //proj = 0.0;
+  //for (k=0;k<n_veloc;k++) {
+  //  proj += c[k][2] * w[k] * c[k][2] * c[k][2];
+  //}
+  //fprintf(stderr," %.6f",proj);
+  //
+  //fprintf(stderr,"\n");
+
+#else
+  int i, j, k, l;
+  double b[9][9];
+  double e[9][9];
+  double proj, norm[9];
+
+  double c[9][2] = { { 0, 0 },
+		     { 1, 0 },
+		     {-1, 0 },
+                     { 0, 1 },
+                     { 0,-1 },
+		     { 1, 1 },
+		     {-1,-1 },
+		     { 1,-1 },
+		     {-1, 1 } };
+
+  double w[9] = { 4./9, 1./9, 1./9, 1./9, 1./9, 1./36, 1./36, 1./36, 1./36 };
+
+  n_veloc = 9;
+
+  /* construct polynomials from the discrete velocity vectors */
+  for (i=0;i<n_veloc;i++) {
+    b[0][i] = 1;
+    b[1][i] = c[i][0];
+    b[2][i] = c[i][1];
+    b[3][i] = 3*(SQR(c[i][0]) + SQR(c[i][1]));
+    b[4][i] = c[i][0]*c[i][0]-c[i][1]*c[i][1];
+    b[5][i] = c[i][0]*c[i][1];
+    b[6][i] = 3*(SQR(c[i][0])+SQR(c[i][1]))*c[i][0];
+    b[7][i] = 3*(SQR(c[i][0])+SQR(c[i][1]))*c[i][1];
+    b[8][i] = (b[3][i]-5)*b[3][i]/2;
+  }
+
+  /* Gram-Schmidt orthogonalization procedure */
+  for (j=0;j<n_veloc;j++) {
+    for (i=0;i<n_veloc;i++) e[j][i] = b[j][i];
+    for (k=0;k<j;k++) {
+      proj = 0.0;
+      for (l=0;l<n_veloc;l++) {
+	proj += w[l]*e[k][l]*b[j][l];
+      }
+      for (i=0;i<n_veloc;i++) e[j][i] -= proj/norm[k]*e[k][i];
+    }
+    norm[j] = 0.0;
+    for (i=0;i<n_veloc;i++) norm[j] += w[i]*SQR(e[j][i]);
+  }
+  
+  fprintf(stderr,"e[%d][%d] = {\n",n_veloc,n_veloc);
+  for (i=0;i<n_veloc;i++) {
+    fprintf(stderr,"{ % .1f",e[i][0]);
+    for (j=1;j<n_veloc;j++) {
+      fprintf(stderr,", % .1f",e[i][j]);
+    }
+    fprintf(stderr," } %.2f\n",norm[i]);
+  }
+  fprintf(stderr,"};\n");
+
+#endif
+
+}
+#endif /* ADDITIONAL_CHECKS */
+
+#ifdef ADDITIONAL_CHECKS
+/** Check for negative populations.  
+ *
+ * Checks for negative populations and increases failcounter for each
+ * occurence.
+ *
+ * @param  local_node Pointer to the local lattice site (Input).
+ * @return Number of negative populations on the local lattice site.
+ */
+MDINLINE int lb_check_negative_n(index_t index) {
+  int i, localfails=0;
+
+  for (i=0; i<n_veloc; i++) {
+    if (lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho < 0.0) {
+      ++localfails;
+      ++failcounter;
+      fprintf(stderr,"%d: Negative population n[%d]=%le (failcounter=%d, rancounter=%d).\n   Check your parameters if this occurs too often!\n",this_node,i,lbmodel.coeff[i][0]*lbpar.rho+lbfluid[0][i][index],failcounter,rancounter);
+      break;
+   }
+  }
+
+  return localfails;
+}
+#endif /* ADDITIONAL_CHECKS */
+
+/***********************************************************************/
+
+/* Halo communication for push scheme */
+MDINLINE void halo_push_communication() {
+
+  index_t index;
+  int x, y, z, count;
+  int rnode, snode;
+  double *buffer=NULL, *sbuf=NULL, *rbuf=NULL;
+  MPI_Status status;
+
+  int yperiod = lblattice.halo_grid[0];
+  int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
+
+  /***************
+   * X direction *
+   ***************/
+  count = 5*lblattice.halo_grid[1]*lblattice.halo_grid[2];
+  sbuf = malloc(count*sizeof(double));
+  rbuf = malloc(count*sizeof(double));
+
+  /* send to right, recv from left i = 1, 7, 9, 11, 13 */
+  snode = node_neighbors[0];
+  rnode = node_neighbors[1];
+
+  buffer = sbuf;
+  index = get_linear_index(lblattice.grid[0]+1,0,0,lblattice.halo_grid);
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (y=0; y<lblattice.halo_grid[1]; y++) {     
+
+      buffer[0] = lbfluid[1][1][index];
+      buffer[1] = lbfluid[1][7][index];
+      buffer[2] = lbfluid[1][9][index];
+      buffer[3] = lbfluid[1][11][index];
+      buffer[4] = lbfluid[1][13][index];      
+      buffer += 5;
+
+      index += yperiod;
+    }    
+  }
+  
+  if (node_grid[0] > 1) {
+    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+		 MPI_COMM_WORLD, &status);
+  } else {
+    memcpy(rbuf,sbuf,count*sizeof(double));
+  }
+
+  buffer = rbuf;
+  index = get_linear_index(1,0,0,lblattice.halo_grid);
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (y=0; y<lblattice.halo_grid[1]; y++) {
+
+      lbfluid[1][1][index] = buffer[0];
+      lbfluid[1][7][index] = buffer[1];
+      lbfluid[1][9][index] = buffer[2];
+      lbfluid[1][11][index] = buffer[3];
+      lbfluid[1][13][index] = buffer[4];
+      buffer += 5;
+
+      index += yperiod;
+    }    
+  }
+
+  /* send to left, recv from right i = 2, 8, 10, 12, 14 */
+  snode = node_neighbors[1];
+  rnode = node_neighbors[0];
+
+  buffer = sbuf;
+  index = get_linear_index(0,0,0,lblattice.halo_grid);
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (y=0; y<lblattice.halo_grid[1]; y++) {     
+
+      buffer[0] = lbfluid[1][2][index];
+      buffer[1] = lbfluid[1][8][index];
+      buffer[2] = lbfluid[1][10][index];
+      buffer[3] = lbfluid[1][12][index];
+      buffer[4] = lbfluid[1][14][index];      
+      buffer += 5;
+
+      index += yperiod;
+    }    
+  }
+
+  if (node_grid[0] > 1) {
+    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+		 MPI_COMM_WORLD, &status);
+  } else {
+    memcpy(rbuf,sbuf,count*sizeof(double));
+  }
+
+  buffer = rbuf;
+  index = get_linear_index(lblattice.grid[0],0,0,lblattice.halo_grid);
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (y=0; y<lblattice.halo_grid[1]; y++) {     
+
+      lbfluid[1][2][index] = buffer[0];
+      lbfluid[1][8][index] = buffer[1];
+      lbfluid[1][10][index] = buffer[2];
+      lbfluid[1][12][index] = buffer[3];
+      lbfluid[1][14][index] = buffer[4];
+      buffer += 5;
+
+      index += yperiod;
+    }    
+  }
+
+  /***************
+   * Y direction *
+   ***************/
+  count = 5*lblattice.halo_grid[0]*lblattice.halo_grid[2];
+  sbuf = realloc(sbuf, count*sizeof(double));
+  rbuf = realloc(rbuf, count*sizeof(double));
+
+  /* send to right, recv from left i = 3, 7, 10, 15, 17 */
+  snode = node_neighbors[2];
+  rnode = node_neighbors[3];
+
+  buffer = sbuf;
+  index = get_linear_index(0,lblattice.grid[1]+1,0,lblattice.halo_grid);
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+
+      buffer[0] = lbfluid[1][3][index];
+      buffer[1] = lbfluid[1][7][index];
+      buffer[2] = lbfluid[1][10][index];
+      buffer[3] = lbfluid[1][15][index];
+      buffer[4] = lbfluid[1][17][index];
+      buffer += 5;
+
+      ++index;
+    }
+    index += zperiod - lblattice.halo_grid[0];
+  }
+
+  if (node_grid[1] > 1) {
+    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+		 MPI_COMM_WORLD, &status);
+  } else {
+    memcpy(rbuf,sbuf,count*sizeof(double));
+  }
+
+  buffer = rbuf;
+  index = get_linear_index(0,1,0,lblattice.halo_grid);  
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+
+      lbfluid[1][3][index] = buffer[0];
+      lbfluid[1][7][index] = buffer[1];
+      lbfluid[1][10][index] = buffer[2];
+      lbfluid[1][15][index] = buffer[3];
+      lbfluid[1][17][index] = buffer[4];
+      buffer += 5;
+
+      ++index;
+    }
+    index += zperiod - lblattice.halo_grid[0];
+  }
+
+  /* send to left, recv from right i = 4, 8, 9, 16, 18 */
+  snode = node_neighbors[3];
+  rnode = node_neighbors[2];
+
+  buffer = sbuf;
+  index = get_linear_index(0,0,0,lblattice.halo_grid);
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+
+      buffer[0] = lbfluid[1][4][index];
+      buffer[1] = lbfluid[1][8][index];
+      buffer[2] = lbfluid[1][9][index];
+      buffer[3] = lbfluid[1][16][index];
+      buffer[4] = lbfluid[1][18][index];
+      buffer += 5;
+
+      ++index;
+    }
+    index += zperiod - lblattice.halo_grid[0];
+  }
+
+  if (node_grid[1] > 1) {
+    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+		 MPI_COMM_WORLD, &status);
+  } else {
+    memcpy(rbuf,sbuf,count*sizeof(double));
+  }
+
+  buffer = rbuf;
+  index = get_linear_index(0,lblattice.grid[1],0,lblattice.halo_grid); 
+  for (z=0; z<lblattice.halo_grid[2]; z++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+      
+      lbfluid[1][4][index] = buffer[0];
+      lbfluid[1][8][index] = buffer[1];
+      lbfluid[1][9][index] = buffer[2];
+      lbfluid[1][16][index] = buffer[3];
+      lbfluid[1][18][index] = buffer[4];
+      buffer += 5;
+
+      ++index;
+    }
+    index += zperiod - lblattice.halo_grid[0];
+  }
+
+  /***************
+   * Z direction *
+   ***************/
+  count = 5*lblattice.halo_grid[0]*lblattice.halo_grid[1];
+  sbuf = realloc(sbuf, count*sizeof(double));
+  rbuf = realloc(rbuf, count*sizeof(double));
+  
+  /* send to right, recv from left i = 5, 11, 14, 15, 18 */
+  snode = node_neighbors[4];
+  rnode = node_neighbors[5];
+
+  buffer = sbuf;
+  index = get_linear_index(0,0,lblattice.grid[2]+1,lblattice.halo_grid);
+  for (y=0; y<lblattice.halo_grid[1]; y++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+      
+      buffer[0] = lbfluid[1][5][index];
+      buffer[1] = lbfluid[1][11][index];
+      buffer[2] = lbfluid[1][14][index];
+      buffer[3] = lbfluid[1][15][index];
+      buffer[4] = lbfluid[1][18][index];      
+      buffer += 5;
+
+      ++index;
+    }
+  }
+
+  if (node_grid[2] > 1) {
+    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+		 MPI_COMM_WORLD, &status);
+  } else {
+    memcpy(rbuf,sbuf,count*sizeof(double));
+  }
+
+  buffer = rbuf;
+  index = get_linear_index(0,0,1,lblattice.halo_grid);  
+  for (y=0; y<lblattice.halo_grid[1]; y++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+      
+      lbfluid[1][5][index] = buffer[0];
+      lbfluid[1][11][index] = buffer[1];
+      lbfluid[1][14][index] = buffer[2];
+      lbfluid[1][15][index] = buffer[3];
+      lbfluid[1][18][index] = buffer[4];
+      buffer += 5;
+
+      ++index;
+    }
+  }
+
+  /* send to left, recv from right i = 6, 12, 13, 16, 17 */
+  snode = node_neighbors[5];
+  rnode = node_neighbors[4];
+
+  buffer = sbuf;
+  index = get_linear_index(0,0,0,lblattice.halo_grid);
+  for (y=0; y<lblattice.halo_grid[1]; y++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+      
+      buffer[0] = lbfluid[1][6][index];
+      buffer[1] = lbfluid[1][12][index];
+      buffer[2] = lbfluid[1][13][index];
+      buffer[3] = lbfluid[1][16][index];
+      buffer[4] = lbfluid[1][17][index];      
+      buffer += 5;
+
+      ++index;
+    }
+  }
+
+  if (node_grid[2] > 1) {
+    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+		 MPI_COMM_WORLD, &status);
+  } else {
+    memcpy(rbuf,sbuf,count*sizeof(double));
+  }
+
+  buffer = rbuf;
+  index = get_linear_index(0,0,lblattice.grid[2],lblattice.halo_grid);
+  for (y=0; y<lblattice.halo_grid[1]; y++) {
+    for (x=0; x<lblattice.halo_grid[0]; x++) {
+      
+      lbfluid[1][6][index] = buffer[0];
+      lbfluid[1][12][index] = buffer[1];
+      lbfluid[1][13][index] = buffer[2];
+      lbfluid[1][16][index] = buffer[3];
+      lbfluid[1][17][index] = buffer[4];
+      buffer += 5;
+
+      ++index;
+    }
+  }
+
+  free(rbuf);
+  free(sbuf);
+}
 
 /***********************************************************************/
 
@@ -285,121 +1013,190 @@ static int lb_sanity_checks() {
       ret = -1;
     }    
 
+    if (thermo_switch & ~THERMO_LB) {
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{122 LB must not be used with other thermostats} ");
+      ret = 1;
+    }
+
     return ret;
 
 }
 
 /***********************************************************************/
 
+/** (Pre-)allocate memory for data structures */
+void lb_pre_init() {
+  n_veloc = lbmodel.n_veloc;
+  lbfluid[0]    = malloc(2*lbmodel.n_veloc*sizeof(double *));
+  lbfluid[0][0] = malloc(2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+}
+
 /** (Re-)allocate memory for the fluid and initialize pointers. */
-static void lb_create_fluid() {
+static void lb_realloc_fluid() {
+  int i;
 
-  int index;
+  LB_TRACE(printf("reallocating fluid\n"));
 
-  lblattice.fields = realloc(lblattice.fields,lblattice.halo_grid_volume*sizeof(LB_FluidNode));
-  lblattice.data = realloc(lblattice.data,lblattice.halo_grid_volume*n_fields*sizeof(double));
+  lbfluid[0]    = realloc(*lbfluid,2*lbmodel.n_veloc*sizeof(double *));
+  lbfluid[0][0] = realloc(**lbfluid,2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+  lbfluid[1]    = (double **)lbfluid[0] + lbmodel.n_veloc;
+  lbfluid[1][0] = (double *)lbfluid[0][0] + lblattice.halo_grid_volume*lbmodel.n_veloc;
 
-  lbfluid = (LB_FluidNode *)lblattice.fields;
-  lbfluid[0].n = (double *)lblattice.data;
-#ifndef D3Q19
-  lbfluid[0].n_tmp = (double *)lblattice.data + lblattice.halo_grid_volume*n_veloc;
-#endif
-  
-  for (index=0; index<lblattice.halo_grid_volume; index++) {
-    lbfluid[index].n = lbfluid[0].n + index*n_veloc;
-#ifndef D3Q19
-    lbfluid[index].n_tmp = lbfluid[0].n_tmp + index*n_veloc;
-#endif
+  for (i=0; i<lbmodel.n_veloc; ++i) {
+    lbfluid[0][i] = lbfluid[0][0] + i*lblattice.halo_grid_volume;
+    lbfluid[1][i] = lbfluid[1][0] + i*lblattice.halo_grid_volume;
   }
 
-  int lens[2] = { n_veloc, 1 };
-  MPI_Aint disps[2] = { 0, n_veloc*sizeof(double) };
-  MPI_Datatype types[2] = { MPI_DOUBLE, MPI_UB };
-  //KG: Quick fix
-  //MPI_Type_free(&lblattice.datatype);
-  MPI_Type_struct(2, lens, disps, types, &lblattice.datatype);
-  MPI_Type_commit(&lblattice.datatype);
-  LB_TRACE(fprintf(stderr,"Potential memory hole!\n"));
+  lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
 
 }
 
 /** Sets up the structures for exchange of the halo regions.
  *  See also \ref halo.c */
 static void lb_prepare_communication() {
+    int i;
+    HaloCommunicator comm = { 0, NULL };
 
-    /* create types for lattice data layout */
-    int lens[2] = { n_veloc*sizeof(double), 1 };
-    int disps[2] = { 0, n_veloc*sizeof(double) };
-    Fieldtype fieldtype;
-    halo_create_fieldtype(1, lens, disps, disps[1], &fieldtype);
+    /* since the data layout is a structure of arrays, we have to
+     * generate a communication for this structure: first we generate
+     * the communication for one of the arrays (the 0-th velocity
+     * population), then we replicate this communication for the other
+     * velocity indices by constructing appropriate vector
+     * datatypes */
 
-    /* setup the halo communication */
-    prepare_halo_communication(&update_halo_comm,&lblattice,fieldtype,lblattice.datatype);
- 
-    halo_free_fieldtype(&fieldtype);
+    /* prepare the communication for a single velocity */
+    prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE);
 
-}
+    update_halo_comm.num = comm.num;
+    update_halo_comm.halo_info = realloc(update_halo_comm.halo_info,comm.num*sizeof(HaloInfo));
 
-/** Release the fluid. */
-static void lb_release_fluid() {
-  MPI_Type_free(&lblattice.datatype);
-  free(lbfluid[0].n);
-  free(lbfluid);
+    /* replicate the halo structure */
+    for (i=0; i<comm.num; i++) {
+      HaloInfo *hinfo = &(update_halo_comm.halo_info[i]);
+
+      hinfo->source_node = comm.halo_info[i].source_node;
+      hinfo->dest_node   = comm.halo_info[i].dest_node;
+      hinfo->s_offset    = comm.halo_info[i].s_offset;
+      hinfo->r_offset    = comm.halo_info[i].r_offset;
+      hinfo->type        = comm.halo_info[i].type;
+
+      /* generate the vector datatype for the structure of lattices we
+       * have to use hvector here because the extent of the subtypes
+       * does not span the full lattice and hence we cannot get the
+       * correct vskip out of them */
+
+      MPI_Aint extent;
+      MPI_Type_extent(MPI_DOUBLE,&extent);      
+      MPI_Type_hvector(lbmodel.n_veloc,1,lblattice.halo_grid_volume*extent,comm.halo_info[i].datatype,&hinfo->datatype);
+      MPI_Type_commit(&hinfo->datatype);
+      
+      halo_create_field_hvector(lbmodel.n_veloc,1,lblattice.halo_grid_volume*sizeof(double),comm.halo_info[i].fieldtype,&hinfo->fieldtype);
+    }      
+
+    release_halo_communication(&comm);    
 }
 
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters() {
+  int i;
+
+  n_veloc = lbmodel.n_veloc;
 
   agrid   = lbpar.agrid;
   tau     = lbpar.tau;
 
-  n_veloc = lbmodel.n_veloc;
-
-  /* number of double entries in the data fields */
-  n_fields = n_veloc;
-#ifndef D3Q19
-  n_fields += n_veloc; /* temporary velocity populations */
+#ifdef LANGEVIN_INTEGRATOR
+  /* force prefactor for the 2nd-order Langevin integrator */
+  integrate_pref2 = (1.-exp(-lbpar.friction*time_step))/lbpar.friction*time_step;  /* one factor time_step is due to the scaled velocities */
 #endif
 
-  /* Eq. (3) Ahlrichs and Duenweg, JCP 111(17):8225 (1999). */
-  lblambda = -2./(6.*lbpar.viscosity*tau/(agrid*agrid)+1.);
+  if (lbpar.viscosity > 0.0) {
+    /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    // unit conversion: viscosity
+    gamma_shear = 1. - 2./(6.*lbpar.viscosity*tau/(agrid*agrid)+1.);
+    //gamma_shear = 0.0;    
+  }
 
   if (lbpar.bulk_viscosity > 0.0) {
-    lblambda_bulk = -2./(9.*lbpar.bulk_viscosity*tau/(agrid*agrid)+1.);
+    /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    // unit conversion: viscosity
+    gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity*tau/(agrid*agrid)+1.);
   }
+  
+  //gamma_odd = gamma_even = gamma_bulk = gamma_shear;
+  gamma_odd = -0.8;
+  gamma_even = -.8;
+
+  //fprintf(stderr,"%f %f %f %f\n",gamma_shear,gamma_bulk,gamma_even,gamma_odd);
+
+  double mu = 0.0;
 
   if (temperature > 0.0) {  /* fluctuating hydrodynamics ? */
 
-    fluct = 1 ;
+    fluct = 1;
 
-    /* lb_fluct_pref is stored in lattice units (pressure)
-     * Eq. (7) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-     * The factor 12 comes from the fact that we use random numbers
-     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     */
-    lb_fluct_pref = sqrt(12.*2.*lbpar.viscosity*lbpar.rho*temperature*SQR(lblambda)*tau*tau*tau/agrid);
-
-    if (lbpar.bulk_viscosity > 0.0) {
-      lb_fluct_pref_bulk = sqrt(12.*2.*lbpar.bulk_viscosity*lbpar.rho*temperature*SQR(lblambda_bulk)*tau*tau*tau/agrid);
-    }
-
-    LB_TRACE(fprintf(stderr,"%d: lb_fluct_pref=%f lb_fluct_pref_bulk=%f (temp=%f, lambda=%f, lambda_v=%f, tau=%f, agrid=%f)\n",this_node,lb_fluct_pref,lb_fluct_pref_bulk,temperature,lblambda,lblambda_bulk,tau,agrid));
-
+    /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
+     * Note that the modes are not normalized as in the paper here! */
+    mu = temperature/lbmodel.c_sound_sq*tau*tau/(agrid*agrid);
+    //mu *= agrid*agrid*agrid;  // Marcello's conjecture
+#ifdef D3Q19
+    double (*e)[19] = d3q19_modebase;
+#else
+    double **e = lbmodel.e;
+#endif
+    for (i=0; i<3; i++) lb_phi[i] = 0.0;
+    lb_phi[4] = sqrt(mu*e[19][4]*(1.-SQR(gamma_bulk)));
+    for (i=5; i<10; i++) lb_phi[i] = sqrt(mu*e[19][i]*(1.-SQR(gamma_shear)));
+    for (i=10; i<n_veloc; i++) lb_phi[i] = sqrt(mu*e[19][i]);
+ 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-    lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step); 
-
-    LB_TRACE(fprintf(stderr,"%d: lb_coupl_pref=%f (temp=%f, friction=%f, time_step=%f)\n",this_node,lb_coupl_pref,temperature,lbpar.friction,time_step));
+#ifdef LANGEVIN_INTEGRATOR
+    double tmp = exp(-lbpar.friction*time_step);
+    lb_coupl_pref = lbpar.friction*sqrt(temperature*(1.+tmp)/(1.-tmp));
+#else
+    lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
+#endif
 
   } else {
     /* no fluctuations at zero temperature */
-    fluct = 0 ;
-    lb_fluct_pref = 0.0;
+    fluct = 0;
+    for (i=0;i<n_veloc;i++) lb_phi[i] = 0.0;
     lb_coupl_pref = 0.0;
+  }
+
+  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity));
+
+  //LB_TRACE(fprintf(stderr,"%d: phi[4]=%f phi[5]=%f phi[6]=%f phi[7]=%f phi[8]=%f phi[9]=%f\n",this_node,lb_phi[4],lb_phi[5],lb_phi[6],lb_phi[7],lb_phi[8],lb_phi[9]));
+
+  //LB_TRACE(fprintf(stderr,"%d: lb_coupl_pref=%f (temp=%f, friction=%f, time_step=%f)\n",this_node,lb_coupl_pref,temperature,lbpar.friction,time_step));
+
+}
+
+
+/** Resets the forces on the fluid nodes */
+void lb_reinit_forces() {
+  index_t index;
+
+  for (index=0; index<lblattice.halo_grid_volume; index++) {
+
+#ifdef EXTERNAL_FORCES
+    // unit conversion: force density
+      lbfields[index].force[0] = lbpar.ext_force[0]*lbpar.agrid*lbpar.agrid*tau*tau;
+      lbfields[index].force[1] = lbpar.ext_force[1]*lbpar.agrid*lbpar.agrid*tau*tau;
+      lbfields[index].force[2] = lbpar.ext_force[2]*lbpar.agrid*lbpar.agrid*tau*tau;
+#else
+      lbfields[index].force[0] = 0.0;
+      lbfields[index].force[1] = 0.0;
+      lbfields[index].force[2] = 0.0;
+      lbfields[index].has_force = 0;
+#endif
+
   }
 
 }
@@ -407,26 +1204,37 @@ void lb_reinit_parameters() {
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
 
-    int k ;
+    index_t index;
 
     /* default values for fields in lattice units */
-    double rho = lbpar.rho*(agrid*agrid*agrid) ;
-    double v[3] = { 0., 0., 0. };
+    /* here the conversion to lb units is performed */
+    double rho = lbpar.rho*agrid*agrid*agrid;
+    double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
-    for (k=0;k<lblattice.halo_grid_volume;k++) {
+    for (index=0; index<lblattice.halo_grid_volume; index++) {
 
-#ifdef CONSTRAINTS
-      if (lbfluid[k].boundary==0) {
-	lb_set_local_fields(k,rho,v,pi);
+#ifdef LB_BOUNDARIES
+      double **tmp;
+      if (lbfields[index].boundary==0) {
+      //if (1) {
+	lb_calc_n_equilibrium(index,rho,v,pi);
       } else {
-	lb_set_local_fields(k,0.0,v,pi);
+	tmp = lbfluid[0];
+	lb_set_boundary_node(index,rho,v,pi);
+	lbfluid[0] = lbfluid[1];
+        lb_set_boundary_node(index,rho,v,pi);
+	lbfluid[0] = tmp;
       }
 #else
-      lb_set_local_fields(k,rho,v,pi);
+      lb_calc_n_equilibrium(index,rho,v,pi);
 #endif
 
+      lbfields[index].recalc_fields = 1;
+
     }
+
+    resend_halo = 0;
 
 }
 
@@ -435,36 +1243,53 @@ void lb_reinit_fluid() {
  *  and the fluid are reset to their default values. */
 void lb_init() {
 
+  //lb_init_mode_transformation();
+  //lb_lattice_sum();
+  //exit(-1);
+
   if (lb_sanity_checks()) return;
 
-  /* initialize derived parameters */
-  lb_reinit_parameters();
-
   /* initialize the local lattice domain */
-  init_lattice(&lblattice,agrid,tau);  
+  init_lattice(&lblattice,lbpar.agrid,lbpar.tau);  
 
   if (check_runtime_errors()) return;
 
   /* allocate memory for data structures */
-  lb_create_fluid();
+  lb_realloc_fluid();
 
-#ifdef CONSTRAINTS
+  /* prepare the halo communication */
+  lb_prepare_communication();
+
+  /* initialize derived parameters */
+  lb_reinit_parameters();
+
+#ifdef LB_BOUNDARIES
   /* setup boundaries of constraints */
-  lb_init_constraints();
+//  lb_init_constraints();
 #endif
 
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
 
-  /* prepare the halo communication */
-  lb_prepare_communication();
+  /* setup the external forces */
+  lb_reinit_forces();
 
+}
+
+/** Release the fluid. */
+MDINLINE void lb_release_fluid() {
+  free(lbfluid[0][0]);
+  free(lbfluid[0]);
+  free(lbfields);
 }
 
 /** Release fluid and communication. */
 void lb_release() {
-  release_halo_communication(&update_halo_comm);
+  
   lb_release_fluid();
+
+  release_halo_communication(&update_halo_comm);
+
 }
 
 /***********************************************************************/
@@ -483,18 +1308,22 @@ void lb_release() {
  * @param trace      Trace of the local stress tensor (Input).
  * @param trace_eq   Trace of equilibriumd part of local stress tensor (Input).
  */
-MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
+void lb_calc_n_equilibrium(const index_t index, const double rho, const double *v, double *pi) {
 
-  double *local_n   = local_node->n;
-  double *local_rho = local_node->rho;
-  double *local_j   = local_node->j;
-  double *local_pi  = local_node->pi;
-  double trace;
-  const double rhoc_sq = *local_rho*lbmodel.c_sound_sq;
-  const double avg_rho = lbpar.rho*(agrid*agrid*agrid);
+  const double rhoc_sq = rho*lbmodel.c_sound_sq;
+  // unit conversion: mass density
+  const double avg_rho = lbpar.rho*agrid*agrid*agrid;
 
-  /* see Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005) */
-  
+  double local_rho, local_j[3], *local_pi, trace;
+
+  local_rho  = rho;
+
+  local_j[0] = rho * v[0];
+  local_j[1] = rho * v[1];
+  local_j[2] = rho * v[2];
+
+  local_pi = pi;
+
   /* reduce the pressure tensor to the part needed here */
   local_pi[0] -= rhoc_sq;
   local_pi[2] -= rhoc_sq;
@@ -507,44 +1336,44 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
   double tmp1,tmp2;
 
   /* update the q=0 sublattice */
-  local_n[0] = 1./3. * (*local_rho-avg_rho) - 1./2.*trace;
+  lbfluid[0][0][index] = 1./3. * (local_rho-avg_rho) - 1./2.*trace;
 
   /* update the q=1 sublattice */
-  rho_times_coeff = 1./18. * (*local_rho-avg_rho);
+  rho_times_coeff = 1./18. * (local_rho-avg_rho);
 
-  local_n[1] = rho_times_coeff + 1./6.*local_j[0] + 1./4.*local_pi[0] - 1./12.*trace;
-  local_n[2] = rho_times_coeff - 1./6.*local_j[0] + 1./4.*local_pi[0] - 1./12.*trace;
-  local_n[3] = rho_times_coeff + 1./6.*local_j[1] + 1./4.*local_pi[2] - 1./12.*trace;
-  local_n[4] = rho_times_coeff - 1./6.*local_j[1] + 1./4.*local_pi[2] - 1./12.*trace;
-  local_n[5] = rho_times_coeff + 1./6.*local_j[2] + 1./4.*local_pi[5] - 1./12.*trace;
-  local_n[6] = rho_times_coeff - 1./6.*local_j[2] + 1./4.*local_pi[5] - 1./12.*trace;
+  lbfluid[0][1][index] = rho_times_coeff + 1./6.*local_j[0] + 1./4.*local_pi[0] - 1./12.*trace;
+  lbfluid[0][2][index] = rho_times_coeff - 1./6.*local_j[0] + 1./4.*local_pi[0] - 1./12.*trace;
+  lbfluid[0][3][index] = rho_times_coeff + 1./6.*local_j[1] + 1./4.*local_pi[2] - 1./12.*trace;
+  lbfluid[0][4][index] = rho_times_coeff - 1./6.*local_j[1] + 1./4.*local_pi[2] - 1./12.*trace;
+  lbfluid[0][5][index] = rho_times_coeff + 1./6.*local_j[2] + 1./4.*local_pi[5] - 1./12.*trace;
+  lbfluid[0][6][index] = rho_times_coeff - 1./6.*local_j[2] + 1./4.*local_pi[5] - 1./12.*trace;
 
   /* update the q=2 sublattice */
-  rho_times_coeff = 1./36. * (*local_rho-avg_rho);
+  rho_times_coeff = 1./36. * (local_rho-avg_rho);
 
   tmp1 = local_pi[0] + local_pi[2];
   tmp2 = 2.0*local_pi[1];
 
-  local_n[7]  = rho_times_coeff + 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-  local_n[8]  = rho_times_coeff - 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-  local_n[9]  = rho_times_coeff + 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
-  local_n[10] = rho_times_coeff - 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+  lbfluid[0][7][index]  = rho_times_coeff + 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+  lbfluid[0][8][index]  = rho_times_coeff - 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+  lbfluid[0][9][index]  = rho_times_coeff + 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+  lbfluid[0][10][index] = rho_times_coeff - 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
   tmp1 = local_pi[0] + local_pi[5];
   tmp2 = 2.0*local_pi[3];
 
-  local_n[11] = rho_times_coeff + 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-  local_n[12] = rho_times_coeff - 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-  local_n[13] = rho_times_coeff + 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
-  local_n[14] = rho_times_coeff - 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+  lbfluid[0][11][index] = rho_times_coeff + 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+  lbfluid[0][12][index] = rho_times_coeff - 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+  lbfluid[0][13][index] = rho_times_coeff + 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+  lbfluid[0][14][index] = rho_times_coeff - 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
   tmp1 = local_pi[2] + local_pi[5];
   tmp2 = 2.0*local_pi[4];
 
-  local_n[15] = rho_times_coeff + 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-  local_n[16] = rho_times_coeff - 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-  local_n[17] = rho_times_coeff + 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
-  local_n[18] = rho_times_coeff - 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+  lbfluid[0][15][index] = rho_times_coeff + 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+  lbfluid[0][16][index] = rho_times_coeff - 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+  lbfluid[0][17][index] = rho_times_coeff + 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+  lbfluid[0][18][index] = rho_times_coeff - 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
 #else
   int i;
@@ -558,10 +1387,10 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
       + (2.0*local_pi[1]*c[i][0]+local_pi[2]*c[i][1])*c[i][1]
       + (2.0*(local_pi[3]*c[i][0]+local_pi[4]*c[i][1])+local_pi[5]*c[i][2])*c[i][2];
 
-    local_n[i] =  coeff[i][0] * (*local_rho-avg_rho);
-    local_n[i] += coeff[i][1] * scalar(local_j,c[i]);
-    local_n[i] += coeff[i][2] * tmp;
-    local_n[i] += coeff[i][3] * trace;
+    lbfluid[0][i][index] =  coeff[i][0] * (local_rho-avg_rho);
+    lbfluid[0][i][index] += coeff[i][1] * scalar(local_j,c[i]);
+    lbfluid[0][i][index] += coeff[i][2] * tmp;
+    lbfluid[0][i][index] += coeff[i][3] * trace;
 
   }
 #endif
@@ -573,480 +1402,780 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
 
 }
   
-MDINLINE void lb_map_fields_to_populations() {
-    int k;
-
-    for (k=0; k<lblattice.halo_grid_volume; k++) {
-	lb_calc_local_fields(&lbfluid[k],1);
-    }
-
-}
-
-MDINLINE void lb_map_populations_to_fields() {
-    int k;
-
-    for (k=0; k<lblattice.halo_grid_volume; k++) {
-	lb_calc_local_n(&lbfluid[k]);
-    }
-
-}
-
 /*@}*/
 
-/***********************************************************************/
-/** \name Collision step */
-/***********************************************************************/
-/*@{*/
+/** Calculation of hydrodynamic modes */
+MDINLINE void lb_calc_modes(index_t index, double *mode) {
 
-/** Collision update of the stress tensor.
- * The stress tensor is relaxed towards the equilibrium.
- *
- * See Eq. (5) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
- *
- * @param local_node Pointer to the local lattice site (Input).
- * @param trace      Trace of local stress tensor (Output).
- * @param trace_eq   Trace of equilibrium part of local stress tensor (Output).
- */
-MDINLINE void lb_update_local_pi(LB_FluidNode *local_node) {
+#ifdef D3Q19
+  double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p, n7m, n8p, n8m, n9p, n9m;
 
-  const double local_rho = *(local_node->rho);
-  double *local_j  = local_node->j;
-  double *local_pi = local_node->pi;
-  double local_pi_eq[6];
-  double trace, trace_eq;
-  double tmp;
-
-  const double rhoc_sq = local_rho*lbmodel.c_sound_sq;
-  const double onepluslambda = 1.0 + lblambda;
-
-  /* calculate the equilibrium part of the pressure tensor */
-  local_pi_eq[0] = rhoc_sq + local_j[0]*local_j[0]/local_rho;
-  tmp = local_j[1]/local_rho;
-  local_pi_eq[1] = local_j[0]*tmp;
-  local_pi_eq[2] = rhoc_sq + local_j[1]*tmp;
-  tmp = local_j[2]/local_rho;
-  local_pi_eq[3] = local_j[0]*tmp;
-  local_pi_eq[4] = local_j[1]*tmp;
-  local_pi_eq[5] = rhoc_sq + local_j[2]*tmp;
-
-  /* calculate the traces */
-  trace_eq = local_pi_eq[0] + local_pi_eq[2] + local_pi_eq[5];
-  trace = local_pi[0] + local_pi[2] + local_pi[5];
-    
-  /* relax the local pressure tensor */
-  local_pi[0] = local_pi_eq[0] + onepluslambda*(local_pi[0] - local_pi_eq[0]);
-  local_pi[1] = local_pi_eq[1] + onepluslambda*(local_pi[1] - local_pi_eq[1]);
-  local_pi[2] = local_pi_eq[2] + onepluslambda*(local_pi[2] - local_pi_eq[2]);
-  local_pi[3] = local_pi_eq[3] + onepluslambda*(local_pi[3] - local_pi_eq[3]);
-  local_pi[4] = local_pi_eq[4] + onepluslambda*(local_pi[4] - local_pi_eq[4]);
-  local_pi[5] = local_pi_eq[5] + onepluslambda*(local_pi[5] - local_pi_eq[5]);  
-  tmp = 1./3.*(lblambda_bulk-lblambda)*(trace - trace_eq);
-  local_pi[0] += tmp;
-  local_pi[2] += tmp;
-  local_pi[5] += tmp;
-
-}
-
-/** Add fluctuating part to the stress tensor and update the populations.
- *
- * Ladd, J. Fluid Mech. 271, 285-309 (1994).<br>
- * Berk Usta, Ladd and Butler, JCP 122, 094902 (2005).<br>
- * Ahlrichs, PhD-Thesis (2000).
- *   
- * @param local_node Pointer to the local lattice site.
- */
-MDINLINE void lb_add_fluct_pi(LB_FluidNode *local_node) {
-
-  double *local_pi = local_node->pi;
-  double tmp, sum=0.0;
-
-  const double pref1 = sqrt(2) * lb_fluct_pref;
-
-  /* off-diagonal components */
-  local_pi[1] += lb_fluct_pref * (d_random()-0.5);
-  local_pi[3] += lb_fluct_pref * (d_random()-0.5);
-  local_pi[4] += lb_fluct_pref * (d_random()-0.5);
-
-  /* diagonal components */
-  tmp = (d_random()-0.5);
-  sum += tmp;
-  local_pi[0] += pref1 * tmp;
-  tmp = (d_random()-0.5);
-  sum += tmp;
-  local_pi[2] += pref1 * tmp;
-  tmp = (d_random()-0.5);
-  sum += tmp;
-  local_pi[5] += pref1 * tmp;
-
-  /* make shear modes traceless and add bulk fluctuations on the trace */
-  sum *= (lb_fluct_pref_bulk/sqrt(3) - pref1/3.0);
-  local_pi[0] += sum;
-  local_pi[2] += sum;
-  local_pi[5] += sum;
-
-#ifdef ADDITIONAL_CHECKS
-  rancounter += 6;
-#endif
-
-}
-
-#ifdef ADDITIONAL_CHECKS
-/** Check for negative populations.  
- *
- * Checks for negative populations and increases failcounter for each
- * occurence.
- *
- * @param  local_node Pointer to the local lattice site (Input).
- * @return Number of negative populations on the local lattice site.
- */
-MDINLINE int lb_check_negative_n(LB_FluidNode *local_node) {
-  int i, localfails=0;
-  const double *local_n = local_node->n;
-
-  for (i=0; i<n_veloc; i++) {
-    if (local_n[i]+lbmodel.coeff[i][0]*lbpar.rho < 0.0) {
-      ++localfails;
-      ++failcounter;
-      fprintf(stderr,"%d: Negative population n[%d]=%le (failcounter=%d, rancounter=%d).\n   Check your parameters if this occurs too often!\n",this_node,i,lbmodel.coeff[i][0]*lbpar.rho+local_n[i],failcounter,rancounter);
-      break;
-   }
-  }
-
-  return localfails;
-}
-#endif
-
-/** The Lattice Boltzmann collision step.
- * Loop over all lattice sites and perform the collision update.
- * If fluctuations are present, the fluctuating part of the stress tensor
- * is added. The update is only accepted then, if no negative populations
- * occur.
- */
-MDINLINE void lb_calc_collisions() {
-
-  int index, x, y, z;
-  LB_FluidNode *local_node;
+  n0  = lbfluid[0][0][index];
+  n1p = lbfluid[0][1][index] + lbfluid[0][2][index];
+  n1m = lbfluid[0][1][index] - lbfluid[0][2][index];
+  n2p = lbfluid[0][3][index] + lbfluid[0][4][index];
+  n2m = lbfluid[0][3][index] - lbfluid[0][4][index];
+  n3p = lbfluid[0][5][index] + lbfluid[0][6][index];
+  n3m = lbfluid[0][5][index] - lbfluid[0][6][index];
+  n4p = lbfluid[0][7][index] + lbfluid[0][8][index];
+  n4m = lbfluid[0][7][index] - lbfluid[0][8][index];
+  n5p = lbfluid[0][9][index] + lbfluid[0][10][index];
+  n5m = lbfluid[0][9][index] - lbfluid[0][10][index];
+  n6p = lbfluid[0][11][index] + lbfluid[0][12][index];
+  n6m = lbfluid[0][11][index] - lbfluid[0][12][index];
+  n7p = lbfluid[0][13][index] + lbfluid[0][14][index];
+  n7m = lbfluid[0][13][index] - lbfluid[0][14][index];
+  n8p = lbfluid[0][15][index] + lbfluid[0][16][index];
+  n8m = lbfluid[0][15][index] - lbfluid[0][16][index];
+  n9p = lbfluid[0][17][index] + lbfluid[0][18][index];
+  n9m = lbfluid[0][17][index] - lbfluid[0][18][index];
+//  printf("n: ");
+//  for (i=0; i<19; i++)
+//    printf("%f ", lbfluid[1][i][index]);
+//  printf("\n");
   
-  /* loop over all nodes (halo excluded) */
-  index = lblattice.halo_offset;
-  for (z=1;z<=lblattice.grid[2];z++) {
-    for (y=1;y<=lblattice.grid[1];y++) {
-      for (x=1;x<=lblattice.grid[0];x++) {
+  /* mass mode */
+  mode[0] = n0 + n1p + n2p + n3p + n4p + n5p + n6p + n7p + n8p + n9p;
+  
+  /* momentum modes */
+  mode[1] = n1m + n4m + n5m + n6m + n7m;
+  mode[2] = n2m + n4m - n5m + n8m + n9m;
+  mode[3] = n3m + n6m - n7m + n8m - n9m;
 
-#ifdef CONSTRAINTS
-	if (lbfluid[index].boundary==0) 
-	{
-#endif
-	  local_node = &lbfluid[index];
+  /* stress modes */
+  mode[4] = -n0 + n4p + n5p + n6p + n7p + n8p + n9p;
+  mode[5] = n1p - n2p + n6p + n7p - n8p - n9p;
+  mode[6] = n1p + n2p - n6p - n7p - n8p - n9p - 2.*(n3p - n4p - n5p);
+  mode[7] = n4p - n5p;
+  mode[8] = n6p - n7p;
+  mode[9] = n8p - n9p;
 
-	  lb_calc_local_fields(local_node,1);
-
-#ifdef ADDITIONAL_CHECKS
-	  double old_rho = *(local_node->rho);
+#ifndef OLD_FLUCT
+  /* kinetic modes */
+  mode[10] = -2.*n1m + n4m + n5m + n6m + n7m;
+  mode[11] = -2.*n2m + n4m - n5m + n8m + n9m;
+  mode[12] = -2.*n3m + n6m - n7m + n8m - n9m;
+  mode[13] = n4m + n5m - n6m - n7m;
+  mode[14] = n4m - n5m - n8m - n9m;
+  mode[15] = n6m - n7m - n8m + n9m;
+  mode[16] = n0 + n4p + n5p + n6p + n7p + n8p + n9p 
+             - 2.*(n1p + n2p + n3p);
+  mode[17] = - n1p + n2p + n6p + n7p - n8p - n9p;
+  mode[18] = - n1p - n2p -n6p - n7p - n8p - n9p
+             + 2.*(n3p + n4p + n5p);
 #endif
 
-	  lb_update_local_pi(local_node);
-	
-	  if (fluct) lb_add_fluct_pi(local_node);
-	  
-	  lb_calc_local_n(local_node);
-	  
-#ifdef ADDITIONAL_CHECKS
-	  lb_check_negative_n(local_node);
-#endif
-
-#ifdef ADDITIONAL_CHECKS
-	  int j;
-	  double *local_n = local_node->n;
-	  for (j=0;j<n_veloc;j++) {
-	    if (lbmodel.coeff[j][0]*lbpar.rho+local_n[j] < 0.0) {
-	      char *errtxt;
-	      errtxt = runtime_error(128);
-	      ERROR_SPRINTF(errtxt,"{105 Unexpected negative population} ");
-	    }
-	  }
-#endif
-	    
-#ifdef ADDITIONAL_CHECKS
-	  double *local_rho = local_node->rho;
-	  lb_calc_local_rho(local_node);
-	  if (fabs(*local_rho-old_rho) > ROUND_ERROR_PREC) {
-	    char *errtxt = runtime_error(128 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE);
-	    ERROR_SPRINTF(errtxt,"{106 Mass loss/gain %le in lb_calc_collisions on site (%d,%d,%d)} ",*local_rho-old_rho,x,y,z);
-	  }
-#endif
-#ifdef CONSTRAINTS
-	}
-#endif
-	++index;
-      }
-      index += 2;
+#else
+  int i, j;
+  for (i=0; i<n_veloc; i++) {
+    mode[i] = 0.0;
+    for (j=0; j<n_veloc; j++) {
+      mode[i] += lbmodel.e[i][j]*lbfluid[0][i][index];
     }
-    index += 2*lblattice.halo_grid[0];
   }
+#endif
 
 }
 
-/*@}*/
-
-/***********************************************************************/
-/** \name Streaming step */
-/***********************************************************************/
-/*@{*/
-
-/** The Lattice Boltzmann streaming step.
- * The populations are moved to the neighbouring lattice sites
- * according to the velocity sublattice. This can be done in two ways:
- * First, one can use a temporary field to store the updated configuration.
- * Second, one can order the updates such that only populations are
- * overwritten which have already been propagated. The halo region
- * serves as a buffer. This requires two sweeps through the lattice,
- * one bottom up and one bottom down. One has to be careful if the
- * velocities are upgoing or downgoing. This can be a real bugfest!
- */
-MDINLINE void lb_propagate_n() {
+/** Streaming and calculation of modes (pull scheme) */
+MDINLINE void lb_pull_calc_modes(index_t index, double *mode) {
 
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
-  int next[n_veloc];
-  int k, index;
+
+  double n[19];
+  n[0]  = lbfluid[0][0][index];
+  n[1]  = lbfluid[0][1][index-1];
+  n[2]  = lbfluid[0][2][index+1];
+  n[3]  = lbfluid[0][3][index-yperiod];
+  n[4]  = lbfluid[0][4][index+yperiod];
+  n[5]  = lbfluid[0][5][index-zperiod];
+  n[6]  = lbfluid[0][6][index+zperiod];
+  n[7]  = lbfluid[0][7][index-(1+yperiod)];
+  n[8]  = lbfluid[0][8][index+(1+yperiod)];
+  n[9]  = lbfluid[0][9][index-(1-yperiod)];
+  n[10] = lbfluid[0][10][index+(1-yperiod)];
+  n[11] = lbfluid[0][11][index-(1+zperiod)];
+  n[12] = lbfluid[0][12][index+(1+zperiod)];
+  n[13] = lbfluid[0][13][index-(1-zperiod)];
+  n[14] = lbfluid[0][14][index+(1-zperiod)];
+  n[15] = lbfluid[0][15][index-(yperiod+zperiod)];
+  n[16] = lbfluid[0][16][index+(yperiod+zperiod)];
+  n[17] = lbfluid[0][17][index-(yperiod-zperiod)];
+  n[18] = lbfluid[0][18][index+(yperiod-zperiod)];
 
 #ifdef D3Q19
+  /* mass mode */
+  mode[ 0] =   n[ 0] + n[ 1] + n[ 2] + n[ 3] + n[4] + n[5] + n[6]
+             + n[ 7] + n[ 8] + n[ 9] + n[10]
+             + n[11] + n[12] + n[13] + n[14]
+             + n[15] + n[16] + n[17] + n[18];
 
-  next[0]  =   n_veloc * 0 + 0;                  // ( 0, 0, 0) =
-  next[1]  =   n_veloc * 1 + 1;                  // ( 1, 0, 0) +
-  next[2]  = - n_veloc * 1 + 2;                  // (-1, 0, 0)
-  next[3]  =   n_veloc * yperiod + 3;            // ( 0, 1, 0) +
-  next[4]  = - n_veloc * yperiod + 4;            // ( 0,-1, 0)
-  next[5]  =   n_veloc * zperiod + 5;            // ( 0, 0, 1) +
-  next[6]  = - n_veloc * zperiod + 6;            // ( 0, 0,-1)
-  next[7]  =   n_veloc * (1+yperiod) + 7;        // ( 1, 1, 0) +
-  next[8]  = - n_veloc * (1+yperiod) + 8;        // (-1,-1, 0)
-  next[9]  =   n_veloc * (1-yperiod) + 9;        // ( 1,-1, 0)
-  next[10] = - n_veloc * (1-yperiod) + 10;       // (-1, 1, 0) +
-  next[11] =   n_veloc * (1+zperiod) + 11;       // ( 1, 0, 1) +
-  next[12] = - n_veloc * (1+zperiod) + 12;       // (-1, 0,-1)
-  next[13] =   n_veloc * (1-zperiod) + 13;       // ( 1, 0,-1)
-  next[14] = - n_veloc * (1-zperiod) + 14;       // (-1, 0, 1) +
-  next[15] =   n_veloc * (yperiod+zperiod) + 15; // ( 0, 1, 1) +
-  next[16] = - n_veloc * (yperiod+zperiod) + 16; // ( 0,-1,-1)
-  next[17] =   n_veloc * (yperiod-zperiod) + 17; // ( 0, 1,-1)
-  next[18] = - n_veloc * (yperiod-zperiod) + 18; // ( 0,-1, 1) +
+  /* momentum modes */
+  mode[ 1] =   n[ 1] - n[ 2] 
+             + n[ 7] - n[ 8] + n[ 9] - n[10] + n[11] - n[12] + n[13] - n[14];
+  mode[ 2] =   n[ 3] - n[ 4]
+             + n[ 7] - n[ 8] - n[ 9] + n[10] + n[15] - n[16] + n[17] - n[18];
+  mode[ 3] =   n[ 5] - n[ 6]
+             + n[11] - n[12] - n[13] + n[14] + n[15] - n[16] - n[17] + n[18];
 
-  double *n = lbfluid[0].n;
+  /* stress modes */
+  mode[ 4] = - n[ 0] 
+             + n[ 7] + n[ 8] + n[ 9] + n[10] 
+             + n[11] + n[12] + n[13] + n[14] 
+             + n[15] + n[16] + n[17] + n[18];
+  mode[ 5] =   n[ 1] + n[ 2] - n[ 3] - n[4]
+             + n[11] + n[12] + n[13] + n[14] - n[15] - n[16] - n[17] - n[18];
+  mode[ 6] =   n[ 1] + n[ 2] + n[ 3] + n[ 4] 
+             - n[11] - n[12] - n[13] - n[14] - n[15] - n[16] - n[17] - n[18]
+             - 2.*(n[5] + n[6] - n[7] - n[8] - n[9] - n[10]);
+  mode[ 7] =   n[ 7] + n[ 8] - n[ 9] - n[10];
+  mode[ 8] =   n[11] + n[12] - n[13] - n[14];
+  mode[ 9] =   n[15] + n[16] - n[17] - n[18];
 
-  /* top down sweep */
-  index = (lblattice.halo_grid_volume-lblattice.halo_offset-1)*n_veloc;
-  for (k=lblattice.halo_grid_volume-lblattice.halo_offset-1;k>=0;k--) {
-      
-    /* propagation to higher indices */
-    n[index+next[1]]  = n[index+1];
-    n[index+next[3]]  = n[index+3];
-    n[index+next[5]]  = n[index+5];
-    n[index+next[7]]  = n[index+7];
-    n[index+next[10]] = n[index+10];
-    n[index+next[11]] = n[index+11];
-    n[index+next[14]] = n[index+14];
-    n[index+next[15]] = n[index+15];
-    n[index+next[18]] = n[index+18];
-
-    index -= n_veloc;
-  }
-
-  /* bottom up sweep */
-  index = lblattice.halo_offset*n_veloc;
-  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
-
-    /* propagation to lower indices */
-    n[index+next[2]]  = n[index+2];
-    n[index+next[4]]  = n[index+4];
-    n[index+next[6]]  = n[index+6];
-    n[index+next[8]]  = n[index+8];
-    n[index+next[9]]  = n[index+9];
-    n[index+next[12]] = n[index+12];
-    n[index+next[13]] = n[index+13];
-    n[index+next[16]] = n[index+16];
-    n[index+next[17]] = n[index+17];
-
-    index += n_veloc;
-  }
-
+  /* kinetic modes */
+  mode[10] = 2.*(n[2] - n[1]) 
+             + n[7] - n[8] + n[9] - n[10] + n[11] - n[12] + n[13] - n[14];
+  mode[11] = 2.*(n[4] - n[3])
+             + n[7] - n[8] - n[9] + n[10] + n[15] - n[16] + n[17] - n[18];
+  mode[12] = 2.*(n[6] - n[5])
+             + n[11] - n[12] - n[13] + n[14] + n[15] - n[16] - n[17] + n[18];
+  mode[13] =   n[ 7] - n[ 8] + n[ 9] - n[10] - n[11] + n[12] - n[13] + n[14];
+  mode[14] =   n[ 7] - n[ 8] - n[ 9] + n[10] - n[15] + n[16] - n[17] + n[18];
+  mode[15] =   n[11] - n[12] - n[13] + n[14] - n[15] + n[16] + n[17] - n[18];
+  mode[16] =   n[ 0]
+             + n[ 7] + n[ 8] + n[ 9] + n[10] 
+             + n[11] + n[12] + n[13] + n[14] 
+             + n[15] + n[16] + n[17] + n[18]
+             - 2.*(n[1] + n[2] + n[3] + n[4] + n[5] + n[6]);
+  mode[17] =   n[ 3] + n[ 4] - n[ 1] - n[ 2] 
+             + n[11] + n[12] + n[13] + n[14] 
+             - n[15] - n[16] - n[17] - n[18];
+  mode[18] = - n[ 1] - n[ 2] - n[ 3] - n[ 4] 
+             - n[11] - n[12] - n[13] - n[14] - n[15] - n[16] - n[17] - n[18]
+             + 2.*(n[5] + n[6] + n[7] + n[8] + n[9] + n[10]);
 #else
-  int i;
+  int i, j;
+  double **e = lbmodel.e;
+  for (i=0; i<n_veloc; i++) {
+    mode[i] = 0.0;
+    for (j=0; j<n_veloc; j++) {
+      mode[i] += e[i][j]*n[j];
+    }
+  }
+#endif
+}
 
-  /* In the general case, we don't know a priori which 
-   * velocities propagate to higher or lower indices.
-   * So we use a complete new array as buffer and
-   * copy it afterwards (copying is necessary because
-   * the halo communication uses fixed memory areas)
-   * \todo Change the halo communication such that the pointers can be swapped!
-   */ 
+MDINLINE void lb_relax_modes(index_t index, double *mode) {
 
-  double *n     = lbfluid[0].n;
-  double *n_new = lbfluid[0].n_tmp;
-  double (*c)[3] = lbmodel.c;
+  double rho, j[3], pi_eq[6];
 
-  /* calculate the index shift for all velocities */
-  for (i=0;i<n_veloc;i++) {
-    next[i] = n_veloc*(c[i][0]+yperiod*c[i][1]+zperiod*c[i][2]) + i;
+  /* re-construct the real density 
+   * remember that the populations are stored as differences to their
+   * equilibrium value */
+  rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
+
+  j[0] = mode[1];
+  j[1] = mode[2];
+  j[2] = mode[3];
+
+  /* if forces are present, the momentum density is redefined to
+   * inlcude one half-step of the force action.  See the
+   * Chapman-Enskog expansion in [Ladd & Verberg]. */
+#ifndef EXTERNAL_FORCES
+  if (lbfields[index].has_force) 
+#endif
+  {
+    j[0] += 0.5*lbfields[index].force[0];
+    j[1] += 0.5*lbfields[index].force[1];
+    j[2] += 0.5*lbfields[index].force[2];
   }
 
-  /* propagate the populations */
-  /* on the surface we have to check that shifts 
-   * don't lead out of the cell's node range */
-  index = 0;
+  /* equilibrium part of the stress modes */
+  pi_eq[0] = scalar(j,j)/rho;
+  pi_eq[1] = (SQR(j[0])-SQR(j[1]))/rho;
+  pi_eq[2] = (scalar(j,j) - 3.0*SQR(j[2]))/rho;
+  pi_eq[3] = j[0]*j[1]/rho;
+  pi_eq[4] = j[0]*j[2]/rho;
+  pi_eq[5] = j[1]*j[2]/rho;
 
-  for (k=0; k<lblattice.halo_offset; k++) {
-    for (i=0;i<n_veloc;i++) {
-      if (index+next[i]>=0) {
-	n_new[index+next[i]] = n[index+i];
-      }
-    }
-    index += n_veloc;
-  }
+  /* relax the stress modes */  
+  mode[4] = pi_eq[0] + gamma_bulk*(mode[4] - pi_eq[0]);
+  mode[5] = pi_eq[1] + gamma_shear*(mode[5] - pi_eq[1]);
+  mode[6] = pi_eq[2] + gamma_shear*(mode[6] - pi_eq[2]);
+  mode[7] = pi_eq[3] + gamma_shear*(mode[7] - pi_eq[3]);
+  mode[8] = pi_eq[4] + gamma_shear*(mode[8] - pi_eq[4]);
+  mode[9] = pi_eq[5] + gamma_shear*(mode[9] - pi_eq[5]);
 
-  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume-lblattice.halo_offset;k++) {
-    for (i=0;i<n_veloc;i++) {
-	n_new[index+next[i]] = n[index+i];
-    }
-    index += n_veloc;
-  }
-
-  for (k=lblattice.halo_grid_volume-lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
-    for (i=0;i<n_veloc;i++) {
-      if (index+next[i]<lblattice.halo_grid_volume*n_veloc) {
-	  n_new[index+next[i]] = n[index+i];
-      }
-    }
-    index += n_veloc;
-  } 
-
-  memcpy(n,n_new,lblattice.halo_grid_volume*n_veloc*sizeof(double));
-
+#ifndef OLD_FLUCT
+  /* relax the ghost modes (project them out) */
+  /* ghost modes have no equilibrium part due to orthogonality */
+  mode[10] = gamma_odd*mode[10];
+  mode[11] = gamma_odd*mode[11];
+  mode[12] = gamma_odd*mode[12];
+  mode[13] = gamma_odd*mode[13];
+  mode[14] = gamma_odd*mode[14];
+  mode[15] = gamma_odd*mode[15];
+  mode[16] = gamma_even*mode[16];
+  mode[17] = gamma_even*mode[17];
+  mode[18] = gamma_even*mode[18];
 #endif
 
 }
 
-/*@}*/
+MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
+    double rootrho = sqrt(mode[0]+lbpar.rho*agrid*agrid*agrid);
+    double fluct[6];
 
-/***********************************************************************/
-/** \name External forces */
-/***********************************************************************/
-/*@{*/
-
-/** Apply external forces to the fluid.
- *
- * Eq. (28) Ladd and Verberg, J. Stat. Phys. 104(5/6):1191 (2001).
- * Note that the second moment of the force is neglected.
- */
-MDINLINE void lb_external_forces() {
-
-  int x, y, z, index;
-  double *local_n, *local_j, delta_j[3] = { 0.0, 0.0, 0.0 };
-
-  index = lblattice.halo_offset;
-  for (z=1; z<=lblattice.grid[2]; z++) {
-    for (y=1; y<=lblattice.grid[1]; y++) {
-      for (x=1; x<=lblattice.grid[0]; x++) {
-
-#ifdef CONSTRAINTS
-	if (lbfluid[index].boundary==0) 
+    /* stress modes */
+    mode[4] += (fluct[0] = rootrho*lb_phi[4]*(d_random()-0.5));
+    mode[5] += (fluct[1] = rootrho*lb_phi[5]*(d_random()-0.5));
+    mode[6] += (fluct[2] = rootrho*lb_phi[6]*(d_random()-0.5));
+    mode[7] += (fluct[3] = rootrho*lb_phi[7]*(d_random()-0.5));
+    mode[8] += (fluct[4] = rootrho*lb_phi[8]*(d_random()-0.5));
+    mode[9] += (fluct[5] = rootrho*lb_phi[9]*(d_random()-0.5));
+    //if (index == lblattice.halo_offset) {
+    //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
+    //}
+    
+#ifndef OLD_FLUCT
+    /* ghost modes */
+    mode[10] += rootrho*lb_phi[10]*(d_random()-0.5);
+    mode[11] += rootrho*lb_phi[11]*(d_random()-0.5);
+    mode[12] += rootrho*lb_phi[12]*(d_random()-0.5);
+    mode[13] += rootrho*lb_phi[13]*(d_random()-0.5);
+    mode[14] += rootrho*lb_phi[14]*(d_random()-0.5);
+    mode[15] += rootrho*lb_phi[15]*(d_random()-0.5);
+    mode[16] += rootrho*lb_phi[16]*(d_random()-0.5);
+    mode[17] += rootrho*lb_phi[17]*(d_random()-0.5);
+    mode[18] += rootrho*lb_phi[18]*(d_random()-0.5);
 #endif
-	{
 
-	  local_n   = lbfluid[index].n;
-	  local_j   = lbfluid[index].j;
+#ifdef ADDITIONAL_CHECKS
+    rancounter += 15;
+#endif
+}
 
-	  /* calculate momentum due to ext_force in lattice units */
-	  /* ext_force is the force per volume in LJ units */
-	  delta_j[0] = lbpar.ext_force[0]*tau*tau*agrid*agrid;
-	  delta_j[1] = lbpar.ext_force[1]*tau*tau*agrid*agrid;
-	  delta_j[2] = lbpar.ext_force[2]*tau*tau*agrid*agrid;
-	  
-	  local_j[0] += delta_j[0];
-	  local_j[1] += delta_j[1];
-	  local_j[2] += delta_j[2];
+#if 0
+MDINLINE void lb_external_forces(double* mode) {
+
+#ifdef EXTERNAL_FORCES
+  double rho, f[3], u[3], C[6];
+  
+  f[0] = lbpar.ext_force[0];
+  f[1] = lbpar.ext_force[1];
+  f[2] = lbpar.ext_force[2];
+
+  rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
+
+  /* hydrodynamic momentum density is redefined when external forces present */
+  u[0] = (mode[1] + 0.5*f[0])/rho;
+  u[1] = (mode[2] + 0.5*f[1])/rho;
+  u[2] = (mode[3] + 0.5*f[2])/rho;
+
+  C[0] = (1.+gamma_bulk)*u[0]*f[0] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[2] = (1.+gamma_bulk)*u[1]*f[1] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[5] = (1.+gamma_bulk)*u[2]*f[2] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[1] = 1./2.*(1.+gamma_shear)*(u[0]*f[1]+u[1]*f[0]);
+  C[3] = 1./2.*(1.+gamma_shear)*(u[0]*f[2]+u[2]*f[0]);
+  C[4] = 1./2.*(1.+gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
+
+  /* update momentum modes */
+  mode[1] += f[0];
+  mode[2] += f[1];
+  mode[3] += f[2];
+
+  /* update stress modes */
+  mode[4] += C[0] + C[2] + C[5];
+  mode[5] += 2.*C[0] - C[2] - C[5];
+  mode[6] += C[2] - C[5];
+  mode[7] += C[1];
+  mode[8] += C[3];
+  mode[9] += C[4];
+#endif
+
+}
+#endif
+
+MDINLINE void lb_apply_forces(index_t index, double* mode) {
+
+  double rho, *f, u[3], C[6];
+  
+  f = lbfields[index].force;
+
+  //fprintf(stderr,"%ld f=(%f,%f,%f)\n",index,f[0],f[1],f[2]);
+
+  rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
+
+  /* hydrodynamic momentum density is redefined when external forces present */
+  u[0] = (mode[1] + 0.5*f[0])/rho;
+  u[1] = (mode[2] + 0.5*f[1])/rho;
+  u[2] = (mode[3] + 0.5*f[2])/rho;
+
+  C[0] = (1.+gamma_bulk)*u[0]*f[0] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[2] = (1.+gamma_bulk)*u[1]*f[1] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[5] = (1.+gamma_bulk)*u[2]*f[2] + 1./3.*(gamma_bulk-gamma_shear)*scalar(u,f);
+  C[1] = 1./2.*(1.+gamma_shear)*(u[0]*f[1]+u[1]*f[0]);
+  C[3] = 1./2.*(1.+gamma_shear)*(u[0]*f[2]+u[2]*f[0]);
+  C[4] = 1./2.*(1.+gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
+
+  /* update momentum modes */
+  mode[1] += f[0];
+  mode[2] += f[1];
+  mode[3] += f[2];
+
+  /* update stress modes */
+  mode[4] += C[0] + C[2] + C[5];
+//  mode[5] += 2.*C[0] - C[2] - C[5];
+//  mode[6] += C[2] - C[5];
+  mode[5] += C[0] - C[2];
+  mode[6] += C[0] + C[2] - 2.*C[5];
+  mode[7] += C[1];
+  mode[8] += C[3];
+  mode[9] += C[4];
+
+  /* reset force */
+#ifdef EXTERNAL_FORCES
+  // unit conversion: force density
+  lbfields[index].force[0] = lbpar.ext_force[0]*lbpar.agrid*lbpar.agrid*tau*tau;
+  lbfields[index].force[1] = lbpar.ext_force[1]*lbpar.agrid*lbpar.agrid*tau*tau;
+  lbfields[index].force[2] = lbpar.ext_force[2]*lbpar.agrid*lbpar.agrid*tau*tau;
+#else
+  lbfields[index].force[0] = 0.0;
+  lbfields[index].force[1] = 0.0;
+  lbfields[index].force[2] = 0.0;
+  lbfields[index].has_force = 0;
+#endif
+
+}
+
+MDINLINE void lb_calc_n_from_modes(index_t index, double *mode) {
+
+  int i;
+  double *w = lbmodel.w;
 
 #ifdef D3Q19
-	  local_n[1]  +=   1./6. * delta_j[0];
-	  local_n[2]  += - 1./6. * delta_j[0];
-	  local_n[3]  +=   1./6. * delta_j[1];
-	  local_n[4]  += - 1./6. * delta_j[1];
-	  local_n[5]  +=   1./6. * delta_j[2];
-	  local_n[6]  += - 1./6. * delta_j[2];
-	  local_n[7]  +=   1./12. * (delta_j[0]+delta_j[1]);
-	  local_n[8]  += - 1./12. * (delta_j[0]+delta_j[1]);
-	  local_n[9]  +=   1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[10] += - 1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[11] +=   1./12. * (delta_j[0]+delta_j[2]);
-	  local_n[12] += - 1./12. * (delta_j[0]+delta_j[2]);
-	  local_n[13] +=   1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[14] += - 1./12. * (delta_j[0]-delta_j[1]);
-	  local_n[15] +=   1./12. * (delta_j[1]+delta_j[2]);
-	  local_n[16] += - 1./12. * (delta_j[1]+delta_j[2]);
-	  local_n[17] +=   1./12. * (delta_j[1]-delta_j[2]);
-	  local_n[18] += - 1./12. * (delta_j[1]-delta_j[2]);
+  double (*e)[19] = d3q19_modebase;
+  double m[19];
+
+  /* normalization factors enter in the back transformation */
+  for (i=0;i<n_veloc;i++) {
+    m[i] = 1./e[19][i]*mode[i];
+  }
+
+  lbfluid[0][ 0][index] = m[0] - m[4] + m[16];
+  lbfluid[0][ 1][index] = m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2.*(m[10] + m[16]);
+  lbfluid[0][ 2][index] = m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2.*(m[10] - m[16]);
+  lbfluid[0][ 3][index] = m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2.*(m[11] + m[16]);
+  lbfluid[0][ 4][index] = m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2.*(m[11] - m[16]);
+  lbfluid[0][ 5][index] = m[0] + m[3] - 2.*(m[6] + m[12] + m[16] - m[18]);
+  lbfluid[0][ 6][index] = m[0] - m[3] - 2.*(m[6] - m[12] + m[16] - m[18]);
+  lbfluid[0][ 7][index] = m[0] + m[ 1] + m[ 2] + m[ 4] + 2.*m[6]
+        + m[7] + m[10] + m[11] + m[13] + m[14] + m[16] + 2.*m[18];
+  lbfluid[0][ 8][index] = m[0] - m[ 1] - m[ 2] + m[ 4] + 2.*m[6]
+        + m[7] - m[10] - m[11] - m[13] - m[14] + m[16] + 2.*m[18];
+  lbfluid[0][ 9][index] = m[0] + m[ 1] - m[ 2] + m[ 4] + 2.*m[6]
+        - m[7] + m[10] - m[11] + m[13] - m[14] + m[16] + 2.*m[18];
+  lbfluid[0][10][index] = m[0] - m[ 1] + m[ 2] + m[ 4] + 2.*m[6]
+        - m[7] - m[10] + m[11] - m[13] + m[14] + m[16] + 2.*m[18];
+  lbfluid[0][11][index] = m[0] + m[ 1] + m[ 3] + m[ 4] + m[ 5] - m[ 6]
+        + m[8] + m[10] + m[12] - m[13] + m[15] + m[16] + m[17] - m[18];
+  lbfluid[0][12][index] = m[0] - m[ 1] - m[ 3] + m[ 4] + m[ 5] - m[ 6]
+        + m[8] - m[10] - m[12] + m[13] - m[15] + m[16] + m[17] - m[18];
+  lbfluid[0][13][index] = m[0] + m[ 1] - m[ 3] + m[ 4] + m[ 5] - m[ 6]
+        - m[8] + m[10] - m[12] - m[13] - m[15] + m[16] + m[17] - m[18];
+  lbfluid[0][14][index] = m[0] - m[ 1] + m[ 3] + m[ 4] + m[ 5] - m[ 6]
+        - m[8] - m[10] + m[12] + m[13] + m[15] + m[16] + m[17] - m[18];
+  lbfluid[0][15][index] = m[0] + m[ 2] + m[ 3] + m[ 4] - m[ 5] - m[ 6]
+        + m[9] + m[11] + m[12] - m[14] - m[15] + m[16] - m[17] - m[18];
+  lbfluid[0][16][index] = m[0] - m[ 2] - m[ 3] + m[ 4] - m[ 5] - m[ 6]
+        + m[9] - m[11] - m[12] + m[14] + m[15] + m[16] - m[17] - m[18];
+  lbfluid[0][17][index] = m[0] + m[ 2] - m[ 3] + m[ 4] - m[ 5] - m[ 6]
+        - m[9] + m[11] - m[12] - m[14] + m[15] + m[16] - m[17] - m[18];
+  lbfluid[0][18][index] = m[0] - m[ 2] + m[ 3] + m[ 4] - m[ 5] - m[ 6]
+        - m[9] - m[11] + m[12] + m[14] - m[15] + m[16] - m[17] - m[18];
+
+  /* weights enter in the back transformation */
+  for (i=0;i<n_veloc;i++) {
+    lbfluid[0][i][index] *= w[i];
+  }
+
 #else
-	  int i;
-	  for (i=0; i<n_veloc; i++) {
-	      local_n[i] += lbmodel.coeff[i][1]*scalar(delta_j,lbmodel.c[i]);
+  int j;
+  double **e = lbmodel.e;
+  for (i=0; i<n_veloc;i++) {
+    lbfluid[0][i][index] = 0.0;
+    for (j=0;j<n_veloc;j++) {
+      lbfluid[0][i][index] += mode[j]*e[j][i]/e[19][j];
+    }
+    lbfluid[0][i][index] *= w[i];
+  }
+#endif
+
+}
+
+MDINLINE void lb_calc_n_from_modes_push(index_t index, double *m) {
+    int i;
+
+#ifdef D3Q19
+    int yperiod = lblattice.halo_grid[0];
+    int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
+    index_t next[19];
+    next[0]  = index;
+    next[1]  = index + 1;
+    next[2]  = index - 1;
+    next[3]  = index + yperiod;
+    next[4]  = index - yperiod;
+    next[5]  = index + zperiod;
+    next[6]  = index - zperiod;
+    next[7]  = index + (1 + yperiod);
+    next[8]  = index - (1 + yperiod);
+    next[9]  = index + (1 - yperiod);
+    next[10] = index - (1 - yperiod);
+    next[11] = index + (1 + zperiod);
+    next[12] = index - (1 + zperiod);
+    next[13] = index + (1 - zperiod);
+    next[14] = index - (1 - zperiod);
+    next[15] = index + (yperiod + zperiod);
+    next[16] = index - (yperiod + zperiod);
+    next[17] = index + (yperiod - zperiod);
+    next[18] = index - (yperiod - zperiod);
+
+    /* normalization factors enter in the back transformation */
+    for (i=0;i<n_veloc;i++) {
+      m[i] = 1./d3q19_modebase[19][i]*m[i];
+    }
+
+#ifndef OLD_FLUCT
+    lbfluid[1][ 0][next[0]] = m[0] - m[4] + m[16];
+    lbfluid[1][ 1][next[1]] = m[0] + m[1] + m[5] + m[6] - m[17] - m[18] - 2.*(m[10] + m[16]);
+    lbfluid[1][ 2][next[2]] = m[0] - m[1] + m[5] + m[6] - m[17] - m[18] + 2.*(m[10] - m[16]);
+    lbfluid[1][ 3][next[3]] = m[0] + m[2] - m[5] + m[6] + m[17] - m[18] - 2.*(m[11] + m[16]);
+    lbfluid[1][ 4][next[4]] = m[0] - m[2] - m[5] + m[6] + m[17] - m[18] + 2.*(m[11] - m[16]);
+    lbfluid[1][ 5][next[5]] = m[0] + m[3] - 2.*(m[6] + m[12] + m[16] - m[18]);
+    lbfluid[1][ 6][next[6]] = m[0] - m[3] - 2.*(m[6] - m[12] + m[16] - m[18]);
+    lbfluid[1][ 7][next[7]] = m[0] + m[ 1] + m[ 2] + m[ 4] + 2.*m[6] + m[7] + m[10] + m[11] + m[13] + m[14] + m[16] + 2.*m[18];
+    lbfluid[1][ 8][next[8]] = m[0] - m[ 1] - m[ 2] + m[ 4] + 2.*m[6] + m[7] - m[10] - m[11] - m[13] - m[14] + m[16] + 2.*m[18];
+    lbfluid[1][ 9][next[9]] = m[0] + m[ 1] - m[ 2] + m[ 4] + 2.*m[6] - m[7] + m[10] - m[11] + m[13] - m[14] + m[16] + 2.*m[18];
+    lbfluid[1][10][next[10]] = m[0] - m[ 1] + m[ 2] + m[ 4] + 2.*m[6] - m[7] - m[10] + m[11] - m[13] + m[14] + m[16] + 2.*m[18];
+    lbfluid[1][11][next[11]] = m[0] + m[ 1] + m[ 3] + m[ 4] + m[ 5] - m[ 6] + m[8] + m[10] + m[12] - m[13] + m[15] + m[16] + m[17] - m[18];
+    lbfluid[1][12][next[12]] = m[0] - m[ 1] - m[ 3] + m[ 4] + m[ 5] - m[ 6] + m[8] - m[10] - m[12] + m[13] - m[15] + m[16] + m[17] - m[18];
+    lbfluid[1][13][next[13]] = m[0] + m[ 1] - m[ 3] + m[ 4] + m[ 5] - m[ 6] - m[8] + m[10] - m[12] - m[13] - m[15] + m[16] + m[17] - m[18];
+    lbfluid[1][14][next[14]] = m[0] - m[ 1] + m[ 3] + m[ 4] + m[ 5] - m[ 6] - m[8] - m[10] + m[12] + m[13] + m[15] + m[16] + m[17] - m[18];
+    lbfluid[1][15][next[15]] = m[0] + m[ 2] + m[ 3] + m[ 4] - m[ 5] - m[ 6] + m[9] + m[11] + m[12] - m[14] - m[15] + m[16] - m[17] - m[18];
+    lbfluid[1][16][next[16]] = m[0] - m[ 2] - m[ 3] + m[ 4] - m[ 5] - m[ 6] + m[9] - m[11] - m[12] + m[14] + m[15] + m[16] - m[17] - m[18];
+    lbfluid[1][17][next[17]] = m[0] + m[ 2] - m[ 3] + m[ 4] - m[ 5] - m[ 6] - m[9] + m[11] - m[12] - m[14] + m[15] + m[16] - m[17] - m[18];
+    lbfluid[1][18][next[18]] = m[0] - m[ 2] + m[ 3] + m[ 4] - m[ 5] - m[ 6] - m[9] - m[11] + m[12] + m[14] - m[15] + m[16] - m[17] - m[18];
+#else
+    lbfluid[1][ 0][next[0]] = m[0] - m[4];
+    lbfluid[1][ 1][next[1]] = m[0] + m[1] + m[5] + m[6];
+    lbfluid[1][ 2][next[2]] = m[0] - m[1] + m[5] + m[6];
+    lbfluid[1][ 3][next[3]] = m[0] + m[2] - m[5] + m[6];
+    lbfluid[1][ 4][next[4]] = m[0] - m[2] - m[5] + m[6];
+    lbfluid[1][ 5][next[5]] = m[0] + m[3] - 2.*m[6];
+    lbfluid[1][ 6][next[6]] = m[0] - m[3] - 2.*m[6];
+    lbfluid[1][ 7][next[7]] = m[0] + m[1] + m[2] + m[4] + 2.*m[6] + m[7];
+    lbfluid[1][ 8][next[8]] = m[0] - m[1] - m[2] + m[4] + 2.*m[6] + m[7];
+    lbfluid[1][ 9][next[9]] = m[0] + m[1] - m[2] + m[4] + 2.*m[6] - m[7];
+    lbfluid[1][10][next[10]] = m[0] - m[1] + m[2] + m[4] + 2.*m[6] - m[7];
+    lbfluid[1][11][next[11]] = m[0] + m[1] + m[3] + m[4] + m[5] - m[6] + m[8];
+    lbfluid[1][12][next[12]] = m[0] - m[1] - m[3] + m[4] + m[5] - m[6] + m[8];
+    lbfluid[1][13][next[13]] = m[0] + m[1] - m[3] + m[4] + m[5] - m[6] - m[8];
+    lbfluid[1][14][next[14]] = m[0] - m[1] + m[3] + m[4] + m[5] - m[6] - m[8];
+    lbfluid[1][15][next[15]] = m[0] + m[2] + m[3] + m[4] - m[5] - m[6] + m[9];
+    lbfluid[1][16][next[16]] = m[0] - m[2] - m[3] + m[4] - m[5] - m[6] + m[9];
+    lbfluid[1][17][next[17]] = m[0] + m[2] - m[3] + m[4] - m[5] - m[6] - m[9];
+    lbfluid[1][18][next[18]] = m[0] - m[2] + m[3] + m[4] - m[5] - m[6] - m[9];
+#endif
+
+    /* weights enter in the back transformation */
+    for (i=0;i<n_veloc;i++) {
+      lbfluid[1][i][next[i]] *= lbmodel.w[i];
+    }
+#else
+  int j;
+  double **e = lbmodel.e;
+  index_t next[n_veloc];
+  for (i=0; i<n_veloc;i++) {
+    next[i] = get_linear_index(c[i][0],c[i][1],c[i][2],lblattic.halo_grid);
+    lbfluid[1][i][next[i]] = 0.0;
+    for (j=0;j<n_veloc;j++) {
+      lbfluid[1][i][next[i]] += mode[j]*e[j][i]/e[19][j];
+    }
+    lbfluid[1][i][index] *= w[i];
+  }
+#endif
+
+}
+
+/* Collisions and streaming (push scheme) */
+MDINLINE void lb_collide_stream() {
+    index_t index;
+    int x, y, z;
+    double modes[19];
+
+    //index = get_linear_index(1,1,1,lblattice.halo_grid);
+    //for (i=0; i<n_veloc; i++) {
+    //  fprintf(stderr,"[%d] %e\n",i,lbfluid[1][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //}
+
+    /* loop over all lattice cells (halo excluded) */
+    index = lblattice.halo_offset;
+    for (z=1; z<=lblattice.grid[2]; z++) {
+      for (y=1; y<=lblattice.grid[1]; y++) {
+	for (x=1; x<=lblattice.grid[0]; x++) {
+	  
+#ifdef LB_BOUNDARIES
+	  if (!lbfields[index].boundary)
+#endif
+	  {
+	
+	    /* calculate modes locally */
+	    lb_calc_modes(index, modes);
+
+	    /* deterministic collisions */
+	    lb_relax_modes(index, modes);
+
+	    /* fluctuating hydrodynamics */
+	    if (fluct) lb_thermalize_modes(index, modes);
+
+	    /* apply forces */
+#ifdef EXTERNAL_FORCES
+	    lb_apply_forces(index, modes);
+#else
+	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
+#endif
+
+	    //fprintf(stderr,"%ld j=(%f,%f,%f)\n",index,modes[1],modes[2],modes[3]);
+
+	    /* transform back to populations and streaming */
+	    lb_calc_n_from_modes_push(index, modes);
+
+	  }
+#ifdef LB_BOUNDARIES
+	  else {
+
+	    lb_boundary_collisions(index, modes);
+
 	  }
 #endif
 
+	  ++index; /* next node */
 	}
-	++index;
+
+	index += 2; /* skip halo region */
       }
-      index += 2;
+      
+      index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
-    index += 2*lblattice.halo_grid[0];
-  }
+
+    //index = get_linear_index(1,1,1,lblattice.halo_grid);
+    //for (i=0; i<n_veloc; i++) {
+    //  fprintf(stderr,"pre halo push [%d] %e\n",i,lbfluid[1][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //}
+
+    //index = 193;
+    //double **tmp = lbfluid[0];
+    //lbfluid[0] = lbfluid[1];
+    //double rho, j[3];//, *f=lbfields[index].force;
+    //
+    //lb_calc_local_fields(index, &rho, j, NULL, 0);
+    ////lb_calc_local_rho(index, &rho);
+    ////lb_calc_local_j(index,j);
+    ////fprintf(stderr,"%f\n",f[0]);
+    //fprintf(stderr,"%p %d (%.12e,%f,%f) %.12e\n",lbfluid[0],index,(j[0])/rho,(j[1])/rho,(j[2])/rho,rho);
+    //
+    //int i;
+    //fprintf(stderr,"( ");
+    //for (i=0;i<lbmodel.n_veloc;i++) {
+    //  fprintf(stderr,"%f ",lbfluid[0][i][index]+lbmodel.coeff[i][0]);
+    //}
+    //fprintf(stderr,") %f\n",lbfields[index].nvec[2]);
+    //lbfluid[0] = tmp;
+
+
+
+    //index = 193;
+    //tmp = lbfluid[0];
+    //lbfluid[0] = lbfluid[1];
+    //lb_calc_local_fields(index, &rho, j, NULL, 0);
+    ////lb_calc_local_rho(index, &rho);
+    ////lb_calc_local_j(index,j);
+    ////fprintf(stderr,"%f\n",f[0]);
+    //fprintf(stderr,"%p %d (%.12e,%f,%f) %.12e\n",lbfluid[0],index,(j[0])/rho,(j[1])/rho,(j[2])/rho,rho);
+    //
+    //fprintf(stderr,"( ");
+    //for (i=0;i<lbmodel.n_veloc;i++) {
+    //  fprintf(stderr,"%f ",lbfluid[0][i][index]+lbmodel.coeff[i][0]);
+    //}
+    //fprintf(stderr,") %f\n",lbfields[index].nvec[2]);
+    //lbfluid[0] = tmp;
+
+
+    //index = get_linear_index(1,1,1,lblattice.halo_grid);
+    //for (i=0; i<n_veloc; i++) {
+    //  fprintf(stderr,"post halo push [%d] %e\n",i,lbfluid[1][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //}
+
+#ifdef LB_BOUNDARIES
+    /* boundary conditions for links */
+    lb_boundary_conditions();
+#endif
+    
+    /* exchange halo regions */
+    halo_push_communication();
+
+   /* swap the pointers for old and new population fields */
+    //fprintf(stderr,"swapping pointers\n");
+    double **tmp;
+    tmp = lbfluid[0];
+    lbfluid[0] = lbfluid[1];
+    lbfluid[1] = tmp;
+
+    /* halo region is invalid after update */
+    resend_halo = 1;
+
+    /* loop over all lattice cells (halo excluded) */
+    //index = lblattice.halo_offset;
+    //for (z=1; z<=lblattice.grid[2]; z++) {
+    //  for (y=1; y<=lblattice.grid[1]; y++) {
+    //	for (x=1; x<=lblattice.grid[0]; x++) {
+    //
+    //	  if (lbfields[index].boundary) {
+    //	    fprintf(stderr,"%ld reflect for measurement\n",index);
+    //	    lb_local_reflection(index);
+    //	  }
+    //
+    //	  ++index; /* next node */
+    //	}
+    //
+    //	index += 2; /* skip halo region */
+    //  }
+    //  
+    //  index += 2*lblattice.halo_grid[0]; /* skip halo region */
+    //}
+
+    //int i;
+    //index = get_linear_index(1,1,1,lblattice.halo_grid);
+    //fprintf(stderr,"n=( ");
+    //for (i=0; i<n_veloc; i++) {
+    //  fprintf(stderr,"%.9f ",lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //}
+    //fprintf(stderr,")\n");
+    //
+    //index = get_linear_index(1,1,2,lblattice.halo_grid);
+    //fprintf(stderr,"n=( ");
+    //for (i=0; i<n_veloc; i++) {
+    //  fprintf(stderr,"%.9f ",lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //}
+    //fprintf(stderr,")\n");
+    
+   //index = get_linear_index(1,1,21,lblattice.halo_grid);
+    //for (i=0; i<n_veloc; i++) {
+    //  fprintf(stderr,"[%d] %e\n",i,lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
+    //}
 
 }
 
-/*@}*/
-
-/***********************************************************************/
-/** \name Integration step for the lattice Boltzmann fluid             */
-/***********************************************************************/
-/*@{*/
-
-/** Propagate the Lattice Boltzmann dynamics.
- * This function is called from the integrator. Since the time step
- * for the lattice dynamics can be coarser than the MD time step,
- * we monitor the time since the last lattice update.
- */
-void lb_propagate() {
-
-  fluidstep+=time_step ;
-
-  if (fluidstep>=tau) {
-
-    fluidstep=0.0 ;
-
-    /* collision step */
-    lb_calc_collisions();
-
-#ifdef EXTERNAL_FORCES
-    /* apply external forces */
-    lb_external_forces();
-#endif
+/** Streaming and collisions (pull scheme) */
+MDINLINE void lb_stream_collide() {
+    index_t index;
+    int x, y, z;
+    double modes[19];
 
     /* exchange halo regions */
-    halo_communication(&update_halo_comm);
+    halo_communication(&update_halo_comm,**lbfluid);
 #ifdef ADDITIONAL_CHECKS
     lb_check_halo_regions();
 #endif
 
-#ifdef CONSTRAINTS
-    /* boundary conditions */
-    lb_boundary_conditions();
+    /* loop over all lattice cells (halo excluded) */
+    index = lblattice.halo_offset;
+    for (z=1; z<=lblattice.grid[2]; z++) {
+      for (y=1; y<=lblattice.grid[1]; y++) {
+	for (x=1; x<=lblattice.grid[0]; x++) {
+	  
+	  {
+
+	    /* stream (pull) and calculate modes */
+	    lb_pull_calc_modes(index, modes);
+  
+	    /* deterministic collisions */
+	    lb_relax_modes(index, modes);
+    
+	    /* fluctuating hydrodynamics */
+	    if (fluct) lb_thermalize_modes(index, modes);
+  
+	    /* apply forces */
+	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
+    
+	    /* calculate new particle populations */
+	    lb_calc_n_from_modes(index, modes);
+
+	  }
+
+	  ++index; /* next node */
+	}
+
+	index += 2; /* skip halo region */
+      }
+      
+      index += 2*lblattice.halo_grid[0]; /* skip halo region */
+    }
+
+    /* swap the pointers for old and new population fields */
+    //fprintf(stderr,"swapping pointers\n");
+    double **tmp = lbfluid[0];
+    lbfluid[0] = lbfluid[1];
+    lbfluid[1] = tmp;
+
+    /* halo region is invalid after update */
+    resend_halo = 1;
+      
+}
+
+/***********************************************************************/
+/** \name Update step for the lattice Boltzmann fluid                  */
+/***********************************************************************/
+/*@{*/
+/*@}*/
+
+
+/** Update the lattice Boltzmann fluid.  
+ *
+ * This function is called from the integrator. Since the time step
+ * for the lattice dynamics can be coarser than the MD time step, we
+ * monitor the time since the last lattice update.
+ */
+void lattice_boltzmann_update() {
+
+  fluidstep += time_step;
+
+  if (fluidstep>=tau) {
+
+    fluidstep=0.0;
+
+#ifdef PULL
+    lb_stream_collide();
+#else 
+    lb_collide_stream();
 #endif
 
-    /* streaming step */
-    lb_propagate_n();
+#if 0
+    double old_rho;
+    lb_calc_fluid_mass(&old_rho);
+#endif
 
+#if 0
+    double rho;
+    lb_calc_fluid_mass(&rho);
+    if (fabs(old_rho-rho) > ROUND_ERROR_PREC) {
+	fprintf(stderr,"rho=%e old_rho=%e %e\n",rho,old_rho,old_rho-rho);
+	//errexit(-1);
+    }
+#endif
   }
-
+  
 }
 
 /***********************************************************************/
@@ -1054,139 +2183,6 @@ void lb_propagate() {
 /***********************************************************************/
 /*@{*/
 
-/** Transfer a certain amount of momentum to a elementray cell of fluid.
- * 
- * Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
- *
- * @param momentum   Momentum to be transfered to the fluid (lattice
- *                   units) (Input).
- * @param node_index Indices of the sites of the elementary lattice
- *                   cell (Input).
- * @param delta      Weights for the assignment to the single lattice
- *                   sites (Input).
- * @param badrandoms Flag/Counter for the occurrence negative
- *                   populations (Output).
- */
-MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_index[8], const double delta[6]) {
-
-  int x, y, z, index;
-  LB_FluidNode *local_node;
-  double *local_n, *n_tmp;
-  double *local_j, delta_j[3];
-
-  /* We don't need to save the local populations because 
-   * we use a trick for their restoration:
-   * We substract the old random force from the new one,
-   * hence the previous change in the local populations
-   * is automatically revoked during the recalculation.
-   * Note that this makes it necessary to actually apply 
-   * all changes and forbids to return immediately when negative
-   * populations occur.
-   */
-
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-	
-	index = node_index[(z*2+y)*2+x];
-	local_node = &lbfluid[index];
-	local_n = n_tmp = local_node->n;
-	local_j = local_node->j;
-
-	delta_j[0] = delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*momentum[0];
-	delta_j[1] = delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*momentum[1];
-	delta_j[2] = delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*momentum[2];
-
-#ifdef D3Q19
-	local_n[1]  = n_tmp[1]  + 1./6.*delta_j[0];
-	local_n[2]  = n_tmp[2]  - 1./6.*delta_j[0];
-	local_n[3]  = n_tmp[3]  + 1./6.*delta_j[1];
-	local_n[4]  = n_tmp[4]  - 1./6.*delta_j[1];
-	local_n[5]  = n_tmp[5]  + 1./6.*delta_j[2];
-	local_n[6]  = n_tmp[6]  - 1./6.*delta_j[2];
-	local_n[7]  = n_tmp[7]  + 1./12.*(delta_j[0]+delta_j[1]);
-	local_n[8]  = n_tmp[8]  - 1./12.*(delta_j[0]+delta_j[1]);
-	local_n[9]  = n_tmp[9]  + 1./12.*(delta_j[0]-delta_j[1]);
-	local_n[10] = n_tmp[10] - 1./12.*(delta_j[0]-delta_j[1]);
-	local_n[11] = n_tmp[11] + 1./12.*(delta_j[0]+delta_j[2]);
-	local_n[12] = n_tmp[12] - 1./12.*(delta_j[0]+delta_j[2]);
-	local_n[13] = n_tmp[13] + 1./12.*(delta_j[0]-delta_j[2]);
-	local_n[14] = n_tmp[14] - 1./12.*(delta_j[0]-delta_j[2]);
-	local_n[15] = n_tmp[15] + 1./12.*(delta_j[1]+delta_j[2]);
-	local_n[16] = n_tmp[16] - 1./12.*(delta_j[1]+delta_j[2]);
-	local_n[17] = n_tmp[17] + 1./12.*(delta_j[1]-delta_j[2]);
-	local_n[18] = n_tmp[18] - 1./12.*(delta_j[1]-delta_j[2]);
-#else
-	int i;
-	double (*c)[3] = lbmodel.c;
-	double (*coeff)[4] = lbmodel.coeff;
-
-	for (i=0;i<n_veloc;i++) {
-	  local_n[i] = n_tmp[i] + coeff[i][1] * scalar(delta_j,c[i]);
-	}
-
-#endif
-
-#ifdef ADDITIONAL_CHECKS
-	lb_check_negative_n(local_node);
-#endif
-
-      }
-    }
-  }
-
-}
-/** Setup of the LB populations on the boundary nodes to allow velocity interpolation close to boundary elements.
- *  Bounce back is the only b.c. implemented right now.
- * 
- * @param lattice	The lattice
- * @param node_index    The node index
- * 
- * Note: this only works for planar boundaries
- */
-/* sega@fias.uni-frankfurt.de */
-MDINLINE void lb_assign_boundary_population(LB_FluidNode *lbfluid, int* node_index, double factor) {
-  int x,y,z,xx,yy,zz,flag;
-#ifdef CONSTRAINTS
-  for (x=0;x<2;x++) {
-    for (y=0;y<2;y++) {
-      for (z=0;z<2;z++) {
-	    flag=0;
-	    if(lbfluid[node_index[z*4+y*2+x]].boundary)
-	    {
-		        zz=(z+1)%2;
-			if(lbfluid[node_index[zz*4+y*2+x]].boundary==0){
-				flag++;
-				lb_copy_neg_populations(lbfluid,node_index[z*4+y*2+x],node_index[zz*4+y*2+x],factor);
-			}
-			else{
-			  yy=(y+1)%2; 
-			  if(lbfluid[node_index[z*4+yy*2+x]].boundary==0){
-				flag++;
-				lb_copy_neg_populations(lbfluid,node_index[z*4+y*2+x],node_index[z*4+yy*2+x],factor);
-			  }
-			  else{
-			    xx=(x+1)%2;
-			    if(lbfluid[node_index[z*4+y*2+xx]].boundary==0){
-				flag++;
-				lb_copy_neg_populations(lbfluid,node_index[z*4+y*2+x],node_index[z*4+y*2+xx],factor);
-			    }
-			  }
-			}
-			if(flag){
-			    if(flag>1) fprintf(stderr,"Corner node found...don't know what to do...\n");
-                            lb_calc_local_rho(&lbfluid[node_index[z*4+y*2+x]]);
-			    *lbfluid[node_index[z*4+y*2+x]].rho = -(*lbfluid[node_index[z*4+y*2+x]].rho);
-                            lb_calc_local_j(&lbfluid[node_index[z*4+y*2+x]]) ;
-			}
-			else fprintf(stderr,"Boundary node found with no fluid node around...\n");
-	    }
-      }
-    }
-  }
-#endif
-
-}
 
 /** Coupling of a particle to viscous fluid with Stokesian friction.
  * 
@@ -1195,28 +2191,32 @@ MDINLINE void lb_assign_boundary_population(LB_FluidNode *lbfluid, int* node_ind
  * @param p          The coupled particle (Input).
  * @param force      Coupling force between particle and fluid (Output).
  */
-MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
-
+MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   int x,y,z;
-  int node_index[8];
+  index_t node_index[8], index;
   double delta[6];
+  double local_rho, local_j[3], *local_f, interpolated_u[3],delta_j[3], *mode;
+  double modes[19];
   LB_FluidNode *local_node;
-  double *local_rho, *local_j, interpolated_u[3], delta_j[3];
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
 #endif
 
+  if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2))) {
+  
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+
+  //fprintf(stderr,"particle number %d\n",p->p.identity);
 
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
-  map_position_to_lattice(&lblattice,p->r.p,node_index,delta) ;
+  map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
+  
+//  printf("position: %f %f %f delta: %f %f %f \n", p->r.p[0], p->r.p[1], p->r.p[2], delta[0],delta[1],delta[2]);
+
+  //fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]);
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
-#ifdef CONSTRAINTS
-  /* set fictious populations on the boundary nodes next to the particle*/
-   lb_assign_boundary_population(lbfluid,node_index,1.0);
-#endif
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -1225,74 +2225,93 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
-
-	local_node = &lbfluid[node_index[(z*2+y)*2+x]];
-	local_rho  = local_node->rho;
-	local_j    = local_node->j;
-
-#ifdef ADDITIONAL_CHECKS
-	old_rho[(z*2+y)*2+x] = *local_rho;
-#endif
-
-	interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(*local_rho);
-	interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(*local_rho);	  
-	interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(*local_rho) ;
+        	
+        index = node_index[(z*2+y)*2+x];
+        
+        local_node = &lbfields[index];
+        
+//        if (local_node->recalc_fields) {
+          lb_calc_modes(index, modes);
+          //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
+//          local_node->recalc_fields = 0;
+//          local_node->has_force = 1;
+//        }
+//        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
+        // unit conversion: mass density
+        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+        local_j[0] = modes[1];
+        local_j[1] = modes[2];
+        local_j[2] = modes[3];
+        
+        #ifdef ADDITIONAL_CHECKS
+        	old_rho[(z*2+y)*2+x] = *local_rho;
+        #endif
+        
+        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
+        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+ //       printf("int_u: %f %f %f\n", interpolated_u[0], interpolated_u[1], interpolated_u[2] );    
 
       }
     }
   }
+  
+//  printf("u: %f %f %f\n", interpolated_u[0],interpolated_u[1],interpolated_u[2] );
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
 
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-#ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
-#endif
-#ifndef LB_ELECTROHYDRODYNAMICS
   force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
   force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
   force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
-#endif
-
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[try][0],p->lc.f_random[try][1],p->lc.f_random[try][2]));
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[0],p->lc.f_random[1],p->lc.f_random[2]));
 
   force[0] = force[0] + p->lc.f_random[0];
   force[1] = force[1] + p->lc.f_random[1];
   force[2] = force[2] + p->lc.f_random[2];
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tot = (%.6e,%.3e,%.3e) (try=%d)\n",this_node,force[0],force[1],force[2],try));
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
       
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+
   delta_j[0] = - force[0]*time_step*tau/agrid;
   delta_j[1] = - force[1]*time_step*tau/agrid;
   delta_j[2] = - force[2]*time_step*tau/agrid;
-    
-  lb_transfer_momentum(delta_j,node_index,delta);
+  
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+	
+	local_f = lbfields[node_index[(z*2+y)*2+x]].force;
+
+	local_f[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[0];
+	local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
+	local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
+
+//	lb_apply_forces(node_index[(z*2+y)*2+x], modes[(z*2+y)*2+x]);
+
+      }
+    }
+  }
+
 
 #ifdef ADDITIONAL_CHECKS
   int i;
   for (i=0;i<8;i++) {
-    lb_calc_local_rho(&lbfluid[node_index[i]]);
-    local_rho = lbfluid[node_index[i]].rho;
+    lb_calc_local_rho(node_index[i],local_rho);
     if (fabs(*local_rho-old_rho[i]) > ROUND_ERROR_PREC) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt,"{108 Mass loss/gain %le in lb_viscous_momentum_exchange for particle %d} ",*local_rho-old_rho[i],p->p.identity);
     }
   }
 #endif
-#ifdef CONSTRAINTS
-  /* reset to zero fictious populations on the boundary nodes next to the particle */ 
-   lb_assign_boundary_population(lbfluid,node_index,0.0);
-#endif
-
+}
 }
 
 /** Calculate particle lattice interactions.
@@ -1329,33 +2348,46 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
  * probably makes this method preferable compared to the above one.
  */
 void calc_particle_lattice_ia() {
- 
-  int i, k, c, np;
+  int i, c, np;
   Cell *cell ;
   Particle *p ;
   double force[3];
 
-  if (transfer_momentum) {
-
-    /* exchange halo regions */
-    halo_communication(&update_halo_comm) ;
-#ifdef ADDITIONAL_CHECKS
-    lb_check_halo_regions();
+#ifndef LANGEVIN_INTEGRATOR
+  if (transfer_momentum) 
 #endif
-    
-    for (k=0;k<lblattice.halo_grid_volume;k++) {
-      lb_calc_local_fields(&lbfluid[k],0);
-    }
+  {
 
+    if (resend_halo) { /* first MD step after last LB update */
+      
+      /* exchange halo regions (for fluid-particle coupling) */
+      halo_communication(&update_halo_comm, **lbfluid);
+#ifdef ADDITIONAL_CHECKS
+      lb_check_halo_regions();
+#endif
+      
+      /* halo is valid now */
+      resend_halo = 0;
+
+      /* all fields have to be recalculated */
+      for (i=0; i<lblattice.halo_grid_volume; ++i) {
+	lbfields[i].recalc_fields = 1;
+      }
+
+    }
+      
     /* draw random numbers for local particles */
     for (c=0;c<local_cells.n;c++) {
       cell = local_cells.cell[c] ;
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-	p[i].lc.f_random[0] = -lb_coupl_pref*(d_random()-0.5);
-	p[i].lc.f_random[1] = -lb_coupl_pref*(d_random()-0.5);
-	p[i].lc.f_random[2] = -lb_coupl_pref*(d_random()-0.5);
+//	p[i].lc.f_random[0] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+//	p[i].lc.f_random[1] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+//	p[i].lc.f_random[2] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+	p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
+	p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
+	p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);
 
 #ifdef ADDITIONAL_CHECKS
 	rancounter += 3;
@@ -1374,12 +2406,13 @@ void calc_particle_lattice_ia() {
 
       for (i=0;i<np;i++) {
 
-	lb_viscous_momentum_exchange(&p[i],force) ;
+	lb_viscous_coupling(&p[i],force);
 
 	/* add force to the particle */
 	p[i].f.f[0] += force[0];
 	p[i].f.f[1] += force[1];
 	p[i].f.f[2] += force[2];
+//  printf("force on particle: , %f %f %f\n", force[0], force[1], force[2]);
 
 	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   
@@ -1402,7 +2435,7 @@ void calc_particle_lattice_ia() {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
-	  lb_viscous_momentum_exchange(&p[i],force) ;
+	  lb_viscous_coupling(&p[i],force);
 
 	  /* ghosts must not have the force added! */
 
@@ -1411,9 +2444,8 @@ void calc_particle_lattice_ia() {
 	}
       }
     }
-    
-  }
 
+  }
 }
 
 /***********************************************************************/
@@ -1423,8 +2455,9 @@ void calc_particle_lattice_ia() {
  * a local lattice site in order to set lbpar.rho consistently. */
 void lb_calc_average_rho() {
 
-  int x, y, z, index;
-  double rho, sum_rho;
+  index_t index;
+  int x, y, z;
+  double rho, local_rho, sum_rho;
 
   rho = 0.0;
   index = 0;
@@ -1432,8 +2465,8 @@ void lb_calc_average_rho() {
     for (y=1; y<=lblattice.grid[1]; y++) {
       for (x=1; x<=lblattice.grid[0]; x++) {
 	
-	lb_calc_local_rho(&lbfluid[index]);
-	rho += *lbfluid[index].rho;
+	lb_calc_local_rho(index, &rho);
+	local_rho += rho;
 
 	index++;
       }
@@ -1445,6 +2478,7 @@ void lb_calc_average_rho() {
   MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   /* calculate average density in MD units */
+  // TODO!!!
   lbpar.rho = sum_rho / (box_l[0]*box_l[1]*box_l[2]);
 
 }
@@ -1455,58 +2489,6 @@ void lb_calc_average_rho() {
  * @param j     Local momentum of the fluid (Output)
  * @param pi    Local stress tensor of the fluid (Output)
  */
-void lb_get_local_fields(int index, double *rho, double *j, double *pi) {
-
-  int i,k,m;
-
-  double *local_rho = lbfluid[index].rho;
-  double *local_j   = lbfluid[index].j;
-  double *local_pi  = lbfluid[index].pi;
-
-  lb_calc_local_fields(&lbfluid[index],1);
-
-  *rho = *local_rho;
-  m = 0;
-  for (i=0;i<3;i++) {
-    j[i] = local_j[i];
-    for (k=0;k<=i;k++) {
-      pi[m] = local_pi[m];
-      m++;
-    }
-  }
-
-}
-
-/** Sets the hydrodynamic fields on a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Input)
- * @param v     Local velocity of the fluid (Input)
- */
-void lb_set_local_fields(int index, const double rho, const double *v, const double *pi) {
-
-  LB_FluidNode *local_node = &lbfluid[index];
-  double *local_rho = local_node->rho;
-  double *local_j = local_node->j;
-  double *local_pi = local_node->pi;
-
-  *local_rho = rho;
-
-  local_j[0] = rho * v[0];
-  local_j[1] = rho * v[1];
-  local_j[2] = rho * v[2];
-  
-  local_pi[0] = pi[0];
-  local_pi[1] = pi[1];
-  local_pi[2] = pi[2];
-  local_pi[3] = pi[3];
-  local_pi[4] = pi[4];
-  local_pi[5] = pi[5];
-
-  /* calculate populations according to equilibrium distribution */
-  lb_calc_local_n(local_node);
-
-}
-
 /*@}*/
 
 /***********************************************************************/
@@ -1514,8 +2496,8 @@ void lb_set_local_fields(int index, const double rho, const double *v, const dou
 /***********************************************************************/
 
 static int lb_parse_set_fields(Tcl_Interp *interp, int argc, char **argv, int *change, int *ind) {
-
-  int k, index, node, grid[3];
+  index_t index;
+  int k, node, grid[3];
   double rho, j[3], pi[6];
 
   *change = 4 ;
@@ -1553,7 +2535,8 @@ static int lb_parse_set_fields(Tcl_Interp *interp, int argc, char **argv, int *c
 static int lb_print_local_fields(Tcl_Interp *interp, int argc, char **argv, int *change, int *ind) {
 
   char buffer[256+4*TCL_DOUBLE_SPACE+3*TCL_INTEGER_SPACE];
-  int index, node, grid[3];
+  index_t index;
+  int node, grid[3];
   double rho, j[3], pi[6];
 
   *change = 0;
@@ -1571,6 +2554,7 @@ static int lb_print_local_fields(Tcl_Interp *interp, int argc, char **argv, int 
   mpi_recv_fluid(node,index,&rho,j,pi) ;
 
   /* transform to MD units */
+  /* unit conversion */
   rho  *= 1./(agrid*agrid*agrid);
   j[0] *= agrid/tau;
   j[1] *= agrid/tau;
@@ -1589,7 +2573,28 @@ static int lb_print_local_fields(Tcl_Interp *interp, int argc, char **argv, int 
 
 }
 
-MDINLINE void lbnode_print_pi(Tcl_Interp *interp, char *buffer, double *pi) {
+MDINLINE void lbnode_print_rho(Tcl_Interp *interp, double rho) {
+  char buffer[TCL_DOUBLE_SPACE];
+
+  Tcl_PrintDouble(interp, rho, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
+}
+
+MDINLINE void lbnode_print_v(Tcl_Interp *interp, double *j, double rho) {
+  char buffer[TCL_DOUBLE_SPACE];
+  
+  Tcl_PrintDouble(interp, j[0]/rho, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, j[1]/rho, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, j[2]/rho, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL); 
+
+}
+
+MDINLINE void lbnode_print_pi(Tcl_Interp *interp, double *pi) {
+  char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_PrintDouble(interp, pi[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -1602,24 +2607,80 @@ MDINLINE void lbnode_print_pi(Tcl_Interp *interp, char *buffer, double *pi) {
   Tcl_PrintDouble(interp, pi[4], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, pi[5], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
       
 }
 
+MDINLINE void lbnode_print_pi_neq(Tcl_Interp *interp, double rho, double *j, double *pi) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double pi_neq[6];
+
+  pi_neq[0] = pi[0] - rho*lbmodel.c_sound_sq - j[0]*j[0]/rho;
+  pi_neq[2] = pi[2] - rho*lbmodel.c_sound_sq - j[1]*j[1]/rho;
+  pi_neq[5] = pi[5] - rho*lbmodel.c_sound_sq - j[2]*j[2]/rho;
+  pi_neq[1] = pi[1] - j[0]*j[1]/rho;
+  pi_neq[3] = pi[3] - j[0]*j[2]/rho;
+  pi_neq[4] = pi[4] - j[1]*j[2]/rho;
+
+  Tcl_PrintDouble(interp, pi_neq[0]/(agrid*tau*tau), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pi_neq[1]/(agrid*tau*tau), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pi_neq[2]/(agrid*tau*tau), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pi_neq[3]/(agrid*tau*tau), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pi_neq[4]/(agrid*tau*tau), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, pi_neq[5]/(agrid*tau*tau), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
+}
+
+MDINLINE void lbnode_print_boundary(Tcl_Interp *interp, int boundary) {
+  char buffer[TCL_INTEGER_SPACE];
+
+  sprintf(buffer, "%d", boundary);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+}
+
 static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *ind) {
-  char buffer[TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE];
-  int node, index, grid[3];
+  index_t index;
+  int node, grid[3], boundary;
   double rho, j[3], pi[6];
+  
+  if ( ind[0] >=  node_grid[0]*lblattice.grid[0] ||  ind[1] >= node_grid[1]*lblattice.grid[1] ||  ind[2] >= node_grid[2]*lblattice.grid[2] ) {
+      Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
+    return TCL_ERROR;
+  }
 
   node = map_lattice_to_node(&lblattice,ind,grid);
   index = get_linear_index(ind[0],ind[1],ind[2],lblattice.halo_grid);
   
   mpi_recv_fluid(node,index,&rho,j,pi);
+  mpi_recv_fluid_border_flag(node,index,&boundary);
+  // unit conversion
+  rho *= 1/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+  j[0] *= 1/lbpar.agrid/lbpar.agrid/tau;
+  j[1] *= 1/lbpar.agrid/lbpar.agrid/tau;
+  j[2] *= 1/lbpar.agrid/lbpar.agrid/tau;
+  pi[0] *= 1/lbpar.agrid/tau/tau;
+  pi[1] *= 1/lbpar.agrid/tau/tau;
+  pi[2] *= 1/lbpar.agrid/tau/tau;
+  pi[3] *= 1/lbpar.agrid/tau/tau;
+  pi[5] *= 1/lbpar.agrid/tau/tau;
 
   while (argc > 0) {
-    if (ARG0_IS_S("pi") || ARG0_IS_S("pressure")) {
-      lbnode_print_pi(interp, buffer, pi);
-    }
+    if (ARG0_IS_S("rho") || ARG0_IS_S("density")) 
+      lbnode_print_rho(interp, rho);
+    else if (ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity"))
+      lbnode_print_v(interp, j, rho);
+    else if (ARG0_IS_S("pi") || ARG0_IS_S("pressure"))
+      lbnode_print_pi(interp, pi);
+    else if (ARG0_IS_S("pi_neq")) /* this has to come after pi */
+      lbnode_print_pi_neq(interp, rho, j, pi);
+    else if (ARG0_IS_S("boundary")) /* this has to come after pi */
+      lbnode_print_boundary(interp, boundary);
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown fluid data \"", argv[0], "\" requested", (char *)NULL);
@@ -1780,6 +2841,7 @@ static int lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], in
 }
 
 static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+#ifdef EXTERNAL_FORCES
     double ext_f[3];
     if (argc < 3) {
 	Tcl_AppendResult(interp, "ext_force requires 3 arguments", (char *)NULL);
@@ -1792,6 +2854,10 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     }
     
     *change = 3;
+
+    /* external force density is stored in lattice units */
+    // WHY? We should do that consistently!
+    // Removed! Now in MD units
     lbpar.ext_force[0] = ext_f[0];
     lbpar.ext_force[1] = ext_f[1];
     lbpar.ext_force[2] = ext_f[2];
@@ -1799,6 +2865,10 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     mpi_bcast_lb_params(LBPAR_EXTFORCE);
  
     return TCL_OK;
+#else
+  Tcl_AppendResult(interp, "EXTERNAL_FORCES not compiled in!", NULL);
+  return TCL_ERROR;
+#endif
 }
 #endif /* LB */
 
@@ -1809,6 +2879,13 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
    int coord[3];
 
    --argc; ++argv;
+   int i;
+  
+   if (lbfluid[0][0]==0) {
+     Tcl_AppendResult(interp, "lbnode: lbfluid not correctly initialized", (char *)NULL);
+     return TCL_ERROR;
+   }
+
    
    if (argc < 3) {
      Tcl_AppendResult(interp, "too few arguments for lbnode", (char *)NULL);
@@ -1818,16 +2895,18 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
    if (!ARG_IS_I(0,coord[0]) || !ARG_IS_I(1,coord[1]) || !ARG_IS_I(2,coord[2])) {
      Tcl_AppendResult(interp, "wrong arguments for lbnode", (char *)NULL);
      return TCL_ERROR;
-   } else {
-     argc-=3; argv+=3;
+   } 
+   argc-=3; argv+=3;
 
-     if (ARG0_IS_S("print"))
-       err = lbnode_parse_print(interp, argc-1, argv+1, coord);
-     else {
-       Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode", (char *)NULL);
-       err = TCL_ERROR;
-     }
-     
+   if (argc == 0 ) { 
+     Tcl_AppendResult(interp, "lbnode syntax: lbnode X Y Z print [ rho | u | pi | pi_neq | boundary ]", (char *)NULL);
+     return TCL_ERROR;
+   }
+   if (ARG0_IS_S("print"))
+     err = lbnode_parse_print(interp, argc-1, argv+1, coord);
+   else {
+     Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode", (char *)NULL);
+     return  TCL_ERROR;
    }
      
    return err;
@@ -1880,6 +2959,7 @@ int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
       argc -= (change + 1);
       argv += (change + 1);
   }
+  lbpar.rho_lb_units =  lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
   lattice_switch = (lattice_switch | LATTICE_LB) ;
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH) ;
