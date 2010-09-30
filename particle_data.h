@@ -72,6 +72,11 @@ typedef struct {
   double q;
 #endif
 
+#ifdef LB_ELECTROHYDRODYNAMICS
+  /** electrophoretic mobility times E-field: mu_0 * E */
+  double mu_E[3];
+#endif
+
 #ifdef DIPOLES
   /** dipole moment (absolute value)*/
   double dipm;
@@ -416,6 +421,13 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
     @return TCL_OK if particle existed
 */
 int set_particle_q(int part, double q);
+
+/** Call only on the master node: set particle electrophoretic mobility.
+    @param part the particle.
+    @param mu_E its new mobility.
+    @return TCL_OK if particle existed
+*/
+int set_particle_mu_E(int part, double mu_E[3]);
 
 /** Call only on the master node: set particle type.
     @param part the particle.

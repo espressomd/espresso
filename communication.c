@@ -186,9 +186,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_BCAST_LBBOUNDARY 55
 /** Action number for \ref mpi_recv_fluid_border_flag */
 #define REQ_LB_GET_BORDER_FLAG 56
+/** Action number for \ref mpi_send_mu_E. */
+#define REQ_SET_MU_E     57
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 57
+#define REQ_MAXIMUM 58
 
 /*@}*/
 
@@ -206,6 +208,7 @@ void mpi_place_particle_slave(int node, int parm);
 void mpi_send_v_slave(int node, int parm);
 void mpi_send_f_slave(int node, int parm);
 void mpi_send_q_slave(int node, int parm);
+void mpi_send_mu_E_slave(int node, int parm);
 void mpi_send_type_slave(int node, int parm);
 void mpi_send_bond_slave(int node, int parm);
 void mpi_recv_part_slave(int node, int parm);
@@ -315,7 +318,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_bcast_lb_boundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
-  mpi_recv_fluid_border_flag_slave  /* 56: REQ_LB_GET_BORDER_FLAG */
+  mpi_recv_fluid_border_flag_slave,  /* 56: REQ_LB_GET_BORDER_FLAG */
+  mpi_send_mu_E_slave                 /* 57: REQ_SET_MU_E */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -387,6 +391,7 @@ char *names[] = {
   "SET_RINERTIA",   /* 54 */
   "REQ_BCAST_LBBOUNDARY", /* 55 */
   "REQ_LB_GET_BORDER_FLAG" /* 56 */
+  "REQ_SEND_MUE" /* 57 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -738,6 +743,39 @@ void mpi_send_q_slave(int pnode, int part)
 #endif
 }
 
+/********************* REQ_SET_MU_E ********/
+void mpi_send_mu_E(int pnode, int part, double mu_E[3])
+{
+#ifdef LB_ELECTROHYDRODYNAMICS
+  mpi_issue(REQ_SET_MU_E, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.mu_E[0] = mu_E[0];
+    p->p.mu_E[1] = mu_E[1];
+    p->p.mu_E[2] = mu_E[2];
+  }
+  else {
+    MPI_Send(&mu_E, 3, MPI_DOUBLE, pnode, REQ_SET_MU_E, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_mu_E_slave(int pnode, int part)
+{
+#ifdef LB_ELECTROHYDRODYNAMICS
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, REQ_SET_MU_E,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
 
 /********************* REQ_SET_M ********/
 void mpi_send_mass(int pnode, int part, double mass)
@@ -2599,7 +2637,7 @@ void mpi_recv_fluid_slave(int node, int index) {
 
 /************** REQ_LB_GET_BORDER_FLAG **************/
 void mpi_recv_fluid_border_flag(int node, int index, int *border) {
-#ifdef LB
+#ifdef LB_BOUNDARIES
   if (node==this_node) {
     lb_local_fields_get_border_flag(index, border);
   } else {
@@ -2613,7 +2651,7 @@ void mpi_recv_fluid_border_flag(int node, int index, int *border) {
 }
 
 void mpi_recv_fluid_border_flag_slave(int node, int index) {
-#ifdef LB
+#ifdef LB_BOUNDARIES
   if (node==this_node) {
     double data;
     lb_local_fields_get_border_flag(index, &data);

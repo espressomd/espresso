@@ -2202,7 +2202,9 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   double old_rho[8];
 #endif
 
+#if 0 // I have no idea what this should be for!
   if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2))) {
+#endif
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
@@ -2263,9 +2265,17 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+#ifdef LB_ELECTROHYDRODYNAMICS
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
+#endif
+#ifndef LB_ELECTROHYDRODYNAMICS
   force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
   force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
   force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+#endif
+
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
 
@@ -2311,7 +2321,10 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
     }
   }
 #endif
+
+#if 0
 }
+#endif
 }
 
 /** Calculate particle lattice interactions.

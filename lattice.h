@@ -26,12 +26,12 @@
 
 extern int lattice_switch;
 
-#ifdef LATTICE
-
 #define index_t long
 
 /** Lattice off */
 #define LATTICE_OFF  0
+
+#ifdef LATTICE
 
 /** Lattice Boltzmann */
 #define LATTICE_LB   1

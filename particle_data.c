@@ -103,6 +103,12 @@ void init_particle(Particle *part)
   part->p.q        = 0.0;
 #endif
 
+#ifdef LB_ELECTROHYDRODYNAMICS
+  part->p.mu_E[0]   = 0.0;
+  part->p.mu_E[1]   = 0.0;
+  part->p.mu_E[2]   = 0.0;
+#endif
+
   /* ParticlePosition */
   part->r.p[0]     = 0.0;
   part->r.p[1]     = 0.0;
@@ -538,6 +544,19 @@ void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
+#ifdef LB_ELECTROHYDRODYNAMICS
+void part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  /* unscale velocities ! */
+  Tcl_PrintDouble(interp, part->p.mu_E[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part->p.mu_E[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part->p.mu_E[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 void part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
@@ -771,6 +790,10 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.q, buffer);
 #endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+  Tcl_AppendResult(interp, buffer, " mu_E ", (char *)NULL);
+  part_print_mu_E(&part, buffer, interp);
+#endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
   part_print_v(&part, buffer, interp);
   Tcl_AppendResult(interp, " f ", (char *)NULL);
@@ -914,6 +937,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("q")) {
       Tcl_PrintDouble(interp, part.p.q, buffer);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
+#endif
+#ifdef LB_ELECTROHYDRODYNAMICS
+    else if (ARG0_IS_S("mu_E")) {
+      part_print_mu_E(&part, buffer, interp);
     }
 #endif
     else if (ARG0_IS_S("v"))
@@ -1211,6 +1239,37 @@ int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_OK;
 }
+
+#ifdef LB_ELECTROHYDRODYNAMICS
+int part_parse_mu_E(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    double mu_E[3];
+
+    *change = 3;
+
+    if (argc < 3) {
+      Tcl_AppendResult(interp, "mu_E requires 3 arguments", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set mobility */
+    if (! ARG_IS_D(0, mu_E[0]))
+      return TCL_ERROR;
+    if (! ARG_IS_D(1, mu_E[1]))
+      return TCL_ERROR;
+    if (! ARG_IS_D(2, mu_E[2]))
+      return TCL_ERROR;
+
+    if (set_particle_mu_E(part_num, mu_E) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+#endif
 
 int part_parse_v(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
@@ -1797,6 +1856,11 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("q"))
       err = part_parse_q(interp, argc-1, argv+1, part_num, &change);
 
+#ifdef LB_ELECTROHYDRODYNAMICS
+    else if (ARG0_IS_S("mu_E"))
+      err = part_parse_mu_E(interp, argc-1, argv+1, part_num, &change);
+#endif
+
     else if (ARG0_IS_S("v"))
       err = part_parse_v(interp, argc-1, argv+1, part_num, &change);
 
@@ -2133,6 +2197,24 @@ int set_particle_q(int part, double q)
   mpi_send_q(pnode, part, q);
   return TCL_OK;
 }
+
+#ifdef LB_ELECTROHYDRODYNAMICS
+int set_particle_mu_E(int part, double mu_E[3])
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_mu_E(pnode, part, mu_E);
+  return TCL_OK;
+}
+#endif
 
 int set_particle_type(int part, int type)
 {

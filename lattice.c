@@ -20,14 +20,14 @@
 #include "grid.h"
 #include "lattice.h"
 
-#ifdef LATTICE
-
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be
  *  combined by or'ing the respective flags.
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 int lattice_switch = LATTICE_OFF ;
+
+#ifdef LATTICE
 
 /** Initialize lattice.
  *
