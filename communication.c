@@ -756,7 +756,7 @@ void mpi_send_mu_E(int pnode, int part, double mu_E[3])
     p->p.mu_E[2] = mu_E[2];
   }
   else {
-    MPI_Send(&mu_E, 3, MPI_DOUBLE, pnode, REQ_SET_MU_E, MPI_COMM_WORLD);
+    MPI_Send(mu_E, 3, MPI_DOUBLE, pnode, REQ_SET_MU_E, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -769,7 +769,7 @@ void mpi_send_mu_E_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, REQ_SET_MU_E,
+    MPI_Recv(p->p.mu_E, 3, MPI_DOUBLE, 0, REQ_SET_MU_E,
 	     MPI_COMM_WORLD, &status);
   }
 
