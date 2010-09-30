@@ -41,8 +41,6 @@
 
 #ifdef LB
 
-#include <fftw3.h>
-
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
 
