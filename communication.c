@@ -2606,7 +2606,7 @@ void mpi_recv_fluid_border_flag(int node, int index, int *border) {
     int data;
     mpi_issue(REQ_LB_GET_BORDER_FLAG, node, index);
     MPI_Status status;
-    MPI_Recv(&data, 1, MPI_INTEGER, node, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(&data, 1, MPI_INT, node, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD, &status);
     *border = data;
   }
 #endif
@@ -2617,7 +2617,7 @@ void mpi_recv_fluid_border_flag_slave(int node, int index) {
   if (node==this_node) {
     double data;
     lb_local_fields_get_border_flag(index, &data);
-    MPI_Send(&data, 1, MPI_INTEGER, 0, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD);
+    MPI_Send(&data, 1, MPI_INT, 0, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD);
   }
 #endif
 }

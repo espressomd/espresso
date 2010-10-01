@@ -83,11 +83,7 @@ MDINLINE void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL
-<<<<<<< lb-boundaries.h
-  int k;
-=======
   int k,i;
->>>>>>> 2.3.6.7
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
   int next[19];
