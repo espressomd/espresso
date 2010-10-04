@@ -188,9 +188,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_LB_GET_BORDER_FLAG 56
 /** Action number for \ref mpi_send_mu_E. */
 #define REQ_SET_MU_E     57
+/** Action number for \ref mpi_recv_fluid_populations. */
+#define REQ_GET_FLUID_POP 58
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 58
+#define REQ_MAXIMUM 59
 
 /*@}*/
 
@@ -257,6 +259,7 @@ void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_isVirtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
+void mpi_recv_fluid_populations_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -319,7 +322,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_bcast_lb_boundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
   mpi_recv_fluid_border_flag_slave,  /* 56: REQ_LB_GET_BORDER_FLAG */
-  mpi_send_mu_E_slave                 /* 57: REQ_SET_MU_E */
+  mpi_send_mu_E_slave,                 /* 57: REQ_SET_MU_E */
+  mpi_recv_fluid_populations_slave            /* 57: REQ_GET_FLUID_POP */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -392,6 +396,7 @@ char *names[] = {
   "REQ_BCAST_LBBOUNDARY", /* 55 */
   "REQ_LB_GET_BORDER_FLAG" /* 56 */
   "REQ_SEND_MUE" /* 57 */
+  "REQ_GET_FLUID_POP" /* 58 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -2742,6 +2747,29 @@ void mpi_iccp3m_init_slave(int node, int dummy)
   printf("(%d) recieved ICC configuration\n", this_node);
 
   check_runtime_errors();
+#endif
+}
+
+void mpi_recv_fluid_populations(int node, int index, double *pop) {
+#ifdef LB
+  if (node==this_node) {
+    lb_get_populations(index, pop);
+  } else {
+    double data[10];
+    mpi_issue(REQ_GET_FLUID_POP, node, index);
+    MPI_Status status;
+    MPI_Recv(pop, 19, MPI_DOUBLE, node, REQ_GET_FLUID, MPI_COMM_WORLD, &status);
+  }
+#endif
+}
+
+void mpi_recv_fluid_populations_slave(int node, int index) {
+#ifdef LB
+  if (node==this_node) {
+    double data[19];
+    lb_get_populations(index, data);
+    MPI_Send(data, 10, MPI_DOUBLE, 0, REQ_GET_FLUID, MPI_COMM_WORLD);
+  }
 #endif
 }
 

@@ -460,6 +460,14 @@ int mpi_iccp3m_iteration(int dummy);
 */
 int mpi_iccp3m_init(int dummy);
 
+/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param rho   local fluid density
+ * @param j     local fluid velocity
+ */
+void mpi_recv_fluid_populations(int node, int index, double *pop);
+
 
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result

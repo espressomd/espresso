@@ -520,6 +520,17 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** Parser for the TCL command \ref lbfluid. */
 int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
+/** Calculate the local fluid momentum.
+ * The calculation is implemented explicitly for the special case of D3Q19.
+ * @param local_node The local lattice site (Input).
+ */
+MDINLINE void lb_get_populations(index_t index, double* pop) {
+  int i=0;
+  for (i=0; i<19; i++) {
+    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho;
+  }
+}
+
 #endif /* LB_H */
 
 /*@}*/
