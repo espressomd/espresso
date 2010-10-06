@@ -544,6 +544,7 @@ void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
+#ifdef LB_ELECTROHYDRODYNAMICS
 void part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
@@ -554,6 +555,7 @@ void part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_PrintDouble(interp, part->p.mu_E[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
+#endif
 
 void part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
