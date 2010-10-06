@@ -51,6 +51,8 @@ int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
 int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
 int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv);
 int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv);
+int parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv);
+
 #endif
 
 #endif
