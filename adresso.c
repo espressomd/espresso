@@ -278,8 +278,7 @@ double adress_wf_vector(double x[3]){
   double dist;
   int dim;
   
-  int img_box[3];
-  double temp_pos[3];
+  
   
   switch (topo) {
   case 0:
@@ -302,13 +301,14 @@ double adress_wf_vector(double x[3]){
     return adress_wf(dist);
     break;
   case 3:
-    for(dim=0;dim<3;dim++){
-      img_box[dim]=0;
-      temp_pos[dim]=x[dim];
-    }
-    fold_position(temp_pos,img_box);
-    dist=distance(temp_pos,&(adress_vars[3]));
-    //printf("%f %f \n", dist, adress_wf(dist));
+    //int img_box[3];
+    //double temp_pos[3];
+    //for(dim=0;dim<3;dim++){
+    //  img_box[dim]=0;
+    //  temp_pos[dim]=x[dim];
+    //}
+    //fold_position(temp_pos,img_box);
+    dist=distance(x,&(adress_vars[3]));
     return adress_wf(dist);
     break;
   default:
