@@ -541,10 +541,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       }
       
 #ifdef ADRESS
-      if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity)
-	force_weight = 1.0;
-      else 
-	force_weight = adress_non_bonded_force_weight(p1,p2);
+      force_weight = adress_bonded_force_weight(p1,p2);
 #endif
 
       for (j = 0; j < 3; j++) {
@@ -584,7 +581,10 @@ MDINLINE void add_bonded_force(Particle *p1)
 		p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
       }
-
+      
+#ifdef ADRESS
+      force_weight=adress_angle_force_weight(p1,p2,p3);
+#endif
       for (j = 0; j < 3; j++) {
 #ifdef ADRESS
 	p1->f.f[j] += force_weight*force[j];
@@ -604,7 +604,9 @@ MDINLINE void add_bonded_force(Particle *p1)
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
       }
-
+#ifdef ADRESS
+      force_weight=adress_dihedral_force_weight(p1,p2,p3,p4);
+#endif 
       for (j = 0; j < 3; j++) {
 #ifdef ADRESS
 	p1->f.f[j] += force_weight*force[j];
