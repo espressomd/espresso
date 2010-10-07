@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.2.0d (Walaskialf)                                                                 *
+* v2.2.0e (Walaskialf)                                                                 *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.2.0d -
+- v2.2.0e -
 -----------
 
+(e) October    6th, 2010.
 (d) September 21st, 2010.
 (c) September  2nd, 2010.
 (b) July      25th, 2010.
@@ -34,6 +35,9 @@ Changes:
 (a) added more reference to original adress papers
 
 Bugfixes:
+(e) : Virtual sites inconsistent with AdResS
+(e) : Added optimization and pressure profile (Todd, Evans and
+    Davis)
 (c) fixed sign of charged plate energy
 (b) removed duplicated file in scripts/Makefile.am
 
