@@ -218,10 +218,6 @@ void propagate_omega_quat()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef EXTERNAL_FORCES
-      if(!(p[i].l.ext_flag & COORDS_FIX_MASK))
-#endif
-	{
 	  double Qd[4], Qdd[4], S[3], Wd[3];
 	  define_Qdd(&p[i], Qd, Qdd, S, Wd);
 	  
@@ -241,7 +237,7 @@ void propagate_omega_quat()
 #ifdef DIPOLES
 	  convert_quatu_to_dip(p[i].r.quatu, p[i].p.dipm, p[i].r.dip);
 #endif
-	}
+	
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
     }
@@ -284,10 +280,6 @@ void convert_torqes_propagate_omega()
     
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     
-#ifdef EXTERNAL_FORCES
-      if(!(p[i].l.ext_flag & COORDS_FIX_MASK))
-#endif
-	{
 #ifdef ROTATIONAL_INERTIA
 	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
 	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
@@ -316,7 +308,7 @@ void convert_torqes_propagate_omega()
 	    p[i].m.omega[1]+= dt2*Wd[1];
 	    p[i].m.omega[2]+= dt2*Wd[2];
 	  }
-	}
+	
       
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       
