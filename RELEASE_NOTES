@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.2.0e (Walaskialf)                                                                 *
+* v2.2.0f (Walaskialf)                                                                 *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.2.0e -
+- v2.2.0f -
 -----------
 
+(f) October    9th, 2010.
 (e) October    6th, 2010.
 (d) September 21st, 2010.
 (c) September  2nd, 2010.
@@ -35,6 +36,7 @@ Changes:
 (a) added more reference to original adress papers
 
 Bugfixes:
+(f) virtual sites can now be coupled to the NPT integrator
 (e) : Virtual sites inconsistent with AdResS
 (e) : Added optimization and pressure profile (Todd, Evans and
     Davis)
