@@ -639,6 +639,16 @@ int checkIfInteraction(IA_parameters *data) {
     return 1;
 #endif
 
+#ifdef DPD
+	 if (dpd_r_cut !=0)
+	   return 1;
+#endif
+
+#ifdef TRANS_DPD
+	 if (dpd_tr_cut !=0)
+	   return 1;
+#endif
+
 #ifdef INTER_DPD
   if ( (data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0) )
     return 1;
