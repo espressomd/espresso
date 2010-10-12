@@ -43,7 +43,7 @@ if {![info exists quiet] || !$quiet} {
     puts "*      A MPI Parallel Molecular Dynamics Program      *"
     puts "*                                                     *"
     puts "*                                                     *"
-    puts "* (c) 2002-2006                                       *"
+    puts "* (c) 2002-2010                                       *"
     puts "* Max-Planck-Institute for Polymer Research           *"
     puts "* Mainz, Germany                                      *"
     puts "*                                                     *"
@@ -68,12 +68,6 @@ if { [ catch { set dummy $env(ESPRESSO_PACKAGES)} ] } {
 
 
 # Include useful tcl-scripts providing new functions etc.
-
-source convertDeserno.tcl
-# adds 'convertDeserno2MD' & 'convertMD2Deserno' for converting particle configurations
-#       stored in Deserno-file-format into Espresso format and vice versa
-# adds 'convertDeserno2MDmain' & 'convertMD2DesernoMain' for directly accessing the conversion scripts
-#       therefore bypassing and/or overriding the initialization procedure
 
 source countBonds.tcl
 # adds 'countBonds' returning a tcl-script with complete bonding-informations on any particle
@@ -130,10 +124,6 @@ source ABHmath.tcl
 # adds 'g_random' which returns random numbers which have a Gaussian distribution
 # adds 'pair_dist <part_id1> <part_id2>' which returns the distance of two particles with identities <part_id1> and <part_id2>
 # adds 'LinRegression <tcl-list of points {{x1 y1} {x2 y2} ...}>' which returns the least-square linear fit a*x+b and the standard errors da and db
-
-source pov.tcl
-#adds 'writepov <file> [options]'
-#adds 'morph <file1> <file2> <file3> [options]'
 
 source vtf.tcl
 #adds 'writevsf <file> [options]'
