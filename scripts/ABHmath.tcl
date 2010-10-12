@@ -14,8 +14,6 @@
 #                                                           #
 # Script to supply some auxiliary mathematical functions.   #
 #                                                           #
-# Created:       24.02.2003 by BAM                          #
-#                                                           #
 #############################################################
 
 #############################################################
@@ -297,6 +295,8 @@ proc part_at_dihedral { p1 p2 p3 theta {phi "rnd"} {len "1.0"} } {
 #############################################################
 
 # Calculate the shift value for the lennard jones interaction
+# This function is obsolete. Better use a value of "auto" for the
+# shift using "inter" to set up the potential.
 proc calc_lj_shift { lj_sigma lj_cutoff } {
     set fcut [expr $lj_sigma / (1.0*$lj_cutoff) ]
     return [expr -(pow($fcut,12)-pow($fcut,6))]

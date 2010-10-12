@@ -51,8 +51,8 @@ if { [catch {
 
     ############## lj-specific part
 
-    inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
-    inter 1 1 lennard-jones 1.3 0.5 2 0.0 0.0
+    inter 0 0 lennard-jones 1.0 1.0 1.12246
+    inter 1 1 lennard-jones 1.3 0.5 2 auto 0.0
     inter 0 1 lennard-jones 2.2 1.0 1.12246 0.0 0.5
     integrate 0
 

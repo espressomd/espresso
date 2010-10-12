@@ -140,46 +140,104 @@ MDINLINE int lj_parser(Tcl_Interp * interp,
 {
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius, min;
-  int change;
+  int compute_auto_shift;
 
   /* get lennard-jones interaction type */
-  if (argc < 6) {
-    Tcl_AppendResult(interp, "lennard-jones needs 5 parameters: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy lennard-jones parameters */
-  if ((! ARG_IS_D(1, eps))   ||
-      (! ARG_IS_D(2, sig))   ||
-      (! ARG_IS_D(3, cut))   ||
-      (! ARG_IS_D(4, shift)) ||
-      (! ARG_IS_D(5, offset)    )) {
-    Tcl_AppendResult(interp, "lennard-jones needs 5 DOUBLE parameters: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset>",
+  if (argc < 4) {
+    Tcl_AppendResult(interp, "lennard-jones needs at least 3 parameters: "
+		     "<lj_eps> <lj_sig> <lj_cut> [<lj_shift> [<lj_offset> [<lj_cap> [<lj_min>]]]]",
 		     (char *) NULL);
     return TCL_ERROR;
   }
-  change = 6;
-	
-  cap_radius = -1.0;
-  min = 0.;  
-  /* check wether there is an additional double, cap radius, and parse in */
-  if (argc >= 7 && ARG_IS_D(6, cap_radius)){
-	  change++;
-	  if (argc >= 8 && ARG_IS_D(7, min))
-		  change++;	  
+
+  /* PARSE LENNARD-JONES COMMAND LINE */
+  /* epsilon */
+  if (! ARG_IS_D(1, eps)) {
+    Tcl_AppendResult(interp, "<lj_eps> should be a double",
+		     (char *) NULL);
+    return TCL_ERROR;
   }
-  else
-    Tcl_ResetResult(interp);
+
+  /* sigma */
+  if (! ARG_IS_D(2, sig)) {
+    Tcl_AppendResult(interp, "<lj_sig> should be a double",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* cutoff */
+  if (! ARG_IS_D(3, cut)) {
+    Tcl_AppendResult(interp, "<lj_cut> should be a double",
+		     (char *) NULL);
+    return TCL_ERROR;
+  }
+  
+  /* shift */
+  if (argc > 4) {
+    if (ARG_IS_D(4, shift)) {
+      /* if a shift is given, use that one */
+      compute_auto_shift = 0;
+    } else if (ARG_IS_S(4, "auto")) {
+      compute_auto_shift = 1;
+      /* if shift is "auto", autocompute the shift */
+    } else {
+      Tcl_AppendResult(interp, "<lj_shift> should be a double or \"auto\"",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    /* by default, compute the shift automatically */
+    compute_auto_shift = 1;
+  }
+  /* the shift can be computed automatically only when the other
+     parameters have been determined, see below */
+
+  /* offset */
+  if (argc > 5) {
+    if (!ARG_IS_D(5, offset)) {
+      Tcl_AppendResult(interp, "<lj_off> should be a double",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    offset = 0.0;
+  }
+  
+  /* cap_radius */
+  if (argc > 6) {
+    if (!ARG_IS_D(6, cap_radius)) {
+      Tcl_AppendResult(interp, "<lj_cap> should be a double",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    cap_radius = -1.0;
+  }
+
+  /* minimal radius */
+  if (argc > 7) {
+    if (!ARG_IS_D(7, min)) {
+      Tcl_AppendResult(interp, "<lj_rmin> should be a double",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    min = 0.0;
+  }
+
+  /* automatically compute the shift */
+  if (compute_auto_shift)
+    shift = -(pow(sig/cut, 12) - pow(sig/cut, 6));
+
+  /* now set the parameters */
   if (lennard_jones_set_params(part_type_a, part_type_b,
 			       eps, sig, cut, shift, offset,
 			       cap_radius, min) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
+    Tcl_AppendResult(interp, "particle types must be non-negative", 
+		     (char *) NULL);
     return 0;
   }
-  return change;
+  return argc;
 }
 
 
