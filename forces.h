@@ -406,9 +406,6 @@ MDINLINE void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      // for harmonic spring:
-      // if cutoff was defined and p2 is not there it is anyway outside the cutoff, see calc_maximal_cutoff()
-      if ((type==BONDED_IA_HARMONIC)&&(iaparams->p.harmonic.r_cut>0)) return;
       errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);

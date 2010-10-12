@@ -748,7 +748,7 @@ $r=\var{r_0}+\var{\Delta r_\mathrm{max}}$. It is given by
 
 \begin{essyntax}
   inter \var{bondid}
-  harmonic \var{K} \var{R}
+  harmonic \var{K} \var{R} \opt{\var{r_\mathrm{cut}}}
 \end{essyntax}
 This creates a bond type with identificator \var{bondid} with a
 classical harmonic potential. It is a symmetric interaction between two
@@ -757,6 +757,10 @@ prefactor is $K$. It is given by
 \begin{equation}
   V(r) = \frac{1}{2} K \left( r - R \right)^2
 \end{equation}
+The third, optional parameter \var{r_\mathrm{cut}} defines a cutoff
+radius.  Whenever a harmonic bond gets longer than
+\var{r_\mathrm{cut}}, the bond will be reported as broken, and a
+background error will be raised.
 
 \subsection{Subtracted Lennard-Jones bond}
 \index{subtracted Lennard-Jones bond|mainindex}

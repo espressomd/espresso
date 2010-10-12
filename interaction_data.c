@@ -1456,8 +1456,10 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
     Tcl_AppendResult(interp, buffer," ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.harmonic.r_cut, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    if (params->p.harmonic.r_cut > 0.0) {
+      Tcl_PrintDouble(interp, params->p.harmonic.r_cut, buffer);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+    }
     return (TCL_OK);
   case BONDED_IA_ANGLE:
     Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
