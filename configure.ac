@@ -117,6 +117,8 @@ ES_INIT_CHOOSER
 ES_INIT_MYCONFIG
 AC_DEFINE(LAST_CHANGE,["ESPRESSO_TIMESTAMP"],[When the last change to the code was done])
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
+toolsdir='${pkglibdir}/tools'
+AC_SUBST(toolsdir)
 
 cat <<EOF
 ****************************************************************
@@ -127,7 +129,10 @@ EOF
 AC_CONFIG_HEADERS([acconfig.h])
 AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
-	Makefile-am scripts/Makefile testsuite/Makefile
+	Makefile-am 
+	tools/Makefile
+	scripts/Makefile 
+	testsuite/Makefile
 	doc/Makefile
 	doc/dg/Makefile
 	doc/ug/Makefile 

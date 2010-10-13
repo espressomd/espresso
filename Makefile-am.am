@@ -1,4 +1,4 @@
-SUBDIRS = . scripts testsuite doc
+SUBDIRS = . scripts tools testsuite doc
 
 # List files that should go into the distribution but are not required
 # by any other means

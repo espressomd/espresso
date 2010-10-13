@@ -5,15 +5,11 @@ dist_scripts_DATA =\
 	auxiliary.tcl \
 	blockfile_support.tcl \
 	bundle.tcl \
-	convertDeserno.tcl \
 	countBonds.tcl \
 	parallel_tempering.tcl \
 	pdb.tcl \
 	polymer.tcl \
-	pov.tcl \
-        set_features \
 	statistics.tcl \
-	vmd_plg.tcl \
 	vtf.tcl \
 	tclline.tcl
 
