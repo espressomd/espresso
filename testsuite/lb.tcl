@@ -26,6 +26,7 @@ set errf [lindex $argv 1]
 source "tests_common.tcl"
 
 require_feature "LB"
+require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
 puts "- Testcase lb.tcl running on [format %02d [setmd n_nodes]] nodes  -"
@@ -52,7 +53,7 @@ proc write_data {file} {
 # Integration parameters
 #############################################################
 set int_steps     10
-set int_times     1000
+set int_times     100
 
 set time_step     0.005
 set tau           0.02
@@ -69,8 +70,8 @@ set temp          1.0
 
 set skin          0.5
 
-set mom_prec      1.e-8
-set mass_prec     1.e-12
+set mom_prec      1.e-5
+set mass_prec     1.e-9
 set temp_prec     5.e-3
 
 # Other parameters
