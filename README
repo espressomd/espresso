@@ -1,59 +1,42 @@
-PROGRAMM:
-===============================================================================
+This is the Molecular Dynamics software ESPResSo ("Extensible
+Simulation Package for the Research on Soft Matter Systems").
 
-Espresso is a parallel molecular dynamics program.  It uses Tcl
-(http://tcl.activestate.com) as controlling language to allow great
-flexibility.
+ESPResSo is a parallelized, flexible molecular dynamics simulation
+program for scientific coarse-grained simulations as they are used in
+soft matter research.
 
-GETTING STARTED:
-===============================================================================
+You can find documentation on how to compile, use and develop ESPResSo
+on the homepage at
 
-System requirements:
-Script language:   tcl 8.4 or higher
-OS:                Linux, Unix, MacOS X,...
+	http://www.espressomd.org
 
-CODE COMPILATION
-===============================================================================
+ESPResSo is intended to be used by people that have proper knowledge
+of simulation techniques and know how to use them. We do not take
+responsibility if you use ESPResSo to create and publish bogus
+results. You have been warned!
 
-Configure using ./configure
-Compile using   make (must be GNU compatible, on some systems call gmake)
+If you use ESPResSo and obtain scientific results that you publish, we
+would ask you to acknowledge the usage of ESPResSo by referencing 
 
-Installation is not necessary, if you set the ESPRESSO_SOURCE and ESPRESSO_SCRIPTS
-environment variables to the source directory location and to the location of
-its subfolder "scripts", respectively. In that case Espresso is started via
-"Espresso" from the source directory.
+      Hans-Jörg Limbach, Axel Arnold, Bernward A. Mann and Christian
+      Holm. 
+      "ESPResSo - An Extensible Simulation Package for Research on
+      Soft Matter Systems". 
+      Comput. Phys. Commun. 174(9) (704-727), 2006.
 
-If you install Espresso, the environment variables do not have to be set. Just make
-sure, that the installation binary path is included in your PATH variable. Then
-Espresso can be started as "Espresso" from anywhere.
+BibTeX record:
 
-To clean junk from old compilation runs:
-                make clean
+@ARTICLE{espresso,
+  author = {Hans-J{\"o}rg Limbach and Axel Arnold and Bernward A. Mann
+            and Christian Holm},
+  title = {{ESPResSo} -- An Extensible Simulation Package for Research
+	   on Soft Matter Systems},
+  journal = {Comput. Phys. Commun.},
+  year = {2006},
+  volume = {174},
+  pages = {704--727},
+  number = {9},
+  month = may,
+  doi = {10.1016/j.cpc.2005.10.005},
+}
 
-For further details, see INSTALL
-
-DOCUMENTATION
-===============================================================================
-
-To generate documentation (requires doxygen to be installed):
-
-change into the Espresso source directory and execute
-                gmake docu
-
-The documentation is in:
-HTML version:  doc/html/index.html
-
-
-CVS
-===============================================================================
-
-The Espresso CVS is located on cvsth.mpip-mainz.mpg.de. Currently, there is no
-anonymous CVS access, so you need a personal account to access CVS.
-The CVS root is /cvs/cvsroot
-
-You need to tell cvs to access the server via ssh by setting the environment
-variable CVS_RSH to ssh. Then you get your private copy by
-                cvs -d :ext:<me>@cvsth.mpip-mainz.mpg.de:/cvs/cvsroot heckout Espresso 
-
-This will create a new directory Espresso in the CWD, containing an
-up-to-date version of Espresso.
