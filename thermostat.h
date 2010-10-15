@@ -150,16 +150,11 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
   extern double langevin_pref2;
 
   int j;
-#ifdef EXTERNAL_FORCES
-  if(!(p->l.ext_flag & COORDS_FIX_MASK))
-#endif
-    {
       for ( j = 0 ; j < 3 ; j++)
 	p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
 
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
       THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
-    }
 }
 #endif
 
