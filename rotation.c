@@ -79,19 +79,28 @@ int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
   double dip_xy, dm;
   double theta2, phi2;
 
+  // Calculate magnitude of dipole moment
   dm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
   *dipm = dm;
 
+  // The dipole vector needs to be != 0 to be converted into a quaternion
   if (dm < ROUND_ERROR_PREC) {
     return 1;
   }
   else {
+    // Calculate angles 
     dip_xy = sqrt(dip[0]*dip[0] + dip[1]*dip[1]);
+    // If dipole points along z axis:
     if (dip_xy == 0){
-      theta2 = 0;
+      // We need to distinguish between (0,0,d_z) and (0,0,d_z)
+      if (dip[2]>0)
+       theta2 = 0;
+      else
+       theta2 = PI/2.;
       phi2 = 0;
     }
     else {
+      // Here, we take care of all other directions
       //Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
       //where theta and phi - angles are in spherical coordinates
       theta2 = 0.5*acos(dip[2]/dm);
@@ -99,6 +108,7 @@ int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
       else phi2 = 0.5*acos(dip[0]/dip_xy) - PI*0.25;
     }
 
+    // Calculate the quaternion from the angles
     quat[0] =  cos(theta2) * cos(phi2);
     quat[1] = -sin(theta2) * cos(phi2);
     quat[2] = -sin(theta2) * sin(phi2);
