@@ -41,6 +41,7 @@ source [file join [file dirname [info script]] distance.tcl]
 source [file join [file dirname [info script]] tiltangle.tcl]
 source [file join [file dirname [info script]] molforce.tcl]
 source [file join [file dirname [info script]] molcom.tcl]
+source [file join [file dirname [info script]] cylinder_radius.tcl]
 
 
 # ::mbtools::analysis::print_averages --
