@@ -61,7 +61,7 @@ proc ::mbtools::system_generation::torus::create_torus { args } {
 	{bondl.arg     1.0   "bond length between atoms"  }
 	{ratio.arg 1.414213 "ratio between inner and outer torus radii"}
     }
-    set usage "Usage: create_torus \[initarea:shuffle:bondl\] ]: "
+    set usage "Usage: create_torus \[c:initarea:shuffle:bondl:ratio\] ]: "
     array set params [::cmdline::getoptions args $options $usage]
 
     global ::mbtools::system_generation::moltypeskey

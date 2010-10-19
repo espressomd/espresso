@@ -32,6 +32,7 @@ namespace eval ::mbtools::system_generation {
     source [file join [file dirname [info script]] random.tcl]
     source [file join [file dirname [info script]] readfile.tcl]
     source [file join [file dirname [info script]] sphere.tcl]
+    source [file join [file dirname [info script]] sphere_cap.tcl]
     source [file join [file dirname [info script]] torus.tcl]
     source [file join [file dirname [info script]] cylinder.tcl]
     source [file join [file dirname [info script]] singlemol.tcl]
@@ -159,7 +160,9 @@ proc ::mbtools::system_generation::setup_system { system_specs iboxl moltypes } 
 	# other geometry specific tasks
 
 	# Shuffle the topology
-	set topology [shuffle_topo $topology ]
+	# set topology [shuffle_topo $topology ]
+        # NOTE: if shuffling topology is needed, use -shuffle option in each geometry
+
 	# Now run the creation command for the specified geometry
 	set createprefix "create_"
 	set namespaceprefix "::mbtools::system_generation::"

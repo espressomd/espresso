@@ -19,7 +19,7 @@ proc ::mbtools::system_generation::random::create_random { args } {
 	{shuffle "shuffle topology before placement"}
 	{exclude.arg "" "a region where no lipids should be placed"}
     }
-    set usage "Usage: create_random_fluid topo boxl \[bondl:uniform:nhb:uniformtt:ht]"
+    set usage "Usage: create_random \[bondl:shuffle:exclude]"
     array set params [::cmdline::getoptions args $options $usage]
     
     
@@ -40,6 +40,9 @@ proc ::mbtools::system_generation::random::create_random { args } {
 
     set maxtries 1000
 
+    if { $params(shuffle) } {
+        set topology [::mbtools::system_generation::shuffle_topo $topology ]
+    }
     
     foreach mol $topology {
 
