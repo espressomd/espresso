@@ -131,7 +131,7 @@ proc ::mbtools::system_generation::cylinder::create_cylinder { args } {
 	{shuffle   "shuffle the topology before placing molecules" }
 	{bondl.arg     1.0   "bond length between atoms"  }
     }
-    set usage "Usage: create_cylinder \[center:center:initarea:random:startmol:bondl]: "
+    set usage "Usage: create_cylinder \[center:initarea:shuffle:bondl]: "
     array set params [::cmdline::getoptions args $options $usage]
 
     global ::mbtools::system_generation::moltypeskey
