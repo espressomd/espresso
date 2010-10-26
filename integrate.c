@@ -949,6 +949,11 @@ void propagate_vel_pos()
 
   rebuild_verletlist = 0;
 
+#ifdef ADDITIONAL_CHECKS
+  db_max_force = db_max_vel = 0;
+  db_maxf_id = db_maxv_id = -1;
+#endif
+
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
