@@ -66,7 +66,7 @@ if { [catch {
 
     # here you can create the necessary snapshot
     if { 0 } {
-	# makes sure that particles are only in the lower 90\% of the box for elc
+	# makes sure that particles are only in the lower 50\% of the box for elc and nsquare
 	set maxz 0
 	set minz 1e100
 	for {set i 0} {$i <= [setmd max_part]} {incr i} {
@@ -76,14 +76,14 @@ if { [catch {
 	    if {$pz < $minz} {set minz $pz}
 	}
 	puts "$minz<=z<=$maxz"
-	if { $maxz > [expr 0.9*[lindex [setmd box_l] 2]] } {
+	if { $maxz > [expr 0.5*[lindex [setmd box_l] 2]] } {
 	    puts "rescaling necessary"
 	    # rescale coordinates
 	    for {set i 0} {$i <= [setmd max_part]} {incr i} {
 		set pos [part $i pr folded]
 		set px [lindex $pos 0]
 		set py [lindex $pos 1]
-		set pz [expr 0.9*[lindex $pos 2]]
+		set pz [expr 0.5*[lindex $pos 2]]
 		part $i pos $px $py $pz
 	    }
 	}
@@ -96,7 +96,7 @@ if { [catch {
 	write_data "el2d_system.data"
     }
 
-    ############## RMS force error for MMM2D
+    ############## RMS force error for MMM2D, layered
 
     set rmsf 0
     for { set i 0 } { $i <= [setmd max_part] } { incr i } {
@@ -111,20 +111,66 @@ if { [catch {
     set rmsf [expr sqrt($rmsf/[setmd n_part])]
     puts "rms force deviation $rmsf"
     if { $rmsf > $epsilon } {
-	error "MMM2D force error too large"
+	error "MMM2D layered force error too large"
     }
 
     set cureng [lindex [analyze energy coulomb] 0]
     set toteng [analyze energy total]
 
     if { [expr abs($toteng - $cureng)] > $epsilon } {
-	error "system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
+	error "MMM2D layered system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
     }
 
     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
     puts "relative energy deviations: $rel_eng_error"
     if { $rel_eng_error > $epsilon } {
-	error "relative energy error too large"
+	error "MMM2D layered relative energy error too large"
+    }
+
+    #########################################
+    ####      check with nsquare
+    #########################################
+    
+    set box_l [lindex [setmd box_l] 0]
+    setmd box_l $box_l $box_l [expr 0.5*$box_l]
+    cellsystem nsquare
+    
+    puts -nonewline "MMM2D nsquare  "
+    flush stdout
+
+    # to ensure force recalculation
+    invalidate_system
+    integrate 0
+
+    ############## RMS force error for MMM2D, nsquared
+
+    set rmsf 0
+    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+	set resF [part $i pr f]
+	set tgtF $F($i)
+	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
+	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
+	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
+
+	set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
+    }
+    set rmsf [expr sqrt($rmsf/[setmd n_part])]
+    puts "rms force deviation $rmsf"
+    if { $rmsf > $epsilon } {
+	error "MMM2D nsquare force error too large"
+    }
+
+    set cureng [lindex [analyze energy coulomb] 0]
+    set toteng [analyze energy total]
+
+    if { [expr abs($toteng - $cureng)] > $epsilon } {
+	error "MMM2D nsquare system has unwanted energy contributions of [format %e [expr $toteng - $cureng]]"
+    }
+
+    set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
+    puts "relative energy deviations: $rel_eng_error"
+    if { $rel_eng_error > $epsilon } {
+	error "MMM2D nsquare relative energy error too large"
     }
 
     inter coulomb 0.0
@@ -134,6 +180,7 @@ if { [catch {
 	####      check P3M + ELC 
 	#########################################
 
+	setmd box_l $box_l $box_l $box_l
 	cellsystem domain_decomposition
 
 	eval setmd node_grid $balance_ng

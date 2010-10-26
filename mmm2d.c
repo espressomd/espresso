@@ -1403,7 +1403,7 @@ static int MMM2D_tune_near(double error)
   /* yes, it's y only... */
   if (max_near > box_l[1]/2)
     return ERROR_LARGE;
-  if (min_far <= 0)
+  if (min_far < 0)
     return ERROR_SMALL;
   if (ux*box_l[1] >= 3/M_SQRT2 )
     return ERROR_BOXL;
@@ -2041,6 +2041,8 @@ void  MMM2D_dielectric_layers_force_contribution()
   double a[3];
   double force[3]={0, 0, 0};
 
+  if (!mmm2d_params.dielectric_contrast_on) return;
+
   if(this_node==0) {
     c=1;
     celll = &cells[c];
@@ -2100,6 +2102,8 @@ double  MMM2D_dielectric_layers_energy_contribution()
   double eng=0.0;
   // prefactor for the charged plate interaction removal
   double corr_pref = coulomb.prefactor*C_2PI*ux*uy;
+
+  if (!mmm2d_params.dielectric_contrast_on) return 0.0;
 
   if(this_node==0) {
     c=1;
