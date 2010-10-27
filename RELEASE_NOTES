@@ -2,15 +2,16 @@ What's new, what's been changed, what's been fixed
 --------------------------------------------------
 
 ****************************************************************************************
-* v2.2.0g (Walaskialf)                                                                 *
+* v2.2.0h (Walaskialf)                                                                 *
 ****************************************************************************************
 
 Current working revision.
 
 
-- v2.2.0g -
+- v2.2.0h -
 -----------
 
+(h) October   26th, 2010.
 (g) October   11th, 2010.
 (f) October    9th, 2010.
 (e) October    6th, 2010.
@@ -37,6 +38,10 @@ Changes:
 (a) added more reference to original adress papers
 
 Bugfixes:
+(h) ADDITIONAL_CHECKS now resets its variables, especially particle
+    ids
+(h) mmm2d now allows again to use the nsquare cellsystem, if no dielectric
+    contrasts are specified
 (g) dpd thermostats will also make particles interact
 (f) virtual sites can now be coupled to the NPT integrator
 (e) : Virtual sites inconsistent with AdResS
