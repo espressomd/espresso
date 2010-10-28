@@ -353,7 +353,6 @@ MDINLINE double sinc(double d)
     PId2 = SQR(PId);
     return 1.0 + PId2*(c2+PId2*(c4+PId2*(c6+PId2*c8)));
   }
-  return 1.0;
 }
 
 /** factorizes small numbers up to a maximum of max factors. */
@@ -589,7 +588,7 @@ MDINLINE int lu_decompose_matrix(double **A, int n, int *perms) {
   int i, j, k, ip;
   double max, sum, tmp;
 
-  double *scal = malloc(n*sizeof(double));
+  double *scal = (double *)malloc(n*sizeof(double));
 
   /* loop over rows and store implicit scaling factors */
   for (i=0; i<n; i++) {

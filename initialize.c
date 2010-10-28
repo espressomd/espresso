@@ -57,6 +57,10 @@
 #include "adresso.h"
 #include "metadynamics.h"
 
+#ifdef CUDA
+#include "cuda_init.h"
+#endif
+
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -67,6 +71,11 @@ static void init_tcl(Tcl_Interp *interp);
 int on_program_start(Tcl_Interp *interp)
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
+
+#ifdef CUDA
+  gpu_init();
+#endif
+
   /*
     call the initialization of the modules here
   */
