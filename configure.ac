@@ -16,19 +16,9 @@
 
 dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
-m4_define([ESPRESSO_VERSION],
-  [esyscmd([awk '/^\* /\
-    { i=2; printf("%s", substr($i,2)); exit}'\
-   RELEASE_NOTES]
-  )])
-m4_define([ESPRESSO_TIMESTAMP],
-  [esyscmd([awk '/[(][a-z]*[)]/\
-    { i=1; if ($i == "*") { next; }; for(i=2;i<NF;i++) printf("%s ",$i); gsub("[.]", "", $NF); printf $NF; exit}'\
-   RELEASE_NOTES]
-  )])
 
 # Initialise autoconf
-AC_INIT(ESPResSo, [ESPRESSO_VERSION], [espresso@fias.uni-frankfurt.de])
+AC_INIT(ESPResSo, [2.9.0], [espresso@fias.uni-frankfurt.de])
 
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([main.c])
@@ -41,8 +31,6 @@ AC_CANONICAL_TARGET
 # Initialise automake
 AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
 AM_MAINTAINER_MODE
-# Make the release notes a dependency of configure
-AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/RELEASE_NOTES'])
 
 cat <<EOF
 ****************************************************************
@@ -132,7 +120,6 @@ cat <<EOF
 EOF
 ES_INIT_CHOOSER
 ES_INIT_MYCONFIG
-AC_DEFINE(LAST_CHANGE,["ESPRESSO_TIMESTAMP"],[When the last change to the code was done])
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
 toolsdir='${pkglibdir}/tools'
 AC_SUBST(toolsdir)
