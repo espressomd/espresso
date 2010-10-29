@@ -1,3 +1,20 @@
+# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 # all the test scripts
 tests= \
 	nve_pe.tcl npt.tcl \
@@ -28,7 +45,7 @@ EXTRA_DIST = $(tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
-        p3m-magnetostatics-t1.dat \
+        p3m-magnetostatics-t1.data \
 	p3m_system.data el2d_system.data el2d_system_die.data\
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
@@ -41,7 +58,7 @@ EXTRA_DIST = $(tests) \
 	mass_system.data \
 	lb_system.data \
 	\
-	pe_micelle.tcl pe_micelle_input.txt \
+	pe_micelle.tcl pe_micelle.data \
 	uwerr_test.tcl uwerr_test.data \
 	\
 	gen_fene.tcl gen_harm.tcl
