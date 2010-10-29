@@ -1,6 +1,5 @@
 dnl -*- mode: autoconf -*-
 dnl Copyright (C) 2010 The ESPResSo project
-dnl Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 dnl  
 dnl This file is part of ESPResSo.
 dnl  
@@ -16,6 +15,7 @@ dnl GNU General Public License for more details.
 dnl  
 dnl You should have received a copy of the GNU General Public License
 dnl along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+dnl
 AC_DEFUN([ES_CHECK_CUDA],[
 	# search for the nvcc CUDA compiler
 	AC_ARG_WITH([cuda],
