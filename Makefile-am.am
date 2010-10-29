@@ -19,7 +19,7 @@ SUBDIRS = . scripts tools testsuite doc
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile GPL.TXT LICENSE.TXT RELEASE_NOTES darwinlink.sh \
+EXTRA_DIST = Makefile darwinlink.sh \
 	autogen.sh configure-ac copyright.sh samples cmake CMakeLists.txt \
         acconfig.h.cmakein packages Espresso \
 	$(extra)

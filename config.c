@@ -87,7 +87,7 @@
 
 int version_callback(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION ", Last Change: " LAST_CHANGE, (char *) NULL);
+  Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION, (char *) NULL);
   return (TCL_OK);
 }
 
