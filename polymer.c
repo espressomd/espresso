@@ -400,11 +400,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	     int type_nM, int type_cM, int type_bond, 
 	     double angle, double angle2, double *posed2, int constr) {
   int p,n, cnt1,cnt2,max_cnt, bond_size, *bond, i;
-#ifdef OLD_RW_VERSION
-  double theta,phi;
-#else
   double phi,zz,rr;
-#endif
   double *poly;
   double pos[3];
   double poz[3];
@@ -467,20 +463,12 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       } else {
 	/* randomly place 2nd monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
-#ifdef OLD_RW_VERSION
-	  theta  = PI*d_random();
-	  phi    = 2.0*PI*d_random();
-	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
-	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
-	  pos[2] = poz[2]+bond_length*cos(theta);
-#else
 	  zz     = (2.0*d_random()-1.0)*bond_length;
           rr     = sqrt(SQR(bond_length)-SQR(zz));
 	  phi    = 2.0*PI*d_random();
 	  pos[0] = poz[0]+rr*cos(phi);
 	  pos[1] = poz[1]+rr*sin(phi);
 	  pos[2] = poz[2]+zz;
-#endif
 #ifdef CONSTRAINTS
 	  if(constr==0 || constraint_collision(pos,poly+3*(n-1))==0){
 #endif
@@ -559,25 +547,17 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 	    vec_rotate(d,angle,a,b);
 
-	    pos[0] += b[0];
-	    pos[1] += b[1];
-	    pos[2] += b[2];
+	    pos[0] = poz[0] + b[0];
+	    pos[1] = poz[1] + b[1];
+	    pos[2] = poz[2] + b[2];
 
 	  } else {
-#ifdef OLD_RW_VERSION
-            theta  = PI*d_random();
-            phi    = 2.0*PI*d_random();
-            pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
-            pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
-            pos[2] = poz[2]+bond_length*cos(theta);
-#else
             zz     = (2.0*d_random()-1.0)*bond_length;
             rr     = sqrt(SQR(bond_length)-SQR(zz));
             phi    = 2.0*PI*d_random();
             pos[0] = poz[0]+rr*cos(phi);
             pos[1] = poz[1]+rr*sin(phi);
             pos[2] = poz[2]+zz;
-#endif
 	  }
 	  
 	  //POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);

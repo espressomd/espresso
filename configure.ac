@@ -103,6 +103,7 @@ ES_CHECK_EFENCE
 ES_CHECK_TCL
 ES_CHECK_TK
 ES_CHECK_FFTW
+ES_CHECK_CUDA
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -225,6 +226,12 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 EOF
+
+if test x$with_cuda != xno; then
+   echo "using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS"
+else
+   echo "CUDA disabled or not supported"
+fi
 
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."

@@ -233,8 +233,24 @@ endif
 ACLOCAL_AMFLAGS = -Iconfig
 
 ##################################################
+# CUDA rules
+##################################################
+SUFFIXES=.cu
+.cu.o:
+	$(NVCC) -c $(NVCCFLAGS) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+
+CUDA_SOURCES= \
+	cuda_init.cu \
+	cuda_init.h
+
+if CUDA
+Espresso_bin_SOURCES += $(CUDA_SOURCES)
+endif
+
+##################################################
 # Targets for backwards compatibility
 ##################################################
 test: check
 mostclean: mostlyclean
 docu: doc
+
