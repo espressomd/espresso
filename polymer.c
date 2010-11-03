@@ -584,7 +584,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	max_cnt=imax(cnt1, max_cnt);
 	POLY_TRACE(printf("M"); fflush(NULL));
       }
-      if ((mode==1) || (n>0)) break;
+      if (n>0) break;
     } /* cnt2 */
     POLY_TRACE(printf(" %d/%d->%d \n",cnt1,cnt2,max_cnt));
     if (cnt2 >= max_try) { free(poly); return(-2); } else max_cnt = imax(max_cnt,imax(cnt1,cnt2));
