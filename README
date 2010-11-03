@@ -5,6 +5,8 @@ ESPResSo is a parallelized, flexible molecular dynamics simulation
 program for scientific coarse-grained simulations as they are used in
 soft matter research.
 
+DOCUMENTATION
+-------------
 You can find documentation on how to compile, use and develop ESPResSo
 on the homepage at
 
@@ -15,8 +17,10 @@ of simulation techniques and know how to use them. We do not take
 responsibility if you use ESPResSo to create and publish bogus
 results. You have been warned!
 
+PLEASE CITE US!
+---------------
 If you use ESPResSo and obtain scientific results that you publish, we
-would ask you to acknowledge the usage of ESPResSo by referencing 
+would ask you to acknowledge the usage of ESPResSo by referencing
 
       Hans-Jörg Limbach, Axel Arnold, Bernward A. Mann and Christian
       Holm. 
@@ -39,4 +43,116 @@ BibTeX record:
   month = may,
   doi = {10.1016/j.cpc.2005.10.005},
 }
+
+LICENSE
+-------
+This file and the following files are licensed and copyrighted as
+indicated below:
+
+doc/dg/figs/bond_angle.fig
+doc/dg/figs/datastorage.gif
+doc/dg/figs/dihedral_angle.fig
+doc/dg/figs/directions.fig
+doc/dg/figs/elc_errordist.gif
+doc/dg/figs/ghost_cells.fig
+doc/dg/figs/ghost_communication.fig
+doc/dg/figs/linked_cells.fig
+doc/dg/figs/logo.gif
+doc/dg/figs/move_to_p_buf.fig
+doc/dg/figs/particles.fig
+doc/ug/figures/dihedral-angle.fig
+doc/ug/figures/hbond.fig
+doc/ug/figures/logo.png
+doc/ug/figures/nacl-rdf.pdf
+doc/ug/figures/salt.png
+doc/maggs_doc/figs/cell.eps
+doc/maggs_doc/figs/charge_assig_cube.eps
+doc/maggs_doc/figs/initializationE.eps
+doc/maggs_doc/figs/initializationE.pdf
+doc/tutorials/tut2/figures/data/neutral-rho.data
+doc/tutorials/tut2/figures/data/nonneutral-rho.data
+doc/tutorials/tut2/figures/data/rdf_from_melt_00.data
+doc/tutorials/tut2/figures/data/rdf_from_melt_10.data
+doc/tutorials/tut2/figures/data/rdf_from_melt_11.data
+doc/tutorials/tut2/figures/data/rdf_lj_00.data
+doc/tutorials/tut2/figures/nacl-rdf.pdf
+doc/tutorials/tut2/figures/nacl.plot
+doc/tutorials/tut2/figures/neutral-rho.pdf
+doc/tutorials/tut2/figures/nonneutral-rho.pdf
+doc/tutorials/tut2/figures/salt.png
+packages/mbtools/doc/colloid_model.jpg
+packages/mbtools/doc/cylinder_membrane.jpg
+packages/mbtools/doc/flat_membrane.jpg
+packages/mbtools/doc/protein_model.jpg
+packages/mbtools/doc/sphere_membrane.jpg
+packages/mbtools/doc/torus_membrane.jpg
+packages/mbtools/doc/wrapped_colloid_densitymap.jpg
+packages/mbtools/examples/forcetables/9_095_11.tab
+packages/mbtools/examples/forcetables/n9_c140_22.tab
+packages/mbtools/examples/forcetables/n9_c160_22.tab
+packages/mbtools/examples/forcetables/sr_e10_c25.tab
+samples/adress/bond_tetra.tab
+samples/adress/cg_ic_tetra.tab
+samples/adress/cg_tetra.tab
+samples/adress/thermo_force.tab
+samples/maggs_correct_rdf.dat
+testsuite/analysis_system.data.00.gz
+testsuite/analysis_system.data.01.gz
+testsuite/analysis_system.data.02.gz
+testsuite/analysis_system.data.03.gz
+testsuite/analysis_system.data.04.gz
+testsuite/analysis_system.data.05.gz
+testsuite/analysis_system.data.06.gz
+testsuite/analysis_system.data.07.gz
+testsuite/analysis_system.data.08.gz
+testsuite/analysis_system.data.09.gz
+testsuite/analysis_system.data.10.gz
+testsuite/analysis_system.data.chk
+testsuite/comfixed_system.data
+testsuite/comforce_system.data
+testsuite/constraints_system.data
+testsuite/dh_system.data
+testsuite/el2d_system.data
+testsuite/el2d_system_die.data
+testsuite/fene_system.data.gz
+testsuite/gb_system.data
+testsuite/harm_system.data.gz
+testsuite/intpbc_system.data.gz
+testsuite/intppbc_system.data.gz
+testsuite/lb_system.data
+testsuite/lj-cos_system.data
+testsuite/lj1.tab
+testsuite/lj2.tab
+testsuite/lj3.tab
+testsuite/lj_system.data
+testsuite/mass_system.data
+testsuite/mmm1d_system.data
+testsuite/npt_lj_system.data
+testsuite/p3m_system.data
+testsuite/tabulated_system.data
+testsuite/thermostat.data
+testsuite/thermostat_rot.data
+testsuite/uwerr_test.data
+testsuite/Makefile.am
+testsuite/p3m-magnetostatics-t1.data
+testsuite/pe_micelle.data
+
+"Copyright (C) 2010 The ESPResSo project
+Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+This file is part of ESPResSo.
+  
+ESPResSo is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+  
+ESPResSo is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+  
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>."
 
