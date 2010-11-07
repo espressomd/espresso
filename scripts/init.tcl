@@ -1,12 +1,3 @@
-#  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-#  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-#  and by which you are legally bound while utilizing this file in any form or way.
-#  There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#  You should have received a copy of that license along with this program;
-#  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-#  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-#  
 #############################################################
 #                                                             #
 # init.tcl                                                    #
@@ -20,7 +11,25 @@
 # by providing additional tcl-commands/-functions.            #
 #                                                             #
 ###############################################################
-
+#
+# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#
 # here do everything you want to do upon initialization.
 # e. g.
 
@@ -35,20 +44,34 @@ if { [file exists "~/.espressorc" ] } {
 foreach arg $argv { if {$arg == "-quiet"} { set quiet 1 } }
 
 if {![info exists quiet] || !$quiet} {
-    puts ""
-    puts "*******************************************************"
-    puts "*                                                     *"
-    puts "*                    - Espresso -                     *"
-    puts "*                    ============                     *"
-    puts "*      A MPI Parallel Molecular Dynamics Program      *"
-    puts "*                                                     *"
-    puts "*                                                     *"
-    puts "* (c) 2002-2006                                       *"
-    puts "* Max-Planck-Institute for Polymer Research           *"
-    puts "* Mainz, Germany                                      *"
-    puts "*                                                     *"
-    puts "*******************************************************"
-    puts ""
+    puts stderr "*******************************************************"
+    puts stderr "*                                                     *"
+    puts stderr "*                    - Espresso -                     *"
+    puts stderr "*                    ============                     *"
+    puts stderr "*        A Parallel Molecular Dynamics Program        *"
+    puts stderr "*                                                     *"
+    puts stderr "* (c) 2010                                            *"
+    puts stderr "* The ESPResSo project                                *"
+    puts stderr "*                                                     *"
+    puts stderr "* (c) 2002-2010                                       *"
+    puts stderr "* Max-Planck-Institute for Polymer Research           *"
+    puts stderr "* Mainz, Germany                                      *"
+    puts stderr "*                                                     *"
+    puts stderr "*******************************************************"
+    puts stderr ""
+    puts stderr "ESPResSo is free software: you can redistribute it and/or modify"
+    puts stderr "it under the terms of the GNU General Public License as published by"
+    puts stderr "the Free Software Foundation, either version 3 of the License, or"
+    puts stderr "(at your option) any later version."
+    puts stderr ""
+    puts stderr "ESPResSo is distributed in the hope that it will be useful,"
+    puts stderr "but WITHOUT ANY WARRANTY; without even the implied warranty of"
+    puts stderr "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+    puts stderr "GNU General Public License for more details."
+    puts stderr "" 
+    puts stderr "You should have received a copy of the GNU General Public License"
+    puts stderr "along with this program.  If not, see <http://www.gnu.org/licenses/>."
+    puts stderr ""
 }
 
 # Check to see if the user specified a packages directory
@@ -68,12 +91,6 @@ if { [ catch { set dummy $env(ESPRESSO_PACKAGES)} ] } {
 
 
 # Include useful tcl-scripts providing new functions etc.
-
-source convertDeserno.tcl
-# adds 'convertDeserno2MD' & 'convertMD2Deserno' for converting particle configurations
-#       stored in Deserno-file-format into Espresso format and vice versa
-# adds 'convertDeserno2MDmain' & 'convertMD2DesernoMain' for directly accessing the conversion scripts
-#       therefore bypassing and/or overriding the initialization procedure
 
 source countBonds.tcl
 # adds 'countBonds' returning a tcl-script with complete bonding-informations on any particle
@@ -130,10 +147,6 @@ source ABHmath.tcl
 # adds 'g_random' which returns random numbers which have a Gaussian distribution
 # adds 'pair_dist <part_id1> <part_id2>' which returns the distance of two particles with identities <part_id1> and <part_id2>
 # adds 'LinRegression <tcl-list of points {{x1 y1} {x2 y2} ...}>' which returns the least-square linear fit a*x+b and the standard errors da and db
-
-source pov.tcl
-#adds 'writepov <file> [options]'
-#adds 'morph <file1> <file2> <file3> [options]'
 
 source vtf.tcl
 #adds 'writevsf <file> [options]'

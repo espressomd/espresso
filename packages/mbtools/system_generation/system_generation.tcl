@@ -1,3 +1,21 @@
+# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#  
+# This file is part of ESPResSo.
+#   
+# ESPResSo is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 # mbtools::system_generation --
 #
 # Routines in this package provide a variety of premade methods for
@@ -32,6 +50,7 @@ namespace eval ::mbtools::system_generation {
     source [file join [file dirname [info script]] random.tcl]
     source [file join [file dirname [info script]] readfile.tcl]
     source [file join [file dirname [info script]] sphere.tcl]
+    source [file join [file dirname [info script]] sphere_cap.tcl]
     source [file join [file dirname [info script]] torus.tcl]
     source [file join [file dirname [info script]] cylinder.tcl]
     source [file join [file dirname [info script]] singlemol.tcl]
@@ -159,7 +178,9 @@ proc ::mbtools::system_generation::setup_system { system_specs iboxl moltypes } 
 	# other geometry specific tasks
 
 	# Shuffle the topology
-	set topology [shuffle_topo $topology ]
+	# set topology [shuffle_topo $topology ]
+        # NOTE: if shuffling topology is needed, use -shuffle option in each geometry
+
 	# Now run the creation command for the specified geometry
 	set createprefix "create_"
 	set namespaceprefix "::mbtools::system_generation::"

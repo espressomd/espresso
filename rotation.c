@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file rotation.c  Molecular dynamics integrator for rotational motion.
  *
  *  A velocity Verlet <a HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
@@ -79,19 +90,28 @@ int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
   double dip_xy, dm;
   double theta2, phi2;
 
+  // Calculate magnitude of dipole moment
   dm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
   *dipm = dm;
 
+  // The dipole vector needs to be != 0 to be converted into a quaternion
   if (dm < ROUND_ERROR_PREC) {
     return 1;
   }
   else {
+    // Calculate angles 
     dip_xy = sqrt(dip[0]*dip[0] + dip[1]*dip[1]);
+    // If dipole points along z axis:
     if (dip_xy == 0){
-      theta2 = 0;
+      // We need to distinguish between (0,0,d_z) and (0,0,d_z)
+      if (dip[2]>0)
+       theta2 = 0;
+      else
+       theta2 = PI/2.;
       phi2 = 0;
     }
     else {
+      // Here, we take care of all other directions
       //Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
       //where theta and phi - angles are in spherical coordinates
       theta2 = 0.5*acos(dip[2]/dm);
@@ -99,6 +119,7 @@ int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
       else phi2 = 0.5*acos(dip[0]/dip_xy) - PI*0.25;
     }
 
+    // Calculate the quaternion from the angles
     quat[0] =  cos(theta2) * cos(phi2);
     quat[1] = -sin(theta2) * cos(phi2);
     quat[2] = -sin(theta2) * sin(phi2);
@@ -218,10 +239,6 @@ void propagate_omega_quat()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef EXTERNAL_FORCES
-      if(!(p[i].l.ext_flag & COORDS_FIX_MASK))
-#endif
-	{
 	  double Qd[4], Qdd[4], S[3], Wd[3];
 	  define_Qdd(&p[i], Qd, Qdd, S, Wd);
 	  
@@ -241,7 +258,7 @@ void propagate_omega_quat()
 #ifdef DIPOLES
 	  convert_quatu_to_dip(p[i].r.quatu, p[i].p.dipm, p[i].r.dip);
 #endif
-	}
+	
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
     }
@@ -284,10 +301,6 @@ void convert_torqes_propagate_omega()
     
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     
-#ifdef EXTERNAL_FORCES
-      if(!(p[i].l.ext_flag & COORDS_FIX_MASK))
-#endif
-	{
 #ifdef ROTATIONAL_INERTIA
 	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
 	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
@@ -316,7 +329,7 @@ void convert_torqes_propagate_omega()
 	    p[i].m.omega[1]+= dt2*Wd[1];
 	    p[i].m.omega[2]+= dt2*Wd[2];
 	  }
-	}
+	
       
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
       

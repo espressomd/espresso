@@ -1,12 +1,3 @@
-#  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-#  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-#  and by which you are legally bound while utilizing this file in any form or way.
-#  There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#  You should have received a copy of that license along with this program;
-#  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-#  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
-#  
 #############################################################
 #                                                           #
 # ABHmath.tcl                                               #
@@ -14,9 +5,26 @@
 #                                                           #
 # Script to supply some auxiliary mathematical functions.   #
 #                                                           #
-# Created:       24.02.2003 by BAM                          #
-#                                                           #
 #############################################################
+#
+# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#  
 
 #############################################################
 # CONSTANTS
@@ -297,6 +305,8 @@ proc part_at_dihedral { p1 p2 p3 theta {phi "rnd"} {len "1.0"} } {
 #############################################################
 
 # Calculate the shift value for the lennard jones interaction
+# This function is obsolete. Better use a value of "auto" for the
+# shift using "inter" to set up the potential.
 proc calc_lj_shift { lj_sigma lj_cutoff } {
     set fcut [expr $lj_sigma / (1.0*$lj_cutoff) ]
     return [expr -(pow($fcut,12)-pow($fcut,6))]

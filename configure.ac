@@ -1,18 +1,24 @@
+# Copyright (C) 2006,2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
-m4_define([ESPRESSO_VERSION],
-  [esyscmd([awk '/^\* /\
-    { i=2; printf("%s", substr($i,2)); exit}'\
-   RELEASE_NOTES]
-  )])
-m4_define([ESPRESSO_TIMESTAMP],
-  [esyscmd([awk '/[(][a-z]*[)]/\
-    { i=1; if ($i == "*") { next; }; for(i=2;i<NF;i++) printf("%s ",$i); gsub("[.]", "", $NF); printf $NF; exit}'\
-   RELEASE_NOTES]
-  )])
 
 # Initialise autoconf
-AC_INIT(ESPResSo, [ESPRESSO_VERSION], [espresso@fias.uni-frankfurt.de])
+AC_INIT(ESPResSo, [2.9.0], [espresso@fias.uni-frankfurt.de])
 
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([main.c])
@@ -23,10 +29,8 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
+AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
 AM_MAINTAINER_MODE
-# Make the release notes a dependency of configure
-AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/RELEASE_NOTES'])
 
 cat <<EOF
 ****************************************************************
@@ -87,6 +91,7 @@ ES_CHECK_EFENCE
 ES_CHECK_TCL
 ES_CHECK_TK
 ES_CHECK_FFTW
+ES_CHECK_CUDA
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -115,8 +120,9 @@ cat <<EOF
 EOF
 ES_INIT_CHOOSER
 ES_INIT_MYCONFIG
-AC_DEFINE(LAST_CHANGE,["ESPRESSO_TIMESTAMP"],[When the last change to the code was done])
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
+toolsdir='${pkglibdir}/tools'
+AC_SUBST(toolsdir)
 
 cat <<EOF
 ****************************************************************
@@ -127,7 +133,10 @@ EOF
 AC_CONFIG_HEADERS([acconfig.h])
 AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
-	Makefile-am scripts/Makefile testsuite/Makefile
+	Makefile-am 
+	tools/Makefile
+	scripts/Makefile 
+	testsuite/Makefile
 	doc/Makefile
 	doc/dg/Makefile
 	doc/ug/Makefile 
@@ -204,6 +213,12 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 EOF
+
+if test x$with_cuda != xno; then
+   echo "using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS"
+else
+   echo "CUDA disabled or not supported"
+fi
 
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
