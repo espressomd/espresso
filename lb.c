@@ -41,8 +41,6 @@
 
 #ifdef LB
 
-#include <fftw3.h>
-
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
 
@@ -2202,7 +2200,9 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   double old_rho[8];
 #endif
 
+#if 0 // I have no idea what this should be for!
   if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2))) {
+#endif
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
@@ -2263,9 +2263,17 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+#ifdef LB_ELECTROHYDRODYNAMICS
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
+#endif
+#ifndef LB_ELECTROHYDRODYNAMICS
   force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
   force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
   force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+#endif
+
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
 
@@ -2311,7 +2319,10 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
     }
   }
 #endif
+
+#if 0
 }
+#endif
 }
 
 /** Calculate particle lattice interactions.
@@ -2611,6 +2622,16 @@ MDINLINE void lbnode_print_pi(Tcl_Interp *interp, double *pi) {
       
 }
 
+MDINLINE void lbnode_print_populations(Tcl_Interp *interp, double *pop) {
+  char buffer[TCL_DOUBLE_SPACE];
+  int i;
+
+  for (i=0; i<19; i++) {
+    Tcl_PrintDouble(interp, pop[i], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+}
+
 MDINLINE void lbnode_print_pi_neq(Tcl_Interp *interp, double rho, double *j, double *pi) {
   char buffer[TCL_DOUBLE_SPACE];
   double pi_neq[6];
@@ -2648,6 +2669,7 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   index_t index;
   int node, grid[3], boundary;
   double rho, j[3], pi[6];
+  double pop[19];
   
   if ( ind[0] >=  node_grid[0]*lblattice.grid[0] ||  ind[1] >= node_grid[1]*lblattice.grid[1] ||  ind[2] >= node_grid[2]*lblattice.grid[2] ) {
       Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
@@ -2659,6 +2681,7 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   
   mpi_recv_fluid(node,index,&rho,j,pi);
   mpi_recv_fluid_border_flag(node,index,&boundary);
+  mpi_recv_fluid_populations(node, index, pop);
   // unit conversion
   rho *= 1/lbpar.agrid/lbpar.agrid/lbpar.agrid;
   j[0] *= 1/lbpar.agrid/lbpar.agrid/tau;
@@ -2668,6 +2691,7 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   pi[1] *= 1/lbpar.agrid/tau/tau;
   pi[2] *= 1/lbpar.agrid/tau/tau;
   pi[3] *= 1/lbpar.agrid/tau/tau;
+  pi[4] *= 1/lbpar.agrid/tau/tau;
   pi[5] *= 1/lbpar.agrid/tau/tau;
 
   while (argc > 0) {
@@ -2681,6 +2705,8 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
       lbnode_print_pi_neq(interp, rho, j, pi);
     else if (ARG0_IS_S("boundary")) /* this has to come after pi */
       lbnode_print_boundary(interp, boundary);
+    else if (ARG0_IS_S("populations")) /* this has to come after pi */
+      lbnode_print_populations(interp, pop);
     else {
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "unknown fluid data \"", argv[0], "\" requested", (char *)NULL);
@@ -2689,6 +2715,81 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
     --argc; ++argv;
   }
 
+  return TCL_OK;
+}
+
+static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
+  index_t index;
+  int node, grid[3], boundary;
+  double rho, j[3], pi[6];
+  double pop[19];
+  int change = 0;
+
+  mpi_recv_fluid(node,index,&rho,j,pi);
+  mpi_recv_fluid_border_flag(node,index,&boundary);
+  
+  if ( ind[0] >=  node_grid[0]*lblattice.grid[0] ||  ind[1] >= node_grid[1]*lblattice.grid[1] ||  ind[2] >= node_grid[2]*lblattice.grid[2] ) {
+      Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  node = map_lattice_to_node(&lblattice,ind,grid);
+  index = get_linear_index(ind[0],ind[1],ind[2],lblattice.halo_grid);
+  while (argc > 0) {
+    if (change==1) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "Error in lbnode set. You can only change one field at the same time.", (char *)NULL);
+      return TCL_ERROR;
+    }
+    if ((ARG0_IS_S("rho") || ARG0_IS_S("density")) && ARG1_IS_D(rho) ) {
+      argc--;
+      argv++;
+      change=1;
+    } else if ((ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity"))) {
+      if (ARG1_IS_D(j[0])) {
+        argc--;
+        argv++;
+      } else return TCL_ERROR;
+      if ( ARG1_IS_D(j[1])) { 
+        argc--;
+        argv++;
+      } else return TCL_ERROR;
+      if (ARG1_IS_D(j[2])) {
+        argc--;
+        argv++;
+      } else return TCL_ERROR;
+      change=1;
+      j[0] *= rho;
+      j[1] *= rho;
+      j[2] *= rho;
+    } else if (ARG0_IS_S("pi") || ARG0_IS_S("pressure")) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "Error in lbnode set. Changing the pressure is not yet implemented.", (char *)NULL);
+      return TCL_ERROR;
+    }
+    else if (ARG0_IS_S("pi_neq")) { /* this has to come after pi */
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "Error in lbnode set. Changing the pressure is not yet implemented.", (char *)NULL);
+      return TCL_ERROR;
+    }
+    else if (ARG0_IS_S("boundary")) { 
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "Error in lbnode set. Changing the boundary state is not yet implemented.", (char *)NULL);
+      return TCL_ERROR;
+    }
+    else if (ARG0_IS_S("populations")) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "Error in lbnode set. Changing the populations is not yet implemented.", (char *)NULL);
+      return TCL_ERROR;
+    }
+    else {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "unknown fluid data \"", argv[0], "\" requested", (char *)NULL);
+      return TCL_ERROR;
+    }
+    --argc; ++argv;
+  }
+  mpi_send_fluid(node,index,rho,j,pi) ;
   return TCL_OK;
 }
 
@@ -2899,11 +3000,13 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
    argc-=3; argv+=3;
 
    if (argc == 0 ) { 
-     Tcl_AppendResult(interp, "lbnode syntax: lbnode X Y Z print [ rho | u | pi | pi_neq | boundary ]", (char *)NULL);
+     Tcl_AppendResult(interp, "lbnode syntax: lbnode X Y Z [ print | set ] [ rho | u | pi | pi_neq | boundary | populations ]", (char *)NULL);
      return TCL_ERROR;
    }
    if (ARG0_IS_S("print"))
      err = lbnode_parse_print(interp, argc-1, argv+1, coord);
+   else if (ARG0_IS_S("set")) 
+     err = lbnode_parse_set(interp, argc-1, argv+1, coord);
    else {
      Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode", (char *)NULL);
      return  TCL_ERROR;

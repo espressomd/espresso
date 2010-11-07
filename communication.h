@@ -142,6 +142,15 @@ void mpi_send_mass(int node, int part, double mass);
 */
 void mpi_send_q(int node, int part, double q);
 
+
+/** Issue REQ_SET_MU_E: send particle electrophoretic mobility.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param mu_E its new mobility.
+*/
+void mpi_send_mu_E(int node, int part, double mu_E[3]);
+
 #ifdef ROTATIONAL_INERTIA
 /** Issue REQ_SET_ROTATIONAL_INERTIA: send particle rotational inertia.
     Also calls \ref on_particle_change.
@@ -450,6 +459,14 @@ int mpi_iccp3m_iteration(int dummy);
     @return nonzero on error
 */
 int mpi_iccp3m_init(int dummy);
+
+/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param rho   local fluid density
+ * @param j     local fluid velocity
+ */
+void mpi_recv_fluid_populations(int node, int index, double *pop);
 
 
 
