@@ -114,6 +114,54 @@ MDINLINE double d_random(void)
   return temp;
 }
 
+/*----------------------------------------------------------------------*/
+
+/** Generator for Gaussian random numbers. Uses the Box-Muller
+ * transformation to generate two Gaussian random numbers from two
+ * uniform random numbers.
+ *
+ * @return Gaussian random number.
+ *
+ */
+MDINLINE double gaussian_random(void) {
+  double x1, x2, r2, fac;
+  static int calc_new = 1;
+  static double save;
+
+  /* On every second call two gaussian random numbers are calculated
+     via the Box-Muller transformation. One is returned as the result
+     and the second one is stored for use on the next call.
+  */
+
+  if (calc_new) {
+
+    /* draw two uniform random numbers in the unit circle */
+    do {      
+      x1 = 2.0*d_random()-1.0;
+      x2 = 2.0*d_random()-1.0;
+      r2 = x1*x1 + x2*x2;
+    } while (r2 >= 1.0 || r2 == 0.0);
+
+    /* perform Box-Muller transformation */
+    fac = sqrt(-2.0*log(r2)/r2);
+
+    /* save one number for later use */
+    save = x1*fac;
+    calc_new = 0;
+
+    /* return the second number */
+    return x2*fac;
+
+  } else {
+
+    calc_new = 1;
+
+    /* return the stored gaussian random number */
+    return save;
+
+  }
+
+}
 
 /**  Implementation of the tcl command \ref tcl_t_random. Access to the
      parallel random number generator.

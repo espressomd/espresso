@@ -11,7 +11,7 @@
  * where its current version can be found, or write to
  * Max-Planck-Institute for Polymer Research, Theory Group, 
  * PO Box 3148, 55021 Mainz, Germany. 
- * Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+ * Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
  */
 
 /** \file statistics_fluid.h
@@ -42,6 +42,9 @@ void lb_calc_fluid_momentum(double *result);
  * \param result Fluid temperature
  */
 void lb_calc_fluid_temp(double *result);
+
+void lb_calc_densprof(double *result, int *params);
+void lb_calc_velprof(double *result, int *params);
 
 /** Parser for fluid related analysis functions. */
 int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv);

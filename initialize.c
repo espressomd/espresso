@@ -113,6 +113,11 @@ int on_program_start(Tcl_Interp *interp)
   fft_pre_init();
 #endif
 
+#ifdef LB
+  lb_pre_init();
+#endif
+
+
   /*
     call all initializations to do only on the master node here.
   */
@@ -190,19 +195,19 @@ void on_integration_start()
 
 #ifdef LB
   if(lattice_switch & LATTICE_LB) {
-    if (lbpar.agrid < 0.0) {
+    if (lbpar.agrid <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
     }
-    if (lbpar.tau < 0.0) {
+    if (lbpar.tau <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar.rho < 0.0) {
+    if (lbpar.rho <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
     }
-    if (lbpar.viscosity < 0.0) {
+    if (lbpar.viscosity <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
@@ -378,12 +383,26 @@ void on_constraint_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
-    lb_init_constraints();
+    lb_init_boundaries();
   }
 #endif
+
+  recalc_forces = 1;
+}
+
+void on_lb_boundary_change()
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_lb_boundary_change\n", this_node));
+  invalidate_obs();
+
+#ifdef LB_BOUNDARIES
+  //printf("executing on_lb_boundary_change on node %d\n", this_node);
+  
+  if(lattice_switch & LATTICE_LB) {
+    lb_init_boundaries();
+  }
 #endif
 
   recalc_forces = 1;
@@ -716,6 +735,10 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("blockfile", blockfile);
   /* in constraint.c */
   REGISTER_COMMAND("constraint", constraint);
+  /* in lb-boundaries.c */
+#ifdef LB_BOUNDARIES
+  REGISTER_COMMAND("lb_boundary", lb_boundary);
+#endif
   /* in uwerr.c */
   REGISTER_COMMAND("uwerr", uwerr);
   /* in nemd.c */
@@ -726,6 +749,7 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("bin", bin);
   /* in lb.c */
   REGISTER_COMMAND("lbfluid", lbfluid_cmd);
+  REGISTER_COMMAND("lbnode", lbnode_cmd);
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", replacestdchannel);
   /* in iccp3m.h */

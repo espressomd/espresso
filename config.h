@@ -118,8 +118,13 @@
 #endif
 
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
-#ifdef LB_ELECTROHYDRODYNAMICS
+#if defined(LB_ELECTROHYDRODYNAMICS) && !defined(LB)
 #define LB
+#endif
+
+/* LB_BOUNDARIES need constraints, obviously... */
+#if defined(LB_BOUNDARIES) && !defined(CONSTRAINTS)
+#define CONSTRAINTS 
 #endif
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
