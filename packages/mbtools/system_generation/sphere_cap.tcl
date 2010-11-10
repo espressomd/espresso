@@ -33,7 +33,7 @@ namespace eval ::mbtools::system_generation::sphere_cap {
 #
 # ::mbtools::system_generation::sphere::create_sphere_cap --
 #
-# Place a topology onto a spherical cap geometry. This cap is part of a sphere
+# Place a topology into a spherical cap geometry. This cap is part of a sphere
 # with radius r as an option. The area of the cap depends on the number of molecules
 # in the topology and the option "initarea". This is done by placing molecules
 # from the polar till all molecules in topology have been placed.
@@ -49,7 +49,7 @@ proc ::mbtools::system_generation::sphere_cap::create_sphere_cap { args } {
     set options {
 	{r.arg   10.0       "the radius of the sphere" }
 	{half  "create a half sphere" }
-	{c.arg  { 0.0 0.0 0.0 } "location of the sphere relative to the box center" }
+	{c.arg  { 0.0 0.0 0.0 } "location of the center of the sphere " }
 	{initarea.arg      1.29    "the starting value for area per mol" }
 	{shuffle "shuffle the topology before placing molecules "}
 	{bondl.arg     1.0   "bond length between atoms"  }
@@ -70,9 +70,9 @@ proc ::mbtools::system_generation::sphere_cap::create_sphere_cap { args } {
 
     #Construct the center
     set center [list 0.0 0.0 0.0 ]
-    lset center 0 [expr [lindex $params(c) 0] + [lindex $boxl 0]/(2.0)]
-    lset center 1 [expr [lindex $params(c) 1] + [lindex $boxl 1]/(2.0)]
-    lset center 2 [expr [lindex $params(c) 2] + [lindex $boxl 2]/(2.0)]
+    lset center 0 [expr [lindex $params(c) 0]]
+    lset center 1 [expr [lindex $params(c) 1]]
+    lset center 2 [expr [lindex $params(c) 2]]
 
     # First work out how many mol types there are and construct a list
     # of their lengths
