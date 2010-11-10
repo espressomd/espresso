@@ -53,7 +53,7 @@ proc write_data {file} {
 # Integration parameters
 #############################################################
 set int_steps     10
-set int_times     100
+set int_times     10
 
 set time_step     0.005
 set tau           0.02
@@ -71,7 +71,7 @@ set temp          1.0
 set skin          0.5
 
 set mom_prec      1.e-5
-set mass_prec     1.e-9
+set mass_prec     1.e-8
 set temp_prec     5.e-3
 
 # Other parameters
