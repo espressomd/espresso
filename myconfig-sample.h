@@ -21,6 +21,7 @@
 /*                       general core features                        */
 /**********************************************************************/
 
+/* #define TIME_CORR */
 /* #define PARTIAL_PERIODIC */
 /* #define ELECTROSTATICS */
 /* #define ROTATION */
