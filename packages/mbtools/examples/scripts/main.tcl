@@ -192,7 +192,6 @@ if { !$checkpointexists } {
     setmd time_step $main_time_step
     thermostat langevin  [lindex $systemtemp 0] $langevin_gamma
  
-    ::mbtools::analysis::setup_analysis $analysis_flags -outputdir  $outputdir -g $mgrid -str $stray_cut_off
     
     mmsg::send $this "starting integration: run $int_n_times times $int_steps steps"
 
@@ -203,7 +202,6 @@ if { !$checkpointexists } {
 
     # A checkpoint exists so all we need to do is reset the topology and setup analysis again
     ::mbtools::utils::read_topology "$outputdir/$topofile"
-    ::mbtools::analysis::setup_analysis $analysis_flags -outputdir  $outputdir -g $mgrid -str $stray_cut_off
     ::mbtools::utils::initialize_vmd $use_vmd $outputdir $ident
 
     # Yikes I hope this is right.  We want to make sure that we start
@@ -233,6 +231,8 @@ if { $npt == "on" } {
     #-cubic_box
     thermostat set npt_isotropic $systemtemp  $gamma_0  $gamma_v
 }
+
+::mbtools::analysis::setup_analysis $analysis_flags -outputdir  $outputdir -g $mgrid -str $stray_cut_off
 
 set timingstart [clock clicks -milliseconds]
 for {set k $startk } { $k <  $int_n_times } { incr k} {
