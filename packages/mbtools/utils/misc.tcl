@@ -87,7 +87,7 @@ proc ::mbtools::utils::isoutside { pos zone } {
 	"sphere" {
 	    set radius [lindex $zone 2]
 	    set center [lindex $zone 1]
-	    set dist [::mathutils::distance $center $pos]
+	    set dist [::mbtools::utils::distance $center $pos]
 
 	    if { $dist > $radius } {
 		return $outside
@@ -96,8 +96,21 @@ proc ::mbtools::utils::isoutside { pos zone } {
 	    }
 
 	}
+        "cuboid" {
+                set center [lindex $zone 1]
+                set cube_size [lindex $zone 2]
+                set dist_x [::tcl::mathfunc::abs [expr ([lindex $pos 0] - [lindex $center 0])]] 
+                set dist_y [::tcl::mathfunc::abs [expr ([lindex $pos 1] - [lindex $center 1])]] 
+                set dist_z [::tcl::mathfunc::abs [expr ([lindex $pos 2] - [lindex $center 2])]]
+                
+                if { $dist_x > [expr [lindex $cube_size 0] * 0.5] || $dist_y > [expr [lindex $cube_size 1] * 0.5] || $dist_z > [expr [lindex $cube_size 2] * 0.5] } {
+                        return $outside
+                } else {
+                        return $inside
+                }
+        }
 	"default" {
-	    ::mmsg::err [namespace current] "[lindex $zone 0] is not a valid exclusion zone type"
+	    ::mmsg::err [namespace current] "[lindex $zone 0] is not a valid zone type"
 	}
     }
     

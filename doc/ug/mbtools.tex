@@ -377,23 +377,42 @@ returns the internal variable \var{middlebead}.
 \subsection{Available geometries}
 
 \begin{code}
-  flat  :  -fixz -bondl.arg -crystal -half
+  flat  :  -fixz -bondl.arg -crystal -half -pancake -shuffle
 \end{code}
 \begin{itemize}
 \item \var{fixz} Fix the vertical positions of all particles. The ids of these particles are added to the list of \var{userfixedparts} which can later be obtained through a call to \codebox{::mbtools::system_generation::get_userfixedparts}.
 \item \var{crystal} Sets lipids on a grid, instead of randomly.
 \item \var{half} Creates a halfbilayer (i.e. periodic only along one direction). Useful to measure a line tension.
+\item \var{pancake} Creates a spherical and flat bilayer. The diameter of the pancake cannot exceed the box\_l.
+\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because otherwise the lipids will be placed on the sphere in the order they appear in the topology
 \end{itemize}
 Creates a flat bilayer in the XY plane by random placement of lipids.
+
+
 \begin{code}
   sphere : -c.arg -initarea.arg -bondl.arg -shuffle
 \end{code}
 \begin{itemize}
 \item \var{c} [\codebox{\{0.0 0.0 0.0\}}] The location of the center of the sphere relative to the center of the box
 \item \var{initarea} [1.29] An initial guess for the area per lipid. This guess is used to compute initial sphere dimensions based on the number of lipids. This initial guess is then iteratively refined until all lipids can be fit uniformly on the sphere.
-\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because the lipids will be placed on the sphere in the order they appear in the topology
+\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because otherwise the lipids will be placed on the sphere in the order they appear in the topology
 \end{itemize}
 Creates a spherical vesicle by placing molecules in an ordered manner at uniform density on the surface of the sphere. Molecules are assumed to have a uniform cross sectional area and closely matched (though not identical) lengths. The radius of the vesicle will depend on the number of lipids and the area per lipid.
+
+
+\begin{code}
+  sphere_cap : -r.arg -half -c.arg -initarea.arg -bondl.arg -shuffle
+\end{code}
+\begin{itemize}
+\item \var{r} [10.0] The radius of the whole sphere where the cap is shaped
+\item \var{half} Create a half of sphere with the amount of molecules available
+\item \var{c} [\codebox{\{0.0 0.0 0.0\}}] The location of the center of the sphere relative to the center of the box
+\item \var{initarea} [1.29] An initial guess for the area per lipid. This guess is used to compute initial sphere dimensions based on the number of lipids. This initial guess is then iteratively refined until all lipids can be fit uniformly on the sphere.
+\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because otherwise the lipids will be placed on the sphere in the order they appear in the topology
+\end{itemize}
+Creates a spherical cap which is part of a vesicle of a radius \var{r}, by placing molecules in an ordered manner at uniform density on the surface of the sphere. Molecules are assumed to have a uniform cross sectional area and closely matched (though not identical) lengths. If the option \var{half} is defined, the radius of the vesicle will depend on the number of lipids and the area per lipid.
+
+
 \begin{code}
   torus : -c.arg -initarea.arg -ratio.arg -bondl.arg -shuffle
 \end{code}
@@ -401,9 +420,11 @@ Creates a spherical vesicle by placing molecules in an ordered manner at uniform
 \item \var{c} [\codebox{\{0.0 0.0 0.0\}}] The location of the center of the torus relative to the center of the box.
 \item \var{initarea} [1.29] An initial guess for the area per lipid. This guess is used to compute initial radii based on the number of lipids. This initial guess is then iteratively refined until all lipids can be fit uniformly on the torus.
 \item \var{ratio} [1.4142] Ratio of major toroidal radius to minor toroidal radius. Default value is for the Clifford torus.
-\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because the lipids will be placed on the torus in the order they appear in the topology.
+\item \var{shuffle} shuffle the topology prior to placing the lipids. This is required for a random lipid distribution because otherwise the lipids will be placed on the torus in the order they appear in the topology.
 \end{itemize}
 Creates a toroidal vesicle by placing molecules in an ordered manner at uniform density on the surface of the torus. Molecules are assumed to have a uniform cross sectional area and closely matched (though not identical) lengths. The two radii of the torus will depend on the number of lipids, the area per lipid and the ratio between radii.
+
+
 \begin{code}
   cylinder : -c.arg -initarea.arg -bondl.arg -shuffle
 \end{code}
@@ -413,16 +434,25 @@ Creates a toroidal vesicle by placing molecules in an ordered manner at uniform 
 \item \var{shuffle} shuffle the topology prior to placing the lipids.
 \end{itemize}
 Creates a cylinder which spans the box along one dimension by placing molecules uniformly on its surface. Works in a similar way to the sphere routine.
+
 \begin{code}
-  random : -exclude.arg -shuffle -bondl.arg
+  random : -exclude.arg -inside.arg -shuffle -bondl.arg
 \end{code}
 \begin{itemize}
-  \item \var{exclude.arg} [] an exclusion zone definition suitable for passing to 
-
-\codebox{::mbtools::}\codebox{utils::isoutside}.
+  \item \var{exclude.arg} [] an exclusion zone definition suitable for passing to\\
+ \codebox{::mbtools::}\codebox{utils::isoutside}.
+  \item \var{inside.arg} [] an inclusion zone definition suitable for passing to\\
+ \codebox{::mbtools::}\codebox{utils::isoutside}.
   \item \var{shuffle} shuffle the topology prior to placing the lipids.
   \end{itemize}
-Places molecules randomly in space with a (sortof) random orientation vector. If an exclusion zone is defined no molecules will be placed such that their centers of mass are within the zone.
+Places molecules randomly in space with a (sortof) random orientation vector. If an exclusion zone is defined, then no molecules will be placed such that their positions are within the zone. If an inclusion zone if defined, then no molecules will be place outside this zone. For instance,
+\begin{code}
+  set geometry \{ geometry "random -exclude \{ sphere \{ 0.0 0.0 0.0 \} 4.0 \}\\
+                -inside \{ cuboid \{ 0.0 0.0 0.0 \} \{ 15.0 15.0 15.0 \} \}" \}\\
+\end{code}
+will randomly place molecules within the volume between a sphere with a radius of $4.0$ and a cuboid with dimension $15.0 \times 15.0 \times 15.0 $ at the origin.
+
+
 \begin{code}
   readfile : -ignore.arg -f.arg -t.arg
 \end{code}
@@ -433,6 +463,8 @@ Places molecules randomly in space with a (sortof) random orientation vector. If
 \item \var{tol.arg} [0.000001] Tolerance for comparison of box dimensions.
 \end{itemize}
 Use particle positions contained in a file to initialise the locations of particles for a particular geometry. The box dimensions in the file and those set by the user are compared and an error is returned if they are not the same to within a tolerance value of \var{tol}. Even though we read from a file we also generate a topology from the \var{n_molslist} and this topology is compared with the topology that is read in to check if the number of particles are the same.
+
+
 \begin{code}
   singlemol : -c.arg -o.arg -trapflag.arg -ctrap.arg \\
               -trapspring.arg -bondl.arg
@@ -754,12 +786,13 @@ Set the trap value for a list of molecules.
 \end{code}
 \begin{itemize}
   \item \var{pos} The point whose status is to be determined
-  \item \var{zone} An exclusion zone. This will be a tcl list. The first element of the list must be a string with the name of the exclusion zone type and subsequent elements will be further information about the exclusion zone. Available zones are:
+  \item \var{zone} This will be a tcl list. The first element of the list must be a string with the name of the zone type and subsequent elements will be further information about the zone. Available zones are:
   \begin{itemize}
-    \item \var{sphere} : center zone
+    \item \var{sphere} : center radius
+    \item \var{cuboid} : center \{L W H\}
   \end{itemize}
 \end{itemize}
-Determines whether the point at \var{pos} is outside the exclusion zone. Returns 1 if it is and 0 if it is not.
+Determines whether the point at \var{pos} is outside the zone. Parameter center should be a tcl list. Returns 1 if it is and 0 if it is not.
 \begin{code}
   ::mbtools::utils::calc_com : mol
 \end{code}
