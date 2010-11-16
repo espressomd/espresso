@@ -523,7 +523,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 {
   int n, type;
   double dist, vec[3];
-  double nonbonded_en, coulomb_en,magnetic_en=0;
+  double nonbonded_en, coulomb_en, magnetic_en;
   IA_parameters *ia_params;
   char *errtxt;
   double folded_pos[3];
@@ -536,8 +536,9 @@ MDINLINE double add_constraints_energy(Particle *p1)
 
   for(n=0;n<n_constraints;n++) { 
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
-    nonbonded_en = 0;
-    coulomb_en   = 0;
+    nonbonded_en = 0.;
+    coulomb_en   = 0.;
+    magnetic_en = 0.;
 
     dist=0.;
     switch(constraints[n].type) {
@@ -619,12 +620,9 @@ MDINLINE double add_constraints_energy(Particle *p1)
     case CONSTRAINT_PLATE:
       coulomb_en = plate_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
-    //ER
     case CONSTRAINT_EXT_MAGN_FIELD:
-      // Torsten, I'm not sure if I should add this energy to energy.coloumb
       magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
       break;
-    //end ER
     }
 
     if (energy.n_coulomb > 0)
