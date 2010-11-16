@@ -368,10 +368,7 @@ MDINLINE void add_ext_magn_field_force(Particle *p1, Constraint_ext_magn_field *
 MDINLINE double ext_magn_field_energy(Particle *p1, Constraint_ext_magn_field *c)
 {
 #ifdef DIPOLES
-  if (c->ext_magn_field[0]*c->ext_magn_field[0] + c->ext_magn_field[1]*c->ext_magn_field[1] + c->ext_magn_field[2]*c->ext_magn_field[2] != 0.0)
-     return c->ext_magn_field[0]*p1->r.dip[0] + c->ext_magn_field[1]*p1->r.dip[1] + c->ext_magn_field[2]*p1->r.dip[2];
-//Do we really need this "if" ?
-//Check the sign of the sum. Do we need "-" before?
+     return -1.0 * scalar(c->ext_magn_field,p1->r.dip);
 #endif
   return 0;
 }
@@ -526,7 +523,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 {
   int n, type;
   double dist, vec[3];
-  double nonbonded_en, coulomb_en;
+  double nonbonded_en, coulomb_en,magnetic_en=0;
   IA_parameters *ia_params;
   char *errtxt;
   double folded_pos[3];
@@ -625,13 +622,16 @@ MDINLINE double add_constraints_energy(Particle *p1)
     //ER
     case CONSTRAINT_EXT_MAGN_FIELD:
       // Torsten, I'm not sure if I should add this energy to energy.coloumb
-      coulomb_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
+      magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
       break;
     //end ER
     }
 
     if (energy.n_coulomb > 0)
       energy.coulomb[0] += coulomb_en;
+    
+    if (energy.n_dipolar > 0)
+      energy.dipolar[0] += magnetic_en;
 
     type = (&constraints[n].part_rep)->p.type;
     if (type >= 0)
