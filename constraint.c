@@ -678,6 +678,7 @@ int constraint_ext_magn_field(Constraint *con, Tcl_Interp *interp,
 {
   int i;
   con->type = CONSTRAINT_EXT_MAGN_FIELD;
+  con->part_rep.p.type=-1;
 
   for(i=0; i<3; i++)
      con->c.emfield.ext_magn_field[i] = 0.;

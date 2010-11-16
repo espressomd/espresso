@@ -199,7 +199,7 @@ void init_energies(Observable_stat *stat)
 #ifdef MAGNETOSTATICS
 
   switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:  n_dipolar = 0; break;
+  case DIPOLAR_NONE:  n_dipolar = 1; break;
 #ifdef ELP3M
   case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
