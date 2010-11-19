@@ -42,6 +42,8 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.wal.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_SPH:
     Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
@@ -56,6 +58,8 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.sph.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_CYL:
     Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
@@ -78,6 +82,8 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.cyl.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_ROD:
     Tcl_PrintDouble(interp, con->c.rod.pos[0], buffer);
@@ -104,6 +110,8 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " cylrad ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.maze.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_PORE:
     Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
@@ -203,6 +211,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
     con->c.wal.n[1] = 
     con->c.wal.n[2] = 0;
   con->c.wal.d = 0;
+  con->c.wal.penetrable = 0;
   con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
@@ -234,13 +243,22 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.wal.penetrable)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
   /* length of the normal vector */
   norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
   if (norm < 1e-10 || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t>",
+    Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t> penetrable <0/1>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -263,6 +281,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
     con->c.sph.pos[2] = 0;
   con->c.sph.rad = 0;
   con->c.sph.direction = -1;
+  con->c.sph.penetrable = 0;
   con->part_rep.p.type = -1;
 
   while (argc > 0) {
@@ -308,12 +327,21 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.sph.penetrable)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
 
   if (con->c.sph.rad < 0. || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t>",
+    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t> penetrable <0/1>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -340,6 +368,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   con->c.cyl.rad = 0;
   con->c.cyl.length = 0;
   con->c.cyl.direction = 0;
+  con->c.cyl.penetrable = 0;
   con->part_rep.p.type = -1;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
@@ -405,6 +434,15 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.cyl.penetrable)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
@@ -415,7 +453,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
 
   if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
       con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
-    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
+    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t> penetrable <0/1>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -609,6 +647,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
   con->c.maze.dim = -1.;
   con->c.maze.sphrad = 0.;
   con->c.maze.cylrad = -1.;
+  con->c.maze.penetrable = 0;
   con->part_rep.p.type = -1;
 
   while (argc > 0) {
@@ -657,12 +696,21 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.maze.penetrable)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
 
   if (con->c.maze.sphrad < 0. || con->c.maze.cylrad < 0. || con->part_rep.p.type < 0 || con->c.maze.dim < 0) {
-    Tcl_AppendResult(interp, "usage: constraint maze nsphere <n> dim <d> sphrad <r> cylrad <r> type <t>",
+    Tcl_AppendResult(interp, "usage: constraint maze nsphere <n> dim <d> sphrad <r> cylrad <r> type <t> penetrable <0/1>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }

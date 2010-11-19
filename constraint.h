@@ -406,10 +406,17 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_WAL: 
       if(checkIfInteraction(ia_params)) {
 	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-	if (dist > 0) {
+	if ( dist > 0 ) {
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -421,10 +428,17 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_SPH:
       if(checkIfInteraction(ia_params)) {
 	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-	if (dist > 0) {
+	if ( dist > 0 ) {
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -441,6 +455,13 @@ MDINLINE void add_constraints_forces(Particle *p1)
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
 	}
+	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
@@ -451,10 +472,17 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_MAZE: 
       if(checkIfInteraction(ia_params)) {
 	calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
-	if (dist > 0) {
+	if ( dist > 0 ) {
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.maze.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -536,7 +564,6 @@ MDINLINE double add_constraints_energy(Particle *p1)
   memcpy(folded_pos, p1->r.p, 3*sizeof(double));
   memcpy(img, p1->l.i, 3*sizeof(int));
   fold_position(folded_pos, img);
-
   for(n=0;n<n_constraints;n++) { 
     ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
     nonbonded_en = 0;
@@ -547,9 +574,16 @@ MDINLINE double add_constraints_energy(Particle *p1)
     case CONSTRAINT_WAL: 
       if(checkIfInteraction(ia_params)) {
 	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-	if (dist > 0)
+	if ( dist > 0 ) {
 	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
 						     ia_params, vec, dist, dist*dist);
+	}
+	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{065 wall constraint %d violated by particle %d} ", n, p1->p.identity);
@@ -560,9 +594,15 @@ MDINLINE double add_constraints_energy(Particle *p1)
     case CONSTRAINT_SPH: 
       if(checkIfInteraction(ia_params)) {
 	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-	if (dist > 0) {
+	if ( dist > 0 ) {
 	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
 						     ia_params, vec, dist, dist*dist);
+	}
+	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
@@ -579,6 +619,12 @@ MDINLINE double add_constraints_energy(Particle *p1)
 						     ia_params, vec, dist, dist*dist);
 
 	}
+	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
@@ -589,9 +635,15 @@ MDINLINE double add_constraints_energy(Particle *p1)
     case CONSTRAINT_MAZE: 
       if(checkIfInteraction(ia_params)) {
 	calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
-	if (dist > 0) {
+	if ( dist > 0 ) {
 	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
 						     ia_params, vec, dist, dist*dist);
+	}
+	else if ( dist <= 0 && constraints[n].c.maze.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
 	}
 	else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
