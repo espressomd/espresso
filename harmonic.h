@@ -48,7 +48,7 @@ MDINLINE int harmonic_set_params(int bond_type, double k, double r,double r_cut)
 }
 
 /// parse parameters for the harmonic potential
-MDINLINE int inter_parse_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double k, r,r_cut;
 

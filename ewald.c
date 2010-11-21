@@ -186,7 +186,7 @@ EWALD_TRACE(fprintf(stderr,"%d: EWALD_prepare_k_field kvec %5i = %18.12g\n",this
 
 /************************************************************/
 
-int printEWALDToResult(Tcl_Interp *interp)
+int tclprint_to_result_EWALD(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   double b=ewald.kmax;
@@ -228,6 +228,7 @@ int ewald_set_params(double r_cut, double alpha, int kmax)
   return 0;
 }
 
+/* TODO: This function is not used anywhere. To be removed?  */
 int ewald_set_eps(double eps)
 {
   ewald.epsilon = eps;
@@ -238,7 +239,7 @@ int ewald_set_eps(double eps)
 }
 
 
-int inter_parse_ewald(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv)
 {
   double r_cut, alpha;
   int i, kmax;
@@ -429,9 +430,9 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
   Cell *cell;
   Particle *p;
   int i,j,c,np,k,kx,ky,kz;
-  int y,z;
+  int y,z,d_rs=0; /* TODO: d_rs was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it. */
   double rclx, rcly, rclz, sps, spc;
-  double fact,tf,tfc,tfs;
+  double fact,tf,tfc,tfs,db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it */ 
   /* Prefactor for force */
   double q,force_prefac;
   /* k space energy */
@@ -605,6 +606,7 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
   return k_space_energy;
 }
 
+/* TODO: This function is not used anywhere. To be removed? */
 void   EWALD_exit()
 { 
   /* free memory */
@@ -630,7 +632,7 @@ void   EWALD_exit()
 /************************************************
  * Debug functions printing ewald structures 
  ************************************************/
-
+/*TODO: this function is not used anywhere. To be removed? */
 void ewald_print_ewald_struct(ewald_struct ps) {
   fprintf(stderr,"%d: ewald_struct: \n",this_node);
   fprintf(stderr,"   alpha_L=%f, r_cut_iL=%f \n",

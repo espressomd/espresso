@@ -35,9 +35,9 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 
-int printljgenIAToResult(Tcl_Interp *interp, int i, int j);
+int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j);
 
-int ljgen_parser(Tcl_Interp * interp,
+int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv);
 

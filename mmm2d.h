@@ -48,10 +48,10 @@ typedef struct {
 extern MMM2D_struct mmm2d_params;
 
 /// print the mmm2d parameters to the interpreters result
-int printMMM2DToResult(Tcl_Interp *interp);
+int tclprint_to_result_MMM2D(Tcl_Interp *interp);
 
 /// parse the mmm2d parameters
-int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
 
 /** set parameters for MMM2D. This assumes that the particles do NOT leave the box.
     For the near formula (nsquared cell structure), precision might be lost, while

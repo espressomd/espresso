@@ -152,7 +152,7 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
     and energy tables from a file.  ia_params and force/energy tables
     are then communicated to each node \warning No checking is
     performed for the file read!! */
-MDINLINE int bonded_tabulated_set_params(int bond_type, int tab_type, char * filename) 
+MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename) 
 {
   int i, token = 0, size;
   double dummr;
@@ -243,7 +243,7 @@ MDINLINE int bonded_tabulated_set_params(int bond_type, int tab_type, char * fil
 }
 
 /// parse parameters for the tabulated bonded potential
-MDINLINE int inter_parse_bonded_tabulated(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   int tab_type = TAB_UNKNOWN;
 
@@ -262,7 +262,7 @@ MDINLINE int inter_parse_bonded_tabulated(Tcl_Interp *interp, int bond_type, int
     return (TCL_ERROR);
   }
 
-  switch (bonded_tabulated_set_params(bond_type, tab_type, argv[2])) {
+  switch (tabulated_bonded_set_params(bond_type, tab_type, argv[2])) {
   case 1:
     Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
     return TCL_ERROR;
@@ -285,7 +285,7 @@ MDINLINE int inter_parse_bonded_tabulated(Tcl_Interp *interp, int bond_type, int
 }
 
 /// parser for the force cap
-MDINLINE int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int tclcommand_inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -320,7 +320,7 @@ MDINLINE int inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv
   return TCL_ERROR;
 }
 
-MDINLINE int tab_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_tab(Tcl_Interp * interp,
 			int part_type_a, int part_type_b,
 			int argc, char ** argv)
 {

@@ -36,7 +36,7 @@ extern int timing_samples;
 double time_force_calc(int default_samples);
 
 /** callback for \ref timing_samples */
-int timings_callback(Tcl_Interp *interp, void *data);
+int tclcallback_timings(Tcl_Interp *interp, void *data);
 
 /** set a time marker. \ref diffTime always gives the time in ms between
     the last two calls to markTime. */

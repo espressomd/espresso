@@ -889,7 +889,7 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
     \param pipename path to the named pipe
  */
 
-int replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

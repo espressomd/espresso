@@ -128,7 +128,7 @@ RandomStatus print_random_stat(void) {
 	  given parameters as the new seeds/status to the respective nodes.     
      </ul>
  */
-int t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   int i,j,cnt, i_out; double d_out;
 
@@ -317,7 +317,7 @@ void init_bit_random_stat(BitRandomStatus tmp_stat) {
 	  given parameters as the new seeds/status to the respective nodes. 
      </ul>
 */
-int bit_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_bit_random (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   int i,j,cnt; double d_out;
 

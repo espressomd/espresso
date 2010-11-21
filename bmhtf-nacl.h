@@ -28,7 +28,7 @@
 
 #ifdef BMHTF_NACL
 
-MDINLINE int printBMHTFIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_BMHTFIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -88,7 +88,7 @@ MDINLINE int BMHTF_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-MDINLINE int BMHTF_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_BMHTF(Tcl_Interp * interp,
 			  int part_type_a, int part_type_b,
 			  int argc, char ** argv)
 {

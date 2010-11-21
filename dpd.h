@@ -54,11 +54,11 @@ extern double dpd_pref3;
 extern double dpd_pref4;
 #endif
 
-void dpd_parse_off(Tcl_Interp *interp, int argc, char **argv);
-int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
-void dpd_print(Tcl_Interp *interp);
+void dpd_switch_off(void);
+int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
+void tclcommand_thermostat_parse_and_print_dpd(Tcl_Interp *interp);
 void thermo_init_dpd();
-void dpd_usage(Tcl_Interp *interp, int argc, char **argv);
+void tclcommand_thermostat_print_usage_dpd(Tcl_Interp *interp, int argc, char **argv);
 void dpd_heat_up();
 void dpd_cool_down();
 
@@ -185,22 +185,22 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
 #ifdef INTER_DPD
-void interdpd_heat_up();
-void interdpd_cool_down();
-void interdpd_parse_off();
-int printinterdpdIAToResult(Tcl_Interp *interp, int i, int j);
-int interdpd_set_params(int part_type_a, int part_type_b,
+void inter_dpd_heat_up();
+void inter_dpd_cool_down();
+void inter_dpd_switch_off();
+int tclprint_to_result_inter_dpdIA(Tcl_Interp *interp, int i, int j);
+int inter_dpd_set_params(int part_type_a, int part_type_b,
 				      double gamma, double r_c, int wf,
 				      double tgamma, double tr_c,
 				      int twf);
-int thermo_parse_interdpd(Tcl_Interp *interp, int argc, char ** argv);
-int interdpd_parser(Tcl_Interp * interp,
+int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** argv);
+int tclcommand_inter_parse_inter_dpd(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv);
-void interdpd_init();
-void interdpd_update_params(double pref2_scale);
+void inter_dpd_init();
+void inter_dpd_update_params(double pref2_scale);
 
-MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
+MDINLINE void add_inter_dpd_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double dist2)
 {
   int j;
@@ -307,8 +307,8 @@ MDINLINE void add_interdpd_pair_force(Particle *p1, Particle *p2, IA_parameters 
   }
 }
 
-
-MDINLINE double interdpd_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
+/* TODO: This function is not used anywhere. To be removed?  */
+MDINLINE double inter_dpd_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist)
 {
    return 0;

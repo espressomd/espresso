@@ -32,10 +32,10 @@
 /*@{*/
 #ifdef ADRESS
 /** prints adress settings */
-int adress_print(Tcl_Interp *interp,int argc, char **argv);
+int tclcommand_adress_parse_print(Tcl_Interp *interp,int argc, char **argv);
 
 /** prints adress settings */
-int adress_set(Tcl_Interp *interp,int argc, char **argv);
+int tclcommand_adress_parse_set(Tcl_Interp *interp,int argc, char **argv);
 
 /** calc weighting function of a distance
     @param dist distance
@@ -49,7 +49,7 @@ double adress_wf(double dist);
 
 double adress_vars[7]       = {0, 0, 0, 0, 0, 0, 0};
 
-int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv){
+int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv){
    int err = TCL_OK;
 #ifndef ADRESS
    Tcl_ResetResult(interp);
@@ -61,8 +61,8 @@ int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv){
       err = (TCL_ERROR);
    }
    else{
-      if (ARG1_IS_S("print")) err=adress_print(interp,argc,argv);
-      else if (ARG1_IS_S("set")) err=adress_set(interp,argc,argv);
+      if (ARG1_IS_S("print")) err=tclcommand_adress_parse_print(interp,argc,argv);
+      else if (ARG1_IS_S("set")) err=tclcommand_adress_parse_set(interp,argc,argv);
       else {
          Tcl_ResetResult(interp);
          Tcl_AppendResult(interp, "The operation \"", argv[1],"\" you requested is not implemented.", (char *)NULL);
@@ -74,7 +74,7 @@ int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv){
 }
 
 #ifdef ADRESS
-int adress_print(Tcl_Interp *interp,int argc, char **argv){
+int tclcommand_adress_parse_print(Tcl_Interp *interp,int argc, char **argv){
    int topo=(int)adress_vars[0],dim;
    char buffer[3*TCL_DOUBLE_SPACE];
    argv+=2;argc-=2;
@@ -118,7 +118,7 @@ int adress_print(Tcl_Interp *interp,int argc, char **argv){
    return TCL_OK;
 }
 
-int adress_set(Tcl_Interp *interp,int argc, char **argv){
+int tclcommand_adress_parse_set(Tcl_Interp *interp,int argc, char **argv){
    int topo=-1,i,wf=0,set_center=0;
    double width[2],center[3];
    char buffer[3*TCL_DOUBLE_SPACE];
@@ -378,7 +378,7 @@ void adress_update_weights(){
 }
 
 /** #ifdef THERMODYNAMIC_FORCE */
-int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
 {
   int i, part_type, err_code;
   double j, prefactor;
@@ -395,7 +395,7 @@ int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
     i=ARG_IS_I(1, part_type);
     j=ARG_IS_D(3,prefactor);
     if(i && j)
-      err_code =  tf_parse(interp, part_type, prefactor, argc-2, argv+2);
+      err_code =  tclcommand_thermodynamic_force_parse_opt(interp, part_type, prefactor, argc-2, argv+2);
     else 
       err_code = TCL_ERROR;
   }
@@ -404,7 +404,7 @@ int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
 }
 
 
-int tf_parse(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv){
+int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv){
   char * filename = NULL;
   
   filename = argv[0];
@@ -432,7 +432,7 @@ int tf_parse(Tcl_Interp * interp, int type, double prefactor, int argc, char ** 
 }
 /** #endif */
 
-int manual_update_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
 {
   int  err_code = TCL_OK;
   

@@ -74,7 +74,7 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
   return 0;
 }
 
-MDINLINE int printcomfixedIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_comfixedIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -85,7 +85,7 @@ MDINLINE int printcomfixedIAToResult(Tcl_Interp *interp, int i, int j)
   return TCL_OK;
 }
 
-MDINLINE int comfixed_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_comfixed(Tcl_Interp * interp,
 			     int part_type_a, int part_type_b,
 			     int argc, char ** argv)
 {

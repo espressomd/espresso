@@ -42,7 +42,7 @@ extern Debye_hueckel_params dh_params;
 /************************************************************/
 /*@{*/
 
-MDINLINE int printdhToResult(Tcl_Interp *interp)
+MDINLINE int tclprint_to_result_dh(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   Tcl_PrintDouble(interp, dh_params.kappa, buffer);
@@ -69,7 +69,7 @@ MDINLINE int dh_set_params(double kappa, double r_cut)
   return 1;
 }
 
-MDINLINE int inter_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, char ** argv)
 {
   double kappa, r_cut;
   int i;

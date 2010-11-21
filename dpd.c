@@ -52,7 +52,7 @@ double dpd_pref4;
 static double dpd_pref4_buffer;
 #endif
 
-void dpd_parse_off(Tcl_Interp *interp, int argc, char **argv)
+void dpd_switch_off()
 {
   extern double dpd_gamma,dpd_r_cut;
   extern int dpd_wf;
@@ -108,7 +108,7 @@ void thermo_init_dpd()
 }
 
 
-int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
   extern double dpd_gamma,dpd_r_cut;
   extern int dpd_wf;
@@ -126,10 +126,10 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
 
 #ifdef ROTATION
     fprintf(stderr,"WARNING: Do not use DPD with ROTATION compiled in\n");
-    fprintf(stderr,"         You should first check if a combiantion of a DPD thermostat\n");
+    fprintf(stderr,"         You should first check if a combination of a DPD thermostat\n");
     fprintf(stderr,"         for the translational degrees of freedom and a LANGEVIN thermostat\n");
     fprintf(stderr,"         for the rotational ones yields correct physics!\n");
-    fprintf(stderr,"         After this you may remove these lines (thermostat.c::thermo_parse_dpd)!\n");
+    fprintf(stderr,"         After this you may remove these lines (thermostat.c::tclcommand_thermostat_parse_dpd)!\n");
 #endif
 
   /* check number of arguments */
@@ -261,7 +261,7 @@ int thermo_parse_dpd(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-void dpd_print(Tcl_Interp *interp)
+void tclcommand_thermostat_parse_and_print_dpd(Tcl_Interp *interp)
 {
   extern double dpd_gamma,dpd_r_cut;
   extern int dpd_wf;
@@ -290,7 +290,7 @@ void dpd_print(Tcl_Interp *interp)
 }
 
 
-void dpd_usage(Tcl_Interp *interp, int argc, char **argv)
+void tclcommand_thermostat_print_usage_dpd(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "'", argv[0], " set dpd <temp> <gamma> <r_cut> [WF <wf>]", (char *)NULL);
 #ifdef TRANS_DPD
@@ -333,20 +333,20 @@ void dpd_cool_down()
 #endif
 
 #ifdef INTER_DPD
-void interdpd_heat_up()
+void inter_dpd_heat_up()
 {
 	double pref_scale=sqrt(3);
-	interdpd_update_params(pref_scale);
+	inter_dpd_update_params(pref_scale);
 }
 
 
-void interdpd_cool_down()
+void inter_dpd_cool_down()
 {
 	double pref_scale=1.0/sqrt(3);
-	interdpd_update_params(pref_scale);
+	inter_dpd_update_params(pref_scale);
 }
 
-int printinterdpdIAToResult(Tcl_Interp *interp, int i, int j)
+int tclprint_to_result_inter_dpdIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -372,7 +372,7 @@ int printinterdpdIAToResult(Tcl_Interp *interp, int i, int j)
 }
 
 
-int interdpd_set_params(int part_type_a, int part_type_b,
+int inter_dpd_set_params(int part_type_a, int part_type_b,
 				      double gamma, double r_c, int wf,
 				      double tgamma, double tr_c,
 				      int twf)
@@ -409,7 +409,7 @@ int interdpd_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-int thermo_parse_interdpd(Tcl_Interp *interp, int argc, char ** argv)
+int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** argv)
 {
   double temp;
 
@@ -434,7 +434,7 @@ int thermo_parse_interdpd(Tcl_Interp *interp, int argc, char ** argv)
   return (TCL_OK);
 }
 
-int interdpd_parser(Tcl_Interp * interp,
+int tclcommand_inter_parse_inter_dpd(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {
@@ -470,18 +470,18 @@ int interdpd_parser(Tcl_Interp * interp,
   }
   change = 7;
 	
-  if (interdpd_set_params(part_type_a, part_type_b,
+  if (inter_dpd_set_params(part_type_a, part_type_b,
 			       gamma,r_c,wf,tgamma,tr_c,twf) == TCL_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
-  interdpd_init();
+  inter_dpd_init();
 
   return change;
 
 }
 
-void interdpd_init(){
+void inter_dpd_init(){
    extern double temperature;
    int type_a,type_b;
    IA_parameters *data;
@@ -499,7 +499,7 @@ void interdpd_init(){
    }
 }
 
-void interdpd_parse_off(){
+void inter_dpd_switch_off(void){
    int type_a,type_b;
    IA_parameters *data;
    for (type_a=0;type_a<n_particle_types;type_a++){
@@ -513,7 +513,7 @@ void interdpd_parse_off(){
    }
 }
 
-void interdpd_update_params(double pref_scale)
+void inter_dpd_update_params(double pref_scale)
 {
    int type_a,type_b;
    IA_parameters *data;

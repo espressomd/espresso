@@ -58,7 +58,7 @@ MDINLINE int checkIfParticlesInteractViaMolCut_partcfg(Particle *p1, Particle *p
    return 0;
 }
 
-MDINLINE int printmolcutIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_molcutIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -94,7 +94,7 @@ MDINLINE int molcut_set_params(int part_type_a, int part_type_b,int mol_cut_type
   return TCL_OK;
 }
 
-MDINLINE int molcut_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_molcut(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

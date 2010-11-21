@@ -434,7 +434,7 @@ MDINLINE void add_kinetic_energy(Particle *p1)
 }
 
 /** implementation of analyze energy */
-int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 
