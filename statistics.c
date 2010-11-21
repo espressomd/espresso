@@ -397,6 +397,72 @@ void  momentofinertiamatrix(int type, double *MofImatrix)
   return;
 }
 
+void calc_gyration_tensor(int type, double **_gt)
+{
+  int i, j, count;
+  double com[3];
+  double eva[3],eve0[3],eve1[3],eve2[3];
+  double *gt=NULL, tmp;
+  double M;
+  double Smatrix[9],p1[3];
+
+  for (i=0; i<9; i++) Smatrix[i] = 0;
+  *_gt = gt = realloc(gt,16*sizeof(double)); /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
+  M=0.0;
+
+  updatePartCfg(WITHOUT_BONDS);
+
+  /* Calculate the position of COM */
+  centermass(type,com);
+
+  /* Calculate the gyration tensor Smatrix */
+  count=0;
+  for (i=0;i<n_total_particles;i++) {
+    if ((partCfg[i].p.type == type) || (type == -1)) {
+      for ( j=0; j<3 ; j++ ) { 
+        p1[j] = partCfg[i].r.p[j] - com[j];
+      }
+      count ++;
+      Smatrix[0] += p1[0]*p1[0];
+      Smatrix[1] += p1[0]*p1[1];
+      Smatrix[2] += p1[0]*p1[2];
+      Smatrix[4] += p1[1]*p1[1];
+      Smatrix[5] += p1[1]*p1[2];
+      Smatrix[8] += p1[2]*p1[2];
+    }
+  }
+  /* use symmetry */
+  Smatrix[3]=Smatrix[1];
+  Smatrix[6]=Smatrix[2];
+  Smatrix[7]=Smatrix[5];
+  for (i=0;i<9;i++){
+    Smatrix[i] /= count;
+  }
+
+  /* Calculate the eigenvalues of Smatrix */
+  i=calc_eigenvalues_3x3(Smatrix, eva);
+  tmp=0.0;
+  for (i=0;i<3;i++) {
+    /* Eigenvalues */
+    gt[i] = eva[i];
+    tmp += eva[i];
+  }
+  
+  i=calc_eigenvector_3x3(Smatrix,eva[0],eve0); 
+  i=calc_eigenvector_3x3(Smatrix,eva[1],eve1); 
+  i=calc_eigenvector_3x3(Smatrix,eva[2],eve2); 
+  gt[3] = tmp; /* Squared Radius of Gyration */
+  gt[4] = eva[0]-0.5*(eva[1]+eva[2]);  /* Asphericity */
+  gt[5] = eva[1]-eva[2];  /* Acylindricity */
+  gt[6] = (gt[4]*gt[4]+0.75*gt[5]*gt[5])/(gt[3]*gt[3]); /* Relative shape anisotropy */
+  /* Eigenvectors */
+  for (j=0;j<3;j++) {
+    gt[7+j]=eve0[j]; 
+    gt[10+j]=eve1[j];
+    gt[13+j]=eve2[j];
+  }
+}
+
 
 void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
 {
@@ -2320,6 +2386,65 @@ static int parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv
   return TCL_OK;
 }
 
+static int parse_gyration_tensor(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze gyration_tensor' */
+  char buffer[6*TCL_DOUBLE_SPACE+10];
+  double *gt;
+  int type;
+  /* parse arguments */
+  if (argc == 0) {
+    /* Calculate gyration tensor for all particles in the system */
+    type = -1;
+  }
+  else if (argc == 1) {
+    /* Calculate gyration tensor for a specific type of particles */
+    if (!ARG0_IS_I(type)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze gyration_tensor [<typeid>]", (char *)NULL);
+      return (TCL_ERROR);
+    }
+    else if ( type < 0 || type >= n_particle_types ) {
+      Tcl_ResetResult(interp);
+      sprintf(buffer,"%d",type);
+      Tcl_AppendResult(interp, "Particle type ", buffer, " does not exist!", (char *)NULL);
+      return (TCL_ERROR);
+    }
+  } 
+  else {
+    Tcl_AppendResult(interp, "usage: analyze gyration_tensor [<typeid>]", (char *)NULL);
+    return (TCL_ERROR);
+  } 
+  calc_gyration_tensor(type,&gt);
+  
+  Tcl_ResetResult(interp);
+  sprintf(buffer,"%f",gt[3]); /* Squared Radius of Gyration */
+  Tcl_AppendResult(interp, "{ Rg^2 ",buffer," } ");
+
+  sprintf(buffer,"%f %f %f",gt[4],gt[5],gt[6]); /* Shape descriptors */
+  Tcl_AppendResult(interp, "{ shape ",buffer," } ");
+
+  sprintf(buffer,"%f",gt[0]); /* Eigenvalue 0 */
+  Tcl_AppendResult(interp, "{ eva0 ",buffer," : ");
+  sprintf(buffer,"%f %f %f",gt[7],gt[8],gt[9]); /* Eigenvector of eva0 */
+  Tcl_AppendResult(interp, buffer," } ");
+
+  sprintf(buffer,"%f",gt[1]); /* Eigenvalue 1 */
+  Tcl_AppendResult(interp, "{ eva1 ",buffer," : ");
+  sprintf(buffer,"%f %f %f",gt[10],gt[11],gt[12]); /* Eigenvector of eva1 */
+  Tcl_AppendResult(interp, buffer," } ");
+
+  sprintf(buffer,"%f",gt[2]); /* Eigenvalue 2 */
+  Tcl_AppendResult(interp, "{ eva2 ",buffer," : ");
+  sprintf(buffer,"%f %f %f",gt[13],gt[14],gt[15]); /* Eigenvector of eva2 */
+  Tcl_AppendResult(interp, buffer," }");
+
+  free(gt);
+  return (TCL_OK);
+}
+
+
+
 static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze find_principal_axis [<type0>]' */
@@ -3644,6 +3769,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
   REGISTER_ANALYSIS("MSD",parse_MSD);
   REGISTER_ANALYSIS("dipmom_normal",parse_and_print_dipole);
   REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
+  REGISTER_ANALYSIS("gyration_tensor", parse_gyration_tensor);
   REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
   REGISTER_ANALYSIS("nbhood", parse_nbhood);
   REGISTER_ANALYSIS("distto", parse_distto);
