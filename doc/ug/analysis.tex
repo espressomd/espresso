@@ -221,6 +221,20 @@ of given type \var{typeid}. The output is a list of all the elements
 of the 3x3 matrix. Variant \variant{2} returns the eigenvalues and
 eigenvectors of the matrix.
 
+\subsection{Gyration tensor}
+\label{analyze:gyration-tensor}
+\analyzeindex{gyration tensor}
+
+\begin{essyntax}
+  analyze gyration\_tensor \opt{\var{typeid}} 
+\end{essyntax}
+Analyze the gyration tensor of particles of a given type \var{typeid},
+or of all particles in the system if no type is given.
+Returns a tcl-list containing the squared radius of gyration,
+ three shape discriptors (asphericity, acylindricity,
+ and relative shape anisotropy), eigenvalues of the gyration tensor and their
+corresponding eigenvectors. The eigenvalues are sorted in descending order.
+
 \subsection{Aggregation}
 \label{analyze:aggregation}
 \analyzeindex{aggregation}

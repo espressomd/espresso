@@ -120,8 +120,10 @@ MDINLINE double add_ewald_coulomb_pair_force(Particle *p1, Particle *p2,
 					   double *d,double dist2,double dist,double force[3])
 {
   int j;
-  double fac1,fac2, adist, erfc_part_ri, fac=0.; /*TODO: (BUG) fac was not declared, now code compiles but its value (0) is arbitrary */
-
+  double fac1,fac2, adist, erfc_part_ri;
+#ifdef ONEPART_DEBUG
+  double fac=0.; /*TODO: (BUG) fac was not declared, now code compiles but its value (0) is arbitrary */
+#endif 
   if(dist < ewald.r_cut) {
     adist = ewald.alpha * dist;
 #if USE_ERFC_APPROXIMATION

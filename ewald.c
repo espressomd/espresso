@@ -430,9 +430,13 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
   Cell *cell;
   Particle *p;
   int i,j,c,np,k,kx,ky,kz;
-  int y,z,d_rs=0; /* TODO: d_rs was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it. */
+  int y,z;
   double rclx, rcly, rclz, sps, spc;
-  double fact,tf,tfc,tfs,db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it */ 
+  double fact,tf,tfc,tfs;
+#ifdef ONEPART_DEBUG
+  int d_rs=0; /* TODO: d_rs and db_fsum were missing and code couldn't compile. Now they have the arbitrary value of 0, fix it. */
+  double db_fsum=0;
+#endif
   /* Prefactor for force */
   double q,force_prefac;
   /* k space energy */

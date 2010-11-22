@@ -688,7 +688,10 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
   Cell *cell;
   Particle *p;
   int i,c,np,i0,i1,i2;
-  double q,db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it. */ 
+  double q;
+#ifdef ONEPART_DEBUG
+  double db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now it has the arbitrary value of 0, fix it. */ 
+#endif
   /* charged particle counter, charge fraction counter */
   int cp_cnt=0, cf_cnt=0;
   /* index, index jumps for rs_mesh array */

@@ -884,7 +884,9 @@ static void P3M_assign_torques(double prefac, int d_rs)
   int q_ind;
   int q_m_off = (Dlm.dim[2] - p3m.Dcao);
   int q_s_off = Dlm.dim[2] * (Dlm.dim[1] - p3m.Dcao);
+#ifdef ONEPART_DEBUG
   double db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now the arbitrary value of 0 is assigned to it, please check.*/ 
+#endif
 
   cp_cnt=0; cf_cnt=0;
   for (c = 0; c < local_cells.n; c++) {
@@ -939,7 +941,9 @@ static void DP3M_assign_forces_dip(double prefac, int d_rs)
 {
   Cell *cell;
   Particle *p;
+#ifdef ONEPART_DEBUG
   double db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now the arbitrary value of 0 is assigned to it, please check.*/ 
+#endif
   int i,c,np,i0,i1,i2;
   /* particle counter, charge fraction counter */
   int cp_cnt=0, cf_cnt=0;

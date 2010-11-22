@@ -612,6 +612,8 @@ typedef struct {
   double n[3];
   /** distance of the wall from the origin. */
   double d;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -622,6 +624,8 @@ typedef struct {
   double rad;  
   /** sphere direction. (+1 outside -1 inside interaction direction)*/
   double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_sphere;
 
 /** Parameters for a CYLINDER constraint. */
@@ -636,6 +640,8 @@ typedef struct {
   double length;
   /** cylinder direction. (+1 outside -1 inside interaction direction)*/
   double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_cylinder;
 
 /** Parameters for a PORE constraint. */
@@ -678,6 +684,8 @@ typedef struct {
   double sphrad;
   /** cylinder (connecting the spheres) radius*/
   double cylrad;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_maze;
 
 //ER
