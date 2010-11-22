@@ -23,7 +23,7 @@
 #include "constraint.h"
 
 #ifdef CONSTRAINTS
-int printConstraintToResult(Tcl_Interp *interp, int i)
+static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
 {
   Constraint *con = &constraints[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -163,19 +163,19 @@ int printConstraintToResult(Tcl_Interp *interp, int i)
   return (TCL_OK);
 }
 
-int constraint_print_all(Tcl_Interp *interp)
+int tclcommand_constraint_print(Tcl_Interp *interp)
 {
   int i;
   if(n_constraints>0) Tcl_AppendResult(interp, "{", (char *)NULL);
   for (i = 0; i < n_constraints; i++) {
     if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
-    printConstraintToResult(interp, i);
+    tclprint_to_result_Constraint(interp, i);
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
   return (TCL_OK);
 }
 
-void printConstraintForceToResult(Tcl_Interp *interp, int con)
+void tclprint_to_result_ConstraintForce(Tcl_Interp *interp, int con)
 {
   double f[3];
   char buffer[TCL_DOUBLE_SPACE];
@@ -200,7 +200,7 @@ Constraint *generate_constraint()
   return &constraints[n_constraints-1];
 }
 
-int constraint_wall(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
   int i;
@@ -270,7 +270,7 @@ int constraint_wall(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int constraint_sphere(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
 {
   con->type = CONSTRAINT_SPH;
@@ -351,7 +351,7 @@ int constraint_sphere(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *interp,
 			int argc, char **argv)
 {
   double axis_len;
@@ -469,7 +469,7 @@ int constraint_cylinder(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int constraint_pore(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
   double axis_len;
@@ -563,7 +563,7 @@ int constraint_pore(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int constraint_rod(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_rod(Constraint *con, Tcl_Interp *interp,
 		   int argc, char **argv)
 {
   con->type = CONSTRAINT_ROD;
@@ -604,7 +604,7 @@ int constraint_rod(Constraint *con, Tcl_Interp *interp,
   return (TCL_OK);
 }
 
-int constraint_plate(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_plate(Constraint *con, Tcl_Interp *interp,
 		     int argc, char **argv)
 {
   con->type = CONSTRAINT_PLATE;
@@ -637,7 +637,7 @@ int constraint_plate(Constraint *con, Tcl_Interp *interp,
 }
 
 
-int constraint_maze(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
 {
   con->type = CONSTRAINT_MAZE;
@@ -721,7 +721,7 @@ int constraint_maze(Constraint *con, Tcl_Interp *interp,
 }
 
 //ER
-int constraint_ext_magn_field(Constraint *con, Tcl_Interp *interp,
+int tclcommand_constraint_parse_ext_magn_field(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
 {
   int i;
@@ -745,7 +745,7 @@ int constraint_ext_magn_field(Constraint *con, Tcl_Interp *interp,
 }
 //end ER
 
-int constraint_plane(Constraint *con, Tcl_Interp *interp,
+static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *interp,
                       int argc, char **argv)
 {
   con->type = CONSTRAINT_PLANE;
@@ -793,49 +793,49 @@ int constraint_plane(Constraint *con, Tcl_Interp *interp,
 #endif
 
 
-int constraint(ClientData _data, Tcl_Interp *interp,
+int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
 #ifdef CONSTRAINTS
   int status, c_num;
 
-  if (argc < 2) return constraint_print_all(interp);
+  if (argc < 2) return tclcommand_constraint_print(interp);
   
   if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
-    status = constraint_wall(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_wall(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
-    status = constraint_sphere(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_sphere(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
-    status = constraint_cylinder(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_cylinder(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "rod", strlen(argv[1]))) {
-    status = constraint_rod(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_rod(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "plate", strlen(argv[1]))) {
-    status = constraint_plate(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_plate(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "maze", strlen(argv[1]))) {
-    status = constraint_maze(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_maze(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
-    status = constraint_pore(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_pore(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   //ER
   else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
-    status = constraint_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   else if(!strncmp(argv[1], "plane cell", strlen(argv[1]))) {
-    status = constraint_plane(generate_constraint(),interp, argc - 2, argv + 2);
+    status = tclcommand_constraint_parse_plane_cell(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
   //end ER
@@ -849,7 +849,7 @@ int constraint(ClientData _data, Tcl_Interp *interp,
       Tcl_AppendResult(interp, "constraint does not exist",(char *) NULL);
       return (TCL_ERROR);
     }
-    printConstraintForceToResult(interp, c_num);
+    tclprint_to_result_ConstraintForce(interp, c_num);
     status  = TCL_OK;
   }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
@@ -869,7 +869,7 @@ int constraint(ClientData _data, Tcl_Interp *interp,
     }
   }
   else if (argc == 2 && Tcl_GetInt(interp, argv[1], &c_num) == TCL_OK) {
-    printConstraintToResult(interp, c_num);
+    tclprint_to_result_Constraint(interp, c_num);
     status = TCL_OK;
   }
   else {

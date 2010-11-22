@@ -64,6 +64,8 @@ extern void Drealloc_ca_fields(int newsize);
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+/* dipolar p3m parser */
+int tclcommand_inter_magnetic_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
@@ -73,80 +75,13 @@ void  P3M_init_dipoles(void);
 /** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
 void P3M_scaleby_box_l_dipoles();
 
-
-/// parse the optimization parameters of p3m and the tuner
-int Dinter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
-
-/// parse the basic p3m parameters
-int Dinter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
-
-
 /// sanity checks
 int DP3M_sanity_checks();
-
-/** checks for correctness for magnetic dipoles in P3M of the cao_cut, necessary when the box length changes */
-int DP3M_sanity_checks_boxl();
-
-
-/** Tune dipolar P3M parameters to desired accuracy.
-
-    Usage:
-    \verbatim inter dipolar <bjerrum> p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim
-
-    The parameters are tuned to obtain the desired accuracy in best
-    time, by running mpi_integrate(0) for several parameter sets.
-
-    The function utilizes the analytic expression of the error estimate 
-    for the dipolar P3M method see JCP,2008 paper by J.J.Cerda et al in 
-    order to obtain the rms error in the force for a system of N randomly 
-    distributed particles in a cubic box.
-    For the real space error the estimate of Kolafa/Perram is used. 
-
-    Parameter range if not given explicit values: For \ref p3m_struct::Dr_cut_iL
-    the function uses the values (\ref min_local_box_l -\ref #skin) /
-    (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_struct::Dr_cut_iL is the largest cutoff in the system!). For \ref
-    p3m_struct::Dmesh the function uses the two values which matches best the
-    equation: number of mesh point = number of magnetic dipolar particles. For
-    \ref p3m_struct::cao the function considers all possible values.
-
-    For each setting \ref p3m_struct::Dalpha_L is calculated assuming that the
-    error contributions of real and reciprocal space should be equal.
-
-    After checking if the total error fulfils the accuracy goal the
-    time needed for one force calculation (including verlet list
-    update) is measured via \ref mpi_integrate(0).
-
-    The function returns a log of the performed tuning.
-
-    The function is based on routines for charges.
- */
-int DP3M_tune_parameters(Tcl_Interp *interp);
-
-/** a probably faster adaptive tuning method. Uses the same error estimates and parameters as
-    \ref DP3M_adaptive_tune_parameters, but a different strategy for finding the optimum. The algorithm
-    basically determines the mesh, cao and then the real space cutoff, in this nested order.
-
-    For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
-    and the algorithm tries whether increasing or decreasing it leads to a better solution. This
-    is efficient, since the optimal cao only changes little with the meshes in general.
-
-    The real space cutoff for a given mesh and cao is determined via a bisection on the error estimate,
-    which determines where the error estimate equals the required accuracy. Therefore the smallest 
-    possible, i.e. fastest real space cutoff is determined.
-
-    Both the search over mesh and cao stop to search in a specific direction once the computation time is
-    significantly higher than the currently known optimum.
-
-    Compared to \ref DP3M_tune_parameters, this function will test more parameters sets for efficiency, but
-    the error estimate is calculated less often. In general this should be faster and give better results.
- */
-int DP3M_adaptive_tune_parameters(Tcl_Interp *interp);
 
 /** assign the physical dipoles using the tabulated assignment function.
     If Dstore_ca_frac is true, then the charge fractions are buffered in Dcur_ca_fmp and
     Dcur_ca_frac. */
-void P3M_dipole_assign();
+void P3M_dipole_assign(void);
 
 
 /** compute the k-space part of forces and energies for the magnetic dipole-dipole interaction  */

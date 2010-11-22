@@ -68,12 +68,12 @@ double *meta_cur_xi      =     NULL;
 double meta_val_xi       =       0.;
 double *meta_apply_direction = NULL;
 
-int metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   int err = TCL_OK;
 
   /* print metadynamics status */
-  if(argc == 1) return meta_print(interp);
+  if(argc == 1) return tclcommand_metadynamics_print_status(interp);
 
   if ( ARG1_IS_S("set") )          {
     argc--;
@@ -81,28 +81,28 @@ int metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc == 1) {
       Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
-      return meta_usage(interp, argc, argv);
+      return tclcommand_metadynamics_print_usage(interp, argc, argv);
     }
   }
   if ( ARG1_IS_S("off") )
-    err = meta_parse_off(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_off(interp, argc, argv);
   else if ( ARG1_IS_S("distance"))
-    err = meta_parse_distance(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_distance(interp, argc, argv);
   else if ( ARG1_IS_S("relative_z"))
-    err = meta_parse_relative_z(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_relative_z(interp, argc, argv);
   else if ( ARG1_IS_S("print_stat"))
-    err = meta_print_stat(interp, argc, argv);
+    err = tclcommand_metadynamics_print_stat(interp, argc, argv);
   else if ( ARG1_IS_S("load_stat"))
-    err = meta_parse_stat(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_load_stat(interp, argc, argv);
   else {
     Tcl_AppendResult(interp, "Unknown metadynamics command ", argv[1], "\n", (char *)NULL);
-    return meta_usage(interp, argc, argv);
+    return tclcommand_metadynamics_print_usage(interp, argc, argv);
   }
   return mpi_gather_runtime_errors(interp, err);
 }
 
 
-int meta_print(Tcl_Interp *interp)
+int tclcommand_metadynamics_print_status(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   /* metadynamics not initialized */
@@ -160,7 +160,7 @@ int meta_print(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-int meta_usage(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_print_usage(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "Usage of tcl-command metadynamics:\n", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], "' for status return or \n ", (char *)NULL);
@@ -175,7 +175,7 @@ int meta_usage(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_ERROR);
 }
 
-int meta_parse_off(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_parse_off(Tcl_Interp *interp, int argc, char **argv)
 {
   /* set pids to -1 - invalidates the algorithm */
   meta_pid1 = -1;
@@ -186,7 +186,7 @@ int meta_parse_off(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-int meta_parse_distance(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **argv)
 {
   int    pid1, pid2, dbins;
   double dmin, dmax, bheight, bwidth, fbound;
@@ -234,7 +234,7 @@ int meta_parse_distance(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int meta_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
 {
   int    pid1, pid2, dbins;
   double dmin, dmax, bheight, bwidth, fbound;
@@ -282,7 +282,7 @@ int meta_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int meta_print_stat(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_print_stat(Tcl_Interp *interp, int argc, char **argv)
 {
   int j;
   char buffer[TCL_DOUBLE_SPACE];
@@ -322,7 +322,7 @@ int meta_print_stat(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv){
+int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char **argv){
   /* Parse free energy profile and biased force that were provided from an 
    * earlier simulation. Allows one to restart from a loaded state, and can 
    * even be used to allow multiple walkers communicating their data through TCL. */

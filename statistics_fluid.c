@@ -138,7 +138,7 @@ void lb_calc_velocity_profile(double *velprof, int vcomp, int pdir, int x1, int 
   }
 
 }
-
+/* TODO: This function is not used anywhere. To be removed?  */
 /** Fourier transform the stress tensor into k-space using FFTW */
 static void lb_calc_fourier_pi() {
 
@@ -167,7 +167,7 @@ static void lb_calc_fourier_pi() {
 
 /***********************************************************************/
 
-int parse_analyze_fluid_mass(Tcl_Interp *interp, int argc, char** argv) {
+static int tclcommand_analyze_fluid_parse_mass(Tcl_Interp *interp, int argc, char** argv) {
   char buffer[TCL_DOUBLE_SPACE];
   double mass;
 
@@ -179,7 +179,7 @@ int parse_analyze_fluid_mass(Tcl_Interp *interp, int argc, char** argv) {
   return TCL_OK;
 }
 
-int parse_analyze_fluid_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
+static int tclcommand_analyze_fluid_parse_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
   char buffer[TCL_DOUBLE_SPACE];
   double mom[3];
 
@@ -195,7 +195,7 @@ int parse_analyze_fluid_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
   return TCL_OK;
 }
 
-int parse_analyze_fluid_temp(Tcl_Interp *interp, int argc, char *argv[]) {
+static int tclcommand_analyze_fluid_parse_temp(Tcl_Interp *interp, int argc, char *argv[]) {
   char buffer[TCL_DOUBLE_SPACE];
   double temp;
 
@@ -207,7 +207,7 @@ int parse_analyze_fluid_temp(Tcl_Interp *interp, int argc, char *argv[]) {
   return TCL_OK;
 }
 
-int parse_analyze_fluid_velprof(Tcl_Interp *interp, int argc, char **argv) {
+static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, char **argv) {
     int i, pdir, vcomp, x1, x2;
     char buffer[TCL_DOUBLE_SPACE];
     double *velprof;
@@ -253,7 +253,7 @@ int parse_analyze_fluid_velprof(Tcl_Interp *interp, int argc, char **argv) {
 }
 
 /** Parser for fluid related analysis functions. */
-int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
     int err = TCL_ERROR;
 
     if (argc==0) {
@@ -262,13 +262,13 @@ int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv) {
     } 
 
     if (ARG0_IS_S("mass"))
-      err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_mass(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("momentum"))
-      err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_momentum(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("temperature"))
-      err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_temp(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("velprof"))
-      err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_velprof(interp, argc - 1, argv + 1);
     else {
 	Tcl_AppendResult(interp, "unkown feature \"", argv[0], "\" of analyze fluid", (char *)NULL);
 	return TCL_ERROR;

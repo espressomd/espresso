@@ -60,14 +60,14 @@
 */
 #ifdef DAWAANR
 
-int  printDAWAANRToResult(Tcl_Interp *interp){
+int  tclprint_to_result_DAWAANR(Tcl_Interp *interp){
   Tcl_AppendResult(interp, " dawaanr ", (char *) NULL);
   return TCL_OK;
 }
 
 /************************************************************/
 
-int Dinter_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv)
 {
     
   if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
@@ -343,7 +343,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
 
 int  Ncut_off_magnetic_dipolar_direct_sum=0;
 
-int printMagnetic_dipolar_direct_sum_ToResult(Tcl_Interp *interp){
+int tclprint_to_result_Magnetic_dipolar_direct_sum_(Tcl_Interp *interp){
   char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_AppendResult(interp, " mdds ", buffer, (char *) NULL);
@@ -355,7 +355,7 @@ int printMagnetic_dipolar_direct_sum_ToResult(Tcl_Interp *interp){
 
 /************************************************************/
 
-int Dinter_parse_magnetic_dipolar_direct_sum(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_mdds(Tcl_Interp * interp, int argc, char ** argv)
 {
   int  n_cut=-1;
    

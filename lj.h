@@ -29,7 +29,7 @@
 #ifdef LENNARD_JONES
 #include "mol_cut.h"
 
-MDINLINE int printljIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -111,7 +111,7 @@ MDINLINE int lennard_jones_set_params(int part_type_a, int part_type_b,
 }
 
 /// parser for the forcecap
-MDINLINE int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -145,7 +145,7 @@ MDINLINE int inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
   return TCL_ERROR;
 }
 
-MDINLINE int lj_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_lj(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

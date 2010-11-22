@@ -70,7 +70,7 @@ double min_distance2(double pos1[3], double pos2[3])
 
 /** Parses a reference point, i.e. either three doubles representing a
     position, or a particle id. */
-static int get_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
+static int tclcommand_analyze_parse_reference_point(Tcl_Interp *interp, int *argc, char ***argv,
 			       double pos[3], int *pid)
 {
   *pid = -1;
@@ -666,7 +666,7 @@ void calc_part_distribution(int *p1_types, int n_p1, int *p2_types, int n_p2,
   for(i=0;i<r_bins;i++) dist[i] /= (double)cnt;
 }
 
-void calc_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
+void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type,int bins,double given_max)
 {
    int i,j,p_count,dist_count,ind;
    double min,max,bin_width,inv_bin_width,com[3],vel;
@@ -1485,7 +1485,8 @@ void invalidate_obs()
  *                                 basic observables parsing
  ****************************************************************************************/
 
-static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
+/* TODO: not used anywhere. To be removed? */
+static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[10 + 3*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i,change ;
@@ -1569,7 +1570,7 @@ static int parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 
 #ifdef MODES
 
-static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i,change ;
@@ -1603,7 +1604,7 @@ static int parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 
 }
 
-static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 {
   STAT_TRACE(fprintf(stderr,"%d,parsing modes2d height grid \n",this_node);)
     /* 'analyze modes2d' */
@@ -1671,7 +1672,7 @@ static int parse_modes2d(Tcl_Interp *interp, int argc, char **argv)
 
 }
 
-static int parse_bilayer_set(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_bilayer_set(Tcl_Interp *interp, int argc, char **argv)
 {
   int change;
   change = 0;
@@ -1708,7 +1709,7 @@ static int parse_bilayer_set(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze radial density profile ' */
   char buffer[TCL_DOUBLE_SPACE+256];
@@ -1882,7 +1883,7 @@ static int parse_radial_density_map(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze bilayer density profile ' */
   char buffer[TCL_DOUBLE_SPACE];
@@ -2007,7 +2008,7 @@ static int parse_bilayer_density_profile(Tcl_Interp *interp, int argc, char **ar
   return TCL_OK;
 }
 
-static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze lipid_orient_order ' */
   double result;
@@ -2062,7 +2063,7 @@ static int parse_lipid_orient_order(Tcl_Interp *interp, int argc, char **argv)
 
 #endif
 
-static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
   char buffer[256 + 3*TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE];
@@ -2177,7 +2178,7 @@ static int parse_aggregation(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_mindist(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze mindist [<type_list_a> <type_list_b>]' */
   double result;
@@ -2218,7 +2219,7 @@ static int parse_mindist(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_centermass(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze centermass [<type>]' */
   double com[3];
@@ -2244,7 +2245,7 @@ static int parse_centermass(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_angularmomentum(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_angularmomentum(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze angularmomentum [<type>]' */
   double com[3];
@@ -2283,7 +2284,7 @@ void mark_neighbours(int type,int pa_nr,double dist,int *list){
   }
 }
 
-static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze cluster_size_dist [<type>]' */
   char buffer[3*TCL_DOUBLE_SPACE+3];
@@ -2359,7 +2360,7 @@ static int parse_cluster_size_dist(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze  momentofinertiamatrix [<type>]' */
   double MofImatrix[9];
@@ -2386,7 +2387,7 @@ static int parse_momentofinertiamatrix(Tcl_Interp *interp, int argc, char **argv
   return TCL_OK;
 }
 
-static int parse_gyration_tensor(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze gyration_tensor' */
   char buffer[6*TCL_DOUBLE_SPACE+10];
@@ -2443,9 +2444,7 @@ static int parse_gyration_tensor(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-
-
-static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze find_principal_axis [<type0>]' */
   double MofImatrix[9],eva[3],eve[3];
@@ -2477,7 +2476,7 @@ static int parse_find_principal_axis(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze nbhood [-planar <x> <y> <z>] { <partid> | <posx> <posy> <posz> } <r_catch> ' */
   int p, i;
@@ -2523,7 +2522,7 @@ static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
   }
 
   /* Process obligatory arguments */
-  get_reference_point(interp, &argc, &argv, pos, &p);
+  tclcommand_analyze_parse_reference_point(interp, &argc, &argv, pos, &p);
   if (!ARG0_IS_D(r_catch)) {
     Tcl_AppendResult(interp, "usage: nbhood [planar <x> <y> <z>] { <partid> | <posx> <posy> <posz> } <r_catch> ",
 		     (char *)NULL);    
@@ -2544,7 +2543,7 @@ static int parse_nbhood(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_distto(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze distto { <part_id> | <posx> <posy> <posz> }' */
   double result;
@@ -2564,7 +2563,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  get_reference_point(interp, &argc, &argv, pos, &p);
+  tclcommand_analyze_parse_reference_point(interp, &argc, &argv, pos, &p);
   if (argc != 0) {
     Tcl_AppendResult(interp, "usage: ", usage, (char *)NULL);
     return TCL_ERROR;
@@ -2580,7 +2579,7 @@ static int parse_distto(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_cell_gpb(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_cell_gpb(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze cell_gpb <Manning parameter> <outer cell radius> <inner cell radius> [<accuracy> [<# of interations>]]' */
   double result[3] = {0, 0, 0}, xi_m, Rc, ro;
@@ -2628,7 +2627,7 @@ static int parse_cell_gpb(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze Vkappa [{ reset | read | set <Vk1> <Vk2> <avk> }]' */
   double result = 0.0;
@@ -2662,7 +2661,7 @@ static int parse_Vkappa(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_distribution(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_distribution(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze distribution { <part_type_list_a> } { <part_type_list_b> } [<r_min> [<r_max> [<r_bins> [<log_flag> [<int_flag>]]]]]' */
   /*********************************************************************************************************************************/
@@ -2752,7 +2751,7 @@ static int parse_distribution(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-static int parse_vel_distr(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_vel_distr(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze vel_distr [<type>]' */
   char buffer[3*TCL_DOUBLE_SPACE+3];
@@ -2791,12 +2790,12 @@ static int parse_vel_distr(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%i %i %f",p1,bins,max);
   Tcl_AppendResult(interp, "{ analyze vel_distr ",buffer,"} ",(char *)NULL);
   updatePartCfg(WITHOUT_BONDS);
-  calc_vel_distr(interp,p1,bins,max);
+  tclcommand_analyze_print_vel_distr(interp,p1,bins,max);
 
   return TCL_OK;
 }
 
-static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
+static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze rdf' (radial distribution function) */
   /************************************************/
@@ -2936,7 +2935,7 @@ static int parse_rdf(Tcl_Interp *interp, int average, int argc, char **argv)
 }
 
 
-int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze { stucturefactor } <type> <order>' */
   /***********************************************************************************************************/
@@ -2968,7 +2967,7 @@ int parse_structurefactor(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
 {
    /* 'analyze <density_profile> [<n_bin> <density> <dir> <number of conf> <type>]' */
   int n_conf;
@@ -3036,7 +3035,7 @@ static int parse_density_profile_av(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
+static int tclcommand_analyze_parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
 {
   int i;
   int nbins, n_part, n_conf, time, type, dir;
@@ -3095,7 +3094,7 @@ static int parse_diffusion_profile(Tcl_Interp *interp, int argc, char **argv )
 
 
 
-static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze vanhove' (van Hove Auto correlation function) */
   /**********************************************************/
@@ -3187,7 +3186,7 @@ static int parse_vanhove(Tcl_Interp *interp, int argc, char **argv)
  *                                 parser for config storage stuff
  ****************************************************************************************/
 
-static int parse_append(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_append(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze append' */
   /********************/
@@ -3206,7 +3205,7 @@ static int parse_append(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
-static int parse_push(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_push(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze push [<size>]' */
   /*****************************/
@@ -3232,7 +3231,7 @@ static int parse_push(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
-static int parse_replace(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_replace(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze replace <index>' */
   /*****************************/
@@ -3259,7 +3258,7 @@ static int parse_replace(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
-static int parse_remove(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_remove(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze remove [<index>]' */
   /******************************/
@@ -3283,7 +3282,7 @@ static int parse_remove(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
-static int parse_stored(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_stored(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze stored' */
   /********************/
@@ -3297,7 +3296,7 @@ static int parse_stored(Tcl_Interp *interp, int argc, char **argv)
   return TCL_OK;
 }
 
-static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_configs(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze configs [ { <which> | <configuration> } ]' */
   /*******************************************************/
@@ -3342,7 +3341,7 @@ static int parse_configs(Tcl_Interp *interp, int argc, char **argv)
   return TCL_ERROR;
 }
 
-static int parse_activate(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_activate(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze replace <index>' */
   /*****************************/
@@ -3369,7 +3368,7 @@ static int parse_activate(Tcl_Interp *interp, int argc, char **argv)
   sprintf(buffer,"%d",n_configs); Tcl_AppendResult(interp, buffer, (char *)NULL); return TCL_OK;
 }
 
-static int parse_mol(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_mol(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze mol <"com" or "force"> <molecule id>' */
   /**************************************************/
@@ -3427,7 +3426,7 @@ static int parse_mol(Tcl_Interp *interp, int argc, char **argv)
 #endif
 }
 
-static int parse_and_print_momentum(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_and_print_momentum(Tcl_Interp *interp, int argc, char **argv)
 {
     char buffer[TCL_DOUBLE_SPACE];
     double momentum[3] = { 0., 0., 0. };
@@ -3541,7 +3540,7 @@ void centermass_conf(int k, int type_1, double *com)
   return;
 }
 
-double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf)
+double tclcommand_analyze_print_MSD(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf)
 {
   int i,j,k;
   double  p1[3],p2[3],p_com[3],p_x[n_configs],p_y[n_configs],p_z[n_configs];
@@ -3601,7 +3600,7 @@ double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n
   return D;
 }
 
-static int parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
+static int tclcommand_analyze_parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
 {
    int i,k;
    char buffer[TCL_DOUBLE_SPACE];
@@ -3609,7 +3608,7 @@ static int parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    for (i=0;i<3;i++)
@@ -3636,7 +3635,7 @@ static int parse_and_print_dipole(Tcl_Interp *interp,int argc, char **argv)
    return TCL_OK;
 }
 
-static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
+static int tclcommand_analyze_parse_MSD(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze MSD [ <type_m> <n_time_steps>]' */
   int n_time_steps;
@@ -3683,13 +3682,13 @@ static int parse_MSD(Tcl_Interp *interp, int argc, char **argv)
   
   sprintf(buffer,"%i %i %i",type_m,n_time_steps,n_configs);
   Tcl_AppendResult(interp, "{ analyze MSD ",buffer," } {\n",(char *)NULL);
-  D=calc_diffusion_coef(interp,type_m, n_time_steps,n_conf);
+  D=tclcommand_analyze_print_MSD(interp,type_m, n_time_steps,n_conf);
   sprintf(buffer,"%e",D);
   Tcl_AppendResult(interp, "}\n{approx. D=",buffer,"}", (char *)NULL);
   return TCL_OK;
 }
 
-static int parse_and_print_energy_kinetic(Tcl_Interp *interp,int argc, char **argv)
+static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,int argc, char **argv)
 {
    int i,type;
    char buffer[TCL_DOUBLE_SPACE];
@@ -3722,7 +3721,7 @@ static int parse_and_print_energy_kinetic(Tcl_Interp *interp,int argc, char **ar
  *                                 main parser for analyze
  ****************************************************************************************/
 
-int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   int err = TCL_OK;
   if (argc < 2) {
@@ -3746,91 +3745,90 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   /* for the elses below */
   if (0);
-
-  REGISTER_ANALYZE_OPTION("set", parse_analyze_set_topology);
+  REGISTER_ANALYZE_OPTION("set", tclcommand_analyze_parse_set);
 #ifdef LB
-  REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
+  REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
-  REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
+  REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
 #ifdef MODES
-  REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);
-  REGISTER_ANALYSIS("modes2d", parse_modes2d);
-  REGISTER_ANALYSIS("bilayer_density_profile", parse_bilayer_density_profile);
-  REGISTER_ANALYSIS("radial_density_map", parse_radial_density_map);
-  REGISTER_ANALYSIS("get_lipid_orients", parse_get_lipid_orients);
-  REGISTER_ANALYSIS("lipid_orient_order", parse_lipid_orient_order);
+  REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
+  REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);
+  REGISTER_ANALYSIS("bilayer_density_profile", tclcommand_analyze_parse_bilayer_density_profile);
+  REGISTER_ANALYSIS("radial_density_map", tclcommand_analyze_parse_radial_density_map);
+  REGISTER_ANALYSIS("get_lipid_orients", tclcommand_analyze_parse_get_lipid_orients);
+  REGISTER_ANALYSIS("lipid_orient_order", tclcommand_analyze_parse_lipid_orient_order);
 #endif
-  REGISTER_ANALYSIS("mol", parse_mol);
-  REGISTER_ANALYSIS("cluster_size_dist", parse_cluster_size_dist);
-  REGISTER_ANALYSIS("mindist", parse_mindist);
-  REGISTER_ANALYSIS("aggregation", parse_aggregation);
-  REGISTER_ANALYSIS("centermass", parse_centermass);
-  REGISTER_ANALYSIS("angularmomentum",parse_angularmomentum);
-  REGISTER_ANALYSIS("MSD",parse_MSD);
-  REGISTER_ANALYSIS("dipmom_normal",parse_and_print_dipole);
-  REGISTER_ANALYSIS("momentofinertiamatrix", parse_momentofinertiamatrix);
-  REGISTER_ANALYSIS("gyration_tensor", parse_gyration_tensor);
-  REGISTER_ANALYSIS("find_principal_axis", parse_find_principal_axis);
-  REGISTER_ANALYSIS("nbhood", parse_nbhood);
-  REGISTER_ANALYSIS("distto", parse_distto);
-  REGISTER_ANALYSIS("cell_gpb", parse_cell_gpb);
-  REGISTER_ANALYSIS("Vkappa", parse_Vkappa);
-  REGISTER_ANALYSIS("energy", parse_and_print_energy);
-  REGISTER_ANALYSIS("energy_kinetic", parse_and_print_energy_kinetic);
-  REGISTER_ANALYSIS_W_ARG("pressure", parse_and_print_pressure, 0);
+  REGISTER_ANALYSIS("mol", tclcommand_analyze_parse_mol);
+  REGISTER_ANALYSIS("cluster_size_dist", tclcommand_analyze_parse_cluster_size_dist);
+  REGISTER_ANALYSIS("mindist", tclcommand_analyze_parse_mindist);
+  REGISTER_ANALYSIS("aggregation", tclcommand_analyze_parse_aggregation);
+  REGISTER_ANALYSIS("centermass", tclcommand_analyze_parse_centermass);
+  REGISTER_ANALYSIS("angularmomentum", tclcommand_analyze_parse_angularmomentum);
+  REGISTER_ANALYSIS("MSD", tclcommand_analyze_parse_MSD);
+  REGISTER_ANALYSIS("dipmom_normal", tclcommand_analyze_parse_and_print_dipole);
+  REGISTER_ANALYSIS("momentofinertiamatrix", tclcommand_analyze_parse_momentofinertiamatrix);
+  REGISTER_ANALYSIS("gyration_tensor", tclcommand_analyze_parse_gyration_tensor);
+  REGISTER_ANALYSIS("find_principal_axis", tclcommand_analyze_parse_find_principal_axis);
+  REGISTER_ANALYSIS("nbhood", tclcommand_analyze_parse_nbhood);
+  REGISTER_ANALYSIS("distto", tclcommand_analyze_parse_distto);
+  REGISTER_ANALYSIS("cell_gpb", tclcommand_analyze_parse_cell_gpb);
+  REGISTER_ANALYSIS("Vkappa", tclcommand_analyze_parse_Vkappa);
+  REGISTER_ANALYSIS("energy", tclcommand_analyze_parse_and_print_energy);
+  REGISTER_ANALYSIS("energy_kinetic", tclcommand_analyze_parse_and_print_energy_kinetic);
+  REGISTER_ANALYSIS_W_ARG("pressure", tclcommand_analyze_parse_and_print_pressure, 0);
 #ifdef VIRTUAL_SITES
-  REGISTER_ANALYSIS("energy_kinetic_mol",parse_and_print_energy_kinetic_mol);
-  REGISTER_ANALYSIS("pressure_mol",  parse_and_print_pressure_mol);
-  REGISTER_ANALYSIS("check_mol",  parse_and_check_mol_pos);
-  REGISTER_ANALYSIS("dipmom_mol",  parse_and_print_dipole_mol);
+  REGISTER_ANALYSIS("energy_kinetic_mol", tclcommand_analyze_parse_and_print_energy_kinetic_mol);
+  REGISTER_ANALYSIS("pressure_mol", tclcommand_analyze_parse_and_print_pressure_mol);
+  REGISTER_ANALYSIS("check_mol", tclcommand_analyze_parse_and_print_check_mol);
+  REGISTER_ANALYSIS("dipmom_mol", tclcommand_analyze_parse_and_print_dipmom_mol);
 #endif
-  REGISTER_ANALYSIS_W_ARG("stress_tensor", parse_and_print_stress_tensor, 0);
-  REGISTER_ANALYSIS("local_stress_tensor", parse_local_stress_tensor);
-  REGISTER_ANALYSIS_W_ARG("p_inst", parse_and_print_pressure, 1);
-  REGISTER_ANALYSIS("momentum", parse_and_print_momentum);
-  REGISTER_ANALYSIS("bins", parse_bins);
-  REGISTER_ANALYSIS("p_IK1", parse_and_print_p_IK1);
-  REGISTER_ANALYSIS_W_ARG("re", parse_re, 0);
-  REGISTER_ANALYSIS_W_ARG("<re>", parse_re, 1);
-  REGISTER_ANALYSIS_W_ARG("rg", parse_rg, 0);
-  REGISTER_ANALYSIS_W_ARG("<rg>", parse_rg, 1);
-  REGISTER_ANALYSIS_W_ARG("rh", parse_rh, 0);
-  REGISTER_ANALYSIS_W_ARG("<rh>", parse_rh, 1);
-  REGISTER_ANALYSIS_W_ARG("internal_dist", parse_intdist, 0);
-  REGISTER_ANALYSIS_W_ARG("<internal_dist>", parse_intdist, 1);
-  REGISTER_ANALYSIS_W_ARG("bond_l", parse_bond_l, 0);
-  REGISTER_ANALYSIS_W_ARG("<bond_l>", parse_bond_l, 1);
-  REGISTER_ANALYSIS_W_ARG("bond_dist", parse_bond_dist, 0);
-  REGISTER_ANALYSIS_W_ARG("<bond_dist>", parse_bond_dist, 1);
-  REGISTER_ANALYSIS_W_ARG("g123", parse_g123, 1);    
-  REGISTER_ANALYSIS_W_ARG("<g1>", parse_g_av, 1);    
-  REGISTER_ANALYSIS_W_ARG("<g2>", parse_g_av, 2);    
-  REGISTER_ANALYSIS_W_ARG("<g3>", parse_g_av, 3);
-  REGISTER_ANALYSIS_W_ARG("formfactor", parse_formfactor, 0);
-  REGISTER_ANALYSIS_W_ARG("<formfactor>", parse_formfactor, 1);    
-  REGISTER_ANALYSIS("necklace", parse_necklace_analyzation);   
-  REGISTER_ANALYSIS("holes", parse_hole_cluster_analyzation);   
-  REGISTER_ANALYSIS("distribution", parse_distribution);
-  REGISTER_ANALYSIS("vel_distr", parse_vel_distr);
-  REGISTER_ANALYSIS_W_ARG("rdf", parse_rdf, 0);
-  REGISTER_ANALYSIS_W_ARG("<rdf>", parse_rdf, 1);
-  REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", parse_rdf, 2);
-  REGISTER_ANALYSIS_W_ARG("<rdf-adress>", parse_rdf, 3);
-  REGISTER_ANALYSIS("rdfchain", parse_rdfchain);
+  REGISTER_ANALYSIS_W_ARG("stress_tensor", tclcommand_analyze_parse_and_print_stress_tensor, 0);
+  REGISTER_ANALYSIS("local_stress_tensor", tclcommand_analyze_parse_local_stress_tensor);
+  REGISTER_ANALYSIS_W_ARG("p_inst", tclcommand_analyze_parse_and_print_pressure, 1);
+  REGISTER_ANALYSIS("momentum", tclcommand_analyze_parse_and_print_momentum);
+  REGISTER_ANALYSIS("bins", tclcommand_analyze_parse_bins);
+  REGISTER_ANALYSIS("p_IK1", tclcommand_analyze_parse_and_print_p_IK1);
+  REGISTER_ANALYSIS_W_ARG("re", tclcommand_analyze_parse_re, 0);
+  REGISTER_ANALYSIS_W_ARG("<re>", tclcommand_analyze_parse_re, 1);
+  REGISTER_ANALYSIS_W_ARG("rg", tclcommand_analyze_parse_rg, 0);
+  REGISTER_ANALYSIS_W_ARG("<rg>", tclcommand_analyze_parse_rg, 1);
+  REGISTER_ANALYSIS_W_ARG("rh", tclcommand_analyze_parse_rh, 0);
+  REGISTER_ANALYSIS_W_ARG("<rh>", tclcommand_analyze_parse_rh, 1);
+  REGISTER_ANALYSIS_W_ARG("internal_dist", tclcommand_analyze_parse_internal_dist, 0);
+  REGISTER_ANALYSIS_W_ARG("<internal_dist>", tclcommand_analyze_parse_internal_dist, 1);
+  REGISTER_ANALYSIS_W_ARG("bond_l", tclcommand_analyze_parse_bond_l, 0);
+  REGISTER_ANALYSIS_W_ARG("<bond_l>", tclcommand_analyze_parse_bond_l, 1);
+  REGISTER_ANALYSIS_W_ARG("bond_dist", tclcommand_analyze_parse_bond_dist, 0);
+  REGISTER_ANALYSIS_W_ARG("<bond_dist>", tclcommand_analyze_parse_bond_dist, 1);
+  REGISTER_ANALYSIS_W_ARG("g123", tclcommand_analyze_parse_g123, 1);    
+  REGISTER_ANALYSIS_W_ARG("<g1>", tclcommand_analyze_parse_g_av, 1);    
+  REGISTER_ANALYSIS_W_ARG("<g2>", tclcommand_analyze_parse_g_av, 2);    
+  REGISTER_ANALYSIS_W_ARG("<g3>", tclcommand_analyze_parse_g_av, 3);
+  REGISTER_ANALYSIS_W_ARG("formfactor", tclcommand_analyze_parse_formfactor, 0);
+  REGISTER_ANALYSIS_W_ARG("<formfactor>", tclcommand_analyze_parse_formfactor, 1);    
+  REGISTER_ANALYSIS("necklace", tclcommand_analyze_parse_necklace);  
+  REGISTER_ANALYSIS("holes", tclcommand_analyze_parse_holes);   
+  REGISTER_ANALYSIS("distribution", tclcommand_analyze_parse_distribution);
+  REGISTER_ANALYSIS("vel_distr", tclcommand_analyze_parse_vel_distr);
+  REGISTER_ANALYSIS_W_ARG("rdf", tclcommand_analyze_parse_rdf, 0);
+  REGISTER_ANALYSIS_W_ARG("<rdf>", tclcommand_analyze_parse_rdf, 1);
+  REGISTER_ANALYSIS_W_ARG("<rdf-intermol>", tclcommand_analyze_parse_rdf, 2);
+  REGISTER_ANALYSIS_W_ARG("<rdf-adress>", tclcommand_analyze_parse_rdf, 3);
+  REGISTER_ANALYSIS("rdfchain", tclcommand_analyze_parse_rdfchain);
 #ifdef ELECTROSTATICS
-  REGISTER_ANALYSIS("cwvac", parse_cwvac);
+  REGISTER_ANALYSIS("cwvac", tclcommand_analyze_parse_cwvac);
 #endif
-  REGISTER_ANALYSIS("structurefactor", parse_structurefactor);
-  REGISTER_ANALYSIS("<density_profile>", parse_density_profile_av);
-  REGISTER_ANALYSIS("<diffusion_profile>", parse_diffusion_profile);
-  REGISTER_ANALYSIS("vanhove", parse_vanhove);
-  REGISTER_ANALYZE_STORAGE("append", parse_append);
-  REGISTER_ANALYZE_STORAGE("push", parse_push);
-  REGISTER_ANALYZE_STORAGE("replace", parse_replace);
-  REGISTER_ANALYZE_STORAGE("activate", parse_activate);
-  REGISTER_ANALYZE_STORAGE("remove", parse_remove);
-  REGISTER_ANALYZE_STORAGE("stored", parse_stored);
-  REGISTER_ANALYZE_STORAGE("configs", parse_configs);
+  REGISTER_ANALYSIS("structurefactor", tclcommand_analyze_parse_structurefactor);
+  REGISTER_ANALYSIS("<density_profile>", tclcommand_analyze_parse_density_profile_av);
+  REGISTER_ANALYSIS("<diffusion_profile>", tclcommand_analyze_parse_diffusion_profile);
+  REGISTER_ANALYSIS("vanhove", tclcommand_analyze_parse_vanhove);
+  REGISTER_ANALYZE_STORAGE("append", tclcommand_analyze_parse_append);
+  REGISTER_ANALYZE_STORAGE("push", tclcommand_analyze_parse_push);
+  REGISTER_ANALYZE_STORAGE("replace", tclcommand_analyze_parse_replace);
+  REGISTER_ANALYZE_STORAGE("activate", tclcommand_analyze_parse_activate);
+  REGISTER_ANALYZE_STORAGE("remove", tclcommand_analyze_parse_remove);
+  REGISTER_ANALYZE_STORAGE("stored", tclcommand_analyze_parse_stored);
+  REGISTER_ANALYZE_STORAGE("configs", tclcommand_analyze_parse_configs);
   else {
     /* the default */
     /***************/

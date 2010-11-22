@@ -107,7 +107,7 @@ int bcast_iccp3m_cfg(void);
 
                  iterate         = Indicates that a previous surface discretization shall be used. T
 */
-int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Calculation of the electrostatic forces between source charges (= real charges) and wall charges.
  *  For each electrostatic method the proper functions for short and long range parts are called.
@@ -144,10 +144,6 @@ void nsq_calculate_ia_iccp3m();
 /** The main iterative scheme, where the surface element charges are calculated self-consistently. 
  */
 int iccp3m_iteration();
-
-/** What is this?  */
-int inter_parse_iccp3m(Tcl_Interp * interp, int argc, char ** argv);
-int gettime(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** The initialisation of ICCP3M with zero values for all variables 
  */

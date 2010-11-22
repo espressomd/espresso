@@ -43,7 +43,7 @@ MDINLINE int fene_set_params(int bond_type, double k, double drmax, double r0)
 }
 
 /// parse parameters for the fene potential
-MDINLINE int inter_parse_fene(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_fene(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double k, drmax, r0;
 

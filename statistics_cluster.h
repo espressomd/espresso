@@ -53,7 +53,7 @@
     chain itself is defined by the identity first of its first monomer
     and the chain length length.
 */
-int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_necklace(Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for Hole cluster algorithm
     \verbatim analyze holes <prob_part_type_number> <mesh_size> \endverbatim
@@ -64,6 +64,6 @@ int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv);
     defined through LJ interactions with the other existing particle
     types via the inter command before calling this routine.
 */
-int parse_hole_cluster_analyzation(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_holes(Tcl_Interp *interp, int argc, char **argv);
 
 #endif

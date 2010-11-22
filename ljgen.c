@@ -36,7 +36,7 @@
 #include "communication.h"
 #include "parser.h"
 
-int printljgenIAToResult(Tcl_Interp *interp, int i, int j)
+int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -110,7 +110,7 @@ static int ljgen_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-int ljgen_parser(Tcl_Interp * interp,
+int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

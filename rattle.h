@@ -50,7 +50,7 @@ void correct_vel_shake();
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);
 
 /// parse parameters for the rigid bonds
-MDINLINE int inter_parse_rigid_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_rigid_bond(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double d, p_tol, v_tol;
     

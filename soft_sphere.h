@@ -28,7 +28,7 @@
 
 #ifdef SOFT_SPHERE
 
-MDINLINE int printsoftIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_softIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -89,7 +89,7 @@ MDINLINE int soft_sphere_set_params(int part_type_a, int part_type_b,
 
 
 
-MDINLINE int soft_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_soft(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

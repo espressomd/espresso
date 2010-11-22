@@ -834,17 +834,14 @@ void tf_tables_init();
 /** Implementation of the tcl command \ref tcl_inter. This function
     allows the interaction parameters to be modified.
  */
-int inter(ClientData data, Tcl_Interp *interp,
+int tclcommand_inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
 /** Implementation of the Tcl function constraint. This function
     allows to set and delete constraints.
  */
-int constraint(ClientData _data, Tcl_Interp *interp,
+int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
-
-/** Callback for setmd niatypes. */
-int niatypes_callback(Tcl_Interp *interp, void *data);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {

@@ -148,10 +148,10 @@ double calc_gauss_res();
 int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv);
 
 /// print the maggs parameters to the interpreters result
-int printMaggsToResult(Tcl_Interp *interp);
+int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 /// parse the basic maggs parameters
-int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
 
 ///
 int Maggs_sanity_checks();

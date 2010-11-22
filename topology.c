@@ -70,7 +70,7 @@ void realloc_topology(int size)
 
 }
 
-int print_structure_info(Tcl_Interp *interp)
+int tclcommand_analyze_set_print_all(Tcl_Interp *interp)
 {
   char buffer[TCL_INTEGER_SPACE + 2];
   int m, i;
@@ -86,7 +86,7 @@ int print_structure_info(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int parse_generic_structure_info(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_generic_structure(Tcl_Interp *interp, int argc, char **argv)
 {
   int arg;
   IntList il;
@@ -129,7 +129,7 @@ void sync_topo_part_info() {
 
 }
 
-int parse_sync_topo_part_info(Tcl_Interp *interp) {
+int tclcommand_analyze_set_parse_topo_part_sync(Tcl_Interp *interp) {
   int i,j,ntopoparts;
 
   if (n_molecules <= 0) {
@@ -189,7 +189,7 @@ int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double 
   return TCL_ERROR;
 }
 
-int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_set_parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
 {
 
 #ifdef MOLFORCES
@@ -325,25 +325,25 @@ int parse_trapmol(Tcl_Interp *interp, int argc, char **argv)
   
 }
 
-int parse_analyze_set_topology(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv)
 {
   if (argc == 0)
-    return print_structure_info(interp);
+    return tclcommand_analyze_set_print_all(interp);
 
   if (ARG0_IS_S("chains")) {
-    return parse_chain_structure_info(interp, argc - 1, argv + 1);
+    return tclcommand_analyze_set_parse_chain_topology(interp, argc - 1, argv + 1);
   } else if (ARG0_IS_S("topo_part_sync")) {
 
-    return parse_sync_topo_part_info(interp);
+    return tclcommand_analyze_set_parse_topo_part_sync(interp);
   } else if (ARG0_IS_S("trapmol")) {
 #ifndef MOLFORCES
     Tcl_AppendResult(interp, "Attempt to trap molecule, but MOLFORCES was not defined.  Turn on MOLFORCES in config.h", (char *)NULL);
     return TCL_ERROR;
 #else
-    return parse_trapmol(interp, argc - 1, argv + 1);
+    return tclcommand_analyze_set_parse_trapmol(interp, argc - 1, argv + 1);
 #endif
   } 
-  return parse_generic_structure_info(interp, argc, argv);
+  return tclcommand_analyze_parse_generic_structure(interp, argc, argv);
 }
 
 

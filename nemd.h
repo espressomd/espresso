@@ -128,7 +128,7 @@ extern int nemd_method;
     USAGE: nemd \<n_slabs\> \<n_exchange\>   
     see also \ref tcl_nemd
 */
-int nemd(ClientData data, Tcl_Interp *interp,
+int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
 #ifdef NEMD 

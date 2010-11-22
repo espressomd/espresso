@@ -105,7 +105,7 @@ extern int n_part_conf;
 /** Implements the Tcl command \ref tcl_analyze. This allows for basic system analysis,
     both online and offline.
 */
-int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** EXPERIMENTAL: Implements the Tcl command \ref tcl_acf for online calculation of autocorrelation functions. */
 int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
@@ -354,7 +354,7 @@ void centermass_conf(int k, int type_1, double *com);
  *  \param n_time_steps number of timestep between saved configurations
  *  \param n_conf  number of saved contributions taken into account
  */
-double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf);
+double tclcommand_analyze_print_MSD(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf);
 
 void momentofinertiamatrix(int type, double *MofImatrix);
 void calc_gyration_tensor(int type, double **gt);

@@ -51,11 +51,11 @@ extern Observable_stat_non_bonded p_tensor_non_bonded;
 /*@{*/
 
 /** Callback for setting \ref nptiso_struct::piston */
-int piston_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_npt_piston(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref nptiso_struct::p_ext */
-int p_ext_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_p_ext(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref nptiso_struct::p_diff */
-int p_diff_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_npt_p_diff(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here the data about the scalar pressure are stored
@@ -543,20 +543,20 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT. */
-int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 /** Implementation of 'analyze bins' */
-int parse_bins(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_bins(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze p_IK1' */
-int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze stress_tensor' */
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 /** implementation of 'analyse local_stress_tensor */
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
-int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 
