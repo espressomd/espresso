@@ -357,6 +357,7 @@ void centermass_conf(int k, int type_1, double *com);
 double calc_diffusion_coef(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf);
 
 void momentofinertiamatrix(int type, double *MofImatrix);
+void calc_gyration_tensor(int type, double **gt);
 void calculate_verlet_neighbors();
 
 /** returns the momentum of the particles in the simulation box.
