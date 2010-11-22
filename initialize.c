@@ -94,7 +94,7 @@ int on_program_start(Tcl_Interp *interp)
   init_bit_random();
 
   setup_node_grid();
-  /* calculate initial minimimal number of cells (see min_num_cells_callback) */
+  /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
   cells_pre_init();
@@ -679,72 +679,72 @@ static void init_tcl(Tcl_Interp *interp)
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
   /* in cells.c */
-  REGISTER_COMMAND("cellsystem", cellsystem);
+  REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
   /* in integrate.c */
-  REGISTER_COMMAND("invalidate_system", invalidate_system);
-  REGISTER_COMMAND("integrate", integrate);
+  REGISTER_COMMAND("invalidate_system", tclcommand_invalidate_system);
+  REGISTER_COMMAND("integrate", tclcommand_integrate);
   /* in global.c */
-  REGISTER_COMMAND("setmd", setmd);
+  REGISTER_COMMAND("setmd", tclcommand_setmd);
   /* in grid.c */
-  REGISTER_COMMAND("change_volume", change_volume);
+  REGISTER_COMMAND("change_volume", tclcommand_change_volume);
+  /* in global.c */
+  REGISTER_COMMAND("code_info", tclcommand_code_info);
   /* in interaction_data.c */
-  REGISTER_COMMAND("code_info", code_info);
-  /* in interaction_data.c */
-  REGISTER_COMMAND("inter", inter);
+  REGISTER_COMMAND("inter",tclcommand_inter);
   /* in particle_data.c */
-  REGISTER_COMMAND("part", part);
+  REGISTER_COMMAND("part",tclcommand_part);
   /* in file binaryfile.c */
-  REGISTER_COMMAND("writemd", writemd);
-  REGISTER_COMMAND("readmd", readmd);
+  REGISTER_COMMAND("writemd", tclcommand_writemd);
+  REGISTER_COMMAND("readmd", tclcommand_readmd);
   /* in file statistics.c */
-  REGISTER_COMMAND("analyze", analyze);
+  REGISTER_COMMAND("analyze", tclcommand_analyze);
   /* in file polymer.c */
-  REGISTER_COMMAND("polymer", polymer);
-  REGISTER_COMMAND("counterions", counterions);
-  REGISTER_COMMAND("salt", salt);
-  REGISTER_COMMAND("velocities", velocities);
-  REGISTER_COMMAND("maxwell_velocities", maxwell_velocities);
-  REGISTER_COMMAND("crosslink", crosslink);
-  REGISTER_COMMAND("diamond", diamond);
-  REGISTER_COMMAND("icosaeder", icosaeder);
+  REGISTER_COMMAND("polymer", tclcommand_polymer);
+  REGISTER_COMMAND("counterions", tclcommand_counterions);
+  REGISTER_COMMAND("salt", tclcommand_salt);
+  REGISTER_COMMAND("velocities", tclcommand_velocities);
+  REGISTER_COMMAND("maxwell_velocities", tclcommand_maxwell_velocities);
+  REGISTER_COMMAND("crosslink", tclcommand_crosslink);
+  REGISTER_COMMAND("diamond", tclcommand_diamond);
+  REGISTER_COMMAND("icosaeder", tclcommand_icosaeder);
   /* in file imd.c */
-  REGISTER_COMMAND("imd", imd);
+  REGISTER_COMMAND("imd", tclcommand_imd);
   /* in file random.c */
-  REGISTER_COMMAND("t_random", t_random);
-  REGISTER_COMMAND("bit_random", bit_random);
+  REGISTER_COMMAND("t_random", tclcommand_t_random);
+  REGISTER_COMMAND("bit_random", tclcommand_bit_random);
   /* in file blockfile_tcl.c */
-  REGISTER_COMMAND("blockfile", blockfile);
+  REGISTER_COMMAND("blockfile", tclcommand_blockfile);
   /* in constraint.c */
-  REGISTER_COMMAND("constraint", constraint);
+  REGISTER_COMMAND("constraint", tclcommand_constraint);
   /* in uwerr.c */
-  REGISTER_COMMAND("uwerr", uwerr);
+  REGISTER_COMMAND("uwerr", tclcommand_uwerr);
   /* in nemd.c */
-  REGISTER_COMMAND("nemd", nemd);
+  REGISTER_COMMAND("nemd", tclcommand_nemd);
   /* in thermostat.c */
-  REGISTER_COMMAND("thermostat", thermostat);
+  REGISTER_COMMAND("thermostat", tclcommand_thermostat);
   /* in bin.c */
-  REGISTER_COMMAND("bin", bin);
+  REGISTER_COMMAND("bin", tclcommand_bin);
   /* in lb.c */
-  REGISTER_COMMAND("lbfluid", lbfluid_cmd);
+  REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
   /* in utils.h */
-  REGISTER_COMMAND("replacestdchannel", replacestdchannel);
+  REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
 #ifdef ELECTROSTATICS
 #ifdef ELP3M
-  REGISTER_COMMAND("iccp3m", iccp3m);
+  REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
 #endif 
 #endif 
   /* in adresso.h */
-  REGISTER_COMMAND("adress", adress_tcl);
+  REGISTER_COMMAND("adress", tclcommand_adress);
 #ifdef ADRESS
   /** #ifdef THERMODYNAMIC_FORCE */
-  REGISTER_COMMAND("thermodynamic_force", tf_tcl);
+  REGISTER_COMMAND("thermodynamic_force", tclcommand_thermodynamic_force);
   /** #endif */
-  REGISTER_COMMAND("update_adress_weights", manual_update_weights);
+  REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
 #endif
 #ifdef METADYNAMICS
   /* in metadynamics.c */
-  REGISTER_COMMAND("metadynamics", metadynamics);
+  REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
 #endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

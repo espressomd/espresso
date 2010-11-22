@@ -36,7 +36,7 @@ static void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int b
     dl->e[i] = min_bin*pow(max_bin/min_bin, ((double)i)/bins);
 }
 
-int bin(ClientData cdata, Tcl_Interp *interp,
+int tclcommand_bin(ClientData cdata, Tcl_Interp *interp,
 	int argc, char **argv)
 {
   DoubleList coords, data, count, sum, bins;

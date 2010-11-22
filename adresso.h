@@ -49,14 +49,14 @@ extern double adress_vars[7];
 /*@{*/
 /** Implements the Tcl command \ref tcl_adress. This allows for seetings for adress
 */
-int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-int manual_update_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 
 #ifdef ADRESS
 /** #ifdef THERMODYNAMIC_FORCE */
-int tf_parse(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
-int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
+int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 /** #endif */
 
 #ifdef INTERFACE_CORRECTION
@@ -378,7 +378,7 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
   //  mpi_tab_cap_forces(tab_force_cap);}
   return 0;
 }
-
+/* TODO: This function is not used anywhere. To be removed?  */
 MDINLINE int adress_tab_parser(Tcl_Interp * interp,
 			int part_type_a, int part_type_b,
 			int argc, char ** argv)

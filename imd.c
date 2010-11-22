@@ -321,7 +321,7 @@ int imd_recv_fcoords(void *s, int32_t n, float *coords) {
 
 /***************************** Espresso stuff ************************/
 
-int imd_drain_socket(Tcl_Interp *interp)
+int tclcommand_imd_print_drain_socket(Tcl_Interp *interp)
 {
   while (vmdsock_selread(sock,0) > 0)  {
     int32_t length;
@@ -417,7 +417,7 @@ int imd_drain_socket(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-int imd_check_connect(Tcl_Interp *interp)
+int tclcommand_imd_print_check_connect(Tcl_Interp *interp)
 {
   /* handshaking */
   if (vmdsock_selread(initsock, 0) > 0) {
@@ -448,7 +448,7 @@ int imd_check_connect(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 {
   enum flag {NONE, UNFOLDED, FOLD_CHAINS};
   double shift[3] = {0.0,0.0,0.0};
@@ -490,7 +490,7 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_OK);
   }
   if (!sock) {
-    if (imd_check_connect(interp) == TCL_ERROR)
+    if (tclcommand_imd_print_check_connect(interp) == TCL_ERROR)
       return (TCL_ERROR);
     
     /* no VMD is ok, but tell the user */
@@ -501,7 +501,7 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
     }
   }
 
-  if (imd_drain_socket(interp) == TCL_ERROR)
+  if (tclcommand_imd_print_drain_socket(interp) == TCL_ERROR)
     return (TCL_ERROR);
   
   /* we do not consider a non connected VMD as error, but tell the user */
@@ -564,7 +564,7 @@ int imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-int imd(ClientData data, Tcl_Interp *interp,
+int tclcommand_imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv)
 {
   if (argc < 2) {
@@ -650,7 +650,7 @@ int imd(ClientData data, Tcl_Interp *interp,
       return (TCL_ERROR);
 
     while (initsock && !sock && cnt--) {
-      if (imd_check_connect(interp) == TCL_ERROR)
+      if (tclcommand_imd_print_check_connect(interp) == TCL_ERROR)
 	return (TCL_ERROR);
       sleep(1);
     }
@@ -659,7 +659,7 @@ int imd(ClientData data, Tcl_Interp *interp,
       Tcl_AppendResult(interp, "no connection",
 		       (char *) NULL);
     else {
-      if (imd_drain_socket(interp) == TCL_ERROR)
+      if (tclcommand_imd_print_drain_socket(interp) == TCL_ERROR)
 	return (TCL_ERROR);
       Tcl_AppendResult(interp, "connected",
 		       (char *) NULL);
@@ -668,7 +668,7 @@ int imd(ClientData data, Tcl_Interp *interp,
   }
 
   if (ARG1_IS_S("positions")) 
-    return imd_parse_pos(interp, argc, argv);
+    return tclcommand_imd_parse_pos(interp, argc, argv);
   
   if (ARG1_IS_S("energies")) {
     Tcl_AppendResult(interp, "Sorry. imd energies not yet implemented",

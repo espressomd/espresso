@@ -54,53 +54,53 @@
 /** Read-only callback for \ref #fields.
     If you choose this, the variable cannot be
     changed by Tcl script code. */
-int ro_callback(Tcl_Interp *interp, void *data);
+int tclcallback_ro(Tcl_Interp *interp, void *data);
 
 /// List of all Tcl accessible global variables
 const Datafield fields[] = {
-  {box_l,            TYPE_DOUBLE, 3, "box_l",         boxl_callback,  1 },         /* 0  from grid.c */
-  {dd.cell_grid,        TYPE_INT, 3, "cell_grid",     ro_callback,    6 },         /* 1  from cells.c */
-  {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     ro_callback,    6 },         /* 2  from cells.c */
-  {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     ro_callback,    5 },         /* 3  from thermostat.c */
-  {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     ro_callback,    5 },         /* 4  from thermostat.c */
-  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         thermo_ro_callback, 1 },     /* 5  from thermostat.c */
-  {&integ_switch,       TYPE_INT, 1, "integ_switch",  ro_callback,    1 },         /* 6  from integrate.c */
-  {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   ro_callback,    2 },         /* 7  from global.c */
-  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       ro_callback,    5 },         /* 8  from interaction_data.c */
-  {&max_num_cells,      TYPE_INT, 1, "max_num_cells", max_num_cells_callback, 5 }, /* 9 from cells.c */
-  {&max_seen_particle,  TYPE_INT, 1, "max_part",      ro_callback,    5 },         /* 10 from particle_data.c */
-  {&max_range,       TYPE_DOUBLE, 1, "max_range",     ro_callback,    5 },         /* 11 from integrate.c */
-  {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      ro_callback,    5 },         /* 12 from integrate.c */
-  {&min_num_cells,      TYPE_INT, 1, "min_num_cells", min_num_cells_callback, 5 }, /* 13  from cells.c */
-  {&n_layers,           TYPE_INT, 1, "n_layers",      ro_callback,    3 },         /* 14 from layered.c */
-  {&n_nodes,            TYPE_INT, 1, "n_nodes",       ro_callback,    3 },         /* 15 from communication.c */
-  {&n_total_particles,  TYPE_INT, 1, "n_part",        ro_callback,    6 },         /* 16 from particle.c */
-  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  ro_callback,    8 },         /* 17 from interaction_data.c */
-  {&n_rigidbonds,       TYPE_INT, 1, "n_rigidbonds",  ro_callback,    5 },         /* 18 from rattle.c */
-  {node_grid,           TYPE_INT, 3, "node_grid",     node_grid_callback, 2 },     /* 19 from grid.c */
-  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", ro_callback,    13 },        /* 20 from thermostat.c */
-  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", ro_callback,    13 },        /* 21 from thermostat.c */
-  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     ro_callback,     7 },        /* 22 from pressure.c */
-  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    ro_callback,    10 },        /* 23 from pressure.c */
-  {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", ro_callback,    10 },        /* 24 from pressure.c */
-  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    p_diff_callback, 7 },        /* 25 from pressure.c */
-  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    piston_callback, 6 },        /* 26 from pressure.c */
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   per_callback,    1 },        /* 27 from grid.c */
-  {&skin,            TYPE_DOUBLE, 1, "skin",          skin_callback,   2 },        /* 28 from integrate.c */
-  {&temperature,     TYPE_DOUBLE, 1, "temperature",   thermo_ro_callback,   2 },   /* 29 from thermostat.c */
-  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", ro_callback,     2 },        /* 30 from thermostat.c */
-  {&sim_time,        TYPE_DOUBLE, 1, "time",          time_callback,   4 },        /* 31 from integrate.c */
-  {&time_step,       TYPE_DOUBLE, 1, "time_step",     time_step_callback, 5 },     /* 32 from integrate.c */
-  {&timing_samples,     TYPE_INT, 1, "timings",       timings_callback, 4 },       /* 33 from tuning.c */
-  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", ro_callback,     2 },        /* 34 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   ro_callback,     8 },        /* 35 from verlet.c */
-  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  ro_callback,     8 },        /* 36 from integrate.c */
-  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", ro_callback,    2 },          /* 37 from lattice.c */
-  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    ro_callback,     6 },         /* 38 from thermostat.c */
-  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",    ro_callback,     6 },         /* 39 from thermostat.c */
-  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",    ro_callback,     6 },         /* 40 from thermostat.c */
-  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",    ro_callback,     5 },         /* 41 from thermostat.c */
-  {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",ro_callback,  1 },         /* 42  from adresso.c */
+  {box_l,            TYPE_DOUBLE, 3, "box_l",         tclcallback_box_l,  1 },         /* 0  from grid.c */
+  {dd.cell_grid,        TYPE_INT, 3, "cell_grid",     tclcallback_ro,    6 },         /* 1  from cells.c */
+  {dd.cell_size,     TYPE_DOUBLE, 3, "cell_size",     tclcallback_ro,    6 },         /* 2  from cells.c */
+  {&dpd_gamma,       TYPE_DOUBLE, 1, "dpd_gamma",     tclcallback_ro,    5 },         /* 3  from thermostat.c */
+  {&dpd_r_cut,       TYPE_DOUBLE, 1, "dpd_r_cut",     tclcallback_ro,    5 },         /* 4  from thermostat.c */
+  {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         tclcallback_thermo_ro, 1 },     /* 5  from thermostat.c */
+  {&integ_switch,       TYPE_INT, 1, "integ_switch",  tclcallback_ro,    1 },         /* 6  from integrate.c */
+  {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   tclcallback_ro,    2 },         /* 7  from global.c */
+  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       tclcallback_ro,    5 },         /* 8  from interaction_data.c */
+  {&max_num_cells,      TYPE_INT, 1, "max_num_cells", tclcallback_max_num_cells, 5 }, /* 9 from cells.c */
+  {&max_seen_particle,  TYPE_INT, 1, "max_part",      tclcallback_ro,    5 },         /* 10 from particle_data.c */
+  {&max_range,       TYPE_DOUBLE, 1, "max_range",     tclcallback_ro,    5 },         /* 11 from integrate.c */
+  {&max_skin,        TYPE_DOUBLE, 1, "max_skin",      tclcallback_ro,    5 },         /* 12 from integrate.c */
+  {&min_num_cells,      TYPE_INT, 1, "min_num_cells", tclcallback_min_num_cells, 5 }, /* 13  from cells.c */
+  {&n_layers,           TYPE_INT, 1, "n_layers",      tclcallback_ro,    3 },         /* 14 from layered.c */
+  {&n_nodes,            TYPE_INT, 1, "n_nodes",       tclcallback_ro,    3 },         /* 15 from communication.c */
+  {&n_total_particles,  TYPE_INT, 1, "n_part",        tclcallback_ro,    6 },         /* 16 from particle.c */
+  {&n_particle_types,   TYPE_INT, 1, "n_part_types",  tclcallback_ro,    8 },         /* 17 from interaction_data.c */
+  {&n_rigidbonds,       TYPE_INT, 1, "n_rigidbonds",  tclcallback_ro,    5 },         /* 18 from rattle.c */
+  {node_grid,           TYPE_INT, 3, "node_grid",     tclcallback_node_grid, 2 },     /* 19 from grid.c */
+  {&nptiso_gamma0,   TYPE_DOUBLE, 1, "nptiso_gamma0", tclcallback_ro,    13 },        /* 20 from thermostat.c */
+  {&nptiso_gammav,   TYPE_DOUBLE, 1, "nptiso_gammav", tclcallback_ro,    13 },        /* 21 from thermostat.c */
+  {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     tclcallback_ro,     7 },        /* 22 from pressure.c */
+  {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    tclcallback_ro,    10 },        /* 23 from pressure.c */
+  {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", tclcallback_ro,    10 },        /* 24 from pressure.c */
+  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    tclcallback_npt_p_diff, 7 },        /* 25 from pressure.c */
+  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    tclcallback_npt_piston, 6 },        /* 26 from pressure.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   tclcallback_periodicity,    1 },        /* 27 from grid.c */
+  {&skin,            TYPE_DOUBLE, 1, "skin",          tclcallback_skin,   2 },        /* 28 from integrate.c */
+  {&temperature,     TYPE_DOUBLE, 1, "temperature",   tclcallback_thermo_ro,   2 },   /* 29 from thermostat.c */
+  {&thermo_switch,      TYPE_INT, 1, "thermo_switch", tclcallback_ro,     2 },        /* 30 from thermostat.c */
+  {&sim_time,        TYPE_DOUBLE, 1, "time",          tclcallback_time,   4 },        /* 31 from integrate.c */
+  {&time_step,       TYPE_DOUBLE, 1, "time_step",     tclcallback_time_step, 5 },     /* 32 from integrate.c */
+  {&timing_samples,     TYPE_INT, 1, "timings",       tclcallback_timings, 4 },       /* 33 from tuning.c */
+  {&transfer_rate,      TYPE_INT, 1, "transfer_rate", tclcallback_ro,     2 },        /* 34 from imd.c */
+  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   tclcallback_ro,     8 },        /* 35 from verlet.c */
+  {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  tclcallback_ro,     8 },        /* 36 from integrate.c */
+  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", tclcallback_ro,    2 },          /* 37 from lattice.c */
+  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    tclcallback_ro,     6 },         /* 38 from thermostat.c */
+  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",    tclcallback_ro,     6 },         /* 39 from thermostat.c */
+  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",    tclcallback_ro,     6 },         /* 40 from thermostat.c */
+  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",    tclcallback_ro,     5 },         /* 41 from thermostat.c */
+  {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",tclcallback_ro,  1 },         /* 42  from adresso.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 
@@ -110,13 +110,13 @@ const Datafield fields[] = {
  **********************************************/
 
 
-int ro_callback(Tcl_Interp *interp, void *data)
+int tclcallback_ro(Tcl_Interp *interp, void *data)
 {
   Tcl_AppendResult(interp, "variable is readonly", (char *)NULL);
   return (TCL_ERROR);
 }
 
-int setmd(ClientData data, Tcl_Interp *interp,
+int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
   char databuf[MAX_DIMENSION*(sizeof(int) + sizeof(double))];
@@ -226,25 +226,25 @@ int setmd(ClientData data, Tcl_Interp *interp,
   return (TCL_ERROR);
 }
 
-int code_info(ClientData data, Tcl_Interp *interp,
+int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
   if (argc < 2) {
-    version_callback(interp);
+    tclcallback_version(interp);
     Tcl_AppendResult(interp, "\n", (char *) NULL);
-    compilation_callback(interp);
+    tclcallback_compilation(interp);
     Tcl_AppendResult(interp, "\n", (char *) NULL);
-    debug_callback(interp);
+    tclcallback_debug(interp);
   }
   else {
     if(!strncmp(argv[1], "version" , strlen(argv[1]))) {
-      version_callback(interp);
+      tclcallback_version(interp);
     }
     else if(!strncmp(argv[1], "compilation" , strlen(argv[1]))) {
-      compilation_callback(interp);
+      tclcallback_compilation(interp);
     }
     else if(!strncmp(argv[1], "debug" , strlen(argv[1]))) {
-      debug_callback(interp);
+      tclcallback_debug(interp);
     }
     else {
       Tcl_AppendResult(interp, "info ",argv[1]," not known!", (char *) NULL);

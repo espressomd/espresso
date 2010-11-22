@@ -55,13 +55,13 @@ double nptiso_pref4;
 #endif
 
 
-int thermo_ro_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data)
 {
   Tcl_AppendResult(interp, "variable is readonly: use the thermostat command to set thermostat parameters.", (char *) NULL);
   return (TCL_ERROR);
 }
 
-int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 
 {
   /* set temperature to zero */
   temperature = 0;
@@ -71,10 +71,10 @@ int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv)
   mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
   /* dpd thermostat */
 #ifdef DPD
-  dpd_parse_off(interp,argc,argv);
+  dpd_switch_off();
 #endif
 #ifdef INTER_DPD
-  interdpd_parse_off();
+  inter_dpd_switch_off();
 #endif
 #ifdef NPT
   /* npt isotropic thermostat */
@@ -89,7 +89,7 @@ int thermo_parse_off(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-int thermo_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_thermostat_parse_langevin(Tcl_Interp *interp, int argc, char **argv) 
 {
   double temp, gamma;
 
@@ -122,7 +122,7 @@ int thermo_parse_langevin(Tcl_Interp *interp, int argc, char **argv)
 }
 
 #ifdef NPT
-int thermo_parse_nptiso(Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_thermostat_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv) 
 {
   double temp, gamma0, gammav;
   /* check number of arguments */
@@ -150,7 +150,7 @@ int thermo_parse_nptiso(Tcl_Interp *interp, int argc, char **argv)
 }
 #endif
 
-int thermo_print(Tcl_Interp *interp)
+int tclcommand_thermostat_print_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   /* thermostat not initialized */
@@ -175,7 +175,7 @@ int thermo_print(Tcl_Interp *interp)
     
 #ifdef DPD
  /* dpd */
-  if(thermo_switch & THERMO_DPD) { dpd_print(interp);}
+  if(thermo_switch & THERMO_DPD) { tclcommand_thermostat_parse_and_print_dpd(interp);}
 #endif
 
 #ifdef NPT
@@ -208,14 +208,14 @@ int thermo_print(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_thermostat_print_usage(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "Usage of tcl-command thermostat:\n", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], "' for status return or \n ", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], " set off' to deactivate it (=> NVE-ensemble) \n ", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], " set langevin <temp> <gamma>' or \n ", (char *)NULL);
 #ifdef DPD
-  dpd_usage(interp,argc,argv);
+  tclcommand_thermostat_print_usage_dpd(interp,argc,argv);
 #endif
 #ifdef NPT
   Tcl_AppendResult(interp, "'", argv[0], " set npt_isotropic <temp> <gamma0> <gammav>' ", (char *)NULL);
@@ -226,13 +226,13 @@ int thermo_usage(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_ERROR);
 }
 
-int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int err = TCL_OK;
   THERMO_TRACE(fprintf(stderr,"%d: thermostat:\n",this_node));
 
   /* print thermostat status */
-  if(argc == 1) return thermo_print(interp);
+  if(argc == 1) return tclcommand_thermostat_print_all(interp);
   
   if ( ARG1_IS_S("set") )          {
     argc--;
@@ -240,32 +240,32 @@ int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc == 1) {
       Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
-      return thermo_usage(interp, argc, argv);
+      return tclcommand_thermostat_print_usage(interp, argc, argv);
     }
   }
   if ( ARG1_IS_S("off") )
-    err = thermo_parse_off(interp, argc, argv);
+    err = tclcommand_thermostat_parse_off(interp, argc, argv);
   else if ( ARG1_IS_S("langevin"))
-    err = thermo_parse_langevin(interp, argc, argv);
+    err = tclcommand_thermostat_parse_langevin(interp, argc, argv);
 #ifdef DPD
   else if ( ARG1_IS_S("dpd") )
-    err = thermo_parse_dpd(interp, argc, argv);
+    err = tclcommand_thermostat_parse_dpd(interp, argc, argv);
 #endif
 #ifdef INTER_DPD
   else if ( ARG1_IS_S("inter_dpd") )
-    err = thermo_parse_interdpd(interp, argc, argv);
+    err = tclcommand_thermostat_parse_inter_dpd(interp, argc, argv);
 #endif
 #ifdef NPT
   else if ( ARG1_IS_S("npt_isotropic") )
-    err = thermo_parse_nptiso(interp, argc, argv);
+    err = tclcommand_thermostat_parse_npt_isotropic(interp, argc, argv);
 #endif
 #ifdef LB
   else if ( ARG1_IS_S("lb") )
-    err = thermo_parse_lb(interp, argc-1, argv+1);
+    err = tclcommand_thermostat_parse_lb(interp, argc-1, argv+1);
 #endif
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
-    return thermo_usage(interp, argc, argv);
+    return tclcommand_thermostat_print_usage(interp, argc, argv);
   }
   return mpi_gather_runtime_errors(interp, err);
 }
@@ -308,7 +308,7 @@ void thermo_init()
     return;
   }
 #ifdef INTER_DPD
-  if(thermo_switch & THERMO_INTER_DPD)  interdpd_init();
+  if(thermo_switch & THERMO_INTER_DPD)  inter_dpd_init();
 #endif
   if(thermo_switch & THERMO_LANGEVIN ) thermo_init_langevin();
 #ifdef DPD
@@ -331,7 +331,7 @@ void thermo_heat_up()
   else if (thermo_switch & THERMO_DPD){dpd_heat_up();}
 #endif
 #ifdef INTER_DPD
-  else if (thermo_switch & THERMO_INTER_DPD) {interdpd_heat_up();}
+  else if (thermo_switch & THERMO_INTER_DPD) {inter_dpd_heat_up();}
 #endif
 }
 
@@ -345,11 +345,11 @@ void thermo_cool_down()
   else if (thermo_switch & THERMO_DPD){dpd_cool_down();}
 #endif
 #ifdef INTER_DPD
-  else if (thermo_switch & THERMO_INTER_DPD) interdpd_cool_down();
+  else if (thermo_switch & THERMO_INTER_DPD) inter_dpd_cool_down();
 #endif
 }
 
-int thermo_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
+int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
 #ifdef LB
   double temp;

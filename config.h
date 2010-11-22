@@ -92,11 +92,15 @@
 
 //inter_rf needs ELECTROSTATICS
 #ifdef INTER_RF
+#ifndef ELECTROSTATICS
 #define ELECTROSTATICS
+#endif
 #endif
 
 #ifdef GAY_BERNE
+#ifndef ROTATION
 #define ROTATION
+#endif
 #endif
 
 /* activate P3M only with FFTW */
@@ -108,18 +112,24 @@
 /* activate dipolar P3M only with FFTW */
 #if defined(MAGNETOSTATICS) && defined(FFTW)
 #define ELP3M
+#ifndef DIPOLES
 #define DIPOLES
+#endif
 #endif
 
 
 /* MAGNETOSTATICS implies the use of DIPOLES */
 #if defined(MAGNETOSTATICS)
+#ifndef DIPOLES
 #define DIPOLES
+#endif
 #endif
 
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
 #ifdef LB_ELECTROHYDRODYNAMICS
+#ifndef LB
 #define LB
+#endif
 #endif
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
@@ -131,26 +141,36 @@
 
 //adress needs mol_cut
 #ifdef ADRESS
+#ifndef MOL_CUT
 #define MOL_CUT
+#endif
 #endif
 
 //mol_cut needs virtual sites
 #ifdef MOL_CUT
+#ifndef VIRTUAL_SITES
 #define VIRTUAL_SITES
+#endif
 #endif
 
 #if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
+#ifndef DPD_MASS
 #define DPD_MASS
+#endif
 #endif
 
 /*DPD with mass needs MASS and DPD */
 #ifdef DPD_MASS
+#ifndef MASS
 #define MASS
+#endif
 #endif
 
 /*Transversal DPD -> needs normal DPD*/
 #ifdef TRANS_DPD
+#ifndef DPD
 #define DPD
+#endif
 #endif
 
 /* If any bond angle potential is activated, actiavte the whole bond angle code */
@@ -176,10 +196,10 @@
 #include <tcl.h>
 
 /** callback for version status. */
-int version_callback(Tcl_Interp *interp);
+int tclcallback_version(Tcl_Interp *interp);
 
 /** callback for compilation status. */
-int compilation_callback(Tcl_Interp *interp);
+int tclcallback_compilation(Tcl_Interp *interp);
 /*@}*/
 
 #endif

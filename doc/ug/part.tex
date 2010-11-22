@@ -529,23 +529,23 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \begin{essyntax}
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
-  dist \var{d} type \var{id}
+  dist \var{d} type \var{id} penetrable \var{flag}
   
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
-  radius \var{rad} direction \var{direction} type \var{id} 
+  radius \var{rad} direction \var{direction} type \var{id} \opt{penetrable \var{flag}} 
   
   \variant{3}
   constraint cylinder center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
   radius \var{rad} length \var{length} 
   direction \var{direction} 
-  type \var{id} 
+  type \var{id}  \opt{penetrable \var{flag}}
   
   \variant{4}
   constraint maze nsphere \var{n} 
   dim \var{d} sphrad \var{r_s} cylrad \var{r_c}
-  type \var{id}
+  type \var{id} \opt{penetrable \var{flag}}
   
   \variant{5}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
@@ -591,7 +591,10 @@ identified like a particle via its type for the non-bonded interaction.
 After a type is defined for each constraint one has
 to define
 the interaction of all different particle types with the constraint using
-the \codebox{inter} command.
+the \codebox{inter} command. In vatiants \variant{1} to \variant{4}, constraints
+ are able to be penetrated if \var{flag} is set to 1. Otherwise, when the
+ penetrable option is ignored or \var{flag} is set to 0, the constraint
+ cannot be violated, i.e. no particle can go through the constraint surface.
 
 Variants \variant{6} and \variant{7} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the

@@ -97,7 +97,7 @@ extern int topo_part_info_synced;
     particle list. */    
 void realloc_topology(int new_size);
 
-int parse_analyze_set_topology(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 
 void sync_topo_part_info();
 /*@}*/

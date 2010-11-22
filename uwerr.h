@@ -29,5 +29,5 @@
 
 /** The C implementation of the tcl function uwerr \ref tcl_uwerr.
 */
-int uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 #endif

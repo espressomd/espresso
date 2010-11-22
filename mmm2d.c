@@ -1838,7 +1838,7 @@ void MMM2D_self_energy()
  * COMMON PARTS
  ****************************************/
 
-int printMMM2DToResult(Tcl_Interp *interp)
+int tclprint_to_result_MMM2D(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -1857,7 +1857,7 @@ int printMMM2DToResult(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
 {
   int err;
   double maxPWerror;

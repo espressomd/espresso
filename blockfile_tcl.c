@@ -30,7 +30,7 @@
 #include "blockfile_tcl.h"
 #include "communication.h"
 
-int blockfile(ClientData data, Tcl_Interp *interp,
+int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char *argv[])
 {
   char title[MAXBLOCKTITLE];

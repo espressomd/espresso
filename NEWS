@@ -1,11 +1,53 @@
-ESPResSo news
--------------
+=================
+= ESPRESSO NEWS =
+=================
 
-* Noteworthy changes in the current development version:
+NOTEWORTHY CHANGES SINCE v2.2.0b
+================================
 
-** The license was upgraded to GPLv3.
+User-visible changes
+--------------------
 
-** The whole package was adapted to GNU standards.
+* The home page of ESPReSso has been relocated to
+
+    http://espressomd.org
+
+* The mailing list and source code repository have been moved to GNU
+  Savannah. Furthermore, we have a bugtracker now. The development
+  homepage is 
+
+    https://savannah.nongnu.org/projects/espressomd
+
+* The maintenance of ESPResSo has been relocated from Torsten Stühn
+  from the Max-Planck-Institute for Polymer Research at Mainz to 
+
+    Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+  from the Institute for Computational Physics at Stuttgart University.
+
+* The old "ESPResSo license" was removed, as it was not really a
+  license, but only contained additions that were either non-binding
+  or already contained in the GPL.
+
+* The license was upgraded to GPLv3.
+
+* The package was adapted to GNU standards. RELEASE_NOTES was moved
+  aside to old/RELEASE_NOTES, instead, we will have the files
+  ChangeLog and NEWS. NEWS will contain a description of the most
+  noteworthy changes since the last release.
+
+* Constraints have been made penetrable.
+
+Changes visible for developers
+------------------------------
+
+* The source code repository has been moved from CVS to git, and it
+  has moved to GNU Savannah (see above).
+
+* All functions that represent the interface to Tcl should follow the
+  same naming conventions. These are described here:
+
+    git log 3d4d6f31655a8d96e47c8f80e10f27f6b764f8df
 
 ========================================================================
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
