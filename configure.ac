@@ -118,10 +118,15 @@ cat <<EOF
 *                   Other settings                             *
 ****************************************************************
 EOF
-ES_INIT_CHOOSER
 ES_INIT_MYCONFIG
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
-toolsdir='${pkglibdir}/tools'
+scriptsdir='${pkgdatadir}/scripts'
+AC_SUBST(scriptsdir)
+dnl AC_DEFINE_UNQUOTED(SCRIPTSDIR_INSTALLED, 
+dnl 	  $pkgdatadir/scripts, [installation directory for Tcl init scripts])
+dnl AC_DEFINE_UNQUOTED(SCRIPTSDIR_BUILD,
+dnl 	  `pwd`/scripts, [build directory of Tcl init scripts])
+toolsdir='${pkgdatadir}/tools'
 AC_SUBST(toolsdir)
 
 cat <<EOF
@@ -145,12 +150,9 @@ AC_CONFIG_FILES([
 	doc/tutorials/tut2/Makefile 
 	doc/tutorials/tut2/figures/Makefile 
 	config/$myconfig:config/myconfig-default.h.in
-	chooser/Espresso mpiwrap/Espresso
 	])
 AC_CONFIG_FILES([testsuite/test.sh],
 	[chmod 755 testsuite/test.sh])
-AC_CONFIG_FILES([Espresso],
-	[chmod 755 Espresso])
 
 AC_OUTPUT
 
@@ -204,7 +206,6 @@ cat <<EOF
 
 Other settings:
 ---------------
-using Espresso chooser	= $enable_chooser
 local config header	= $myconfig
 installation prefix	= $prefix
 pdflatex		= $PDFLATEX
@@ -213,6 +214,11 @@ bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 EOF
 
+if test x$with_cuda != xno; then
+   echo "using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS"
+else
+   echo "CUDA disabled or not supported"
+fi
 
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."

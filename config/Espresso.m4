@@ -16,27 +16,6 @@ dnl GNU General Public License for more details.
 dnl  
 dnl You should have received a copy of the GNU General Public License
 dnl along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-AC_DEFUN([ES_INIT_CHOOSER],[
-	# test whether to use the chooser or not
-	AC_ARG_ENABLE(chooser,
-		AC_HELP_STRING([--enable-chooser],
-			[create a chooser for the Espresso binary [[no]]]
-			),
-		,[enable_chooser=no])
-	AC_MSG_CHECKING([whether to enable the chooser])
-	if test .$enable_chooser = .yes; then
-	   AC_MSG_RESULT(yes)
-	   execpkglibdir='${pkglibdir}'/obj-`$srcdir/config/config.guess`
-	   scriptsdir='${pkglibdir}/scripts'
-	else
-	   AC_MSG_RESULT(no)
-	   scriptsdir='${pkgdatadir}/scripts'
-	fi
-	AM_CONDITIONAL(USE_CHOOSER, test .$enable_chooser = .yes)
-	AC_SUBST(scriptsdir)
-	AC_SUBST(execpkglibdir)
-])
-
 AC_DEFUN([ES_INIT_MYCONFIG],[
 	# Handling the myconfig-header
 	AC_ARG_WITH(myconfig, 
