@@ -251,16 +251,16 @@ AC_DEFUN([ES_ADDPATH_CHECK_HEADER],[
 	save_CPPFLAGS=$CPPFLAGS
 	adp_found=no
 	dnl let's see whether it's in the default paths
-	AC_COMPILE_IFELSE([
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 		#include <$1>
-	],[adp_found=yes],[])
+	])],[adp_found=yes],[])
 
 	if test .$adp_found = .no; then
 		for path in $4 /sw/include /usr/include /usr/local/include /opt/include; do
 			CPPFLAGS="$save_CPPFLAGS -I$path"
-			AC_COMPILE_IFELSE([
+			AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 				#include <$1>
-			],[adp_found=yes],[])
+			])],[adp_found=yes],[])
 			if test .$adp_found = .yes; then break; fi
 		done
 	fi

@@ -131,9 +131,8 @@ cat <<EOF
 EOF
 # Creating the output
 AC_CONFIG_HEADERS([acconfig.h])
-AC_CONFIG_LINKS(Makefile:Makefile)
 AC_CONFIG_FILES([
-	Makefile-am 
+	Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
@@ -214,11 +213,6 @@ bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 EOF
 
-if test x$with_cuda != xno; then
-   echo "using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS"
-else
-   echo "CUDA disabled or not supported"
-fi
 
 if test .$pdflatex = .no; then
    echo "To be able to rebuild the user's guide, add pdflatex to your PATH."
