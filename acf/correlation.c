@@ -81,7 +81,7 @@ void double_correlation_init(double_correlation* self, double dt, unsigned int t
   self->result = (double***)malloc(hierarchy_depth*sizeof(double**));
   self->tau = (int**) malloc(hierarchy_depth*sizeof(double*));
   self->n_sweeps = (unsigned int*) malloc(hierarchy_depth*tau_lin*sizeof(unsigned int));
-  self->n_vals = (unsigned int*) malloc(hierarchy_depth*tau_lin*sizeof(unsigned int));
+  self->n_vals = (unsigned int*) malloc(hierarchy_depth*sizeof(unsigned int));
 
   for (i=0; i<self->hierarchy_depth; i++) {
     self->A[i] = (double**) malloc(self->tau_lin*sizeof(double*));
@@ -90,7 +90,9 @@ void double_correlation_init(double_correlation* self, double dt, unsigned int t
     self->tau[i] = &self->tau_data[i*tau_lin];
   }
   for (i=0; i<self->hierarchy_depth; i++) {
+    self->n_vals[i]=0;
     for (j=0; j<self->tau_lin; j++) {
+      self->n_sweeps[i]=0;
       self->A[i][j] = &self->A_data[(i*hierarchy_depth+j)*tau_lin];
       self->B[i][j] = &self->B_data[(i*hierarchy_depth+j)*tau_lin];
       self->result[i][j] = &self->result_data[(i*hierarchy_depth+j)*tau_lin];
@@ -154,7 +156,7 @@ void double_correlation_get_data(  double_correlation* self, double* input, unsi
           self->result[i][j][k] += C_temp[k];
       }
     }
-    self->n_sweeps[i]++;
+    self->n_sweeps[i*self->tau_lin+j]++;
   }
 }
 
