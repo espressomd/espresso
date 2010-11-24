@@ -143,8 +143,8 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	doc/Makefile
 	doc/dg/Makefile
-	doc/ug/Makefile 
-	doc/ug/figures/Makefile
+	doc/ug/Makefile
+	doc/ug/latexit.sh
 	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
