@@ -8,6 +8,22 @@ NOTEWORTHY CHANGES SINCE v2.2.0b
 User-visible changes
 --------------------
 
+* Constraints have been made penetrable.
+
+* The automatic obj-directories have been removed. If you want to use
+  object directories, just change to the directory and call configure
+  from there. This change made the whole build system much more GNU
+  compliant and easier to maintain.
+
+* The Espresso wrapper scripts have disappeared, and Espresso_bin has
+  been renamed to Espresso. The directory where the scripts are
+  installed is now compiled into the binary, i.e. it is not necessary
+  anymore to set the environment variable ESPRESSO_SCRIPTS. Still, it
+  will heed the environment variable if it is set.
+
+Organizational changes
+----------------------
+
 * The home page of ESPReSso has been relocated to
 
     http://espressomd.org
@@ -35,8 +51,6 @@ User-visible changes
   aside to old/RELEASE_NOTES, instead, we will have the files
   ChangeLog and NEWS. NEWS will contain a description of the most
   noteworthy changes since the last release.
-
-* Constraints have been made penetrable.
 
 Changes visible for developers
 ------------------------------
