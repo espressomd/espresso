@@ -1,8 +1,0 @@
-#!/bin/sh
-TEXINPUTS=.:@abs_srcdir@:
-export TEXINPUTS
-@PDFLATEX@ ug.tex
-@MAKEINDEX@ ug
-@BIBTEX@ ug
-@PDFLATEX@ ug.tex
-@PDFLATEX@ ug.tex

@@ -142,13 +142,12 @@ AC_CONFIG_FILES([
 	scripts/Makefile 
 	testsuite/Makefile
 	doc/Makefile
+	doc/latexit.sh
 	doc/dg/Makefile
 	doc/ug/Makefile
-	doc/ug/latexit.sh
 	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	doc/tutorials/tut2/figures/Makefile 
 	config/$myconfig:config/myconfig-default.h.in
 	])
 AC_CONFIG_FILES([testsuite/test.sh],

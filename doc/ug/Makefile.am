@@ -50,7 +50,6 @@ ug_FILES = \
 
 EXTRA_DIST = \
 	$(ug_FILES) \
-	latexit.sh \
 	ug.pdf \
 	check_consistency.sh assemble_quickref.awk \
 	latexmk latexmk.1 latexmkrc
@@ -61,16 +60,19 @@ doc: ug
 ug: ug.pdf
 ug.pdf: $(ug_FILES)
 if HAVE_LATEX
-	cd $(srcdir); $(AWK) -f assemble_quickref.awk $(ug_TEXFILES) > $(abs_builddir)/quickref.inp
-	sh latexit.sh
+	cd $(srcdir); \
+		$(AWK) -f assemble_quickref.awk $(ug_TEXFILES) \
+			> $(abs_builddir)/quickref.inp
+	sh ../latexit.sh $(srcdir) ug || rm uf.pdf
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."
 	@echo "Install these and rerun configure."
 endif
 
-CLEANFILES=ug.pdf 
-MOSTLYCLEANFILES=\
+CLEANFILES = ug.pdf
+
+MOSTLYCLEANFILES = \
 	quickref.inp\
 	*.aux *.aux.bak\
 	ug.bbl ug.blg \
