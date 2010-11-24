@@ -3,6 +3,7 @@
 // FIXME tau_lin may be confusig as it is the number of entries, and not their difference in time units; similar for tau_max
 // Double_correlation = correlation of Real values of double precision
 
+#define MIN(a,b) ((a)>(b)?(b):(a))
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -22,10 +23,11 @@ typedef struct {
 
   // Convenience pointers to our stored data
   // indices: A[level][tau_i][component]
-  int** tau;                       // time differences
+  int* tau;                       // time differences
   double*** A;                     // input quantity 1
   double*** B;                     // input quantity 2
-  double*** result;                // output quantity
+  double** result;                // output quantity
+  unsigned int n_result;           // the total number of result values
   
   // The actual allocated storage space
   double* A_data;
@@ -59,7 +61,7 @@ struct {
 void double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_C, 
                   void* A_fun, void* B_fun, void* corr_operation, void* compressA, void* compressB) {
-  unsigned int i,j;
+  unsigned int i,j,k;
   self->dt = dt;
   self->tau_lin=tau_lin;
   self->hierarchy_depth = hierarchy_depth;
@@ -76,30 +78,39 @@ void double_correlation_init(double_correlation* self, double dt, unsigned int t
 
   self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
   self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
-//  self->result_data = (double*)malloc(tau_lin+(hierarchy_depth-2)*(tau_lin+1)/2*dim_C*sizeof(double));
-//  _res self->tau_data = (int*)malloc(tau_lin*hierarchy_depth*sizeof(int));
+
+
+  self->n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
+  self->tau = (int*)                malloc(self->n_result*sizeof(int));
+  self->n_sweeps = (unsigned int*)  malloc(self->n_result*sizeof(int));
+  self->result  = (double**)        malloc(self->n_result*sizeof(double*));
+  self->result_data  = (double*)    malloc(self->n_result*dim_C*sizeof(double));
 
   self->A = (double***)malloc(hierarchy_depth*sizeof(double**));
   self->B = (double***)malloc(hierarchy_depth*sizeof(double**));
-// _res  self->result = (double***)malloc(hierarchy_depth*sizeof(double**));
-// _res  self->tau = (int**) malloc(hierarchy_depth*sizeof(double*));
-// _res  self->n_sweeps = (unsigned int*) malloc(hierarchy_depth*tau_lin*sizeof(unsigned int));
   self->n_vals = (unsigned int*) malloc(hierarchy_depth*sizeof(unsigned int));
 
   for (i=0; i<self->hierarchy_depth; i++) {
     self->A[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
     self->B[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
-// _res  self->result[i] = (double**) malloc(self->tau_lin*sizeof(double*));
-// _res  self->tau[i] = &self->tau_data[i*tau_lin];
   }
   for (i=0; i<self->hierarchy_depth; i++) {
     self->n_vals[i]=0;
     for (j=0; j<self->tau_lin+1; j++) {
-// _res      self->n_sweeps[i]=0;
       self->A[i][j] = &self->A_data[(i*(tau_lin+1))*dim_A+j*dim_A];
-      self->B[i][j] = &self->B_data[(i*(tau_lin+1))*dim_A+j*dim_A];
-// _res      self->result[i][j] = &self->result_data[(i*hierarchy_depth+j)*tau_lin];
+      self->B[i][j] = &self->B_data[(i*(tau_lin+1))*dim_B+j*dim_B];
+      for (k=0; k<dim_A; k++) 
+        self->A[i][j][k] = 0.;
+      for (k=0; k<dim_B; k++) 
+        self->B[i][j][k] = 0.;
     }
+  }
+
+  for (i=0; i<self->n_result; i++) {
+    self->n_sweeps[i]=0;
+    self->result[i]=&self->result_data[i*self->dim_C];
+    for (j=0; j<self->dim_C; j++) 
+      self->result[i][j]=0;
   }
 
   self->newest = (unsigned int *)malloc(hierarchy_depth*sizeof(unsigned int));
@@ -116,6 +127,13 @@ void double_correlation_init(double_correlation* self, double dt, unsigned int t
       self->tau[i][j]=((1<<i)*tau_lin+j)*self->dt;
     }
   } */
+  for (i=0; i < tau_lin+1; i++) {
+    self->tau[i] = i;
+  }
+  for (j=1; j < self->hierarchy_depth; j++)
+    for (k=0; k < self->tau_lin/2; k++) {
+      self->tau[self->tau_lin + 1 + (j-1)*tau_lin/2+k] = (k+(self->tau_lin/2)+1)*(1<<j); 
+    }
 }
 
 // Data organization:
@@ -130,6 +148,7 @@ void double_correlation_get_data(  double_correlation* self, double* input, unsi
   double* C_temp = (double*)malloc(self->dim_C*sizeof(double));
   int i,j,k;
   int highest_level_to_compress;
+  unsigned int index_new, index_old, index_res;
   
   self->t++;
 
@@ -138,12 +157,15 @@ void double_correlation_get_data(  double_correlation* self, double* input, unsi
   j=1;
   // Lets find out how far we have to go back in the hierarchy to make space for the new value
   while (1) {
-    if (self->t % (1<<(i+1)) == 0 && i < (self->hierarchy_depth - 1) && self->n_vals[i]> self->tau_lin) {
-      highest_level_to_compress+=1;
-      i++;
+    if ( ( (self->t - ((self->tau_lin + 1)*((1<<(i+1))-1) + 1) )% (1<<(i+1)) == 0) ) {
+      if ( i < (self->hierarchy_depth - 1) && self->n_vals[i]> self->tau_lin) {
+
+        highest_level_to_compress+=1;
+        i++;
+      } else break;
     } else break;
   }
-  
+
   // Now we know we must make space on the levels 0..highest_level_to_compress
   // Now lets compress the data level by level.
 
@@ -151,8 +173,8 @@ void double_correlation_get_data(  double_correlation* self, double* input, unsi
     // We increase the index indicating the newest on level i+1 by one (plus folding)
     self->newest[i+1] = (self->newest[i+1] + 1) % (self->tau_lin+1);
     self->n_vals[i+1]+=1;
-    printf("compressing level %d no %d and %d to level %d no %d, nv %d\n",i, (self->newest[i]+1) % (self->tau_lin+1),
-(self->newest[i]+2) % (self->tau_lin+1), i+1, self->newest[i+1], self->n_vals[i]);
+//    printf("t %d compressing level %d no %d and %d to level %d no %d, nv %d\n",self->t, i, (self->newest[i]+1) % (self->tau_lin+1),
+//(self->newest[i]+2) % (self->tau_lin+1), i+1, self->newest[i+1], self->n_vals[i]);
     (*self->compressA)(self->A[i][(self->newest[i]+1) % (self->tau_lin+1)],  
                        self->A[i][(self->newest[i]+2) % (self->tau_lin+1)], 
                        self->A[i+1][self->newest[i+1]],self->dim_A);
@@ -167,21 +189,33 @@ void double_correlation_get_data(  double_correlation* self, double* input, unsi
   (*self->A_fun)(input, n_input, self->A[0][self->newest[0]], self->dim_A);
   (*self->B_fun)(input, n_input, self->B[0][self->newest[0]], self->dim_B);
 
-  // Now update the corellation estimate
-
-//  if ((self->t + 1) % self->window_distance == 0) {
-//    for ( i = 0; i < self->hierarchy_depth; i-- ) {
-//      for ( j = 0; j < self->tau_lin; j++ ) {
-//        (*self->corr_operation)
-//             (self->A[0][self->newest[0]], self->dim_A, 
-//              self->B[i][(self->newest[i]+j)%self->tau_lin ], self->dim_B, 
-//              C_temp, self->dim_C);
-//        for ( k = 0; k < self->dim_C; k++ )
-//          self->result[i][j][k] += C_temp[k];
-//      }
-//    }
-//    self->n_sweeps[i*self->tau_lin+j]++;
-//  }
+  double* temp = malloc(self->dim_C*sizeof(double));
+// Now update the lowest level correlation estimates
+  for ( j = 0; j < MIN(self->tau_lin+1, self->n_vals[0]); j++) {
+    index_new = self->newest[0];
+    index_old =  (self->newest[0] - j + self->tau_lin + 1) % (self->tau_lin + 1);
+//    printf("old %d new %d\n", index_old, index_new);
+    
+    (self->corr_operation)(self->A[0][index_old], self->dim_A, self->B[0][index_new], self->dim_B, temp, self->dim_C);
+    self->n_sweeps[j]++;
+    for (k = 0; k < self->dim_C; k++) {
+      self->result[j][k] += temp[k];
+    }
+  }
+// Now for the higher ones
+  for ( i = 1; i < self->hierarchy_depth; i++) {
+    for ( j = (self->tau_lin+1)/2+1; j < MIN(self->tau_lin+1, self->n_vals[i]); j++) {
+      index_new = self->newest[i];
+      index_old = (self->newest[i] - j + self->tau_lin + 1) % (self->tau_lin + 1);
+      index_res = self->tau_lin + (i-1)*self->tau_lin/2 + (j - self->tau_lin/2+1) -1;
+//      printf("%d %d %d\n", index_old, index_new, index_res); 
+      (self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_C);
+      self->n_sweeps[index_res]++;
+      for (k = 0; k < self->dim_C; k++) {
+        self->result[index_res][k] += temp[k];
+      }
+    }
+  }
 }
 
 void double_correlation_print_A(  double_correlation* self ) {
@@ -219,15 +253,13 @@ void double_correlation_write_corellation( double_correlation* self, char* outpu
   int level; // current hierarchy level
   FILE* outputfile = fopen(outputfilename, "w");
   double dt=self->dt;
-  for ( level = 0; level < self->hierarchy_depth; level++ ) 
-    for ( j = 0; j < self->tau_lin; j++ ) {
-      fprintf(outputfile, "%f ", self->tau[level][j]*dt);
-      for ( k = 0; k < self->dim_C; k++ ) {
-        fprintf(outputfile, "%f ", self->result[level][j][k]/self->n_sweeps[level]); // n_sweeps differs for each hierarchy level
-      }
-      fprintf(outputfile, "\n");
+  for (j=0; j<self->n_result; j++) {
+    printf("%d %d ", self->tau[j], self->n_sweeps[j]);
+    for (k=0; k< self->dim_C; k++) {
+      printf("%f ", self->result[j][k]/ (double) self->n_sweeps[j]);
     }
-  
+    printf("\n");
+  }
 }
 
 
@@ -288,11 +320,11 @@ int main(int argc, char** argv) {
   unsigned int i,j;
   unsigned int n = 1;
   unsigned int dim = 3;
-  double gamma = .01;
+  double gamma = .1;
 
   // These are the input parameters
   double dt=1.0; // time difference between consecutive samples
-  unsigned int tau_lin=5; // number of entries in one linear correlation block
+  unsigned int tau_lin=16; // number of entries in one linear correlation block
   unsigned int hierarchy_depth=7; // how deep in hierarchy to go
   unsigned int window_distance=1; // what is this?
 
@@ -308,22 +340,22 @@ int main(int argc, char** argv) {
   double_correlation_init(&cor, dt, tau_lin, hierarchy_depth, window_distance, n*dim, n*dim, n*dim, &identity, &identity, &componentwise_product, &compress_linear, &compress_linear);
 
   double test[3];
-  for (i=1; i<11; i++) {
+  for (i=1; i<200000; i++) {
     for (j=0; j<n*dim; j++) {
-      f[j] = -gamma*v[j]+ ( ((float) (rand()%10000)/10000.0) -0.5);
+      f[j] = -gamma*v[j]+ sqrt(12*gamma) * ( ((float) (rand()%10000)/10000.0) -0.5);
       v[j] += f[j];
       r[j] += v[j];
     }
-//    double_correlation_get_data(&cor, v, 3);
+    double_correlation_get_data(&cor, v, 3);
 //    printf("%f %f %f\n", v[0], v[1], v[2]);
       test[0]=(double)i;
       test[1]=(double)i-1000;
       test[2]=(double)i+10000;
-      double_correlation_get_data(&cor, test, 3);
+//      double_correlation_get_data(&cor, test, 3);
   }
-  double_correlation_print_A(&cor);
+//  double_correlation_print_A(&cor);
+  double_correlation_write_corellation(&cor, "test");
   printf("\n");
-//  double_correlation_print_B(&cor);
   exit(0);
 
   double_correlation_write_corellation(&cor, "test_cor.dat");
