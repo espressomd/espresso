@@ -169,6 +169,8 @@ $(Espresso_OBJECTS): $(myconfig)
 
 DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
 
+DEFS += -D 'ESPRESSO_SCRIPTS_DEFAULT="$(abs_top_builddir)/scripts"'
+
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
