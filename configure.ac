@@ -120,12 +120,12 @@ cat <<EOF
 EOF
 ES_INIT_MYCONFIG
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
+
+# where to install the init scripts and tools
+buildscriptsdir='${abs_top_builddir}/scripts'
+AC_SUBST(buildscriptsdir)
 scriptsdir='${pkgdatadir}/scripts'
 AC_SUBST(scriptsdir)
-dnl AC_DEFINE_UNQUOTED(SCRIPTSDIR_INSTALLED, 
-dnl 	  $pkgdatadir/scripts, [installation directory for Tcl init scripts])
-dnl AC_DEFINE_UNQUOTED(SCRIPTSDIR_BUILD,
-dnl 	  `pwd`/scripts, [build directory of Tcl init scripts])
 toolsdir='${pkgdatadir}/tools'
 AC_SUBST(toolsdir)
 

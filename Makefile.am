@@ -133,13 +133,8 @@ Espresso_SOURCES = \
 #deactivate building of the library
 #libEspresso_a_SOURCES = $(Espresso_SOURCES)
 
-# Remove all CVS files from the distribution
-# and remove the internal dir if not dist-internal is used
-dist-hook:
-	-rm -rf `find $(distdir) -name CVS`
-
 #################################################################
-# Installation of the main program and wrapper scripts
+# Installation of the main program
 #################################################################
 bin_PROGRAMS = Espresso
 
@@ -152,13 +147,18 @@ doc ug dg tutorials: FORCE
 FORCE:
 
 #################################################################
+# Handling of scripts
+#################################################################
+DEFS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(abs_top_builddir)/scripts"'
+
+#################################################################
 # Handling of local configure headers
 #################################################################
 
 # add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
 INCLUDES = -Iconfig
-DEFS = -D 'MYCONFIG_H="$(myconfig)"'
+DEFS += -D 'MYCONFIG_H="$(myconfig)"'
 
 # add config/ to the VPATH so that $(myconfig) can be found by make
 vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
@@ -168,8 +168,6 @@ vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
 $(Espresso_OBJECTS): $(myconfig)
 
 DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
-
-DEFS += -D 'ESPRESSO_SCRIPTS_DEFAULT="$(abs_top_builddir)/scripts"'
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -185,6 +183,7 @@ ACLOCAL_AMFLAGS = -Iconfig
 ##################################################
 # CUDA rules
 ##################################################
+if CUDA
 SUFFIXES=.cu
 .cu.o:
 	$(NVCC) -c $(NVCCFLAGS) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
@@ -193,7 +192,6 @@ CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h
 
-if CUDA
 Espresso_SOURCES += $(CUDA_SOURCES)
 endif
 
