@@ -155,6 +155,10 @@ install-exec-hook:
 		$(DESTDIR)$(bindir)/Espresso.install \
 		$(DESTDIR)$(bindir)/Espresso
 
+uninstall-local:
+	-rm -f $(DESTDIR)$(bindir)/Espresso
+
+
 #################################################################
 # Documentation
 #################################################################
