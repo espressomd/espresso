@@ -37,7 +37,6 @@ cat <<EOF
 *                   Check the compiler and MPI                 *
 ****************************************************************
 EOF
-dnl Save and restore CFLAGS to avoid unwanted "-g -O2"-flags
 dnl Suggested improvement:
 dnl - check --with-mpi: 
 dnl     "no" => no MPI, 
