@@ -749,7 +749,7 @@ static void init_tcl(Tcl_Interp *interp)
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)
-    scriptdir = ESPRESSO_SCRIPTS_DEFAULT ;
+    scriptdir = get_default_scriptsdir();
   
   fprintf(stderr,"%d: Script directory: %s\n", this_node, scriptdir);
 

@@ -31,7 +31,7 @@ noinst_HEADERS = myconfig-sample.h \
 	p3m-assignment.c
 
 # List the sources of the Espresso binary here
-Espresso_SOURCES = \
+libEspresso_a_SOURCES = \
 	main.c \
 	config.c config.h \
 	initialize.c initialize.h \
@@ -130,13 +130,30 @@ Espresso_SOURCES = \
 	adresso.c adresso.h \
         tunable_slip.h
 
-#deactivate building of the library
-#libEspresso_a_SOURCES = $(Espresso_SOURCES)
-
 #################################################################
 # Installation of the main program
 #################################################################
-bin_PROGRAMS = Espresso
+# All objects are compiled into the library
+# Two binaries are generated: Espresso for the build dir,
+# Espresso.install for the installation dir. 
+# The ".install" suffix is removed upon installation
+noinst_LIBRARIES = libEspresso.a
+
+noinst_PROGRAMS = Espresso
+Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
+Espresso_SOURCES = scriptsdir.c
+Espresso_LDADD = libEspresso.a
+
+bin_PROGRAMS = Espresso.install
+Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
+Espresso_install_SOURCES = scriptsdir.c
+Espresso_install_LDADD = libEspresso.a
+
+# rename Espresso after installation
+install-exec-hook:
+	$(am__mv) \
+		$(DESTDIR)$(bindir)/Espresso.install \
+		$(DESTDIR)$(bindir)/Espresso
 
 #################################################################
 # Documentation
@@ -145,11 +162,6 @@ bin_PROGRAMS = Espresso
 doc ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
-
-#################################################################
-# Handling of scripts
-#################################################################
-DEFS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(abs_top_builddir)/scripts"'
 
 #################################################################
 # Handling of local configure headers
