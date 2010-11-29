@@ -13,7 +13,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "tcl.h"
+#include "parser.h"
 
+#define MAXLINELENGTH 2048
 
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
@@ -76,13 +78,18 @@ typedef struct {
   int(*B_fun)  ( void* B_args, double* B, unsigned int dim_B);
   void* B_args;
 
+  int is_from_file;
+
 } double_correlation;
 
-// Something we can do later!
-//typedef struct {
-//  int* types;
-//  int* ids;
-//} particle_selection;
+
+typedef struct {
+  FILE* f;
+  IntList requested_columns;
+  int n_columns;
+  char last_line[MAXLINELENGTH];
+  int data_left;
+} file_data_source;
 
 
 /**
@@ -128,6 +135,11 @@ int double_correlation_get_data(  double_correlation* self );
 /** writes the correlation to the TCL console */
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 
 
+int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
+int file_data_source_readline(void* xargs, double* A, int dim_A); 
+
+
+
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A);
 
 int compress_linear( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
@@ -140,5 +152,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
 
 int particle_velocities(void* typelist, double* A, unsigned int n_A);
 int particle_positions(void* typelist, double* A, unsigned int n_A);
+
 
 #endif

@@ -30,6 +30,7 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "statistics_fluid.h"
+#include "statistics_correlation.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
@@ -43,6 +44,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "initialize.h"
+
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -3626,6 +3628,7 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #ifdef LB
   REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
 #endif
+  REGISTER_ANALYZE_OPTION("correlation", parse_correlation);
   REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);

@@ -7,13 +7,52 @@
 double_correlation* correlations=0;
 unsigned int n_correlations = 0;
 
+const char init_errors[][64] = {
+  "",
+  "No valid correlation given" ,
+  "delta_t must be > 0",
+  "tau_lin must be >= 2",
+  "hierarchy_depth must be >=1",
+  "window_distance must be >1",
+  "dimension of A was not >1",
+  "dimension of B was not >1",
+  "dim_corr was not >1",
+  "no proper function for first observable given",
+  "no proper function for second observable given",
+  "no proper function for correlation operation given",
+  "no proper function for compression of first observable given",
+  "no proper function for compression of second observable given"
+};
+
+const char file_data_source_init_errors[][64] = {
+  "",
+  "No valid filename given." ,
+  "File could not be opened.",
+  "No line found that was not commented out"
+};
+
+const char double_correlation_get_data_errors[][64] = {
+  "",
+  "Error calculating variable A" ,
+  "Error calculating variable B" ,
+  "Error calculating correlation" 
+};
+
 int correlation_update(unsigned int no) {
-  printf("updating correlation %d\n", no);
   if (n_correlations > no)
     return double_correlation_get_data(&correlations[no]);
   else 
     return 1;
 }
+
+int correlation_update_from_file(unsigned int no) {
+  if (!correlations[no].is_from_file)
+    return 1;
+  while ( ! double_correlation_get_data(&correlations[no]) ) {
+  }
+  return 0;
+}
+
 
 int parse_correlation(Tcl_Interp* interp, int argc, char** argv) {
   int no;
@@ -46,6 +85,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
   int dim_corr;
   int change;
+  int error;
   
   // Check if ID is negative
   if ( no < 0 ) {
@@ -59,7 +99,19 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
       if (ARG0_IS_S("print")) {
         return double_correlation_print_correlation(&correlations[no], interp);
       } else if (ARG0_IS_S("update")) {
-        return double_correlation_get_data(&correlations[no]);
+        error = double_correlation_get_data(&correlations[no]);
+        if (error) {
+          Tcl_AppendResult(interp, double_correlation_get_data_errors[error], (char *)NULL);
+        } else {
+          return TCL_OK;
+        }
+      } else if (ARG0_IS_S("update_from_file")) {
+        error = correlation_update_from_file(no);
+        if (error) {
+          Tcl_AppendResult(interp, "error in update_from_file", (char *)NULL);
+        } else {
+          return TCL_OK;
+        }
       } else {
         Tcl_AppendResult(interp, "Usage for an already existing correlation:", (char *)NULL);
         Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
@@ -74,24 +126,23 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   
   // Else we must parse the other arguments and see if we can construct a fully
   // working correlation class instance from that.
-  printf("making a new correlation\n");
   while (argc > 0) {
-    printf("next argument %s\n", argv[0]);
     if ( ARG0_IS_S("first_obs") ) {
       argc -= 1;
       argv += 1;
-      if ( parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args) )
-        return TCL_ERROR;
-      printf("change: %d\n", change);
+      error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
       argc -= change;
       argv += change;
+      if (error)
+        return TCL_ERROR;
     } else if ( ARG0_IS_S("second_obs") ) {
       argc -= 1;
       argv += 1;
-      if ( parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args) )
-        return TCL_ERROR;
+      error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
       argc -= change;
       argv += change;
+      if (error)
+        return TCL_ERROR;
     } else if ( ARG0_IS_S("corr_operation") ) {
       argc -= 1;
       argv += 1;
@@ -99,12 +150,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         return TCL_ERROR;
       argc -= change;
       argv += change;
-    } else {
-      Tcl_AppendResult(interp, "unknown argument ", argv[0], (char *)NULL);
-      return TCL_ERROR;
-    }
-  }
-/*    else if ( ARG0_IS_S("tau_lin") ) {
+    } else if ( ARG0_IS_S("tau_lin") ) {
       if ( argc < 2 || !ARG1_IS_I(tau_lin))
         Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL);
       else { 
@@ -125,9 +171,11 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         argc -= 2;
         argv += 2;
       } // delta_t is already set
+    } else {
+      Tcl_AppendResult(interp, "unknown argument ", argv[0], (char *)NULL);
+      return TCL_ERROR;
     }
   }
-  */
 
   // Now we should find out, if this is enough to make a correlation.
   // Unfortunately still nothing happens here!
@@ -137,13 +185,17 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   n_correlations++;
 
   // Now initialize the new correlation
-  if (double_correlation_init(&correlations[n_correlations-1], delta_t, tau_lin, hierarchy_depth, 1, 
+  error = double_correlation_init(&correlations[n_correlations-1], delta_t, tau_lin, hierarchy_depth, 1, 
       dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
-      corr_operation, &compress_linear, &compress_linear) == 0)
+      corr_operation, &compress_linear, &compress_linear);
+  if ( error == 0 ) {
+    n_correlations++;
     return TCL_OK;
-  else
+  } else {
+    printf("Error number %d\n", error);
+    Tcl_AppendResult(interp, "correlation could not be corretly initialized: ", init_errors[error], "\n", (char *)NULL);
     return TCL_ERROR;
-  return TCL_OK;
+  }
 
 }
 
@@ -156,32 +208,49 @@ int observable_usage(Tcl_Interp* interp) {
 }
 
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args){
-  int i;
-  for (i=0; i<argc; i++) 
-    printf("%s ", argv[i]);
-  printf("\n");
 
+  file_data_source* fds;
   IntList* types=0;
-  if (ARG0_IS_S("velocity") || ARG0_IS_S("position"))  {
-    if (ARG0_IS_S("velocity")) {
+  int error=0;
+  if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions"))  {
+    if (ARG0_IS_S("particle_velocities")) {
       *A_fun = &particle_velocities;
     }
-    if (ARG0_IS_S("position")) {
+    if (ARG0_IS_S("particle_positions")) {
       *A_fun = &particle_positions;
     }
   
-    if (ARG1_IS_S("type")) {
+    if (argc > 1 && ARG1_IS_S("type")) {
       types = realloc(types, sizeof(IntList));
       parse_int_list(interp, argv[2], types);
-      *A_args = types;
-      *dim_A = 17;
-      *change=2;
+      Tcl_AppendResult(interp, "You requestet particle_positions/particle_velocities with the type option.\nThis is not yet implemented" , (char *)NULL);
       return TCL_OK;
     } else {
       *A_args=0;
       *dim_A=3*n_total_particles;
       *change=1;
       return TCL_OK;
+    }
+  } else if (ARG0_IS_S("textfile")) {
+    // We still can only handle full files
+    printf("parseing file thingy.\n");
+    if ( argc>1 ) {
+      fds= malloc(sizeof(file_data_source));
+      error = file_data_source_init(fds, argv[1], 0);
+      *change=2;
+      if (!error) {
+        *A_args=(void*) fds;
+        *dim_A = fds->n_columns;
+        *A_fun = (void*)&file_data_source_readline;
+        return TCL_OK;
+      } else {
+        Tcl_AppendResult(interp, "Error reading file ", argv[1] ,"\n", (char *)NULL);
+        Tcl_AppendResult(interp, file_data_source_init_errors[error] ,"\n", (char *)NULL);
+        return TCL_ERROR;
+      }
+    } else {
+      Tcl_AppendResult(interp, "Error in parse_observable textfile: no filename given" , (char *)NULL);
+      return TCL_ERROR;
     }
   } else {
     return observable_usage(interp);
@@ -195,7 +264,13 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
+  } else if (ARG0_IS_S("square_distance_componentwise")) {
+    *corr_fun = &square_distance_componentwise;
+    *dim_corr = dim_A;
+    *change=1;
+    return TCL_OK;
   } else {
+    Tcl_AppendResult(interp, "Unknown correlation operation", argv[0], "\n" , (char *)NULL);
     return TCL_ERROR;
   }
 }
@@ -220,6 +295,37 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   self->compressB = compressB;
   self->window_distance = window_distance;
   self->t = 0;
+
+  if (self==0)
+    return 1;
+  if (dt <= 0)
+    return 2;
+  if (tau_lin<2)
+    return 3;
+  if (hierarchy_depth<1)
+    return 4;
+  if (window_distance<1)
+    return 5;
+  if (dim_A<1)
+    return 6;
+  if (dim_B<1)
+    return 7;
+  if (dim_corr<1)
+    return 8;
+  if (A_fun == 0)
+    return 9;
+  if (B_fun == 0)
+    return 10;
+  if (corr_operation==0)
+    return 11;
+  if (compressA==0)
+    return 12;
+  if (compressB==0)
+    return 13;
+
+  if (A_fun == &file_data_source_readline && B_fun == &file_data_source_readline) {
+    self->is_from_file = 1;
+  }
 
   self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
   self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
@@ -273,7 +379,6 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
 }
 
 int double_correlation_get_data( double_correlation* self ) {
-  printf("getting data\n");
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
@@ -419,7 +524,7 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
     return 1;
   }
   for ( i = 0; i < dim_A; i++ ) {
-    C[i] += (A[i]-B[i])*(A[i]-B[i]);
+    C[i] = (A[i]-B[i])*(A[i]-B[i]);
   }
   return 0;
 }
@@ -438,7 +543,6 @@ int particle_velocities(void* typelist, double* A, unsigned int n_A) {
         A[3*partCfg[i].p.identity + 1] = partCfg[i].m.v[1]/time_step;
         A[3*partCfg[i].p.identity + 2] = partCfg[i].m.v[2]/time_step;
       }
-      printf("data A[0]%f\n", A[0]);
       return 0;
     }
   } else 
@@ -462,5 +566,71 @@ int particle_positions(void* typelist, double* A, unsigned int n_A) {
     }
   } else 
     return 1;
+}
+
+
+int file_data_source_init(file_data_source* self, char* filename, IntList* columns) {
+  int counter=1;
+  char* token;
+  if (filename==0)
+    return 1;
+  self->f = fopen(filename, "r");
+  if (! self->f )
+    return 2;
+  fgets(self->last_line, MAXLINELENGTH, self->f);
+  while (self->last_line && self->last_line[0] == 35) {
+    printf("reading line\n");
+    fgets(self->last_line, MAXLINELENGTH, self->f);
+  }
+  printf("the new line: %s\n", self->last_line);
+  if (!self->last_line)
+    return 3;
+// Now lets count the tokens in the first line
+  token=strtok(self->last_line, " \t\n");
+  while (token) {
+//    printf("reading token **%s**\n", token);
+    token=strtok(NULL, " \t\n");
+    counter++;
+  }
+  self->n_columns = counter;
+  rewind(self->f);
+  self->data_left=1;
+//  printf("I found out that your file has %d columns\n", self->n_columns);
+  if (columns !=0)
+    /// Here we would like to check if we can handle the desired columns, but this has to be implemented!
+    return -1;
+  return 0;
+}
+
+int file_data_source_readline(void* xargs, double* A, int dim_A) {
+  file_data_source* self = xargs;
+  int counter=0;
+  char* token;
+  char* temp;
+
+  temp=fgets(self->last_line, MAXLINELENGTH, self->f);
+  while (temp!= NULL && self->last_line && self->last_line[0] == 35) {
+    printf("reading new line\n");
+    temp=fgets(self->last_line, MAXLINELENGTH, self->f);
+  }
+  if (!self->last_line || temp==NULL) {
+//    printf("nothing left\n");
+    self->data_left=0;
+    return 3;
+  }
+  token=strtok(self->last_line, " \t\n");
+  while (token) {
+//    printf("reading token: ");
+    A[counter]=atof(token);
+//    printf("%f ", A[counter]);
+    token=strtok(NULL, " \t\n");
+    counter++;
+    if (counter >= dim_A) {
+//      printf("urgs\n");
+      return 4;
+    }
+  }
+//  printf("\n");
+  return 0;
 }
 
