@@ -1621,45 +1621,19 @@ static double tclcommand_inter_coulomb_print_p3m_m_time(Tcl_Interp *interp, int 
   return best_time;
 }
 
-int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *interp)
-{
-  int    mesh_max,                   mesh     = -1, tmp_mesh;
+int p3m_adaptive_tune() {
+    int    mesh_max,                   mesh     = -1, tmp_mesh;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
 
   double                             alpha_L  = -1, tmp_alpha_L=0.0;
   double                             accuracy = -1, tmp_accuracy=0.0;
   double                            time_best=1e20, tmp_time;
-  char
-    b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
-    b2[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
-    b3[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 17];
- 
-  P3M_TRACE(fprintf(stderr,"%d: tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres\n",this_node));
 
-  if (skin == -1) {
-    Tcl_AppendResult(interp, "p3m cannot be tuned, since the skin is not yet set", (char *) NULL);
-    return TCL_ERROR;
-  }
-
+  P3M_TRACE(fprintf(stderr,"%d: p3m_adaptive_tune\n",this_node));
+  
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
-
-  /* Print Status */
-  sprintf(b1,"%.5e",p3m.accuracy);
-  Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
-  Tcl_PrintDouble(interp, box_l[0], b1);
-
-
-    sprintf(b2,"%d",p3m_sum_qpart);
-  Tcl_PrintDouble(interp, p3m_sum_q2, b3);
-  Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
-
-
-  if (p3m_sum_qpart == 0) {
-    Tcl_AppendResult(interp, "no charged particles in the system, cannot tune P3M", (char *) NULL);
-    return (TCL_ERROR);
-  }
 
   /* parameter ranges */
   if (p3m.mesh[0] == 0 ) {
@@ -1676,8 +1650,6 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
       mesh_max = P3M_MAX_MESH;
   }
   else {
-    sprintf(b1, "%d", p3m.mesh[0]);
-    Tcl_AppendResult(interp, "fixed mesh ", b1, "\n", (char *)NULL);
     tmp_mesh = mesh_max = p3m.mesh[0];
   }
 
@@ -1688,8 +1660,6 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     r_cut_iL_max *= box_l_i[0];
   }
   else {
-    sprintf(b1, "%f", p3m.r_cut_iL);
-    Tcl_AppendResult(interp, "fixed r_cut_iL ", b1, "\n", (char *)NULL);
     r_cut_iL_min = r_cut_iL_max = p3m.r_cut_iL;
   }
 
@@ -1699,22 +1669,21 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     cao = 3;
   }
   else {
-    sprintf(b1, "%d", p3m.cao);
-    Tcl_AppendResult(interp, "fixed cao ", b1, "\n", (char *)NULL);
     cao_min = cao_max = cao = p3m.cao;
   }
-
-  Tcl_AppendResult(interp, "mesh cao r_cut_iL     alpha_L      err          rs_err     ks_err     time [ms]\n", (char *) NULL);
 
   /* mesh loop */
   for (;tmp_mesh <= mesh_max; tmp_mesh *= 2) {
     tmp_cao = cao;
-    tmp_time = tclcommand_inter_coulomb_print_p3m_m_time(interp, tmp_mesh,
+    
+#warning FIX ME!
+    
+/*    tmp_time = tclcommand_inter_coulomb_print_p3m_m_time(interp, tmp_mesh,
 			  cao_min, cao_max, &tmp_cao,
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
-			  &tmp_alpha_L, &tmp_accuracy);
+			  &tmp_alpha_L, &tmp_accuracy); */
     /* some error occured during the tuning force evaluation */
-    if (tmp_time == -1) return TCL_ERROR;
+    if (tmp_time == -1) return -1;
     /* this mesh does not work at all */
     if (tmp_time < 0) continue;
 
@@ -1738,8 +1707,7 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
   
   P3M_TRACE(fprintf(stderr,"finshed tuning\n"));
   if(time_best == 1e20) {
-    Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
-    return (TCL_ERROR);
+    return -1;
   }
 
   /* set tuned p3m parameters */
@@ -1751,15 +1719,52 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
   P3M_scaleby_box_l_charges();
   /* broadcast tuned p3m parameters */
   mpi_bcast_coulomb_params();
+  return 0;
+}
+  
+
+
+int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *interp)
+{
+  char
+    b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
+    b2[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
+    b3[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 17];
+ 
+  P3M_TRACE(fprintf(stderr,"%d: tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres\n",this_node));
+
+  if (skin == -1) {
+    Tcl_AppendResult(interp, "p3m cannot be tuned, since the skin is not yet set", (char *) NULL);
+    return TCL_ERROR;
+  }
+
+  /* Print Status */
+  sprintf(b1,"%.5e",p3m.accuracy);
+  Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
+  Tcl_PrintDouble(interp, box_l[0], b1);
+
+  sprintf(b2,"%d",p3m_sum_qpart);
+  Tcl_PrintDouble(interp, p3m_sum_q2, b3);
+  Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
+
+  if (p3m_sum_qpart == 0) {
+    Tcl_AppendResult(interp, "no charged particles in the system, cannot tune P3M", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  
+  if(!p3m_adaptive_tune()) {  
+    Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
+    return (TCL_ERROR);
+  }
+  
   /* Tell the user about the outcome */
   Tcl_AppendResult(interp, "\nresulting parameters:\n", (char *) NULL);
-  sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
+  sprintf(b2,"%-4d",p3m.mesh[0]); sprintf(b3,"%-3d",p3m.cao);
   Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-  sprintf(b1,"%.5e",r_cut_iL); sprintf(b2,"%.5e",alpha_L); sprintf(b3,"%.5e",accuracy);
+  sprintf(b1,"%.5e",p3m.r_cut_iL); sprintf(b2,"%.5e",p3m.alpha_L); sprintf(b3,"%.5e",p3m.accuracy);
   Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
-  sprintf(b3,"                 %-8d",(int)time_best);
-  Tcl_AppendResult(interp, b3, (char *) NULL);
-  return (TCL_OK);
+
+  return (TCL_OK);  
 }
 
 void P3M_count_charged_particles()
