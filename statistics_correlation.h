@@ -1,13 +1,101 @@
 
 /** @File Header file for the correlation classe
  *
- * TODO: Add a return value to all voids to check if everything was working allright.
- * TODO: Add a destructor.
+ * This module allow to compute correlations (and other two time averages) on
+ * the fly an from files.
+ *
+ * The basic idea is that the user can write arbitrary function A and B that
+ * can depend on e.g. particle coordinates or whatever state of the MD box.
+ * These function can be vector valued, always indicated by dim_A and dim_B.
+ *
+ * The way they can be correlated is can be formulated as a (vector valued)
+ * operation on A and B. One example would be to calculate the product
+ * component by component, and if A and B are both the particle velocities,
+ * then one would obtain 
+ * { <v_1x v_1x(t)>  <v_1y v_1y(t)>  <v_1z v_1z(t)>  <v_2x v_2x(t)>  <v_2y v_2y(t)>  <v_2z v_2z(t)> ... }
+ *
+ * The idea of the algorithm is not to keep all As and Bs in memory, but
+ * feed the algorithm (or the container object) successively by new As and Bs
+ * and new correlation estimates are calculated on the fly. Those As and Bs
+ * which have exceeded a certain age are (first compressed, see below) and then
+ * discarded. 
+ *
+ * To save memory, increase statistics and make the calculation possible for
+ * many orders of magnitude in time, the blocking algorithm in Frenkels book (p.91)
+ * is applied. Thus not all As and Bs of the whole "past" are stored but 
+ * some of them are blocked. In this implementation always a blocking based
+ * on 2 is applied: All As and Bs not older than a certain tau_lin are stored
+ * as they were, those which are older are not entire stored, but only
+ * their compressed average value. All As and Bs older than 2*tau_lin
+ * are compressed in blocks of four etc.
+ *
+ * This leads to a hiearchical "history": on level 0 the last tau_lin values
+ * are stored. This is done in a cyclic array: The newest is always appended
+ * at the end of the array, and if the array length is reached, values
+ * are appended at the beginning, overwriting older values. We therefore
+ * have to carry the index newest[0] which tells, what is the index of the
+ * newest value of A and B. 
+ *
+ * As soon as the first row of As and Bs is full, two of them are 
+ * compressed by calculating the arithmetic mean, and stored in the
+ * first element on level 1. Then we can overwrite these two values
+ * on level 0, because we have saved them. Always if necessary 
+ * we produce space on level 0 by compressing to level 1. On 
+ * level 1 also an array with tau_lin entries is available to store
+ * the level-1-compresssed values. It is sucessivly filled
+ * and also cyclic. When it is filled, the values are stored
+ * on level 2 and so on.
+ *
+ * This allows to have a "history" over many orders of magnitude
+ * in time, without the full memory effort. 
+ *
+ * Correlations are only calculated on each level: For
+ * tau=1,2,..,tau_lin the values are taken from level 1.
+ * For tau=tau_lin, tau_lin+2, .., 2*tau_lin we take the values
+ * from level 2. On level 2 we halso have values for 0,..tau_lin-2, 
+ * but these are discared as we have "better" estimates on level 1.
+ *
+ * The functions A and B can get extra arguments. This can e.g. be an
+ * integer describing to the "type" of the particles to be considered,
+ * or in case of files, it is a file_data_source pointer, which tells
+ * the function from where to read. These arguments have to be a single
+ * pointer to an object that carries all relevant information
+ * to obtain A and B (from the MD Box or somewhere else).
+ *
+ * The correlation has to be initialized with all necessary information,
+ * i.e. all function pointers, the dimensions of A and B and their dimensions etc.
+ * When new A and B values should be processed, a single call of
+ * double_correlation_get_data(..) with the correlation object as an 
+ * argument is enough to update A and B and the correlation estimate.
+ *
+ * Eventually the correlation can be printed. 
+ *
+ *
+ * There is a lot of stuff to do:
+ * ==============================
+ * -> Write input functions that take TCL arrays for A and B to
+ *  make the method available for TCL-coded variables
+ * -> Expand the file_data_source so that one can specify which
+ *  columns of the file are to be processed
+ * -> Write more correlation operations (scalar product)
+ * -> Write more observable
+ * -> calculate an estimate of average values. This might be 
+ *  even necessary to calculate <(A-<A>)(B(tau)-<B>), which
+ *  is often probably what people want
+ * -> Use the A_args to calculate As and Bs only for particular 
+ *  particle types (especially and example, so that other people can follow)
+ * -> Use the A_args to calculate molecular stuff in combination with
+ *  the topology concept
+ * -> Tidy up the parsers (just a bit)
+ * -> Write some nice samples 
+ * -> Write a destructor
+ * -> Finally: write the users guide
+ *
  *
  */
 
-#ifndef STATISTICS_CORRALTION_H
-#define STATISTICS_CORRALTION_H
+#ifndef STATISTICS_CORRELATION_H
+#define STATISTICS_CORRELATION_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,7 +170,11 @@ typedef struct {
 
 } double_correlation;
 
-
+/** This struct allow to use a file as input for the correlation.
+ * It is initalized and then just passed as extra argument to the file_data_source_readline 
+ * function that extracts floating point values from the particular file.
+ *
+ */
 typedef struct {
   FILE* f;
   IntList requested_columns;
@@ -139,7 +231,6 @@ int file_data_source_init(file_data_source* self, char* filename, IntList* colum
 int file_data_source_readline(void* xargs, double* A, int dim_A); 
 
 
-
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A);
 
 int compress_linear( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
@@ -150,7 +241,17 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
+
+/**************  Functions that calculate A and B from MD state ************/
+
+/** Obtain the particle velocities.
+ * TODO: make the typelist work!
+ */ 
 int particle_velocities(void* typelist, double* A, unsigned int n_A);
+/** Obtain the particle positions.
+ * TODO: Folded or unfolded?
+ * TODO: make the typelist work!
+ */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
 
 

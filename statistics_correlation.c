@@ -233,7 +233,6 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
     }
   } else if (ARG0_IS_S("textfile")) {
     // We still can only handle full files
-    printf("parseing file thingy.\n");
     if ( argc>1 ) {
       fds= malloc(sizeof(file_data_source));
       error = file_data_source_init(fds, argv[1], 0);
@@ -579,10 +578,8 @@ int file_data_source_init(file_data_source* self, char* filename, IntList* colum
     return 2;
   fgets(self->last_line, MAXLINELENGTH, self->f);
   while (self->last_line && self->last_line[0] == 35) {
-    printf("reading line\n");
     fgets(self->last_line, MAXLINELENGTH, self->f);
   }
-  printf("the new line: %s\n", self->last_line);
   if (!self->last_line)
     return 3;
 // Now lets count the tokens in the first line
@@ -610,7 +607,6 @@ int file_data_source_readline(void* xargs, double* A, int dim_A) {
 
   temp=fgets(self->last_line, MAXLINELENGTH, self->f);
   while (temp!= NULL && self->last_line && self->last_line[0] == 35) {
-    printf("reading new line\n");
     temp=fgets(self->last_line, MAXLINELENGTH, self->f);
   }
   if (!self->last_line || temp==NULL) {
