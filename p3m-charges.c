@@ -1396,7 +1396,7 @@ static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
     a simple bisection. Returns -1 if the force evaluation does not work, -2 if there is no valid r_cut, and -3 if
     the charge assigment order is to large for this grid */
 /* TODO: separate tcl from nontcl thingies */
-static double tclcommand_inter_coulomb_print_p3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
+static double p3m_mc_time(int mesh, int cao,
 			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			  double *_alpha_L, double *_accuracy)
 {
@@ -1404,30 +1404,21 @@ static double tclcommand_inter_coulomb_print_p3m_mc_time(Tcl_Interp *interp, int
   double r_cut_iL;
   double rs_err, ks_err, mesh_size, k_cut;
   int i, n_cells;
-  char b1[TCL_DOUBLE_SPACE + 12],b2[TCL_DOUBLE_SPACE + 12],b3[TCL_DOUBLE_SPACE + 12];
+
   /* initial checks. */
   mesh_size = box_l[0]/(double)mesh;
   k_cut =  mesh_size*cao/2.0;
   P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
 		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
   if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
-    /* print result */
-    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
-    Tcl_AppendResult(interp, b2," ", b3," cao too large for this mesh\n", (char *) NULL);
-    return -3;
+    return -P3M_TUNE_CAOTOLARGE;
   }
 
   /* Either low and high boundary are equal (for fixed cut), or the low border is initially 0 and therefore
      has infinite error estimate, as required. Therefore if the high boundary fails, there is no possible r_cut */
   if ((*_accuracy = get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L, &rs_err, &ks_err)) > p3m.accuracy) {
     /* print result */
-    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
-    Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-    sprintf(b1,"%.5e",r_cut_iL_max); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
-    Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
-    sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
-    Tcl_AppendResult(interp, b1,"  ", b2,"  accuracy not achieved\n", (char *) NULL);
-    return -2;
+    return -P3M_TUNE_NOCUTOFF;
   }
 
   for (;;) {
@@ -1451,14 +1442,7 @@ static double tclcommand_inter_coulomb_print_p3m_mc_time(Tcl_Interp *interp, int
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
     P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
 		      2*r_cut_iL*box_l[0], elc_params.gap_size));
-    /* print result */
-    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
-    Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-    sprintf(b1,"%.5e",r_cut_iL_max); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
-    Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
-    sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
-    Tcl_AppendResult(interp, b1,"  ", b2,"  conflict with ELC\n", (char *) NULL);
-    return -2;
+    return -P3M_TUNE_ELCTEST;
   }
 
   /* check whether this radius is too large, so that we would use less cells than allowed */
@@ -1467,33 +1451,18 @@ static double tclcommand_inter_coulomb_print_p3m_mc_time(Tcl_Interp *interp, int
     n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
-    /* print result */
-    sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
-    Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-    sprintf(b1,"%.5e",r_cut_iL_max); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
-    Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
-    sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
-    Tcl_AppendResult(interp, b1,"  ", b2,"  radius dangerously high\n", (char *) NULL);
-    return -2;
+
+    return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
 
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "tuning failed, test integration not possible", (char *)NULL);
-    return -1;
+    return -P3M_TUNE_FAIL;
   }
 
   *_accuracy = get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
 
   P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
-  /* print result */
-  sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
-  Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-  sprintf(b1,"%.5e",r_cut_iL); sprintf(b2,"%.5e",*_alpha_L); sprintf(b3,"%.5e",*_accuracy);
-  Tcl_AppendResult(interp, b1,"  ", b2,"  ",b3," ", (char *) NULL);
-  sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err); sprintf(b3,"%-8d",(int)int_time);
-  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"\n", (char *) NULL);
 
   return int_time;
 }
@@ -1516,7 +1485,7 @@ static double tclcommand_inter_coulomb_print_p3m_m_time(Tcl_Interp *interp, int 
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
-    tmp_time = tclcommand_inter_coulomb_print_p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    tmp_time = p3m_mc_time(mesh, cao,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
     if (tmp_time == -1) return -1;
     /* cao is too large for this grid, but still the accuracy cannot be achieved, give up */
@@ -1554,9 +1523,9 @@ static double tclcommand_inter_coulomb_print_p3m_m_time(Tcl_Interp *interp, int 
     double dir_times[3];
     for (final_dir = -1; final_dir <= 1; final_dir += 2) {
       dir_times[final_dir + 1] = tmp_time =
-	tclcommand_inter_coulomb_print_p3m_mc_time(interp, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+        p3m_mc_time(mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
-      if (tmp_time == -1) return -1;
+      if (tmp_time == -1) return -P3M_TUNE_FAIL;
       /* in this direction, we cannot optimise, since we get into precision trouble */
       if (tmp_time < 0) continue;
 
@@ -1683,7 +1652,7 @@ int p3m_adaptive_tune() {
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
 			  &tmp_alpha_L, &tmp_accuracy); */
     /* some error occured during the tuning force evaluation */
-    if (tmp_time == -1) return -1;
+    if (tmp_time == -1) return P3M_TUNE_FAIL;
     /* this mesh does not work at all */
     if (tmp_time < 0) continue;
 
