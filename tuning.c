@@ -44,7 +44,7 @@ double diffTime()
     1e3*(time1.ru_utime.tv_sec - time2.ru_utime.tv_sec);
 }
 
-int timings_callback(Tcl_Interp *interp, void *data)
+int tclcallback_timings(Tcl_Interp *interp, void *data)
 {
   if (*(int *)data <= 0)
     timing_samples = 0;

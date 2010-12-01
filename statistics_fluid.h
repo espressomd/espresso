@@ -44,7 +44,7 @@ void lb_calc_fluid_momentum(double *result);
 void lb_calc_fluid_temp(double *result);
 
 /** Parser for fluid related analysis functions. */
-int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB */
 

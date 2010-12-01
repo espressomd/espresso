@@ -767,10 +767,11 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac) {
  *                                 chain structure commands parsing
  ****************************************************************************************/
 
-int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, char **argv)
 {
+  /* parses a chain topology (e.g. in 'analyze ( rg | <rg> ) [chain start n chains chain length]' , or
+     in 'analyze set chains <chain_start> <n_chains> <chain_length>') */
   int m, i, pc;
-  /* 'analyze set chains <chain_start> <n_chains> <chain_length>' */
   
   if (argc < 3) {
     Tcl_AppendResult(interp, "chain structure info consists of <start> <n> <length>", (char *)NULL);    
@@ -809,10 +810,14 @@ void update_mol_ids_setchains() {
 }
 
 
-int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv)
+/** this function scans the arguments for a description of the chain structure,
+    i.e. start of chains, number of chains and chain length. Since this structure
+    requires the particles to be sorted, this is performed, too. */
+
+static int tclcommand_analyze_set_parse_chain_topology_check(Tcl_Interp *interp, int argc, char **argv)
 {
   if (argc > 0)
-    if (parse_chain_structure_info(interp, argc, argv) != TCL_OK)
+    if (tclcommand_analyze_set_parse_chain_topology(interp, argc, argv) != TCL_OK)
       return TCL_ERROR;
   
   if (!sortPartCfg()) {
@@ -824,13 +829,13 @@ int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **ar
   return TCL_OK;
 }
 
-int parse_re(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { re | <re> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[4*TCL_DOUBLE_SPACE+4];
   double *re;
 
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
@@ -856,12 +861,12 @@ int parse_re(Tcl_Interp *interp, int average, int argc, char **argv)
 }
 
 
-int parse_rg(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { rg | <rg> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[4*TCL_DOUBLE_SPACE+4];
   double *rg;
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
@@ -885,12 +890,12 @@ int parse_rg(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
-int parse_rh(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { rh | <rh> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[2*TCL_DOUBLE_SPACE+2];
   double *rh;
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) {
     Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL);
@@ -915,14 +920,14 @@ int parse_rh(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
-int parse_intdist(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_internal_dist(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { internal_dist | <internal_dist> } [<chain_start> <n_chains> <chain_length>]' */
   char buffer[TCL_DOUBLE_SPACE+2];
   int i;
   double *idf;
 
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (!average)
     calc_internal_dist(&idf); 
@@ -944,14 +949,14 @@ int parse_intdist(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
-int parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { bond_l | <bond_l> } [<chain_start> <n_chains> <chain_length>]' */
   /*****************************************************************************/
   char buffer[4*TCL_DOUBLE_SPACE+4];
   double *bond_l;
 
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (!average) calc_bond_l(&bond_l); 
   else if (n_configs == 0) {
@@ -964,7 +969,7 @@ int parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
-int parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { bond_dist | <bond_dist> } [index <index>] [<chain_start> <n_chains> <chain_length>]' */
   /***************************************************************************************************/
@@ -972,7 +977,7 @@ int parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv)
   double *bdf; int ind_n=0, i;
 
   if (argc >= 1 && !strncmp(argv[0], "index", strlen(argv[0]))) { ind_n = atoi(argv[1]); argc-=2; argv+=2; }
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (ind_n < 0 || ind_n > chain_length-1) { 
     sprintf(buffer,"%d!",chain_length-1);
@@ -992,7 +997,7 @@ int parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv)
 }
 
 	   
-int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze g123 [-init] [<chain_start> <n_chains> <chain_length>]' */
   /********************************************************************/
@@ -1003,7 +1008,7 @@ int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
   if (argc > 0 && ARG0_IS_S("-init")) {
     init = 1; argc--; argv++; 
   }
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR)
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   
@@ -1021,7 +1026,7 @@ int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
-int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
+int tclcommand_analyze_parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
 {
   /* 'analyze { <g1> | <g2> | <g3> } [<chain_start> <n_chains> <chain_length>]' */
   /******************************************************************************/
@@ -1042,7 +1047,7 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
     }
     else break;
   }
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info or -sliding allowed", (char *)NULL); return TCL_ERROR; }
   if (n_configs == 0) { Tcl_AppendResult(interp, "no configurations found! Use 'analyze append' to save some!", (char *)NULL); return TCL_ERROR; }
   switch (what) {
@@ -1062,7 +1067,7 @@ int parse_g_av(Tcl_Interp *interp, int what, int argc, char **argv)
 }
 
 
-int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
+int tclcommand_analyze_parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
 {
   /* 'analyze { formfactor | <formfactor> } <qmin> <qmax> <qbins> [<chain_start> <n_chains> <chain_length>]' */
   /***********************************************************************************************************/
@@ -1082,7 +1087,7 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
       return (TCL_ERROR);
     argc-=3; argv+=3;
   }
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
 
   if ((chain_n_chains == 0) || (chain_length == 0)) {
     Tcl_AppendResult(interp, "The chain topology has not been set",(char *)NULL); return TCL_ERROR;
@@ -1115,7 +1120,7 @@ int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv)
   return (TCL_OK);
 }
 
-int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze { rdfchain } <r_min> <r_max> <r_bins> [<chain_start> <n_chains> <chain_length>]' */
   /***********************************************************************************************************/
@@ -1136,7 +1141,7 @@ int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
       return (TCL_ERROR);
     argc-=3; argv+=3;
   }
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   
   if ((chain_n_chains == 0) || (chain_length == 0)) {
     Tcl_AppendResult(interp, "The chain topology has not been set",(char *)NULL); return TCL_ERROR;
@@ -1169,7 +1174,7 @@ int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv)
 }
 
 #ifdef ELECTROSTATICS
-int parse_cwvac(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_cwvac(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze { cwvac } <maxtau> <interval> [<chain_start> <n_chains> <chain_length>]' */
   /***********************************************************************************************************/
@@ -1187,7 +1192,7 @@ int parse_cwvac(Tcl_Interp *interp, int argc, char **argv)
       return (TCL_ERROR);
     argc-=2; argv+=2;
   }
-  if (check_and_parse_chain_structure_info(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
+  if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   
   if ((chain_n_chains == 0) || (chain_length == 0)) {
     Tcl_AppendResult(interp, "The chain topology has not been set",(char *)NULL); return TCL_ERROR;

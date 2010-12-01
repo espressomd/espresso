@@ -29,7 +29,7 @@
 #ifdef HERTZIAN
 #include "mol_cut.h"
 
-MDINLINE int printHertzianIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_HertzianIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -68,7 +68,7 @@ MDINLINE int hertzian_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-MDINLINE int hertzian_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_hertzian(Tcl_Interp * interp,
 			     int part_type_a, int part_type_b,
 			     int argc, char ** argv)
 {

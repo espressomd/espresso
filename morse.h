@@ -27,7 +27,7 @@
 */
 
 #ifdef MORSE
-MDINLINE int printmorseIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -103,7 +103,7 @@ MDINLINE int morse_set_params(int part_type_a, int part_type_b,
 }
 
 /// parser for the forcecap
-MDINLINE int inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -137,7 +137,7 @@ MDINLINE int inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** ar
   return TCL_ERROR;
 }
 
-MDINLINE int morse_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_morse(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

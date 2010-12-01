@@ -49,7 +49,7 @@ MDINLINE int subt_lj_set_params(int bond_type, double k, double r)
 }
 
 /// parse parameters for the subt_lj potential
-MDINLINE int inter_parse_subt_lj(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_subt_lj(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double k, r;
   if (argc != 3) {

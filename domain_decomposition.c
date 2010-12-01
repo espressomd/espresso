@@ -899,7 +899,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 
 /*************************************************/
 
-int max_num_cells_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_max_num_cells(Tcl_Interp *interp, void *_data)
 {
   int data = *(int *)_data;
   if (data < min_num_cells) {
@@ -921,7 +921,7 @@ int calc_processor_min_num_cells()
   return min;
 }
 
-int min_num_cells_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_min_num_cells(Tcl_Interp *interp, void *_data)
 {
   char buf[TCL_INTEGER_SPACE];
   int data = *(int *)_data;

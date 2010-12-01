@@ -1212,7 +1212,7 @@ int ELC_tune(double error)
  * COMMON PARTS
  ****************************************/
 
-int printELCToResult(Tcl_Interp *interp)
+int tclprint_to_result_ELC(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -1237,7 +1237,7 @@ int printELCToResult(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
 {
   double pwerror;
   double gap_size;
@@ -1361,6 +1361,7 @@ void ELC_on_resort_particles()
   partblk   = realloc(partblk,  n_localpart*8*sizeof(double));
 }
 
+/* TODO: This function is not used anywhere :) To be removed?  */
 void ELC_on_coulomb_change()
 {
 }

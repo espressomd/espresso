@@ -39,7 +39,7 @@
 /** Bonded overlapped potentials: Reads overlapped parameters from a file.  
     ia_params are then communicated to each node \warning No checking is
     performed for the file read!! */
-MDINLINE int bonded_overlapped_set_params(int bond_type, int overlap_type, char * filename) 
+MDINLINE int overlapped_bonded_set_params(int bond_type, int overlap_type, char * filename) 
 {
   int i, token = 0, size;
   FILE* fp;
@@ -110,7 +110,7 @@ MDINLINE int bonded_overlapped_set_params(int bond_type, int overlap_type, char 
 }
 
 /// parse parameters for the overlapped bonded potential
-MDINLINE int inter_parse_bonded_overlapped(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_overlapped_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   int overlap_type = OVERLAP_UNKNOWN;
 
@@ -129,7 +129,7 @@ MDINLINE int inter_parse_bonded_overlapped(Tcl_Interp *interp, int bond_type, in
     return (TCL_ERROR);
   }
 
-  switch (bonded_overlapped_set_params(bond_type, overlap_type, argv[2])) {
+  switch (overlapped_bonded_set_params(bond_type, overlap_type, argv[2])) {
   case 1:
     Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
     return TCL_ERROR;

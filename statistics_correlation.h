@@ -1,5 +1,22 @@
-
-/** @File Header file for the correlation classe
+/*
+  Copyright (C) 2010 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+/* * @File Header file for the correlation class
  *
  * This module allow to compute correlations (and other two time averages) on
  * the fly an from files.
@@ -93,7 +110,6 @@
  *
  *
  */
-
 #ifndef STATISTICS_CORRELATION_H
 #define STATISTICS_CORRELATION_H
 
@@ -109,7 +125,7 @@
 
 /** The TCL command parser 
  */
-int parse_correlation(Tcl_Interp* interp, int argc, char** argv); 
+int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv); 
 int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
 int correlation_print_usage(Tcl_Interp* interp);
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args);

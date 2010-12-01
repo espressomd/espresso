@@ -612,6 +612,8 @@ typedef struct {
   double n[3];
   /** distance of the wall from the origin. */
   double d;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -622,6 +624,8 @@ typedef struct {
   double rad;  
   /** sphere direction. (+1 outside -1 inside interaction direction)*/
   double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_sphere;
 
 /** Parameters for a CYLINDER constraint. */
@@ -636,6 +640,8 @@ typedef struct {
   double length;
   /** cylinder direction. (+1 outside -1 inside interaction direction)*/
   double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_cylinder;
 
 /** Parameters for a PORE constraint. */
@@ -678,6 +684,8 @@ typedef struct {
   double sphrad;
   /** cylinder (connecting the spheres) radius*/
   double cylrad;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_maze;
 
 //ER
@@ -826,17 +834,14 @@ void tf_tables_init();
 /** Implementation of the tcl command \ref tcl_inter. This function
     allows the interaction parameters to be modified.
  */
-int inter(ClientData data, Tcl_Interp *interp,
+int tclcommand_inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
 /** Implementation of the Tcl function constraint. This function
     allows to set and delete constraints.
  */
-int constraint(ClientData _data, Tcl_Interp *interp,
+int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
-
-/** Callback for setmd niatypes. */
-int niatypes_callback(Tcl_Interp *interp, void *data);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {

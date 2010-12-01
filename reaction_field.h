@@ -42,7 +42,7 @@ extern Reaction_field_params rf_params;
 /************************************************************/
 /*@{*/
 
-MDINLINE int printrfToResult(Tcl_Interp *interp,char *name)
+MDINLINE int tclprint_to_result_rf(Tcl_Interp *interp,char *name)
 {
   char buffer[TCL_DOUBLE_SPACE];
   sprintf(buffer,"%s",name);
@@ -80,7 +80,7 @@ MDINLINE int rf_set_params(double kappa,double epsilon1,double epsilon2, double 
   return 1;
 }
 
-MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
+MDINLINE int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
 {
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
@@ -171,7 +171,7 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 
 /*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
 #ifdef INTER_RF
-MDINLINE int printinterrfIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_interrfIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -204,7 +204,7 @@ MDINLINE int interrf_set_params(int part_type_a, int part_type_b,int rf_on)
   return TCL_OK;
 }
 
-MDINLINE int interrf_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_interrf(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {
@@ -242,6 +242,9 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
 MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
+#ifdef ONEPART_DEBUG
+  double fac=0.0 ; /* TODO: this  variable was not declared. Now the code compiles, but I have no idea of what value to assign to it (MS) */
+#endif
   if ((ia_params->rf_on ==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {
      add_rf_coulomb_pair_force_no_cutoff(p1,p2,d, dist,force);
   }

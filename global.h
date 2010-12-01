@@ -178,13 +178,13 @@ extern const Datafield fields[];
  **********************************************/
 
 /// Implements the Tcl command \ref tcl_setmd. It allows to modify simulation parameters
-int setmd(ClientData data, Tcl_Interp *interp,
+int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
 /** Implements the Tcl command \ref tcl_code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
     code. */
-int code_info(ClientData data, Tcl_Interp *interp,
+int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
 #endif

@@ -150,6 +150,7 @@ void maggs_friction_thermo();
 void check_yukawa_eq();
 /*@}*/
 
+/*TODO: this function is not used anywhere. To be removed? */
 MDINLINE int dtoi(double flt)
 {       
   int intgr;
@@ -2111,7 +2112,7 @@ void maggs_propagate_psi_vel(double dthalf) {
     lattice[i].psi_v += dthalf*lattice[i].psi_f; 
   }
 }
-
+/* TODO: separate printing from variable setting */
 int set_maggs_params(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh, double gamma,
 		     int yukawa, double kappa, double r_cut)
 {
@@ -2283,7 +2284,7 @@ void check_gauss_law()
 }
 
 /************************************************************/
-int printMaggsToResult(Tcl_Interp *interp)
+int tclprint_to_result_Maggs(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -2306,7 +2307,7 @@ int printMaggsToResult(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int inter_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
 {
   int mesh;
   int yukawa = 0;
@@ -2485,7 +2486,7 @@ void Maggs_exit()
   free(Bfield);
 }
 #endif
-
+/* TODO: this appears not to be used anywhere. To be removed?  */ 
 int parse_and_print_gauss_res(Tcl_Interp *interp, int argc, char **argv)
 { 
 #ifndef ELECTROSTATICS

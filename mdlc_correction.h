@@ -66,11 +66,11 @@ typedef struct {
 } DLC_struct;
 extern DLC_struct dlc_params;
 
-   int         mdlc_sanity_checks(); 
-   void       add_mdlc_force_corrections();
-   double   add_mdlc_energy_corrections();
-   int         inter_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv) ; 
-   int printMDLCToResult(Tcl_Interp *interp);
+   int       mdlc_sanity_checks(); 
+   void      add_mdlc_force_corrections();
+   double    add_mdlc_energy_corrections();
+   int       tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv) ; 
+   int       tclprint_to_result_MDLC(Tcl_Interp *interp);
    
    
 #endif  /*of DIPOLES */

@@ -62,7 +62,7 @@ MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
   return 0;
 }
 
-MDINLINE int printcomforceIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_comforceIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -79,7 +79,7 @@ MDINLINE int printcomforceIAToResult(Tcl_Interp *interp, int i, int j)
   return TCL_OK;
 }
 
-MDINLINE int comforce_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_comforce(Tcl_Interp * interp,
 			     int part_type_a, int part_type_b,
 			     int argc, char ** argv)
 {

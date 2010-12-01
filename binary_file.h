@@ -110,7 +110,7 @@ struct MDHeader {
     channel to write to, all subsequent arguments give the fields to write.
     The order of the data in the file is given by the argument order.
     The names of the field are the same as above in lowercase. */
-int writemd(ClientData data, Tcl_Interp *interp,
+int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
 	    int argc, char **argv);
 
 /** Implements the readmd Tcl command. Note that for reading in new particles,
@@ -118,7 +118,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
     put, readmd searches for them. readmd also takes care to initialize the
     \ref particle_node map and the \ref node_grid, if necessary.
 */
-int readmd(ClientData data, Tcl_Interp *interp,
+int tclcommand_readmd(ClientData data, Tcl_Interp *interp,
 	   int argc, char **argv);
 /*@}*/
 
