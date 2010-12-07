@@ -226,6 +226,7 @@ int double_correlation_get_data(  double_correlation* self );
 
 /** writes the correlation to the TCL console */
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 
+int double_correlation_write_to_file( double_correlation* self, char* filename); 
 
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
 int file_data_source_readline(void* xargs, double* A, int dim_A); 
@@ -254,5 +255,11 @@ int particle_velocities(void* typelist, double* A, unsigned int n_A);
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
 
+typedef struct {
+  Tcl_Interp* interp;
+  int argc;
+  char** argv;
+} tcl_input_data;
 
+int tcl_input(void* data, double* A, unsigned int n_A);
 #endif
