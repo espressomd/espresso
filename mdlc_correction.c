@@ -878,7 +878,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 }
 /* ***************************************************************** */
 
-int printMDLCToResult(Tcl_Interp *interp)
+int tclprint_to_result_MDLC(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   
@@ -892,7 +892,7 @@ int printMDLCToResult(Tcl_Interp *interp)
 }
 /* ***************************************************************** */
 
-int inter_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv)
 {
   double pwerror;
   double gap_size;

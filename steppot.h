@@ -28,7 +28,7 @@
 
 #ifdef SMOOTH_STEP
 
-MDINLINE int printSmStIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_SmStIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -83,7 +83,7 @@ MDINLINE int smooth_step_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-MDINLINE int SmSt_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_SmSt(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

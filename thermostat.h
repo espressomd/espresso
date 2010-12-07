@@ -79,7 +79,7 @@ extern double nptiso_gammav;
 /** Implementation of the tcl command \ref tcl_thermostat. This function
     allows to change the used thermostat and to set its parameters.
  */
-int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** initialize constants of the thermostat on
     start of integration */
@@ -118,7 +118,7 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
 #endif
 
 /** Callback marking setting the temperature as outdated */
-int thermo_ro_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
@@ -170,7 +170,7 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 #endif
 
 #ifdef LB
-int thermo_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 
 #endif

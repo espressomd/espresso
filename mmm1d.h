@@ -51,10 +51,10 @@ typedef struct {
 extern MMM1D_struct mmm1d_params;
 
 /// print the mmm1d parameters to the interpreters result
-int printMMM1DToResult(Tcl_Interp *interp);
+int tclprint_to_result_MMM1D(Tcl_Interp *interp);
 
 /// parse the mmm1d parameters
-int inter_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
 
 /** parameters for MMM1D. Most of the parameters can also be tuned automatically. Unlike
     P3M, this tuning is redone automatically whenever parameters change, but not immediately
@@ -69,7 +69,7 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror);
 
 /** tuning of the parameters which are not set by the user, e.g. the switching radius or the
     bessel_cutoff. */
-int MMM1D_tune(Tcl_Interp *interp);
+int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp);
 
 /** recalculate the polygamma taylor series. */
 void MMM1D_recalcTables();

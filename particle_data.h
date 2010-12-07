@@ -275,7 +275,7 @@ extern int *partBondPartners;
 
 /** Implementation of the tcl command \ref tcl_part. This command allows to
     modify particle data. */
-int part(ClientData data, Tcl_Interp *interp,
+int tclcommand_part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
 /*       Functions acting on Particles          */
@@ -499,7 +499,7 @@ int set_particle_dipm(int part, double dipm);
     @param isVirtual its new dipole moment.
     @return TCL_OK if particle existed
 */
-int set_particle_isVirtual(int part,int isVirtual);
+int set_particle_virtual(int part,int isVirtual);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -648,6 +648,7 @@ void recv_particles(ParticleList *particles, int node);
 int do_nonbonded(Particle *p1, Particle *p2);
 #endif
 
+/*TODO: this function is not used anywhere. To be removed? */
 /** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
     @param id particle identity.
  */

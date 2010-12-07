@@ -984,7 +984,7 @@ int uwerr_read_double_vector(Tcl_Interp *interp, char * data_in ,
   return TCL_OK;
 }
 
-int uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
+int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 {
   int i, nrows, ncols, len, plot = 0,
     col_to_analyze = -1, analyze_col = 0, error = 0,

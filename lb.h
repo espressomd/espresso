@@ -263,6 +263,7 @@ MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
 
 }
 
+/* TODO: This function is not used anywhere. To be removed?  */
 /** Calculate the local fluid stress.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param local_node The local lattice site (Input).
@@ -412,11 +413,11 @@ MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
 
 #endif /* LB */
 
-/** Parser for the \ref lbnode command. */
-int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+/** Parser for the \ref lbnode command.  TODO: not registered!! */
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
-int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB_H */
 

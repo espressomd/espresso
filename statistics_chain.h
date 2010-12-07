@@ -156,44 +156,36 @@ void analyze_rdfchain(double r_min, double r_max, int r_bins, double **_rdf, dou
   */
 void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac); 
 #endif
-///
-int print_chain_structure_info(Tcl_Interp *interp);
-
-/** this function scans the arguments for a description of the chain structure,
-    i.e. start of chains, number of chains and chain length. Since this structure
-    requires the particles to be sorted, this is performed, too. */
-int parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv);
 
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();
 
-/** same as \ref parse_chain_structure_info, but also allows for chain_structure info
-    not to be given. You either get an error or chain topology is safe to be used. */
-int check_and_parse_chain_structure_info(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_set_chains(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, char **argv);
 
 ///
-int parse_re(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_rg(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_rh(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_intdist(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_internal_dist(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_g123(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_g123(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_g_av(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_g_av(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
+int tclcommand_analyze_parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
-int parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
 ///
 #ifdef ELECTROSTATICS
-int parse_cwvac(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_cwvac(Tcl_Interp *interp, int argc, char **argv);
 #endif
 /*@}*/
 

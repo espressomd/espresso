@@ -194,6 +194,7 @@ void ghost_communicator(GhostCommunicator *gc);
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
 void invalidate_ghosts();
 
+/* TODO: This function is not used anywhere. To be removed?  */
 #ifdef GHOST_FLAG
 MDINLINE int ifParticleIsGhost(Particle *p){
    return p->l.ghost;

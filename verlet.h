@@ -124,7 +124,7 @@ void announce_rebuild_vlist();
     </ul>
     \return TCL status.
 */
-int rebuild_vlist_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_rebuild_vlist(Tcl_Interp *interp, void *_data);
 /*@}*/
 
 

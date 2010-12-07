@@ -43,7 +43,7 @@ MDINLINE int tunable_slip_set_params(int part_type_a, int part_type_b,
   return TCL_OK;
 }
 
-MDINLINE int printtunable_slipIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_tunable_slipIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -65,7 +65,7 @@ MDINLINE int printtunable_slipIAToResult(Tcl_Interp *interp, int i, int j)
   return TCL_OK;
 }
 
-MDINLINE int tunable_slip_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_tunable_slip(Tcl_Interp * interp,
 			    int part_type_a, int part_type_b,
 			    int argc, char ** argv)
 {

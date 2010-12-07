@@ -246,7 +246,7 @@ int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3])
   return row_dir;
 }
 
-int node_grid_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_node_grid(Tcl_Interp *interp, void *_data)
 {
   int *data = (int *)_data;
   if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
@@ -273,7 +273,7 @@ int node_grid_callback(Tcl_Interp *interp, void *_data)
 }
 
 #ifdef PARTIAL_PERIODIC
-int per_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_periodicity(Tcl_Interp *interp, void *_data)
 {
   periodic = *(int *)_data;
 
@@ -283,7 +283,7 @@ int per_callback(Tcl_Interp *interp, void *_data)
 }
 #else
 
-int per_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_periodicity(Tcl_Interp *interp, void *_data)
 {
   int tmp_periodic;
   tmp_periodic = *(int *)_data;
@@ -296,7 +296,7 @@ int per_callback(Tcl_Interp *interp, void *_data)
 
 #endif
 
-int boxl_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_box_l(Tcl_Interp *interp, void *_data)
 {
   double *data = _data;
 
@@ -314,7 +314,7 @@ int boxl_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-int change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   char *mode;
   double d_new = box_l[0]; 

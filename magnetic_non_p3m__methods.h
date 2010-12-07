@@ -67,10 +67,10 @@
 */
 #ifdef DAWAANR
      /*  Information about the status of the method */
-     int printDAWAANRToResult(Tcl_Interp *interp);
+     int tclprint_to_result_DAWAANR(Tcl_Interp *interp);
          
   /* Parsing function for the dawaanr method*/
-  int Dinter_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv);
+  int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv);
 
    /* Sanity checks for the dawaanr*/
   int DAWAANR_sanity_checks();
@@ -88,11 +88,11 @@
 #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
 
     /*  Information about the status of the method */
-     int printMagnetic_dipolar_direct_sum_ToResult(Tcl_Interp *interp);
+     int tclprint_to_result_Magnetic_dipolar_direct_sum_(Tcl_Interp *interp);
 
 
   /* Parsing function for the magnetic dipolar direct sum method*/
-  int Dinter_parse_magnetic_dipolar_direct_sum(Tcl_Interp * interp, int argc, char ** argv);
+  int tclcommand_inter_magnetic_parse_mdds(Tcl_Interp * interp, int argc, char ** argv);
 
   /* Sanity checks for the magnetic dipolar direct sum*/
   int magnetic_dipolar_direct_sum_sanity_checks();
