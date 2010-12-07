@@ -130,6 +130,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
     if ( ARG0_IS_S("first_obs") ) {
       argc -= 1;
       argv += 1;
+//      dim_A=28300;
       error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
       argc -= change;
       argv += change;
@@ -138,6 +139,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
     } else if ( ARG0_IS_S("second_obs") ) {
       argc -= 1;
       argv += 1;
+//      dim_B=28292;
       error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
       argc -= change;
       argv += change;
@@ -209,15 +211,33 @@ int observable_usage(Tcl_Interp* interp) {
 
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args){
 
+
   file_data_source* fds;
   IntList* types=0;
   int error=0;
-  if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions"))  {
+  if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions") || ARG0_IS_S("structure_factor"))  {
     if (ARG0_IS_S("particle_velocities")) {
       *A_fun = &particle_velocities;
+      *A_args=0;
+      *dim_A=3*n_total_particles;
+      *change=1;
+      return TCL_OK;
     }
     if (ARG0_IS_S("particle_positions")) {
       *A_fun = &particle_positions;
+      *A_args=0;
+      *dim_A=3*n_total_particles;
+      *change=1;
+      return TCL_OK;
+    }
+    if (ARG0_IS_S("structure_factor")) {
+      *A_fun = &structure_factor;
+      *A_args=0;
+      *dim_A=28292;
+//      printf("DIMENSION %i",*dim_A);
+
+      *change=1;
+      return TCL_OK;
     }
   
     if (argc > 1 && ARG1_IS_S("type")) {
@@ -225,12 +245,12 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       parse_int_list(interp, argv[2], types);
       Tcl_AppendResult(interp, "You requestet particle_positions/particle_velocities with the type option.\nThis is not yet implemented" , (char *)NULL);
       return TCL_OK;
-    } else {
+    } /* else {
       *A_args=0;
       *dim_A=3*n_total_particles;
       *change=1;
       return TCL_OK;
-    }
+    } */
   } else if (ARG0_IS_S("textfile")) {
     // We still can only handle full files
     if ( argc>1 ) {
@@ -254,6 +274,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   } else {
     return observable_usage(interp);
   }
+  return 0 ;
 }
 
 
@@ -456,18 +477,76 @@ int double_correlation_get_data( double_correlation* self ) {
 }
 
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp) {
-  int j, k;
-  double dt=self->dt;
-  for (j=0; j<self->n_result; j++) {
-    printf("%f %d ", self->tau[j]*dt, self->n_sweeps[j]);
-    for (k=0; k< self->dim_corr; k++) {
-      if (self->n_sweeps[j] == 0 )
-        printf("%f ", 0.);
-      else 
-        printf("%f ", self->result[j][k]/ (double) self->n_sweeps[j]);
-    }
-    printf("\n");
+  int i,j, k, l,m,n;
+  double dt=self->dt,qfak;
+  FILE *pFile;
+  int order,order2;
+
+  qfak = 2.0*PI/box_l[0];
+  order=15;
+  order2=order*order;
+
+  double vector[2*order2];
+  sortPartCfg();
+  for(m=0; m<2*order2; m++) {
+      vector[m] = 0.0;
   }
+
+  pFile=fopen("/data/data4/pojeda/correlations.dat","w");
+  for (l=0; l<self->n_result; l++) {
+    fprintf(pFile,"&  Tiempos %f %d \n", self->tau[l]*dt, self->n_sweeps[l]);
+
+/*    for (k=0; k< self->dim_corr; k++) {
+      if (self->n_sweeps[j] == 0 )
+        fprintf(pFile,"%f \n", 0.);
+      else 
+        fprintf(pFile,"%f \n", self->result[j][k]/ (double) self->n_sweeps[j]);
+    } */
+
+    m=0;
+    for(i=-order; i<=order; i++) {
+      for(j=-order; j<=order; j++) {
+        for(k=-order; k<=order; k++) {
+	  n = i*i + j*j + k*k;
+	  if ((n<=order2) && (n>=1)) {
+	/*    C_sum = S_sum = 0.0;
+	    for(p=0; p<n_total_particles; p++) {
+	      if (partCfg[p].p.type == 1) {
+		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		C_sum-= cos(qr);
+		S_sum-= sin(qr);
+	      }
+	      if (partCfg[p].p.type == 2) {
+		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		C_sum+= cos(qr);
+		S_sum+= sin(qr);
+	      }
+	    } */
+
+            if (self->n_sweeps[l] != 0 ) {
+               vector[2*n-2] += self->result[l][m]/ (double)self->n_sweeps[l];
+            }
+            vector[2*n-1]++ ;
+            m=m+2;
+//            printf("%i   %f   %i   %f\n",l,A[l],l+1,A[l+1]);
+	  }
+	}
+      }
+    }
+
+  n = 0;
+  for(m=0; m<n_total_particles; m++) {
+      if (partCfg[m].p.type == 1 || partCfg[m].p.type == 2) n++;
+//      if (partCfg[m].p.type == 1) n++;
+  }
+
+  for(m=0; m<order2; m++) {
+     if(vector[2*m+1]!=0) fprintf(pFile,"%f  %f \n", qfak*sqrt(1.0*m+1.0), vector[2*m]/(n*vector[2*m+1])); 
+  }
+
+    fprintf(pFile,"\n");
+  }
+  fclose(pFile);
   return 0;
 }
 
@@ -505,14 +584,23 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
 }
 
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  unsigned int i;
+  int i,j;
   if (!(dim_A == dim_B )) {
     printf("Error in componentwise product: The vector sizes do not match");
     return 1;
   }
-  for ( i = 0; i < dim_A; i++ ) {
-    C[i] = A[i]*B[i];
+  j=0;
+  for ( i = 0; i < dim_A/2; i++ ) {
+    C[j] = A[j]*B[j] + A[j+1]*B[j+1];
+    C[j+1] = A[j+1]*B[j] - A[j]*B[j+1];
+//    printf("%f    %f    \n",A[j]*B[j] + A[j+1]*B[j+1],A[j+1]*B[j] - A[j]*B[j+1] );
+    j=j+2;
   }
+
+//  for ( i = 0; i < dim_A; i++ ) {
+//    printf("%i    %f    \n",i, C[i]);
+//  }
+
   return 0;
 }
 
@@ -566,6 +654,71 @@ int particle_positions(void* typelist, double* A, unsigned int n_A) {
   } else 
     return 1;
 }
+
+
+
+int structure_factor(void* typelist, double* A, unsigned int n_A) {
+  int i,j,k,l,p;
+  int order, order2, n;
+  double twoPI_L, C_sum, S_sum, qr ;
+  order = 15;
+  order2=order*order;
+  twoPI_L = 2*PI/box_l[0];
+//  printf("%f  %f  %f",PI,twoPI_L, box_l[0]);
+//  exit(0);
+  sortPartCfg();
+  if (typelist == NULL) {
+
+    for(l=0; l<28292; l++) {
+       A[l]   = 0.0;
+    }
+
+    l=0;
+    for(i=-order; i<=order; i++) {
+      for(j=-order; j<=order; j++) {
+        for(k=-order; k<=order; k++) {
+	  n = i*i + j*j + k*k;
+	  if ((n<=order2) && (n>=1)) {
+	    C_sum = S_sum = 0.0;
+	    for(p=0; p<n_total_particles; p++) {
+	      if (partCfg[p].p.type == 1) {
+		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		C_sum+= cos(qr);
+		S_sum-= sin(qr);
+	      }
+	      if (partCfg[p].p.type == 2) {
+		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+		C_sum-= cos(qr);
+		S_sum+= sin(qr);
+	      }  
+	    }
+            A[l]   =C_sum;
+            A[l+1] =S_sum;
+//            printf("%i   %f   %i   %f\n",l,A[l],l+1,A[l+1]);
+            l=l+2;
+	  }
+	}
+      }
+    }
+
+/*      j=0;
+      for ( i = 0; i<(n_total_particles)/3; i++ ) {
+        r1=partCfg[j+1].r.p[0]-partCfg[j+2].r.p[0];
+        r2=partCfg[j+1].r.p[1]-partCfg[j+2].r.p[1];
+        r3=partCfg[j+1].r.p[2]-partCfg[j+2].r.p[2];
+        j=3*(i+1); */
+/*        r1=floor(r1/box_l[0]+0.5)*box_l[0]+r1;
+        r2=floor(r2/box_l[0]+0.5)*box_l[0]+r2;
+        r3=floor(r3/box_l[0]+0.5)*box_l[0]+r3; */
+//        rr = sqrt(r1*r1 + r2*r2 + r3*r3);
+//        printf("Distancia= %f %f %f \n",partCfg[i].r.p[0],partCfg[i].r.p[1],partCfg[i].r.p[2]);
+//          printf("Distancia= %f  %f\n",time_step,box_l[0]);
+
+    return 0;
+  } else 
+    return 1;
+}
+
 
 
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns) {

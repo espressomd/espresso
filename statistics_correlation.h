@@ -254,5 +254,6 @@ int particle_velocities(void* typelist, double* A, unsigned int n_A);
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
 
+int structure_factor(void* typelist, double* A, unsigned int n_A);
 
 #endif
