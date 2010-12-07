@@ -770,7 +770,7 @@ directory.
   \opt { tau_lin \var{\tau_{lin}} } \opt { hierarchy_depth \var{h} } \opt{ delta_t \var{\delta_t} }
   \variant{2} analyze correlation update_from_file
   \variant{3} analyze correlation update
-  \variant{4} analyze correlation update \var{A_1} \dots \var{A_m} \var{B_1} \dots \var{B_n}
+  \variant{4} analyze correlation update { \var{A_1} \dots \var{A_m} } { \var{B_1} \dots \var{B_n} }
 \end{essyntax}
 
 Variant \variant{1} initializes the correlations, and while the other variants feed
@@ -778,7 +778,7 @@ the correlation with new data depending on their input data flavour.
 Arguments of the initialization are:
 
 \begin{arguments}
-\item \lit{first_obs} and \lit{first_obs}: The observables A and B that are to correlated.
+\item \lit{first_obs} and \lit{second_obs}: The observables A and B that are to correlated.
   Some observables are already implemented, and others can be easily added. This can be done
   with very limited \es{} knowledge just by following the implementations that are already
   in. The following functions are already implemented:
