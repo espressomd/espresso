@@ -42,7 +42,7 @@ Nemd nemddata = { -1, 0, 0, 0.0, 1.0, NULL, 0, 0, NULL, 0.0, 0.0, 0.0, 0};
 /*@{*/
 
 /** Hand over nemd usage information to tcl interpreter. */
-int nemd_usage(Tcl_Interp *interp) 
+int tclcommand_nemd_print_usage(Tcl_Interp *interp) 
 {
 #ifdef NEMD
   Tcl_AppendResult(interp, "Usage of tcl command nemd:\n", (char *)NULL);
@@ -148,7 +148,7 @@ void nemd_init(int n_slabs, int n_exchange, double shear_rate)
 }
 
 /** Hand over nemd status information to tcl interpreter. */
-int nemd_print_status(Tcl_Interp *interp) 
+int tclcommand_nemd_print_status(Tcl_Interp *interp) 
 {
   char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
   switch (nemd_method) {
@@ -177,16 +177,16 @@ int nemd_print_status(Tcl_Interp *interp)
 }
 
 /** Set nemd method to exchange and set nemd parameters */
-int nemd_set_exchange(Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_nemd_parse_exchange(Tcl_Interp *interp, int argc, char **argv) 
 {
   int n_slabs, n_exchange;
   if (argc < 4) {
     Tcl_AppendResult(interp, "wrong # args:  ", (char *)NULL);
-    return nemd_usage(interp);
+    return tclcommand_nemd_print_usage(interp);
   }
   if ( !ARG_IS_I(2, n_slabs) || !ARG_IS_I(3, n_exchange) ) {
     Tcl_AppendResult(interp, "wrong argument type:  ", (char *)NULL);
-    return nemd_usage(interp);
+    return tclcommand_nemd_print_usage(interp);
   }
   /* parameter sanity */
   if ( n_slabs<0 || n_slabs%2!=0 ) {
@@ -204,17 +204,17 @@ int nemd_set_exchange(Tcl_Interp *interp, int argc, char **argv)
 }
 
 /** Set nemd method to shearrate and set nemd parameters */
-int nemd_set_shearrate(Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_nemd_parse_shearrate(Tcl_Interp *interp, int argc, char **argv) 
 {
   int n_slabs;
   double shearrate;
   if (argc < 4) {
     Tcl_AppendResult(interp, "wrong # args:  ", (char *)NULL);
-    return nemd_usage(interp);
+    return tclcommand_nemd_print_usage(interp);
   }
   if ( !ARG_IS_I(2, n_slabs) || !ARG_IS_D(3, shearrate) ) {
     Tcl_AppendResult(interp, "wrong argument type:  ", (char *)NULL);
-    return nemd_usage(interp);
+    return tclcommand_nemd_print_usage(interp);
   }
  /* parameter sanity */
   if ( n_slabs<0 || n_slabs%2!=0 ) {
@@ -227,13 +227,13 @@ int nemd_set_shearrate(Tcl_Interp *interp, int argc, char **argv)
 }
 
 /** Hand over velocity profile to tcl interpreter */
-int nemd_print_profile(Tcl_Interp *interp)
+int tclcommand_nemd_parse_and_print_profile(Tcl_Interp *interp)
 {
   int i;
   double val;
   char buffer[TCL_DOUBLE_SPACE];
   
-  INTEG_TRACE(fprintf(stderr,"%d: nemd_print_profile:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: tclcommand_nemd_parse_and_print_profile:\n",this_node));
   if(nemd_method == NEMD_METHOD_OFF) {
     Tcl_AppendResult(interp, "nemd is off", (char *)NULL);
     return (TCL_OK);
@@ -253,11 +253,11 @@ int nemd_print_profile(Tcl_Interp *interp)
 }
 
 /** Gives back the calculated viscosity */
-int nemd_print_viscosity(Tcl_Interp *interp)
+int tclcommand_nemd_parse_and_print_viscosity(Tcl_Interp *interp)
 {
   double shear_rate=0.0, mean_force, viscosity;
   char buffer[TCL_DOUBLE_SPACE];
-  INTEG_TRACE(fprintf(stderr,"%d: nemd_print_viscosity:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: tclcommand_nemd_parse_and_print_viscosity:\n",this_node));
 
   /* calculate shear_rate */
   switch (nemd_method) {
@@ -290,7 +290,7 @@ int nemd_print_viscosity(Tcl_Interp *interp)
  *            Exported Functions                            *
  ************************************************************/
 
-int nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
 #ifdef NEMD
   int status = TCL_OK;
@@ -300,34 +300,34 @@ int nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   /* print nemd status */
   if(argc == 1) {
-    status = nemd_print_status(interp) ;
+    status = tclcommand_nemd_print_status(interp) ;
   }
   else if (ARG1_IS_S("off")) {
     nemd_method = NEMD_METHOD_OFF;
     status = nemd_free();
   }  
   else if (ARG1_IS_S("exchange")) {
-    status = nemd_set_exchange(interp,argc,argv);
+    status = tclcommand_nemd_parse_exchange(interp,argc,argv);
   } 
   else if (ARG1_IS_S("shearrate")) {
-    status = nemd_set_shearrate(interp,argc,argv);
+    status = tclcommand_nemd_parse_shearrate(interp,argc,argv);
   } 
   else if (ARG1_IS_S("profile")) {
-    status = nemd_print_profile(interp);
+    status = tclcommand_nemd_parse_and_print_profile(interp);
   } 
   else if (ARG1_IS_S("viscosity")) {
-    status = nemd_print_viscosity(interp);
+    status = tclcommand_nemd_parse_and_print_viscosity(interp);
   } 
   else {
     Tcl_AppendResult(interp, "Unkwnown keyword: \n", (char *)NULL);
-    return nemd_usage(interp);
+    return tclcommand_nemd_print_usage(interp);
   }
 
   return mpi_gather_runtime_errors(interp, status);
 
 #endif
   INTEG_TRACE(fprintf(stderr,"%d: call to nemd but not compiled in!\n",this_node));
-  return nemd_usage(interp);
+  return tclcommand_nemd_print_usage(interp);
 }
 
 /************************************************************/

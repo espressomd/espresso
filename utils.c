@@ -25,7 +25,7 @@
 
 
 
-int replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_Channel channel=NULL;
 

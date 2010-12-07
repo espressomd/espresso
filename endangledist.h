@@ -59,7 +59,7 @@ MDINLINE int endangledist_set_params(int bond_type, double bend, double phi0 ,do
 }
 
 /// parse parameters for the endangledist potential
-MDINLINE int inter_parse_endangledist(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_endangledist(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double bend, phi0, distmin, distmax;
 

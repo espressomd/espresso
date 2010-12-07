@@ -126,7 +126,7 @@ int collision(double pos[3], double shield, int n_add, double *add) {
 
 
 
-int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; 
   double bond_length; 
   int part_id = 0; 
@@ -616,7 +616,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 
 
-int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_CI; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_CI = -1.0; int type_CI = 2;
@@ -729,7 +729,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
 
 
 
-int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_pS, N_nS; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_pS = 1.0, val_nS = -1.0; int type_pS = 3, type_nS = 4;
@@ -918,7 +918,7 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
 
 
 
-int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double v_max; int part_id = 0, N_T = n_total_particles;
   double tmp_try;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1000,7 +1000,7 @@ double velocitiesC(double v_max, int part_id, int N_T) {
   return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
 }
 
-int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int part_id = 0, N_T = n_total_particles;
   double tmp_try;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1081,7 +1081,7 @@ double maxwell_velocitiesC(int part_id, int N_T) {
   return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
 }
 
-int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; int part_id=0;
   double r_catch=1.9; int link_dist=2, chain_dist, type_bond=0, tmp_try,max_try=30000; 
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1410,7 +1410,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 
 
 
-int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double a, bond_length; int MPC, N_CI = 0; double val_nodes = 0.0, val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; int nonet = 0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;
@@ -1550,7 +1550,7 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, 
 
 
 
-int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double a; int MPC, N_CI = 0; double val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; 
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;

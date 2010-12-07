@@ -199,7 +199,7 @@ void init_energies(Observable_stat *stat)
 #ifdef MAGNETOSTATICS
 
   switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:  n_dipolar = 0; break;
+  case DIPOLAR_NONE:  n_dipolar = 1; break;
 #ifdef ELP3M
   case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
@@ -231,7 +231,7 @@ void master_energy_calc() {
  *                                 parser
  ****************************************************************************************/
 
-static void print_detailed_energies(Tcl_Interp *interp)
+static void tclcommand_analyze_print_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double value;
@@ -328,7 +328,7 @@ static void print_detailed_energies(Tcl_Interp *interp)
 
 /************************************************************/
 
-int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | subt_lj_harm <type_num> | subt_lj_fene <type_num> | subt_lj <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | ljcos2 <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -347,7 +347,7 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
   }
 
   if (argc == 0)
-    print_detailed_energies(interp);
+    tclcommand_analyze_print_all(interp);
   else {
 
     if      (ARG0_IS_S("kinetic"))

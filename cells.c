@@ -164,7 +164,7 @@ static void topology_init(int cs, CellPList *local) {
  *            Exported Functions                            *
  ************************************************************/
 
-int cellsystem(ClientData data, Tcl_Interp *interp,
+int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv)
 {
   int err = 0;

@@ -1,4 +1,21 @@
-
+/*
+  Copyright (C) 2010 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/ 
 #include "statistics_correlation.h"
 #include "particle_data.h"
 #include "parser.h"
@@ -54,7 +71,7 @@ int correlation_update_from_file(unsigned int no) {
 }
 
 
-int parse_correlation(Tcl_Interp* interp, int argc, char** argv) {
+int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv) {
   int no;
   if (argc < 1)
     return correlation_print_usage(interp);
@@ -79,13 +96,14 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int(*B_fun)  ( void* B_args, double* B, unsigned int dim_B) = 0;
   void* B_args = 0;
   int dim_B;
-  int tau_lin = 16;
+  int tau_lin = 16; // default values
   int hierarchy_depth = 4;
   double delta_t = 1;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
   int dim_corr;
   int change;
   int error;
+  tcl_input_data* temp;
   
   // Check if ID is negative
   if ( no < 0 ) {
@@ -95,9 +113,24 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   // If correlation already exists then, the next argument must be print or update, because we
   // can not handle anything else yet.
   if ( no < n_correlations ) {
-    if (argc == 1)
+    if (argc > 0)
       if (ARG0_IS_S("print")) {
         return double_correlation_print_correlation(&correlations[no], interp);
+      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
+        temp = correlations[no].A_args;
+        temp->interp=interp;
+        temp->argv=argv+1;
+        temp->argc=argc-1;
+        temp = correlations[no].B_args;
+        temp->interp=interp;
+        temp->argv=argv+2;
+        temp->argc=argc-2;
+        error = double_correlation_get_data(&correlations[no]);
+        if (error) {
+          Tcl_AppendResult(interp, "Error reading tclinput", (char *)NULL);
+        } else {
+          return TCL_OK;
+        }
       } else if (ARG0_IS_S("update")) {
         error = double_correlation_get_data(&correlations[no]);
         if (error) {
@@ -109,6 +142,17 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         error = correlation_update_from_file(no);
         if (error) {
           Tcl_AppendResult(interp, "error in update_from_file", (char *)NULL);
+        } else {
+          return TCL_OK;
+        }
+      } else if (ARG0_IS_S("write_to_file")) {
+        if (argc <2) {
+          Tcl_AppendResult(interp, "You must pass a filename as argument of write_to_file", (char *)NULL);
+          return TCL_ERROR;
+        }
+        error = double_correlation_write_to_file(&correlations[no], argv[1]);
+        if (error) {
+          Tcl_AppendResult(interp, "error in write to file", (char *)NULL);
         } else {
           return TCL_OK;
         }
@@ -184,10 +228,9 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   
   // Let us just realloc space. Does not matter even if we can not make a proper correlation out of that.
   correlations=(double_correlation*) realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
-  n_correlations++;
 
   // Now initialize the new correlation
-  error = double_correlation_init(&correlations[n_correlations-1], delta_t, tau_lin, hierarchy_depth, 1, 
+  error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, hierarchy_depth, 1, 
       dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
       corr_operation, &compress_linear, &compress_linear);
   if ( error == 0 ) {
@@ -215,6 +258,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   file_data_source* fds;
   IntList* types=0;
   int error=0;
+  int temp;
   if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions") || ARG0_IS_S("structure_factor"))  {
     if (ARG0_IS_S("particle_velocities")) {
       *A_fun = &particle_velocities;
@@ -271,7 +315,18 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       Tcl_AppendResult(interp, "Error in parse_observable textfile: no filename given" , (char *)NULL);
       return TCL_ERROR;
     }
-  } else {
+  } else if (ARG0_IS_S("tclinput")) {
+    if (argc>1 && ARG1_IS_I(temp)) {
+      *dim_A = temp;
+      *A_fun = &tcl_input;
+      *A_args=malloc(sizeof(tcl_input_data));
+      *change =2;
+      return TCL_OK;
+    } else {
+      Tcl_AppendResult(interp, "\nError in parse_observable tclinfo. You must pass the dimension of the observable." , (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else {
     return observable_usage(interp);
   }
   return 0 ;
@@ -287,6 +342,11 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   } else if (ARG0_IS_S("square_distance_componentwise")) {
     *corr_fun = &square_distance_componentwise;
     *dim_corr = dim_A;
+    *change=1;
+    return TCL_OK;
+  } else if (ARG0_IS_S("scalar_product")) {
+    *corr_fun = &scalar_product;
+    *dim_corr = 1;
     *change=1;
     return TCL_OK;
   } else {
@@ -461,7 +521,7 @@ int double_correlation_get_data( double_correlation* self ) {
     }
   }
 // Now for the higher ones
-  for ( i = 1; i < self->hierarchy_depth; i++) {
+  for ( i = 1; i < highest_level_to_compress+2; i++) {
     for ( j = (self->tau_lin+1)/2+1; j < MIN(self->tau_lin+1, self->n_vals[i]); j++) {
       index_new = self->newest[i];
       index_old = (self->newest[i] - j + self->tau_lin + 1) % (self->tau_lin + 1);
@@ -547,6 +607,28 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
     fprintf(pFile,"\n");
   }
   fclose(pFile);
+  return 0;
+}
+
+int double_correlation_write_to_file( double_correlation* self, char* filename) {
+  FILE* file=0;
+  int j, k;
+  double dt=self->dt;
+  file=fopen(filename, "w");
+  if (!file) {
+    return 1;
+  }
+  for (j=0; j<self->n_result; j++) {
+    fprintf(file, "%f %d ", self->tau[j]*dt, self->n_sweeps[j]);
+    for (k=0; k< self->dim_corr; k++) {
+      if (self->n_sweeps[j] == 0 )
+        fprintf(file, "%f ", 0.);
+      else 
+        fprintf(file, "%f ", self->result[j][k]/ (double) self->n_sweeps[j]);
+    }
+    fprintf(file, "\n");
+  }
+  close(file);
   return 0;
 }
 
@@ -780,6 +862,24 @@ int file_data_source_readline(void* xargs, double* A, int dim_A) {
     }
   }
 //  printf("\n");
+  return 0;
+}
+
+int tcl_input(void* data, double* A, unsigned int n_A) {
+  tcl_input_data* input_data = (tcl_input_data*) data;
+  int i, tmp_argc, res = 1;
+  char  **tmp_argv;
+  Tcl_SplitList(input_data->interp, input_data->argv[0], &tmp_argc, &tmp_argv);
+  if (tmp_argc < n_A) {
+    Tcl_AppendResult(input_data->interp, "Not enough arguments passed to analyze correlation update", (char *)NULL);
+    return 1;
+  }
+  for (i = 0; i < n_A; i++) {
+    if (Tcl_GetDouble(input_data->interp, tmp_argv[i], &A[i]) != TCL_OK) {
+      Tcl_AppendResult(input_data->interp, "error parsing argument ", input_data->argv[i],"\n", (char *)NULL);
+      return 1;
+    }
+  }
   return 0;
 }
 

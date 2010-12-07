@@ -384,8 +384,8 @@ void announce_rebuild_vlist()
 
 /* Callback functions */
 /************************************************************/
-
-int rebuild_vlist_callback(Tcl_Interp *interp, void *_data)
+/* TODO: this function is not used anywhere, should it be deleted? */
+int tclcallback_rebuild_vlist(Tcl_Interp *interp, void *_data)
 {
   int data = *(int *)_data;
   /* declared as bool, no check necessary (and possible) */

@@ -34,7 +34,7 @@
    cwz-build-command: make
 */
 
-int writemd(ClientData data, Tcl_Interp *interp,
+int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
 	    int argc, char **argv)
 {
   static int end_num = -1;
@@ -191,7 +191,7 @@ int writemd(ClientData data, Tcl_Interp *interp,
   return TCL_OK;
 }
 
-int readmd(ClientData dummy, Tcl_Interp *interp,
+int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
 	   int argc, char **argv)
 {
   char *row;

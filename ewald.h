@@ -88,10 +88,10 @@ extern ewald_struct ewald;
 /*@{*/
 
 /// print the ewald parameters to the interpreters result
-int printEWALDToResult(Tcl_Interp *interp);
+int tclprint_to_result_EWALD(Tcl_Interp *interp);
 
 /// parse the ewald parameters
-int inter_parse_ewald(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv);
   
 /// sanity checks
 int EWALD_sanity_checks();
@@ -121,7 +121,9 @@ MDINLINE double add_ewald_coulomb_pair_force(Particle *p1, Particle *p2,
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;
-
+#ifdef ONEPART_DEBUG
+  double fac=0.; /*TODO: (BUG) fac was not declared, now code compiles but its value (0) is arbitrary */
+#endif 
   if(dist < ewald.r_cut) {
     adist = ewald.alpha * dist;
 #if USE_ERFC_APPROXIMATION

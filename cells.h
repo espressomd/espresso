@@ -173,7 +173,7 @@ extern CellStructure cell_structure;
 /*@{*/
 
 /** implementation of the Tcl command \ref tcl_cellsystem */
-int cellsystem(ClientData data, Tcl_Interp *interp,
+int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv);
 
 /** Initialize the cell structure on program start with the default

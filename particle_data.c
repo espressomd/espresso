@@ -436,7 +436,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
 }
 
 #ifdef ROTATIONAL_INERTIA
-void part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *interp)
   {double rinertia[3];
 
   rinertia[0]=part->p.rinertia[0];
@@ -453,7 +453,7 @@ void part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *int
 #endif
 
 #ifdef ROTATION
-void part_print_omega(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_omega(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->m.omega[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -463,7 +463,7 @@ void part_print_omega(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-void part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double torque[3];
 //in Espresso torques are in body-fixed frames. We should convert they to the space-fixed coordinates.
@@ -477,12 +477,12 @@ void part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-/* part_print_torque_body_frame: function to have the possiblility of
+/* tclcommand_part_print_torque_body_frame: function to have the possiblility of
    printing also the torques in the body_frame to make compatible the
    manual recovery of saved configurations with the use of the instruction  
    part $i torque tx,ty,tz  to assign torques in the new run. The torques in
    the body frame can be printed using "part $i print torquebf" */ 
- void part_print_torque_body_frame(Particle *part, char *buffer, Tcl_Interp *interp)
+ void tclcommand_part_print_torque_body_frame(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double torque[3];
 
@@ -501,7 +501,7 @@ void part_print_torque(Particle *part, char *buffer, Tcl_Interp *interp)
 }
 
 
-void part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->r.quat[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -513,7 +513,8 @@ void part_print_quat(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-void part_print_quatu(Particle *part, char *buffer, Tcl_Interp *interp)
+/* TODO: This function is not used anywhere. To be removed?  */
+void tclcommand_part_print_quatu(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->r.quatu[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -525,7 +526,7 @@ void part_print_quatu(Particle *part, char *buffer, Tcl_Interp *interp)
 #endif
 
 #ifdef DIPOLES
-void part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->r.dip[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -537,14 +538,14 @@ void part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
 #endif
 
 #ifdef VIRTUAL_SITES
-void part_print_isVirtual(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   sprintf(buffer,"%i", part->p.isVirtual);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
 }
 #endif
 
-void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
   Tcl_PrintDouble(interp, part->m.v[0]/time_step, buffer);
@@ -556,7 +557,7 @@ void part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 }
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-void part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
   Tcl_PrintDouble(interp, part->p.mu_E[0], buffer);
@@ -568,7 +569,7 @@ void part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp)
 }
 #endif
 
-void part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
   Tcl_PrintDouble(interp, part->f.f[0]/(0.5*time_step*time_step), buffer);
@@ -579,7 +580,7 @@ void part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-void part_print_position(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double ppos[3];
   int img[3];
@@ -594,7 +595,7 @@ void part_print_position(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-void part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   double ppos[3];
   int img[3];
@@ -610,7 +611,7 @@ void part_print_folded_position(Particle *part, char *buffer, Tcl_Interp *interp
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-void part_print_bonding_structure(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_bonding_structure(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int i,j,size;
   Tcl_AppendResult(interp, "{ ", (char *)NULL);
@@ -655,7 +656,7 @@ MDINLINE void add_link(IntList *il, IntList *link, int l, int p, int size)
 }
  
 /** Return all bond partners of a particle including bonds that are not stored at the particle itself up to a certain distance in numbers of bonds. Return a tcl list to the interpreter c*/
-void part_print_bond_partners(Particle *part, char *buffer, Tcl_Interp *interp, int distance)
+void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Interp *interp, int distance)
 {
   int c, p, i, p1, p2;
   Bonded_ia_parameters *ia_params;
@@ -734,7 +735,7 @@ void part_print_bond_partners(Particle *part, char *buffer, Tcl_Interp *interp, 
 }
 
 #ifdef EXCLUSIONS
-void part_print_exclusions(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_exclusions(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int i;
   for (i = 0; i < part->el.n; i++) {
@@ -745,7 +746,7 @@ void part_print_exclusions(Particle *part, char *buffer, Tcl_Interp *interp)
 #endif
 
 #ifdef EXTERNAL_FORCES
-void part_print_fix(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_fix(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int i;
   for (i = 0; i < 3; i++) {
@@ -756,7 +757,7 @@ void part_print_fix(Particle *part, char *buffer, Tcl_Interp *interp)
   }
 }
 
-void part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *interp)
+void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_PrintDouble(interp, part->l.ext_force[0], buffer);
@@ -775,7 +776,7 @@ void part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *interp)
 /** append particle data in ASCII form to the Tcl result.
     @param part_num the particle which data is appended
     @param interp   the Tcl interpreter to which result to add to */
-int printParticleToResult(Tcl_Interp *interp, int part_num)
+int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 {
   char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
@@ -786,7 +787,7 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   sprintf(buffer, "%d", part.p.identity);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_AppendResult(interp, " pos ", (char *)NULL);
-  part_print_position(&part, buffer, interp);
+  tclcommand_part_print_position(&part, buffer, interp);
   Tcl_AppendResult(interp, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
   if (part.p.mol_id > -1) {
@@ -803,47 +804,47 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
   Tcl_AppendResult(interp, buffer, " mu_E ", (char *)NULL);
-  part_print_mu_E(&part, buffer, interp);
+  tclcommand_part_print_mu_E(&part, buffer, interp);
 #endif
   Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
-  part_print_v(&part, buffer, interp);
+  tclcommand_part_print_v(&part, buffer, interp);
   Tcl_AppendResult(interp, " f ", (char *)NULL);
-  part_print_f(&part, buffer, interp);
+  tclcommand_part_print_f(&part, buffer, interp);
 
 #ifdef ROTATION
   /* print information about rotation */
   Tcl_AppendResult(interp, " quat ", (char *)NULL);
-  part_print_quat(&part, buffer, interp);
+  tclcommand_part_print_quat(&part, buffer, interp);
 
   Tcl_AppendResult(interp, " omega ", (char *)NULL);
-  part_print_omega(&part, buffer, interp);
+  tclcommand_part_print_omega(&part, buffer, interp);
 
   Tcl_AppendResult(interp, " torque ", (char *)NULL);
-  part_print_torque(&part, buffer, interp);
+  tclcommand_part_print_torque(&part, buffer, interp);
 #endif
 
 #ifdef ROTATIONAL_INERTIA
   /* print information about rotational inertia */
   Tcl_AppendResult(interp, " rinertia ", (char *)NULL);
-  part_print_rotational_inertia(&part, buffer, interp);
+  tclcommand_part_print_rotational_inertia(&part, buffer, interp);
 #endif
 
 #ifdef DIPOLES
   /* print information about dipoles */
   Tcl_AppendResult(interp, " dip ", (char *)NULL);
-  part_print_dip(&part, buffer, interp);
+  tclcommand_part_print_dip(&part, buffer, interp);
 #endif
 
 #ifdef VIRTUAL_SITES
   /* print information about isVirtual */
   Tcl_AppendResult(interp, " virtual ", (char *)NULL);
-  part_print_isVirtual(&part, buffer, interp);
+  tclcommand_part_print_virtual(&part, buffer, interp);
 #endif
 
 #ifdef EXCLUSIONS
   if (part.el.n > 0) {
     Tcl_AppendResult(interp, " exclude ", (char *)NULL);
-    part_print_exclusions(&part, buffer, interp);
+    tclcommand_part_print_exclusions(&part, buffer, interp);
   }
 #endif
 
@@ -851,27 +852,27 @@ int printParticleToResult(Tcl_Interp *interp, int part_num)
   /* print external force information. */
   if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
-    part_print_ext_force(&part, buffer, interp);
+    tclcommand_part_print_ext_force(&part, buffer, interp);
   }
 
   /* print fix information. */
   if (part.l.ext_flag & COORDS_FIX_MASK) {
     Tcl_AppendResult(interp, " fix ", (char *)NULL);
-    part_print_fix(&part, buffer, interp);
+    tclcommand_part_print_fix(&part, buffer, interp);
   }
 #endif
 
   /* print bonding structure */
   if (part.bl.n > 0) {
     Tcl_AppendResult(interp, " bond ", (char *)NULL);
-    part_print_bonding_structure(&part, buffer, interp);
+    tclcommand_part_print_bonding_structure(&part, buffer, interp);
   }
 
   free_particle(&part);
   return (TCL_OK);
 }
 
-int part_print_all(Tcl_Interp *interp)
+int tclcommand_part_print_all(Tcl_Interp *interp)
 {
   int i = 0, start = 1;
 
@@ -892,7 +893,7 @@ int part_print_all(Tcl_Interp *interp)
       else
 	Tcl_AppendResult(interp, " {", (char *)NULL);
 
-      printParticleToResult(interp, i);
+      tclprint_to_result_Particle(interp, i);
       Tcl_AppendResult(interp, "}", (char *)NULL);
     }
   }
@@ -900,7 +901,7 @@ int part_print_all(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 		     int part_num)
 {
 
@@ -924,11 +925,11 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     else if (ARG0_IS_S("position"))
-      part_print_position(&part, buffer, interp);
+      tclcommand_part_print_position(&part, buffer, interp);
     else if (ARG0_IS_S("force"))
-      part_print_f(&part, buffer, interp);
+      tclcommand_part_print_f(&part, buffer, interp);
     else if (ARG0_IS_S("folded_position"))
-      part_print_folded_position(&part, buffer, interp);
+      tclcommand_part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
       sprintf(buffer, "%d", part.p.type);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -952,56 +953,56 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
     else if (ARG0_IS_S("mu_E")) {
-      part_print_mu_E(&part, buffer, interp);
+      tclcommand_part_print_mu_E(&part, buffer, interp);
     }
 #endif
     else if (ARG0_IS_S("v"))
-      part_print_v(&part, buffer, interp);
+      tclcommand_part_print_v(&part, buffer, interp);
 
 #ifdef ROTATION
     else if (ARG0_IS_S("quat"))
-      part_print_quat(&part, buffer, interp);
+      tclcommand_part_print_quat(&part, buffer, interp);
    else if (ARG0_IS_S("quatu"))
-      part_print_quat(&part, buffer, interp);
+      tclcommand_part_print_quat(&part, buffer, interp);
     else if (ARG0_IS_S("omega"))
-      part_print_omega(&part, buffer, interp);
+      tclcommand_part_print_omega(&part, buffer, interp);
     else if (ARG0_IS_S("torque"))
-      part_print_torque(&part, buffer, interp);
+      tclcommand_part_print_torque(&part, buffer, interp);
     else if (ARG0_IS_S("tbf"))
-      part_print_torque_body_frame(&part, buffer, interp);
+      tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
 
 #ifdef ROTATIONAL_INERTIA
     else if (ARG0_IS_S("rinertia"))
-      part_print_rotational_inertia(&part, buffer, interp);
+      tclcommand_part_print_rotational_inertia(&part, buffer, interp);
 #endif
 
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip"))
-      part_print_dip(&part, buffer, interp);
+      tclcommand_part_print_dip(&part, buffer, interp);
     else if (ARG0_IS_S("dipm"))
       Tcl_PrintDouble(interp, part.p.dipm, buffer);
 #endif
 
 #ifdef VIRTUAL_SITES
     else if (ARG0_IS_S("virtual"))
-      part_print_isVirtual(&part, buffer, interp);
+      tclcommand_part_print_virtual(&part, buffer, interp);
 #endif
 
 #ifdef EXTERNAL_FORCES
     else if (ARG0_IS_S("ext_force"))
-      part_print_ext_force(&part,buffer,interp);
+      tclcommand_part_print_ext_force(&part,buffer,interp);
     else if (ARG0_IS_S("fix"))
-      part_print_fix(&part, buffer, interp);
+      tclcommand_part_print_fix(&part, buffer, interp);
 #endif
 
 #ifdef EXCLUSIONS
     else if (ARG0_IS_S("exclusions"))
-      part_print_exclusions(&part, buffer, interp);
+      tclcommand_part_print_exclusions(&part, buffer, interp);
 #endif
 
     else if (ARG0_IS_S("bonds"))
-      part_print_bonding_structure(&part, buffer, interp);
+      tclcommand_part_print_bonding_structure(&part, buffer, interp);
     else if (ARG0_IS_S("connections")) {
       int distance = 1;
       if (argc ==2) {
@@ -1011,7 +1012,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 	}
 	argc--; argv++;
       }
-      part_print_bond_partners(&part, buffer, interp, distance);
+      tclcommand_part_print_bond_partners(&part, buffer, interp, distance);
     }
     else {
       Tcl_ResetResult(interp);
@@ -1031,7 +1032,7 @@ int part_parse_print(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_cmd_delete(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_delete(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num, int * change)
 {
   *change = 0;
@@ -1054,7 +1055,7 @@ int part_cmd_delete(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num, int * change)
 {
   double pos[3];
@@ -1082,7 +1083,7 @@ int part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
 }
 
 #ifdef MASS
-int part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
     double mass;
@@ -1109,7 +1110,7 @@ int part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef  ROTATIONAL_INERTIA
-int part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
 				  int part_num, int * change)
 {
   double rinertia[3];
@@ -1136,7 +1137,7 @@ int part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef DIPOLES
-int part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
     double dipm;
@@ -1161,7 +1162,7 @@ int part_parse_dipm(Tcl_Interp *interp, int argc, char **argv,
     return TCL_OK;
 }
 
-int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double dip[3];
@@ -1200,7 +1201,7 @@ int part_parse_dip(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef VIRTUAL_SITES
-int part_parse_isVirtual(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_virtual(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
     int isVirtual;
@@ -1216,7 +1217,7 @@ int part_parse_isVirtual(Tcl_Interp *interp, int argc, char **argv,
     if (! ARG0_IS_I(isVirtual))
       return TCL_ERROR;
 
-    if (set_particle_isVirtual(part_num, isVirtual) == TCL_ERROR) {
+    if (set_particle_virtual(part_num, isVirtual) == TCL_ERROR) {
       Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
 
       return TCL_ERROR;
@@ -1226,7 +1227,7 @@ int part_parse_isVirtual(Tcl_Interp *interp, int argc, char **argv,
 }
 #endif
 
-int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_q(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
     double q;
@@ -1252,7 +1253,7 @@ int part_parse_q(Tcl_Interp *interp, int argc, char **argv,
 }
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-int part_parse_mu_E(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_mu_E(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
     double mu_E[3];
@@ -1282,7 +1283,7 @@ int part_parse_mu_E(Tcl_Interp *interp, int argc, char **argv,
 }
 #endif
 
-int part_parse_v(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_v(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
   double v[3];
@@ -1319,7 +1320,7 @@ int part_parse_v(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_f(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_f(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
   double f[3];
@@ -1356,7 +1357,7 @@ int part_parse_f(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int * change)
 {
   int type;
@@ -1386,7 +1387,7 @@ int part_parse_type(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
 		      int part_num, int * change)
 {
   int mid;
@@ -1421,7 +1422,7 @@ int part_parse_mol_id(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef ROTATION
 
-int part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double quat[4];
@@ -1459,7 +1460,7 @@ int part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double omega[3];
@@ -1489,7 +1490,7 @@ int part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double torque[3];
@@ -1523,7 +1524,7 @@ int part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef EXTERNAL_FORCES
 
-int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double ext_f[3];
@@ -1558,7 +1559,7 @@ int part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num, int * change)
 {
   int fixed_coord_flag[3] = {0, 0, 0};
@@ -1598,7 +1599,7 @@ int part_parse_fix(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
-int part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 		     int part_num, int * change)
 {
   *change = 0;
@@ -1614,7 +1615,7 @@ int part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int * change)
 {
   int delete = 0;
@@ -1780,7 +1781,7 @@ int part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 }
 
 #ifdef EXCLUSIONS
-int part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   int delete = 0, partner;
@@ -1835,7 +1836,7 @@ int part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
 }
 #endif
 
-int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
+int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num)
 {
   int change = 0, err = TCL_OK;
@@ -1847,91 +1848,91 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
   if (ARG0_IS_S("print"))
-    err = part_parse_print(interp, argc-1, argv+1, part_num);
+    err = tclcommand_part_parse_print(interp, argc-1, argv+1, part_num);
   else while (argc > 0) {
     if (ARG0_IS_S("delete"))
-      err = part_cmd_delete(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_delete(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("pos"))
-      err = part_parse_pos(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_pos(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("type"))
-      err = part_parse_type(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_type(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("molecule_id"))
-      err = part_parse_mol_id(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_mol_id(interp, argc-1, argv+1, part_num, &change);
 #ifdef MASS
     else if (ARG0_IS_S("mass"))
-      err = part_parse_mass(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_mass(interp, argc-1, argv+1, part_num, &change);
 #endif
     else if (ARG0_IS_S("q"))
-      err = part_parse_q(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_q(interp, argc-1, argv+1, part_num, &change);
 
 #ifdef LB_ELECTROHYDRODYNAMICS
     else if (ARG0_IS_S("mu_E"))
-      err = part_parse_mu_E(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_mu_E(interp, argc-1, argv+1, part_num, &change);
 #endif
 
     else if (ARG0_IS_S("v"))
-      err = part_parse_v(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_v(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("f"))
-      err = part_parse_f(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_f(interp, argc-1, argv+1, part_num, &change);
 
 #ifdef ROTATION
 
     else if (ARG0_IS_S("quat"))
-      err = part_parse_quat(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_quat(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("omega"))
-      err = part_parse_omega(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_omega(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("torque"))
-      err = part_parse_torque(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_torque(interp, argc-1, argv+1, part_num, &change);
 
 #endif
 
 #ifdef ROTATIONAL_INERTIA
     else if (ARG0_IS_S("rinertia"))
-      err = part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
 #endif
 
 #ifdef DIPOLES
 
     else if (ARG0_IS_S("dip"))
-      err = part_parse_dip(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_dip(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("dipm"))
-      err = part_parse_dipm(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_dipm(interp, argc-1, argv+1, part_num, &change);
 
 #endif
 
 #ifdef VIRTUAL_SITES
 
     else if (ARG0_IS_S("virtual"))
-      err = part_parse_isVirtual(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_virtual(interp, argc-1, argv+1, part_num, &change);
 
 #endif
 
 #ifdef EXTERNAL_FORCES
 
     else if (ARG0_IS_S("unfix"))
-      err = part_parse_unfix(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_unfix(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("fix"))
-      err = part_parse_fix(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_fix(interp, argc-1, argv+1, part_num, &change);
 
     else if (ARG0_IS_S("ext_force"))
-      err = part_parse_ext_force(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_ext_force(interp, argc-1, argv+1, part_num, &change);
 
 #endif
 
     else if (ARG0_IS_S("bond"))
-      err = part_parse_bond(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_bond(interp, argc-1, argv+1, part_num, &change);
 
 #ifdef EXCLUSIONS
     else if (ARG0_IS_S("exclude"))
-      err = part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
+      err = tclcommand_part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
 #endif
 
     else {
@@ -1954,14 +1955,14 @@ int part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
   return mpi_gather_runtime_errors(interp, err);
 }
 
-int part(ClientData data, Tcl_Interp *interp,
+int tclcommand_part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
 {
   int part_num = -1;
 
   /* if no further arguments are given, print out all stored particles */
   if (argc == 1)
-    return part_print_all(interp);
+    return tclcommand_part_print_all(interp);
   
   /* parse away all non particle number arguments */
   if (ARG1_IS_S("deleteall")) {
@@ -1998,7 +1999,7 @@ int part(ClientData data, Tcl_Interp *interp,
   if (argc == 2) {
 
     if (ARG1_IS_I(part_num)) {
-      if (printParticleToResult(interp, part_num) == TCL_ERROR)
+      if (tclprint_to_result_Particle(interp, part_num) == TCL_ERROR)
 	Tcl_AppendResult(interp, "na", (char *)NULL);
       return TCL_OK;
     }
@@ -2018,7 +2019,7 @@ int part(ClientData data, Tcl_Interp *interp,
     return TCL_ERROR;
   }
 
-  return part_parse_cmd(interp, argc-2, argv+2, part_num);
+  return tclcommand_part_parse_cmd(interp, argc-2, argv+2, part_num);
 }
 
 int get_particle_data(int part, Particle *data)
@@ -2176,7 +2177,7 @@ int set_particle_dip(int part, double dip[3])
 #endif
 
 #ifdef VIRTUAL_SITES
-int set_particle_isVirtual(int part, int isVirtual)
+int set_particle_virtual(int part, int isVirtual)
 {
   int pnode;
   if (!particle_node)
@@ -2188,7 +2189,7 @@ int set_particle_isVirtual(int part, int isVirtual)
 
   if (pnode == -1)
     return TCL_ERROR;
-  mpi_send_isVirtual(pnode, part, isVirtual);
+  mpi_send_virtual(pnode, part, isVirtual); 
   return TCL_OK;
 }
 #endif

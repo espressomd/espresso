@@ -39,7 +39,6 @@ ug_TEXFILES=\
         mbtools.tex
 
 ug_FILES=$(ug_TEXFILES) \
-	underscore.sty \
 	bibliography.bib
 
 EXTRA_DIST= $(ug_FILES) \

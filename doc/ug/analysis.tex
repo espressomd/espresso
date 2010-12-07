@@ -221,6 +221,20 @@ of given type \var{typeid}. The output is a list of all the elements
 of the 3x3 matrix. Variant \variant{2} returns the eigenvalues and
 eigenvectors of the matrix.
 
+\subsection{Gyration tensor}
+\label{analyze:gyration-tensor}
+\analyzeindex{gyration tensor}
+
+\begin{essyntax}
+  analyze gyration\_tensor \opt{\var{typeid}} 
+\end{essyntax}
+Analyze the gyration tensor of particles of a given type \var{typeid},
+or of all particles in the system if no type is given.
+Returns a tcl-list containing the squared radius of gyration,
+ three shape discriptors (asphericity, acylindricity,
+ and relative shape anisotropy), eigenvalues of the gyration tensor and their
+corresponding eigenvectors. The eigenvalues are sorted in descending order.
+
 \subsection{Aggregation}
 \label{analyze:aggregation}
 \analyzeindex{aggregation}
@@ -727,6 +741,76 @@ reference configuration is set, when the option \lit{-init} is used.
 \begin{code}
   \{ \var{g1(t)} \var{g2(t)} \var{g3(t)} \}
 \end{code}
+
+\subsection{Correlation}
+The correlation analysis provides a framework for the calculation of two-time 
+averages, as like the correlation of two variables. The general idea is that
+a general function $f\left(A\left(t\right),B\left(t+\tau\right)\right)$ is to 
+be averaged over time. Several of these quantities can be calculated at
+the same time. Each of them is adressed by \lit{analyze correlation \$n}
+where \lit{\$n} stands for the number of the corresponding correlation
+that is to be calculated.
+
+The functions A and B can either depend on the MD 
+state of the system, or on external data sources (files), or can be
+given explicitly from the tcl interface. After proper initalization
+the correlation module automatically fetches new data from the corresponding
+data sources, when the function \lit{analyze correlation \$n update} is called.
+$A$, $B$ and also the function $f$ are vector-valued, and their dimensionality
+does not need to match. The correlation module keeps a memory of $A$ and $B$
+that is uses a hierarchical blocking mechanism (see Frenkel/Smit book for the details)
+to reduce the amount of memory necessary to store the data, and also to achieve
+nonlinear spacing in the time domain. 
+
+For an example of the usage, please see the script \lit{correlation.tcl} in the samples
+directory.
+
+\begin{essyntax}
+  \variant{1} analyze correlation \var{n} first_obs \var{A} second_obs \var{B} corr_operation \var{f}
+  \opt { tau_lin \var{\tau_{lin}} } \opt { hierarchy_depth \var{h} } \opt{ delta_t \var{\delta_t} }
+  \variant{2} analyze correlation update_from_file
+  \variant{3} analyze correlation update
+  \variant{4} analyze correlation update \var{A_1} \dots \var{A_m} \var{B_1} \dots \var{B_n}
+\end{essyntax}
+
+Variant \variant{1} initializes the correlations, and while the other variants feed
+the correlation with new data depending on their input data flavour. 
+Arguments of the initialization are:
+
+\begin{arguments}
+\item \lit{first_obs} and \lit{first_obs}: The observables A and B that are to correlated.
+  Some observables are already implemented, and others can be easily added. This can be done
+  with very limited \es{} knowledge just by following the implementations that are already
+  in. The following functions are already implemented:
+  \begin{itemize}
+    \item \lit{particle_velocities}
+    \item \lit{particle_positions}
+    \item \lit{textfile \var{textfilename} \opt{\var{column_1} \dots \var{column_n} }}
+      This option allows to read data from an arbitrary text file, organized in columns.
+      The name of the textfile is 
+    \item \lit{tclinput \var{dimQ} }
+      TCL input of length  \var{dimQ} is used as ``observable''. Note that on calling 
+      \lit{analyze correlation update} the following numbers are intepreted
+      first as components of $A$ and then of $B$.
+  \end{itemize}
+\item \lit{corr_operation}
+  The function $f$ that is calculated from $A$ and $B$. Here also the statement is valid that
+  some functions are already implemented and others can be added easily. The following is 
+  available:
+  \begin{itemize}
+    \item hallo
+  \end{itemize}
+\item \lit{tau_lin}: The number of datapoints taken with linear distance. The default value is 16.  
+\item \lit{hierarchy_depth}: The number of levels in the hierarcharchical history of the
+  variable. The last datapoint is taken at $t=2^{h}t_{lin}$. The default value is 4.
+\item \lit{delta_t}: The time between subsequent updates of $A$, $B$ and $f$. This
+  is only needed for the output to have the correct time units. The default value is 1.
+\end{arguments}
+After correct initialization the call \lit{analyze correlation update} automatically
+updates $A$, $B$ and the correlation estimate. All the memory needed for the correlation
+estimate and the memory of $A$ and $B$ are allocated, so this method can not run out
+of memory once it is initialized. The number of datapoints to be taken are only limited by the
+amount of input data.
 
 \section{Storing configurations}
 \label{sec:stored-configs}
