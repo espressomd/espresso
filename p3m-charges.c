@@ -1395,7 +1395,6 @@ static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao. The r_cut is determined via
     a simple bisection. Returns -1 if the force evaluation does not work, -2 if there is no valid r_cut, and -3 if
     the charge assigment order is to large for this grid */
-/* TODO: separate tcl from nontcl thingies */
 static double p3m_mc_time(int mesh, int cao,
 			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			  double *_alpha_L, double *_accuracy)
@@ -1470,7 +1469,7 @@ static double p3m_mc_time(int mesh, int cao,
 /** get the optimal alpha and the corresponding computation time for fixed mesh. *cao
     should contain an initial guess, which is then adapted by stepping up and down. Returns the time
     upon completion, -1 if the force evaluation does not work, and -2 if the accuracy cannot be met */
-static double tclcommand_inter_coulomb_print_p3m_m_time(Tcl_Interp *interp, int mesh,
+static double p3m_m_time(int mesh,
 			 int cao_min, int cao_max, int *_cao,
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
@@ -1568,7 +1567,7 @@ static double tclcommand_inter_coulomb_print_p3m_m_time(Tcl_Interp *interp, int 
 
   /* move cao into the optimisation direction until we do not gain anymore. */
   for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
-    tmp_time = tclcommand_inter_coulomb_print_p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max,
+    tmp_time = p3m_mc_time(mesh, cao,  r_cut_iL_min, r_cut_iL_max,
 			   &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out on errors, as usual */
     if (tmp_time == -1) return -1;
@@ -1645,12 +1644,10 @@ int p3m_adaptive_tune() {
   for (;tmp_mesh <= mesh_max; tmp_mesh *= 2) {
     tmp_cao = cao;
     
-#warning FIX ME!
-    
-/*    tmp_time = tclcommand_inter_coulomb_print_p3m_m_time(interp, tmp_mesh,
+    tmp_time = p3m_m_time(tmp_mesh,
 			  cao_min, cao_max, &tmp_cao,
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
-			  &tmp_alpha_L, &tmp_accuracy); */
+			  &tmp_alpha_L, &tmp_accuracy); 
     /* some error occured during the tuning force evaluation */
     if (tmp_time == -1) return P3M_TUNE_FAIL;
     /* this mesh does not work at all */
