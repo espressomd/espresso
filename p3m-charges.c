@@ -1407,7 +1407,7 @@ static double p3m_mc_time(int mesh, int cao,
   /* initial checks. */
   mesh_size = box_l[0]/(double)mesh;
   k_cut =  mesh_size*cao/2.0;
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
+  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
 		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
   if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
     return -P3M_TUNE_CAOTOLARGE;
@@ -1421,7 +1421,7 @@ static double p3m_mc_time(int mesh, int cao,
   }
 
   for (;;) {
-    P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: interval [%f,%f]\n", r_cut_iL_min, r_cut_iL_max));
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: interval [%f,%f]\n", r_cut_iL_min, r_cut_iL_max));
     r_cut_iL = 0.5*(r_cut_iL_min + r_cut_iL_max);
 
     if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC)
@@ -1439,7 +1439,7 @@ static double p3m_mc_time(int mesh, int cao,
 
   /* check whether we are running P3M+ELC, and whether we leave a reasonable gap space */
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
-    P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
 		      2*r_cut_iL*box_l[0], elc_params.gap_size));
     return -P3M_TUNE_ELCTEST;
   }
@@ -1449,7 +1449,7 @@ static double p3m_mc_time(int mesh, int cao,
   for (i = 0; i < 3; i++)
     n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
   if (n_cells < min_num_cells) {
-    P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
 
     return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
@@ -1461,7 +1461,7 @@ static double p3m_mc_time(int mesh, int cao,
 
   *_accuracy = get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
 
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
+  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
 
   return int_time;
 }
@@ -1479,7 +1479,7 @@ static double p3m_m_time(int mesh,
   int final_dir = 0;
   int cao = *_cao;
 
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: mesh=%d, cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d, cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
 		    mesh, cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
@@ -1489,7 +1489,7 @@ static double p3m_m_time(int mesh,
     if (tmp_time == -1) return -1;
     /* cao is too large for this grid, but still the accuracy cannot be achieved, give up */
     if (tmp_time == -3) {
-      P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: no possible cao found\n"));
+      P3M_TRACE(fprintf(stderr, "p3m_m_time: no possible cao found\n"));
       return -2;
     }
     /* we have a valid time, start optimising from there */
@@ -1503,7 +1503,7 @@ static double p3m_m_time(int mesh,
     }
     /* the required accuracy could not be obtained, try higher caos. Therefore optimisation can only be
        obtained with even higher caos, but not lower ones */
-    P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: doesn't give precision, step up\n"));
+    P3M_TRACE(fprintf(stderr, "p3m_m_time: doesn't give precision, step up\n"));
     cao++;
     final_dir = 1;
   }
@@ -1515,7 +1515,7 @@ static double p3m_m_time(int mesh,
   if (cao == cao_min)      final_dir = 1;
   else if (cao == cao_max) final_dir = -1;
 
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: final constraints dir %d\n", final_dir));
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: final constraints dir %d\n", final_dir));
 
   if (final_dir == 0) {
     /* check in which direction we can optimise. Both directions are possible */
@@ -1551,7 +1551,7 @@ static double p3m_m_time(int mesh,
 	final_dir = 1;
       else {
 	/* really no chance for optimisation */
-	P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: mesh=%d final cao=%d time=%f\n",mesh, cao, best_time));
+	P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d time=%f\n",mesh, cao, best_time));
 	return best_time;
       }
     }
@@ -1563,7 +1563,7 @@ static double p3m_m_time(int mesh,
     cao += final_dir;
   }
 
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: optimise in direction %d\n", final_dir));
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: optimise in direction %d\n", final_dir));
 
   /* move cao into the optimisation direction until we do not gain anymore. */
   for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
@@ -1585,7 +1585,7 @@ static double p3m_m_time(int mesh,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "tclcommand_inter_coulomb_print_p3m_m_time: mesh=%d final cao=%d r_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d r_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
 
