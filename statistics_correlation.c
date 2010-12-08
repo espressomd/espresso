@@ -259,6 +259,8 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   IntList* types=0;
   int error=0;
   int temp;
+  int order=0;
+  int *order_p;
   if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions") || ARG0_IS_S("structure_factor"))  {
     if (ARG0_IS_S("particle_velocities")) {
       *A_fun = &particle_velocities;
@@ -274,14 +276,30 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       *change=1;
       return TCL_OK;
     }
-    if (ARG0_IS_S("structure_factor")) {
-      *A_fun = &structure_factor;
-      *A_args=0;
-      *dim_A=28292;
-//      printf("DIMENSION %i",*dim_A);
-
-      *change=1;
-      return TCL_OK;
+    if (ARG0_IS_S("structure_factor") ) {
+      if (argc > 1 && ARG1_IS_I(order)) {
+        *A_fun = &structure_factor;
+        *A_fun = &structure_factor;
+        order_p=malloc(sizeof(int));
+        *order_p=order;
+        *A_args=(void*) order_p;
+        int order2,i,j,k,l,n ; 
+        order2=order*order ;
+        l=0;
+        for(i=-order; i<=order; i++) 
+          for(j=-order; j<=order; j++) 
+            for(k=-order; k<=order; k++) {
+	       n = i*i + j*j + k*k;
+	       if ((n<=order2) && (n>=1)) 
+                 l=l+2;
+	    }
+        *dim_A=l;
+        *change=2;
+        return TCL_OK;
+      } else { 
+        Tcl_AppendResult(interp, "usage: structure_factor $order\n" , (char *)NULL);
+        return TCL_ERROR; 
+      }
     }
   
     if (argc > 1 && ARG1_IS_S("type")) {
@@ -628,7 +646,7 @@ int double_correlation_write_to_file( double_correlation* self, char* filename) 
     }
     fprintf(file, "\n");
   }
-  close(file);
+  fclose(file);
   return 0;
 }
 
@@ -675,14 +693,8 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
   for ( i = 0; i < dim_A/2; i++ ) {
     C[j] = A[j]*B[j] + A[j+1]*B[j+1];
     C[j+1] = A[j+1]*B[j] - A[j]*B[j+1];
-//    printf("%f    %f    \n",A[j]*B[j] + A[j+1]*B[j+1],A[j+1]*B[j] - A[j]*B[j+1] );
     j=j+2;
   }
-
-//  for ( i = 0; i < dim_A; i++ ) {
-//    printf("%i    %f    \n",i, C[i]);
-//  }
-
   return 0;
 }
 
@@ -739,20 +751,18 @@ int particle_positions(void* typelist, double* A, unsigned int n_A) {
 
 
 
-int structure_factor(void* typelist, double* A, unsigned int n_A) {
+int structure_factor(void* order_p, double* A, unsigned int n_A) {
   int i,j,k,l,p;
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr ;
-  order = 15;
+  order = *(int*)order_p;
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
-//  printf("%f  %f  %f",PI,twoPI_L, box_l[0]);
-//  exit(0);
-  sortPartCfg();
-  if (typelist == NULL) {
 
-    for(l=0; l<28292; l++) {
-       A[l]   = 0.0;
+  sortPartCfg();
+
+    for(p=0; p<n_A; p++) {
+       A[p]   = 0.0;
     }
 
     l=0;
@@ -797,8 +807,6 @@ int structure_factor(void* typelist, double* A, unsigned int n_A) {
 //          printf("Distancia= %f  %f\n",time_step,box_l[0]);
 
     return 0;
-  } else 
-    return 1;
 }
 
 
