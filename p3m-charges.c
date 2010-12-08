@@ -224,8 +224,7 @@ MDINLINE double perform_aliasing_sums_energy(int n[3]);
    \param alpha_L  rescaled ewald splitting parameter.
    \return real space error
 */
-double P3M_real_space_error(double box_size, double prefac, double r_cut_iL, 
-			    int n_c_part, double sum_q2, double alpha_L);
+double P3M_real_space_error(double prefac, double r_cut_iL, int n_c_part, double sum_q2, double alpha_L);
 
 /** Calculate the analytic expression of the error estimate for the
     P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
@@ -241,14 +240,13 @@ double P3M_real_space_error(double box_size, double prefac, double r_cut_iL,
     \return reciprocal (k) space error
 */
 
-double P3M_k_space_error(double box_size, double prefac, int mesh, 
-			 int cao, int n_c_part, double sum_q2, double alpha_L);
+double P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L);
 
 
 
 /** aliasing sum used by \ref P3M_k_space_error. */
 void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
-			    int mesh, double mesh_i, int cao, double alpha_L_i, 
+			    int mesh[3], double mesh_i[3], int cao, double alpha_L_i, 
 			    double *alias1, double *alias2);
 
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
@@ -1337,36 +1335,30 @@ int tclcommand_inter_coulomb_print_p3m_tune_parameteres(Tcl_Interp *interp)
 /** get the minimal error for this combination of parameters. In fact, the real space error is tuned such that it
     contributes half of the total error, and then the Fourier space error is calculated. Returns the error and the
     optimal alpha, or 0 if this combination does not work at all */
-static double get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err)
+static double get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err)
 {
   double rs_err, ks_err;
   double alpha_L;
-  P3M_TRACE(fprintf(stderr, "get_accuracy: mesh %d, cao %d, r_cut %f ", mesh, cao, r_cut_iL));
+  P3M_TRACE(fprintf(stderr, "get_accuracy: mesh (%d, %d %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
 
   /* calc maximal real space error for setting */
-  /* calc maximal real space error for setting */
-  //Beginning of JJCP modification 15/5/2006 
-  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+  rs_err = P3M_real_space_error(coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
   
-  //Original line ->  rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
-  
-    if(M_SQRT2*rs_err > p3m.accuracy) {
-     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-        alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
-    
-    }
-
-  else
+  if(M_SQRT2*rs_err > p3m.accuracy) {
+  /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
+    alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
+  }
+  else {
     /* even alpha=0 is ok, however, we cannot choose it since it kills the k-space error formula.
        Anyways, this very likely NOT the optimal solution */
     alpha_L = 0.1;
+  }
 
   *_alpha_L = alpha_L;
   /* calculate real space and k space error for this alpha_L */
-    rs_err = P3M_real_space_error(box_l[0],coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
-    ks_err = P3M_k_space_error(box_l[0],coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+  rs_err = P3M_real_space_error(coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
+  ks_err = P3M_k_space_error(coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
   
- //End of JJCP modification 15/5/2006 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
   P3M_TRACE(fprintf(stderr, "resulting: %f -> %f %f\n", alpha_L, rs_err, ks_err));
@@ -1395,7 +1387,7 @@ static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao. The r_cut is determined via
     a simple bisection. Returns -1 if the force evaluation does not work, -2 if there is no valid r_cut, and -3 if
     the charge assigment order is to large for this grid */
-static double p3m_mc_time(int mesh, int cao,
+static double p3m_mc_time(int mesh[3], int cao,
 			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			  double *_alpha_L, double *_accuracy)
 {
@@ -1405,10 +1397,10 @@ static double p3m_mc_time(int mesh, int cao,
   int i, n_cells;
 
   /* initial checks. */
-  mesh_size = box_l[0]/(double)mesh;
+  mesh_size = box_l[0]/(double)mesh[0];
   k_cut =  mesh_size*cao/2.0;
-  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
-		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
+  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
+		    mesh[0],mesh[1],mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
   if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
     return -P3M_TUNE_CAOTOLARGE;
   }
@@ -1469,7 +1461,7 @@ static double p3m_mc_time(int mesh, int cao,
 /** get the optimal alpha and the corresponding computation time for fixed mesh. *cao
     should contain an initial guess, which is then adapted by stepping up and down. Returns the time
     upon completion, -1 if the force evaluation does not work, and -2 if the accuracy cannot be met */
-static double p3m_m_time(int mesh,
+static double p3m_m_time(int mesh[3],
 			 int cao_min, int cao_max, int *_cao,
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
@@ -1479,8 +1471,8 @@ static double p3m_m_time(int mesh,
   int final_dir = 0;
   int cao = *_cao;
 
-  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d, cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
-		    mesh, cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d %d), cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
+		    mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
@@ -1551,7 +1543,7 @@ static double p3m_m_time(int mesh,
 	final_dir = 1;
       else {
 	/* really no chance for optimisation */
-	P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d time=%f\n",mesh, cao, best_time));
+	P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d, %d) final cao=%d time=%f\n",mesh[0],mesh[1],mesh[2], cao, best_time));
 	return best_time;
       }
     }
@@ -1585,12 +1577,12 @@ static double p3m_m_time(int mesh,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=%d final cao=%d r_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
+  P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d, %d) final cao=%d r_cut=%f time=%f\n",mesh[0],mesh[1],mesh[2], *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
 
 int p3m_adaptive_tune() {
-    int    mesh_max,                   mesh     = -1, tmp_mesh;
+  int    mesh_max,                   mesh  = -1, tmp_mesh; 
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
 
@@ -1762,39 +1754,36 @@ void P3M_count_charged_particles()
 }
 
 
-double P3M_real_space_error(double box_size, double prefac, double r_cut_iL, 
+double P3M_real_space_error(double prefac, double r_cut_iL, 
 			    int n_c_part, double sum_q2, double alpha_L)
 {
-// Modification done just to be sure about n_c_part,  JJCP 15/5/06
-//  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt(n_c_part*r_cut_iL)*box_size*box_size);
-  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt((double)n_c_part*r_cut_iL)*box_size*box_size);
+  return (2.0*prefac*sum_q2*exp(-SQR(r_cut_iL*alpha_L))) / (sqrt((double)n_c_part*r_cut_iL)*box_l[1]*box_l[2]);
 }
 
-double P3M_k_space_error(double box_size, double prefac, int mesh, 
-			 int cao, int n_c_part, double sum_q2, double alpha_L)
+double P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L)
 {
   int  nx, ny, nz;
-  double he_q = 0.0, mesh_i = 1./mesh, alpha_L_i = 1./alpha_L;
+  double he_q = 0.0, mesh_i[3] = {1.0/mesh[0], 1.0/mesh[1], 1.0/mesh[2]}, alpha_L_i = 1./alpha_L;
   double alias1, alias2, n2, cs;
 
-  for (nx=-mesh/2; nx<mesh/2; nx++)
-    for (ny=-mesh/2; ny<mesh/2; ny++)
-      for (nz=-mesh/2; nz<mesh/2; nz++)
+  for (nx=-mesh[0]/2; nx<mesh[0]/2; nx++)
+    for (ny=-mesh[1]/2; ny<mesh[1]/2; ny++)
+      for (nz=-mesh[2]/2; nz<mesh[2]/2; nz++)
 	if((nx!=0) || (ny!=0) || (nz!=0)) {
 	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
-	  cs = analytic_cotangent_sum(nx,mesh_i,cao)*
- 	       analytic_cotangent_sum(ny,mesh_i,cao)*
-	       analytic_cotangent_sum(nz,mesh_i,cao);
+	  cs = analytic_cotangent_sum(nx,mesh_i[0],cao)*
+ 	       analytic_cotangent_sum(ny,mesh_i[1],cao)*
+	       analytic_cotangent_sum(nz,mesh_i[2],cao);
 	  P3M_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
 	  he_q += (alias1  -  SQR(alias2/cs) / n2);
 	  /* fprintf(stderr,"%d %d %d he_q = %.20f %.20f %.20f %.20f\n",nx,ny,nz,he_q,cs,alias1,alias2); */
 	}
-  return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / SQR(box_size);
+  return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / box_l[1]*box_l[2];
 }
 
 
 void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
-			    int mesh, double mesh_i, int cao, double alpha_L_i, 
+			    int mesh[3], double mesh_i[3], int cao, double alpha_L_i, 
 			    double *alias1, double *alias2)
 {
 
@@ -1808,11 +1797,11 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
 
   *alias1 = *alias2 = 0.0;
   for (mx=-P3M_BRILLOUIN; mx<=P3M_BRILLOUIN; mx++) {
-    fnmx = mesh_i * (nmx = nx + mx*mesh);
+    fnmx = mesh_i[0] * (nmx = nx + mx*mesh[0]);
     for (my=-P3M_BRILLOUIN; my<=P3M_BRILLOUIN; my++) {
-      fnmy = mesh_i * (nmy = ny + my*mesh);
+      fnmy = mesh_i[1] * (nmy = ny + my*mesh[1]);
       for (mz=-P3M_BRILLOUIN; mz<=P3M_BRILLOUIN; mz++) {
-	fnmz = mesh_i * (nmz = nz + mz*mesh);
+	fnmz = mesh_i[2] * (nmz = nz + mz*mesh[2]);
 	
 	nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
 	ex2 = SQR( ex = exp(-factor1*nm2) );
