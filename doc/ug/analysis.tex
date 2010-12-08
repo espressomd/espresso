@@ -751,7 +751,7 @@ the same time. Each of them is adressed by \lit{analyze correlation \$n}
 where \lit{\$n} stands for the number of the corresponding correlation
 that is to be calculated.
 
-The functions A and B can either depend on the MD 
+The functions $A$ and $B$ can either depend on the MD 
 state of the system, or on external data sources (files), or can be
 given explicitly from the tcl interface. After proper initalization
 the correlation module automatically fetches new data from the corresponding
@@ -770,7 +770,7 @@ directory.
   \opt { tau_lin \var{\tau_{lin}} } \opt { hierarchy_depth \var{h} } \opt{ delta_t \var{\delta_t} }
   \variant{2} analyze correlation update_from_file
   \variant{3} analyze correlation update
-  \variant{4} analyze correlation update { \var{A_1} \dots \var{A_m} } { \var{B_1} \dots \var{B_n} }
+  \variant{4} analyze correlation update  \var{A} \var{B} 
 \end{essyntax}
 
 Variant \variant{1} initializes the correlations, and while the other variants feed
