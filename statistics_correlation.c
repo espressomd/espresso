@@ -16,7 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */ 
-//comentario nuevo
+//comentario siguiente
 #include "statistics_correlation.h"
 #include "particle_data.h"
 #include "parser.h"
