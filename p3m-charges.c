@@ -1182,7 +1182,7 @@ static double get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha
 }
 
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao, r_cut and alpha */
-static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
+static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L)
 {
   /* rounded up 2000/n_charges timing force evaluations */
   int int_num = (1999 + p3m_sum_qpart)/p3m_sum_qpart;
@@ -1190,7 +1190,9 @@ static double p3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 
   /* broadcast p3m parameters for test run */
   p3m.r_cut_iL = r_cut_iL;
-  p3m.mesh[0]  = p3m.mesh[1] = p3m.mesh[2] = mesh;
+  p3m.mesh[0] = mesh[0];
+  p3m.mesh[1] = mesh[1];
+  p3m.mesh[2] = mesh[2];
   p3m.cao      = cao;
   p3m.alpha_L  = alpha_L;
   P3M_scaleby_box_l_charges();
@@ -1217,7 +1219,7 @@ static double p3m_mc_time(int mesh[3], int cao,
   k_cut =  mesh_size*cao/2.0;
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
 		    mesh[0],mesh[1],mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
-  if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
+  if(cao >= imin(mesh[0],imin(mesh[1],mesh[2])) || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
     return -P3M_TUNE_CAOTOLARGE;
   }
 
