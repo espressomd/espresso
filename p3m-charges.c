@@ -1284,7 +1284,7 @@ static double p3m_m_time(int mesh[3],
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
 {
-  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L=0.0, tmp_accuracy=0.0;
+  double best_time = -1, tmp_time, tmp_r_cut_iL=0.0, tmp_alpha_L=0.0, tmp_accuracy=0.0;
   /* in which direction improvement is possible. Initially, we dont know it yet. */
   int final_dir = 0;
   int cao = *_cao;
@@ -1400,7 +1400,9 @@ static double p3m_m_time(int mesh[3],
 }
 
 int p3m_adaptive_tune() {
-  int    mesh_max,                   mesh  = -1, tmp_mesh; 
+  int  mesh_max, mesh[3] = {0, 0, 0}, tmp_mesh_points; 
+  int tmp_mesh[3];
+  double mesh_factors[3], box_volume3;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
 
@@ -1408,28 +1410,41 @@ int p3m_adaptive_tune() {
   double                             accuracy = -1, tmp_accuracy=0.0;
   double                            time_best=1e20, tmp_time;
 
+
+
   P3M_TRACE(fprintf(stderr,"%d: p3m_adaptive_tune\n",this_node));
   
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
 
   /* parameter ranges */
-  if (p3m.mesh[0] == 0 ) {
-    double expo;
-    expo = log(pow((double)p3m_sum_qpart,(1.0/3.0)))/log(2.0);
-
-    tmp_mesh = (int)(pow(2.0,(double)((int)expo))+0.1);
+  if (p3m.mesh[0] == 0 || p3m.mesh[1] == 0 || p3m.mesh[2] == 0) {
+    tmp_mesh_points = p3m_sum_qpart;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
-    mesh_max = tmp_mesh * 256;
+    mesh_max = tmp_mesh_points * 256;
     /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
     if (mesh_max > P3M_MAX_MESH)
       mesh_max = P3M_MAX_MESH;
+
+    box_volume3 = pow(box_l[0]*box_l[1]*box_l[2], 1.0/3.0);
+
+    mesh_factors[0] = box_l[0] / box_volume3;
+    mesh_factors[1] = box_l[1] / box_volume3;
+    mesh_factors[2] = box_l[2] / box_volume3;
+
   }
   else {
-    tmp_mesh = mesh_max = p3m.mesh[0];
+
+    mesh_factors[0] = p3m.mesh[0];
+    mesh_factors[1] = p3m.mesh[1];
+    mesh_factors[2] = p3m.mesh[2];
+
+    tmp_mesh_points = mesh_max = 1;
   }
+
+
 
   if(p3m.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
@@ -1451,9 +1466,15 @@ int p3m_adaptive_tune() {
   }
 
   /* mesh loop */
-  for (;tmp_mesh <= mesh_max; tmp_mesh *= 2) {
+  /* we're tuning the total number of mesh-points */
+  for (;tmp_mesh_points <= mesh_max; tmp_mesh_points *= 2) {
+    double tmp_mesh3 = pow((double)tmp_mesh_points, 1.0/3.0);
     tmp_cao = cao;
     
+    tmp_mesh[0] = (int)(mesh_factors[0]*tmp_mesh3);
+    tmp_mesh[1] = (int)(mesh_factors[1]*tmp_mesh3);
+    tmp_mesh[2] = (int)(mesh_factors[2]*tmp_mesh3);
+
     tmp_time = p3m_m_time(tmp_mesh,
 			  cao_min, cao_max, &tmp_cao,
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
@@ -1470,7 +1491,9 @@ int p3m_adaptive_tune() {
     /* new optimum */
     if (tmp_time < time_best) {
       time_best = tmp_time;
-      mesh      = tmp_mesh;
+      mesh[0]   = tmp_mesh[0];
+      mesh[1]   = tmp_mesh[1];
+      mesh[2]   = tmp_mesh[2];
       cao       = tmp_cao;
       r_cut_iL  = tmp_r_cut_iL;
       alpha_L   = tmp_alpha_L;
@@ -1488,7 +1511,9 @@ int p3m_adaptive_tune() {
 
   /* set tuned p3m parameters */
   p3m.r_cut_iL = r_cut_iL;
-  p3m.mesh[0]  = p3m.mesh[1] = p3m.mesh[2] = mesh;
+  p3m.mesh[0]  = mesh[0];
+  p3m.mesh[1]  = mesh[1];
+  p3m.mesh[2]  = mesh[2];
   p3m.cao      = cao;
   p3m.alpha_L  = alpha_L;
   p3m.accuracy = accuracy;
@@ -1523,6 +1548,8 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
   Tcl_PrintDouble(interp, p3m_sum_q2, b3);
   Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
 
+  mpi_bcast_event(P3M_COUNT_CHARGES);
+
   if (p3m_sum_qpart == 0) {
     Tcl_AppendResult(interp, "no charged particles in the system, cannot tune P3M", (char *) NULL);
     return (TCL_ERROR);
@@ -1549,6 +1576,9 @@ void P3M_count_charged_particles()
   Particle *part;
   int i,c,np;
   double node_sums[3], tot_sums[3];
+
+  P3M_TRACE(fprintf(stderr,"%d: P3M_count_charged_particles\n",this_node));
+
   for(i=0;i<3;i++)
     { node_sums[i]=0.0; tot_sums[i]=0.0;}
 
