@@ -110,6 +110,15 @@ int P3M_sanity_checks_boxl();
     charges and the squared sum of the charges. */
 void P3M_count_charged_particles();
 
+/** Error Codes for p3m tuning (version 2) :
+    P3M_TUNE_FAIL: force evaluation failes,
+    P3M_TUNE_NO_CUTOFF: could not finde a valid realspace cutoff radius,
+    P3M_TUNE_CAOTOLARGE: Charge asignment order to large for mesh size,
+    P3M_TUNE_ELCTEST: conflict with ELC gap size.
+*/
+
+enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLARGE = 4, P3M_TUNE_ELCTEST = 8, P3M_TUNE_CUTOFF_TOO_LARGE = 16 };
+
 /** Tune P3M parameters to desired accuracy.
 
     Usage:
