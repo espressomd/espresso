@@ -1177,7 +1177,7 @@ static double get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha
   
   *_rs_err = rs_err;
   *_ks_err = ks_err;
-  P3M_TRACE(fprintf(stderr, "resulting: %f -> %f %f\n", alpha_L, rs_err, ks_err));
+  P3M_TRACE(fprintf(stderr, "resulting: alpha_L %f -> rs_err: %f, ks_err %f, total_err %f\n", alpha_L, rs_err, ks_err,sqrt(SQR(rs_err)+SQR(ks_err))));
   return sqrt(SQR(rs_err)+SQR(ks_err));
 }
 
@@ -1413,11 +1413,12 @@ int p3m_adaptive_tune() {
 
 
   P3M_TRACE(fprintf(stderr,"%d: p3m_adaptive_tune\n",this_node));
-  
+  P3M_TRACE(fprintf(stderr,"%d: desired accuracy: %lf\n", this_node, p3m.accuracy));
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
 
   /* parameter ranges */
+  /* if at least the number of meshpoints in one direction is not set we have to tune it. */
   if (p3m.mesh[0] == 0 || p3m.mesh[1] == 0 || p3m.mesh[2] == 0) {
     tmp_mesh_points = p3m_sum_qpart;
     /* this limits the tried meshes if the accuracy cannot
@@ -1425,14 +1426,17 @@ int p3m_adaptive_tune() {
        meshes have to be tested */
     mesh_max = tmp_mesh_points * 256;
     /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
-    if (mesh_max > P3M_MAX_MESH)
-      mesh_max = P3M_MAX_MESH;
+    //    mesh_max = imin(mesh_max, P3M_MAX_MESH*P3M_MAX_MESH*P3M_MAX_MESH);
+
+    P3M_TRACE(fprintf(stderr, "%d: starting with %d meshpoints, using at most %d points.\n", this_node, tmp_mesh_points, mesh_max));
 
     box_volume3 = pow(box_l[0]*box_l[1]*box_l[2], 1.0/3.0);
 
     mesh_factors[0] = box_l[0] / box_volume3;
     mesh_factors[1] = box_l[1] / box_volume3;
     mesh_factors[2] = box_l[2] / box_volume3;
+
+
 
   }
   else {
@@ -1444,8 +1448,7 @@ int p3m_adaptive_tune() {
     tmp_mesh_points = mesh_max = 1;
   }
 
-
-
+ 
   if(p3m.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
     r_cut_iL_max = min_local_box_l/2 - skin;
@@ -1466,7 +1469,7 @@ int p3m_adaptive_tune() {
   }
 
   /* mesh loop */
-  /* we're tuning the total number of mesh-points */
+  /* we're tuning the density of mesh points, which is the same in every direction. */
   for (;tmp_mesh_points <= mesh_max; tmp_mesh_points *= 2) {
     double tmp_mesh3 = pow((double)tmp_mesh_points, 1.0/3.0);
     tmp_cao = cao;
@@ -1480,6 +1483,7 @@ int p3m_adaptive_tune() {
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
 			  &tmp_alpha_L, &tmp_accuracy); 
     /* some error occured during the tuning force evaluation */
+    P3M_TRACE(fprintf(stderr,"tune time: %lf\n", tmp_time));
     if (tmp_time == -1) return P3M_TUNE_FAIL;
     /* this mesh does not work at all */
     if (tmp_time < 0) continue;
@@ -1519,11 +1523,11 @@ int p3m_adaptive_tune() {
   p3m.accuracy = accuracy;
   P3M_scaleby_box_l_charges();
   /* broadcast tuned p3m parameters */
+  P3M_TRACE(fprintf(stderr,"%d: Broadcasting P3M parameters: mesh: (%d %d %d), cao: %d, alpha_L: %lf, acccuracy: %lf\n", this_node, p3m.mesh[0], p3m.mesh[1],  p3m.mesh[2], p3m.cao, p3m.alpha_L, p3m.accuracy));
   mpi_bcast_coulomb_params();
   return 0;
 }
   
-
 
 int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *interp)
 {
