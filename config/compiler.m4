@@ -60,6 +60,7 @@ MDINLINE void test() {}],
 		    if test .$works = .yes; then break; fi
 		done
 		if test .$works = .no; then
+		   AC_MSG_RESULT([???])
 		   AC_MSG_ERROR([your compiler does not even support "static"])
 		fi
 		AC_MSG_RESULT([$mdinline])

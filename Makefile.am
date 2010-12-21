@@ -189,7 +189,7 @@ DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-Espresso_SOURCES += mpifake/mpi.h mpifake/mpi.c
+libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 INCLUDES += -I$(srcdir)/mpifake -Iconfig
 endif
@@ -208,7 +208,7 @@ CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h
 
-Espresso_SOURCES += $(CUDA_SOURCES)
+libEspresso_a_SOURCES += $(CUDA_SOURCES)
 endif
 
 ##################################################

@@ -37,27 +37,12 @@ cat <<EOF
 *                   Check the compiler and MPI                 *
 ****************************************************************
 EOF
-dnl Suggested improvement:
-dnl - check --with-mpi: 
-dnl     "no" => no MPI, 
-dnl     "yes" => guess MPI, bail out if none is found
-dnl     "auto" => guess MPI, continue with "no" if NONE is found
-dnl     * => check for specific implementation, bail out if it doesn't work
-dnl - from this compute "check_CC_list"
-dnl - call AC_PROC_CC($check_CC_list)
-dnl - now test for the other MPI components
-dnl - set the value only when MPI is complete and working
-
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
 m4_define([_AC_PROG_CC_G],[])
 
-AC_PROG_CPP
-AC_PROG_CC
-AC_PROG_CC_C_O
-AM_PROG_CC_C_O
-
 ES_CHECK_MPI
 ES_CHECK_COMPILER
+AM_PROG_CC_C_O
 
 cat <<EOF
 ****************************************************************
@@ -151,6 +136,8 @@ AC_CONFIG_FILES([
 	])
 AC_CONFIG_FILES([testsuite/test.sh],
 	[chmod 755 testsuite/test.sh])
+AC_CONFIG_FILES([tools/es_mpiexec],
+	[chmod 755 tools/es_mpiexec])
 
 AC_OUTPUT
 
@@ -162,7 +149,6 @@ platform detected	= $target
 
 Compiler settings:
 ------------------
-MPI			= $with_mpi
 compiler		= $CC
 linker			= $LD
 c compiler flags	= $CFLAGS
@@ -172,21 +158,6 @@ libraries		= $LIBS
 using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
 inline			= $MDINLINE
-EOF
-
-if test "$issue_fake_warning"; then cat <<EOF
-********************************************************************
-* Could neither detect LAM nor MPICH nor a native MPI environment, *
-* using the FAKE implementation for one processor only.            *
-* If you have an MPI environment, please specify its type and      *
-* the compiler or includes/libraries of your MPI implementation    *
-* manually, or, even better, add your MPI environment to           * 
-* config/mpi.m4                                                    *
-********************************************************************
-EOF
-fi
-
-cat <<EOF
 
 Libraries:
 ----------
@@ -194,28 +165,28 @@ Tcl version		= $use_tcl
 Tk version		= $use_tk
 FFTW version		= $use_fftw
 efence			= $with_efence
-EOF
-
-if test .$use_tcl != .tcl8.6 && test .$use_tcl != .tcl8.5 && test .$use_tcl != .tcl8.4; then
-   echo "WARNING: Not all supplied scripts work properly with Tcl version before 8.4, consider upgrading"
-fi 
-
-cat <<EOF
 
 Other settings:
 ---------------
 local config header	= $myconfig
 installation prefix	= $prefix
+mympiexec               = $MYMPIEXEC
+mpiexec	     		= $MPIEXEC
 pdflatex		= $PDFLATEX
 makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
+
 EOF
 
+if test x"$use_mpi_fake" = x"yes"; then
+   echo "WARNING: MPI disabled or not supported! Parallelization tuned off."
+fi
+
 if test x$with_cuda != xno; then
-   echo "using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS"
+   echo "Using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS."
 else
-   echo "CUDA disabled or not supported"
+   echo "CUDA disabled or not supported."
 fi
 
 if test .$pdflatex = .no; then
