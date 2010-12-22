@@ -180,7 +180,7 @@ doxygen			= $DOXYGEN
 EOF
 
 if test x"$use_mpi_fake" = x"yes"; then
-   echo "WARNING: MPI disabled or not supported! Parallelization tuned off."
+   echo "WARNING: MPI disabled or not supported! Parallelization turned off."
 fi
 
 if test x$with_cuda != xno; then

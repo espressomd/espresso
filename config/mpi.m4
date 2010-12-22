@@ -98,21 +98,21 @@ AC_DEFUN([_ES_CHECK_MPI],[
       [compile with MPI (parallelization) support. If none is found, the
        fake implementation for only one processor is used. Default: guess])
   ], [], [
-    with_mpi=guess
+    with_mpi=auto
   ])
   AC_MSG_RESULT($with_mpi)
 
   AC_ARG_VAR(MPICC,[MPI C compiler command])
   # if MPI is wanted, look for MPI compiler
   if test x"$with_mpi" != xno; then
-    COMPILERS="mpicc hcc mpxlc_r mpxlc mpcc cmpicc gcc cc /usr/ucb/cc cl.exe"
+    if test -z "$CC" && test -n "$MPICC"; then
+      CC="$MPICC"
+    else
+      AC_CHECK_TOOLS([CC], [mpicc hcc mpxlc_r mpxlc mpcc cmpicc])
+    fi
   else
-    COMPILERS="gcc cc /usr/ucb/cc cl.exe"
     use_mpi_fake="yes"
   fi
-  if test -z "$CC" && test -n "$MPICC"; then
-    CC="$MPICC"
-  fi
-  AC_PROG_CC($COMPILERS)
+  AC_PROG_CC
 ])
 
