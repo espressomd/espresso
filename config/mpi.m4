@@ -20,36 +20,19 @@ dnl
 
 dnl Recognize the MPI compiler
 AC_DEFUN([ES_CHECK_MPI],[
-  dnl The following is needed to avoid a "macro is expanded before it
-  dnl is required" warning. The function _ES_CHECK_MPI will check for
-  dnl the compiler
-  AC_REQUIRE([_ES_CHECK_MPI])
+  # Check for --with-mpi
+  AC_ARG_WITH(mpi, [AC_HELP_STRING([--with-mpi],
+      [compile with MPI (parallelization) support. If none is found, the
+       fake implementation for only one processor is used. Default: auto])
+  ],,[with_mpi=auto])
 
-  AS_IF([test x"$with_mpi" != xno], [
-    # test whether MPI_Init is available now
-    AC_CHECK_FUNC(MPI_Init,, [
-      # if not, try to find it in a library
-      AC_SEARCH_LIBS(MPI_Init, [mpi mpich],, [
-        # if not, give up or use fake
-        if test xyes = x"$with_mpi"; then
-          AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
-        else
-          AC_MSG_WARN([No MPI compiler found, will use fake implementation!])
-          use_mpi_fake="yes"
-        fi
-      ])
-    ])
-
-    # test wether the MPI headers are there
-    AS_IF([test x"$use_mpi_fake" != xyes], [
-      AC_MSG_CHECKING([for mpi.h])
-      AC_TRY_COMPILE([#include <mpi.h>],,[
-        AC_MSG_RESULT(yes)
-      ], [
-        AC_MSG_RESULT(no)
-	AC_MSG_ERROR([Header mpi.h was not found!])
-      ])
-    ])
+  AX_MPI_ONLY([test x"$with_mpi" != xno],,[
+    if test xyes = x"$with_mpi"; then
+      AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
+    else
+      AC_MSG_WARN([No MPI compiler found, will use fake implementation!])
+      use_mpi_fake="yes"
+    fi
   ])
 
   # if requested, use the fake implementation
@@ -87,32 +70,5 @@ AC_DEFUN([ES_CHECK_MPI],[
 
     ESPRESSO_MPIEXEC="`pwd`/tools/es_mpiexec"
  ])
-])
-
-dnl We need to split the main function (ES_CHECK_MPI) into two parts
-dnl to avoid an "macro is expanded before it is required" warning.
-AC_DEFUN([_ES_CHECK_MPI],[
-  AC_MSG_CHECKING([whether to compile using MPI])
-  # Check for --with-mpi
-  AC_ARG_WITH(mpi, [AC_HELP_STRING([--with-mpi],
-      [compile with MPI (parallelization) support. If none is found, the
-       fake implementation for only one processor is used. Default: guess])
-  ], [], [
-    with_mpi=auto
-  ])
-  AC_MSG_RESULT($with_mpi)
-
-  AC_ARG_VAR(MPICC,[MPI C compiler command])
-  # if MPI is wanted, look for MPI compiler
-  if test x"$with_mpi" != xno; then
-    if test -z "$CC" && test -n "$MPICC"; then
-      CC="$MPICC"
-    else
-      AC_CHECK_TOOLS([CC], [mpicc hcc mpxlc_r mpxlc mpcc cmpicc])
-    fi
-  else
-    use_mpi_fake="yes"
-  fi
-  AC_PROG_CC
 ])
 
