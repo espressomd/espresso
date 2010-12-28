@@ -388,6 +388,7 @@ char *names[] = {
   "REQ_ICCP3M_ITERATION", /* 52 */
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
+  "SET_MU_E", /* 55 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
