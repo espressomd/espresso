@@ -191,9 +191,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_RINERTIA  54
 /** Action number for \ref mpi_send_mu_E. */
 #define REQ_SET_MU_E     55
+/** Action number for \ref mpi_send_rotation. */
+#define REQ_SET_ROTATION     56
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 56
+#define REQ_MAXIMUM 57
 
 /*@}*/
 
@@ -318,7 +320,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
-  mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
+  mpi_send_mu_E_slave,              /* 55: REQ_SET_MU_E */
+  mpi_send_rotation,                /* 56: REQ_SET_ROTTION */ 
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -389,6 +392,7 @@ char *names[] = {
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
   "SET_MU_E", /* 55 */
+  "SET_ROTATION", /* 56 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1118,6 +1122,39 @@ void mpi_send_virtual_slave(int pnode, int part)
     Particle *p = local_particles[part];
     MPI_Status status;
     MPI_Recv(&p->p.isVirtual, 1, MPI_INT, 0, REQ_SET_ISVI,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+// ********************************
+
+void mpi_send_rotation(int pnode, int part, int rot)
+{
+#ifdef SWITCHABLE_ROTATION
+  mpi_issue(REQ_SET_ROTATION, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.rotation = rot;
+  }
+  else {
+    MPI_Send(&rot, 1, MPI_INT, pnode, REQ_SET_ROTATION, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_rotation_slave(int pnode, int part)
+{
+#ifdef SWITCHABLE_ROTATION
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, REQ_SET_ROTATION,
 	     MPI_COMM_WORLD, &status);
   }
 

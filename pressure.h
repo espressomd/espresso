@@ -525,6 +525,9 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
     virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION
+#ifdef SWITCHABLE_ROTATION
+if (p1->p.rotation)
+#endif
   virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
 #endif
 

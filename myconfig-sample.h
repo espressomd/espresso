@@ -24,6 +24,8 @@
 /* #define PARTIAL_PERIODIC */
 /* #define ELECTROSTATICS */
 /* #define ROTATION */
+// Enable the following, if you want to enable rotation on a per-particle level
+// $define SWITCHABLE_ROTATION
 /* #define ROTATIONAL_INTERIA */
 /* #define DIPOLES */
 /* #define MAGNETOSTATICS */

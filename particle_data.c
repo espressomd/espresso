@@ -109,6 +109,10 @@ void init_particle(Particle *part)
   part->p.rinertia[1] = 1.0;
   part->p.rinertia[2] = 1.0;
 #endif
+#ifdef SWITCHABLE_ROTATION
+  part->p.rotation =0;
+#endif
+
 
 #ifdef ELECTROSTATICS
   part->p.q        = 0.0;
@@ -545,6 +549,14 @@ void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *int
 }
 #endif
 
+#ifdef SWITCHABLE_ROTATION
+void tclcommand_part_print_rotation(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  sprintf(buffer,"%i", part->p.rotation);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
@@ -823,6 +835,13 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_torque(&part, buffer, interp);
 #endif
 
+#ifdef SWITCHABLE_ROTATION
+  Tcl_AppendResult(interp, " rotation ", (char *)NULL);
+  tclcommand_part_print_rotation(&part, buffer, interp);
+#endif
+
+
+
 #ifdef ROTATIONAL_INERTIA
   /* print information about rotational inertia */
   Tcl_AppendResult(interp, " rinertia ", (char *)NULL);
@@ -970,6 +989,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_torque(&part, buffer, interp);
     else if (ARG0_IS_S("tbf"))
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
+#endif
+#ifdef SWITCHABLE_ROTATION
+    else if (ARG0_IS_S("rotation"))
+      tclcommand_part_print_rotation(&part, buffer, interp);
 #endif
 
 #ifdef ROTATIONAL_INERTIA
@@ -1133,6 +1156,33 @@ int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char 
   }
 
   return TCL_OK;
+}
+#endif
+
+#ifdef SWITCHABLE_ROTATION
+int tclcommand_part_parse_rotation(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    int rot;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "rotation requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set rotation flag */
+    if (! ARG0_IS_I(rot))
+      return TCL_ERROR;
+
+    if (set_particle_rotation(part_num, rot) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
 }
 #endif
 
@@ -1897,6 +1947,11 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
 #endif
 
+#ifdef SWITCHABLE_ROTATION
+    else if (ARG0_IS_S("rotation"))
+      err = tclcommand_part_parse_rotation(interp, argc-1, argv+1, part_num, &change);
+#endif
+
 #ifdef DIPOLES
 
     else if (ARG0_IS_S("dip"))
@@ -2135,6 +2190,25 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
   if (pnode == -1)
     return TCL_ERROR;
   mpi_send_rotational_inertia(pnode, part, rinertia);
+  return TCL_OK;
+}
+#endif
+
+
+#ifdef SWITCHABLE_ROTATION
+int set_particle_rotation(int part, int rot)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_rotation(pnode, part, rot);
   return TCL_OK;
 }
 #endif

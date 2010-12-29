@@ -131,6 +131,11 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
   }
   /* rescale kinetic energy (=ideal contribution) */
 #ifdef ROTATION
+#ifdef SWITCHABLE_ROTATION
+    fprintf(stderr, "Switching rotation on the particle level (#define SWITCHABLE_ROTATION) and pressure calculation are incompatible.\n");
+#endif
+
+  
   virials.data.e[0] /= (6.0*volume*time_step*time_step);
 #else
   virials.data.e[0] /= (3.0*volume*time_step*time_step);

@@ -239,6 +239,10 @@ void propagate_omega_quat()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef SWITCHABLE_ROTATION
+	  if (!p[i].p.rotation)
+	   continue;
+#endif
 	  double Qd[4], Qdd[4], S[3], Wd[3];
 	  define_Qdd(&p[i], Qd, Qdd, S, Wd);
 	  
@@ -280,6 +284,10 @@ void convert_torqes_propagate_omega()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef SWITCHABLE_ROTATION
+      if (!p[i].p.rotation)
+       continue;
+#endif
       double A[9];
       define_rotation_matrix(&p[i], A);
 
@@ -351,6 +359,10 @@ void convert_initial_torques()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef SWITCHABLE_ROTATION
+      if (!p[i].p.rotation)
+       continue;
+#endif
       double A[9];
       define_rotation_matrix(&p[i], A);
 

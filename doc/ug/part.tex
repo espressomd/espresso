@@ -44,6 +44,7 @@
   \require{5}{\opt{mass \var{mass}}}
   \require{6}{\opt{dipm \var{moment}}}
   \require{6}{\opt{dip \var{dx} \var{dy} \var{dz}}}
+  \require{7}{\opt{rotation \var{rot}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -51,6 +52,7 @@
     \required[4]{EXCLUSION}
     \required[5]{MASS}
     \required[6]{DIPOLES}
+    \required[6]{SWITCHABLE_ROTATION}
   \end{features}
 \end{essyntax}
 
@@ -113,6 +115,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   \item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
   \item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
   dipol axis to $(dx,dy,dz)$.
+  \item \opt{rotation \var{rot}} specifies whether a particle's rotational degrees of freedom are integrated (value of 1) or not (0). If set to zero, the content of the torque and omega variables are meaningless.
  
   \end{arguments}
 \subsection{Getting particle properties}

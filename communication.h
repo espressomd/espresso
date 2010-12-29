@@ -180,7 +180,17 @@ void mpi_send_rotational_inertia(int node, int part, double rinertia[3]);
 */
 void mpi_send_quat(int node, int part, double quat[4]);
 
-/** Issue REQ_SET_LAMBDA: send particle angular velocity.
+
+/** Issue REQ_SET_ROTATION: send particle rotation flag
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param rot the rotation flag
+*/
+void mpi_send_rotation(int pnode, int part, int rot);
+
+
+/* Issue REQ_SET_LAMBDA: send particle angular velocity.
     Also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
@@ -196,6 +206,7 @@ void mpi_send_omega(int node, int part, double omega[3]);
 */
 void mpi_send_torque(int node, int part, double torque[3]);
 #endif
+
 
 #ifdef DIPOLES 
 /** Issue REQ_SET_DIP: send particle dipole orientation.
