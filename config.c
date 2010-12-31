@@ -134,6 +134,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef ROTATION
   Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
 #endif
+#ifdef SWITCHABLE_ROTATION
+  Tcl_AppendResult(interp, "{ SWITCHABLE_ROTATION } ", (char *) NULL);
+#endif
 #ifdef DIPOLES
   Tcl_AppendResult(interp, "{ DIPOLES } ", (char *) NULL);
 #endif
