@@ -1,3 +1,4 @@
+dnl -*- mode: autoconf -*-
 # ===========================================================================
 #       http://www.gnu.org/software/autoconf-archive/ax_mpi_only.html
 # ===========================================================================
@@ -48,6 +49,8 @@ AC_DEFUN([AX_MPI_ONLY], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 
 # Check for compiler
+# Needs to be split off into an extra macro to ensure right expansion
+# order.
 AC_REQUIRE([_AX_MPI_ONLY],[_AX_MPI_ONLY([$1])])
 
 AS_IF([test x"$_ax_mpi_only_mpi_wanted" = xno], 
