@@ -100,7 +100,7 @@ for np in $processors; do
     for testcase in $testcases; do
         # here go the error messages of the testcases
 	errf=$testcase.err
-	CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase $errf"
+	CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase $errf -quiet"
 	echo "**************************************************"
 	echo "** $testcase"
 	echo "Executing: \"$CMD\""
