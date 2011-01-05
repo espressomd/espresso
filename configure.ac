@@ -1,4 +1,4 @@
-# Copyright (C) 2006,2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 #
 # This program is free software: you can redistribute it and/or modify
@@ -134,8 +134,8 @@ AC_CONFIG_FILES([
 	doc/tutorials/tut2/Makefile 
 	config/$myconfig:config/myconfig-default.h.in
 	])
-AC_CONFIG_FILES([testsuite/test.sh],
-	[chmod 755 testsuite/test.sh])
+AC_CONFIG_FILES([testsuite/runtest.sh],
+	[chmod 755 testsuite/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 

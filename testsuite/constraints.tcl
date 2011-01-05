@@ -20,7 +20,7 @@
 set errf [lindex $argv 1]
 
 source "tests_common.tcl"
-source "$env(ESPRESSO_SCRIPTS)/bundle.tcl"
+source "../scripts/bundle.tcl"
 
 require_feature "PARTIAL_PERIODIC"
 require_feature "CONSTRAINTS"
