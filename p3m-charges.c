@@ -1155,7 +1155,7 @@ static double get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha
 {
   double rs_err, ks_err;
   double alpha_L;
-  P3M_TRACE(fprintf(stderr, "get_accuracy: mesh (%d, %d %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
+  P3M_TRACE(fprintf(stderr, "get_accuracy: mesh (%d, %d, %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
 
   /* calc maximal real space error for setting */
   rs_err = P3M_real_space_error(coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
