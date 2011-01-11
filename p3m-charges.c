@@ -55,7 +55,9 @@
 /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
 /** help variable for calculation of aliasing sums */
-  double *meshift = NULL;
+  double *meshift_x = NULL;
+  double *meshift_y = NULL;
+  double *meshift_z = NULL;
 /** Spatial differential operator in k-space. We use an i*k differentiation. */
   double *d_op = NULL;
 /** Force optimised influence function (k-space) */
@@ -967,21 +969,36 @@ void realloc_ca_fields(int newsize)
   ca_frac = (double *)realloc(ca_frac, p3m.cao3*ca_num*sizeof(double));
   ca_fmp  = (int *)realloc(ca_fmp, ca_num*sizeof(int));
     
-}
+} 
 
 
 
 void calc_meshift(void)
 {
-  int i;
-  double dmesh;
+    int i;
 
-  dmesh = (double)p3m.mesh[0];
-  meshift = (double *) realloc(meshift, p3m.mesh[0]*sizeof(double));
+    meshift_x = (double *) realloc(meshift_x, p3m.mesh[0]*sizeof(double));
+    meshift_y = (double *) realloc(meshift_y, p3m.mesh[1]*sizeof(double));
+    meshift_z = (double *) realloc(meshift_z, p3m.mesh[2]*sizeof(double));
 
-  for (i=0; i<p3m.mesh[0]; i++) meshift[i] = i - dround(i/dmesh)*dmesh; 
+    meshift_x[0] = meshift_y[0] = meshift_z[0] = 0;
+    for (i = 1; i < p3m.mesh[0]; i++) {
+        meshift_x[i] = i;
+        meshift_x[p3m.mesh[0] - i] = -i;
+    }
 
+    for (i = 1; i < p3m.mesh[1]; i++) {
+        meshift_y[i] = i;
+        meshift_y[p3m.mesh[1] - i] = -i;
+    }
+
+    for (i = 1; i < p3m.mesh[2]; i++) {
+        meshift_z[i] = i;
+        meshift_z[p3m.mesh[2] - i] = -i;
+    }
 }
+
+
 
 
 
@@ -1039,40 +1056,41 @@ void calc_influence_function_force()
       }
 }
 
-MDINLINE double perform_aliasing_sums_force(int n[3], double nominator[3])
+MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
 {
-  int i;
-  double denominator=0.0;
-  /* lots of temporary variables... */
-  double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
-  double limit = 30;
+    int i;
+    double denominator = 0.0;
+    /* lots of temporary variables... */
+    double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
+    double limit = 30;
 
-  for(i=0;i<3;i++) nominator[i]=0.0;
-  f1 = 1.0/(double)p3m.mesh[0];
-  f2 = SQR(PI/(p3m.alpha_L));
+    for(i = 0; i < 3; i++)
+        numerator[i] = 0.0;
 
-  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = meshift[n[0]] + p3m.mesh[0]*mx;
-    sx  = pow(sinc(f1*nmx),2.0*p3m.cao);
-    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = meshift[n[1]] + p3m.mesh[0]*my;
-      sy  = sx*pow(sinc(f1*nmy),2.0*p3m.cao);
-      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-	nmz = meshift[n[2]] + p3m.mesh[0]*mz;
-	sz  = sy*pow(sinc(f1*nmz),2.0*p3m.cao);
-	
-	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
-	expo         =  f2*nm2;
-	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+    f1 = SQR(PI/(p3m.alpha));
 
-	nominator[0] += f3*nmx; 
-	nominator[1] += f3*nmy; 
-	nominator[2] += f3*nmz; 
-	denominator  += sz;
-      }
+    for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+        nmx = meshift_y[n[0]] + p3m.mesh[1]*mx;
+        sx  = pow(sinc(nmx/(double)p3m.mesh[1]),2.0*p3m.cao);
+        for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+            nmy = meshift_z[n[1]] + p3m.mesh[2]*my;
+            sy  = sx*pow(sinc(nmy/(double)p3m.mesh[2]),2.0*p3m.cao);
+            for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+                nmz = meshift_x[n[2]] + p3m.mesh[0]*mz;
+                sz  = sy*pow(sinc(nmz/(double)p3m.mesh[0]),2.0*p3m.cao);
+
+                nm2          =  SQR(nmx/box_l[0]) + SQR(nmy/box_l[1]) + SQR(nmz/box_l[2]);
+                expo         =  f1*nm2;
+                f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+
+                numerator[0] += f2*nmx;
+                numerator[1] += f2*nmy;
+                numerator[2] += f2*nmz;
+                denominator  += sz;
+            }
+        }
     }
-  }
-  return denominator;
+    return denominator;
 }
 
 void calc_influence_function_energy()
@@ -1108,37 +1126,42 @@ void calc_influence_function_energy()
       }
 }
 
+
+
 MDINLINE double perform_aliasing_sums_energy(int n[3])
 {
-  double nominator=0.0,denominator=0.0;
-  /* lots of temporary variables... */
-  double sx,sy,sz,f1,f2,f3,mx,my,mz,nmx,nmy,nmz,nm2,expo;
-  double limit = 30;
+    double numerator=0.0, denominator=0.0;
+    /* lots of temporary variables... */
+    double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
+    double limit = 30;
+//     const int rs_x = 0, rs_y = 1, rs_z = 2;
+//     const int ks_x = 2, ks_y = 0, ks_z = 1;
 
-  f1 = 1.0/(double)p3m.mesh[0];
-  f2 = SQR(PI/(p3m.alpha_L));
+    f1 = SQR(PI/(p3m.alpha));
 
-  for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = meshift[n[0]] + p3m.mesh[0]*mx;
-    sx  = pow(sinc(f1*nmx),2.0*p3m.cao);
-    for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = meshift[n[1]] + p3m.mesh[0]*my;
-      sy  = sx*pow(sinc(f1*nmy),2.0*p3m.cao);
-      for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-	nmz = meshift[n[2]] + p3m.mesh[0]*mz;
-	sz  = sy*pow(sinc(f1*nmz),2.0*p3m.cao);
-	
-	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
-	expo         =  f2*nm2;
-	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
+    for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
+        nmx = meshift_y[n[0]] + p3m.mesh[1]*mx;
+        sx  = pow(sinc(nmx/(double)p3m.mesh[1]),2.0*p3m.cao);
+        for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
+            nmy = meshift_z[n[1]] + p3m.mesh[2]*my;
+            sy  = sx*pow(sinc(nmy/(double)p3m.mesh[2]),2.0*p3m.cao);
+            for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
+                nmz = meshift_x[n[2]] + p3m.mesh[0]*mz;
+                sz  = sy*pow(sinc(nmz/(double)p3m.mesh[0]),2.0*p3m.cao);
+                /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
+                nm2          =  SQR(nmx/box_l[0]) + SQR(nmy/box_l[1]) + SQR(nmz/box_l[2]);
+                expo         =  f1*nm2;
+                f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-	nominator += f3; 
-	denominator  += sz;
-      }
+                numerator += f2;
+                denominator  += sz;
+            }
+        }
     }
-  }
-  return nominator/SQR(denominator);
+
+    return numerator/SQR(denominator);
 }
+
 
 
 /************************************************
