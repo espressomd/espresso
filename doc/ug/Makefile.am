@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -32,7 +32,6 @@ ug_TEXFILES = \
 	quickref.tex \
 	features.tex \
 	examples.tex \
-	deserno.tex \
 	mmm.tex \
         mbtools.tex
 
