@@ -59,7 +59,8 @@
   double *meshift_y = NULL;
   double *meshift_z = NULL;
 /** Spatial differential operator in k-space. We use an i*k differentiation. */
-  double *d_op = NULL;
+  double *d_op[3];
+
 /** Force optimised influence function (k-space) */
   double *g_force = NULL;
 /** Energy optimised influence function (k-space) */
@@ -109,6 +110,28 @@ int send_recv_grid_size=0;
 /************************************************************/
 /*@{*/
 
+#warning remove me!
+void static print_p3m(void) {
+  fprintf(stderr, "general information: \n\t node: %d \n\t box_l: (%lf, %lf, %lf)\n", this_node, box_l[0], box_l[1], box_l[2]);
+
+  fprintf(stderr, "p3m parameters:\n\t alpha_L: %lf\n\t r_cut_iL: %lf\n\t \
+                   mesh: (%d, %d, %d)\n\t mesh_off: (%lf, %lf, %lf)\n\t \
+                   cao: %d\n\t inter: %d\n\t accuracy: %lf\n\t epsilon: %lf\n\t \
+                   cao_cut: (%lf, %lf, %lf)\n\t a: (%lf,%lf,%lf)\n\t \
+                   ai: (%lf,%lf,%lf)\n\t alpha: %lf\n\t r_cut: %lf\n\t \
+                   inter2: %d\n\t cao3: %d\n\t additional_mesh: (%lf,%lf,%lf)\n", \
+	  p3m.alpha_L,p3m.r_cut_iL, p3m.mesh[0], p3m.mesh[1], p3m.mesh[2], p3m.mesh_off[0], p3m.mesh_off[1], p3m.mesh_off[2], \
+          p3m.cao, p3m.inter, p3m.accuracy, p3m.epsilon, p3m.cao_cut[0], p3m.cao_cut[1], p3m.cao_cut[2], p3m.a[0], p3m.a[1], p3m.a[2], p3m.ai[0], p3m.ai[1], p3m.ai[2], \
+          p3m.alpha, p3m.r_cut, p3m.inter2, p3m.cao3, p3m.additional_mesh[0], p3m.additional_mesh[1], p3m.additional_mesh[2]);
+}
+
+void static print_dop(void) {
+
+}
+
+void static print_g_force(void) {
+
+}
 
 /** Calculates for charges the properties of the send/recv sub-meshes of the local FFT mesh. 
  *  In order to calculate the recv sub-meshes there is a communication of 
@@ -148,11 +171,6 @@ void spread_force_grid(double* mesh);
 /** realloc charge assignment fields. */
 void realloc_ca_fields(int newsize);
 
-/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref p3m_struct::ai) 
-    and the cutoff for charge assignment \ref p3m_struct::cao_cut, which has to be
-    done by \ref P3M_init once and by \ref P3M_scaleby_box_l_charges whenever the \ref box_l changed.
-*/
-void P3M_init_a_ai_cao_cut(void);
 
 /** checks for correctness for charges in P3M of the cao_cut, necessary when the box length changes */
 int P3M_sanity_checks_boxl(void);
@@ -1000,23 +1018,25 @@ void calc_meshift(void)
 
 
 
-
-
-
 void calc_differential_operator()
 {
-  int i;
-  double dmesh;
+  int i,j;
 
-  dmesh = (double)p3m.mesh[0];
-  d_op = (double *) realloc(d_op, p3m.mesh[0]*sizeof(double));
+  for(i=0;i<3;i++) {
+    d_op[i] = realloc(d_op[i], p3m.mesh[i]*sizeof(double));
+    d_op[i][0] = 0;
+    d_op[i][p3m.mesh[i]/2] = 0;
 
-  for (i=0; i<p3m.mesh[0]; i++) 
-    d_op[i] = (double)i - dround((double)i/dmesh)*dmesh;
-
-  d_op[p3m.mesh[0]/2] = 0;
- 
+    for(j = 1; j < p3m.mesh[i]/2; j++) {
+      d_op[i][j] = j;
+      d_op[i][p3m.mesh[i] - j] = -j;
+    }
+  }
 }
+
+
+
+
 
 void calc_influence_function_force()
 {
@@ -1272,7 +1292,7 @@ static double p3m_mc_time(int mesh[3], int cao,
 
   /* check whether we are running P3M+ELC, and whether we leave a reasonable gap space */
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
-    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f reject r_cut %f > gap %f\n", mesh[0],mesh[1],mesh[2], cao, r_cut_iL,
 		      2*r_cut_iL*box_l[0], elc_params.gap_size));
     return -P3M_TUNE_ELCTEST;
   }
@@ -1282,7 +1302,7 @@ static double p3m_mc_time(int mesh[3], int cao,
   for (i = 0; i < 3; i++)
     n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
   if (n_cells < min_num_cells) {
-    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
+    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f reject n_cells %d\n", mesh[0], mesh[1], mesh[2], cao, r_cut_iL, n_cells));
 
     return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
@@ -1294,7 +1314,7 @@ static double p3m_mc_time(int mesh[3], int cao,
 
   *_accuracy = get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
 
-  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
+  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f time %f\n", mesh[0], mesh[1], mesh[2], cao, r_cut_iL, int_time));
 
   return int_time;
 }
@@ -1440,6 +1460,8 @@ int p3m_adaptive_tune() {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
 
+  P3M_TRACE(fprintf(stderr,"%d: %d charged particles.\n", this_node, p3m_sum_qpart));
+
   /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set we have to tune it. */
   if (p3m.mesh[0] == 0 || p3m.mesh[1] == 0 || p3m.mesh[2] == 0) {
@@ -1548,6 +1570,9 @@ int p3m_adaptive_tune() {
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr,"%d: Broadcasting P3M parameters: mesh: (%d %d %d), cao: %d, alpha_L: %lf, acccuracy: %lf\n", this_node, p3m.mesh[0], p3m.mesh[1],  p3m.mesh[2], p3m.cao, p3m.alpha_L, p3m.accuracy));
   mpi_bcast_coulomb_params();
+
+  P3M_TRACE(print_p3m());
+
   return 0;
 }
   
@@ -1582,7 +1607,7 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     return (TCL_ERROR);
   }
   
-  if(!p3m_adaptive_tune()) {  
+  if(!(p3m_adaptive_tune() == 0)) {  
     Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
     return (TCL_ERROR);
   }
@@ -1626,6 +1651,8 @@ void P3M_count_charged_particles()
   p3m_sum_qpart    = (int)(tot_sums[0]+0.1);
   p3m_sum_q2       = tot_sums[1];
   p3m_square_sum_q = SQR(tot_sums[2]);
+  
+  P3M_TRACE(fprintf(stderr, "%d: p3m_sum_qpart: %d, p3m_sum_q2: %lf\n", this_node, p3m_sum_qpart, p3m_sum_q2));
 }
 
 
@@ -1837,6 +1864,11 @@ int P3M_sanity_checks()
     ERROR_SPRINTF(errtxt,"{047 P3M_init: skin is not yet set} ");
     ret = 1;
   }
+  if (p3m.alpha < 0.0 || p3m.alpha > 1.0) {
+    errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be between 0 and 1.} ");
+    ret = 1;
+  }
     
   return ret;
 }
@@ -1927,7 +1959,7 @@ void P3M_scaleby_box_l_charges() {
 
   p3m.r_cut = p3m.r_cut_iL* box_l[0];
   p3m.alpha = p3m.alpha_L * box_l_i[0];
-   P3M_init_a_ai_cao_cut();
+  P3M_init_a_ai_cao_cut();
   calc_lm_ld_pos();
   P3M_sanity_checks_boxl(); 
 }
@@ -1940,15 +1972,13 @@ void   P3M_init_charges() {
   int n;
 
   if(coulomb.bjerrum == 0.0) {       
-    
-      if(coulomb.bjerrum == 0.0) {
-           p3m.r_cut    = 0.0;
-           p3m.r_cut_iL = 0.0;
-          if(this_node==0) 
-             P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
-	   fprintf(stderr,"   Electrostatics switched off!\n"));
-      }
-      
+    p3m.r_cut    = 0.0;
+    p3m.r_cut_iL = 0.0;
+
+    if(this_node==0) 
+      P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
+
+      fprintf(stderr,"   Electrostatics switched off!\n"));
   } else {  
     P3M_TRACE(fprintf(stderr,"%d: P3M_init_charges: \n",this_node));
 
