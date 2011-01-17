@@ -34,24 +34,25 @@ BLACKLIST=
 
 srcdir=@srcdir@
 ESPRESSO=@top_builddir@/Espresso
-#ESPRESSO_SCRIPTS=@top_srcdir@/scripts
-#export ESPRESSO_SCRIPTS
+ESMPIEXEC=@ESPRESSO_MPIEXEC@
 
 # tests need to be run from the directory where this script is located
-cd ${0%test.sh}
+cd ${0%runtest.sh}
 
 # handle processors
-processors=$PROCESSORS
-if test $1 = "-p"; then
+if test -z "$PROCESSORS"; then
+    processors=1
+else
+    processors=$PROCESSORS
+fi
+if test "$1" = "-p"; then
     processors=$2
     shift 2
 fi
 
 # handle testcases
 testcases=$TESTCASES
-if test $# -ge 1; then
-    testcases="$@"
-fi
+test $# -ge 1 && testcases="$@"
 
 # check if variables are available
 if test -z "$processors" || test -z "$testcases"; then
@@ -99,7 +100,7 @@ for np in $processors; do
     for testcase in $testcases; do
         # here go the error messages of the testcases
 	errf=$testcase.err
-	CMD="$ESPRESSO $srcdir/$testcase $np $errf -quiet"
+	CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase $errf -quiet"
 	echo "**************************************************"
 	echo "** $testcase"
 	echo "Executing: \"$CMD\""

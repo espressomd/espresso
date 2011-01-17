@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
 # 
-set errf [lindex $argv 1]
-
 source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"

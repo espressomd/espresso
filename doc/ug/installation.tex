@@ -1,5 +1,6 @@
 % Copyright (C) 2010,2011 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -16,73 +17,88 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
-\chapter{Compiling and installing \es}
+\chapter{Getting, compiling and running \es}
 \label{chap:install}
 \index{Installation|textbf}
 
-\begin{itemize}
-\item Compiling \es{} is a necessary evil
-\item Features can be compiled in or not
-\item For maximal efficiency, compile in only the features that you
-  use
-\item \es{} can be obtained from the \es{} home page
-  \footnote{\url{http://espressomd.org}}.
-\item If you are looking for the \es binary or the object files, read
-  \vref{sec:builddir}
-\item other than in most packages, \es will probably not be installed,
-  or it will only be installed locally. Refer to \vref{sec:installdir}
-  for details.
-\end{itemize}
+This chapter will describe how to get, compile and run the \es
+software.  
 
-\section{Source and build directories}
-\label{sec:builddir}
+\es releases are available as source code packages from the \es home
+page\footnote{\url{http://espressomd.org}}.  This is where new users
+should get the code.  The code within release packages is tested and
+known to run on a number of platforms.  Alternatively, people that
+want to use the newest features of \es or that want to start
+contributing to the software can instead obtain the current
+development code via the version control system software
+\textsf{git}\footnote{\url{http://git.org}} from \es's project page at
+the Savannah GNU server
+\footnote{\url{https://savannah.nongnu.org/projects/espressomd/}}.
+This code is not as well tested and documented as the release code; it
+is recommended to use this code only if you have already gained some
+experience in using \es.
+
+Unlike most other software, no binary distributions of \es are
+available, and the software is usually not installed globally for all
+users.  Instead, users of \es should compile the software themselves.
+\index{features} The reason for this is that it is possible to
+activate and deactivate various features before compiling the code.
+Some of these features are not compatible with each other, and some of
+the features have a profound impact on the performance of the code.
+Therefore it is not possible to build a single binary that can satisfy
+all needs.  A user should always activate only those features that are
+actually needed.  This means, however, that learning how to compile
+\es is a necessary evil.  The build system of \es uses the GNU
+autotools, which are developed since more than 20 years and allow to
+compile software easily on a wide range of platforms.
+
+\section{Running \texttt{configure}}
+\label{sec:configure}
+\index{configure}
+
+% Description of basic options: --prefix, --exec-prefix, CPPFLAGS,
+% CFLAGS, LDFLAGS
+
+The first step of building \es is to run the shell script
+\codebox{configure} which is to be found in the top level source
+directory.  The script collects all the information required by the
+compilation process.  It will determine how to use and where to find
+the compiler, as well as the different libraries and tools required by
+the compilation process, and it will test what compiler flags are to
+be used.  The script will find out about most of these things
+automatically.  If something is missing, it will complain and give
+hints how to solve the problem.  The generic syntax of calling the
+\codebox{configure} script is:
+\begin{code}
+configure [\var{options} ...] [\var{variable}=\var{value} ...]
+\end{code}
+
+If you are using the development source code from the \textsf{git}
+repository, before you can call \codebox{configure}, it is necessary
+to have the GNU autotools (\textsf{autoconf} and \textsf{automake})
+installed. Then you can call the script \codebox{autogen.sh} from the
+top level source directory, which will generate the
+\codebox{configure} script.
+
+\subsection{Source and build directories}
+\label{ssec:builddir}
 \index{build directory} \index{source directory}
 
 Usually, when a program is compiled, the resulting binary files are
-put into the same directory as the sources of the program. In \es, the
-\emph{source directory} that contains all the source files is
-completely separated from the \emph{build directory} where the files
-created by the build process are put. As the source directory is not
-modified during the compilation process, it is possible to compile more
-than one binary versions of \es from a single set of source files.
-
-The location of the build directory is determined when
-\texttt{configure} is called.  Depending on whether it is called from
-the source directory where it resides, or from some other directory,
-the build system will act different.
-
-When \texttt{configure} is called from another current working
-directory than the source directory, this directory will become the
-\emph{build directory}.  All files will be generated below the build
-directory.  This way, you can make as many builds of \es as you like,
-each build having different compiler flags and built-in features, and
+put into the same directory as the sources of the program.  In \es's
+build system, the \emph{source directory} that contains all the source
+files is completely separated from the \emph{build directory}, where
+the files created by the build process are put.  The location of the
+build directory is the current working directory at the time when
+\codebox{configure} is called.  In this way, you can build several
+variants of \es, each variant having different activated features, and
 for as many platforms as you want.  All further commands concerning
-compiling and running \es{} have to be called from this directory,
-instead of from the source directory.
-
-When \texttt{configure} is called from the source directory where the
-script resides, the \es build system has limited built-in capabilities
-to handle different computer hardware.  A new subdirectory is created
-in the source directory and \texttt{configure} is recursively called
-from this directory, making the subdirectory the build directory.  The
-directory is called \texttt{obj-}\textit{platform}\texttt{/}, where
-\textit{platform} is an automatically determined descriptor of the CPU
-type where the script was started, \eg
-\mbox{\texttt{obj-Athlon\_64-pc-linux}}.  Note that this heuristic
-will work in many cases, but it may not always work as intended.  When
-you notice any problems, you can always call \texttt{configure} from
-another directory.
-
-In this case it is also possible to run the commands \texttt{make} and
-\texttt{Espresso} directly in the source directory.  Furthermore, the
-option \texttt{--enable-chooser} will be set in the recursive call of
-\texttt{configure} that activates the automatic binary chooser (see
-section \vref{sec:installdir}).
+compiling and running \es have to be called from the build directory.
 
 \paragraph{Example}
-When the source directory is \texttt{\$srcdir} (\ie{} the files where
+When the source directory is \codebox{\$srcdir} (\ie the files where
 unpacked to this directory), then the build directory can be set to
-\texttt{\$builddir} by calling the \texttt{configure}-script from
+\codebox{\$builddir} by calling the \codebox{configure}-script from
 there:
 \begin{code}
 cd $builddir
@@ -91,94 +107,11 @@ make
 Espresso
 \end{code}
 
-\section{\texttt{myconfig.h}: Activating and deactivating features}
-\label{sec:myconfig}
+\subsection{Options}
+\label{ssec:configureoptions}
 
-\index{features} \index{myconfig.h} \index{configuration header} \es
-has a large number of features that can be compiled into the binary.
-However, it is not recommended to actually compile in all possible
-features, as this will negatively affect \es's performance.  Instead,
-compile in only the features that are actually required.  For the
-developers, it is also possible to turn on or off a number of
-debugging messages.  The features and debug messages can be controlled
-via a configuration header file that contains C-preprocessor
-declarations. Appendix \vref{chap:features} lists and describes all
-available features.  When no configuration header is provided by the
-user, a default header will be used that turns on the default
-features.  The file \texttt{myconfig-sample.h} in the source directory
-contains a list of all possible features that can be copied into your
-own configuration file.
-
-When you distinguish between the build and the source directory (see
-\vref{sec:builddir}), the configuration header can be put in either of
-these. Note, however, that when a configuration header is found in
-both directories, the one in the build directory will be used.  For an
-example how this can be employed, see section \ref{sec:builddir}.
-
-By default, the configuration header is called \texttt{myconfig.h}.
-The name of the configuration header can be changed either when the
-\texttt{configure}-script is called with the option
-\mbox{\texttt{--with-myconfig}} (see section \vref{sec:configure}), or
-when \texttt{make} is called with the setting
-\mbox{\texttt{myconfig=}\textit{myconfig\_header}} (see section
-\vref{sec:make}).
-
-The configuration header can be used to compile different binary
-versions of \es with a different set of features from the same source
-directory.  Suppose that you have a source directory \texttt{\$srcdir}
-and two build directories \texttt{\$builddir1} and
-\texttt{\$builddir2} that contain different configuration headers:
-
-\begin{itemize}
-\item \texttt{\$builddir1/myconfig.h}:
-\begin{code}
-#define ELECTROSTATICS
-#define LENNARD-JONES
-\end{code}
-
-\item \texttt{\$builddir2/myconfig.h}:
-\begin{code}
-#define LJCOS
-\end{code}
-\end{itemize}
-
-\noindent Then you can simply compile two different versions of \es via
-\begin{code}
-cd $builddir1
-$srcdir/configure
-make
-
-cd $builddir2
-$srcdir/configure
-make
-\end{code}
-
-
-\section{Running \texttt{configure}}
-\label{sec:configure}
-
-% Description of basic options: --prefix, --exec-prefix, CPPFLAGS,
-% CFLAGS, LDFLAGS
-
-\index{configure} The shell script \texttt{configure} collects all the
-information required by the compilation process. It will determine how
-to use and where to find the different libraries and tools required by
-the compilation process, and it will test what compiler flags are to
-be used.  The script will find out most of these things automatically.
-If something is missing, it will complain and give hints how to solve
-the problem.  The generic syntax of calling the \texttt{configure}
-script is:
-\begin{code}
-configure [\var{options} ...] [\var{variable}=\var{value} ...]
-\end{code}
-
-\noindent Note that in the \es build system, the files generated by
-the configuration and compilation process are not placed next to the
-source files, but into a separate \emph{build directory} instead.
-Refer to section \vref{sec:builddir} for details.
-
-\index{configure options} The behaviour of \texttt{configure} can be
-controlled by the means of command line options. In the following,
+\index{configure options} The behaviour of \codebox{configure} can be
+controlled by the means of command line options.  In the following
 only those command line options that are specific to \es will be
 explained.  For a complete list of options and explanations thereof,
 call
@@ -186,52 +119,25 @@ call
 configure --help
 \end{code}
 
-\subsection{Options}
-
 \begin{description}
-\item [\texttt{--enable-chooser}] This option will enable the
-  automatic binary chooser mechanism for \es (see section
-  \vref{sec:installdir}).  This option will be automatically enabled,
-  when the \texttt{configure} script is called from the source
-  directory, otherwise it will be disabled. It is not recommended to
-  set the option manually.
 \item[\texttt{--enable-debug}] This option will enable compiler flags
   required for debugging the \es binary and is disabled by default.
 \item[\texttt{--enable-profiling}] This option will enable compiler
   flags required for profiling the \es binary and is disabled by
   default.
-\item[\texttt{--disable-processor-optimization}] This option will
-  control whether \texttt{configure} will check for several
-  optimization flags to be used by the compiler. This option is
-  enabled by default.
-\item[\texttt{--disable-xlc-qipa}] This option is only useful when the
-  IBM C-compiler \texttt{xlc} is used and will control whether or not
-  the compiler flag \texttt{-qipa} is used.  If you come upon problems
-  when using the \es binary on IBM machines, try using
-  \texttt{--disable-xlc-ipa}. The option is enabled by default.
 \item[\texttt{--with-myconfig=MYCONFIG\_HEADER}] This option sets the
   name of the local configuration header (see \vref{sec:myconfig}). It
   defaults to ``\texttt{myconfig.h}''.
-\item[\texttt{--with-mpi=MPI}/ \texttt{--without-mpi}] Sets the MPI
-  implementation that should be used, or disables MPI. By default,
-  \texttt{configure} will test automatically what MPI implementation
-  is available. The following implementations are known:
-  \begin{description}
-  \item[\texttt{fake}, \texttt{no}] This will disable MPI
-    completely. Equivalent to \mbox{\texttt{--without-mpi}}.
-  \item[\texttt{lam}] Use the LAM/MPI environment
-    (\url{http://www.lam-mpi.org/}).
-  \item[\texttt{mpich}] Use the MPICH environment
-    (\url{http://www-unix.mcs.anl.gov/mpi/mpich/}).
-  \item[\texttt{poe}] Use the POE environment (IBM).
-  \item[\texttt{dmpi}] Use the DMPI environment (Tru64).
-  \item[\texttt{generic}] Use a generic MPI implementation. This will
-    try to find an MPI compiler and an MPI runtime environment.
-  \end{description}
+\item[\texttt{--with-mpi=\alt{\lit{yes} \asep \lit{no} \asep
+      \lit{guess}}}/ \texttt{--without-mpi}] By default,
+  \codebox{configure} will automatically determine whether an MPI
+  compiler is available.  If it is, it will use it.  If you specify
+  \codebox{--without-mpi} or \codebox{--with-mpi=no}, then MPI will
+  not be used, even if it is available.
 \item[\texttt{--with-efence} / \texttt{--without-efence}] Whether or
-  not to use the ``electric fence'' memory debugging library
-  (\url{http://freshmeat.net/projects/efence/}). Efence is not used by
-  default.
+  not to use the ``electric fence'' memory debugging library.
+  \footnote{\url{http://freshmeat.net/projects/efence/}} Efence is not
+  used by default.
 \item[\texttt{--with-tcl=TCL}] By default, \texttt{configure} will
   automatically determine which version of Tcl is used.  If the wrong
   version is chosen automatically, you can specify the name of the
@@ -252,11 +158,11 @@ configure --help
 \section{\texttt{make}: Compiling,  testing and installing \es}
 \label{sec:make}
 
-The command \texttt{make} is mainly used to compile the \es{} source
+The command \texttt{make} is mainly used to compile the \es source
 code, but it can do a number of other things. The generic syntax of
 the \texttt{make} command is:
 \begin{code}
-make [\var{target}...] [\var{variable}=\var{value}]
+make [\var{options}] [\var{target}...] [\var{variable}=\var{value}]
 \end{code}
 When no target is given, the target \texttt{all} is used. The
 following targets are available:
@@ -297,38 +203,20 @@ following targets are available:
   \texttt{configure} script are used. \texttt{prefix} sets the prefix
   where all \es files are to be installed, \texttt{exec-prefix} sets
   the prefix where the executable files are to be installed and is
-  required only when there is an architecture-specific directory (\eg
-  \texttt{/usr/local/bin64/}).  For the actual locations where the
-  different files are installed, refer to section
-  \vref{sec:installdir}.\\
+  required only when there is an architecture-specific directory.\\
   \textbf{Example:} \verb!make install prefix=/usr/local!\\
   will install all files below \texttt{/usr/local}.
-\item[\texttt{uninstall}] Uninstalls \es{}, \ie{} removes all files
-  that were installed during \texttt{make install}. The variables are
+\item[\texttt{uninstall}] Uninstalls \es, \ie removes all files that
+  were installed during \texttt{make install}. The variables are
   identical to the variables of the \texttt{install}-target.
 \end{description}
 
-\subsection{Installation directories}
-\label{sec:installdir}
-
-\index{installation directory} Other than most software, \es is not
-necessarily installed into the system, but can also be used directly
-from the build directory.  The rest of this section is only
-interesting if you plan to install \es.
-
-Normally, the \es-binary \texttt{Espresso-bin} is installed in the
-directory \texttt{\$prefix/libexec/} and a the wrapper script
-\texttt{Espresso} in the directory \texttt{\$prefix/bin/} that handles
-the MPI invocation.
-
-When the \texttt{configure}-script is called from the source directory
-or when the option \texttt{--enable-chooser} is given, an automatic
-binary chooser is installed in the directory \texttt{\$prefix/bin/}
-and the \es-binary and the MPI wrapper script are installed in an
-architecture-specific subdirectory
-\mbox{\texttt{\$exec-prefix/lib/espresso/obj-}\textit{platform}\texttt{/}}.
-When called, the binary chooser will automatically call the MPI
-wrapper script from the right subdirectory.
+A number of options are available when calling \texttt{make}.  The
+most interesting option is probably \texttt{-j \textit{num\_jobs}},
+which can be used for parallel compilation on computers that have more
+than one CPU or core.  \textit{num\_jobs} specifies the maximal number
+of jobs that will be run.  Setting \textit{num\_jobs} to the number of
+available processors speeds up the compilation process significantly.
 
 \section{Running \es}
 \label{sec:run}
@@ -347,33 +235,67 @@ the script. Note that depending on your MPI installation, MPI jobs can
 only be run in the queueing system, so that \es will not run from
 the command line.
 
-% A number of wrapper scripts are used in running \es{}:
-% \begin{itemize}
-% \item The script \texttt{Espresso} in the source and build directory
-%   will try to run the compiled version of \es. If it is called from
-%   the source directory, it assumes that \es{} was also configured in
-%   the source directory and will try to recursively start the script in
-%   the corresponding \texttt{obj-PLATFORM} build directory. If it is
-%   called in the build directory, it will start the \es-binary with the
-%   right MPI implementation.
-% \item The chooser script \texttt{Espresso} 
-%   \begin{itemize}
-%   \item installed when \verb!--enable-chooser! was given
-%   \item installed to bindir
-%   \item tries to run the correct version of the MPI-wrapper
-%     \texttt{Espresso}
-%   \end{itemize}
-% \item The MPI-wrapper \texttt{Espresso}
-%   \begin{itemize}
-%   \item installed next to \es{} binary
-%   \item starts the binary with the right MPI implementation
-%   \end{itemize}
-% \item The \es{} binary \texttt{Espresso-bin} can also be started
-%   directly, however, it requires that the environment variable
-%   \verb!ESPRESSO_SCRIPTS! is set to the directory where the scripts
-%   are installed (usually \verb!$(prefix)/lib/espresso/scripts! or
-%   \verb!$(prefix)/share/espresso/scripts!).
-% \end{itemize}
+
+\section{\texttt{myconfig.h}: Activating and deactivating features}
+\label{sec:myconfig}
+
+\index{features} \index{myconfig.h} \index{configuration header} \es
+has a large number of features that can be compiled into the binary.
+However, it is not recommended to actually compile in all possible
+features, as this will negatively affect \es's performance.  Instead,
+compile in only the features that are actually required.  For the
+developers, it is also possible to turn on or off a number of
+debugging messages.  The features and debug messages can be controlled
+via a configuration header file that contains C-preprocessor
+declarations. Appendix \vref{chap:features} lists and describes all
+available features.  When no configuration header is provided by the
+user, a default header will be used that turns on the default
+features.  The file \texttt{myconfig-sample.h} in the source directory
+contains a list of all possible features that can be copied into your
+own configuration file.
+
+When you distinguish between the build and the source directory, the
+configuration header can be put in either of these. Note, however,
+that when a configuration header is found in both directories, the one
+in the build directory will be used.
+
+By default, the configuration header is called \texttt{myconfig.h}.
+The name of the configuration header can be changed either when the
+\texttt{configure}-script is called with the option
+\mbox{\texttt{--with-myconfig}} (see section \vref{sec:configure}), or
+when \texttt{make} is called with the setting
+\mbox{\texttt{myconfig=}\textit{myconfig\_header}} (see section
+\vref{sec:make}).
+
+The configuration header can be used to compile different binary
+versions of \es with a different set of features from the same source
+directory.  Suppose that you have a source directory \texttt{\$srcdir}
+and two build directories \texttt{\$builddir1} and
+\texttt{\$builddir2} that contain different configuration headers:
+
+\begin{itemize}
+\item \texttt{\$builddir1/myconfig.h}:
+\begin{code}
+#define ELECTROSTATICS
+#define LENNARD-JONES
+\end{code}
+
+\item \texttt{\$builddir2/myconfig.h}:
+\begin{code}
+#define LJCOS
+\end{code}
+\end{itemize}
+
+\noindent Then you can simply compile two different versions of \es via
+\begin{code}
+cd $builddir1
+$srcdir/configure
+make
+
+cd $builddir2
+$srcdir/configure
+make
+\end{code}
 
 
 %%% Local Variables: 

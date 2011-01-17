@@ -107,7 +107,6 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef PROFILING
   Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
 #endif
-  Tcl_AppendResult(interp, "{ MPI " MPI " } ", (char *) NULL);
 #if FFTW == 2
   Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
 #elif FFTW == 3
