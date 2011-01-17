@@ -1036,45 +1036,44 @@ void calc_differential_operator()
 
 
 
-
-
 void calc_influence_function_force()
 {
-  int i,n[3],ind;
-  int end[3];
-  int size=1;
-  double fak1,fak2;
-  double nominator[3]={0.0,0.0,0.0},denominator=0.0;
+    int i, n[3], ind;
+    int end[3];
+    int size = 1;
+    double fak1,fak2,fak3;
+    double nominator[3] = {0.0, 0.0, 0.0}, denominator = 0.0;
 
-  calc_meshift();
+    calc_meshift();
 
-  for(i=0;i<3;i++) {
-    size *= fft_plan[3].new_mesh[i];
-    end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
-  }
-  g_force = (double *) realloc(g_force, size*sizeof(double));
+    for(i=0;i<3;i++) {
+        size *= fft_plan[3].new_mesh[i];
+        end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+    }
+    g_force = (double *) realloc(g_force, size*sizeof(double));
 
-  fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
+    for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) {
+        for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) {
+            for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
+                ind = (n[2]-fft_plan[3].start[2])
+                    + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1])
+                    + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 
-  for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) 
-    for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) 
-      for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
-
-	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  g_force[ind] = 0.0;
-	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
-		 (n[1]%(p3m.mesh[0]/2)==0) && 
-		 (n[2]%(p3m.mesh[0]/2)==0) )
-	  g_force[ind] = 0.0;
-	else {
-	  denominator = perform_aliasing_sums_force(n,nominator);
-	  fak2 =  d_op[n[0]]*nominator[0] + d_op[n[1]]*nominator[1] + d_op[n[2]]*nominator[2];  
-	  fak2 /= ( ( SQR(d_op[n[0]])+SQR(d_op[n[1]])+SQR(d_op[n[2]]) ) * SQR(denominator) );
-	  g_force[ind] = fak1*fak2;
-	}
-      }
+                if( (n[0]%(p3m.mesh[1]/2)==0) && (n[1]%(p3m.mesh[2]/2)==0) && (n[2]%(p3m.mesh[0]/2)==0) ) {
+                    g_force[ind] = 0.0;
+                }
+                else {
+                    denominator = perform_aliasing_sums_force(n,nominator);
+                    fak1 =  d_op[1][n[0]]*nominator[0] + d_op[2][n[1]]*nominator[1] + d_op[0][n[2]]*nominator[2];
+                    fak2 = SQR(d_op[1][n[0]])+SQR(d_op[2][n[1]])+SQR(d_op[0][n[2]]);
+                    fak3 = fak1/(fak2 * SQR(denominator));
+                    g_force[ind] = fak3/PI;
+                }
+            }
+        }
+    }
 }
+
 
 MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
 {
