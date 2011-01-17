@@ -738,111 +738,107 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 
 
 
-
-
-
-
-
-double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag) 
+double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
 {
-  int i,d,d_rs,ind,j[3];
-  /**************************************************************/
-  /* Prefactor for force */
-  double force_prefac;
-  /* k space energy */
-  double k_space_energy=0.0, node_k_space_energy=0.0;
+    int i,d,d_rs,ind,j[3];
+    /**************************************************************/
+    /* Prefactor for force */
+    double force_prefac;
+    /* k space energy */
+    double k_space_energy=0.0, node_k_space_energy=0.0;
+    /* directions */
+    const int x = 3, y = 0, z = 1;
+    double *d_operator = NULL;
 
-  P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
+    P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
+//     fprintf(stderr, "calculating kspace forces\n");
 
-  force_prefac = coulomb.prefactor / (double)(p3m.mesh[0]*p3m.mesh[1]*p3m.mesh[2]);
+    force_prefac = coulomb.prefactor / (2 * box_l[0] * box_l[1] * box_l[2]);
 
-  /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
-  /* and Perform forward 3D FFT (Charge Assignment Mesh). */
-  if (p3m_sum_q2 > 0) {
-    gather_fft_grid(rs_mesh);
-    fft_perform_forw(rs_mesh);
-    }
-//Note: after these calls, the grids are in the order yzx and not xyz anymore!!!
-
-  /* === K Space Calculations === */
-  P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
-
-  /* === K Space Energy Calculation  === */
-  if(energy_flag) {
-/*********************
-   Coulomb energy
-**********************/
-   if (p3m_sum_q2 > 0) {
-    ind = 0;
-    for(i=0; i<fft_plan[3].new_size; i++) {
-      // Use the energy optimized influence function for energy!
-      node_k_space_energy += g_energy[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
-      ind += 2;
-    }
-    node_k_space_energy *= force_prefac * box_l[0] / (4.0*PI) ;
- 
-    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    if(this_node==0) {
-      /* self energy correction */
-      k_space_energy -= coulomb.prefactor*(p3m_sum_q2*p3m.alpha_L*box_l_i[0] * wupii);
-      /* net charge correction */
-      k_space_energy -= coulomb.prefactor*(p3m_square_sum_q*PI / (2.0*box_l[0]*SQR(p3m.alpha_L)));
-    }
-   }
-
-  } //if (energy_flag)
-
-  /* === K Space Force Calculation  === */
-  if(force_flag) {
- /***************************
-    COULOMB FORCES (k-space)
-****************************/ 
+    /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
+    /* and Perform forward 3D FFT (Charge Assignment Mesh). */
     if (p3m_sum_q2 > 0) {
-    /* Force preparation */
-    ind = 0;
-
-    /* apply the influence function */
-    for(i=0; i<fft_plan[3].new_size; i++) {
-      ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
-      ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
+        gather_fft_grid(rs_mesh);
+        fft_perform_forw(rs_mesh);
     }
-    
-    /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
-    
-    /* Force component loop */
-    for(d=0;d<3;d++) {  
-      /* direction in k space: */
-      d_rs = (d+ks_pnum)%3;
-      /* srqt(-1)*k differentiation */
-      ind=0;
-      for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
-	for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
-	  for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
-	    /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */ 
-	    rs_mesh[ind] = -(ks_mesh[ind+1]*d_op[ j[d]+fft_plan[3].start[d] ]); ind++;
-	    rs_mesh[ind] =   ks_mesh[ind-1]*d_op[ j[d]+fft_plan[3].start[d] ];  ind++;
-	  }
-	}
-      }
-      /* Back FFT force component mesh */
-      fft_perform_back(rs_mesh);
-      /* redistribute force component mesh */
-      spread_force_grid(rs_mesh);
-      /* Assign force component from mesh to particle */
-      P3M_assign_forces(force_prefac, d_rs);
+    //Note: after these calls, the grids are in the order yzx and not xyz anymore!!!
+
+    /* === K Space Calculations === */
+    P3M_TRACE(fprintf(stderr,"%d: p3m_perform: k-Space\n",this_node));
+
+    /* === K Space Energy Calculation  === */
+//     if(energy_flag && p3m_sum_q2 > 0) {
+    if (1 == 1) {
+        /*********************
+        Coulomb energy
+        **********************/
+        ind = 0;
+        for(i=0; i<fft_plan[3].new_size; i++) {
+            // Use the energy optimized influence function for energy!
+            node_k_space_energy += g_energy[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
+            ind += 2;
+        }
+        node_k_space_energy *= force_prefac;
+
+        MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        if(this_node==0) {
+            /* self energy correction */
+            k_space_energy -= coulomb.prefactor*(p3m_sum_q2 * p3m.alpha * wupii);
+            /* net charge correction */
+            k_space_energy -= coulomb.prefactor* p3m_square_sum_q * PI / (2.0*box_l[0]*box_l[1]*box_l[2]*SQR(p3m.alpha));
+        }
+
+    } /* if (energy_flag) */
+
+    /* === K Space Force Calculation  === */
+    if(force_flag && p3m_sum_q2 > 0) {
+       /***************************
+        COULOMB FORCES (k-space)
+        ****************************/
+        /* Force preparation */
+        ind = 0;
+        /* apply the influence function */
+        for(i=0; i<fft_plan[3].new_size; i++) {
+            ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
+            ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
+        }
+
+        /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
+
+        /* Force component loop */
+        for(d=0;d<3;d++) {
+            if (d == y)
+                d_operator = d_op[0];
+            else if (d == z)
+                d_operator = d_op[1];
+            else if (d == x)
+                d_operator = d_op[2];
+
+            /* direction in k space: */
+            d_rs = (d+ks_pnum)%3;
+            /* srqt(-1)*k differentiation */
+            ind=0;
+            for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
+                for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
+                    for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
+                        /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
+                        rs_mesh[ind] = -(ks_mesh[ind+1] * d_operator[ j[d]+fft_plan[3].start[d] ]); ind++;
+                        rs_mesh[ind] =   ks_mesh[ind-1] * d_operator[ j[d]+fft_plan[3].start[d] ];  ind++;
+                    }
+                }
+            }
+            fft_perform_back(rs_mesh);              /* Back FFT force component mesh */
+            spread_force_grid(rs_mesh);             /* redistribute force component mesh */
+            P3M_assign_forces(force_prefac, d_rs);  /* Assign force component from mesh to particle */
+        }
+    } /* if(force_flag) */
+
+    if (p3m.epsilon != P3M_EPSILON_METALLIC) {
+        k_space_energy += calc_dipole_term(force_flag, energy_flag);
     }
-   }  // if(p3m_sum_q2>0)
 
-  } // if(force_flag)
-
-  if (p3m.epsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy += calc_dipole_term(force_flag, energy_flag);
-  }
-
-  return k_space_energy;
+    return k_space_energy;
 }
-
 
 
 /************************************************************/
