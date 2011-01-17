@@ -1035,7 +1035,7 @@ void calc_differential_operator()
 }
 
 
-
+/* TODO: double-check prefactors */
 void calc_influence_function_force()
 {
     int i, n[3], ind;
@@ -1112,38 +1112,40 @@ MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
     return denominator;
 }
 
+
+/* TODO: double-check prefactord */
 void calc_influence_function_energy()
 {
-  int i,n[3],ind;
-  int end[3];
-  int size=1;
-  double fak1;
+    int i,n[3],ind;
+    int end[3];
+    int size=1;
 
-  calc_meshift();
+    calc_meshift();
 
-  for(i=0;i<3;i++) {
-    size *= fft_plan[3].new_mesh[i];
-    end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
-  }
-  g_energy = (double *) realloc(g_energy, size*sizeof(double));
+    for(i = 0; i < 3; i++) {
+        size *= fft_plan[3].new_mesh[i];
+        end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+    }
 
-  fak1  = p3m.mesh[0]*p3m.mesh[0]*p3m.mesh[0]*2.0/(box_l[0]*box_l[0]);
+    g_energy = (double *) realloc(g_energy, size*sizeof(double));
+    ind = 0;
 
-  for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) 
-    for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) 
-      for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-fft_plan[3].start[2]) + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1]) + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
-	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  g_energy[ind] = 0.0;
-	else if( (n[0]%(p3m.mesh[0]/2)==0) && 
-		 (n[1]%(p3m.mesh[0]/2)==0) && 
-		 (n[2]%(p3m.mesh[0]/2)==0) )
-	  g_energy[ind] = 0.0;
-	else {
-	  g_energy[ind] = fak1*perform_aliasing_sums_energy(n);
-	}
-      }
+    for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) {
+        for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) {
+            for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
+                ind = (n[2]-fft_plan[3].start[2])
+                    + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1])
+                    + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
+                if( (n[0]%(p3m.mesh[1]/2)==0) && (n[1]%(p3m.mesh[2]/2)==0) && (n[2]%(p3m.mesh[0]/2)==0) ) {
+                    g_energy[ind] = 0.0;
+                }
+                else
+                    g_energy[ind] = perform_aliasing_sums_energy(n)/PI;
+            }
+        }
+    }
 }
+
 
 
 
