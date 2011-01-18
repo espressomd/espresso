@@ -74,13 +74,3 @@ check-local: runtest.sh
 	@builddir@/runtest.sh -p "$(processors)" $(tests)
 
 DISTCLEANFILES=runtest.sh
-
-CLEANKEEPFILES=Makefile runtest.sh $(EXTRA_DIST)
-clean-local:
-	-for f in *; do \
-	   keep=; \
-	   for cf in $(CLEANKEEPFILES); do \
-	     if test "$$f" = "$$cf"; then keep=y; fi; \
-	   done; \
-	   if test -z "$$keep"; then rm -f "$$f"; fi; \
-	 done

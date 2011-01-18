@@ -18,7 +18,7 @@
 # All Tcl-scripts in the scripts-directory should be listed here
 
 # make a copy of all script files
-dist_ESSCRIPTS = \
+ESSCRIPTS = \
 	init.tcl \
 	ABHmath.tcl \
 	auxiliary.tcl \
@@ -32,19 +32,30 @@ dist_ESSCRIPTS = \
 	tclline.tcl \
 	parallel_tempering.tcl
 
+EXTRA_DIST=$(ESSCRIPTS)
+
 # copy the scripts files from the source dir to the obj dir if they are different
 # using INSTALL_DATA here as the scripts should not be executable
 all:
-	if test $(abs_srcdir) != $(abs_builddir); then \
-	  cd $(srcdir) && $(INSTALL_DATA) $(dist_ESSCRIPTS) $(abs_builddir); \
-	fi
+	for file in $(ESSCRIPTS); do \
+	  if test ! -e $$file || test ! $$file -ef $(abs_srcdir)/$$file; then \
+	    $(INSTALL_DATA) $(abs_srcdir)/$$file $(abs_builddir); \
+	  fi; \
+	done
+
+clean-local:
+	for file in $(ESSCRIPTS); do \
+	  if test -e $$file && test ! $$file -ef $(abs_srcdir)/$$file; then \
+	    rm -f $$file; \
+	  fi; \
+	done
 
 # install the scripts from the obj dir to the install dir
 # using INSTALL_DATA here as the scripts should not be executable
 install-exec-local:
 	test -z "$(DESTDIR)$(pkgdatadir)" || $(MKDIR_P) "$(DESTDIR)$(scriptsdir)"
-	echo " $(INSTALL_DATA) $(dist_ESSCRIPTS) '$(DESTDIR)$(scriptsdir)'"
-	$(INSTALL_DATA) $(dist_ESSCRIPTS) "$(DESTDIR)$(scriptsdir)"
+	echo " $(INSTALL_DATA) $(ESSCRIPTS) '$(DESTDIR)$(scriptsdir)'"
+	$(INSTALL_DATA) $(ESSCRIPTS) "$(DESTDIR)$(scriptsdir)"
 
 uninstall-local:
-	-cd $(DESTDIR)$(scriptsdir) && rm $(dist_ESSCRIPTS)
+	-cd $(DESTDIR)$(scriptsdir) && rm $(ESSCRIPTS)
