@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -32,10 +32,12 @@ dist_ESSCRIPTS = \
 	tclline.tcl \
 	parallel_tempering.tcl
 
-# copy the scripts files from the source dir to the obj dir
+# copy the scripts files from the source dir to the obj dir if they are different
 # using INSTALL_DATA here as the scripts should not be executable
 all:
-	cd $(srcdir) && $(INSTALL_DATA) $(dist_ESSCRIPTS) $(abs_builddir)
+	if test $(abs_srcdir) != $(abs_builddir); then \
+	  cd $(srcdir) && $(INSTALL_DATA) $(dist_ESSCRIPTS) $(abs_builddir); \
+	fi
 
 # install the scripts from the obj dir to the install dir
 # using INSTALL_DATA here as the scripts should not be executable
