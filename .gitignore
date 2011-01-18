@@ -1,4 +1,6 @@
 aclocal.m4
 autom4te.cache
 Makefile.in
+configure
+acconfig.h.in
 

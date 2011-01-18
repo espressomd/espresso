@@ -1,5 +1,7 @@
+******************************************************************************
 *
 *                  ESPResSo installation
+*
 ******************************************************************************
 
 The ESPResSo compilation and installation process is decribed in
@@ -8,10 +10,10 @@ sources in a .tar.gz file, the user's guide can be found in the file
 "ug.pdf" in the subdirectory "doc/ug/" relative to the directory where
 this file resided.
 
-When you have obtained the sources from the ESPResSo-CVS or by other
+When you have obtained the sources from the git repository or by other
 means, the user's guide can be found on the ESPResSo-Homepage at
 
-	http://www.espresso.mpg.de/
+	http://espressomd.org
 
 
 QUICK START
@@ -22,7 +24,14 @@ running ESPResSo requires only two steps:
 > configure
 > make
  
-When both steps have completed successfully, you can run Espresso with
+If you have development sources, it might be necessary to first
+execute
+
+> ./autogen.sh
+
+to generate the required configure script. 
+
+When these steps have completed successfully, you can run Espresso with
 help of the command
 
 > Espresso

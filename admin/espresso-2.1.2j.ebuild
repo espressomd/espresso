@@ -1,4 +1,4 @@
-# Copyright 2010 The ESPResSo project
+# Copyright 2010,2011 The ESPResSo project
 # Copyright 1999-2009 Gentoo Foundation
 #
 # This file is part of ESPResSo.
@@ -24,7 +24,7 @@ EAPI="2"
 inherit autotools savedconfig
 
 DESCRIPTION="Extensible Simulation Package for Research on Soft matter"
-HOMEPAGE="http://www.espresso.mpg.de"
+HOMEPAGE="http://espressomd.org"
 SRC_URI="http://espressowiki.mpip-mainz.mpg.de/wiki/uploads/4/43/Espresso-2.1.2j.tar.gz"
 
 LICENSE="GPL-2"
