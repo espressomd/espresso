@@ -40,24 +40,26 @@ ESMPIEXEC=@ESPRESSO_MPIEXEC@
 cd ${0%runtest.sh}
 
 # handle processors
-if test -z "$PROCESSORS"; then
-    processors=1
+if test x@MPI_FAKE@ = "xyes" || test @CPU_COUNT@ = "1"; then 
+  processors=1
+elif test "$1" = "-p"; then
+  processors=$2
+  shift 2
+elif test -n "$PROCESSORS"; then
+  processors=$PROCESSORS
 else
-    processors=$PROCESSORS
+  processors="1 @CPU_COUNT@"
 fi
-if test "$1" = "-p"; then
-    processors=$2
-    shift 2
-fi
+
+echo "processors=$processors"
 
 # handle testcases
 testcases=$TESTCASES
 test $# -ge 1 && testcases="$@"
 
 # check if variables are available
-if test -z "$processors" || test -z "$testcases"; then
-    test -z "$processors" && echo "Processors not specified!"
-    test -z "$testcases" && echo "No testcases specified!"
+if test -z "$testcases"; then
+    echo "No testcases specified!"
     usage
 fi
 
@@ -100,7 +102,11 @@ for np in $processors; do
     for testcase in $testcases; do
         # here go the error messages of the testcases
 	errf=$testcase.err
-	CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase $errf -quiet"
+	if test x@MPI_FAKE@ = "xyes"; then
+	  CMD="$ESPRESSO $srcdir/$testcase $errf -quiet"
+	else
+	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase $errf -quiet"
+	fi
 	echo "**************************************************"
 	echo "** $testcase"
 	echo "Executing: \"$CMD\""

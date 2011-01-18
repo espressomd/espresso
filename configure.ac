@@ -34,7 +34,7 @@ AM_MAINTAINER_MODE
 
 cat <<EOF
 ****************************************************************
-*      Checking compiler characterstics and MPI support        *
+*      Checking compiler characteristics and MPI support       *
 ****************************************************************
 EOF
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
@@ -60,6 +60,8 @@ AX_MPI_ONLY([test x"$with_mpi" != xno],,[
 
 # if requested, use the fake implementation
 AM_CONDITIONAL(MPI_FAKE, [test x"$use_mpi_fake" = xyes])
+MPI_FAKE=$use_mpi_fake
+AC_SUBST(MPI_FAKE)
 
 # determine ESPRESSO_MPIEXEC
 AS_IF([test x"$use_mpi_fake" = xyes], [
@@ -543,6 +545,12 @@ myconfig=$with_myconfig
 AC_MSG_RESULT($myconfig)
 AC_SUBST(myconfig)
 
+##################################
+# Number of CPUs
+AX_COUNT_CPUS
+AC_ARG_VAR(CPU_COUNT,[number of CPUS available on this machine])
+AC_SUBST(CPU_COUNT)
+
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
 
 # where to install the init scripts and tools
@@ -610,6 +618,7 @@ Other settings:
 ---------------
 local config header	= $myconfig
 installation prefix	= $prefix
+number of CPUs		= $CPU_COUNT
 mympiexec               = $MYMPIEXEC
 mpiexec	     		= $MPIEXEC
 pdflatex		= $PDFLATEX
