@@ -1307,7 +1307,7 @@ static double p3m_mc_time(int mesh[3], int cao,
 
     return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
-
+  if(*_alpha_L > box_l[0]) return -P3M_TUNE_FAIL;
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
     return -P3M_TUNE_FAIL;
@@ -1381,6 +1381,9 @@ static double p3m_m_time(int mesh[3],
       if (tmp_time == -1) return -P3M_TUNE_FAIL;
       /* in this direction, we cannot optimise, since we get into precision trouble */
       if (tmp_time < 0) continue;
+
+      /* discard invalid values for alpha */
+      if(tmp_alpha_L > box_l[0]) continue;
 
       if (tmp_time < best_time) {
 	best_time  = tmp_time;
@@ -1464,7 +1467,7 @@ int p3m_adaptive_tune() {
   P3M_TRACE(fprintf(stderr,"%d: %d charged particles.\n", this_node, p3m_sum_qpart));
 
   /* parameter ranges */
-  /* if at least the number of meshpoints in one direction is not set we have to tune it. */
+  /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.mesh[0] == 0 || p3m.mesh[1] == 0 || p3m.mesh[2] == 0) {
     tmp_mesh_points = p3m_sum_qpart;
     /* this limits the tried meshes if the accuracy cannot
@@ -1481,12 +1484,8 @@ int p3m_adaptive_tune() {
     mesh_factors[0] = box_l[0] / box_volume3;
     mesh_factors[1] = box_l[1] / box_volume3;
     mesh_factors[2] = box_l[2] / box_volume3;
-
-
-
   }
   else {
-
     mesh_factors[0] = p3m.mesh[0];
     mesh_factors[1] = p3m.mesh[1];
     mesh_factors[2] = p3m.mesh[2];
@@ -1516,21 +1515,25 @@ int p3m_adaptive_tune() {
 
   /* mesh loop */
   /* we're tuning the density of mesh points, which is the same in every direction. */
-  for (;tmp_mesh_points <= mesh_max; tmp_mesh_points *= 2) {
+  for (;tmp_mesh_points <= mesh_max; tmp_mesh_points = (tmp_mesh_points == 1) ? 2 : (tmp_mesh_points*1.1)) {
     double tmp_mesh3 = pow((double)tmp_mesh_points, 1.0/3.0);
     tmp_cao = cao;
-    
+
     tmp_mesh[0] = (int)(mesh_factors[0]*tmp_mesh3);
     tmp_mesh[1] = (int)(mesh_factors[1]*tmp_mesh3);
     tmp_mesh[2] = (int)(mesh_factors[2]*tmp_mesh3);
+
+    #warning solve odd/seven problem
+    if((tmp_mesh[0] % 2) || (tmp_mesh[1] % 2) || (tmp_mesh[2] % 2))
+      continue;
 
     tmp_time = p3m_m_time(tmp_mesh,
 			  cao_min, cao_max, &tmp_cao,
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
 			  &tmp_alpha_L, &tmp_accuracy); 
     /* some error occured during the tuning force evaluation */
-    P3M_TRACE(fprintf(stderr,"tune time: %lf\n", tmp_time));
-    if (tmp_time == -1) return P3M_TUNE_FAIL;
+    P3M_TRACE(fprintf(stderr,"delta_acceracy: %lf tune time: %lf\n", p3m.accuracy - tmp_accuracy,tmp_time));
+    //    if (tmp_time == -1) con;
     /* this mesh does not work at all */
     if (tmp_time < 0) continue;
 
@@ -1705,7 +1708,7 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
       fnmy = mesh_i[1] * (nmy = ny + my*mesh[1]);
       for (mz=-P3M_BRILLOUIN; mz<=P3M_BRILLOUIN; mz++) {
 	fnmz = mesh_i[2] * (nmz = nz + mz*mesh[2]);
-	
+
 	nm2 = SQR(nmx) + SQR(nmy) + SQR(nmz);
 	ex2 = SQR( ex = exp(-factor1*nm2) );
 	
@@ -1834,7 +1837,7 @@ int P3M_sanity_checks()
     ERROR_SPRINTF(errtxt, "{042 P3M at present requires the domain decomposition cell system} ");
     ret = 1;
   }
-  
+  /*  
   if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{043 P3M requires a cubic box} ");
@@ -1846,7 +1849,7 @@ int P3M_sanity_checks()
     ERROR_SPRINTF(errtxt, "{044 P3M requires a cubic mesh} ");
     ret = 1;
   }
-   
+  */
 
   if (P3M_sanity_checks_boxl()) ret = 1;
 
