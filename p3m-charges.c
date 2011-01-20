@@ -1671,19 +1671,23 @@ double P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, doub
   int  nx, ny, nz;
   double he_q = 0.0, mesh_i[3] = {1.0/mesh[0], 1.0/mesh[1], 1.0/mesh[2]}, alpha_L_i = 1./alpha_L;
   double alias1, alias2, n2, cs;
+  double ctan_x, ctan_y;
 
-  for (nx=-mesh[0]/2; nx<mesh[0]/2; nx++)
-    for (ny=-mesh[1]/2; ny<mesh[1]/2; ny++)
-      for (nz=-mesh[2]/2; nz<mesh[2]/2; nz++)
+  for (nx=-mesh[0]/2; nx<mesh[0]/2; nx++) {
+    ctan_x = analytic_cotangent_sum(nx,mesh_i[0],cao);
+    for (ny=-mesh[1]/2; ny<mesh[1]/2; ny++) {
+      ctan_y = ctan_x * analytic_cotangent_sum(ny,mesh_i[1],cao);
+      for (nz=-mesh[2]/2; nz<mesh[2]/2; nz++) {
 	if((nx!=0) || (ny!=0) || (nz!=0)) {
 	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
-	  cs = analytic_cotangent_sum(nx,mesh_i[0],cao)*
- 	       analytic_cotangent_sum(ny,mesh_i[1],cao)*
-	       analytic_cotangent_sum(nz,mesh_i[2],cao);
+	  cs = analytic_cotangent_sum(nz,mesh_i[2],cao)*ctan_y;
 	  P3M_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
 	  he_q += (alias1  -  SQR(alias2/cs) / n2);
 	  /* fprintf(stderr,"%d %d %d he_q = %.20f %.20f %.20f %.20f\n",nx,ny,nz,he_q,cs,alias1,alias2); */
 	}
+      }
+    }
+  }
   return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / box_l[1]*box_l[2];
 }
 
