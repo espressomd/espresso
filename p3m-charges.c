@@ -768,7 +768,7 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
 
     /* === K Space Energy Calculation  === */
 //     if(energy_flag && p3m_sum_q2 > 0) {
-    if (1 == 1) {
+    if (energy_flag) {
         /*********************
         Coulomb energy
         **********************/
@@ -986,7 +986,11 @@ void realloc_ca_fields(int newsize)
 } 
 
 
-
+/* TODO: loop-boudaries differ from florian h. version
+         this one produces meshift from espresso stable.
+         check which one is correct.
+*/
+#warning check me!
 void calc_meshift(void)
 {
     int i;
@@ -1649,7 +1653,7 @@ void P3M_count_charged_particles()
   p3m_sum_q2       = tot_sums[1];
   p3m_square_sum_q = SQR(tot_sums[2]);
   
-  P3M_TRACE(fprintf(stderr, "%d: p3m_sum_qpart: %d, p3m_sum_q2: %lf\n", this_node, p3m_sum_qpart, p3m_sum_q2));
+  P3M_TRACE(fprintf(stderr, "%d: p3m_sum_qpart: %d, p3m_sum_q2: %lf, total_charge %lf\n", this_node, p3m_sum_qpart, p3m_sum_q2, sqrt(p3m_square_sum_q)));
 }
 
 
@@ -1972,6 +1976,8 @@ void   P3M_init_charges() {
     p3m.r_cut    = 0.0;
     p3m.r_cut_iL = 0.0;
 
+
+
     if(this_node==0) 
       P3M_TRACE(fprintf(stderr,"0: P3M_init: Bjerrum length is zero.\n");
 
@@ -2030,8 +2036,6 @@ void   P3M_init_charges() {
   
     /* k-space part: */
     calc_differential_operator();
-    
-    
     calc_influence_function_force();
     calc_influence_function_energy();
 
