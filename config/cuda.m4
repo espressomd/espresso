@@ -56,7 +56,7 @@ AC_DEFUN([ES_CHECK_CUDA],[
 	   # if no other compute capability is defined by the user, we need at least 1.1
 	   case "$NVCCFLAGS" in
 	       *-arch=*) ;;
-	       *) NVCCFLAGS="$NVCCFLAGS -arch=compute_11"
+	       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -arch=compute_20 -code=sm_20"
 	   esac
 	   # use nvcc
 	   save_CC=$CC

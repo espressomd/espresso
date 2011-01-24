@@ -44,6 +44,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
+#include "lbgpu.h"
 
 /************************************************
  * DEFINES
@@ -382,7 +383,9 @@ void integrate_vv(int n_steps)
 #ifdef LB
     transfer_momentum = 0;
 #endif
-
+#ifdef LB_GPU
+    transfer_momentum_gpu = 0;
+#endif
 //VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     update_mol_vel_pos();
@@ -492,6 +495,9 @@ void integrate_vv(int n_steps)
 #ifdef LB
     transfer_momentum = 1;
 #endif
+#ifdef LB_GPU
+    transfer_momentum_gpu = 1;
+#endif
 
     force_calc();
 
@@ -521,6 +527,14 @@ void integrate_vv(int n_steps)
 #ifdef LB
   if (lattice_switch & LATTICE_LB) lb_propagate();
   if (check_runtime_errors()) break;
+#endif
+
+#ifdef LB_GPU
+if(this_node == 0){
+	if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
+	//fprintf(stderr,"lb_integrate_GPU \n");
+
+}
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -623,6 +637,14 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
 #ifdef LB
   else if ((lbpar.tau >= 0.0) && (data > lbpar.tau)) {
     Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
+    return (TCL_ERROR);
+  }
+#endif
+//Achtung vielleicht nur auf master aufrufen
+#ifdef LB_GPU	
+  else if ((params.tau >= 0.0) && (data > params.tau)) {
+    fprintf(stderr,"tau %f %lf \n", params.tau, data); 
+	Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
     return (TCL_ERROR);
   }
 #endif

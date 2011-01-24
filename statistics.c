@@ -3615,6 +3615,9 @@ int analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 #ifdef LB
   REGISTER_ANALYZE_OPTION("fluid", parse_analyze_fluid);
 #endif
+#ifdef LB_GPU
+  REGISTER_ANALYZE_OPTION("fluid_gpu", parse_analyze_fluid_gpu);
+#endif
   REGISTER_ANALYSIS("get_folded_positions", parse_get_folded_positions);
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", parse_bilayer_set);

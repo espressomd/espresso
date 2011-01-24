@@ -20,9 +20,7 @@
      adding in front of the name a D   and replacing where "charge" appears by "dipole". In this way
      one can recognize the similarity of the functions but avoiding nasty confusions in their use.
 
- PS: By default the magnetic epsilon is 1, it has no sense to change the epsilon in magnetic cases, 
-     but we left along the code the epsilon handling because in this way in the future it will be
-     easier to map to the electrical dipoles. Please do not get rid of the epsilon along the code.  
+ PS: By default the magnetic epsilon is metallic = 0.  
 */
 
 #ifdef MAGNETOSTATICS

@@ -37,6 +37,7 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
+#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -73,11 +74,19 @@ void force_calc()
     nsq_calculate_ia();
     
   }
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
+#endif
   
   calc_long_range_forces();
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
+#endif
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
 #endif
 
 #ifdef COMFORCE

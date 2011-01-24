@@ -25,6 +25,7 @@
 #include "cells.h"
 #include "lb.h"
 #include "dpd.h"
+#include "lbgpu.h"
 
 /** \name Thermostat switches*/
 /************************************************************/
@@ -160,6 +161,9 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 
 #ifdef LB
 int thermo_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
+#endif
+#ifdef LB_GPU
+int thermo_parse_lb_gpu(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 
 #endif
