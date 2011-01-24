@@ -48,7 +48,7 @@ elif test "$1" = "-p"; then
 elif test -n "$PROCESSORS"; then
   processors=$PROCESSORS
 else
-  processors="1 @CPU_COUNT@"
+  processors="@CPU_COUNT@"
 fi
 
 echo "processors=$processors"
