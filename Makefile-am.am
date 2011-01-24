@@ -91,6 +91,7 @@ Espresso_bin_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
+	lbgpu_cfile.c \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
@@ -241,7 +242,9 @@ SUFFIXES=.cu
 
 CUDA_SOURCES= \
 	cuda_init.cu \
-	cuda_init.h
+	cuda_init.h\
+	lbgpu.cu \
+	lbgpu.h
 
 if CUDA
 Espresso_bin_SOURCES += $(CUDA_SOURCES)
