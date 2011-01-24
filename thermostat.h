@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef THERMOSTAT_H
 #define THERMOSTAT_H
 /** \file thermostat.h 
@@ -69,7 +80,7 @@ extern double nptiso_gammav;
 /** Implementation of the tcl command \ref tcl_thermostat. This function
     allows to change the used thermostat and to set its parameters.
  */
-int thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** initialize constants of the thermostat on
     start of integration */
@@ -108,7 +119,7 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
 #endif
 
 /** Callback marking setting the temperature as outdated */
-int thermo_ro_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
@@ -160,7 +171,7 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 #endif
 
 #ifdef LB
-int thermo_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 #ifdef LB_GPU
 int thermo_parse_lb_gpu(Tcl_Interp * interp, int argc, char ** argv);

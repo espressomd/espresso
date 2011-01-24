@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef POLYMER_H
 #define POLYMER_H
 /** \file polymer.h
@@ -68,7 +79,7 @@ int collision(double pos[3], double shield, int n_add, double *add);
 		 \<x2,y2,z2\>    = sets the position of the 2nd monomer of the first chain <br>
 		 \<constr\>      = shall constraints be respected when setting up polymer? (0=no, 1=yes, default: 0)
     <br>For more informations on the parameters see \ref polymerC. */
-int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Function used by polymerC to determine wether a constraint has been violated while setting up a polymer. Currently only "wall", "sphere" and "cylinder" constraints are respected.
     @param p1           = position of first particle given as double-array of lenght 3
@@ -114,7 +125,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed, i
 		   \<val_CI\>      = valency of the counterions (defaults to '-1.0') <br>
 		   \<type_CI\>     = type number of the counterions to be used with "part" (default to '2') <br>
     <br>For more informations on the parameters see \ref counterionsC. */
-int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
     @param  N_CI        = number of counterions to create
@@ -143,7 +154,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
 		   \<type_{p|n}S\> = type numbers to be used with "part" (default to '3' and '4'); if \<type_nS\> is not given, \<type_nS\> = \<type_pS\> is assumed. <br>
 		   \<rad\>         = radius of the cell for the cell model. <br>
     <br>For more informations on the parameters see \ref saltC. */
-int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'salt \<N_pS\> \<N_nS\> [options]',
     @param  N_pS        = number of positive salt ions to create
@@ -170,7 +181,7 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
 		   \<part_id\>     = particle number of the first of the \<N_T\> particles (defaults to '0') <br>
 		   \<N_T\>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') <br>
     <br>For more informations on the parameters see \ref velocitiesC. */
-int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'velocities \<v_max\> [options]',
     @param  v_max       = maximum velocity to be used
@@ -187,7 +198,7 @@ double velocitiesC(double v_max, int part_id, int N_T);
                    \<part_id\>     = particle number of the first of the \<N_T\> particles (defaults to '0') <br>
 		   \<N_T\>         = number of particles of which the velocities should be set (defaults to 'n_total_particles - part_id') <br>
     <br>For more informations on the parameters see \ref maxwell_velocitiesC. */
-int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'maxwell_velocities [options]',
     @param  part_id     = particle number of the first of the \<N_T\> particles (defaults to '0') 
@@ -210,7 +221,7 @@ double maxwell_velocitiesC(int part_id, int N_T);
 		   \<type_FENE\>   = type number of the FENE-typed bonded interaction bonds to be set between the monomers (defaults to '0') <br>
 		   \<max_try\>     = how often crosslinks should be removed if they are too close to other links (defaults to '30000') <br>
     <br>For more informations on the parameters see \ref crosslinkC. */
-int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Collects the bonds leading to and from the ending monomers of the chains (mode == 1) or
     all the bonds leading to and from each monomer (mode == 2). 
@@ -231,14 +242,14 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 
 /** Implementation of the tcl-command <br>
     diamond \<a\> \<bond_length\> \<MPC\> [counterions \<N_CI\>] [charges \<val_nodes\> \<val_cM\> \<val_CI\>] [distance \<cM_dist\>] [nonet] */
-int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
 int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet);
 
 /** Implementation of the tcl-command <br>
     icosaeder \<a\> \<MPC\> [counterions \<N_CI\>] [charges \<val_cM\> \<val_CI\>] [distance \<cM_dist\>] */
-int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'icosaeder \<a\> \<bond_length\> \<MPC\> [options]' */
 int icosaederC(double ico_a, int MPC, int N_CI, double val_cM, double val_CI, int cM_dist);

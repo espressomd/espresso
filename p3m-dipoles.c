@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file p3m-dipoles.c  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  For more information about the p3m algorithm,
@@ -116,6 +127,9 @@
 /*@{*/
 
 
+static int tclcommand_inter_magnetic_print_p3m_adaptive_tune_parameters(Tcl_Interp *interp);
+int tclcommand_inter_magnetic_print_p3m_tune_parameters(Tcl_Interp *interp);
+int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
 
 /** Calculates for magnetic dipoles the properties of the send/recv sub-meshes of the local FFT mesh. 
  *  In order to calculate the recv sub-meshes there is a communication of 
@@ -160,8 +174,8 @@ void Drealloc_ca_fields(int newsize);
 void DP3M_init_a_ai_cao_cut();
 
 
-/** checks for correctness for dipoles in P3M of the cao_cut, necessary when the box length changes */
-int DP3M_sanity_checks_boxl();
+/** checks for correctness for magnetic dipoles in P3M of the cao_cut, necessary when the box length changes */
+int DP3M_sanity_checks_boxl(void);
 
 
 /** Calculate the spacial position of the left down mesh point of the local mesh, to be
@@ -517,7 +531,7 @@ int Dp3m_set_ninterpol(int n)
 
 
 
-int Dinter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
+int tclcommand_inter_magnetic_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
   int mesh = -1, cao = -1, n_interpol = -1;
   double r_cut = -1, accuracy = -1;
@@ -569,16 +583,16 @@ int Dinter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv, in
 
   /* check for optional parameters */
   if (argc > 0) {
-    if (Dinter_parse_p3m_opt_params(interp, argc, argv) == TCL_ERROR)
+    if (tclcommand_inter_magnetic_parse_p3m_opt_params(interp, argc, argv) == TCL_ERROR)
       return TCL_ERROR;
   }
 
   if (adaptive) {
-    if(DP3M_adaptive_tune_parameters(interp) == TCL_ERROR) 
+    if(tclcommand_inter_magnetic_print_p3m_adaptive_tune_parameters(interp) == TCL_ERROR) 
       return TCL_ERROR;
   }
   else {
-    if(DP3M_tune_parameters(interp) == TCL_ERROR) 
+    if(tclcommand_inter_magnetic_print_p3m_tune_parameters(interp) == TCL_ERROR) 
       return TCL_ERROR;
   }
 
@@ -591,7 +605,7 @@ int Dinter_parse_p3m_tune_params(Tcl_Interp * interp, int argc, char ** argv, in
 
 
 
-int Dinter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 {
   double r_cut, alpha, accuracy = -1.0;
   int mesh, cao, i;
@@ -622,10 +636,10 @@ int Dinter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
   }
 
   if (ARG0_IS_S("tune"))
-    return Dinter_parse_p3m_tune_params(interp, argc-1, argv+1, 0);
+    return tclcommand_inter_magnetic_parse_p3m_tune_params(interp, argc-1, argv+1, 0);
 
   if (ARG0_IS_S("tunev2"))
-    return Dinter_parse_p3m_tune_params(interp, argc-1, argv+1, 1);
+    return tclcommand_inter_magnetic_parse_p3m_tune_params(interp, argc-1, argv+1, 1);
       
   if(! ARG0_IS_D(r_cut))
     return TCL_ERROR;  
@@ -692,7 +706,7 @@ int Dinter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 
 
 
-int Dinter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv)
 {
   int i; double d1, d2, d3;
 
@@ -822,7 +836,7 @@ void interpolate_dipole_assignment_function()
 
 
 /* assign the dipoles */
-void P3M_dipole_assign()
+void P3M_dipole_assign(void)
 {
   Cell *cell;
   Particle *p;
@@ -868,6 +882,9 @@ static void P3M_assign_torques(double prefac, int d_rs)
   int q_ind;
   int q_m_off = (Dlm.dim[2] - p3m.Dcao);
   int q_s_off = Dlm.dim[2] * (Dlm.dim[1] - p3m.Dcao);
+#ifdef ONEPART_DEBUG
+  double db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now the arbitrary value of 0 is assigned to it, please check.*/ 
+#endif
 
   cp_cnt=0; cf_cnt=0;
   for (c = 0; c < local_cells.n; c++) {
@@ -922,6 +939,9 @@ static void DP3M_assign_forces_dip(double prefac, int d_rs)
 {
   Cell *cell;
   Particle *p;
+#ifdef ONEPART_DEBUG
+  double db_fsum=0 ; /* TODO: db_fsum was missing and code couldn't compile. Now the arbitrary value of 0 is assigned to it, please check.*/ 
+#endif
   int i,c,np,i0,i1,i2;
   /* particle counter, charge fraction counter */
   int cp_cnt=0, cf_cnt=0;
@@ -1633,8 +1653,42 @@ MDINLINE double Dperform_aliasing_sums_energy(int n[3], double nominator[1])
  ************************************************/
 
 #define P3M_TUNE_MAX_CUTS 50
+/** Tune dipolar P3M parameters to desired accuracy.
 
-int DP3M_tune_parameters(Tcl_Interp *interp)
+    Usage:
+    \verbatim inter dipolar <bjerrum> p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim
+
+    The parameters are tuned to obtain the desired accuracy in best
+    time, by running mpi_integrate(0) for several parameter sets.
+
+    The function utilizes the analytic expression of the error estimate 
+    for the dipolar P3M method see JCP,2008 paper by J.J.Cerda et al in 
+    order to obtain the rms error in the force for a system of N randomly 
+    distributed particles in a cubic box.
+    For the real space error the estimate of Kolafa/Perram is used. 
+
+    Parameter range if not given explicit values: For \ref p3m_struct::Dr_cut_iL
+    the function uses the values (\ref min_local_box_l -\ref #skin) /
+    (n * \ref box_l), n being an integer (this implies the assumption that \ref
+    p3m_struct::Dr_cut_iL is the largest cutoff in the system!). For \ref
+    p3m_struct::Dmesh the function uses the two values which matches best the
+    equation: number of mesh point = number of magnetic dipolar particles. For
+    \ref p3m_struct::cao the function considers all possible values.
+
+    For each setting \ref p3m_struct::Dalpha_L is calculated assuming that the
+    error contributions of real and reciprocal space should be equal.
+
+    After checking if the total error fulfils the accuracy goal the
+    time needed for one force calculation (including verlet list
+    update) is measured via \ref mpi_integrate(0).
+
+    The function returns a log of the performed tuning.
+
+    The function is based on routines for charges.
+ */
+
+
+int tclcommand_inter_magnetic_print_p3m_tune_parameters(Tcl_Interp *interp)
 {
   int i,ind, try=0, best_try=0, n_cuts;
   double r_cut_iL, r_cut_iL_min  , r_cut_iL_max, r_cut_iL_best=0, cuts[P3M_TUNE_MAX_CUTS], cut_start;
@@ -1646,7 +1700,7 @@ int DP3M_tune_parameters(Tcl_Interp *interp)
   double int_time=0, min_time=1e20, int_num;
   char b1[TCL_DOUBLE_SPACE + 12],b2[TCL_DOUBLE_SPACE + 12],b3[TCL_DOUBLE_SPACE + 12];
  
-  P3M_TRACE(fprintf(stderr,"%d: DP3M_tune_parameters\n",this_node));
+  P3M_TRACE(fprintf(stderr,"%d: tclcommand_inter_magnetic_print_p3m_tune_parameters\n",this_node));
   
   /* preparation */
   mpi_bcast_event(P3M_COUNT_DIPOLES);
@@ -1839,7 +1893,7 @@ static double Dget_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L
   /* calc maximal real space error for setting */
 
     //Alpha cannot be zero in the dipolar case because real_space formula breaks down	     
-    //Idem of the previous function DP3M_tune_parameters, here we do nothing
+    //Idem of the previous function tclcommand_inter_magnetic_print_p3m_tune_parameters, here we do nothing
     rs_err =P3M_DIPOLAR_real_space_error(box_l[0],coulomb.Dprefactor,r_cut_iL,p3m_sum_dip_part,p3m_sum_mu2,0.001);
     
   
@@ -1893,7 +1947,7 @@ static double Dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao. The r_cut is determined via
     a simple bisection. Returns -1 if the force evaluation does not work, -2 if there is no valid r_cut, and -3 if
     the charge assigment order is to large for this grid */
-static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
+static double tclcommand_inter_magnetic_print_p3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
 			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			  double *_alpha_L, double *_accuracy)
 {
@@ -1905,7 +1959,7 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   /* initial checks. */
   mesh_size = box_l[0]/(double)mesh;
   k_cut =  mesh_size*cao/2.0;
-  P3M_TRACE(fprintf(stderr, "Dp3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
 		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
   if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
     /* print result */
@@ -1928,7 +1982,7 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   }
 
   for (;;) {
-    P3M_TRACE(fprintf(stderr, "Dp3m_mc_time: interval [%f,%f]\n", r_cut_iL_min, r_cut_iL_max));
+    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_mc_time: interval [%f,%f]\n", r_cut_iL_min, r_cut_iL_max));
     r_cut_iL = 0.5*(r_cut_iL_min + r_cut_iL_max);
 
     if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC)
@@ -1950,7 +2004,7 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   /*
   needs to be fixed
   if (coulomb.method == DIPOLAR_MDLC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
-    P3M_TRACE(fprintf(stderr, "Dp3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
+    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
 		      2*r_cut_iL*box_l[0], elc_params.gap_size));
     // print result 
     sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
@@ -1968,7 +2022,7 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
   for (i = 0; i < 3; i++)
     n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
   if (n_cells < min_num_cells) {
-    P3M_TRACE(fprintf(stderr, "Dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
+    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
     /* print result */
     sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
     Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
@@ -1988,7 +2042,7 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
 
   *_accuracy = Dget_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
 
-  P3M_TRACE(fprintf(stderr, "Dp3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
   /* print result */
   sprintf(b2,"%-4d",mesh); sprintf(b3,"%-3d",cao);
   Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
@@ -2006,7 +2060,7 @@ static double Dp3m_mc_time(Tcl_Interp *interp, int mesh, int cao,
 /** get the optimal alpha and the corresponding computation time for fixed mesh. *cao
     should contain an initial guess, which is then adapted by stepping up and down. Returns the time
     upon completion, -1 if the force evaluation does not work, and -2 if the accuracy cannot be met */
-static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
+static double tclcommand_inter_magnetic_print_p3m_m_time(Tcl_Interp *interp, int mesh,
 			 int cao_min, int cao_max, int *_cao,
 			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
 			 double *_alpha_L, double *_accuracy)
@@ -2016,17 +2070,17 @@ static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
   int final_dir = 0;
   int cao = *_cao;
 
-  P3M_TRACE(fprintf(stderr, "Dp3m_m_time: Dmesh=%d, Dcao_min=%d, Dcao_max=%d, Drmin=%f, Drmax=%f\n",
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: Dmesh=%d, Dcao_min=%d, Dcao_max=%d, Drmin=%f, Drmax=%f\n",
 		    mesh, cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
-    tmp_time = Dp3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    tmp_time = tclcommand_inter_magnetic_print_p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
     if (tmp_time == -1) return -1;
     /* cao is too large for this grid, but still the accuracy cannot be achieved, give up */
     if (tmp_time == -3) {
-      P3M_TRACE(fprintf(stderr, "Dp3m_m_time: no possible cao found\n"));
+      P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: no possible cao found\n"));
       return -2;
     }
     /* we have a valid time, start optimising from there */
@@ -2040,7 +2094,7 @@ static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
     }
     /* the required accuracy could not be obtained, try higher caos. Therefore optimisation can only be
        obtained with even higher caos, but not lower ones */
-    P3M_TRACE(fprintf(stderr, "Dp3m_m_time: doesn't give precision, step up\n"));
+    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: doesn't give precision, step up\n"));
     cao++;
     final_dir = 1;
   }
@@ -2052,14 +2106,14 @@ static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
   if (cao == cao_min)      final_dir = 1;
   else if (cao == cao_max) final_dir = -1;
 
-  P3M_TRACE(fprintf(stderr, "Dp3m_m_time: final constraints dir %d\n", final_dir));
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: final constraints dir %d\n", final_dir));
 
   if (final_dir == 0) {
     /* check in which direction we can optimise. Both directions are possible */
     double dir_times[3];
     for (final_dir = -1; final_dir <= 1; final_dir += 2) {
       dir_times[final_dir + 1] = tmp_time =
-	Dp3m_mc_time(interp, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+	tclcommand_inter_magnetic_print_p3m_mc_time(interp, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
       if (tmp_time == -1) return -1;
       /* in this direction, we cannot optimise, since we get into precision trouble */
@@ -2088,7 +2142,7 @@ static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
 	final_dir = 1;
       else {
 	/* really no chance for optimisation */
-	P3M_TRACE(fprintf(stderr, "Dp3m_m_time: Dmesh=%d final Dcao=%d time=%f\n",mesh, cao, best_time));
+	P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: Dmesh=%d final Dcao=%d time=%f\n",mesh, cao, best_time));
 	return best_time;
       }
     }
@@ -2100,11 +2154,11 @@ static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
     cao += final_dir;
   }
 
-  P3M_TRACE(fprintf(stderr, "Dp3m_m_time: optimise in direction %d\n", final_dir));
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: optimise in direction %d\n", final_dir));
 
   /* move cao into the optimisation direction until we do not gain anymore. */
   for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
-    tmp_time = Dp3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max,
+    tmp_time = tclcommand_inter_magnetic_print_p3m_mc_time(interp, mesh, cao,  r_cut_iL_min, r_cut_iL_max,
 			   &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out on errors, as usual */
     if (tmp_time == -1) return -1;
@@ -2122,14 +2176,31 @@ static double Dp3m_m_time(Tcl_Interp *interp, int mesh,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr, "Dp3m_m_time: Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_print_p3m_m_time: Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
 
 
-/*****************************************************************************/
+/** a probably faster adaptive tuning method. Uses the same error estimates and parameters as
+    \ref tclcommand_inter_magnetic_print_p3m_adaptive_tune_parameters, but a different strategy for finding the optimum. The algorithm
+    basically determines the mesh, cao and then the real space cutoff, in this nested order.
 
-int DP3M_adaptive_tune_parameters(Tcl_Interp *interp)
+    For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
+    and the algorithm tries whether increasing or decreasing it leads to a better solution. This
+    is efficient, since the optimal cao only changes little with the meshes in general.
+
+    The real space cutoff for a given mesh and cao is determined via a bisection on the error estimate,
+    which determines where the error estimate equals the required accuracy. Therefore the smallest 
+    possible, i.e. fastest real space cutoff is determined.
+
+    Both the search over mesh and cao stop to search in a specific direction once the computation time is
+    significantly higher than the currently known optimum.
+
+    Compared to \ref tclcommand_inter_magnetic_print_p3m_tune_parameters, this function will test more parameters sets for efficiency, but
+    the error estimate is calculated less often. In general this should be faster and give better results.
+ */
+
+static int tclcommand_inter_magnetic_print_p3m_adaptive_tune_parameters(Tcl_Interp *interp)
 {
   int    mesh_max,                   mesh     = -1, tmp_mesh;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
@@ -2217,7 +2288,7 @@ int DP3M_adaptive_tune_parameters(Tcl_Interp *interp)
   /* mesh loop */
   for (;tmp_mesh <= mesh_max; tmp_mesh *= 2) {
     tmp_cao = cao;
-    tmp_time = Dp3m_m_time(interp, tmp_mesh,
+    tmp_time = tclcommand_inter_magnetic_print_p3m_m_time(interp, tmp_mesh,
 			  cao_min, cao_max, &tmp_cao,
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
 			  &tmp_alpha_L, &tmp_accuracy);
@@ -2311,7 +2382,7 @@ void P3M_count_magnetic_particles()
    
    
    This functions are called by the functions: Dget_accuracy() and
-   DP3M_tune_parameters.
+   tclcommand_inter_magnetic_print_p3m_tune_parameters.
   
 */
 

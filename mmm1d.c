@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file mmm1d.c  MMM1D algorithm for long range coulomb interaction.
  *
  *  For more information about MMM1D, see \ref mmm1d.h "mmm1d.h".
@@ -54,7 +65,7 @@ static double uz, L2, uz2, prefuz2, prefL3_i;
 
 MMM1D_struct mmm1d_params = { 0.05, 5, 1, 1e-5 };
 
-int printMMM1DToResult(Tcl_Interp *interp)
+int tclprint_to_result_MMM1D(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -68,7 +79,7 @@ int printMMM1DToResult(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int inter_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv)
 {
   double switch_rad, maxPWerror;
   int bessel_cutoff;
@@ -119,7 +130,7 @@ int inter_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv)
   }
 
   MMM1D_set_params(switch_rad, bessel_cutoff, maxPWerror);
-  return MMM1D_tune(interp);
+  return tclcommand_inter_coulomb_print_mmm1d_parameteres(interp);
 }
 
 static void MMM1D_setup_constants()
@@ -157,7 +168,7 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
   mmm1d_params.far_switch_radius_2 = (switch_rad > 0) ? SQR(switch_rad) : -1;
   mmm1d_params.bessel_cutoff = bessel_cutoff;
   // if parameters come from here they are never calculated
-  // that is only the case if you call MMM1D_tune, which then changes
+  // that is only the case if you call tclcommand_inter_coulomb_print_mmm1d_parameteres, which then changes
   // this flag
   mmm1d_params.bessel_calculated = 0;
 
@@ -168,8 +179,8 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
 
   return 0;
 }
-
-int MMM1D_tune(Tcl_Interp *interp)
+/* TODO: separate tcl / nontcl code */
+int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp)
 {
   char buffer[32 + 2*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   double int_time, min_time=1e200, min_rad = -1;

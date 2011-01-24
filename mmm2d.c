@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file mmm2d.c  MMM2D algorithm for long range coulomb interaction.
  *
  *  For more information about MMM2D, see \ref mmm2d.h "mmm2d.h".
@@ -1403,7 +1414,7 @@ static int MMM2D_tune_near(double error)
   /* yes, it's y only... */
   if (max_near > box_l[1]/2)
     return ERROR_LARGE;
-  if (min_far <= 0)
+  if (min_far < 0)
     return ERROR_SMALL;
   if (ux*box_l[1] >= 3/M_SQRT2 )
     return ERROR_BOXL;
@@ -1827,7 +1838,7 @@ void MMM2D_self_energy()
  * COMMON PARTS
  ****************************************/
 
-int printMMM2DToResult(Tcl_Interp *interp)
+int tclprint_to_result_MMM2D(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -1846,7 +1857,7 @@ int printMMM2DToResult(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-int inter_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
 {
   int err;
   double maxPWerror;
@@ -2041,6 +2052,8 @@ void  MMM2D_dielectric_layers_force_contribution()
   double a[3];
   double force[3]={0, 0, 0};
 
+  if (!mmm2d_params.dielectric_contrast_on) return;
+
   if(this_node==0) {
     c=1;
     celll = &cells[c];
@@ -2100,6 +2113,8 @@ double  MMM2D_dielectric_layers_energy_contribution()
   double eng=0.0;
   // prefactor for the charged plate interaction removal
   double corr_pref = coulomb.prefactor*C_2PI*ux*uy;
+
+  if (!mmm2d_params.dielectric_contrast_on) return 0.0;
 
   if(this_node==0) {
     c=1;

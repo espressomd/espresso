@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file energy.c
     Implementation of \ref energy.h "energy.h".
 */
@@ -188,7 +199,7 @@ void init_energies(Observable_stat *stat)
 #ifdef MAGNETOSTATICS
 
   switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:  n_dipolar = 0; break;
+  case DIPOLAR_NONE:  n_dipolar = 1; break;
 #ifdef ELP3M
   case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
@@ -220,7 +231,7 @@ void master_energy_calc() {
  *                                 parser
  ****************************************************************************************/
 
-static void print_detailed_energies(Tcl_Interp *interp)
+static void tclcommand_analyze_print_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double value;
@@ -317,7 +328,7 @@ static void print_detailed_energies(Tcl_Interp *interp)
 
 /************************************************************/
 
-int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
 {
   /* 'analyze energy [{ fene <type_num> | harmonic <type_num> | subt_lj_harm <type_num> | subt_lj_fene <type_num> | subt_lj <type_num> | lj <type1> <type2> | ljcos <type1> <type2> | ljcos2 <type1> <type2> | gb <type1> <type2> | coulomb | kinetic | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -336,7 +347,7 @@ int parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv)
   }
 
   if (argc == 0)
-    print_detailed_energies(interp);
+    tclcommand_analyze_print_all(interp);
   else {
 
     if      (ARG0_IS_S("kinetic"))

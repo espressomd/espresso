@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 
 #include "metadynamics.h"
 
@@ -57,12 +68,12 @@ double *meta_cur_xi      =     NULL;
 double meta_val_xi       =       0.;
 double *meta_apply_direction = NULL;
 
-int metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   int err = TCL_OK;
 
   /* print metadynamics status */
-  if(argc == 1) return meta_print(interp);
+  if(argc == 1) return tclcommand_metadynamics_print_status(interp);
 
   if ( ARG1_IS_S("set") )          {
     argc--;
@@ -70,28 +81,28 @@ int metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc == 1) {
       Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
-      return meta_usage(interp, argc, argv);
+      return tclcommand_metadynamics_print_usage(interp, argc, argv);
     }
   }
   if ( ARG1_IS_S("off") )
-    err = meta_parse_off(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_off(interp, argc, argv);
   else if ( ARG1_IS_S("distance"))
-    err = meta_parse_distance(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_distance(interp, argc, argv);
   else if ( ARG1_IS_S("relative_z"))
-    err = meta_parse_relative_z(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_relative_z(interp, argc, argv);
   else if ( ARG1_IS_S("print_stat"))
-    err = meta_print_stat(interp, argc, argv);
+    err = tclcommand_metadynamics_print_stat(interp, argc, argv);
   else if ( ARG1_IS_S("load_stat"))
-    err = meta_parse_stat(interp, argc, argv);
+    err = tclcommand_metadynamics_parse_load_stat(interp, argc, argv);
   else {
     Tcl_AppendResult(interp, "Unknown metadynamics command ", argv[1], "\n", (char *)NULL);
-    return meta_usage(interp, argc, argv);
+    return tclcommand_metadynamics_print_usage(interp, argc, argv);
   }
   return mpi_gather_runtime_errors(interp, err);
 }
 
 
-int meta_print(Tcl_Interp *interp)
+int tclcommand_metadynamics_print_status(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   /* metadynamics not initialized */
@@ -149,7 +160,7 @@ int meta_print(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-int meta_usage(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_print_usage(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "Usage of tcl-command metadynamics:\n", (char *)NULL);
   Tcl_AppendResult(interp, "'", argv[0], "' for status return or \n ", (char *)NULL);
@@ -164,7 +175,7 @@ int meta_usage(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_ERROR);
 }
 
-int meta_parse_off(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_parse_off(Tcl_Interp *interp, int argc, char **argv)
 {
   /* set pids to -1 - invalidates the algorithm */
   meta_pid1 = -1;
@@ -175,7 +186,7 @@ int meta_parse_off(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-int meta_parse_distance(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **argv)
 {
   int    pid1, pid2, dbins;
   double dmin, dmax, bheight, bwidth, fbound;
@@ -223,7 +234,7 @@ int meta_parse_distance(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int meta_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
 {
   int    pid1, pid2, dbins;
   double dmin, dmax, bheight, bwidth, fbound;
@@ -271,7 +282,7 @@ int meta_parse_relative_z(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int meta_print_stat(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_metadynamics_print_stat(Tcl_Interp *interp, int argc, char **argv)
 {
   int j;
   char buffer[TCL_DOUBLE_SPACE];
@@ -311,7 +322,7 @@ int meta_print_stat(Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv){
+int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char **argv){
   /* Parse free energy profile and biased force that were provided from an 
    * earlier simulation. Allows one to restart from a loaded state, and can 
    * even be used to allow multiple walkers communicating their data through TCL. */

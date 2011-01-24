@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef PARTICLE_DATA_H
 #define PARTICLE_DATA_H
 /** \file particle_data.h
@@ -70,6 +81,11 @@ typedef struct {
 #ifdef ELECTROSTATICS
   /** charge. */
   double q;
+#endif
+
+#ifdef LB_ELECTROHYDRODYNAMICS
+  /** electrophoretic mobility times E-field: mu_0 * E */
+  double mu_E[3];
 #endif
 
 #ifdef DIPOLES
@@ -259,7 +275,7 @@ extern int *partBondPartners;
 
 /** Implementation of the tcl command \ref tcl_part. This command allows to
     modify particle data. */
-int part(ClientData data, Tcl_Interp *interp,
+int tclcommand_part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);
 
 /*       Functions acting on Particles          */
@@ -417,6 +433,13 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 */
 int set_particle_q(int part, double q);
 
+/** Call only on the master node: set particle electrophoretic mobility.
+    @param part the particle.
+    @param mu_E its new mobility.
+    @return TCL_OK if particle existed
+*/
+int set_particle_mu_E(int part, double mu_E[3]);
+
 /** Call only on the master node: set particle type.
     @param part the particle.
     @param type its new type.
@@ -476,7 +499,7 @@ int set_particle_dipm(int part, double dipm);
     @param isVirtual its new dipole moment.
     @return TCL_OK if particle existed
 */
-int set_particle_isVirtual(int part,int isVirtual);
+int set_particle_virtual(int part,int isVirtual);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -625,6 +648,7 @@ void recv_particles(ParticleList *particles, int node);
 int do_nonbonded(Particle *p1, Particle *p2);
 #endif
 
+/*TODO: this function is not used anywhere. To be removed? */
 /** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
     @param id particle identity.
  */

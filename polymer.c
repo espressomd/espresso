@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file polymer.c
     This file contains everything needed to create a start-up configuration
     of (partially charged) polymer chains with counterions and salt molecules,
@@ -115,7 +126,7 @@ int collision(double pos[3], double shield, int n_add, double *add) {
 
 
 
-int polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; 
   double bond_length; 
   int part_id = 0; 
@@ -389,11 +400,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	     int type_nM, int type_cM, int type_bond, 
 	     double angle, double angle2, double *posed2, int constr) {
   int p,n, cnt1,cnt2,max_cnt, bond_size, *bond, i;
-#ifdef OLD_RW_VERSION
-  double theta,phi;
-#else
   double phi,zz,rr;
-#endif
   double *poly;
   double pos[3];
   double poz[3];
@@ -456,20 +463,12 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
       } else {
 	/* randomly place 2nd monomer */
 	for (cnt1=0; cnt1<max_try; cnt1++) {
-#ifdef OLD_RW_VERSION
-	  theta  = PI*d_random();
-	  phi    = 2.0*PI*d_random();
-	  pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
-	  pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
-	  pos[2] = poz[2]+bond_length*cos(theta);
-#else
 	  zz     = (2.0*d_random()-1.0)*bond_length;
           rr     = sqrt(SQR(bond_length)-SQR(zz));
 	  phi    = 2.0*PI*d_random();
 	  pos[0] = poz[0]+rr*cos(phi);
 	  pos[1] = poz[1]+rr*sin(phi);
 	  pos[2] = poz[2]+zz;
-#endif
 #ifdef CONSTRAINTS
 	  if(constr==0 || constraint_collision(pos,poly+3*(n-1))==0){
 #endif
@@ -548,25 +547,17 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 	    vec_rotate(d,angle,a,b);
 
-	    pos[0] += b[0];
-	    pos[1] += b[1];
-	    pos[2] += b[2];
+	    pos[0] = poz[0] + b[0];
+	    pos[1] = poz[1] + b[1];
+	    pos[2] = poz[2] + b[2];
 
 	  } else {
-#ifdef OLD_RW_VERSION
-            theta  = PI*d_random();
-            phi    = 2.0*PI*d_random();
-            pos[0] = poz[0]+bond_length*sin(theta)*cos(phi);
-            pos[1] = poz[1]+bond_length*sin(theta)*sin(phi);
-            pos[2] = poz[2]+bond_length*cos(theta);
-#else
             zz     = (2.0*d_random()-1.0)*bond_length;
             rr     = sqrt(SQR(bond_length)-SQR(zz));
             phi    = 2.0*PI*d_random();
             pos[0] = poz[0]+rr*cos(phi);
             pos[1] = poz[1]+rr*sin(phi);
             pos[2] = poz[2]+zz;
-#endif
 	  }
 	  
 	  //POLY_TRACE(/* printf("a=(%f,%f,%f) absa=%f M=(%f,%f,%f) c=(%f,%f,%f) absMc=%f a*c=%f)\n",a[0],a[1],a[2],sqrt(SQR(a[0])+SQR(a[1])+SQR(a[2])),M[0],M[1],M[2],c[0],c[1],c[2],sqrt(SQR(M[0]+c[0])+SQR(M[1]+c[1])+SQR(M[2]+c[2])),a[0]*c[0]+a[1]*c[1]+a[2]*c[2]) */);
@@ -593,7 +584,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 	max_cnt=imax(cnt1, max_cnt);
 	POLY_TRACE(printf("M"); fflush(NULL));
       }
-      if ((mode==1) || (n>0)) break;
+      if (n>0) break;
     } /* cnt2 */
     POLY_TRACE(printf(" %d/%d->%d \n",cnt1,cnt2,max_cnt));
     if (cnt2 >= max_try) { free(poly); return(-2); } else max_cnt = imax(max_cnt,imax(cnt1,cnt2));
@@ -625,7 +616,7 @@ int polymerC(int N_P, int MPC, double bond_length, int part_id, double *posed,
 
 
 
-int counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_CI; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_CI = -1.0; int type_CI = 2;
@@ -738,7 +729,7 @@ int counterionsC(int N_CI, int part_id, int mode, double shield, int max_try, do
 
 
 
-int salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_pS, N_nS; int part_id = n_total_particles; 
   int mode = 0; double shield = 0.0; int tmp_try,max_try = 30000;                             /* mode==0 equals "SAW", mode==1 equals "RW" */
   double val_pS = 1.0, val_nS = -1.0; int type_pS = 3, type_nS = 4;
@@ -927,7 +918,7 @@ int saltC(int N_pS, int N_nS, int part_id, int mode, double shield, int max_try,
 
 
 
-int velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double v_max; int part_id = 0, N_T = n_total_particles;
   double tmp_try;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1009,7 +1000,7 @@ double velocitiesC(double v_max, int part_id, int N_T) {
   return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
 }
 
-int maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int part_id = 0, N_T = n_total_particles;
   double tmp_try;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1090,7 +1081,7 @@ double maxwell_velocitiesC(int part_id, int N_T) {
   return ( sqrt(SQR(v_av[0])+SQR(v_av[1])+SQR(v_av[2])) );
 }
 
-int crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int N_P, MPC; int part_id=0;
   double r_catch=1.9; int link_dist=2, chain_dist, type_bond=0, tmp_try,max_try=30000; 
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1419,7 +1410,7 @@ int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int
 
 
 
-int diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double a, bond_length; int MPC, N_CI = 0; double val_nodes = 0.0, val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; int nonet = 0;
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;
@@ -1559,7 +1550,7 @@ int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, 
 
 
 
-int icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   double a; int MPC, N_CI = 0; double val_cM = 0.0, val_CI = 0.0; int cM_dist = 1; 
   char buffer[128 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   int i, tmp_try;

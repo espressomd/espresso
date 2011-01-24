@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 
 /** \file integrate.c   Molecular dynamics integrator.
  *
@@ -111,7 +122,7 @@ void finalize_p_inst_npt();
 
 /************************************************************/
 
-int invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);
   return TCL_OK;
 }
@@ -123,7 +134,7 @@ void local_invalidate_system()
 }
 
 /**  Hand over integrate usage information to tcl interpreter. */
-int integrate_usage(Tcl_Interp *interp) 
+int tclcommand_integrate_print_usage(Tcl_Interp *interp) 
 {
   Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
   Tcl_AppendResult(interp, "'integrate <INT n steps>' for integrating n steps \n", (char *)NULL);
@@ -136,7 +147,7 @@ int integrate_usage(Tcl_Interp *interp)
 }
 
 /** Hand over integrate status information to tcl interpreter. */
-int integrate_print_status(Tcl_Interp *interp) 
+int tclcommand_integrate_print_status(Tcl_Interp *interp) 
 {
   int i;
   char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
@@ -169,7 +180,7 @@ int integrate_print_status(Tcl_Interp *interp)
 }
 
 /** Parse integrate nvt command */
-int integrate_parse_nvt(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_integrate_set_nvt(Tcl_Interp *interp, int argc, char **argv)
 {
   integ_switch = INTEG_METHOD_NVT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
@@ -177,29 +188,29 @@ int integrate_parse_nvt(Tcl_Interp *interp, int argc, char **argv)
 }
 
 /** Parse integrate npt_isotropic command */
-int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
 {
   int xdir, ydir, zdir;
   xdir = ydir = zdir = nptiso.cubic_box = 0;
 
   if (argc < 4) {
     Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
-    return integrate_usage(interp);
+    return tclcommand_integrate_print_usage(interp);
   }  
   /* set parameters p_ext and piston */
-  if ( !ARG_IS_D(3, nptiso.p_ext) )  return integrate_usage(interp);
-  p_ext_callback(interp, &nptiso.p_ext);
+  if ( !ARG_IS_D(3, nptiso.p_ext) )  return tclcommand_integrate_print_usage(interp);
+  tclcallback_p_ext(interp, &nptiso.p_ext);
   if ( argc > 4 ) { 
-    if(!ARG_IS_D(4, nptiso.piston) ) return integrate_usage(interp);
-    piston_callback(interp, &nptiso.piston); }
+    if(!ARG_IS_D(4, nptiso.piston) ) return tclcommand_integrate_print_usage(interp);
+    tclcallback_npt_piston(interp, &nptiso.piston); }
   else if ( nptiso.piston <= 0.0 ) {
     Tcl_AppendResult(interp, "You must set <piston> as well before you can use this integrator! \n", (char *)NULL);
-    return integrate_usage(interp);
+    return tclcommand_integrate_print_usage(interp);
   }
 
   if ( argc > 5 ) {
     if (!ARG_IS_I(5,xdir) || !ARG_IS_I(6,ydir) || !ARG_IS_I(7,zdir) ) {
-      return integrate_usage(interp);}
+      return tclcommand_integrate_print_usage(interp);}
     else {
       /* set the geometry to include rescaling specified directions only*/
       nptiso.geometry = 0; nptiso.dimension = 0; nptiso.non_const_dim = -1;
@@ -232,7 +243,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
     /* enable if the volume fluctuations should also apply to dimensions which are switched off by the above flags
        and which do not contribute to the pressure (3D) / tension (2D, 1D) */
     if (!ARG_IS_S(8,"-cubic_box")) {
-      return integrate_usage(interp);
+      return tclcommand_integrate_print_usage(interp);
     } else {
       nptiso.cubic_box = 1;
     }
@@ -275,7 +286,7 @@ int integrate_parse_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_OK);
 }
 
-int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
+int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int  n_steps;
   
@@ -283,25 +294,25 @@ int integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 
   if (argc < 1) {
     Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
-    return integrate_usage(interp);  }
-  else if (argc < 2) {                    return integrate_print_status(interp); }
+    return tclcommand_integrate_print_usage(interp);  }
+  else if (argc < 2) {                    return tclcommand_integrate_print_status(interp); }
 
   if (ARG1_IS_S("set")) {
-    if      (argc < 3)                    return integrate_print_status(interp);
-    if      (ARG_IS_S(2,"nvt"))           return integrate_parse_nvt(interp, argc, argv);
+    if      (argc < 3)                    return tclcommand_integrate_print_status(interp);
+    if      (ARG_IS_S(2,"nvt"))           return tclcommand_integrate_set_nvt(interp, argc, argv);
 #ifdef NPT
-    else if (ARG_IS_S(2,"npt_isotropic")) return integrate_parse_npt_isotropic(interp, argc, argv);
+    else if (ARG_IS_S(2,"npt_isotropic")) return tclcommand_integrate_set_npt_isotropic(interp, argc, argv);
 #endif
     else {
       Tcl_AppendResult(interp, "unknown integrator method:\n", (char *)NULL);
-      return integrate_usage(interp);
+      return tclcommand_integrate_print_usage(interp);
     }
-  } else if ( !ARG_IS_I(1,n_steps) ) return integrate_usage(interp);
+  } else if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
 
   /* go on with integrate <n_steps> */
   if(n_steps < 0) {
     Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
-    return integrate_usage(interp);;
+    return tclcommand_integrate_print_usage(interp);;
   }
   /* perform integration */
   if (mpi_integrate(n_steps))
@@ -615,7 +626,7 @@ void rescale_velocities(double scale)
 /************************************************************/
 
 
-int skin_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_skin(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   if (data < 0) {
@@ -627,7 +638,7 @@ int skin_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-int time_step_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_time_step(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   if (data < 0.0) {
@@ -653,7 +664,7 @@ int time_step_callback(Tcl_Interp *interp, void *_data)
   return (TCL_OK);
 }
 
-int time_callback(Tcl_Interp *interp, void *_data)
+int tclcallback_time(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
   sim_time = data;
@@ -810,6 +821,9 @@ void propagate_press_box_pos_and_rescale_npt()
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
       for(i = 0; i < np; i++) {	for(j=0; j < 3; j++){
+#ifdef VIRTUAL_SITES
+       if (ifParticleIsVirtual(&p[i])) continue;
+#endif
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
 #endif	    
@@ -872,6 +886,9 @@ void propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef VIRTUAL_SITES
+       if (ifParticleIsVirtual(&p[i])) continue;
+#endif
       for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j)))	
@@ -931,6 +948,9 @@ void propagate_pos()
       p  = cell->part;
       np = cell->n;
       for(i = 0; i < np; i++) {
+#ifdef VIRTUAL_SITES
+       if (ifParticleIsVirtual(&p[i])) continue;
+#endif
 	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	  if (!(p[i].l.ext_flag & COORD_FIXED(j)))
@@ -961,6 +981,11 @@ void propagate_vel_pos()
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
 
   rebuild_verletlist = 0;
+
+#ifdef ADDITIONAL_CHECKS
+  db_max_force = db_max_vel = 0;
+  db_maxf_id = db_maxv_id = -1;
+#endif
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];

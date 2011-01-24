@@ -153,6 +153,14 @@ void mpi_send_mass(int node, int part, double mass);
 */
 void mpi_send_q(int node, int part, double q);
 
+/** Issue REQ_SET_MU_E: send particle electrophoretic mobility.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param mu_E its new mobility.
+*/
+void mpi_send_mu_E(int node, int part, double mu_E[3]);
+
 #ifdef ROTATIONAL_INERTIA
 /** Issue REQ_SET_ROTATIONAL_INERTIA: send particle rotational inertia.
     Also calls \ref on_particle_change.
@@ -213,7 +221,7 @@ void mpi_send_dipm(int node, int part, double dipm);
     \param node the node it is attached to.
     \param isVirtual its new isVirtual.
 */
-void mpi_send_isVirtual(int node, int part, int isVirtual);
+void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.

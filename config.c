@@ -31,9 +31,15 @@
 #endif
 
 #ifdef ADRESS
+
 #ifdef ROTATION
-#error ADRESS and ROTATION currently do not work together
+#error ADRESS and ROTATION currently do not work together 
 #endif
+
+#ifdef GAY_BERNE
+#error ADRESS and ROTATION (required by GAY_BERNE) are not compatible
+#endif
+
 #endif
 
 /* errors for all modules that require fftw if not present */
@@ -85,14 +91,14 @@
 #endif
 
 
-int version_callback(Tcl_Interp *interp)
+int tclcallback_version(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION ", Last Change: " LAST_CHANGE, (char *) NULL);
+  Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION, (char *) NULL);
   return (TCL_OK);
 }
 
 /** callback for compilation status. */
-int compilation_callback(Tcl_Interp *interp)
+int tclcallback_compilation(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
 #ifdef DEBUG
@@ -101,7 +107,6 @@ int compilation_callback(Tcl_Interp *interp)
 #ifdef PROFILING
   Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
 #endif
-  Tcl_AppendResult(interp, "{ MPI " MPI " } ", (char *) NULL);
 #if FFTW == 2
   Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
 #elif FFTW == 3

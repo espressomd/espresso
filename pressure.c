@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file pressure.c
     Implementation of \ref pressure.h "pressure.h".
 */
@@ -36,7 +47,7 @@ nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0
 /* callbacks for setmd                                      */
 /************************************************************/
 
-int piston_callback(Tcl_Interp *interp, void *_data) {
+int tclcallback_npt_piston(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
   if (data < 0.0) { Tcl_AppendResult(interp, "the piston's mass must be positive.", (char *) NULL); return (TCL_ERROR); }
   nptiso.piston = data;
@@ -44,14 +55,14 @@ int piston_callback(Tcl_Interp *interp, void *_data) {
   return (TCL_OK);
 }
 
-int p_ext_callback(Tcl_Interp *interp, void *_data) {
+int tclcallback_p_ext(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
   nptiso.p_ext = data;
   mpi_bcast_parameter(FIELD_NPTISO_PEXT);
   return (TCL_OK);
 }
 
-int p_diff_callback(Tcl_Interp *interp, void *_data) {
+int tclcallback_npt_p_diff(Tcl_Interp *interp, void *_data) {
   double data = *(double *)_data;
   nptiso.p_diff = data;
   mpi_bcast_parameter(FIELD_NPTISO_PDIFF);
@@ -1017,7 +1028,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
  *                                 parser
  ****************************************************************************************/
 
-static void print_detailed_pressure(Tcl_Interp *interp)
+static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double value;
@@ -1150,7 +1161,7 @@ static void print_detailed_pressure(Tcl_Interp *interp)
 
 /************************************************************/
 
-int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv)
+int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv)
 {
   /* 'analyze pressure [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -1187,7 +1198,7 @@ int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **ar
   }
 
   if (argc == 0)
-    print_detailed_pressure(interp);
+    tclcommand_analyze_print_pressure_all(interp);
   else {
 
     if      (ARG0_IS_S("ideal"))
@@ -1310,13 +1321,13 @@ int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **ar
   return (TCL_OK);
 }
 
-int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "analyze p_IK no longer exists", (char *)NULL);
   return (TCL_ERROR);
 }
  
-int parse_bins(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_bins(Tcl_Interp *interp, int argc, char **argv)
 {
   Tcl_AppendResult(interp, "analyze bins no longer exists", (char *)NULL);
   return (TCL_ERROR);
@@ -1326,7 +1337,7 @@ int parse_bins(Tcl_Interp *interp, int argc, char **argv)
  *                                 parser
  ****************************************************************************************/
 /* Parser routines used in the "analyze stress_tensor" command */ 
-static void print_detailed_stress_tensor(Tcl_Interp *interp)
+static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
   double value, tvalue[9];
@@ -1451,7 +1462,7 @@ static void print_detailed_stress_tensor(Tcl_Interp *interp)
 }
 
 /************************************************************/
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv)
+int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv)
 {
   /* 'analyze stress_tensor [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
@@ -1488,7 +1499,7 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
   }
 
   if (argc == 0)
-    print_detailed_stress_tensor(interp);
+    tclcommand_analyze_print_stress_tensor_all(interp);
   else {
 
     if      (ARG0_IS_S("ideal")) {
@@ -1614,7 +1625,7 @@ int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char
   return (TCL_OK);
 }
 
-int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
   char* usage;
@@ -1624,7 +1635,7 @@ int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
   int bins[3];
   int i,j,k,l;
   DoubleList *TensorInBin;
-  PTENSOR_TRACE(fprintf(stderr,"%d: Running parse_local_stress_tensor\n",this_node));
+  PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
   /* 'analyze stress profile ' */
   if (argc != 12) {
     Tcl_ResetResult(interp);
@@ -1691,7 +1702,7 @@ int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
   }
 
   mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
-  PTENSOR_TRACE(fprintf(stderr,"%d: parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
+  PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
 
   /* Write stress profile to Tcl export */
   Tcl_AppendResult(interp, "{ LocalStressTensor } ", (char *)NULL);

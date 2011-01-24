@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file p3m.c  P3M algorithm for long range coulomb interaction.
  *
  *  For more information about the ewald algorithm,
@@ -175,7 +186,7 @@ EWALD_TRACE(fprintf(stderr,"%d: EWALD_prepare_k_field kvec %5i = %18.12g\n",this
 
 /************************************************************/
 
-int printEWALDToResult(Tcl_Interp *interp)
+int tclprint_to_result_EWALD(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
   double b=ewald.kmax;
@@ -217,6 +228,7 @@ int ewald_set_params(double r_cut, double alpha, int kmax)
   return 0;
 }
 
+/* TODO: This function is not used anywhere. To be removed?  */
 int ewald_set_eps(double eps)
 {
   ewald.epsilon = eps;
@@ -227,7 +239,7 @@ int ewald_set_eps(double eps)
 }
 
 
-int inter_parse_ewald(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv)
 {
   double r_cut, alpha;
   int i, kmax;
@@ -421,6 +433,10 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
   int y,z;
   double rclx, rcly, rclz, sps, spc;
   double fact,tf,tfc,tfs;
+#ifdef ONEPART_DEBUG
+  int d_rs=0; /* TODO: d_rs and db_fsum were missing and code couldn't compile. Now they have the arbitrary value of 0, fix it. */
+  double db_fsum=0;
+#endif
   /* Prefactor for force */
   double q,force_prefac;
   /* k space energy */
@@ -594,6 +610,7 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
   return k_space_energy;
 }
 
+/* TODO: This function is not used anywhere. To be removed? */
 void   EWALD_exit()
 { 
   /* free memory */
@@ -619,7 +636,7 @@ void   EWALD_exit()
 /************************************************
  * Debug functions printing ewald structures 
  ************************************************/
-
+/*TODO: this function is not used anywhere. To be removed? */
 void ewald_print_ewald_struct(ewald_struct ps) {
   fprintf(stderr,"%d: ewald_struct: \n",this_node);
   fprintf(stderr,"   alpha_L=%f, r_cut_iL=%f \n",

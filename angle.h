@@ -60,7 +60,7 @@ MDINLINE int angle_set_params(int bond_type, double bend, double phi0)
 }
 
 /// parse parameters for the angle potential
-MDINLINE int inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double bend, phi0;
 
@@ -216,6 +216,7 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
   fprintf(stderr, "WARNING: calc_angle_3body_forces not implemented for cossquare potential, cannot calculate stress tensor");
+  pot_dep = 0; /* better zero than an undefined value ...*/
 #endif
 
   fac = pot_dep / sin_phi;

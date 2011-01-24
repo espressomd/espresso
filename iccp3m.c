@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 
 /** \file iccp3m.c
     Detailed Information about the method is included in the corresponding header file \ref iccp3m.h.
@@ -58,7 +69,7 @@ Cell *local_icc;
 CellPList me_do_ghosts_icc;
 
 /* other icc*  functions */
-static int parse_vector(Tcl_Interp *interp,int normal_args, char *string, int flag);
+static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag);
 int imod(int x,int y);
 void iccp3m_revive_forces();
 void iccp3m_store_forces();
@@ -83,7 +94,7 @@ void iccp3m_init(void){
 
 /** Parses the ICCP3M command.
  */
-int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   int last_ind_id,num_iteration,normal_args,area_args;
   char buffer[TCL_DOUBLE_SPACE];
   double e1,convergence,relax;
@@ -152,7 +163,7 @@ int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
        normal_args = (iccp3m_cfg.last_ind_id+1)*3;
        /* Now get Normal Vectors components consecutively */
        
-       if( parse_vector(interp,normal_args,argv[7],ICCP3M_NORMAL) == 1) { 
+       if( tclcommand_iccp3m_parse_params(interp,normal_args,argv[7],ICCP3M_NORMAL) == 1) { 
               Tcl_ResetResult(interp);
               Tcl_AppendResult(interp, "ICCP3M: Error in following normal vectors\n", argv[7],"\nICCP3M: Error in previous normal vectors\n", (char *)NULL); 
               return (TCL_ERROR);
@@ -161,20 +172,20 @@ int iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
        area_args=(iccp3m_cfg.last_ind_id+1);
        /* Now get area of the boundary elements */
        
-       if ( parse_vector(interp,area_args,argv[6],ICCP3M_AREA) == 1 ){
+       if ( tclcommand_iccp3m_parse_params(interp,area_args,argv[6],ICCP3M_AREA) == 1 ){
              Tcl_ResetResult(interp);
              Tcl_AppendResult(interp, "ICCP3M: Error in following areas\n", argv[6],"\nICCP3M: Error in previous areas\n", (char *)NULL); return (TCL_ERROR);
        }
        /* Now get the ration ein/eout for each element. 
           It's the user's duty to make sure that only disconnected 
           regions have different ratios */
-      if ( parse_vector(interp,area_args,argv[8],ICCP3M_EPSILON) == 1 ) {
+      if ( tclcommand_iccp3m_parse_params(interp,area_args,argv[8],ICCP3M_EPSILON) == 1 ) {
              Tcl_ResetResult(interp);
              Tcl_AppendResult(interp, "ICCP3M: Error in following dielectric constants\n", argv[8],"\nICCP3M:  Error in previous dielectric constants\n", (char *)NULL); return (TCL_ERROR);
        } 
 
        if( argc == 10 ) {
-         if( parse_vector(interp,normal_args,argv[9],ICCP3M_EXTFIELD) == 1) { 
+         if( tclcommand_iccp3m_parse_params(interp,normal_args,argv[9],ICCP3M_EXTFIELD) == 1) { 
               Tcl_ResetResult(interp);
               Tcl_AppendResult(interp, "ICCP3M: Error in following external field vectors\n", argv[9],"\nICCP3M: Error in previous external field vectors\n", (char *)NULL); return (TCL_ERROR);
          }      
@@ -773,7 +784,7 @@ int imod(int x,int y) {
   return z;
 }
 
-static int parse_vector(Tcl_Interp *interp,int normal_args, char *string, int flag) {
+static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag) {
   /* This function parses a vector give as C-String */
   /* It currently is not too elegant. But works. */
   int size,i,k=0;
@@ -887,27 +898,6 @@ void iccp3m_store_forces() {
        iccp3m_cfg.fz[part[i].p.identity]=part[i].f.f[2];
      }
    }
-}
-
-int inter_parse_iccp3m(Tcl_Interp * interp, int argc, char ** argv) {
-  char buffer[TCL_DOUBLE_SPACE];
-
-  Tcl_PrintDouble(interp, iccp3m_cfg.citeration, buffer);
-  Tcl_AppendResult(interp, buffer,(char *) NULL);
-
-  return TCL_OK;
-}
-
-
-int gettime(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-    char buffer[TCL_DOUBLE_SPACE];
-    clock_t cputime;
-    double timing;
-    cputime= clock();
-    timing=((double) cputime) / CLOCKS_PER_SEC;
-    Tcl_PrintDouble(interp, timing, buffer);
-    Tcl_AppendResult(interp, buffer,(char *) NULL);
-    return TCL_OK;
 }
 
 #endif

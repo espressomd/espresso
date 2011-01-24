@@ -49,14 +49,14 @@ extern double adress_vars[7];
 /*@{*/
 /** Implements the Tcl command \ref tcl_adress. This allows for seetings for adress
 */
-int adress_tcl(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-int manual_update_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 
 #ifdef ADRESS
 /** #ifdef THERMODYNAMIC_FORCE */
-int tf_parse(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
-int tf_tcl(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
+int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 /** #endif */
 
 #ifdef INTERFACE_CORRECTION
@@ -130,20 +130,87 @@ MDINLINE double adress_non_bonded_force_weight(Particle *p1,Particle *p2){
   return force_weight;
 }
 
-MDINLINE double adress_bonded_force_weight(Particle *p1){
-  //for the moment, the bonds are kept and integrated everywhere
-  return 1;
-  //double adress_weight_1=adress_wf_particle(p1);
-  //double force_weight;
-  //NOTE only ex particles have bonded interations and bonded interactions are only inside a molecule
-
-  //particle is cg
-  //if (adress_weight_1<ROUND_ERROR_PREC) return 0.0;
-
-  //both
-  //force_weight=adress_weight_1*adress_weight_1;
-  //return force_weight;
+MDINLINE double adress_bonded_force_weight(Particle *p1,Particle *p2){
+   double weight=1.0;
+  if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity )
+    weight=1.0;
+  else {
+    double weight_1, weight_2;
+    int virtual_1, virtual_2, n_part_int=2;
+    weight_1=adress_wf_particle(p1);
+    virtual_1=ifParticleIsVirtual(p1);
+    if( (weight_1<ROUND_ERROR_PREC) && (virtual_1==0) ) return 0;
+    weight_2=adress_wf_particle(p2);
+    virtual_2=ifParticleIsVirtual(p2);
+    if( (weight_2<ROUND_ERROR_PREC) && (virtual_2==0) ) return 0;
+    
+    int sum_virtual=virtual_1+virtual_2;
+    if (sum_virtual>0 && sum_virtual<n_part_int) return 0.0;
+    
+    weight = pow(weight_1*weight_2,2.0/((double) n_part_int));
+    if(sum_virtual==n_part_int) weight=1.0-weight;
+  }
+  return weight;
 }
+
+MDINLINE double adress_angle_force_weight(Particle *p1, Particle *p2, Particle *p3){
+  double weight=1.0;
+  if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity &&(get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p3))->p.identity )
+    weight=1.0;
+  else {
+    double weight_1, weight_2, weight_3;
+    int virtual_1, virtual_2, virtual_3, n_part_int=3;
+    weight_1=adress_wf_particle(p1);
+    virtual_1=ifParticleIsVirtual(p1);
+    if( (weight_1<ROUND_ERROR_PREC) && (virtual_1==0) ) return 0;
+    weight_2=adress_wf_particle(p2);
+    virtual_2=ifParticleIsVirtual(p2);
+    if( (weight_2<ROUND_ERROR_PREC) && (virtual_2==0) ) return 0;
+    weight_3=adress_wf_particle(p3);
+    virtual_3=ifParticleIsVirtual(p3);
+    if( (weight_3<ROUND_ERROR_PREC) && (virtual_3==0) ) return 0;
+    
+    int sum_virtual=virtual_1+virtual_2+virtual_3;
+    if (sum_virtual>0 && sum_virtual<n_part_int) return 0.0;
+    
+    weight = pow(weight_1*weight_2*weight_3,2.0/((double) n_part_int));
+    if(sum_virtual==n_part_int) weight=1.0-weight;
+  }
+  return weight;
+}
+
+MDINLINE double adress_dihedral_force_weight(Particle *p1, Particle *p2, Particle *p3, Particle *p4){
+  double weight=1.0;
+  if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity &&(get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p3))->p.identity && (get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p4))->p.identity)
+    weight=1.0;
+  else {
+    double weight_1, weight_2, weight_3, weight_4;
+    int virtual_1, virtual_2, virtual_3, virtual_4, n_part_int=4;
+    weight_1=adress_wf_particle(p1);
+    virtual_1=ifParticleIsVirtual(p1);
+    if( (weight_1<ROUND_ERROR_PREC) && (virtual_1==0) ) return 0;
+    weight_2=adress_wf_particle(p2);
+    virtual_2=ifParticleIsVirtual(p2);
+    if( (weight_2<ROUND_ERROR_PREC) && (virtual_2==0) ) return 0;
+    weight_3=adress_wf_particle(p3);
+    virtual_3=ifParticleIsVirtual(p3);
+    if( (weight_3<ROUND_ERROR_PREC) && (virtual_3==0) ) return 0;
+    weight_4=adress_wf_particle(p4);
+    virtual_4=ifParticleIsVirtual(p4);
+    if( (weight_4<ROUND_ERROR_PREC) && (virtual_4==0) ) return 0;
+    
+    int sum_virtual=virtual_1+virtual_2+virtual_3+virtual_4;
+    if (sum_virtual>0 && sum_virtual<n_part_int) return 0.0;
+    
+    weight = pow(weight_1*weight_2*weight_3*weight_4,2.0/((double) n_part_int));
+    if(sum_virtual==n_part_int) weight=1.0-weight;
+  }
+  return weight;
+}
+
+
+
+
 
 #ifdef INTERFACE_CORRECTION
 /** Adress scheme for tabulated forces 
@@ -311,7 +378,7 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
   //  mpi_tab_cap_forces(tab_force_cap);}
   return 0;
 }
-
+/* TODO: This function is not used anywhere. To be removed?  */
 MDINLINE int adress_tab_parser(Tcl_Interp * interp,
 			int part_type_a, int part_type_b,
 			int argc, char ** argv)

@@ -1,19 +1,22 @@
-/* $Id$
- *
- * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
- * It is therefore subject to the ESPResSo license agreement which you
- * accepted upon receiving the distribution and by which you are
- * legally bound while utilizing this file in any form or way.
- * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- * You should have received a copy of that license along with this
- * program; if not, refer to http://www.espresso.mpg.de/license.html
- * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group, 
- * PO Box 3148, 55021 Mainz, Germany. 
- * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
- */
-
+/*
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file lb.h
  * Header file for lb.c
  *
@@ -263,6 +266,7 @@ MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
 
 }
 
+/* TODO: This function is not used anywhere. To be removed?  */
 /** Calculate the local fluid stress.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param local_node The local lattice site (Input).
@@ -412,11 +416,11 @@ MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
 
 #endif /* LB */
 
-/** Parser for the \ref lbnode command. */
-int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+/** Parser for the \ref lbnode command.  TODO: not registered!! */
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
-int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB_H */
 

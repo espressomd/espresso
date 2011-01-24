@@ -179,7 +179,7 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_LOCAL_STRESS_TENSOR 48
 /** Action number for \ref mpi_ljangle_cap_forces. */
 #define REQ_BCAST_LAFC 49
-/** Action number for \ref mpi_send_isVirtual. */
+/** Action number for \ref mpi_send_virtual. */
 #define REQ_SET_ISVI 50
 /** ADRESS - Action number for \ref mpi_bcast_tf_params. */
 #define REQ_BCAST_TF  51
@@ -189,9 +189,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_ICCP3M_INIT 53
 /** Action number for \ref mpi_send_rotational_inertia. */
 #define REQ_SET_RINERTIA  54
+/** Action number for \ref mpi_send_mu_E. */
+#define REQ_SET_MU_E     55
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 55
+#define REQ_MAXIMUM 56
 
 /*@}*/
 
@@ -209,6 +211,7 @@ void mpi_place_particle_slave(int node, int parm);
 void mpi_send_v_slave(int node, int parm);
 void mpi_send_f_slave(int node, int parm);
 void mpi_send_q_slave(int node, int parm);
+void mpi_send_mu_E_slave(int node, int parm);
 void mpi_send_type_slave(int node, int parm);
 void mpi_send_bond_slave(int node, int parm);
 void mpi_recv_part_slave(int node, int parm);
@@ -252,7 +255,7 @@ void mpi_send_fluid_slave(int node, int parm);
 void mpi_recv_fluid_slave(int node, int parm);
 void mpi_local_stress_tensor_slave(int node, int parm);
 void mpi_ljangle_cap_forces_slave(int node, int parm);
-void mpi_send_isVirtual_slave(int node, int parm);
+void mpi_send_virtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
 /*@}*/
@@ -310,11 +313,12 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
   mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
   mpi_ljangle_cap_forces_slave,     /* 49: REQ_BCAST_LAFC */
-  mpi_send_isVirtual_slave,         /* 50: REQ_SET_ISVI */
+  mpi_send_virtual_slave,         /* 50: REQ_SET_ISVI */
   mpi_bcast_tf_params_slave,        /* 51: REQ_BCAST_TF */
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
+  mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -384,6 +388,7 @@ char *names[] = {
   "REQ_ICCP3M_ITERATION", /* 52 */
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
+  "SET_MU_E", /* 55 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -735,6 +740,39 @@ void mpi_send_q_slave(int pnode, int part)
 #endif
 }
 
+/********************* REQ_SET_MU_E ********/
+void mpi_send_mu_E(int pnode, int part, double mu_E[3])
+{
+#ifdef LB_ELECTROHYDRODYNAMICS
+  mpi_issue(REQ_SET_MU_E, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.mu_E[0] = mu_E[0];
+    p->p.mu_E[1] = mu_E[1];
+    p->p.mu_E[2] = mu_E[2];
+  }
+  else {
+    MPI_Send(&mu_E, 3, MPI_DOUBLE, pnode, REQ_SET_MU_E, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_mu_E_slave(int pnode, int part)
+{
+#ifdef LB_ELECTROHYDRODYNAMICS
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, REQ_SET_MU_E,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
 
 /********************* REQ_SET_M ********/
 void mpi_send_mass(int pnode, int part, double mass)
@@ -1056,7 +1094,7 @@ void mpi_send_dipm_slave(int pnode, int part)
 
 /********************* REQ_SET_ISVI ********/
 
-void mpi_send_isVirtual(int pnode, int part, int isVirtual)
+void mpi_send_virtual(int pnode, int part, int isVirtual)
 {
 #ifdef VIRTUAL_SITES
   mpi_issue(REQ_SET_ISVI, pnode, part);
@@ -1073,7 +1111,7 @@ void mpi_send_isVirtual(int pnode, int part, int isVirtual)
 #endif
 }
 
-void mpi_send_isVirtual_slave(int pnode, int part)
+void mpi_send_virtual_slave(int pnode, int part)
 {
 #ifdef VIRTUAL_SITES
   if (pnode == this_node) {

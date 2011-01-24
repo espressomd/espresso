@@ -1,3 +1,21 @@
+# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#  
+# This file is part of ESPResSo.
+#   
+# ESPResSo is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 # This set of routines constructs a spherical cap where we attempt
 # to place the lipids at a uniform density taking account of the
@@ -15,7 +33,7 @@ namespace eval ::mbtools::system_generation::sphere_cap {
 #
 # ::mbtools::system_generation::sphere::create_sphere_cap --
 #
-# Place a topology onto a spherical cap geometry. This cap is part of a sphere
+# Place a topology into a spherical cap geometry. This cap is part of a sphere
 # with radius r as an option. The area of the cap depends on the number of molecules
 # in the topology and the option "initarea". This is done by placing molecules
 # from the polar till all molecules in topology have been placed.
@@ -31,7 +49,7 @@ proc ::mbtools::system_generation::sphere_cap::create_sphere_cap { args } {
     set options {
 	{r.arg   10.0       "the radius of the sphere" }
 	{half  "create a half sphere" }
-	{c.arg  { 0.0 0.0 0.0 } "location of the sphere relative to the box center" }
+	{c.arg  { 0.0 0.0 0.0 } "location of the center of the sphere " }
 	{initarea.arg      1.29    "the starting value for area per mol" }
 	{shuffle "shuffle the topology before placing molecules "}
 	{bondl.arg     1.0   "bond length between atoms"  }
@@ -52,9 +70,9 @@ proc ::mbtools::system_generation::sphere_cap::create_sphere_cap { args } {
 
     #Construct the center
     set center [list 0.0 0.0 0.0 ]
-    lset center 0 [expr [lindex $params(c) 0] + [lindex $boxl 0]/(2.0)]
-    lset center 1 [expr [lindex $params(c) 1] + [lindex $boxl 1]/(2.0)]
-    lset center 2 [expr [lindex $params(c) 2] + [lindex $boxl 2]/(2.0)]
+    lset center 0 [expr [lindex $params(c) 0]]
+    lset center 1 [expr [lindex $params(c) 1]]
+    lset center 2 [expr [lindex $params(c) 2]]
 
     # First work out how many mol types there are and construct a list
     # of their lengths

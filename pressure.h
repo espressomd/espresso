@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file pressure.h
     Pressure calculation. Really similar to \ref energy.h "energy.h".
 */
@@ -40,11 +51,11 @@ extern Observable_stat_non_bonded p_tensor_non_bonded;
 /*@{*/
 
 /** Callback for setting \ref nptiso_struct::piston */
-int piston_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_npt_piston(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref nptiso_struct::p_ext */
-int p_ext_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_p_ext(Tcl_Interp *interp, void *_data);
 /** Callback for setting \ref nptiso_struct::p_diff */
-int p_diff_callback(Tcl_Interp *interp, void *_data);
+int tclcallback_npt_p_diff(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here the data about the scalar pressure are stored
@@ -532,20 +543,20 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
 		  (hence it only works with domain decomposition); naturally it
 		  therefore doesn't make sense to use it without NpT. */
-int parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 /** Implementation of 'analyze bins' */
-int parse_bins(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_bins(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze p_IK1' */
-int parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
 
 /** implementation of 'analyze stress_tensor' */
-int parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
+int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
 
 /** implementation of 'analyse local_stress_tensor */
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
-int parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

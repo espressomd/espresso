@@ -13,7 +13,7 @@
     corresponding \ref tcl_features "Tcl-commands".
 
     If you add a new feature to Espresso, you also have to add the
-    corresponding lines in the function \ref compilation_callback and
+    corresponding lines in the function \ref tclcallback_compilation and
     to add documentation in <tt>doc/text/features.doc</tt>.
  */
 
@@ -60,6 +60,7 @@
 /* #define DPD_MASS_LIN */
 
 /* #define LB */
+/* #define LB_ELECTROHYDRODYNAMICS */
 
 /**********************************************************************/
 /*                           interactions                             */

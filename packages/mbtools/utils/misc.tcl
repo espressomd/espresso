@@ -1,3 +1,21 @@
+# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#  
+# This file is part of ESPResSo.
+#   
+# ESPResSo is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 #
 #
 # General use geometry type routines
@@ -69,7 +87,7 @@ proc ::mbtools::utils::isoutside { pos zone } {
 	"sphere" {
 	    set radius [lindex $zone 2]
 	    set center [lindex $zone 1]
-	    set dist [::mathutils::distance $center $pos]
+	    set dist [::mbtools::utils::distance $center $pos]
 
 	    if { $dist > $radius } {
 		return $outside
@@ -78,8 +96,21 @@ proc ::mbtools::utils::isoutside { pos zone } {
 	    }
 
 	}
+        "cuboid" {
+                set center [lindex $zone 1]
+                set cube_size [lindex $zone 2]
+                set dist_x [::tcl::mathfunc::abs [expr ([lindex $pos 0] - [lindex $center 0])]] 
+                set dist_y [::tcl::mathfunc::abs [expr ([lindex $pos 1] - [lindex $center 1])]] 
+                set dist_z [::tcl::mathfunc::abs [expr ([lindex $pos 2] - [lindex $center 2])]]
+                
+                if { $dist_x > [expr [lindex $cube_size 0] * 0.5] || $dist_y > [expr [lindex $cube_size 1] * 0.5] || $dist_z > [expr [lindex $cube_size 2] * 0.5] } {
+                        return $outside
+                } else {
+                        return $inside
+                }
+        }
 	"default" {
-	    ::mmsg::err [namespace current] "[lindex $zone 0] is not a valid exclusion zone type"
+	    ::mmsg::err [namespace current] "[lindex $zone 0] is not a valid zone type"
 	}
     }
     

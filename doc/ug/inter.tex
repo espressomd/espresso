@@ -1,3 +1,22 @@
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 \chapter{Setting up interactions}
 \label{sec:inter}
 \newescommand{inter}
@@ -985,7 +1004,8 @@ Uneducated use can result in completely unphysical simulations.
 
 \begin{essyntax}
   \variant{1} inter coulomb 0.0
-  \variant{2} inter coulomb \opt{\var{l_B} \var{method}} \opt{\var{parameters}}
+  \variant{2} inter coulomb \opt{\var{l_B} \var{method}}
+  \opt{\var{parameters}} 
   \variant{3} inter coulomb
 \end{essyntax}
 
@@ -1059,6 +1079,42 @@ using P3M! If you are not sure, read the following references
 \cite{ewald21, hockney88, kolafa92, deserno98, deserno98a, deserno00,
   deserno00a, cerda08a}.
 
+\todo{Are dipole-monopole interactions implemented?}  If only magnetic
+dipoles but not charges are present in the sytem, it is advisable to
+deactivate the feature \texttt{ELECTROSTATICS} to improve the
+performance of the program.  Mixed systems containing magnetic dipoles
+and charges can be simulated without problems by enabling both
+features, \texttt{ELECTROSTATICS} and \texttt{MAGNETOSTATICS}. For
+each kind of particle one should use the prefered algorithm. For
+magnetic dipole-dipole interactions the only algorithm implemented at
+this moment is dipolar P3M. In principle there is no problem to use a
+non P3M method to deal with charges (see folowing sections) while one
+uses dipolar P3M to deal with the magnetic dipoles. In case you use
+P3M for both charges and magnetic dipoles, make sure that you tune
+each P3M method (coulomb/magnetic) to the desired accuracy.
+
+\subsubsection{Additional P3M parameters}
+
+\begin{essyntax}
+  inter coulomb \opt{\lit{epsilon} \alt{\lit{metallic} \asep \var{epsilon}}}
+  \opt{\lit{n_interpol} \var{points}} \opt{\lit{mesh_off} \var{xoff}
+    \var{yoff} \var{zoff}}
+\end{essyntax}
+
+There are some additional P3M parameters
+\begin{description}
+\item[\lit{epsilon}] The dielectric constant of the surrounding
+  medium, metallic (\ie infinity) or some finite positive number.
+  Defaults to \lit{metallic}.
+\item[\lit{n_interpol}] Number of interpolation points for the charge
+  assignment function.  When this is set to $0$, interpolation is
+  turned off and the function is computed directly. Defaults to
+  $32768$.
+\item[\lit{mesh_off}] Offset of the first mesh point from the lower
+  left corner of the simulation box in units of the mesh
+  constant. Defaults to \codebox{{0.5 0.5 0.5}}.
+\end{description}
+
 \subsubsection{Tuning P3M}
 \begin{essyntax}
   \variant{1}inter coulomb \var{l_B} p3m \alt{tune \asep tunev2}
@@ -1118,40 +1174,6 @@ electrostatics, \eg after a major system change, you should use
 inter \alt{coulomb \asep magnetic}  \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
 \end{code}
 
-\noindent Some additional p3m parameters have a preset value:
-\begin{tclcode}
- epsilon = metallic
-\end{tclcode}
-The dielectric constant of the surrounding medium, metallic
-(i.e.infinity) or some finite positive number.
-\begin{tclcode}
- n_interpol = 32768
-\end{tclcode}
-Number of interpolation points for the charge assignment function.
-When this is set to 0, interpolation is turned off.
-\begin{tclcode}
- mesh_off = 0.5 0.5 0.5
-\end{tclcode}
-Offset of the first mesh point from the lower left corner of the
-simulation box in units of the mesh constant. As soon as p3m is turned
-on the additional parameters can be changed with:
-\begin{code}
-inter coulomb \var{parameter\_name} \var{value}+
-\end{code}
-
-If only magnetic dipoles are present in the sytem (no charges
-present), it is advisable to deactivate the feature
-\texttt{ELECTROSTATICS} to improve the performance of the program.
-Mixed systems containing magnetic dipoles and charges can be simulated
-without problems by enabling both features, \texttt{ELECTROSTATICS}
-and \texttt{MAGNETOSTATICS}. For each kind of particle one should use
-the prefered algorithm. For magnetic dipole-dipole interactions the
-only algorithm implemented at this moment is dipolar P3M. In principle
-there is no problem to use a non P3M method to deal with charges (see
-folowing sections) while one uses dipolar P3M to deal with the
-magnetic dipoles. In case you use P3M for both charges and magnetic
-dipoles, make sure that you tune each P3M method (coulomb/magnetic) to
-the desired accuracy.
 
 \subsection{Debye-H\"uckel potential}
 \index{Debye-H\"uckel potential|mainindex}

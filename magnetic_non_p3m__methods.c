@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file magnetic_non_p3m__methods.c  All 3d non P3M methods to deal with the magnetic dipoles
  *   
  *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
@@ -49,14 +60,14 @@
 */
 #ifdef DAWAANR
 
-int  printDAWAANRToResult(Tcl_Interp *interp){
+int  tclprint_to_result_DAWAANR(Tcl_Interp *interp){
   Tcl_AppendResult(interp, " dawaanr ", (char *) NULL);
   return TCL_OK;
 }
 
 /************************************************************/
 
-int Dinter_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv)
 {
     
   if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
@@ -332,7 +343,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
 
 int  Ncut_off_magnetic_dipolar_direct_sum=0;
 
-int printMagnetic_dipolar_direct_sum_ToResult(Tcl_Interp *interp){
+int tclprint_to_result_Magnetic_dipolar_direct_sum_(Tcl_Interp *interp){
   char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_AppendResult(interp, " mdds ", buffer, (char *) NULL);
@@ -344,7 +355,7 @@ int printMagnetic_dipolar_direct_sum_ToResult(Tcl_Interp *interp){
 
 /************************************************************/
 
-int Dinter_parse_magnetic_dipolar_direct_sum(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_magnetic_parse_mdds(Tcl_Interp * interp, int argc, char ** argv)
 {
   int  n_cut=-1;
    

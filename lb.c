@@ -1,19 +1,22 @@
-/* $Id$
- *
- * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
- * It is therefore subject to the ESPResSo license agreement which you
- * accepted upon receiving the distribution and by which you are
- * legally bound while utilizing this file in any form or way.
- * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- * You should have received a copy of that license along with this
- * program; if not, refer to http://www.espresso.mpg.de/license.html
- * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group, 
- * PO Box 3148, 55021 Mainz, Germany. 
- * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
- */
-
+/*
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file lb.c
  *
  * Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
@@ -573,6 +576,7 @@ MDINLINE void lb_calc_local_n(LB_FluidNode *local_node) {
 
 }
   
+/* TODO: This function is not used anywhere. To be removed?  */
 MDINLINE void lb_map_fields_to_populations() {
     int k;
 
@@ -582,6 +586,7 @@ MDINLINE void lb_map_fields_to_populations() {
 
 }
 
+/* TODO: This function is not used anywhere. To be removed?  */
 MDINLINE void lb_map_populations_to_fields() {
     int k;
 
@@ -1145,9 +1150,9 @@ MDINLINE void lb_transfer_momentum(const double momentum[3], const int node_inde
  * Note: this only works for planar boundaries
  */
 /* sega@fias.uni-frankfurt.de */
+#ifdef CONSTRAINTS
 MDINLINE void lb_assign_boundary_population(LB_FluidNode *lbfluid, int* node_index, double factor) {
   int x,y,z,xx,yy,zz,flag;
-#ifdef CONSTRAINTS
   for (x=0;x<2;x++) {
     for (y=0;y<2;y++) {
       for (z=0;z<2;z++) {
@@ -1184,9 +1189,8 @@ MDINLINE void lb_assign_boundary_population(LB_FluidNode *lbfluid, int* node_ind
       }
     }
   }
-#endif
-
 }
+#endif
 
 /** Coupling of a particle to viscous fluid with Stokesian friction.
  * 
@@ -1203,6 +1207,7 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
   LB_FluidNode *local_node;
   double *local_rho, *local_j, interpolated_u[3], delta_j[3];
 #ifdef ADDITIONAL_CHECKS
+  int try=0; /* TODO: this was missing, and was needed for the code to compile, but the assigment is now arbitrary. Please check */
   double old_rho[8];
 #endif
 
@@ -1247,13 +1252,21 @@ MDINLINE void lb_viscous_momentum_exchange(Particle *p, double force[3]) {
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+#ifdef LB_ELECTROHYDRODYNAMICS
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
+#endif
+#ifndef LB_ELECTROHYDRODYNAMICS
   force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
   force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
   force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+#endif
+
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_drag = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
 
-  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[try][0],p->lc.f_random[try][1],p->lc.f_random[try][2]));
+/* TODO: this line did not compile, please correct or remove  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[try][0],p->lc.f_random[try][1],p->lc.f_random[try][2])); */
 
   force[0] = force[0] + p->lc.f_random[0];
   force[1] = force[1] + p->lc.f_random[1];
@@ -1504,7 +1517,7 @@ void lb_set_local_fields(int index, const double rho, const double *v, const dou
 /***********************************************************************/
 /** \name TCL stuff */
 /***********************************************************************/
-
+/* TODO: This function is not used anywhere. To be removed?  */
 static int lb_parse_set_fields(Tcl_Interp *interp, int argc, char **argv, int *change, int *ind) {
 
   int k, index, node, grid[3];
@@ -1542,6 +1555,7 @@ static int lb_parse_set_fields(Tcl_Interp *interp, int argc, char **argv, int *c
 
 }
 
+/* TODO: This function is not used anywhere. To be removed?  */
 static int lb_print_local_fields(Tcl_Interp *interp, int argc, char **argv, int *change, int *ind) {
 
   char buffer[256+4*TCL_DOUBLE_SPACE+3*TCL_INTEGER_SPACE];
@@ -1598,7 +1612,7 @@ MDINLINE void lbnode_print_pi(Tcl_Interp *interp, char *buffer, double *pi) {
       
 }
 
-static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *ind) {
+static int tclcommand_lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   char buffer[TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE];
   int node, index, grid[3];
   double rho, j[3], pi[6];
@@ -1623,7 +1637,7 @@ static int lbnode_parse_print(Tcl_Interp *interp, int argc, char **argv, int *in
   return TCL_OK;
 }
 
-static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *change) {
     double tau;
 
     if (argc < 1) {
@@ -1651,7 +1665,7 @@ static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *ch
     return TCL_OK;
 }
 
-static int lbfluid_parse_agrid(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_agrid(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
     if (argc < 1) {
 	Tcl_AppendResult(interp, "agrid requires 1 argument", (char *)NULL);
@@ -1674,7 +1688,7 @@ static int lbfluid_parse_agrid(Tcl_Interp *interp, int argc, char *argv[], int *
     return TCL_OK;
 }
 
-static int lbfluid_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
     double density;
 
     if (argc < 1) {
@@ -1698,7 +1712,7 @@ static int lbfluid_parse_density(Tcl_Interp *interp, int argc, char *argv[], int
     return TCL_OK;
 }
 
-static int lbfluid_parse_viscosity(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_viscosity(Tcl_Interp *interp, int argc, char *argv[], int *change) {
     double viscosity;
 
     if (argc < 1) {
@@ -1722,7 +1736,7 @@ static int lbfluid_parse_viscosity(Tcl_Interp *interp, int argc, char *argv[], i
     return TCL_OK;
 }
 
-static int lbfluid_parse_bulk_visc(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_bulk_viscosity(Tcl_Interp *interp, int argc, char *argv[], int *change) {
   double bulk_visc;
 
   if (argc < 1) {
@@ -1747,7 +1761,7 @@ static int lbfluid_parse_bulk_visc(Tcl_Interp *interp, int argc, char *argv[], i
 
 }
 
-static int lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], int *change) {
     double friction;
 
     if (argc < 1) {
@@ -1771,7 +1785,7 @@ static int lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], in
     return TCL_OK;
 }
 
-static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int tclcommand_lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], int *change) {
     double ext_f[3];
     if (argc < 3) {
 	Tcl_AppendResult(interp, "ext_force requires 3 arguments", (char *)NULL);
@@ -1795,7 +1809,7 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
 #endif /* LB */
 
 /** Parser for the \ref lbnode command. */
-int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int err=TCL_ERROR;
    int coord[3];
@@ -1814,7 +1828,7 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
      argc-=3; argv+=3;
 
      if (ARG0_IS_S("print"))
-       err = lbnode_parse_print(interp, argc-1, argv+1, coord);
+       err = tclcommand_lbnode_parse_print(interp, argc-1, argv+1, coord);
      else {
        Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode", (char *)NULL);
        err = TCL_ERROR;
@@ -1830,7 +1844,7 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 }
 
 /** Parser for the \ref lbfluid command. */
-int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
   int err = TCL_OK;
   int change = 0;
@@ -1849,19 +1863,19 @@ int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   }
   else while (argc > 0) {
       if (ARG0_IS_S("grid") || ARG0_IS_S("agrid"))
-	  err = lbfluid_parse_agrid(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_agrid(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("tau"))
-	  err = lbfluid_parse_tau(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_tau(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("density"))
-	  err = lbfluid_parse_density(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_density(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("viscosity"))
-	  err = lbfluid_parse_viscosity(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_viscosity(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("bulk_viscosity"))
-	  err = lbfluid_parse_bulk_visc(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_bulk_viscosity(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("friction") || ARG0_IS_S("coupling"))
-	  err = lbfluid_parse_friction(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_friction(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("ext_force"))
-	  err = lbfluid_parse_ext_force(interp, argc-1, argv+1, &change);
+	  err = tclcommand_lbfluid_parse_ext_force(interp, argc-1, argv+1, &change);
       else {
 	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
 	  err = TCL_ERROR ;

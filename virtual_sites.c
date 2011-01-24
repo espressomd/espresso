@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 
 #include "virtual_sites.h"
 #include "pressure.h"
@@ -32,6 +43,10 @@ int calc_mol_pos_cfg(Particle *p_com,double r_com[3]);
 void put_mol_force_on_parts(Particle *p_com);
 
 void get_mol_dist_vector_cfg(Particle *p1,Particle *p2,double dist[3]);
+
+double calc_press_cross_sec(int type1, int type2, double cross_pos, int dir);
+int check_mol_positions(int mol_id1, int mol_id2, double cross_pos, int dir);
+double fold_slab(double coord, double cross_pos, int dir);
 
 void update_mol_vel_pos()
 {
@@ -141,32 +156,40 @@ void calc_mol_vel(Particle *p_com,double v_com[3]){
       v_com[i]=0.0;
    }
    mol_id=p_com->p.mol_id;
-   for (i=0;i<topology[mol_id].part.n;i++){
-      p=local_particles[topology[mol_id].part.e[i]];
-      #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
-         char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-         ERROR_SPRINTF(errtxt,"Particle does not exist in calc_mol_vel! id=%i\n",topology[mol_id].part.e[i]);
-         return;
-      }
-      #endif
-      if (ifParticleIsVirtual(p)) continue;
-      for (j=0;j<3;j++){
-         v_com[j] += PMASS(*p)*p->m.v[j];
-      }
-      M+=PMASS(*p);
-#ifdef VIRTUAL_SITES_DEBUG
-      count++;
+#ifdef FASTER_ADRESS   
+   for (i=1;i<topology[mol_id].part.n;i++)
+#else
+     for (i=0;i<topology[mol_id].part.n;i++)
 #endif
-   }
+       {
+	 p=local_particles[topology[mol_id].part.e[i]];
+#ifdef VIRTUAL_SITES_DEBUG
+	 if (p==NULL){
+	   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	   ERROR_SPRINTF(errtxt,"Particle does not exist in calc_mol_vel! id=%i\n",topology[mol_id].part.e[i]);
+	   return;
+	 }
+#endif
+#ifndef FASTER_ADRESS
+	 if (ifParticleIsVirtual(p)) continue;
+#endif
+	 for (j=0;j<3;j++){
+	   v_com[j] += PMASS(*p)*p->m.v[j];
+	 }
+	 M+=PMASS(*p);
+	 
+#ifdef VIRTUAL_SITES_DEBUG
+	 count++;
+#endif
+       }
    for (j=0;j<3;j++){
-      v_com[j] /= M;
+     v_com[j] /= M;
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_vel! mol_id=%i\n",mol_id);
-      return;
+     char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+     ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_vel! mol_id=%i\n",mol_id);
+     return;
    }
 #endif
 }
@@ -185,34 +208,41 @@ void calc_mol_pos(Particle *p_com,double r_com[3]){
       r_com[i]=0.0;
    }
    mol_id=p_com->p.mol_id;
-   for (i=0;i<topology[mol_id].part.n;i++){
-      p=local_particles[topology[mol_id].part.e[i]];
-      #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
-         char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+#ifdef FASTER_ADRESS
+   for (i=1;i<topology[mol_id].part.n;i++)
+#else
+     for (i=0;i<topology[mol_id].part.n;i++)
+#endif
+       {
+	 p=local_particles[topology[mol_id].part.e[i]];
+#ifdef VIRTUAL_SITES_DEBUG
+	 if (p==NULL){
+	   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in calc_mol_pos! id=%i\n",topology[mol_id].part.e[i]);
          return;
       }
-      #endif
-      if (ifParticleIsVirtual(p)) continue;
-      get_mi_vector(vec12,p->r.p, p_com->r.p);
-      for (j=0;j<3;j++){
-          r_com[j] += PMASS(*p)*vec12[j];
-      }
-      M+=PMASS(*p);
-#ifdef VIRTUAL_SITES_DEBUG
-      count++;
 #endif
-   }
+#ifndef FASTER_ADRESS
+	 if (ifParticleIsVirtual(p)) continue;
+#endif
+	 get_mi_vector(vec12,p->r.p, p_com->r.p);
+	 for (j=0;j<3;j++){
+	   r_com[j] += PMASS(*p)*vec12[j];
+	 }
+	 M+=PMASS(*p);
+#ifdef VIRTUAL_SITES_DEBUG
+	 count++;
+#endif
+       }
    for (j=0;j<3;j++){
-      r_com[j] /= M;
-      r_com[j] += p_com->r.p[j];
+     r_com[j] /= M;
+     r_com[j] += p_com->r.p[j];
    }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_pos! mol_id=%i\n",mol_id);
-      return;
+     char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+     ERROR_SPRINTF(errtxt,"There is more than one COM in calc_mol_pos! mol_id=%i\n",mol_id);
+     return;
    }
 #endif
 }
@@ -228,12 +258,19 @@ int calc_mol_pos_cfg(Particle *p_com,double r_com[3]){
       r_com[i]=0.0;
    }
    mol_id=p_com->p.mol_id;
-   for (i=0;i<topology[mol_id].part.n;i++){
-      p=&partCfg[topology[mol_id].part.e[i]];
-      if (ifParticleIsVirtual(p)) continue;
-      for (j=0;j<3;j++){
-            r_com[j] += PMASS(*p)*p->r.p[j];
-      }
+#ifdef FASTER_ADRESS
+   for (i=1;i<topology[mol_id].part.n;i++)
+     #else
+   for (i=0;i<topology[mol_id].part.n;i++)
+#endif
+     {
+       p=&partCfg[topology[mol_id].part.e[i]];
+       #ifndef FASTER_ADRESS
+       if (ifParticleIsVirtual(p)) continue;
+       #endif
+       for (j=0;j<3;j++){
+	 r_com[j] += PMASS(*p)*p->r.p[j];
+       }
       M+=PMASS(*p);
 #ifdef VIRTUAL_SITES_DEBUG
       count++;
@@ -265,50 +302,69 @@ void put_mol_force_on_parts(Particle *p_com){
    }
 #ifdef MASS
    M=0;
-   for (i=0;i<topology[mol_id].part.n;i++){
-      p=local_particles[topology[mol_id].part.e[i]];
-      #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
-         char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-         ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
-         return;
-      }
-      #endif
-       if (ifParticleIsVirtual(p)) continue;
-      M+=PMASS(*p);
-   }
+#ifdef FASTER_ADRESS
+   for (i=1;i<topology[mol_id].part.n;i++)
+#else
+     for (i=0;i<topology[mol_id].part.n;i++)
+#endif 
+       {
+	 p=local_particles[topology[mol_id].part.e[i]];
+#ifdef VIRTUAL_SITES_DEBUG
+	 if (p==NULL){
+	   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	   ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
+	   return;
+	 }
+#endif
+#ifndef FASTER_ADRESS 
+	 if (ifParticleIsVirtual(p)) continue;
+#endif
+	 M+=PMASS(*p);
+       }
 #else
    M=topology[mol_id].part.n-1;
 #endif
-   for (i=0;i<topology[mol_id].part.n;i++){
-      p=local_particles[topology[mol_id].part.e[i]];
-      #ifdef VIRTUAL_SITES_DEBUG
-      if (p==NULL){
+  #ifdef FASTER_ADRESS
+   for (i=1;i<topology[mol_id].part.n;i++)
+#else
+   for (i=0;i<topology[mol_id].part.n;i++)
+#endif 
+     {     
+       p=local_particles[topology[mol_id].part.e[i]];
+#ifdef VIRTUAL_SITES_DEBUG
+       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
          return;
-      }
-      #endif
-      if (!ifParticleIsVirtual(p)) {
-         for (j=0;j<3;j++){
-            p->f.f[j]+=PMASS(*p)*force[j]/M;
+       }
+#endif
+       #ifndef FASTER_ADRESS
+       if (!ifParticleIsVirtual(p)) {
+#endif
+	 for (j=0;j<3;j++){
+	   p->f.f[j]+=PMASS(*p)*force[j]/M;
+#ifndef FASTER_ADRESS
          }
+#endif
 #ifdef VIRTUAL_SITES_DEBUG
          count++;
 #endif
       }
-   }
+     }
 #ifdef VIRTUAL_SITES_DEBUG
    if (count!=topology[mol_id].part.n-1){
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt,"There is more than one COM input_mol_force_on_parts! mol_id=%i\n",mol_id);
-      return;
+     char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+     ERROR_SPRINTF(errtxt,"There is more than one COM input_mol_force_on_parts! mol_id=%i\n",mol_id);
+     return;
    }
 #endif
 }
 
 Particle *get_mol_com_particle(Particle *calling_p){
-   int mol_id;
+#ifdef FASTER_ADRESS
+  return local_particles[topology[calling_p->p.mol_id].part.e[0]];
+#else
+int mol_id;
    int i;
    Particle *p;
 
@@ -332,6 +388,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
    return NULL;
 #endif
    return calling_p;
+#endif
 }
 
 double get_mol_dist(Particle *p1,Particle *p2){
@@ -370,7 +427,7 @@ void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]);
 
-int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int type1, type2;
@@ -378,14 +435,14 @@ int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
    #ifdef ELECTROSTATICS
    #ifndef INTER_RF
    Tcl_ResetResult(interp);
-   Tcl_AppendResult(interp, "parse_and_print_pressure_mol is only possible with INTER_RF ", (char *)NULL);
+   Tcl_AppendResult(interp, "tclcommand_analyze_parse_and_print_pressure_mol is only possible with INTER_RF ", (char *)NULL);
    return (TCL_ERROR);
    #endif
    #endif
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    if (argc < 2) {
@@ -421,7 +478,7 @@ int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
    return TCL_OK;
 }
 
-int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int type;
@@ -429,7 +486,7 @@ int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    if (argc < 1) {
@@ -493,7 +550,7 @@ double calc_pressure_mol(int type1,int type2){
   return psum;
 }
 
-int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv)
 {
 #ifndef ELECTROSTATICS
    Tcl_ResetResult(interp);
@@ -506,7 +563,7 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_dipole_mol: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    if (n_molecules==0) {
@@ -516,13 +573,13 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
    }
    if (argc < 2) {
       Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
+      Tcl_AppendResult(interp, "usage: analyze dipole_mol <type>", (char *)NULL);
       return (TCL_ERROR);
    }
 
    if (!ARG1_IS_I(type)) {
       Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
+      Tcl_AppendResult(interp, "usage: analyze dipole_mol <type>", (char *)NULL);
       return (TCL_ERROR);
    }
    if (ARG0_IS_S("total")){
@@ -723,7 +780,7 @@ void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
 }
 
-int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
+int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv){
    int j,count=0;
    double dist;
    char buffer[TCL_DOUBLE_SPACE];
@@ -761,6 +818,162 @@ int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
       return(TCL_ERROR);
    }
    return(TCL_OK);
+}
+/* TODO: this analysis command is not registered. To be removed ? */
+int tclcommand_analyze_parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv)
+{
+   char buffer[TCL_DOUBLE_SPACE];
+   int i;
+   int type1, type2;
+   int bins, dir;
+   double *pprof;
+   
+   updatePartCfg(WITHOUT_BONDS);
+   if (!sortPartCfg()) {
+     char *errtxt = runtime_error(128);
+     ERROR_SPRINTF(errtxt, "{059 parse_print_pressure_profile_cross_section: could not sort particle config, particle ids not consecutive?} ");
+     return TCL_ERROR;
+   }
+   if (argc < 2) {
+     Tcl_ResetResult(interp);
+     Tcl_AppendResult(interp, "usage: analyze pressure_cross_section <type1> <type2> <bins> <dir>", (char *)NULL);
+     return (TCL_ERROR);
+   }
+
+   if (!ARG0_IS_I(type1)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze pressure_cross_section <type1> <type2> <bins> <dir>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   if (!ARG1_IS_I(type2)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze pressure_cross_section <type1> <type2> <bins> <dir>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   argc-=2; argv+=2;
+   
+    if (!ARG0_IS_I(bins)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze pressure_cross_section <type1> <type2> <bins> <dir>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   if (!ARG1_IS_I(dir)) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "usage: analyze pressure_cross_section <type1> <type2> <bins> <dir>", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   
+   if (n_molecules==0) {
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "No molecules defined !", (char *)NULL);
+      return (TCL_ERROR);
+   }
+   
+   pprof=malloc(sizeof(double)*bins);
+   
+   double bin_width=box_l[dir]/((double)bins);
+   double cross_pos =bin_width/2.0;
+   for(i=0;i<bins;i++)
+     {
+       pprof[i]=calc_press_cross_sec(type1, type2, cross_pos, dir);
+       sprintf(buffer,"%f %f",cross_pos,pprof[i]);
+       Tcl_AppendResult(interp, "{ ", buffer, " }\n", (char *)NULL);
+       cross_pos+=bin_width;
+     }
+   //sprintf(buffer,"%i",type1);
+   //Tcl_AppendResult(interp,"{ analyze pressure_mol ",buffer," ",(char *)NULL);   
+   //sprintf(buffer,"%i",type2);
+   //Tcl_AppendResult(interp,buffer," ",(char *)NULL);   
+   
+   return TCL_OK;
+}
+
+double calc_press_cross_sec(int type1, int type2, double cross_pos, int dir){
+  double sum_force=0;
+  double force[3], com_dist[3];
+  double area=1, dist;
+  int i,j,l,start;
+  int checkpos;
+  for (i=0;i<n_molecules;i++){
+    if (topology[i].type == type1){
+      if (type1==type2){
+	start=i+1;
+      } else {
+	start=0;
+      }
+      for (j=start;j<n_molecules;j++){
+	for(l=0;l<3;l++)
+	  force[l]=0;
+	if (topology[j].type == type2){
+	  //here positions are folded and compared
+	  checkpos=check_mol_positions(i,j,cross_pos,dir);
+	  get_mol_dist_vector_from_molid_cfg(i,j,com_dist);
+	  dist = sqrt(sqrlen(com_dist));
+	  if(checkpos!=0 && dist <= max_cut)
+	    {
+	      calc_force_between_mol(i,j,force);
+	      
+	      sum_force+=2.0*force[dir]*(double)checkpos;
+	      //psum+=force[k]*com_dist[k];
+	    }
+	}
+      }
+    }
+  }
+  
+  for(l=0;l<3;l++)
+    if(l != dir)
+      area=area*box_l[l];
+  
+  return sum_force/(2.0*area);
+}
+
+int check_mol_positions(int mol_id1, int mol_id2, double cross_pos, int dir){
+  
+  Particle *p1_com,*p2_com;
+  double coord1, coord2;
+  double folded1, folded2;
+  int sign=0;
+  
+  p1_com=get_mol_com_particle_from_molid_cfg(mol_id1);
+  p2_com=get_mol_com_particle_from_molid_cfg(mol_id2);  
+  
+  coord1=p1_com->r.p[dir];
+  coord2=p2_com->r.p[dir];
+  
+  folded1=fold_slab(coord1, cross_pos,dir);
+  folded2=fold_slab(coord2, cross_pos,dir);
+  
+  if ( fabs(folded1-cross_pos) >max_cut || fabs(folded2-cross_pos)>max_cut){
+    sign=0;
+  } else {
+    if(folded1>folded2){
+      if(folded1>=cross_pos && folded2<=cross_pos)
+	sign=1;
+    } else {
+      if(folded2>=cross_pos && folded1<=cross_pos)
+	sign=-1;
+    }
+  }
+  return sign;
+}
+
+double fold_slab(double coord, double cross_pos, int dir){
+  double a=cross_pos-box_l[dir]*0.5;
+  double folded=coord;
+  if(coord>=a){
+    while(folded>a+box_l[dir]){
+      folded=folded-box_l[dir];
+    }
+  } else {
+    while(folded<a)
+      folded=folded+box_l[dir];
+  }
+  
+  if(folded<a || folded >a+box_l[dir]){
+    fprintf(stderr, "Particle not well folded\nIn %f, %f but %f\nbox=%f\tslab=%f\n", a, coord,folded, box_l[dir],cross_pos ); errexit();
+  }
+  return folded;
 }
 
 #endif

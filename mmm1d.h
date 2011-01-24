@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file mmm1d.h  MMM1D algorithm for long range coulomb interactions.
     Implementation of the MMM1D method for the calculation of the electrostatic interaction in one dimensionally
     periodic systems. For details on the method see \ref MMM_general. The MMM1D method works only with the
@@ -40,10 +51,10 @@ typedef struct {
 extern MMM1D_struct mmm1d_params;
 
 /// print the mmm1d parameters to the interpreters result
-int printMMM1DToResult(Tcl_Interp *interp);
+int tclprint_to_result_MMM1D(Tcl_Interp *interp);
 
 /// parse the mmm1d parameters
-int inter_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
 
 /** parameters for MMM1D. Most of the parameters can also be tuned automatically. Unlike
     P3M, this tuning is redone automatically whenever parameters change, but not immediately
@@ -58,7 +69,7 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror);
 
 /** tuning of the parameters which are not set by the user, e.g. the switching radius or the
     bessel_cutoff. */
-int MMM1D_tune(Tcl_Interp *interp);
+int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp);
 
 /** recalculate the polygamma taylor series. */
 void MMM1D_recalcTables();

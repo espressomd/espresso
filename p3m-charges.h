@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 
 /** \file p3m-charges.h   P3M algorithm for long range coulomb interaction.
  *
@@ -81,10 +92,10 @@ void  P3M_init_charges(void);
 void P3M_scaleby_box_l_charges();
 
 /// parse the optimization parameters of p3m and the tuner
-int inter_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
 
 /// parse the basic p3m parameters
-int inter_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
 
 /** compute the k-space part of forces and energies for the charge-charge interaction  **/
 double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag);
@@ -98,6 +109,15 @@ int P3M_sanity_checks_boxl();
 /** Calculate number of charged particles, the sum of the squared
     charges and the squared sum of the charges. */
 void P3M_count_charged_particles();
+
+/** Error Codes for p3m tuning (version 2) :
+    P3M_TUNE_FAIL: force evaluation failes,
+    P3M_TUNE_NO_CUTOFF: could not finde a valid realspace cutoff radius,
+    P3M_TUNE_CAOTOLARGE: Charge asignment order to large for mesh size,
+    P3M_TUNE_ELCTEST: conflict with ELC gap size.
+*/
+
+enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLARGE = 4, P3M_TUNE_ELCTEST = 8, P3M_TUNE_CUTOFF_TOO_LARGE = 16 };
 
 /** Tune P3M parameters to desired accuracy.
 
@@ -132,10 +152,10 @@ void P3M_count_charged_particles();
 
     The function is based on routines of the program HE_Q.c written by M. Deserno.
  */
-int P3M_tune_parameters(Tcl_Interp *interp);
+int tclcommand_inter_coulomb_print_p3m_tune_parameteres(Tcl_Interp *interp);
 
 /** a probably faster adaptive tuning method. Uses the same error estimates and parameters as
-    \ref P3M_adaptive_tune_parameters, but a different strategy for finding the optimum. The algorithm
+    \ref tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres, but a different strategy for finding the optimum. The algorithm
     basically determines the mesh, cao and then the real space cutoff, in this nested order.
 
     For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
@@ -149,10 +169,10 @@ int P3M_tune_parameters(Tcl_Interp *interp);
     Both the search over mesh and cao stop to search in a specific direction once the computation time is
     significantly higher than the currently known optimum.
 
-    Compared to \ref P3M_tune_parameters, this function will test more parameters sets for efficiency, but
+    Compared to \ref tclcommand_inter_coulomb_print_p3m_tune_parameteres, this function will test more parameters sets for efficiency, but
     the error estimate is calculated less often. In general this should be faster and give better results.
  */
-int P3M_adaptive_tune_parameters(Tcl_Interp *interp);
+int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *interp);
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and

@@ -50,7 +50,7 @@ MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double ph
 }
 
 /// parse parameters for the dihedral potential
-MDINLINE int inter_parse_dihedral(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_dihedral(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   int mult;
   double bend, phase;

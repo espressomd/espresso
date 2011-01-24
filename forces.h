@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef FORCES_H
 #define FORCES_H
 /** \file forces.h Force calculation. 
@@ -238,7 +249,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 
 #ifdef INTER_DPD
-  if ( thermo_switch == THERMO_INTER_DPD ) add_interdpd_pair_force(p1,p2,ia_params,d,dist,dist2);
+  if ( thermo_switch == THERMO_INTER_DPD ) add_inter_dpd_pair_force(p1,p2,ia_params,d,dist,dist2);
 #endif
 
   /***********************************************/
@@ -538,10 +549,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       }
       
 #ifdef ADRESS
-      if((get_mol_com_particle(p1))->p.identity == (get_mol_com_particle(p2))->p.identity)
-	force_weight = 1.0;
-      else 
-	force_weight = adress_non_bonded_force_weight(p1,p2);
+      force_weight = adress_bonded_force_weight(p1,p2);
 #endif
 
       for (j = 0; j < 3; j++) {
@@ -581,7 +589,10 @@ MDINLINE void add_bonded_force(Particle *p1)
 		p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
       }
-
+      
+#ifdef ADRESS
+      force_weight=adress_angle_force_weight(p1,p2,p3);
+#endif
       for (j = 0; j < 3; j++) {
 #ifdef ADRESS
 	p1->f.f[j] += force_weight*force[j];
@@ -601,7 +612,9 @@ MDINLINE void add_bonded_force(Particle *p1)
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
       }
-
+#ifdef ADRESS
+      force_weight=adress_dihedral_force_weight(p1,p2,p3,p4);
+#endif 
       for (j = 0; j < 3; j++) {
 #ifdef ADRESS
 	p1->f.f[j] += force_weight*force[j];

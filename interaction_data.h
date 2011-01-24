@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while utilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef IA_DATA_H
 #define IA_DATA_H
 /** \file interaction_data.h
@@ -601,6 +612,8 @@ typedef struct {
   double n[3];
   /** distance of the wall from the origin. */
   double d;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -611,6 +624,8 @@ typedef struct {
   double rad;  
   /** sphere direction. (+1 outside -1 inside interaction direction)*/
   double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_sphere;
 
 /** Parameters for a CYLINDER constraint. */
@@ -625,6 +640,8 @@ typedef struct {
   double length;
   /** cylinder direction. (+1 outside -1 inside interaction direction)*/
   double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_cylinder;
 
 /** Parameters for a PORE constraint. */
@@ -667,6 +684,8 @@ typedef struct {
   double sphrad;
   /** cylinder (connecting the spheres) radius*/
   double cylrad;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
 } Constraint_maze;
 
 //ER
@@ -815,17 +834,14 @@ void tf_tables_init();
 /** Implementation of the tcl command \ref tcl_inter. This function
     allows the interaction parameters to be modified.
  */
-int inter(ClientData data, Tcl_Interp *interp,
+int tclcommand_inter(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
 /** Implementation of the Tcl function constraint. This function
     allows to set and delete constraints.
  */
-int constraint(ClientData _data, Tcl_Interp *interp,
+int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
-
-/** Callback for setmd niatypes. */
-int niatypes_callback(Tcl_Interp *interp, void *data);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
