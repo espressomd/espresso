@@ -202,7 +202,7 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
  /* lb */
   if(thermo_switch & THERMO_LB) {
     Tcl_PrintDouble(interp, temperature, buffer);
-    Tcl_AppendResult(interp,"{ lb_gpu ",buffer, " } ", (char *)NULL);
+    Tcl_AppendResult(interp,"{ lb ",buffer, " } ", (char *)NULL);
   }
 #endif
 

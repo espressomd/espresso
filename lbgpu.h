@@ -311,16 +311,14 @@ void lb_send_forces_gpu();
 }
 #endif
 
-#endif /* LB_GPU */
-
 /** Parser for the \ref lbnode command. */
-int lbnode_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbnode_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
-int lbfluid_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-int lbnode_extforce_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
+int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+#endif /* LB_GPU */
 #endif /* LB_GPU_H */
 
 /*@}*/

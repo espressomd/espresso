@@ -786,8 +786,9 @@ static int lbfluid_parse_gamma_even(Tcl_Interp *interp, int argc, char *argv[], 
 #endif /* LB_GPU */
 
 /** Parser for the \ref lbnode command. */
-int lbnode_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
+int tclcommand_lbnode_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
 #if 0 
    int err=TCL_ERROR;
    int coord[3];
@@ -830,12 +831,12 @@ int lbnode_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 Tcl_AppendResult(interp, "lbnode_gpu command currently not implemented in the GPU code, please use the CPU code", (char *)NULL);
      return TCL_ERROR;
 
-#else /* !defined LB_GPU */
-  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
-  return TCL_ERROR;
-#endif /* LB_GPU */
-}
+//#else /* !defined LB_GPU */
+//  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
+//  return TCL_ERROR;
 
+}
+#endif /* LB_GPU */
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   unsigned int index;
   double f[3];
@@ -893,8 +894,9 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 }
 
 /** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g. */
-int lbnode_extforce_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
+int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
 #if 1 
    int err=TCL_ERROR;
    int coord[3];
@@ -929,15 +931,16 @@ int lbnode_extforce_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char 
    return err;
 #endif
 
-#else /* !defined LB_GPU */
-  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
-  return TCL_ERROR;
-#endif /* LB_GPU */
-}
+//#else /* !defined LB_GPU */
+//  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
+//  return TCL_ERROR;
 
+}
+#endif /* LB_GPU */
 /** Parser for the \ref lbfluid command gpu. */
-int lbfluid_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
+int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
   int err = TCL_OK;
   int change = 0;
 
@@ -992,11 +995,12 @@ int lbfluid_cmd_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 	LB_TRACE (fprintf(stderr,"lbfluid_cmd_gpu parser ok \n"));
 
   return err;    
-#else /* !defined LB */
-  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
-  return TCL_ERROR;
-#endif
+//#else /* !defined LB */
+//  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+//  return TCL_ERROR;
+
 }
+#endif /* LB_GPU */
 /** dev output for several phys. values and printing into a paraview readable file for the macrscopic velocities */
 static void develop_output(){
 #ifdef LB_GPU

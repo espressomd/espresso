@@ -67,7 +67,6 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
-//#include "lbgpu.h"
 
 #ifdef CUDA
 #include "cuda_init.h"
@@ -797,7 +796,9 @@ static void init_tcl(Tcl_Interp *interp)
   /* in bin.c */
   REGISTER_COMMAND("bin", tclcommand_bin);
   /* in lb.c */
+#ifdef LB
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
+#endif
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
@@ -820,14 +821,14 @@ static void init_tcl(Tcl_Interp *interp)
 #endif
 #ifdef LB_GPU
   /* in lbgpu.c */
-  REGISTER_COMMAND("lbfluid_gpu", lbfluid_cmd_gpu);
+  REGISTER_COMMAND("lbfluid", tclcommand_lbfluid_gpu);
 
-  REGISTER_COMMAND("lbnode_gpu", lbnode_cmd_gpu);
+  REGISTER_COMMAND("lbnode", tclcommand_lbnode_gpu);
 
-  REGISTER_COMMAND("lbnode_exf_gpu", lbnode_extforce_cmd_gpu);
+  REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
 
 #ifdef LB_BOUNDARIES_GPU
-  REGISTER_COMMAND("lb_boundary_gpu", lb_boundary_cmd_gpu);
+  REGISTER_COMMAND("lb_boundary", tclcommand_lbboundary_gpu);
 #endif
 #endif
   /* evaluate the Tcl initialization script */
