@@ -19,9 +19,9 @@ SUBDIRS = . scripts tools testsuite doc
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = Makefile darwinlink.sh \
-	autogen.sh configure-ac samples cmake CMakeLists.txt \
-        acconfig.h.cmakein packages Espresso \
+EXTRA_DIST = darwinlink.sh \
+	autogen.sh samples cmake CMakeLists.txt \
+        acconfig.h.cmakein packages \
 	$(extra)
 
 # List headers that are not used by the program here
@@ -31,7 +31,7 @@ noinst_HEADERS = myconfig-sample.h \
 	p3m-assignment.c
 
 # List the sources of the Espresso binary here
-Espresso_bin_SOURCES = \
+libEspresso_a_SOURCES = \
 	main.c \
 	config.c config.h \
 	initialize.c initialize.h \
@@ -131,70 +131,34 @@ Espresso_bin_SOURCES = \
 	adresso.c adresso.h \
         tunable_slip.h
 
-#deactivate building of the library
-#libEspresso_a_SOURCES = $(Espresso_bin_SOURCES)
-
-# Remove all CVS files from the distribution
-# and remove the internal dir if not dist-internal is used
-dist-hook:
-	-rm -rf `find $(distdir) -name CVS`
-
 #################################################################
-# Installation of the main program and wrapper scripts
+# Installation of the main program
 #################################################################
-noinst_PROGRAMS = Espresso_bin
+# All objects are compiled into the library
+# Two binaries are generated: Espresso for the build dir,
+# Espresso.install for the installation dir. 
+# The ".install" suffix is removed upon installation
+noinst_LIBRARIES = libEspresso.a
 
-if USE_CHOOSER
+noinst_PROGRAMS = Espresso
+Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
+Espresso_SOURCES = scriptsdir.c
+Espresso_LDADD = libEspresso.a
 
-# Substitute some remaining variables in the Espresso wrappers. This
-# is necessary as the required values are only known at installation
-# time.
-install-exec-local:
-# create directories
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	test -z "$(pkglibdir)" || $(mkdir_p) "$(DESTDIR)$(pkglibdir)"
-	test -z "$(execpkglibdir)" || $(mkdir_p) "$(DESTDIR)$(execpkglibdir)"
-# install chooser
-	sed -e "s,[@]ESPRESSO_PKGLIBDIR[@],$(pkglibdir),g" \
-	chooser/Espresso > $(DESTDIR)/$(bindir)/Espresso
-	chmod 755 $(DESTDIR)/$(bindir)/Espresso
-# install config.guess script
-	$(INSTALL_SCRIPT) \
-	$(srcdir)/config/config.guess $(DESTDIR)/$(pkglibdir)/
-# install mpi wrapper
-	sed -e "s,[@]ESPRESSO_BIN[@],$(execpkglibdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-	mpiwrap/Espresso > $(DESTDIR)/$(execpkglibdir)/Espresso
-	chmod 755 $(DESTDIR)/$(execpkglibdir)/Espresso
-# install binary
-	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
-	Espresso_bin $(DESTDIR)/$(execpkglibdir)/
+bin_PROGRAMS = Espresso.install
+Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
+Espresso_install_SOURCES = scriptsdir.c
+Espresso_install_LDADD = libEspresso.a
 
-unistall-local:
-	rm $(DESTDIR)/$(bindir)/Espresso
-	rm $(DESTDIR)/$(execpkglibdir)/Espresso
-	rm $(DESTDIR)/$(execpkglibdir)/Espresso_bin
-
-else
-
-# Substitute some remaining variables in the Espresso wrappers. This
-# is necessary as the required values are only known at installation
-# time.
-install-exec-local:
-# create directories
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	test -z "$(libexecdir)" || $(mkdir_p) "$(DESTDIR)$(libexecdir)"
-# install mpi wrapper
-	sed -e "s,[@]ESPRESSO_BIN[@],$(libexecdir)/Espresso_bin,g;s,[@]ESPRESSO_SCRIPTS[@],$(scriptsdir),g" \
-	mpiwrap/Espresso > $(DESTDIR)/$(bindir)/Espresso
-	chmod 755 $(DESTDIR)/$(bindir)/Espresso
-# install binary
-	$(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) \
-	Espresso_bin $(DESTDIR)/$(libexecdir)/
+# rename Espresso after installation
+install-exec-hook:
+	$(am__mv) \
+		$(DESTDIR)$(bindir)/Espresso.install \
+		$(DESTDIR)$(bindir)/Espresso
 
 uninstall-local:
-	rm $(DESTDIR)/$(bindir)/Espresso
-	rm $(DESTDIR)/$(libexecdir)/Espresso_bin
-endif
+	-rm -f $(DESTDIR)$(bindir)/Espresso
+
 
 #################################################################
 # Documentation
@@ -211,14 +175,14 @@ FORCE:
 # add config/ to the INCLUDES so that the default config/$(myconfig) is
 # found at compile time
 INCLUDES = -Iconfig
-DEFS = -D 'MYCONFIG_H="$(myconfig)"'
+DEFS += -D 'MYCONFIG_H="$(myconfig)"'
 
 # add config/ to the VPATH so that $(myconfig) can be found by make
 vpath $(myconfig) $(top_builddir):$(top_srcdir):$(top_builddir)/config
 
 # add $(myconfig) to the dependencies of all object files so that
 # they get rebuilt when $(myconfig) is changed
-$(Espresso_bin_OBJECTS): $(myconfig)
+$(Espresso_OBJECTS): $(myconfig)
 
 DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
 
@@ -226,7 +190,7 @@ DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-Espresso_bin_SOURCES += mpifake/mpi.h mpifake/mpi.c
+libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 INCLUDES += -I$(srcdir)/mpifake -Iconfig
 endif
@@ -236,6 +200,7 @@ ACLOCAL_AMFLAGS = -Iconfig
 ##################################################
 # CUDA rules
 ##################################################
+if CUDA
 SUFFIXES=.cu
 .cu.o:
 	$(NVCC) -c $(NVCCFLAGS) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
@@ -244,8 +209,7 @@ CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h
 
-if CUDA
-Espresso_bin_SOURCES += $(CUDA_SOURCES)
+libEspresso_a_SOURCES += $(CUDA_SOURCES)
 endif
 
 ##################################################
