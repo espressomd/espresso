@@ -51,6 +51,7 @@ libEspresso_a_SOURCES = \
 	thermostat.c thermostat.h \
 	dpd.c dpd.h \
 	statistics.c statistics.h \
+	statistics_correlation.c statistics_correlation.h \
 	statistics_chain.c statistics_chain.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
