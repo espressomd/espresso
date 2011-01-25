@@ -30,7 +30,7 @@
 #ifdef LJCOS2
 #include <math.h>
 
-MDINLINE int printljcos2IAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_ljcos2IA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -84,7 +84,7 @@ MDINLINE int ljcos2_set_params(int part_type_a, int part_type_b,
 }
 
 
-MDINLINE int ljcos2_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_ljcos2(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {

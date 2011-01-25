@@ -1,17 +1,100 @@
-ESPResSo news
--------------
+=================
+= ESPRESSO NEWS =
+=================
 
-* Noteworthy changes in the current development version:
+NOTEWORTHY CHANGES SINCE v2.2.0b
+================================
 
-** The license was upgraded to GPLv3.
+User-visible changes
+--------------------
 
-** The whole package was adapted to GNU standards.
+* Constraints have been made penetrable.
+
+* The automatic obj-directories have been removed. If you want to use
+  object directories, just change to the directory and call configure
+  from there. This change made the whole build system much more GNU
+  compliant and easier to maintain.
+
+* The Espresso wrapper scripts have disappeared, and Espresso_bin has
+  been renamed to Espresso. The directory where the scripts are
+  installed is now compiled into the binary, i.e. it is not necessary
+  anymore to set the environment variable ESPRESSO_SCRIPTS. Still, it
+  will heed the environment variable if it is set.
+
+Organizational changes
+----------------------
+
+* The home page of ESPReSso has been relocated to
+
+    http://espressomd.org
+
+* The mailing list and source code repository have been moved to GNU
+  Savannah. Furthermore, we have a bugtracker now. The development
+  homepage is 
+
+    https://savannah.nongnu.org/projects/espressomd
+
+* The maintenance of ESPResSo has been relocated from Torsten Stühn
+  from the Max-Planck-Institute for Polymer Research at Mainz to 
+
+    Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+  from the Institute for Computational Physics at Stuttgart University.
+
+* The old "ESPResSo license" was removed, as it was not really a
+  license, but only contained additions that were either non-binding
+  or already contained in the GPL.
+
+* The license was upgraded to GPLv3.
+
+* The package was adapted to GNU standards. RELEASE_NOTES was moved
+  aside to old/RELEASE_NOTES, instead, we will have the files
+  ChangeLog and NEWS. NEWS will contain a description of the most
+  noteworthy changes since the last release.
+
+User-visible changes
+--------------------
+
+* The build system has been overhauled and simplified.
+
+  * "Espresso" is now the actual binary instead of a wrapper shell
+    script that automatically calls MPI. This means that it is
+    necessary to call "mpiexec" or "mpirun" youself to run ESPResSo in
+    an MPI environment.
+
+  * MPI recognition has changed. The build system first needs to find
+    out how to compile an MPI binary. If it doesn't find out
+    automatically, you can help it by setting the variable MPICC or
+    LDFLAGS correctly.  Furthermore, it needs to know how to run an MPI
+    binary.  If "mpiexec" is available, everything is fine.  If it is
+    not, you can provide a script "mympiexec.sh" that behaves like
+    mpiexec.
+
+  * So far, when you built in the source directory, all files ended up
+    in a subdirectory "obj.XXX", where XXX was some description of the
+    processor you used.  This non-standard behavior has been removed.
+    Instead, the files are generated directly in the source directory
+    when compiling there.
+    If you want to compile several binaries from a single source
+    directory, you can use build directories as described in the
+    User's Guide.
+
+Changes visible for developers
+------------------------------
+
+* The source code repository has been moved from CVS to git, and it
+  has moved to GNU Savannah (see above).
+
+* All functions that represent the interface to Tcl should follow the
+  same naming conventions. These are described here:
+
+    git log 3d4d6f31655a8d96e47c8f80e10f27f6b764f8df
 
 ========================================================================
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010 The ESPResSo project
+Copyright (C) 2010,2011 The ESPResSo project
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or

@@ -1,4 +1,4 @@
-# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2010,2011 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 #  
 # This file is part of ESPResSo.
@@ -21,14 +21,7 @@
 #                                                           #
 #  Test System: NaCl crystal - Madelung constant            #
 #                                                           #
-#                                                           #
-#  Created:       18.03.2003 by HL                          #
-#  Last modified: 24.03.2003 by HL                          #
-#                                                           #
 #############################################################
-
-set errf [lindex $argv 1]
-
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
@@ -185,5 +178,4 @@ if { $err_pres > $accuracy } {
     error_exit "pressure derivation failed to reach accuracy goal"
 }
 
-exec rm -f $errf
 exit 0

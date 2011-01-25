@@ -1,7 +1,6 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!--
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+/*
+  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010 Olaf Lenz
   
   This file is part of ESPResSo.
   
@@ -16,9 +15,9 @@
   GNU General Public License for more details.
   
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
--->
-<html><head><meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
-<title>$title</title>
-<link href="doxygen.css" rel="stylesheet" type="text/css">
-</head><body>
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+/* Minimal function that only contains the default scriptsdir. */
+char* get_default_scriptsdir() {
+  return ESPRESSO_SCRIPTS_DEFAULT ;
+}

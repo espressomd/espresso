@@ -126,10 +126,10 @@ DoubleList thermodynamic_f_energies;
 #endif
 
 ///
-int printCoulombIAToResult(Tcl_Interp *interp);
+int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
 #ifdef MAGNETOSTATICS
-int printDipolarIAToResult(Tcl_Interp *interp);
+int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 #endif
 
 /*****************************************
@@ -1234,14 +1234,14 @@ int coulomb_set_bjerrum(double bjerrum)
   return TCL_OK;
 }
 
-int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 {
   double d1;
 
   Tcl_ResetResult(interp);
 
   if(argc == 0) {
-    printCoulombIAToResult(interp);
+    tclprint_to_result_CoulombIA(interp);
     return TCL_OK;
   }
   
@@ -1249,9 +1249,9 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 #ifdef ELP3M
     Tcl_ResetResult(interp);
     if (ARG0_IS_S("elc") && ((coulomb.method == COULOMB_P3M) || (coulomb.method == COULOMB_ELC_P3M)))
-      return inter_parse_elc_params(interp, argc - 1, argv + 1);
+      return tclcommand_inter_coulomb_parse_elc_params(interp, argc - 1, argv + 1);
     if (coulomb.method == COULOMB_P3M)
-      return inter_parse_p3m_opt_params(interp, argc, argv);
+      return tclcommand_inter_coulomb_parse_p3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter coulomb <bjerrum>",
 		       (char *) NULL);
@@ -1290,22 +1290,22 @@ int inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
     return parser(interp, argc-1, argv+1);
 
 #ifdef ELP3M
-  REGISTER_COULOMB("p3m", inter_parse_p3m);
+  REGISTER_COULOMB("p3m", tclcommand_inter_coulomb_parse_p3m);
 #endif
 
-  REGISTER_COULOMB("ewald", inter_parse_ewald);
+  REGISTER_COULOMB("ewald", tclcommand_inter_coulomb_parse_ewald); 
 
-  REGISTER_COULOMB("dh", inter_parse_dh);    
+  REGISTER_COULOMB("dh", tclcommand_inter_coulomb_parse_dh);    
 
-  if(ARG0_IS_S("rf")) return inter_parse_rf(interp, argc-1, argv+1,COULOMB_RF);
+  if(ARG0_IS_S("rf")) return tclcommand_inter_coulomb_parse_rf(interp, argc-1, argv+1,COULOMB_RF);
 
-  if(ARG0_IS_S("inter_rf")) return inter_parse_rf(interp, argc-1, argv+1,COULOMB_INTER_RF);
+  if(ARG0_IS_S("inter_rf")) return tclcommand_inter_coulomb_parse_rf(interp, argc-1, argv+1,COULOMB_INTER_RF);
 
-  REGISTER_COULOMB("mmm1d", inter_parse_mmm1d);
+  REGISTER_COULOMB("mmm1d", tclcommand_inter_coulomb_parse_mmm1d);
 
-  REGISTER_COULOMB("mmm2d", inter_parse_mmm2d);
+  REGISTER_COULOMB("mmm2d", tclcommand_inter_coulomb_parse_mmm2d);
 
-  REGISTER_COULOMB("maggs", inter_parse_maggs);
+  REGISTER_COULOMB("maggs", tclcommand_inter_coulomb_parse_maggs);
 
   /* fallback */
   coulomb.method  = COULOMB_NONE;
@@ -1361,14 +1361,14 @@ int dipolar_set_Dbjerrum(double bjerrum)
   return TCL_OK;
 }
 
-int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
 {
   double d1;
 
   Tcl_ResetResult(interp);
 
   if(argc == 0) {
-    printDipolarIAToResult(interp);
+    tclprint_to_result_DipolarIA(interp);
     return TCL_OK;
   }
   
@@ -1378,14 +1378,14 @@ int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
     
     #ifdef MDLC  
     if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
-      return inter_parse_mdlc_params(interp, argc - 1, argv + 1);
+      return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
 
      if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
-      return inter_parse_mdlc_params(interp, argc - 1, argv + 1);
+      return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
    #endif 
       
    if (coulomb.Dmethod == DIPOLAR_P3M)
-      return Dinter_parse_p3m_opt_params(interp, argc, argv);
+      return tclcommand_inter_magnetic_parse_p3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter magnetic <Dbjerrum>",
 		       (char *) NULL);
@@ -1425,15 +1425,15 @@ int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
     return parser(interp, argc-1, argv+1);
 
 #ifdef ELP3M
-  REGISTER_DIPOLAR("p3m", Dinter_parse_p3m);
+  REGISTER_DIPOLAR("p3m", tclcommand_inter_magnetic_parse_p3m);
 #endif
 
 #ifdef DAWAANR
-  REGISTER_DIPOLAR("dawaanr", Dinter_parse_dawaanr);
+  REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
 #endif
 
 #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-  REGISTER_DIPOLAR("mdds", Dinter_parse_magnetic_dipolar_direct_sum);
+  REGISTER_DIPOLAR("mdds", tclcommand_inter_magnetic_parse_mdds);
 #endif
 
 
@@ -1459,7 +1459,7 @@ int inter_parse_dipolar(Tcl_Interp * interp, int argc, char ** argv)
 /*                                       printing                               */
 /********************************************************************************/
 
-int printBondedIAToResult(Tcl_Interp *interp, int i)
+int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 {
   Bonded_ia_parameters *params = &bonded_ia_params[i];
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -1587,7 +1587,7 @@ int printBondedIAToResult(Tcl_Interp *interp, int i)
 
 #ifdef ADRESS
 /** #ifdef THERMODYNAMIC_FORCE */
-int printTFToResult(Tcl_Interp *interp, int i)
+int tclprint_to_result_TF(Tcl_Interp *interp, int i)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   TF_parameters *data = get_tf_param(i);
@@ -1609,7 +1609,7 @@ int printTFToResult(Tcl_Interp *interp, int i)
 /** #endif */
 #endif
 
-int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
+int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -1624,40 +1624,40 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
   sprintf(buffer, "%d %d ", i, j);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 #ifdef LENNARD_JONES
-  if (data->LJ_cut != 0) printljIAToResult(interp,i,j);
+  if (data->LJ_cut != 0) tclprint_to_result_ljIA(interp,i,j);
 #endif
 #ifdef LENNARD_JONES_GENERIC
-  if (data->LJGEN_cut != 0) printljgenIAToResult(interp,i,j);
+  if (data->LJGEN_cut != 0) tclprint_to_result_ljgenIA(interp,i,j);
 #endif
 #ifdef LJ_ANGLE
-  if (data->LJANGLE_cut != 0) printljangleIAToResult(interp,i,j);
+  if (data->LJANGLE_cut != 0) tclprint_to_result_ljangleIA(interp,i,j);
 #endif
 #ifdef SMOOTH_STEP
-  if (data->SmSt_cut != 0) printSmStIAToResult(interp,i,j);
+  if (data->SmSt_cut != 0) tclprint_to_result_SmStIA(interp,i,j);
 #endif
 #ifdef HERTZIAN
-  if (data->Hertzian_sig != 0) printHertzianIAToResult(interp,i,j);
+  if (data->Hertzian_sig != 0) tclprint_to_result_HertzianIA(interp,i,j);
 #endif
 #ifdef BMHTF_NACL
-  if (data->BMHTF_cut != 0) printBMHTFIAToResult(interp,i,j);
+  if (data->BMHTF_cut != 0) tclprint_to_result_BMHTFIA(interp,i,j);
 #endif
 #ifdef MORSE
-  if (data->MORSE_cut != 0) printmorseIAToResult(interp,i,j);
+  if (data->MORSE_cut != 0) tclprint_to_result_morseIA(interp,i,j);
 #endif
 #ifdef LJCOS
-  if (data->LJCOS_cut != 0) printljcosIAToResult(interp,i,j);
+  if (data->LJCOS_cut != 0) tclprint_to_result_ljcosIA(interp,i,j);
 #endif
 #ifdef BUCKINGHAM
-  if (data->BUCK_cut != 0) printbuckIAToResult(interp,i,j);
+  if (data->BUCK_cut != 0) tclprint_to_result_buckIA(interp,i,j);
 #endif
 #ifdef SOFT_SPHERE
-  if (data->soft_cut != 0) printsoftIAToResult(interp,i,j);
+  if (data->soft_cut != 0) tclprint_to_result_softIA(interp,i,j);
 #endif
 #ifdef LJCOS2
-  if (data->LJCOS2_cut != 0) printljcos2IAToResult(interp,i,j);
+  if (data->LJCOS2_cut != 0) tclprint_to_result_ljcos2IA(interp,i,j);
 #endif
 #ifdef GAY_BERNE
-  if (data->GB_cut != 0) printgbIAToResult(interp,i,j);
+  if (data->GB_cut != 0) tclprint_to_result_gbIA(interp,i,j);
 #endif
 #ifdef TABULATED
   if (data->TAB_maxval != 0)
@@ -1670,33 +1670,33 @@ int printNonbondedIAToResult(Tcl_Interp *interp, int i, int j)
 #endif
 #endif
 #ifdef COMFORCE
-  if (data->COMFORCE_flag != 0) printcomforceIAToResult(interp,i,j);
+  if (data->COMFORCE_flag != 0) tclprint_to_result_comforceIA(interp,i,j);
 #endif
 
 #ifdef COMFIXED
-  if (data->COMFIXED_flag != 0) printcomfixedIAToResult(interp,i,j);
+  if (data->COMFIXED_flag != 0) tclprint_to_result_comfixedIA(interp,i,j);
 #endif
 
 #ifdef INTER_DPD
-  if ((data->dpd_r_cut != 0)||(data->dpd_tr_cut != 0)) printinterdpdIAToResult(interp,i,j);
+  if ((data->dpd_r_cut != 0)||(data->dpd_tr_cut != 0)) tclprint_to_result_inter_dpdIA(interp,i,j);
 #endif
 
 #ifdef INTER_RF
-  if (data->rf_on == 1) printinterrfIAToResult(interp,i,j);
+  if (data->rf_on == 1) tclprint_to_result_interrfIA(interp,i,j);
 #endif
   
 #ifdef MOL_CUT
-  if (data->mol_cut_type != 0) printmolcutIAToResult(interp,i,j);
+  if (data->mol_cut_type != 0) tclprint_to_result_molcutIA(interp,i,j);
 #endif
 
 #ifdef TUNABLE_SLIP
-  if (data->TUNABLE_SLIP_r_cut != 0) printtunable_slipIAToResult(interp,i,j);
+  if (data->TUNABLE_SLIP_r_cut != 0) tclprint_to_result_tunable_slipIA(interp,i,j);
 #endif
 
   return (TCL_OK);
 }
 
-int printCoulombIAToResult(Tcl_Interp *interp) 
+int tclprint_to_result_CoulombIA(Tcl_Interp *interp) 
 {
 #ifdef ELECTROSTATICS
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -1709,18 +1709,18 @@ int printCoulombIAToResult(Tcl_Interp *interp)
   switch (coulomb.method) {
 #ifdef ELP3M
   case COULOMB_ELC_P3M:
-    printChargeP3MToResult(interp);
-    printELCToResult(interp);
+    tclprint_to_result_ChargeP3M(interp);
+    tclprint_to_result_ELC(interp);
     break;
-  case COULOMB_P3M: printChargeP3MToResult(interp); break;
+  case COULOMB_P3M: tclprint_to_result_ChargeP3M(interp); break;
 #endif
-  case COULOMB_EWALD: printEWALDToResult(interp); break;
-  case COULOMB_DH: printdhToResult(interp); break;
-  case COULOMB_RF: printrfToResult(interp,"rf"); break;
-  case COULOMB_INTER_RF: printrfToResult(interp,"inter_rf"); break;
-  case COULOMB_MMM1D: printMMM1DToResult(interp); break;
-  case COULOMB_MMM2D: printMMM2DToResult(interp); break;
-  case COULOMB_MAGGS: printMaggsToResult(interp); break;
+  case COULOMB_EWALD: tclprint_to_result_EWALD(interp); break;
+  case COULOMB_DH: tclprint_to_result_dh(interp); break;
+  case COULOMB_RF: tclprint_to_result_rf(interp,"rf"); break;
+  case COULOMB_INTER_RF: tclprint_to_result_rf(interp,"inter_rf"); break;
+  case COULOMB_MMM1D: tclprint_to_result_MMM1D(interp); break;
+  case COULOMB_MMM2D: tclprint_to_result_MMM2D(interp); break;
+  case COULOMB_MAGGS: tclprint_to_result_Maggs(interp); break;
   default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
@@ -1732,7 +1732,7 @@ int printCoulombIAToResult(Tcl_Interp *interp)
 }
 
 #ifdef MAGNETOSTATICS
-int printDipolarIAToResult(Tcl_Interp *interp) 
+int tclprint_to_result_DipolarIA(Tcl_Interp *interp) 
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
   if (coulomb.Dmethod == DIPOLAR_NONE) {
@@ -1746,23 +1746,23 @@ int printDipolarIAToResult(Tcl_Interp *interp)
     #ifdef ELP3M
      #ifdef MDLC
        case DIPOLAR_MDLC_P3M:
-        printDipolarP3MToResult(interp);   
-        printMDLCToResult(interp);
+        tclprint_to_result_DipolarP3M(interp);   
+        tclprint_to_result_MDLC(interp);
         break;
      #endif	
-    case DIPOLAR_P3M: printDipolarP3MToResult(interp); break;
+    case DIPOLAR_P3M: tclprint_to_result_DipolarP3M(interp); break;
    #endif
    #if  defined(MDLC) && defined(MAGNETIC_DIPOLAR_DIRECT_SUM)
      case DIPOLAR_MDLC_DS:
-        printMagnetic_dipolar_direct_sum_ToResult(interp);
-        printMDLCToResult(interp);
+        tclprint_to_result_Magnetic_dipolar_direct_sum_(interp);
+        tclprint_to_result_MDLC(interp);
         break;
   #endif
   #ifdef DAWAANR	
-    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: printDAWAANRToResult(interp); break;
+    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
  #endif
  #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-    case DIPOLAR_DS: printMagnetic_dipolar_direct_sum_ToResult(interp); break;
+    case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
 #endif
     default: break;
   }
@@ -1772,7 +1772,7 @@ int printDipolarIAToResult(Tcl_Interp *interp)
 }
 #endif
 
-int inter_print_all(Tcl_Interp *interp)
+int tclcommand_inter_print_all(Tcl_Interp *interp)
 {
   int i, j, start = 1;
 
@@ -1785,7 +1785,7 @@ int inter_print_all(Tcl_Interp *interp)
       else
 	Tcl_AppendResult(interp, " {", (char *)NULL);
 
-      printBondedIAToResult(interp, i);
+      tclprint_to_result_BondedIA(interp, i);
       Tcl_AppendResult(interp, "}", (char *)NULL);
     }
   }
@@ -1798,7 +1798,7 @@ int inter_print_all(Tcl_Interp *interp)
 	}
 	else
 	  Tcl_AppendResult(interp, " {", (char *)NULL);
-	printNonbondedIAToResult(interp, i, j);
+	tclprint_to_result_NonbondedIA(interp, i, j);
 	Tcl_AppendResult(interp, "}", (char *)NULL);
       }
     }
@@ -1808,9 +1808,9 @@ int inter_print_all(Tcl_Interp *interp)
       start = 0;
     else
       Tcl_AppendResult(interp, " ", (char *)NULL);
-    /* here the curled braces will be set inside \ref printCoulombIAToResult
+    /* here the curled braces will be set inside \ref tclprint_to_result_CoulombIA
        because electrostatics might be using several lists */
-    printCoulombIAToResult(interp);
+    tclprint_to_result_CoulombIA(interp);
   }
 #endif
 
@@ -1820,9 +1820,9 @@ int inter_print_all(Tcl_Interp *interp)
       start = 0;
     else
       Tcl_AppendResult(interp, " ", (char *)NULL);
-    /* here the curled braces will be set inside \ref printDipolarIAToResult
+    /* here the curled braces will be set inside \ref tclprint_to_result_DipolarIA
        because magnetostatics might be using several lists */
-    printDipolarIAToResult(interp);
+    tclprint_to_result_DipolarIA(interp);
   }
 #endif
 
@@ -1929,7 +1929,7 @@ if(morse_force_cap != 0.0) {
   return (TCL_OK);
 }
 
-int inter_print_bonded(Tcl_Interp *interp, int i)
+int tclcommand_inter_print_bonded(Tcl_Interp *interp, int i)
 {
   char buffer[TCL_INTEGER_SPACE];
 
@@ -1943,7 +1943,7 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
   
   /* print specific interaction information */
   if(i<n_bonded_ia) {
-    printBondedIAToResult(interp, i);
+    tclprint_to_result_BondedIA(interp, i);
     return TCL_OK;
   }
 
@@ -1953,7 +1953,7 @@ int inter_print_bonded(Tcl_Interp *interp, int i)
   return TCL_ERROR;
 }
 
-int inter_print_non_bonded(Tcl_Interp * interp,
+int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b)
 {
   IA_parameters *data, *data_sym;
@@ -1971,11 +1971,12 @@ int inter_print_non_bonded(Tcl_Interp * interp,
     return TCL_ERROR;
   }
 
-  return printNonbondedIAToResult(interp, part_type_a, part_type_b);
+  return tclprint_to_result_NonbondedIA(interp, part_type_a, part_type_b);
 }
 
 #ifdef ADRESS
 /** #ifdef THERMODYNAMIC_FORCE */
+/* TODO: This function is not used anywhere. To be removed?  */
 int tf_print(Tcl_Interp * interp, int part_type)
 {
   TF_parameters *data;
@@ -1985,13 +1986,13 @@ int tf_print(Tcl_Interp * interp, int part_type)
     
     data = get_tf_param(part_type);
     
-    return printTFToResult(interp, part_type);
+    return tclprint_to_result_TF(interp, part_type);
 }
 /** #endif */
 #endif
 
 
-int inter_parse_non_bonded(Tcl_Interp * interp,
+int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 			   int part_type_a, int part_type_b,
 			   int argc, char ** argv)
 {
@@ -2021,80 +2022,80 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
       change = parser(interp, part_type_a, part_type_b, argc, argv)
 
 #ifdef LENNARD_JONES
-    REGISTER_NONBONDED("lennard-jones", lj_parser);
+    REGISTER_NONBONDED("lennard-jones", tclcommand_inter_parse_lj);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-    REGISTER_NONBONDED("lj-gen", ljgen_parser);
+    REGISTER_NONBONDED("lj-gen", tclcommand_inter_parse_ljgen);
 #endif
 
 #ifdef LJ_ANGLE
-    REGISTER_NONBONDED("lj-angle", ljangle_parser);
+    REGISTER_NONBONDED("lj-angle", tclcommand_inter_parse_ljangle);
 #endif
 
 #ifdef SMOOTH_STEP
-    REGISTER_NONBONDED("smooth-step", SmSt_parser);
+    REGISTER_NONBONDED("smooth-step", tclcommand_inter_parse_SmSt);
 #endif
 
 #ifdef HERTZIAN
-    REGISTER_NONBONDED("hertzian", hertzian_parser);
+    REGISTER_NONBONDED("hertzian", tclcommand_inter_parse_hertzian);
 #endif
 
 #ifdef BMHTF_NACL
-    REGISTER_NONBONDED("bmhtf-nacl", BMHTF_parser);
+    REGISTER_NONBONDED("bmhtf-nacl", tclcommand_inter_parse_BMHTF);
 #endif
 
 #ifdef MORSE
-    REGISTER_NONBONDED("morse", morse_parser);
+    REGISTER_NONBONDED("morse", tclcommand_inter_parse_morse);
 #endif
 
 #ifdef LJCOS
-    REGISTER_NONBONDED("lj-cos", ljcos_parser);
+    REGISTER_NONBONDED("lj-cos", tclcommand_inter_parse_ljcos);
 #endif
 
 #ifdef BUCKINGHAM
-    REGISTER_NONBONDED("buckingham", buckingham_parser);
+    REGISTER_NONBONDED("buckingham", tclcommand_inter_parse_buckingham);
 #endif
 
 #ifdef SOFT_SPHERE
-    REGISTER_NONBONDED("soft-sphere", soft_parser);
+    REGISTER_NONBONDED("soft-sphere", tclcommand_inter_parse_soft);
 #endif
 
 #ifdef COMFORCE
-    REGISTER_NONBONDED("comforce", comforce_parser);
+    REGISTER_NONBONDED("comforce", tclcommand_inter_parse_comforce);
 #endif
 
 #ifdef LJCOS2
-    REGISTER_NONBONDED("lj-cos2", ljcos2_parser);
+    REGISTER_NONBONDED("lj-cos2", tclcommand_inter_parse_ljcos2);
 #endif
 
 #ifdef COMFIXED
-    REGISTER_NONBONDED("comfixed", comfixed_parser);
+    REGISTER_NONBONDED("comfixed", tclcommand_inter_parse_comfixed);
 #endif
 
 #ifdef GAY_BERNE
-    REGISTER_NONBONDED("gay-berne", gb_parser);
+    REGISTER_NONBONDED("gay-berne", tclcommand_inter_parse_gb);
 #endif
 
 #ifdef TABULATED
-    REGISTER_NONBONDED("tabulated", tab_parser);
+    REGISTER_NONBONDED("tabulated", tclcommand_inter_parse_tab);
 #endif
 #ifdef INTER_DPD
-    REGISTER_NONBONDED("inter_dpd", interdpd_parser);
+    REGISTER_NONBONDED("inter_dpd", tclcommand_inter_parse_inter_dpd);
 #endif
 #ifdef INTER_RF
-    REGISTER_NONBONDED("inter_rf", interrf_parser);
+    REGISTER_NONBONDED("inter_rf", tclcommand_inter_parse_interrf);
 #endif
 #ifdef TUNABLE_SLIP
-    REGISTER_NONBONDED("tunable_slip", tunable_slip_parser);
+    REGISTER_NONBONDED("tunable_slip", tclcommand_inter_parse_tunable_slip);
 #endif
 #ifdef MOL_CUT
-    REGISTER_NONBONDED("molcut", molcut_parser);
+    REGISTER_NONBONDED("molcut", tclcommand_inter_parse_molcut);
 #endif
     
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
-    REGISTER_NONBONDED("adress_tab_ic", adress_tab_parser);
+    REGISTER_NONBONDED("adress_tab_ic", tclcommand_inter_parse_adress_tab);
 #endif
 #endif
     else {
@@ -2113,7 +2114,7 @@ int inter_parse_non_bonded(Tcl_Interp * interp,
   return TCL_OK;
 }
 
-int inter_print_partner_num(Tcl_Interp *interp, int bond_type)
+int tclcommand_inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 {
   Bonded_ia_parameters * params;
   char buffer[TCL_INTEGER_SPACE];
@@ -2158,19 +2159,19 @@ int virtual_set_params(int bond_type)
   return TCL_OK;
 }
 
-int inter_parse_virtual_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+int tclcommand_inter_parse_virtual_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
 	CHECK_VALUE(virtual_set_params(bond_type), "bond type must be nonnegative");
 }
 #endif
 
-int inter_parse_bonded(Tcl_Interp *interp,
+int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 		       int bond_type,
 		       int argc, char ** argv)
 {
   if (ARG0_IS_S("num")) {
     if (argc == 1)
-      return inter_print_partner_num(interp, bond_type);
+      return tclcommand_inter_print_partner_num(interp, bond_type);
     else {
 	Tcl_AppendResult(interp, "too many parameters",
 			 (char *) NULL);
@@ -2181,69 +2182,69 @@ int inter_parse_bonded(Tcl_Interp *interp,
 #define REGISTER_BONDED(name,parser)			\
   if (ARG0_IS_S(name)) return parser(interp, bond_type, argc, argv);
   
-  REGISTER_BONDED("fene", inter_parse_fene);
-  REGISTER_BONDED("harmonic", inter_parse_harmonic);
+  REGISTER_BONDED("fene", tclcommand_inter_parse_fene);
+  REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
 #ifdef LENNARD_JONES  
-  REGISTER_BONDED("subt_lj", inter_parse_subt_lj);
+  REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif
 #ifdef BOND_ANGLE
-  REGISTER_BONDED("angle", inter_parse_angle);
+  REGISTER_BONDED("angle", tclcommand_inter_parse_angle);
 #endif
 #ifdef BOND_ANGLEDIST
-  REGISTER_BONDED("angledist", inter_parse_angledist);
+  REGISTER_BONDED("angledist", tclcommand_inter_parse_angledist);
 #endif
-  REGISTER_BONDED("dihedral", inter_parse_dihedral);
+  REGISTER_BONDED("dihedral", tclcommand_inter_parse_dihedral);
 #ifdef BOND_ENDANGLEDIST
-  REGISTER_BONDED("endangledist", inter_parse_endangledist);
+  REGISTER_BONDED("endangledist", tclcommand_inter_parse_endangledist);
 #endif
 #ifdef TABULATED
-  REGISTER_BONDED("tabulated", inter_parse_bonded_tabulated);
+  REGISTER_BONDED("tabulated", tclcommand_inter_parse_tabulated_bonded);
 #endif
 #ifdef OVERLAPPED
-  REGISTER_BONDED("overlapped", inter_parse_bonded_overlapped);
+  REGISTER_BONDED("overlapped", tclcommand_inter_parse_overlapped_bonded);
 #endif
 #ifdef BOND_CONSTRAINT
-  REGISTER_BONDED("rigid_bond", inter_parse_rigid_bonds);
+  REGISTER_BONDED("rigid_bond", tclcommand_inter_parse_rigid_bond);
 #endif
 #ifdef BOND_VIRTUAL
-  REGISTER_BONDED("virtual_bond", inter_parse_virtual_bonds);
+  REGISTER_BONDED("virtual_bond", tclcommand_inter_parse_virtual_bonds);
 #endif
   Tcl_AppendResult(interp, "unknown bonded interaction type \"", argv[0],
 		   "\"", (char *) NULL);
   return TCL_ERROR;
 }
 
-int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
 #if defined(LENNARD_JONES) || defined(LENNARD_JONES_GENERIC)
   if(ARG0_IS_S("ljforcecap"))
-    return inter_parse_ljforcecap(interp, argc-1, argv+1);
+    return tclcommand_inter_parse_ljforcecap(interp, argc-1, argv+1);
 #endif
 
 #ifdef LJ_ANGLE
   if(ARG0_IS_S("ljangleforcecap"))
-    return inter_parse_ljangleforcecap(interp, argc-1, argv+1);
+    return tclcommand_inter_parse_ljangleforcecap(interp, argc-1, argv+1);
 #endif
 
   
 #ifdef MORSE
   if(ARG0_IS_S("morseforcecap"))
-    return inter_parse_morseforcecap(interp, argc-1, argv+1);
+    return tclcommand_inter_parse_morseforcecap(interp, argc-1, argv+1);
 #endif
 
 #ifdef BUCKINGHAM
   if(ARG0_IS_S("buckforcecap"))
-    return inter_parse_buckforcecap(interp, argc-1, argv+1);
+    return tclcommand_inter_parse_buckforcecap(interp, argc-1, argv+1);
 #endif
 
 #ifdef TABULATED
   if(ARG0_IS_S("tabforcecap"))
-    return inter_parse_tabforcecap(interp, argc-1, argv+1);
+    return tclcommand_inter_parse_tabforcecap(interp, argc-1, argv+1);
 #endif
 
   if(ARG0_IS_S("coulomb")) {
     #ifdef ELECTROSTATICS
-      return inter_parse_coulomb(interp, argc-1, argv+1);
+      return tclcommand_inter_parse_coulomb(interp, argc-1, argv+1);
    #else
        Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)", (char *) NULL);
     #endif
@@ -2251,7 +2252,7 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
   
   if(ARG0_IS_S("magnetic")) {
    #ifdef MAGNETOSTATICS
-      return inter_parse_dipolar(interp, argc-1, argv+1);
+      return tclcommand_inter_parse_magnetic(interp, argc-1, argv+1);
     #else
       Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)", (char *) NULL);
     #endif
@@ -2264,7 +2265,7 @@ int inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
   return TCL_ERROR;
 }
 
-int inter(ClientData _data, Tcl_Interp *interp,
+int tclcommand_inter(ClientData _data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
   int i, j, err_code = TCL_OK, is_i1, is_i2;
@@ -2284,16 +2285,16 @@ int inter(ClientData _data, Tcl_Interp *interp,
 
   if (argc == 1) {
     /* no argument -> print all interaction informations. */
-    err_code = inter_print_all(interp);
+    err_code = tclcommand_inter_print_all(interp);
   }
   else if (argc == 2) {
     /* There is only 1 parameter, bonded ia printing or force caps */
 
     if (ARG1_IS_I(i))
-      err_code = inter_print_bonded(interp, i);
+      err_code = tclcommand_inter_print_bonded(interp, i);
     else {
       Tcl_ResetResult(interp);
-      err_code = inter_parse_rest(interp, argc-1, argv+1);
+      err_code = tclcommand_inter_parse_rest(interp, argc-1, argv+1);
     }
   }
   else if (argc == 3) {
@@ -2305,11 +2306,11 @@ int inter(ClientData _data, Tcl_Interp *interp,
     Tcl_ResetResult(interp);
 
     if (is_i1 && is_i2)
-      err_code = inter_print_non_bonded(interp, i, j);
+      err_code = tclcommand_inter_print_non_bonded(interp, i, j);
     else if (is_i1)
-      err_code = inter_parse_bonded(interp, i, argc-2, argv+2);
+      err_code = tclcommand_inter_parse_bonded(interp, i, argc-2, argv+2);
     else
-      err_code = inter_parse_rest(interp, argc-1, argv+1);
+      err_code = tclcommand_inter_parse_rest(interp, argc-1, argv+1);
   }
   else {
     /****************************************************
@@ -2323,13 +2324,13 @@ int inter(ClientData _data, Tcl_Interp *interp,
  
     // non bonded interactions
     if (is_i1 && is_i2)
-      err_code = inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
+      err_code = tclcommand_inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
     else if (is_i1)
       // bonded interactions
-      err_code = inter_parse_bonded(interp, i, argc-2, argv+2);
+      err_code = tclcommand_inter_parse_bonded(interp, i, argc-2, argv+2);
     else
       // named interactions
-      err_code = inter_parse_rest(interp, argc-1, argv+1);
+      err_code = tclcommand_inter_parse_rest(interp, argc-1, argv+1);
   }
   /* check for background errors which have not been handled so far */
   return mpi_gather_runtime_errors(interp, err_code);

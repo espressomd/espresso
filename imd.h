@@ -27,7 +27,7 @@
 
 #include <tcl.h>
 
-int imd(ClientData data, Tcl_Interp *interp,
+int tclcommand_imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv);
 
 extern int transfer_rate;

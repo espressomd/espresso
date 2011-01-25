@@ -62,7 +62,7 @@ MDINLINE int angledist_set_params(int bond_type, double bend, double phimin, dou
 }
 
 /// parse parameters for the angle potential
-MDINLINE int inter_parse_angledist(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+MDINLINE int tclcommand_inter_parse_angledist(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double bend, phimin, distmin, phimax, distmax;
 

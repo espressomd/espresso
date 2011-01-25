@@ -83,7 +83,7 @@ void __free(void *p, char *where, int line)
 
 #endif
 
-int debug_callback(Tcl_Interp *interp)
+int tclcallback_debug(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Debug status { ", (char *) NULL);
 #ifdef COMM_DEBUG

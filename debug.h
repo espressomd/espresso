@@ -53,7 +53,7 @@ void __free(void *p, char *where, int line);
 #endif
 
 /** callback for debug status. */
-int debug_callback(Tcl_Interp *interp);
+int tclcallback_debug(Tcl_Interp *interp);
 
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */

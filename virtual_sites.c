@@ -44,7 +44,6 @@ void put_mol_force_on_parts(Particle *p_com);
 
 void get_mol_dist_vector_cfg(Particle *p1,Particle *p2,double dist[3]);
 
-int parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv);
 double calc_press_cross_sec(int type1, int type2, double cross_pos, int dir);
 int check_mol_positions(int mol_id1, int mol_id2, double cross_pos, int dir);
 double fold_slab(double coord, double cross_pos, int dir);
@@ -428,7 +427,7 @@ void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]);
 
-int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int type1, type2;
@@ -436,14 +435,14 @@ int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
    #ifdef ELECTROSTATICS
    #ifndef INTER_RF
    Tcl_ResetResult(interp);
-   Tcl_AppendResult(interp, "parse_and_print_pressure_mol is only possible with INTER_RF ", (char *)NULL);
+   Tcl_AppendResult(interp, "tclcommand_analyze_parse_and_print_pressure_mol is only possible with INTER_RF ", (char *)NULL);
    return (TCL_ERROR);
    #endif
    #endif
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    if (argc < 2) {
@@ -479,7 +478,7 @@ int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
    return TCL_OK;
 }
 
-int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int type;
@@ -487,7 +486,7 @@ int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    if (argc < 1) {
@@ -551,7 +550,7 @@ double calc_pressure_mol(int type1,int type2){
   return psum;
 }
 
-int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv)
 {
 #ifndef ELECTROSTATICS
    Tcl_ResetResult(interp);
@@ -564,7 +563,7 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
    updatePartCfg(WITHOUT_BONDS);
    if (!sortPartCfg()) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
+      ERROR_SPRINTF(errtxt, "{059 tclcommand_analyze_parse_and_print_dipole_mol: could not sort particle config, particle ids not consecutive?} ");
       return TCL_ERROR;
    }
    if (n_molecules==0) {
@@ -574,13 +573,13 @@ int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
    }
    if (argc < 2) {
       Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
+      Tcl_AppendResult(interp, "usage: analyze dipole_mol <type>", (char *)NULL);
       return (TCL_ERROR);
    }
 
    if (!ARG1_IS_I(type)) {
       Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
+      Tcl_AppendResult(interp, "usage: analyze dipole_mol <type>", (char *)NULL);
       return (TCL_ERROR);
    }
    if (ARG0_IS_S("total")){
@@ -781,7 +780,7 @@ void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
 }
 
-int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
+int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv){
    int j,count=0;
    double dist;
    char buffer[TCL_DOUBLE_SPACE];
@@ -820,8 +819,8 @@ int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
    }
    return(TCL_OK);
 }
-
-int parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv)
+/* TODO: this analysis command is not registered. To be removed ? */
+int tclcommand_analyze_parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int i;

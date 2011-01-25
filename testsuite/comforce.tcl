@@ -15,10 +15,7 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-
 # 
-set errf [lindex $argv 1]
-
 source "tests_common.tcl"
 
 require_feature "COMFORCE"
@@ -136,5 +133,4 @@ if { [catch {
     error_exit $res
 }
 
-exec rm -f $errf
 exit 0

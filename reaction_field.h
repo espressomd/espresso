@@ -1,11 +1,22 @@
-// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-// and by which you are legally bound while u tilizing this file in any form or way.
-// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// You should have received a copy of that license along with this program;
-// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-// Copyright (c) 2002-2004; all rights reserved unless otherwise stated.
+/*
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #ifndef REACTION_FIELD_H
 #define REACTION_FIELD_H
 /** \file reaction_field.h
@@ -14,7 +25,6 @@
  *  M. Neumann, J. Chem. Phys 82, 5663 (1985)
  *  \ref forces.c
  *
-    stolen form Matej's ACG version of Espresso
 */
 
 #ifdef ELECTROSTATICS
@@ -42,7 +52,7 @@ extern Reaction_field_params rf_params;
 /************************************************************/
 /*@{*/
 
-MDINLINE int printrfToResult(Tcl_Interp *interp,char *name)
+MDINLINE int tclprint_to_result_rf(Tcl_Interp *interp,char *name)
 {
   char buffer[TCL_DOUBLE_SPACE];
   sprintf(buffer,"%s",name);
@@ -80,7 +90,7 @@ MDINLINE int rf_set_params(double kappa,double epsilon1,double epsilon2, double 
   return 1;
 }
 
-MDINLINE int inter_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
+MDINLINE int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
 {
   double kappa,epsilon1,epsilon2, r_cut;
   int i;
@@ -171,7 +181,7 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 
 /*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
 #ifdef INTER_RF
-MDINLINE int printinterrfIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_interrfIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -204,7 +214,7 @@ MDINLINE int interrf_set_params(int part_type_a, int part_type_b,int rf_on)
   return TCL_OK;
 }
 
-MDINLINE int interrf_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_interrf(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv)
 {
@@ -242,6 +252,9 @@ MDINLINE int interrf_parser(Tcl_Interp * interp,
 MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])
 {
+#ifdef ONEPART_DEBUG
+  double fac=0.0 ; /* TODO: this  variable was not declared. Now the code compiles, but I have no idea of what value to assign to it (MS) */
+#endif
   if ((ia_params->rf_on ==1) && CUTOFF_CHECK(dist < rf_params.r_cut)) {
      add_rf_coulomb_pair_force_no_cutoff(p1,p2,d, dist,force);
   }

@@ -221,7 +221,7 @@ void mpi_send_dipm(int node, int part, double dipm);
     \param node the node it is attached to.
     \param isVirtual its new isVirtual.
 */
-void mpi_send_isVirtual(int node, int part, int isVirtual);
+void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.

@@ -71,10 +71,10 @@ typedef struct {
 extern ELC_struct elc_params;
 
 /// print the elc parameters to the interpreters result
-int printELCToResult(Tcl_Interp *interp);
+int tclprint_to_result_ELC(Tcl_Interp *interp);
 
 /// parse the elc parameters
-int inter_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv);
 
 /** set parameters for ELC.
     @param maxPWerror the required accuracy of the potential and the force. Note that this counts for the

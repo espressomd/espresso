@@ -285,7 +285,7 @@ int analyze_necklace(Particle *part, int np) {
 /* parser for necklace cluster analyzation:
    analyze necklace <pearl_treshold> <back_dist> <space_dist> <first> <length> 
  */
-int parse_necklace_analyzation(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_necklace(Tcl_Interp *interp, int argc, char **argv)
 {
   double space_dist;
   int first,length;
@@ -532,7 +532,7 @@ void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **hol
 /* parser for hole cluster analyzation:
    analyze holes <prob_part_type_number> <mesh_size>.
    Needs feature LENNARD_JONES compiled in. */
-int parse_hole_cluster_analyzation(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_analyze_parse_holes(Tcl_Interp *interp, int argc, char **argv)
 {
   int i,j;
   int probe_part_type;

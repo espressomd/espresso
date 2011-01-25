@@ -102,17 +102,17 @@ extern double *meta_apply_direction;
 
 /** Implementation of the Tcl command \ref tcl_metadynamics. This function
  *  allows to change the parameters of metadynamics */
-int metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** Print metadynamics options and parameters */
-int meta_print(Tcl_Interp *interp);
-int meta_usage(Tcl_Interp *interp, int argc, char **argv);
-int meta_parse_off(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics_print_status(Tcl_Interp *interp);
+int tclcommand_metadynamics_print_usage(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics_parse_off(Tcl_Interp *interp, int argc, char **argv);
 /** Reaction coordinates available */
-int meta_parse_distance(Tcl_Interp *interp, int argc, char **argv);
-int meta_parse_relative_z(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char **argv);
 /** Input/Output stuff */
-int meta_print_stat(Tcl_Interp *interp, int argc, char **argv);
-int meta_parse_stat(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics_print_stat(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char **argv);
 
 /** Initialize metadynamics on start of integration 
  *  Create arrays if necessary. */

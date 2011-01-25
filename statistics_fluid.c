@@ -1,19 +1,22 @@
-/* $Id$
- *
- * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
- * It is therefore subject to the ESPResSo license agreement which you
- * accepted upon receiving the distribution and by which you are
- * legally bound while utilizing this file in any form or way.
- * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- * You should have received a copy of that license along with this
- * program; if not, refer to http://www.espresso.mpg.de/license.html
- * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group, 
- * PO Box 3148, 55021 Mainz, Germany. 
- * Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
- */
-
+/*
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 /** \file statistics_fluid.c
  *
  * Fluid related analysis functions.
@@ -315,7 +318,7 @@ static void lb_master_calc_velprof(double *result, int vcomp, int pdir, int x1, 
   mpi_gather_stats(8, result, params, NULL, NULL);
 
 }
-
+/* TODO: This function is not used anywhere. To be removed?  */
 /** Fourier transform the stress tensor into k-space using FFTW */
 static void lb_calc_fourier_pi() {
 
@@ -344,7 +347,7 @@ static void lb_calc_fourier_pi() {
 
 /***********************************************************************/
 
-int parse_analyze_fluid_mass(Tcl_Interp *interp, int argc, char** argv) {
+static int tclcommand_analyze_fluid_parse_mass(Tcl_Interp *interp, int argc, char** argv) {
   char buffer[TCL_DOUBLE_SPACE];
   double mass;
 
@@ -356,7 +359,7 @@ int parse_analyze_fluid_mass(Tcl_Interp *interp, int argc, char** argv) {
   return TCL_OK;
 }
 
-int parse_analyze_fluid_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
+static int tclcommand_analyze_fluid_parse_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
   char buffer[TCL_DOUBLE_SPACE];
   double mom[3];
 
@@ -372,7 +375,7 @@ int parse_analyze_fluid_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
   return TCL_OK;
 }
 
-int parse_analyze_fluid_temp(Tcl_Interp *interp, int argc, char *argv[]) {
+static int tclcommand_analyze_fluid_parse_temp(Tcl_Interp *interp, int argc, char *argv[]) {
   char buffer[TCL_DOUBLE_SPACE];
   double temp;
 
@@ -384,7 +387,7 @@ int parse_analyze_fluid_temp(Tcl_Interp *interp, int argc, char *argv[]) {
   return TCL_OK;
 }
 
-int parse_analyze_fluid_densprof(Tcl_Interp *interp, int argc, char **argv) {
+static int tclcommand_analyze_fluid_parse_densprof(Tcl_Interp *interp, int argc, char **argv) {
   
   int i, pdir, x1, x2;
   char buffer[TCL_DOUBLE_SPACE];
@@ -420,8 +423,8 @@ int parse_analyze_fluid_densprof(Tcl_Interp *interp, int argc, char **argv) {
 
 }
 
-int parse_analyze_fluid_velprof(Tcl_Interp *interp, int argc, char **argv) {
-    int i, vcomp, pdir, x1, x2;
+static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, char **argv) {
+    int i, pdir, vcomp, x1, x2;
     char buffer[TCL_DOUBLE_SPACE];
     double *velprof;
 
@@ -471,7 +474,7 @@ int parse_analyze_fluid_velprof(Tcl_Interp *interp, int argc, char **argv) {
 }
 
 /** Parser for fluid related analysis functions. */
-int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
     int err = TCL_ERROR;
 
     if (argc==0) {
@@ -480,15 +483,15 @@ int parse_analyze_fluid(Tcl_Interp *interp, int argc, char **argv) {
     } 
 
     if (ARG0_IS_S("mass"))
-      err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_mass(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("momentum"))
-      err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_momentum(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("temperature"))
-      err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_temp(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("density"))
-      err = parse_analyze_fluid_densprof(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_densprof(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("velprof"))
-      err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_velprof(interp, argc - 1, argv + 1);
     else {
 	Tcl_AppendResult(interp, "unkown feature \"", argv[0], "\" of analyze fluid", (char *)NULL);
 	return TCL_ERROR;

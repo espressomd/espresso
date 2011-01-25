@@ -72,7 +72,7 @@ int analyze_fold_molecules(float *coord, double shift[3])
 
 
 
-
+/* TODO: this function is not used anywhere. To be removed? */
 double calc_mol_hydro_radius(Molecule mol) 
 {
   int i, j, id1, id2;
@@ -105,7 +105,7 @@ void calc_mol_center_of_mass(Molecule mol, double com[3])
     for(j=0; j<3; j++) com[j] /= M;
 }
 
-
+/* TODO: This function is not used anywhere. To be removed? */
 /**Incorporates mass of each particle*/
 double calc_mol_gyr_radius2(Molecule mol)
 {

@@ -27,7 +27,7 @@
 
 #ifdef BUCKINGHAM
 
-MDINLINE int printbuckIAToResult(Tcl_Interp *interp, int i, int j)
+MDINLINE int tclprint_to_result_buckIA(Tcl_Interp *interp, int i, int j)
 {
     char buffer[TCL_DOUBLE_SPACE];
     IA_parameters *data = get_ia_param(i, j);
@@ -131,7 +131,7 @@ MDINLINE int buckingham_set_params(int part_type_a, int part_type_b,
 
 
 ///parser for the forcecap
-MDINLINE int inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** argv)
+MDINLINE int tclcommand_inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
 
@@ -169,7 +169,7 @@ MDINLINE int inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** arg
 
 
 
-MDINLINE int buckingham_parser(Tcl_Interp * interp,
+MDINLINE int tclcommand_inter_parse_buckingham(Tcl_Interp * interp,
                          int part_type_a, int part_type_b,
                          int argc, char ** argv)
 {

@@ -721,14 +721,15 @@ int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *dens
 
 
 int calc_fluctuations ( double* height_grid, int switch_fluc ) {
-  if (switch_fluc == 1)
+  if (switch_fluc == 1){
     STAT_TRACE(fprintf(stderr,"%d,calculating height grid \n",this_node));
-  else if (switch_fluc == 0)
+  } else { if (switch_fluc == 0) {
     STAT_TRACE(fprintf(stderr,"%d,calculating thickness \n",this_node));
-  else{
-    char *errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{097 Wrong argument in calc_fluctuations function} ");
-    return -1;
+    } else {
+       char *errtxt = runtime_error(128);
+       ERROR_SPRINTF(errtxt,"{097 Wrong argument in calc_fluctuations function} ");
+       return -1;
+    }
   }
     
   int i, j, gi, gj;
