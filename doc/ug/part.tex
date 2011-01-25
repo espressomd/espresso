@@ -402,11 +402,20 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
 \end{essyntax}
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
-connected by $2*8$ polymer chains of length \var{MPC} in a unit cell of length
-\var{a}. For inter-particle bonds interaction $0$ is taken which must be a
-two-particle bond. 
-\todo{A picture would be helpful.}
-\todo{Which typeids are used for the different particles?}
+connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} in 
+a unit cell of length \var{a}. Chain monomers are placed at a mutual distance \var{bond\_length}
+along the vector connecting network nodes.
+The polymer is created starting from particle ID 0. Nodes are assigned type 0,
+monomers (both charged and uncharged) are type 1 and counterions type 2.
+For inter-particle bonds interaction $0$ is taken which must be a two-particle bond.
+
+\begin{figure}[h]
+  \label{fig:diamond}
+  \begin{center}
+  \includegraphics[height=6cm]{figures/diamond}
+  \caption{Diamond-like polymer network with \var{monomers\_per\_chain}=15.}
+  \end{center}
+\end{figure}
 
 \begin{arguments}
 \item[\var{a}] Determines the size of the of the unit cell.
@@ -425,7 +434,7 @@ two-particle bond.
   between charged monomers along the interconnecting chains. If
   $\var{d_\mathrm{charged}} > 1$ the remaining chain monomers are
   uncharged.
-  \item[\opt{nonet}] \todo{Define what \var{nonet} does.}
+  \item[\opt{nonet}] Do not create bonds between the chains.
 \end{arguments}
 
 
