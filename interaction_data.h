@@ -614,6 +614,7 @@ typedef struct {
   double d;
   /** whether the constraint is penetrable 1 or not 0*/
   int penetrable; 
+  int reflecting;
 } Constraint_wall;
 
 /** Parameters for a SPHERE constraint. */
@@ -626,6 +627,7 @@ typedef struct {
   double direction;
   /** whether the constraint is penetrable 1 or not 0*/
   int penetrable; 
+  int reflecting;
 } Constraint_sphere;
 
 /** Parameters for a CYLINDER constraint. */
@@ -642,6 +644,7 @@ typedef struct {
   double direction;
   /** whether the constraint is penetrable 1 or not 0*/
   int penetrable; 
+  int reflecting;
 } Constraint_cylinder;
 
 /** Parameters for a PORE constraint. */
@@ -651,9 +654,12 @@ typedef struct {
   /** Axis of the cylinder .*/
   double axis[3];
   /** cylinder radius. */
-  double rad;
+  double rad_left;
+  double rad_right;
+  double smoothing_radius;
   /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
   double length;
+  int reflecting;
 } Constraint_pore;
 
 /** Parameters for a ROD constraint. */
