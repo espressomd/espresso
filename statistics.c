@@ -291,7 +291,9 @@ void momentum_calc(double *momentum)
     double momentum_particles[3] = { 0., 0., 0. };
 
     mpi_gather_stats(4, momentum_particles, NULL, NULL, NULL);
+#ifdef LB
     mpi_gather_stats(6, momentum_fluid, NULL, NULL, NULL);
+#endif
 
     momentum[0] = momentum_fluid[0] + momentum_particles[0];
     momentum[1] = momentum_fluid[1] + momentum_particles[1];
