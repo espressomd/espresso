@@ -134,7 +134,7 @@ void lbnode_tcl_print_usage(Tcl_Interp *interp) {
 
 /** TCL Interface: The \ref lbfluid command. */
 #endif
-int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
   int err = TCL_OK;
   double floatarg;
@@ -328,7 +328,7 @@ int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 #endif
 /** Parser for the \ref lbnode command. */
-int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int coord[3];
    int counter;
