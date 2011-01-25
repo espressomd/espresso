@@ -827,6 +827,8 @@ static void init_tcl(Tcl_Interp *interp)
 
   REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
 
+  REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
+
 #ifdef LB_BOUNDARIES_GPU
   REGISTER_COMMAND("lb_boundary", tclcommand_lbboundary_gpu);
 #endif

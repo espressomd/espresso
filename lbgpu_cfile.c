@@ -783,6 +783,40 @@ static int lbfluid_parse_gamma_even(Tcl_Interp *interp, int argc, char *argv[], 
     return TCL_OK;
 }
 
+static int lbprint_parse_field(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+
+    if (argc < 1) {
+	Tcl_AppendResult(interp, "file requires at least 1 argument", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    *change = 1;
+
+	datei=fopen(argv[0],"w");
+		if(datei == NULL){
+			fprintf(stderr, "couldn't open datafile! \n");
+			exit(1);
+		}
+	lb_get_values_GPU(host_values);
+	fprintf(datei, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", params.dim_x, params.dim_y, params.dim_z, params.number_of_nodes);
+	int j;	
+	for(j=0; j<params.number_of_nodes; ++j){
+	/** print of the calculated phys values */
+		fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+
+#if 0
+		printf("Stresstensor %f %i \n", host_values[j].pi[0], j);
+		printf("Stresstensor %f %i \n", host_values[j].pi[1], j);
+		printf("Stresstensor %f %i \n", host_values[j].pi[2], j);
+		printf("Stresstensor %f %i \n", host_values[j].pi[3], j);
+		printf("Stresstensor %f %i \n", host_values[j].pi[4], j);
+		printf("Stresstensor %f %i \n", host_values[j].pi[5], j);
+#endif
+	}
+
+    return TCL_OK;
+}
+
 #endif /* LB_GPU */
 
 /** Parser for the \ref lbnode command. */
@@ -918,10 +952,7 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
      Tcl_AppendResult(interp, "lbnode_extforce syntax: lbnode_extforce X Y Z [ print | set ] [ F(X) | F(Y) | F(Z) ]", (char *)NULL);
      return TCL_ERROR;
    }
-   //if (ARG0_IS_S("print"))
-     //err = lbnode_parse_print(interp, argc-1, argv+1, coord);
-//   else
-//fprintf(stderr,"coord %i \t %i \t %i \t \n", coord[0], coord[1] ,coord[2]);
+
  if (ARG0_IS_S("set")) 
      err = lbnode_parse_set(interp, argc-1, argv+1, coord);
    else {
@@ -992,7 +1023,7 @@ int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
 	//lb_init_gpu();
 
-	LB_TRACE (fprintf(stderr,"lbfluid_cmd_gpu parser ok \n"));
+	LB_TRACE (fprintf(stderr,"tclcommand_lbfluid_gpu parser ok \n"));
 
   return err;    
 //#else /* !defined LB */
@@ -1001,9 +1032,38 @@ int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
 
 }
 #endif /* LB_GPU */
+#ifdef LB_GPU
+int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
+  int err = TCL_OK;
+  int change = 0;
+
+  argc--; argv++;
+
+  if (argc < 1) {
+      Tcl_AppendResult(interp, "too few arguments to \"lbprint\"", (char *)NULL);
+      err = TCL_ERROR;
+  }
+
+  else while (argc > 0) {
+      if (ARG0_IS_S("field"))
+	  err = lbprint_parse_field(interp, argc-1, argv+1, &change);   
+  else {
+	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbprint", (char *)NULL);
+	  err = TCL_ERROR ;
+      }
+      argc -= (change + 1);
+      argv += (change + 1);
+
+	LB_TRACE (fprintf(stderr,"tclcommand_lbprint_gpu parser ok \n"));
+  }
+  return err;    
+}
+#endif/* LB_GPU */
 /** dev output for several phys. values and printing into a paraview readable file for the macrscopic velocities */
 static void develop_output(){
 #ifdef LB_GPU
+#if 0
 LB_TRACE (printf("dev output on \n"));
 
 #if 1
@@ -1017,7 +1077,7 @@ if(params.calc_val){
 			fprintf(stderr, "couldn't open datafile! \n");
 			exit(1);
 		}
-#endif
+//#endif
 	int j;
 		
 	fprintf(datei, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", params.dim_x, params.dim_y, params.dim_z, params.number_of_nodes);
@@ -1057,4 +1117,6 @@ if(params.calc_val){
 		fclose(datei);
 	l++;
 #endif
+#endif
+#endif/* LB_GPU */
 }

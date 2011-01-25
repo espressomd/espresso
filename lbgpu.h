@@ -318,6 +318,8 @@ int tclcommand_lbnode_gpu(ClientData data, Tcl_Interp *interp, int argc, char **
 int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 #endif /* LB_GPU */
 #endif /* LB_GPU_H */
 
