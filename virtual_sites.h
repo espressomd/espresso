@@ -1,22 +1,11 @@
-/*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
-  
-  This file is part of ESPResSo.
-  
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-  
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-*/
+// This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+// It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
+// and by which you are legally bound while utilizing this file in any form or way.
+// There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// You should have received a copy of that license along with this program;
+// if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
+// write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
+// Copyright (c) 2002-2009; all rights reserved unless otherwise stated.
 
 #ifndef VIRTUAL_SITES_H
 #define VIRTUAL_SITES_H
@@ -36,18 +25,32 @@
  */
 
 #ifdef VIRTUAL_SITES
+// Recalculate position and velocity for all virtual particles
 void update_mol_vel_pos();
+// Recalc velocities for virtual particles
 void update_mol_vel();
+// Recalc positions of virtual particles
 void update_mol_pos();
-void update_mol_pos_particle(Particle *);
-void update_mol_vel_particle(Particle *);
 
-void distribute_mol_force();
 
-Particle *get_mol_com_particle(Particle *calling_p);
+// Update the position of all virutal particles 
+// in the partCfg-array rather than in the local cells.
+int update_mol_pos_cfg();
 
-double get_mol_dist(Particle *p1,Particle *p2);
-double get_mol_dist_partcfg(Particle *p1,Particle *p2);
+
+// The following three functions have to be provided by all implementations
+// of virtual sites
+// Update the vel/pos of the given virtual particle as defined by the real 
+// particles in the same molecule
+// void update_mol_pos_particle(Particle *);
+// void update_mol_vel_particle(Particle *);
+
+// Distribute forces that have accumulated on virtual particles to the 
+// associated real particles
+//void distribute_mol_force();
+
+
+// Checks, if a particle is virtual
 MDINLINE int ifParticleIsVirtual(Particle *p){
    if (p->p.isVirtual == 0) {
       return 0;
@@ -57,12 +60,19 @@ MDINLINE int ifParticleIsVirtual(Particle *p){
    }
 }
 
-int update_mol_pos_cfg();
-int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv);
+// According to what rules the virtual particles are placed and the forces and
+// torques accumulating on the virtual particles distributed back to real 
+// particles, is decided by a specific implementation.
+
+// Virtual particles in center of mass of molecule
+#ifdef VIRTUAL_SITES_COM
+ #include "virtual_sites_com.h"
+#endif
+
+// Virtual particles relative to position and orientation of a real particle
+#ifdef VIRTUAL_SITES_RELATIVE
+ #include "virtual_sites_relative.h"
+#endif
 
 #endif
 
