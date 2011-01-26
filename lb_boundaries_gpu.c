@@ -31,8 +31,6 @@ int unsigned lb_boundaries_bb_gpu = 0;
 int n_lb_boundaries_gpu       = 0;
 LB_boundary_gpu *lb_boundaries_gpu = NULL;
 
-//    LB_Boundary lb_boundary_par = { LB_BOUNDARY_NONE, 0.0 }; //do we need this?
-
 /** Initialize a planar boundary specified by a wall constraint.
  * @param plane The \ref Constraint_wall struct describing the boundary.
  */
@@ -360,20 +358,15 @@ int tclcommand_lbboundary_gpu(ClientData _data, Tcl_Interp *interp,
   
   if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
     status = lb_boundary_wall(generate_lb_boundary(),interp, argc - 2, argv + 2);   
-	//mpi_bcast_lb_boundary(-1);
   }
   else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
-    status = lb_boundary_sphere(generate_lb_boundary(),interp, argc - 2, argv + 2);
-    //mpi_bcast_lb_boundary(-1);
+    status = lb_boundary_sphere(generate_lb_boundary(),interp, argc - 2, argv + 2); 
   }
   else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
-    status = lb_boundary_cylinder(generate_lb_boundary(),interp, argc - 2, argv + 2);
-    //mpi_bcast_lb_boundary(-1);
+    status = lb_boundary_cylinder(generate_lb_boundary(),interp, argc - 2, argv + 2);  
   }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
-    if(argc < 3) {
-      /* delete all */
-      //mpi_bcast_lb_boundary(-2);
+    if(argc < 3) {      
       status = TCL_OK;
     }
     else {
@@ -398,45 +391,9 @@ int tclcommand_lbboundary_gpu(ClientData _data, Tcl_Interp *interp,
 	lb_boundaries_bb_gpu = 1; 
   return status;
 
-//#else /* !defined(LB_BOUNDARIES) */
-//  Tcl_AppendResult(interp, "LB_BOUNDARIES_GPU not compiled in!" ,(char *) NULL);
-//  return (TCL_ERROR);
+}
+#endif /* LB_BOUNDARIES_GPU */
 
-}
-#endif /* LB_BOUNDARIES */
-#if 0
-static void lb_init_boundary_wall_gpu(Constraint_wall* wall) {
-  int x, y, z;
-  double pos[3], dist, dist_vec[3];
-  int host_number_of_boundnodes = 0;
-  int *host_boundindex = (int*)malloc(sizeof(int));
-  size_t size_of_index;
-  
-		  
-  for (z=0; z<params.dim_z; z++) {
-    for (y=0; y<params.dim_y; y++) {
-	    for (x=0; x<params.dim_x; x++) {
-	    
-	      pos[0] = x*params.agrid;
-	      pos[1] = y*params.agrid;
-	      pos[2] = z*params.agrid;
-       
-        calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, wall, &dist, dist_vec);
-                
-  	    if (dist <= 0) {
-			size_of_index = (host_number_of_boundnodes+1)*sizeof(int);
-			host_boundindex = realloc(host_boundindex, size_of_index);
-			host_boundindex[host_number_of_boundnodes] = x + params.dim_x*y + params.dim_x*params.dim_y*z; 
-		  	host_number_of_boundnodes++;
- 	    }
-      }
-    }
-  }
-  /**call of cuda fkt*/
-  lb_init_boundaries_GPU(host_number_of_boundnodes, host_boundindex);
-  free(host_boundindex);
-}
-#endif
 #ifdef LB_BOUNDARIES_GPU
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries_gpu() {

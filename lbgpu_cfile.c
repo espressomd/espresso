@@ -80,18 +80,7 @@ void lattice_boltzmann_update_gpu() {
  
         	lb_integrate_GPU();
 		
-		LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
-	//should be available via tcl cmd but someone else has to write it :p
-	//if(get_field_data)lb_get_values_GPU(host_values);
-	//if(write_to_file)develop_output();
-#if 0
-if(k==10){
-	lb_get_values_GPU(host_values);
-	develop_output();
-	k=0;
-}
-k++;
-#endif
+			LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
   	}
 }
 
@@ -105,11 +94,9 @@ void lb_calc_particle_lattice_ia_gpu() {
 
 	if(this_node == 0){
 
-#if 0
 	LB_TRACE (for (int i=0;i<n_total_particles;i++) {
 		fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
 	})
-#endif
 /**----------------------------------------*/
 /**Call of the particle interaction kernel */
 /**----------------------------------------*/
@@ -131,7 +118,7 @@ void lb_send_forces_gpu(){
 		if (params.number_of_particles) lb_copy_forces_GPU(host_forces);
 
 		LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
-#if 0
+#if 1
 		LB_TRACE (for (int i=0;i<n_total_particles;i++) {
 			fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
 		})
@@ -228,8 +215,6 @@ void lb_reinit_fluid_gpu() {
 /** Release the fluid. */
 /*not needed in Espresso but still not deleted*/
 void lb_release_gpu(){
-
-    //lb_free_GPU();
 
     // Free host memory
     free(host_nodes);
@@ -378,7 +363,7 @@ static void mpi_get_particles_lb(LB_particle *host_data)
 			}
 	  }
 	    else {
-			//fprintf(stderr, "%i: node g pre %i\n", pnode, g);
+
 			MPI_Recv(&host_data[g], sizes[pnode]*sizeof(LB_particle), MPI_BYTE, pnode, REQ_GETPARTS,
 		 		MPI_COMM_WORLD, &status);
 			g += sizes[pnode];
@@ -405,9 +390,6 @@ static void mpi_get_particles_slave_lb(){
   n_part = cells_get_n_particles();
 
   COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %d particles\n", this_node, n_part));
-
-  /* first collect number of particles on each node */
-  //MPI_Gather(&n_part, 1, MPI_INT, NULL, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (n_part > 0) {
 
@@ -707,7 +689,6 @@ static int lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], in
     return TCL_OK;
 }
 
-#if 1
 static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
     double ext_f[3];
@@ -735,7 +716,6 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     
     return TCL_OK;
 }
-#endif
 
 static int lbfluid_parse_gamma_odd(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
@@ -783,7 +763,7 @@ static int lbfluid_parse_gamma_even(Tcl_Interp *interp, int argc, char *argv[], 
     return TCL_OK;
 }
 
-static int lbprint_parse_field(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
     if (argc < 1) {
 	Tcl_AppendResult(interp, "file requires at least 1 argument", (char *)NULL);
@@ -804,19 +784,59 @@ static int lbprint_parse_field(Tcl_Interp *interp, int argc, char *argv[], int *
 	/** print of the calculated phys values */
 		fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
 
-#if 0
-		printf("Stresstensor %f %i \n", host_values[j].pi[0], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[1], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[2], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[3], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[4], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[5], j);
-#endif
 	}
 
     return TCL_OK;
 }
+static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
+    if (argc < 1) {
+	Tcl_AppendResult(interp, "file requires at least 1 argument", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    *change = 1;
+
+	datei=fopen(argv[0],"w");
+		if(datei == NULL){
+			fprintf(stderr, "couldn't open datafile! \n");
+			exit(1);
+		}
+	lb_get_values_GPU(host_values);
+	int j;	
+	for(j=0; j<params.number_of_nodes; ++j){
+	/** print of the calculated phys values */
+		fprintf(datei, " %f \n", host_values[j].rho);
+	}
+
+    return TCL_OK;
+}
+static int lbprint_parse_stresstensor(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+#if 0
+    if (argc < 1) {
+	Tcl_AppendResult(interp, "file requires at least 1 argument", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    *change = 1;
+
+	datei=fopen(argv[0],"w");
+		if(datei == NULL){
+			fprintf(stderr, "couldn't open datafile! \n");
+			exit(1);
+		}
+	lb_get_values_GPU(host_values);
+	int j;	
+	for(j=0; j<params.number_of_nodes; ++j){
+	/** print of the calculated phys values */
+		fprintf(datei, " %f \t %f \t %f \t %f \t %f \t %f \n", host_values[j].pi[0], host_values[j].pi[1], host_values[j].pi[2],
+ 															   host_values[j].pi[3], host_values[j].pi[4], host_values[j].pi[5]);
+	}
+
+    return TCL_OK;
+#endif
+
+}
 #endif /* LB_GPU */
 
 /** Parser for the \ref lbnode command. */
@@ -916,8 +936,6 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 	n_extern_nodeforces++;
 	  
 	  if(params.external_force == 0)params.external_force = 1;
-//fprintf(stderr,"n_extern_nodeforces %i \n", n_extern_nodeforces);
-//fprintf(stderr,"host_extern_nodeforces %u \t %f \t %f \t %f \t \n", host_extern_nodeforces[n_extern_nodeforces-1].index, host_extern_nodeforces[n_extern_nodeforces-1].force[0], host_extern_nodeforces[n_extern_nodeforces-1].force[1], host_extern_nodeforces[n_extern_nodeforces-1].force[2]);
 
     --argc; ++argv;
 
@@ -1044,11 +1062,16 @@ int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
       Tcl_AppendResult(interp, "too few arguments to \"lbprint\"", (char *)NULL);
       err = TCL_ERROR;
   }
-
   else while (argc > 0) {
-      if (ARG0_IS_S("field"))
-	  err = lbprint_parse_field(interp, argc-1, argv+1, &change);   
-  else {
+      if (ARG0_IS_S("velocity"))
+	  err = lbprint_parse_velocity(interp, argc-1, argv+1, &change); 
+      else if (ARG0_IS_S("density"))
+	  err = lbprint_parse_density(interp, argc-1, argv+1, &change);   
+      else if (ARG0_IS_S("stresstensor")){
+	  //err = lbprint_parse_stresstensor(interp, argc-1, argv+1, &change); 
+	  Tcl_AppendResult(interp, "\"lbprint stresstensor\" is not available by default due to memory saving, pls ensure availablity of pi[6] (see lbgpu.h) and lbprint_parse_stresstensor()", (char *)NULL);
+      err = TCL_ERROR;}  
+  	  else {
 	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbprint", (char *)NULL);
 	  err = TCL_ERROR ;
       }
@@ -1060,63 +1083,3 @@ int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
   return err;    
 }
 #endif/* LB_GPU */
-/** dev output for several phys. values and printing into a paraview readable file for the macrscopic velocities */
-static void develop_output(){
-#ifdef LB_GPU
-#if 0
-LB_TRACE (printf("dev output on \n"));
-
-#if 1
-if(params.calc_val){
-
-	file[0] = 0;
-	sprintf(file, "lb_field/datei%i.vtk", l);
-	//fprintf(stderr, "%16s \n", file);
-	datei=fopen(file,"w");
-		if(datei == NULL){
-			fprintf(stderr, "couldn't open datafile! \n");
-			exit(1);
-		}
-//#endif
-	int j;
-		
-	fprintf(datei, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", params.dim_x, params.dim_y, params.dim_z, params.number_of_nodes);
-	for(j=0; j<params.number_of_nodes; ++j){
-	/** print of the calculated phys values */
-		//int j = 0;
-		//printf("Rho %f %i \n", host_values[j].rho, j);
-		
-
-		fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
-
-#if 0
-		printf("Stresstensor %f %i \n", host_values[j].pi[0], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[1], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[2], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[3], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[4], j);
-		printf("Stresstensor %f %i \n", host_values[j].pi[5], j);
-#endif
-	}
-		} 
-	
-#if 0
-	int i;
-	for(int i=8191; i<params.number_of_particles; i++){
-	for(int i=0; i<params.number_of_particles; i++){
-	for(i=0; i<15; i++){	
-	printf("veloc xyz %i \t %f \t %f \t %f \n", i, host_data[i].v[0], host_data[i].v[1], host_data[i].v[2]);
-	printf("posi xyz %i \t %f \t %f \t %f \n\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
-	}
-#endif
-#if 0
-	//printf("veloc xyz \t %f \t %f \t %f \n", host_data[0].v[0], host_data[0].v[1], host_data[0].v[2]);
-	printf("%f \t %f \t %f \n", host_data[0].p[0], host_data[0].p[1], host_data[0].p[2]);
-#endif
-    //fprintf(stderr,"timeGPU %f sec \n", (end - start)*1./CLOCKS_PER_SEC);
-		fclose(datei);
-	l++;
-#endif
-#endif
-#endif/* LB_GPU */
-}
