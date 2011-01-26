@@ -103,9 +103,9 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   double delta_t = 1;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
   int dim_corr;
-  int change;
+  int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
-  tcl_input_data* temp;
+  tcl_input_data* tcl_input_p;
   
   // Check if ID is negative
   if ( no < 0 ) {
@@ -119,14 +119,14 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
       if (ARG0_IS_S("print")) {
         return double_correlation_print_correlation(&correlations[no], interp);
       } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
-        temp = correlations[no].A_args;
-        temp->interp=interp;
-        temp->argv=argv+1;
-        temp->argc=argc-1;
-        temp = correlations[no].B_args;
-        temp->interp=interp;
-        temp->argv=argv+2;
-        temp->argc=argc-2;
+        correlations[no].A_args = tcl_input_p;
+        tcl_input_p->interp=interp;
+        tcl_input_p->argv=argv+1;
+        tcl_input_p->argc=argc-1;
+        correlations[no].B_args = tcl_input_p;
+        tcl_input_p->interp=interp;
+        tcl_input_p->argv=argv+2;
+        tcl_input_p->argc=argc-2;
         error = double_correlation_get_data(&correlations[no]);
         if (error) {
           Tcl_AppendResult(interp, "Error reading tclinput", (char *)NULL);
@@ -269,18 +269,15 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       *A_args=0;
       *dim_A=3*n_total_particles;
       *change=1;
-      return TCL_OK;
-    }
+    } else 
     if (ARG0_IS_S("particle_positions")) {
       *A_fun = &particle_positions;
       *A_args=0;
       *dim_A=3*n_total_particles;
       *change=1;
-      return TCL_OK;
     }
     if (ARG0_IS_S("structure_factor") ) {
       if (argc > 1 && ARG1_IS_I(order)) {
-        *A_fun = &structure_factor;
         *A_fun = &structure_factor;
         order_p=malloc(sizeof(int));
         *order_p=order;
@@ -288,16 +285,16 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
         int order2,i,j,k,l,n ; 
         order2=order*order ;
         l=0;
+        // lets counter the number of entries for the DSF
         for(i=-order; i<=order; i++) 
           for(j=-order; j<=order; j++) 
             for(k=-order; k<=order; k++) {
-	       n = i*i + j*j + k*k;
-	       if ((n<=order2) && (n>=1)) 
-                 l=l+2;
+	            n = i*i + j*j + k*k;
+	            if ((n<=order2) && (n>=1)) 
+                l=l+2;
 	    }
-        *dim_A=l;
-        *change=2;
-        return TCL_OK;
+      *dim_A=l;
+      *change=2;
       } else { 
         Tcl_AppendResult(interp, "usage: structure_factor $order\n" , (char *)NULL);
         return TCL_ERROR; 
@@ -560,76 +557,19 @@ int double_correlation_get_data( double_correlation* self ) {
 }
 
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp) {
-  int i,j, k, l,m,n;
-  double dt=self->dt,qfak;
-  FILE *pFile;
-  int order,order2;
 
-  qfak = 2.0*PI/box_l[0];
-  order=15;
-  order2=order*order;
-
-  double vector[2*order2];
-  sortPartCfg();
-  for(m=0; m<2*order2; m++) {
-      vector[m] = 0.0;
+  int j, k;
+  double dt=self->dt;
+  for (j=0; j<self->n_result; j++) {
+     printf("%f %d ", self->tau[j]*dt, self->n_sweeps[j]);
+     for (k=0; k< self->dim_corr; k++) {
+     if (self->n_sweeps[j] == 0 )
+       printf("%f ", 0.);
+     else 
+       printf("%f ", self->result[j][k]/ (double) self->n_sweeps[j]);
+     printf("\n");
+     }
   }
-
-  pFile=fopen("/data/data4/pojeda/correlations.dat","w");
-  for (l=0; l<self->n_result; l++) {
-    fprintf(pFile,"&  Tiempos %f %d \n", self->tau[l]*dt, self->n_sweeps[l]);
-
-/*    for (k=0; k< self->dim_corr; k++) {
-      if (self->n_sweeps[j] == 0 )
-        fprintf(pFile,"%f \n", 0.);
-      else 
-        fprintf(pFile,"%f \n", self->result[j][k]/ (double) self->n_sweeps[j]);
-    } */
-
-    m=0;
-    for(i=-order; i<=order; i++) {
-      for(j=-order; j<=order; j++) {
-        for(k=-order; k<=order; k++) {
-	  n = i*i + j*j + k*k;
-	  if ((n<=order2) && (n>=1)) {
-	/*    C_sum = S_sum = 0.0;
-	    for(p=0; p<n_total_particles; p++) {
-	      if (partCfg[p].p.type == 1) {
-		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		C_sum-= cos(qr);
-		S_sum-= sin(qr);
-	      }
-	      if (partCfg[p].p.type == 2) {
-		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		C_sum+= cos(qr);
-		S_sum+= sin(qr);
-	      }
-	    } */
-
-            if (self->n_sweeps[l] != 0 ) {
-               vector[2*n-2] += self->result[l][m]/ (double)self->n_sweeps[l];
-            }
-            vector[2*n-1]++ ;
-            m=m+2;
-//            printf("%i   %f   %i   %f\n",l,A[l],l+1,A[l+1]);
-	  }
-	}
-      }
-    }
-
-  n = 0;
-  for(m=0; m<n_total_particles; m++) {
-      if (partCfg[m].p.type == 1 || partCfg[m].p.type == 2) n++;
-//      if (partCfg[m].p.type == 1) n++;
-  }
-
-  for(m=0; m<order2; m++) {
-     if(vector[2*m+1]!=0) fprintf(pFile,"%f  %f \n", qfak*sqrt(1.0*m+1.0), vector[2*m]/(n*vector[2*m+1])); 
-  }
-
-    fprintf(pFile,"\n");
-  }
-  fclose(pFile);
   return 0;
 }
 
@@ -763,6 +703,9 @@ int structure_factor(void* order_p, double* A, unsigned int n_A) {
   order = *(int*)order_p;
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
+  
+  // TODO: The particles types have FIXED MEANING
+  // We need a more general concept here!
 
   sortPartCfg();
 
@@ -798,8 +741,6 @@ int structure_factor(void* order_p, double* A, unsigned int n_A) {
     }
     return 0;
 }
-
-
 
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns) {
   int counter=1;
