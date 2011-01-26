@@ -105,13 +105,6 @@ int DAWAANR_sanity_checks()
   char *errtxt;
 #endif  
   
-#ifdef PARTIAL_PERIODIC
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{006 DAWAANR requires periodicity 1 1 1} ");
-    return 1;
-  }
-#endif  
   return 0;
 }
 
@@ -202,10 +195,20 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   u=0;
   for(i=0;i<dip_particles-1;i++) {
     for(j=i+1;j<dip_particles;j++) {
+
       rx=x[i]-x[j];
       ry=y[i]-y[j];
       rz=z[i]-z[j];
- 
+ #ifdef PARTIAL_PERIODIC
+      // Apply minimum image convention.
+      // Due to the layout of the data, we can't use get_mi_vecotr from grid.h
+      if (PERIODIC(0))
+       rx -= dround(rx*box_l_i[0])*box_l[0];
+      if (PERIODIC(1))
+       ry -= dround(ry*box_l_i[1])*box_l[1];
+      if (PERIODIC(2))
+       rz -= dround(rz*box_l_i[2])*box_l[2];
+#endif 
 
       pe1=mx[i]*mx[j]+my[i]*my[j]+mz[i]*mz[j];
       r2=rx*rx+ry*ry+rz*rz;
@@ -517,10 +520,8 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
 	   
     u=0;
      
-    fprintf(stderr,"Magnetic Direct sum takes long time. Done of %d: \n",dip_particles);
 
     for(i=0;i<dip_particles;i++){
-      fprintf(stderr,"%d\r",i);
       for(j=0;j<dip_particles;j++){
 	pe1=mx[i]*mx[j]+my[i]*my[j]+mz[i]*mz[j];
 	rx=x[i]-x[j];
@@ -597,7 +598,6 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
       }}   /* of  j and i  */ 
 
 
-    fprintf(stderr,"done \n");
   }/* end of the area of calculation */
     
     
