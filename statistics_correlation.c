@@ -560,15 +560,23 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
 
   int j, k;
   double dt=self->dt;
+  char buffer[TCL_DOUBLE_SPACE];
+
   for (j=0; j<self->n_result; j++) {
-     printf("%f %d ", self->tau[j]*dt, self->n_sweeps[j]);
+     Tcl_AppendResult(interp, " { ", (char *)NULL);
+     Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
+     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
      for (k=0; k< self->dim_corr; k++) {
-     if (self->n_sweeps[j] == 0 )
-       printf("%f ", 0.);
-     else 
-       printf("%f ", self->result[j][k]/ (double) self->n_sweeps[j]);
-     printf("\n");
+     if (self->n_sweeps[j] == 0 ) {
+       Tcl_PrintDouble(interp, 0., buffer);
+       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
      }
+     else {
+       Tcl_PrintDouble(interp, self->result[j][k]/ (double) self->n_sweeps[j], buffer);
+       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+     }
+     }
+     Tcl_AppendResult(interp, " } ", (char *)NULL);
   }
   return 0;
 }
