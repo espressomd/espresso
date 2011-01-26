@@ -234,7 +234,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm);
 void mpi_send_ext_slave(int node, int parm);
 void mpi_remove_particle_slave(int node, int parm);
 void mpi_bcast_constraint_slave(int node, int parm);
-void mpi_bcast_lb_boundary_slave(int node, int parm);
+void mpi_bcast_lbboundary_slave(int node, int parm);
 void mpi_random_seed_slave(int node, int parm);
 void mpi_random_stat_slave(int node, int parm);
 void mpi_lj_cap_forces_slave(int node, int parm);
@@ -328,7 +328,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
-  mpi_bcast_lb_boundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
+  mpi_bcast_lbboundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
   mpi_recv_fluid_border_flag_slave,  /* 56: REQ_LB_GET_BORDER_FLAG */
   mpi_send_mu_E_slave,                 /* 57: REQ_SET_MU_E */
   mpi_recv_fluid_populations_slave            /* 58: REQ_GET_FLUID_POP */
@@ -2053,7 +2053,7 @@ void mpi_bcast_constraint_slave(int node, int parm)
 }
 
 /*************** REQ_BCAST_LBBOUNDARY ************/
-void mpi_bcast_lb_boundary(int del_num)
+void mpi_bcast_lbboundary(int del_num)
 {
 #ifdef LB_BOUNDARIES
   mpi_issue(REQ_BCAST_LBBOUNDARY, 0, del_num);
@@ -2073,11 +2073,11 @@ void mpi_bcast_lb_boundary(int del_num)
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 
-  on_lb_boundary_change();
+  on_lbboundary_change();
 #endif
 }
 
-void mpi_bcast_lb_boundary_slave(int node, int parm)
+void mpi_bcast_lbboundary_slave(int node, int parm)
 {   
 #ifdef LB_BOUNDARIES
   if(parm == -1) {
@@ -2096,7 +2096,7 @@ void mpi_bcast_lb_boundary_slave(int node, int parm)
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
 
-  on_lb_boundary_change();
+  on_lbboundary_change();
 #endif
 }
 
@@ -2666,7 +2666,7 @@ void mpi_recv_fluid_border_flag(int node, int index, int *border) {
 void mpi_recv_fluid_border_flag_slave(int node, int index) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
-    double data;
+    int data;
     lb_local_fields_get_border_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, REQ_LB_GET_BORDER_FLAG, MPI_COMM_WORLD);
   }

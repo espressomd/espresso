@@ -380,7 +380,7 @@ void mpi_bcast_constraint(int del_num);
 
 #ifdef LB_BOUNDARIES
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
-void mpi_bcast_lb_boundary(int del_num);
+void mpi_bcast_lbboundary(int del_num);
 #endif
 
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */

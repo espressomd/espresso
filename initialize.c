@@ -392,13 +392,13 @@ void on_constraint_change()
   recalc_forces = 1;
 }
 
-void on_lb_boundary_change()
+void on_lbboundary_change()
 {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_boundary_change\n", this_node));
+  EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
 
 #ifdef LB_BOUNDARIES
-  //printf("executing on_lb_boundary_change on node %d\n", this_node);
+  //printf("executing on_lbboundary_change on node %d\n", this_node);
   
   if(lattice_switch & LATTICE_LB) {
     lb_init_boundaries();

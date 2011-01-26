@@ -1935,8 +1935,6 @@ MDINLINE void lb_collide_stream() {
 	    if (lbfields[index].has_force) lb_apply_forces(index, modes);
 #endif
 
-	    //fprintf(stderr,"%ld j=(%f,%f,%f)\n",index,modes[1],modes[2],modes[3]);
-
 	    /* transform back to populations and streaming */
 	    lb_calc_n_from_modes_push(index, modes);
 
@@ -1962,7 +1960,7 @@ MDINLINE void lb_collide_stream() {
 
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
-    lb_boundary_conditions();
+    lb_bounce_back();
 #endif
     
     /* exchange halo regions */
