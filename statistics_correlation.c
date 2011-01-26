@@ -16,6 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */ 
+//comentario siguiente
 #include "statistics_correlation.h"
 #include "particle_data.h"
 #include "parser.h"
@@ -53,6 +54,7 @@ const char double_correlation_get_data_errors[][64] = {
   "Error calculating variable A" ,
   "Error calculating variable B" ,
   "Error calculating correlation" 
+  "Error allocating temporary memory" 
 };
 
 int correlation_update(unsigned int no) {
@@ -526,6 +528,8 @@ int double_correlation_get_data( double_correlation* self ) {
     return 2;
 
   double* temp = malloc(self->dim_corr*sizeof(double));
+  if (!temp)
+    return 4;
 // Now update the lowest level correlation estimates
   for ( j = 0; j < MIN(self->tau_lin+1, self->n_vals[0]); j++) {
     index_new = self->newest[0];
@@ -551,6 +555,7 @@ int double_correlation_get_data( double_correlation* self ) {
       }
     }
   }
+  free(temp);
   return 0;
 }
 
@@ -684,7 +689,7 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
 }
 
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  int i,j;
+  unsigned int i,j;
   if (!(dim_A == dim_B )) {
     printf("Error in componentwise product: The vector sizes do not match");
     return 1;
@@ -786,26 +791,11 @@ int structure_factor(void* order_p, double* A, unsigned int n_A) {
 	    }
             A[l]   =C_sum;
             A[l+1] =S_sum;
-//            printf("%i   %f   %i   %f\n",l,A[l],l+1,A[l+1]);
             l=l+2;
 	  }
 	}
       }
     }
-
-/*      j=0;
-      for ( i = 0; i<(n_total_particles)/3; i++ ) {
-        r1=partCfg[j+1].r.p[0]-partCfg[j+2].r.p[0];
-        r2=partCfg[j+1].r.p[1]-partCfg[j+2].r.p[1];
-        r3=partCfg[j+1].r.p[2]-partCfg[j+2].r.p[2];
-        j=3*(i+1); */
-/*        r1=floor(r1/box_l[0]+0.5)*box_l[0]+r1;
-        r2=floor(r2/box_l[0]+0.5)*box_l[0]+r2;
-        r3=floor(r3/box_l[0]+0.5)*box_l[0]+r3; */
-//        rr = sqrt(r1*r1 + r2*r2 + r3*r3);
-//        printf("Distancia= %f %f %f \n",partCfg[i].r.p[0],partCfg[i].r.p[1],partCfg[i].r.p[2]);
-//          printf("Distancia= %f  %f\n",time_step,box_l[0]);
-
     return 0;
 }
 
