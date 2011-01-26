@@ -1186,10 +1186,17 @@ the desired accuracy.
 
 Defines the electrostatic potential by
 \begin{equation}
-  U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}
+  U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 \end{equation}
 
+The Debye-H\"uckel potential is an approximate method for calculating
+electrostatic interactions, but technically it is treated as other
+short-ranged non-bonding potentials. For $r>r_{\mathrm cut}$ it is set 
+to zero which introduces a step in energy. Therefore, it introduces
+fluctuations in energy.
+
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
+
 
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
