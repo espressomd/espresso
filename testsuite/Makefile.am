@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -70,17 +70,7 @@ processors=1 2 3 4 6 8
 endif
 
 # run the testsuite
-check-local: test.sh
-	@builddir@/test.sh -p "$(processors)" $(tests)
+check-local: runtest.sh
+	@builddir@/runtest.sh -p "$(processors)" $(tests)
 
-DISTCLEANFILES=test.sh
-
-CLEANKEEPFILES=Makefile test.sh $(EXTRA_DIST)
-clean-local:
-	-for f in *; do \
-	   keep=; \
-	   for cf in $(CLEANKEEPFILES); do \
-	     if test "$$f" = "$$cf"; then keep=y; fi; \
-	   done; \
-	   if test -z "$$keep"; then rm -f "$$f"; fi; \
-	 done
+DISTCLEANFILES=runtest.sh

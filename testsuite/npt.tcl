@@ -1,4 +1,4 @@
-# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2010,2011 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 #  
 # This file is part of ESPResSo.
@@ -15,10 +15,7 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-
 # 
-set errf [lindex $argv 1]
-
 source "tests_common.tcl"
 
 require_feature "NPT"
@@ -82,16 +79,6 @@ proc write_data {file} {
     blockfile $f write variable box_l
     blockfile $f write particles {id type pos f q}
     close $f
-}
-
-proc require_feature {feature} {
-    global errf
-    if { ! [regexp $feature [code_info]]} {
-	set f [open $errf "w"]
-	puts $f "not compiled in: $feature"
-	close $f
-	exit -42
-    }
 }
 
 read_data "npt_lj_system.data"
@@ -209,7 +196,6 @@ if { [expr abs($compressibility - 0.209) ] > 0.05 } {
 #    error_exit $res
 #}
 
-exec rm -f $errf
 exit 0
 
 

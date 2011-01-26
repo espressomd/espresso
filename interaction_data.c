@@ -1385,7 +1385,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
    #endif 
       
    if (coulomb.Dmethod == DIPOLAR_P3M)
-      return tclcommand_inter_coulomb_parse_p3m_opt_params(interp, argc, argv);
+      return tclcommand_inter_magnetic_parse_p3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter magnetic <Dbjerrum>",
 		       (char *) NULL);
