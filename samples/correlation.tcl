@@ -57,7 +57,7 @@ set var 0.
 ## Now comes the main integration loop
 set nsteps 1000
 for { set i 0 } { $i < $nsteps } { incr i } {
-  integrate 10
+  integrate 1
   ## The correlation is updated after every MD step
   analyze correlation 0 update
   set var [expr $var + [ lindex [ part 0 print v ] 0 ] *  [ lindex [ part 0 print v ] 0 ] ]
