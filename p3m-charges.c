@@ -1704,6 +1704,8 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     return TCL_ERROR;
   }
 
+  mpi_bcast_event(P3M_COUNT_CHARGES);
+
   /* Print Status */
   sprintf(b1,"%.5e",p3m.accuracy);
   Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
