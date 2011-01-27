@@ -1720,7 +1720,7 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     return (TCL_ERROR);
   }
   
-  if(!p3m_adaptive_tune()) {  
+  if(p3m_adaptive_tune()) {  
     Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
     return (TCL_ERROR);
   }
