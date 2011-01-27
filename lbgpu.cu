@@ -60,7 +60,7 @@ static __constant__ int number_of_bnodes;
 static __constant__ float c_sound_sq = 1.f/3.f;
 
 /**cudasteams for parallel computing on cpu and gpu */
-cudaStream_t stream[2];
+cudaStream_t stream[1];
 
 /*-------------------------------------------------------*/
 /*********************************************************/
@@ -700,7 +700,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle 
 		my_left[i] = (unsigned int)(floorf(scaledpos));
 		temp_delta[3+i] = scaledpos - my_left[i];
 		temp_delta[i] = 1.f - temp_delta[3+i];
-
+		/**further value used for interpolation of fluid velocity at part pos near boundaries */
 		temp_delta_half[3+i] = (scaledpos - my_left[i])*2.f;
 		temp_delta_half[i] = 2.f - temp_delta_half[3+i];
 	}
@@ -728,8 +728,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle 
 	node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 	
 #if 1
-	/** calc of the interpolated verlocity at the position of the particle*/
-
+	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
   if(n_a[node_index[0]].boundary == 1){
 		delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
 		delta[2] = temp_delta[0] * temp_delta_half[4] * temp_delta[2];
@@ -886,7 +885,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force *node_f, int
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
  	/*----------------------------------- */
-#if 1
+
   	float rhoc_sq = Rho*c_sound_sq;
   	float avg_rho = para.rho*para.agrid*para.agrid*para.agrid;
   	float local_rho, local_j[3], *local_pi, trace;
@@ -950,7 +949,6 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force *node_f, int
   	n_a[index].vd[17] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
   	n_a[index].vd[18] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
-#endif
   	/*set different seed for randomgen on every node */
   	n_a[index].seed = para.your_seed + index;
 
@@ -1014,9 +1012,6 @@ __global__ void reinit_node_force(LB_node_force *node_f){
 			node_f[index].force[1] = 0.0f;
 			node_f[index].force[2] = 0.0f;
 		}
-#if 0
-if(index == 0)printf("ext_force int lb units \t %f \t %f \t %f \n", node_f[index].force[0], node_f[index].force[1], node_f[index].force[2]);	
-#endif
 	}
 }
 #if 1
@@ -1064,7 +1059,6 @@ __global__ void init_boundaries_hardcoded(LB_nodes_gpu *n_a, LB_nodes_gpu *n_b){
 	}
 #endif	
   }
-
 }
 #endif
 /*-------------------------------------------------------*/
@@ -1166,7 +1160,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu *n_a, LB_particle *particle_
 	
 	if(part_index<para.number_of_particles){
 #if 1		
-		/** check if particles are in the box, but no longer needed due to check by cpu MD code*/
+		/** check if particles are in the box*/
 		check_part_posis(particle_data, part_index);		
 #endif
 		rng_part.seed = part[part_index].seed;
@@ -1317,7 +1311,7 @@ void lb_init_GPU(LB_parameters_gpu *params){
  	reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);
 
 	cudaStreamCreate(&stream[0]);
-	cudaStreamCreate(&stream[1]);
+	//cudaStreamCreate(&stream[1]);
 	*h_gpu_check = 0;
 	cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost);
 

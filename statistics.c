@@ -3751,7 +3751,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
 #endif
 
 #ifdef LB_GPU
-  REGISTER_ANALYZE_OPTION("fluid_gpu", parse_analyze_fluid_gpu);
+  REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
   REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
 

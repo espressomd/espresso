@@ -285,7 +285,7 @@ int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
 
 #ifdef LB_GPU
 
-int parse_analyze_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
     int err = TCL_ERROR;
 
     if (argc==0) {
