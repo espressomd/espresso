@@ -192,8 +192,12 @@ typedef void (SlaveCallback)(int node, int param);
 /** Action number for \ref mpi_send_mu_E. */
 #define REQ_SET_MU_E     55
 
+/** Action number for \ref mpi_send_vs_relative. */
+#define REQ_SET_VS_RELATIVE 56
+
+
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 56
+#define REQ_MAXIMUM 57
 
 /*@}*/
 
@@ -258,6 +262,7 @@ void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_virtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
+void mpi_send_vs_relative_slave(int pnode, int part);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -319,6 +324,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
+  mpi_send_vs_relative_slave, // 57 REQ_SET_VS_RELATIVE
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -389,6 +395,7 @@ char *names[] = {
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
   "SET_MU_E", /* 55 */
+  "SET_VS_RELATIVE", // 56 
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1126,6 +1133,47 @@ void mpi_send_virtual_slave(int pnode, int part)
 }
 
 /********************* REQ_SET_BOND ********/
+
+void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_distance)
+{
+#ifdef VIRTUAL_SITES_RELATIVE
+  mpi_issue(REQ_SET_VS_RELATIVE, pnode, part);
+
+  // If the particle is on the node on which this function was called
+  // set the values locally
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.vs_relative_to_particle_id = vs_relative_to;
+    p->p.vs_relative_distance = vs_distance;
+  }
+  else {
+    MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
+    MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_vs_relative_slave(int pnode, int part)
+{
+#ifdef VIRTUAL_SITES_RELATIVE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, REQ_SET_VS_RELATIVE,
+	     MPI_COMM_WORLD, &status);
+    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, REQ_SET_VS_RELATIVE,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_BOND ********/
+
+
 int mpi_send_bond(int pnode, int part, int *bond, int delete)
 {
   int bond_size, stat=0;
