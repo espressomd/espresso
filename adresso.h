@@ -38,6 +38,8 @@
 #include "interaction_data.h"
 #include "communication.h"
 
+
+
 /** \name Exported Variables */
 /************************************************************/
 /*@{*/
@@ -54,6 +56,10 @@ int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv
 int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 
 #ifdef ADRESS
+// This code requires the "center of mass" implementation of virtual sites
+#ifndef VIRTUAL_SITES_COM
+ #error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
+#endif
 /** #ifdef THERMODYNAMIC_FORCE */
 int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
 int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
