@@ -407,6 +407,7 @@ void integrate_vv(int n_steps)
 
    
    force_calc();
+
    
    //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
@@ -415,15 +416,15 @@ void integrate_vv(int n_steps)
    distribute_mol_force();
    if (check_runtime_errors()) return;
 #endif
+#ifdef ROTATION
+    convert_initial_torques();
+#endif
 
     thermo_cool_down();
 
     /* Communication Step: ghost forces */
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
-#ifdef ROTATION
-    convert_initial_torques();
-#endif
 
     /*apply trap forces to trapped molecules*/
 #ifdef MOLFORCES         
@@ -699,16 +700,16 @@ void rescale_forces_propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef VIRTUAL_SITES
-       if (ifParticleIsVirtual(&p[i])) continue;
-#endif
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/PMASS(p[i]);
       p[i].f.f[1] *= scale/PMASS(p[i]);
       p[i].f.f[2] *= scale/PMASS(p[i]);
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
+#ifdef VIRTUAL_SITES
+       // Virtual sites are not propagated during integration
+       if (ifParticleIsVirtual(&p[i])) continue; 
+#endif
       for(j = 0; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
@@ -798,10 +799,11 @@ void propagate_press_box_pos_and_rescale_npt()
     /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
-      for(i = 0; i < np; i++) {	for(j=0; j < 3; j++){
+      for(i = 0; i < np; i++) {	
 #ifdef VIRTUAL_SITES
        if (ifParticleIsVirtual(&p[i])) continue;
 #endif
+       for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
 	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
 #endif	    
