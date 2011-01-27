@@ -518,7 +518,17 @@ specifying the local pressure tensor in each bin.
 \analyzeindex{topologies}
 \label{analyze:set}
 
-\todo{Topologies intro}
+\todo{Topologies is probably not the best name for this section}
+
+The following set of functions is designed to facilitate analysis 
+of molecules. Molecules are expected to be a group of particles
+comprising a contiguous range of particle IDs. Each molecule
+is a set of consecutively numbered particles and all molecules
+are supposed to consist of the same number of particles.
+Some functions in this group require that the particles constituting
+a molecule are connected into linear chains (particle $n$ is connected
+to $n+1$ and so on) while others are applicable to molecules
+of whatever topology.
 
 The \lit{analyze set} command defines the structure of the current
 system to be used with some of the analysis functions.
@@ -526,17 +536,27 @@ system to be used with some of the analysis functions.
 \begin{essyntax}
   \variant{1} analyze set chains \opt{\var{chain\_start} \var{n\_chains}
     \var{chain\_length}}
-  \variant{2} analyze set chains
+  \variant{2} analyze set topo\_part\_sync
+  \variant{3} analyze set trapmol \var{mol\_id} \var{xpos} \var{ypos} \var{zpos} \var{isrelative} \var{spring\_constant} \var{drag\_constant} coords \var{trapped\_coord\_x} \var{trapped\_coord\_y} \var{trapped\_coord\_z} noforce\_coords \var{noforce\_coord\_x} \var{noforce\_coord\_y} \var{noforce\_coord\_z}
+  \variant{4} analyze set
 \end{essyntax}
 
-\todo{Update documentation for set_topology}
 
 Variant \variant{1} defines a set of \var{n\_chains} chains of equal
 length \var{chain\_length} which start with the particle with particle
 number \var{chain\_start} and are consecutively numbered (\ie the last
 particle in that topology has number $\var{chain\_start} +
-\var{n\_chains}*\var{chain\_length}$). Variant \variant{2} will return
-the chains currently stored.
+\var{n\_chains}*\var{chain\_length}$). 
+
+Variant \variant{2} synchronizes topology and particle data, assigning \var{mol\_id} values to particles.
+
+\todo{Why is setting up a trap implemented via analyze command?}
+Variant \variant{3} sets a trap on a molecule, i.e.\ an external potential acting on it.
+\var{mol\_id} define the molecule ID on which the trap is set, \var{xpos} \var{ypos} \var{zpos} define coordinates of the centre of the trap. \var{isrelative} is an integer specifying if the trap is relative or absolute. (Requires features: MOLFORCES and EXTERNAL\_FORCES).
+\todo{Trapmol documentation still incomplete.}
+
+Variant \variant{4} will return the chains currently stored.
+
 
 \subsection{Chains}
 \analyzeindex{chains}
@@ -569,9 +589,18 @@ stored configurations (see section \vref{sec:stored-configs}).
   analyze \alt{rg \asep <rg>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-\todo{Reference?}
-Returns the radius of gyration averaged over all chains.  If
-\lit{<rg>} is used, the radius of gyration is averaged over all stored
+Returns the radius of gyration averaged over all chains. It is a radius
+of a sphere, which would have the same moment of inertia as the molecule, 
+defined as
+\begin{equation}
+\label{eq:Rg}
+R_{\mathrm G}^2 = \frac{1}{N} \sum\limits_{i=1}^{N} \left(\vec r_i - \vec r_{\mathrm{cm}}\right)^2\,,
+\end{equation}
+where $\vec r_i$ are position vectors of individual particles constituting a molecule
+and $\vec r_{\mathrm{cm}}$ is the position vector of its centre of mass. The sum runs
+over all $N$ particles comprising the molecule. For more information see
+any polymer science book, e.g.~\cite{rubinstein03a}.
+If \lit{<rg>} is used, the radius of gyration is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
@@ -585,10 +614,16 @@ configurations (see section \vref{sec:stored-configs}).
   analyze \alt{rh \asep <rh>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-\todo{Reference?}
-Returns the hydrodynamic radius averaged over all chains.  If
-\lit{<rh>} is used, the hydodynamic radius is averaged over all stored
+Returns the hydrodynamic radius averaged over all chains.  
+If \lit{<rh>} is used, the hydodynamic radius is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
+The following formula is used for the computation:
+\begin{equation}
+\label{eq:Rh}
+\frac{1}{R_{\mathrm H}} = \frac{2}{N^2} \sum\limits_{i=1}^{N} \sum\limits_{j=i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
+\end{equation}
+The above-mentioned formula is only valid under certain assumptions.
+For more information, see Chapter 4 and eqaution 4.102 in~\cite{doi86a}.
 \minisec{Output format}
 \begin{code}
 \{ \var{rh} \var{error\_of\_rh} \}
@@ -600,8 +635,9 @@ configurations (see section \vref{sec:stored-configs}).
  analyze \alt{internal_dist \asep <internal_dist>} 
  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-Returns the averaged internal distances within the chains.  If
-\lit{<internal_dist>} is used, the values are averaged over all stored
+Returns the averaged internal distances within the chains (over
+all pairs of particles).  
+If \lit{<internal_dist>} is used, the values are averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 \minisec{Output format}
 \begin{code}
@@ -612,6 +648,7 @@ considered (0 = next neighbours, 1 = one monomer in between, \dots).
 
 \subsubsection{Bond distances}
 \analyzeindex{bond distances}
+\todo{Why is this called bond distances? It has nothing to do with bonds.}
 \begin{essyntax}
   analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -642,6 +679,8 @@ only at specific chains, use the optional arguments, \ie $\var{chain\_start} =
 chain's monomers. If \lit{<bond_l>} is used, the value will be
 averaged over all stored configurations (see section
 \vref{sec:stored-configs}).
+This function assumes linear chain topology and does not check 
+if the bonds really exist!
 
 \minisec{Output format}
 \begin{code}
