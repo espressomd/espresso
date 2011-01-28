@@ -1360,7 +1360,27 @@ z-direction of the volume where particles are not allowed to enter.
 
 As a reference for DLC-method, see \cite{brodka04a}.
 
-\subsection{MDDS}
+
+\subsection{Dipolar interaction, all with all, no replicas}
+\index{DAWAANR method|mainindex}
+\index{interactions!DAWAANR method|mainindex}
+
+\begin{essyntax}
+  inter magnetic \var{l_{B}} dawaanr
+  \begin{features}
+    \required{MAGNETOSTATICS}
+  \end{features}
+\end{essyntax}
+
+This interaction calculates energies and forces between dipoles by
+explicitly summing over all pairs. For those directions, in which the
+system is periodic (as defined by \texttt{setmd periodic}), it applies
+minimum image convention, i.e., the interaction is effectively cut-off
+at a half box length.
+
+This method should only be used if using p3m or dlc is not possible.
+
+\subsection{Magnetic dipolar direct sum}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
@@ -1371,44 +1391,16 @@ As a reference for DLC-method, see \cite{brodka04a}.
     \required{MAGNETOSTATICS}
   \end{features}
 \end{essyntax}
-The command enables the magnetic dipolar direct sum. This method is
-not intendeed to do simulations, rahter to check the results you get
-from Espresso. It is the exact calculation all the other magnetic
-methods with PBC try to mimic but doing the calculation faster.  The
-value-n-cut is the number of replicas that should be taken into
-account in each direction If Periodic Boundaries are not in 3
-dimensions, the mehtod takes only replicas in those directions which
-are periodic. Thus, using partially periodic boundaries, once can
-easily calculate the values for 2D+h and 1D+h systems.
+The command enables the magnetic dipolar direct sum.  The
+dipole-dipole interaction is obtained by explicitly summing over all
+pairs. If the system is periodic in one or more directions, replicas
+of the system will be explicitly added.  \var{value\_n\_cut} is the
+number of replicas that are taken into account in each direction.
+
+As it is very slow, this method is not intendeed to do simulations,
+but rather to check the results you get from more efficient methods
+like p3m.
   
-\subsection{DAWAANR}
-\index{MDDS method|mainindex}
-\index{interactions!MDDS method|mainindex}
-
-\begin{essyntax}
-  inter magnetic \var{l_{B}} dawaanr
-  \opt{\var{far\_cutoff}}
-  \begin{features}
-    \required{MAGNETOSTATICS}
-  \end{features}
-\end{essyntax}
-The command enables the "dipolar all-with-all and no replicas"
-method. It is a very special method intended to calculations when you
-have a single magnetic polymer chain inside and infinite volume where
-no replicas of the system exist along any of the directions in the
-space.  You should setup formally a box length large enough for the
-initial conformation to be in, but after that, the box has no use.  No
-minimum image convention is used. You compute the interactions from
-the positions where the particles has diffused to at each moment. You
-can use for particles not linked, but the method only makes sense in
-the case you want to study the evolution of a single chain in the
-space.
-
-Notice that P3M and any other methods that assumes PBC are of no
-practical use here.  A rough way to mimic it with P3M would be
-assigning a very long box, but it would be a waste of time and
-resources.
-
 \section{Other interaction types}
 \label{sec:inter-other}
 

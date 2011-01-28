@@ -44,7 +44,7 @@
 #include "nsquare.h"
 #include "layered.h"
 #include "domain_decomposition.h"
-#include "magnetic_non_p3m__methods.h"
+#include "magnetic_non_p3m_methods.h"
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
