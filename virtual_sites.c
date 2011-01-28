@@ -61,11 +61,10 @@ void update_mol_pos()
 }
 
 int update_mol_pos_cfg(){
-  Particle *p;
   int i;
   for(i=0; i<n_total_particles; i++) {
-     p=&partCfg[i];
-     update_mol_pos_particle(p);
+     if (partCfg[i].p.isVirtual==1)
+      update_mol_pos_particle(&partCfg[i]);
   }
   return 1;
 }
