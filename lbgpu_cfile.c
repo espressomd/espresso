@@ -118,11 +118,11 @@ void lb_send_forces_gpu(){
 		if (params.number_of_particles) lb_copy_forces_GPU(host_forces);
 
 		LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
-#if 1
+
 		LB_TRACE (for (int i=0;i<n_total_particles;i++) {
 			fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
 		})
-#endif
+
 	}
 	mpi_send_forces_lb(host_forces);
   }
@@ -144,10 +144,6 @@ void lb_pre_init_gpu() {
 	size_t size_of_values = params.number_of_nodes * sizeof(LB_values_gpu);
 	host_values = (LB_values_gpu*)malloc(size_of_values);
 
-   	/** Allocate struct in host memory for fluidnodes */
-	//size_t size_of_nodes = params.number_of_nodes * sizeof(LB_nodes_gpu);
-	//host_nodes = (LB_nodes_gpu*)malloc(size_of_nodes);
-
 	/**Allocate struct for particle forces */
 	size_t size_of_forces = params.number_of_particles * sizeof(LB_particle_force);
 	host_forces = (LB_particle_force*)malloc(size_of_forces);
@@ -162,7 +158,7 @@ void lb_pre_init_gpu() {
 	located in the cpu memory*/ 
 static void lb_realloc_fluid_gpu() {
 	 
-	//LB_TRACE (printf("#nodes \t %u \n", params.number_of_nodes));
+	LB_TRACE (printf("#nodes \t %u \n", params.number_of_nodes));
 
 	/**-----------------------------------------------------*/
 	/** allocating of the needed memory for several structs */
@@ -174,10 +170,6 @@ static void lb_realloc_fluid_gpu() {
 	/**Struct holding calc phys values rho, j, phi of every node*/
 	size_t size_of_values = params.number_of_nodes * sizeof(LB_values_gpu);
 	host_values = realloc(host_values, size_of_values);
-
-    	/** Allocate struct in host memory for fluidnodes */
-	//size_t size_of_nodes = params.number_of_nodes * sizeof(LB_nodes_gpu);
-	//host_nodes = realloc(host_nodes, size_of_nodes);
 
 	LB_TRACE (fprintf(stderr,"lb_realloc_fluid_gpu \n"));
 }
@@ -216,15 +208,11 @@ void lb_reinit_fluid_gpu() {
 /*not needed in Espresso but still not deleted*/
 void lb_release_gpu(){
 
-    // Free host memory
+    // free host memory
     free(host_nodes);
-	//fprintf(stderr,"freed host_nodes \n");
     free(host_values);
-	//fprintf(stderr,"freed params \n");
     free(host_forces);
-	//fprintf(stderr,"freed host_forces \n");
     free(host_data);
-
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
@@ -294,7 +282,6 @@ void lb_init_gpu() {
 	
 	lb_realloc_fluid_gpu();
 
-	//initGPU(argc, argv);
 	lb_init_GPU(&params);
 
 	LB_TRACE (fprintf(stderr,"lb_init_gpu \n"));
@@ -347,7 +334,7 @@ static void mpi_get_particles_lb(LB_particle *host_data)
 	 				npart = cell->n;
 					 
 				for (i=0;i<npart;i++) {
-					//	fold_position(part[i].r.p, dummy);
+					
 						memcpy(pos, part[i].r.p, 3*sizeof(double));
 						fold_position(pos, dummy);
 
@@ -704,10 +691,7 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     
     *change = 3;
 
-    /* external force density is stored in lattice units */
-    // WHY? We should do that consistently!
-    // Removed! Now in MD units
-
+    /* external force density is stored in MD units */
     params.ext_force[0] = (float)ext_f[0];
     params.ext_force[1] = (float)ext_f[1];
     params.ext_force[2] = (float)ext_f[2];
@@ -980,10 +964,6 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
    return err;
 #endif
 
-//#else /* !defined LB_GPU */
-//  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
-//  return TCL_ERROR;
-
 }
 #endif /* LB_GPU */
 /** Parser for the \ref lbfluid command gpu. */
@@ -1043,11 +1023,7 @@ int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
 
 	LB_TRACE (fprintf(stderr,"tclcommand_lbfluid_gpu parser ok \n"));
 
-  return err;    
-//#else /* !defined LB */
-//  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
-//  return TCL_ERROR;
-
+  return err;
 }
 #endif /* LB_GPU */
 #ifdef LB_GPU

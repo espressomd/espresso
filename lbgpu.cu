@@ -881,7 +881,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force *node_f, int
 	*gpu_check = 1;
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
-    float v[3] = { 0.01f, 0.0f, 0.0f };
+    float v[3] = { 0.0f, 0.0f, 0.0f };
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
  	/*----------------------------------- */
@@ -1480,10 +1480,5 @@ void lb_free_GPU(){
 	cudaFree(&number_of_bnodes);
 	cudaStreamDestroy(stream[0]);
 
-}
-
-void initGPU(int argc, char **argv){
-
-        //CUT_DEVICE_INIT(argc, argv);
 }
 #endif /* LB_GPU */

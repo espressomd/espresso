@@ -73,12 +73,13 @@ proc require_feature {feature} {
 set errf [lindex $argv 1]
 
 require_feature "LB_GPU"
+#require_feature "LB"
 
 # Integration parameters
 #############################################################
 set int_steps     	1
 puts $int_steps
-set int_times		11
+set int_times		1000
 
 set time_step     0.02
 set tau           0.02
@@ -90,8 +91,8 @@ set box_l_x       128.0
 
 set dens          1.0
 set viscosity     3.0
-set bulk_viscosity 0.1
-set friction      5.1
+#set bulk_viscosity 0.1
+set friction      0.01
 #equ velo 0.025
 set temp          0.0
 
@@ -127,10 +128,10 @@ puts [setmd cell_grid]
 
 # Fluid
 #############################################################
-lbfluid_gpu dens $dens visc $viscosity agrid $agrid tau $tau
-lbfluid_gpu friction $friction
+lbfluid dens $dens visc $viscosity agrid $agrid tau $tau
+lbfluid friction $friction
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
-thermostat lb_gpu $temp
+thermostat lb $temp
 
 #lbnode_exf_gpu 0 0 0 set force 10 0 0
 #	for { set i 0 } { $i < 32 } { incr i } {
@@ -138,17 +139,17 @@ thermostat lb_gpu $temp
 #		lbnode_exf_gpu 0 $i $j set force 1 0 0
 #		}
 #	}
-#lb_boundary_gpu wall normal 0 0 1 dist 0
-#lb_boundary_gpu wall normal 0 0 -1 dist -63
+#lb_boundary wall normal 0 0 1 dist 0
+#lb_boundary wall normal 0 0 -1 dist -63
 
-#lb_boundary_gpu wall normal 0 1 0 dist 0
-#lb_boundary_gpu wall normal 0 -1 0 dist -63
+#lb_boundary wall normal 0 1 0 dist 0
+#lb_boundary wall normal 0 -1 0 dist -63
 # Particles
 #############################################################
 # load colloid from file
 #read_data "~/espresso/testsuite/lb_system.data"
 
-#part 0 pos 0 5 15
+part 0 pos 1 1 1
 #part 0 v 0. 0. -10.5
 #set k	0
 #set m	5
@@ -213,18 +214,18 @@ set var_temp  0.0
 puts [time {
 for { set i 1 } { $i <= $int_times } { incr i } {
 
-    puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\n"; flush stdout
+    #puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\n"; flush stdout
 #\n
 #puts [part 0 print pos v force]
-	for { set k 0 } { $k < $box_l } { incr k } {
-		for { set j 0 } { $j < $box_l } { incr j } {
-			lbnode_exf_gpu 5 $k $j set force 0.01 0 0
-		}
-	}
-
+	#for { set k 0 } { $k < $box_l } { incr k } {
+	#	for { set j 0 } { $j < $box_l } { incr j } {
+	#		lbnode_exf_gpu 5 $k $j set force 0.01 0 0
+	#	}
+	#}
+	#lbprint field lb_field/datei$i.vtk
     integrate $int_steps
-
-    puts -nonewline [analyze energy]
+	puts [part 0 print pos]
+    #puts -nonewline [analyze energy]
 
 #imd positions
 #after 50
