@@ -110,7 +110,6 @@ int send_recv_grid_size=0;
 /************************************************************/
 /*@{*/
 
-#warning remove me!
 void static print_p3m(void) {
   fprintf(stderr, "general information: \n\t node: %d \n\t box_l: (%lf, %lf, %lf)\n", this_node, box_l[0], box_l[1], box_l[2]);
 
@@ -123,14 +122,6 @@ void static print_p3m(void) {
 	  p3m.alpha_L,p3m.r_cut_iL, p3m.mesh[0], p3m.mesh[1], p3m.mesh[2], p3m.mesh_off[0], p3m.mesh_off[1], p3m.mesh_off[2], \
           p3m.cao, p3m.inter, p3m.accuracy, p3m.epsilon, p3m.cao_cut[0], p3m.cao_cut[1], p3m.cao_cut[2], p3m.a[0], p3m.a[1], p3m.a[2], p3m.ai[0], p3m.ai[1], p3m.ai[2], \
           p3m.alpha, p3m.r_cut, p3m.inter2, p3m.cao3, p3m.additional_mesh[0], p3m.additional_mesh[1], p3m.additional_mesh[2]);
-}
-
-void static print_dop(void) {
-
-}
-
-void static print_g_force(void) {
-
 }
 
 /** Calculates for charges the properties of the send/recv sub-meshes of the local FFT mesh. 
@@ -1197,18 +1188,18 @@ MDINLINE double perform_aliasing_sums_energy(int n[3])
     optimal alpha, or 0 if this combination does not work at all */
 static double get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err)
 {
-  double rs_err, ks_err;
-  double alpha_L;
-  P3M_TRACE(fprintf(stderr, "get_accuracy: mesh (%d, %d, %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
-
-  /* calc maximal real space error for setting */
-  rs_err = P3M_real_space_error(coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
-  
-  if(M_SQRT2*rs_err > p3m.accuracy) {
-  /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
-    alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
-  }
-  else {
+   double rs_err, ks_err;
+   double alpha_L;
+   P3M_TRACE(fprintf(stderr, "get_accuracy: mesh (%d, %d, %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
+ 
+   /* calc maximal real space error for setting */
+   rs_err = P3M_real_space_error(coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,0);
+ 
+   if(M_SQRT2*rs_err > p3m.accuracy) {
+   /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
+     alpha_L = sqrt(log(M_SQRT2*rs_err/p3m.accuracy)) / r_cut_iL;
+   }
+   else {
     /* even alpha=0 is ok, however, we cannot choose it since it kills the k-space error formula.
        Anyways, this very likely NOT the optimal solution */
     alpha_L = 0.1;
@@ -1218,10 +1209,10 @@ static double get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha
   /* calculate real space and k space error for this alpha_L */
   rs_err = P3M_real_space_error(coulomb.prefactor,r_cut_iL,p3m_sum_qpart,p3m_sum_q2,alpha_L);
   ks_err = P3M_k_space_error(coulomb.prefactor,mesh,cao,p3m_sum_qpart,p3m_sum_q2,alpha_L);
-  
+
   *_rs_err = rs_err;
   *_ks_err = ks_err;
-  P3M_TRACE(fprintf(stderr, "resulting: alpha_L %f -> rs_err: %f, ks_err %f, total_err %f\n", alpha_L, rs_err, ks_err,sqrt(SQR(rs_err)+SQR(ks_err))));
+  P3M_TRACE(fprintf(stderr, "resulting: alpha_L %g -> rs_err: %g, ks_err %g, total_err %g\n", alpha_L, rs_err, ks_err,sqrt(SQR(rs_err)+SQR(ks_err))));
   return sqrt(SQR(rs_err)+SQR(ks_err));
 }
 
@@ -1230,7 +1221,7 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L
 {
   /* rounded up 2000/n_charges timing force evaluations */
   int int_num = (1999 + p3m_sum_qpart)/p3m_sum_qpart;
-  
+  double int_time;
 
   /* broadcast p3m parameters for test run */
   p3m.r_cut_iL = r_cut_iL;
@@ -1243,15 +1234,17 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
   /* perform force calculation test */
-  return time_force_calc(int_num);    
+  int_time = time_force_calc(int_num);
+  P3M_TRACE(fprintf(stderr, "%d: test integration with mesh (%d %d %d), r_cut_iL %lf, cao %d, alpha_L %lf returned %lf.\n", this_node, mesh[0], mesh[1], mesh[2], r_cut_iL, cao, alpha_L, int_time));
+  return int_time;
 }
 
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao. The r_cut is determined via
     a simple bisection. Returns -1 if the force evaluation does not work, -2 if there is no valid r_cut, and -3 if
     the charge assigment order is to large for this grid */
 static double p3m_mc_time(int mesh[3], int cao,
-			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
-			  double *_alpha_L, double *_accuracy)
+                         double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
+                         double *_alpha_L, double *_accuracy)
 {
   double int_time;
   double r_cut_iL;
@@ -1262,16 +1255,16 @@ static double p3m_mc_time(int mesh[3], int cao,
   mesh_size = box_l[0]/(double)mesh[0];
   k_cut =  mesh_size*cao/2.0;
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
-		    mesh[0],mesh[1],mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
-  if(cao >= imin(mesh[0],imin(mesh[1],mesh[2])) || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
-    return -P3M_TUNE_CAOTOLARGE;
+                   mesh[0],mesh[1],mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
+  if(cao >= imin(mesh[0],imin(mesh[1],mesh[2])) || k_cut >= (dmin(min_box_l,min_local_box_l) - skin)) {
+    return -3;
   }
 
   /* Either low and high boundary are equal (for fixed cut), or the low border is initially 0 and therefore
      has infinite error estimate, as required. Therefore if the high boundary fails, there is no possible r_cut */
   if ((*_accuracy = get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L, &rs_err, &ks_err)) > p3m.accuracy) {
     /* print result */
-    return -P3M_TUNE_NOCUTOFF;
+    return -2;
   }
 
   for (;;) {
@@ -1287,6 +1280,7 @@ static double p3m_mc_time(int mesh[3], int cao,
     else
       r_cut_iL_max = r_cut_iL;
   }
+
   /* final result is always the upper interval boundary, since only there
      we know that the desired minimal accuracy is obtained */
   *_r_cut_iL = r_cut_iL = r_cut_iL_max;
@@ -1294,7 +1288,7 @@ static double p3m_mc_time(int mesh[3], int cao,
   /* check whether we are running P3M+ELC, and whether we leave a reasonable gap space */
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
     P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f reject r_cut %f > gap %f\n", mesh[0],mesh[1],mesh[2], cao, r_cut_iL,
-		      2*r_cut_iL*box_l[0], elc_params.gap_size));
+                     2*r_cut_iL*box_l[0], elc_params.gap_size));
     return -P3M_TUNE_ELCTEST;
   }
 
@@ -1307,7 +1301,7 @@ static double p3m_mc_time(int mesh[3], int cao,
 
     return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
-  if(*_alpha_L > box_l[0]) return -P3M_TUNE_FAIL;
+  if(*_alpha_L > box_l[0]) return -4;
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
     return -P3M_TUNE_FAIL;
@@ -1324,9 +1318,9 @@ static double p3m_mc_time(int mesh[3], int cao,
     should contain an initial guess, which is then adapted by stepping up and down. Returns the time
     upon completion, -1 if the force evaluation does not work, and -2 if the accuracy cannot be met */
 static double p3m_m_time(int mesh[3],
-			 int cao_min, int cao_max, int *_cao,
-			 double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
-			 double *_alpha_L, double *_accuracy)
+                        int cao_min, int cao_max, int *_cao,
+                        double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
+                        double *_alpha_L, double *_accuracy)
 {
   double best_time = -1, tmp_time, tmp_r_cut_iL=0.0, tmp_alpha_L=0.0, tmp_accuracy=0.0;
   /* in which direction improvement is possible. Initially, we dont know it yet. */
@@ -1334,7 +1328,7 @@ static double p3m_m_time(int mesh[3],
   int cao = *_cao;
 
   P3M_TRACE(fprintf(stderr, "p3m_m_time: mesh=(%d, %d %d), cao_min=%d, cao_max=%d, rmin=%f, rmax=%f\n",
-		    mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
+                   mesh[0],mesh[1],mesh[2], cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
      to increase cao to increase the obtainable precision of the far formula. */
   do {
@@ -1447,7 +1441,7 @@ static double p3m_m_time(int mesh[3],
 }
 
 int p3m_adaptive_tune() {
-  int  mesh_max, mesh[3] = {0, 0, 0}, tmp_mesh_points; 
+  int  mesh[3] = {0, 0, 0}, tmp_mesh_points; 
   int tmp_mesh[3];
   double mesh_factors[3], box_volume3;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
@@ -1456,7 +1450,7 @@ int p3m_adaptive_tune() {
   double                             alpha_L  = -1, tmp_alpha_L=0.0;
   double                             accuracy = -1, tmp_accuracy=0.0;
   double                            time_best=1e20, tmp_time;
-
+  double mesh_density = 0.0, mesh_density_min, mesh_density_max;
 
 
   P3M_TRACE(fprintf(stderr,"%d: p3m_adaptive_tune\n",this_node));
@@ -1464,36 +1458,26 @@ int p3m_adaptive_tune() {
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
 
-  P3M_TRACE(fprintf(stderr,"%d: %d charged particles.\n", this_node, p3m_sum_qpart));
-
-  /* parameter ranges */
+ /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.mesh[0] == 0 || p3m.mesh[1] == 0 || p3m.mesh[2] == 0) {
     tmp_mesh_points = p3m_sum_qpart;
+    mesh_density_min = pow((box_l[0] * box_l[1] * box_l[2]) / p3m_sum_qpart, 1.0/3.0);
+    mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
-    mesh_max = tmp_mesh_points * 256;
     /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
     //    mesh_max = imin(mesh_max, P3M_MAX_MESH*P3M_MAX_MESH*P3M_MAX_MESH);
 
-    P3M_TRACE(fprintf(stderr, "%d: starting with %d meshpoints, using at most %d points.\n", this_node, tmp_mesh_points, mesh_max));
+    P3M_TRACE(fprintf(stderr, "%d: starting with meshdensity %lf, using at most %lf.\n", this_node, mesh_density_min, mesh_density_max));
 
-    box_volume3 = pow(box_l[0]*box_l[1]*box_l[2], 1.0/3.0);
-
-    mesh_factors[0] = box_l[0] / box_volume3;
-    mesh_factors[1] = box_l[1] / box_volume3;
-    mesh_factors[2] = box_l[2] / box_volume3;
-  }
-  else {
-    mesh_factors[0] = p3m.mesh[0];
-    mesh_factors[1] = p3m.mesh[1];
-    mesh_factors[2] = p3m.mesh[2];
-
-    tmp_mesh_points = mesh_max = 1;
+  } else {
+    mesh_density = mesh_density_min = mesh_density_max = p3m.mesh[0] / box_l[0];
   }
 
- 
+   
+
   if(p3m.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
     r_cut_iL_max = min_local_box_l/2 - skin;
@@ -1515,15 +1499,15 @@ int p3m_adaptive_tune() {
 
   /* mesh loop */
   /* we're tuning the density of mesh points, which is the same in every direction. */
-  for (;tmp_mesh_points <= mesh_max; tmp_mesh_points = (tmp_mesh_points == 1) ? 2 : (tmp_mesh_points*1.1)) {
-    double tmp_mesh3 = pow((double)tmp_mesh_points, 1.0/3.0);
+  for (mesh_density=mesh_density_min;mesh_density<=mesh_density_max;mesh_density+=0.1) {
     tmp_cao = cao;
 
-    tmp_mesh[0] = (int)(mesh_factors[0]*tmp_mesh3);
-    tmp_mesh[1] = (int)(mesh_factors[1]*tmp_mesh3);
-    tmp_mesh[2] = (int)(mesh_factors[2]*tmp_mesh3);
+    fprintf(stderr, "%d: trying meshdensity %lf.\n", this_node, mesh_density);
 
-    #warning solve odd/seven problem
+    tmp_mesh[0] = (int)(box_l[0]*mesh_density);
+    tmp_mesh[1] = (int)(box_l[1]*mesh_density);
+    tmp_mesh[2] = (int)(box_l[2]*mesh_density);
+
     if((tmp_mesh[0] % 2) || (tmp_mesh[1] % 2) || (tmp_mesh[2] % 2))
       continue;
 
@@ -1535,7 +1519,7 @@ int p3m_adaptive_tune() {
     P3M_TRACE(fprintf(stderr,"delta_acceracy: %lf tune time: %lf\n", p3m.accuracy - tmp_accuracy,tmp_time));
     //    if (tmp_time == -1) con;
     /* this mesh does not work at all */
-    if (tmp_time < 0) continue;
+    if (tmp_time < 0.0) continue;
 
     /* the optimum r_cut for this mesh is the upper limit for higher meshes,
        everything else is slower */
@@ -1543,6 +1527,7 @@ int p3m_adaptive_tune() {
 
     /* new optimum */
     if (tmp_time < time_best) {
+      P3M_TRACE(fprintf(stderr, "Found new optimum: time %lf, mesh (%d %d %d)\n", tmp_time, tmp_mesh[0], tmp_mesh[1], tmp_mesh[2]));
       time_best = tmp_time;
       mesh[0]   = tmp_mesh[0];
       mesh[1]   = tmp_mesh[1];
@@ -1553,11 +1538,13 @@ int p3m_adaptive_tune() {
       accuracy  = tmp_accuracy;
     }
     /* no hope of further optimisation */
-    else if (tmp_time > time_best + P3M_TIME_GRAN)
+    else if (tmp_time > time_best + P3M_TIME_GRAN) {
+      P3M_TRACE(fprintf(stderr, "%d: %lf is mush slower then best time, aborting.\n", this_node, tmp_time));
       break;
+    }
   }
   
-  P3M_TRACE(fprintf(stderr,"finshed tuning\n"));
+  P3M_TRACE(fprintf(stderr,"finshed tuning, best time: %lf\n", time_best));
   if(time_best == 1e20) {
     return -1;
   }
