@@ -1502,7 +1502,7 @@ int p3m_adaptive_tune() {
   for (mesh_density=mesh_density_min;mesh_density<=mesh_density_max;mesh_density+=0.1) {
     tmp_cao = cao;
 
-    fprintf(stderr, "%d: trying meshdensity %lf.\n", this_node, mesh_density);
+    P3M_TRACE(fprintf(stderr, "%d: trying meshdensity %lf.\n", this_node, mesh_density));
 
     tmp_mesh[0] = (int)(box_l[0]*mesh_density);
     tmp_mesh[1] = (int)(box_l[1]*mesh_density);
