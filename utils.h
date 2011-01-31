@@ -114,7 +114,7 @@ MDINLINE void *prealloc(void *old, int size)
   }
   p = (void *)realloc(old, size);
   if(p == NULL) {
-    fprintf(stderr, "%d: Could not allocate memory.\n", this_node);
+    fprintf(stderr, "Could not allocate memory.\n");
     errexit();
   }
   return p;
@@ -128,9 +128,9 @@ MDINLINE void *pmalloc(int size)
   if (size <= 0) {
     return NULL;
   }
-  p = (void *)realloc(old, size);
+  p = (void *)malloc(size);
   if(p == NULL) {
-    fprintf(stderr, "%d: Could not allocate memory.\n", this_node);
+    fprintf(stderr, "Could not allocate memory.\n");
     errexit();
   }
   return p;
