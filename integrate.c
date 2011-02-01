@@ -653,8 +653,8 @@ int tclcallback_time_step(Tcl_Interp *interp, void *_data)
 #endif
 //Achtung vielleicht nur auf master aufrufen
 #ifdef LB_GPU	
-  else if ((params.tau >= 0.0) && (data > params.tau)) {
-    fprintf(stderr,"tau %f %lf \n", params.tau, data); 
+  else if ((lb_para.tau >= 0.0) && (data > lb_para.tau)) {
+    fprintf(stderr,"tau %f %lf \n", lb_para.tau, data); 
 	Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
     return (TCL_ERROR);
   }

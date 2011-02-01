@@ -228,19 +228,19 @@ void on_integration_start()
 #ifdef LB_GPU
 if(this_node == 0){
   if(lattice_switch & LATTICE_LB_GPU) {
-    if (params.agrid <= 0.0) {
+    if (lb_para.agrid <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann GPU agrid not set} ");
     }
-    if (params.tau <= 0.0) {
+    if (lb_para.tau <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann GPU time step not set} ");
     }
-    if (params.rho <= 0.0) {
+    if (lb_para.rho <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann GPU fluid density not set} ");
     }
-    if (params.viscosity <= 0.0) {
+    if (lb_para.viscosity <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann GPU fluid viscosity not set} ");
     }
@@ -691,7 +691,7 @@ if(this_node == 0){
 }
 
 #ifdef LB
-void on_lb_params_change(int field) {
+void on_lb_lb_para_change(int field) {
 
   if (field == LBPAR_AGRID) {
     lb_init();

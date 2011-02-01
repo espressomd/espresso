@@ -406,12 +406,12 @@ void lb_init_boundaries_gpu() {
   dist_tmp = 0.;
 	
   
-  for (z=0; z<params.dim_z; z++) {
-    for (y=0; y<params.dim_y; y++) {
-	    for (x=0; x<params.dim_x; x++) {	    
-	      pos[0] = x*params.agrid;
-	      pos[1] = y*params.agrid;
-	      pos[2] = z*params.agrid;
+  for (z=0; z<lb_para.dim_z; z++) {
+    for (y=0; y<lb_para.dim_y; y++) {
+	    for (x=0; x<lb_para.dim_x; x++) {	    
+	      pos[0] = x*lb_para.agrid;
+	      pos[1] = y*lb_para.agrid;
+	      pos[2] = z*lb_para.agrid;
 	      
 	      dist = 0.;
 
@@ -439,7 +439,7 @@ void lb_init_boundaries_gpu() {
   	    if (dist <= 0 && n_lb_boundaries_gpu > 0) {
    	      		size_of_index = (number_of_boundnodes+1)*sizeof(int);
 				host_boundindex = realloc(host_boundindex, size_of_index);
-				host_boundindex[number_of_boundnodes] = x + params.dim_x*y + params.dim_x*params.dim_y*z; 
+				host_boundindex[number_of_boundnodes] = x + lb_para.dim_x*y + lb_para.dim_x*lb_para.dim_y*z; 
 		  		number_of_boundnodes++;   
         }
       }
