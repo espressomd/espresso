@@ -41,7 +41,7 @@ part 1 pos 5 5 6 virtual 1 vs_relate_to 0
 part 2 pos 5 5 4 virtual 1 vs_relate_to 0 
 integrate 0
 if { ([part 1 print pos] != "5.0 5.0 6.0") || ([part 2 print pos] != "5.0 5.0 4.0")} {
- puts "Error: Virutal sites incorrectly positioned: [part 1 print pos] [part 2 print pos]"
+ error_exit  "Error: Virutal sites incorrectly positioned: [part 1 print pos] [part 2 print pos]"
 } else {
  puts "OK: Position of virtual sites"
 }
@@ -51,7 +51,7 @@ set r [vecsub [part 1 print pos] [part 0 print pos]]
 set omega [part 0 print omega]
 set v [veccross_product3d $omega $r]
 if {[veclen [vecsub $v [part 1 print v]]] >0.0001 } {
- puts "Error: Particle 1 velocity incorrect."
+ error_exit "Error: Particle 1 velocity incorrect."
 } else {
  puts "OK: Velocity particle 1" 
 }
@@ -60,7 +60,7 @@ set r [vecsub [part 2 print pos] [part 0 print pos]]
 set omega [part 0 print omega]
 set v [veccross_product3d $omega $r]
 if {[veclen [vecsub $v [part 2 print v]]] >0.0001 } {
- puts "Error: Particle 2 velocity incorrect. Is [part 2 print v], should be $v."
+ error_exit "Error: Particle 2 velocity incorrect. Is [part 2 print v], should be $v."
 } else {
  puts "OK: Velocity particle 2" 
 }
@@ -75,12 +75,12 @@ integrate 1
 set diff1 [vecscale 100 [vecsub [part 1 print pos] $pos1]]
 set diff2 [vecscale 100 [vecsub [part 2 print pos] $pos2]]
 if { [vecdot_product $diff1 $v1] <0.9 } {
- puts "Error: Particle 1 moved in wrong direction." 
+ error_exit "Error: Particle 1 moved in wrong direction." 
 } else {
  puts "OK: Actual motion of particle 1 is in the right direction. ( $diff1 $v1 ) "
 }
 if { [vecdot_product $diff2 $v2] <0.9 } {
- puts "Error: Particle 1 moved in wrong direction." 
+ error_exit "Error: Particle 1 moved in wrong direction." 
 } else {
  puts "OK: Actual motion of particle 2 is in the right direction. ( $diff2 $v2 ) "
 }
@@ -94,7 +94,7 @@ integrate 0
 set t [part 0 print torque]
 set f [part 0 print f]
 if { [veclen [vecsub [vecadd $f1 $f2] $f]] >1E-4 } {
- puts "Error: Force on central particle should be [vecadd $f1 $f2] but is $f" 
+ error_exit "Error: Force on central particle should be [vecadd $f1 $f2] but is $f" 
 } else {
  puts "OK: Force on central particle"
 }
@@ -105,7 +105,7 @@ set t1 [veccross_product3d $r1 $f1]
 set t2 [veccross_product3d $r2 $f2]
 
 if {[veclen [vecsub [vecadd $t1 $t2] $t]] >1E-5 } {
- puts "Error: Torque on central particle should be [vecadd $t1 $t2] but is $t" 
+ error_exit "Error: Torque on central particle should be [vecadd $t1 $t2] but is $t" 
 } else {
  puts "OK: Torque on central particle"
 }
@@ -144,7 +144,7 @@ for {set i 0} {$i<10000} {incr i } {
  set v2 [part 2 print v]
 puts -nonewline "[expr 100*$i/10000] %\r"
  if { [veclen [vecsub [vecadd $v1 $v2] [vecscale 2 $v]]] >1E-5 } {
-  puts "Error: Velocities of outer particles do not add up to twice the velocity of center of mass."
+  error_exit "Error: Velocities of outer particles do not add up to twice the velocity of center of mass."
   puts "[vecadd $v1 $v2] $v"
   set error 1
  }
@@ -164,8 +164,7 @@ puts -nonewline "[expr 100*$i/10000] %\r"
 #   puts "Error: Particle 2 velocity incorrect. Is [part 2 print v], should be $v."
 #  } 
 }
-if { $error==0} {
  puts "OK: Handling of periodic boundaries"
  puts "OK: Velocities of outer particles add up to velocity of center of mass"
-}
 
+return  0
