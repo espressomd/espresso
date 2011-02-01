@@ -414,14 +414,13 @@ MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
 
 }
 
-#endif /* LB */
 
 /** Parser for the \ref lbnode command.  TODO: not registered!! */
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
+#endif /* LB */
 #endif /* LB_H */
 
 /*@}*/

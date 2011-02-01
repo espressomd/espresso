@@ -51,4 +51,9 @@ int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB */
 
+#ifdef LB_GPU
+/** Parser for fluid related analysis functions. */
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
+#endif
+
 #endif /* STATISTICS_FLUID_H */

@@ -30,6 +30,7 @@
 #include "communication.h"
 #include "lb.h"
 #include "statistics_fluid.h"
+#include "lbgpu.h"
 
 #ifdef LB
 
@@ -281,3 +282,35 @@ int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
 }
 
 #endif /* LB */
+
+#ifdef LB_GPU
+
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
+    int err = TCL_ERROR;
+
+    if (argc==0) {
+	Tcl_AppendResult(interp, "usage: analyze fluid gpu <what>", (char *)NULL);
+	return TCL_ERROR;
+    } 
+
+    if (ARG0_IS_S("mass"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
+    else if (ARG0_IS_S("momentum"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+    else if (ARG0_IS_S("temperature"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
+    else if (ARG0_IS_S("velprof"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);
+    else {
+	Tcl_AppendResult(interp, "unkown feature \"", argv[0], "\" of analyze fluid", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    return err;
+}
+
+#endif /* LB_GPU */ 

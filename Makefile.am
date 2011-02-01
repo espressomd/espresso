@@ -92,12 +92,14 @@ libEspresso_a_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
+	lbgpu_cfile.c \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
+	lb_boundaries_gpu.c lb_boundaries_gpu.h \
 	utils.c utils.h \
 	angle.h \
         pwdist.h \
@@ -206,7 +208,9 @@ SUFFIXES=.cu
 
 CUDA_SOURCES= \
 	cuda_init.cu \
-	cuda_init.h
+	cuda_init.h\
+	lbgpu.cu \
+	lbgpu.h
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
 endif

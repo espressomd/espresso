@@ -70,6 +70,8 @@
 
 #ifdef CUDA
 #include "cuda_init.h"
+#include "lbgpu.h"
+#include "lb_boundaries_gpu.h"
 #endif
 
 // import function from scriptsdir.c
@@ -79,6 +81,7 @@ char *get_default_scriptsdir();
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
 static int reinit_magnetostatics = 0;
+static int lb_reinit_particles_gpu = 1;
 
 static void init_tcl(Tcl_Interp *interp);
 
@@ -87,7 +90,9 @@ int on_program_start(Tcl_Interp *interp)
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
 #ifdef CUDA
+if(this_node == 0){
   gpu_init();
+}
 #endif
 
   /*
@@ -116,6 +121,11 @@ int on_program_start(Tcl_Interp *interp)
   fft_pre_init();
 #endif
 
+#ifdef LB_GPU
+if(this_node == 0){
+  	if(lattice_switch & LATTICE_LB_GPU) lb_pre_init_gpu();
+}
+#endif
   /*
     call all initializations to do only on the master node here.
   */
@@ -126,7 +136,9 @@ int on_program_start(Tcl_Interp *interp)
     init_tcl(interp);
   }
   return TCL_OK;
+
 }
+
 
 void on_integration_start()
 {
@@ -216,6 +228,33 @@ void on_integration_start()
   meta_init();
 #endif
 
+#ifdef LB_GPU
+if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU) {
+    if (lb_para.agrid <= 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann GPU agrid not set} ");
+    }
+    if (lb_para.tau <= 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann GPU time step not set} ");
+    }
+    if (lb_para.rho <= 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann GPU fluid density not set} ");
+    }
+    if (lb_para.viscosity <= 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann GPU fluid viscosity not set} ");
+    }
+  }
+	if (lb_reinit_particles_gpu) {lb_realloc_particles_gpu();
+	lb_reinit_particles_gpu = 0;
+	}
+}	
+	//lb_init_gpu();
+#endif
+
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
@@ -293,6 +332,10 @@ void on_particle_change()
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
   rebuild_verletlist = 1;
+
+#ifdef LB_GPU
+  lb_reinit_particles_gpu = 1;
+#endif
 
   invalidate_obs();
 
@@ -387,6 +430,13 @@ void on_constraint_change()
     lb_init_constraints();
   }
 #endif
+#endif
+#ifdef LB_BOUNDARIES_GPU
+  //printf("executing on_lb_boundary_change on node %d\n", this_node);
+  
+  if(lattice_switch & LATTICE_LB_GPU) {
+    lb_init_boundaries_gpu();
+  }
 #endif
 
   recalc_forces = 1;
@@ -620,10 +670,31 @@ void on_parameter_change(int field)
     }
   }
 #endif
+
+#ifdef LB_GPU
+if(this_node == 0){
+  /* LB needs ghost velocities */
+  /*if (field == FIELD_LATTICE_SWITCH) {
+    on_ghost_flags_change();
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+  }*/
+
+  if (lattice_switch & LATTICE_LB_GPU) {
+    if (field == FIELD_TEMPERATURE) {
+      //lb_reinit_parameters_gpu();
+		lb_init_gpu();
+    }
+
+    //if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID) {
+      //lb_init_gpu();
+    //}
+}
+  }
+#endif
 }
 
 #ifdef LB
-void on_lb_params_change(int field) {
+void on_lb_lb_para_change(int field) {
 
   if (field == LBPAR_AGRID) {
     lb_init();
@@ -728,7 +799,9 @@ static void init_tcl(Tcl_Interp *interp)
   /* in bin.c */
   REGISTER_COMMAND("bin", tclcommand_bin);
   /* in lb.c */
+#ifdef LB
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
+#endif
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
@@ -748,6 +821,20 @@ static void init_tcl(Tcl_Interp *interp)
 #ifdef METADYNAMICS
   /* in metadynamics.c */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
+#endif
+#ifdef LB_GPU
+  /* in lbgpu.c */
+  REGISTER_COMMAND("lbfluid", tclcommand_lbfluid_gpu);
+
+  REGISTER_COMMAND("lbnode", tclcommand_lbnode_gpu);
+
+  REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
+
+  REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
+
+#ifdef LB_BOUNDARIES_GPU
+  REGISTER_COMMAND("lb_boundary", tclcommand_lbboundary_gpu);
+#endif
 #endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");

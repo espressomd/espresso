@@ -1809,8 +1809,9 @@ static int tclcommand_lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char
 #endif /* LB */
 
 /** Parser for the \ref lbnode command. */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
    int err=TCL_ERROR;
    int coord[3];
 
@@ -1837,15 +1838,15 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
    }
      
    return err;
-#else /* !defined LB */
-  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
-  return TCL_ERROR;
-#endif
+//#else /* !defined LB */
+//  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+//  return TCL_ERROR;
 }
-
+#endif
 /** Parser for the \ref lbfluid command. */
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
   int err = TCL_OK;
   int change = 0;
   
@@ -1895,10 +1896,10 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
 
   return err;    
-#else /* !defined LB */
-  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
-  return TCL_ERROR;
-#endif
-}
+//#else /* !defined LB */
+//  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+//  return TCL_ERROR;
 
+}
+#endif
 /*@}*/
