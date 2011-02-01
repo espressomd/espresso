@@ -32,7 +32,8 @@ tests= \
 	constraints.tcl \
 	mass.tcl \
 	lb.tcl \
-        tunable_slip.tcl
+        tunable_slip.tcl \
+	virtual-sites.tcl
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) \
