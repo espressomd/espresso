@@ -39,7 +39,7 @@
 #define D3Q19
 
 /** \name Parameter fields for Lattice Boltzmann
- * The numbers are referenced in \ref mpi_bcast_lb_lb_para
+ * The numbers are referenced in \ref mpi_bcast_lb_lbpar
  * to determine what actions have to take place upon change
  * of the respective parameter. */
 /*@{*/
@@ -114,7 +114,7 @@ typedef struct {
 
   unsigned int your_seed;
 
-} LB_parameters_gpu;
+} lbparmeters_gpu;
 
 /** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
 typedef struct {
@@ -205,7 +205,7 @@ typedef struct {
 extern "C" {
 #endif
 
-extern LB_parameters_gpu lb_para;
+extern lbparmeters_gpu lbpar;
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum_gpu;
@@ -262,17 +262,17 @@ void lb_reinit_fluid_gpu();
 void lb_realloc_particles_gpu();
 
 
-void lb_init_GPU(LB_parameters_gpu *lb_para);
+void lb_init_GPU(lbparmeters_gpu *lbpar);
 void lb_integrate_GPU();
 void LB_particle_GPU(LB_particle *host_data);
 void initGPU(int argc, char **argv);
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
-void lb_realloc_particle_GPU(LB_parameters_gpu *lb_para);
+void lb_realloc_particle_GPU(lbparmeters_gpu *lbpar);
 void lb_copy_forces_GPU(LB_particle_force *host_forces);
 
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex);
-void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lb_para);
+void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, lbparmeters_gpu *lbpar);
 #ifdef __cplusplus
 }
 #endif

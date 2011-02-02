@@ -541,11 +541,9 @@ void integrate_vv(int n_steps)
 #endif
 
 #ifdef LB_GPU
-if(this_node == 0){
+  if(this_node == 0){
 	if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
-	//fprintf(stderr,"lb_integrate_GPU \n");
-
-}
+  }
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -641,6 +639,7 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data)
 int tclcallback_time_step(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
+  float ts = (float)data;
   if (data < 0.0) {
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
@@ -651,10 +650,10 @@ int tclcallback_time_step(Tcl_Interp *interp, void *_data)
     return (TCL_ERROR);
   }
 #endif
-//Achtung vielleicht nur auf master aufrufen
+
 #ifdef LB_GPU	
-  else if ((lb_para.tau >= 0.0) && (data > lb_para.tau)) {
-    fprintf(stderr,"tau %f %lf \n", lb_para.tau, data); 
+  else if ((lbpar.tau >= 0.0) && (ts > lbpar.tau)) {
+    //fprintf(stderr,"tau %f time_step %lf \n", lbpar.tau, ts); 
 	Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
     return (TCL_ERROR);
   }

@@ -200,8 +200,13 @@ void on_integration_start()
 
   if (!check_obs_calc_initialized()) return;
 
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
+#ifdef LB_GPU
+if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU) {
+#else
   if(lattice_switch & LATTICE_LB) {
+#endif
     if (lbpar.agrid < 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
@@ -219,37 +224,16 @@ void on_integration_start()
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
   }
+#ifdef LB_GPU
+	if (lb_reinit_particles_gpu) {lb_realloc_particles_gpu();
+	lb_reinit_particles_gpu = 0;
+	}
+  }
+#endif
 #endif
 
 #ifdef METADYNAMICS
   meta_init();
-#endif
-
-#ifdef LB_GPU
-if(this_node == 0){
-  if(lattice_switch & LATTICE_LB_GPU) {
-    if (lb_para.agrid <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann GPU agrid not set} ");
-    }
-    if (lb_para.tau <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann GPU time step not set} ");
-    }
-    if (lb_para.rho <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann GPU fluid density not set} ");
-    }
-    if (lb_para.viscosity <= 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann GPU fluid viscosity not set} ");
-    }
-  }
-	if (lb_reinit_particles_gpu) {lb_realloc_particles_gpu();
-	lb_reinit_particles_gpu = 0;
-	}
-}	
-	//lb_init_gpu();
 #endif
 
   /********************************************/
@@ -670,28 +654,18 @@ void on_parameter_change(int field)
 
 #ifdef LB_GPU
 if(this_node == 0){
-  /* LB needs ghost velocities */
-  /*if (field == FIELD_LATTICE_SWITCH) {
-    on_ghost_flags_change();
-    cells_re_init(CELL_STRUCTURE_CURRENT);
-  }*/
 
   if (lattice_switch & LATTICE_LB_GPU) {
     if (field == FIELD_TEMPERATURE) {
-      //lb_reinit_parameters_gpu();
 		lb_init_gpu();
     }
-
-    //if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID) {
-      //lb_init_gpu();
-    //}
-}
   }
+}
 #endif
 }
 
 #ifdef LB
-void on_lb_lb_para_change(int field) {
+void on_lb_lbpar_change(int field) {
 
   if (field == LBPAR_AGRID) {
     lb_init();
