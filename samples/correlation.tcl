@@ -33,6 +33,7 @@ setmd skin 0.1
 for { set i 0 } { $i < 100 } { incr i } {
   part $i pos [ expr $box_l * [ t_random ] ]  [ expr $box_l * [ t_random ] ]  [ expr $box_l * [ t_random ] ]
 }
+integrate 1000
 
 ## Now we initialize the correlation number 0.
 ## We need to pass the first and second observable 
@@ -49,7 +50,8 @@ for { set i 0 } { $i < 100 } { incr i } {
 ## Finally we tell the correlation that the unit of time
 ## is $time_step, i.e. the time difference between
 ## sucessive updates
-analyze correlation 0 first_obs particle_velocities second_obs particle_velocities corr_operation scalar_product tau_lin 20 hierarchy_depth 3 delta_t [ setmd time_step ]
+analyze correlation 0 first_obs com_velocity id { 0 0 } second_obs com_velocity id { 0 0 } corr_operation componentwise_product tau_lin 20 hierarchy_depth 3 delta_t [ setmd time_step ] compress1 linear compress2 linear
+analyze correlation 1 first_obs particle_velocities id { 0 } second_obs particle_velocities id { 0 } corr_operation scalar_product tau_lin 20 hierarchy_depth 3 delta_t [ setmd time_step ] compress1 linear compress2 linear
 
 ## We also calculate the variance of the x component of the velocity 
 ## as reference value (to see that everything works).
@@ -60,8 +62,10 @@ for { set i 0 } { $i < $nsteps } { incr i } {
   integrate 1
   ## The correlation is updated after every MD step
   analyze correlation 0 update
+  analyze correlation 1 update
   set var [expr $var + [ lindex [ part 0 print v ] 0 ] *  [ lindex [ part 0 print v ] 0 ] ]
 }
 ## Finally we print the result to the screen.
 puts "variance [ expr $var/$nsteps ]"
-analyze correlation 0 print
+analyze correlation 0 write_to_file "corr1.dat"
+analyze correlation 1 write_to_file "corr2.dat"
