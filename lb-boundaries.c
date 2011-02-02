@@ -34,8 +34,6 @@
 int n_lb_boundaries       = 0;
 LB_Boundary *lb_boundaries = NULL;
 
-#ifdef LB_BOUNDARIES
-
 // TCL Parser functions
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
@@ -401,8 +399,8 @@ int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char *
   Tcl_AppendResult(interp, "LB_BOUNDARIES not compiled in!" ,(char *) NULL);
   return (TCL_ERROR);
 #endif /* LB_BOUNDARIES */
-#ifdef LB_BOUNDARIES
 }
+#ifdef LB_BOUNDARIES
 
 
 /** Initialize boundary conditions for all constraints in the system. */
@@ -460,5 +458,4 @@ void lb_init_boundaries() {
 }
 
 #endif /* LB_BOUNDARIES */
-#endif // LB
 
