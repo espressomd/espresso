@@ -123,15 +123,14 @@
 
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
-/** The TCL command parser 
- */
-int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv); 
-int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
-int correlation_print_usage(Tcl_Interp* interp);
-int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args);
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B);
+// IDs of different correlations
+#define CORR_TYPE_GENERIC       0
+#define CORR_TYPE_SF            1
+#define CORR_TYPE_AVERAGED_SF   2
+#define CORR_TYPE_VACF          3
+#define CORR_TYPE_MSD           4
 
-  
+
 
 /** The struct that is used to calculate correlations *
  * 
@@ -154,6 +153,7 @@ typedef struct {
   unsigned int tau_lin;            // number of frames in the linear correlation
   unsigned int* newest;            // index of the newest entry in each hierarchy level
   unsigned int window_distance; 
+  int corr_type;                   // to help keeping track what we are actually correlating
 
   // Convenience pointers to our stored data
   // indices: A[level][tau_i][component]
@@ -186,6 +186,22 @@ typedef struct {
 
 } double_correlation;
 
+
+// TODO: missing destructor
+/** struct for passing arguments to structure_factor
+ */
+typedef struct {
+  int order;
+  int dim_sf;
+  // entries for spherical averaging
+  int n_bins; // number of bins 
+  double inv_bin_width; // 1/bin_width
+  double *q_density; // number of q vectors per bin
+  double qmax;
+  double q2max;
+} sf_params;
+
+
 /** This struct allow to use a file as input for the correlation.
  * It is initalized and then just passed as extra argument to the file_data_source_readline 
  * function that extracts floating point values from the particular file.
@@ -199,6 +215,18 @@ typedef struct {
   int data_left;
 } file_data_source;
 
+/** The TCL command parser 
+ */
+int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv); 
+int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
+int correlation_print_usage(Tcl_Interp* interp);
+// parsing calls to pre-defined correlations
+int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p);
+// parsing generic correlation call
+int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args);
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B);
+
+  
 
 /**
  * The initialization procedure for the correlation object. All important parameters have to be speciefied
@@ -250,7 +278,14 @@ int file_data_source_readline(void* xargs, double* A, int dim_A);
 
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A);
 
+/** Compress computing arithmetic mean: A_compressed=(A1+A2)/2 */
 int compress_linear( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
+
+/** Compress discarding the 1st argument and return the 2nd */
+int compress_discard1( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
+
+/** Compress discarding the 2nd argument and return the 1st */
+int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
 
 int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
@@ -271,7 +306,9 @@ int particle_velocities(void* typelist, double* A, unsigned int n_A);
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
 
-int structure_factor(void* typelist, double* A, unsigned int n_A);
+/** Calculate structure factor from positions
+*/
+int structure_factor(void* params, double* A, unsigned int n_A);
 
 typedef struct {
   Tcl_Interp* interp;

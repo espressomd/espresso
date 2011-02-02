@@ -73,6 +73,9 @@ int correlation_update_from_file(unsigned int no) {
 }
 
 
+/* We can track several correlation functions at a time
+*  identified by their ids.
+*/
 int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv) {
   int no;
   if (argc < 1)
@@ -93,20 +96,29 @@ int correlation_print_usage(Tcl_Interp* interp) {
 
 int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A) = 0;
+  int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
   void* A_args = 0;
   int dim_A;
   int(*B_fun)  ( void* B_args, double* B, unsigned int dim_B) = 0;
+  int(*compressB)  ( double* B1, double*B2, double* B_compressed, unsigned int dim_B ) = 0;
   void* B_args = 0;
   int dim_B;
   int tau_lin = 16; // default values
-  int hierarchy_depth = 4;
+  /* It would be perhaps better, if the user should specify 
+  tau_max and hiererchy depth was computed internally 
+  PK */
+  int hierarchy_depth = 4; 
   double delta_t = 1;
+  double tau_max=0.0;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
   int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
   tcl_input_data* tcl_input_p;
-  
+  char buffer[TCL_INTEGER_SPACE];
+  static int *correlation_types=NULL; // list of already set up correlations
+  int correlation_type; // correlation type of correlation which is currently being created
+
   // Check if ID is negative
   if ( no < 0 ) {
     Tcl_AppendResult(interp, "Correlation IDs must be positive", (char *)NULL);
@@ -168,75 +180,168 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
       Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
       return TCL_ERROR;
 
-  }  
+  } else if ( no == n_correlations ) {  
   
-  // Else we must parse the other arguments and see if we can construct a fully
-  // working correlation class instance from that.
-  while (argc > 0) {
-    if ( ARG0_IS_S("first_obs") ) {
-      argc -= 1;
-      argv += 1;
+    // Else we must parse the other arguments and see if we can construct a fully
+    // working correlation class instance from that.
+    correlation_type=CORR_TYPE_GENERIC; // this is the default
+    while (argc > 0) {
+      if ( ARG_IS_S_EXACT(0,"vacf") ) {
+        Tcl_AppendResult(interp, "Cannot use vacf yet. Use generic instead.", (char *)NULL);
+	error=1;
+        //error=parse_vacf(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
+        argc -= change;
+        argv += change;
+        if (error)
+          return TCL_ERROR; 
+	else 
+	  correlation_type=CORR_TYPE_VACF;
+      } 
+      else if ( ARG_IS_S_EXACT(0,"msd") ) {
+        Tcl_AppendResult(interp, "Cannot use msd yet. Use generic instead.", (char *)NULL);
+	error=1;
+        //error=parse_msd(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
+        argc -= change;
+        argv += change;
+        if (error)
+          return TCL_ERROR;
+	else 
+	  correlation_type=CORR_TYPE_MSD;
+      } 
+      else if ( ARG_IS_S_EXACT(0,"structure_factor") ) {
+        Tcl_AppendResult(interp, "Cannot use structure_factor yet. Use generic instead.", (char *)NULL);
+	error=1;
+        error=parse_structure_factor(interp, argc, argv, &change,  &A_args,  &tau_lin, &tau_max,  &delta_t);
+        argc -= change;
+        argv += change;
+        if (error)
+          return TCL_ERROR;
+	else 
+	  correlation_type=CORR_TYPE_SF;
+      } 
+      else if ( ARG0_IS_S("first_obs") ) {
+        argc -= 1;
+        argv += 1;
 //      dim_A=28300;
-      error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-      argc -= change;
-      argv += change;
-      if (error)
-        return TCL_ERROR;
-    } else if ( ARG0_IS_S("second_obs") ) {
-      argc -= 1;
-      argv += 1;
-//      dim_B=28292;
-      error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
-      argc -= change;
-      argv += change;
-      if (error)
-        return TCL_ERROR;
-    } else if ( ARG0_IS_S("corr_operation") ) {
-      argc -= 1;
-      argv += 1;
-      if ( parse_corr_operation(interp, argc, argv, &change, &corr_operation, &dim_corr, dim_A, dim_B) ) 
-        return TCL_ERROR;
-      argc -= change;
-      argv += change;
-    } else if ( ARG0_IS_S("tau_lin") ) {
-      if ( argc < 2 || !ARG1_IS_I(tau_lin))
-        Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL);
-      else { 
+        error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
+	// by default, set second_observable to the same
+        error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
+        argc -= change;
+        argv += change;
+        if (error)
+          return TCL_ERROR;
+      } else if ( ARG0_IS_S("second_obs") ) {
+        argc -= 1;
+        argv += 1;
+//        dim_B=28292;
+        error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
+        argc -= change;
+        argv += change;
+        if (error)
+          return TCL_ERROR;
+      } else if ( ARG0_IS_S("corr_operation") ) {
+        argc -= 1;
+        argv += 1;
+        if ( parse_corr_operation(interp, argc, argv, &change, &corr_operation, &dim_corr, dim_A, dim_B) ) 
+          return TCL_ERROR;
+        argc -= change;
+        argv += change;
+      } else if ( ARG0_IS_S("tau_lin") ) {
+        if ( argc < 2 || !ARG1_IS_I(tau_lin))
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL);
+        else { 
+          argc -= 2;
+          argv += 2;
+        } // tau_lin is already set
+      } else if ( ARG0_IS_S("hierarchy_depth") ) {
+        if ( argc < 2 || !ARG1_IS_I(hierarchy_depth))
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... hierarchy_depth $hierarchy_depth", (char *)NULL);
+        else { 
+          argc -= 2;
+          argv += 2;
+        } // hierarchy_depth is already set
+      } else if ( ARG0_IS_S("delta_t") ) {
+        if ( argc < 2 || !ARG1_IS_D(delta_t))
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t", (char *)NULL);
+        else { 
         argc -= 2;
         argv += 2;
-      } // tau_lin is already set
-    } else if ( ARG0_IS_S("hierarchy_depth") ) {
-      if ( argc < 2 || !ARG1_IS_I(hierarchy_depth))
-        Tcl_AppendResult(interp, "Usage: analyze correlation ... hierarchy_depth $hierarchy_depth", (char *)NULL);
-      else { 
+        } // delta_t is already set
+      } else if ( ARG_IS_S_EXACT(0,"compress1") ) {
+        if ( ARG_IS_S_EXACT(1,"linear") )  compressA=compress_linear; 
+        else if (ARG_IS_S_EXACT(1,"discard1")) compressA=compress_discard1;
+        else if (ARG_IS_S_EXACT(1,"discard2")) compressA=compress_discard2;
+	else {
+	  Tcl_AppendResult(interp, "Compression function ", argv[1], (char *)NULL);
+	  Tcl_AppendResult(interp, " is not implemented. ", (char *)NULL);
+	  return TCL_ERROR;
+	}
         argc -= 2;
-        argv += 2;
-      } // hierarchy_depth is already set
-    } else if ( ARG0_IS_S("delta_t") ) {
-      if ( argc < 2 || !ARG1_IS_D(delta_t))
-        Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t", (char *)NULL);
-      else { 
+        argv += 2; 
+      } else if ( ARG_IS_S_EXACT(0,"compress2") ) {
+        if ( ARG_IS_S_EXACT(1,"linear") )  compressB=compress_linear; 
+        else if (ARG_IS_S_EXACT(1,"discard1")) compressB=compress_discard1;
+        else if (ARG_IS_S_EXACT(1,"discard2")) compressB=compress_discard2;
+	else {
+	  Tcl_AppendResult(interp, "Compression function ", argv[1], (char *)NULL);
+	  Tcl_AppendResult(interp, " is not implemented. ", (char *)NULL);
+	  return TCL_ERROR;
+	}
         argc -= 2;
-        argv += 2;
-      } // delta_t is already set
-    } else {
-      Tcl_AppendResult(interp, "unknown argument ", argv[0], (char *)NULL);
-      return TCL_ERROR;
+        argv += 2; 
+      } else if ( ARG0_IS_S("update") ) {
+        sprintf(buffer,"%d",no);
+        Tcl_AppendResult(interp, "Correlation error: cannot update correlation ", buffer, (char *)NULL);
+        Tcl_AppendResult(interp, " It must be set up first", (char *)NULL);
+        return TCL_ERROR;
+      } else if ( ARG0_IS_S("print") ) {
+        sprintf(buffer,"%d",no);
+        Tcl_AppendResult(interp, "Correlation error: cannot print correlation ", buffer, (char *)NULL);
+        Tcl_AppendResult(interp, " It must be set up first", (char *)NULL);
+        return TCL_ERROR;
+      } else {
+        Tcl_AppendResult(interp, "unknown argument ", argv[0], (char *)NULL);
+        return TCL_ERROR;
+      }
     }
+  } else {
+      sprintf(buffer,"%d",no);
+      Tcl_AppendResult(interp,"Correlation error: cannot set up correlation with id ",buffer,(char *)NULL);
+      sprintf(buffer,"%d",n_correlations);
+      Tcl_AppendResult(interp," Next correlation must have id ",buffer,(char *)NULL);
+      return TCL_ERROR;
   }
+
 
   // Now we should find out, if this is enough to make a correlation.
   // Unfortunately still nothing happens here!
+  if(hierarchy_depth>0) {
+    if(compressA==NULL) {
+        Tcl_AppendResult(interp, "You have not chosen the compression function! Correlation cannot be performed.", (char *)NULL);
+        return TCL_ERROR; 
+    }
+    if(compressB==NULL) {
+        Tcl_AppendResult(interp, "You have not chosen the compressB function. Taking compressB=compressA by default.", (char *)NULL);
+	compressB=compressA;
+    }
+  }
   
   // Let us just realloc space. Does not matter even if we can not make a proper correlation out of that.
   correlations=(double_correlation*) realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
 
   // Now initialize the new correlation
+  /*
   error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, hierarchy_depth, 1, 
       dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
       corr_operation, &compress_linear, &compress_linear);
+      */
+  error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, hierarchy_depth, 1, 
+      dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
+      corr_operation, compressA, compressB);
   if ( error == 0 ) {
     n_correlations++;
+    correlation_types=realloc(correlation_types,n_correlations*sizeof(int));
+    correlation_types[n_correlations-1]=correlation_type;
     return TCL_OK;
   } else {
     printf("Error number %d\n", error);
@@ -254,7 +359,74 @@ int observable_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
-int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args){
+int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p) {
+  sf_params* params;
+  int order,order2,tau_lin;
+  int i,j,k,l,n;
+  double delta_t,tau_max;
+  char buffer[TCL_DOUBLE_SPACE];
+  if (ARG0_IS_I(order)) {
+    if(order>1) {
+      params->order=order;
+      order2=order*order;
+    } else {
+      sprintf(buffer, "%d", order);
+      Tcl_AppendResult(interp, "order must be > 1, got ", buffer);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading order\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    return TCL_ERROR; 
+  }
+  if (ARG1_IS_D(delta_t)) {
+    if (delta_t > 0.0) *delta_t_p=delta_t;
+    else {
+      sprintf(buffer, "%lf", delta_t);
+      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", buffer);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading delta_t\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_D(2,tau_max)) {
+    if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
+    else {
+      sprintf(buffer, "%lf", tau_max);
+      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", buffer);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading tau_max\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_I(3,tau_lin)) {
+    if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
+    else {
+      sprintf(buffer, "%d", tau_lin);
+      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", buffer);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading tau_lin\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    return TCL_ERROR; 
+  }
+  // compute the vectors
+  l=0;
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) 
+            l += 2;
+        }
+  params->dim_sf=l;
+  *A_args=(void*)params;
+  *change=4; // if we reach this point, we have parsed 3 arguments, if not error is returned anyway
+  return 0;
+}
+
+int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args) {
 
 
   file_data_source* fds;
@@ -367,7 +539,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     *change=1;
     return TCL_OK;
   } else {
-    Tcl_AppendResult(interp, "Unknown correlation operation", argv[0], "\n" , (char *)NULL);
+    Tcl_AppendResult(interp, "Unknown correlation operation: ", argv[0], "\n" , (char *)NULL);
     return TCL_ERROR;
   }
 }
@@ -576,7 +748,7 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
      }
      }
-     Tcl_AppendResult(interp, " } ", (char *)NULL);
+     Tcl_AppendResult(interp, " } \n", (char *)NULL);
   }
   return 0;
 }
@@ -619,6 +791,20 @@ int compress_linear( double* A1, double*A2, double* A_compressed, unsigned int d
   unsigned int i;
   for ( i = 0; i < dim_A; i++ )
     A_compressed[i] = 0.5*(A1[i]+A2[i]);
+  return 0;
+}
+
+int compress_discard1( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) {
+  unsigned int i;
+  for ( i = 0; i < dim_A; i++ )
+    A_compressed[i] = A2[i];
+  return 0;
+}
+
+int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) {
+  unsigned int i;
+  for ( i = 0; i < dim_A; i++ )
+    A_compressed[i] = A1[i];
   return 0;
 }
 
@@ -704,17 +890,16 @@ int particle_positions(void* typelist, double* A, unsigned int n_A) {
 
 
 
-int structure_factor(void* order_p, double* A, unsigned int n_A) {
+int structure_factor(void* params_p, double* A, unsigned int n_A) {
   int i,j,k,l,p;
   int order, order2, n;
-  double twoPI_L, C_sum, S_sum, qr ;
-  order = *(int*)order_p;
+  double twoPI_L, C_sum, S_sum, qr;
+  sf_params params;
+  params = *(sf_params*)params_p;
+  order = params.order;
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
   
-  // TODO: The particles types have FIXED MEANING
-  // We need a more general concept here!
-
   sortPartCfg();
 
     for(p=0; p<n_A; p++) {
@@ -729,16 +914,9 @@ int structure_factor(void* order_p, double* A, unsigned int n_A) {
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
 	    for(p=0; p<n_total_particles; p++) {
-	      if (partCfg[p].p.type == 1) {
-		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		C_sum+= cos(qr);
-		S_sum-= sin(qr);
-	      }
-	      if (partCfg[p].p.type == 2) {
-		qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-		C_sum-= cos(qr);
-		S_sum+= sin(qr);
-	      }  
+	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
+	      C_sum+= partCfg[p].p.scattering_length * cos(qr);
+	      S_sum-= partCfg[p].p.scattering_length * sin(qr);
 	    }
             A[l]   =C_sum;
             A[l+1] =S_sum;
@@ -749,6 +927,7 @@ int structure_factor(void* order_p, double* A, unsigned int n_A) {
     }
     return 0;
 }
+
 
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns) {
   int counter=1;

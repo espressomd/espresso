@@ -103,6 +103,7 @@ void init_particle(Particle *part)
 #ifdef MASS
   part->p.mass     = 1.0;
 #endif
+  part->p.scattering_length=0.0;
 
 #ifdef ROTATIONAL_INERTIA
   part->p.rinertia[0] = 1.0;
@@ -798,6 +799,8 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, " mass ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.mass, buffer);
 #endif
+  Tcl_AppendResult(interp, buffer, " scattering_length ", (char *)NULL);
+  Tcl_PrintDouble(interp, part.p.scattering_length, buffer);
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.q, buffer);
@@ -944,7 +947,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
-
+    else if (ARG0_IS_S("scattering_length")) {
+      Tcl_PrintDouble(interp, part.p.scattering_length, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
 #ifdef ELECTROSTATICS
     else if (ARG0_IS_S("q")) {
       Tcl_PrintDouble(interp, part.p.q, buffer);
@@ -1000,7 +1006,6 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("exclusions"))
       tclcommand_part_print_exclusions(&part, buffer, interp);
 #endif
-
     else if (ARG0_IS_S("bonds"))
       tclcommand_part_print_bonding_structure(&part, buffer, interp);
     else if (ARG0_IS_S("connections")) {
@@ -1108,6 +1113,31 @@ int tclcommand_part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
     return TCL_OK;
 }
 #endif
+
+int tclcommand_part_parse_scattering_length(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    double scattering_length;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "scattering_length requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set scattering_length */
+    if (! ARG0_IS_D(scattering_length))
+      return TCL_ERROR;
+
+    if (set_particle_scattering_length(part_num, scattering_length) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
 
 #ifdef  ROTATIONAL_INERTIA
 int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
@@ -1865,6 +1895,8 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("mass"))
       err = tclcommand_part_parse_mass(interp, argc-1, argv+1, part_num, &change);
 #endif
+    else if (ARG0_IS_S("scattering_length"))
+      err = tclcommand_part_parse_scattering_length(interp, argc-1, argv+1, part_num, &change);
     else if (ARG0_IS_S("q"))
       err = tclcommand_part_parse_q(interp, argc-1, argv+1, part_num, &change);
 
@@ -2120,6 +2152,24 @@ int set_particle_mass(int part, double mass)
   return TCL_OK;
 }
 #endif
+
+
+int set_particle_scattering_length(int part,  double scattering_length)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+  mpi_send_scattering_length(pnode, part, scattering_length);
+  return TCL_OK;
+}
+
 
 #ifdef ROTATIONAL_INERTIA
 int set_particle_rotational_inertia(int part, double rinertia[3])

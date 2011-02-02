@@ -191,9 +191,12 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_RINERTIA  54
 /** Action number for \ref mpi_send_mu_E. */
 #define REQ_SET_MU_E     55
+/** Action number for \ref mpi_send_scattering_length. */
+#define REQ_SET_SCATTERING_LENGTH     56
+
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 56
+#define REQ_MAXIMUM 57
 
 /*@}*/
 
@@ -244,6 +247,7 @@ void mpi_bcast_nptiso_geom_slave(int node, int parm);
 void mpi_update_mol_ids_slave(int node, int parm);
 void mpi_sync_topo_part_info_slave(int node, int parm);
 void mpi_send_mass_slave(int node, int parm);
+void mpi_send_scattering_length_slave(int node, int parm);
 void mpi_buck_cap_forces_slave(int node, int parm);
 void mpi_gather_runtime_errors_slave(int node, int parm);
 void mpi_send_exclusion_slave(int node, int parm);
@@ -319,6 +323,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
+  mpi_send_scattering_length_slave,              /* 56: REQ_SET_SCATTERING_LENGTH */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -389,6 +394,7 @@ char *names[] = {
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
   "SET_MU_E", /* 55 */
+  "SET_SCATTERING_LENGTH",       /* 56 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -805,6 +811,35 @@ void mpi_send_mass_slave(int pnode, int part)
   on_particle_change();
 #endif
 }
+
+/****************** REQ_SET_SCATTERING_LENGTH ************/
+void mpi_send_scattering_length(int pnode, int part, double scattering_length)
+{
+  mpi_issue(REQ_SET_SCATTERING_LENGTH, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.scattering_length = scattering_length;
+  }
+  else {
+    MPI_Send(&scattering_length, 1, MPI_DOUBLE, pnode, REQ_SET_SCATTERING_LENGTH, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+}
+
+void mpi_send_scattering_length_slave(int pnode, int part)
+{
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.scattering_length, 1, MPI_DOUBLE, 0, REQ_SET_SCATTERING_LENGTH,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+}
+
 
 /********************* REQ_SET_RINERTIA ********/
 
@@ -1940,6 +1975,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif
 }
 
+
 /****************** REQ_SET_EXT ************/
 void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
 {
@@ -1966,6 +2002,7 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
   on_particle_change();
 #endif
 }
+
 
 void mpi_send_ext_slave(int pnode, int part)
 {

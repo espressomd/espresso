@@ -72,6 +72,8 @@ typedef struct {
   /** particle mass */
   double mass;
 #endif
+  /** scattering length for calculating structure factor */
+  double scattering_length;
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
@@ -517,6 +519,14 @@ int set_particle_ext(int part, int flag, double force[3]);
 */
 int set_particle_fix(int part,  int flag);
 #endif
+
+/** Call only on the master node: Set the scattering length of the particle
+    @param part  particle ID.
+    @param scattering_length     new value of the scattering length
+    @return TCL_OK if set successfuly
+*/
+int set_particle_scattering_length(int part,  double scattering_length);
+
 
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
