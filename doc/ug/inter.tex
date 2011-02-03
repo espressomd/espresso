@@ -1037,34 +1037,66 @@ method, \eg
   {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5}
 \end{tclcode}
 
-\subsection{P3M}
+\subsection{Coulomb P3M}
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
 \begin{essyntax}
-  \variant{1}inter coulomb \var{l_B} p3m 
-  \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
-
-  \variant{2}inter magnetic \var{l_B} p3m 
+  inter coulomb \var{l_B} p3m 
   \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
   \begin{features}
-    \required[1]{ELECTROSTATICS}
-    \required[2]{MAGNETOSTATICS}
+    \required{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
 
-Variant \variant{1} activates the P3M method to handle the
-electrostatic interactions (charge-charge), whereas variant
-\variant{2} activates the P3M method to handle the magnetostatic
-interactions (magnetic dipole-dipole) (aka dipolar P3M).
-
-For electrostatics the interaction is:
+This command activates the P3M method to handle the electrostatic
+interactions between charged particles. The interaction type is:
 \begin{equation}
   U^{C-P3M} = l_B k_B T \frac{q_1 q_2}{r}
 \end{equation}
 Here $l_B = e_o^2 / (4 \pi \epsilon k_B T)$ is the Bjerrum length.
 
-For magnetostatics the interaction is:
+Make sure that you know the relevance of the P3M parameters before
+using P3M! If you are not sure, read the following references
+\cite{ewald21, hockney88, kolafa92, deserno98, deserno98a, deserno00,
+  deserno00a, cerda08a}.
+
+
+\subsubsection{Additional P3M parameters}
+
+\begin{essyntax}
+  inter coulomb \opt{\lit{epsilon} \alt{\lit{metallic} \asep \var{epsilon}}}
+  \opt{\lit{n_interpol} \var{points}} \opt{\lit{mesh_off} \var{xoff}
+    \var{yoff} \var{zoff}}
+\end{essyntax}
+
+There are some additional P3M parameters
+\begin{description}
+\item[\lit{epsilon}] The dielectric constant of the surrounding
+  medium, metallic (\ie infinity) or some finite positive number.
+  Defaults to \lit{metallic}.
+\item[\lit{n_interpol}] Number of interpolation points for the charge
+  assignment function.  When this is set to $0$, interpolation is
+  turned off and the function is computed directly. Defaults to
+  $32768$.
+\item[\lit{mesh_off}] Offset of the first mesh point from the lower
+  left corner of the simulation box in units of the mesh
+  constant. Defaults to \codebox{{0.5 0.5 0.5}}.
+\end{description}
+
+\subsection{Magnetic P3M}
+
+\begin{essyntax}
+  inter magnetic \var{l_B} p3m 
+  \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
+  \begin{features}
+    \required{MAGNETOSTATICS}
+  \end{features}
+\end{essyntax}
+
+This command activates the P3M method to handle the magnetostatic
+interactions (magnetic dipole-dipole) (so-called dipolar P3M). The
+interaction type is
 \begin{equation}
   U^{D-P3M} = l_{B} k_B T \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
   - \frac{3  (\vec{\mu}_i \cdot \vec{r}_{ij})  (\vec{\mu}_j \cdot \vec{r}_{ij}) }{r^5} \right)
@@ -1092,28 +1124,6 @@ non P3M method to deal with charges (see folowing sections) while one
 uses dipolar P3M to deal with the magnetic dipoles. In case you use
 P3M for both charges and magnetic dipoles, make sure that you tune
 each P3M method (coulomb/magnetic) to the desired accuracy.
-
-\subsubsection{Additional P3M parameters}
-
-\begin{essyntax}
-  inter coulomb \opt{\lit{epsilon} \alt{\lit{metallic} \asep \var{epsilon}}}
-  \opt{\lit{n_interpol} \var{points}} \opt{\lit{mesh_off} \var{xoff}
-    \var{yoff} \var{zoff}}
-\end{essyntax}
-
-There are some additional P3M parameters
-\begin{description}
-\item[\lit{epsilon}] The dielectric constant of the surrounding
-  medium, metallic (\ie infinity) or some finite positive number.
-  Defaults to \lit{metallic}.
-\item[\lit{n_interpol}] Number of interpolation points for the charge
-  assignment function.  When this is set to $0$, interpolation is
-  turned off and the function is computed directly. Defaults to
-  $32768$.
-\item[\lit{mesh_off}] Offset of the first mesh point from the lower
-  left corner of the simulation box in units of the mesh
-  constant. Defaults to \codebox{{0.5 0.5 0.5}}.
-\end{description}
 
 \subsubsection{Tuning P3M}
 \begin{essyntax}
@@ -1303,7 +1313,7 @@ For the case of Yukawa screened simulation (second method) one has to
 enter screening parameter \var{kappa} and the cut-off of the Yukawa
 potential \var{r_\mathrm{cut}}.
 
-\subsection{ELC}
+\subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}
 
@@ -1337,7 +1347,7 @@ appendix \vref{chap:mmm}.
 Make sure that you read the papers on ELC before using it!!!
 \todo{references}
 
-\subsection{DLC}
+\subsection{Dipolar Layer Correction (DLC)}
 \index{DLC method|mainindex}
 \index{interactions!DLC method|mainindex}
 
@@ -1365,7 +1375,7 @@ z-direction of the volume where particles are not allowed to enter.
 
 As a reference for DLC-method, see \cite{brodka04a}.
 
-\subsection{MDDS}
+\subsection{Magnetic Dipolar Direct Sum (MDDS)}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
@@ -1376,7 +1386,7 @@ As a reference for DLC-method, see \cite{brodka04a}.
     \required{MAGNETOSTATICS}
   \end{features}
 \end{essyntax}
-The command enables the magnetic dipolar direct sum. This method is
+The command enables the "magnetic dipolar direct sum". This method is
 not intendeed to do simulations, rahter to check the results you get
 from Espresso. It is the exact calculation all the other magnetic
 methods with PBC try to mimic but doing the calculation faster.  The
@@ -1386,7 +1396,7 @@ dimensions, the mehtod takes only replicas in those directions which
 are periodic. Thus, using partially periodic boundaries, once can
 easily calculate the values for 2D+h and 1D+h systems.
   
-\subsection{DAWAANR}
+\subsection{Dipolar all-with-all and no replicas (DAWAANR)}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
