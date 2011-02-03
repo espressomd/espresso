@@ -1236,8 +1236,6 @@ double calc_surface_term(int force_flag, int energy_flag)
       }  
      } 
 
-
-
      // we will need the sum of all dipolar momenta vectors    
       ax=0.0;
       ay=0.0;
@@ -1252,11 +1250,11 @@ double calc_surface_term(int force_flag, int energy_flag)
      MPI_Allreduce(MPI_IN_PLACE, &ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
      MPI_Allreduce(MPI_IN_PLACE, &ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
      MPI_Allreduce(MPI_IN_PLACE, &az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-       
+     
      if (energy_flag) {
       
         suma=0.0;
-        for (i = 0; i < n_total_particles; i++){
+        for (i = 0; i < n_local_part; i++){
  	      suma+=mx[i]*ax+my[i]*ay+mz[i]*az;
         }  	   
         MPI_Allreduce(MPI_IN_PLACE, &suma, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -1267,7 +1265,6 @@ double calc_surface_term(int force_flag, int energy_flag)
      } 
        
      if (force_flag) {
- 
  
           //fprintf(stderr," number of particles= %d ",n_total_particles);   
 
@@ -1280,9 +1277,7 @@ double calc_surface_term(int force_flag, int energy_flag)
             sumiy[i]=mz[i]*ax-mx[i]*az;
             sumiz[i]=mx[i]*ay-my[i]*ax;
 	  }
-	  
-   
-   
+	    
          // for (i = 0; i < n_total_particles; i++){
   	 //    fprintf(stderr,"part %d, correccions torque  x:%le, y:%le, z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
          // }
@@ -1305,7 +1300,7 @@ double calc_surface_term(int force_flag, int energy_flag)
   	  free(sumiy);     
 	  free(sumiz);     
      }
-       
+
     free(mx);	 
     free(my);	 
     free(mz);	 
