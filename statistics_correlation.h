@@ -192,11 +192,12 @@ typedef struct {
  */
 typedef struct {
   int order;
-  int dim_sf;
+  int dim_sf; // number of q vectors
+  int *q_vals; // values of q vectors
+  double *q_density; // number of q vectors per bin
   // entries for spherical averaging
   int n_bins; // number of bins 
   double inv_bin_width; // 1/bin_width
-  double *q_density; // number of q vectors per bin
   double qmax;
   double q2max;
 } sf_params;
@@ -222,6 +223,8 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
 int correlation_print_usage(Tcl_Interp* interp);
 // parsing calls to pre-defined correlations
 int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p);
+// TESTING
+void print_sf_params(sf_params *params);
 // parsing generic correlation call
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args);
 int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B);
@@ -291,6 +294,8 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
 
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
 
+int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
+
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
 
@@ -302,7 +307,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
 int particle_velocities(void* typelist, double* A, unsigned int n_A);
 /** Obtain the particle positions.
  * TODO: Folded or unfolded?
- * TODO: make the typelist work!
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
 

@@ -94,6 +94,7 @@ int correlation_print_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
+
 int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A) = 0;
   int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
@@ -115,7 +116,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
   tcl_input_data* tcl_input_p;
-  char buffer[TCL_INTEGER_SPACE];
+  char buffer[TCL_INTEGER_SPACE+2];
   static int *correlation_types=NULL; // list of already set up correlations
   int correlation_type; // correlation type of correlation which is currently being created
 
@@ -209,15 +210,21 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 	  correlation_type=CORR_TYPE_MSD;
       } 
       else if ( ARG_IS_S_EXACT(0,"structure_factor") ) {
-        Tcl_AppendResult(interp, "Cannot use structure_factor yet. Use generic instead.", (char *)NULL);
-	error=1;
         error=parse_structure_factor(interp, argc, argv, &change,  &A_args,  &tau_lin, &tau_max,  &delta_t);
         argc -= change;
         argv += change;
-        if (error)
+	if (error)
           return TCL_ERROR;
 	else 
 	  correlation_type=CORR_TYPE_SF;
+
+        // Only the followign parameter combination makes sense
+	&A_fun=&B_fun=&structure_factor;
+	&compressA=&compressB=&discard1;
+	&corr_operation=&complex_conjugate_product;
+	// dim_sf is the number of q vectors
+	// per each of the 3 vector components, we store sin(q_i*r) and cos(q_i*r)
+	*dim_A=*dim_B=*dim_corr=6*(sf_params*)A_args->dim_sf;
       } 
       else if ( ARG0_IS_S("first_obs") ) {
         argc -= 1;
@@ -312,6 +319,8 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
       return TCL_ERROR;
   }
 
+  // TODO compute hierarchy depth from tau_max
+  // Q: what to do with the last (incomplete) level?
 
   // Now we should find out, if this is enough to make a correlation.
   // Unfortunately still nothing happens here!
@@ -364,67 +373,119 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
   int order,order2,tau_lin;
   int i,j,k,l,n;
   double delta_t,tau_max;
-  char buffer[TCL_DOUBLE_SPACE];
-  if (ARG0_IS_I(order)) {
+  char ibuffer[TCL_INTEGER_SPACE + 2];
+  char dbuffer[TCL_DOUBLE_SPACE];
+  int *vals;
+  params=(sf_params*)malloc(sizeof(sf_params));
+  
+  if(argc!=5) { 
+    sprintf(ibuffer, "%d ", argc);
+    Tcl_AppendResult(interp, "structure_factor  needs 5 arguments, got ", ibuffer, (char*)NULL);
+    sf_print_usage(interp);
+    return TCL_ERROR;
+  }
+  if (ARG_IS_I(1,order)) {
+    sprintf(ibuffer, "%d ", order);
     if(order>1) {
       params->order=order;
       order2=order*order;
     } else {
-      sprintf(buffer, "%d", order);
-      Tcl_AppendResult(interp, "order must be > 1, got ", buffer);
+      Tcl_AppendResult(interp, "order must be > 1, got ", ibuffer, (char*)NULL);
+      sf_print_usage(interp);
       return TCL_ERROR;
     }
   } else {
-    Tcl_AppendResult(interp, "problem reading order\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    Tcl_AppendResult(interp, "problem reading order",(char*)NULL);
     return TCL_ERROR; 
   }
-  if (ARG1_IS_D(delta_t)) {
+  if (ARG_IS_D(2,delta_t)) {
     if (delta_t > 0.0) *delta_t_p=delta_t;
     else {
-      sprintf(buffer, "%lf", delta_t);
-      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", buffer);
+      Tcl_PrintDouble(interp,delta_t,dbuffer);
+      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", dbuffer,(char*)NULL);
       return TCL_ERROR;
     }
   } else {
-    Tcl_AppendResult(interp, "problem reading delta_t\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    Tcl_AppendResult(interp, "problem reading delta_t, got ",argv[2],(char*)NULL);
     return TCL_ERROR; 
   }
-  if (ARG_IS_D(2,tau_max)) {
+  if (ARG_IS_D(3,tau_max)) {
     if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
     else {
-      sprintf(buffer, "%lf", tau_max);
-      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", buffer);
+      Tcl_PrintDouble(interp,tau_max,dbuffer);
+      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", dbuffer,(char*)NULL);
       return TCL_ERROR;
     }
   } else {
-    Tcl_AppendResult(interp, "problem reading tau_max\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    Tcl_AppendResult(interp, "problem reading tau_max, got",argv[3],(char*)NULL);
     return TCL_ERROR; 
   }
-  if (ARG_IS_I(3,tau_lin)) {
+  if (ARG_IS_I(4,tau_lin)) {
     if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
     else {
-      sprintf(buffer, "%d", tau_lin);
-      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", buffer);
+      sprintf(ibuffer, "%d", tau_lin);
+      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", ibuffer,(char*)NULL);
       return TCL_ERROR;
     }
   } else {
-    Tcl_AppendResult(interp, "problem reading tau_lin\n", "usage: structure_factor order delta_t tau_max  tau_lin\n");
+    Tcl_AppendResult(interp, "problem reading tau_lin, got",argv[4],(char*)NULL);
+    sf_print_usage(interp);
     return TCL_ERROR; 
   }
-  // compute the vectors
+  // compute the number of vectors
   l=0;
   for(i=-order; i<=order; i++) 
       for(j=-order; j<=order; j++) 
         for(k=-order; k<=order; k++) {
           n = i*i + j*j + k*k;
           if ((n<=order2) && (n>0)) 
-            l += 2;
+            l++;
         }
+  // and store their values
   params->dim_sf=l;
+  params->q_vals=(int*)malloc(3*l*sizeof(double));
+  l=0;
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) {
+	    params->q_vals[3*l  ]=i;
+	    params->q_vals[3*l+1]=j;
+	    params->q_vals[3*l+2]=k;
+            l++;
+	  }
+        }
   *A_args=(void*)params;
-  *change=4; // if we reach this point, we have parsed 3 arguments, if not error is returned anyway
+  *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
+  //print_sf_params(params);
   return 0;
 }
+
+// just a text function, will be removed later
+void print_sf_params(sf_params *params) {
+  int i, imax;
+  int *vals;
+  printf("order: %d\n",params->order);
+  printf("dim_sf: %d\n",params->dim_sf);
+  printf("n_bins: %d\n",params->n_bins);
+  printf("qmax: %g\n",params->qmax);
+  printf("q2max2: %g\n",params->q2max);
+  printf("q_vals: \n");
+  imax=params->dim_sf;
+  vals=params->q_vals;
+  for(i=0;i<imax;i++)
+    printf("i:%d %d %d %d\n",i,vals[3*i],vals[3*i+1],vals[3*i+ 2]);
+  printf("End of sf_params\n");
+  return;
+}
+
+
+int sf_print_usage(Tcl_Interp* interp) {
+  Tcl_AppendResult(interp, "\nusage: structure_factor order delta_t tau_max  tau_lin", (char *)NULL);
+  return TCL_ERROR;
+}
+
 
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args) {
 
@@ -523,17 +584,22 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
 
 
 int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B) {
-  if (ARG0_IS_S("componentwise_product")) {
+  if (ARG_IS_S_EXACT(0,"componentwise_product")) {
     *corr_fun = &componentwise_product;
     *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
-  } else if (ARG0_IS_S("square_distance_componentwise")) {
+  } else if (ARG_IS_S_EXACT(0,"complex_conjugate_product")) {
+    *corr_fun = &complex_conjugate_product;
+    *dim_corr = dim_A;
+    *change=1;
+    return TCL_OK;
+  } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {
     *corr_fun = &square_distance_componentwise;
     *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
-  } else if (ARG0_IS_S("scalar_product")) {
+  } else if (ARG_IS_S_EXACT(0,"scalar_product")) {
     *corr_fun = &scalar_product;
     *dim_corr = 1;
     *change=1;
@@ -830,6 +896,20 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
   }
   j=0;
   for ( i = 0; i < dim_A/2; i++ ) {
+    C[j] = A[j]*B[j];
+    j++;
+  }
+  return 0;
+}
+
+int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+  unsigned int i,j;
+  if (!(dim_A == dim_B )) {
+    printf("Error in complex_conjugate product: The vector sizes do not match");
+    return 1;
+  }
+  j=0;
+  for ( i = 0; i < dim_A/2; i++ ) {
     C[j] = A[j]*B[j] + A[j+1]*B[j+1];
     C[j+1] = A[j+1]*B[j] - A[j]*B[j+1];
     j=j+2;
@@ -994,8 +1074,10 @@ int file_data_source_readline(void* xargs, double* A, int dim_A) {
 int tcl_input(void* data, double* A, unsigned int n_A) {
   tcl_input_data* input_data = (tcl_input_data*) data;
   int i, tmp_argc, res = 1;
-  char  **tmp_argv;
+  const char  **tmp_argv;
   Tcl_SplitList(input_data->interp, input_data->argv[0], &tmp_argc, &tmp_argv);
+  // function prototype from man page:
+  // int Tcl_SplitList(interp, list, argcPtr, argvPtr)
   if (tmp_argc < n_A) {
     Tcl_AppendResult(input_data->interp, "Not enough arguments passed to analyze correlation update", (char *)NULL);
     return 1;
