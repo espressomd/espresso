@@ -1121,9 +1121,8 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       /* Assign force component from mesh to particle */
       P3M_assign_torques(dipole_prefac*(2*PI/box_l[0]), d_rs);
     }
+    P3M_TRACE(fprintf(stderr, "%d: done torque calculation.\n", this_node));
  #endif  /*if def ROTATION */ 
-    
-   fprintf(stderr, "%d: done torque calculation.\n", this_node);
     
 /***************************
    DIPOLAR FORCES (k-space)
@@ -1139,15 +1138,12 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  //tmp0 = Im(mu)*k,   tmp1 = -Re(mu)*k
-	  tmp0 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[2]];
-	  tmp1 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[2]];
-//	  Dks_mesh[ind]   = tmp0*Dg[i];
-//	  Dks_mesh[ind+1] = -tmp1*Dg[i];
-          /* Next two lines modified by JJCP 26-4-06 */
+	  tmp0 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[1]];
+	  tmp1 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[1]];
 	  Dks_mesh[ind]   = tmp0*Dg_force[i];
 	  Dks_mesh[ind+1] = -tmp1*Dg_force[i];
 	  ind += 2;
@@ -1164,19 +1160,18 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  tmp0 = Dd_op[ j[d]+Dfft_plan[3].start[d] ]*Dks_mesh[ind];
-	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[d] ]*tmp0;
+	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[2] ]*tmp0;
+	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[0] ]*tmp0;
+	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[1] ]*tmp0;
 	  ind++;
 	  tmp0 = Dd_op[ j[d]+Dfft_plan[3].start[d] ]*Dks_mesh[ind];
-	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[d] ]*tmp0;
+	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[2] ]*tmp0;
+	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[0] ]*tmp0;
+	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[1] ]*tmp0;
 	  ind++;
 	}
       }
     }
-
       /* Back FFT force component mesh */
       Dfft_perform_back(Drs_mesh_dip[0]);
       Dfft_perform_back(Drs_mesh_dip[1]);
