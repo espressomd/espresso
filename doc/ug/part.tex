@@ -454,10 +454,20 @@ For inter-particle bonds interaction $0$ is taken which must be a two-particle b
 Creates a modified icosaeder to model a fullerene (or soccer ball).
 The edges are modeled by polymer chains connected at the corners of
 the icosaeder. For inter-particle bonds interaction $0$ is taken which
-must be a two-particle bond.  \todo{A picture would be helpful}
+must be a two-particle bond. Two particle types are used for the
+pentagons and the interconnecting links. For an example, see figure \ref{fig:fullerene}.
+
+\begin{figure}[h]
+  \label{fig:diamond}
+  \begin{center}
+  \includegraphics[height=6cm]{figures/fullerene}
+  \caption{Icosaeder with \var{monomers\_per\_chain}=15.}
+  \label{fig:fullerene}
+  \end{center}
+\end{figure}
 
 \begin{arguments}
-\item[\var{a}] Defines the size of the icosaeder.
+\item[\var{a}] Length of the links. Defines the size of the icosaeder.
 \item[\var{monomers\_per\_chain}] Specifies the number of chain monomers along one edge.
 \item[\opt{counterions \var{N_\mathrm{CI}}}] Specifies the number of
   counterions to be placed into the system.
