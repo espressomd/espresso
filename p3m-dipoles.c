@@ -1047,14 +1047,15 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
    if (Dflag_constants_energy_dipolar==0) {Dflag_constants_energy_dipolar=1;}
    compute_constants_energy_dipolar(); 
    
-    k_space_energy_dip+= coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
-   
+ 
    P3M_TRACE(fprintf(stderr,"%d: p3m.Depsilon=%lf\n", this_node, p3m.Depsilon));
-   P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
    
     if(this_node==0) {
       /* self energy correction */
+      P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
+
       k_space_energy_dip -= coulomb.Dprefactor*(p3m_sum_mu2*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
+      k_space_energy_dip+= coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
     }
 
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m end Energy calculation: k-Space\n",this_node));
@@ -1206,7 +1207,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 double calc_surface_term(int force_flag, int energy_flag)
 {
  
-   int np, c, i,ip=0,n_local_part;
+  int np, c, i,ip=0,n_local_part=0;
   Particle *part;
   double pref =coulomb.Dprefactor*4*M_PI*box_l_i[0]*box_l_i[1]*box_l_i[2]/(2*p3m.Depsilon + 1);
   double suma,ax,ay,az;
@@ -1215,7 +1216,7 @@ double calc_surface_term(int force_flag, int energy_flag)
   double  *mx=NULL,*my=NULL,*mz=NULL;
 
      for (c = 0; c < local_cells.n; c++)
-       n_local_part = local_cells.cell[c]->n;
+       n_local_part += local_cells.cell[c]->n;
 
      // We put all the dipolar momenta in a the arrays mx,my,mz according to the id-number of the particles   
      mx = (double *) malloc(sizeof(double)*n_local_part);
