@@ -1028,13 +1028,13 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {	 
 	  node_k_space_energy_dip += Dg_energy[i] * (
-	  SQR(Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-	      Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-	      Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[2]]
+	  SQR(Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+	      Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+	      Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[1]]
 	  ) +
-	  SQR(Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-	      Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-	      Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[2]]
+	  SQR(Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+	      Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+	      Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[1]]
 	      ));
 	  ind += 2;
 	  i++;
