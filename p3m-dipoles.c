@@ -1057,7 +1057,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
 
       k_space_energy_dip -= coulomb.Dprefactor*(p3m_sum_mu2*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
-      k_space_energy_dip+= coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+      k_space_energy_dip += coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
     }
 
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m end Energy calculation: k-Space\n",this_node));
