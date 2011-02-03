@@ -991,6 +991,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
   /**************************************************************/
    /* k space energy */
   double dipole_prefac;
+  double surface_term;
   double k_space_energy_dip=0.0, node_k_space_energy_dip=0.0;
   double tmp0,tmp1;
 
@@ -1192,9 +1193,10 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
  } /* of if (p3m_sum_mu2>0 */
 } /* of if(force_flag) */
 
+  surface_term = calc_surface_term(force_flag, energy_flag);
  
-  if (p3m.Depsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy_dip += calc_surface_term(force_flag, energy_flag);
+  if (p3m.Depsilon != P3M_EPSILON_METALLIC && (this_node == 0)) {
+    k_space_energy_dip += surface_term;
    }
 
 
