@@ -1049,8 +1049,8 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
    
     k_space_energy_dip+= coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
    
-   /*fprintf(stderr,"p3m.Depsilon=%lf\n", p3m.Depsilon);
-   fprintf(stderr,"*Dipolar_energy_correction=%20.15lf\n",Dipolar_energy_correction);*/
+   P3M_TRACE(fprintf(stderr,"%d: p3m.Depsilon=%lf\n", this_node, p3m.Depsilon));
+   P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
    
     if(this_node==0) {
       /* self energy correction */
@@ -1206,33 +1206,32 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 double calc_surface_term(int force_flag, int energy_flag)
 {
  
-   int np, c, i,ip;
+   int np, c, i,ip=0,n_local_part;
   Particle *part;
   double pref =coulomb.Dprefactor*4*M_PI*box_l_i[0]*box_l_i[1]*box_l_i[2]/(2*p3m.Depsilon + 1);
   double suma,ax,ay,az;
   double en;
   double  *sumix=NULL,*sumiy=NULL,*sumiz=NULL;
   double  *mx=NULL,*my=NULL,*mz=NULL;
-     
-      
-     
-  if(n_nodes==1) {
- 
- 
+
+     for (c = 0; c < local_cells.n; c++)
+       n_local_part = local_cells.cell[c]->n;
+
      // We put all the dipolar momenta in a the arrays mx,my,mz according to the id-number of the particles   
-     mx = (double *) malloc(sizeof(double)*n_total_particles);
-     my = (double *) malloc(sizeof(double)*n_total_particles);
-     mz = (double *) malloc(sizeof(double)*n_total_particles);
+     mx = (double *) malloc(sizeof(double)*n_local_part);
+     my = (double *) malloc(sizeof(double)*n_local_part);
+     mz = (double *) malloc(sizeof(double)*n_local_part);
     
-  
+     
+     
      for (c = 0; c < local_cells.n; c++) {
        np   = local_cells.cell[c]->n;
        part = local_cells.cell[c]->part;
        for (i = 0; i < np; i++){
- 	 ip=part[i].p.identity;
 	 mx[ip]=part[i].r.dip[0];
 	 my[ip]=part[i].r.dip[1];
 	 mz[ip]=part[i].r.dip[2];	 
+	 ip++;
       }  
      } 
 
@@ -1243,50 +1242,39 @@ double calc_surface_term(int force_flag, int energy_flag)
       ay=0.0;
       az=0.0;
 
-      for (i = 0; i < n_total_particles; i++){
+      for (i = 0; i < n_local_part; i++){
          ax+=mx[i];
          ay+=my[i];
          az+=mz[i];
       }   
-
- 
-     printf("%d: np %d, n_total_particles %d\n", this_node, np, n_total_particles);
-     
-     //for (i = 0; i < n_total_particles; i++){
-     //  fprintf(stderr,"part ip:%d, mux: %le, muy:%le, muz:%le \n",i,mx[i],my[i],mz[i]);   
-     //}
-     
- 
-     //Now we can proceed to compute things .....
   
+     MPI_Allreduce(MPI_IN_PLACE, &ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+     MPI_Allreduce(MPI_IN_PLACE, &ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+     MPI_Allreduce(MPI_IN_PLACE, &az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+       
      if (energy_flag) {
       
         suma=0.0;
         for (i = 0; i < n_total_particles; i++){
  	      suma+=mx[i]*ax+my[i]*ay+mz[i]*az;
-        }  	      
-
-        //fprintf(stderr,"energia, pref=%le, suma=%le\n",pref,suma);
-
+        }  	   
+        MPI_Allreduce(MPI_IN_PLACE, &suma, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         en = 0.5*pref*suma;
        
      } else {
         en = 0;
      } 
-      
-
-      
        
      if (force_flag) {
  
  
           //fprintf(stderr," number of particles= %d ",n_total_particles);   
 
-          sumix = (double *) malloc(sizeof(double)*n_total_particles);
-          sumiy = (double *) malloc(sizeof(double)*n_total_particles);
-          sumiz = (double *) malloc(sizeof(double)*n_total_particles);
+          sumix = (double *) malloc(sizeof(double)*n_local_part);
+          sumiy = (double *) malloc(sizeof(double)*n_local_part);
+          sumiz = (double *) malloc(sizeof(double)*n_local_part);
 	  
-          for (i = 0; i < n_total_particles; i++){
+          for (i = 0; i < n_local_part; i++){
 	    sumix[i]=my[i]*az-mz[i]*ay;
             sumiy[i]=mz[i]*ax-mx[i]*az;
             sumiz[i]=mx[i]*ay-my[i]*ax;
@@ -1299,20 +1287,15 @@ double calc_surface_term(int force_flag, int energy_flag)
          // }
 	      
           #ifdef ROTATION	      
+          ip=0;
           for (c = 0; c < local_cells.n; c++) {
              np	= local_cells.cell[c]->n;
              part = local_cells.cell[c]->part;
              for (i = 0; i < np; i++){
-	     
-	        ip=part[i].p.identity;
-		
-	        // fprintf(stderr,"part %d, torque abans %le %le %le\n",ip,part[i].f.torque[0],part[i].f.torque[1],part[i].f.torque[2]);
-	      
 		part[i].f.torque[0] -= pref*sumix[ip];
 		part[i].f.torque[1] -= pref*sumiy[ip];
 		part[i].f.torque[2] -= pref*sumiz[ip];
-		
-	       // fprintf(stderr,"part %d, torque despres %le %le %le\n",ip,part[i].f.torque[0],part[i].f.torque[1],part[i].f.torque[2]);
+		ip++;
  	     }	
           }
           #endif
@@ -1325,16 +1308,6 @@ double calc_surface_term(int force_flag, int energy_flag)
     free(mx);	 
     free(my);	 
     free(mz);	 
-    	
-  } else {
-        //The code is not prepared to run in more than one node
-      
-      fprintf(stderr,"dipolar-P3M: Non metallic environment is  not ready to work in more than one Node, Sorry ....");
-      fprintf(stderr," I am NOT computing the surface term for the dipolar interaction.neither fortorques not for the energy...");
-      return 0.;
-
-  }
- 
  	    
   return en;
  
