@@ -194,7 +194,7 @@ MDINLINE double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia
     r_off = dist - ia_params->LJCOS2_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJCOS2_capradius) {
-      if (r_off < ia_params->LJCOS2_offset + ia_params->LJCOS2_rchange){
+      if (r_off < ia_params->LJCOS2_rchange){
         frac2 = SQR(ia_params->LJCOS2_sig/r_off);
         frac6 = frac2*frac2*frac2;
         return 4.0*ia_params->LJCOS2_eps*(SQR(frac6)-frac6);

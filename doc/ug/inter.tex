@@ -168,7 +168,7 @@ This command defines a generalized version of the Lennard-Jones
 interaction (see section \ref{sec:LennardJones}) between particles of
 the types \var{type1} and \var{type2}.  The potential is defined by
 \begin{equation}
-  \label{eq:lj}
+  \label{eq:lj-generic}
   V_\mathrm{LJ}(r) = \Biggl\{
     \begin{array}{ll}
       \epsilon(\var{b_1}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
@@ -220,11 +220,13 @@ and
 $\beta = \pi - \left(\var{r_\mathrm{min}}-\var{r_\mathrm{off}}\right)^2\alpha$.
 
 In the second variant, the cutoff radius is
-$\var{r_\mathrm{cut}}=\var{r_\mathrm{min}} + \omega$, and the potential
+$\var{r_\mathrm{cut}}=\var{r_\mathrm{min}} + \omega$, where $\var{r_\mathrm{min}} =  r_\mathrm{off} +
+2^{\frac{1}{6}}\sigma$ as in the first variant. The potential
 between $\var{r_\mathrm{min}}$ and $\var{r_\mathrm{cut}}$ is given by
 \begin{equation}
   V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(\var{r} - \var{r_\mathrm{min}})\right].
 \end{equation}
+For $\var{r} < \var{r_\mathrm{min}}$, $V(r)$ is implemented as normal Lennard-Jones potential, see equation \ref{eq:lj} with $\var{c_\mathrm{shift}} = 0$.
 
 Only the second variant allows capping the force using \lit{inter
   ljforcecap}, see section~\ref{sec:forcecap}.
