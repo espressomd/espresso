@@ -994,7 +994,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
   double k_space_energy_dip=0.0, node_k_space_energy_dip=0.0;
   double tmp0,tmp1;
 
-  P3M_TRACE(fprintf(stderr,"%d: dipolar p3m_perform: \n",this_node));
+  P3M_TRACE(fprintf(stderr,"%d: dipolar p3m_perform(%d,%d): \n",this_node, force_flag, energy_flag));
 
   dipole_prefac = coulomb.Dprefactor / (double)(p3m.Dmesh[0]*p3m.Dmesh[1]*p3m.Dmesh[2]);
  
@@ -1081,13 +1081,13 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  //tmp0 = Re(mu)*k,   tmp1 = Im(mu)*k
 	  
-	  tmp0 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[2]];
+	  tmp0 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[1]];
 		 
-	  tmp1 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[2]];
+	  tmp1 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[1]];
 		 
 	  /* the optimal influence function is the same for torques
 	     and energy */ 
@@ -1123,6 +1123,8 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       P3M_assign_torques(dipole_prefac*(2*PI/box_l[0]), d_rs);
     }
  #endif  /*if def ROTATION */ 
+    
+   fprintf(stderr, "%d: done torque calculation.\n", this_node);
     
 /***************************
    DIPOLAR FORCES (k-space)
@@ -1254,6 +1256,7 @@ double calc_surface_term(int force_flag, int energy_flag)
       }   
 
  
+     printf("%d: np %d, n_total_particles %d\n", this_node, np, n_total_particles);
      
      //for (i = 0; i < n_total_particles; i++){
      //  fprintf(stderr,"part ip:%d, mux: %le, muy:%le, muz:%le \n",i,mx[i],my[i],mz[i]);   
@@ -2643,12 +2646,12 @@ int DP3M_sanity_checks()
     ERROR_SPRINTF(errtxt, "{041 dipolar P3M requires periodicity 1 1 1} ");
     ret = 1;
   }
-  
+  /*
   if (n_nodes != 1) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{110 dipolar P3M does not run in parallel} ");
     ret = 1;
-  }
+  } */
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{042 dipolar P3M at present requires the domain decomposition cell system} ");
