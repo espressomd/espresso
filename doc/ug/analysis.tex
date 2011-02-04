@@ -36,18 +36,6 @@ In addition, \es offers the command \keyword{uwerr} (see section
 The \keyword{analyze}-command provides online-calculation of local and
 global observables.
 
-\todo{Missing: 
-  \keyword{radial_density_map}, 
-  \keyword{modes2d},
-  \keyword{get_lipid_orients},
-  \keyword{get_folded_positions},
-  \keyword{bilayer_set},
-  \keyword{bilayer_density_profile},
-  \keyword{lipid_orient_order},
-  \keyword{cell_gpb},
-  \keyword{Vkappa}
-}
-
 \subsection{Minimal distances between particles}
 \label{analyze:mindist}
 \label{analyze:distto}
@@ -112,6 +100,99 @@ The output corresponds to the blockfile format (see section
   \vdots 
 \}
 \end{code}
+
+\subsection{Radial density map}
+\label{analyze:radialdensitymap}
+
+\begin{essyntax}
+  analyze radial_density_map xbins ybins xrange yrange
+  \{axisofrotation\} \{centerofrotation\} \{beadtypelist\}
+  \opt{thetabins}
+\end{essyntax}
+
+Returns the radial density of particles around a given
+axis. Parameters are:
+
+\todo{Someone who knows or wrote this command should check this.}
+
+\begin{itemize}
+\item \keyword{xbins} histogram bins in x direction.
+\item \keyword{ybins} histogram bins in y direction.
+\item \keyword{xrange} range for analysis in x direction.
+\item \keyword{yrange} range for analysis in y direction.
+\item \keyword{axisofrotation} rotate around given axis. (x, y, or z)
+\item \keyword{centerofrotation} rotate around given point.
+\item \keyword{beadtypelist} only analyze beads of given types.
+\item \keyword{thetabins} histogram bins in angle theta.
+\end{itemize}
+
+\subsection{Modes}
+\label{analyze:modes2d}
+
+\begin{essyntax}
+  analyze modes2d
+\end{essyntax}
+
+Analyzes the modes of a configuration. Requires that a grid is set and
+that the system contains more than two particles. Output are four
+numbers in the order:
+
+\begin{displaymath}
+ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
+\end{displaymath}
+
+\subsection{Lipid orientation}
+\label{analyze:lipids}
+
+\begin{essyntax}
+  \variant{1} analyze get_lipid_orients
+  \variant{2} analyze lipid_orient_order
+\end{essyntax}
+
+\todo{Document the usage!}
+
+\subsection{Bilayers}
+\label{analyze:bilayers}
+
+\begin{essyntax}
+  \variant{1} analyze bilayer_set
+  \variant{2} analyze bilayer_density_profile
+\end{essyntax}
+
+\todo{Document the usage!}
+
+\subsection{GPB}
+\label{analyze:cellgpb}
+
+\begin{essyntax}
+  analyze cell_gpb \var{Manning parameter} \var{outer cell radius}
+  \var{inner cell radius} \opt{\var{accuracy}
+    \opt{\var{number of interations}}}
+\end{essyntax}
+
+\todo{Document the usage and what it is!}
+
+\subsection{Get folded positions}
+\label{analyze:folded}
+
+\begin{essyntax}
+  analyze get_folded_positions \opt{-molecule} \opt{shift \var{x} \var{y} \var{z}}
+\end{essyntax}
+
+Outputs the folded positions of particles. Without any parameters, the
+positions of all particles are given, folded to the box length. The
+optional parameter \keyword{-molecule} ensures that molecules
+(particle groups) are kept intact. The optional shift parameters can
+be used to shift the not seperated molecules if needed.
+
+\subsection{Vkappa}
+\label{analyze:Vkappa}
+
+\begin{essyntax}
+  analyze Vkappa \opt{\alt{ reset \asep read \asep set \var{V_{\kappa, 1}} \var{V_{\kappa, 2}} \var{avk} } }
+\end{essyntax}
+
+\todo{Document the usage and what it is!}
 
 \subsection{Radial distribution function}
 \label{analyze:rdf}
@@ -934,7 +1015,7 @@ arbitrary numerical time series accordings to \citet{wolff04a}.
 \item[\var{data}] is a matrix filled with the primary estimates
   $a_\alpha^{i,r}$ from $R\/$ replica with $N_1,N_2,\ldots,N_R$
   measurements each.
-  \todo{How exactly does the Tcl-list look like?}
+
   \begin{displaymath}
     \var{data}=\left(
       \begin{array}
