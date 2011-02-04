@@ -24,11 +24,30 @@
 
 \begin{essyntax}
   \variant{1} integrate \var{steps}
-  \variant{2} integrate set \var{method} \opt{\var{parameter}}\dots
+  \variant{2} integrate set \opt{nvt}
+  \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\: y\: z}} \opt{-cubic_box}
 \end{essyntax}
 
-\todo{Docs missing!}
-\todo{Which integrators do exist?}
+\es uses the Velocity Verlet algorithm for the integration of the
+equations of motion. The command \texttt{integrate} with an integer
+\texttt{steps} as parameter integrates the system for \texttt{steps}
+time steps.
+
+Two methods for the integration can be set: For an NVT ensemble
+(thermostat) and for an NPT isotropic ensemble (barostat). The current
+method can be detected with the command \texttt{integrate set} without
+any parameters.
+
+The NVT integrator is set without parameters (the temperature can be
+set with the thermostat). For the NPT ensemble, the parameters that
+can be added are:
+
+\begin{itemize}
+\item \var{p_{ext}} The external pressure as float variable. This parameter is required.
+\item \var{piston} The mass of the applied piston as float variable. This parameter is required.
+\item \var{x\: y\: z} Three integers to set the box geometry for non-cubic boxes. This parameter is optional.
+\item \texttt{-cubic_box} If this optional parameter is added, a cubic box is assumed.
+\end{itemize}
 
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
