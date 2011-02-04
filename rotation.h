@@ -40,7 +40,7 @@ void propagate_omega_quat();
 
 /** Convert torques to the body-fixed frame and propogate
     angular velocities */
-void convert_torqes_propagate_omega();
+void convert_torques_propagate_omega();
 
 /** Convert torques to the body-fixed frame to start
     the integration loop */

@@ -559,7 +559,7 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 
 #ifdef ROTATION
-    convert_torqes_propagate_omega();
+    convert_torques_propagate_omega();
 #endif
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
