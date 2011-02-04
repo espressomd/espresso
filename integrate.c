@@ -416,6 +416,9 @@ void integrate_vv(int n_steps)
    distribute_mol_force();
    if (check_runtime_errors()) return;
 #endif
+
+ghost_communicator(&cell_structure.collect_ghost_force_comm);
+
 #ifdef ROTATION
     convert_initial_torques();
 #endif
@@ -423,7 +426,6 @@ void integrate_vv(int n_steps)
     thermo_cool_down();
 
     /* Communication Step: ghost forces */
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 
     /*apply trap forces to trapped molecules*/
