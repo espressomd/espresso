@@ -114,7 +114,7 @@ typedef struct {
 
   unsigned int your_seed;
 
-} lbparmeters_gpu;
+} LB_parameters_gpu;
 
 /** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
 typedef struct {
@@ -205,7 +205,7 @@ typedef struct {
 extern "C" {
 #endif
 
-extern lbparmeters_gpu lbpar;
+extern LB_parameters_gpu lbpar_gpu;
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum_gpu;
@@ -262,17 +262,17 @@ void lb_reinit_fluid_gpu();
 void lb_realloc_particles_gpu();
 
 
-void lb_init_GPU(lbparmeters_gpu *lbpar);
+void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 void LB_particle_GPU(LB_particle *host_data);
 void initGPU(int argc, char **argv);
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
-void lb_realloc_particle_GPU(lbparmeters_gpu *lbpar);
+void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_copy_forces_GPU(LB_particle_force *host_forces);
 
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex);
-void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, lbparmeters_gpu *lbpar);
+void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 #ifdef __cplusplus
 }
 #endif
@@ -315,7 +315,7 @@ void lb_send_forces_gpu();
 int tclcommand_lbnode_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
-int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 

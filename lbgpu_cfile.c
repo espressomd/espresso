@@ -32,7 +32,7 @@ float integrate_pref2 = 1.0;
 #endif
 
 /** Struct holding the Lattice Boltzmann parameters */
-lbparmeters_gpu lbpar = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, 0.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345};
+LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, 0.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345};
 
 LB_values_gpu *host_values;
 LB_nodes_gpu *host_nodes;
@@ -74,7 +74,7 @@ void lattice_boltzmann_update_gpu() {
   	fluidstep += time_step;
 
    
-  	if (fluidstep>=lbpar.tau) {
+  	if (fluidstep>=lbpar_gpu.tau) {
 
     		fluidstep=0.0;
  
@@ -100,7 +100,7 @@ void lb_calc_particle_lattice_ia_gpu() {
 /**----------------------------------------*/
 /**Call of the particle interaction kernel */
 /**----------------------------------------*/
-	if (lbpar.number_of_particles) LB_particle_GPU(host_data);
+	if (lbpar_gpu.number_of_particles) LB_particle_GPU(host_data);
 
 	LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
 
@@ -115,7 +115,7 @@ void lb_send_forces_gpu(){
   if (transfer_momentum_gpu) {
 
 	if(this_node == 0){
-		if (lbpar.number_of_particles) lb_copy_forces_GPU(host_forces);
+		if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
 
 		LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
 
@@ -131,25 +131,25 @@ void lb_send_forces_gpu(){
 /** allocation of the needed memory for phys. values and particle data residing in the cpu memory*/
 void lb_pre_init_gpu() {
 	 
-	lbpar.number_of_particles = n_total_particles;
+	lbpar_gpu.number_of_particles = n_total_particles;
 
-	LB_TRACE (fprintf(stderr,"#particles \t %u \n", lbpar.number_of_particles));
-	LB_TRACE (fprintf(stderr,"#nodes \t %u \n", lbpar.number_of_nodes));
+	LB_TRACE (fprintf(stderr,"#particles \t %u \n", lbpar_gpu.number_of_particles));
+	LB_TRACE (fprintf(stderr,"#nodes \t %u \n", lbpar_gpu.number_of_nodes));
 	/**-----------------------------------------------------*/
 	/** allocating of the needed memory for several structs */
 	/**-----------------------------------------------------*/
 	/** Struct holding the Lattice Boltzmann parameters */
 
 	/**Struct holding calc phys values rho, j, phi of every node*/
-	size_t size_of_values = lbpar.number_of_nodes * sizeof(LB_values_gpu);
+	size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
 	host_values = (LB_values_gpu*)malloc(size_of_values);
 
 	/**Allocate struct for particle forces */
-	size_t size_of_forces = lbpar.number_of_particles * sizeof(LB_particle_force);
+	size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force);
 	host_forces = (LB_particle_force*)malloc(size_of_forces);
 
 	/**Allocate struct for particle positions */
-	size_t size_of_positions = lbpar.number_of_particles * sizeof(LB_particle);
+	size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle);
 	host_data = (LB_particle*)malloc(size_of_positions);
 
 	LB_TRACE (fprintf(stderr,"lb_pre_init_gpu \n"));
@@ -158,17 +158,17 @@ void lb_pre_init_gpu() {
 	located in the cpu memory*/ 
 static void lb_realloc_fluid_gpu() {
 	 
-	LB_TRACE (printf("#nodes \t %u \n", lbpar.number_of_nodes));
+	LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
 
 	/**-----------------------------------------------------*/
 	/** allocating of the needed memory for several structs */
 	/**-----------------------------------------------------*/
 	/** Struct holding the Lattice Boltzmann parameters */
 
-	LB_TRACE (printf("#nodes \t %u \n", lbpar.number_of_nodes));
+	LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
 
 	/**Struct holding calc phys values rho, j, phi of every node*/
-	size_t size_of_values = lbpar.number_of_nodes * sizeof(LB_values_gpu);
+	size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
 	host_values = realloc(host_values, size_of_values);
 
 	LB_TRACE (fprintf(stderr,"lb_realloc_fluid_gpu \n"));
@@ -176,29 +176,29 @@ static void lb_realloc_fluid_gpu() {
 /** (re-) allocation of the memory need for the particles (cpu part)*/
 void lb_realloc_particles_gpu(){
 
-	lbpar.number_of_particles = n_total_particles;
-	LB_TRACE (printf("#particles realloc\t %u \n", lbpar.number_of_particles));
+	lbpar_gpu.number_of_particles = n_total_particles;
+	LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
 	/**-----------------------------------------------------*/
 	/** allocating of the needed memory for several structs */
 	/**-----------------------------------------------------*/
 	/**Allocate struct for particle forces */
-	size_t size_of_forces = lbpar.number_of_particles * sizeof(LB_particle_force);
+	size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force);
 	host_forces = realloc(host_forces, size_of_forces);
 
 	/**Allocate struct for particle positions */
-	size_t size_of_positions = lbpar.number_of_particles * sizeof(LB_particle);
+	size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle);
 	host_data = realloc(host_data, size_of_positions);
 	
-	lbpar.your_seed = (unsigned int)i_random(max_ran);
+	lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
-	LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar.your_seed));
-	lb_realloc_particle_GPU(&lbpar);
+	LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
+	lb_realloc_particle_GPU(&lbpar_gpu);
 }
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
-	lb_init_GPU(&lbpar);
+	lb_init_GPU(&lbpar_gpu);
 
 	LB_TRACE (fprintf(stderr,"lb_reinit_fluid_gpu \n"));
 
@@ -217,36 +217,36 @@ void lb_release_gpu(){
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
 
-	lbpar.mu = 0.0;
-	lbpar.time_step = (float)time_step;
-	lbpar.integrate_pref2 = (float)integrate_pref2;
+	lbpar_gpu.mu = 0.0;
+	lbpar_gpu.time_step = (float)time_step;
+	lbpar_gpu.integrate_pref2 = (float)integrate_pref2;
 
 #ifdef LANGEVIN_INTEGRATOR
   /* force prefactor for the 2nd-order Langevin integrator */
-  lbpar.integrate_pref2 = (1.-exp(-lbpar.friction*lbpar.time_step))/lbpar.friction*lbpar.time_step;
+  lbpar_gpu.integrate_pref2 = (1.-exp(-lbpar_gpu.friction*lbpar_gpu.time_step))/lbpar_gpu.friction*lbpar_gpu.time_step;
 	/* one factor time_step is due to the scaled velocities */
 #endif
-//printf("integrate_pref2 %f \n", lbpar->integrate_pref2);	
+//printf("integrate_pref2 %f \n", lbpar_gpu->integrate_pref2);	
 
-  if (lbpar.viscosity > 0.0) {
+  if (lbpar_gpu.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lbpar.gamma_shear = 1. - 2./(6.*lbpar.viscosity*lbpar.tau/(lbpar.agrid*lbpar.agrid) + 1.);   
+    lbpar_gpu.gamma_shear = 1. - 2./(6.*lbpar_gpu.viscosity*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);   
   }
 
-  if (lbpar.bulk_viscosity > 0.0) {
+  if (lbpar_gpu.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lbpar.gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity*lbpar.tau/(lbpar.agrid*lbpar.agrid) + 1.);
+    lbpar_gpu.gamma_bulk = 1. - 2./(9.*lbpar_gpu.bulk_viscosity*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
   }
 
   if (temperature > 0.0) {  /* fluctuating hydrodynamics ? */
 
-    lbpar.fluct = 1;
+    lbpar_gpu.fluct = 1;
 	LB_TRACE (fprintf(stderr, "fluct ein \n"));
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
     /* Note that the modes are not normalized as in the paper here! */
 
-    lbpar.mu = (float)temperature/c_sound_sq*lbpar.tau*lbpar.tau/(lbpar.agrid*lbpar.agrid);
-    //lbpar->mu *= agrid*agrid*agrid;  // Marcello's conjecture
+    lbpar_gpu.mu = (float)temperature/c_sound_sq*lbpar_gpu.tau*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid);
+    //lbpar_gpu->mu *= agrid*agrid*agrid;  // Marcello's conjecture
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -255,16 +255,16 @@ void lb_reinit_parameters_gpu() {
      * time_step comes from the discretization.
      */
 #ifdef LANGEVIN_INTEGRATOR
-    float tmp = exp(-lbpar.friction*time_step);
-    lbpar.lb_coupl_pref = lbpar.friction*sqrt(temperature*(1.+tmp)/(1.-tmp));
+    float tmp = exp(-lbpar_gpu.friction*time_step);
+    lbpar_gpu.lb_coupl_pref = lbpar_gpu.friction*sqrt(temperature*(1.+tmp)/(1.-tmp));
 #else
-    lbpar.lb_coupl_pref = sqrt(12.f*2.f*lbpar.friction*temperature/time_step);
+    lbpar_gpu.lb_coupl_pref = sqrt(12.f*2.f*lbpar_gpu.friction*temperature/time_step);
 #endif
 
   } else {
     /* no fluctuations at zero temperature */
-    lbpar.fluct = 0;
-    lbpar.lb_coupl_pref = 0.0;
+    lbpar_gpu.fluct = 0;
+    lbpar_gpu.lb_coupl_pref = 0.0;
   }
 	LB_TRACE (fprintf(stderr,"lb_reinit_prarameters_gpu \n"));
 }
@@ -274,7 +274,7 @@ void lb_reinit_parameters_gpu() {
  *  and the fluid are reset to their default values. */
 void lb_init_gpu() {
  	
-	LB_TRACE (printf("#nodes cpu \t %i \n", lbpar.number_of_nodes));
+	LB_TRACE (printf("#nodes cpu \t %i \n", lbpar_gpu.number_of_nodes));
 	/** set parameters for transfer to gpu */
    	lb_reinit_parameters_gpu();
 
@@ -282,7 +282,7 @@ void lb_init_gpu() {
 	
 	lb_realloc_fluid_gpu();
 
-	lb_init_GPU(&lbpar);
+	lb_init_GPU(&lbpar_gpu);
 
 	LB_TRACE (fprintf(stderr,"lb_init_gpu \n"));
 
@@ -533,14 +533,14 @@ static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *ch
 	return TCL_ERROR;
     }
     else if ((time_step >= 0.0) && (tau < time_step)) {
-		fprintf(stderr,"tau %f \n", lbpar.tau);
+		fprintf(stderr,"tau %f \n", lbpar_gpu.tau);
 		fprintf(stderr,"time_step %f \n", time_step);
       Tcl_AppendResult(interp, "tau must be larger than MD time_step", (char *)NULL);
       return TCL_ERROR;
     }
 
     *change = 1;
-    lbpar.tau = (float)tau;
+    lbpar_gpu.tau = (float)tau;
 
     return TCL_OK;
 }
@@ -562,16 +562,16 @@ static int lbfluid_parse_agrid(Tcl_Interp *interp, int argc, char *argv[], int *
     }
 
     *change = 1;
-    lbpar.agrid = (float)agrid;
+    lbpar_gpu.agrid = (float)agrid;
 
-    lbpar.dim_x = (unsigned int)floor(box_l[0]/agrid);
-    lbpar.dim_y = (unsigned int)floor(box_l[1]/agrid);
-    lbpar.dim_z = (unsigned int)floor(box_l[2]/agrid);
+    lbpar_gpu.dim_x = (unsigned int)floor(box_l[0]/agrid);
+    lbpar_gpu.dim_y = (unsigned int)floor(box_l[1]/agrid);
+    lbpar_gpu.dim_z = (unsigned int)floor(box_l[2]/agrid);
 
     unsigned int tmp[3];
-    tmp[0] = lbpar.dim_x;
-    tmp[1] = lbpar.dim_y;
-    tmp[2] = lbpar.dim_z;
+    tmp[0] = lbpar_gpu.dim_x;
+    tmp[1] = lbpar_gpu.dim_y;
+    tmp[2] = lbpar_gpu.dim_z;
   /* sanity checks */
     int dir;
   for (dir=0;dir<3;dir++) {
@@ -582,8 +582,8 @@ static int lbfluid_parse_agrid(Tcl_Interp *interp, int argc, char *argv[], int *
     }
   }
 
-	lbpar.number_of_nodes = lbpar.dim_x * lbpar.dim_y * lbpar.dim_z;
-	LB_TRACE (printf("#nodes \t %u \n", lbpar.number_of_nodes));
+	lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+	LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
  
     return TCL_OK;
 }
@@ -605,7 +605,7 @@ static int lbfluid_parse_density(Tcl_Interp *interp, int argc, char *argv[], int
     }
 
     *change = 1;
-    lbpar.rho = (float)density;
+    lbpar_gpu.rho = (float)density;
 
     return TCL_OK;
 }
@@ -627,7 +627,7 @@ static int lbfluid_parse_viscosity(Tcl_Interp *interp, int argc, char *argv[], i
     }
 
     *change = 1;
-    lbpar.viscosity = (float)viscosity;
+    lbpar_gpu.viscosity = (float)viscosity;
  
     return TCL_OK;
 }
@@ -649,7 +649,7 @@ static int lbfluid_parse_bulk_visc(Tcl_Interp *interp, int argc, char *argv[], i
   }
 
   *change =1;
-  lbpar.bulk_viscosity = (float)bulk_visc;
+  lbpar_gpu.bulk_viscosity = (float)bulk_visc;
 
   return TCL_OK;
 
@@ -672,7 +672,7 @@ static int lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], in
     }
 
     *change = 1;
-    lbpar.friction = (float)friction;
+    lbpar_gpu.friction = (float)friction;
 
     return TCL_OK;
 }
@@ -693,11 +693,11 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
     *change = 3;
 
     /* external force density is stored in MD units */
-    lbpar.ext_force[0] = (float)ext_f[0];
-    lbpar.ext_force[1] = (float)ext_f[1];
-    lbpar.ext_force[2] = (float)ext_f[2];
+    lbpar_gpu.ext_force[0] = (float)ext_f[0];
+    lbpar_gpu.ext_force[1] = (float)ext_f[1];
+    lbpar_gpu.ext_force[2] = (float)ext_f[2];
 
-	lbpar.external_force = 1;
+	lbpar_gpu.external_force = 1;
     
     return TCL_OK;
 }
@@ -720,7 +720,7 @@ static int lbfluid_parse_gamma_odd(Tcl_Interp *interp, int argc, char *argv[], i
     }
 
     *change = 1;
-    lbpar.gamma_odd = (float)g;
+    lbpar_gpu.gamma_odd = (float)g;
 
     return TCL_OK;
 }
@@ -743,7 +743,7 @@ static int lbfluid_parse_gamma_even(Tcl_Interp *interp, int argc, char *argv[], 
     }
 
     *change = 1;
-    lbpar.gamma_even = (float)g;
+    lbpar_gpu.gamma_even = (float)g;
 
     return TCL_OK;
 }
@@ -763,9 +763,9 @@ static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], in
 			exit(1);
 		}
 	lb_get_values_GPU(host_values);
-	fprintf(datei, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar.dim_x, lbpar.dim_y, lbpar.dim_z, lbpar.number_of_nodes);
+	fprintf(datei, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.number_of_nodes);
 	int j;	
-	for(j=0; j<lbpar.number_of_nodes; ++j){
+	for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
 	/** print of the calculated phys values */
 		fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
 
@@ -789,7 +789,7 @@ static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int
 		}
 	lb_get_values_GPU(host_values);
 	int j;	
-	for(j=0; j<lbpar.number_of_nodes; ++j){
+	for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
 	/** print of the calculated phys values */
 		fprintf(datei, " %f \n", host_values[j].rho);
 	}
@@ -812,7 +812,7 @@ static int lbprint_parse_stresstensor(Tcl_Interp *interp, int argc, char *argv[]
 		}
 	lb_get_values_GPU(host_values);
 	int j;	
-	for(j=0; j<lbpar.number_of_nodes; ++j){
+	for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
 	/** print of the calculated phys values */
 		fprintf(datei, " %f \t %f \t %f \t %f \t %f \t %f \n", host_values[j].pi[0], host_values[j].pi[1], host_values[j].pi[2],
  															   host_values[j].pi[3], host_values[j].pi[4], host_values[j].pi[5]);
@@ -876,18 +876,19 @@ Tcl_AppendResult(interp, "lbnode_gpu command currently not implemented in the GP
 
 }
 #endif /* LB_GPU */
+#ifdef LB_GPU
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
   unsigned int index;
   double f[3];
   size_t size_of_extforces;
   int change = 0;
 
-  if ( ind[0] >=  lbpar.dim_x ||  ind[1] >= lbpar.dim_y ||  ind[2] >= lbpar.dim_z ) {
+  if ( ind[0] >=  lbpar_gpu.dim_x ||  ind[1] >= lbpar_gpu.dim_y ||  ind[2] >= lbpar_gpu.dim_z ) {
       Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
     return TCL_ERROR;
   }
 
-  index = ind[0] + ind[1]*lbpar.dim_x + ind[2]*lbpar.dim_x*lbpar.dim_y;
+  index = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
   while (argc > 0) {
     if (change==1) {
       Tcl_ResetResult(interp);
@@ -920,18 +921,17 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 	host_extern_nodeforces[n_extern_nodeforces].index = index;
 	n_extern_nodeforces++;
 	  
-	  if(lbpar.external_force == 0)lbpar.external_force = 1;
+	  if(lbpar_gpu.external_force == 0)lbpar_gpu.external_force = 1;
 
     --argc; ++argv;
 
-	lb_init_extern_nodeforces_GPU(n_extern_nodeforces, host_extern_nodeforces, &lbpar);
+	lb_init_extern_nodeforces_GPU(n_extern_nodeforces, host_extern_nodeforces, &lbpar_gpu);
   }
 
   return TCL_OK;
 }
 
 /** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g. */
-#ifdef LB_GPU
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 #if 1 
@@ -968,25 +968,13 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
 }
 #endif /* LB_GPU */
 /** Parser for the \ref lbfluid command gpu. */
-#ifdef LB_GPU
-int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
+int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
+#ifdef LB_GPU
   int err = TCL_OK;
   int change = 0;
 
-  argc--; argv++;
-
-  if (argc < 1) {
-      Tcl_AppendResult(interp, "too few arguments to \"lbfluid_gpu\"", (char *)NULL);
-      err = TCL_ERROR;
-  }
-  else if (ARG0_IS_S("off")) {
-    err = TCL_ERROR;
-  }
-  else if (ARG0_IS_S("init")) {
-    err = TCL_ERROR;
-  }
-  else while (argc > 0) {
+  while (argc > 0) {
       if (ARG0_IS_S("grid") || ARG0_IS_S("agrid"))
 	  err = lbfluid_parse_agrid(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("tau"))
@@ -1009,24 +997,29 @@ int tclcommand_lbfluid_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
 	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
 	  err = TCL_ERROR ;
       }
+      if (err == TCL_ERROR) return TCL_ERROR;
+
       argc -= (change + 1);
       argv += (change + 1);
   }
 
-  lattice_switch = (lattice_switch | LATTICE_LB_GPU) ;
+  //lattice_switch = (lattice_switch | LATTICE_LB_GPU) ;
 	//fprintf(stderr,"%i lattice_switch %i \n", this_node, lattice_switch);
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH) ;
 
   /* thermo_switch is retained for backwards compatibility */
   thermo_switch = (thermo_switch | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-	//lb_init_gpu();
-
+	
 	LB_TRACE (fprintf(stderr,"tclcommand_lbfluid_gpu parser ok \n"));
 
   return err;
+#else /* !defined LB_GPU */
+  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
+  return TCL_ERROR;
+#endif
 }
-#endif /* LB_GPU */
+
 #ifdef LB_GPU
 int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 

@@ -55,7 +55,7 @@ static size_t size_of_boundindex;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
-static __constant__ lbparmeters_gpu para;
+static __constant__ LB_parameters_gpu para;
 static __constant__ int number_of_bnodes;
 static __constant__ float c_sound_sq = 1.f/3.f;
 
@@ -881,7 +881,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force *node_f, int
 	*gpu_check = 1;
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
-    float v[3] = { 0.01f, 0.0f, 0.0f };
+    float v[3] = { 0.0f, 0.0f, 0.0f };
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
  	/*----------------------------------- */
@@ -1257,19 +1257,19 @@ __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodefo
 /**********************************************************************/
 /**-------------------------------------------------------*/
 /*@{
- * @param *lbpar	Pointer to parameters to setup the lb field
+ * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 }*/
 /**-------------------------------------------------------*/
-void lb_init_GPU(lbparmeters_gpu *lbpar){
+void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
     // Allocate lattice-struct in device memory
 
-   	size_of_values = lbpar->number_of_nodes * sizeof(LB_values_gpu);
-  	size_of_nodes = lbpar->number_of_nodes * sizeof(LB_nodes_gpu);
-	size_of_node_f = lbpar->number_of_nodes * sizeof(LB_node_force);
-   	size_of_forces = lbpar->number_of_particles * sizeof(LB_particle_force);
-	size_of_positions = lbpar->number_of_particles * sizeof(LB_particle);
-	size_of_seed = lbpar->number_of_particles * sizeof(LB_particle_seed);
+   	size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
+  	size_of_nodes = lbpar_gpu->number_of_nodes * sizeof(LB_nodes_gpu);
+	size_of_node_f = lbpar_gpu->number_of_nodes * sizeof(LB_node_force);
+   	size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force);
+	size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle);
+	size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed);
 
    	cudaMalloc((void**)&device_values, size_of_values);
 
@@ -1286,18 +1286,18 @@ void lb_init_GPU(lbparmeters_gpu *lbpar){
 	cudaMalloc((void**)&part, size_of_seed);
 	
    	/**write parameters in const memory*/
-	cudaMemcpyToSymbol(para, lbpar, sizeof(lbparmeters_gpu));
+	cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
 
 	cudaMalloc((void**)&gpu_check, sizeof(int));
 	h_gpu_check = (int*)malloc(sizeof(int));
 
 	/** values for the kernel call */
    	threads_per_block = 128;
-   	blocks_per_grid = (lbpar->number_of_nodes + threads_per_block - 1) /(threads_per_block);
+   	blocks_per_grid = (lbpar_gpu->number_of_nodes + threads_per_block - 1) /(threads_per_block);
 
    	/** values for the particle kernel */
    	threads_per_block_particles = 128;
-	blocks_per_grid_particles = (lbpar->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
+	blocks_per_grid_particles = (lbpar_gpu->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
 
 	reset_boundaries<<<blocks_per_grid, threads_per_block>>>(nodes_a, nodes_b);
 
@@ -1305,9 +1305,9 @@ void lb_init_GPU(lbparmeters_gpu *lbpar){
 	calc_n_equilibrium<<<blocks_per_grid, threads_per_block>>>(nodes_a, node_f, gpu_check);
 
 	/** init part forces with zero*/
-	if(lbpar->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
+	if(lbpar_gpu->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
 
-	//if(lbpar->external_force)
+	//if(lbpar_gpu->external_force)
  	reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);
 
 	cudaStreamCreate(&stream[0]);
@@ -1327,20 +1327,20 @@ void lb_init_GPU(lbparmeters_gpu *lbpar){
 /**-------------------------------------------------------------------------*/
 /**setup and call particle reallocation from the host */
 /*@{
- * @param *lbpar	Pointer to parameters to setup the lb field
+ * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 }*/
 /**-------------------------------------------------------------------------*/
-void lb_realloc_particle_GPU(lbparmeters_gpu *lbpar){
+void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 
    	cudaFree(particle_force);
     cudaFree(particle_data);
 	cudaFree(part);
 
-	cudaMemcpyToSymbol(para, lbpar, sizeof(lbparmeters_gpu));
+	cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
 
-	size_of_forces = lbpar->number_of_particles * sizeof(LB_particle_force);
-	size_of_positions = lbpar->number_of_particles * sizeof(LB_particle);
-	size_of_seed = lbpar->number_of_particles * sizeof(LB_particle_seed);
+	size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force);
+	size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle);
+	size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed);
 
 	cudaMalloc((void**)&particle_force, size_of_forces);
 	
@@ -1350,11 +1350,11 @@ void lb_realloc_particle_GPU(lbparmeters_gpu *lbpar){
 
 	/** values for the particle kernel */
 	threads_per_block_particles = 128;
-	blocks_per_grid_particles = (lbpar->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
+	blocks_per_grid_particles = (lbpar_gpu->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
 
-	if(lbpar->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
+	if(lbpar_gpu->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
 	
-	if(lbpar->number_of_particles) reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);	
+	if(lbpar_gpu->number_of_particles) reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);	
 }
 
 /**-------------------------------------------------------------------------*/
@@ -1386,13 +1386,13 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 	cudaThreadSynchronize();
 }
 
-void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, lbparmeters_gpu *lbpar){
+void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu){
 
 	size_of_extern_nodeforces = n_extern_nodeforces*sizeof(LB_extern_nodeforce_gpu);
 	cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces);
 	cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
 
-	if(para.external_force == 0)cudaMemcpyToSymbol(para, lbpar, sizeof(lbparmeters_gpu)); 
+	if(para.external_force == 0)cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)); 
 	
 	threads_per_block_exf = 128;
 	blocks_per_grid_exf = (n_extern_nodeforces + threads_per_block_exf -1)/(threads_per_block_exf);
@@ -1451,11 +1451,11 @@ void lb_integrate_GPU(){
            	integrate<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b, device_values, node_f);
 		
 			reset_population<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_b, nodes_a);
-		
+#ifdef LB_BOUNDARIES_GPU		
 			if (lb_boundaries_bb_gpu == 1) bb_read<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b);
 			
 			if (lb_boundaries_bb_gpu == 1) bb_write<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b);
-
+#endif
 			/** swapping pointer */
 			tmp = nodes_a;
             nodes_a = nodes_b;

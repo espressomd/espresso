@@ -200,13 +200,8 @@ void on_integration_start()
 
   if (!check_obs_calc_initialized()) return;
 
-#if defined(LB) || defined(LB_GPU)
-#ifdef LB_GPU
-if(this_node == 0){
-  if(lattice_switch & LATTICE_LB_GPU) {
-#else
+#ifdef LB
   if(lattice_switch & LATTICE_LB) {
-#endif
     if (lbpar.agrid < 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
@@ -224,12 +219,33 @@ if(this_node == 0){
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
   }
+#endif
 #ifdef LB_GPU
+if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU) {
+    if (lbpar_gpu.agrid < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    }
+    if (lbpar_gpu.tau < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    }
+    if (lbpar_gpu.rho < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+    }
+    if (lbpar_gpu.viscosity < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+    }
+  }
+
 	if (lb_reinit_particles_gpu) {lb_realloc_particles_gpu();
 	lb_reinit_particles_gpu = 0;
 	}
   }
-#endif
+
 #endif
 
 #ifdef METADYNAMICS
@@ -665,7 +681,7 @@ if(this_node == 0){
 }
 
 #ifdef LB
-void on_lb_lbpar_change(int field) {
+void on_lb_params_change(int field) {
 
   if (field == LBPAR_AGRID) {
     lb_init();
@@ -770,9 +786,9 @@ static void init_tcl(Tcl_Interp *interp)
   /* in bin.c */
   REGISTER_COMMAND("bin", tclcommand_bin);
   /* in lb.c */
-#ifdef LB
+
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
-#endif
+
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
@@ -795,7 +811,7 @@ static void init_tcl(Tcl_Interp *interp)
 #endif
 #ifdef LB_GPU
   /* in lbgpu.c */
-  REGISTER_COMMAND("lbfluid", tclcommand_lbfluid_gpu);
+  //REGISTER_COMMAND("lbfluid", tclcommand_lbfluid_gpu);
 
   REGISTER_COMMAND("lbnode", tclcommand_lbnode_gpu);
 

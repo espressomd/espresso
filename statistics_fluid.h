@@ -47,13 +47,14 @@ void lb_calc_fluid_momentum(double *result);
 void lb_calc_fluid_temp(double *result);
 
 /** Parser for fluid related analysis functions. */
-int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB */
 
 #ifdef LB_GPU
 /** Parser for fluid related analysis functions. */
-int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv);
 #endif
-
+/** Parser for fluid related analysis functions. */
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
 #endif /* STATISTICS_FLUID_H */
