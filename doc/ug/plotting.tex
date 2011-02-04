@@ -1,0 +1,64 @@
+% Copyright (C) 2010 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+\chapter{Plotting}
+
+\begin{essyntax}
+  plotObs \var{file} \{ \var{x1}:\var{y1} \var{x2}:\var{y2} \dots \}
+  \opt{titles \{ \var{title1} \var{title2} \dots \}}
+  \opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}} 
+  \opt{scale \var{gnuplot-scale}}
+  \opt{cmd \var{gnuplot-command}} 
+  \opt{out \var{filebase}}
+\end{essyntax}
+Uses \textsc{gnuplot} to create plots of the data in \var{file} and
+writes it to the file \var{filebase}\lit{.ps} (default:
+\var{file}\lit{.ps}). The data in \var{file} should be stored
+column-wise. $\var{x1}, \var{x2} \dots$ and $\var{y1}, \var{y2} \dots$
+denote the columns used for the data of the x- and y-axis,
+respectively.
+
+\begin{arguments}
+\item[\opt{titles \{ \var{title1} \var{title2} \dots \}}] can be used
+  to specify the titles of the different plots
+\item[\opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}}] will define the
+  labels of the axis. If \var{ylabel} is omitted, the filename
+  \var{file} is used as label for the y-axis.
+\item[\opt{scale \var{gnuplot-scale}}] will define the scaling of the
+  axis (\eg \lit{scale logscale xy}) (default: \lit{nologscale xy})
+\item[\opt{cmd \var{gnuplot-command}}] allows to pass any other
+  commands to gnuplot. For example, use
+  \codebox{plotObs \dots cmd "set key left"} to adjust the titles on
+  the left side.
+\item[\opt{out \var{filebase}}] can be used to change the output
+  file. By default, the plot will be written to \var{file}\lit{.ps}.
+\end{arguments}
+
+\subsection{Joining plots}
+\begin{essyntax}
+  plotJoin \{ \var{source1} \var{source2} \dots \} \var{final}
+\end{essyntax}
+Joins the plot files $\var{source1}, \var{source2}, \dots$ into a
+single file \var{final}, while placing any two files on one page.
+Note that the resulting files may be huge and therefore hard to print!
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End: 
