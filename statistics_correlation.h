@@ -141,6 +141,8 @@
  * it starts again from the beginning. 
  */
 typedef struct {
+  unsigned int autocorrelation;    // autocorrelation flag
+  unsigned int correlation_type;   // to help keeping track what we are actually correlating
   unsigned int hierarchy_depth;    // maximum level of data compression
   unsigned int dim_A;              // dimensionality of A
   unsigned int dim_B;
@@ -153,7 +155,6 @@ typedef struct {
   unsigned int tau_lin;            // number of frames in the linear correlation
   unsigned int* newest;            // index of the newest entry in each hierarchy level
   unsigned int window_distance; 
-  int corr_type;                   // to help keeping track what we are actually correlating
 
   // Convenience pointers to our stored data
   // indices: A[level][tau_i][component]
@@ -196,10 +197,6 @@ typedef struct {
   int *q_vals; // values of q vectors
   double *q_density; // number of q vectors per bin
   // entries for spherical averaging
-  int n_bins; // number of bins 
-  double inv_bin_width; // 1/bin_width
-  double qmax;
-  double q2max;
 } sf_params;
 
 
@@ -257,7 +254,8 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   void* A_fun, void* A_args, void* B_fun, void* B_args, void* corr_operation, 
-                  void* compressA, void* compressB);
+                  void* compressA, void* compressB,
+		  int correlation_type, int autocorrelation);
 
 
 /** The function to process a new datapoint of A and B
@@ -275,11 +273,21 @@ int double_correlation_get_data(  double_correlation* self );
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 
 int double_correlation_write_to_file( double_correlation* self, char* filename); 
 
+/** Prints spherically averaged SF */
+int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp);
+
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
 int file_data_source_readline(void* xargs, double* A, int dim_A); 
 
-
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A);
+
+/* *************************
+*
+* Functions for compressing data
+*
+**************************/
+/** The minimal version of compression function */
+int compress_do_nothing( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
 
 /** Compress computing arithmetic mean: A_compressed=(A1+A2)/2 */
 int compress_linear( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
@@ -290,6 +298,13 @@ int compress_discard1( double* A1, double*A2, double* A_compressed, unsigned int
 /** Compress discarding the 2nd argument and return the 1st */
 int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
 
+/* *************************
+*
+* Functions for computing observables
+*
+**************************/
+/** The minimal version of observable computing function */
+
 int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
@@ -297,6 +312,7 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
 int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+
 
 
 /**************  Functions that calculate A and B from MD state ************/
@@ -310,9 +326,11 @@ int particle_velocities(void* typelist, double* A, unsigned int n_A);
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
 
-/** Calculate structure factor from positions
-*/
+/** Calculate structure factor from positions and scattering length */
 int structure_factor(void* params, double* A, unsigned int n_A);
+
+/** Do nothing */
+int obs_nothing (void* params, double* A, unsigned int n_A);
 
 typedef struct {
   Tcl_Interp* interp;

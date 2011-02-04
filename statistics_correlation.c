@@ -105,20 +105,18 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   void* B_args = 0;
   int dim_B;
   int tau_lin = 16; // default values
-  /* It would be perhaps better, if the user should specify 
-  tau_max and hiererchy depth was computed internally 
-  PK */
-  int hierarchy_depth = 4; 
+  int hierarchy_depth=0; 
   double delta_t = 1;
-  double tau_max=0.0;
+  double tau_max = 0;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
   int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
   tcl_input_data* tcl_input_p;
   char buffer[TCL_INTEGER_SPACE+2];
-  static int *correlation_types=NULL; // list of already set up correlations
   int correlation_type; // correlation type of correlation which is currently being created
+  int autocorrelation=1; // by default, we are doing autocorrelation
+  int n_bins; // number of bins for spherically averaged sf
 
   // Check if ID is negative
   if ( no < 0 ) {
@@ -130,7 +128,24 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   if ( no < n_correlations ) {
     if (argc > 0)
       if (ARG0_IS_S("print")) {
-        return double_correlation_print_correlation(&correlations[no], interp);
+        if(argc==1)
+          return double_correlation_print_correlation(&correlations[no], interp);
+	else if (ARG1_IS_S("spherically_averaged_sf")) {
+	  // parse qmin, qmax, etc
+	  if(correlations[no].correlation_type=CORR_TYPE_SF) {
+	    if(argc!=3) sf_print_usage(interp);
+	    else {
+	      if(ARG_IS_I(2,n_bins)) {
+              return double_correlation_print_spherically_averaged_sf(&correlations[no],interp);
+	      }
+	    }
+	  } else {
+	    sprintf(buffer,"%d ",correlations[no].correlation_type);
+            Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
+	    return TCL_ERROR;
+	  }
+          return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
+	}
       } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
         correlations[no].A_args = tcl_input_p;
         tcl_input_p->interp=interp;
@@ -216,23 +231,20 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 	if (error)
           return TCL_ERROR;
 	else 
-	  correlation_type=CORR_TYPE_SF;
-
-        // Only the followign parameter combination makes sense
-	&A_fun=&B_fun=&structure_factor;
-	&compressA=&compressB=&discard1;
-	&corr_operation=&complex_conjugate_product;
+	correlation_type=CORR_TYPE_SF;
+        // Only the following parameter combination makes sense
+	A_fun=&structure_factor;
+	compressA=&compress_discard1;
+	corr_operation=&complex_conjugate_product;
 	// dim_sf is the number of q vectors
-	// per each of the 3 vector components, we store sin(q_i*r) and cos(q_i*r)
-	*dim_A=*dim_B=*dim_corr=6*(sf_params*)A_args->dim_sf;
+	// per vector, we store separately sin(q*r) and cos(q*r)
+	dim_A=dim_corr=2*((sf_params*)A_args)->dim_sf;
       } 
       else if ( ARG0_IS_S("first_obs") ) {
         argc -= 1;
         argv += 1;
 //      dim_A=28300;
         error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-	// by default, set second_observable to the same
-        error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
         argc -= change;
         argv += change;
         if (error)
@@ -242,6 +254,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         argv += 1;
 //        dim_B=28292;
         error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
+	autocorrelation=0;
         argc -= change;
         argv += change;
         if (error)
@@ -260,17 +273,26 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
           argc -= 2;
           argv += 2;
         } // tau_lin is already set
+      } else if ( ARG0_IS_S("tau_max") ) {
+        if ( argc < 2 || !ARG1_IS_D(tau_max)) {
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_max $hierarchy_depth", (char *)NULL);
+	  return TCL_ERROR;
+	} else { 
+          argc -= 2;
+          argv += 2;
+        }
       } else if ( ARG0_IS_S("hierarchy_depth") ) {
-        if ( argc < 2 || !ARG1_IS_I(hierarchy_depth))
+        if ( argc < 2 || !ARG1_IS_I(hierarchy_depth)) {
           Tcl_AppendResult(interp, "Usage: analyze correlation ... hierarchy_depth $hierarchy_depth", (char *)NULL);
-        else { 
+	  return TCL_ERROR;
+	} else { 
           argc -= 2;
           argv += 2;
         } // hierarchy_depth is already set
       } else if ( ARG0_IS_S("delta_t") ) {
-        if ( argc < 2 || !ARG1_IS_D(delta_t))
+        if ( argc < 2 || !ARG1_IS_D(delta_t)) {
           Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t", (char *)NULL);
-        else { 
+        } else { 
         argc -= 2;
         argv += 2;
         } // delta_t is already set
@@ -294,15 +316,16 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 	  Tcl_AppendResult(interp, " is not implemented. ", (char *)NULL);
 	  return TCL_ERROR;
 	}
+	autocorrelation=0;
         argc -= 2;
         argv += 2; 
       } else if ( ARG0_IS_S("update") ) {
-        sprintf(buffer,"%d",no);
+        sprintf(buffer,"%d ",no);
         Tcl_AppendResult(interp, "Correlation error: cannot update correlation ", buffer, (char *)NULL);
         Tcl_AppendResult(interp, " It must be set up first", (char *)NULL);
         return TCL_ERROR;
       } else if ( ARG0_IS_S("print") ) {
-        sprintf(buffer,"%d",no);
+        sprintf(buffer,"%d ",no);
         Tcl_AppendResult(interp, "Correlation error: cannot print correlation ", buffer, (char *)NULL);
         Tcl_AppendResult(interp, " It must be set up first", (char *)NULL);
         return TCL_ERROR;
@@ -312,25 +335,41 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
       }
     }
   } else {
-      sprintf(buffer,"%d",no);
+      sprintf(buffer,"%d ",no);
       Tcl_AppendResult(interp,"Correlation error: cannot set up correlation with id ",buffer,(char *)NULL);
-      sprintf(buffer,"%d",n_correlations);
+      sprintf(buffer,"%d ",n_correlations);
       Tcl_AppendResult(interp," Next correlation must have id ",buffer,(char *)NULL);
       return TCL_ERROR;
   }
 
-  // TODO compute hierarchy depth from tau_max
-  // Q: what to do with the last (incomplete) level?
-
   // Now we should find out, if this is enough to make a correlation.
   // Unfortunately still nothing happens here!
-  if(hierarchy_depth>0) {
-    if(compressA==NULL) {
-        Tcl_AppendResult(interp, "You have not chosen the compression function! Correlation cannot be performed.", (char *)NULL);
-        return TCL_ERROR; 
-    }
-    if(compressB==NULL) {
-        Tcl_AppendResult(interp, "You have not chosen the compressB function. Taking compressB=compressA by default.", (char *)NULL);
+  if(tau_max!=0.0 && hierarchy_depth!=0) {
+    Tcl_AppendResult(interp, "You cannot specify both tau_max and hierarchy_depth.\n", (char *)NULL);
+    return TCL_ERROR;
+  } 
+  if (tau_max>0.0) {
+    //set hierarchy depth which can  accomodate at least tau_max
+    hierarchy_depth=(int)ceil(1+log(tau_max/(tau_lin-1))/log(2.0));
+  }
+  if(! hierarchy_depth>0) {
+    Tcl_AppendResult(interp, "Hierarchy depth must be > 0. Correlation cannot be performed.\n", (char *)NULL);
+    return TCL_ERROR; 
+  }
+  if(compressA==NULL) {
+    Tcl_AppendResult(interp, "You have not chosen the compression function! Correlation cannot be performed.\n", (char *)NULL);
+    return TCL_ERROR; 
+  }
+  if(autocorrelation) {
+    dim_B=dim_A;
+    B_fun=&obs_nothing;
+    compressB=&compress_do_nothing;
+  } else {
+    if(B_fun==NULL) {
+        Tcl_AppendResult(interp, "You have not chosen  the function for computing observable B.  Taking compressB=compressA by default.\n", (char *)NULL);
+       return TCL_ERROR; 
+    } else if(compressB==NULL) {
+        Tcl_AppendResult(interp, "You are not performing autocorrelation but have not chosen the compressB function. Taking compressB=compressA by default.\n", (char *)NULL);
 	compressB=compressA;
     }
   }
@@ -339,18 +378,11 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   correlations=(double_correlation*) realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
 
   // Now initialize the new correlation
-  /*
   error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, hierarchy_depth, 1, 
       dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
-      corr_operation, &compress_linear, &compress_linear);
-      */
-  error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, hierarchy_depth, 1, 
-      dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
-      corr_operation, compressA, compressB);
+      corr_operation, compressA, compressB, correlation_type, autocorrelation);
   if ( error == 0 ) {
     n_correlations++;
-    correlation_types=realloc(correlation_types,n_correlations*sizeof(int));
-    correlation_types[n_correlations-1]=correlation_type;
     return TCL_OK;
   } else {
     printf("Error number %d\n", error);
@@ -376,6 +408,7 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
   char ibuffer[TCL_INTEGER_SPACE + 2];
   char dbuffer[TCL_DOUBLE_SPACE];
   int *vals;
+  double *q_density;
   params=(sf_params*)malloc(sizeof(sf_params));
   
   if(argc!=5) { 
@@ -433,14 +466,9 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
     return TCL_ERROR; 
   }
   // compute the number of vectors
-  l=0;
-  for(i=-order; i<=order; i++) 
-      for(j=-order; j<=order; j++) 
-        for(k=-order; k<=order; k++) {
-          n = i*i + j*j + k*k;
-          if ((n<=order2) && (n>0)) 
-            l++;
-        }
+  // TODO do it as it is done with static SF
+  q_density=(double*)malloc(order2*sizeof(double));
+  for(i=0;i<order2;i++) q_density[i]=0.0;
   // and store their values
   params->dim_sf=l;
   params->q_vals=(int*)malloc(3*l*sizeof(double));
@@ -454,23 +482,25 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
 	    params->q_vals[3*l+1]=j;
 	    params->q_vals[3*l+2]=k;
             l++;
+	    q_density[n]++;
 	  }
         }
+  for(i=0;i<order2;i++) q_density[i]/=(double)l;
+  params->q_density=q_density;
   *A_args=(void*)params;
   *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
-  //print_sf_params(params);
   return 0;
 }
 
-// just a text function, will be removed later
+// just a test function, will be removed later
 void print_sf_params(sf_params *params) {
   int i, imax;
   int *vals;
   printf("order: %d\n",params->order);
   printf("dim_sf: %d\n",params->dim_sf);
-  printf("n_bins: %d\n",params->n_bins);
-  printf("qmax: %g\n",params->qmax);
-  printf("q2max2: %g\n",params->q2max);
+  //printf("n_bins: %d\n",params->n_bins);
+  //printf("qmax: %g\n",params->qmax);
+  //printf("q2max2: %g\n",params->q2max);
   printf("q_vals: \n");
   imax=params->dim_sf;
   vals=params->q_vals;
@@ -613,7 +643,8 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   void* A_fun, void* A_args, void* B_fun, void* B_args, void* corr_operation, 
-                  void* compressA, void* compressB) {
+                  void* compressA, void* compressB,
+		  int correlation_type, int autocorrelation) {
   unsigned int i,j,k;
   self->dt = dt;
   self->tau_lin=tau_lin;
@@ -630,6 +661,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   self->compressB = compressB;
   self->window_distance = window_distance;
   self->t = 0;
+  self->autocorrelation=autocorrelation;
+  self->correlation_type=correlation_type;
 
   if (self==0)
     return 1;
@@ -663,7 +696,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
-  self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
+  if(autocorrelation) self->B_data = self->A_data;
+  else self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
 
 
   self->n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
@@ -673,22 +707,25 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   self->result_data  = (double*)    malloc(self->n_result*dim_corr*sizeof(double));
 
   self->A = (double***)malloc(hierarchy_depth*sizeof(double**));
-  self->B = (double***)malloc(hierarchy_depth*sizeof(double**));
+  if(autocorrelation) self->B = self->A;
+  else self->B = (double***)malloc(hierarchy_depth*sizeof(double**));
   self->n_vals = (unsigned int*) malloc(hierarchy_depth*sizeof(unsigned int));
 
   for (i=0; i<self->hierarchy_depth; i++) {
     self->A[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
-    self->B[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
+    if(!autocorrelation) self->B[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
   }
   for (i=0; i<self->hierarchy_depth; i++) {
     self->n_vals[i]=0;
     for (j=0; j<self->tau_lin+1; j++) {
       self->A[i][j] = &self->A_data[(i*(tau_lin+1))*dim_A+j*dim_A];
-      self->B[i][j] = &self->B_data[(i*(tau_lin+1))*dim_B+j*dim_B];
       for (k=0; k<dim_A; k++) 
         self->A[i][j][k] = 0.;
-      for (k=0; k<dim_B; k++) 
-        self->B[i][j][k] = 0.;
+      if(!autocorrelation) {
+        self->B[i][j] = &self->B_data[(i*(tau_lin+1))*dim_B+j*dim_B];
+        for (k=0; k<dim_B; k++) 
+          self->B[i][j][k] = 0.;
+      }
     }
   }
 
@@ -819,6 +856,35 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
   return 0;
 }
 
+// TODO print it out
+// Look at how static SF is printed
+int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp) {
+
+  int j, k;
+  double dt=self->dt;
+  char buffer[TCL_DOUBLE_SPACE];
+  int *q_vals;
+  double *q_density;
+
+  for (j=0; j<self->n_result; j++) {
+     Tcl_AppendResult(interp, " { ", (char *)NULL);
+     Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
+     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+     for (k=0; k< self->dim_corr; k++) {
+     if (self->n_sweeps[j] == 0 ) {
+       Tcl_PrintDouble(interp, 0., buffer);
+       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+     }
+     else {
+       Tcl_PrintDouble(interp, self->result[j][k]/ (double) self->n_sweeps[j], buffer);
+       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+     }
+     }
+     Tcl_AppendResult(interp, " } \n", (char *)NULL);
+  }
+  return 0;
+}
+
 int double_correlation_write_to_file( double_correlation* self, char* filename) {
   FILE* file=0;
   int j, k;
@@ -853,6 +919,10 @@ int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_
   return 0;
 }
 
+int compress_do_nothing( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) {
+  return 0;
+}
+
 int compress_linear( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) {
   unsigned int i;
   for ( i = 0; i < dim_A; i++ )
@@ -871,6 +941,10 @@ int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int
   unsigned int i;
   for ( i = 0; i < dim_A; i++ )
     A_compressed[i] = A1[i];
+  return 0;
+}
+
+int obs_nothing (void* params, double* A, unsigned int n_A) {
   return 0;
 }
 
@@ -987,12 +1061,14 @@ int structure_factor(void* params_p, double* A, unsigned int n_A) {
     }
 
     l=0;
+    //printf("n_A: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
     for(i=-order; i<=order; i++) {
       for(j=-order; j<=order; j++) {
         for(k=-order; k<=order; k++) {
 	  n = i*i + j*j + k*k;
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
+            //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
 	    for(p=0; p<n_total_particles; p++) {
 	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
 	      C_sum+= partCfg[p].p.scattering_length * cos(qr);
@@ -1005,6 +1081,7 @@ int structure_factor(void* params_p, double* A, unsigned int n_A) {
 	}
       }
     }
+    //printf("finished calculating sf\n"); fflush(stdout);
     return 0;
 }
 
