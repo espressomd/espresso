@@ -991,7 +991,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
   /**************************************************************/
    /* k space energy */
   double dipole_prefac;
-  double surface_term;
+  double surface_term=0.0;
   double k_space_energy_dip=0.0, node_k_space_energy_dip=0.0;
   double tmp0,tmp1;
 
@@ -1021,8 +1021,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 **********************/
   if (p3m_sum_mu2 > 0) {
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m start Energy calculation: k-Space\n",this_node));
-
-
+    
     /* i*k differentiation for dipolar gradients: |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
     ind=0;
     i=0;
@@ -1266,7 +1265,7 @@ double calc_surface_term(int force_flag, int energy_flag)
      } else {
         en = 0;
      } 
-       
+     #ifdef ROTATION	             
      if (force_flag) {
  
           //fprintf(stderr," number of particles= %d ",n_total_particles);   
@@ -1285,7 +1284,6 @@ double calc_surface_term(int force_flag, int energy_flag)
   	 //    fprintf(stderr,"part %d, correccions torque  x:%le, y:%le, z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
          // }
 	      
-          #ifdef ROTATION	      
           ip=0;
           for (c = 0; c < local_cells.n; c++) {
              np	= local_cells.cell[c]->n;
@@ -1297,12 +1295,13 @@ double calc_surface_term(int force_flag, int energy_flag)
 		ip++;
  	     }	
           }
-          #endif
+          
 	     
 	  free(sumix);     
   	  free(sumiy);     
 	  free(sumiz);     
      }
+    #endif
 
     free(mx);	 
     free(my);	 
