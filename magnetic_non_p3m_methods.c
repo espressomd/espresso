@@ -37,10 +37,9 @@
 #ifdef MAGNETOSTATICS
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag, int energy_flag)
+double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
 {
-  double u,r,pe1,pe2,pe3,pe4,r3,r5,r2,r7,rx,ry,rz,a,b,cc,d,ab;
-  double x1,x2,y1,y2,z1,z2;
+  double u,r,pe1,pe2,pe3,pe4,r3,r5,r2,r7,a,b,cc,d,ab;
 #ifdef ROTATION
   double bx,by,bz,ax,ay,az; 
 #endif
@@ -65,8 +64,7 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag, int ene
   pe4=3.0/r5;
 
   // Energy, if requested
-  if (energy_flag)
-    u= pe1/r3 - pe4*pe2*pe3;
+  u= pe1/r3 - pe4*pe2*pe3;
 
   // Force, if requested
   if(force_flag) { 
@@ -151,7 +149,6 @@ int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char 
 
 double dawaanr_calculations(int force_flag, int energy_flag)
 {
-  Cell *cell,*cell2;
   double u; 
   int i,j,c,cc;
   
@@ -175,7 +172,7 @@ double dawaanr_calculations(int force_flag, int energy_flag)
         if( local_cells.cell[c]->part[j].p.dipm < 1.e-11 ) 
           continue;
         // Calculate energy and/or force between the particles
-	u+=calc_dipole_dipole_ia(&local_cells.cell[c]->part[i],&local_cells.cell[c]->part[j],force_flag, energy_flag);
+	u+=calc_dipole_dipole_ia(&local_cells.cell[c]->part[i],&local_cells.cell[c]->part[j],force_flag);
       }
 
       // Calculate the ia between this particles and the particles in the 
@@ -189,7 +186,7 @@ double dawaanr_calculations(int force_flag, int energy_flag)
 	    continue;
         
 	  // Calculate energy and/or force between the particles
-	  u+=calc_dipole_dipole_ia(&local_cells.cell[c]->part[i],&local_cells.cell[cc]->part[j],force_flag, energy_flag);
+	  u+=calc_dipole_dipole_ia(&local_cells.cell[c]->part[i],&local_cells.cell[cc]->part[j],force_flag);
 	}
       }
     }
