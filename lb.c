@@ -3072,7 +3072,33 @@ int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 }
 
 /** Parser for the \ref lbfluid command. */
-int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+  argc--; argv++;
+
+  if (argc < 1) {
+      Tcl_AppendResult(interp, "too few arguments to \"lbfluid\"", (char *)NULL);
+      return TCL_ERROR;
+  }
+  else if (ARG0_IS_S("off")) {
+      Tcl_AppendResult(interp, "off not implemented", (char *)NULL);
+      return TCL_ERROR;
+  }
+  else if (ARG0_IS_S("init")) {
+      Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
+      return TCL_ERROR;
+  }
+  else if (ARG0_IS_S("gpu")) {
+      lattice_switch = (lattice_switch | LATTICE_LB_GPU);
+      argc--; argv++;
+  }
+
+  if (lattice_switch & LATTICE_LB_GPU)
+      return tclcommand_lbfluid_gpu(interp, argc, argv);
+  else
+      return tclcommand_lbfluid_cpu(interp, argc, argv);
+}
+
+int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
   int err = TCL_OK;
   int change = 0;
