@@ -119,10 +119,16 @@ if(this_node == 0){
 #endif
 
 #ifdef LB_GPU
-if(this_node == 0){
-  	if(lattice_switch & LATTICE_LB_GPU) lb_pre_init_gpu();
-}
+  if(lattice_switch & LATTICE_LB_GPU) {
+    if(this_node == 0){
+  	  lb_pre_init_gpu();
+    }
+  }
 #endif
+#ifdef LB
+  if(lattice_switch & LATTICE_LB_GPU) lb_pre_init();
+#endif
+
   /*
     call all initializations to do only on the master node here.
   */
@@ -202,19 +208,19 @@ void on_integration_start()
 
 #ifdef LB
   if(lattice_switch & LATTICE_LB) {
-    if (lbpar.agrid < 0.0) {
+    if (lbpar.agrid <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
     }
-    if (lbpar.tau < 0.0) {
+    if (lbpar.tau <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar.rho < 0.0) {
+    if (lbpar.rho <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
     }
-    if (lbpar.viscosity < 0.0) {
+    if (lbpar.viscosity <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
@@ -421,12 +427,26 @@ void on_constraint_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
-    lb_init_constraints();
+    lb_init_boundaries();
   }
 #endif
+
+  recalc_forces = 1;
+}
+
+void on_lbboundary_change()
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
+  invalidate_obs();
+
+#ifdef LB_BOUNDARIES
+  //printf("executing on_lbboundary_change on node %d\n", this_node);
+  
+  if(lattice_switch & LATTICE_LB) {
+    lb_init_boundaries();
+  }
 #endif
 #ifdef LB_BOUNDARIES_GPU
   //printf("executing on_lb_boundary_change on node %d\n", this_node);
@@ -788,7 +808,8 @@ static void init_tcl(Tcl_Interp *interp)
   /* in lb.c */
 
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
-
+  REGISTER_COMMAND("lbnode", tclcommand_lbnode);
+  REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
@@ -813,7 +834,7 @@ static void init_tcl(Tcl_Interp *interp)
   /* in lbgpu.c */
   //REGISTER_COMMAND("lbfluid", tclcommand_lbfluid_gpu);
 
-  REGISTER_COMMAND("lbnode", tclcommand_lbnode_gpu);
+  //REGISTER_COMMAND("lbnode", tclcommand_lbnode_gpu);
 
   REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
 

@@ -45,8 +45,7 @@
 int transfer_momentum = 0;
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0},0.,0. };
-
+LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0} };
 
 /** The DnQm model to be used. */
 LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3. };
@@ -1124,9 +1123,9 @@ void lb_reinit_parameters() {
   }
   
   //gamma_odd = gamma_even = gamma_bulk = gamma_shear;
-  gamma_odd = lbpar.gamma_odd;
-  gamma_even = lbpar.gamma_even;
-////
+  gamma_odd = -0.8;
+  gamma_even = -.8;
+
   //fprintf(stderr,"%f %f %f %f\n",gamma_shear,gamma_bulk,gamma_even,gamma_odd);
 
   double mu = 0.0;
@@ -1169,7 +1168,7 @@ void lb_reinit_parameters() {
     lb_coupl_pref = 0.0;
   }
 
-  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f, gamma_dd=%f, gamma_even=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity, gamma_odd, gamma_even));
+  LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity));
 
   //LB_TRACE(fprintf(stderr,"%d: phi[4]=%f phi[5]=%f phi[6]=%f phi[7]=%f phi[8]=%f phi[9]=%f\n",this_node,lb_phi[4],lb_phi[5],lb_phi[6],lb_phi[7],lb_phi[8],lb_phi[9]));
 
@@ -1208,7 +1207,7 @@ void lb_reinit_fluid() {
     /* default values for fields in lattice units */
     /* here the conversion to lb units is performed */
     double rho = lbpar.rho*agrid*agrid*agrid;
-    double v[3] = { 0.01, 0., 0. };
+    double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
@@ -1719,7 +1718,6 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
   C[4] = 1./2.*(1.+gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
 
   /* update momentum modes */
-/**half of force? */
   mode[1] += f[0];
   mode[2] += f[1];
   mode[3] += f[2];
@@ -2973,56 +2971,6 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
   return TCL_ERROR;
 #endif
 }
-
-static int lbfluid_parse_gamma_odd(Tcl_Interp *interp, int argc, char *argv[], int *change) {
-
-    double g;
-
-    if (argc < 1) {
-	Tcl_AppendResult(interp, "gamma_odd requires 1 argument", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if (!ARG0_IS_D(g)) {
-	Tcl_AppendResult(interp, "wrong argument for gamma_odd", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if (fabs( g > 1.0)) {
-	Tcl_AppendResult(interp, "fabs(gamma_odd) must be > 1.", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    *change = 1;
-    lbpar.gamma_odd= g;
-
-    mpi_bcast_lb_params(LBPAR_AGRID);
- 
-    return TCL_OK;
-}
-
-static int lbfluid_parse_gamma_even(Tcl_Interp *interp, int argc, char *argv[], int *change) {
-
-    double g;
-
-    if (argc < 1) {
-	Tcl_AppendResult(interp, "gamma_even requires 1 argument", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if (!ARG0_IS_D(g)) {
-	Tcl_AppendResult(interp, "wrong argument for gamma_even", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if (fabs( g > 1.0)) {
-	Tcl_AppendResult(interp, "fabs(gamma_even) must be > 1.", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    *change = 1;
-    lbpar.gamma_even= g;
-
-    mpi_bcast_lb_params(LBPAR_AGRID);
- 
-    return TCL_OK;
-}
 #endif /* LB */
 
 /** Parser for the \ref lbnode command. */
@@ -3104,10 +3052,6 @@ int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 	  err = lbfluid_parse_friction(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("ext_force"))
 	  err = lbfluid_parse_ext_force(interp, argc-1, argv+1, &change);
-      else if (ARG0_IS_S("gamma_odd"))
-	  err = lbfluid_parse_gamma_odd(interp, argc-1, argv+1, &change);
-      else if (ARG0_IS_S("gamma_even"))
-	  err = lbfluid_parse_gamma_even(interp, argc-1, argv+1, &change);
       else {
 	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
 	  err = TCL_ERROR ;
