@@ -55,7 +55,7 @@
 
 /** moment of inertia. Currently we define the inertia tensor here to be constant.
     If it is not spherical the angular velocities have to be refined several times
-    in the \ref convert_torqes_propagate_omega. Also the kinetic energy in file
+    in the \ref convert_torques_propagate_omega. Also the kinetic energy in file
     \ref statistics.c is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
 static double I[3] = { 1, 1, 1};
 
@@ -286,7 +286,7 @@ void propagate_omega_quat()
 }
 
 /** convert the torques to the body-fixed frames and propagate angular velocities */
-void convert_torqes_propagate_omega()
+void convert_torques_propagate_omega()
 {
   Particle *p;
   Cell *cell;
@@ -294,7 +294,7 @@ void convert_torqes_propagate_omega()
   double dt2, tx, ty, tz;
 
   dt2 = time_step*0.5;
-  INTEG_TRACE(fprintf(stderr,"%d: convert_torqes_propagate_omega:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -371,7 +371,7 @@ void convert_initial_torques()
   int c,i, np;
   double tx, ty, tz;
 
-  INTEG_TRACE(fprintf(stderr,"%d: convert_initial_torqes:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: convert_initial_torques:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
