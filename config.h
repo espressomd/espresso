@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -148,8 +149,8 @@
 
 //mol_cut needs virtual sites
 #ifdef MOL_CUT
-#ifndef VIRTUAL_SITES
-#define VIRTUAL_SITES
+#ifndef VIRTUAL_SITES_COM
+#define VIRTUAL_SITES_COM
 #endif
 #endif
 
@@ -178,6 +179,12 @@
 #define BOND_ANGLE
 #endif
 
+#if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
+  || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
+  || defined(BOND_ANGLE_COSSQUARE) && defined(BOND_ANGLE_COSINE)
+#error Activate only one of features BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE!
+#endif
+
 /* If any bond angledist potential is activated, activate the whole bond angle code and constraints */
 #if defined(BOND_ANGLEDIST_HARMONIC)
 #define BOND_ANGLEDIST
@@ -188,6 +195,15 @@
 #define BOND_ENDANGLEDIST
 #define CONSTRAINTS
 #endif
+
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
+#endif
+
+#if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)
+#define VIRTUAL_SITES
+#endif
+
 
 /********************************************/
 /* \name exported functions of config.c     */

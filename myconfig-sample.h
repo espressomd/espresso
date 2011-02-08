@@ -41,30 +41,19 @@
 // To use address, also activate VIRTUAL_SITES and VIRTUAL_SITES_COM
 /* #define ADRESS*/
 
-
 /* #define DAWAANR */
 /* #define MAGNETIC_DIPOLAR_DIRECT_SUM */
 /* #define MDLC */
 /* #define METADYNAMICS */
 /* #define OVERLAPPED */
 
-// When using virtual_sites, activate ONE implementation, below
-/* #define VIRTUAL_SITES */
-// This implementation puts the virtual particle in the center of mass
-// of all real particles in the same molecule
+/* Note: Activate only one virtual sites implementation! */
 /* #define VIRTUAL_SITES_COM */
-// This implementation puts a virtual particle relative to a real particle's
-// positino and orientation 
 /* #define VIRTUAL_SITES_RELATIVE */
 
-// Activate the following, if you don't want the velocity of virtual sites to be calculated
-// #define VIRTUAL_SITES_NO_VELOCITY
-
-// Activate the following, if you want the langevin thermostat to act on virtual sites
-// #define VIRTUAL_SITES_THERMOSTAT
-
-// Activate the following, if you do NOT want the Langevin thermostat to act on non-virtual particles
-// #define THERMOSTAT_IGNORE_NON_VIRTUAL
+/* #define VIRTUAL_SITES_NO_VELOCITY */
+/* #define VIRTUAL_SITES_THERMOSTAT */
+/* #define THERMOSTAT_IGNORE_NON_VIRTUAL */
 
 
 /**********************************************************************/
