@@ -1,0 +1,71 @@
+\chapter{Virtual sites}
+\label{sec:virtual}
+
+Virtual sites are particles, the positions and velocities of which are not obtained by integrating an equation of motion. Rather, their coordinates are obtained from the position (and orientation) of one or more other particles. In this way, rigid arrangements of particles can be constructed and a particle can be placed in the center of mass of a set of other particles. 
+Virtual sites can interact with other particles in the system by means of interactions. Forces are added to them according to their respective particle type. Before the next integration step, the forces accumulated on a virtual site are distributed back to those particles, from which the virtual site was derived.
+
+To use virtual sites, activate VIRTUAL_SITES in myconfig.h (see section \ref{sec:myconfig}). In addition, exactly one implementation of virtual sites has to be enabled, determining thre rules by which virtual sites are placed. 
+
+
+\section{Virtual sites in the center of mass of a molecule}
+
+To activate this implementation, enable VIRTUAL_SITES and VIRTUAL_SITES_COM in myconfig.h (sec. \ref{sec:myconfig}). 
+Virtual sites are then placed in the center of mass of a set of particles (as defined below). Their velocity will also be that of the center of mass. Forces accumulating on the virtual sites are distributed back to the particles which form the molecule.
+To place a virtual site at the center of a molecule, perform the following steps (\emph{ORDER MATTERS!})
+\begin{enumerate}
+\item Create a particle of the desired type for each molecule. It should be placed at least roughly in the center of the molecule to make sure, it's on the same node as teh other particles forming the molecule, in a simulatino with more than one cpu.
+\item Make it a virtual site using \newline
+part \var{pid} virtual 1
+\item Declare the list of molecules and the particles they consist of:\newline
+analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}\newline
+The lists of particles in a molecule comprise the non-virtual particles and the virtual site.
+\item Assign to all particles that belong to the same molecule a common molecule id:\newline
+part \var{pid} mol \var{molid}
+\item Update the position of all virtual particles (optional)\newline
+integrate 0
+\end{enumerate}
+
+
+\section{Rigid arrangements of particles}
+
+The ``relative`` implementation of virtual sites allows for the simulation of rigid arrangements of particles. It can be used, e.g., for extended dipoles and raspberry-particles, but also for more complex configurations. 
+Position and velocity of a virtual site are obtained from the position and orientation of exactly one non-virtual particle, which has to be placed in the center of mass of the rigid body. Several virtaul sites can be related to one and the same non-virtual particle.
+The position of the virtual site is given by
+\begin{equation}
+\vec{x_v} =\vec{x_n} +O_n (O_v \vec{E_z}) d,
+\end{equation}
+where $\vec{x_n}$ is the position of the non-virtual particle, $O_n$ is the orientation of the non-virtual particle, $O_v$ denotes the orientation of the vector $\vec{x_v}-\vec{x_n}$ with respect to the non-virtual particle's body fixed frame and $d$ the distance between virtual and non-virtaul particle. 
+In words: The virtual site is placed at a fixed distance from the non-virtual particle. When the non-virtual particle rotates, the virtual sites rotates on an orbit around the non-virtual particle's center.
+
+To use this implementation of virtual sites, define VIRTUAL\_SITES, VIRTUAL\_SITES\_RELATIVE and ROTATION in myconfig.h (sec. \ref{sec:myconfig}).
+To set up a virtual site,
+\begin{enumerate}
+\item Place the particle to which the virtual site should be related. It needs to be in the center of mass of the rigid arrangement of particles you create. Let its particle id be n.
+\item Place a particle at the desired relative position, make it virtual and relate it to the first particle\newline
+part \var{v} pos \var{pos} virtual 1 vs\_auto\_relate \var{n}
+\item Repeat the previous step with more virtual sites, if desired.
+\item To update the positions of all virtual sites, call\newline
+integrate 0
+\end{enumerate}
+
+Please note:
+\begin{itemize}
+\item The relative position of the virtual site is defined by its distance from the non-virtual particle, the id of the non-virtual particle and a quaternion which defines the vector from non-virtual particle to virtual site in the non-virtual particle's body-fixed frame. The first two are saved in the virtual site's vs\_relative-attribute, while the latter is saved in the quaternion attribute. Take care, not to overwrite these after using vs\_auto\_relate.
+\item Virtual sites can not be placed relative to other virtual sites, as the order in which the positions of virtual sites are updated is not guaranteed. Always relate a virtual site to a non-virtual particle placed in the center of mass of the rigid arrangement of particles.
+\item Don't forget to declare the particle virtual in addition to calling vs\_auto\_relate
+\item In case you know the correct quaternions, you can also setup a virtual site using\newline
+part \var{v} virtual 1 quat \var{q} vs\_relative \var{n} \var{d}\,,\newline
+where n is the id of the non-virtual particle and d is its distance from the virtual site.
+\item In a simulation on more than one cpu, at least one non-bonded interaction needs to have a range greater or equal to the largest distance between a non-virtual particle and its associated virtual sites. If such an interaction does not exist in your system, you can declare a dummy interaction for a particle type not present in the simulation.
+\item If the virtual sites represent actual particles carrying a mass, the inertia tensor of the non-virtual particle in the center of mass needs to be adapted.
+\end{itemize}
+
+\section{Additional switches}
+
+The behaviour of virtual sites can be fine-tuned with the following switches in myconfig.h (sec.\ref{sec:myconfig})
+\begin{itemize}
+\item VIRTUAL_SITES_NO_VELOCITY specifies that the velocity of virtual sites is not computed
+\item VIRTUAL_SITES_THERMOSTAT specifies that the Langevin thermostat should also act on virtual sites
+\item THERMOSTAT_IGNORE_NON_VIRTUAL specifies that the thermostat does not act on non-virtual particles
+\end{itemize}
+
