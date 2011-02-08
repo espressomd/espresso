@@ -56,7 +56,7 @@
 #include "morse.h"
 #include "dpd.h"
 #include "tunable_slip.h"
-#include "magnetic_non_p3m__methods.h"
+#include "magnetic_non_p3m_methods.h"
 #include "mdlc_correction.h"
 
 /****************************************
@@ -1159,9 +1159,6 @@ int check_obs_calc_initialized()
   case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
 #endif
   case DIPOLAR_P3M: if (DP3M_sanity_checks()) state = 0; break;
-#endif
-#ifdef DAWAANR  
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: if (DAWAANR_sanity_checks()) state = 0; break;
 #endif
 #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
 #ifdef MDLC

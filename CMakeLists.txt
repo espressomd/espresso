@@ -140,7 +140,7 @@ add_executable(Espresso_bin
   interaction_data.c interaction_data.h verlet.c verlet.h grid.c grid.h integrate.c integrate.h cells.c cells.h ghosts.c ghosts.h
   forces.c forces.h rotation.c rotation.h debug.c debug.h particle_data.c particle_data.h thermostat.c thermostat.h dpd.c dpd.h
   statistics.c statistics.h statistics_chain.c statistics_chain.h energy.c energy.h pressure.c pressure.h vmdsock.c vmdsock.h
-  imd.c imd.h iccp3m.c iccp3m.h p3m.c p3m.h magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h ewald.c ewald.h fft.c fft.h
+  imd.c imd.h iccp3m.c iccp3m.h p3m.c p3m.h magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h ewald.c ewald.h fft.c fft.h
   random.c random.h blockfile.c blockfile.h blockfile_tcl.c blockfile_tcl.h polymer.c polymer.h specfunc.c specfunc.h tuning.c tuning.h
   uwerr.c uwerr.h parser.c parser.h domain_decomposition.c domain_decomposition.h nsquare.c nsquare.h layered.c layered.h mmm-common.c 
   mmm-common.h mmm1d.c mmm1d.h mmm2d.c mmm2d.h modes.c modes.h topology.c topology.h nemd.c nemd.h statistics_cluster.c statistics_cluster.h

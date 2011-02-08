@@ -215,10 +215,12 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
 			  this_node, gc->part_lists[pl], *(int *)retrieve, gc->node));
       realloc_particlelist(gc->part_lists[pl], gc->part_lists[pl]->n = *(int *)retrieve);
 #ifdef GHOST_FLAG
-      //init ghost variable
-      int i;
-      for (i=0;i<gc->part_lists[pl]->n;i++){
-           gc->part_lists[pl]->part[i].l.ghost=1;
+      {
+	//init ghost variable
+	int i;
+	for (i=0;i<gc->part_lists[pl]->n;i++){
+	  gc->part_lists[pl]->part[i].l.ghost=1;
+	}
       }
 #endif
       retrieve += sizeof(int);
@@ -310,6 +312,15 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts)
     if (data_parts == GHOSTTRANS_PARTNUM) {
       realloc_particlelist(gc->part_lists[pl + offset],
 			   gc->part_lists[pl + offset]->n = gc->part_lists[pl]->n); 
+#ifdef GHOST_FLAG
+      {
+        //init ghost variable
+        int i;
+        for (i=0;i<gc->part_lists[pl + offset]->n;i++){
+          gc->part_lists[pl + offset]->part[i].l.ghost=1;
+        }
+      }
+#endif
     }
     else {
       part1 = gc->part_lists[pl]->part;

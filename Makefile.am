@@ -58,7 +58,7 @@ libEspresso_a_SOURCES = \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
 	p3m.c p3m.h \
-	magnetic_non_p3m__methods.c magnetic_non_p3m__methods.h \
+	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
 	fft.c fft.h \
 	random.c random.h \
