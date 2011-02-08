@@ -100,6 +100,9 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
 /** compute the k-space part of forces and energies for the charge-charge interaction  **/
 double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag);
 
+/** computer the k-space part of the stress tensor **/
+void P3M_calc_kspace_stress (double* stress);
+
 /// sanity checks
 int P3M_sanity_checks();
 
