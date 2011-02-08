@@ -2420,25 +2420,25 @@ static int tclcommand_analyze_parse_gyration_tensor(Tcl_Interp *interp, int argc
   
   Tcl_ResetResult(interp);
   sprintf(buffer,"%f",gt[3]); /* Squared Radius of Gyration */
-  Tcl_AppendResult(interp, "{ Rg^2 ",buffer," } ");
+  Tcl_AppendResult(interp, "{ Rg^2 ",buffer," } ", (char *)NULL);
 
   sprintf(buffer,"%f %f %f",gt[4],gt[5],gt[6]); /* Shape descriptors */
-  Tcl_AppendResult(interp, "{ shape ",buffer," } ");
+  Tcl_AppendResult(interp, "{ shape ",buffer," } ", (char *)NULL);
 
   sprintf(buffer,"%f",gt[0]); /* Eigenvalue 0 */
-  Tcl_AppendResult(interp, "{ eva0 ",buffer," : ");
+  Tcl_AppendResult(interp, "{ eva0 ",buffer," : ", (char *)NULL);
   sprintf(buffer,"%f %f %f",gt[7],gt[8],gt[9]); /* Eigenvector of eva0 */
-  Tcl_AppendResult(interp, buffer," } ");
+  Tcl_AppendResult(interp, buffer," } ", (char *)NULL);
 
   sprintf(buffer,"%f",gt[1]); /* Eigenvalue 1 */
-  Tcl_AppendResult(interp, "{ eva1 ",buffer," : ");
+  Tcl_AppendResult(interp, "{ eva1 ",buffer," : ", (char *)NULL);
   sprintf(buffer,"%f %f %f",gt[10],gt[11],gt[12]); /* Eigenvector of eva1 */
-  Tcl_AppendResult(interp, buffer," } ");
+  Tcl_AppendResult(interp, buffer," } ", (char *)NULL);
 
   sprintf(buffer,"%f",gt[2]); /* Eigenvalue 2 */
-  Tcl_AppendResult(interp, "{ eva2 ",buffer," : ");
+  Tcl_AppendResult(interp, "{ eva2 ",buffer," : ", (char *)NULL);
   sprintf(buffer,"%f %f %f",gt[13],gt[14],gt[15]); /* Eigenvector of eva2 */
-  Tcl_AppendResult(interp, buffer," }");
+  Tcl_AppendResult(interp, buffer," }", (char *)NULL);
 
   free(gt);
   return (TCL_OK);

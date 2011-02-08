@@ -72,6 +72,9 @@
 #include "cuda_init.h"
 #endif
 
+// import function from scriptsdir.c
+char *get_default_scriptsdir();
+
 /** whether before integration the thermostat has to be reinitialized */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;

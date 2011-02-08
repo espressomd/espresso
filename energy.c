@@ -29,7 +29,7 @@
 #include "nsquare.h"
 #include "layered.h"
 #include "elc.h"
-#include "magnetic_non_p3m__methods.h"
+#include "magnetic_non_p3m_methods.h"
 #include "mdlc_correction.h"
 
 Observable_stat energy = {0, {NULL,0,0}, 0,0,0};

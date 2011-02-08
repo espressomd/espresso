@@ -37,7 +37,7 @@ MDINLINE int tclprint_to_result_HertzianIA(Tcl_Interp *interp, int i, int j)
   Tcl_PrintDouble(interp, data->Hertzian_eps, buffer);
   Tcl_AppendResult(interp, "hertzian ", buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->Hertzian_sig, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
 
   return TCL_OK;
 }
