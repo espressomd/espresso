@@ -37,8 +37,12 @@ setmd skin 0.3
 thermostat off
 
 part 0 pos 5 5 5 omega 1 2 3
-part 1 pos 5 5 6 virtual 1 vs_relate_to 0 
-part 2 pos 5 5 4 virtual 1 vs_relate_to 0 
+part 1 pos 5 5 6 virtual 1 vs_auto_relate_to 0 
+part 2 pos 5 5 4 virtual 1 vs_auto_relate_to 0 
+puts [part 1 print pos ]
+puts [part 2 print pos ]
+
+
 integrate 0
 if { ([part 1 print pos] != "5.0 5.0 6.0") || ([part 2 print pos] != "5.0 5.0 4.0")} {
  error_exit  "Error: Virutal sites incorrectly positioned: [part 1 print pos] [part 2 print pos]"
@@ -128,8 +132,8 @@ thermostat langevin 1 1
 #inter 1 1 lennard-jones 10 0.8 10
 
 part 0 pos 2 2 2 v -1 0 0 type 0
-part 1 pos 1.8 2 2 virtual 1 vs_relate_to 0 q 1 type 1
-part 2 pos 2.2 2 2 virtual 1 vs_relate_to 0 q -1 type 1
+part 1 pos 1.8 2 2 virtual 1 vs_auto_relate_to 0 q 1 type 1
+part 2 pos 2.2 2 2 virtual 1 vs_auto_relate_to 0 q -1 type 1
 
 set error 0
 puts "Checking "
