@@ -8,6 +8,9 @@ NOTEWORTHY CHANGES SINCE v2.2.0b
 User-visible changes
 --------------------
 
+* The P3M algorithm for charges (not for dipoles so far) now allows
+  for non-cubic simulation boxes.
+
 * Constraints have been made penetrable.
 
 * The build system has been overhauled and simplified.
