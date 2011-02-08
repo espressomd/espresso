@@ -239,7 +239,7 @@ int tclcommand_inter_magnetic_parse_mdds(Tcl_Interp * interp, int argc, char ** 
     
 
   if (n_nodes > 1) {
-    Tcl_AppendResult(interp, "sorry: magnetic dipolar direct sum  only works with 1 cpu", (char *) NULL);
+    Tcl_AppendResult(interp, "sorry: magnetic dipolar direct sum only works with 1 cpu", (char *) NULL);
     return TCL_ERROR;  
   }
    
