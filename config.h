@@ -204,6 +204,12 @@
 #define VIRTUAL_SITES
 #endif
 
+#ifdef VIRTUAL_SITES_RELATIVE
+#ifndef ROTATION
+#define ROTATION
+#endif
+#endif
+
 
 /********************************************/
 /* \name exported functions of config.c     */
