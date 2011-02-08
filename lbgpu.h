@@ -17,7 +17,7 @@
 /** \file lbgpu.h
  * Header file for lbgpu.c
  *
- * This is the header file for the Lattice Boltzmann implementation in lbgpu.c
+ * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
  */
 
 
@@ -264,8 +264,7 @@ void lb_realloc_particles_gpu();
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-void LB_particle_GPU(LB_particle *host_data);
-void initGPU(int argc, char **argv);
+void lb_particle_GPU(LB_particle *host_data);
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu);
@@ -312,7 +311,7 @@ void lb_send_forces_gpu();
 #endif
 
 /** Parser for the \ref lbnode command. */
-int tclcommand_lbnode_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);

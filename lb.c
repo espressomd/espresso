@@ -156,8 +156,9 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
   if (lattice_switch & LATTICE_LB_GPU)
       return tclcommand_lbfluid_gpu(interp, argc, argv);
-  else
+  else{
       return tclcommand_lbfluid_cpu(interp, argc, argv);
+	}
 }
 
 int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
@@ -165,8 +166,6 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   int err = TCL_OK;
   double floatarg;
   double vectarg[3];
-  
-  argc--; argv++;
 
   if (argc < 1) {
     lbfluid_tcl_print_usage(interp);
@@ -350,11 +349,15 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   return TCL_ERROR;
 #endif
 }
-#ifdef LB
-
-#endif
-/** Parser for the \ref lbnode command. */
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
+  if (lattice_switch & LATTICE_LB_GPU)
+      return tclcommand_lbnode_gpu(interp, argc, argv);
+  else
+      return tclcommand_lbnode_cpu(interp, argc, argv);
+}
+/** Parser for the \ref lbnode command. */
+int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int coord[3];
    int counter;

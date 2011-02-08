@@ -1,3 +1,19 @@
+/* $Id$
+ *
+ * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+ * It is therefore subject to the ESPResSo license agreement which you
+ * accepted upon receiving the distribution and by which you are
+ * legally bound while utilizing this file in any form or way.
+ * There is NO WARRANTY, not even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+ * You should have received a copy of that license along with this
+ * program; if not, refer to http://www.espresso.mpg.de/license.html
+ * where its current version can be found, or write to
+ * Max-Planck-Institute for Polymer Research, Theory Group, 
+ * PO Box 3148, 55021 Mainz, Germany. 
+ * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
+ */
+
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
@@ -813,9 +829,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle 
 	  
 	/* delta_j for transform momentum transfer to lattice units which is done in calc_node_force
 	(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-	delta_j[0] = - particle_force[part_index].f[0]*para.integrate_pref2/para.time_step*para.tau/para.agrid;
-	delta_j[1] = - particle_force[part_index].f[1]*para.integrate_pref2/para.time_step*para.tau/para.agrid;
-	delta_j[2] = - particle_force[part_index].f[2]*para.integrate_pref2/para.time_step*para.tau/para.agrid;  																	  																	  
+	delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
+	delta_j[1] = - particle_force[part_index].f[1]*para.time_step*para.tau/para.agrid;
+	delta_j[2] = - particle_force[part_index].f[2]*para.time_step*para.tau/para.agrid;  																	  																	  
 }
 /*-------------------------------------------------------*/
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
@@ -881,7 +897,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force *node_f, int
 	*gpu_check = 1;
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
-    float v[3] = { 0.0f, 0.0f, 0.0f };
+    float v[3] = { 0.01f, 0.0f, 0.0f };
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
  	/*----------------------------------- */
@@ -1125,8 +1141,8 @@ __global__ void integrate(LB_nodes_gpu *n_a, LB_nodes_gpu *n_b, LB_values_gpu *d
     	/**lb_thermalize_modes */
     	if (para.fluct) thermalize_modes(mode, index, &rng);
 #ifdef EXTERNAL_FORCES
-		/**if external force is used apply node force */
-		if (para.external_force) apply_forces(index, mode, node_f);
+	/**if external force is used apply node force */
+	if (para.external_force) apply_forces(index, mode, node_f);
 #else
     	/**if partcles are used apply node forces*/
     	if (para.number_of_particles) apply_forces(index, mode, node_f); 
@@ -1317,9 +1333,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
 	cudaThreadSynchronize();
 
-	if(*h_gpu_check)fprintf(stderr, "initialization lb_gpu successful! \n");
+	//if(*h_gpu_check)fprintf(stderr, "initialization lb_gpu successful! \n");
 	if(!*h_gpu_check){
-			fprintf(stderr, "initialization lb_gpu !NOT! successful! \n");
+			fprintf(stderr, "initialization of lb gpu code failed! \n");
 			exit(0);
 	}	
 
@@ -1333,7 +1349,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 
    	cudaFree(particle_force);
-    cudaFree(particle_data);
+    	cudaFree(particle_data);
 	cudaFree(part);
 
 	cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
@@ -1407,7 +1423,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
  * @param **host_data		Pointer to the host particle positions and velocities
 }*/
 /**-------------------------------------------------------------------------*/
-void LB_particle_GPU(LB_particle *host_data){
+void lb_particle_GPU(LB_particle *host_data){
   	
 
 		//** get espresso md particle values*/
@@ -1449,8 +1465,10 @@ void lb_integrate_GPU(){
 	
         	/**call of fluid step*/
            	integrate<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b, device_values, node_f);
-		
+
+#if 0		
 			reset_population<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_b, nodes_a);
+#endif
 #ifdef LB_BOUNDARIES_GPU		
 			if (lb_boundaries_bb_gpu == 1) bb_read<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b);
 			
@@ -1458,8 +1476,8 @@ void lb_integrate_GPU(){
 #endif
 			/** swapping pointer */
 			tmp = nodes_a;
-            nodes_a = nodes_b;
-            nodes_b = tmp;
+            		nodes_a = nodes_b;
+            		nodes_b = tmp;
                 
                
 }

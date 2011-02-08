@@ -194,11 +194,7 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
  /* lb */
   if(thermo_switch & THERMO_LB) {
     Tcl_PrintDouble(interp, temperature, buffer);
-#ifdef LB
     Tcl_AppendResult(interp,"{ lb ",buffer, " } ", (char *)NULL);
-#else
-    Tcl_AppendResult(interp,"{ lb_gpu ",buffer, " } ", (char *)NULL);
-#endif
   }
 #endif
 
@@ -267,7 +263,7 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
     err = tclcommand_thermostat_parse_npt_isotropic(interp, argc, argv);
 #endif
 #if defined(LB) || defined(LB_GPU)
-  else if ( ARG1_IS_S("lb") || ARG1_IS_S("lb_gpu"))
+  else if ( ARG1_IS_S("lb"))
     err = tclcommand_thermostat_parse_lb(interp, argc-1, argv+1);
 #endif
   else {

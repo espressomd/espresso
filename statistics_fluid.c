@@ -540,24 +540,6 @@ int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv
 }
 
 int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
-  argc--; argv++;
-
-  if (argc < 1) {
-      Tcl_AppendResult(interp, "too few arguments to \"lbfluid\"", (char *)NULL);
-      return TCL_ERROR;
-  }
-  else if (ARG0_IS_S("off")) {
-      Tcl_AppendResult(interp, "off not implemented", (char *)NULL);
-      return TCL_ERROR;
-  }
-  else if (ARG0_IS_S("init")) {
-      Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
-      return TCL_ERROR;
-  }
-  else if (ARG0_IS_S("gpu")) {
-      lattice_switch = (lattice_switch | LATTICE_LB_GPU);
-      argc--; argv++;
-  }
 
   if (lattice_switch & LATTICE_LB_GPU)
       return tclcommand_analyze_parse_fluid_gpu(interp, argc, argv);

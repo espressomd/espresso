@@ -26,6 +26,7 @@
 #include "utils.h"
 #include "constraint.h"
 #include "lb-boundaries.h"
+#include "lb_boundaries_gpu.h"
 #include "lb.h"
 #include "interaction_data.h"
 
@@ -347,8 +348,15 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 }
 
 #endif /* LB_BOUNDARIES */
+int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
-int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv)
+  if (lattice_switch & LATTICE_LB_GPU)
+      return tclcommand_lbboundary_gpu(interp, argc, argv);
+  else
+      return tclcommand_lbboundary_cpu(interp, argc, argv);
+}
+
+int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef LB_BOUNDARIES
   int status, c_num;

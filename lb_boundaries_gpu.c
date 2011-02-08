@@ -345,14 +345,12 @@ int lb_boundary_cylinder(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 }
 
 #endif /* LB_BOUNDARIES_GPU */
-#ifdef LB_BOUNDARIES_GPU
-int tclcommand_lbboundary_gpu(ClientData _data, Tcl_Interp *interp,
+int tclcommand_lbboundary_gpu(Tcl_Interp *interp,
 	       int argc, char **argv)
 {
-
+#ifdef LB_BOUNDARIES_GPU
   int status = TCL_ERROR;
   int c_num;
-
 
   if (argc < 2) return lb_boundary_print_all(interp);
   
@@ -390,9 +388,11 @@ int tclcommand_lbboundary_gpu(ClientData _data, Tcl_Interp *interp,
   lb_init_boundaries_gpu();
 	lb_boundaries_bb_gpu = 1; 
   return status;
-
-}
+#else /* !defined(LB_BOUNDARIES) */
+  Tcl_AppendResult(interp, "LB_BOUNDARIES_GPU not compiled in!" ,(char *) NULL);
+  return (TCL_ERROR);
 #endif /* LB_BOUNDARIES_GPU */
+}
 
 #ifdef LB_BOUNDARIES_GPU
 /** Initialize boundary conditions for all constraints in the system. */

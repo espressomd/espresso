@@ -80,8 +80,7 @@ void lb_init_boundaries_gpu();
 
 /*@}*/
 
-int tclcommand_lbboundary_gpu(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
+int tclcommand_lbboundary_gpu(Tcl_Interp *interp, int argc, char **argv);
 #endif /* LB_BOUNDARIES_GPU */
 #endif /* LB_BOUNDARIES_GPU_H */
 

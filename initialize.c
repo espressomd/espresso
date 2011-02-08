@@ -119,14 +119,12 @@ if(this_node == 0){
 #endif
 
 #ifdef LB_GPU
-  if(lattice_switch & LATTICE_LB_GPU) {
-    if(this_node == 0){
-  	  lb_pre_init_gpu();
-    }
+if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU) lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
-  if(lattice_switch & LATTICE_LB_GPU) lb_pre_init();
+  if(lattice_switch & LATTICE_LB) lb_pre_init();
 #endif
 
   /*
@@ -245,12 +243,12 @@ if(this_node == 0){
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
-  }
-
-	if (lb_reinit_particles_gpu) {lb_realloc_particles_gpu();
+    if (lb_reinit_particles_gpu) {
+	lb_realloc_particles_gpu();
 	lb_reinit_particles_gpu = 0;
-	}
+    }
   }
+}
 
 #endif
 
@@ -432,6 +430,13 @@ void on_constraint_change()
     lb_init_boundaries();
   }
 #endif
+#ifdef LB_BOUNDARIES_GPU
+  if(this_node == 0){
+    if(lattice_switch & LATTICE_LB_GPU) {
+      lb_init_boundaries_gpu();
+    }
+  }
+#endif
 
   recalc_forces = 1;
 }
@@ -442,17 +447,15 @@ void on_lbboundary_change()
   invalidate_obs();
 
 #ifdef LB_BOUNDARIES
-  //printf("executing on_lbboundary_change on node %d\n", this_node);
-  
   if(lattice_switch & LATTICE_LB) {
     lb_init_boundaries();
   }
 #endif
 #ifdef LB_BOUNDARIES_GPU
-  //printf("executing on_lb_boundary_change on node %d\n", this_node);
-  
-  if(lattice_switch & LATTICE_LB_GPU) {
-    lb_init_boundaries_gpu();
+  if(this_node == 0){
+    if(lattice_switch & LATTICE_LB_GPU) {
+      lb_init_boundaries_gpu();
+    }
   }
 #endif
 
@@ -690,11 +693,8 @@ void on_parameter_change(int field)
 
 #ifdef LB_GPU
 if(this_node == 0){
-
   if (lattice_switch & LATTICE_LB_GPU) {
-    if (field == FIELD_TEMPERATURE) {
-		lb_init_gpu();
-    }
+    if (field == FIELD_TEMPERATURE) lb_init_gpu();
   }
 }
 #endif
@@ -831,18 +831,10 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
 #endif
 #ifdef LB_GPU
-  /* in lbgpu.c */
-  //REGISTER_COMMAND("lbfluid", tclcommand_lbfluid_gpu);
-
-  //REGISTER_COMMAND("lbnode", tclcommand_lbnode_gpu);
-
+  /* in lbgpu_cfile.c */
   REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
 
   REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
-
-#ifdef LB_BOUNDARIES_GPU
-  REGISTER_COMMAND("lb_boundary", tclcommand_lbboundary_gpu);
-#endif
 #endif
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
