@@ -1292,7 +1292,7 @@ int part_parse_vs_relate_to(Tcl_Interp *interp, int argc, char **argv,
 
     // Validate input
     if (argc < 1) {
-      Tcl_AppendResult(interp, "vs_relate_to needs the id of the particle to which this particle should be related.", (char *) NULL);
+      Tcl_AppendResult(interp, "vs_auto_relate_to needs the id of the particle to which this particle should be related.", (char *) NULL);
       return TCL_ERROR;
     }
 
@@ -2002,9 +2002,8 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
     else if (ARG0_IS_S("vs_relative"))
       err = part_parse_vs_relative(interp, argc-1, argv+1, part_num, &change);
-    else if (ARG0_IS_S("vs_relate_to"))
+    else if (ARG0_IS_S("vs_auto_relate_to"))
       err = part_parse_vs_relate_to(interp, argc-1, argv+1, part_num, &change);
-
 #endif
 
 #ifdef EXTERNAL_FORCES
