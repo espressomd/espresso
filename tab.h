@@ -43,14 +43,19 @@ MDINLINE int tabforcecap_set_params(double tabforcecap)
 /** Non-Bonded tabulated potentials:
     Reads tabulated parameters and force and energy tables from a file.
     ia_params and force/energy tables are then communicated to each node
-    \warning No checking is performed for the file read!!
+
     @param part_type_a particle type for which the interaction is defined
     @param part_type_b particle type for which the interaction is defined
     @param filename from which file to fetch the data
+
     @return <ul>
     <li> 0 on success
     <li> 1 on particle type mismatches
-    <li> 2 
+    <li> 2 file name too long
+    <li> 3 cannot open the file
+    <li> 4 file too short
+    <li> 5 file broken, cannot parse numbers
+    <li> 6 number of points of existing potential changed
     </ul>
 */
 MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
@@ -83,7 +88,7 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   /*Look for a line starting with # */
   while ( token != EOF) {
     token = fgetc(fp);
-    if ( token == 35 ) { break; } // magic number for # symbol
+    if ( token == '#' ) { break; } // magic number for # symbol
   }
   if ( token == EOF ) {
     fclose(fp);
@@ -91,9 +96,7 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   }
 
   /* First read two important parameters we read in the data later*/
-  fscanf( fp , "%d ", &npoints);
-  fscanf( fp, "%lf ", &minval);
-  fscanf( fp, "%lf ", &maxval);
+  if (fscanf( fp , "%d %lf %lf", &npoints, &minval, &maxval) != 3) return 5;
 
   // Set the newsize to the same as old size : only changed if a new force table is being added.
   newsize = tabulated_forces.max;
@@ -107,7 +110,7 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
     // We have existing data for this pair of monomer types check array sizing
     if ( data->TAB_npoints != npoints ) {
       fclose(fp);
-      return 5;
+      return 6;
     }
   }
 
@@ -132,9 +135,9 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   /* Read in the new force and energy table data */
   for (i =0 ; i < npoints ; i++)
     {
-      fscanf(fp,"%lf",&dummr);
-      fscanf(fp,"%lf", &(tabulated_forces.e[i+data->TAB_startindex]));
-      fscanf(fp,"%lf", &(tabulated_energies.e[i+data->TAB_startindex]));
+      if (fscanf(fp,"%lf %lf %lf",&dummr,
+		 &(tabulated_forces.e[i+data->TAB_startindex]),
+		 &(tabulated_energies.e[i+data->TAB_startindex])) != 3) return 5;
     }
 
   fclose(fp);
@@ -150,8 +153,22 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
 
 /** Bonded tabulated potentials: Reads tabulated parameters and force
     and energy tables from a file.  ia_params and force/energy tables
-    are then communicated to each node \warning No checking is
-    performed for the file read!! */
+    are then communicated to each node.
+
+    @param bond_type bond type for which the interaction is defined
+    @param tab_type table type, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
+    @param filename from which file to fetch the data
+
+    @return <ul>
+    <li> 0 on success
+    <li> 1 if wrong bond type
+    <li> 2 currently unused
+    <li> 3 cannot open the file
+    <li> 4 file too short
+    <li> 5 file broken, cannot parse numbers
+    <li> 6 parameter out of bounds
+    </ul>
+*/
 MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename) 
 {
   int i, token = 0, size;
@@ -165,16 +182,16 @@ MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * fil
   
   fp = fopen( filename , "r");
   if ( !fp )
-    return 2;
+    return 3;
   
   /*Look for a line starting with # */
   while ( token != EOF) {
     token = fgetc(fp);
-    if ( token == 35 ) { break; } // magic number for # symbol
+    if ( token == '#' ) { break; } // magic number for # symbol
   }
   if ( token == EOF ) { 
     fclose(fp);
-    return 3;
+    return 4;
   }
 
   /* set types */
@@ -192,10 +209,10 @@ MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * fil
   strcpy(bonded_ia_params[bond_type].p.tab.filename,filename);
 
   /* read basic parameters from file */
-  fscanf( fp , "%d ", &size);
+  if (fscanf( fp , "%d %lf %lf", &size,
+	      &bonded_ia_params[bond_type].p.tab.minval,
+	      &bonded_ia_params[bond_type].p.tab.maxval) != 3) return 5;
   bonded_ia_params[bond_type].p.tab.npoints = size;
-  fscanf( fp, "%lf ", &bonded_ia_params[bond_type].p.tab.minval);
-  fscanf( fp, "%lf ", &bonded_ia_params[bond_type].p.tab.maxval);
 
   /* Check interval for angle and dihedral potentials.  With adding
      ROUND_ERROR_PREC to the upper boundary we make sure, that during
@@ -205,7 +222,7 @@ MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * fil
     if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
 	abs(bonded_ia_params[bond_type].p.tab.maxval-PI) > 1e-5 ) {
       fclose(fp);
-      return 4;
+      return 6;
     }
     bonded_ia_params[bond_type].p.tab.maxval = PI+ROUND_ERROR_PREC;
   }
@@ -214,13 +231,10 @@ MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * fil
     if( bonded_ia_params[bond_type].p.tab.minval != 0.0 || 
 	abs(bonded_ia_params[bond_type].p.tab.maxval-(2*PI)) > 1e-5 ) {
       fclose(fp);
-      return 5;
+      return 6;
     }
     bonded_ia_params[bond_type].p.tab.maxval = (2*PI)+ROUND_ERROR_PREC;
   }
-
-
-				    
 
   /* calculate dependent parameters */
   bonded_ia_params[bond_type].p.tab.invstepsize = (double)(size-1)/(bonded_ia_params[bond_type].p.tab.maxval-bonded_ia_params[bond_type].p.tab.minval);
@@ -231,9 +245,9 @@ MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * fil
 
   /* Read in the new force and energy table data */
   for (i =0 ; i < size ; i++) {
-      fscanf(fp,"%lf", &dummr);
-      fscanf(fp,"%lf", &bonded_ia_params[bond_type].p.tab.f[i]);
-      fscanf(fp,"%lf", &bonded_ia_params[bond_type].p.tab.e[i]);
+    if (fscanf(fp,"%lf %lf %lf", &dummr,
+	       &bonded_ia_params[bond_type].p.tab.f[i],
+	       &bonded_ia_params[bond_type].p.tab.e[i]) != 3) return 5;
   }
   fclose(fp);
 
@@ -266,18 +280,23 @@ MDINLINE int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bon
   case 1:
     Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
     return TCL_ERROR;
-  case 2:
+  case 3:
     Tcl_AppendResult(interp, "cannot open \"", argv[2], "\"", (char *)NULL);
     return TCL_ERROR;
-  case 3:
-    Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed."
+  case 4:
+    Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed. "
 		     "Could not find start the start token <#>", (char *)NULL);
     return TCL_ERROR;
-  case 4:
-    Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to pi", (char *)NULL);
-    return TCL_ERROR;
   case 5:
-    Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to 2pi", (char *)NULL);
+    Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed. "
+		     "Could not understand some numbers", (char *)NULL);
+    return TCL_ERROR;
+  case 6:
+    if (tab_type == TAB_BOND_ANGLE) {
+      Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to pi", (char *)NULL);
+    } else {
+      Tcl_AppendResult(interp, "dihedral potential has to be defined in the interval 0 to 2pi", (char *)NULL);
+    }
     return TCL_ERROR;
   default:
     return TCL_OK;
@@ -334,7 +353,7 @@ MDINLINE int tclcommand_inter_parse_tab(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "tabulated potentials require a filename: "
 		     "<filename>",
 		     (char *) NULL);
-    return 0;
+    return TCL_ERROR;
   }
 
   /* copy tabulated parameters */
@@ -352,13 +371,17 @@ MDINLINE int tclcommand_inter_parse_tab(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "cannot open \"", filename, "\"", (char *)NULL);
     return 0;
   case 4:
-    Tcl_AppendResult(interp, "attempt to read file \"", filename,
-		     "\" failed, could not find start the start token <#>", (char *)NULL);
+    Tcl_AppendResult(interp, "attempt to read file \"", filename, "\" failed. "
+		     "Could not find start the start token <#>", (char *)NULL);
     return 0;
   case 5:
+    Tcl_AppendResult(interp, "attempt to read file \"", filename, "\" failed. "
+		     "Could not understand some numbers", (char *)NULL);
+    return TCL_ERROR;
+  case 6:
     Tcl_AppendResult(interp, "number of data points does not match the existing table", (char *)NULL);
     return 0;
-    
+ 
   }
   return 2;
 }

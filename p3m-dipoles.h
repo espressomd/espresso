@@ -64,8 +64,11 @@ extern void Drealloc_ca_fields(int newsize);
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-/* dipolar p3m parser */
+/** dipolar p3m parser */
 int tclcommand_inter_magnetic_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
+
+/** dipolar p3m parser, optional parameters */
+int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.

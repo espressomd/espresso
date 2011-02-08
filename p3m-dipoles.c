@@ -130,8 +130,7 @@
 
 
 static int tclcommand_inter_magnetic_print_p3m_adaptive_tune_parameters(Tcl_Interp *interp);
-int tclcommand_inter_magnetic_print_p3m_tune_parameters(Tcl_Interp *interp);
-int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
+static int tclcommand_inter_magnetic_print_p3m_tune_parameters(Tcl_Interp *interp);
 
 /** Calculates for magnetic dipoles the properties of the send/recv sub-meshes of the local FFT mesh. 
  *  In order to calculate the recv sub-meshes there is a communication of 

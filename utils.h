@@ -541,9 +541,9 @@ MDINLINE int calc_eigenvector_3x3(double *a,double eva,double *eve) {
        direction as the eigenvector
        remember : {eigenvectors} = kernel(A_x1) */
     if (row1 == 3) {
-      eve[row1]=1.0;
-      eve[(row1+1) % 3]=0.0;
-      eve[(row1+2) % 3]=0.0;
+      eve[ind3]=1.0;
+      eve[(ind3+1) % 3]=0.0;
+      eve[(ind3+2) % 3]=0.0;
       return 1;
     }
 
