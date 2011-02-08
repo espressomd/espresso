@@ -10,16 +10,39 @@ User-visible changes
 
 * Constraints have been made penetrable.
 
-* The automatic obj-directories have been removed. If you want to use
-  object directories, just change to the directory and call configure
-  from there. This change made the whole build system much more GNU
-  compliant and easier to maintain.
+* The build system has been overhauled and simplified.
 
-* The Espresso wrapper scripts have disappeared, and Espresso_bin has
-  been renamed to Espresso. The directory where the scripts are
-  installed is now compiled into the binary, i.e. it is not necessary
-  anymore to set the environment variable ESPRESSO_SCRIPTS. Still, it
-  will heed the environment variable if it is set.
+  * "Espresso" is now the actual binary instead of a wrapper shell
+    script that automatically calls MPI. This means that it is
+    necessary to call "mpiexec" or "mpirun" youself to run ESPResSo in
+    an MPI environment.
+
+  * The directory where the scripts are installed is now compiled into
+    the binary, i.e. it is not necessary anymore to set the
+    environment variable ESPRESSO_SCRIPTS. Still, it will heed the
+    environment variable if it is set.
+
+  * Running "make check" will run the testsuite with a single number
+    of processors, which gives a significant speedup. "configure" will
+    try to determine the available number of CPUs/cores. If it can't,
+    it will use 1 by default.
+
+  * MPI recognition has changed. The build system first needs to find
+    out how to compile an MPI binary. If it doesn't find out
+    automatically, you can help it by setting the variable MPICC or
+    LDFLAGS correctly.  Furthermore, it needs to know how to run an MPI
+    binary.  If "mpiexec" is available, everything is fine.  If it is
+    not, you can provide a script "mympiexec.sh" that behaves like
+    mpiexec.
+
+  * So far, when you built in the source directory, all files ended up
+    in a subdirectory "obj.XXX", where XXX was some description of the
+    processor you used.  This non-standard behavior has been removed.
+    Instead, the files are generated directly in the source directory
+    when compiling there.
+    If you want to compile several binaries from a single source
+    directory, you can use build directories as described in the
+    User's Guide.
 
 Organizational changes
 ----------------------
@@ -55,29 +78,6 @@ Organizational changes
 User-visible changes
 --------------------
 
-* The build system has been overhauled and simplified.
-
-  * "Espresso" is now the actual binary instead of a wrapper shell
-    script that automatically calls MPI. This means that it is
-    necessary to call "mpiexec" or "mpirun" youself to run ESPResSo in
-    an MPI environment.
-
-  * MPI recognition has changed. The build system first needs to find
-    out how to compile an MPI binary. If it doesn't find out
-    automatically, you can help it by setting the variable MPICC or
-    LDFLAGS correctly.  Furthermore, it needs to know how to run an MPI
-    binary.  If "mpiexec" is available, everything is fine.  If it is
-    not, you can provide a script "mympiexec.sh" that behaves like
-    mpiexec.
-
-  * So far, when you built in the source directory, all files ended up
-    in a subdirectory "obj.XXX", where XXX was some description of the
-    processor you used.  This non-standard behavior has been removed.
-    Instead, the files are generated directly in the source directory
-    when compiling there.
-    If you want to compile several binaries from a single source
-    directory, you can use build directories as described in the
-    User's Guide.
 
 Changes visible for developers
 ------------------------------
