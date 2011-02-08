@@ -1,22 +1,19 @@
-/*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
-  
-  This file is part of ESPResSo.
-  
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-  
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-*/
+/* $Id$
+ *
+ * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
+ * It is therefore subject to the ESPResSo license agreement which you
+ * accepted upon receiving the distribution and by which you are
+ * legally bound while utilizing this file in any form or way.
+ * There is NO WARRANTY, not even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+ * You should have received a copy of that license along with this
+ * program; if not, refer to http://www.espresso.mpg.de/license.html
+ * where its current version can be found, or write to
+ * Max-Planck-Institute for Polymer Research, Theory Group, 
+ * PO Box 3148, 55021 Mainz, Germany. 
+ * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
+ */
+
 /** \file lb.h
  * Header file for lb.c
  *
@@ -52,6 +49,7 @@
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
 
 /*@}*/
+
   /** Some general remarks:
    * This file implements the LB D3Q19 method to Espresso. The LB_Model
    * construction is preserved for historical reasons and might be removed
@@ -109,7 +107,7 @@ typedef struct {
   /** local stress tensor */
   double pi[6];
 
-  /* local populations of the velocity directions
+  /** local populations of the velocity directions
    *  are stored seperately to achieve higher performance */
 
   /** flag indicating whether a force is acting on the node */
@@ -153,10 +151,8 @@ typedef struct {
   double friction;
 
   /** external force applied to the fluid at each lattice site (MD units) */
-  double ext_force[3]; /* Open question: Do we want a local force or global force? */
+  double ext_force[3]; /* TODO: local force or global force? */
   double rho_lb_units;
-  double gamma_odd;
-  double gamma_even;
           
 } LB_Parameters;
 
@@ -232,8 +228,9 @@ void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, 
  */
 void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi);
 
-/** Calculates the equilibrium distributions. */
+/** Calculates the equilibrium distributions TODO: What does it mean?*/
 void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi);
+
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
@@ -326,7 +323,6 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
 }
 
-/* TODO: This function is not used anywhere. To be removed?  */
 /** Calculate the local fluid stress.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param local_node The local lattice site (Input).
@@ -516,13 +512,13 @@ MDINLINE void lb_local_fields_get_border_flag(index_t index, int *border) {
 }
 #endif
 
-#endif // LB
-/** Parser for the TCL command \ref lbfluid. */
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+#endif /* LB */
 
 /** Parser for the \ref lbnode command. */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-#ifdef LB
+int lbnode_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** Parser for the TCL command \ref lbfluid. */
+int lbfluid_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
@@ -534,41 +530,6 @@ MDINLINE void lb_get_populations(index_t index, double* pop) {
     pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho;
   }
 }
-
-/* A C level interface to the LB fluid */ 
-int lb_lbfluid_set_density(double p_dens);
-int lb_lbfluid_set_agrid(double p_agrid);
-int lb_lbfluid_set_visc(double p_visc);
-int lb_lbfluid_set_tau(double p_tau);
-int lb_lbfluid_set_bulk_visc(double p_bulk_visc);
-int lb_lbfluid_set_gamma_odd(double p_gamma_odd);
-int lb_lbfluid_set_gamma_even(double p_gamma_even);
-int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
-int lb_lbfluid_set_friction(double p_friction);
-
-int lb_lbfluid_get_density(double* p_dens);
-int lb_lbfluid_get_agrid(double* p_agrid);
-int lb_lbfluid_get_visc(double* p_visc);
-int lb_lbfluid_get_bulk_visc(double* p_bulk_visc);
-int lb_lbfluid_get_tau(double* p_tau);
-int lb_lbfluid_get_gamma_odd(double* p_gamma_odd);
-int lb_lbfluid_get_gamma_even(double* p_gamma_even);
-int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz);
-int lb_lbfluid_get_friction(double* p_friction);
-
-int lb_lbnode_get_rho(int* ind, double* p_rho);
-int lb_lbnode_get_u(int* ind, double* u);
-int lb_lbnode_get_pi(int* ind, double* pi);
-int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
-int lb_lbnode_get_pop(int* ind, double* pop);
-
-int lb_lbnode_set_rho(int* ind, double rho);
-int lb_lbnode_set_u(int* ind, double* u);
-int lb_lbnode_set_pi(int* ind, double* pi);
-int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
-int lb_lbnode_set_pop(int* ind, double* pop);
-
-#endif /* LB */
 
 #endif /* LB_H */
 

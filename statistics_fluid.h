@@ -46,6 +46,9 @@ void lb_calc_fluid_momentum(double *result);
  */
 void lb_calc_fluid_temp(double *result);
 
+void lb_calc_densprof(double *result, int *params);
+void lb_calc_velprof(double *result, int *params);
+
 /** Parser for fluid related analysis functions. */
 int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv);
 

@@ -132,6 +132,11 @@
 #endif
 #endif
 
+/* LB_BOUNDARIES need constraints, obviously... */
+#if defined(LB_BOUNDARIES) && !defined(CONSTRAINTS)
+#define CONSTRAINTS 
+#endif
+
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY
