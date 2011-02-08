@@ -131,13 +131,10 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         if(argc==1)
           return double_correlation_print_correlation(&correlations[no], interp);
 	else if (ARG1_IS_S("spherically_averaged_sf")) {
-	  // parse qmin, qmax, etc
-	  if(correlations[no].correlation_type=CORR_TYPE_SF) {
-	    if(argc!=3) sf_print_usage(interp);
-	    else {
-	      if(ARG_IS_I(2,n_bins)) {
-              return double_correlation_print_spherically_averaged_sf(&correlations[no],interp);
-	      }
+	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
+	    if(argc!=2) { 
+              Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
+	      return TCL_ERROR;
 	    }
 	  } else {
 	    sprintf(buffer,"%d ",correlations[no].correlation_type);
@@ -466,13 +463,21 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
     return TCL_ERROR; 
   }
   // compute the number of vectors
-  // TODO do it as it is done with static SF
-  q_density=(double*)malloc(order2*sizeof(double));
-  for(i=0;i<order2;i++) q_density[i]=0.0;
-  // and store their values
+  l=0;
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) {
+            l++;
+	  }
+        }
   params->dim_sf=l;
   params->q_vals=(int*)malloc(3*l*sizeof(double));
+  q_density=(double*)malloc(order2*sizeof(double));
+  for(i=0;i<order2;i++) q_density[i]=0.0;
   l=0;
+  // Store their values and density
   for(i=-order; i<=order; i++) 
       for(j=-order; j<=order; j++) 
         for(k=-order; k<=order; k++) {
@@ -481,8 +486,8 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
 	    params->q_vals[3*l  ]=i;
 	    params->q_vals[3*l+1]=j;
 	    params->q_vals[3*l+2]=k;
+	    q_density[n-1]+=1.0;
             l++;
-	    q_density[n]++;
 	  }
         }
   for(i=0;i<order2;i++) q_density[i]/=(double)l;
@@ -532,14 +537,12 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       *A_args=0;
       *dim_A=3*n_total_particles;
       *change=1;
-    } else 
-    if (ARG0_IS_S("particle_positions")) {
+    } else if (ARG0_IS_S("particle_positions")) {
       *A_fun = &particle_positions;
       *A_args=0;
       *dim_A=3*n_total_particles;
       *change=1;
-    }
-    if (ARG0_IS_S("structure_factor") ) {
+    } else if (ARG0_IS_S("structure_factor") ) {
       if (argc > 1 && ARG1_IS_I(order)) {
         *A_fun = &structure_factor;
         order_p=malloc(sizeof(int));
@@ -559,7 +562,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       *dim_A=l;
       *change=2;
       } else { 
-        Tcl_AppendResult(interp, "usage: structure_factor $order\n" , (char *)NULL);
+        sf_print_usage(interp);
         return TCL_ERROR; 
       }
     }
@@ -860,27 +863,80 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
 // Look at how static SF is printed
 int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp) {
 
-  int j, k;
+  int i,j,k,n_samp;
+  int qi,qj,qk,qn, dim_sf, order2;
   double dt=self->dt;
+  sf_params* params=(sf_params*)self->A_args;
   char buffer[TCL_DOUBLE_SPACE];
+  char ibuffer[ 3*(TCL_INTEGER_SPACE+1) + 1 ];
   int *q_vals;
   double *q_density;
+  double *av_sf_Re;
+  double *av_sf_Im;
+  
+  q_vals=params->q_vals;
+  q_density=params->q_density;
+  dim_sf=params->dim_sf;
+  order2=params->order*params->order;
+  if(dim_sf!=self->dim_corr) printf("problem: dim_sf=%d != dim_corr=%d\n",dim_sf,self->dim_corr); 
+  else printf("OK: dim_sf=%d != dim_corr=%d\n",dim_sf,self->dim_corr); fflush(stdout);
+  fflush(stdout);
+  
+  
+  av_sf_Re=(double*)malloc(order2*sizeof(double));
+  av_sf_Im=(double*)malloc(order2*sizeof(double));
+
+  // compute spherically averaged sf
 
   for (j=0; j<self->n_result; j++) {
-     Tcl_AppendResult(interp, " { ", (char *)NULL);
-     Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
-     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-     for (k=0; k< self->dim_corr; k++) {
-     if (self->n_sweeps[j] == 0 ) {
-       Tcl_PrintDouble(interp, 0., buffer);
-       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-     }
-     else {
-       Tcl_PrintDouble(interp, self->result[j][k]/ (double) self->n_sweeps[j], buffer);
-       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-     }
-     }
-     Tcl_AppendResult(interp, " } \n", (char *)NULL);
+ //   Tcl_AppendResult(interp, " { \n", (char *)NULL);
+    // compute the spherically averaged sf for current dt
+    for(k=0;k<order2;k++) av_sf_Re[k]=av_sf_Im[k]=0.0;
+    if(j==0) printf("q_vals (n^2, i, j, k:\n");
+    for(k=0;k<dim_sf;k++) {
+      qi=q_vals[3*k  ];
+      qj=q_vals[3*k+1];
+      qk=q_vals[3*k+2];
+      qn= qi*qi + qj*qj + qk*qk;
+      av_sf_Re[qn-1]+=self->result[j][2*k  ];
+      av_sf_Im[qn-1]+=self->result[j][2*k+1];
+      if(j==0) printf("%d: %d, %d, %d, %d\n",k, qn, qi, qj, qk);
+    }
+    if(j==0) printf("q_density:\n");
+    for(k=0;k<order2;k++) { 
+      if(q_density[k]>0.0) {
+        av_sf_Re[k]/=q_density[k];
+        av_sf_Im[k]/=q_density[k];
+      }
+      if(j==0) printf("%d %lf\n",k, q_density[k]);
+      // note: if q_density[k]==0, we did not add anything to av_sf_Xx[k], so it is 0.0
+    }
+    if(j==0) printf("\n\n");
+    fflush(stdout);
+    // now print what we obtained
+    for(k=0;k<order2;k++) { 
+      Tcl_AppendResult(interp, " { ", (char *)NULL);
+      Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
+      Tcl_AppendResult(interp, buffer, " } { ",(char *)NULL);
+      Tcl_PrintDouble(interp, (double) self->n_sweeps[j], buffer);
+      Tcl_AppendResult(interp, buffer, " } { ", (char *)NULL);
+      Tcl_PrintDouble(interp, sqrt((double)k+1.0), buffer);
+      Tcl_AppendResult(interp, buffer, " } { ", (char *)NULL);
+      if (self->n_sweeps[j] == 0 ) {
+        Tcl_PrintDouble(interp, 0., buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+        Tcl_PrintDouble(interp, 0., buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      }
+      else {
+        Tcl_PrintDouble(interp, av_sf_Re[k]/(double) self->n_sweeps[j], buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+        Tcl_PrintDouble(interp, av_sf_Im[k]/(double) self->n_sweeps[j], buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      }
+      Tcl_AppendResult(interp, " } \n", (char *)NULL);
+    }
+//    Tcl_AppendResult(interp, " } \n", (char *)NULL);
   }
   return 0;
 }
