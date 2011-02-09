@@ -351,7 +351,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 }
 
 int observable_usage(Tcl_Interp* interp) {
-  Tcl_AppendResult(interp, "Usage: analyze correlation [ particle_velocities | com_velocity | particle_position ", (char *) NULL);
+  Tcl_AppendResult(interp, "Usage: analyze correlation [ particle_velocities | com_velocity | particle_positions ", (char *) NULL);
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, "particle_currents | currents ] ", (char *) NULL);
 #endif
@@ -433,10 +433,15 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
       int i,j,n_ids=0,flag;
       sortPartCfg();
       for ( i = 0; i<n_total_particles; i++ ) {
-         flag=0;
-         for ( j = 0; j<type_list->n ; j++ ) {
-             if(partCfg[i].p.type == type_list->e[j])  flag=1;
-	 }
+         if(type_list==NULL) { 
+		/* in this case we select all particles */
+               flag=1 ;
+         } else {  
+                flag=0;
+                for ( j = 0; j<type_list->n ; j++ ) {
+                    if(partCfg[i].p.type == type_list->e[j])  flag=1;
+	        }
+         }
 	 if(flag==1){
               realloc_intlist(id_list, id_list->n=n_ids+1);
 	      id_list->e[n_ids] = i;
@@ -479,14 +484,24 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
       return TCL_ERROR;
     } 
     if( (ret=convert_types_to_ids(input,output))<=0){
-        Tcl_AppendResult(interp, "Error parsing type list. No particle with given types found.\n", (char *)NULL);
+        Tcl_AppendResult(interp, "Error parsing types list. No particle with given types found.\n", (char *)NULL);
         return TCL_ERROR;
     } else { 
       *ids=output;
     }
     *change=2;
     return TCL_OK;
+  } else if ( ARG0_IS_S("all") ) {
+    if( (ret=convert_types_to_ids(NULL,output))<=0){
+        Tcl_AppendResult(interp, "Error parsing keyword all. No particle found.\n", (char *)NULL);
+        return TCL_ERROR;
+    } else { 
+      *ids=output;
+    }
+    *change=1;
+    return TCL_OK;
   }
+
   Tcl_AppendResult(interp, "unknown keyword given to observable: ", argv[0] , (char *)NULL);
   return TCL_ERROR;
 }
@@ -522,9 +537,11 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   } 
   if (ARG0_IS_S("particle_positions")) {
     *A_fun = &particle_positions;
-    *A_args=0;
-    *dim_A=3*n_total_particles;
-    *change=1;
+    if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+       return TCL_ERROR;
+    *A_args=(void*)ids;
+    *dim_A=3*ids->n;
+    *change=1+temp;
     return TCL_OK;
   }
 #ifdef ELECTROSTATICS
@@ -620,9 +637,14 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
-  } else if (ARG0_IS_S("square_distance_componentwise")) {
+  } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {
     *corr_fun = &square_distance_componentwise;
     *dim_corr = dim_A;
+    *change=1;
+    return TCL_OK;
+  } else if (ARG_IS_S_EXACT(0,"square_distance")) {
+    *corr_fun = &square_distance;
+    *dim_corr = 1;
     *change=1;
     return TCL_OK;
   } else if (ARG0_IS_S("scalar_product")) {
@@ -929,10 +951,25 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
   return 0;
 }
 
+int square_distance ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+  unsigned int i;
+  double tmp=0.0;
+  if (!(dim_A == dim_B )) {
+    printf("Error in square distance: The vector sizes do not match\n");
+    return 5;
+  }
+  for ( i = 0; i < dim_A; i++ ) {
+    tmp += (A[i]-B[i])*(A[i]-B[i]);
+  }
+  C[0]=tmp;
+  return 0;
+}
+
+
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
   unsigned int i;
   if (!(dim_A == dim_B )) {
-    printf("Error in componentwise product: The vector sizes do not match\n");
+    printf("Error in square distance componentwise: The vector sizes do not match\n");
     return 5;
   }
   for ( i = 0; i < dim_A; i++ ) {
@@ -947,7 +984,7 @@ int particle_velocities(void* idlist, double* A, unsigned int n_A) {
   sortPartCfg();
   ids=(IntList*) idlist;
   for ( i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] > n_total_particles)
+    if (ids->e[i] >= n_total_particles)
       return 1;
     A[3*i + 0] = partCfg[ids->e[i]].m.v[0]/time_step;
     A[3*i + 1] = partCfg[ids->e[i]].m.v[1]/time_step;
@@ -965,7 +1002,7 @@ int particle_currents(void* idlist, double* A, unsigned int n_A) {
   sortPartCfg();
   ids=(IntList*) idlist;
   for ( i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] > n_total_particles)
+    if (ids->e[i] >= n_total_particles)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
     A[3*i + 0] = charge * partCfg[ids->e[i]].m.v[0]/time_step;
@@ -1004,7 +1041,7 @@ int com_velocity(void* idlist, double* A, unsigned int n_A) {
   sortPartCfg();
   ids=(IntList*) idlist;
   for ( i = 0; i<ids->n; i++ ) {
-    if (ids->e[i] > n_total_particles)
+    if (ids->e[i] >= n_total_particles)
       return 1;
     v_com[0] += partCfg[ids->e[i]].m.v[0]/time_step;
     v_com[1] += partCfg[ids->e[i]].m.v[1]/time_step;
@@ -1016,26 +1053,20 @@ int com_velocity(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int particle_positions(void* typelist, double* A, unsigned int n_A) {
+int particle_positions(void* idlist, double* A, unsigned int n_A) {
   unsigned int i;
+  IntList* ids;
   sortPartCfg();
-  if (typelist == NULL) {
-    if (n_total_particles*3 != n_A) {
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
       return 1;
-    } else {
-      // Then everything seems to be alright
-      for ( i = 0; i<n_total_particles; i++ ) {
-        A[3*partCfg[i].p.identity + 0] = partCfg[i].r.p[0];
-        A[3*partCfg[i].p.identity + 1] = partCfg[i].r.p[1];
-        A[3*partCfg[i].p.identity + 2] = partCfg[i].r.p[2];
-      }
-      return 0;
-    }
-  } else 
-    return 1;
+      A[3*i + 0] = partCfg[ids->e[i]].r.p[0];
+      A[3*i + 1] = partCfg[ids->e[i]].r.p[1];
+      A[3*i + 2] = partCfg[ids->e[i]].r.p[2];
+  }
+  return 0;
 }
-
-
 
 int structure_factor(void* params_p, double* A, unsigned int n_A) {
   int i,j,k,l,p;
