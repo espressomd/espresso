@@ -351,7 +351,11 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 }
 
 int observable_usage(Tcl_Interp* interp) {
-  Tcl_AppendResult(interp, "Usage: analyze correlation [ velocities | com_velocity | position | com_position ] [ first_obs | second_obs ] " , (char *)NULL);
+  Tcl_AppendResult(interp, "Usage: analyze correlation [ particle_velocities | com_velocity | particle_position ", (char *) NULL);
+#ifdef ELECTROSTATICS
+  Tcl_AppendResult(interp, "particle_currents | currents ] ", (char *) NULL);
+#endif
+  Tcl_AppendResult(interp, "] [ first_obs | second_obs ] " , (char *)NULL);
   Tcl_AppendResult(interp, "   type [ int ... int | * ]  \n" , (char *)NULL);
   Tcl_AppendResult(interp, "or id [ int ... int ]  \n" , (char *)NULL);
   Tcl_AppendResult(interp, "or molecule int \n" , (char *)NULL);
@@ -425,13 +429,33 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
   return 0;
 }
 
+static int convert_types_to_ids(IntList * type_list, IntList * id_list){ 
+      int i,j,n_ids=0,flag;
+      sortPartCfg();
+      for ( i = 0; i<n_total_particles; i++ ) {
+         flag=0;
+         for ( j = 0; j<type_list->n ; j++ ) {
+             if(partCfg[i].p.type == type_list->e[j])  flag=1;
+	 }
+	 if(flag==1){
+              realloc_intlist(id_list, id_list->n=n_ids+1);
+	      id_list->e[n_ids] = i;
+	      n_ids++;
+	 }
+      }
+      return n_ids;
+}
+
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
-  int i;
+  int i,ret;
   char** temp_argv; int temp_argc;
   int temp;
   IntList* input=malloc(sizeof(IntList));
+  IntList* output=malloc(sizeof(IntList));
   init_intlist(input);
   alloc_intlist(input,1);
+  init_intlist(output);
+  alloc_intlist(output,1);
 
 
   if (ARG0_IS_S("id")) {
@@ -449,9 +473,19 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
     *change=2;
     return TCL_OK;
 
-  } else if ( ARG0_IS_S("type") ) {
-      Tcl_AppendResult(interp, "Error parsing ID list. Specifying particles by IDs is not possible yet.", (char *)NULL);
+  } else if ( ARG0_IS_S("types") ) {
+    if (!parse_int_list(interp, argv[1],input)) {
+      Tcl_AppendResult(interp, "Error parsing types list\n", (char *)NULL);
       return TCL_ERROR;
+    } 
+    if( (ret=convert_types_to_ids(input,output))<=0){
+        Tcl_AppendResult(interp, "Error parsing type list. No particle with given types found.\n", (char *)NULL);
+        return TCL_ERROR;
+    } else { 
+      *ids=output;
+    }
+    *change=2;
+    return TCL_OK;
   }
   Tcl_AppendResult(interp, "unknown keyword given to observable: ", argv[0] , (char *)NULL);
   return TCL_ERROR;
@@ -467,7 +501,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   int order=0;
   int *order_p;
   IntList* ids;
-//  if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions") || ARG0_IS_S("structure_factor"))  {
+
   if (ARG0_IS_S("particle_velocities")) {
     *A_fun = &particle_velocities;
     if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
@@ -493,6 +527,28 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
     *change=1;
     return TCL_OK;
   }
+#ifdef ELECTROSTATICS
+  if (ARG0_IS_S("particle_currents")) {
+    *A_fun = &particle_currents;
+    if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+      return TCL_ERROR;
+    *A_args=(void*)ids;
+    *dim_A=3*ids->n;
+    *change=1+temp;
+    return TCL_OK;
+  }
+
+  if (ARG0_IS_S("currents")) {
+    *A_fun = &currents;
+    if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+      return TCL_ERROR;
+    *A_args=(void*)ids;
+    *dim_A=3;
+    *change=1+temp;
+    return TCL_OK;
+  } 
+#endif
+
   if (ARG0_IS_S("structure_factor") ) {
     if (argc > 1 && ARG1_IS_I(order)) {
       *A_fun = &structure_factor;
@@ -900,7 +956,48 @@ int particle_velocities(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
+
+#ifdef ELECTROSTATICS
+int particle_currents(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  double charge;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] > n_total_particles)
+      return 1;
+    charge = partCfg[ids->e[i]].p.q;
+    A[3*i + 0] = charge * partCfg[ids->e[i]].m.v[0]/time_step;
+    A[3*i + 1] = charge * partCfg[ids->e[i]].m.v[1]/time_step;
+    A[3*i + 2] = charge * partCfg[ids->e[i]].m.v[2]/time_step;
+  }
+  return 0;
+}
+int currents(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  double charge;
+  double j[3] = {0. , 0., 0. } ;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] > n_total_particles)
+      return 1;
+    charge = partCfg[ids->e[i]].p.q;
+    j[0] += charge * partCfg[ids->e[i]].m.v[0]/time_step;
+    j[1] += charge * partCfg[ids->e[i]].m.v[1]/time_step;
+    j[2] += charge * partCfg[ids->e[i]].m.v[2]/time_step;
+  }
+  A[0]=j[0];
+  A[1]=j[1];
+  A[2]=j[2];
+  return 0;
+}
+#endif
+
 int com_velocity(void* idlist, double* A, unsigned int n_A) {
+/* TODO: this does not work with MASS ... */
   unsigned int i;
   double v_com[3] = { 0. , 0., 0. } ;
   IntList* ids;

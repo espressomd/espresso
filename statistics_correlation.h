@@ -305,6 +305,11 @@ int com_velocity(void* idlist, double* A, unsigned int n_A);
  * TODO: make the typelist work!
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
+#ifdef ELECTROSTATICS
+int particle_currents(void* typelist, double* A, unsigned int n_A);
+int currents(void* typelist, double* A, unsigned int n_A);
+#endif
+
 
 /** Calculate structure factor from positions
 */
