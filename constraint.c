@@ -22,6 +22,7 @@
 */
 #include "constraint.h"
 
+int reflection_happened;
 #ifdef CONSTRAINTS
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
 {
@@ -252,13 +253,22 @@ static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint wall reflecting {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.wal.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
   /* length of the normal vector */
   norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
   if (norm < 1e-10 || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t> penetrable <0/1>",
+    Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t> penetrable <0/1> reflecting <1/2>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -282,6 +292,7 @@ static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *inter
   con->c.sph.rad = 0;
   con->c.sph.direction = -1;
   con->c.sph.penetrable = 0;
+  con->c.sph.reflecting = 0;
   con->part_rep.p.type = -1;
 
   while (argc > 0) {
@@ -336,12 +347,21 @@ static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *inter
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint sphere reflecting {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.sph.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
 
   if (con->c.sph.rad < 0. || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t> penetrable <0/1>",
+    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t> penetrable <0/1> reflecting <1/2>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -370,6 +390,7 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
   con->c.cyl.direction = 0;
   con->c.cyl.penetrable = 0;
   con->part_rep.p.type = -1;
+  con->c.cyl.reflecting = 0;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -443,6 +464,15 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint cylinder reflecting {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.cyl.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
@@ -453,7 +483,7 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
 
   if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
       con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
-    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t> penetrable <0/1>",
+    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t> penetrable <0/1> reflecting <1/2>",
 		     (char *) NULL);
     return (TCL_ERROR);    
   }
@@ -483,9 +513,12 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   con->c.pore.axis[0] = 
     con->c.pore.axis[1] = 
     con->c.pore.axis[2] = 0;
-  con->c.pore.rad = 0;
+  con->c.pore.rad_left = 0;
+  con->c.pore.rad_right = 0;
   con->c.pore.length = 0;
+  con->c.pore.reflecting = 0;
   con->part_rep.p.type = -1;
+  con->c.pore.smoothing_radius = 1.;
   while (argc > 0) {
     if(!strncmp(argv[0], "center", strlen(argv[0]))) {
       if(argc < 4) {
@@ -514,10 +547,31 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       if (argc < 1) {
 	Tcl_AppendResult(interp, "constraint pore radius <rad> expected", (char *) NULL);
 	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad)) == TCL_ERROR)
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      con->c.pore.rad_right =  con->c.pore.rad_left; 
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.smoothing_radius)) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "radii", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore radii <rad_left> <rad_right> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.rad_right)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
     }
     else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
       if (argc < 1) {
@@ -526,6 +580,7 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       }
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.length)) == TCL_ERROR)
 	return (TCL_ERROR);
+      con->c.pore.length *= 2;
       argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
@@ -537,6 +592,15 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
 	return (TCL_ERROR);
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "constraint pore reflecting {0|1} expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetInt(interp, argv[1], &(con->c.pore.reflecting)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
     else
       break;
   }
@@ -545,7 +609,7 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
   for (i=0;i<3;i++)
     axis_len += SQR(con->c.pore.axis[i]);
 
-  if (con->c.pore.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
+  if (con->c.pore.rad_left < 0. || con->c.pore.rad_right < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
       con->c.pore.length <= 0) {
     Tcl_AppendResult(interp, "usage: constraint pore center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length/2> type <t>",
 		     (char *) NULL);

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2011 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -17,7 +17,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-
 #ifndef VIRTUAL_SITES_H
 #define VIRTUAL_SITES_H
 
@@ -36,18 +35,32 @@
  */
 
 #ifdef VIRTUAL_SITES
+// Recalculate position and velocity for all virtual particles
 void update_mol_vel_pos();
+// Recalc velocities for virtual particles
 void update_mol_vel();
+// Recalc positions of virtual particles
 void update_mol_pos();
-void update_mol_pos_particle(Particle *);
-void update_mol_vel_particle(Particle *);
 
-void distribute_mol_force();
 
-Particle *get_mol_com_particle(Particle *calling_p);
+// Update the position of all virutal particles 
+// in the partCfg-array rather than in the local cells.
+int update_mol_pos_cfg();
 
-double get_mol_dist(Particle *p1,Particle *p2);
-double get_mol_dist_partcfg(Particle *p1,Particle *p2);
+
+// The following three functions have to be provided by all implementations
+// of virtual sites
+// Update the vel/pos of the given virtual particle as defined by the real 
+// particles in the same molecule
+// void update_mol_pos_particle(Particle *);
+// void update_mol_vel_particle(Particle *);
+
+// Distribute forces that have accumulated on virtual particles to the 
+// associated real particles
+//void distribute_mol_force();
+
+
+// Checks, if a particle is virtual
 MDINLINE int ifParticleIsVirtual(Particle *p){
    if (p->p.isVirtual == 0) {
       return 0;
@@ -57,12 +70,19 @@ MDINLINE int ifParticleIsVirtual(Particle *p){
    }
 }
 
-int update_mol_pos_cfg();
-int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv);
-int tclcommand_analyze_parse_pressure_profile_cross_section(Tcl_Interp *interp,int argc, char **argv);
+// According to what rules the virtual particles are placed and the forces and
+// torques accumulating on the virtual particles distributed back to real 
+// particles, is decided by a specific implementation.
+
+// Virtual particles in center of mass of molecule
+#ifdef VIRTUAL_SITES_COM
+ #include "virtual_sites_com.h"
+#endif
+
+// Virtual particles relative to position and orientation of a real particle
+#ifdef VIRTUAL_SITES_RELATIVE
+ #include "virtual_sites_relative.h"
+#endif
 
 #endif
 

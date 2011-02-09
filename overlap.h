@@ -41,7 +41,7 @@
     performed for the file read!! */
 MDINLINE int overlapped_bonded_set_params(int bond_type, int overlap_type, char * filename) 
 {
-  int i, token = 0, size;
+  int i, scan_success = 0, size;
   FILE* fp;
 
   if(bond_type < 0)
@@ -71,8 +71,8 @@ MDINLINE int overlapped_bonded_set_params(int bond_type, int overlap_type, char 
     return 2;
   
   /* Read in size of overlapps from file */
-  token = fscanf( fp , "%d ", &size);
-  if ( token == EOF ) { 
+  scan_success = fscanf( fp , "%d ", &size);
+  if ( scan_success < 1 ) { 
     fclose(fp);
     return 3;
   } 
@@ -86,18 +86,18 @@ MDINLINE int overlapped_bonded_set_params(int bond_type, int overlap_type, char 
 
    /* Read in the overlapped funciton parameter data */
   for (i=0; i<size; i++) {
-  	token = fscanf(fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_a[i]);
-  	if ( token == EOF ) { 
+  	scan_success = fscanf(fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_a[i]);
+  	if ( scan_success < 1 ) { 
     		fclose(fp);
     		return 3;
   	} 
-  	token = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_b[i]);
-  	if ( token == EOF ) { 
+  	scan_success = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_b[i]);
+  	if ( scan_success < 1 ) { 
     		fclose(fp);
     		return 3;
   	} 
-	token = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_c[i]);
-  	if ( token == EOF ) { 
+	scan_success = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_c[i]);
+  	if ( scan_success < 1 ) { 
     		fclose(fp);
     		return 3;
   	} 

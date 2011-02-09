@@ -55,7 +55,7 @@
 
 /** moment of inertia. Currently we define the inertia tensor here to be constant.
     If it is not spherical the angular velocities have to be refined several times
-    in the \ref convert_torqes_propagate_omega. Also the kinetic energy in file
+    in the \ref convert_torques_propagate_omega. Also the kinetic energy in file
     \ref statistics.c is calculated assuming that I[0] =  I[1] =  I[2] = 1  */
 static double I[3] = { 1, 1, 1};
 
@@ -87,46 +87,16 @@ void convert_quat_to_quatu(double quat[4], double quatu[3])
 /** convert a dipole moment to quaternions and dipolar strength  */
 int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
 {
-  double dip_xy, dm;
-  double theta2, phi2;
-
+  double dm;
   // Calculate magnitude of dipole moment
   dm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
   *dipm = dm;
+  convert_quatu_to_quat(dip,quat);
 
-  // The dipole vector needs to be != 0 to be converted into a quaternion
-  if (dm < ROUND_ERROR_PREC) {
-    return 1;
-  }
-  else {
-    // Calculate angles 
-    dip_xy = sqrt(dip[0]*dip[0] + dip[1]*dip[1]);
-    // If dipole points along z axis:
-    if (dip_xy == 0){
-      // We need to distinguish between (0,0,d_z) and (0,0,d_z)
-      if (dip[2]>0)
-       theta2 = 0;
-      else
-       theta2 = PI/2.;
-      phi2 = 0;
-    }
-    else {
-      // Here, we take care of all other directions
-      //Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
-      //where theta and phi - angles are in spherical coordinates
-      theta2 = 0.5*acos(dip[2]/dm);
-      if (dip[1] < 0) phi2 = -0.5*acos(dip[0]/dip_xy) - PI*0.25;
-      else phi2 = 0.5*acos(dip[0]/dip_xy) - PI*0.25;
-    }
-
-    // Calculate the quaternion from the angles
-    quat[0] =  cos(theta2) * cos(phi2);
-    quat[1] = -sin(theta2) * cos(phi2);
-    quat[2] = -sin(theta2) * sin(phi2);
-    quat[3] =  cos(theta2) * sin(phi2);
-  }
   return 0;
 }
+
+
 
 /** convert quaternion director to the dipole moment */
 void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
@@ -138,6 +108,48 @@ void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 }
 
 #endif
+/** Convert director to quaternions */
+int convert_quatu_to_quat(double d[3], double quat[4])
+{
+  double d_xy, dm;
+  double theta2, phi2;
+
+  // Calculate magnitude of the given vector
+  dm = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
+
+  // The vector needs to be != 0 to be converted into a quaternion
+  if (dm < ROUND_ERROR_PREC) {
+    return 1;
+  }
+  else {
+    // Calculate angles 
+    d_xy = sqrt(d[0]*d[0] + d[1]*d[1]);
+    // If dipole points along z axis:
+    if (d_xy == 0){
+      // We need to distinguish between (0,0,d_z) and (0,0,d_z)
+      if (d[2]>0)
+       theta2 = 0;
+      else
+       theta2 = PI/2.;
+      phi2 = 0;
+    }
+    else {
+      // Here, we take care of all other directions
+      //Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
+      //where theta and phi - angles are in spherical coordinates
+      theta2 = 0.5*acos(d[2]/dm);
+      if (d[1] < 0) phi2 = -0.5*acos(d[0]/d_xy) - PI*0.25;
+      else phi2 = 0.5*acos(d[0]/d_xy) - PI*0.25;
+    }
+
+    // Calculate the quaternion from the angles
+    quat[0] =  cos(theta2) * cos(phi2);
+    quat[1] = -sin(theta2) * cos(phi2);
+    quat[2] = -sin(theta2) * sin(phi2);
+    quat[3] =  cos(theta2) * sin(phi2);
+  }
+  return 0;
+}
 
 /** Here we use quaternions to calculate the rotation matrix which
     will be used then to transform torques from the laboratory to
@@ -240,6 +252,13 @@ void propagate_omega_quat()
     np = cell->n;
     for(i = 0; i < np; i++) {
 	  double Qd[4], Qdd[4], S[3], Wd[3];
+	  
+	  #ifdef VIRTUAL_SITES
+	   // Virtual sites are not propagated in the integration step
+	   if (ifParticleIsVirtual(&p[i]))
+	    continue;
+	  #endif
+
 	  define_Qdd(&p[i], Qd, Qdd, S, Wd);
 	  
 	  lambda = 1 - S[0]*dtdt2 - sqrt(1 - dtdt*(S[0] + time_step*(S[1] + dt4*(S[2]-S[0]*S[0]))));
@@ -253,9 +272,10 @@ void propagate_omega_quat()
 	  p[i].r.quat[1]+= time_step*(Qd[1] + dt2*Qdd[1]) - lambda*p[i].r.quat[1];
 	  p[i].r.quat[2]+= time_step*(Qd[2] + dt2*Qdd[2]) - lambda*p[i].r.quat[2];
 	  p[i].r.quat[3]+= time_step*(Qd[3] + dt2*Qdd[3]) - lambda*p[i].r.quat[3];
-
+	  // Update the director
 	  convert_quat_to_quatu(p[i].r.quat, p[i].r.quatu);
 #ifdef DIPOLES
+	  // When dipoles are enabled, update dipole moment
 	  convert_quatu_to_dip(p[i].r.quatu, p[i].p.dipm, p[i].r.dip);
 #endif
 	
@@ -266,7 +286,7 @@ void propagate_omega_quat()
 }
 
 /** convert the torques to the body-fixed frames and propagate angular velocities */
-void convert_torqes_propagate_omega()
+void convert_torques_propagate_omega()
 {
   Particle *p;
   Cell *cell;
@@ -274,7 +294,7 @@ void convert_torqes_propagate_omega()
   double dt2, tx, ty, tz;
 
   dt2 = time_step*0.5;
-  INTEG_TRACE(fprintf(stderr,"%d: convert_torqes_propagate_omega:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -287,12 +307,18 @@ void convert_torqes_propagate_omega()
       ty = A[1 + 3*0]*p[i].f.torque[0] + A[1 + 3*1]*p[i].f.torque[1] + A[1 + 3*2]*p[i].f.torque[2];
       tz = A[2 + 3*0]*p[i].f.torque[0] + A[2 + 3*1]*p[i].f.torque[1] + A[2 + 3*2]*p[i].f.torque[2];
 
+      
       if ( thermo_switch & THERMO_LANGEVIN ) {
+      #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+       if (!ifParticleIsVirtual(&p[i]))
+       #endif
+       {
 	friction_thermo_langevin_rotation(&p[i]);
 
 	p[i].f.torque[0]+= tx;
 	p[i].f.torque[1]+= ty;
 	p[i].f.torque[2]+= tz;
+       }
       } else {
 	p[i].f.torque[0] = tx;
 	p[i].f.torque[1] = ty;
@@ -312,7 +338,7 @@ void convert_torqes_propagate_omega()
 #endif
 	  /* if the tensor of inertia is isotrpic, the following refinement is not needed.
 	     Otherwise repeat this loop 2-3 times depending on the required accuracy */
-	  for(times=0;times<=0;times++) { 
+	  for(times=0;times<=5;times++) { 
 	    double Wd[3];
 
 #ifdef ROTATIONAL_INERTIA
@@ -345,7 +371,7 @@ void convert_initial_torques()
   int c,i, np;
   double tx, ty, tz;
 
-  INTEG_TRACE(fprintf(stderr,"%d: convert_initial_torqes:\n",this_node));
+  INTEG_TRACE(fprintf(stderr,"%d: convert_initial_torques:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
     p  = cell->part;
@@ -359,6 +385,7 @@ void convert_initial_torques()
       tz = A[2 + 3*0]*p[i].f.torque[0] + A[2 + 3*1]*p[i].f.torque[1] + A[2 + 3*2]*p[i].f.torque[2];
 
       if ( thermo_switch & THERMO_LANGEVIN ) {
+      
 	friction_thermo_langevin_rotation(&p[i]);
 	p[i].f.torque[0]+= tx;
 	p[i].f.torque[1]+= ty;
@@ -385,5 +412,28 @@ void convert_torques_body_to_space(Particle *p, double *torque)
   torque[2] = A[0 + 3*2]*p->f.torque[0] + A[1 + 3*2]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
 
 }
+
+void convert_omega_body_to_space(Particle *p, double *omega)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  omega[0] = A[0 + 3*0]*p->m.omega[0] + A[1 + 3*0]*p->m.omega[1] + A[2 + 3*0]*p->m.omega[2];
+  omega[1] = A[0 + 3*1]*p->m.omega[0] + A[1 + 3*1]*p->m.omega[1] + A[2 + 3*1]*p->m.omega[2];
+  omega[2] = A[0 + 3*2]*p->m.omega[0] + A[1 + 3*2]*p->m.omega[1] + A[2 + 3*2]*p->m.omega[2];
+
+}
+
+
+/** Multiply two quaternions */
+void multiply_quaternions(double a[4], double b[4], double result[4])
+{
+ // Formula from http://www.j3d.org/matrix_faq/matrfaq_latest.html
+ result[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3];
+ result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
+ result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3]; 
+ result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
+}
+
 
 #endif

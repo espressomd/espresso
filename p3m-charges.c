@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -1582,6 +1583,8 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     return TCL_ERROR;
   }
 
+  mpi_bcast_event(P3M_COUNT_CHARGES);
+
   /* Print Status */
   sprintf(b1,"%.5e",p3m.accuracy);
   Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
@@ -1598,7 +1601,7 @@ int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameteres(Tcl_Interp *int
     return (TCL_ERROR);
   }
   
-  if(!(p3m_adaptive_tune() == 0)) {  
+  if(p3m_adaptive_tune()) {  
     Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
     return (TCL_ERROR);
   }

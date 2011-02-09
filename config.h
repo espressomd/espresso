@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -153,8 +154,8 @@
 
 //mol_cut needs virtual sites
 #ifdef MOL_CUT
-#ifndef VIRTUAL_SITES
-#define VIRTUAL_SITES
+#ifndef VIRTUAL_SITES_COM
+#define VIRTUAL_SITES_COM
 #endif
 #endif
 
@@ -193,6 +194,17 @@
 #define BOND_ENDANGLEDIST
 #define CONSTRAINTS
 #endif
+
+#if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)
+#define VIRTUAL_SITES
+#endif
+
+#ifdef VIRTUAL_SITES_RELATIVE
+#ifndef ROTATION
+#define ROTATION
+#endif
+#endif
+
 
 /********************************************/
 /* \name exported functions of config.c     */

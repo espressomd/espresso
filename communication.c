@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -198,9 +199,11 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_MU_E     57
 /** Action number for \ref mpi_recv_fluid_populations. */
 #define REQ_GET_FLUID_POP 58
+/** Action number for \ref mpi_send_vs_relative. */
+#define REQ_SET_VS_RELATIVE 59
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 59
+#define REQ_MAXIMUM 60
 
 /*@}*/
 
@@ -268,6 +271,7 @@ void mpi_send_virtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
 void mpi_recv_fluid_populations_slave(int node, int parm);
+void mpi_send_vs_relative_slave(int pnode, int part);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -329,9 +333,10 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_bcast_lbboundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
-  mpi_recv_fluid_border_flag_slave,  /* 56: REQ_LB_GET_BORDER_FLAG */
-  mpi_send_mu_E_slave,                 /* 57: REQ_SET_MU_E */
-  mpi_recv_fluid_populations_slave            /* 58: REQ_GET_FLUID_POP */
+  mpi_recv_fluid_border_flag_slave, /* 56: REQ_LB_GET_BORDER_FLAG */
+  mpi_send_mu_E_slave,		    /* 57: REQ_SET_MU_E */
+  mpi_recv_fluid_populations_slave,  /* 58: REQ_GET_FLUID_POP */
+  mpi_send_vs_relative_slave	     /* 59: REQ_SET_VS_RELATIVE */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -403,8 +408,9 @@ char *names[] = {
   "SET_RINERTIA",   /* 54 */
   "REQ_BCAST_LBBOUNDARY", /* 55 */
   "REQ_LB_GET_BORDER_FLAG" /* 56 */
-  "REQ_SEND_MUE" /* 57 */
+  "SET_MU_E", /* 57 */
   "REQ_GET_FLUID_POP" /* 58 */
+  "SET_VS_RELATIVE", /* 59 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -1142,6 +1148,47 @@ void mpi_send_virtual_slave(int pnode, int part)
 }
 
 /********************* REQ_SET_BOND ********/
+
+void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_distance)
+{
+#ifdef VIRTUAL_SITES_RELATIVE
+  mpi_issue(REQ_SET_VS_RELATIVE, pnode, part);
+
+  // If the particle is on the node on which this function was called
+  // set the values locally
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.vs_relative_to_particle_id = vs_relative_to;
+    p->p.vs_relative_distance = vs_distance;
+  }
+  else {
+    MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
+    MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_vs_relative_slave(int pnode, int part)
+{
+#ifdef VIRTUAL_SITES_RELATIVE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, REQ_SET_VS_RELATIVE,
+	     MPI_COMM_WORLD, &status);
+    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, REQ_SET_VS_RELATIVE,
+	     MPI_COMM_WORLD, &status);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_BOND ********/
+
+
 int mpi_send_bond(int pnode, int part, int *bond, int delete)
 {
   int bond_size, stat=0;

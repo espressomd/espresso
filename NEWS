@@ -8,8 +8,20 @@ NOTEWORTHY CHANGES SINCE v2.2.0b
 User-visible changes
 --------------------
 
-* The P3M algorithm for charges (not for dipoles so far) now allows
-  for non-cubic simulation boxes.
+* The P3M algorithm for the electrostatic interaction (not for dipoles
+  so far) now allows for non-cubic simulation boxes.
+
+* The pressure tensor for P3M is computed correctly now.
+
+* The virtual sites feature has been significantly extended and
+  documented.  Virtual sites are particles that can interact with
+  other particles but whose positions are not integrated via the
+  normal integrator.  Instead, the positions are determined by the
+  positions of other, "real" particles.  Virtual sites can either be
+  set into the center of mass of a set of real particles (feature
+  VIRTUAL_SITES_COM), or it can be set to an arbitrary location
+  relative to another particle (VIRTUAL_SITES_RELATIVE).  This allows
+  to create rigid structures within ESPResSo.
 
 * Constraints have been made penetrable.
 
@@ -77,10 +89,6 @@ Organizational changes
   aside to old/RELEASE_NOTES, instead, we will have the files
   ChangeLog and NEWS. NEWS will contain a description of the most
   noteworthy changes since the last release.
-
-User-visible changes
---------------------
-
 
 Changes visible for developers
 ------------------------------

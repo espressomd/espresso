@@ -89,6 +89,8 @@ libEspresso_a_SOURCES = \
 	rattle.c rattle.h \
 	molforces.c molforces.h \
 	virtual_sites.c virtual_sites.h \
+	virtual_sites_com.c virtual_sites_com.h \
+	virtual_sites_relative.c virtual_sites_relative.h \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \

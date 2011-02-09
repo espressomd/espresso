@@ -3777,10 +3777,14 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   REGISTER_ANALYSIS("energy_kinetic", tclcommand_analyze_parse_and_print_energy_kinetic);
   REGISTER_ANALYSIS_W_ARG("pressure", tclcommand_analyze_parse_and_print_pressure, 0);
 #ifdef VIRTUAL_SITES
+  // The following analysis commands apply only to the "center of mass"
+  // implementation of virtual sites
+#ifdef VIRTUAL_SITES_COM
   REGISTER_ANALYSIS("energy_kinetic_mol", tclcommand_analyze_parse_and_print_energy_kinetic_mol);
   REGISTER_ANALYSIS("pressure_mol", tclcommand_analyze_parse_and_print_pressure_mol);
   REGISTER_ANALYSIS("check_mol", tclcommand_analyze_parse_and_print_check_mol);
   REGISTER_ANALYSIS("dipmom_mol", tclcommand_analyze_parse_and_print_dipmom_mol);
+#endif
 #endif
   REGISTER_ANALYSIS_W_ARG("stress_tensor", tclcommand_analyze_parse_and_print_stress_tensor, 0);
   REGISTER_ANALYSIS("local_stress_tensor", tclcommand_analyze_parse_local_stress_tensor);

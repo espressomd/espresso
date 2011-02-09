@@ -33,7 +33,7 @@
 #ifdef MAGNETOSTATICS
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag, int energy_flag);
+double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag);
 
 /* =============================================================================
                   DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA                

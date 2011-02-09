@@ -44,6 +44,9 @@
   \require{5}{\opt{mass \var{mass}}}
   \require{6}{\opt{dipm \var{moment}}}
   \require{6}{\opt{dip \var{dx} \var{dy} \var{dz}}}
+  \require{7}{\opt{virtual \var{v}}}
+  \require{7,8}{\opt{vs\_relative \var{pid} \par{distance}}}
+  \require{7,8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -51,6 +54,8 @@
     \required[4]{EXCLUSION}
     \required[5]{MASS}
     \required[6]{DIPOLES}
+    \required[7]{VIRTUAL\_SITES}
+    \required[8]{VIRTUAL\_SITES\_RELATIVE}
   \end{features}
 \end{essyntax}
 
@@ -113,6 +118,9 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   \item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
   \item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
   dipol axis to $(dx,dy,dz)$.
+  \item[\opt{virtual \var{v}}] Declares the particles as virtual (1) or non-virtual (0, default). Please read chapter \ref{sec:virtual} before using virtual sites.
+  \item[\opt{vs\_auto\_relate\_to \var{pid}}] Automatically relates a virtual site to a non-virtual particle for the ```relative`` implementation of virtual sites. \var{pid} is the id of the particle to which the virtual site should be related.
+  \item[\opt{vs\_relative \var{pid} \var{distance}}] Allows for manual access to the attributes of virtual sites in the ``relative`` implementation. \var{pid} denotes the id of the particle to which this virtual site is related and \var{distnace} the distance between non-virtual and virtual particle. 
  
   \end{arguments}
 \subsection{Getting particle properties}
