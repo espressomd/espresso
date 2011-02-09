@@ -45,12 +45,12 @@ double get_mol_dist_partcfg(Particle *p1,Particle *p2);
 
 // Unknown
 // Analyze the pressure on the molecule level
-int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
+int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
 // Analyze kinetic energy of the molecules
-int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
+int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
 // Sanity checks the positions of virtual sites
-int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv);
+int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv);
 // Analze dipole moment on melecular basis
-int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv);
+int tclcommand_analyze_parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv);
 #endif
 

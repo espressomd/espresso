@@ -313,7 +313,7 @@ void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]);
 
-int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int type1, type2;
@@ -364,7 +364,7 @@ int parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
    return TCL_OK;
 }
 
-int parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
 {
    char buffer[TCL_DOUBLE_SPACE];
    int type;
@@ -436,7 +436,7 @@ double calc_pressure_mol(int type1,int type2){
   return psum;
 }
 
-int parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv)
+int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv)
 {
 #ifndef ELECTROSTATICS
    Tcl_ResetResult(interp);
@@ -666,7 +666,7 @@ void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
 }
 
-int parse_and_check_mol_pos(Tcl_Interp *interp,int argc, char **argv){
+int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv){
    int j,count=0;
    double dist;
    char buffer[TCL_DOUBLE_SPACE];
