@@ -23,7 +23,7 @@ User-visible changes
   relative to another particle (VIRTUAL_SITES_RELATIVE).  This allows
   to create rigid structures within ESPResSo.
 
-* Constraints have been made penetrable.
+* Some constraints can now be made penetrable or reflecting.
 
 * The build system has been overhauled and simplified.
 
