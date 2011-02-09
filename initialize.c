@@ -124,7 +124,8 @@ if(this_node == 0){
   }
 #endif
 #ifdef LB
-  if(lattice_switch & LATTICE_LB) lb_pre_init();
+  //if(lattice_switch & LATTICE_LB) 
+  lb_pre_init();
 #endif
 
   /*

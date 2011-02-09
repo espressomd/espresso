@@ -157,12 +157,15 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   if (lattice_switch & LATTICE_LB_GPU)
       return tclcommand_lbfluid_gpu(interp, argc, argv);
   else{
+  lattice_switch = (lattice_switch | LATTICE_LB);
+  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
       return tclcommand_lbfluid_cpu(interp, argc, argv);
 	}
 }
 
 int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
+
   int err = TCL_OK;
   double floatarg;
   double vectarg[3];
@@ -335,13 +338,12 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   }
 
   lattice_switch = (lattice_switch | LATTICE_LB) ;
-  mpi_bcast_parameter(FIELD_LATTICE_SWITCH) ;
+  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
 //
   /* thermo_switch is retained for backwards compatibility */
   thermo_switch = (thermo_switch | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-//
-//  return err;    
+
 
   return TCL_OK;
 #else /* !defined LB */
