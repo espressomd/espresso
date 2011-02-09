@@ -98,6 +98,16 @@ typedef struct {
       0 = real particle
       else = virual particle */
   int isVirtual;
+  #ifdef VIRTUAL_SITES_RELATIVE
+  /** In case, the "relative" implementation of virtual sites is enabled, the 
+  following properties define, with respect to which real particle a virtual
+  site is placed and in what distance. The relative orientation of the vector
+  pointing from real particle to virtual site with respect to the orientation
+  of the real particle is stored in the virtual site's quaternion attribute.
+  */
+  int vs_relative_to_particle_id;
+  double vs_relative_distance;
+  #endif
 #endif
 
 #ifdef ADRESS

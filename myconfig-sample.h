@@ -37,13 +37,24 @@
 /* #define BOND_CONSTRAINT */
 /* #define MODES */
 /* #define BOND_VIRTUAL */
-/* #define VIRTUAL_SITES */
+
+// To use address, also activate VIRTUAL_SITES and VIRTUAL_SITES_COM
 /* #define ADRESS*/
+
 /* #define DAWAANR */
 /* #define MAGNETIC_DIPOLAR_DIRECT_SUM */
 /* #define MDLC */
 /* #define METADYNAMICS */
 /* #define OVERLAPPED */
+
+/* Note: Activate only one virtual sites implementation! */
+/* #define VIRTUAL_SITES_COM */
+/* #define VIRTUAL_SITES_RELATIVE */
+
+/* #define VIRTUAL_SITES_NO_VELOCITY */
+/* #define VIRTUAL_SITES_THERMOSTAT */
+/* #define THERMOSTAT_IGNORE_NON_VIRTUAL */
+
 
 /**********************************************************************/
 /*                        integrator features                         */

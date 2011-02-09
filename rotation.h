@@ -40,7 +40,7 @@ void propagate_omega_quat();
 
 /** Convert torques to the body-fixed frame and propogate
     angular velocities */
-void convert_torqes_propagate_omega();
+void convert_torques_propagate_omega();
 
 /** Convert torques to the body-fixed frame to start
     the integration loop */
@@ -59,4 +59,11 @@ int convert_dip_to_quat(double dip[3], double quat[4], double *dipm);
 /** convert quaternion director to the dipole moment */
 void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]);
 
+/** Multiply two quaternions */ 
+void multiply_quaternions(double a[4], double b[4], double result[4]);
+
+/** Convert director to quaternions */
+int convert_quatu_to_quat(double d[3], double quat[4]);
+
+void convert_omega_body_to_space(Particle *p, double *omega);
 #endif
