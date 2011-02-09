@@ -248,7 +248,7 @@ for {set i 0} { $i < $n_steam } {incr i} {
 
 #rerun only when you have changed some parameters
 #puts "[inter coulomb $bjerrum p3m tune accuracy 0.0005]"
-inter coulomb $bjerrum p3m 9.0 16 4 2.92863e-01
+inter coulomb $bjerrum p3m tune accuracy 2.92863e-01 mesh 36
 
 puts "Interactions:\n[inter]"
 set act_min_dist [analyze mindist]

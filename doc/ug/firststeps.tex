@@ -29,9 +29,15 @@ If you have installed the requirements (see section
 is usually enough to execute the following sequence of two steps in
 the directory where you have unpacked the sources:
 \begin{code}
-configure
+./configure
 make
 \end{code}
+
+This will compile \es in a freshly created object path named according
+to your CPU and operating system. As you have not yet specified a
+configuration, a standard version will be built with the most often
+used features. Usually you will want to build another version of \es
+with options better suited for your purpose.
 
 In some cases, \eg when \es needs to be compiled for several different
 platforms or when different versions with different sets of features

@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -32,7 +33,7 @@
 #ifdef MAGNETOSTATICS
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag, int energy_flag);
+double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag);
 
 /* =============================================================================
                   DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA                
