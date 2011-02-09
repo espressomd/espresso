@@ -88,6 +88,8 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 
 #define MPI_REQUEST_NULL NULL
 
+#define MPI_IN_PLACE 0x1
+
 extern struct mpifake_dtype mpifake_dtype_int;
 extern struct mpifake_dtype mpifake_dtype_double;
 extern struct mpifake_dtype mpifake_dtype_byte;
@@ -172,7 +174,7 @@ MDINLINE int MPI_Op_create(MPI_User_function func, int commute, MPI_Op *pop) { *
 MDINLINE int MPI_Reduce(void *sbuf, void* rbuf, int count, MPI_Datatype dtype, MPI_Op op, int root, MPI_Comm comm)
 { op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 MDINLINE int MPI_Allreduce(void *sbuf, void *rbuf, int count, MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
-{ op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
+{ op((rbuf == (void *)MPI_IN_PLACE) ? rbuf : sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 MDINLINE int MPI_Error_string(int errcode, char *string, int *len) { *string = 0; *len = 0; return MPI_SUCCESS; }
 
 #endif
