@@ -1246,7 +1246,7 @@ int tclcommand_part_parse_virtual(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 
-#ifdef VIRTUAL_SITES
+#ifdef VIRTUAL_SITES_RELATIVE
 int part_parse_vs_relative(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
