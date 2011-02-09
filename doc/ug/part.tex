@@ -529,18 +529,18 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \begin{essyntax}
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
-  dist \var{d} type \var{id} penetrable \var{flag}
+  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
-  radius \var{rad} direction \var{direction} type \var{id} \opt{penetrable \var{flag}} 
+  radius \var{rad} direction \var{direction} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{3}
   constraint cylinder center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
   radius \var{rad} length \var{length} 
   direction \var{direction} 
-  type \var{id}  \opt{penetrable \var{flag}}
+  type \var{id}  \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{4}
   constraint maze nsphere \var{n} 
@@ -591,10 +591,19 @@ identified like a particle via its type for the non-bonded interaction.
 After a type is defined for each constraint one has
 to define
 the interaction of all different particle types with the constraint using
-the \codebox{inter} command. In vatiants \variant{1} to \variant{4}, constraints
+the \codebox{inter} command. In variants \variant{1} to \variant{4}, constraints
  are able to be penetrated if \var{flag} is set to 1. Otherwise, when the
  penetrable option is ignored or \var{flag} is set to 0, the constraint
  cannot be violated, i.e. no particle can go through the constraint surface.
+ In variants \variant{1} to \variant{3} it is also possible to specify a flag 
+ indicating if the constraints should be reflecting. The flags can equal 1 or 2.
+ The flag 1 corresponds to a reflection process where the normal component of the 
+ velocity is reflected and the tangential component remains unchanged. If the
+ flag is 2, also the tangential component is turned around, so that a bounce back
+ motion is performed. The second variant is useful for boundaries of DPD.
+ The reflection property is only activated if an interaction is defined between
+ a particular particle and the constraint! This will usually be a lennard-jones
+ interaction with $\epsilon=0$, but finite interaction range.
 
 Variants \variant{6} and \variant{7} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
@@ -614,6 +623,9 @@ be reset upon restarting a simulation.}
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
 \var{d} from the origin. The force acts in direction of the normal. 
+Note that the \var{d} describes the distance from the origin in units
+of the normal vector so that the product of $d$ and $n$ is a point on the
+surface. Therefore negative distances are quite common!
 
 The resulting surface in variant
 \variant{2} is a sphere with center \var{c_x} \var{c_y} \var{c_z} and radius
@@ -640,7 +652,10 @@ Variant \variant{5} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
-normalized in the program.
+normalized in the program. The argument \codebox{radius \var{rad}} 
+can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
+to obtain a pore with a conical shape and corresponding opening radii.
+The first radius is in the direction opposite to the axis vector.
 
 Variant \variant{6} specifies an electrostatic interaction between the
 charged particles in the system to an infinitely long rod with a line
