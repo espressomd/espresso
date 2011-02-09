@@ -55,15 +55,11 @@ DLC_struct dlc_params = { 1e100, 0, 0, 0, 0};
 // It will be desirable to have a  checking function that check that the slab geometry is such that 
 // the short direction is along the z component.
 
-
-/* This version will fail in more than one processor */
 double get_mu_max() {
-   Cell *cell;
+  Cell *cell;
   Particle *part;
   int i,c,np;
   double max_value_dipole=-1;
-
-  if(n_nodes !=1) {fprintf(stderr,"get_mu_max -> version for only one cpu \n"); exit(1);}
  
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -73,7 +69,7 @@ double get_mu_max() {
      if(max_value_dipole <  part[i].p.dipm ) {  max_value_dipole=part[i].p.dipm;}
     }
   }
-  
+  MPI_Allreduce(MPI_IN_PLACE, max_value_dipole, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   return max_value_dipole;
 }
 /* ******************************************************************* */
