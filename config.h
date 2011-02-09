@@ -179,12 +179,6 @@
 #define BOND_ANGLE
 #endif
 
-#if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
-  || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
-  || defined(BOND_ANGLE_COSSQUARE) && defined(BOND_ANGLE_COSINE)
-#error Activate only one of features BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE!
-#endif
-
 /* If any bond angledist potential is activated, activate the whole bond angle code and constraints */
 #if defined(BOND_ANGLEDIST_HARMONIC)
 #define BOND_ANGLEDIST
@@ -194,10 +188,6 @@
 #if defined(BOND_ENDANGLEDIST_HARMONIC)
 #define BOND_ENDANGLEDIST
 #define CONSTRAINTS
-#endif
-
-#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
-#error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
 #endif
 
 #if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)

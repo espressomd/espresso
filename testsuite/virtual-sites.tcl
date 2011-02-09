@@ -25,8 +25,6 @@
 source "tests_common.tcl"
 
 #require_feature "ELECTROSTATICS"
-require_feature "ROTATION"
-require_feature "VIRTUAL_SITES"
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "EXTERNAL_FORCES"
 

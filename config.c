@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -90,6 +91,15 @@
 
 #endif
 
+#if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
+  || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
+  || defined(BOND_ANGLE_COSSQUARE) && defined(BOND_ANGLE_COSINE)
+#error Activate only one of features BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE!
+#endif
+
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
+#endif
 
 int tclcallback_version(Tcl_Interp *interp)
 {
@@ -247,8 +257,8 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef NO_INTRA_NB
   Tcl_AppendResult(interp, "{ NO_INTRA_NB } ", (char *) NULL);
 #endif
-#ifdef VIRTUAL_SITES
-  Tcl_AppendResult(interp, "{ VIRTUAL_SITES } ", (char *) NULL);
+#ifdef VIRTUAL_SITES_COM
+  Tcl_AppendResult(interp, "{ VIRTUAL_SITES_COM } ", (char *) NULL);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
   Tcl_AppendResult(interp, "{ VIRTUAL_SITES_RELATIVE } ", (char *) NULL);
