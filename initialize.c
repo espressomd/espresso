@@ -120,11 +120,10 @@ if(this_node == 0){
 
 #ifdef LB_GPU
 if(this_node == 0){
-  if(lattice_switch & LATTICE_LB_GPU) lb_pre_init_gpu();
+    lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
-  //if(lattice_switch & LATTICE_LB) 
   lb_pre_init();
 #endif
 

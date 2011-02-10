@@ -821,11 +821,19 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle 
  	particle_force[part_index].f[2] = - para.friction * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau);
         
 	/** add stochastik force of zero mean (Ahlrichs, Duennweg equ. 15)*/
+#ifdef gaussrandom
 	gaussian_random(rn_part);
-	particle_force[part_index].f[0] += para.lb_coupl_pref*rn_part->randomnr[0];
-	particle_force[part_index].f[1] += para.lb_coupl_pref*rn_part->randomnr[1];
+	particle_force[part_index].f[0] += para.lb_coupl_pref2*rn_part->randomnr[0];
+	particle_force[part_index].f[1] += para.lb_coupl_pref2*rn_part->randomnr[1];
 	gaussian_random(rn_part);
-	particle_force[part_index].f[2] += para.lb_coupl_pref*rn_part->randomnr[0];
+	particle_force[part_index].f[2] += para.lb_coupl_pref2*rn_part->randomnr[0];
+#else
+	random_01(rn_part);
+	particle_force[part_index].f[0] += para.lb_coupl_pref*(rn_part->randomnr[0]-0.5f);
+	particle_force[part_index].f[1] += para.lb_coupl_pref*(rn_part->randomnr[1]-0.5f);
+	random_01(rn_part);
+	particle_force[part_index].f[2] += para.lb_coupl_pref*(rn_part->randomnr[0]-0.5f);
+#endif
 	  
 	/* delta_j for transform momentum transfer to lattice units which is done in calc_node_force
 	(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -897,7 +905,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force *node_f, int
 	*gpu_check = 1;
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
-    float v[3] = { 0.01f, 0.0f, 0.0f };
+    float v[3] = { 0.0f, 0.0f, 0.0f };
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
  	/*----------------------------------- */

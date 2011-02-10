@@ -42,7 +42,7 @@
 #endif
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, 0.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345};
+LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345};
 
 LB_values_gpu *host_values;
 LB_nodes_gpu *host_nodes;
@@ -228,14 +228,9 @@ void lb_release_gpu(){
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
 
-	lbpar_gpu.mu = 0.0;
-	lbpar_gpu.time_step = (float)time_step;
+  lbpar_gpu.mu = 0.0;
+  lbpar_gpu.time_step = (float)time_step;
 
-#ifdef LANGEVIN_INTEGRATOR
-  /* force prefactor for the 2nd-order Langevin integrator */
-  lbpar_gpu.integrate_pref2 = (1.-exp(-lbpar_gpu.friction*lbpar_gpu.time_step))/lbpar_gpu.friction*lbpar_gpu.time_step;
-	/* one factor time_step is due to the scaled velocities */
-#endif
   if (lbpar_gpu.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     lbpar_gpu.gamma_shear = 1. - 2./(6.*lbpar_gpu.viscosity*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);   
@@ -262,17 +257,15 @@ void lb_reinit_parameters_gpu() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-#ifdef LANGEVIN_INTEGRATOR
-    float tmp = exp(-lbpar_gpu.friction*lbpar_gpu.time_step);
-    lbpar_gpu.lb_coupl_pref = lbpar_gpu.friction*sqrt((float)temperature*(1.+tmp)/(1.-tmp));
-#else
+
     lbpar_gpu.lb_coupl_pref = sqrt(12.f*2.f*lbpar_gpu.friction*(float)temperature/lbpar_gpu.time_step);
-#endif
+    lbpar_gpu.lb_coupl_pref2 = sqrt(2.f*lbpar_gpu.friction*(float)temperature/lbpar_gpu.time_step);
 
   } else {
     /* no fluctuations at zero temperature */
     lbpar_gpu.fluct = 0;
     lbpar_gpu.lb_coupl_pref = 0.0;
+    lbpar_gpu.lb_coupl_pref2 = 0.0;
   }
 	LB_TRACE (fprintf(stderr,"lb_reinit_prarameters_gpu \n"));
 }

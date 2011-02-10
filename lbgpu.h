@@ -93,7 +93,7 @@ typedef struct {
 /** amplitude of the fluctuations in the viscous coupling */
   float lb_coupl_pref;
 
-  float integrate_pref2;
+  float lb_coupl_pref2;
 
   float bulk_viscosity;
 

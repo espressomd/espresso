@@ -90,6 +90,8 @@ static double gamma_even = 0.0;
 static double lb_phi[19];
 /** amplitude of the fluctuations in the viscous coupling */
 static double lb_coupl_pref = 0.0;
+/** amplitude of the fluctuations in the viscous coupling with gaussian random numbers */
+static double lb_coupl_pref2 = 0.0;
 /*@}*/
 
 /** The number of velocities of the LB model.
@@ -149,16 +151,18 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
       return TCL_ERROR;
   }
-  else if (ARG0_IS_S("gpu")) {
-      lattice_switch = (lattice_switch | LATTICE_LB_GPU);
+  else if (ARG0_IS_S("gpu") || ARG0_IS_S("GPU")) {
+      lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
+      argc--; argv++;
+  }
+  else if (ARG0_IS_S("cpu") || ARG0_IS_S("CPU")) {
+      lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
       argc--; argv++;
   }
 
   if (lattice_switch & LATTICE_LB_GPU)
       return tclcommand_lbfluid_gpu(interp, argc, argv);
   else{
-  lattice_switch = (lattice_switch | LATTICE_LB);
-  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
       return tclcommand_lbfluid_cpu(interp, argc, argv);
 	}
 }
@@ -1167,11 +1171,6 @@ void lb_reinit_parameters() {
   agrid   = lbpar.agrid;
   tau     = lbpar.tau;
 
-#ifdef LANGEVIN_INTEGRATOR
-  /* force prefactor for the 2nd-order Langevin integrator */
-  integrate_pref2 = (1.-exp(-lbpar.friction*time_step))/lbpar.friction*time_step;  /* one factor time_step is due to the scaled velocities */
-#endif
-
   if (lbpar.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
@@ -1217,18 +1216,17 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-#ifdef LANGEVIN_INTEGRATOR
-    double tmp = exp(-lbpar.friction*time_step);
-    lb_coupl_pref = lbpar.friction*sqrt(temperature*(1.+tmp)/(1.-tmp));
-#else
+
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
-#endif
+    lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
+
 
   } else {
     /* no fluctuations at zero temperature */
     fluct = 0;
     for (i=0;i<n_veloc;i++) lb_phi[i] = 0.0;
     lb_coupl_pref = 0.0;
+    lb_coupl_pref2 = 0.0;
   }
 
   LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity));
@@ -2282,10 +2280,8 @@ void calc_particle_lattice_ia() {
   Particle *p ;
   double force[3];
 
-#ifndef LANGEVIN_INTEGRATOR
-  if (transfer_momentum) 
-#endif
-  {
+
+  if (transfer_momentum) {
 
     if (resend_halo) { /* first MD step after last LB update */
       
@@ -2311,12 +2307,15 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-//	p[i].lc.f_random[0] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
-//	p[i].lc.f_random[1] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
-//	p[i].lc.f_random[2] = lb_coupl_pref*gaussian_random();//(d_random()-0.5);
+#ifdef gaussrandom
+	p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random();
+	p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random();
+	p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random();
+#else
 	p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
 	p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
 	p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);
+#endif
 
 #ifdef ADDITIONAL_CHECKS
 	rancounter += 3;
