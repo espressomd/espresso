@@ -2307,7 +2307,7 @@ void calc_particle_lattice_ia() {
       p = cell->part ;
       np = cell->n ;
       for (i=0;i<np;i++) {
-#ifdef gaussrandom
+#ifdef GAUSSRANDOM
 	p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random();
 	p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random();
 	p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random();

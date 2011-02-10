@@ -345,6 +345,11 @@ static void mpi_get_particles_lb(LB_particle *host_data)
 						host_data[i+g].v[0] = (float)part[i].m.v[0];
 						host_data[i+g].v[1] = (float)part[i].m.v[1];
 						host_data[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef LB_ELECTROHYDRODYNAMICS
+						host_data[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
+						host_data[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
+						host_data[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
+#endif
 				}
 	  			g += npart;
 			}
@@ -405,6 +410,11 @@ static void mpi_get_particles_slave_lb(){
 				host_data_sl[i+g].v[0] = (float)part[i].m.v[0];
 				host_data_sl[i+g].v[1] = (float)part[i].m.v[1];
 				host_data_sl[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef LB_ELECTROHYDRODYNAMICS
+				host_data_sl[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
+				host_data_sl[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
+				host_data_sl[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
+#endif
 		}
         g+=npart;
     }
@@ -450,14 +460,8 @@ static void mpi_send_forces_lb(LB_particle_force *host_forces){
 						cell->part[i].f.f[0] += (double)host_forces[i+g].f[0];
 						cell->part[i].f.f[1] += (double)host_forces[i+g].f[1];
 						cell->part[i].f.f[2] += (double)host_forces[i+g].f[2];
-#if 0
-#ifdef LB_ELECTROHYDRODYNAMICS
-  cell->part[i].f.f[0] += lbpar_gpu.friction * cell->part[i].p.mu_E[0];
-  cell->part[i].f.f[1] += lbpar_gpu.friction * cell->part[i].p.mu_E[1];
-  cell->part[i].f.f[2] += lbpar_gpu.friction * cell->part[i].p.mu_E[2];
-#endif
-#endif
-			}
+
+				}
  				g += npart;
 			}
 	  }

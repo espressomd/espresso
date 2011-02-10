@@ -171,6 +171,9 @@ typedef struct {
 	float p[3];
 /** particle momentum struct velocity p.m->v*/
 	float v[3];
+#ifdef LB_ELECTROHYDRODYNAMICS
+	float mu_E[2];
+#endif
 
 	unsigned int fixed;
 

@@ -316,7 +316,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
     float rootrho = sqrt(mode[0]+para.rho*para.agrid*para.agrid*para.agrid);
 
     /* stress modes */
-	gaussian_random(rn);
+    gaussian_random(rn);
     mode[4] += rootrho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * rn->randomnr[1];
     mode[5] += rootrho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
 
@@ -816,12 +816,17 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle 
 	/* calculate viscous force
 	* take care to rescale velocities with time_step and transform to MD units
  	* (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+#ifdef LB_ELECTROHYDRODYNAMICS
+	particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
+ 	particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
+ 	particle_force[part_index].f[2] = - para.friction * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau - particle_data[part_index].mu_E[2]);
+#else
 	particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau);
  	particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau);
  	particle_force[part_index].f[2] = - para.friction * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau);
-        
+#endif
 	/** add stochastik force of zero mean (Ahlrichs, Duennweg equ. 15)*/
-#ifdef gaussrandom
+#ifdef GAUSSRANDOM
 	gaussian_random(rn_part);
 	particle_force[part_index].f[0] += para.lb_coupl_pref2*rn_part->randomnr[0];
 	particle_force[part_index].f[1] += para.lb_coupl_pref2*rn_part->randomnr[1];
