@@ -744,7 +744,7 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
     P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
 //     fprintf(stderr, "calculating kspace forces\n");
 
-    force_prefac = coulomb.prefactor / (2 * box_l[0] * box_l[1] * box_l[2]);
+    force_prefac = coulomb.prefactor / ( 2 * box_l[0] * box_l[1] * box_l[2] );
 
     /* Gather information for FFT grid inside the nodes domain (inner local mesh) */
     /* and Perform forward 3D FFT (Charge Assignment Mesh). */
@@ -792,7 +792,7 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
         for(i=0; i<fft_plan[3].new_size; i++) {
             ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
             ks_mesh[ind] = g_force[i] * rs_mesh[ind]; ind++;
-        }
+        } 
 
         /* === 3 Fold backward 3D FFT (Force Component Meshs) === */
 
@@ -985,23 +985,25 @@ void realloc_ca_fields(int newsize)
 void calc_meshift(void)
 {
     int i;
+    double dmesh = (double)p3m.mesh[0];
 
+    
     meshift_x = (double *) realloc(meshift_x, p3m.mesh[0]*sizeof(double));
     meshift_y = (double *) realloc(meshift_y, p3m.mesh[1]*sizeof(double));
     meshift_z = (double *) realloc(meshift_z, p3m.mesh[2]*sizeof(double));
 
     meshift_x[0] = meshift_y[0] = meshift_z[0] = 0;
-    for (i = 1; i < p3m.mesh[0]; i++) {
+    for (i = 1; i <= p3m.mesh[0]/2; i++) {
         meshift_x[i] = i;
         meshift_x[p3m.mesh[0] - i] = -i;
     }
 
-    for (i = 1; i < p3m.mesh[1]; i++) {
+    for (i = 1; i <= p3m.mesh[1]/2; i++) {
         meshift_y[i] = i;
         meshift_y[p3m.mesh[1] - i] = -i;
     }
 
-    for (i = 1; i < p3m.mesh[2]; i++) {
+    for (i = 1; i <= p3m.mesh[2]/2; i++) {
         meshift_z[i] = i;
         meshift_z[p3m.mesh[2] - i] = -i;
     }
@@ -1015,10 +1017,10 @@ void calc_differential_operator()
 
   for(i=0;i<3;i++) {
     d_op[i] = realloc(d_op[i], p3m.mesh[i]*sizeof(double));
-    d_op[i][0] = 0;
     d_op[i][p3m.mesh[i]/2] = 0;
+    d_op[i][0] = 0;
 
-    for(j = 1; j < p3m.mesh[i]/2; j++) {
+    for(j = 1; j <= p3m.mesh[i]/2; j++) {
       d_op[i][j] = j;
       d_op[i][p3m.mesh[i] - j] = -j;
     }
@@ -1055,10 +1057,10 @@ void calc_influence_function_force()
                 }
                 else {
                     denominator = perform_aliasing_sums_force(n,nominator);
-                    fak1 =  d_op[1][n[0]]*nominator[0] + d_op[2][n[1]]*nominator[1] + d_op[0][n[2]]*nominator[2];
-                    fak2 = SQR(d_op[1][n[0]])+SQR(d_op[2][n[1]])+SQR(d_op[0][n[2]]);
+                    fak1 =  d_op[0][n[0]]*nominator[0]/box_l[0] + d_op[1][n[1]]*nominator[1]/box_l[1] + d_op[2][n[2]]*nominator[2]/box_l[2];
+                    fak2 = SQR(d_op[0][n[0]]/box_l[0])+SQR(d_op[1][n[1]]/box_l[1])+SQR(d_op[2][n[2]]/box_l[2]);
                     fak3 = fak1/(fak2 * SQR(denominator));
-                    g_force[ind] = fak3/PI;
+                    g_force[ind] = fak3/(PI*PI*PI);
                 }
             }
         }
@@ -1093,9 +1095,9 @@ MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
                 expo         =  f1*nm2;
                 f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-                numerator[0] += f2*nmx;
-                numerator[1] += f2*nmy;
-                numerator[2] += f2*nmz;
+                numerator[0] += f2*nmx/box_l[0];
+                numerator[1] += f2*nmy/box_l[1];
+                numerator[2] += f2*nmz/box_l[2];
                 denominator  += sz;
             }
         }
@@ -1103,8 +1105,6 @@ MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
     return denominator;
 }
 
-
-/* TODO: double-check prefactord */
 void calc_influence_function_energy()
 {
     int i,n[3],ind;
@@ -1131,7 +1131,7 @@ void calc_influence_function_energy()
                     g_energy[ind] = 0.0;
                 }
                 else
-                    g_energy[ind] = perform_aliasing_sums_energy(n)/PI;
+		  g_energy[ind] = perform_aliasing_sums_energy(n)/PI;
             }
         }
     }
