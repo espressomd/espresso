@@ -1027,7 +1027,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
     i=0;
     for(j[0]=0; j[0]<Dfft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {
-	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {	 
+	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {
 	  node_k_space_energy_dip += Dg_energy[i] * (
 	  SQR(Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
 	      Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
@@ -1052,11 +1052,14 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
    P3M_TRACE(fprintf(stderr,"%d: p3m.Depsilon=%lf\n", this_node, p3m.Depsilon));
    
     if(this_node==0) {
+      double a;
       /* self energy correction */
       P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
-
+      a = k_space_energy_dip;
       k_space_energy_dip -= coulomb.Dprefactor*(p3m_sum_mu2*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
       k_space_energy_dip += coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+      
+      fprintf(stderr, "%d: Energy correction: %lf\n", this_node, k_space_energy_dip - a);
     }
 
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m end Energy calculation: k-Space\n",this_node));
