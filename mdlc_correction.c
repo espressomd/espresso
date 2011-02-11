@@ -50,7 +50,7 @@
    
 DLC_struct dlc_params = { 1e100, 0, 0, 0, 0};
 
-
+static int n_local_particles=0;
 
 // It will be desirable to have a  checking function that check that the slab geometry is such that 
 // the short direction is along the z component.
@@ -120,6 +120,7 @@ MDINLINE double g2_DLC_dip(double g,double x) {
      }
    }
    
+
    MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
    M= sqrt(tot_sums[0]*tot_sums[0]+tot_sums[1]*tot_sums[1]+tot_sums[2]*tot_sums[2]);
@@ -147,134 +148,118 @@ MDINLINE double g2_DLC_dip(double g,double x) {
 
 double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, double *ty, double *tz){
 
- int    ix,iy,kcut2,ip; 
- double gx,gy,gr;
+    int    ix,iy,kcut2,ip; 
+    double gx,gy,gr;
+
+    double S[4] = {0.0,0.0,0.0,0.0}; // S of Brodka methode, oder is S[4] = {Re(S+), Im(S+), Re(S-), Im(S-)}
+    double *ReSjp=NULL,*ReSjm=NULL;
+    double *ImSjp=NULL,*ImSjm=NULL;
+    double *ReGrad_Mup=NULL,*ImGrad_Mup=NULL;
+    double *ReGrad_Mum=NULL,*ImGrad_Mum=NULL;
+    double a,b,c,d,er,ez,f,fa1;
+    double s1,s2,s3,s4;
+    double s1z,s2z,s3z,s4z;
+    double ss;
+    double energy,piarea,facux,facuy;
+    int cc,j,np;
+    Cell *cell = NULL;   
+    Particle *p1;
+
+      facux=2.0*M_PI/box_l[0];
+      facuy=2.0*M_PI/box_l[1];
+      
+      energy=0.0;
     
- double ReSp,ReSm;    // Keep real parts of S+,(S+)*,S-,(S-)*  of Brodka method.  
- double ImSp,ImSm;    // Keep imaginary parts
- double *ReSjp=NULL,*ReSjm=NULL;
- double *ImSjp=NULL,*ImSjm=NULL;
- double *ReGrad_Mup=NULL,*ImGrad_Mup=NULL;
- double *ReGrad_Mum=NULL,*ImGrad_Mum=NULL;
- double a,b,c,d,er,ez,f,fa1;
- double s1,s2,s3,s4;
- double s1z,s2z,s3z,s4z,ss;
- double energy,piarea,facux,facuy;
- int cc,j,np;  										    
- Cell *cell = NULL;   
- Particle *p1;  									    
+      ReSjp= (double *) malloc(sizeof(double)*n_local_particles);
+      ReSjm= (double *) malloc(sizeof(double)*n_local_particles);
+      ImSjp= (double *) malloc(sizeof(double)*n_local_particles);
+      ImSjm= (double *) malloc(sizeof(double)*n_local_particles);
+      ReGrad_Mup = (double *) malloc(sizeof(double)*n_local_particles);
+      ImGrad_Mup = (double *) malloc(sizeof(double)*n_local_particles);
+      ReGrad_Mum = (double *) malloc(sizeof(double)*n_local_particles);
+      ImGrad_Mum = (double *) malloc(sizeof(double)*n_local_particles);
 
-    //FILE *FilePtr;
-   // char File_Name[40];
+    kcut2=kcut*kcut;
+    
+    for(ix=-kcut;ix<=+kcut;ix++){
+    for(iy=-kcut;iy<=+kcut;iy++){
 
-  facux=2.0*M_PI/box_l[0];
-  facuy=2.0*M_PI/box_l[1];
-  
-  energy=0.0;
- 
-  ReSjp= (double *) malloc(sizeof(double)*n_total_particles);
-  ReSjm= (double *) malloc(sizeof(double)*n_total_particles);
-  ImSjp= (double *) malloc(sizeof(double)*n_total_particles);
-  ImSjm= (double *) malloc(sizeof(double)*n_total_particles);
-  ReGrad_Mup = (double *) malloc(sizeof(double)*n_total_particles);
-  ImGrad_Mup = (double *) malloc(sizeof(double)*n_total_particles);
-  ReGrad_Mum = (double *) malloc(sizeof(double)*n_total_particles);
-  ImGrad_Mum = (double *) malloc(sizeof(double)*n_total_particles);
-
-      //sprintf(File_Name, "forti20.dat");
-     //FilePtr = fopen(File_Name,"w");
-
- kcut2=kcut*kcut;
- 
- for(ix=-kcut;ix<=+kcut;ix++){ 	
- for(iy=-kcut;iy<=+kcut;iy++){ 	
-
-            
-    if(!(ix==0 && iy==0)){  
-       gx=(double)ix*facux;
-       gy=(double)iy*facuy;
-       
-       gr=sqrt(gx*gx+gy*gy);
-       
-       fa1=1./(gr*(exp(gr*box_l[2])-1.0));   //We assume short slab direction is z direction
-       
-      // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
-      
-      
-      // BE CAREFUL:  This is the version for a single node. We assume that all the cells of the system are
-      // under the control of the same procesor, otherwise the values of S+ or S- will be just a contribution
-      // to the real value of S+ and S- and therefore the calculus would be wrong ...
-   	
-	      
-      ReSp  =0.0; ReSm  =0.0;
-      ImSp  =0.0; ImSm  =0.0;
+		
+	if(!(ix==0 && iy==0)){  
+	  gx=(double)ix*facux;
+	  gy=(double)iy*facuy;
+	  
+	  gr=sqrt(gx*gx+gy*gy);
+	  
+	  fa1=1./(gr*(exp(gr*box_l[2])-1.0));   //We assume short slab direction is z direction
+	  
+	  // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
+	  
+	  S[0] = S[1] = S[2] = S[3] = 0.0;
+	  
+	  ip=0;
+	  for(cc=0; cc<local_cells.n;cc++){      
+	    cell = local_cells.cell[cc];
+	    p1      = cell->part;
+	    np  = cell->n;
+	    
+	    for(j = 0; j < np; j++)  {
+              if(p1[j].p.dipm>0){
 	
-											      
-      for(cc=0; cc<local_cells.n;cc++){							      
-         cell = local_cells.cell[cc];							      
-         p1      = cell->part;								      
-         np  = cell->n;									      
-         for(j = 0; j < np; j++)  {
-	  ip=p1[j].p.identity;
-	  if(p1[j].p.dipm>0){
-	    
-	    a=gx*p1[j].r.dip[0]+gy*p1[j].r.dip[1];
-	    b=gr*p1[j].r.dip[2];
-	    er=gx*p1[j].r.p[0] +gy*p1[j].r.p[1] ;
-	    ez=gr*p1[j].r.p[2];
-	    c=cos(er);
-	    d=sin(er);
-	    f=exp(ez);
-	    
-	    ReSjp[ip]=(b*c-a*d)*f;
-	    ImSjp[ip]=(c*a+b*d)*f;
-	    ReSjm[ip]=(-b*c-a*d)/f;
-	    ImSjm[ip]=(c*a-b*d)/f;
-	    ReGrad_Mup[ip]=c*f;
-	    ReGrad_Mum[ip]=c/f;
-	    ImGrad_Mup[ip]=d*f;
-	    ImGrad_Mum[ip]=d/f;
-	    
-	    ReSp+=ReSjp[ip];
-	    ImSp+=ImSjp[ip];
-	    ReSm+=ReSjm[ip];
-	    ImSm+=ImSjm[ip];
-	  }  
-        } 										      
-      }											      
-   	
-      //fprintf(FilePtr,"------ gx=%le gy=%le gr=%le --------- \n ",gx,gy,gr);
-      //fprintf(FilePtr," S+=( %le, %le)  and  S-=( %le, %le) \n",ReSp,ImSp,ReSm,ImSm); 										      
+	        a=gx*p1[j].r.dip[0]+gy*p1[j].r.dip[1];
+	        b=gr*p1[j].r.dip[2];
+		er=gx*p1[j].r.p[0] +gy*p1[j].r.p[1] ;
+		ez=gr*p1[j].r.p[2];
+		c=cos(er);
+		d=sin(er);
+		f=exp(ez);
+		
+		ReSjp[ip]=(b*c-a*d)*f;
+		ImSjp[ip]=(c*a+b*d)*f;
+		ReSjm[ip]=(-b*c-a*d)/f;
+		ImSjm[ip]=(c*a-b*d)/f;
+		ReGrad_Mup[ip]=c*f;
+		ReGrad_Mum[ip]=c/f;
+		ImGrad_Mup[ip]=d*f;
+		ImGrad_Mum[ip]=d/f;
+		
+		S[0]+=ReSjp[ip];
+		S[1]+=ImSjp[ip];
+		S[2]+=ReSjm[ip];
+		S[3]+=ImSjm[ip];
+	      }  
+	      ip++;
+	    }      
+	  }      
+
+	  MPI_Allreduce(MPI_IN_PLACE, S, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	    //We compute the contribution to the energy ............
-	     s1=(ReSp*ReSm+ImSp*ImSm);
+	     
 	     //s2=(ReSm*ReSp+ImSm*ImSp); s2=s1!!!
-	     
-	     //printf("fa1=%le, s1=%le, s2=%le \n",fa1,s1,s2);
-	     
-	     energy+=fa1*(s1*2.0); 
+	          
+     energy+=fa1*((S[0]*S[2]+S[1]*S[3])*2.0); 
      
       // ... Now we can compute the contributions to E,Fj,Ej for the current g-value
-     for(cc=0; cc<local_cells.n;cc++){							      
-         cell = local_cells.cell[cc];							      
-         p1      = cell->part;								      
-         np  = cell->n;									      
+     for(cc=0; cc<local_cells.n;cc++){      
+         cell = local_cells.cell[cc];
+         p1      = cell->part;
+
+         np  = cell->n;
+	 ip=0;
          for(j = 0; j < np; j++)  {
-	  ip=p1[j].p.identity;
-	  if(p1[j].p.dipm>0){
-	    
-	    
-	    //We compute the contributions to the forces ............ 
-	    
-            s1=-(-ReSjp[ip]*ImSm+ImSjp[ip]*ReSm); 
-            s2=+( ReSjm[ip]*ImSp-ImSjm[ip]*ReSp); 
-            s3=-(-ReSjm[ip]*ImSp+ImSjm[ip]*ReSp); 
-            s4=+( ReSjp[ip]*ImSm-ImSjp[ip]*ReSm); 
+           if(p1[j].p.dipm>0){
+	   //We compute the contributions to the forces ............ 
+
+            s1=-(-ReSjp[ip]*S[3]+ImSjp[ip]*S[2]); 
+            s2=+( ReSjm[ip]*S[1]-ImSjm[ip]*S[0]); 
+            s3=-(-ReSjm[ip]*S[1]+ImSjm[ip]*S[0]); 
+            s4=+( ReSjp[ip]*S[3]-ImSjp[ip]*S[2]); 
 	
-	    s1z=+(ReSjp[ip]*ReSm+ImSjp[ip]*ImSm);
-	    s2z=-(ReSjm[ip]*ReSp+ImSjm[ip]*ImSp);    
-	    s3z=-(ReSjm[ip]*ReSp+ImSjm[ip]*ImSp);    
-     	    s4z=+(ReSjp[ip]*ReSm+ImSjp[ip]*ImSm);
+	    s1z=+(ReSjp[ip]*S[2]+ImSjp[ip]*S[3]);
+	    s2z=-(ReSjm[ip]*S[0]+ImSjm[ip]*S[1]);    
+	    s3z=-(ReSjm[ip]*S[0]+ImSjm[ip]*S[1]);    
+     	    s4z=+(ReSjp[ip]*S[2]+ImSjp[ip]*S[3]);
 	    
 	    ss=s1+s2+s3+s4;
 	    fx[ip]+=fa1*gx*ss;
@@ -284,31 +269,28 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 	     
 	    //We compute the contributions to the electrical field ............
 	  
-            s1=-(-ReGrad_Mup[ip]*ImSm+ImGrad_Mup[ip]*ReSm); 
-            s2=+( ReGrad_Mum[ip]*ImSp-ImGrad_Mum[ip]*ReSp); 
-            s3=-(-ReGrad_Mum[ip]*ImSp+ImGrad_Mum[ip]*ReSp); 
-            s4=+( ReGrad_Mup[ip]*ImSm-ImGrad_Mup[ip]*ReSm); 
+            s1=-(-ReGrad_Mup[ip]*S[3]+ImGrad_Mup[ip]*S[2]); 
+            s2=+( ReGrad_Mum[ip]*S[1]-ImGrad_Mum[ip]*S[0]); 
+            s3=-(-ReGrad_Mum[ip]*S[1]+ImGrad_Mum[ip]*S[0]); 
+            s4=+( ReGrad_Mup[ip]*S[3]-ImGrad_Mup[ip]*S[2]); 
 	
-	    s1z=+(ReGrad_Mup[ip]*ReSm+ImGrad_Mup[ip]*ImSm);
-	    s2z=-(ReGrad_Mum[ip]*ReSp+ImGrad_Mum[ip]*ImSp);	 
-	    s3z=-(ReGrad_Mum[ip]*ReSp+ImGrad_Mum[ip]*ImSp);	 
-     	    s4z=+(ReGrad_Mup[ip]*ReSm+ImGrad_Mup[ip]*ImSm);
+	    s1z=+(ReGrad_Mup[ip]*S[2]+ImGrad_Mup[ip]*S[3]);
+	    s2z=-(ReGrad_Mum[ip]*S[0]+ImGrad_Mum[ip]*S[1]); 
+	    s3z=-(ReGrad_Mum[ip]*S[0]+ImGrad_Mum[ip]*S[1]); 
+	    s4z=+(ReGrad_Mup[ip]*S[2]+ImGrad_Mup[ip]*S[3]);
 	    
 	    ss=s1+s2+s3+s4;
 	    tx[ip]+=fa1*gx*ss;
 	    ty[ip]+=fa1*gy*ss;
 	    
 	    tz[ip]+=fa1*gr*(s1z+s2z+s3z+s4z);
-	     
-	    //printf("ReGrad_Mup= %le , ImGrad_Mup= %le \n",ReGrad_Mup[ip],ImGrad_Mup[ip]);
-	    
-	    
            }//if dipm>0 ....
-          }//loop j 										      
-      } //loop cc											      
-       
- 
+           ip++;
+          }//loop j  
+      } //loop cc
+      
     }//end of if(ii> ... 
+    
  }} //end of loops for gx,gy
  
  
@@ -322,8 +304,8 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
      cell = local_cells.cell[cc];							  
      p1      = cell->part;								  
      np  = cell->n;									  
+     ip=0;
      for(j = 0; j < np; j++)  {
-      ip=p1[j].p.identity;
       if(p1[j].p.dipm>0){
          a=p1[j].r.dip[1]*tz[ip]-p1[j].r.dip[2]*ty[ip];
          b=p1[j].r.dip[2]*tx[ip]-p1[j].r.dip[0]*tz[ip];
@@ -333,6 +315,7 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 	 tz[ip]=c;
 	 
       }
+      ip++;
      }
   }
  
@@ -342,7 +325,7 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 
   piarea=M_PI/(box_l[0]*box_l[1]);
 
- for(j = 0; j < n_total_particles; j++)  {
+ for(j = 0; j < n_local_particles; j++)  {
       fx[j]*=piarea;
       fy[j]*=piarea;
       fz[j]*=piarea;
@@ -383,9 +366,8 @@ double get_DLC_energy_dipolar(int kcut){
 
  int    ix,iy,kcut2,ip; 
  double gx,gy,gr;
-    
- double ReSp,ReSm;    // Keep real parts of S+,(S+)*,S-,(S-)*  of Brodka method.  
- double ImSp,ImSm;    // Keep imaginary parts
+
+ double S[4];
  double *ReSjp=NULL,*ReSjm=NULL;
  double *ImSjp=NULL,*ImSjm=NULL;
  double a,b,c,d,er,ez,f,fa1;
@@ -398,17 +380,17 @@ double get_DLC_energy_dipolar(int kcut){
     //FILE *FilePtr;
    // char File_Name[40];
 
+  n_local_particles = 0;
+  for(cc=0; cc<local_cells.n;cc++) {
+    cell = local_cells.cell[cc];
+    n_local_particles += cell->n;
+  }
 
-
+   
   facux=2.0*M_PI/box_l[0];
   facuy=2.0*M_PI/box_l[1];
   
   energy=0.0;
- 
-  ReSjp= (double *) malloc(sizeof(double)*n_total_particles);
-  ReSjm= (double *) malloc(sizeof(double)*n_total_particles);
-  ImSjp= (double *) malloc(sizeof(double)*n_total_particles);
-  ImSjm= (double *) malloc(sizeof(double)*n_total_particles);
 
       //sprintf(File_Name, "forti20.dat");
      //FilePtr = fopen(File_Name,"w");
@@ -435,19 +417,17 @@ double get_DLC_energy_dipolar(int kcut){
       // to the real value of S+ and S- and therefore the calculus would be wrong ...
    	
 	      
-      ReSp  =0.0; ReSm  =0.0;
-      ImSp  =0.0; ImSm  =0.0;
-	
-											      
-      for(cc=0; cc<local_cells.n;cc++){							      
-         cell = local_cells.cell[cc];							      
-         p1      = cell->part;								      
-         np  = cell->n;									      
+      S[0] = S[1] = S[2] = S[3] = 0.0;
+      
+      for(cc=0; cc<local_cells.n;cc++){
+         cell = local_cells.cell[cc];
+         p1      = cell->part;
+         np  = cell->n;
+	 ip=0;
          for(j = 0; j < np; j++)  {
-	  ip=p1[j].p.identity;
 	  if(p1[j].p.dipm>0){
 	    
-	    a=gx*p1[j].r.dip[0]+gy*p1[j].r.dip[1];
+	    a=gx*p1[j].r.dip[0]+gy*p1[j].r.dip[1];{
 	    b=gr*p1[j].r.dip[2];
 	    er=gx*p1[j].r.p[0] +gy*p1[j].r.p[1] ;
 	    ez=gr*p1[j].r.p[2];
@@ -455,15 +435,13 @@ double get_DLC_energy_dipolar(int kcut){
 	    d=sin(er);
 	    f=exp(ez);
 	    
-	    ReSjp[ip]=(b*c-a*d)*f;
-	    ImSjp[ip]=(c*a+b*d)*f;
-	    ReSjm[ip]=(-b*c-a*d)/f;
-	    ImSjm[ip]=(c*a-b*d)/f;
+	    S[0]+=(b*c-a*d)*f;
+	    S[1]+=(c*a+b*d)*f;
+	    S[2]+=(-b*c-a*d)/f;
+	    S[3]+=(c*a-b*d)/f;
+	    }
 	    
-	    ReSp+=ReSjp[ip];
-	    ImSp+=ImSjp[ip];
-	    ReSm+=ReSjm[ip];
-	    ImSm+=ImSjm[ip];
+	    ip++;
 	  }  
         } 										      
       }											      
@@ -472,7 +450,7 @@ double get_DLC_energy_dipolar(int kcut){
       //fprintf(FilePtr," S+=( %le, %le)  and  S-=( %le, %le) \n",ReSp,ImSp,ReSm,ImSm); 										      
 
 	    //We compute the contribution to the energy ............
-	     s1=(ReSp*ReSm+ImSp*ImSm);
+	     s1=(S[0]*S[2]+S[1]*S[3]);
 	     //s2=(ReSm*ReSp+ImSm*ImSp); s2=s1!!!
 	     
 	     //printf("fa1=%le, s1=%le, s2=%le \n",fa1,s1,s2);
@@ -484,26 +462,10 @@ double get_DLC_energy_dipolar(int kcut){
  
   
  // Multiply by the factors we have left during the loops
-
  
-  piarea=M_PI/(box_l[0]*box_l[1]);
-
-  
+ piarea=M_PI/(box_l[0]*box_l[1]);
  energy*=(-piarea);
-  
-      //fclose(FilePtr);
-
-
- free(ReSjp);
- free(ReSjm);
- free(ImSjp);
- free(ImSjm);
-
-
-   	   //printf("Energy0= %20.15le \n",energy);
-
-
-return energy;
+ return energy;
 }    
 /* ***************************************************************** */
      
@@ -519,6 +481,7 @@ return energy;
     Cell *cell;
     Particle *p;
     int i,c,np,ip;
+    int cc;
     int dip_DLC_kcut;
     double  *dip_DLC_f_x=NULL,*dip_DLC_f_y=NULL,*dip_DLC_f_z=NULL;
     double  *dip_DLC_t_x=NULL,*dip_DLC_t_y=NULL,*dip_DLC_t_z=NULL;
@@ -527,11 +490,15 @@ return energy;
   #ifdef ROTATION    
     double dx,dy,dz,correps;
   #endif  
-  
+
    dip_DLC_kcut=dlc_params.far_cut ;
-    
-    if(n_nodes==1) {
-         
+
+  n_local_particles = 0;
+  for(cc=0; cc<local_cells.n;cc++) {
+    cell = local_cells.cell[cc];
+    n_local_particles += cell->n;
+  }
+          
 	 volume=box_l[0]*box_l[1]*box_l[2];
 	
          // --- Create arrays that should contain the corrections to
@@ -546,7 +513,7 @@ return energy;
          dip_DLC_t_z = (double *) malloc(sizeof(double)*n_total_particles);
 
 
-         for(i=0;i<n_total_particles;i++){
+         for(i=0;i<n_local_particles;i++){
 	   dip_DLC_f_x[i] = 0.0;
 	   dip_DLC_f_y[i] = 0.0;
 	   dip_DLC_f_z[i] = 0.0;
@@ -556,7 +523,6 @@ return energy;
 	   dip_DLC_t_z[i] = 0.0;
 	 }   
 
-    
    	 //---- Compute the corrections ----------------------------------  
      
            //First the DLC correction  
@@ -585,34 +551,18 @@ return energy;
 	         fprintf(stderr,"You are not usingP3M method, therefore p3m.epsilon unknown, I assume metallic borders \n");   
 	    }  
 	         
-/*
-           printf("mz, m  = %20.15le  %20.15le \n \n",mz,mtot);
-	   
-  	   printf("Energy (SDC(disk sum)                        = %20.15le \n",coulomb.Dprefactor*2.*M_PI/volume*(mz*mz));
-  	   printf("Energy (SDC(spherical sum)                   = %20.15le \n",coulomb.Dprefactor*2.*M_PI/volume*(mtot*mtot/3.));
-           if(p3m.Depsilon == P3M_EPSILON_METALLIC) {	
-  	     printf("Energy (DLC+SDC(disk sum)) = %20.15le \n",dip_DLC_energy);
-           }else{
-  	     printf("Energy (DLC+SDC(disk sum)-SDC(spherical sum) = %20.15le \n",dip_DLC_energy);
-	   }
-	   
-	   
-	  // printf("fx fy fz : %20.15le %20.15le %20.15le \n",dip_DLC_f_x[0],dip_DLC_f_y[0],dip_DLC_f_z[0]);
-	   //printf("tx ty tz : %20.15le %20.15le %20.15le \n",dip_DLC_t_x[0],dip_DLC_t_y[0],dip_DLC_t_z[0]);
-*/	
-	
    	 // --- Transfer the computed corrections to the Forces, Energy and torques
    	 //	of the particles
 	 
 	correc= 4.*M_PI/volume;
 	 
+        ip = 0;
    	for (c = 0; c < local_cells.n; c++) {
    	   cell = local_cells.cell[c];
    	   p  = cell->part;
    	   np = cell->n;
    	  for(i=0; i<np; i++) { 
    	     if( (p[i].p.dipm) != 0.0 ) {
-	       ip=p[i].p.identity;
 
    	       p[i].f.f[0] += coulomb.Dprefactor*dip_DLC_f_x[ip];    
    	       p[i].f.f[1] += coulomb.Dprefactor*dip_DLC_f_y[ip];
@@ -646,6 +596,7 @@ return energy;
 		}   
 #endif  	      
    	      }  
+   	      ip++;
    	  }	 
    	}
 	
@@ -658,14 +609,8 @@ return energy;
           free(dip_DLC_t_y);
           free(dip_DLC_t_z);
    
-   }   
-   else{
-      //The code is not prepared to run in more than one node
-      
-      fprintf(stderr,"DLC-dipolar is not ready to work in more than one Node, Sorry ....");
-      exit(1);
-      
-   } //end of if this_node
+    
+
 }    
      /* ***************************************************************** */
      
@@ -677,72 +622,46 @@ return energy;
     ************************************************************************** */
    
  double     add_mdlc_energy_corrections(){
-    double  dip_DLC_energy=0.0;
-    double  mz=0.0,mx=0.0,my=0.0,volume,mtot=0.0;
-    int dip_DLC_kcut;
-    
-    if(n_nodes==1) {
-    
-	 volume=box_l[0]*box_l[1]*box_l[2];
-	
-	  dip_DLC_kcut=dlc_params.far_cut ;
-	 
-   	 //---- Compute the corrections ----------------------------------  
+   double  dip_DLC_energy=0.0;
+   double  mz=0.0,mx=0.0,my=0.0,volume,mtot=0.0;
+   int dip_DLC_kcut;
      
-           //First the DLC correction  
-           dip_DLC_energy+=coulomb.Dprefactor*get_DLC_energy_dipolar(dip_DLC_kcut);    
- 
- //           printf("Energy DLC                                  = %20.15le \n",dip_DLC_energy);
- 
-           //Now we compute the the correction like Yeh and Klapp to take into account the fact that you are using a
-	   //3D PBC method which uses spherical summation instead of slab-wise sumation. Slab-wise summation is the one 
-	   //required to apply DLC correction.  This correction is often called SDC = Shape Dependent Correction.
-	   //See Brodka, Chem. Phys. Lett. 400, 62, (2004).
-	   
-            mz=slab_dip_count_mu(&mtot, &mx, &my);
- 	   
-	   if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-
-              if(p3m.Depsilon == P3M_EPSILON_METALLIC) {	
-	         dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
-	      }
-	      else{   
-                dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*p3m.Depsilon+1.0)); 
-	      }
-	    }
-	    else{
-	         dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
-	         fprintf(stderr,"You are not usingP3M method, therefore p3m.Depsilon unknown, I assume metallic borders \n");   
-	    }  
-	         
-
-/*
-           printf("mz, m  = %20.15le  %20.15le \n \n",mz,mtot);
-	   
-  	   printf("Energy (SDC(disk sum)                        = %20.15le \n",coulomb.Dprefactor*2.*M_PI/volume*(mz*mz));
-  	   printf("Energy (SDC(spherical sum)                   = %20.15le \n",coulomb.Dprefactor*2.*M_PI/volume*(mtot*mtot/3.));
-           if(p3m.Depsilon == P3M_EPSILON_METALLIC) {	
-  	     printf("Energy (DLC+SDC(disk sum)) = %20.15le \n",dip_DLC_energy);
-           }else{
-  	     printf("Energy (DLC+SDC(disk sum)-SDC(spherical sum) = %20.15le \n",dip_DLC_energy);
-	   }
-	
-*/	
-   
-   } else{
-      //The code is not prepared to run in more than one node
+     volume=box_l[0]*box_l[1]*box_l[2];
+     
+     dip_DLC_kcut=dlc_params.far_cut ;
+     
+     //---- Compute the corrections ----------------------------------  
+     
+     //First the DLC correction  
+     dip_DLC_energy+=coulomb.Dprefactor*get_DLC_energy_dipolar(dip_DLC_kcut);    
+     
+     //           printf("Energy DLC                                  = %20.15le \n",dip_DLC_energy);
+     
+     //Now we compute the the correction like Yeh and Klapp to take into account the fact that you are using a
+     //3D PBC method which uses spherical summation instead of slab-wise sumation. Slab-wise summation is the one 
+     //required to apply DLC correction.  This correction is often called SDC = Shape Dependent Correction.
+     //See Brodka, Chem. Phys. Lett. 400, 62, (2004).
+     
+     mz=slab_dip_count_mu(&mtot, &mx, &my);
+     
+     if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
+       if(p3m.Depsilon == P3M_EPSILON_METALLIC) {
+	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
+       }
+       else{   
+	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*p3m.Depsilon+1.0)); 
+       }
+     }
+     else{
+       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
+       fprintf(stderr,"You are not using P3M method, therefore p3m.Depsilon unknown, I assume metallic borders \n");   
+     }  
       
-      fprintf(stderr,"DLC-dipolar is not ready to work in more than one Node, Sorry ....");
-      exit(1);
-      
-      
-   } //end of if this_node
    
+   return dip_DLC_energy;
    
-return dip_DLC_energy;
-   
-}    
-/* ***************************************************************** */
+ }    
+ /* ***************************************************************** */
 
 /* -------------------------------------------------------------------------------
     Subroutine to compute the cut-off (NCUT) necessary in the DLC dipolar part
