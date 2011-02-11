@@ -1211,7 +1211,7 @@ double calc_surface_term(int force_flag, int energy_flag)
   int np, c, i,ip=0,n_local_part=0;
   Particle *part;
   double pref =coulomb.Dprefactor*4*M_PI*box_l_i[0]*box_l_i[1]*box_l_i[2]/(2*p3m.Depsilon + 1);
-  double suma,ax,ay,az;
+  double suma,a[3];
   double en;
   double  *sumix=NULL,*sumiy=NULL,*sumiz=NULL;
   double  *mx=NULL,*my=NULL,*mz=NULL;
@@ -1238,25 +1238,23 @@ double calc_surface_term(int force_flag, int energy_flag)
      } 
 
      // we will need the sum of all dipolar momenta vectors    
-      ax=0.0;
-      ay=0.0;
-      az=0.0;
+      a[0]=0.0;
+      a[1]=0.0;
+      a[2]=0.0;
 
       for (i = 0; i < n_local_part; i++){
-         ax+=mx[i];
-         ay+=my[i];
-         az+=mz[i];
+         a[0]+=mx[i];
+         a[1]+=my[i];
+         a[2]+=mz[i];
       }   
   
-     MPI_Allreduce(MPI_IN_PLACE, &ax, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-     MPI_Allreduce(MPI_IN_PLACE, &ay, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-     MPI_Allreduce(MPI_IN_PLACE, &az, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+     MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
      
      if (energy_flag) {
       
         suma=0.0;
         for (i = 0; i < n_local_part; i++){
- 	      suma+=mx[i]*ax+my[i]*ay+mz[i]*az;
+ 	      suma+=mx[i]*a[0]+my[i]*a[1]+mz[i]*a[2];
         }  	   
         MPI_Allreduce(MPI_IN_PLACE, &suma, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         en = 0.5*pref*suma;
@@ -1274,9 +1272,9 @@ double calc_surface_term(int force_flag, int energy_flag)
           sumiz = (double *) malloc(sizeof(double)*n_local_part);
 	  
           for (i = 0; i < n_local_part; i++){
-	    sumix[i]=my[i]*az-mz[i]*ay;
-            sumiy[i]=mz[i]*ax-mx[i]*az;
-            sumiz[i]=mx[i]*ay-my[i]*ax;
+	    sumix[i]=my[i]*a[2]-mz[i]*a[1];
+            sumiy[i]=mz[i]*a[0]-mx[i]*a[2];
+            sumiz[i]=mx[i]*a[1]-my[i]*a[0];
 	  }
 	    
          // for (i = 0; i < n_total_particles; i++){
