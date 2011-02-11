@@ -74,7 +74,7 @@ double get_mu_max() {
 }
 /* ******************************************************************* */
 
-double g1_DLC_dip(double g,double x) {
+MDINLINE double g1_DLC_dip(double g,double x) {
     double a,c,cc2,x3;
     c=g/x;
     cc2=c*c;
@@ -85,7 +85,7 @@ double g1_DLC_dip(double g,double x) {
 /* ******************************************************************* */
 
 
-double g2_DLC_dip(double g,double x) {
+MDINLINE double g2_DLC_dip(double g,double x) {
     double a,x2;
     x2=x*x;
     a=g*g/x+2.0*g/x2+2.0/(x2*x); 
@@ -121,13 +121,8 @@ double g2_DLC_dip(double g,double x) {
    }
    
    //Next line will be for the multi-procesor version ...  
-   //MPI_Allreduce(node_sums, tot_sums, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
    // For the one node version is enough the next line
-
-   tot_sums[0]= node_sums[0];
-   tot_sums[1]= node_sums[1];
-   tot_sums[2]= node_sums[2];
-   
    
    M= sqrt(tot_sums[0]*tot_sums[0]+tot_sums[1]*tot_sums[1]+tot_sums[2]*tot_sums[2]);
    Mz=tot_sums[2]; 
