@@ -57,6 +57,7 @@
 #include "topology.h"
 #include "errorhandling.h"
 #include "molforces.h"
+#include "mdlc_correction.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -191,6 +192,8 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_RINERTIA  54
 /** Action number for \ref mpi_send_mu_E. */
 #define REQ_SET_MU_E     55
+/** Action mumber for \ref mpi_bcast_max_mu. */
+#define REQ_MAX_MU 56
 
 /** Action number for \ref mpi_send_vs_relative. */
 #define REQ_SET_VS_RELATIVE 56
@@ -263,6 +266,7 @@ void mpi_send_virtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
 void mpi_send_vs_relative_slave(int pnode, int part);
+void mpi_bcast_max_mu_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -324,6 +328,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
+  mpi_bcast_max_mu_slave,            /* 56: REQ_MAX_MU */
   mpi_send_vs_relative_slave, // 57 REQ_SET_VS_RELATIVE
 };
 
@@ -395,7 +400,8 @@ char *names[] = {
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
   "SET_MU_E", /* 55 */
-  "SET_VS_RELATIVE", // 56 
+  "REQ_MAX_MU", /* 56 */
+  "SET_VS_RELATIVE", // 57
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -2717,6 +2723,22 @@ void mpi_iccp3m_init_slave(int node, int dummy)
 #endif
 }
 
+void mpi_bcast_max_mu_slave(int node, int dummy) {
+ #ifdef MDLC
+ 
+ get_mu_max();
+ 
+ #endif
+}
+
+void mpi_bcast_max_mu(void) {
+  #ifdef MDLC
+  mpi_issue(REQ_MAX_MU, -1, 0);
+  
+  get_mu_max();
+  
+  #endif
+}
 
 /*********************** MAIN LOOP for slaves ****************/
 
