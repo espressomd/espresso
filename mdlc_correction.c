@@ -449,6 +449,8 @@ double get_DLC_energy_dipolar(int kcut){
       //fprintf(FilePtr,"------ gx=%le gy=%le gr=%le --------- \n ",gx,gy,gr);
       //fprintf(FilePtr," S+=( %le, %le)  and  S-=( %le, %le) \n",ReSp,ImSp,ReSm,ImSm); 										      
 
+     MPI_Allreduce(MPI_IN_PLACE, S, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      
 	    //We compute the contribution to the energy ............
 	     s1=(S[0]*S[2]+S[1]*S[3]);
 	     //s2=(ReSm*ReSp+ImSm*ImSp); s2=s1!!!
