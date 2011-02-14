@@ -51,11 +51,12 @@
 DLC_struct dlc_params = { 1e100, 0, 0, 0, 0};
 
 static int n_local_particles=0;
+static double mu_max;
 
 // It will be desirable to have a  checking function that check that the slab geometry is such that 
 // the short direction is along the z component.
 
-double get_mu_max() {
+double get_mu_max(void) {
   Cell *cell;
   Particle *part;
   int i,c,np;
@@ -682,14 +683,16 @@ double get_DLC_energy_dipolar(int kcut){
 
 int mdlc_tune(double error)
 {
- double de,n,gc,lz,lx,a,fa1,fa2,fa0,mu_max,h;
+ double de,n,gc,lz,lx,a,fa1,fa2,fa0,h;
  int     kc,limitkc=200,flag;
 
+ MDLC_TRACE(fprintf(stderr, "%d: mdlc_tune().\n", this_node));
+ 
  n=(double) n_total_particles;
  lz=box_l[2];
   
  a=box_l[0]*box_l[1];
- mu_max = get_mu_max();   /* we take the maximum dipole in the system, to be sure that the errors in the other case
+ mpi_bcast_max_mu();   /* we take the maximum dipole in the system, to be sure that the errors in the other case
                         will be equal or less than for this one */
  
  h=dlc_params.h;
@@ -725,6 +728,9 @@ int mdlc_tune(double error)
  }
  
  dlc_params.far_cut=kc;
+ 
+ MDLC_TRACE(fprintf(stderr, "%d: done mdlc_tune().\n", this_node));
+ 
 return TCL_OK;
  
 }		
@@ -750,6 +756,8 @@ int mdlc_sanity_checks()
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 {
+  MDLC_TRACE(fprintf(stderr, "%d: mdlc_set_params().\n", this_node));
+  
   dlc_params.maxPWerror = maxPWerror;
   dlc_params.gap_size = gap_size;
   dlc_params.h = box_l[2] - gap_size;
@@ -809,6 +817,8 @@ int tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, c
   double gap_size;
   double far_cut = -1;
  
+  MDLC_TRACE(fprintf(stderr, "%d: tclcommand_inter_magnetic_parse_mdlc_params().\n", this_node));
+  
   if (argc < 2) {
     Tcl_AppendResult(interp, "either nothing or mdlc <pwerror> <minimal layer distance> {<cutoff>}  expected, not \"", argv[0], "\"", (char *)NULL);
     return TCL_ERROR;
