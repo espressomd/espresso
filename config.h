@@ -34,6 +34,8 @@
 
 /************************************************/
 /** \name Default Parameter Settings            */
+/** These values can be changed from the Tcl    */
+/** */
 /************************************************/
 /*@{*/
 
@@ -55,41 +57,66 @@
     down corner of the simulation box. */
 #define P3M_MESHOFF 0.5
 
-/** P3M: Default for the number of Brillouin zones taken into account
-    in the calculation of the optimal influence function (aliasing
-    sums). */
-#define P3M_BRILLOUIN 1
-
-/** P3M: Maximal mesh size that will be checked. The current setting
-         limits the memory consumption to below 1GB, which is probably
-	 reasonable for a while. */
-#define P3M_MAX_MESH 128
-
-/** Whether to use the approximation of Abramowitz/Stegun
-    AS_erfc_part() for \f$\exp(d^2) erfc(d)\f$, or the C function erfc
-    in P3M and Ewald summation. */
-#define USE_ERFC_APPROXIMATION 1
-
-/** Precision for capture of round off errors. */
-#define ROUND_ERROR_PREC 1.0e-14
-
-/** Tiny angle cutoff for sinus calculations */
-#define TINY_SIN_VALUE 1e-10
-/** Tiny angle cutoff for cosine calculations */
-#define TINY_COS_VALUE 0.9999999999
-/** Tiny length cutoff */
-#define TINY_LENGTH_VALUE 0.0001
-
-
-/** maximal number of iterations in the RATTLE algorithm before it bails out. */
-#define SHAKE_MAX_ITERATIONS 1000
-
 /*@}*/
-
 
 #ifdef MYCONFIG_H
 #include MYCONFIG_H
 #endif
+
+/*********************************************************/
+/** \name Parameters from myconfig.h that need to be set */
+/*********************************************************/
+/*@{*/
+
+/** P3M: Number of Brillouin zones taken into account
+    in the calculation of the optimal influence function (aliasing
+    sums). */
+#ifndef P3M_BRILLOUIN
+#define P3M_BRILLOUIN 1
+#endif
+/** P3M: Maximal mesh size that will be checked. The current setting
+         limits the memory consumption to below 1GB, which is probably
+	 reasonable for a while. */
+#ifndef P3M_MAX_MESH
+#define P3M_MAX_MESH 128
+#endif
+
+/** Whether to use the approximation of Abramowitz/Stegun
+    AS_erfc_part() for \f$\exp(d^2) erfc(d)\f$, or the C function erfc
+    in P3M and Ewald summation. */
+#ifndef USE_ERFC_APPROXIMATION
+#define USE_ERFC_APPROXIMATION 1
+#endif
+
+/** Precision for capture of round off errors. */
+#ifndef ROUND_ERROR_PREC
+#define ROUND_ERROR_PREC 1.0e-14
+#endif
+
+/** Tiny angle cutoff for sinus calculations */
+#ifndef TINY_SIN_VALUE
+#define TINY_SIN_VALUE 1e-10
+#endif
+/** Tiny angle cutoff for cosine calculations */
+#ifndef TINY_COS_VALUE
+#define TINY_COS_VALUE 0.9999999999
+#endif
+/** Tiny length cutoff */
+#ifndef TINY_LENGTH_VALUE
+#define TINY_LENGTH_VALUE 0.0001
+#endif
+
+/** maximal number of iterations in the RATTLE algorithm before it bails out. */
+#ifndef SHAKE_MAX_ITERATIONS
+#define SHAKE_MAX_ITERATIONS 1000
+#endif
+
+/*@}*/
+
+/*********************************************************/
+/** \name  */
+/*********************************************************/
+/*@{*/
 
 //inter_rf needs ELECTROSTATICS
 #ifdef INTER_RF
@@ -200,6 +227,7 @@
 #endif
 #endif
 
+/*@}*/
 
 /********************************************/
 /* \name exported functions of config.c     */
