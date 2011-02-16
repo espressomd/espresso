@@ -978,11 +978,7 @@ void realloc_ca_fields(int newsize)
 } 
 
 
-/* TODO: loop-boudaries differ from florian h. version
-         this one produces meshift from espresso stable.
-         check which one is correct.
-*/
-#warning check me!
+
 void calc_meshift(void)
 {
     int i;
@@ -1509,8 +1505,13 @@ int p3m_adaptive_tune() {
     tmp_mesh[1] = (int)(box_l[1]*mesh_density);
     tmp_mesh[2] = (int)(box_l[2]*mesh_density);
 
-    if((tmp_mesh[0] % 2) || (tmp_mesh[1] % 2) || (tmp_mesh[2] % 2))
-      continue;
+    if(tmp_mesh[0] % 2)
+      tmp_mesh[0]++;
+    if(tmp_mesh[1] % 2) 
+      tmp_mesh[1]++;
+    if(tmp_mesh[2] % 2)
+      tmp_mesh[2]++;
+
 
     tmp_time = p3m_m_time(tmp_mesh,
 			  cao_min, cao_max, &tmp_cao,
@@ -1673,12 +1674,11 @@ double P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, doub
 	  cs = analytic_cotangent_sum(nz,mesh_i[2],cao)*ctan_y;
 	  P3M_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
 	  he_q += (alias1  -  SQR(alias2/cs) / n2);
-	  /* fprintf(stderr,"%d %d %d he_q = %.20f %.20f %.20f %.20f\n",nx,ny,nz,he_q,cs,alias1,alias2); */
 	}
       }
     }
   }
-  return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / box_l[1]*box_l[2];
+  return 2.0*prefac*sum_q2*sqrt(he_q/(double)n_c_part) / (box_l[1]*box_l[2]);
 }
 
 
@@ -1710,7 +1710,6 @@ void P3M_tune_aliasing_sums(int nx, int ny, int nz,
 	
 	*alias1 += ex2 / nm2;
 	*alias2 += U2 * ex * (nx*nmx + ny*nmy + nz*nmz) / nm2;
-	/* fprintf(stderr,"%d %d %d : %d %d %d alias %.20f %.20f\n",nx,ny,nz,mx,my,mz,*alias1,*alias2); */
       }
     }
   }
