@@ -369,7 +369,7 @@ double get_DLC_energy_dipolar(int kcut){
  int    ix,iy,kcut2,ip; 
  double gx,gy,gr;
 
- double S[4];
+ double S[4], global_S[4];
  double *ReSjp=NULL,*ReSjm=NULL;
  double *ImSjp=NULL,*ImSjm=NULL;
  double a,b,c,d,er,ez,f,fa1;
@@ -438,8 +438,10 @@ double get_DLC_energy_dipolar(int kcut){
 	  ip++;
         } 										      
       }											      
+     MPI_Reduce(S, global_S, 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      
 	    //We compute the contribution to the energy ............
-	     s1=(S[0]*S[2]+S[1]*S[3]);
+	     s1=(global_S[0]*global_S[2]+global_S[1]*global_S[3]);
 	     //s2=(ReSm*ReSp+ImSm*ImSp); s2=s1!!!
 	     
 	     energy+=fa1*(s1*2.0); 
@@ -452,7 +454,7 @@ double get_DLC_energy_dipolar(int kcut){
  
  piarea=M_PI/(box_l[0]*box_l[1]);
  energy*=(-piarea);
- return energy;
+ return (this_node == 0) ? energy : 0.0;
 }    
 /* ***************************************************************** */
      
@@ -631,6 +633,7 @@ double get_DLC_energy_dipolar(int kcut){
      
      mz=slab_dip_count_mu(&mtot, &mx, &my);
      
+     if(this_node == 0) {
      if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
        if(p3m.Depsilon == P3M_EPSILON_METALLIC) {
 	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
@@ -646,6 +649,9 @@ double get_DLC_energy_dipolar(int kcut){
       
    
    return dip_DLC_energy;
+     } else {
+       return 0.0;
+     }
    
  }    
  /* ***************************************************************** */
