@@ -394,9 +394,6 @@ double get_DLC_energy_dipolar(int kcut){
   
   energy=0.0;
 
-      //sprintf(File_Name, "forti20.dat");
-     //FilePtr = fopen(File_Name,"w");
-
  kcut2=kcut*kcut;
  
  for(ix=-kcut;ix<=+kcut;ix++){ 	
@@ -412,13 +409,7 @@ double get_DLC_energy_dipolar(int kcut){
         fa1=1./(gr*(exp(gr*box_l[2])-1.0));   //We assume short slab direction is z direction
        
       // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
-      
-      
-      // BE CAREFUL:  This is the version for a single node. We assume that all the cells of the system are
-      // under the control of the same procesor, otherwise the values of S+ or S- will be just a contribution
-      // to the real value of S+ and S- and therefore the calculus would be wrong ...
-   	
-	      
+            
       S[0] = S[1] = S[2] = S[3] = 0.0;
       
       for(cc=0; cc<local_cells.n;cc++){
@@ -442,22 +433,14 @@ double get_DLC_energy_dipolar(int kcut){
 	    S[2]+=(-b*c-a*d)/f;
 	    S[3]+=(c*a-b*d)/f;
 	    }
-	    
-	    ip++;
-	  }  
+	   
+	  }
+	  ip++;
         } 										      
       }											      
-   	
-      //fprintf(FilePtr,"------ gx=%le gy=%le gr=%le --------- \n ",gx,gy,gr);
-      //fprintf(FilePtr," S+=( %le, %le)  and  S-=( %le, %le) \n",ReSp,ImSp,ReSm,ImSm); 										      
-
-     MPI_Allreduce(MPI_IN_PLACE, S, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-      
 	    //We compute the contribution to the energy ............
 	     s1=(S[0]*S[2]+S[1]*S[3]);
 	     //s2=(ReSm*ReSp+ImSm*ImSp); s2=s1!!!
-	     
-	     //printf("fa1=%le, s1=%le, s2=%le \n",fa1,s1,s2);
 	     
 	     energy+=fa1*(s1*2.0); 
  
