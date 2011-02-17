@@ -72,7 +72,7 @@
     in the calculation of the optimal influence function (aliasing
     sums). */
 #ifndef P3M_BRILLOUIN
-#define P3M_BRILLOUIN 1
+#define P3M_BRILLOUIN 0
 #endif
 /** P3M: Maximal mesh size that will be checked. The current setting
          limits the memory consumption to below 1GB, which is probably
