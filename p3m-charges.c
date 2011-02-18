@@ -1017,7 +1017,7 @@ void calc_differential_operator()
     d_op[i][p3m.mesh[i]/2] = 0;
     d_op[i][0] = 0;
 
-    for(j = 1; j <= p3m.mesh[i]/2; j++) {
+    for(j = 1; j < p3m.mesh[i]/2; j++) {
       d_op[i][j] = j;
       d_op[i][p3m.mesh[i] - j] = -j;
     }
