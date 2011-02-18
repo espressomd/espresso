@@ -1045,6 +1045,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
     MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
    
    if (Dflag_constants_energy_dipolar==0) {Dflag_constants_energy_dipolar=1;}
+   
    compute_constants_energy_dipolar(); 
    
  
@@ -1056,6 +1057,8 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 
       k_space_energy_dip -= coulomb.Dprefactor*(p3m_sum_mu2*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
       k_space_energy_dip += coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+      
+      P3M_TRACE(fprintf(stderr, "%d: Energy correction: %lf\n", this_node, k_space_energy_dip - a));
     }
 
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m end Energy calculation: k-Space\n",this_node));
@@ -2757,7 +2760,9 @@ void P3M_scaleby_box_l_dipoles() {
  void compute_constants_energy_dipolar() {
       double  Eself, Ukp3m;
       double volume;
- 
+      
+      P3M_TRACE(fprintf(stderr, "%d: compute_constants_energy_dipolar().\n", this_node));
+      
        if(Dflag_constants_energy_dipolar==1) { 
  
  /*             double sumi1_value,sumi2_value, Eself, Ukp3m, Uk, Ur_cut;
@@ -2771,6 +2776,9 @@ void P3M_scaleby_box_l_dipoles() {
 	     */
 	     
 	     Ukp3m=P3M_Average_dipolar_SelfEnergy(box_l[0],p3m.Dmesh[0]);
+	     
+	     P3M_TRACE(fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
+	     
              Eself=-(2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
              volume=box_l[0]*box_l[1]*box_l[2];
 
