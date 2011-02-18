@@ -431,7 +431,7 @@ void mpifake_copy(void *src, void *dest, int *count, MPI_Datatype *dtype) {
     break;
 
   default:
-    memmove((char *)dest, (char *)src, *count*(*dtype)->size);
+    memcpy((char *)dest, (char *)src, *count*(*dtype)->size);
 
   }
 
