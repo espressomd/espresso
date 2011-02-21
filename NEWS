@@ -96,6 +96,14 @@ Changes visible for developers
 * The source code repository has been moved from CVS to git, and it
   has moved to GNU Savannah (see above).
 
+* The .c/.h/.cu source files have been moved to the subdirectory
+  src/.
+
+* The automatically generated files configure and Makefile.in are not
+  part of the repository anymore.  A developer can generate them using
+  the command "bootstrap.sh", which requires the GNU autotools
+  (autoconf and automake).
+
 * All functions that represent the interface to Tcl should follow the
   same naming conventions. These are described here:
 
