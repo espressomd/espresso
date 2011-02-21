@@ -156,7 +156,7 @@ void distribute_mol_force()
     for(i = 0; i < np; i++) {
       // We only care about virtual particles
       if (ifParticleIsVirtual(&p[i])) {
-       update_mol_pos(p[i]);
+       update_mol_pos_particle(&p[i]);
 
        // First obtain the real particle responsible for this virtual particle:
        Particle *p_real = vs_relative_get_real_particle(&p[i]);

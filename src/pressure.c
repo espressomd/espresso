@@ -184,7 +184,7 @@ void calc_long_range_virials()
     
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = virials.coulomb[1]/3.;
-    fprintf(stderr, "WARNING: stress tensor calculated, but P3M stress tensor not implemented\n");
+    P3M_calc_kspace_stress(p_tensor.coulomb);
     break;
   }
 #endif
@@ -1445,7 +1445,7 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
   if(coulomb.method != COULOMB_NONE) {
     Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL);
     for(j=0; j<9; j++) {
-      Tcl_PrintDouble(interp, total_p_tensor.coulomb[j], buffer);
+      sprintf(buffer, " %lf ", total_p_tensor.coulomb[j]);
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
     Tcl_AppendResult(interp, "} ", (char *)NULL);

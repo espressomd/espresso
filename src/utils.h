@@ -107,21 +107,33 @@ void errexit();
     Makes sure that resizing to zero FREEs pointer */
 MDINLINE void *prealloc(void *old, int size)
 {
-  if (size == 0) {
+  void *p;
+  if (size <= 0) {
     free(old);
     return NULL;
   }
-  return (void *)realloc(old, size);
+  p = (void *)realloc(old, size);
+  if(p == NULL) {
+    fprintf(stderr, "Could not allocate memory.\n");
+    errexit();
+  }
+  return p;
 }
 
 /** used instead of malloc.
     Makes sure that a zero size allocation returns a NULL pointer */
 MDINLINE void *pmalloc(int size)
 {
+  void *p;
   if (size <= 0) {
     return NULL;
   }
-  return (void *)malloc(size);
+  p = (void *)malloc(size);
+  if(p == NULL) {
+    fprintf(stderr, "Could not allocate memory.\n");
+    errexit();
+  }
+  return p;
 }
 
 /** use our own realloc which makes sure that realloc(0) is actually a free. */
