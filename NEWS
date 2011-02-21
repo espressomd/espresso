@@ -13,8 +13,7 @@ User-visible changes
 
   * Electrostatic P3M allows for non-cubic boxes.
 
-  * The pressure tensor is computed correctly now (electrostatic and
-    dipolar).
+  * The electrostatic P3M pressure tensor is computed correctly now.
 
   * Dipolar P3M has been parallelized (electrostatics P3M was
     parallelized already!)
