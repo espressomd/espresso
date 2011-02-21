@@ -111,6 +111,38 @@
 /* #define OLD_DIHEDRAL */
 
 /**********************************************************************/
+/* rarely used constants. Normally, you don't need to touch these.    */
+/* Change at own risk!                                                */
+/**********************************************************************/
+
+/** P3M: Number of Brillouin zones taken into account
+    in the calculation of the optimal influence function (aliasing
+    sums). */
+//#define P3M_BRILLOUIN 1
+/** P3M: Maximal mesh size that will be checked. The current setting
+         limits the memory consumption to below 1GB, which is probably
+	 reasonable for a while. */
+//#define P3M_MAX_MESH 128
+
+/** Whether to use the approximation of Abramowitz/Stegun
+    AS_erfc_part() for \f$\exp(d^2) erfc(d)\f$, or the C function erfc
+    in P3M and Ewald summation. */
+//#define USE_ERFC_APPROXIMATION 1
+
+/** Precision for capture of round off errors. */
+//#define ROUND_ERROR_PREC 1.0e-14
+
+/** Tiny angle cutoff for sinus calculations */
+//#define TINY_SIN_VALUE 1e-10
+/** Tiny angle cutoff for cosine calculations */
+//#define TINY_COS_VALUE 0.9999999999
+/** Tiny length cutoff */
+//#define TINY_LENGTH_VALUE 0.0001
+
+/** maximal number of iterations in the RATTLE algorithm before it bails out. */
+//#define SHAKE_MAX_ITERATIONS 1000
+
+/**********************************************************************/
 /*                            debugging                               */
 /**********************************************************************/
 

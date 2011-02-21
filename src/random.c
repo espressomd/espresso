@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -141,7 +142,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
   if (!strncmp(argv[0], "int", strlen(argv[0]))) {        /* 't_random int <n>' */
     if(argc < 2){ Tcl_AppendResult(interp, "Wrong # of args: Usage: 't_random int <n>'", (char *) NULL); return (TCL_ERROR); }
     else {
-      Tcl_GetInt(interp, argv[2], &i_out);
+      Tcl_GetInt(interp, argv[1], &i_out);
       i_out = i_random(i_out);
       sprintf(buffer, "%d", i_out); Tcl_AppendResult(interp, buffer, (char *) NULL); return (TCL_OK);
     }
