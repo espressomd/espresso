@@ -128,37 +128,37 @@ void static print_p3m(void) {
 /** Calculates for charges the properties of the send/recv sub-meshes of the local FFT mesh. 
  *  In order to calculate the recv sub-meshes there is a communication of 
  *  the margins between neighbouring nodes. */ 
-void calc_send_mesh();
+void static calc_send_mesh();
 
 
 /** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref p3m_struct::ai) 
     and the cutoff for charge assignment \ref p3m_struct::cao_cut, which has to be
     done by \ref P3M_init once and by \ref P3M_scaleby_box_l_charges whenever the \ref box_l changed.
 */
-void P3M_init_a_ai_cao_cut(void);
+void static P3M_init_a_ai_cao_cut(void);
 
 
 /** Calculate the spacial position of the left down mesh point of the local mesh, to be
     stored in \ref local_mesh::ld_pos; function called by \ref calc_local_ca_mesh once
     and by \ref P3M_scaleby_box_l_charges whenever the \ref box_l changed. */
-void calc_lm_ld_pos(void);
+void static calc_lm_ld_pos(void);
 
 
 /** Calculates the dipole term */
-double calc_dipole_term(int force_flag, int energy_flag);
+double static calc_dipole_term(int force_flag, int energy_flag);
 
 /** Gather FFT grid.
  *  After the charge assignment Each node needs to gather the
  *  information for the FFT grid in his spatial domain.
  */
-void gather_fft_grid(double* mesh);
+void static gather_fft_grid(double* mesh);
 
 /** Spread force grid.
  *  After the k-space calculations each node needs to get all force
  *  information to reassigne the forces from the grid to the
  *  particles.
  */
-void spread_force_grid(double* mesh);
+void static spread_force_grid(double* mesh);
 
 /** realloc charge assignment fields. */
 void realloc_ca_fields(int newsize);
@@ -170,25 +170,25 @@ int P3M_sanity_checks_boxl(void);
 /** Calculate the spacial position of the left down mesh point of the local mesh, to be
     stored in \ref local_mesh::ld_pos; function called by \ref calc_local_ca_mesh once
     and by \ref P3M_scaleby_box_l_charges whenever the \ref box_l changed. */
-void calc_lm_ld_pos(void);
+void static calc_lm_ld_pos(void);
 
 /** Calculates properties of the local FFT mesh for the 
     charge assignment process. */
-void calc_local_ca_mesh(void);
+void static calc_local_ca_mesh(void);
 
 
 /** Interpolates the P-th order charge assignment function from
  * Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
  * are also tabulated in Deserno/Holm. */
-void interpolate_charge_assignment_function(void);
+void static interpolate_charge_assignment_function(void);
 
 /** shifts the mesh points by mesh/2 */
-void calc_meshift(void);
+void static calc_meshift(void);
 
 /** Calculates the Fourier transformed differential operator.  
  *  Remark: This is done on the level of n-vectors and not k-vectors,
  *           i.e. the prefactor i*2*PI/L is missing! */
-void calc_differential_operator(void);
+void static calc_differential_operator(void);
 
 /** Calculates the optimal influence function of Hockney and Eastwood. 
  * (optimised for force calculations)
@@ -199,11 +199,11 @@ void calc_differential_operator(void);
  *  See also: Hockney/Eastwood 8-22 (p275). Note the somewhat
  *  different convention for the prefactors, which is described in
  *  Deserno/Holm. */
-void calc_influence_function_force(void);
+void static calc_influence_function_force(void);
 
 /** Calculates the influence function optimized for the energy and the
     self energy correction.  */
-void calc_influence_function_energy(void);
+void static calc_influence_function_energy(void);
 
 
 /** Calculates the aliasing sums for the optimal influence function.
@@ -236,7 +236,7 @@ MDINLINE double perform_aliasing_sums_energy(int n[3]);
    \param alpha_L  rescaled ewald splitting parameter.
    \return real space error
 */
-double P3M_real_space_error(double prefac, double r_cut_iL, int n_c_part, double sum_q2, double alpha_L);
+double static P3M_real_space_error(double prefac, double r_cut_iL, int n_c_part, double sum_q2, double alpha_L);
 
 /** Calculate the analytic expression of the error estimate for the
     P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
@@ -252,16 +252,16 @@ double P3M_real_space_error(double prefac, double r_cut_iL, int n_c_part, double
     \return reciprocal (k) space error
 */
 
-double P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L);
+double static P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L);
 
 
 
 /** aliasing sum used by \ref P3M_k_space_error. */
-void P3M_tune_aliasing_sums(int nx, int ny, int nz, 
+void static P3M_tune_aliasing_sums(int nx, int ny, int nz, 
 			    int mesh[3], double mesh_i[3], int cao, double alpha_L_i, 
 			    double *alias1, double *alias2);
 
-void p3m_set_tune_params(double r_cut, int mesh, int cao,
+void static p3m_set_tune_params(double r_cut, int mesh, int cao,
 			 double alpha, double accuracy, int n_interpol)
 {
   if (r_cut >= 0) {
@@ -291,7 +291,7 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
 
 
 
-int p3m_set_params(double r_cut, int mesh, int cao,
+int static p3m_set_params(double r_cut, int mesh, int cao,
 		   double alpha, double accuracy)
 {
   if(r_cut < 0)
@@ -328,7 +328,7 @@ int p3m_set_params(double r_cut, int mesh, int cao,
 }
 
 
-int p3m_set_mesh_offset(double x, double y, double z)
+int static p3m_set_mesh_offset(double x, double y, double z)
 {
   if(x < 0.0 || x > 1.0 ||
      y < 0.0 || y > 1.0 ||
@@ -346,7 +346,7 @@ int p3m_set_mesh_offset(double x, double y, double z)
 
 
 
-int p3m_set_eps(double eps)
+int static p3m_set_eps(double eps)
 {
   p3m.epsilon = eps;
 
@@ -357,7 +357,7 @@ int p3m_set_eps(double eps)
 
 
 
-int p3m_set_ninterpol(int n)
+int static p3m_set_ninterpol(int n)
 {
   if (n < 0)
     return TCL_ERROR;
