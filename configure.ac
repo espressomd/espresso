@@ -1,5 +1,6 @@
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
-# Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@ dnl Fetch the version and timestamp from RELEASE_NOTES
 AC_INIT(ESPResSo, [2.9.0], [espressomd-users@nongnu.org])
 
 AC_PREREQ(2.50)
-AC_CONFIG_SRCDIR([main.c])
+AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -568,9 +569,10 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
-AC_CONFIG_HEADERS([acconfig.h])
+AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
+	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
@@ -581,7 +583,7 @@ AC_CONFIG_FILES([
 	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	config/$myconfig:config/myconfig-default.h.in
+	src/config/$myconfig:src/config/myconfig-default.h.in
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
