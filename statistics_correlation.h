@@ -313,6 +313,8 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
+int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+
 
 
 /**************  Functions that calculate A and B from MD state ************/
@@ -325,6 +327,11 @@ int com_velocity(void* idlist, double* A, unsigned int n_A);
  * TODO: Folded or unfolded?
  */ 
 int particle_positions(void* typelist, double* A, unsigned int n_A);
+#ifdef ELECTROSTATICS
+int particle_currents(void* typelist, double* A, unsigned int n_A);
+int currents(void* typelist, double* A, unsigned int n_A);
+#endif
+
 
 /** Calculate structure factor from positions and scattering length */
 int structure_factor(void* params, double* A, unsigned int n_A);
