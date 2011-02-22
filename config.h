@@ -189,6 +189,24 @@
 #define CONSTRAINTS
 #endif
 
+#if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)
+#define VIRTUAL_SITES
+#endif
+
+#ifdef VIRTUAL_SITES_RELATIVE
+#ifndef ROTATION
+#define ROTATION
+#endif
+#endif
+
+#ifdef SWITCHABLE_ROTATION
+#ifndef ROTATION
+#define ROTATION
+#endif
+#endif
+
+/*@}*/
+
 /********************************************/
 /* \name exported functions of config.c     */
 /********************************************/

@@ -260,6 +260,7 @@ void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_virtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
+void mpi_send_rotation_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -321,7 +322,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_send_mu_E_slave,              /* 55: REQ_SET_MU_E */
-  mpi_send_rotation,                /* 56: REQ_SET_ROTTION */ 
+  mpi_send_rotation_slave,         /* 56: REQ_SET_ROTATION */ 
 };
 
 /** Names to be printed when communication debugging is on. */
