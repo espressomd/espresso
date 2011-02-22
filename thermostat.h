@@ -173,8 +173,5 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 #ifdef LB
 int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
-#ifdef LB_GPU
-int thermo_parse_lb_gpu(Tcl_Interp * interp, int argc, char ** argv);
-#endif
 
 #endif

@@ -190,19 +190,15 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
   }
 #endif
 
+#if defined(LB) || defined(LB_GPU)
+ /* lb */
+  if(thermo_switch & THERMO_LB) {
+    Tcl_PrintDouble(interp, temperature, buffer);
 #ifdef LB
- /* lb */
-  if(thermo_switch & THERMO_LB) {
-    Tcl_PrintDouble(interp, temperature, buffer);
     Tcl_AppendResult(interp,"{ lb ",buffer, " } ", (char *)NULL);
-  }
+#else
+    Tcl_AppendResult(interp,"{ lb_gpu ",buffer, " } ", (char *)NULL);
 #endif
-
-#ifdef LB_GPU
- /* lb */
-  if(thermo_switch & THERMO_LB) {
-    Tcl_PrintDouble(interp, temperature, buffer);
-    Tcl_AppendResult(interp,"{ lb ",buffer, " } ", (char *)NULL);
   }
 #endif
 
@@ -270,13 +266,9 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
   else if ( ARG1_IS_S("npt_isotropic") )
     err = tclcommand_thermostat_parse_npt_isotropic(interp, argc, argv);
 #endif
-#ifdef LB
-  else if ( ARG1_IS_S("lb") )
+#if defined(LB) || defined(LB_GPU)
+  else if ( ARG1_IS_S("lb") || ARG1_IS_S("lb_gpu"))
     err = tclcommand_thermostat_parse_lb(interp, argc-1, argv+1);
-#endif
-#ifdef LB_GPU
-  else if ( ARG1_IS_S("lb_gpu") )
-    err = thermo_parse_lb_gpu(interp, argc-1, argv+1);
 #endif
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
@@ -284,7 +276,6 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
   }
   return mpi_gather_runtime_errors(interp, err);
 }
-
 
 
 void thermo_init_langevin() 
@@ -366,7 +357,7 @@ void thermo_cool_down()
 
 int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
   double temp;
 
   /* get lb interaction type */
@@ -391,34 +382,5 @@ int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
   
 #endif
   
-  return TCL_OK;
-}
-
-int thermo_parse_lb_gpu(Tcl_Interp *interp, int argc, char ** argv)
-{
-#ifdef LB_GPU
-  double temp;
-
-  /* get lb interaction type */
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "lattice-Boltzmann needs 1 parameter: "
-		     "<temperature>",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  /* copy lattice-boltzmann parameters */
-  if (! ARG_IS_D(1, temp)) { return TCL_ERROR; }
-
-  if ( temp < 0.0 ) {
-    Tcl_AppendResult(interp, "temperature must be non-negative", (char *) NULL);
-    return TCL_ERROR;
-  }
-  temperature = temp;
-  thermo_switch = ( thermo_switch | THERMO_LB );
-  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-  mpi_bcast_parameter(FIELD_TEMPERATURE);
-  
-#endif
   return TCL_OK;
 }

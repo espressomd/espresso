@@ -1844,25 +1844,39 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 }
 #endif
 /** Parser for the \ref lbfluid command. */
-#ifdef LB
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
-  int err = TCL_OK;
-  int change = 0;
-  
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   argc--; argv++;
 
   if (argc < 1) {
       Tcl_AppendResult(interp, "too few arguments to \"lbfluid\"", (char *)NULL);
-      err = TCL_ERROR;
+      return TCL_ERROR;
   }
   else if (ARG0_IS_S("off")) {
-    err = TCL_ERROR;
+      Tcl_AppendResult(interp, "off not implemented", (char *)NULL);
+      return TCL_ERROR;
   }
   else if (ARG0_IS_S("init")) {
-    err = TCL_ERROR;
+      Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
+      return TCL_ERROR;
   }
-  else while (argc > 0) {
+  else if (ARG0_IS_S("gpu")) {
+      lattice_switch = (lattice_switch | LATTICE_LB_GPU);
+      argc--; argv++;
+  }
+
+  if (lattice_switch & LATTICE_LB_GPU)
+      return tclcommand_lbfluid_gpu(interp, argc, argv);
+  else
+      return tclcommand_lbfluid_cpu(interp, argc, argv);
+}
+
+int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
+#ifdef LB
+  int err = TCL_OK;
+  int change = 0;
+  
+  while (argc > 0) {
       if (ARG0_IS_S("grid") || ARG0_IS_S("agrid"))
 	  err = tclcommand_lbfluid_parse_agrid(interp, argc-1, argv+1, &change);
       else if (ARG0_IS_S("tau"))
@@ -1881,7 +1895,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
 	  err = TCL_ERROR ;
       }
-
+      if (err == TCL_ERROR) return TCL_ERROR;
       if ((err = mpi_gather_runtime_errors(interp, err))) break;
 
       argc -= (change + 1);
@@ -1896,10 +1910,10 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
 
   return err;    
-//#else /* !defined LB */
-//  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
-//  return TCL_ERROR;
-
-}
+#else /* !defined LB */
+  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+  return TCL_ERROR;
 #endif
+}
+
 /*@}*/
