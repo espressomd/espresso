@@ -136,11 +136,14 @@ myconfig-final.h: FORCE
 		    $(top_builddir)/src/$(myconfig) \
 		    $(top_srcdir)/$(myconfig) \
 		    $(top_srcdir)/src/$(myconfig) \
-		    $(top_srcdir)/src/myconfig-default.h\
+		    $(top_builddir)/src/myconfig-default.h \
 		  ; do \
 	  if test -e $$file; then \
-	    test -e $@ && rm $@; \
-	    $(LN_S) $$file $@; \
+	    if test -e $@; then \
+	      cmp -s $$file $@ || cp $$file $@; \
+	    else \
+	       cp $$file $@; \
+	    fi; \
 	    break; \
 	  fi; \
 	done
