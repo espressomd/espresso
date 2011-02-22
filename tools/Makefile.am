@@ -21,3 +21,5 @@ dist_tools_DATA =\
 	uwerr.tcl \
 	trace_memory.py \
 	trace_memory.tcl 
+noinst_SCRIPTS = \
+	es_mpiexec

@@ -1,7 +1,0 @@
-#!/bin/sh
-espdir=${0%bin/Espresso*}
-export ESPRESSO_SOURCE=${espdir}lib/ESPResSo; export ESPRESSO_SCRIPTS=${espdir}lib/ESPResSo/scripts
-if test ! -d $ESPRESSO_SCRIPTS; then echo "ESPRESSO scripts directory $ESPRESSO_SCRIPTS is missing, reinstall Espresso" 1>&2; exit -1; fi
-if test ! -x ${espdir}lib/ESPResSo/config.guess; then echo "ESPRESSO configuration guess script ${espdir}lib/ESPResSo/config.guess is missing, reinstall Espresso" 1>&2; exit -1; fi
-if test ! -x ${espdir}lib/ESPResSo/obj-`${espdir}lib/ESPResSo/config.guess`/Espresso; then echo 'There is no binary for the current hardware, '`${espdir}lib/ESPResSo/config.guess`', recompile and install Espresso for this platform' 1>&2; exit -1; fi
-${espdir}lib/ESPResSo/obj-`${espdir}lib/ESPResSo/config.guess`/Espresso $*

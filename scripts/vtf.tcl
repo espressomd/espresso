@@ -7,7 +7,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2006,2007,2008,2009,2010 Olaf Lenz
+# Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz
 #  
 # This file is part of ESPResSo.
 #  
@@ -249,7 +249,7 @@ proc writevcf { file args } {
 		} else {
 		    puts -nonewline $file [part $pid print pos]
 		}
-		if { $userdata } then {
+		if { [llength $userdata] } then {
 		    puts $file [ lindex $userdata $pid ]
 		} else {
 		    puts $file ""
@@ -264,7 +264,7 @@ proc writevcf { file args } {
 		} else {
 		    puts -nonewline $file "[vtfpid $pid] [part $pid print pos]"
 		}
-		if { $userdata } then {
+		if { [llength $userdata] } then {
 		    puts $file [ lindex $userdata $pid ]
 		} else {
 		    puts $file ""
