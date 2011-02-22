@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -191,10 +192,8 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_RINERTIA  54
 /** Action number for \ref mpi_send_mu_E. */
 #define REQ_SET_MU_E     55
-
 /** Action number for \ref mpi_send_vs_relative. */
 #define REQ_SET_VS_RELATIVE 56
-
 
 /** Total number of action numbers. */
 #define REQ_MAXIMUM 57
@@ -324,7 +323,7 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
   mpi_send_mu_E_slave,                 /* 55: REQ_SET_MU_E */
-  mpi_send_vs_relative_slave, // 57 REQ_SET_VS_RELATIVE
+  mpi_send_vs_relative_slave,       /* 56: REQ_SET_VS_RELATIVE */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -395,7 +394,7 @@ char *names[] = {
   "REQ_ICCP3M_INIT",      /* 53 */
   "SET_RINERTIA",   /* 54 */
   "SET_MU_E", /* 55 */
-  "SET_VS_RELATIVE", // 56 
+  "SET_VS_RELATIVE", /* 56 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
