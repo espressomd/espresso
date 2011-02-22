@@ -191,8 +191,8 @@ MDINLINE void P3M_assign_charge(double q,
 				int cp_cnt)
 {
   /* we do not really want to export these, but this function should be inlined */
-  double P3M_caf(int i, double x,int cao_value);
-  void realloc_ca_fields(int size);
+  extern double P3M_caf(int i, double xc,int cao_value);
+  extern void realloc_ca_fields(int size);
 
   extern int    *ca_fmp;
   extern double *ca_frac;
