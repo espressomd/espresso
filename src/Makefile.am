@@ -17,7 +17,7 @@
 #
 
 # List headers that are not used by the program here
-noinst_HEADERS = myconfig-sample.h \
+noinst_HEADERS = \
 	p3m-charges.c p3m-dipoles.h \
 	p3m-dipoles.c p3m-charges.h \
 	p3m-assignment.c
@@ -128,22 +128,29 @@ libEspresso_a_SOURCES = \
 noinst_LIBRARIES = libEspresso.a
 
 #################################################################
-# Handling of local configure headers
+# Handling of myconfig.h
 #################################################################
+FORCE:
+myconfig-final.h: FORCE
+	for file in $(top_builddir)/$(myconfig) \
+		    $(top_builddir)/src/$(myconfig) \
+		    $(top_srcdir)/$(myconfig) \
+		    $(top_srcdir)/src/$(myconfig) \
+		    $(top_builddir)/src/myconfig-default.h \
+		  ; do \
+	  if test -e $$file; then \
+	    if test -e $@; then \
+	      cmp -s $$file $@ || cp $$file $@; \
+	    else \
+	       cp $$file $@; \
+	    fi; \
+	    break; \
+	  fi; \
+	done
 
-# add config/ to the INCLUDES so that the default config/$(myconfig) is
-# found at compile time
-INCLUDES = -Iconfig
-DEFS += -D 'MYCONFIG_H="$(myconfig)"'
+$(libEspresso_a_OBJECTS): myconfig-final.h
 
-# add config/ to the VPATH so that $(myconfig) can be found by make
-vpath $(myconfig) $(top_builddir):$(top_builddir)/src:$(top_srcdir):$(top_srcdir)/src:$(top_builddir)/src/config
-
-# add $(myconfig) to the dependencies of all object files so that
-# they get rebuilt when $(myconfig) is changed
-$(Espresso_OBJECTS): $(myconfig)
-
-DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
+CLEANFILES = myconfig-final.h
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -151,10 +158,8 @@ DISTCLEANFILES = $(top_builddir)/config/$(myconfig)
 if MPI_FAKE
 libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
-INCLUDES += -I$(srcdir)/mpifake -Iconfig
+AM_CPPFLAGS = -I$(srcdir)/mpifake
 endif
-
-ACLOCAL_AMFLAGS = -Iconfig
 
 ##################################################
 # CUDA rules

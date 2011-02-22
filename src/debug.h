@@ -171,6 +171,12 @@ extern int check_id;
 #define P3M_TRACE(cmd)
 #endif
 
+#ifdef MDLC_DEBUG
+#define MDLC_TRACE(cmd) { cmd; }
+#else
+#define MDLC_TRACE(cmd)
+#endif
+
 #ifdef EWALD_DEBUG
 #define EWALD_TRACE(cmd) { cmd;  }
 #else

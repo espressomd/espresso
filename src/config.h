@@ -34,7 +34,7 @@
 
 /************************************************/
 /** \name Default Parameter Settings            */
-/** These values can be changed from the Tcl    */
+/** These values can be changed from Tcl        */
 /** */
 /************************************************/
 /*@{*/
@@ -59,9 +59,7 @@
 
 /*@}*/
 
-#ifdef MYCONFIG_H
-#include MYCONFIG_H
-#endif
+#include <myconfig-final.h>
 
 /*********************************************************/
 /** \name Parameters from myconfig.h that need to be set */

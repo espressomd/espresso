@@ -8,10 +8,18 @@ NOTEWORTHY CHANGES SINCE v2.2.0b
 User-visible changes
 --------------------
 
-* The P3M algorithm for the electrostatic interaction (not for dipoles
-  so far) now allows for non-cubic simulation boxes.
+* The P3M algorithm for electrostatic and dipolar (magnetostatic)
+  interactions has been extended.
 
-* The pressure tensor for P3M is computed correctly now.
+  * Electrostatic P3M allows for non-cubic boxes.
+
+  * The electrostatic P3M pressure tensor is computed correctly now.
+
+  * Dipolar P3M has been parallelized (electrostatics P3M was
+    parallelized already!)
+
+  * The MDLC method (magnetic dipolar layer correction) has been
+    parallelized.
 
 * The virtual sites feature has been significantly extended and
   documented.  Virtual sites are particles that can interact with
@@ -97,7 +105,9 @@ Changes visible for developers
   has moved to GNU Savannah (see above).
 
 * The .c/.h/.cu source files have been moved to the subdirectory
-  src/.
+  src/. The Espresso binary is still placed in the top-level build
+  directory. myconfig.h may be placed eitther in the src/ or top-level
+  dirs.
 
 * The automatically generated files configure and Makefile.in are not
   part of the repository anymore.  A developer can generate them using

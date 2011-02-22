@@ -1,5 +1,2 @@
-#!/bin/sh -x
-aclocal -I config
-autoheader
-automake --add-missing --copy
-autoconf 
+#!/bin/sh
+exec autoreconf -i -v -Wall
