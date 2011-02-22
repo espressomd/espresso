@@ -533,8 +533,8 @@ AC_MSG_RESULT($with_efence)
 ##################################
 # Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [[myconfig.h]]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.h],
+  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [myconfig.h]]),
+[ test .$with_myconfig = .no && with_myconfig=myconfig.h ],
 [ with_myconfig=myconfig.h ])
 AC_MSG_CHECKING([the name of the configuration header])
 myconfig=$with_myconfig

@@ -132,13 +132,17 @@ noinst_LIBRARIES = libEspresso.a
 #################################################################
 FORCE:
 myconfig-final.h: FORCE
-	for file in $(top_builddir)/$(myconfig) \
-		    $(top_builddir)/src/$(myconfig) \
-		    $(top_srcdir)/$(myconfig) \
-		    $(top_srcdir)/src/$(myconfig) \
-		    $(top_builddir)/src/myconfig-default.h \
-		  ; do \
+	config_files=\
+	  $(top_builddir)/$(myconfig) \
+	  $(top_builddir)/src/$(myconfig) \
+	  $(top_srcdir)/$(myconfig) \
+	  $(top_srcdir)/src/$(myconfig); \
+	if test $(myconfig) = myconfig.h; then \
+	  config_files="$$config_files $(top_builddir)/src/myconfig-default.h"; \
+	fi; \
+	for file in $$config_files; do \
 	  if test -e $$file; then \
+	    myconfig_found=1; \
 	    if test -e $@; then \
 	      cmp -s $$file $@ || cp $$file $@; \
 	    else \
@@ -146,7 +150,11 @@ myconfig-final.h: FORCE
 	    fi; \
 	    break; \
 	  fi; \
-	done
+	done; \
+	if test ! $$myconfig_found; then \
+	  echo "ERROR: Couldn't find $(myconfig) anywhere"; \
+	  exit 1; \
+	fi
 
 $(libEspresso_a_OBJECTS): myconfig-final.h
 
