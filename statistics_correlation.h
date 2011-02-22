@@ -318,9 +318,9 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
 /**************  Functions that calculate A and B from MD state ************/
 
 /** Obtain the particle velocities.
- * TODO: make the typelist work!
  */ 
-int particle_velocities(void* typelist, double* A, unsigned int n_A);
+int particle_velocities(void* idlist, double* A, unsigned int n_A);
+int com_velocity(void* idlist, double* A, unsigned int n_A); 
 /** Obtain the particle positions.
  * TODO: Folded or unfolded?
  */ 
