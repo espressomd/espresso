@@ -72,8 +72,8 @@ proc require_feature {feature} {
 #############################################################
 set errf [lindex $argv 1]
 
-require_feature "LB_GPU"
-#require_feature "LB"
+#require_feature "LB_GPU"
+require_feature "LB"
 
 # Integration parameters
 #############################################################
