@@ -148,7 +148,6 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 	}
       } else if (ARG0_IS_S("finalize")) {
         if(argc==1) {
-          //for(i=0;i<correlations[no].hierarchy_depth;i++) printf ("[%d]=%d\n",i,correlations[no].n_vals[i]); fflush(stdout);
           return double_correlation_finalize(&correlations[no]);
 	}
 	else {
@@ -211,45 +210,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
     // working correlation class instance from that.
     correlation_type=CORR_TYPE_GENERIC; // this is the default
     while (argc > 0) {
-      if ( ARG_IS_S_EXACT(0,"vacf") ) {
-        Tcl_AppendResult(interp, "Cannot use vacf yet. Use generic instead.", (char *)NULL);
-	error=1;
-        //error=parse_vacf(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-        argc -= change;
-        argv += change;
-        if (error)
-          return TCL_ERROR; 
-	else 
-	  correlation_type=CORR_TYPE_VACF;
-      } 
-      else if ( ARG_IS_S_EXACT(0,"msd") ) {
-        Tcl_AppendResult(interp, "Cannot use msd yet. Use generic instead.", (char *)NULL);
-	error=1;
-        //error=parse_msd(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-        argc -= change;
-        argv += change;
-        if (error)
-          return TCL_ERROR;
-	else 
-	  correlation_type=CORR_TYPE_MSD;
-      } 
-      else if ( ARG_IS_S_EXACT(0,"structure_factor") ) {
-        error=parse_structure_factor(interp, argc, argv, &change,  &A_args,  &tau_lin, &tau_max,  &delta_t);
-        argc -= change;
-        argv += change;
-	if (error)
-          return TCL_ERROR;
-	else 
-	correlation_type=CORR_TYPE_SF;
-        // Only the following parameter combination makes sense
-	A_fun=&structure_factor;
-	compressA=&compress_discard1;
-	corr_operation=&complex_conjugate_product;
-	// dim_sf is the number of q vectors
-	// per vector, we store separately sin(q*r) and cos(q*r)
-	dim_A=dim_corr=2*((sf_params*)A_args)->dim_sf;
-      } 
-      else if ( ARG0_IS_S("first_obs") ) {
+      if ( ARG0_IS_S("first_obs") ) {
         argc -= 1;
         argv += 1;
         error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
@@ -289,16 +250,12 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
           argv += 2;
         }
       } else if ( ARG0_IS_S("hierarchy_depth") ) {
-        if ( argc < 2 || !ARG1_IS_I(hierarchy_depth)) {
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... hierarchy_depth $hierarchy_depth", (char *)NULL);
+        // FIXME This will be removed later
+	Tcl_AppendResult(interp, "*** CHANGE *** specify tau_max instead of hierarchy_depth *** ", (char *)NULL);
 	  return TCL_ERROR;
-	} else { 
-          argc -= 2;
-          argv += 2;
-        } // hierarchy_depth is already set
       } else if ( ARG0_IS_S("delta_t") ) {
         if ( argc < 2 || !ARG1_IS_D(delta_t)) {
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t", (char *)NULL);
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t ", (char *)NULL);
         } else { 
         argc -= 2;
         argv += 2;
@@ -350,18 +307,16 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   }
 
   // Now we should find out, if this is enough to make a correlation.
-  // Unfortunately still nothing happens here!
-  if(tau_max!=0.0 && hierarchy_depth!=0) {
-    Tcl_AppendResult(interp, "You cannot specify both tau_max and hierarchy_depth.\n", (char *)NULL);
-    return TCL_ERROR;
-  } 
-  if (tau_max>0.0) {
-    //set hierarchy depth which can  accomodate at least tau_max
-    hierarchy_depth=(int)ceil(1+log(tau_max/(tau_lin-1))/log(2.0));
-  }
-  if(! hierarchy_depth>0) {
-    Tcl_AppendResult(interp, "Hierarchy depth must be > 0. Correlation cannot be performed.\n", (char *)NULL);
+  if ( ! (delta_t > 0.0) ) { 
+    Tcl_AppendResult(interp, "delta_t must be > 0.0. Correlation cannot be performed.\n", (char *)NULL);
     return TCL_ERROR; 
+  }
+  if (tau_max <= delta_t) { 
+    Tcl_AppendResult(interp, "tau_max must be >= delta_t. Correlation cannot be performed.\n", (char *)NULL);
+    return TCL_ERROR; 
+  } else {
+    //set hierarchy depth which can  accomodate at least tau_max
+    hierarchy_depth=(int)ceil( 1 + log( (tau_max/delta_t)/(tau_lin-1) ) / log(2.0) );
   }
   if(compressA==NULL) {
     Tcl_AppendResult(interp, "You have not chosen the compression function! Correlation cannot be performed.\n", (char *)NULL);
@@ -1495,7 +1450,7 @@ int interacts_with (void* params_p, double* A, unsigned int n_A) {
       if(dist2<cutoff2) {
         A[i] = 1;
 	break;
-	// interaction of particle i found, go for next
+	// interaction found for i, go for next
       }
     }
   }
