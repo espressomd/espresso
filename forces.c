@@ -96,10 +96,6 @@ void force_calc()
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
 
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
-#endif
-
 #ifdef COMFORCE
   calc_comforce();
 #endif
@@ -107,6 +103,10 @@ void force_calc()
 #ifdef METADYNAMICS
     /* Metadynamics main function */
     meta_perform();
+#endif
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
 #endif
 
 /* this must be the last force to be calculated (Mehmet)*/

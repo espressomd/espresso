@@ -890,8 +890,8 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 
   return TCL_OK;
 }
+#endif /* LB_GPU */
 /** Parser for the \ref lbnode command. */
-
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
 #if 1 
@@ -987,7 +987,7 @@ Tcl_AppendResult(interp, "lbnode_gpu command currently not implemented in the GP
   return TCL_ERROR;
 #endif /* LB_GPU */
 }
-
+#ifdef LB_GPU
 /** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g. */
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
