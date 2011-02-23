@@ -111,6 +111,7 @@ int send_recv_grid_size=0;
 /************************************************************/
 /*@{*/
 
+#ifdef P3M_DEBUG
 void static print_p3m(void) {
   fprintf(stderr, "general information: \n\t node: %d \n\t box_l: (%lf, %lf, %lf)\n", this_node, box_l[0], box_l[1], box_l[2]);
 
@@ -124,6 +125,8 @@ void static print_p3m(void) {
           p3m.cao, p3m.inter, p3m.accuracy, p3m.epsilon, p3m.cao_cut[0], p3m.cao_cut[1], p3m.cao_cut[2], p3m.a[0], p3m.a[1], p3m.a[2], p3m.ai[0], p3m.ai[1], p3m.ai[2], \
           p3m.alpha, p3m.r_cut, p3m.inter2, p3m.cao3, p3m.additional_mesh[0], p3m.additional_mesh[1], p3m.additional_mesh[2]);
 }
+
+#endif
 
 /** Calculates for charges the properties of the send/recv sub-meshes of the local FFT mesh. 
  *  In order to calculate the recv sub-meshes there is a communication of 
@@ -982,8 +985,6 @@ void realloc_ca_fields(int newsize)
 void calc_meshift(void)
 {
     int i;
-    double dmesh = (double)p3m.mesh[0];
-
     
     meshift_x = (double *) realloc(meshift_x, p3m.mesh[0]*sizeof(double));
     meshift_y = (double *) realloc(meshift_y, p3m.mesh[1]*sizeof(double));
@@ -1440,10 +1441,8 @@ static double p3m_m_time(int mesh[3],
 int p3m_adaptive_tune() {
   int  mesh[3] = {0, 0, 0}, tmp_mesh_points; 
   int tmp_mesh[3];
-  double mesh_factors[3], box_volume3;
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
-
   double                             alpha_L  = -1, tmp_alpha_L=0.0;
   double                             accuracy = -1, tmp_accuracy=0.0;
   double                            time_best=1e20, tmp_time;
