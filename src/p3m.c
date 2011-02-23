@@ -18,9 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file p3m.c  P3M algorithms, main file to handle all the long range interactions via P3M algorithms.
- *               Charge-Charge and magnetic dipole-dipole interactions are installed at this moment.
- *               Coming soon: charge-electrical dipole interaction.
+/** \file p3m.c  P3M algorithms, main file to handle all the long
+ *               range interactions via P3M algorithms.  
  *     
  *  For more information about the different p3m algorithms,
  *  see \ref p3m.h "p3m.h"
@@ -53,8 +52,9 @@
 
 #ifdef ELP3M
 
-/* defined only within this header file, for checking that system (electro/magnetostatic)
-   specific files are only included from here. */
+/* defined only within this header file, for checking that system
+   (electro/magnetostatic) specific files are only included from
+   here. */
 #define P3M_C_CURRENT
 
 /************************************************
@@ -198,17 +198,6 @@ int tclprint_to_result_DipolarP3M(Tcl_Interp *interp)
   return TCL_OK;
 }
 
-/************************************************/
-
-void   P3M_init() {
-#ifdef ELECTROSTATICS
-  P3M_init_charges();
-#endif
-  
-#ifdef  MAGNETOSTATICS  
-  P3M_init_dipoles();
-#endif    
-}
 
 /******************* common p3m assignment functions *****************************************/
 
