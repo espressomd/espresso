@@ -131,6 +131,7 @@
 #define CORR_TYPE_MSD           4
 
 
+void autoupdate_correlations();
 
 /** The struct that is used to calculate correlations *
  * 
@@ -151,6 +152,7 @@ typedef struct {
   unsigned int *n_vals;            // number of data values already present at a particular value of tau
   unsigned int t;                  // global time in number of frames
   double dt;                       // time interval at which samples arrive
+  int update_frequency;              // time distance between updates in MD timesteps 
   double tau_max;                  // maximum time, for which the correlation should be calculated
   unsigned int tau_lin;            // number of frames in the linear correlation
   unsigned int* newest;            // index of the newest entry in each hierarchy level
@@ -184,8 +186,13 @@ typedef struct {
   void* B_args;
 
   int is_from_file;
+  int autoupdate;
+  double last_update;
 
 } double_correlation;
+
+extern int correlations_autoupdate;
+extern double_correlation* correlations;
 
 
 // TODO: missing destructor

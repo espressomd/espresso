@@ -24,22 +24,25 @@
 
 double_correlation* correlations=0;
 unsigned int n_correlations = 0;
+int correlations_autoupdate=0;
 
 const char init_errors[][64] = {
-  "",
-  "No valid correlation given" ,
-  "delta_t must be > 0",
-  "tau_lin must be >= 2",
-  "hierarchy_depth must be >=1",
-  "window_distance must be >1",
-  "dimension of A was not >1",
-  "dimension of B was not >1",
-  "dim_corr was not >1",
-  "no proper function for first observable given",
-  "no proper function for second observable given",
-  "no proper function for correlation operation given",
-  "no proper function for compression of first observable given",
-  "no proper function for compression of second observable given"
+  "",                            // 0
+  "No valid correlation given" , // 1
+  "delta_t must be > 0",         // 2
+  "tau_lin must be >= 2",        // 3
+  "hierarchy_depth must be >=1", // 4
+  "window_distance must be >1",  // 5
+  "dimension of A was not >1",   // 6
+  "dimension of B was not >1",   // 7
+  "dim_corr was not >1",         // 8
+  "no proper function for first observable given",                // 9
+  "no proper function for second observable given",               //10 
+  "no proper function for correlation operation given",           //11
+  "no proper function for compression of first observable given", //12
+  "no proper function for compression of second observable given",//13
+  "dt is smaller than the MD timestep",//14
+  "dt is not a multiple of the MD timestep"//15
 };
 
 const char file_data_source_init_errors[][64] = {
@@ -95,6 +98,31 @@ int correlation_print_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
+int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv) {
+  int i;
+  if (argc > 0 ) {
+    if (ARG0_IS_S("start")) {
+      if(correlations[no].update_frequency > 0) {
+        correlations_autoupdate = 1;
+        correlations[no].autoupdate=1;
+        correlations[no].last_update=sim_time;
+        return TCL_OK;
+      } else {
+        Tcl_AppendResult(interp, "Could not start autoupdate: update frequency not set\n", (char *)NULL);
+        return TCL_ERROR;
+      }
+    } else if (ARG0_IS_S("stop")) {
+      correlations_autoupdate=0;
+      for (i=0; i<n_correlations; i++) {
+        if (correlations[i].autoupdate)
+          correlations_autoupdate=1;
+      }
+      return TCL_OK;
+    }
+  }
+  Tcl_AppendResult(interp, "Usage: analyze correlation $n autoupdate [ start | stop ]\n", (char *)NULL);
+  return TCL_ERROR;
+}
 
 int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A) = 0;
@@ -166,6 +194,8 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         } else {
           return TCL_OK;
         }
+      } else if (ARG0_IS_S("autoupdate")) {
+        return tclcommand_correlation_parse_autoupdate(interp, no, argc-1, argv+1);
       } else if (ARG0_IS_S("update_from_file")) {
         error = correlation_update_from_file(no);
         if (error) {
@@ -803,6 +833,13 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
 		  int correlation_type, int autocorrelation) {
   unsigned int i,j,k;
   self->dt = dt;
+  if ((dt-time_step)<-1e-6*time_step) {
+    return 14;
+  }
+  // check if dt is a multiple of the md timestep
+  if ( abs(dt/time_step - round(dt/time_step)>1e-6 ) ) 
+    return 15;
+  self->update_frequency = (int) floor(dt/time_step);
   self->tau_lin=tau_lin;
   self->hierarchy_depth = hierarchy_depth;
   self->dim_A = dim_A;
@@ -1444,3 +1481,14 @@ int tcl_input(void* data, double* A, unsigned int n_A) {
   return 0;
 }
 
+void autoupdate_correlations() {
+  int i;
+  for (i=0; i<n_correlations; i++) {
+//    printf("checking correlation %d autoupdate is %d \n", i, correlations[i].autoupdate);
+    if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
+//      printf("updating %d\n", i);
+      correlations[i].last_update=sim_time;
+      double_correlation_get_data(&correlations[i]);
+    }
+  }
+}
