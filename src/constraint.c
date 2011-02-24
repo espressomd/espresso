@@ -580,7 +580,7 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       }
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.length)) == TCL_ERROR)
 	return (TCL_ERROR);
-      con->c.pore.length *= 2;
+//      con->c.pore.length *= 2;
       argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
