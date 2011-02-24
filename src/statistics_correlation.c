@@ -41,8 +41,9 @@ const char init_errors[][64] = {
   "no proper function for correlation operation given",           //11
   "no proper function for compression of first observable given", //12
   "no proper function for compression of second observable given",//13
-  "dt is smaller than the MD timestep",//14
-  "dt is not a multiple of the MD timestep"//15
+  "tau_lin must be divisible by 2" // 14
+  "dt is smaller than the MD timestep",//15
+  "dt is not a multiple of the MD timestep"//16
 };
 
 const char file_data_source_init_errors[][64] = {
@@ -146,6 +147,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int correlation_type; // correlation type of correlation which is currently being created
   int autocorrelation=1; // by default, we are doing autocorrelation
   int n_bins; // number of bins for spherically averaged sf
+  int i;
 
   // Check if ID is negative
   if ( no < 0 ) {
@@ -171,6 +173,14 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 	    return TCL_ERROR;
 	  }
           return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
+	}
+      } else if (ARG0_IS_S("finalize")) {
+        if(argc==1) {
+          return double_correlation_finalize(&correlations[no]);
+	}
+	else {
+          Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize", buffer, (char *)NULL);
+	  return TCL_ERROR;
 	}
       } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
         correlations[no].A_args = tcl_input_p;
@@ -230,45 +240,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
     // working correlation class instance from that.
     correlation_type=CORR_TYPE_GENERIC; // this is the default
     while (argc > 0) {
-      if ( ARG_IS_S_EXACT(0,"vacf") ) {
-        Tcl_AppendResult(interp, "Cannot use vacf yet. Use generic instead.", (char *)NULL);
-	error=1;
-        //error=parse_vacf(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-        argc -= change;
-        argv += change;
-        if (error)
-          return TCL_ERROR; 
-	else 
-	  correlation_type=CORR_TYPE_VACF;
-      } 
-      else if ( ARG_IS_S_EXACT(0,"msd") ) {
-        Tcl_AppendResult(interp, "Cannot use msd yet. Use generic instead.", (char *)NULL);
-	error=1;
-        //error=parse_msd(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-        argc -= change;
-        argv += change;
-        if (error)
-          return TCL_ERROR;
-	else 
-	  correlation_type=CORR_TYPE_MSD;
-      } 
-      else if ( ARG_IS_S_EXACT(0,"structure_factor") ) {
-        error=parse_structure_factor(interp, argc, argv, &change,  &A_args,  &tau_lin, &tau_max,  &delta_t);
-        argc -= change;
-        argv += change;
-	if (error)
-          return TCL_ERROR;
-	else 
-	correlation_type=CORR_TYPE_SF;
-        // Only the following parameter combination makes sense
-	A_fun=&structure_factor;
-	compressA=&compress_discard1;
-	corr_operation=&complex_conjugate_product;
-	// dim_sf is the number of q vectors
-	// per vector, we store separately sin(q*r) and cos(q*r)
-	dim_A=dim_corr=2*((sf_params*)A_args)->dim_sf;
-      } 
-      else if ( ARG0_IS_S("first_obs") ) {
+      if ( ARG0_IS_S("first_obs") ) {
         argc -= 1;
         argv += 1;
         error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
@@ -280,7 +252,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         argc -= 1;
         argv += 1;
         error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
-	autocorrelation=0;
+	      autocorrelation=0;
         argc -= change;
         argv += change;
         if (error)
@@ -308,16 +280,12 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
           argv += 2;
         }
       } else if ( ARG0_IS_S("hierarchy_depth") ) {
-        if ( argc < 2 || !ARG1_IS_I(hierarchy_depth)) {
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... hierarchy_depth $hierarchy_depth", (char *)NULL);
+        // FIXME This will be removed later
+	Tcl_AppendResult(interp, "*** CHANGE *** specify tau_max instead of hierarchy_depth *** ", (char *)NULL);
 	  return TCL_ERROR;
-	} else { 
-          argc -= 2;
-          argv += 2;
-        } // hierarchy_depth is already set
       } else if ( ARG0_IS_S("delta_t") ) {
         if ( argc < 2 || !ARG1_IS_D(delta_t)) {
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t", (char *)NULL);
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t ", (char *)NULL);
         } else { 
         argc -= 2;
         argv += 2;
@@ -369,18 +337,16 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   }
 
   // Now we should find out, if this is enough to make a correlation.
-  // Unfortunately still nothing happens here!
-  if(tau_max!=0.0 && hierarchy_depth!=0) {
-    Tcl_AppendResult(interp, "You cannot specify both tau_max and hierarchy_depth.\n", (char *)NULL);
-    return TCL_ERROR;
-  } 
-  if (tau_max>0.0) {
-    //set hierarchy depth which can  accomodate at least tau_max
-    hierarchy_depth=(int)ceil(1+log(tau_max/(tau_lin-1))/log(2.0));
-  }
-  if(! hierarchy_depth>0) {
-    Tcl_AppendResult(interp, "Hierarchy depth must be > 0. Correlation cannot be performed.\n", (char *)NULL);
+  if ( ! (delta_t > 0.0) ) { 
+    Tcl_AppendResult(interp, "delta_t must be > 0.0. Correlation cannot be performed.\n", (char *)NULL);
     return TCL_ERROR; 
+  }
+  if (tau_max <= delta_t) { 
+    Tcl_AppendResult(interp, "tau_max must be >= delta_t. Correlation cannot be performed.\n", (char *)NULL);
+    return TCL_ERROR; 
+  } else {
+    //set hierarchy depth which can  accomodate at least tau_max
+    hierarchy_depth=(int)ceil( 1 + log( (tau_max/delta_t)/(tau_lin-1) ) / log(2.0) );
   }
   if(compressA==NULL) {
     Tcl_AppendResult(interp, "You have not chosen the compression function! Correlation cannot be performed.\n", (char *)NULL);
@@ -391,12 +357,14 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
     B_fun=&obs_nothing;
     compressB=&compress_do_nothing;
   } else {
-    if(B_fun==NULL) {
-        Tcl_AppendResult(interp, "You have not chosen  the function for computing observable B.  Taking compressB=compressA by default.\n", (char *)NULL);
+    printf("auto %d\n", autocorrelation);
+    if(B_fun==NULL && compressB!=NULL) {
+      Tcl_AppendResult(interp, "You have not chosen compressB but not a function for computing observable B.\n", (char *)NULL);
        return TCL_ERROR; 
-    } else if(compressB==NULL) {
+    } 
+    if(compressB==NULL) {
         Tcl_AppendResult(interp, "You are not performing autocorrelation but have not chosen the compressB function. Taking compressB=compressA by default.\n", (char *)NULL);
-	compressB=compressA;
+	      compressB=compressA;
     }
   }
   
@@ -634,51 +602,17 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
 
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args) {
 
-
   file_data_source* fds;
   IntList* types=0;
   int error=0;
   int temp;
   int order=0;
+  double cutoff;
   int *order_p;
-//<<<<<<< HEAD
-//  if (ARG0_IS_S("particle_velocities") || ARG0_IS_S("particle_positions") || ARG0_IS_S("structure_factor"))  {
-//    if (ARG0_IS_S("particle_velocities")) {
-//      *A_fun = &particle_velocities;
-//      *A_args=0;
-//      *dim_A=3*n_total_particles;
-//      *change=1;
-//    } else if (ARG0_IS_S("particle_positions")) {
-//      *A_fun = &particle_positions;
-//      *A_args=0;
-//      *dim_A=3*n_total_particles;
-//      *change=1;
-//    } else if (ARG0_IS_S("structure_factor") ) {
-//      if (argc > 1 && ARG1_IS_I(order)) {
-//        *A_fun = &structure_factor;
-//        order_p=malloc(sizeof(int));
-//        *order_p=order;
-//        *A_args=(void*) order_p;
-//        int order2,i,j,k,l,n ; 
-//        order2=order*order ;
-//        l=0;
-//        // lets counter the number of entries for the DSF
-//        for(i=-order; i<=order; i++) 
-//          for(j=-order; j<=order; j++) 
-//            for(k=-order; k<=order; k++) {
-//	            n = i*i + j*j + k*k;
-//	            if ((n<=order2) && (n>=1)) 
-//                l=l+2;
-//	    }
-//      *dim_A=l;
-//      *change=2;
-//      } else { 
-//        sf_print_usage(interp);
-//        return TCL_ERROR; 
-//      }
-//=======
   IntList* ids;
-
+  IntList* ids1;
+  iw_params* iw_params_p;
+  
   if (ARG0_IS_S("particle_velocities")) {
     *A_fun = &particle_velocities;
     if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
@@ -745,14 +679,36 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
 	          if ((n<=order2) && (n>=1)) 
               l=l+2;
 	  }
-    *dim_A=l;
-    *change=2;
-    return TCL_OK;
+      *dim_A=l;
+      *change=2;
+      return TCL_OK;
     } else { 
-      Tcl_AppendResult(interp, "usage: structure_factor $order\n" , (char *)NULL);
+      sf_print_usage(interp);
       return TCL_ERROR; 
-//>>>>>>> kessel_github/timecorr
     }
+  }
+  if (ARG0_IS_S("interacts_with") ) {
+    *A_fun = &interacts_with;
+    ids=(IntList*)malloc(2*sizeof(IntList));
+    if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+      return TCL_ERROR;
+    iw_params_p=(iw_params*)malloc(sizeof(iw_params));
+    iw_params_p->ids1=ids;
+    *change=1+temp;
+    if (! parse_id_list(interp, argc-3, argv+3, &temp, &ids1) == TCL_OK ) {
+      return TCL_ERROR;
+    }
+    *change+=temp;
+    iw_params_p->ids2=ids1;
+    if ( argc < 5 || !ARG_IS_D(5,cutoff)) {
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... interacts_with id_list1 id_list2 cutoff", (char *)NULL);
+	  return TCL_ERROR;
+    }
+    *change+=1;
+    iw_params_p->cutoff=cutoff;
+    *A_args=(void*)iw_params_p;
+    *dim_A=ids->n; // number of ids from the 1st argument
+    return TCL_OK;
   }
   if (ARG0_IS_S("textfile")) {
     // We still can only handle full files
@@ -834,11 +790,11 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   unsigned int i,j,k;
   self->dt = dt;
   if ((dt-time_step)<-1e-6*time_step) {
-    return 14;
+    return 15;
   }
   // check if dt is a multiple of the md timestep
   if ( abs(dt/time_step - round(dt/time_step)>1e-6 ) ) 
-    return 15;
+    return 16;
   self->update_frequency = (int) floor(dt/time_step);
   self->tau_lin=tau_lin;
   self->hierarchy_depth = hierarchy_depth;
@@ -883,6 +839,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     return 12;
   if (compressB==0)
     return 13;
+  if (tau_lin%2)
+    return 14;
 
   if (A_fun == &file_data_source_readline && B_fun == &file_data_source_readline) {
     self->is_from_file = 1;
@@ -1028,15 +986,119 @@ int double_correlation_get_data( double_correlation* self ) {
   return 0;
 }
 
+int double_correlation_finalize( double_correlation* self ) {
+  // We must now go through the hierarchy and make sure there is space for the new 
+  // datapoint. For every hierarchy level we have to decide if it necessary to move 
+  // something
+  int i,j,k;
+  int ll=0; // current lowest level
+  int vals_ll=0; // number of values remaining in the lowest level
+  int dt=2;
+  int highest_level_to_compress;
+  unsigned int index_new, index_old, index_res;
+  int error;
+  //int compress;
+  int tau_lin=self->tau_lin;
+  int hierarchy_depth=self->hierarchy_depth;
+  
+  double* temp = malloc(self->dim_corr*sizeof(double));
+  if (!temp)
+    return 4;
+  //printf ("tau_lin:%d, hierarchy_depth: %d\n",tau_lin,hierarchy_depth); 
+  //for(ll=0;ll<hierarchy_depth;ll++) printf("n_vals[l=%d]=%d\n",ll, self->n_vals[ll]);
+  for(ll=0;ll<hierarchy_depth-1;ll++) {
+    if(self->n_vals[ll] > tau_lin+1 ) vals_ll = tau_lin + self->n_vals[ll]%2;
+    else vals_ll=self->n_vals[ll];
+    //printf("\nfinalizing level %d with %d vals initially\n",ll,vals_ll);
+    
+    while(vals_ll) {
+      // Check, if we will want to push the value from the lowest level
+      if(vals_ll % 2)  {
+        highest_level_to_compress=ll; 
+      } else {
+        highest_level_to_compress=-1;
+      }
+      //printf("have %d values in ll=%d ",vals_ll,ll);
+      //if(highest_level_to_compress<0) printf("Do NOT ");
+      //printf("Compress\n"); fflush(stdout);
+  
+      i=ll+1; // lowest level, for which we have to check for compression 
+      j=1; 
+      // Lets find out how far we have to go back in the hierarchy to make space for the new value 
+      while (highest_level_to_compress>-1) { 
+        //printf("test level %d for compression, n_vals=%d ... ",i,self->n_vals[i]);
+        if ( self->n_vals[i]%2 ) { 
+	  if ( i < (hierarchy_depth - 1) && self->n_vals[i]> tau_lin) { 
+            //printf("YES\n");
+  	    highest_level_to_compress+=1; 
+  	    i++; 
+  	  } else {
+            //printf("NO\n");
+	    break;
+	  }
+        } else {
+          //printf("NO\n");
+	  break; 
+        }
+      }
+      vals_ll-=1; 
+      //printf("ll: %d, highest_lvevel_to_compress:%d\n",ll, highest_level_to_compress); fflush(stdout);
+    
+      // Now we know we must make space on the levels 0..highest_level_to_compress 
+      // Now lets compress the data level by level.  
+    
+      for ( i = highest_level_to_compress; i >=ll; i-- ) { 
+        // We increase the index indicating the newest on level i+1 by one (plus folding) 
+        self->newest[i+1] = (self->newest[i+1] + 1) % (tau_lin+1); 
+        self->n_vals[i+1]+=1; 
+        //printf("compressing level %d no %d and %d to level %d no %d, nv %d\n",i, (self->newest[i]+1) % (tau_lin+1), (self->newest[i]+2) % (tau_lin+1), i+1, self->newest[i+1], self->n_vals[i]); 
+        (*self->compressA)(self->A[i][(self->newest[i]+1) % (tau_lin+1)],  
+	                   self->A[i][(self->newest[i]+2) % (tau_lin+1)], 
+                           self->A[i+1][self->newest[i+1]],self->dim_A);
+        (*self->compressB)(self->B[i][(self->newest[i]+1) % (tau_lin+1)],  
+                           self->B[i][(self->newest[i]+2) % (tau_lin+1)], 
+                           self->B[i+1][self->newest[i+1]],self->dim_B);
+      } 
+      self->newest[ll] = (self->newest[ll] + 1) % (tau_lin+1); 
+
+      // We only need to update correlation estimates for the higher levels
+      for ( i = ll+1; i < highest_level_to_compress+2; i++) {
+        for ( j = (tau_lin+1)/2+1; j < MIN(tau_lin+1, self->n_vals[i]); j++) {
+          index_new = self->newest[i];
+          index_old = (self->newest[i] - j + tau_lin + 1) % (tau_lin + 1);
+          index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;
+          error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr);
+          if ( error != 0)
+            return error;
+          self->n_sweeps[index_res]++;
+          for (k = 0; k < self->dim_corr; k++) {
+            self->result[index_res][k] += temp[k];
+          }
+        }
+      }
+      // lowest level exploited, go upwards
+      if(!vals_ll) { 
+        //printf("reached end of level %d, go up\n",ll); 
+	//fflush(stdout);
+      }
+    }
+  }
+  free(temp);
+  return 0;
+}
+
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp) {
 
   int j, k;
   double dt=self->dt;
   char buffer[TCL_DOUBLE_SPACE];
+  char ibuffer[TCL_INTEGER_SPACE+2];
 
   for (j=0; j<self->n_result; j++) {
      Tcl_AppendResult(interp, " { ", (char *)NULL);
      Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
+     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+     sprintf(buffer, "%d ", self->n_sweeps[j]);
      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
      for (k=0; k< self->dim_corr; k++) {
      if (self->n_sweeps[j] == 0 ) {
@@ -1216,12 +1278,13 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
   if (!(dim_A == dim_B )) {
     printf("Error in componentwise product: The vector sizes do not match");
     return 5;
+  } 
+  if (!(dim_A == dim_corr )) {
+    printf("Error in componentwise product: The vector sizes do not match");
+    return 5;
   }
-  j=0;
-  for ( i = 0; i < dim_A/2; i++ ) {
-    C[j] = A[j]*B[j];
-    j++;
-  }
+  for ( i = 0; i < dim_A; i++ )
+    C[i] = A[i]*B[i];
   return 0;
 }
 
@@ -1229,7 +1292,7 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
   unsigned int i,j;
   if (!(dim_A == dim_B )) {
     printf("Error in complex_conjugate product: The vector sizes do not match");
-    return 1;
+    return 5;
   }
   j=0;
   for ( i = 0; i < dim_A/2; i++ ) {
@@ -1281,7 +1344,6 @@ int particle_velocities(void* idlist, double* A, unsigned int n_A) {
   }
   return 0;
 }
-
 
 #ifdef ELECTROSTATICS
 int particle_currents(void* idlist, double* A, unsigned int n_A) {
@@ -1397,6 +1459,43 @@ int structure_factor(void* params_p, double* A, unsigned int n_A) {
     //printf("finished calculating sf\n"); fflush(stdout);
     return 0;
 }
+
+int interacts_with (void* params_p, double* A, unsigned int n_A) {
+  iw_params *params=(iw_params*)params_p;
+  IntList* ids1;
+  IntList* ids2;
+  int i,j;
+  double dx,dy,dz,dist2;
+  double cutoff2=params->cutoff*params->cutoff;
+  double pos1[3], pos2[3], dist[3];
+  ids1=params->ids1;
+  ids2=params->ids2;
+  sortPartCfg();
+  for ( i = 0; i<ids1->n; i++ ) {
+    if (ids1->e[i] >= n_total_particles)
+      return 1;
+    pos1[0]=partCfg[ids1->e[i]].r.p[0];
+    pos1[1]=partCfg[ids1->e[i]].r.p[1];
+    pos1[2]=partCfg[ids1->e[i]].r.p[2];
+    for ( j = 0; j<ids2->n; j++ ) {
+      if (ids2->e[j] >= n_total_particles)
+        return 1;
+      A[i] = 0;
+      pos2[0]=partCfg[ids2->e[j]].r.p[0];
+      pos2[1]=partCfg[ids2->e[j]].r.p[1];
+      pos2[2]=partCfg[ids2->e[j]].r.p[2];
+      get_mi_vector(dist,pos1,pos2);
+      dist2= dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2];
+      if(dist2<cutoff2) {
+        A[i] = 1;
+	break;
+	// interaction found for i, go for next
+      }
+    }
+  }
+  return 0;
+}
+
 
 
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns) {

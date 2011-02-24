@@ -144,6 +144,7 @@ void autoupdate_correlations();
 typedef struct {
   unsigned int autocorrelation;    // autocorrelation flag
   unsigned int correlation_type;   // to help keeping track what we are actually correlating
+  unsigned int finalized;          // non-zero of correlation is finialized
   unsigned int hierarchy_depth;    // maximum level of data compression
   unsigned int dim_A;              // dimensionality of A
   unsigned int dim_B;
@@ -205,6 +206,15 @@ typedef struct {
   double *q_density; // number of q vectors per bin
   // entries for spherical averaging
 } sf_params;
+
+// TODO: missing destructor
+/** struct for passing arguments to interacts_with 
+ */
+typedef struct {
+  double cutoff;
+  IntList *ids1;
+  IntList *ids2;
+} iw_params;
 
 
 /** This struct allow to use a file as input for the correlation.
@@ -276,6 +286,14 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
  */
 int double_correlation_get_data(  double_correlation* self );
 
+/** At the end of data collection, go through the whole hierarchy and correlate data left there
+ *  
+ * This works pretty much the same as get_data, but does not feed on new data, just uses what
+ * is already available.
+ *
+ */
+int double_correlation_get_data(double_correlation* self);
+
 /** writes the correlation to the TCL console */
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 
 int double_correlation_write_to_file( double_correlation* self, char* filename); 
@@ -342,6 +360,11 @@ int currents(void* typelist, double* A, unsigned int n_A);
 
 /** Calculate structure factor from positions and scattering length */
 int structure_factor(void* params, double* A, unsigned int n_A);
+
+/** See if particles from idList1 interact with any of the particles in idList2 
+input parameters are passed via struct iw_params
+*/
+int interacts_with(void* params, double* A, unsigned int n_A);
 
 /** Do nothing */
 int obs_nothing (void* params, double* A, unsigned int n_A);
