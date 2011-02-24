@@ -130,6 +130,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
 ])
 
 ##################################
+# test for -Wall
+AC_MSG_CHECKING([whether the compiler accepts -Wall])
+saved_CFLAGS=$CFLAGS
+CFLAGS="-Wall $CFLAGS"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+  AC_MSG_RESULT(yes);try_add_flag_res=yes
+],[
+  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+])
+
+##################################
 # test inlining
 AS_IF([test .$enable_debug = .yes || test .$enable_profiling = .yes], [
   mdinline=static
