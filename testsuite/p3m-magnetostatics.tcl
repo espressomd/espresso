@@ -32,7 +32,7 @@ require_feature "MAGNETOSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"
 
-require_max_nodes_per_side 1
+#require_max_nodes_per_side 1
 
 puts "--------------------------------------------------------------------"
 puts "- Testcase p3m-magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"

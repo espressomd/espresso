@@ -32,7 +32,8 @@ tests= \
 	constraints.tcl \
 	mass.tcl \
 	lb.tcl \
-        tunable_slip.tcl
+        tunable_slip.tcl \
+	virtual-sites.tcl
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) \
@@ -63,14 +64,11 @@ EXTRA_DIST = $(tests) \
 	\
 	gen_fene.tcl gen_harm.tcl
 
-if MPI_FAKE
-processors=1
-else
-processors=1 2 3 4 6 8
-endif
-
 # run the testsuite
 check-local: runtest.sh
-	@builddir@/runtest.sh -p "$(processors)" $(tests)
+	if test -n "$(processors)"; then \
+	  procopt=-p "$(processors)"; \
+	fi; \
+	@builddir@/runtest.sh $$procopt $(tests)
 
 DISTCLEANFILES=runtest.sh

@@ -82,8 +82,10 @@ idxtotoc                        % add the index to the TOC
   \unskip\setbox0=\lastbox%%%DPC%%%
   \egroup
   \par%
+  \vspace{0.5\baselineskip}%
   \noindent\hspace{1em}%
   \codebox{\box0}%
+  \vspace{0.5\baselineskip}%
   \par\noindent%
 }
 \makeatother
@@ -286,6 +288,7 @@ idxtotoc                        % add the index to the TOC
 \include{quickref}
 \include{features}
 \include{examples}
+\include{plotting}
 
 %% Scientific appendices: description of algorithms
 \include{mmm}
