@@ -21,24 +21,20 @@
 \index{analysis}
 \newescommand{analyze}
 
-\todo{Intro: \lit{analyze} can measure observables, but also define
-  topologies and store configurations}
+\es provides some tools for online (during the simulation run) and
+offline (on stored data) analysis of your simulation. The
+\keyword{analyze} command can hereby has into two main uses:
+Calculation of observables (\keyword{analyze \var{observable}}) and
+definition and analysis of topologies in the system (\keyword{analyze
+  \var{topology command}}).
+
+In addition, \es offers the command \keyword{uwerr} (see section
+\ref{sec:uwerr} for computing statistical errors in time series.
+
 \section{Measuring observables}
 
 The \keyword{analyze}-command provides online-calculation of local and
 global observables.
-
-\todo{Missing: 
-  \keyword{radial_density_map}, 
-  \keyword{modes2d},
-  \keyword{get_lipid_orients},
-  \keyword{get_folded_positions},
-  \keyword{bilayer_set},
-  \keyword{bilayer_density_profile},
-  \keyword{lipid_orient_order},
-  \keyword{cell_gpb},
-  \keyword{Vkappa}
-}
 
 \subsection{Minimal distances between particles}
 \label{analyze:mindist}
@@ -104,6 +100,99 @@ The output corresponds to the blockfile format (see section
   \vdots 
 \}
 \end{code}
+
+\subsection{Radial density map}
+\label{analyze:radialdensitymap}
+
+\begin{essyntax}
+  analyze radial_density_map xbins ybins xrange yrange
+  \{axisofrotation\} \{centerofrotation\} \{beadtypelist\}
+  \opt{thetabins}
+\end{essyntax}
+
+Returns the radial density of particles around a given
+axis. Parameters are:
+
+\todo{Someone who knows or wrote this command should check this.}
+
+\begin{itemize}
+\item \keyword{xbins} histogram bins in x direction.
+\item \keyword{ybins} histogram bins in y direction.
+\item \keyword{xrange} range for analysis in x direction.
+\item \keyword{yrange} range for analysis in y direction.
+\item \keyword{axisofrotation} rotate around given axis. (x, y, or z)
+\item \keyword{centerofrotation} rotate around given point.
+\item \keyword{beadtypelist} only analyze beads of given types.
+\item \keyword{thetabins} histogram bins in angle theta.
+\end{itemize}
+
+\subsection{Modes}
+\label{analyze:modes2d}
+
+\begin{essyntax}
+  analyze modes2d
+\end{essyntax}
+
+Analyzes the modes of a configuration. Requires that a grid is set and
+that the system contains more than two particles. Output are four
+numbers in the order:
+
+\begin{displaymath}
+ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
+\end{displaymath}
+
+\subsection{Lipid orientation}
+\label{analyze:lipids}
+
+\begin{essyntax}
+  \variant{1} analyze get_lipid_orients
+  \variant{2} analyze lipid_orient_order
+\end{essyntax}
+
+\todo{Document the usage!}
+
+\subsection{Bilayers}
+\label{analyze:bilayers}
+
+\begin{essyntax}
+  \variant{1} analyze bilayer_set
+  \variant{2} analyze bilayer_density_profile
+\end{essyntax}
+
+\todo{Document the usage!}
+
+\subsection{GPB}
+\label{analyze:cellgpb}
+
+\begin{essyntax}
+  analyze cell_gpb \var{Manning parameter} \var{outer cell radius}
+  \var{inner cell radius} \opt{\var{accuracy}
+    \opt{\var{number of interations}}}
+\end{essyntax}
+
+\todo{Document the usage and what it is!}
+
+\subsection{Get folded positions}
+\label{analyze:folded}
+
+\begin{essyntax}
+  analyze get_folded_positions \opt{-molecule} \opt{shift \var{x} \var{y} \var{z}}
+\end{essyntax}
+
+Outputs the folded positions of particles. Without any parameters, the
+positions of all particles are given, folded to the box length. The
+optional parameter \keyword{-molecule} ensures that molecules
+(particle groups) are kept intact. The optional shift parameters can
+be used to shift the not seperated molecules if needed.
+
+\subsection{Vkappa}
+\label{analyze:Vkappa}
+
+\begin{essyntax}
+  analyze Vkappa \opt{\alt{ reset \asep read \asep set \var{V_{\kappa, 1}} \var{V_{\kappa, 2}} \var{avk} } }
+\end{essyntax}
+
+\todo{Document the usage and what it is!}
 
 \subsection{Radial distribution function}
 \label{analyze:rdf}
@@ -518,7 +607,17 @@ specifying the local pressure tensor in each bin.
 \analyzeindex{topologies}
 \label{analyze:set}
 
-\todo{Topologies intro}
+\todo{Topologies is probably not the best name for this section}
+
+The following set of functions is designed to facilitate analysis 
+of molecules. Molecules are expected to be a group of particles
+comprising a contiguous range of particle IDs. Each molecule
+is a set of consecutively numbered particles and all molecules
+are supposed to consist of the same number of particles.
+Some functions in this group require that the particles constituting
+a molecule are connected into linear chains (particle $n$ is connected
+to $n+1$ and so on) while others are applicable to molecules
+of whatever topology.
 
 The \lit{analyze set} command defines the structure of the current
 system to be used with some of the analysis functions.
@@ -526,17 +625,26 @@ system to be used with some of the analysis functions.
 \begin{essyntax}
   \variant{1} analyze set chains \opt{\var{chain\_start} \var{n\_chains}
     \var{chain\_length}}
-  \variant{2} analyze set chains
+  \variant{2} analyze set topo\_part\_sync
+  \variant{3} analyze set
+  %\variant{4} analyze set trapmol \var{mol\_id} \var{xpos} \var{ypos} \var{zpos} \var{isrelative} \var{spring\_constant} \var{drag\_constant} coords \var{trapped\_coord\_x} \var{trapped\_coord\_y} \var{trapped\_coord\_z} noforce\_coords \var{noforce\_coord\_x} \var{noforce\_coord\_y} \var{noforce\_coord\_z}
 \end{essyntax}
-
-\todo{Update documentation for set_topology}
 
 Variant \variant{1} defines a set of \var{n\_chains} chains of equal
 length \var{chain\_length} which start with the particle with particle
 number \var{chain\_start} and are consecutively numbered (\ie the last
 particle in that topology has number $\var{chain\_start} +
-\var{n\_chains}*\var{chain\_length}$). Variant \variant{2} will return
-the chains currently stored.
+\var{n\_chains}*\var{chain\_length}$). 
+
+Variant \variant{2} synchronizes topology and particle data, assigning \var{mol\_id} values to particles.
+
+Variant \variant{3} will return the chains currently stored.
+
+%\todo{Why is setting up a trap implemented via analyze command?}
+%Variant \variant{3} sets a trap on a molecule, i.e.\ an external potential acting on it.
+%\var{mol\_id} define the molecule ID on which the trap is set, \var{xpos} \var{ypos} \var{zpos} define coordinates of the centre of the trap. \var{isrelative} is an integer specifying if the trap is relative or absolute. (Requires features: MOLFORCES and EXTERNAL\_FORCES).
+%\todo{Trapmol documentation still incomplete.}
+
 
 \subsection{Chains}
 \analyzeindex{chains}
@@ -569,9 +677,18 @@ stored configurations (see section \vref{sec:stored-configs}).
   analyze \alt{rg \asep <rg>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-\todo{Reference?}
-Returns the radius of gyration averaged over all chains.  If
-\lit{<rg>} is used, the radius of gyration is averaged over all stored
+Returns the radius of gyration averaged over all chains. It is a radius
+of a sphere, which would have the same moment of inertia as the molecule, 
+defined as
+\begin{equation}
+\label{eq:Rg}
+R_{\mathrm G}^2 = \frac{1}{N} \sum\limits_{i=1}^{N} \left(\vec r_i - \vec r_{\mathrm{cm}}\right)^2\,,
+\end{equation}
+where $\vec r_i$ are position vectors of individual particles constituting a molecule
+and $\vec r_{\mathrm{cm}}$ is the position vector of its centre of mass. The sum runs
+over all $N$ particles comprising the molecule. For more information see
+any polymer science book, e.g.~\cite{rubinstein03a}.
+If \lit{<rg>} is used, the radius of gyration is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
@@ -585,10 +702,16 @@ configurations (see section \vref{sec:stored-configs}).
   analyze \alt{rh \asep <rh>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-\todo{Reference?}
-Returns the hydrodynamic radius averaged over all chains.  If
-\lit{<rh>} is used, the hydodynamic radius is averaged over all stored
+Returns the hydrodynamic radius averaged over all chains.  
+If \lit{<rh>} is used, the hydodynamic radius is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
+The following formula is used for the computation:
+\begin{equation}
+\label{eq:Rh}
+\frac{1}{R_{\mathrm H}} = \frac{2}{N^2} \sum\limits_{i=1}^{N} \sum\limits_{j=i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
+\end{equation}
+The above-mentioned formula is only valid under certain assumptions.
+For more information, see Chapter 4 and eqaution 4.102 in~\cite{doi86a}.
 \minisec{Output format}
 \begin{code}
 \{ \var{rh} \var{error\_of\_rh} \}
@@ -600,8 +723,9 @@ configurations (see section \vref{sec:stored-configs}).
  analyze \alt{internal_dist \asep <internal_dist>} 
  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-Returns the averaged internal distances within the chains.  If
-\lit{<internal_dist>} is used, the values are averaged over all stored
+Returns the averaged internal distances within the chains (over
+all pairs of particles).  
+If \lit{<internal_dist>} is used, the values are averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 \minisec{Output format}
 \begin{code}
@@ -612,6 +736,7 @@ considered (0 = next neighbours, 1 = one monomer in between, \dots).
 
 \subsubsection{Bond distances}
 \analyzeindex{bond distances}
+\todo{Why is this called bond distances? It has nothing to do with bonds.}
 \begin{essyntax}
   analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -642,6 +767,8 @@ only at specific chains, use the optional arguments, \ie $\var{chain\_start} =
 chain's monomers. If \lit{<bond_l>} is used, the value will be
 averaged over all stored configurations (see section
 \vref{sec:stored-configs}).
+This function assumes linear chain topology and does not check 
+if the bonds really exist!
 
 \minisec{Output format}
 \begin{code}
@@ -887,52 +1014,7 @@ Variant \variant{1} returns all stored configurations, while variant
 \}
 \end{code}
 
-\section{Statistical analysis and plotting}
-
-\todo{Make this an appendix?}
-
-
-\subsection{Plotting}
-
-\begin{essyntax}
-  plotObs \var{file} \{ \var{x1}:\var{y1} \var{x2}:\var{y2} \dots \}
-  \opt{titles \{ \var{title1} \var{title2} \dots \}}
-  \opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}} 
-  \opt{scale \var{gnuplot-scale}}
-  \opt{cmd \var{gnuplot-command}} 
-  \opt{out \var{filebase}}
-\end{essyntax}
-Uses \textsc{gnuplot} to create plots of the data in \var{file} and
-writes it to the file \var{filebase}\lit{.ps} (default:
-\var{file}\lit{.ps}). The data in \var{file} should be stored
-column-wise. $\var{x1}, \var{x2} \dots$ and $\var{y1}, \var{y2} \dots$
-denote the columns used for the data of the x- and y-axis,
-respectively.
-
-\begin{arguments}
-\item[\opt{titles \{ \var{title1} \var{title2} \dots \}}] can be used
-  to specify the titles of the different plots
-\item[\opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}}] will define the
-  labels of the axis. If \var{ylabel} is omitted, the filename
-  \var{file} is used as label for the y-axis.
-\item[\opt{scale \var{gnuplot-scale}}] will define the scaling of the
-  axis (\eg \lit{scale logscale xy}) (default: \lit{nologscale xy})
-\item[\opt{cmd \var{gnuplot-command}}] allows to pass any other
-  commands to gnuplot. For example, use
-  \codebox{plotObs \dots cmd "set key left"} to adjust the titles on
-  the left side.
-\item[\opt{out \var{filebase}}] can be used to change the output
-  file. By default, the plot will be written to \var{file}\lit{.ps}.
-\end{arguments}
-
-\subsection{Joining plots}
-\begin{essyntax}
-  plotJoin \{ \var{source1} \var{source2} \dots \} \var{final}
-\end{essyntax}
-Joins the plot files $\var{source1}, \var{source2}, \dots$ into a
-single file \var{final}, while placing any two files on one page.
-Note that the resulting files may be huge and therefore hard to print!
-
+\section{Statistical analysis}
 
 \subsection{Computing averages and errors}
 
@@ -986,6 +1068,7 @@ variant \variant{3}, returning just these values as tiny tcl-list.
 \end{code}
 
 \section{\lit{uwerr}: Computing statistical errors in time series}
+\label{sec:uwerr}
 \newescommand{uwerr}
 
 \begin{essyntax}
@@ -1002,7 +1085,7 @@ arbitrary numerical time series accordings to \citet{wolff04a}.
 \item[\var{data}] is a matrix filled with the primary estimates
   $a_\alpha^{i,r}$ from $R\/$ replica with $N_1,N_2,\ldots,N_R$
   measurements each.
-  \todo{How exactly does the Tcl-list look like?}
+
   \begin{displaymath}
     \var{data}=\left(
       \begin{array}

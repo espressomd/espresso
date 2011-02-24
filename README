@@ -46,8 +46,7 @@ BibTeX record:
 
 LICENSE
 -------
-This file and the following files are licensed and copyrighted as
-indicated below:
+The following files are licensed and copyrighted as indicated below:
 
 doc/dg/figs/bond_angle.fig
 doc/dg/figs/datastorage.gif
@@ -137,7 +136,7 @@ testsuite/Makefile.am
 testsuite/p3m-magnetostatics-t1.data
 testsuite/pe_micelle.data
 
-"Copyright (C) 2010 The ESPResSo project
+"Copyright (C) 2010,2011 The ESPResSo project
 Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
@@ -156,3 +155,11 @@ General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>."
 
+This file is licensed as follows:
+
+Copyright (C) 2010,2011 The ESPResSo project
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without any warranty.

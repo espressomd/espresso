@@ -82,6 +82,7 @@ Features can be activated in the configuration header
 \item \newfeature{MOLFORCES} \todo{Docs missing}
 \item \newfeature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which
   allows for fixed lengths bonds between particles. \todo{How to use it?}
+\item \newfeature{VIRTUAL\_SITES} Virtual sites are particles, the position and velocity of which is not obtained by integrating equations of motion. Rather, they are placed using the position (and orientation) of other particles. This allows for rigid arrangements of particles and for placing a particle in the center of mass of a set of other particles. See section \ref{sec:virtual}.
 \item \newfeature{OLD_RW_VERSION} This switches back to the old,
 \emph{wrong} random walk code of the polymer. Only use this if you
 rely on the old behaviour and \emph{know what you are doing}.

@@ -1,5 +1,6 @@
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
-# Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +19,10 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT(ESPResSo, [2.9.0], [espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[2.9.0],[espressomd-users@nongnu.org])
 
-AC_PREREQ(2.50)
-AC_CONFIG_SRCDIR([main.c])
+AC_PREREQ([2.59])
+AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -34,7 +35,7 @@ AM_MAINTAINER_MODE
 
 cat <<EOF
 ****************************************************************
-*      Checking compiler characterstics and MPI support        *
+*      Checking compiler characteristics and MPI support       *
 ****************************************************************
 EOF
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
@@ -44,7 +45,7 @@ m4_define([_AC_PROG_CC_G],[])
 #### MPI ####
 #############
 # Check for --with-mpi
-AC_ARG_WITH(mpi, [AC_HELP_STRING([--with-mpi],
+AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
     [compile with MPI (parallelization) support. If none is found, the
      fake implementation for only one processor is used. Default: auto])
 ],,[with_mpi=auto])
@@ -60,6 +61,8 @@ AX_MPI_ONLY([test x"$with_mpi" != xno],,[
 
 # if requested, use the fake implementation
 AM_CONDITIONAL(MPI_FAKE, [test x"$use_mpi_fake" = xyes])
+MPI_FAKE=$use_mpi_fake
+AC_SUBST(MPI_FAKE)
 
 # determine ESPRESSO_MPIEXEC
 AS_IF([test x"$use_mpi_fake" = xyes], [
@@ -100,8 +103,7 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 # test whether to enable debugging
 AC_ARG_ENABLE(debug,
-	AC_HELP_STRING(--enable-debug,
-		[Turn on debugging]),
+	AS_HELP_STRING([--enable-debug],[Turn on debugging]),
 	,enable_debug=no)
 if test .$enable_debug = .yes; then
    AC_DEFINE(DEBUG,,[Turn on debugging?])
@@ -110,8 +112,7 @@ fi
 ##################################
 # test whether to enable profiling
 AC_ARG_ENABLE(profiling,
-	AC_HELP_STRING(--enable-profiling,
-		[Turn on profiling]),
+	AS_HELP_STRING([--enable-profiling],[Turn on profiling]),
 	,enable_profiling=no)
 if test .$enable_profiling = .yes; then
    AC_DEFINE(PROFILING,,[Turn on profiling?])
@@ -160,6 +161,7 @@ esac
 
 ##################################
 # miscellaneous
+AC_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_C_CONST
 AC_HEADER_TIME
@@ -211,7 +213,6 @@ AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
-AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([atexit floor getcwd gethostbyname memset pow rint select socket sqrt])
@@ -228,7 +229,8 @@ LIBS="$LIBS -lm"
 # check for tcl
 AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
-AC_ARG_WITH(tcl,AC_HELP_STRING([--with-tcl=VERSION],[specify the tcl library to use (e.g. tcl8.4)]),
+AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
+            [specify the tcl library to use (e.g. tcl8.4)]),
             [], [with_tcl=yes])
 dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
 dnl with_tcl=no   bail out
@@ -285,8 +287,7 @@ fi
 ##################################
 # check for tk
 AC_ARG_WITH(tk,
-	AC_HELP_STRING([--with-tk=VERSION],
-		[whether to use Tk, and which version to use]),
+	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
 	[], [with_tk=no])
 dnl with_tk=no   don't use Tk
 dnl with_tk=yes  try to find a working Tk version, bail out if none is found
@@ -378,8 +379,7 @@ AC_DEFUN([ES_CHECK_FFTW2],[
 
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AC_HELP_STRING([--with-fftw=VERSION],
-		[specify the version of FFTW to use (2 or 3)]),
+	AS_HELP_STRING([--with-fftw=VERSION],[specify the version of FFTW to use (2 or 3)]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 dnl with_fftw=no    don't use FFTW
@@ -453,8 +453,7 @@ fi
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
 AC_ARG_WITH([cuda],
-	AC_HELP_STRING([--with-cuda=CUDAINSTALLDIR],
-		[specify where CUDA is installed.
+	AS_HELP_STRING([--with-cuda=CUDAINSTALLDIR],[specify where CUDA is installed.
 		The cuda compiler can also be specified by setting the NVCC
 		environment variable. The CUDA library and header can be
 		manually specified by using CPPFLAGS, LDFLAGS and LIBS.]),
@@ -522,7 +521,7 @@ EOF
 # check for efence
 AC_MSG_CHECKING([whether to use efence])
 AC_ARG_WITH(efence,
-  AC_HELP_STRING([--with-efence],[use ElectricFence memory debugging for the debug binary]),
+  AS_HELP_STRING([--with-efence],[use ElectricFence memory debugging for the debug binary]),
     ,with_efence=no)
 if test .$with_efence = .yes; then
   AC_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]))
@@ -534,14 +533,19 @@ AC_MSG_RESULT($with_efence)
 ##################################
 # Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
-  AC_HELP_STRING(--with-myconfig=FILE,
-    [default name of the local config file [[myconfig.h]]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.h],
+  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [myconfig.h]]),
+[ test .$with_myconfig = .no && with_myconfig=myconfig.h ],
 [ with_myconfig=myconfig.h ])
 AC_MSG_CHECKING([the name of the configuration header])
 myconfig=$with_myconfig
 AC_MSG_RESULT($myconfig)
 AC_SUBST(myconfig)
+
+##################################
+# Number of CPUs
+AX_COUNT_CPUS
+AC_ARG_VAR(CPU_COUNT,[number of CPUS available on this machine])
+AC_SUBST(CPU_COUNT)
 
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
 
@@ -559,9 +563,10 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
-AC_CONFIG_HEADERS([acconfig.h])
+AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
+	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
@@ -572,7 +577,8 @@ AC_CONFIG_FILES([
 	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	config/$myconfig:config/myconfig-default.h.in
+	src/myconfig-default.h:src/myconfig-default.h.in
+	myconfig-sample.h:src/myconfig-sample.h.in
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
@@ -610,6 +616,7 @@ Other settings:
 ---------------
 local config header	= $myconfig
 installation prefix	= $prefix
+number of CPUs		= $CPU_COUNT
 mympiexec               = $MYMPIEXEC
 mpiexec	     		= $MPIEXEC
 pdflatex		= $PDFLATEX
