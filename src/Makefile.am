@@ -132,11 +132,11 @@ noinst_LIBRARIES = libEspresso.a
 #################################################################
 FORCE:
 myconfig-final.h: FORCE
-	config_files=\
+	config_files="\
 	  $(top_builddir)/$(myconfig) \
 	  $(top_builddir)/src/$(myconfig) \
 	  $(top_srcdir)/$(myconfig) \
-	  $(top_srcdir)/src/$(myconfig); \
+	  $(top_srcdir)/src/$(myconfig)"; \
 	if test $(myconfig) = myconfig.h; then \
 	  config_files="$$config_files $(top_builddir)/src/myconfig-default.h"; \
 	fi; \
