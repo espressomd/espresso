@@ -173,6 +173,12 @@ typedef struct {
   double* result_data;
   int* tau_data;                     // just for double-checking, store tau for all results
 
+  double* A_accumulated_average;     // all A values are added up here
+  double* B_accumulated_average;     // all B values are added up here
+  double* A_accumulated_variance;    // all A**2 values are added up here
+  double* B_accumulated_variance;    // all B**2 values are added up here
+  unsigned int n_data;               // a counter to calculated averages and variances
+
   // compressing functions
   int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
   int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
@@ -368,6 +374,19 @@ int interacts_with(void* params, double* A, unsigned int n_A);
 
 /** Do nothing */
 int obs_nothing (void* params, double* A, unsigned int n_A);
+
+typedef struct { 
+  IntList* id_list;
+  double startz;
+  double stopz;
+  int nbins;
+} profile_data;
+
+int flux_profile(void* params, double* A, unsigned int n_A);
+
+int density_profile(void* params, double* A, unsigned int n_A);
+
+int lb_velocity_profile(void* params, double* A, unsigned int n_A);
 
 typedef struct {
   Tcl_Interp* interp;

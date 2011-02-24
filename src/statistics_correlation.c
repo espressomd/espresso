@@ -77,6 +77,74 @@ int correlation_update_from_file(unsigned int no) {
   return 0;
 }
 
+int correlation_print_average1(double_correlation* self, Tcl_Interp* interp) {
+  int i;
+  char buffer[TCL_DOUBLE_SPACE];
+  for (i=0; i< self->dim_A; i++) {
+    Tcl_PrintDouble(interp, self->A_accumulated_average[i]/self->n_data, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+}
+
+int correlation_print_variance1(double_correlation* self, Tcl_Interp* interp) {
+  int i;
+  char buffer[TCL_DOUBLE_SPACE];
+  for (i=0; i< self->dim_A; i++) {
+    Tcl_PrintDouble(interp, 
+        self->A_accumulated_variance[i]/self->n_data
+        - (self->A_accumulated_average[i]/self->n_data)*(self->A_accumulated_average[i]/self->n_data), buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+}
+
+int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* interp) {
+  int j, k;
+  double dt=self->dt;
+  char buffer[TCL_DOUBLE_SPACE];
+  double* correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+
+// We calculate the correlation time for each dim_corr by normalizing the correlation,
+// integrating it and finding out where C(tau)=tau;
+  double C_tau;
+  int ok_flag;
+  for (j=0; j<self->dim_corr; j++) {
+    correlation_time[j] = 0.; 
+  }
+
+  // here we still have to fix the stuff a bit!
+  printf("calculating autocorrelation time dim %d %d\n", self->dim_corr, self->n_result);
+  if (self->autocorrelation) {
+  } else {
+    for (j=0; j<self->dim_corr; j++) {
+      C_tau=1*self->dt;
+      ok_flag=0;
+      for (k=1; k<self->n_result; k++) {
+        C_tau+=(self->result[j][k]/ (double) self->n_sweeps[j] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[j][0]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
+        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f \n", 
+            C_tau, 
+            self->tau[k]*self->dt, 
+            exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data),
+            self->result[j][k]/ (double) self->n_sweeps[j]);
+
+//        if (C_tau < i*self->tau[k]*self->dt) {
+//          correlation_time[j]=2*self->tau[k]*self->dt;
+//          ok_flag=1;
+//          break;
+//        }
+      }
+      if (!ok_flag) {
+        correlation_time[j]=-1;
+      }
+    }
+  }
+
+  for (j=0; j<self->dim_corr; j++) {
+     Tcl_PrintDouble(interp, correlation_time[j], buffer);
+     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+  }
+  free(correlation_time);
+  return 0;
+}
 
 /* We can track several correlation functions at a time
 *  identified by their ids.
@@ -159,29 +227,37 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   if ( no < n_correlations ) {
     if (argc > 0)
       if (ARG0_IS_S("print")) {
-        if(argc==1)
+        if(argc==1) {
           return double_correlation_print_correlation(&correlations[no], interp);
-	else if (ARG1_IS_S("spherically_averaged_sf")) {
-	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
-	    if(argc!=2) { 
-              Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
-	      return TCL_ERROR;
-	    }
-	  } else {
-	    sprintf(buffer,"%d ",correlations[no].correlation_type);
-            Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
-	    return TCL_ERROR;
-	  }
-          return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
-	}
+        } else if (ARG1_IS_S("spherically_averaged_sf")) {
+      	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
+      	    if(argc!=2) { 
+                    Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
+      	      return TCL_ERROR;
+      	    }
+      	  } else {
+      	    sprintf(buffer,"%d ",correlations[no].correlation_type);
+                  Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
+      	    return TCL_ERROR;
+      	  }
+                return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
+        }
       } else if (ARG0_IS_S("finalize")) {
         if(argc==1) {
           return double_correlation_finalize(&correlations[no]);
-	}
-	else {
+        } else {
           Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize", buffer, (char *)NULL);
-	  return TCL_ERROR;
-	}
+    	    return TCL_ERROR;
+        }
+    	} else if (ARG1_IS_S("average1")) {
+        correlation_print_average1(&correlations[no], interp);
+        return TCL_OK;
+      } else if (ARG1_IS_S("variance1")) {
+        correlation_print_variance1(&correlations[no], interp);
+        return TCL_OK;
+      } else if (ARG1_IS_S("correlation_time")) {
+        correlation_get_correlation_time(&correlations[no], interp);
+        return TCL_OK;
       } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
         correlations[no].A_args = tcl_input_p;
         tcl_input_p->interp=interp;
@@ -229,10 +305,11 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
         return TCL_ERROR;
       }
-    else
+    else {
       Tcl_AppendResult(interp, "Usage for an already existing correlation:", (char *)NULL);
       Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
       return TCL_ERROR;
+    }
 
   } else if ( no == n_correlations ) {  
   
@@ -359,7 +436,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   } else {
     printf("auto %d\n", autocorrelation);
     if(B_fun==NULL && compressB!=NULL) {
-      Tcl_AppendResult(interp, "You have not chosen compressB but not a function for computing observable B.\n", (char *)NULL);
+      Tcl_AppendResult(interp, "You have chosen compressB but not a function for computing observable B.\n", (char *)NULL);
        return TCL_ERROR; 
     } 
     if(compressB==NULL) {
@@ -782,6 +859,42 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   }
 }
 
+int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data* pdata) {
+  int variables_read;
+  *change=0;
+  while (argc>0) {
+    if (parse_id_list(pdata->id_list, &variables_read)) {
+      argc-=variables_read;
+      argv+=variables_read;
+    } else if ( ARG0_IS_S("startz")){
+      if (argc>1 && ARG1_IS_D(pdata->startz)) {
+        argc-=2;
+        argv+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in flux_profile: could not read startx\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if ( ARG0_IS_S("stopz") ) {
+      if (argc>1 && ARG1_IS_D(pdata->startz)) {
+        argc-=2;
+        argv+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in flux_profile: could not read startx\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    }
+    if (ARG0_IS_S("nbins")) {
+      if (argc>1 && ARG1_IS_I(pdata->nbins)) {
+        argc-=2;
+        argv+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in flux_profile: could not read startx\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    }
+  }
+}
+
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   void* A_fun, void* A_args, void* B_fun, void* B_args, void* corr_operation, 
@@ -847,8 +960,29 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   }
 
   self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
-  if(autocorrelation) self->B_data = self->A_data;
-  else self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
+  if (autocorrelation) 
+    self->B_data = self->A_data;
+  else 
+    self->B_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_B*sizeof(double));
+  
+  self->n_data=0;
+  self->A_accumulated_average = (double*)malloc(dim_A*sizeof(double));
+  self->A_accumulated_variance= (double*)malloc(dim_A*sizeof(double));
+  for (k=0; k<dim_A; k++) {
+    self->A_accumulated_average[k]=0;
+    self->A_accumulated_variance[k]=0;
+  }
+  if (autocorrelation) {
+    self->B_accumulated_average =  0;
+    self->B_accumulated_variance = 0;
+  } else {
+    self->B_accumulated_average = (double*)malloc(dim_B*sizeof(double));
+    self->B_accumulated_variance = (double*)malloc(dim_B*sizeof(double));
+    for (k=0; k<dim_B; k++) {
+      self->B_accumulated_average[k]=0;
+      self->B_accumulated_variance[k]=0;
+    }
+  }
 
 
   self->n_result=tau_lin+1 + (tau_lin+1)/2*(hierarchy_depth-1);
@@ -950,6 +1084,20 @@ int double_correlation_get_data( double_correlation* self ) {
     return 1;
   if ( (*self->B_fun)(self->B_args, self->B[0][self->newest[0]], self->dim_B) != 0 )
     return 2;
+
+  // Now we update the cumulated averages and variances of A and B
+  self->n_data++;
+  for (k=0; k<self->dim_A; k++) {
+    self->A_accumulated_average[k]+=self->A[0][self->newest[0]][k];
+    self->A_accumulated_variance[k]+=self->A[0][self->newest[0]][k]*self->A[0][self->newest[0]][k];
+  }
+  // Here we check if it is an autocorrelation
+  if (!self->autocorrelation) {
+    for (k=0; k<self->dim_B; k++) {
+      self->B_accumulated_average[k]+=self->B[0][self->newest[0]][k];
+      self->B_accumulated_variance[k]+=self->B[0][self->newest[0]][k]*self->B[0][self->newest[0]][k];
+    }
+  }
 
   double* temp = malloc(self->dim_corr*sizeof(double));
   if (!temp)
