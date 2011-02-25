@@ -382,11 +382,20 @@ typedef struct {
   int nbins;
 } profile_data;
 
+typedef struct {
+  IntList* id_list;
+  double stopr;
+  double center[3];
+  int nbins;
+} radial_profile_data;
+
 int flux_profile(void* params, double* A, unsigned int n_A);
 
 int density_profile(void* params, double* A, unsigned int n_A);
 
 int lb_velocity_profile(void* params, double* A, unsigned int n_A);
+
+int radial_density_profile(void* params, double* A, unsigned int n_A);
 
 typedef struct {
   Tcl_Interp* interp;

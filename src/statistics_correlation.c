@@ -1,4 +1,4 @@
-/*
+ /*
   Copyright (C) 2010 The ESPResSo project
   
   This file is part of ESPResSo.
@@ -80,21 +80,31 @@ int correlation_update_from_file(unsigned int no) {
 int correlation_print_average1(double_correlation* self, Tcl_Interp* interp) {
   int i;
   char buffer[TCL_DOUBLE_SPACE];
+  if (self->n_data < 1) {
+    Tcl_AppendResult(interp, buffer, "Error in print average: No input data available", (char *)NULL);
+    return TCL_ERROR;
+  }
   for (i=0; i< self->dim_A; i++) {
     Tcl_PrintDouble(interp, self->A_accumulated_average[i]/self->n_data, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   }
+  return TCL_OK;
 }
 
 int correlation_print_variance1(double_correlation* self, Tcl_Interp* interp) {
   int i;
   char buffer[TCL_DOUBLE_SPACE];
+  if (self->n_data < 1) {
+    Tcl_AppendResult(interp, buffer, "Error in print variance: No input data available", (char *)NULL);
+    return TCL_ERROR;
+  }
   for (i=0; i< self->dim_A; i++) {
     Tcl_PrintDouble(interp, 
         self->A_accumulated_variance[i]/self->n_data
         - (self->A_accumulated_average[i]/self->n_data)*(self->A_accumulated_average[i]/self->n_data), buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   }
+  return TCL_OK;
 }
 
 int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* interp) {
@@ -102,6 +112,11 @@ int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* inter
   double dt=self->dt;
   char buffer[TCL_DOUBLE_SPACE];
   double* correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+  if (self->dim_A != self->dim_corr) {
+    Tcl_AppendResult(interp, buffer, "Error in print correlation_time: Only makes sense when the dimensions of  \
+        the observables and correlation match (Isn't it?) ", (char *)NULL);
+    return TCL_ERROR;
+  }
 
 // We calculate the correlation time for each dim_corr by normalizing the correlation,
 // integrating it and finding out where C(tau)=tau;
@@ -112,25 +127,33 @@ int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* inter
   }
 
   // here we still have to fix the stuff a bit!
-  printf("calculating autocorrelation time dim %d %d\n", self->dim_corr, self->n_result);
-  if (self->autocorrelation) {
+  if (!self->autocorrelation) {
+    Tcl_AppendResult(interp, buffer, "Does this make sense for an non-autocorrelation function? ", (char *)NULL);
+    return TCL_ERROR;
   } else {
     for (j=0; j<self->dim_corr; j++) {
       C_tau=1*self->dt;
       ok_flag=0;
-      for (k=1; k<self->n_result; k++) {
-        C_tau+=(self->result[j][k]/ (double) self->n_sweeps[j] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[j][0]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
-        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f \n", 
+      for (k=1; k<self->n_result-1; k++) {
+        if (self->n_sweeps[k]==0)
+          break;
+        C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
+        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f deltat %f \n", 
             C_tau, 
             self->tau[k]*self->dt, 
             exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data),
-            self->result[j][k]/ (double) self->n_sweeps[j]);
+            self->result[k][j]/ (double) self->n_sweeps[k],
+            self->dt*(self->tau[k]-self->tau[k-1])
+            );
 
 //        if (C_tau < i*self->tau[k]*self->dt) {
-//          correlation_time[j]=2*self->tau[k]*self->dt;
-//          ok_flag=1;
-//          break;
-//        }
+          if (exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data)
+              >exp(-self->tau[k-1]*self->dt/C_tau)+2*sqrt(self->tau[k-1]*self->dt/self->n_data)) {
+          correlation_time[j]=C_tau*(1+(2*(double)self->tau[k]+1)/(double)self->n_data);
+          printf("stopped at tau=>%f\n", self->tau[k]*self->dt);
+          ok_flag=1;
+          break;
+         }
       }
       if (!ok_flag) {
         correlation_time[j]=-1;
@@ -151,8 +174,14 @@ int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* inter
 */
 int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv) {
   int no;
+  char buffer[TCL_INTEGER_SPACE];
   if (argc < 1)
     return correlation_print_usage(interp);
+  if (argc==1 && ARG0_IS_S("n_corr")) {
+    sprintf(buffer,"%d ",n_correlations);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    return TCL_OK;
+  }
   if (ARG0_IS_I(no)) {
     argc-=1;
     argv+=1;
@@ -193,6 +222,33 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
   return TCL_ERROR;
 }
 
+
+int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv) {
+  char buffer[TCL_INTEGER_SPACE];
+  if(argc==0) {
+      return double_correlation_print_correlation(&correlations[no], interp);
+  } 
+  if (ARG0_IS_S("spherically_averaged_sf")) {
+  	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
+  	    if(argc!=2) { 
+          Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
+  	      return TCL_ERROR;
+  	    }
+  	  } else {
+  	    sprintf(buffer,"%d ",correlations[no].correlation_type);
+        Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
+  	    return TCL_ERROR;
+  	  }
+            return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
+  } else if (ARG0_IS_S("average1")) {
+    return correlation_print_average1(&correlations[no], interp);
+  } else if (ARG0_IS_S("variance1")) {
+    return correlation_print_variance1(&correlations[no], interp);
+  } else if (ARG0_IS_S("correlation_time")) {
+    return correlation_get_correlation_time(&correlations[no], interp);
+  }
+}
+
 int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A) = 0;
   int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
@@ -227,21 +283,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   if ( no < n_correlations ) {
     if (argc > 0)
       if (ARG0_IS_S("print")) {
-        if(argc==1) {
-          return double_correlation_print_correlation(&correlations[no], interp);
-        } else if (ARG1_IS_S("spherically_averaged_sf")) {
-      	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
-      	    if(argc!=2) { 
-                    Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
-      	      return TCL_ERROR;
-      	    }
-      	  } else {
-      	    sprintf(buffer,"%d ",correlations[no].correlation_type);
-                  Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
-      	    return TCL_ERROR;
-      	  }
-                return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
-        }
+          return tclcommand_correlation_parse_print(interp, no, argc-1, argv+1); 
       } else if (ARG0_IS_S("finalize")) {
         if(argc==1) {
           return double_correlation_finalize(&correlations[no]);
@@ -249,15 +291,6 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
           Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize", buffer, (char *)NULL);
     	    return TCL_ERROR;
         }
-    	} else if (ARG1_IS_S("average1")) {
-        correlation_print_average1(&correlations[no], interp);
-        return TCL_OK;
-      } else if (ARG1_IS_S("variance1")) {
-        correlation_print_variance1(&correlations[no], interp);
-        return TCL_OK;
-      } else if (ARG1_IS_S("correlation_time")) {
-        correlation_get_correlation_time(&correlations[no], interp);
-        return TCL_OK;
       } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
         correlations[no].A_args = tcl_input_p;
         tcl_input_p->interp=interp;
@@ -286,6 +319,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         error = correlation_update_from_file(no);
         if (error) {
           Tcl_AppendResult(interp, "error in update_from_file", (char *)NULL);
+          return TCL_ERROR;
         } else {
           return TCL_OK;
         }
@@ -690,6 +724,9 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   IntList* ids1;
   iw_params* iw_params_p;
   
+  profile_data* pdata=0;
+  radial_profile_data* rpdata=0;
+
   if (ARG0_IS_S("particle_velocities")) {
     *A_fun = &particle_velocities;
     if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
@@ -714,6 +751,24 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
        return TCL_ERROR;
     *A_args=(void*)ids;
     *dim_A=3*ids->n;
+    *change=1+temp;
+    return TCL_OK;
+  }
+  if (ARG0_IS_S("density_profile")) {
+    *A_fun = &density_profile;
+    if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &dim_A, &pdata) == TCL_OK ) 
+       return TCL_ERROR;
+    *A_args=(void*)pdata;
+    *dim_A=pdata->nbins;
+    *change=1+temp;
+    return TCL_OK;
+  }
+  if (ARG0_IS_S("radial_density_profile")) {
+    *A_fun = &radial_density_profile;
+    if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &dim_A, &rpdata) == TCL_OK ) 
+       return TCL_ERROR;
+    *A_args=(void*)rpdata;
+    *dim_A=rpdata->nbins;
     *change=1+temp;
     return TCL_OK;
   }
@@ -859,40 +914,150 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   }
 }
 
-int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data* pdata) {
-  int variables_read;
+int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_) {
+  int temp;
   *change=0;
-  while (argc>0) {
-    if (parse_id_list(pdata->id_list, &variables_read)) {
-      argc-=variables_read;
-      argv+=variables_read;
-    } else if ( ARG0_IS_S("startz")){
-      if (argc>1 && ARG1_IS_D(pdata->startz)) {
-        argc-=2;
-        argv+=2;
-      } else {
-        Tcl_AppendResult(interp, "Error in flux_profile: could not read startx\n" , (char *)NULL);
-        return TCL_ERROR;
-      } 
-    } else if ( ARG0_IS_S("stopz") ) {
-      if (argc>1 && ARG1_IS_D(pdata->startz)) {
-        argc-=2;
-        argv+=2;
-      } else {
-        Tcl_AppendResult(interp, "Error in flux_profile: could not read startx\n" , (char *)NULL);
-        return TCL_ERROR;
-      } 
+  profile_data* pdata=(profile_data*)malloc(sizeof(profile_data));
+  *pdata_ = pdata;
+  pdata->id_list=0;
+  pdata->startz=1e100;
+  pdata->stopz=1e100;
+  pdata->nbins=0;
+  if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
+    if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
+      Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
+      return TCL_ERROR;
+    } else {
+      *change+=temp;
+      argc-=temp;
+      argv+=temp;
     }
-    if (ARG0_IS_S("nbins")) {
-      if (argc>1 && ARG1_IS_I(pdata->nbins)) {
-        argc-=2;
-        argv+=2;
-      } else {
-        Tcl_AppendResult(interp, "Error in flux_profile: could not read startx\n" , (char *)NULL);
-        return TCL_ERROR;
-      } 
-    }
+  } 
+  if ( ARG0_IS_S("startz")){
+    if (argc>1 && ARG1_IS_D(pdata->startz)) {
+      argc-=2;
+      argv+=2;
+      *change+=2;
+    } else {
+      Tcl_AppendResult(interp, "Error in profile: could not read startz\n" , (char *)NULL);
+      return TCL_ERROR;
+    } 
+  } 
+  if ( ARG0_IS_S("stopz") ) {
+    if (argc>1 && ARG1_IS_D(pdata->stopz)) {
+      argc-=2;
+      argv+=2;
+      *change+=2;
+    } else {
+      Tcl_AppendResult(interp, "Error in profile: could not read stopz\n" , (char *)NULL);
+      return TCL_ERROR;
+    } 
+  } 
+  if (ARG0_IS_S("nbins")) {
+    if (argc>1 && ARG1_IS_I(pdata->nbins)) {
+      argc-=2;
+      argv+=2;
+      *change+=2;
+    } else {
+      Tcl_AppendResult(interp, "Error in profile: could not read nbins\n" , (char *)NULL);
+      return TCL_ERROR;
+    } 
   }
+  
+  temp=0;
+  if (pdata->id_list==0) {
+    Tcl_AppendResult(interp, "Error in profile: particle ids/types not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (pdata->startz>1e90) {
+    Tcl_AppendResult(interp, "Error in profile: startz not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (pdata->stopz>1e90) {
+    Tcl_AppendResult(interp, "Error in profile: stopz not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (pdata->nbins<1) {
+    Tcl_AppendResult(interp, "Error in profile: nbins not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (temp)
+    return TCL_ERROR;
+  else
+    return TCL_OK;
+}
+
+int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata_) {
+  int temp;
+  *change=0;
+  radial_profile_data* pdata=(radial_profile_data*)malloc(sizeof(radial_profile_data));
+  *pdata_ = pdata;
+  pdata->id_list=0;
+  pdata->stopr=1e100;
+  pdata->center[0]=1e100;pdata->center[1]=1e100;pdata->center[2]=1e100;
+  pdata->nbins=0;
+  if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
+    if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
+      Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
+      return TCL_ERROR;
+    } else {
+      *change+=temp;
+      argc-=temp;
+      argv+=temp;
+    }
+  } 
+  if ( ARG0_IS_S("center")){
+    if (argc>3 && ARG1_IS_D(pdata->center[0]) && ARG_IS_D(2,pdata->center[1]) && ARG_IS_D(3,pdata->center[2])) {
+      argc-=4;
+      argv+=4;
+      *change+=4;
+    } else {
+      Tcl_AppendResult(interp, "Error in radial_profile: could not read center\n" , (char *)NULL);
+      return TCL_ERROR;
+    } 
+  } 
+  if ( ARG0_IS_S("stopr") ) {
+    if (argc>1 && ARG1_IS_D(pdata->stopr)) {
+      argc-=2;
+      argv+=2;
+      *change+=2;
+    } else {
+      Tcl_AppendResult(interp, "Error in radial_profile: could not read stopr\n" , (char *)NULL);
+      return TCL_ERROR;
+    } 
+  } 
+  if (ARG0_IS_S("nbins")) {
+    if (argc>1 && ARG1_IS_I(pdata->nbins)) {
+      argc-=2;
+      argv+=2;
+      *change+=2;
+    } else {
+      Tcl_AppendResult(interp, "Error in radial_profile: could not read nbins\n" , (char *)NULL);
+      return TCL_ERROR;
+    } 
+  }
+  
+  temp=0;
+  if (pdata->id_list==0) {
+    Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (pdata->center[0]>1e90) {
+    Tcl_AppendResult(interp, "Error in radial_profile: center not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (pdata->stopr>1e90) {
+    Tcl_AppendResult(interp, "Error in radial_profile: stopr not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (pdata->nbins<1) {
+    Tcl_AppendResult(interp, "Error in radial_profile: nbins not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (temp)
+    return TCL_ERROR;
+  else
+    return TCL_OK;
 }
 
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
@@ -955,7 +1120,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   if (tau_lin%2)
     return 14;
 
-  if (A_fun == &file_data_source_readline && B_fun == &file_data_source_readline) {
+  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
     self->is_from_file = 1;
   }
 
@@ -973,8 +1138,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     self->A_accumulated_variance[k]=0;
   }
   if (autocorrelation) {
-    self->B_accumulated_average =  0;
-    self->B_accumulated_variance = 0;
+    self->B_accumulated_average =  self->A_accumulated_average;
+    self->B_accumulated_variance = self->B_accumulated_variance;
   } else {
     self->B_accumulated_average = (double*)malloc(dim_B*sizeof(double));
     self->B_accumulated_variance = (double*)malloc(dim_B*sizeof(double));
@@ -1097,7 +1262,7 @@ int double_correlation_get_data( double_correlation* self ) {
       self->B_accumulated_average[k]+=self->B[0][self->newest[0]][k];
       self->B_accumulated_variance[k]+=self->B[0][self->newest[0]][k]*self->B[0][self->newest[0]][k];
     }
-  }
+  } 
 
   double* temp = malloc(self->dim_corr*sizeof(double));
   if (!temp)
@@ -1549,6 +1714,72 @@ int com_velocity(void* idlist, double* A, unsigned int n_A) {
   A[0]=v_com[0]/ids->n;
   A[1]=v_com[1]/ids->n;
   A[2]=v_com[2]/ids->n;
+  printf("v_com %f %f %f\n", A[0], A[1], A[2]);
+  return 0;
+}
+
+int density_profile(void* pdata_, double* A, unsigned int n_A) {
+  unsigned int i;
+  int bin;
+  double ppos[3];
+  int img[3];
+  IntList* ids;
+  profile_data* pdata;
+  sortPartCfg();
+  pdata=(profile_data*) pdata_;
+  ids=pdata->id_list;
+    
+  for ( i = 0; i<pdata->nbins; i++ ) {
+    A[i]=0;
+  }
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+/* We use folded coordinates here */
+    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    fold_position(ppos, img);
+    bin= (int) floor( pdata->nbins*  (ppos[2]-pdata->startz)/(pdata->stopz-pdata->startz));
+/* uncomment this line for unfolded coordinates */
+//    bin= (int) floor( pdata->nbins*  (partCfg[ids->e[i]].r.p[2]-pdata->startz)/(pdata->stopz-pdata->startz));
+    if (bin>=0 && bin < pdata->nbins) {
+      A[bin] += 1./box_l[0]/box_l[1]/(pdata->stopz - pdata->startz)*pdata->nbins;
+    }
+  }
+  return 0;
+}
+
+int radial_density_profile(void* pdata_, double* A, unsigned int n_A) {
+  unsigned int i;
+  int bin;
+  double ppos[3];
+  double r;
+  int img[3];
+  double bin_volume;
+  IntList* ids;
+  radial_profile_data* pdata;
+  sortPartCfg();
+  pdata=(radial_profile_data*) pdata_;
+  ids=pdata->id_list;
+    
+  for ( i = 0; i<pdata->nbins; i++ ) {
+    A[i]=0;
+  }
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+/* We use folded coordinates here */
+    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    fold_position(ppos, img);
+    r=sqrt( (ppos[0]-pdata->center[0])*(ppos[0]-pdata->center[0])+(ppos[1]-pdata->center[1])*(ppos[1]-pdata->center[1]));
+    bin= (int) floor( pdata->nbins*  r/pdata->stopr);
+
+    if (bin>=0 && bin < pdata->nbins) {
+      bin_volume=PI*((bin+1)*(bin+1)-bin*bin)*pdata->stopr/pdata->nbins*box_l[2];
+      A[bin] += 1./bin_volume;
+    }
+  }
   return 0;
 }
 
