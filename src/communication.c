@@ -59,6 +59,7 @@
 #include "topology.h"
 #include "errorhandling.h"
 #include "molforces.h"
+#include "mdlc_correction.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -201,9 +202,13 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_GET_FLUID_POP 58
 /** Action number for \ref mpi_send_vs_relative. */
 #define REQ_SET_VS_RELATIVE 59
+/** Action mumber for \ref mpi_bcast_max_mu. */
+#define REQ_MAX_MU 60 
+/** Action number for \ref mpi_send_vs_relative. */
+#define REQ_SET_VS_RELATIVE 61 
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 60
+#define REQ_MAXIMUM 62
 
 /*@}*/
 
@@ -272,6 +277,7 @@ void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
 void mpi_recv_fluid_populations_slave(int node, int parm);
 void mpi_send_vs_relative_slave(int pnode, int part);
+void mpi_bcast_max_mu_slave(int node, int parm);
 /*@}*/
 
 /** A list of which function has to be called for
@@ -337,6 +343,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_send_mu_E_slave,		    /* 57: REQ_SET_MU_E */
   mpi_recv_fluid_populations_slave,  /* 58: REQ_GET_FLUID_POP */
   mpi_send_vs_relative_slave	     /* 59: REQ_SET_VS_RELATIVE */
+  mpi_bcast_max_mu_slave,            /* 60: REQ_MAX_MU */
+  mpi_send_vs_relative_slave,        /* 61: REQ_SET_VS_RELATIVE */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -411,6 +419,8 @@ char *names[] = {
   "SET_MU_E", /* 57 */
   "REQ_GET_FLUID_POP" /* 58 */
   "SET_VS_RELATIVE", /* 59 */
+  "REQ_MAX_MU", /* 60 */
+  "SET_VS_RELATIVE", /* 61 */
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
@@ -2805,6 +2815,7 @@ void mpi_iccp3m_init_slave(int node, int dummy)
 #endif
 }
 
+<<<<<<< HEAD
 void mpi_recv_fluid_populations(int node, int index, double *pop) {
 #ifdef LB
   if (node==this_node) {
@@ -2828,6 +2839,24 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
 #endif
 }
 
+=======
+void mpi_bcast_max_mu_slave(int node, int dummy) {
+ #ifdef MDLC
+ 
+ get_mu_max();
+ 
+ #endif
+}
+
+void mpi_bcast_max_mu(void) {
+  #ifdef MDLC
+  mpi_issue(REQ_MAX_MU, -1, 0);
+  
+  get_mu_max();
+  
+  #endif
+}
+>>>>>>> master
 
 /*********************** MAIN LOOP for slaves ****************/
 

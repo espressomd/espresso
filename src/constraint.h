@@ -271,20 +271,8 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
   for(i=0;i<3;i++) 
     e_r[i] = r_vec[i]/norm;
   
-  /* if the parallel component of the z coordinate is larger than
-   * half the pore length plus the max interaction range, the is 
-   * of course no interaction between pore and particle possible */
-  if ( fabs(z) > c->length + max_range) {
-    /* then the true distance and distance vector sould be of no 
-     * importance, so fill them with useless values */
-    *dist = max_range;
-    vec[0] = max_range;
-    vec[1] = max_range;
-    vec[2] = max_range;
-//    printf("out of range, pos %f %f %f \n", ppos[0], ppos[1], ppos[2]   );
-    return;
-  }
-
+  /* c?_r/z and are the centers of the circles that are used to smooth 
+   * the entrance of the pore in cylindrical coordinates*/
   c1_z = - (c->length - c->smoothing_radius);
   c2_z = + (c->length - c->smoothing_radius);
   z_left = c1_z - sign(slope) * sqrt(slope*slope/(1+slope*slope))*c->smoothing_radius;
@@ -295,17 +283,19 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
   c2_r = c->rad_left + slope * ( z_right + c->length ) +
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
 //  printf("r %f z %f c1_r %f c1_z %f c2_r %f c2_z%f\n", r, z, c1_r, c1_z, c2_r, c2_z);
-
-  /* check if in wall region */
-  if ( r  >  c1_r  && r >  c2_r )  {
-    /* feel the wall */
-    *dist = fabs(z) - c->length;
+ 
+  /* Check if we are in the region of the left wall */
+  if ( r > c1_r && z < c1_z ) {
+    *dist = -z - c->length;
     for (i=0; i<3;i++) 
-      vec[i] = e_z[i]*(*dist) ;
-//    if (*dist < 0)
-//      printf("reflecting from the wall, pos %f %f %f dist %f vec %f %f %f dist %f\n", ppos[0], ppos[1], ppos[2], *dist, vec[0], vec[1], vec[2],*dist   );
-    if (*dist < -0.3)
-      printf("warning - reflection w length %f in the pore\n", *dist);
+      vec[i] = -e_z[i]*(*dist) ;
+    return;
+  }
+  /* Check if we are in the region of the right wall */
+  if ( r > c2_r && z > c2_z ) {
+    *dist = +z - c->length;
+    for (i=0; i<3;i++) 
+      vec[i] = +e_z[i]*(*dist) ;
     return;
   }
 
@@ -317,67 +307,34 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
   help_dist = (- ( r - average_radius ) + (z * slope)); ///sqrt(1+slope*slope);
   z_0 = z + help_dist * slope / sqrt(1+slope*slope);
 
+  /* Check if we are in the range of the cone in the center */
   if (z_0 > z_left && z_0 < z_right) { 
     *dist = help_dist;
     for (i=0; i<3;i++) 
       vec[i]= - e_r[i] * help_dist; 
-//    if (*dist < 0)
-//      printf("reflecting in the pore , pos %f %f %f dist %f vec %f %f %f dist %f c1_r %f c1_z %f \n", ppos[0], ppos[1], ppos[2], *dist, vec[0], vec[1], vec[2],*dist, c1_r, c1_z   );
-    if (*dist < -0.3)
-      printf("warning - reflection w length %f in the pore\n", *dist);
     return;
   }
+  /* Check if we are in the range of the left smoothing circle */
   if ( z_0 < z_left ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
     *dist = norm - c->smoothing_radius;
     for (i=0; i<3;i++) 
       vec[i] = (c->smoothing_radius/norm - 1)*(z - c1_z)*e_z[i] - (c->smoothing_radius/norm -1)*(r - c1_r)*e_r[i];
-//    if (*dist < 0)
-//      printf("in smoothing region r %f z %f z_0 %f dist %f vec %f %f %f e_r %f %f %f \n", r, z, z_0, *dist, vec[0], vec[1], vec[2], e_r[0], e_r[1], e_r[2] );
-    if (*dist < -0.3)
-      printf("warning - reflection w length %f in left smoo area\n", *dist);
-//    printf("in smoothing region, r %f, z %f, z_0 %f, dist %f, vec %f %f %f  c1_r %f c1_z %f \n", r,z,z_0,*dist, vec[0], vec[1], vec[2], c1_r, c1_z  ) ;
     return;
   }
+  /* Check if we are in the range of the right smoothing circle */
   if ( z_0 > z_right ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
     *dist = norm - c->smoothing_radius;
     for (i=0; i<3;i++) 
       vec[i] = -(c->smoothing_radius/norm - 1)*(z - c2_z)*e_z[i] - (c->smoothing_radius/norm -1)*(r - c2_r)*e_r[i];
-    if (*dist < -0.3)
-      printf("warning - reflection w length %f in right smoo area\n", *dist);
+//    if (*dist < -0.3)
+//      printf("warning - reflection w length %f in right smoo area\n", *dist);
     return;
   }
   exit(printf("should never be reached, z %f, r%f\n",z, r));
 
-//  if(d_par_sh <= 0.) { /* within the channel OR the constraint violated */
-//    if(d_per_sh <= 0.) { /* constraint violated */
-//	    *dist=-1.0;
-//	    vec[0]=vec[1]=vec[2]=0.0;
-//      /* kessel put something here! */
-//    } 
-//    else {           /* within the channel */
-//	    *dist = d_per_sh;   
-//            for (i=0; i<3;i++) 
-//               vec[i]= -d_per_vec[i] * (d_per_sh /  d_per);
-//    }
-//  }
-//  else { /* out of the channel (aligned or not) ( d_par_sh > 0 ) */
-//	  if (d_per_sh < 0) /* not aligned, feel the wall */
-//	  {
-//             *dist = d_par_sh;
-//             for (i=0; i<3;i++) 
-//                 vec[i]= d_par_vec[i] * (d_par_sh /  d_par) ;
-//	  }
-//	  else /* aligned, feel the "ring" */
-//	  {
-//	     *dist = sqrt(SQR(d_par_sh)+SQR(d_per_sh));
-//             for (i=0; i<3;i++) 
-//               vec[i]= -d_per_vec[i] * (d_per_sh /  d_per)  + 
-//	                d_par_vec[i] * (d_par_sh /  d_par);
-//	  }
-//  }
 }
 
 MDINLINE void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
@@ -660,9 +617,13 @@ MDINLINE void add_constraints_forces(Particle *p1)
 				     torque1, torque2);
 	}
 	else {
+    if(constraints[n].c.pore.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
+    } else {
 	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 pore constraint %d violated by particle %d} ", n, p1->p.identity);
         }
+      }
       }
       break;
 	
