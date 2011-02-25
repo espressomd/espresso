@@ -20,6 +20,7 @@
 #include "lbgpu.h"
 
 #ifdef LB_GPU
+#define malloc malloc
 
 /**defining structures residing in global memory */
 /** struct for phys. values */
@@ -1551,4 +1552,5 @@ void lb_free_GPU(){
 	cudaStreamDestroy(stream[0]);
 
 }
+#define malloc pmalloc
 #endif /* LB_GPU */
