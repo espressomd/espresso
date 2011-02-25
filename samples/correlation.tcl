@@ -27,7 +27,7 @@
 ## with (not so important MD parameters)
 set box_l 10. 
 setmd box_l $box_l $box_l $box_l
-set friction 10.0
+set friction 1.0
 set force 1.
 thermostat langevin 1. $friction
 setmd time_step 0.01
@@ -57,7 +57,7 @@ for { set i 0 } { $i < $part_with_force } { incr i } {
   incr counter
 }
 analyze correlation 3 first_obs particle_velocities type { 1 } corr_operation componentwise_product tau_lin 20 tau_max 100. delta_t [ setmd time_step ] compress1 linear
-integrate 1000
+integrate 100
 analyze correlation 3 autoupdate start
 
 
@@ -70,7 +70,7 @@ inter 0 0 lennard-jones 0 0.25 0. 0.
 set var 0.
 set av 0.
 ## Now comes the main integration loop
-set nsteps 10000
+set nsteps 100
 set ofile [ open "v.dat" "w"]
 for { set i 0 } { $i < $nsteps } { incr i } {
   integrate 1
@@ -100,20 +100,20 @@ analyze correlation 3 write_to_file "corr_with_force.dat"
 set average [ analyze correlation 3 print average1 ]
 set variance [ analyze correlation 3 print variance1 ]
 set corrtime [ analyze correlation 3 print correlation_time ]
-set stdev_mean [ list ] 
+set stdev_mean [ analyze correlation 3 print average_errorbars]
 set true_value [ list ]
 set true_correlation_time [ list ]
 for { set i 0 } { $i < $part_with_force } { incr i } {
   lappend true_value [ expr $force/$friction ] 0. 0.
   lappend true_correlation_time [ expr 1/$friction ]  [ expr 1/$friction ] [ expr 1/$friction ]
 }
-for { set i 0 } { $i < [ llength $average ] } { incr i } {
-  if { [ lindex $corrtime $i  ] > 0 } {
-    lappend stdev_mean [ expr sqrt( [ lindex $variance $i ] / $nsteps / [ setmd time_step ] * [ lindex $corrtime $i ] ) ]
-  } else {
-    lappend stdev_mean 0.
-  }
-}
+#for { set i 0 } { $i < [ llength $average ] } { incr i } {
+#  if { [ lindex $corrtime $i  ] > 0 } {
+#    lappend stdev_mean [ expr sqrt( [ lindex $variance $i ] / $nsteps / [ setmd time_step ] * [ lindex $corrtime $i ] ) ]
+#  } else {
+#    lappend stdev_mean 0.
+#  }
+#}
 
 puts "average    [ lrange $average    0 5 ] "
 puts "stdev_mean [ lrange $stdev_mean 0 5 ] "
@@ -128,8 +128,8 @@ for { set i 0 } { $i < [ llength $average ] } { incr i } {
 }
 puts "[ expr $counter/([llength $average ]) *100] % are within 1 sigma"
 
-
 exit
+
 ## Finally we print the result to the screen.
 
 #puts "average [ expr $av/$nsteps ] [ lindex [ analyze correlation 0 print average1 ] 0 ]"

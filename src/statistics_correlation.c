@@ -107,16 +107,63 @@ int correlation_print_variance1(double_correlation* self, Tcl_Interp* interp) {
   return TCL_OK;
 }
 
-int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* interp) {
-  int j, k;
-  double dt=self->dt;
+int tclcommand_print_correlation_time(double_correlation* self, Tcl_Interp* interp) {
   char buffer[TCL_DOUBLE_SPACE];
-  double* correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+  double* correlation_time;
+  int j;
   if (self->dim_A != self->dim_corr) {
     Tcl_AppendResult(interp, buffer, "Error in print correlation_time: Only makes sense when the dimensions of  \
         the observables and correlation match (Isn't it?) ", (char *)NULL);
     return TCL_ERROR;
   }
+  if (!self->autocorrelation) {
+    Tcl_AppendResult(interp, buffer, "Does this make sense for an non-autocorrelation function? ", (char *)NULL);
+    return TCL_ERROR;
+  }
+  correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+  correlation_get_correlation_time(self, correlation_time);
+  
+  for (j=0; j<self->dim_corr; j++) {
+     Tcl_PrintDouble(interp, correlation_time[j], buffer);
+     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+  }
+  
+  free(correlation_time);
+  return TCL_OK;
+}
+
+int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* interp) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double* correlation_time;
+  double variance;
+  double errorbar;
+  int j;
+  if (self->dim_A != self->dim_corr) {
+    Tcl_AppendResult(interp, buffer, "Error in print average_errorbars: Only makes sense when the dimensions of  \
+        the observables and correlation match (Isn't it?) ", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (!self->autocorrelation) {
+    Tcl_AppendResult(interp, buffer, "Error in print_average_errorbars: Must be an autocorrelation ", (char *)NULL);
+    return TCL_ERROR;
+  }
+  correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
+  correlation_get_correlation_time(self, correlation_time);
+  
+  for (j=0; j<self->dim_corr; j++) {
+    variance=(self->A_accumulated_variance[j]/self->n_data - self->A_accumulated_average[j]*self->A_accumulated_average[j]/self->n_data/self->n_data);
+    errorbar=sqrt(variance*(correlation_time[j]/self->dt / self->n_data));
+    Tcl_PrintDouble(interp, errorbar, buffer);
+    Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
+  }
+  
+  free(correlation_time);
+  return TCL_OK;
+}
+
+int correlation_get_correlation_time(double_correlation* self, double* correlation_time) {
+  int j, k;
+  double dt=self->dt;
 
 // We calculate the correlation time for each dim_corr by normalizing the correlation,
 // integrating it and finding out where C(tau)=tau;
@@ -127,17 +174,13 @@ int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* inter
   }
 
   // here we still have to fix the stuff a bit!
-  if (!self->autocorrelation) {
-    Tcl_AppendResult(interp, buffer, "Does this make sense for an non-autocorrelation function? ", (char *)NULL);
-    return TCL_ERROR;
-  } else {
-    for (j=0; j<self->dim_corr; j++) {
-      C_tau=1*self->dt;
-      ok_flag=0;
-      for (k=1; k<self->n_result-1; k++) {
-        if (self->n_sweeps[k]==0)
-          break;
-        C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
+  for (j=0; j<self->dim_corr; j++) {
+    C_tau=1*self->dt;
+    ok_flag=0;
+    for (k=1; k<self->n_result-1; k++) {
+      if (self->n_sweeps[k]==0)
+        break;
+      C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
 //        printf("C_tau %f tau %f exp(-W/tau) + 2*sqrt(W/N) %f corr %f deltat %f \n", 
 //            C_tau, 
 //            self->tau[k]*self->dt, 
@@ -147,25 +190,19 @@ int correlation_get_correlation_time(double_correlation* self, Tcl_Interp* inter
 //            );
 
 //        if (C_tau < i*self->tau[k]*self->dt) {
-          if (exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data)
-              >exp(-self->tau[k-1]*self->dt/C_tau)+2*sqrt(self->tau[k-1]*self->dt/self->n_data)) {
-          correlation_time[j]=C_tau*(1+(2*(double)self->tau[k]+1)/(double)self->n_data);
+        if (exp(-self->tau[k]*self->dt/C_tau)+2*sqrt(self->tau[k]*self->dt/self->n_data)
+            >exp(-self->tau[k-1]*self->dt/C_tau)+2*sqrt(self->tau[k-1]*self->dt/self->n_data)) {
+        correlation_time[j]=C_tau*(1+(2*(double)self->tau[k]+1)/(double)self->n_data);
 //          printf("stopped at tau=>%f\n", self->tau[k]*self->dt);
-          ok_flag=1;
-          break;
-         }
-      }
-      if (!ok_flag) {
-        correlation_time[j]=-1;
-      }
+        ok_flag=1;
+        break;
+       }
+    }
+    if (!ok_flag) {
+      correlation_time[j]=-1;
     }
   }
 
-  for (j=0; j<self->dim_corr; j++) {
-     Tcl_PrintDouble(interp, correlation_time[j], buffer);
-     Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-  }
-  free(correlation_time);
   return 0;
 }
 
@@ -245,7 +282,9 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
   } else if (ARG0_IS_S("variance1")) {
     return correlation_print_variance1(&correlations[no], interp);
   } else if (ARG0_IS_S("correlation_time")) {
-    return correlation_get_correlation_time(&correlations[no], interp);
+    return tclcommand_print_correlation_time(&correlations[no], interp);
+  } else if (ARG0_IS_S("average_errorbars")) {
+    return tclcommand_print_average_errorbars(&correlations[no], interp);
   }
 }
 
