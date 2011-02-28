@@ -854,7 +854,6 @@ static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *i
   return (TCL_OK);
 }
 
-#endif
 int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
   double pos[3];
   double vec[3];
@@ -913,6 +912,7 @@ int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **
     return TCL_ERROR;
   }
 }
+#endif
 
 
 int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
