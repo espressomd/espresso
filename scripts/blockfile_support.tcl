@@ -1,5 +1,6 @@
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#  Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -216,6 +217,21 @@ proc blockfile_read_auto_interactions {channel read auto} {
     set data [blockfile $channel read toend]
     foreach d $data { eval "inter $d" }
     return "interactions"
+}
+
+######################################
+# constraints support
+######################################
+proc blockfile_write_constraints {channel write constraints} {
+    blockfile $channel write start constraints
+    set data [join [constraint] "\}\n\t\{"]
+    puts $channel "\n\t{$data}\n\}"
+}
+
+proc blockfile_read_auto_constraints {channel read auto} {
+    set data [blockfile $channel read toend]
+    foreach d $data { eval "constraint [lrange $d 1 end]" }
+    return "constraints"
 }
 
 ######################################

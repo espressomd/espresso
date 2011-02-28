@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -30,14 +31,11 @@
 
 /** fftw plan for calculating the 2d mode analysis */
 
-#if FFTW == 3
-#  ifdef FFTW_ENABLE_FLOAT
+#ifdef FFTW_ENABLE_FLOAT
 typedef float fftw_real;
-#  else
+#else
 typedef double fftw_real;
-#  endif
 #endif
-
 
 /** Flag to indicate when the grid size has changed*/
 int mode_grid_changed = 1;
@@ -414,7 +412,6 @@ int get_lipid_orients(IntList* l_orient) {
     switch_fluc == 0 for thickness
 */
 int modes2d(fftw_complex* modes, int switch_fluc) {
-#if FFTW == 3
   /* All these variables need to be static so that the fftw3 plan can
      be initialised and reused */
   static  fftw_plan mode_analysis_plan; // height grid
@@ -422,10 +419,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   static  double* height_grid;
   /** Output values for the fft */
   static  fftw_complex* result;
-#else 
-  static  double* height_grid;
-  static  rfftwnd_plan mode_analysis_plan;
-#endif
 
   double zref;
 
@@ -444,7 +437,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
 
     STAT_TRACE(fprintf(stderr,"%d,destroying old fftw plan \n",this_node));
 
-#if FFTW == 3
     /* Make sure all memory is free and old plan is destroyed. It's ok
        to call these functions on uninitialised pointers I think */
     fftw_free(result);
@@ -455,13 +447,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
     height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
     result      = malloc((mode_grid_3d[ydir]/2+1)*(mode_grid_3d[xdir])*sizeof(fftw_complex)); 
     mode_analysis_plan = fftw_plan_dft_r2c_2d(mode_grid_3d[xdir],mode_grid_3d[ydir],height_grid, result,FFTW_ESTIMATE);
-#else
-    /* Make sure the height grid is allocated */
-    if ( height_grid != NULL ) { free(height_grid); };
-    height_grid = malloc((mode_grid_3d[xdir])*sizeof(double)*mode_grid_3d[ydir]);
-    rfftwnd_destroy_plan(mode_analysis_plan);
-    mode_analysis_plan = rfftw2d_create_plan(mode_grid_3d[xdir], mode_grid_3d[ydir], FFTW_REAL_TO_COMPLEX,FFTW_MEASURE);
-#endif
 
     STAT_TRACE(fprintf(stderr,"%d,created new fftw plan \n",this_node));
     mode_grid_changed = 0;  
@@ -486,13 +471,9 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
 
   STAT_TRACE(fprintf(stderr,"%d,calling fftw \n",this_node));
 
-#if FFTW == 3
   fftw_execute(mode_analysis_plan);
   /* Copy result to modes */
   memcpy(modes, result, mode_grid_3d[xdir]*(mode_grid_3d[ydir]/2 + 1)*sizeof(fftw_complex));
-#else
-  rfftwnd_one_real_to_complex(mode_analysis_plan, height_grid, modes);
-#endif
   
   
   STAT_TRACE(fprintf(stderr,"%d,called fftw \n",this_node));    

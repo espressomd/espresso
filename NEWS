@@ -67,6 +67,8 @@ User-visible changes
     directory, you can use build directories as described in the
     User's Guide.
 
+* FFTW2 is no longer supported.
+
 Organizational changes
 ----------------------
 

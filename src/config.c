@@ -117,9 +117,7 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef PROFILING
   Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
 #endif
-#if FFTW == 2
-  Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
-#elif FFTW == 3
+#ifdef FFTW
   Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
 #endif
 #ifdef TK
