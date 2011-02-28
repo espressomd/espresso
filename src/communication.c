@@ -204,11 +204,9 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_VS_RELATIVE 59
 /** Action mumber for \ref mpi_bcast_max_mu. */
 #define REQ_MAX_MU 60 
-/** Action number for \ref mpi_send_vs_relative. */
-#define REQ_SET_VS_RELATIVE 61 
 
 /** Total number of action numbers. */
-#define REQ_MAXIMUM 62
+#define REQ_MAXIMUM 61
 
 /*@}*/
 
@@ -342,9 +340,8 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_recv_fluid_border_flag_slave, /* 56: REQ_LB_GET_BORDER_FLAG */
   mpi_send_mu_E_slave,		    /* 57: REQ_SET_MU_E */
   mpi_recv_fluid_populations_slave,  /* 58: REQ_GET_FLUID_POP */
-  mpi_send_vs_relative_slave	     /* 59: REQ_SET_VS_RELATIVE */
-  mpi_bcast_max_mu_slave,            /* 60: REQ_MAX_MU */
-  mpi_send_vs_relative_slave,        /* 61: REQ_SET_VS_RELATIVE */
+  mpi_send_vs_relative_slave,	     /* 59: REQ_SET_VS_RELATIVE */
+  mpi_bcast_max_mu_slave           /* 60: REQ_MAX_MU */
 };
 
 /** Names to be printed when communication debugging is on. */
@@ -2815,7 +2812,6 @@ void mpi_iccp3m_init_slave(int node, int dummy)
 #endif
 }
 
-<<<<<<< HEAD
 void mpi_recv_fluid_populations(int node, int index, double *pop) {
 #ifdef LB
   if (node==this_node) {
@@ -2839,7 +2835,6 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
 #endif
 }
 
-=======
 void mpi_bcast_max_mu_slave(int node, int dummy) {
  #ifdef MDLC
  
@@ -2856,7 +2851,6 @@ void mpi_bcast_max_mu(void) {
   
   #endif
 }
->>>>>>> master
 
 /*********************** MAIN LOOP for slaves ****************/
 
