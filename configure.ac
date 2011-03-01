@@ -101,24 +101,6 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# test whether to enable debugging
-AC_ARG_ENABLE(debug,
-	AS_HELP_STRING([--enable-debug],[Turn on debugging]),
-	,enable_debug=no)
-if test .$enable_debug = .yes; then
-   AC_DEFINE(DEBUG,,[Turn on debugging?])
-fi
-
-##################################
-# test whether to enable profiling
-AC_ARG_ENABLE(profiling,
-	AS_HELP_STRING([--enable-profiling],[Turn on profiling]),
-	,enable_profiling=no)
-if test .$enable_profiling = .yes; then
-   AC_DEFINE(PROFILING,,[Turn on profiling?])
-fi
-
-##################################
 # test for -O5
 AC_MSG_CHECKING([whether the compiler accepts -O5])
 saved_CFLAGS=$CFLAGS
