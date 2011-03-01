@@ -62,6 +62,20 @@ const char double_correlation_get_data_errors[][64] = {
   "Error in correlation operation: The vector sizes do not match\n"
 };
 
+/* forward declarations */
+int tclcommand_print_correlation_time(double_correlation* self, Tcl_Interp* interp);
+int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* interp); 
+int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv);
+int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv);
+int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv);
+int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_);
+int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata);
+
+
+int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
+int double_correlation_finalize( double_correlation* self );
+int sf_print_usage(Tcl_Interp* interp); 
+
 int correlation_update(unsigned int no) {
   if (n_correlations > no)
     return double_correlation_get_data(&correlations[no]);
@@ -163,7 +177,6 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
 
 int correlation_get_correlation_time(double_correlation* self, double* correlation_time) {
   int j, k;
-  double dt=self->dt;
 
 // We calculate the correlation time for each dim_corr by normalizing the correlation,
 // integrating it and finding out where C(tau)=tau;
@@ -237,6 +250,10 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
   int i;
   if (argc > 0 ) {
     if (ARG0_IS_S("start")) {
+      if(correlations[no].A_fun==&tcl_input || correlations[no].is_from_file) {
+        Tcl_AppendResult(interp, "Can not use autoupdate for a correlation from a file or from tclinput\n", (char *)NULL);
+        return TCL_ERROR;
+      }
       if(correlations[no].update_frequency > 0) {
         correlations_autoupdate = 1;
         correlations[no].autoupdate=1;
@@ -285,7 +302,11 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
     return tclcommand_print_correlation_time(&correlations[no], interp);
   } else if (ARG0_IS_S("average_errorbars")) {
     return tclcommand_print_average_errorbars(&correlations[no], interp);
-  }
+  } 
+    
+  Tcl_AppendResult(interp, "Unknown option to analyze correlation print: ", argv[0], (char *)NULL);
+  return TCL_ERROR;
+
 }
 
 int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
@@ -305,12 +326,11 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
-  tcl_input_data* tcl_input_p;
+  tcl_input_data tcl_input_d;
   char buffer[TCL_INTEGER_SPACE+2];
   int correlation_type; // correlation type of correlation which is currently being created
   int autocorrelation=1; // by default, we are doing autocorrelation
-  int n_bins; // number of bins for spherically averaged sf
-  int i;
+//  int n_bins; // number of bins for spherically averaged sf
 
   // Check if ID is negative
   if ( no < 0 ) {
@@ -330,15 +350,17 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
           Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize", buffer, (char *)NULL);
     	    return TCL_ERROR;
         }
-      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input && correlations[no].B_fun==&tcl_input ) {
-        correlations[no].A_args = tcl_input_p;
-        tcl_input_p->interp=interp;
-        tcl_input_p->argv=argv+1;
-        tcl_input_p->argc=argc-1;
-        correlations[no].B_args = tcl_input_p;
-        tcl_input_p->interp=interp;
-        tcl_input_p->argv=argv+2;
-        tcl_input_p->argc=argc-2;
+      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
+        correlations[no].A_args = &tcl_input_d;
+        tcl_input_d.interp=interp;
+        tcl_input_d.argv=argv+1;
+        tcl_input_d.argc=argc-1;
+        if (!correlations[no].autocorrelation) {
+          correlations[no].B_args = &tcl_input; 
+          tcl_input_d.interp=interp;
+          tcl_input_d.argv=argv+2;
+          tcl_input_d.argc=argc-2;
+        }
         error = double_correlation_get_data(&correlations[no]);
         if (error) {
           Tcl_AppendResult(interp, "Error reading tclinput", (char *)NULL);
@@ -555,7 +577,7 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* chan
   double delta_t,tau_max;
   char ibuffer[TCL_INTEGER_SPACE + 2];
   char dbuffer[TCL_DOUBLE_SPACE];
-  int *vals;
+//  int *vals;
   double *q_density;
   params=(sf_params*)malloc(sizeof(sf_params));
   
@@ -697,8 +719,8 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
 
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
   int i,ret;
-  char** temp_argv; int temp_argc;
-  int temp;
+//  char** temp_argv; int temp_argc;
+//  int temp;
   IntList* input=malloc(sizeof(IntList));
   IntList* output=malloc(sizeof(IntList));
   init_intlist(input);
@@ -753,7 +775,6 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
 int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args) {
 
   file_data_source* fds;
-  IntList* types=0;
   int error=0;
   int temp;
   int order=0;
@@ -1161,6 +1182,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
 
   if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
     self->is_from_file = 1;
+  } else {
+    self->is_from_file = 0;
   }
 
   self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
@@ -1276,7 +1299,8 @@ int double_correlation_get_data( double_correlation* self ) {
     (*self->compressA)(self->A[i][(self->newest[i]+1) % (self->tau_lin+1)],  
                        self->A[i][(self->newest[i]+2) % (self->tau_lin+1)], 
                        self->A[i+1][self->newest[i+1]],self->dim_A);
-    (*self->compressB)(self->B[i][(self->newest[i]+1) % (self->tau_lin+1)],  
+    if (!self->autocorrelation)
+      (*self->compressB)(self->B[i][(self->newest[i]+1) % (self->tau_lin+1)],  
                        self->B[i][(self->newest[i]+2) % (self->tau_lin+1)], 
                        self->B[i+1][self->newest[i+1]],self->dim_B);
   }
@@ -1286,8 +1310,9 @@ int double_correlation_get_data( double_correlation* self ) {
 
   if ( (*self->A_fun)(self->A_args, self->A[0][self->newest[0]], self->dim_A) != 0 )
     return 1;
-  if ( (*self->B_fun)(self->B_args, self->B[0][self->newest[0]], self->dim_B) != 0 )
-    return 2;
+  if (!self->autocorrelation)
+    if ( (*self->B_fun)(self->B_args, self->B[0][self->newest[0]], self->dim_B) != 0 )
+      return 2;
 
   // Now we update the cumulated averages and variances of A and B
   self->n_data++;
@@ -1345,7 +1370,6 @@ int double_correlation_finalize( double_correlation* self ) {
   int i,j,k;
   int ll=0; // current lowest level
   int vals_ll=0; // number of values remaining in the lowest level
-  int dt=2;
   int highest_level_to_compress;
   unsigned int index_new, index_old, index_res;
   int error;
@@ -1444,7 +1468,7 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
   int j, k;
   double dt=self->dt;
   char buffer[TCL_DOUBLE_SPACE];
-  char ibuffer[TCL_INTEGER_SPACE+2];
+//  char ibuffer[TCL_INTEGER_SPACE+2];
 
   for (j=0; j<self->n_result; j++) {
      Tcl_AppendResult(interp, " { ", (char *)NULL);
@@ -1471,12 +1495,12 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
 // Look at how static SF is printed
 int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp) {
 
-  int i,j,k,n_samp;
+  int j,k;
   int qi,qj,qk,qn, dim_sf, order2;
   double dt=self->dt;
   sf_params* params=(sf_params*)self->A_args;
   char buffer[TCL_DOUBLE_SPACE];
-  char ibuffer[ 3*(TCL_INTEGER_SPACE+1) + 1 ];
+//  char ibuffer[ 3*(TCL_INTEGER_SPACE+1) + 1 ];
   int *q_vals;
   double *q_density;
   double *av_sf_Re;
@@ -1626,7 +1650,7 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
 }
 
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  unsigned int i,j;
+  unsigned int i;
   if (!(dim_A == dim_B )) {
     printf("Error in componentwise product: The vector sizes do not match");
     return 5;
@@ -1883,7 +1907,8 @@ int interacts_with (void* params_p, double* A, unsigned int n_A) {
   IntList* ids1;
   IntList* ids2;
   int i,j;
-  double dx,dy,dz,dist2;
+//  double dx,dy,dz;
+  double dist2;
   double cutoff2=params->cutoff*params->cutoff;
   double pos1[3], pos2[3], dist[3];
   ids1=params->ids1;
@@ -1980,7 +2005,7 @@ int file_data_source_readline(void* xargs, double* A, int dim_A) {
 
 int tcl_input(void* data, double* A, unsigned int n_A) {
   tcl_input_data* input_data = (tcl_input_data*) data;
-  int i, tmp_argc, res = 1;
+  int i, tmp_argc;
   const char  **tmp_argv;
   Tcl_SplitList(input_data->interp, input_data->argv[0], &tmp_argc, &tmp_argv);
   // function prototype from man page:

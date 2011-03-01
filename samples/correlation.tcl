@@ -42,11 +42,13 @@ part 0 pos 0. 0. 0.
 analyze correlation 0 first_obs particle_velocities id { 0 } second_obs particle_velocities id  { 0 } corr_operation scalar_product tau_lin 20 tau_max 100 delta_t [ setmd time_step ] compress1 discard1 
 analyze correlation 1 first_obs particle_velocities id { 0 } corr_operation scalar_product tau_lin 20 tau_max 100. delta_t [ setmd time_step ] compress1 discard1
 analyze correlation 1 autoupdate start
+analyze correlation 2 first_obs tclinput 3 corr_operation scalar_product tau_lin 20 tau_max 100. delta_t [ setmd time_step ] compress1 discard1
 
 ## We set up a second particle of which we measure the mean square displacement
 part 1 pos 1. 1. 1. 
-analyze correlation 2 first_obs particle_velocities  id { 1 } corr_operation square_distance tau_lin 20 tau_max 100 delta_t [ setmd time_step ] compress1 discard1 
-analyze correlation 2 autoupdate start
+analyze correlation 3 first_obs particle_velocities  id { 1 } corr_operation square_distance tau_lin 20 tau_max 100 delta_t [ setmd time_step ] compress1 discard1 
+analyze correlation 3 autoupdate start
+
 
 ## Now we want to measure the mobility of particle 1. We use an external force 
 ## and investigate the mean of its velocity in x direction.
@@ -56,12 +58,11 @@ for { set i 0 } { $i < $part_with_force } { incr i } {
   part $counter pos 1 1 1 ext_force $force 0. 0. type 1
   incr counter
 }
-analyze correlation 3 first_obs particle_velocities type { 1 } corr_operation componentwise_product tau_lin 20 tau_max 100. delta_t [ setmd time_step ] compress1 linear
-integrate 100
-analyze correlation 3 autoupdate start
+analyze correlation 4 first_obs particle_velocities type { 1 } corr_operation componentwise_product tau_lin 20 tau_max 100. delta_t [ setmd time_step ] compress1 linear
+analyze correlation 4 autoupdate start
 
 
-#analyze correlation 0 first_obs density_profile type { 0 } startz 0 stopz 10 nbins 10 second_obs density_profile id { 0 } startz 0 stopz 10 nbins 10 corr_operation componentwise_product tau_lin 5 hierarchy_depth 1 delta_t [ setmd time_step ] compress1 discard1 compress2 discard2
+analyze correlation [ analyze correlation n_corr ] first_obs density_profile type { 0 } startz 0 stopz 10 nbins 10 second_obs density_profile id { 0 } startz 0 stopz 10 nbins 10 corr_operation componentwise_product tau_lin 10 tau_max 1. delta_t [ setmd time_step ] compress1 discard1 compress2 discard2
 #analyze correlation 1 first_obs radial_density_profile type { 0 } center 5. 5. 5. stopr 5 nbins 10 second_obs radial_density_profile type { 0 } center 5. 5. 5. stopr 5 nbins 10 corr_operation componentwise_product tau_lin 5 hierarchy_depth 1 delta_t [ setmd time_step ] compress1 discard1 compress2 discard2
 
 inter 0 0 lennard-jones 0 0.25 0. 0. 
@@ -76,6 +77,7 @@ for { set i 0 } { $i < $nsteps } { incr i } {
   integrate 1
   ## The correlation is updated after every MD step
   analyze correlation 0 update
+  analyze correlation 2 update [ part 0 print v ]
   set av [ expr $av + [ lindex [ part 0 print v ] 0 ] ]
   set var [expr $var + [ lindex [ part 0 print v ] 0 ] *  [ lindex [ part 0 print v ] 0 ] ]
   puts $ofile [ part 0 print v ]
@@ -89,18 +91,19 @@ analyze correlation $file_corr_number write_to_file "test.dat"
 
 analyze correlation 0 write_to_file "corr0.dat"
 analyze correlation 1 write_to_file "corr1.dat"
-analyze correlation $file_corr_number write_to_file "corr2.dat"
-analyze correlation 2 write_to_file "msd.dat"
+analyze correlation 2 write_to_file "corr2.dat"
+analyze correlation $file_corr_number write_to_file "corr3.dat"
+analyze correlation 3 write_to_file "msd.dat"
 
 #analyze correlation 3 finalize
-analyze correlation 3 write_to_file "corr_with_force.dat"
+analyze correlation 4 write_to_file "corr_with_force.dat"
 
 #Lets look at the average velocities of the particles
 #with external force
-set average [ analyze correlation 3 print average1 ]
-set variance [ analyze correlation 3 print variance1 ]
-set corrtime [ analyze correlation 3 print correlation_time ]
-set stdev_mean [ analyze correlation 3 print average_errorbars]
+set average [ analyze correlation 4 print average1 ]
+set variance [ analyze correlation 4 print variance1 ]
+set corrtime [ analyze correlation 4 print correlation_time ]
+set stdev_mean [ analyze correlation 4 print average_errorbars]
 set true_value [ list ]
 set true_correlation_time [ list ]
 for { set i 0 } { $i < $part_with_force } { incr i } {
