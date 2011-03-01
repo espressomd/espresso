@@ -68,13 +68,12 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
 int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv);
 int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv);
 int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv);
-int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_);
-int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata);
+int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, profile_data** pdata_);
+int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, radial_profile_data** pdata);
 
 
 int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
 int double_correlation_finalize( double_correlation* self );
-int sf_print_usage(Tcl_Interp* interp); 
 
 int correlation_update(unsigned int no) {
   if (n_correlations > no)
@@ -278,22 +277,15 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
 
 
 int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv) {
-  char buffer[TCL_INTEGER_SPACE];
   if(argc==0) {
       return double_correlation_print_correlation(&correlations[no], interp);
   } 
-  if (ARG0_IS_S("spherically_averaged_sf")) {
-  	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
-  	    if(argc!=2) { 
-          Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
-  	      return TCL_ERROR;
-  	    }
-  	  } else {
-  	    sprintf(buffer,"%d ",correlations[no].correlation_type);
-        Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
-  	    return TCL_ERROR;
-  	  }
-            return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
+  if(argc!=1) { 
+    Tcl_AppendResult(interp, "usage: analyze <correlation_id> print [what]\n", (char *)NULL); 
+    return TCL_ERROR; 
+  }
+  if (ARG0_IS_S("spherically_averaged_sf")) { 
+    return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
   } else if (ARG0_IS_S("average1")) {
     return correlation_print_average1(&correlations[no], interp);
   } else if (ARG0_IS_S("variance1")) {
@@ -313,24 +305,23 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A) = 0;
   int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
   void* A_args = 0;
-  int dim_A;
+  unsigned int dim_A;
   int(*B_fun)  ( void* B_args, double* B, unsigned int dim_B) = 0;
   int(*compressB)  ( double* B1, double*B2, double* B_compressed, unsigned int dim_B ) = 0;
   void* B_args = 0;
-  int dim_B;
+  unsigned int dim_B;
   int tau_lin = 16; // default values
   int hierarchy_depth=0; 
   double delta_t = 1;
   double tau_max = 0;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
-  int dim_corr;
+  unsigned int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
   tcl_input_data tcl_input_d;
   char buffer[TCL_INTEGER_SPACE+2];
   int correlation_type; // correlation type of correlation which is currently being created
   int autocorrelation=1; // by default, we are doing autocorrelation
-//  int n_bins; // number of bins for spherically averaged sf
 
   // Check if ID is negative
   if ( no < 0 ) {
@@ -347,7 +338,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         if(argc==1) {
           return double_correlation_finalize(&correlations[no]);
         } else {
-          Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize", buffer, (char *)NULL);
+          Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize\n", buffer, (char *)NULL);
     	    return TCL_ERROR;
         }
       } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
@@ -548,6 +539,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
       dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
       corr_operation, compressA, compressB, correlation_type, autocorrelation);
   if ( error == 0 ) {
+  printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
     n_correlations++;
     return TCL_OK;
   } else {
@@ -570,129 +562,6 @@ int observable_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
-int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p) {
-  sf_params* params;
-  int order,order2,tau_lin;
-  int i,j,k,l,n;
-  double delta_t,tau_max;
-  char ibuffer[TCL_INTEGER_SPACE + 2];
-  char dbuffer[TCL_DOUBLE_SPACE];
-//  int *vals;
-  double *q_density;
-  params=(sf_params*)malloc(sizeof(sf_params));
-  
-  if(argc!=5) { 
-    sprintf(ibuffer, "%d ", argc);
-    Tcl_AppendResult(interp, "structure_factor  needs 5 arguments, got ", ibuffer, (char*)NULL);
-    sf_print_usage(interp);
-    return TCL_ERROR;
-  }
-  if (ARG_IS_I(1,order)) {
-    sprintf(ibuffer, "%d ", order);
-    if(order>1) {
-      params->order=order;
-      order2=order*order;
-    } else {
-      Tcl_AppendResult(interp, "order must be > 1, got ", ibuffer, (char*)NULL);
-      sf_print_usage(interp);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading order",(char*)NULL);
-    return TCL_ERROR; 
-  }
-  if (ARG_IS_D(2,delta_t)) {
-    if (delta_t > 0.0) *delta_t_p=delta_t;
-    else {
-      Tcl_PrintDouble(interp,delta_t,dbuffer);
-      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", dbuffer,(char*)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading delta_t, got ",argv[2],(char*)NULL);
-    return TCL_ERROR; 
-  }
-  if (ARG_IS_D(3,tau_max)) {
-    if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
-    else {
-      Tcl_PrintDouble(interp,tau_max,dbuffer);
-      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", dbuffer,(char*)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading tau_max, got",argv[3],(char*)NULL);
-    return TCL_ERROR; 
-  }
-  if (ARG_IS_I(4,tau_lin)) {
-    if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
-    else {
-      sprintf(ibuffer, "%d", tau_lin);
-      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", ibuffer,(char*)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading tau_lin, got",argv[4],(char*)NULL);
-    sf_print_usage(interp);
-    return TCL_ERROR; 
-  }
-  // compute the number of vectors
-  l=0;
-  for(i=-order; i<=order; i++) 
-      for(j=-order; j<=order; j++) 
-        for(k=-order; k<=order; k++) {
-          n = i*i + j*j + k*k;
-          if ((n<=order2) && (n>0)) {
-            l++;
-	  }
-        }
-  params->dim_sf=l;
-  params->q_vals=(int*)malloc(3*l*sizeof(double));
-  q_density=(double*)malloc(order2*sizeof(double));
-  for(i=0;i<order2;i++) q_density[i]=0.0;
-  l=0;
-  // Store their values and density
-  for(i=-order; i<=order; i++) 
-      for(j=-order; j<=order; j++) 
-        for(k=-order; k<=order; k++) {
-          n = i*i + j*j + k*k;
-          if ((n<=order2) && (n>0)) {
-	    params->q_vals[3*l  ]=i;
-	    params->q_vals[3*l+1]=j;
-	    params->q_vals[3*l+2]=k;
-	    q_density[n-1]+=1.0;
-            l++;
-	  }
-        }
-  for(i=0;i<order2;i++) q_density[i]/=(double)l;
-  params->q_density=q_density;
-  *A_args=(void*)params;
-  *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
-  return 0;
-}
-
-// just a test function, will be removed later
-void print_sf_params(sf_params *params) {
-  int i, imax;
-  int *vals;
-  printf("order: %d\n",params->order);
-  printf("dim_sf: %d\n",params->dim_sf);
-  //printf("n_bins: %d\n",params->n_bins);
-  //printf("qmax: %g\n",params->qmax);
-  //printf("q2max2: %g\n",params->q2max);
-  printf("q_vals: \n");
-  imax=params->dim_sf;
-  vals=params->q_vals;
-  for(i=0;i<imax;i++)
-    printf("i:%d %d %d %d\n",i,vals[3*i],vals[3*i+1],vals[3*i+ 2]);
-  printf("End of sf_params\n");
-  return;
-}
-
-
-int sf_print_usage(Tcl_Interp* interp) {
-  Tcl_AppendResult(interp, "\nusage: structure_factor order delta_t tau_max  tau_lin", (char *)NULL);
-  return TCL_ERROR;
-}
 
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list){ 
@@ -772,7 +641,7 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
   return TCL_ERROR;
 }
 
-int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args) {
+int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), unsigned int* dim_A, void** A_args) {
 
   file_data_source* fds;
   int error=0;
@@ -816,7 +685,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   }
   if (ARG0_IS_S("density_profile")) {
     *A_fun = &density_profile;
-    if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &dim_A, &pdata) == TCL_OK ) 
+    if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, dim_A, &pdata) == TCL_OK ) 
        return TCL_ERROR;
     *A_args=(void*)pdata;
     *dim_A=pdata->nbins;
@@ -825,7 +694,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
   }
   if (ARG0_IS_S("radial_density_profile")) {
     *A_fun = &radial_density_profile;
-    if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &dim_A, &rpdata) == TCL_OK ) 
+    if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, dim_A, &rpdata) == TCL_OK ) 
        return TCL_ERROR;
     *A_args=(void*)rpdata;
     *dim_A=rpdata->nbins;
@@ -875,7 +744,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
       *change=2;
       return TCL_OK;
     } else { 
-      sf_print_usage(interp);
+      Tcl_AppendResult(interp, "Usage: analyze correlation ... structure_factor order\n", (char *)NULL);
       return TCL_ERROR; 
     }
   }
@@ -893,7 +762,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
     *change+=temp;
     iw_params_p->ids2=ids1;
     if ( argc < 5 || !ARG_IS_D(5,cutoff)) {
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... interacts_with id_list1 id_list2 cutoff", (char *)NULL);
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... interacts_with <id_list1> <id_list2> <cutoff>\n", (char *)NULL);
 	  return TCL_ERROR;
     }
     *change+=1;
@@ -942,7 +811,7 @@ int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int
 }
 
 
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B) {
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B) {
   if (ARG_IS_S_EXACT(0,"componentwise_product")) {
     *corr_fun = &componentwise_product;
     *dim_corr = dim_A;
@@ -974,7 +843,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   }
 }
 
-int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_) {
+int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, profile_data** pdata_) {
   int temp;
   *change=0;
   profile_data* pdata=(profile_data*)malloc(sizeof(profile_data));
@@ -1047,7 +916,7 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
     return TCL_OK;
 }
 
-int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata_) {
+int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, radial_profile_data** pdata_) {
   int temp;
   *change=0;
   radial_profile_data* pdata=(radial_profile_data*)malloc(sizeof(radial_profile_data));
@@ -1133,6 +1002,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   // check if dt is a multiple of the md timestep
   if ( abs(dt/time_step - round(dt/time_step)>1e-6 ) ) 
     return 16;
+  self->autoupdate=0;
   self->update_frequency = (int) floor(dt/time_step);
   self->tau_lin=tau_lin;
   self->hierarchy_depth = hierarchy_depth;
@@ -1491,8 +1361,7 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
   return 0;
 }
 
-// TODO print it out
-// Look at how static SF is printed
+
 int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp) {
 
   int j,k;
@@ -1500,31 +1369,30 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
   double dt=self->dt;
   sf_params* params=(sf_params*)self->A_args;
   char buffer[TCL_DOUBLE_SPACE];
-//  char ibuffer[ 3*(TCL_INTEGER_SPACE+1) + 1 ];
   int *q_vals;
   double *q_density;
   double *av_sf_Re;
   double *av_sf_Im;
   
+  if(self->correlation_type!=CORR_TYPE_SF) { 
+    Tcl_AppendResult(interp, "Cannot print spherically averaged sf for correlation type ", (char *)NULL); 
+    sprintf(buffer,"%d ",self->correlation_type); 
+    Tcl_AppendResult(interp, buffer, "\n", (char *)NULL); 
+    return TCL_ERROR; 
+  }
+
   q_vals=params->q_vals;
   q_density=params->q_density;
   dim_sf=params->dim_sf;
   order2=params->order*params->order;
-  if(dim_sf!=self->dim_corr) printf("problem: dim_sf=%d != dim_corr=%d\n",dim_sf,self->dim_corr); 
-  else printf("OK: dim_sf=%d != dim_corr=%d\n",dim_sf,self->dim_corr); fflush(stdout);
-  fflush(stdout);
-  
   
   av_sf_Re=(double*)malloc(order2*sizeof(double));
   av_sf_Im=(double*)malloc(order2*sizeof(double));
 
   // compute spherically averaged sf
-
   for (j=0; j<self->n_result; j++) {
- //   Tcl_AppendResult(interp, " { \n", (char *)NULL);
     // compute the spherically averaged sf for current dt
     for(k=0;k<order2;k++) av_sf_Re[k]=av_sf_Im[k]=0.0;
-    if(j==0) printf("q_vals (n^2, i, j, k:\n");
     for(k=0;k<dim_sf;k++) {
       qi=q_vals[3*k  ];
       qj=q_vals[3*k+1];
@@ -1532,19 +1400,14 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
       qn= qi*qi + qj*qj + qk*qk;
       av_sf_Re[qn-1]+=self->result[j][2*k  ];
       av_sf_Im[qn-1]+=self->result[j][2*k+1];
-      if(j==0) printf("%d: %d, %d, %d, %d\n",k, qn, qi, qj, qk);
     }
-    if(j==0) printf("q_density:\n");
     for(k=0;k<order2;k++) { 
       if(q_density[k]>0.0) {
         av_sf_Re[k]/=q_density[k];
         av_sf_Im[k]/=q_density[k];
       }
-      if(j==0) printf("%d %lf\n",k, q_density[k]);
       // note: if q_density[k]==0, we did not add anything to av_sf_Xx[k], so it is 0.0
     }
-    if(j==0) printf("\n\n");
-    fflush(stdout);
     // now print what we obtained
     for(k=0;k<order2;k++) { 
       Tcl_AppendResult(interp, " { ", (char *)NULL);
@@ -1568,7 +1431,6 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
       }
       Tcl_AppendResult(interp, " } \n", (char *)NULL);
     }
-//    Tcl_AppendResult(interp, " } \n", (char *)NULL);
   }
   return 0;
 }
@@ -1972,7 +1834,7 @@ int file_data_source_init(file_data_source* self, char* filename, IntList* colum
   return 0;
 }
 
-int file_data_source_readline(void* xargs, double* A, int dim_A) {
+int file_data_source_readline(void* xargs, double* A, unsigned int dim_A) {
   file_data_source* self = xargs;
   int counter=0;
   char* token;
