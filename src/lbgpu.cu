@@ -1339,7 +1339,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
 	cudaMalloc((void**)&particle_force, size_of_forces);
 	
-	cudaMalloc((void**)&particle_data, size_of_positions);
+	cudaMalloc((void**)&particle_data, size_of_positions);	
 
 	cudaMalloc((void**)&part, size_of_seed);
 	
@@ -1401,7 +1401,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 	size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
 
 	cudaMalloc((void**)&particle_force, size_of_forces);
-	
+
 	cudaMalloc((void**)&particle_data, size_of_positions);
 
 	cudaMalloc((void**)&part, size_of_seed);
@@ -1412,7 +1412,8 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 
 	if(lbpar_gpu->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
 	
-	if(lbpar_gpu->number_of_particles) reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);	
+	if(lbpar_gpu->number_of_particles) reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);
+	
 }
 
 /**-------------------------------------------------------------------------*/
@@ -1468,13 +1469,14 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
   	
 
 		//** get espresso md particle values*/
-		cudaMemcpy(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice);
+		//cudaMemcpy(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice);
 
- 	  	/** call of the particle kernel */
-		cudaThreadSynchronize();
+		cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
 
+		/** call of the particle kernel */
 	   	calc_fluid_particle_ia<<<blocks_per_grid_particles, threads_per_block_particles, 0, stream[0]>>>(nodes_a, particle_data, particle_force, node_f, part);
-
+ 	  	
+		//cudaThreadSynchronize();
 }
 /** setup and call kernel to copy particle forces to host */
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
@@ -1486,6 +1488,7 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
 		reset_particle_force<<<blocks_per_grid_particles, threads_per_block_particles, 0,  stream[0]>>>(particle_force);
 
 		cudaThreadSynchronize();
+		//cudaStreamSynchronize(stream[0]);
 }
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes*/

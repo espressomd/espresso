@@ -1751,6 +1751,9 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
 
   /* update stress modes */
   mode[4] += C[0] + C[2] + C[5];
+//  mode[5] += 2.*C[0] - C[2] - C[5];
+//  mode[6] += C[2] - C[5];
+//ulf vorschlag: mode[6] += C[2] + C[5] - 2.*C[0];
   mode[5] += C[0] - C[2];
   mode[6] += C[0] + C[2] - 2.*C[5];
   mode[7] += C[1];

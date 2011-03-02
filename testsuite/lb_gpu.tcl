@@ -79,7 +79,7 @@ require_feature "LB"
 #############################################################
 set int_steps     	1
 puts $int_steps
-set int_times		1000
+set int_times		10
 
 set time_step     0.02
 set tau           0.02
@@ -92,9 +92,9 @@ set box_l_x       128.0
 set dens          1.0
 set viscosity     3.0
 #set bulk_viscosity 0.1
-set friction      0.01
+set friction      5.0
 #equ velo 0.025
-set temp          0.0
+set temp          1.01
 
 set skin          0.5
 
@@ -128,8 +128,7 @@ puts [setmd cell_grid]
 
 # Fluid
 #############################################################
-lbfluid dens $dens visc $viscosity agrid $agrid tau $tau
-lbfluid friction $friction
+lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
 thermostat lb $temp
 

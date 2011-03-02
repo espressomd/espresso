@@ -66,11 +66,11 @@ void init_forces();
 
 void force_calc()
 {
-#if 0
+
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
 #endif
-#endif
+
    init_forces();
   
   switch (cell_structure.type) {
@@ -91,11 +91,7 @@ void force_calc()
     nsq_calculate_ia();
     
   }
-#if 1
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
-#endif
-#endif
+
   calc_long_range_forces();
 
 #ifdef LB

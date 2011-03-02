@@ -44,10 +44,10 @@
 /** Struct holding the Lattice Boltzmann parameters */
 LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345};
 
-LB_values_gpu *host_values;
-LB_nodes_gpu *host_nodes;
-LB_particle_force_gpu *host_forces;
-LB_particle_gpu *host_data;
+LB_values_gpu *host_values = NULL;
+LB_nodes_gpu *host_nodes = NULL;
+LB_particle_force_gpu *host_forces = NULL;
+LB_particle_gpu *host_data = NULL;
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
 
@@ -161,7 +161,12 @@ void lb_pre_init_gpu() {
 
 	/**Allocate struct for particle positions */
 	size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle_gpu);
-	host_data = (LB_particle_gpu*)malloc(size_of_positions);
+#if CUDART_VERSION >= 2020
+        //pinned memory mode - use special function to get OS-pinned memory
+        cudaHostAlloc((void**)&host_data, size_of_positions, cudaHostAllocWriteCombined);
+#else
+	cudaMallocHost((void**)&host_data, size_of_positions);
+#endif
 
 	LB_TRACE (fprintf(stderr,"lb_pre_init_gpu \n"));
 }
@@ -198,7 +203,12 @@ void lb_realloc_particles_gpu(){
 
 	/**Allocate struct for particle positions */
 	size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle_gpu);
-	host_data = realloc(host_data, size_of_positions);
+#if CUDART_VERSION >= 2020
+        //pinned memory mode - use special function to get OS-pinned memory
+        cudaHostAlloc((void**)&host_data, size_of_positions, cudaHostAllocWriteCombined);
+#else
+	cudaMallocHost((void**)&host_data, size_of_positions);
+#endif
 	
 	lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
