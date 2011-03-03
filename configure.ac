@@ -101,28 +101,21 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# test whether to enable debugging
-AC_ARG_ENABLE(debug,
-	AS_HELP_STRING([--enable-debug],[Turn on debugging]),
-	,enable_debug=no)
-if test .$enable_debug = .yes; then
-   AC_DEFINE(DEBUG,,[Turn on debugging?])
-fi
-
-##################################
-# test whether to enable profiling
-AC_ARG_ENABLE(profiling,
-	AS_HELP_STRING([--enable-profiling],[Turn on profiling]),
-	,enable_profiling=no)
-if test .$enable_profiling = .yes; then
-   AC_DEFINE(PROFILING,,[Turn on profiling?])
-fi
-
-##################################
 # test for -O5
 AC_MSG_CHECKING([whether the compiler accepts -O5])
 saved_CFLAGS=$CFLAGS
 CFLAGS="-O5 $CFLAGS"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+  AC_MSG_RESULT(yes);try_add_flag_res=yes
+],[
+  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+])
+
+##################################
+# test for -Wall
+AC_MSG_CHECKING([whether the compiler accepts -Wall])
+saved_CFLAGS=$CFLAGS
+CFLAGS="-Wall $CFLAGS"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
   AC_MSG_RESULT(yes);try_add_flag_res=yes
 ],[
@@ -349,105 +342,32 @@ fi
 
 ##################################
 # check for FFTW
-AC_DEFUN([ES_CHECK_FFTW3],[
- 	ES_ADDPATH_CHECK_LIB(fftw3, fftw_plan_many_dft, [fftw3_found=yes], [fftw3_found=no])
-	if test x$fftw3_found = xyes; then
-		ES_ADDPATH_CHECK_HEADER(fftw3.h, [], [fftw3_found=no])
-	fi
-])
-
-AC_DEFUN([ES_CHECK_FFTW2],[
-	dnl we just assume that fftw and rfftw are in the same directory
-	dnl if this is not the case for you, consider cleaning up your system...
-	dnl first we check for the d* (SuSE) versions, then the normal ones
-	dnl At the end we have to include rfftw before fftw on some systems, but testing
-	dnl is only possible for fftw
-	saved_LIBS=$LIBS
- 	ES_ADDPATH_CHECK_LIB(dfftw, fftw_create_plan_specific, [fftw2_found=yes], [fftw2_found=no])
-	if test x$fftw2_found = xyes; then
-		LIBS="$saved_LIBS -ldrfftw -ldfftw"
-	else
-	 	ES_ADDPATH_CHECK_LIB(fftw, fftw_create_plan_specific, [fftw2_found=yes], [fftw2_found=no])
-		if test x$fftw2_found = xyes; then
-			LIBS="$LIBS -lrfftw -lfftw"
-		fi
-	fi
-	if test x$fftw2_found = xyes; then
-		ES_ADDPATH_CHECK_HEADER(fftw.h, [], [fftw2_found=no])
-	fi
-])
-
+# with_fftw=no    don't use FFTW
+# with_fftw=yes   try to find a working FFTW, bail out if none is found
+# not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw=VERSION],[specify the version of FFTW to use (2 or 3)]),
+	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
-dnl with_fftw=no    don't use FFTW
-dnl with_fftw=yes   try to find a working FFTW, bail out if none is found
-dnl with_fftw=  (not set) try to find a working FFTW, continue if none is found
-dnl otherwise       use the specified version
 
-if test x"$with_fftw" = xguess || test x"$with_fftw" = xyes; then
-	# determine fftw automatically
-	ES_CHECK_FFTW3
-	if test x$fftw3_found = xyes; then
-	   use_fftw=3
-	else
-	  ES_CHECK_FFTW2
-	  if test x$fftw2_found = xyes; then
-	     use_fftw=2
-	  elif test x$with_fftw = xguess; then
-	      # no fftw was found, and none was requested
-	      use_fftw=none
-	  else
-              # no fftw was found, but the user wanted one (--with-fftw)
-	      ES_NOTE_64BIT
-	      AC_MSG_FAILURE([
-********************************************************************************
-* Could not find FFTW!                                                         *
-********************************************************************************
-])
-	  fi
-	fi
-elif test x$with_fftw = x3; then
-        use_fftw=3
-	ES_CHECK_FFTW3
-	if test x$fftw3_found != xyes; then
-	   ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
-********************************************************************************
-* Could not find FFTW3!                                                        *
-* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)   *
-* Please add the include path to CPPFLAGS                                      *
-* (e.g. configure CPPFLAGS=-I/usr/include).                                    *
-********************************************************************************
-])
-	fi
-elif test x$with_fftw = x2; then
-	use_fftw=2
-	ES_CHECK_FFTW2
-	if test x$fftw2_found != xyes; then
-	   ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
-************************************************************************
-* Could not find FFTW2!                                                        *
-* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)   *
-* Please add the include path to CPPFLAGS                                      *
-* (e.g. configure CPPFLAGS=-I/usr/include).                                    *
-********************************************************************************
-])
-	fi
-elif test x$with_fftw = xno; then
-     use_fftw=none
-else
-  AC_MSG_ERROR([specified bad FFTW version ($with_fftw)])
-fi
+AS_IF([test x$with_fftw = xno], [fftw_found=no],
+  [ AC_SEARCH_LIBS(fftw_plan_many_dft, [fftw3], [fftw_found=yes], [fftw_found=no])
+    AS_IF([test x$fftw_found = xyes],
+      [AC_CHECK_HEADER([fftw3.h],, [fftw_found=no])])
+  ])
 
-# after this, use_fftw should be set correctly
-if test x$use_fftw != xnone; then
-	# save the result
-	AC_DEFINE_UNQUOTED(FFTW, $use_fftw, [Whether to use the FFTW library, and which version to use])
-fi
+AS_IF([test x$fftw_found = xno],[
+  AS_IF([test x$with_fftw = xyes],[
+    ES_NOTE_64BIT
+    AC_MSG_FAILURE([FFTW3 requested, but FFTW3 was not found!])
+    ],[ AS_IF([test x$with_fftw = xguess], [
+          AC_MSG_WARN([FFTW3 not found. Some features will not be available!])
+         ])
+    ])
+  ])
+
+AC_DEFINE_UNQUOTED(FFTW,$fftw_found,[Whether FFTW is available])
 
 ##################################
 # check for CUDA
@@ -609,7 +529,7 @@ Libraries:
 ----------
 Tcl version		= $use_tcl
 Tk version		= $use_tk
-FFTW version		= $use_fftw
+FFTW 			= $fftw_found
 efence			= $with_efence
 
 Other settings:

@@ -276,8 +276,6 @@ void mpi_send_rotational_inertia_slave(int node, int parm);
 void mpi_send_vs_relative_slave(int pnode, int part);
 void mpi_bcast_max_mu_slave(int node, int parm);
 void mpi_recv_fluid_populations_slave(int node, int parm);
-/*@}*/
-
 /** A list of which function has to be called for
     the issued command. */
 static SlaveCallback *slave_callbacks[] = {
@@ -413,11 +411,20 @@ char *names[] = {
   "REQ_ICCP3M_INIT",/* 53 */
   "SET_RINERTIA",   /* 54 */
   "REQ_BCAST_LBBOUNDARY", /* 55 */
+<<<<<<< HEAD
   "SET_MU_E",       /* 56 */
   "REQ_MAX_MU",     /* 57 */
   "SET_VS_RELATIVE",/* 58 */
   "REQ_GET_FLUID_POP", /* 59 */
   "REQ_LB_GET_BORDER_FLAG" /* 60 */
+=======
+  "REQ_LB_GET_BORDER_FLAG" /* 56 */
+  "SET_MU_E", /* 57 */
+  "REQ_GET_FLUID_POP" /* 58 */
+  "SET_VS_RELATIVE", /* 59 */
+  "REQ_MAX_MU", /* 60 */
+  "SET_VS_RELATIVE", /* 61 */
+>>>>>>> master
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */

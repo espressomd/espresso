@@ -178,9 +178,9 @@ int tclprint_to_result_DipolarP3M(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, p3m.Daccuracy, buffer);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
 
-  Tcl_AppendResult(interp, "} {dipolar epsilon ", (char *) NULL);
+  Tcl_AppendResult(interp, "} {magnetic epsilon ", (char *) NULL);
   if (p3m.Depsilon == P3M_EPSILON_METALLIC)
-    Tcl_AppendResult(interp, " metallic ", (char *) NULL);
+    Tcl_AppendResult(interp, "metallic ", (char *) NULL);
   else {
     Tcl_PrintDouble(interp, p3m.Depsilon, buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *) NULL);

@@ -1,14 +1,36 @@
-\chapter{Lattice Boltzmann}
-\label{sec:lb}
-For an implicit treatment of a solvent \es allows to couple the molecular dynamics 
-part to a Lattice Boltzmann fluid. The Lattice Boltzmann Method is a fast, lattice 
-based method that allows in its ``pure'' form to calculate fluid flow in various boundary
-conditions also in complex geometries. Coupled to molecular dynamics, it is mainly used to 
-take hydrodynamic interactions into account computationally efficiently. The main
-goal in \es is, of course the coupling to MD and therefore available geometries and
-boundary conditions are somewhat limited compared to ``pure'' codes. 
-Here we restrict the documentation on the interface. For a more detailed description
+% Copyright (C) 2010,2011 The ESPResSo project
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
 
+\chapter{Lattice-Boltzmann}
+\label{sec:lb}
+\newescommand{lb}
+
+For an implicit treatment of a solvent \es allows to couple the
+molecular dynamics part to a Lattice-Boltzmann fluid. The Lattice-
+Boltzmann-Method is a fast, lattice based method that allows in its
+``pure'' form to calculate fluid flow in various boundary conditions
+also in complex geometries. Coupled to molecular dynamics, it is
+mainly used to take hydrodynamic interactions into account
+computationally efficiently. The main goal in \es is, of course the
+coupling to MD and therefore available geometries and boundary
+conditions are somewhat limited compared to ``pure'' codes.  Here we
+restrict the documentation on the interface. For a more detailed
+description
 
 \section{Setting up and LB fluid}
 \begin{essyntax}
@@ -26,41 +48,44 @@ Here we restrict the documentation on the interface. For a more detailed descrip
   \required{LB}
   \end{features}
 \end{essyntax}
-The \lit{lbfluid} command serves to initialize the fluid with a given set
-of parameters. It is also possible to change parameters on the fly, but this will
-only rarely be done in practice. Before being able to use the LBM, it is necessary
-to set up a box of a desired size. The parameter \lit{agrid} serves to set up
-the lattice constant of the fluid, so the size of the box in every direction must be a
-multiple of \var{agrid}. 
+The \lit{lbfluid} command serves to initialize the fluid with a given
+set of parameters. It is also possible to change parameters on the
+fly, but this will only rarely be done in practice. Before being able
+to use the LBM, it is necessary to set up a box of a desired size. The
+parameter \lit{agrid} serves to set up the lattice constant of the
+fluid, so the size of the box in every direction must be a multiple of
+\var{agrid}.
 
-In \es the LB scheme and the MD scheme are not synchronized: In one
-LB time step typically several MD steps are performed. This allows to speed
-up the simulations and is adjusted with the parameter \var{tau}.
-The parameters \var{dens} and \var{visc} set up the
-density and viscosity of the LB fluid in (usual) MD units.
-Internally the LB implementation works with a different set of units:
-all lengths are expressed in \var{agrid}, all times in \var{tau} and so on.
-Therefore changing  \var{agrid} and \var{tau}, might change the behaviour 
-of the LB fluid, \eg at boundaries, due to characteristics of the LBM
+In \es the LB scheme and the MD scheme are not synchronized: In one LB
+time step typically several MD steps are performed. This allows to
+speed up the simulations and is adjusted with the parameter \var{tau}.
+The parameters \var{dens} and \var{visc} set up the density and
+viscosity of the LB fluid in (usual) MD units.  Internally the LB
+implementation works with a different set of units: all lengths are
+expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
+changing \var{agrid} and \var{tau}, might change the behaviour of the
+LB fluid, \eg at boundaries, due to characteristics of the LBM
 itself. Currently it is not possible to precisely give a parameter set
-where reliable results are expected, but we are currently performing 
-a study on that. Therefore the LBM should \emph{not be used as a black box}, but
-only after a careful check of all parameters that were applied. Again: 
-You have to \emph{know what you are doing} before you can use the Lattice-Boltzmann
-module productively. 
+where reliable results are expected, but we are currently performing a
+study on that. Therefore the LBM should \emph{not be used as a black
+  box}, but only after a careful check of all parameters that were
+applied. Again: You have to \emph{know what you are doing} before you
+can use the Lattice-Boltzmann module productively.
 
-The parameter \lit{ext_force} allows to apply an external body force density
-that is homogenous over the fluid. It is again to be given in MD units.
-The parameter \lit{bulk_viscosity} allows to tune the bulk viscosity of the fluid
-and is given in MD units. In the limit of low Mach (often also low Reynolds) number
-the results should be independent of the bulk viscosity. 
-\lit{gamma_odd} and \lit{gamma_even} are the relaxation parameters for the kinetic
-modes. Due to their somewhat obscure nature they are to be given directly in 
-LB units.
+The parameter \lit{ext_force} allows to apply an external body force
+density that is homogenous over the fluid. It is again to be given in
+MD units.  The parameter \lit{bulk_viscosity} allows to tune the bulk
+viscosity of the fluid and is given in MD units. In the limit of low
+Mach (often also low Reynolds) number the results should be
+independent of the bulk viscosity.  \lit{gamma_odd} and
+\lit{gamma_even} are the relaxation parameters for the kinetic
+modes. Due to their somewhat obscure nature they are to be given
+directly in LB units.
 
-Before running a simulation at least the following parameters must be set up:
-\lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau}. For the other parameters, the following
-defaults are taken:  \var{bulk\_viscosity}=0, \var{gamma}=0, \var{gamma\_odd}=0, \var{gamma\_even}=0.
+Before running a simulation at least the following parameters must be
+set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau}. For the other
+parameters, the following defaults are taken: \var{bulk\_viscosity}=0,
+\var{gamma}=0, \var{gamma\_odd}=0, \var{gamma\_even}=0.
 
 \section{LB as a thermostat}
 
@@ -102,26 +127,33 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
   \required{LB_BOUNDARIES}
   \end{features}
 \end{essyntax}
-The \lit{lbboundary} command syntax is very close to the \lit{constraint} syntax, as 
-usually one wants the hydrodynamic boundary conditions to be shaped similar to 
-the MD boundaries. Currently the above mentioned shapes are available and their syntax follows exactly
-the syntax of the constraint command. For example
+The \lit{lbboundary} command syntax is very close to the
+\lit{constraint} syntax, as usually one wants the hydrodynamic
+boundary conditions to be shaped similar to the MD
+boundaries. Currently the above mentioned shapes are available and
+their syntax follows exactly the syntax of the constraint command. For
+example
 \begin{tclcode}
   lbboundary wall dist 1.5 normal 1. 0. 0. 
 \end{tclcode}
-creates a planar boundary condition at distance 1.5 from the origin of the coordinate system
-where the half space $x>1.5$ is treated as normal LB fluid, and the other half space 
-is filled with boundary nodes.
+creates a planar boundary condition at distance 1.5 from the origin of
+the coordinate system where the half space $x>1.5$ is treated as
+normal LB fluid, and the other half space is filled with boundary
+nodes.
 
-Intersecting boundaries are in principle possible but must be treated with care. In the current,
-only partly satisfactory implementation for every LB node the closest boundary is determined
-and in case of a negative distance to that boundary (meaning being inside the wall) lets \es decide that
-it is a wall node, and a positive one, that it is not.
-This allows example multiple parallel channels, but is is not always clear that a rectangularly shaped
-channel can be constructed. Suggestions on how to solve this issue are very welcome.
+Intersecting boundaries are in principle possible but must be treated
+with care. In the current, only partly satisfactory implementation for
+every LB node the closest boundary is determined and in case of a
+negative distance to that boundary (meaning being inside the wall)
+lets \es decide that it is a wall node, and a positive one, that it is
+not.  This allows example multiple parallel channels, but is is not
+always clear that a rectangularly shaped channel can be
+constructed. Suggestions on how to solve this issue are very welcome.
 
-Currently, only the so called ``link-bounce-back'' algorithm for wall nodes is available. This creates a boundary that
-is located approximately midway between the lattice nodes, so in the above example this corresponds indeed to 
-a boundary at $x=1.5$. Note that the location of the boundary is unfortunately not independent of the 
-viscosity. This can \eg be seen when using the sample script \lit{poisseuille.tcl}
-with a high viscosity.
+Currently, only the so called ``link-bounce-back'' algorithm for wall
+nodes is available. This creates a boundary that is located
+approximately midway between the lattice nodes, so in the above
+example this corresponds indeed to a boundary at $x=1.5$. Note that
+the location of the boundary is unfortunately not independent of the
+viscosity. This can \eg be seen when using the sample script
+\lit{poisseuille.tcl} with a high viscosity.

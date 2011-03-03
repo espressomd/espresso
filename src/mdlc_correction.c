@@ -792,7 +792,7 @@ int tclprint_to_result_MDLC(Tcl_Interp *interp)
   char buffer[TCL_DOUBLE_SPACE];
   
   Tcl_PrintDouble(interp, dlc_params.maxPWerror, buffer);
- Tcl_AppendResult(interp, "} {magnetic dlc ", buffer, (char *) NULL);
+ Tcl_AppendResult(interp, "} {magnetic mdlc ", buffer, (char *) NULL);
   Tcl_PrintDouble(interp, dlc_params.gap_size, buffer);
   Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
   Tcl_PrintDouble(interp, dlc_params.far_cut, buffer);

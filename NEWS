@@ -8,6 +8,10 @@ NOTEWORTHY CHANGES SINCE v2.2.0b
 User-visible changes
 --------------------
 
+* The Lattice-Boltzmann implementation in ESPResSo has been
+  significantly overhauled and it has been documented for the first
+  time.
+
 * The P3M algorithm for electrostatic and dipolar (magnetostatic)
   interactions has been extended.
 
@@ -66,6 +70,8 @@ User-visible changes
     If you want to compile several binaries from a single source
     directory, you can use build directories as described in the
     User's Guide.
+
+* FFTW2 is no longer supported.
 
 Organizational changes
 ----------------------

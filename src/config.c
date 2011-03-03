@@ -108,15 +108,7 @@ int tclcallback_version(Tcl_Interp *interp)
 int tclcallback_compilation(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
-#ifdef DEBUG
-  Tcl_AppendResult(interp, "{ " DEBUG " } ", (char *) NULL);
-#endif
-#ifdef PROFILING
-  Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
-#endif
-#if FFTW == 2
-  Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
-#elif FFTW == 3
+#ifdef FFTW
   Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
 #endif
 #ifdef TK
