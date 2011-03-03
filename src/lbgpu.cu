@@ -17,10 +17,12 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
+
+extern "C" {
 #include "lbgpu.h"
+}
 
 #ifdef LB_GPU
-#define malloc malloc
 
 /**defining structures residing in global memory */
 /** struct for phys. values */
@@ -100,6 +102,7 @@ __device__ inline void atomicadd(float* address, float value){
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
 	atomicAdd(address, value);
 #elif __CUDA_ARCH__ >= 110
+#warning Using slower atomicAdd emulation
 // float-atomic-add from 
 // [url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]http://forums.nvidia.com/index.php?showtop...st&p=991561[/url]
   float old = value;
@@ -635,7 +638,7 @@ if(para.external_force){
 __device__ void calc_values(float *mode, LB_values_gpu *d_v, unsigned int index, LB_nodes_gpu *n_a, unsigned int singlenode){
 
 	float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
-#if 1	
+	
 /**implemented due to the problem of division via zero*/
 	if(n_a[index].boundary == 1){
 		Rho = 1.0f;
@@ -643,7 +646,7 @@ __device__ void calc_values(float *mode, LB_values_gpu *d_v, unsigned int index,
 		mode[2] = 0.f;
 		mode[3] = 0.f;
 	}
-#endif
+
 if(singlenode == 1){
 	d_v[0].rho = Rho;
  	d_v[0].v[0] = mode[1]/Rho;
@@ -732,6 +735,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle_
 	float temp_delta_half[6];
 
 /** see ahlrichs + duennweg page 8227 equ (10) and (11) */
+	#pragma unroll
 	for(int i=0; i<3; ++i){
                 float scaledpos = particle_data[part_index].p[i]/para.agrid;
 		my_left[i] = (unsigned int)(floorf(scaledpos));
@@ -751,9 +755,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle_
 	delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
 	delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
-    unsigned int x = my_left[0];
-    unsigned int y = my_left[1];
-    unsigned int z = my_left[2];
+    	unsigned int x = my_left[0];
+    	unsigned int y = my_left[1];
+    	unsigned int z = my_left[2];
 
 	node_index[0] = x                + para.dim_x*y                  + para.dim_x*para.dim_y*z;
 	node_index[1] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*z;
@@ -764,7 +768,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle_
 	node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 	node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 	
-#if 1
+#if 0
 	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
   if(n_a[node_index[0]].boundary == 1){
 		delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
@@ -824,7 +828,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle_
   if(n_a[node_index[7]].boundary == 1)delta[7] = 0.f;
 #endif
 
-
+  #pragma unroll
   for(int i=0; i<8; ++i){
 		calc_mode(mode, n_a, node_index[i]);
 		Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
@@ -880,12 +884,37 @@ __device__ void calc_viscous_force(LB_nodes_gpu *n_a, float *delta, LB_particle_
 /*-------------------------------------------------------*/
 __device__ void calc_node_force(LB_nodes_gpu *n_a, float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu *node_f){
 
-for(int i=0; i<8; ++i){
-	atomicadd(&(node_f[node_index[i]].force[0]), (delta[i]*delta_j[0]));
-	atomicadd(&(node_f[node_index[i]].force[1]), (delta[i]*delta_j[1]));
-	atomicadd(&(node_f[node_index[i]].force[2]), (delta[i]*delta_j[2]));
-}
+	atomicadd(&(node_f[node_index[0]].force[0]), (delta[0]*delta_j[0]));
+	atomicadd(&(node_f[node_index[0]].force[1]), (delta[0]*delta_j[1]));
+	atomicadd(&(node_f[node_index[0]].force[2]), (delta[0]*delta_j[2]));
 
+	atomicadd(&(node_f[node_index[1]].force[0]), (delta[1]*delta_j[0]));
+	atomicadd(&(node_f[node_index[1]].force[1]), (delta[1]*delta_j[1]));
+	atomicadd(&(node_f[node_index[1]].force[2]), (delta[1]*delta_j[2]));
+
+	atomicadd(&(node_f[node_index[2]].force[0]), (delta[2]*delta_j[0]));
+	atomicadd(&(node_f[node_index[2]].force[1]), (delta[2]*delta_j[1]));
+	atomicadd(&(node_f[node_index[2]].force[2]), (delta[2]*delta_j[2]));
+
+	atomicadd(&(node_f[node_index[3]].force[0]), (delta[3]*delta_j[0]));
+	atomicadd(&(node_f[node_index[3]].force[1]), (delta[3]*delta_j[1]));
+	atomicadd(&(node_f[node_index[3]].force[2]), (delta[3]*delta_j[2]));
+
+	atomicadd(&(node_f[node_index[4]].force[0]), (delta[4]*delta_j[0]));
+	atomicadd(&(node_f[node_index[4]].force[1]), (delta[4]*delta_j[1]));
+	atomicadd(&(node_f[node_index[4]].force[2]), (delta[4]*delta_j[2]));
+
+	atomicadd(&(node_f[node_index[5]].force[0]), (delta[5]*delta_j[0]));
+	atomicadd(&(node_f[node_index[5]].force[1]), (delta[5]*delta_j[1]));
+	atomicadd(&(node_f[node_index[5]].force[2]), (delta[5]*delta_j[2]));
+
+	atomicadd(&(node_f[node_index[6]].force[0]), (delta[6]*delta_j[0]));
+	atomicadd(&(node_f[node_index[6]].force[1]), (delta[6]*delta_j[1]));
+	atomicadd(&(node_f[node_index[6]].force[2]), (delta[6]*delta_j[2]));
+
+	atomicadd(&(node_f[node_index[7]].force[0]), (delta[7]*delta_j[0]));
+	atomicadd(&(node_f[node_index[7]].force[1]), (delta[7]*delta_j[1]));
+	atomicadd(&(node_f[node_index[7]].force[2]), (delta[7]*delta_j[2]));
 }
 /*-------------------------------------------------------*/
 /**additional check if the particles are within the box */
@@ -895,7 +924,7 @@ for(int i=0; i<8; ++i){
 }*/
 /*-------------------------------------------------------*/
 __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int part_index){
-#if 1
+
 	if(particle_data[part_index].p[0]/para.agrid < 0.f || particle_data[part_index].p[0]/para.agrid > para.dim_x){
 		 printf("particle out of box! (dim_x) \t %u \t %f \n", part_index, particle_data[part_index].p[0]); 
 	}
@@ -905,7 +934,6 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
 	if(particle_data[part_index].p[2]/para.agrid < 0.f || particle_data[part_index].p[2]/para.agrid > para.dim_z){
 		 printf("particle out of box! (dim_z) \t %u \t %f \n", part_index, particle_data[part_index].p[2]); 
 	}
-#endif
 }
 /*-------------------------------------------------------*/
 /**kernel to calculate local populations from hydrodynamic fields given by the tcl values.
@@ -930,9 +958,9 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu *n_a, LB_node_force_gpu *node_f,
       /* default values for fields in lattice units */
 	*gpu_check = 1;
 
-    float Rho = para.rho*para.agrid*para.agrid*para.agrid;
-    float v[3] = { 0.0f, 0.0f, 0.0f };
-    float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
+    	float Rho = para.rho*para.agrid*para.agrid*para.agrid;
+    	float v[3] = { 0.0f, 0.0f, 0.0f };
+    	float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
  	/*----------------------------------- */
 
@@ -1209,7 +1237,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu *n_a, LB_particle_gpu *parti
 	LB_randomnr_gpu rng_part;
 	
 	if(part_index<para.number_of_particles){
-#if 1		
+#if 0		
 		/** check if particles are in the box*/
 		check_part_posis(particle_data, part_index);		
 #endif
@@ -1350,11 +1378,11 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 	h_gpu_check = (int*)malloc(sizeof(int));
 
 	/** values for the kernel call */
-   	threads_per_block = 128;
+   	threads_per_block = 64;
    	blocks_per_grid = (lbpar_gpu->number_of_nodes + threads_per_block - 1) /(threads_per_block);
 
    	/** values for the particle kernel */
-   	threads_per_block_particles = 128;
+   	threads_per_block_particles = 64;
 	blocks_per_grid_particles = (lbpar_gpu->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
 
 	reset_boundaries<<<blocks_per_grid, threads_per_block>>>(nodes_a, nodes_b);
@@ -1407,7 +1435,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 	cudaMalloc((void**)&part, size_of_seed);
 
 	/** values for the particle kernel */
-	threads_per_block_particles = 128;
+	threads_per_block_particles = 64;
 	blocks_per_grid_particles = (lbpar_gpu->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
 
 	if(lbpar_gpu->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
@@ -1432,7 +1460,7 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
 	reset_boundaries<<<blocks_per_grid, threads_per_block>>>(nodes_a, nodes_b);
 	
-	threads_per_block_bound = 128;
+	threads_per_block_bound = 64;
 	blocks_per_grid_bound = (number_of_boundnodes + threads_per_block_bound -1)/(threads_per_block_bound);
 
 #if 0
@@ -1555,5 +1583,4 @@ void lb_free_GPU(){
 	cudaStreamDestroy(stream[0]);
 
 }
-#define malloc pmalloc
 #endif /* LB_GPU */
