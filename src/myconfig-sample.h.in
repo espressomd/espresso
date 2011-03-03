@@ -26,9 +26,7 @@
 
     Instead, create a copy of this file at any of these locations:
     @myconfig@
-    src/@myconfig@
     @abs_top_srcdir@/@myconfig@
-    @abs_top_srcdir@/src/@myconfig@
 
     Then uncomment any of the following lines to activate the
     corresponding feature of ESPResSo. It is recommended to activate
