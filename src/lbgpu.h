@@ -120,14 +120,14 @@ typedef struct {
 typedef struct {
 
   /** velocitydensity of the node */
-  float vd[19];
+  float *vd[19];
 
 
   /** seed for the random gen */
-  unsigned int seed;
+  unsigned int *seed;
 
-   /** flag indicating whether this site belongs to a boundary */
-   unsigned int boundary;
+  /** flag indicating whether this site belongs to a boundary */
+  unsigned int *boundary;
 
   /** (re)set values like seed */
   //unsigned int set;
