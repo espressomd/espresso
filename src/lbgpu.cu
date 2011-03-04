@@ -35,9 +35,7 @@ static LB_particle_force_gpu *particle_force;
 /** struct for particle position and veloctiy */
 static LB_particle_gpu *particle_data;
 /** struct for node force */
-static LB_node_force_gpu *node_f;
-/** struct for pointer swapping */
-//static LB_nodes_gpu tmp;
+static LB_node_force_gpu node_f;
 /** struct for storing particle rn seed */
 static LB_particle_seed_gpu *part;
 
@@ -68,10 +66,8 @@ static int blocks_per_grid_print;
 static unsigned int intflag = 1;
 /**defining size values for allocating global memory */
 static size_t size_of_values;
-static size_t size_of_nodes;
 static size_t size_of_forces;
 static size_t size_of_positions;
-static size_t size_of_node_f;
 static size_t size_of_seed;
 static size_t size_of_boundindex;
 static size_t size_of_extern_nodeforces;
@@ -257,10 +253,10 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
  * @param n_a		Pointer to local node residing in array a (Input)
  * @param index		node index / thread index (Input)
  * @param mode		Pointer to the local register values mode (Input/Output)
- * @param *node_f	Pointer to local node force (Input)
+ * @param node_f	Pointer to local node force (Input)
 }*/
 /*-------------------------------------------------------*/
-__device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu *node_f){
+__device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu node_f){
 
     float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
     float j[3], pi_eq[6];
@@ -277,9 +273,9 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu *
    	* inlcude one half-step of the force action.  See the
    	* Chapman-Enskog expansion in [Ladd & Verberg]. */
 
-    j[0] += 0.5f*node_f[index].force[0];
-    j[1] += 0.5f*node_f[index].force[1];
-    j[2] += 0.5f*node_f[index].force[2];
+    j[0] += 0.5f*node_f.force[0][index];
+    j[1] += 0.5f*node_f.force[1][index];
+    j[2] += 0.5f*node_f.force[2][index];
 
   	/* equilibrium part of the stress modes (eq13 schiller)*/
   	pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
@@ -552,33 +548,33 @@ __device__ void reset_pop(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index
 /*@{
  * @param index		node index / thread index (Input)
  * @param mode		Pointer to the local register values mode (Input/Output)
- * @param *node_f	Pointer to local node force (Input)
+ * @param node_f	Pointer to local node force (Input)
 }*/
 /*-------------------------------------------------------*/
-__device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu *node_f) {
+__device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu node_f) {
 
-  	float Rho, *f, u[3], C[6];
+  	float Rho, u[3], C[6];
 
-	f = node_f[index].force;
+	//f = node_f.force[index];
 
   	Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
   	/* hydrodynamic momentum density is redefined when forces present */
-  	u[0] = (mode[1] + 0.5f*f[0])/Rho;
-  	u[1] = (mode[2] + 0.5f*f[1])/Rho;
-  	u[2] = (mode[3] + 0.5f*f[2])/Rho;
+  	u[0] = (mode[1] + 0.5f*node_f.force[0][index])/Rho;
+  	u[1] = (mode[2] + 0.5f*node_f.force[1][index])/Rho;
+  	u[2] = (mode[3] + 0.5f*node_f.force[2][index])/Rho;
 
-  	C[0] = (1.f + para.gamma_bulk)*u[0]*f[0] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*f[0] + u[1]*f[1] + u[2]*f[2]);
-  	C[2] = (1.f + para.gamma_bulk)*u[1]*f[1] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*f[0] + u[1]*f[1] + u[2]*f[2]);
-  	C[5] = (1.f + para.gamma_bulk)*u[2]*f[2] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*f[0] + u[1]*f[1] + u[2]*f[2]);
-  	C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*f[1]+u[1]*f[0]);
-  	C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*f[2]+u[2]*f[0]);
-  	C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*f[2]+u[2]*f[1]);
+  	C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
+  	C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
+  	C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
+  	C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1][index]+u[1]*node_f.force[0][index]);
+  	C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2][index]+u[2]*node_f.force[0][index]);
+  	C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2][index]+u[2]*node_f.force[1][index]);
 
   	/* update momentum modes */
-  	mode[1] += f[0];
-  	mode[2] += f[1];
-  	mode[3] += f[2];
+  	mode[1] += node_f.force[0][index];
+  	mode[2] += node_f.force[1][index];
+  	mode[3] += node_f.force[2][index];
   	
   	/* update stress modes */
   	mode[4] += C[0] + C[2] + C[5];
@@ -590,15 +586,15 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 
 #ifdef EXTERNAL_FORCES
 if(para.external_force){
-	node_f[index].force[0] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-	node_f[index].force[1] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-	node_f[index].force[2] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+	node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+	node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+	node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
 }
 #else
   	  /* reset force */
-	node_f[index].force[0] = 0.f;
-	node_f[index].force[1] = 0.f;
-	node_f[index].force[2] = 0.f;
+	node_f.force[0][index] = 0.f;
+	node_f.force[1][index] = 0.f;
+	node_f.force[2][index] = 0.f;
 #endif
 
 }
@@ -855,42 +851,42 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
  * @param *delta			Pointer for the weighting of particle position (Input)
  * @param *delta_j			Pointer for the weighting of particle momentum (Input)
  * @param node_index		node index around (8) particle (Input)
- * @param *node_f    		Pointer to the node force (Output).
+ * @param node_f    		Pointer to the node force (Output).
 }*/
 /*-------------------------------------------------------*/
-__device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu *node_f){
+__device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu node_f){
 
-	atomicadd(&(node_f[node_index[0]].force[0]), (delta[0]*delta_j[0]));
-	atomicadd(&(node_f[node_index[0]].force[1]), (delta[0]*delta_j[1]));
-	atomicadd(&(node_f[node_index[0]].force[2]), (delta[0]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[0]]), (delta[0]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[0]]), (delta[0]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[0]]), (delta[0]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[1]].force[0]), (delta[1]*delta_j[0]));
-	atomicadd(&(node_f[node_index[1]].force[1]), (delta[1]*delta_j[1]));
-	atomicadd(&(node_f[node_index[1]].force[2]), (delta[1]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[1]]), (delta[1]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[1]]), (delta[1]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[1]]), (delta[1]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[2]].force[0]), (delta[2]*delta_j[0]));
-	atomicadd(&(node_f[node_index[2]].force[1]), (delta[2]*delta_j[1]));
-	atomicadd(&(node_f[node_index[2]].force[2]), (delta[2]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[2]]), (delta[2]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[2]]), (delta[2]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[2]]), (delta[2]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[3]].force[0]), (delta[3]*delta_j[0]));
-	atomicadd(&(node_f[node_index[3]].force[1]), (delta[3]*delta_j[1]));
-	atomicadd(&(node_f[node_index[3]].force[2]), (delta[3]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[3]]), (delta[3]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[3]]), (delta[3]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[3]]), (delta[3]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[4]].force[0]), (delta[4]*delta_j[0]));
-	atomicadd(&(node_f[node_index[4]].force[1]), (delta[4]*delta_j[1]));
-	atomicadd(&(node_f[node_index[4]].force[2]), (delta[4]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[4]]), (delta[4]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[4]]), (delta[4]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[4]]), (delta[4]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[5]].force[0]), (delta[5]*delta_j[0]));
-	atomicadd(&(node_f[node_index[5]].force[1]), (delta[5]*delta_j[1]));
-	atomicadd(&(node_f[node_index[5]].force[2]), (delta[5]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[5]]), (delta[5]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[5]]), (delta[5]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[5]]), (delta[5]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[6]].force[0]), (delta[6]*delta_j[0]));
-	atomicadd(&(node_f[node_index[6]].force[1]), (delta[6]*delta_j[1]));
-	atomicadd(&(node_f[node_index[6]].force[2]), (delta[6]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[6]]), (delta[6]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[6]]), (delta[6]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[6]]), (delta[6]*delta_j[2]));
 
-	atomicadd(&(node_f[node_index[7]].force[0]), (delta[7]*delta_j[0]));
-	atomicadd(&(node_f[node_index[7]].force[1]), (delta[7]*delta_j[1]));
-	atomicadd(&(node_f[node_index[7]].force[2]), (delta[7]*delta_j[2]));
+	atomicadd(&(node_f.force[0][node_index[7]]), (delta[7]*delta_j[0]));
+	atomicadd(&(node_f.force[1][node_index[7]]), (delta[7]*delta_j[1]));
+	atomicadd(&(node_f.force[2][node_index[7]]), (delta[7]*delta_j[2]));
 }
 /*-------------------------------------------------------*/
 /**additional check if the particles are within the box */
@@ -920,11 +916,11 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
  * Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
  *
  * @param n_a		 Pointer to the lattice site (Input).
- * @param *node_f    Pointer to the node force (Input).
+ * @param node_f    Pointer to the node force (Input).
  * @param *gpu_check additional check if gpu kernel are executed(Input).
  */
 /*-------------------------------------------------------*/
-__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu *node_f, int *gpu_check) {
+__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, int *gpu_check) {
 
   unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1048,23 +1044,23 @@ __global__ void reset_particle_force(LB_particle_force_gpu *particle_force){
 /*-------------------------------------------------------*/
 /** (re-)initialization of the node force / set up of external force in lb units */
 /*@{
- * @param *node_f		Pointer to local node force (Input)
+ * @param node_f		Pointer to local node force (Input)
 }*/
 /*-------------------------------------------------------*/
-__global__ void reinit_node_force(LB_node_force_gpu *node_f){
+__global__ void reinit_node_force(LB_node_force_gpu node_f){
 
 	unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
 
 	if(index<para.number_of_nodes){
 		if(para.external_force){
-			node_f[index].force[0] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-			node_f[index].force[1] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-			node_f[index].force[2] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+			node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+			node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+			node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
 		}
 		else{
-			node_f[index].force[0] = 0.0f;
-			node_f[index].force[1] = 0.0f;
-			node_f[index].force[2] = 0.0f;
+			node_f.force[0][index] = 0.0f;
+			node_f.force[1][index] = 0.0f;
+			node_f.force[2][index] = 0.0f;
 		}
 	}
 }
@@ -1154,10 +1150,10 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
  * @param n_a		Pointer to local node residing in array a (Input)
  * @param n_b		Pointer to local node residing in array b (Input)
  * @param *d_v		Pointer to local device values (Input)
- * @param *node_f	Pointer to local node force (Input)
+ * @param node_f	Pointer to local node force (Input)
 }*/
 /*-------------------------------------------------------*/
-__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v, LB_node_force_gpu *node_f){
+__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v, LB_node_force_gpu node_f){
     
 	/**every node is connected to a thread via the index*/
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -1201,10 +1197,10 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
  * @param *particle_data	Pointer to the particle position and velocity (Input)
  * @param *particle_force	Pointer to the particle force (Input)
  * @param *part				Pointer to the rn array of the particles (Input)
- * @param *node_f			Pointer to local node force (Input)
+ * @param node_f			Pointer to local node force (Input)
 }*/
 /*-------------------------------------------------------*/
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, LB_node_force_gpu *node_f, LB_particle_seed_gpu *part){
+__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, LB_node_force_gpu node_f, LB_particle_seed_gpu *part){
 	
 	unsigned int part_index = blockDim.x * blockIdx.x + threadIdx.x;
 	unsigned int node_index[8];
@@ -1294,14 +1290,14 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
 	}
 }
 
-__global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodeforce_gpu *extern_nodeforces, LB_node_force_gpu *node_f){
+__global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodeforce_gpu *extern_nodeforces, LB_node_force_gpu node_f){
 
 	unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
 
 	if(index<n_extern_nodeforces){
-		node_f[extern_nodeforces[index].index].force[0] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
-		node_f[extern_nodeforces[index].index].force[1] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
-		node_f[extern_nodeforces[index].index].force[2] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
+		node_f.force[0][extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
+		node_f.force[1][extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
+		node_f.force[2][extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
 	}
 }
 __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nodes_gpu n_a){
@@ -1324,9 +1320,8 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
 /**-------------------------------------------------------*/
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
-    // Allocate lattice-struct in device memory
+   	// Allocate lattice-struct in device memory
    	size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
-	size_of_node_f = lbpar_gpu->number_of_nodes * sizeof(LB_node_force_gpu);
    	size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
 	size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
 	size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
@@ -1342,7 +1337,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 	cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int));
 	cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int));
 
-	cudaMalloc((void**)&node_f, size_of_node_f);
+  	for(int i=0; i<3; i++){
+		cudaMalloc((void**)&node_f.force[i], lbpar_gpu->number_of_nodes * sizeof(float));
+	}
 
 	cudaMalloc((void**)&particle_force, size_of_forces);
 	
@@ -1566,7 +1563,7 @@ void lb_free_GPU(){
    	cudaFree(&nodes_b);
    	cudaFree(particle_force);
    	cudaFree(particle_data);
-   	cudaFree(node_f);
+   	cudaFree(&node_f);
 	cudaFree(part);
 	cudaFree(&number_of_bnodes);
 	cudaStreamDestroy(stream[0]);
