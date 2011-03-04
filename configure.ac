@@ -30,7 +30,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
+AM_INIT_AUTOMAKE([1.9 gnu])
 AM_MAINTAINER_MODE
 
 cat <<EOF

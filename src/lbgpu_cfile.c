@@ -64,11 +64,7 @@ static float c_sound_sq = 1.f/3.f;
 //clock_t start, end;
 
 static FILE *datei;
-static char file[300];
-static int l = 0;
-static int k = 10;
-static int i = 0;
-static void develop_output();
+//static char file[300];
 static void mpi_get_particles_lb(LB_particle_gpu *host_result);
 static void mpi_get_particles_slave_lb();
 static void mpi_send_forces_lb(LB_particle_force_gpu *host_forces);
@@ -818,8 +814,9 @@ static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int
 
     return TCL_OK;
 }
-static int lbprint_parse_stresstensor(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 #if 0
+static int lbprint_parse_stresstensor(Tcl_Interp *interp, int argc, char *argv[], int *change) {
+
     if (argc < 1) {
 	Tcl_AppendResult(interp, "file requires at least 1 argument", (char *)NULL);
 	return TCL_ERROR;
@@ -841,9 +838,9 @@ static int lbprint_parse_stresstensor(Tcl_Interp *interp, int argc, char *argv[]
 	}
 
     return TCL_OK;
-#endif
 
 }
+#endif
 #endif /* LB_GPU */
 
 #ifdef LB_GPU
@@ -905,7 +902,6 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
 #if 1 
-   int err=TCL_ERROR;
    int coord[3];
    int counter;
    char double_buffer[TCL_DOUBLE_SPACE];
@@ -913,7 +909,6 @@ int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
    host_print_values = malloc(sizeof(LB_values_gpu));	
    int single_nodeindex;
    --argc; ++argv;
-   int i;
    if (argc < 3) {
      Tcl_AppendResult(interp, "too few arguments for lbnode", (char *)NULL);
      return TCL_ERROR;

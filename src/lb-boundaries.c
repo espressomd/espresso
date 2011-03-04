@@ -416,7 +416,7 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
-  int n, x, y, z, index, node_domain_position[3], offset[3];
+  int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
   double pos[3], dist, dist_tmp, dist_vec[3];
 	

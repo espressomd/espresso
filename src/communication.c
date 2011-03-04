@@ -411,20 +411,12 @@ char *names[] = {
   "REQ_ICCP3M_INIT",/* 53 */
   "SET_RINERTIA",   /* 54 */
   "REQ_BCAST_LBBOUNDARY", /* 55 */
-<<<<<<< HEAD
   "SET_MU_E",       /* 56 */
   "REQ_MAX_MU",     /* 57 */
   "SET_VS_RELATIVE",/* 58 */
   "REQ_GET_FLUID_POP", /* 59 */
   "REQ_LB_GET_BORDER_FLAG" /* 60 */
-=======
-  "REQ_LB_GET_BORDER_FLAG" /* 56 */
-  "SET_MU_E", /* 57 */
-  "REQ_GET_FLUID_POP" /* 58 */
-  "SET_VS_RELATIVE", /* 59 */
-  "REQ_MAX_MU", /* 60 */
   "SET_VS_RELATIVE", /* 61 */
->>>>>>> master
 };
 
 /** the requests are compiled here. So after a crash you get the last issued request */
