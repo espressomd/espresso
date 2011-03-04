@@ -48,6 +48,19 @@
 /** Tag for communication in spread_force_grid(). */
 #define REQ_P3M_SPREAD 202
 
+/* Index helpers for direct and reciprocal space
+ * After the FFT the data is in order YZX, which
+ * means that Y is the slowest changing index.
+ * The defines are here to not get confused and
+ * be abel to easily change the order.
+ */
+
+#define RX 0
+#define RY 1
+#define RZ 2
+#define KY 0
+#define KZ 1
+#define KX 2 
 
 /***********************/
 
@@ -742,8 +755,9 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
     /* k space energy */
     double k_space_energy=0.0, node_k_space_energy=0.0;
     /* directions */
-    const int x = 3, y = 0, z = 1;
     double *d_operator = NULL;
+    /* kspace loop index */
+    int n[3], end[3], start[3];
 
     P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
 //     fprintf(stderr, "calculating kspace forces\n");
@@ -767,12 +781,12 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
         /*********************
         Coulomb energy
         **********************/
-        ind = 0;
-        for(i=0; i<fft_plan[3].new_size; i++) {
-            // Use the energy optimized influence function for energy!
-            node_k_space_energy += g_energy[i] * ( SQR(rs_mesh[ind]) + SQR(rs_mesh[ind+1]) );
-            ind += 2;
-        }
+
+
+      for(i=0;i<fft_plan[3].new_size;i++) {
+        // Use the energy optimized influence function for energy!
+        node_k_space_energy += g_energy[i] * ( SQR(rs_mesh[2*i]) + SQR(rs_mesh[2*i+1]) );
+      }
         node_k_space_energy *= force_prefac;
 
         MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -802,12 +816,12 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
 
         /* Force component loop */
         for(d=0;d<3;d++) {
-            if (d == y)
-                d_operator = d_op[0];
-            else if (d == z)
-                d_operator = d_op[1];
-            else if (d == x)
-                d_operator = d_op[2];
+            if (d == KX)
+                d_operator = d_op[RX];
+            else if (d == KY)
+                d_operator = d_op[RY];
+            else if (d == KZ)
+                d_operator = d_op[RZ];
 
             /* direction in k space: */
             d_rs = (d+ks_pnum)%3;
@@ -829,7 +843,7 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
     } /* if(force_flag) */
 
     if (p3m.epsilon != P3M_EPSILON_METALLIC) {
-        k_space_energy += calc_dipole_term(force_flag, energy_flag);
+      k_space_energy += calc_dipole_term(force_flag, energy_flag);
     }
 
     return k_space_energy;
@@ -990,21 +1004,22 @@ void calc_meshift(void)
     meshift_y = (double *) realloc(meshift_y, p3m.mesh[1]*sizeof(double));
     meshift_z = (double *) realloc(meshift_z, p3m.mesh[2]*sizeof(double));
 
-    meshift_x[0] = meshift_y[0] = meshift_z[0] = 0;
-    for (i = 1; i <= p3m.mesh[0]/2; i++) {
+    //    meshift_x[0] = meshift_y[0] = meshift_z[0] = 0;
+    for (i = 1; i <= p3m.mesh[RX]/2; i++) {
         meshift_x[i] = i;
         meshift_x[p3m.mesh[0] - i] = -i;
     }
 
-    for (i = 1; i <= p3m.mesh[1]/2; i++) {
+    for (i = 1; i <= p3m.mesh[RY]/2; i++) {
         meshift_y[i] = i;
         meshift_y[p3m.mesh[1] - i] = -i;
     }
 
-    for (i = 1; i <= p3m.mesh[2]/2; i++) {
+    for (i = 1; i <= p3m.mesh[RZ]/2; i++) {
         meshift_z[i] = i;
         meshift_z[p3m.mesh[2] - i] = -i;
     }
+    
 }
 
 
@@ -1015,9 +1030,8 @@ void calc_differential_operator()
 
   for(i=0;i<3;i++) {
     d_op[i] = realloc(d_op[i], p3m.mesh[i]*sizeof(double));
-    d_op[i][p3m.mesh[i]/2] = 0;
     d_op[i][0] = 0;
-
+    d_op[i][p3m.mesh[i]/2] = 0.0;
     for(j = 1; j < p3m.mesh[i]/2; j++) {
       d_op[i][j] = j;
       d_op[i][p3m.mesh[i] - j] = -j;
@@ -1025,8 +1039,6 @@ void calc_differential_operator()
   }
 }
 
-
-/* TODO: double-check prefactors */
 void calc_influence_function_force()
 {
     int i, n[3], ind;
@@ -1050,13 +1062,13 @@ void calc_influence_function_force()
                     + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1])
                     + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
 
-                if( (n[0]%(p3m.mesh[1]/2)==0) && (n[1]%(p3m.mesh[2]/2)==0) && (n[2]%(p3m.mesh[0]/2)==0) ) {
+                if( (n[KX]%(p3m.mesh[RX]/2)==0) && (n[KY]%(p3m.mesh[RY]/2)==0) && (n[KZ]%(p3m.mesh[RZ]/2)==0) ) {
                     g_force[ind] = 0.0;
                 }
                 else {
                     denominator = perform_aliasing_sums_force(n,nominator);
-                    fak1 =  d_op[0][n[0]]*nominator[0]/box_l[0] + d_op[1][n[1]]*nominator[1]/box_l[1] + d_op[2][n[2]]*nominator[2]/box_l[2];
-                    fak2 = SQR(d_op[0][n[0]]/box_l[0])+SQR(d_op[1][n[1]]/box_l[1])+SQR(d_op[2][n[2]]/box_l[2]);
+                    fak1 =  d_op[RX][n[KX]]*nominator[RX]/box_l[RX] + d_op[RY][n[KY]]*nominator[RY]/box_l[RY] + d_op[RZ][n[KZ]]*nominator[RZ]/box_l[RZ];
+                    fak2 = SQR(d_op[RX][n[KX]]/box_l[RX])+SQR(d_op[RY][n[KY]]/box_l[RY])+SQR(d_op[RZ][n[KZ]]/box_l[RZ]);
                     fak3 = fak1/(fak2 * SQR(denominator));
                     g_force[ind] = fak3/(PI*PI*PI);
                 }
@@ -1080,22 +1092,22 @@ MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
     f1 = SQR(PI/(p3m.alpha));
 
     for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-        nmx = meshift_y[n[0]] + p3m.mesh[1]*mx;
-        sx  = pow(sinc(nmx/(double)p3m.mesh[1]),2.0*p3m.cao);
+        nmx = meshift_x[n[KX]] + p3m.mesh[RX]*mx;
+        sx  = pow(sinc(nmx/(double)p3m.mesh[RX]),2.0*p3m.cao);
         for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-            nmy = meshift_z[n[1]] + p3m.mesh[2]*my;
-            sy  = sx*pow(sinc(nmy/(double)p3m.mesh[2]),2.0*p3m.cao);
+            nmy = meshift_y[n[KY]] + p3m.mesh[RY]*my;
+            sy  = sx*pow(sinc(nmy/(double)p3m.mesh[RY]),2.0*p3m.cao);
             for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-                nmz = meshift_x[n[2]] + p3m.mesh[0]*mz;
-                sz  = sy*pow(sinc(nmz/(double)p3m.mesh[0]),2.0*p3m.cao);
+                nmz = meshift_z[n[KZ]] + p3m.mesh[RZ]*mz;
+                sz  = sy*pow(sinc(nmz/(double)p3m.mesh[RZ]),2.0*p3m.cao);
 
-                nm2          =  SQR(nmx/box_l[0]) + SQR(nmy/box_l[1]) + SQR(nmz/box_l[2]);
+                nm2          =  SQR(nmx/box_l[RX]) + SQR(nmy/box_l[RY]) + SQR(nmz/box_l[RZ]);
                 expo         =  f1*nm2;
                 f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-                numerator[0] += f2*nmx/box_l[0];
-                numerator[1] += f2*nmy/box_l[1];
-                numerator[2] += f2*nmz/box_l[2];
+                numerator[RX] += f2*nmx/box_l[RX];
+                numerator[RY] += f2*nmy/box_l[RY];
+                numerator[RZ] += f2*nmz/box_l[RZ];
                 denominator  += sz;
             }
         }
@@ -1106,37 +1118,35 @@ MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
 void calc_influence_function_energy()
 {
     int i,n[3],ind;
-    int end[3];
+    int end[3]; int start[3];
     int size=1;
 
     calc_meshift();
 
     for(i = 0; i < 3; i++) {
-        size *= fft_plan[3].new_mesh[i];
-        end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+      size *= fft_plan[3].new_mesh[i];
+      end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+      start[i] = fft_plan[3].start[i];
     }
 
     g_energy = (double *) realloc(g_energy, size*sizeof(double));
     ind = 0;
 
-    for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) {
-        for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) {
-            for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-                ind = (n[2]-fft_plan[3].start[2])
-                    + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1])
-                    + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
-                if( (n[0]%(p3m.mesh[1]/2)==0) && (n[1]%(p3m.mesh[2]/2)==0) && (n[2]%(p3m.mesh[0]/2)==0) ) {
+   for(n[0]=start[0]; n[0]<end[0]; n[0]++) {
+        for(n[1]=start[1]; n[1]<end[1]; n[1]++) {
+            for(n[2]=start[2]; n[2]<end[2]; n[2]++) {
+                ind = (n[2]-start[2])
+                    + fft_plan[3].new_mesh[0] * (n[1]-start[1])
+                    + fft_plan[3].new_mesh[1] * fft_plan[3].new_mesh[0]*(n[0]-start[0]);
+                if( (n[KX]%(p3m.mesh[RX]/2)==0) && (n[KY]%(p3m.mesh[RY]/2)==0) && (n[KZ]%(p3m.mesh[RZ]/2)==0) ) {
                     g_energy[ind] = 0.0;
                 }
-                else
+                else 
 		  g_energy[ind] = perform_aliasing_sums_energy(n)/PI;
             }
         }
     }
 }
-
-
-
 
 MDINLINE double perform_aliasing_sums_energy(int n[3])
 {
@@ -1144,22 +1154,20 @@ MDINLINE double perform_aliasing_sums_energy(int n[3])
     /* lots of temporary variables... */
     double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
     double limit = 30;
-//     const int rs_x = 0, rs_y = 1, rs_z = 2;
-//     const int ks_x = 2, ks_y = 0, ks_z = 1;
 
     f1 = SQR(PI/(p3m.alpha));
 
     for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-        nmx = meshift_y[n[0]] + p3m.mesh[1]*mx;
-        sx  = pow(sinc(nmx/(double)p3m.mesh[1]),2.0*p3m.cao);
+        nmx = meshift_x[n[KX]] + p3m.mesh[RX]*mx;
+        sx  = pow(sinc(nmx/(double)p3m.mesh[RX]),2.0*p3m.cao);
         for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-            nmy = meshift_z[n[1]] + p3m.mesh[2]*my;
-            sy  = sx*pow(sinc(nmy/(double)p3m.mesh[2]),2.0*p3m.cao);
+            nmy = meshift_y[n[KY]] + p3m.mesh[RY]*my;
+            sy  = sx*pow(sinc(nmy/(double)p3m.mesh[RY]),2.0*p3m.cao);
             for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-                nmz = meshift_x[n[2]] + p3m.mesh[0]*mz;
-                sz  = sy*pow(sinc(nmz/(double)p3m.mesh[0]),2.0*p3m.cao);
+                nmz = meshift_z[n[KZ]] + p3m.mesh[RZ]*mz;
+                sz  = sy*pow(sinc(nmz/(double)p3m.mesh[RZ]),2.0*p3m.cao);
                 /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
-                nm2          =  SQR(nmx/box_l[0]) + SQR(nmy/box_l[1]) + SQR(nmz/box_l[2]);
+                nm2          =  SQR(nmx/box_l[RX]) + SQR(nmy/box_l[RY]) + SQR(nmz/box_l[RZ]);
                 expo         =  f1*nm2;
                 f2           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
@@ -1273,7 +1281,7 @@ static double p3m_mc_time(int mesh[3], int cao,
       break;
 
     /* bisection */
-    if (get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) > p3m.accuracy)
+    if ((get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) > p3m.accuracy) || (*_alpha_L > box_l[0]))
       r_cut_iL_min = r_cut_iL;
     else
       r_cut_iL_max = r_cut_iL;
@@ -1299,7 +1307,10 @@ static double p3m_mc_time(int mesh[3], int cao,
 
     return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
-  if(*_alpha_L > box_l[0]) return -4;
+  if(*_alpha_L > box_l[0]) {
+    P3M_TRACE(fprintf(stderr, "%d: alpha too large (%lf).\n", this_node, *_alpha_L/box_l[0]));
+    return -4;
+  }
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
     return -P3M_TUNE_FAIL;
