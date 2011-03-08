@@ -79,7 +79,7 @@ require_feature "LB"
 #############################################################
 set int_steps     	1
 puts $int_steps
-set int_times		10
+set int_times		20
 
 set time_step     0.02
 set tau           0.02
