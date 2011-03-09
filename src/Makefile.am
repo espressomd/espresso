@@ -136,7 +136,7 @@ myconfig-final.h: FORCE
 	  $(top_builddir)/$(myconfig) \
 	  $(top_srcdir)/$(myconfig)"; \
 	if test $(myconfig) = myconfig.h; then \
-	  config_files="$$config_files $(top_builddir)/src/myconfig-default.h"; \
+	  config_files="$$config_files $(top_srcdir)/src/myconfig-default.h"; \
 	fi; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
