@@ -225,7 +225,6 @@ extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */

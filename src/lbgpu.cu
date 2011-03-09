@@ -26,25 +26,25 @@ extern "C" {
 
 /**defining structures residing in global memory */
 /** struct for phys. values */
-static LB_values_gpu *device_values;
+static LB_values_gpu *device_values = NULL;
 /** structs for velocity densities */
 static LB_nodes_gpu nodes_a;
 static LB_nodes_gpu nodes_b;
 /** struct for particle force */
-static LB_particle_force_gpu *particle_force;
+static LB_particle_force_gpu *particle_force = NULL;
 /** struct for particle position and veloctiy */
-static LB_particle_gpu *particle_data;
+static LB_particle_gpu *particle_data = NULL;
 /** struct for node force */
 static LB_node_force_gpu node_f;
 /** struct for storing particle rn seed */
-static LB_particle_seed_gpu *part;
+static LB_particle_seed_gpu *part = NULL;
 
-static LB_extern_nodeforce_gpu *extern_nodeforces;
+static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
 /** pointer for bound index array*/
 static int *boundindex;
 /** pointers for additional cuda check flag*/
-static int *gpu_check;
-static int *h_gpu_check;
+static int *gpu_check = NULL;
+static int *h_gpu_check = NULL;
 
 /** values for the kernel call */
 static int threads_per_block;
@@ -80,6 +80,7 @@ static __constant__ float c_sound_sq = 1.f/3.f;
 /**cudasteams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
+cudaError_t err;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /**device funktions call by kernel funktions */
@@ -915,7 +916,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 
     /*temp gesetzt aus lb_reinit_fluid() wären Anfangs-Werte die aus tcl übergeben werden*/
     /* default values for fields in lattice units */
-    *gpu_check = 1;
+    gpu_check[0] = 1;
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
     float v[3] = { 0.0f, 0.0f, 0.0f };
@@ -1274,6 +1275,13 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
     calc_values(n_a, mode, d_p_v, single_nodeindex, singlenode);
   }	
 }
+
+void cuda_safe_mem(cudaError_t err){
+    if( cudaSuccess != err) {                                             
+      fprintf(stderr, "Could not allocate gpu memory.\n");                                   \
+      exit(EXIT_FAILURE);                                                  \
+    }
+}
 /**********************************************************************/
 /* Host funktions to setup and call kernels*/
 /**********************************************************************/
@@ -1290,28 +1298,28 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
   size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
 
-  cudaMalloc((void**)&device_values, size_of_values);
+  cuda_safe_mem(cudaMalloc((void**)&device_values, size_of_values));
 
   for(int i=0; i<19; i++){
-    cudaMalloc((void**)&nodes_a.vd[i], lbpar_gpu->number_of_nodes * sizeof(float));
-    cudaMalloc((void**)&nodes_b.vd[i], lbpar_gpu->number_of_nodes * sizeof(float));
+    cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd[i], lbpar_gpu->number_of_nodes * sizeof(float)));
+    cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd[i], lbpar_gpu->number_of_nodes * sizeof(float)));                                           
   }
-  cudaMalloc((void**)&nodes_a.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int));
-  cudaMalloc((void**)&nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int));
-  cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int));
-  cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int));
+  cuda_safe_mem(cudaMalloc((void**)&nodes_a.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
+  cuda_safe_mem(cudaMalloc((void**)&nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
+  cuda_safe_mem(cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
+  cuda_safe_mem(cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
 
   for(int i=0; i<3; i++){
-    cudaMalloc((void**)&node_f.force[i], lbpar_gpu->number_of_nodes * sizeof(float));
+    cuda_safe_mem(cudaMalloc((void**)&node_f.force[i], lbpar_gpu->number_of_nodes * sizeof(float)));
   }
-  cudaMalloc((void**)&particle_force, size_of_forces);
-  cudaMalloc((void**)&particle_data, size_of_positions);	
-  cudaMalloc((void**)&part, size_of_seed);
+  cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
+  cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));	
+  cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 	
   /**write parameters in const memory*/
   cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
   /**check flag if lb gpu init works*/
-  cudaMalloc((void**)&gpu_check, sizeof(int));
+  cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
@@ -1333,15 +1341,15 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);
 
   cudaStreamCreate(&stream[0]);
-  //cudaStreamCreate(&stream[1]);
-  *h_gpu_check = 0;
+
+  h_gpu_check[0] = 0;
   cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost);
 
   cudaThreadSynchronize();
 
-  if(!*h_gpu_check){
+  if(!h_gpu_check[0]){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
-    exit(0);
+    errexit();	
   }	
 }
 /**-------------------------------------------------------------------------*/
