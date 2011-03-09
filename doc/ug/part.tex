@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -44,6 +45,9 @@
   \require{5}{\opt{mass \var{mass}}}
   \require{6}{\opt{dipm \var{moment}}}
   \require{6}{\opt{dip \var{dx} \var{dy} \var{dz}}}
+  \require{7,8}{\opt{virtual \var{v}}}
+  \require{8}{\opt{vs\_relative \var{pid} \par{distance}}}
+  \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -51,6 +55,8 @@
     \required[4]{EXCLUSION}
     \required[5]{MASS}
     \required[6]{DIPOLES}
+    \required[7]{VIRTUAL\_SITES\_COM}
+    \required[8]{VIRTUAL\_SITES\_RELATIVE}
   \end{features}
 \end{essyntax}
 
@@ -113,8 +119,20 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   \item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
   \item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
   dipol axis to $(dx,dy,dz)$.
- 
-  \end{arguments}
+\item[\opt{virtual \var{v}}] Declares the particles as virtual (1) or
+  non-virtual (0, default). Please read chapter \ref{sec:virtual}
+  before using virtual sites.
+\item[\opt{vs\_auto\_relate\_to \var{pid}}] Automatically relates a
+  virtual site to a non-virtual particle for the ``relative''
+  implementation of virtual sites. \var{pid} is the id of the particle
+  to which the virtual site should be related.
+\item[\opt{vs\_relative \var{pid} \var{distance}}] Allows for manual
+  access to the attributes of virtual sites in the ``relative''
+  implementation. \var{pid} denotes the id of the particle to which
+  this virtual site is related and \var{distance} the distance between
+  non-virtual and virtual particle.
+   \end{arguments}
+
 \subsection{Getting particle properties}
 
 \begin{essyntax}
@@ -308,10 +326,10 @@ set up to be \var{bond\_length}.
     \var{typeid_\mathrm{charged}} defaults to $1$. If the option is
     omitted, both monomer types default to $0$.
   \item[\opt{bond \var{bondid}}] Sets the type number of the bonded
-    interaction to be set between the monomers. This defaults to $0$.
-    Any bonded interaction, no matter how many bonding-partners
-    needed, is stored with the second particle in this bond.
-    \todo{Link to bonded interactions}
+    interaction to be set up between the monomers. This defaults to
+    $0$.  Any bonded interaction, no matter how many bonding-partners
+    needed, is stored with the second particle in this bond. See
+    chapter \ref{sec:inter-bonded}.
   \item[\opt{angle \var{\phi} [\var{\theta} [\var{x} \var{y}
       \var{z}]]}] Allows for setting up helices or planar polymers:
     \var{\phi} and \var{theta} are the angles between adjacent bonds.
@@ -321,7 +339,7 @@ set up to be \var{bond\_length}.
   tries to obey previously defined constraints (see section \vref{sec:constraint}).
 \end{arguments}
 
-\subsection{\texttt{counterions}: Set up counterions}
+\subsection{\texttt{counterions}: Setting up counterions}
 \newescommand{counterions}
 \begin{essyntax}
   counterions
@@ -350,7 +368,7 @@ This command will create \var{N} counterions in the simulation box.
 \end{arguments}
 
 \smallskip
-\subsection{\texttt{salt}: Set up salt ions}
+\subsection{\texttt{salt}: Setting up salt ions}
 \newescommand{salt}
 \begin{essyntax}
   salt 
@@ -402,11 +420,20 @@ of charge \var{val_+} and \var{val_-} within the simulation box.
 \end{essyntax}
 
 Creates a diamond-shaped polymer network with 8 tetra-functional nodes
-connected by $2*8$ polymer chains of length \var{MPC} in a unit cell of length
-\var{a}. For inter-particle bonds interaction $0$ is taken which must be a
-two-particle bond. 
-\todo{A picture would be helpful.}
-\todo{Which typeids are used for the different particles?}
+connected by $2*8$ polymer chains of length \var{monomers\_per\_chain} in 
+a unit cell of length \var{a}. Chain monomers are placed at a mutual distance \var{bond\_length}
+along the vector connecting network nodes.
+The polymer is created starting from particle ID 0. Nodes are assigned type 0,
+monomers (both charged and uncharged) are type 1 and counterions type 2.
+For inter-particle bonds interaction $0$ is taken which must be a two-particle bond.
+
+\begin{figure}[h]
+  \label{fig:diamond}
+  \begin{center}
+  \includegraphics[height=6cm]{figures/diamond}
+  \caption{Diamond-like polymer network with \var{monomers\_per\_chain}=15.}
+  \end{center}
+\end{figure}
 
 \begin{arguments}
 \item[\var{a}] Determines the size of the of the unit cell.
@@ -425,7 +452,7 @@ two-particle bond.
   between charged monomers along the interconnecting chains. If
   $\var{d_\mathrm{charged}} > 1$ the remaining chain monomers are
   uncharged.
-  \item[\opt{nonet}] \todo{Define what \var{nonet} does.}
+  \item[\opt{nonet}] Do not create bonds between the chains.
 \end{arguments}
 
 
@@ -445,10 +472,20 @@ two-particle bond.
 Creates a modified icosaeder to model a fullerene (or soccer ball).
 The edges are modeled by polymer chains connected at the corners of
 the icosaeder. For inter-particle bonds interaction $0$ is taken which
-must be a two-particle bond.  \todo{A picture would be helpful}
+must be a two-particle bond. Two particle types are used for the
+pentagons and the interconnecting links. For an example, see figure \ref{fig:fullerene}.
+
+\begin{figure}[h]
+  \label{fig:diamond}
+  \begin{center}
+  \includegraphics[height=6cm]{figures/fullerene}
+  \caption{Icosaeder with \var{monomers\_per\_chain}=15.}
+  \label{fig:fullerene}
+  \end{center}
+\end{figure}
 
 \begin{arguments}
-\item[\var{a}] Defines the size of the icosaeder.
+\item[\var{a}] Length of the links. Defines the size of the icosaeder.
 \item[\var{monomers\_per\_chain}] Specifies the number of chain monomers along one edge.
 \item[\opt{counterions \var{N_\mathrm{CI}}}] Specifies the number of
   counterions to be placed into the system.
@@ -529,18 +566,18 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \begin{essyntax}
   \variant{1} 
   constraint wall normal \var{n_x} \var{n_y} \var{n_z} 
-  dist \var{d} type \var{id} penetrable \var{flag}
+  dist \var{d} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{2}
   constraint sphere center \var{c_x} \var{c_y} \var{c_z} 
-  radius \var{rad} direction \var{direction} type \var{id} \opt{penetrable \var{flag}} 
+  radius \var{rad} direction \var{direction} type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{3}
   constraint cylinder center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
   radius \var{rad} length \var{length} 
   direction \var{direction} 
-  type \var{id}  \opt{penetrable \var{flag}}
+  type \var{id}  \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{4}
   constraint maze nsphere \var{n} 
@@ -574,6 +611,9 @@ All these examples do the same - making exact copies of particles 1 through 4.
   constraint plane cell \var{x} \var{y} \var{z} 
   type \var{id}
 
+  \variant{10}
+  constraint mindist_position \var{x} \var{y} \var{z} 
+
   \begin{features}
     \required{CONSTRAINTS}
     \required[1]{ELECTROSTATICS}
@@ -591,10 +631,19 @@ identified like a particle via its type for the non-bonded interaction.
 After a type is defined for each constraint one has
 to define
 the interaction of all different particle types with the constraint using
-the \codebox{inter} command. In vatiants \variant{1} to \variant{4}, constraints
+the \codebox{inter} command. In variants \variant{1} to \variant{4}, constraints
  are able to be penetrated if \var{flag} is set to 1. Otherwise, when the
  penetrable option is ignored or \var{flag} is set to 0, the constraint
  cannot be violated, i.e. no particle can go through the constraint surface.
+ In variants \variant{1} to \variant{3} it is also possible to specify a flag 
+ indicating if the constraints should be reflecting. The flags can equal 1 or 2.
+ The flag 1 corresponds to a reflection process where the normal component of the 
+ velocity is reflected and the tangential component remains unchanged. If the
+ flag is 2, also the tangential component is turned around, so that a bounce back
+ motion is performed. The second variant is useful for boundaries of DPD.
+ The reflection property is only activated if an interaction is defined between
+ a particular particle and the constraint! This will usually be a lennard-jones
+ interaction with $\epsilon=0$, but finite interaction range.
 
 Variants \variant{6} and \variant{7} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
@@ -608,12 +657,20 @@ Variant \variant{9} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
 Flow.
 
+Variant \variant{10} calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, maze, pore).
+Negative distances mean that the position is ``within'' the area that
+particles should not access. Helpful to find initial configurations.) 
+
 \textbf{Note that constraints are not saved to checkpoints and that they have to
 be reset upon restarting a simulation.}
 
 The resulting surface in variant \variant{1} is a plane defined by the
 normal vector \var{n_x} \var{n_y} \var{n_z} and the distance
 \var{d} from the origin. The force acts in direction of the normal. 
+Note that the \var{d} describes the distance from the origin in units
+of the normal vector so that the product of $d$ and $n$ is a point on the
+surface. Therefore negative distances are quite common!
 
 The resulting surface in variant
 \variant{2} is a sphere with center \var{c_x} \var{c_y} \var{c_z} and radius
@@ -640,7 +697,10 @@ Variant \variant{5} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
-normalized in the program.
+normalized in the program. The argument \codebox{radius \var{rad}} 
+can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
+to obtain a pore with a conical shape and corresponding opening radii.
+The first radius is in the direction opposite to the axis vector.
 
 Variant \variant{6} specifies an electrostatic interaction between the
 charged particles in the system to an infinitely long rod with a line
@@ -689,6 +749,152 @@ constraint  \opt{\var{num}}
 \end{essyntax}
 Prints out all constraint information. If \var{num} is specified only this
 constraint is displayed, otherwise all constraints will be printed.
+
+\section{Virtual sites}
+\label{sec:virtual}
+\index{virtual sites|mainindex}
+
+Virtual sites are particles, the positions and velocities of which are
+not obtained by integrating an equation of motion.  Rather, their
+coordinates are obtained from the position (and orientation) of one or
+more other particles. In this way, rigid arrangements of particles can
+be constructed and a particle can be placed in the center of mass of a
+set of other particles.  Virtual sites can interact with other
+particles in the system by means of interactions. Forces are added to
+them according to their respective particle type. Before the next
+integration step, the forces accumulated on a virtual site are
+distributed back to those particles, from which the virtual site was
+derived.
+
+There are two distinct types of virtual sites, decribed in the
+following.
+
+\subsection{Virtual sites in the center of mass of a molecule}
+
+To activate this implementation, enable the feature
+\texttt{VIRTUAL_SITES_COM} in \texttt{myconfig.h}
+(sec. \ref{sec:myconfig}).  Virtual sites are then placed in the
+center of mass of a set of particles (as defined below). Their
+velocity will also be that of the center of mass. Forces accumulating
+on the virtual sites are distributed back to the particles which form
+the molecule.  To place a virtual site at the center of a molecule,
+perform the following steps in that order
+\begin{enumerate}
+\item Create a particle of the desired type for each molecule. It
+  should be placed at least roughly in the center of the molecule to
+  make sure, it's on the same node as teh other particles forming the
+  molecule, in a simulatino with more than one cpu.
+\item Make it a virtual site using 
+  \begin{essyntaxbox}
+    part \var{pid} virtual 1
+  \end{essyntaxbox}
+\item Declare the list of molecules and the particles they consist of:
+  \begin{essyntaxbox}
+    analyze set \{\var{molid} \{\var{list of particle ids ..}\} ...\}
+  \end{essyntaxbox}
+  The lists of particles in a molecule comprise the non-virtual
+  particles and the virtual site.
+\item Assign to all particles that belong to the same molecule a
+  common molecule id
+  \begin{essyntaxbox}
+    part \var{pid} mol \var{molid}
+  \end{essyntaxbox}
+\item Update the position of all virtual particles (optional)
+  \begin{essyntaxbox}
+    integrate 0
+  \end{essyntaxbox}
+\end{enumerate}
+
+\subsection{Rigid arrangements of particles}
+
+The ``relative'' implementation of virtual sites allows for the
+simulation of rigid arrangements of particles. It can be used, \eg,
+for extended dipoles and raspberry-particles, but also for more
+complex configurations.  Position and velocity of a virtual site are
+obtained from the position and orientation of exactly one non-virtual
+particle, which has to be placed in the center of mass of the rigid
+body. Several virtaul sites can be related to one and the same
+non-virtual particle.  The position of the virtual site is given by
+\begin{equation}
+\vec{x_v} =\vec{x_n} +O_n (O_v \vec{E_z}) d,
+\end{equation}
+where $\vec{x_n}$ is the position of the non-virtual particle, $O_n$
+is the orientation of the non-virtual particle, $O_v$ denotes the
+orientation of the vector $\vec{x_v}-\vec{x_n}$ with respect to the
+non-virtual particle's body fixed frame and $d$ the distance between
+virtual and non-virtaul particle.  In words: The virtual site is
+placed at a fixed distance from the non-virtual particle. When the
+non-virtual particle rotates, the virtual sites rotates on an orbit
+around the non-virtual particle's center.
+
+To use this implementation of virtual sites, activate the feature
+\texttt{VIRTUAL_SITES_RELATIVE} in \texttt{myconfig.h} (see
+sec. \ref{sec:myconfig}).  To set up a virtual site,
+\begin{enumerate}
+\item Place the particle to which the virtual site should be
+  related. It needs to be in the center of mass of the rigid
+  arrangement of particles you create. Let its particle id be n.
+\item Place a particle at the desired relative position, make it
+  virtual and relate it to the first particle
+  \begin{essyntaxbox}
+    part \var{v} pos \var{pos} virtual 1 vs_auto_relate \var{n}
+  \end{essyntaxbox}
+\item Repeat the previous step with more virtual sites, if desired.
+\item To update the positions of all virtual sites, call
+  \begin{essyntaxbox}
+    integrate 0
+  \end{essyntaxbox}
+\end{enumerate}
+
+Please note:
+\begin{itemize}
+\item The relative position of the virtual site is defined by its
+  distance from the non-virtual particle, the id of the non-virtual
+  particle and a quaternion which defines the vector from non-virtual
+  particle to virtual site in the non-virtual particle's body-fixed
+  frame. The first two are saved in the virtual site's
+  vs\_relative-attribute, while the latter is saved in the quaternion
+  attribute. Take care, not to overwrite these after using
+  vs\_auto\_relate.
+\item Virtual sites can not be placed relative to other virtual sites,
+  as the order in which the positions of virtual sites are updated is
+  not guaranteed. Always relate a virtual site to a non-virtual
+  particle placed in the center of mass of the rigid arrangement of
+  particles.
+\item Don't forget to declare the particle virtual in addition to
+  calling vs\_auto\_relate
+\item In case you know the correct quaternions, you can also setup a
+  virtual site using
+  \begin{essyntaxbox}
+    part \var{v} virtual 1 quat \var{q} vs\_relative \var{n} \var{d}
+  \end{essyntaxbox}
+  where n is the id of the non-virtual particle and d is its distance
+  from the virtual site.
+\item In a simulation on more than one cpu, at least one non-bonded
+  interaction needs to have a range greater or equal to the largest
+  distance between a non-virtual particle and its associated virtual
+  sites. If such an interaction does not exist in your system, you can
+  declare a dummy interaction for a particle type not present in the
+  simulation.
+\item If the virtual sites represent actual particles carrying a mass,
+  the inertia tensor of the non-virtual particle in the center of mass
+  needs to be adapted.
+\end{itemize}
+
+\subsection{Additional features}
+
+The behaviour of virtual sites can be fine-tuned with the following
+switches in \texttt{myconfig.h} (sec.\ref{sec:myconfig})
+\begin{itemize}
+\item \texttt{VIRTUAL_SITES_NO_VELOCITY} specifies that the velocity
+  of virtual sites is not computed
+\item \texttt{VIRTUAL_SITES_THERMOSTAT} specifies that the Langevin
+  thermostat should also act on virtual sites
+\item \texttt{THERMOSTAT_IGNORE_NON_VIRTUAL} specifies that the
+  thermostat does not act on non-virtual particles
+\end{itemize}
+
+
 
 %%% Local Variables: 
 %%% mode: latex

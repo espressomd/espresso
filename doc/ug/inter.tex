@@ -168,7 +168,7 @@ This command defines a generalized version of the Lennard-Jones
 interaction (see section \ref{sec:LennardJones}) between particles of
 the types \var{type1} and \var{type2}.  The potential is defined by
 \begin{equation}
-  \label{eq:lj}
+  \label{eq:lj-generic}
   V_\mathrm{LJ}(r) = \Biggl\{
     \begin{array}{ll}
       \epsilon(\var{b_1}(\frac{\var{\sigma}}{r-\var{r_\mathrm{off}}})^\var{e_1}
@@ -220,11 +220,13 @@ and
 $\beta = \pi - \left(\var{r_\mathrm{min}}-\var{r_\mathrm{off}}\right)^2\alpha$.
 
 In the second variant, the cutoff radius is
-$\var{r_\mathrm{cut}}=\var{r_\mathrm{min}} + \omega$, and the potential
+$\var{r_\mathrm{cut}}=\var{r_\mathrm{min}} + \omega$, where $\var{r_\mathrm{min}} =  r_\mathrm{off} +
+2^{\frac{1}{6}}\sigma$ as in the first variant. The potential
 between $\var{r_\mathrm{min}}$ and $\var{r_\mathrm{cut}}$ is given by
 \begin{equation}
   V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(\var{r} - \var{r_\mathrm{min}})\right].
 \end{equation}
+For $\var{r} < \var{r_\mathrm{min}}$, $V(r)$ is implemented as normal Lennard-Jones potential, see equation \ref{eq:lj} with $\var{c_\mathrm{shift}} = 0$.
 
 Only the second variant allows capping the force using \lit{inter
   ljforcecap}, see section~\ref{sec:forcecap}.
@@ -995,103 +997,137 @@ should be displayed in VMD.
 \section{Coulomb interaction}
 \label{sec:inter-electrostatics}
 \index{Coulomb interactions|mainindex}
+\index{Electrostatic interactions|mainindex}
 \index{interactions!Coulomb|mainindex}
-
-Electrostatic interactions are very computation time-intensive. \es{} features
-some state-of-the-art algorithms to deal with these interactions as efficiently
-as possible, but almost all of them require some knowledge to use them properly.
-Uneducated use can result in completely unphysical simulations.
+\index{interactions!Electrostatic|mainindex}
 
 \begin{essyntax}
   \variant{1} inter coulomb 0.0
-  \variant{2} inter coulomb \opt{\var{l_B} \var{method}}
-  \opt{\var{parameters}} 
-  \variant{3} inter coulomb
+  \variant{2} inter coulomb
+  \variant{3} inter coulomb \var{parameters}
 \end{essyntax}
 
-This command defines how \es deals with electrostatic interactions.
-
-Variant \variant{1} completely disables Coulomb interactions hence
-deactivating the electrostatic subsystem, while variant \variant{2}
-sets up one of the methods described below to treat electrostatic
-interactions. \var{l_B} denotes the Bjerrum length, which measures the
-strength of the electrostatic interaction.  For a pair of particles at
-distance $r$ with charge $q$ each, the interaction is given by
+These commands allow to set up the calculation of the Coulomb
+interaction.  The Coulomb (or electrostatic) interaction is defined as
+follows.  For a pair of particles at distance $r$ with charges $q_1$
+and $q_2$, the interaction is given by
 \begin{equation}
-  U^C(r)=l_B k_B T\frac{q^2}{r}.
+  U^C(r)=l_B k_B T\frac{q_1 q_2}{r}.
 \end{equation}
-Using the electrostatic interaction also requires to assign charges to the
-particles. This is done using the \texttt{part} command to set the charge
-\texttt{q}, \eg
+where $l_B = e_o^2 / (4 \pi \epsilon k_B T)$ denotes the Bjerrum
+length, which measures the strength of the electrostatic interaction.
 
-\begin{tclcode}
-  inter coulomb 1.0 p3m tune accuracy 1e-4
-  part 0 q 1.0; part 1 q -1.0
-\end{tclcode}
+Computing electrostatic interactions is computationally very
+expensive.  \es{} features some state-of-the-art algorithms to deal
+with these interactions as efficiently as possible, but almost all of
+them require some knowledge to use them properly.  Uneducated use can
+result in completely unphysical simulations.
 
-Variant \variant{3} returns the current parameters of the coulomb
-interaction as a tcl-list using the same syntax as used to setup the
-method, \eg
+Variant \variant{1} disables Coulomb interactions.  Variant
+\variant{2} returns the current parameters of the coulomb interaction
+as a Tcl-list using the same syntax as used to setup the method, \eg
 \begin{tclcode}
   {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0}
   {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5}
 \end{tclcode}
 
-\subsection{P3M}
+Variant \variant{3} is the generic syntax to set up a specific method
+or its parameters, the details of which are described in the following
+subsections.  Note that using the electrostatic interaction also
+requires assigning charges to the particles.  This is done using the
+\texttt{part} command to set the charge \texttt{q}, \eg
+\begin{tclcode}
+  inter coulomb 1.0 p3m tune accuracy 1e-4
+  part 0 q 1.0; part 1 q -1.0
+\end{tclcode}
+
+\subsection{Coulomb P3M}
+\label{sec:coulomb}
 \index{P3M method|mainindex}
 \index{interactions!P3M|mainindex}
 
 \begin{essyntax}
-  \variant{1}inter coulomb \var{l_B} p3m 
-  \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
-
-  \variant{2}inter magnetic \var{l_B} p3m 
+  inter coulomb \var{l_B} p3m 
   \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
   \begin{features}
-    \required[1]{ELECTROSTATICS}
-    \required[2]{MAGNETOSTATICS}
+    \required{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
 
-Variant \variant{1} activates the P3M method to handle the
-electrostatic interactions (charge-charge), whereas variant
-\variant{2} activates the P3M method to handle the magnetostatic
-interactions (magnetic dipole-dipole) (aka dipolar P3M).
-
-For electrostatics the interaction is:
-\begin{equation}
-  U^{C-P3M} = l_B k_B T \frac{q_1 q_2}{r}
-\end{equation}
-Here $l_B = e_o^2 / (4 \pi \epsilon k_B T)$ is the Bjerrum length.
-
-For magnetostatics the interaction is:
-\begin{equation}
-  U^{D-P3M} = l_{B} k_B T \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
-  - \frac{3  (\vec{\mu}_i \cdot \vec{r}_{ij})  (\vec{\mu}_j \cdot \vec{r}_{ij}) }{r^5} \right)
-\end{equation}
-Here $\vec{r}_{ij}=\vec{r}_{i}-\vec{r}_{j}$, and $l_{B}$ is a non
-dimensional parameter similar to the Bjerrum length in electrostatics
-which can help to tune the effect of the medium on the magnetic
-interaction between two magnetic dipoles.
+This command activates the P3M method to compute the electrostatic
+interactions between charged particles.  The different parameters are
+described in more detail in \cite{deserno98a}.
+\begin{description}
+\item[\var{r_\mathrm{cut}}] The real space cutoff as a positive
+  floating point number.
+\item[\var{mesh}] The number of mesh points, as a single positive
+  integer.
+\item[\var{cao}] The \emph{charge-assignment order}, an integer
+  between $0$ and $7$.
+\item[\var{alpha}] The Ewald parameter as a positive floating point
+  number.
+\end{description}
 
 Make sure that you know the relevance of the P3M parameters before
 using P3M! If you are not sure, read the following references
 \cite{ewald21, hockney88, kolafa92, deserno98, deserno98a, deserno00,
   deserno00a, cerda08a}.
 
-\todo{Are dipole-monopole interactions implemented?}  If only magnetic
-dipoles but not charges are present in the sytem, it is advisable to
-deactivate the feature \texttt{ELECTROSTATICS} to improve the
-performance of the program.  Mixed systems containing magnetic dipoles
-and charges can be simulated without problems by enabling both
-features, \texttt{ELECTROSTATICS} and \texttt{MAGNETOSTATICS}. For
-each kind of particle one should use the prefered algorithm. For
-magnetic dipole-dipole interactions the only algorithm implemented at
-this moment is dipolar P3M. In principle there is no problem to use a
-non P3M method to deal with charges (see folowing sections) while one
-uses dipolar P3M to deal with the magnetic dipoles. In case you use
-P3M for both charges and magnetic dipoles, make sure that you tune
-each P3M method (coulomb/magnetic) to the desired accuracy.
+\subsubsection{Tuning Coulomb P3M}
+\label{ssec:tunep3m}
+\begin{essyntax}
+  inter coulomb \var{l_B} p3m \alt{tune \asep tunev2}
+  accuracy \var{accuracy}\\
+  \opt{r_cut \var{r_\mathrm{cut}}}
+  \opt{mesh \var{mesh}}
+  \opt{cao \var{cao}}
+  \opt{alpha \var{\alpha}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+
+It is not easy to calculate the various parameters of the P3M method
+such that the method provides the desired accuracy at maximum speed.
+To simplify this, \es{} provides a function to automatically tune the
+algorithm.  Note that for this function to work properly, your system
+should already contain an initial configuration of charges and the
+correct initial box size.
+
+The function employs the analytical expression of the error estimate
+for the P3M method \cite[8.23]{hockney88} and its real space error
+\cite{kolafa92} to obtain sets of parameters that yield the desired
+accuracy, then it measures how long it takes to compute the coulomb
+interaction using these parameter sets and chooses the set with the
+shortest run time.
+
+The function will only automatically tune those parameters that are
+not set to a predetermined value using the optional parameters of the
+tuning command.
+
+The two tuning methods follow different methods for determining the
+optimal parameters. While the \keyword{tune} version tests different
+values on a grid in the parameter space, the \keyword{tunev2} version
+uses a bisection to determine the optimal parameters.  In general, for
+small systems the \keyword{tune} version is faster, while for large
+systems \keyword{tunev2} is faster. The results of \keyword{tunev2}
+are always at least as good as the parameters from the \keyword{tune}
+version, and normally the obtained accuracy is much closer to the
+desired value.
+
+During execution the tuning routines report the tested parameter sets,
+the corresponding k-space and real-space errors and the timings needed
+for force calculations (the setmd variable \var{timings} controls the
+number of test force calculations).  Since the error depends on
+\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
+output is given in these units.
+
+Note that the previous setting of \var{r_\mathrm{cut}}, \var{cao} and
+\var{mesh} will be remembered.  If you want to retune your
+electrostatics, \eg after a major system change, you should use
+\begin{code}
+  inter coulomb \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
+\end{code}
 
 \subsubsection{Additional P3M parameters}
 
@@ -1101,86 +1137,27 @@ each P3M method (coulomb/magnetic) to the desired accuracy.
     \var{yoff} \var{zoff}}
 \end{essyntax}
 
-There are some additional P3M parameters
+Once P3M algorithm has been set up, it is possible to set some
+additional P3M parameters with this command.  The different parameters
+have the following meaning:
 \begin{description}
-\item[\lit{epsilon}] The dielectric constant of the surrounding
-  medium, metallic (\ie infinity) or some finite positive number.
-  Defaults to \lit{metallic}.
-\item[\lit{n_interpol}] Number of interpolation points for the charge
-  assignment function.  When this is set to $0$, interpolation is
-  turned off and the function is computed directly. Defaults to
-  $32768$.
-\item[\lit{mesh_off}] Offset of the first mesh point from the lower
-  left corner of the simulation box in units of the mesh
-  constant. Defaults to \codebox{{0.5 0.5 0.5}}.
+\item[\lit{epsilon} \var{epsilon}] The dielectric constant of the
+  surrounding medium, metallic (\ie infinity) or some finite positive
+  number.  Defaults to \lit{metallic}.
+\item[\lit{n_interpol} \var{n_interpol}] Number of interpolation
+  points for the charge assignment function.  When this is set to $0$,
+  interpolation is turned off and the function is computed directly.
+  Defaults to $32768$.
+\item[\lit{mesh_off} \var{mesh_off}] Offset of the first mesh point
+  from the lower left corner of the simulation box in units of the
+  mesh constant. Defaults to \codebox{{0.5 0.5 0.5}}.
 \end{description}
-
-\subsubsection{Tuning P3M}
-\begin{essyntax}
-  \variant{1}inter coulomb \var{l_B} p3m \alt{tune \asep tunev2}
-  accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_\mathrm{cut}}}
-  \opt{mesh \var{mesh}}
-  \opt{cao \var{cao}}
-  \opt{alpha \var{\alpha}}
-
-  \variant{2}inter magnetic \var{l_B} p3m \alt{tune \asep tunev2}
-  accuracy \var{accuracy}\\
-  \opt{r_cut \var{r_\mathrm{cut}}}
-  \opt{mesh \var{mesh}}
-  \opt{cao \var{cao}}
-  \opt{alpha \var{\alpha}}
-  \begin{features}
-    \required[1]{ELECTROSTATICS}
-    \required[2]{MAGNETOSTATICS}
-  \end{features}
-\end{essyntax}
-
-Make sure you know how to tune p3m parameters before using the
-automatic tuning feature.
-
-For the charge-charge interaction the function utilizes the analytic
-expression of the error estimate for the P3M method in the book of
-Hockney and Eastwood \cite[eqn 8.23]{hockney88} in order to obtain the
-rms error in the force for a system of N randomly distributed
-particles in a cubic box.  For the real space error the estimate of
-Kolafa and Perram \cite{kolafa92} is used. For the magnetic case,
-magnetic dipole-dipole interaction, the expressions of the error
-estimate for the dipolar-P3M are those written in Cerda et
-al. \cite{cerda08a}. At this moment, the P3M methods only work for
-cubic boxes.
-
-The two tuning methods follow different methods for determining the
-optimal parameter. While the \keyword{tune} version simply tests
-different values on a grid in the parameter space, the
-\keyword{tunev2} version uses a bisection to determine the optimal
-parameters. In general, for small systems the \keyword{tune} version
-is faster, while for large systems \keyword{tunev2} is faster. The
-results of \keyword{tunev2} are always at least as good as the
-parameters achievable from the \keyword{tune} version, and normally
-the obtained accuracy is much closer to the desired value.
-
-During execution the tuning routines report the parameter sets tested,
-the corresponding k-space and real-space errors and timings needed for
-force calculations (the setmd variable \var{timings} controls the
-number of test force calculations). Since the error depends on
-\var{r_\mathrm{cut}}/\var{box\_l} and \var{\alpha}\var{box\_l} the
-output is given in these units.
-
-Note that any previous settings of \var{r_\mathrm{cut}}, \var{cao} and
-\var{mesh} will be remembered. So if you want to retune your
-electrostatics, \eg after a major system change, you should use
-\begin{code}
-inter \alt{coulomb \asep magnetic}  \var{l_B} p3m tune accuracy \var{acc} r_cut 0 mesh 0 cao 0
-\end{code}
 
 
 \subsection{Debye-H\"uckel potential}
 \index{Debye-H\"uckel potential|mainindex}
 \index{interactions!Debye-H\"uckel|mainindex}
 
-\todo{How is the cutoff handled? Why is this not a normal short-raged
-  potential?}
 \begin{essyntax}
   inter coulomb \var{l_B} dh \var{\kappa} \var{r_\mathrm{cut}}
   \begin{features}
@@ -1190,10 +1167,17 @@ inter \alt{coulomb \asep magnetic}  \var{l_B} p3m tune accuracy \var{acc} r_cut 
 
 Defines the electrostatic potential by
 \begin{equation}
-  U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}
+  U^{C-DH} = l_B k_B T \frac{q_1 q_2 exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 \end{equation}
 
+The Debye-H\"uckel potential is an approximate method for calculating
+electrostatic interactions, but technically it is treated as other
+short-ranged non-bonding potentials. For $r>r_{\mathrm cut}$ it is set 
+to zero which introduces a step in energy. Therefore, it introduces
+fluctuations in energy.
+
 For $\kappa = 0$, this corresponds to the plain coulomb potential.
+
 
 \subsection{MMM2D}
 \index{MMM2D method|mainindex}
@@ -1298,7 +1282,7 @@ For the case of Yukawa screened simulation (second method) one has to
 enter screening parameter \var{kappa} and the cut-off of the Yukawa
 potential \var{r_\mathrm{cut}}.
 
-\subsection{ELC}
+\subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}
 
@@ -1332,12 +1316,113 @@ appendix \vref{chap:mmm}.
 Make sure that you read the papers on ELC before using it!!!
 \todo{references}
 
-\subsection{DLC}
+\section{Dipolar interaction}
+\label{sec:inter-dipolar}
+\index{Dipolar interactions|mainindex}
+\index{Magnetostatic interactions|mainindex}
+\index{interactions!Dipolar|mainindex}
+\index{interactions!Magnetostatic|mainindex}
+
+\begin{essyntax}
+  \variant{1} inter magnetic 0.0
+  \variant{2} inter magnetic
+  \variant{3} inter magnetic \var{parameters}
+\end{essyntax}
+
+These commands can be used to set up magnetostatic interactions, which
+is defined as follows:
+\begin{equation}
+  U^{D-P3M}(\vec{r}) = l_{B} k_B T \left( \frac{(\vec{\mu}_i \cdot \vec{\mu}_j)}{r^3} 
+  - \frac{3  (\vec{\mu}_i \cdot \vec{r})  (\vec{\mu}_j \cdot \vec{r}) }{r^5} \right)
+\end{equation}
+where $r=|\vec{r}|$.
+
+$l_{B}$ is a dimensionless parameter similar to the Bjerrum length in
+electrostatics which helps to tune the effect of the medium on the
+magnetic interaction between two magnetic dipoles.
+
+Computing magnetostatic interactions is computationally very
+expensive.  \es{} features some state-of-the-art algorithms to deal
+with these interactions as efficiently as possible, but almost all of
+them require some knowledge to use them properly.  Uneducated use can
+result in completely unphysical simulations.
+
+The commands above work as their couterparts for the electrostatic
+interactions (see section \vref{sec:coulomb}).  Variant \variant{1}
+disables dipolar interactions.  Variant \variant{2} returns the
+current parameters of the dipolar interaction as a Tcl-list using the
+same syntax as used to setup the method, \eg
+\begin{tclcode}
+  {coulomb 1.0 p3m 7.75 8 5 0.1138 0.0}
+  {coulomb epsilon 0.1 n_interpol 32768 mesh_off 0.5 0.5 0.5}
+\end{tclcode}
+
+Variant \variant{3} is the generic syntax to set up a specific method
+or its parameters, the details of which are described in the following
+subsections.  Note that using the magnetostatic interaction also
+requires assigning dipole moments to the particles.  This is done
+using the \texttt{part} command to set the dipole moment \texttt{dip},
+\eg
+\begin{tclcode}
+  inter coulomb 1.0 p3m tune accuracy 1e-4
+  part 0 dip 1 0 0; part 1 dip 0 0 1
+\end{tclcode}
+
+\subsection{Dipolar P3M}
+
+\begin{essyntax}
+  inter magnetic \var{l_B} p3m 
+  \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
+  \begin{features}
+    \required{MAGNETOSTATICS}
+  \end{features}
+\end{essyntax}
+
+This command activates the P3M method to compute the dipolar
+interactions between charged particles.  The different parameters are
+described in more detail in \cite{cerda08a}.
+\begin{description}
+\item[\var{r_\mathrm{cut}}] The real space cutoff as a positive
+  floating point number.
+\item[\var{mesh}] The number of mesh points, as a single positive
+  integer.
+\item[\var{cao}] The \emph{charge-assignment order}, an integer
+  between $0$ and $7$.
+\item[\var{alpha}] The Ewald parameter as a positive floating point
+  number.
+\end{description}
+
+Make sure that you know the relevance of the P3M parameters before
+using P3M! If you are not sure, read the following references
+\cite{ewald21, hockney88, kolafa92, deserno98, deserno98a, deserno00,
+  deserno00a}.
+
+Note that dipolar P3M does not work with non-cubic boxes.
+
+\subsubsection{Tuning dipolar P3M}
+\begin{essyntax}
+  inter magnetic \var{l_B} p3m \alt{tune \asep tunev2}
+  accuracy \var{accuracy}\\
+  \opt{r_cut \var{r_\mathrm{cut}}} \opt{mesh \var{mesh}} \opt{cao
+    \var{cao}} \opt{alpha \var{\alpha}}
+  \begin{features}
+    \required{MAGNETOSTATICS}
+  \end{features}
+\end{essyntax}
+
+Tuning dipolar P3M works exactly as tuning Coulomb P3M.  Therefore,
+for details on how to tune the algorothm, refer to the documentation
+of Coulomb P3M (see section \vref{ssec:tunep3m}).
+
+For the magnetic case, the expressions of the error estimate are given
+in \cite{cerda08a}.
+
+\subsection{Dipolar Layer Correction (DLC)}
 \index{DLC method|mainindex}
 \index{interactions!DLC method|mainindex}
 
 \begin{essyntax}
-  inter magnetic \var{l_B} mdlc \var{accuracy} \var{gap\_size}
+  inter magnetic mdlc \var{accuracy} \var{gap\_size}
   \opt{\var{far\_cutoff}}
   \begin{features}
     \required{MAGNETOSTATICS}
@@ -1345,23 +1430,22 @@ Make sure that you read the papers on ELC before using it!!!
 \end{essyntax}
 
 Like ELC but applied to the case of magnetic dipoles, but here the
-accuracy is the one you wish for computing the energy.  The far-cutoff
-is set to a value that, assuming all dipoles to be as larger as the
-largest of the dipoles in the system, the error for the energy would
-be smaller thant the value given by accuracy. At this moment you
-cannot compute the accuracy for the forces, or torques, nonetheless,
-usually you will have an error for forces and torques smaller than for
-energies. Thus, the error for the energies is an upper boundary to all
-errors in the calculations.
+accuracy is the one you wish for computing the energy.
+\var{far_cutoff} is set to a value that, assuming all dipoles to be as
+larger as the largest of the dipoles in the system, the error for the
+energy would be smaller thant the value given by accuracy. At this
+moment you cannot compute the accuracy for the forces, or torques,
+nonetheless, usually you will have an error for forces and torques
+smaller than for energies. Thus, the error for the energies is an
+upper boundary to all errors in the calculations.
 
 At present, the program assumes that the gap without particles is
 along the z-direction.  The gap-size is the length along the
 z-direction of the volume where particles are not allowed to enter.
 
-As a reference for DLC-method, see \cite{brodka04a}.
+As a reference for the DLC method, see \cite{brodka04a}.
 
-
-\subsection{Dipolar interaction, all with all, no replicas}
+\subsection{Dipolar all-with-all and no replicas (DAWAANR)}
 \index{DAWAANR method|mainindex}
 \index{interactions!DAWAANR method|mainindex}
 
@@ -1373,33 +1457,35 @@ As a reference for DLC-method, see \cite{brodka04a}.
 \end{essyntax}
 
 This interaction calculates energies and forces between dipoles by
-explicitly summing over all pairs. For those directions, in which the
+explicitly summing over all pairs.  For the directions in which the
 system is periodic (as defined by \texttt{setmd periodic}), it applies
-minimum image convention, i.e., the interaction is effectively cut-off
-at a half box length.
+the minimum image convention, i.e. the interaction is effectively cut
+off at half a box length.
 
-This method should only be used if using p3m or dlc is not possible.
+This method should only be used if it is not possible to P3M or DLC
+and has a low accuracy.
 
-\subsection{Magnetic dipolar direct sum}
+\subsection{Magnetic Dipolar Direct Sum (MDDS)}
 \index{MDDS method|mainindex}
 \index{interactions!MDDS method|mainindex}
 
 \begin{essyntax}
   inter magnetic \var{l_{B}} mdds n\_cut \var{value\_n\_cut}
-  \opt{\var{far\_cutoff}}
   \begin{features}
     \required{MAGNETOSTATICS}
+    \required{MAGNETIC_DIPOLAR_DIRECT_SUM}
   \end{features}
 \end{essyntax}
-The command enables the magnetic dipolar direct sum.  The
-dipole-dipole interaction is obtained by explicitly summing over all
-pairs. If the system is periodic in one or more directions, replicas
-of the system will be explicitly added.  \var{value\_n\_cut} is the
-number of replicas that are taken into account in each direction.
+
+The command enables the ``magnetic dipolar direct sum''.  The
+dipole-dipole interaction is computed by explicitly summing over all
+pairs. If the system is periodic in one or more directions, the
+interactions with further \var{value\_n\_cut} replicas of the system
+in all periodic directions is explicitly computed.
 
 As it is very slow, this method is not intendeed to do simulations,
 but rather to check the results you get from more efficient methods
-like p3m.
+like P3M.
   
 \section{Other interaction types}
 \label{sec:inter-other}
