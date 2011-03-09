@@ -86,7 +86,7 @@ set tau           0.02
 
 set agrid         1.0
 
-set box_l         32.0
+set box_l         208
 set box_l_x       128.0
 
 set dens          1.0
@@ -94,7 +94,7 @@ set viscosity     3.0
 #set bulk_viscosity 0.1
 set friction      5.0
 #equ velo 0.025
-set temp          1.01
+set temp          1.0
 
 set skin          0.5
 
@@ -128,7 +128,7 @@ puts [setmd cell_grid]
 
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction
+lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 0 0 0
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
 thermostat lb $temp
 
@@ -138,17 +138,17 @@ thermostat lb $temp
 #		lbnode_exf_gpu 0 $i $j set force 1 0 0
 #		}
 #	}
-#lb_boundary wall normal 0 0 1 dist 0
-#lb_boundary wall normal 0 0 -1 dist -63
+#lbboundary wall normal 0 0 1 dist 0
+#lbboundary wall normal 0 0 -1 dist [expr -$box_l+1]
 
-#lb_boundary wall normal 0 1 0 dist 0
-#lb_boundary wall normal 0 -1 0 dist -63
+#lbboundary wall normal 0 1 0 dist 0
+#lbboundary wall normal 0 -1 0 dist [expr -$box_l+1]
 # Particles
 #############################################################
 # load colloid from file
 #read_data "~/espresso/testsuite/lb_system.data"
 
-part 0 pos 1 1 1
+part 0 pos 10 10 10
 #part 0 v 0. 0. -10.5
 #set k	0
 #set m	5
