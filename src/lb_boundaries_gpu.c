@@ -135,23 +135,23 @@ int lb_boundary_wall(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "lb_boundary wall normal <nx> <ny> <nz> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.wal.n[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(lbb->c.wal.n[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(lbb->c.wal.n[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.wal.n[0])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[2], &(lbb->c.wal.n[1])) == TCL_ERROR ||
+        Tcl_GetDouble(interp, argv[3], &(lbb->c.wal.n[2])) == TCL_ERROR)
 	return (TCL_ERROR);
       argc -= 4; argv += 4;
     }
     else if(!strncmp(argv[0], "dist", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary wall dist <d> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.wal.d)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.wal.d)) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+        argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary wall type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
@@ -169,8 +169,6 @@ int lb_boundary_wall(LB_boundary_gpu *lbb, Tcl_Interp *interp,
   }
   /* normalize the normal vector */
   for (i=0;i<3;i++) lbb->c.wal.n[i] /= sqrt(norm);
-  //fprintf(stderr,"normvec %lf \t %lf \t %lf \n",  lbb->c.wal.n[0], lbb->c.wal.n[1], lbb->c.wal.n[2]);
-
 
   return (TCL_OK);
 }
@@ -182,8 +180,8 @@ int lb_boundary_sphere(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 
   /* invalid entries to start of */
   lbb->c.sph.pos[0] = 
-    lbb->c.sph.pos[1] = 
-    lbb->c.sph.pos[2] = 0;
+  lbb->c.sph.pos[1] = 
+  lbb->c.sph.pos[2] = 0;
   lbb->c.sph.rad = 0;
   lbb->c.sph.direction = -1;
 
@@ -193,43 +191,43 @@ int lb_boundary_sphere(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "lb_boundary sphere center <x> <y> <z> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(lbb->c.sph.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(lbb->c.sph.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.pos[0])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[2], &(lbb->c.sph.pos[1])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[3], &(lbb->c.sph.pos[2])) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 4; argv += 4;
+        argc -= 4; argv += 4;
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary sphere radius <r> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.rad)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.rad)) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+        argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "-1/1 or inside/outside is expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
+      if(!strncmp(argv[1], "inside", strlen(argv[1])))
 	lbb->c.sph.direction = -1;
-      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
+      else if(!strncmp(argv[1], "outside", strlen(argv[1])))
 	lbb->c.sph.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.direction)) == TCL_ERROR)
+      else if(Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.direction)) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+        argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary sphere type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
       argc -= 2; argv += 2;
     }
     else
-      break;
+    break;
   }
 
   if (lbb->c.sph.rad < 0.) {
@@ -250,11 +248,11 @@ int lb_boundary_cylinder(LB_boundary_gpu *lbb, Tcl_Interp *interp,
   lbb->type = LB_BOUNDARY_CYL;
   /* invalid entries to start of */
   lbb->c.cyl.pos[0] = 
-    lbb->c.cyl.pos[1] = 
-    lbb->c.cyl.pos[2] = 0;
+  lbb->c.cyl.pos[1] = 
+  lbb->c.cyl.pos[2] = 0;
   lbb->c.cyl.axis[0] = 
-    lbb->c.cyl.axis[1] = 
-    lbb->c.cyl.axis[2] = 0;
+  lbb->c.cyl.axis[1] = 
+  lbb->c.cyl.axis[2] = 0;
   lbb->c.cyl.rad = 0;
   lbb->c.cyl.length = 0;
   lbb->c.cyl.direction = 0;
@@ -264,72 +262,71 @@ int lb_boundary_cylinder(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "lb_boundary cylinder center <x> <y> <z> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(lbb->c.cyl.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(lbb->c.cyl.pos[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.pos[0])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[2], &(lbb->c.cyl.pos[1])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[3], &(lbb->c.cyl.pos[2])) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 4; argv += 4;
+        argc -= 4; argv += 4;
     }
     else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
       if(argc < 4) {
 	Tcl_AppendResult(interp, "lb_boundary cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.axis[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(lbb->c.cyl.axis[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(lbb->c.cyl.axis[2])) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.axis[0])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[2], &(lbb->c.cyl.axis[1])) == TCL_ERROR ||
+	Tcl_GetDouble(interp, argv[3], &(lbb->c.cyl.axis[2])) == TCL_ERROR)
 	return (TCL_ERROR);
-
-      argc -= 4; argv += 4;    
+        argc -= 4; argv += 4;    
     }
     else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary cylinder radius <rad> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.rad)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.rad)) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+        argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary cylinder length <len> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.length)) == TCL_ERROR)
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.length)) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+        argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary cylinder direction <dir> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
+      if(!strncmp(argv[1], "inside", strlen(argv[1])))
 	lbb->c.cyl.direction = -1;
       else if (!strncmp(argv[1], "outside", strlen(argv[1])))
 	lbb->c.cyl.direction = 1;
       else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.direction)) == TCL_ERROR)
 	return (TCL_ERROR);
-      argc -= 2; argv += 2;
+        argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
+      if(argc < 1) {
 	Tcl_AppendResult(interp, "lb_boundary cylinder type <t> expected", (char *) NULL);
 	return (TCL_ERROR);
       }
       argc -= 2; argv += 2;
     }
     else
-      break;
+    break;
   }
 
   axis_len=0.;
-  for (i=0;i<3;i++)
+  for(i=0;i<3;i++)
     axis_len += SQR(lbb->c.cyl.axis[i]);
 
-  if (lbb->c.cyl.rad < 0. || axis_len < 1e-30 ||
-      lbb->c.cyl.direction == 0 || lbb->c.cyl.length <= 0) {
+  if(lbb->c.cyl.rad < 0. || axis_len < 1e-30 ||
+    lbb->c.cyl.direction == 0 || lbb->c.cyl.length <= 0) {
     Tcl_AppendResult(interp, "usage: lb_boundary cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t>",
 		     (char *) NULL);
     return (TCL_ERROR);    
@@ -337,10 +334,9 @@ int lb_boundary_cylinder(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 
   /*normalize the axis vector */
   axis_len = sqrt (axis_len);
-  for (i=0;i<3;i++) {
+  for(i=0;i<3;i++) {
     lbb->c.cyl.axis[i] /= axis_len;
-  }
-      
+  } 
   return (TCL_OK);
 }
 
@@ -373,7 +369,6 @@ int tclcommand_lbboundary_gpu(Tcl_Interp *interp,
 	Tcl_AppendResult(interp, "Can not delete non existing lb_boundary",(char *) NULL);
 	return (TCL_ERROR);
       }
-      //mpi_bcast_lb_boundary(c_num);
       status = TCL_OK;    
     }
   }
@@ -406,14 +401,14 @@ void lb_init_boundaries_gpu() {
   dist_tmp = 0.;
 	
   
-  for (z=0; z<lbpar_gpu.dim_z; z++) {
-    for (y=0; y<lbpar_gpu.dim_y; y++) {
-	    for (x=0; x<lbpar_gpu.dim_x; x++) {	    
-	      pos[0] = x*lbpar_gpu.agrid;
-	      pos[1] = y*lbpar_gpu.agrid;
-	      pos[2] = z*lbpar_gpu.agrid;
-	      
-	      dist = 0.;
+  for(z=0; z<lbpar_gpu.dim_z; z++) {
+    for(y=0; y<lbpar_gpu.dim_y; y++) {
+      for (x=0; x<lbpar_gpu.dim_x; x++) {	    
+	pos[0] = x*lbpar_gpu.agrid;
+	pos[1] = y*lbpar_gpu.agrid;
+	pos[2] = z*lbpar_gpu.agrid;
+	     
+	dist = 0.;
 
         for (n=0;n<n_lb_boundaries_gpu;n++) {
           switch (lb_boundaries_gpu[n].type) {
@@ -436,19 +431,20 @@ void lb_init_boundaries_gpu() {
           }
         }       
         
-  	    if (dist <= 0 && n_lb_boundaries_gpu > 0) {
-   	      		size_of_index = (number_of_boundnodes+1)*sizeof(int);
-				host_boundindex = realloc(host_boundindex, size_of_index);
-				host_boundindex[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z; 
-		  		number_of_boundnodes++;   
+  	if (dist <= 0 && n_lb_boundaries_gpu > 0) {
+   	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
+          host_boundindex = realloc(host_boundindex, size_of_index);
+          host_boundindex[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z; 
+          number_of_boundnodes++;   
         }
       }
     }
   }
   /**call of cuda fkt*/
   lb_init_boundaries_GPU(number_of_boundnodes, host_boundindex);
-  	LB_TRACE (fprintf(stderr,"lb_init_boundaries \n"));
-	LB_TRACE (fprintf(stderr,"boundnumbers %i \n", number_of_boundnodes));
+
+  LB_TRACE (fprintf(stderr,"lb_init_boundaries \n"));
+  LB_TRACE (fprintf(stderr,"boundnumbers %i \n", number_of_boundnodes));
 
   free(host_boundindex);
 }

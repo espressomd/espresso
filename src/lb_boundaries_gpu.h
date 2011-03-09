@@ -59,7 +59,7 @@ typedef struct {
   double slip_pref;
 
   union {
-  	Constraint_wall wal;
+    Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
   } c;
@@ -71,8 +71,6 @@ typedef struct {
 extern "C" {
 #endif
 void lb_init_boundaries_gpu();
-
-//void lb_init_boundaries_GPU(int host_number_of_boundnodes, int *host_boundindex);
 
 #ifdef __cplusplus
 }

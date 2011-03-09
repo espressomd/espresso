@@ -90,7 +90,7 @@ typedef struct {
   float friction;
   /** MD tiemstep */
   float time_step;
-/** amplitude of the fluctuations in the viscous coupling */
+  /** amplitude of the fluctuations in the viscous coupling */
   float lb_coupl_pref;
 
   float lb_coupl_pref2;
@@ -103,9 +103,9 @@ typedef struct {
 
   unsigned int number_of_nodes;
   unsigned int number_of_particles;
-/** Flag indicating whether fluctuations are present. */
+  /** Flag indicating whether fluctuations are present. */
   int fluct;
-/**to calc and print out phys values */
+  /**to calc and print out phys values */
   int calc_val;
 
   int external_force;
@@ -121,16 +121,10 @@ typedef struct {
 
   /** velocitydensity of the node */
   float *vd[19];
-
-
   /** seed for the random gen */
   unsigned int *seed;
-
   /** flag indicating whether this site belongs to a boundary */
   unsigned int *boundary;
-
-  /** (re)set values like seed */
-  //unsigned int set;
 
 } LB_nodes_gpu;
 
@@ -144,7 +138,7 @@ typedef struct {
   float v[3];
 
   /** stresstensor of the node */
-/** use this value only (due to memory saving) if you want to print out the value (used in calc_values)*/
+  /** use this value only (due to memory saving) if you want to print out the value (used in calc_values)*/
   //float pi[6];
 
 } LB_values_gpu;
@@ -159,51 +153,43 @@ typedef struct {
 } LB_randomnr_gpu;
 
 typedef struct {
-/** force on the particle given to md part */
-	float f[3];
-
-	//unsigned int identity;
+  /** force on the particle given to md part */
+  float f[3];
 
 } LB_particle_force_gpu;
 
 typedef struct {
-/** particle position given from md part*/
-	float p[3];
-/** particle momentum struct velocity p.m->v*/
-	float v[3];
+  /** particle position given from md part*/
+  float p[3];
+  /** particle momentum struct velocity p.m->v*/
+  float v[3];
 #ifdef LB_ELECTROHYDRODYNAMICS
-	float mu_E[2];
+  float mu_E[2];
 #endif
-
-	unsigned int fixed;
+  unsigned int fixed;
 
 } LB_particle_gpu;
 
 typedef struct {
 
-	float *force[3];
+  float *force[3];
 
 } LB_node_force_gpu;
 
 typedef struct {
 
-	float force[3];
+  float force[3];
 
-	unsigned int index;
+  unsigned int index;
 
 } LB_extern_nodeforce_gpu;
 
 typedef struct {
 
-	unsigned int seed;
+  unsigned int seed;
 
 } LB_particle_seed_gpu;
 
-
-/** The DnQm model to be used. */
-//extern LB_Model lbmodel;
-
-/** Struct holding the Lattice Boltzmann parameters */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -275,38 +261,8 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex);
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
-#ifdef __cplusplus
-}
-#endif
-/** Sets the density and momentum on a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Input)
- * @param j     Local momentum of the fluid (Input)
- */
-//void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, const double *pi);
-
-/** Returns the mass, momentum and stress of a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Output)
- * @param j     Local momentum of the fluid (Output)
- * @param pi    Local stress tensor of the fluid (Output)
- */
-//void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi);
-
-//void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi);
-
-/** Calculates the coupling of MD particles to the LB fluid.
- * This function  is called from \ref force_calc. The force is added
- * to the particle force and the corresponding momentum exchange is
- * applied to the fluid.
- * Note that this function changes the state of the fluid!
- */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void lb_calc_particle_lattice_ia_gpu();
-
 void lb_send_forces_gpu();
 
 #ifdef __cplusplus

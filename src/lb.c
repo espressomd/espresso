@@ -149,31 +149,31 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   argc--; argv++;
 
   if (argc < 1) {
-      Tcl_AppendResult(interp, "too few arguments to \"lbfluid\"", (char *)NULL);
-      return TCL_ERROR;
+    Tcl_AppendResult(interp, "too few arguments to \"lbfluid\"", (char *)NULL);
+    return TCL_ERROR;
   }
   else if (ARG0_IS_S("off")) {
-      Tcl_AppendResult(interp, "off not implemented", (char *)NULL);
-      return TCL_ERROR;
+    Tcl_AppendResult(interp, "off not implemented", (char *)NULL);
+    return TCL_ERROR;
   }
   else if (ARG0_IS_S("init")) {
-      Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
-      return TCL_ERROR;
+    Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
+    return TCL_ERROR;
   }
   else if (ARG0_IS_S("gpu") || ARG0_IS_S("GPU")) {
-      lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
-      argc--; argv++;
+    lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
+    argc--; argv++;
   }
   else if (ARG0_IS_S("cpu") || ARG0_IS_S("CPU")) {
-      lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
-      argc--; argv++;
+    lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
+    argc--; argv++;
   }
 
   if (lattice_switch & LATTICE_LB_GPU)
-      return tclcommand_lbfluid_gpu(interp, argc, argv);
+    return tclcommand_lbfluid_gpu(interp, argc, argv);
   else{
-      return tclcommand_lbfluid_cpu(interp, argc, argv);
-	}
+    return tclcommand_lbfluid_cpu(interp, argc, argv);
+  }
 }
 
 int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
@@ -367,9 +367,9 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   if (lattice_switch & LATTICE_LB_GPU)
-      return tclcommand_lbnode_gpu(interp, argc, argv);
+    return tclcommand_lbnode_gpu(interp, argc, argv);
   else
-      return tclcommand_lbnode_cpu(interp, argc, argv);
+    return tclcommand_lbnode_cpu(interp, argc, argv);
 }
 /** Parser for the \ref lbnode command. */
 int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
