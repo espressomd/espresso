@@ -340,13 +340,13 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
 #endif
             }  
             g += npart;
-         }  
-      }
-      else {
-        MPI_Recv(&host_data[g], sizes[pnode]*sizeof(LB_particle_gpu), MPI_BYTE, pnode, REQ_GETPARTS,
-        MPI_COMM_WORLD, &status);
-        g += sizes[pnode];
-      }
+          }  
+        }
+        else {
+          MPI_Recv(&host_data[g], sizes[pnode]*sizeof(LB_particle_gpu), MPI_BYTE, pnode, REQ_GETPARTS,
+          MPI_COMM_WORLD, &status);
+          g += sizes[pnode];
+        }
       }
     }
   }
@@ -403,7 +403,7 @@ static void mpi_get_particles_slave_lb(){
     /* and send it back to the master node */
     MPI_Send(host_data_sl, n_part*sizeof(LB_particle_gpu), MPI_BYTE, 0, REQ_GETPARTS, MPI_COMM_WORLD);
     free(host_data_sl);
-  }
+  }  
 }
 
 static void mpi_send_forces_lb(LB_particle_force_gpu *host_forces){

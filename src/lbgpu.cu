@@ -599,7 +599,7 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
 
   float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 	
-/**implemented due to the problem of division via zero*/
+  /**implemented due to the problem of division via zero*/
   if(n_a.boundary[index] == 1){
     Rho = 1.0f;
     mode[1] = 0.f;
@@ -621,8 +621,8 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
   }
 #if 0
   if(singlenode == 1){
-  	  /* equilibrium part of the stress modes */
-	/**to print out the stress tensor entries, ensure that in lbgpu.h struct the values are available*/
+    /* equilibrium part of the stress modes */
+    /**to print out the stress tensor entries, ensure that in lbgpu.h struct the values are available*/
     d_v[0].pi[0] = ((mode[1]*mode[1]) + (mode[2]*mode[2]) + (mode[3]*mode[3]))/para.rho;
     d_v[0].pi[1] = ((mode[1]*mode[1]) - (mode[2]*mode[2]))/para.rho;
     d_v[0].pi[2] = ((mode[1]*mode[1]) + (mode[2]*mode[2])  + (mode[3]*mode[3])) - 3.0f*(mode[3]*mode[3]))/para.rho;
