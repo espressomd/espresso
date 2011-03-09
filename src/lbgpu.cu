@@ -1331,7 +1331,10 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
-  threads_per_block = 128;
+  if((para.dim_x || para.dim_y || para.dim_z) > 160){
+    threads_per_block = 128;
+  }else
+    threads_per_block = 64;
   blocks_per_grid = (lbpar_gpu->number_of_nodes + threads_per_block - 1) /(threads_per_block);
 
   /** values for the particle kernel */
@@ -1410,7 +1413,10 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
   reset_boundaries<<<blocks_per_grid, threads_per_block>>>(nodes_a, nodes_b);
   cuda_safe_kernel(cudaGetLastError());	
 
-  threads_per_block_bound = 128;
+  if((para.dim_x || para.dim_y || para.dim_z) > 160){
+    threads_per_block = 128;
+  }else
+    threads_per_block = 64;
   blocks_per_grid_bound = (number_of_boundnodes + threads_per_block_bound -1)/(threads_per_block_bound);
 
 #if 0
@@ -1430,7 +1436,10 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 
   if(para.external_force == 0)cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)); 
 
-  threads_per_block_exf = 128;
+  if((para.dim_x || para.dim_y || para.dim_z) > 160){
+    threads_per_block = 128;
+  }else
+    threads_per_block = 64;
   blocks_per_grid_exf = (n_extern_nodeforces + threads_per_block_exf -1)/(threads_per_block_exf);
 	
   init_extern_nodeforces<<<blocks_per_grid_exf, threads_per_block_exf>>>(n_extern_nodeforces, extern_nodeforces, node_f);
