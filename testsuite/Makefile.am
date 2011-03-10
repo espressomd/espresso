@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # all the test scripts
-tests= \
+tests = \
 	nve_pe.tcl npt.tcl \
 	madelung.tcl p3m.tcl el2d.tcl \
 	p3m-magnetostatics.tcl \
@@ -35,8 +35,11 @@ tests= \
         tunable_slip.tcl \
 	virtual-sites.tcl
 
+deactivated_tests = \
+	lb_gpu.tcl
+
 # add data files for the tests here
-EXTRA_DIST = $(tests) \
+EXTRA_DIST = $(tests) $(deactivated_tests) \
 	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
