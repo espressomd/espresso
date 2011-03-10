@@ -86,7 +86,7 @@ set tau           0.02
 
 set agrid         1.0
 
-set box_l         208
+set box_l         160
 set box_l_x       128.0
 
 set dens          1.0
@@ -125,10 +125,10 @@ cellsystem domain_decomposition -no_verlet_list
 #puts [inter]
 
 puts [setmd cell_grid]
-
+part 0 pos 10 10 10
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 0 0 0
+lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 1 0 0
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
 thermostat lb $temp
 
@@ -148,7 +148,7 @@ thermostat lb $temp
 # load colloid from file
 #read_data "~/espresso/testsuite/lb_system.data"
 
-part 0 pos 10 10 10
+#part 0 pos 10 10 10
 #part 0 v 0. 0. -10.5
 #set k	0
 #set m	5
