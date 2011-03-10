@@ -1004,7 +1004,7 @@ void calc_meshift(void)
     meshift_y = (double *) realloc(meshift_y, p3m.mesh[1]*sizeof(double));
     meshift_z = (double *) realloc(meshift_z, p3m.mesh[2]*sizeof(double));
 
-    //    meshift_x[0] = meshift_y[0] = meshift_z[0] = 0;
+    meshift_x[0] = meshift_y[0] = meshift_z[0] = 0;
     for (i = 1; i <= p3m.mesh[RX]/2; i++) {
         meshift_x[i] = i;
         meshift_x[p3m.mesh[0] - i] = -i;
@@ -1032,6 +1032,7 @@ void calc_differential_operator()
     d_op[i] = realloc(d_op[i], p3m.mesh[i]*sizeof(double));
     d_op[i][0] = 0;
     d_op[i][p3m.mesh[i]/2] = 0.0;
+
     for(j = 1; j < p3m.mesh[i]/2; j++) {
       d_op[i][j] = j;
       d_op[i][p3m.mesh[i] - j] = -j;
@@ -1067,8 +1068,10 @@ void calc_influence_function_force()
                 }
                 else {
                     denominator = perform_aliasing_sums_force(n,nominator);
+
                     fak1 =  d_op[RX][n[KX]]*nominator[RX]/box_l[RX] + d_op[RY][n[KY]]*nominator[RY]/box_l[RY] + d_op[RZ][n[KZ]]*nominator[RZ]/box_l[RZ];
                     fak2 = SQR(d_op[RX][n[KX]]/box_l[RX])+SQR(d_op[RY][n[KY]]/box_l[RY])+SQR(d_op[RZ][n[KZ]]/box_l[RZ]);
+
                     fak3 = fak1/(fak2 * SQR(denominator));
                     g_force[ind] = fak3/(PI*PI*PI);
                 }
@@ -1108,6 +1111,7 @@ MDINLINE double perform_aliasing_sums_force(int n[3], double numerator[3])
                 numerator[RX] += f2*nmx/box_l[RX];
                 numerator[RY] += f2*nmy/box_l[RY];
                 numerator[RZ] += f2*nmz/box_l[RZ];
+
                 denominator  += sz;
             }
         }
@@ -1141,6 +1145,7 @@ void calc_influence_function_energy()
                 if( (n[KX]%(p3m.mesh[RX]/2)==0) && (n[KY]%(p3m.mesh[RY]/2)==0) && (n[KZ]%(p3m.mesh[RZ]/2)==0) ) {
                     g_energy[ind] = 0.0;
                 }
+
                 else 
 		  g_energy[ind] = perform_aliasing_sums_energy(n)/PI;
             }
