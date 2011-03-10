@@ -808,7 +808,7 @@ general tabulated potentials.
 \subsection{Rigid bonds}
 \index{rigid bond|mainindex}
 \index{interactions!rigid bond|mainindex}
-\index{RATTLE}
+\index{Rattle Shake algorithm}
 
 \begin{essyntax}
   inter \var{bondid}
@@ -817,8 +817,9 @@ general tabulated potentials.
   \var{velocity\_tolerance}
 \end{essyntax}
 
-\todo{Docs}
-No description so far.
+To simulate rigid bonds, \es uses the Rattle Shake algorithm which
+satisfies internal constraints for molecular models with internal
+constraints, using Lagrange multipliers.\cite{andersen83a}
 
 \subsection{Bond-angle interactions}
 \index{bond-angle interactions|mainindex}
