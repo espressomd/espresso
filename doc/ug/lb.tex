@@ -20,17 +20,21 @@
 \label{sec:lb}
 \newescommand{lb}
 
-For an implicit treatment of a solvent \es allows to couple the
-molecular dynamics part to a Lattice-Boltzmann fluid. The Lattice-
-Boltzmann-Method is a fast, lattice based method that allows in its
-``pure'' form to calculate fluid flow in various boundary conditions
-also in complex geometries. Coupled to molecular dynamics, it is
-mainly used to take hydrodynamic interactions into account
-computationally efficiently. The main goal in \es is, of course the
+For an implicit treatment of a solvent, \es allows to couple the
+molecular dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-
+Boltzmann-Method (LBM) is a fast, lattice based method that allows in its
+``pure'' form to calculate fluid flow in different boundary conditions
+also in complex geometries. Coupled to molecular dynamics, it allows
+to take hydrodynamic interactions into account
+computationally efficiently. The implementation of boundary conditions
+for the LBM is a difficult task, where still a lot of research is going 
+on. The focus of the \es implementation of the LBM is, of course, the
 coupling to MD and therefore available geometries and boundary
-conditions are somewhat limited compared to ``pure'' codes.  Here we
-restrict the documentation on the interface. For a more detailed
-description
+conditions are somewhat limited compared to ``pure'' codes. 
+
+
+Here we restrict the documentation on the interface. For a more detailed
+description of the method, please refer to the literature.
 
 \section{Setting up and LB fluid}
 \begin{essyntax}
@@ -48,17 +52,18 @@ description
   \required{LB}
   \end{features}
 \end{essyntax}
-The \lit{lbfluid} command serves to initialize the fluid with a given
+The \lit{lbfluid} command initializes the fluid with a given
 set of parameters. It is also possible to change parameters on the
 fly, but this will only rarely be done in practice. Before being able
 to use the LBM, it is necessary to set up a box of a desired size. The
-parameter \lit{agrid} serves to set up the lattice constant of the
+parameter \lit{agrid} is used to set the lattice constant of the
 fluid, so the size of the box in every direction must be a multiple of
 \var{agrid}.
 
 In \es the LB scheme and the MD scheme are not synchronized: In one LB
 time step typically several MD steps are performed. This allows to
-speed up the simulations and is adjusted with the parameter \var{tau}.
+speed up the simulations and is adjusted with the parameter \var{tau},
+the LB timestep.
 The parameters \var{dens} and \var{visc} set up the density and
 viscosity of the LB fluid in (usual) MD units.  Internally the LB
 implementation works with a different set of units: all lengths are
@@ -69,25 +74,52 @@ itself. Currently it is not possible to precisely give a parameter set
 where reliable results are expected, but we are currently performing a
 study on that. Therefore the LBM should \emph{not be used as a black
   box}, but only after a careful check of all parameters that were
-applied. Again: You have to \emph{know what you are doing} before you
-can use the Lattice-Boltzmann module productively.
+applied. 
 
 The parameter \lit{ext_force} allows to apply an external body force
-density that is homogenous over the fluid. It is again to be given in
+density that is homogeneous over the fluid. It is again to be given in
 MD units.  The parameter \lit{bulk_viscosity} allows to tune the bulk
 viscosity of the fluid and is given in MD units. In the limit of low
 Mach (often also low Reynolds) number the results should be
-independent of the bulk viscosity.  \lit{gamma_odd} and
+independent of the bulk viscosity up to a scaling factor. 
+It is however known that the values of the viscosity does 
+affect the quality of the implemented link-bounce-back method.
+\lit{gamma_odd} and
 \lit{gamma_even} are the relaxation parameters for the kinetic
 modes. Due to their somewhat obscure nature they are to be given
 directly in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau}. For the other
-parameters, the following defaults are taken: \var{bulk\_viscosity}=0,
-\var{gamma}=0, \var{gamma\_odd}=0, \var{gamma\_even}=0.
+set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau}, \lit{friction}. For the other
+parameters, the following are taken: \var{bulk\_viscosity}=0, ,
+\var{gamma\_odd}=0, \var{gamma\_even}=0,  \var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
 
 \section{LB as a thermostat}
+\begin{essyntax}
+  thermostat lb \var{T} 
+  \begin{features}
+  \required{LB}
+  \end{features}
+\end{essyntax}
+The LBM implementation in \es uses Duenweg's point coupling method
+to couple MD particles the LB fluid. This coupling consists
+in a frictional force and a random force:
+\begin{equation*}
+  \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
+\end{equation*}
+The frictional force tends to decrease the relative velocity
+between the fluid and the particle whereas the random forces are chosen
+so large that the average kinetic energy per particle corresponds to
+the given temperature, according to a fluctuation dissipation theorem.
+No other thermostatting mechanism is necessary then. Please any of these
+off before starting the LB thermostatting mechanism.
+
+
+The LBM implementation provides a fully thermalized LB fluid, \ie all nonconserved modes,
+including the pressure tensor, fluctuate correctly according to the 
+given temperature and the relaxation parameters. All fluctuations can
+be switched off by setting the temperature to 0.
+
 
 \section{Reading and setting single lattice nodes}
 \begin{essyntax}
@@ -96,7 +128,7 @@ parameters, the following defaults are taken: \var{bulk\_viscosity}=0,
   \required{LB}
   \end{features}
 \end{essyntax}
-The \lit{lbnode} command allows to inspect (\lit{print}) and (\lit{modify}) single LB nodes. 
+The \lit{lbnode} command allows to inspect (\lit{print}) and modify (\lit{set}) single LB nodes. 
 Note that the indexing in every direction starts with 0. 
 For both commands you have to specify what quantity should be printed
 or modified. Print allows the following arguments: \\
@@ -121,6 +153,9 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{tclcode}
 
 \section{Setting up boundary conditions}
+If nothing else is specified periodic boundary conditions are assumed 
+for the LB fluid. The \lit{lbboundary} command allows to set up
+other (internal or external) boundaries.
 \begin{essyntax}
   lbboundary \var{shape} \var{shape\_args} 
   \begin{features}
@@ -142,7 +177,7 @@ normal LB fluid, and the other half space is filled with boundary
 nodes.
 
 Intersecting boundaries are in principle possible but must be treated
-with care. In the current, only partly satisfactory implementation for
+with care. In the current, only partly satisfactory, implementation for
 every LB node the closest boundary is determined and in case of a
 negative distance to that boundary (meaning being inside the wall)
 lets \es decide that it is a wall node, and a positive one, that it is
@@ -157,3 +192,16 @@ example this corresponds indeed to a boundary at $x=1.5$. Note that
 the location of the boundary is unfortunately not independent of the
 viscosity. This can \eg be seen when using the sample script
 \lit{poisseuille.tcl} with a high viscosity.
+
+\section{GPU implementation of the LBM}
+A very recent development is an implementation of the LBM for GPU using
+the Nvidia CUDA framework. On CUDA-supporting machines this can be activated
+by configuring with \lit{configure --with-cuda=/path/to/cuda} and compiling
+with the  \lit{LB_GPU} flag set in \lit{myconfig.h}. The GPU is switched on
+by the command \lit{lbfluid gpu} implying that all following LB-related commands
+will be executed for the GPU implementation. If, however the CPU implementation
+is to be used, this can be specified by the command  \lit{lbfluid cpu}.
+Currently only a subset of
+the CPU commands are available for the GPU implementation.
+For boundary conditions analogous to the CPU implementation, the flag \lit{LB_BOUNDARY_GPU} 
+has to be set in \lit{myconfig.h}.
