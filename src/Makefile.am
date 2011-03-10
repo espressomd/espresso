@@ -131,6 +131,14 @@ libEspresso_a_SOURCES = \
 noinst_LIBRARIES = libEspresso.a
 
 #################################################################
+# Build the blockfile library
+#################################################################
+libespressobf_a_SOURCES = blockfile.c blockfile.h
+libespressobf_a_CPPFLAGS = -DBLOCKFILE_STDIO
+
+lib_LIBRARIES = libespressobf.a
+
+#################################################################
 # Handling of myconfig.h
 #################################################################
 FORCE:
