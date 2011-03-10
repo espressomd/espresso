@@ -32,10 +32,10 @@ require_feature "MAGNETOSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"
 
-require_max_nodes_per_side 1
+#require_max_nodes_per_side 1
 
 puts "--------------------------------------------------------------------"
-puts "- Testcase p3m-magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase p3m_magnetostatics.tcl for magnetic dipoles running on [format %02d [setmd n_nodes]] nodes: -"
 puts "--------------------------------------------------------------------"
 puts "CAREFUL: tests do not check PRESSURES NOR ENERGIES"
 
@@ -85,7 +85,7 @@ if { [catch {
     close $outp
     
     #----- validate the trajectories against the known correct solution ---------------
-    set outp  [open "p3m-magnetostatics-t1.data" r]  
+    set outp  [open "p3m_magnetostatics_expected.data" r]  
     set outp1 [open "dummy.dat" r]  
     for {set i_step 0} { $i_step <= 5 } {incr i_step} {   
       for {set i 0} { $i < 2} {incr i} {

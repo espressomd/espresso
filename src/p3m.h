@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,12 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef P3M_H 
-#define P3M_H
+#ifndef _P3M_H 
+#define _P3M_H
 /** \file p3m.h   main header-file for P3M algorithms intended to deal with long-range forces.
  *
- *  We use here a P3M (Particle-Particle Particle-Mesh) method based
- *  on the Ewald summation. Details of the used method can be found in
+ *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
+ *  Ewald summation. Details of the used method can be found in
  *  Hockney/Eastwood and Deserno/Holm. The file p3m contains only the
  *  Particle-Mesh part.
  *
@@ -48,7 +49,6 @@
  *  </ul>
  *
  *  For more information about the p3m algorithm,
-  *  For more information about the p3m algorithm,
  *  see \ref p3m.h "p3m.h"
  *  see \ref p3m-charges.c  "p3m-charges.c"
  *  see \ref p3m-charges.h  "p3m-charges.h"
@@ -221,8 +221,6 @@ extern p3m_struct p3m;
 
 /// print the p3m parameters to the interpreters result
 int tclprint_to_result_ChargeP3M(Tcl_Interp *interp);
-
-/// print the p3m parameters to the interpreters result
 int tclprint_to_result_DipolarP3M(Tcl_Interp *interp);
 
 /** Initialize all structures, parameters and arrays needed for the 

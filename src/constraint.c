@@ -580,7 +580,7 @@ static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
       }
       if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.length)) == TCL_ERROR)
 	return (TCL_ERROR);
-      con->c.pore.length *= 2;
+//      con->c.pore.length *= 2;
       argc -= 2; argv += 2;
     }
     else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
@@ -854,6 +854,64 @@ static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *i
   return (TCL_OK);
 }
 
+int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
+  double pos[3];
+  double vec[3];
+  double dist;
+  double mindist = 1e100;
+  int n;
+  char buffer[TCL_DOUBLE_SPACE];
+  if (n_constraints==0) {
+    Tcl_AppendResult(interp, "Error in constraint mindist_position: no constraints defined\n", (char*) NULL);
+    return TCL_ERROR;
+  }
+
+  Particle* p1=0;
+  if (ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
+    for(n=0;n<n_constraints;n++) {
+      switch(constraints[n].type) {
+        case CONSTRAINT_WAL: 
+          if ( !constraints[n].c.wal.penetrable )
+	          calculate_wall_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_SPH:
+          if ( !constraints[n].c.sph.penetrable )
+	          calculate_sphere_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_CYL: 
+          if ( !constraints[n].c.cyl.penetrable )
+	          calculate_cylinder_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_MAZE: 
+          if ( !constraints[n].c.maze.penetrable )
+	          calculate_maze_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_PORE: 
+	        calculate_pore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
+          break;
+        case CONSTRAINT_PLANE:
+	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
+          break;
+      }
+      mindist = dist<mindist?dist:mindist;
+
+    }
+    Tcl_PrintDouble(interp, mindist, buffer);
+    Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
+    return TCL_OK;
+  } else {
+    Tcl_AppendResult(interp, "\nError in constraint mindist_position: could not read position\n", (char*) NULL);
+    return TCL_ERROR;
+  }
+}
 #endif
 
 
@@ -864,8 +922,11 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
   int status, c_num;
 
   if (argc < 2) return tclcommand_constraint_print(interp);
-  
-  if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
+
+  if(!strncmp(argv[1], "mindist_position", strlen(argv[1]))) {
+    return tclcommand_constraint_mindist_position(interp, argc-2, argv+2);
+  }
+  else if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
     status = tclcommand_constraint_parse_wall(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }

@@ -3748,10 +3748,11 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   /* for the elses below */
   if (0);
   REGISTER_ANALYZE_OPTION("set", tclcommand_analyze_parse_set);
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
   REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
   REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
+
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
   REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);

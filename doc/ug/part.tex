@@ -270,10 +270,13 @@ set up to be \var{bond\_length}.
 \item[\var{num\_polymers}] Sets the number of polymer chains.
 \item[\var{monomers\_per\_chain}] Sets the number of monomers per
   chain.
-\item[\var{bond\_length}] Sets the initial distance between two adjacent
-  monomers. The distance during the course of the simulation depends on the
-  applied potentials. For fixed bond length please refer to the SHAKE algorithm.
-  \todo{Link to rattle/shake.}
+\item[\var{bond\_length}] Sets the initial distance between two
+  adjacent monomers. The distance during the course of the simulation
+  depends on the applied potentials. For fixed bond length please
+  refer to the Rattle Shake algorithm\cite{andersen83a}.  The algorithm
+  is based on Verlet algorithm and satisfy internal constraints for
+  molecular models with internal constrains, using Lagrange
+  multipliers.
 \item[\opt{start \var{pid}}] Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.
@@ -611,6 +614,9 @@ All these examples do the same - making exact copies of particles 1 through 4.
   constraint plane cell \var{x} \var{y} \var{z} 
   type \var{id}
 
+  \variant{10}
+  constraint mindist_position \var{x} \var{y} \var{z} 
+
   \begin{features}
     \required{CONSTRAINTS}
     \required[1]{ELECTROSTATICS}
@@ -653,6 +659,11 @@ with a dipol moment.
 Variant \variant{9} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
 Flow.
+
+Variant \variant{10} calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, maze, pore).
+Negative distances mean that the position is ``within'' the area that
+particles should not access. Helpful to find initial configurations.) 
 
 \textbf{Note that constraints are not saved to checkpoints and that they have to
 be reset upon restarting a simulation.}

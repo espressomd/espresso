@@ -16,10 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # all the test scripts
-tests= \
+tests = \
 	nve_pe.tcl npt.tcl \
 	madelung.tcl p3m.tcl el2d.tcl \
-	p3m-magnetostatics.tcl \
+	p3m_magnetostatics.tcl \
 	el2d_nonneutral.tcl el2d_die.tcl mmm1d.tcl dh.tcl \
 	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
 	harm.tcl fene.tcl \
@@ -35,8 +35,12 @@ tests= \
         tunable_slip.tcl \
 	virtual-sites.tcl
 
+deactivated_tests = \
+	lb_gpu.tcl \
+	p3m_magnetostatics2.tcl
+
 # add data files for the tests here
-EXTRA_DIST = $(tests) \
+EXTRA_DIST = $(tests) $(deactivated_tests) \
 	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
@@ -46,7 +50,8 @@ EXTRA_DIST = $(tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
-        p3m-magnetostatics-t1.data \
+        p3m_magnetostatics_system.data \
+        p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
 	p3m_system.data el2d_system.data el2d_system_die.data\
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
@@ -67,8 +72,11 @@ EXTRA_DIST = $(tests) \
 # run the testsuite
 check-local: runtest.sh
 	if test -n "$(processors)"; then \
-	  procopt=-p "$(processors)"; \
-	fi; \
-	@builddir@/runtest.sh $$procopt $(tests)
-
-DISTCLEANFILES=runtest.sh
+	  @builddir@/runtest.sh -p "${processors}" $(tests); \
+	else \
+	  @builddir@/runtest.sh $(tests); \
+	fi
+DISTCLEANFILES=\
+	runtest.sh \
+	fftw3_1d_wisdom_forw_n32.file \
+	fftw3_1d_wisdom_back_n32.file

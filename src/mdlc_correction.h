@@ -71,7 +71,7 @@ extern DLC_struct dlc_params;
    double    add_mdlc_energy_corrections();
    int       tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv) ; 
    int       tclprint_to_result_MDLC(Tcl_Interp *interp);
-   
+   double get_mu_max(void);
    
 #endif  /*of DIPOLES */
 #endif   

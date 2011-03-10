@@ -31,9 +31,7 @@
      adding in front of the name a D   and replacing where "charge" appears by "dipole". In this way
      one can recognize the similarity of the functions but avoiding nasty confusions in their use.
 
- PS: By default the magnetic epsilon is 1, it has no sense to change the epsilon in magnetic cases, 
-     but we left along the code the epsilon handling because in this way in the future it will be
-     easier to map to the electrical dipoles. Please do not get rid of the epsilon along the code.  
+ PS: By default the magnetic epsilon is metallic = 0.  
 */
 
 #ifdef MAGNETOSTATICS
@@ -990,10 +988,11 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
   /**************************************************************/
    /* k space energy */
   double dipole_prefac;
+  double surface_term=0.0;
   double k_space_energy_dip=0.0, node_k_space_energy_dip=0.0;
   double tmp0,tmp1;
 
-  P3M_TRACE(fprintf(stderr,"%d: dipolar p3m_perform: \n",this_node));
+  P3M_TRACE(fprintf(stderr,"%d: dipolar p3m_perform(%d,%d): \n",this_node, force_flag, energy_flag));
 
   dipole_prefac = coulomb.Dprefactor / (double)(p3m.Dmesh[0]*p3m.Dmesh[1]*p3m.Dmesh[2]);
  
@@ -1019,22 +1018,21 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 **********************/
   if (p3m_sum_mu2 > 0) {
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m start Energy calculation: k-Space\n",this_node));
-
-
+    
     /* i*k differentiation for dipolar gradients: |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
     ind=0;
     i=0;
     for(j[0]=0; j[0]<Dfft_plan[3].new_mesh[0]; j[0]++) {
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {
-	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {	 
+	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {
 	  node_k_space_energy_dip += Dg_energy[i] * (
-	  SQR(Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-	      Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-	      Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[2]]
+	  SQR(Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+	      Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+	      Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[1]]
 	  ) +
-	  SQR(Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-	      Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-	      Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[2]]
+	  SQR(Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+	      Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+	      Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[1]]
 	      ));
 	  ind += 2;
 	  i++;
@@ -1045,16 +1043,21 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
     MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
    
    if (Dflag_constants_energy_dipolar==0) {Dflag_constants_energy_dipolar=1;}
+   
    compute_constants_energy_dipolar(); 
    
-    k_space_energy_dip+= coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
-   
-   /*fprintf(stderr,"p3m.Depsilon=%lf\n", p3m.Depsilon);
-   fprintf(stderr,"*Dipolar_energy_correction=%20.15lf\n",Dipolar_energy_correction);*/
+ 
+   P3M_TRACE(fprintf(stderr,"%d: p3m.Depsilon=%lf\n", this_node, p3m.Depsilon));
    
     if(this_node==0) {
+      double a;
       /* self energy correction */
+      P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
+      a = k_space_energy_dip;
       k_space_energy_dip -= coulomb.Dprefactor*(p3m_sum_mu2*2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
+      k_space_energy_dip += coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+      
+      P3M_TRACE(fprintf(stderr, "%d: Energy correction: %lf\n", this_node, k_space_energy_dip - a));
     }
 
     P3M_TRACE(fprintf(stderr,"%d: dipolar p3m end Energy calculation: k-Space\n",this_node));
@@ -1080,13 +1083,13 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  //tmp0 = Re(mu)*k,   tmp1 = Im(mu)*k
 	  
-	  tmp0 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[2]];
+	  tmp0 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[1]];
 		 
-	  tmp1 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[2]];
+	  tmp1 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[1]];
 		 
 	  /* the optimal influence function is the same for torques
 	     and energy */ 
@@ -1121,6 +1124,7 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       /* Assign force component from mesh to particle */
       P3M_assign_torques(dipole_prefac*(2*PI/box_l[0]), d_rs);
     }
+    P3M_TRACE(fprintf(stderr, "%d: done torque calculation.\n", this_node));
  #endif  /*if def ROTATION */ 
     
 /***************************
@@ -1137,15 +1141,12 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  //tmp0 = Im(mu)*k,   tmp1 = -Re(mu)*k
-	  tmp0 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[2]];
-	  tmp1 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[0]]+
-		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[1]]+
-		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[2]];
-//	  Dks_mesh[ind]   = tmp0*Dg[i];
-//	  Dks_mesh[ind+1] = -tmp1*Dg[i];
-          /* Next two lines modified by JJCP 26-4-06 */
+	  tmp0 = Drs_mesh_dip[0][ind+1]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind+1]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind+1]*Dd_op[j[1]+Dfft_plan[3].start[1]];
+	  tmp1 = Drs_mesh_dip[0][ind]*Dd_op[j[2]+Dfft_plan[3].start[2]]+
+		 Drs_mesh_dip[1][ind]*Dd_op[j[0]+Dfft_plan[3].start[0]]+
+		 Drs_mesh_dip[2][ind]*Dd_op[j[1]+Dfft_plan[3].start[1]];
 	  Dks_mesh[ind]   = tmp0*Dg_force[i];
 	  Dks_mesh[ind+1] = -tmp1*Dg_force[i];
 	  ind += 2;
@@ -1162,19 +1163,18 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
       for(j[1]=0; j[1]<Dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
 	for(j[2]=0; j[2]<Dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  tmp0 = Dd_op[ j[d]+Dfft_plan[3].start[d] ]*Dks_mesh[ind];
-	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[d] ]*tmp0;
+	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[2] ]*tmp0;
+	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[0] ]*tmp0;
+	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[1] ]*tmp0;
 	  ind++;
 	  tmp0 = Dd_op[ j[d]+Dfft_plan[3].start[d] ]*Dks_mesh[ind];
-	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[d] ]*tmp0;
-	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[d] ]*tmp0;
+	  Drs_mesh_dip[0][ind] = Dd_op[ j[2]+Dfft_plan[3].start[2] ]*tmp0;
+	  Drs_mesh_dip[1][ind] = Dd_op[ j[0]+Dfft_plan[3].start[0] ]*tmp0;
+	  Drs_mesh_dip[2][ind] = Dd_op[ j[1]+Dfft_plan[3].start[1] ]*tmp0;
 	  ind++;
 	}
       }
     }
-
       /* Back FFT force component mesh */
       Dfft_perform_back(Drs_mesh_dip[0]);
       Dfft_perform_back(Drs_mesh_dip[1]);
@@ -1192,10 +1192,11 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
    
  } /* of if (p3m_sum_mu2>0 */
 } /* of if(force_flag) */
-
  
   if (p3m.Depsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy_dip += calc_surface_term(force_flag, energy_flag);
+    surface_term = calc_surface_term(force_flag, energy_flag);
+    if(this_node == 0)
+      k_space_energy_dip += surface_term;
    }
 
 
@@ -1209,134 +1210,101 @@ double P3M_calc_kspace_forces_for_dipoles(int force_flag, int energy_flag)
 double calc_surface_term(int force_flag, int energy_flag)
 {
  
-   int np, c, i,ip;
+  int np, c, i,ip=0,n_local_part=0;
   Particle *part;
   double pref =coulomb.Dprefactor*4*M_PI*box_l_i[0]*box_l_i[1]*box_l_i[2]/(2*p3m.Depsilon + 1);
-  double suma,ax,ay,az;
+  double suma,a[3];
   double en;
   double  *sumix=NULL,*sumiy=NULL,*sumiz=NULL;
   double  *mx=NULL,*my=NULL,*mz=NULL;
-     
-      
-     
-  if(n_nodes==1) {
- 
- 
+
+     for (c = 0; c < local_cells.n; c++)
+       n_local_part += local_cells.cell[c]->n;
+
      // We put all the dipolar momenta in a the arrays mx,my,mz according to the id-number of the particles   
-     mx = (double *) malloc(sizeof(double)*n_total_particles);
-     my = (double *) malloc(sizeof(double)*n_total_particles);
-     mz = (double *) malloc(sizeof(double)*n_total_particles);
+     mx = (double *) malloc(sizeof(double)*n_local_part);
+     my = (double *) malloc(sizeof(double)*n_local_part);
+     mz = (double *) malloc(sizeof(double)*n_local_part);
     
-  
+     
+     
      for (c = 0; c < local_cells.n; c++) {
        np   = local_cells.cell[c]->n;
        part = local_cells.cell[c]->part;
        for (i = 0; i < np; i++){
- 	 ip=part[i].p.identity;
 	 mx[ip]=part[i].r.dip[0];
 	 my[ip]=part[i].r.dip[1];
 	 mz[ip]=part[i].r.dip[2];	 
+	 ip++;
       }  
      } 
 
-
-
      // we will need the sum of all dipolar momenta vectors    
-      ax=0.0;
-      ay=0.0;
-      az=0.0;
+      a[0]=0.0;
+      a[1]=0.0;
+      a[2]=0.0;
 
-      for (i = 0; i < n_total_particles; i++){
-         ax+=mx[i];
-         ay+=my[i];
-         az+=mz[i];
+      for (i = 0; i < n_local_part; i++){
+         a[0]+=mx[i];
+         a[1]+=my[i];
+         a[2]+=mz[i];
       }   
-
- 
-     
-     //for (i = 0; i < n_total_particles; i++){
-     //  fprintf(stderr,"part ip:%d, mux: %le, muy:%le, muz:%le \n",i,mx[i],my[i],mz[i]);   
-     //}
-     
- 
-     //Now we can proceed to compute things .....
   
+     MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+     
      if (energy_flag) {
       
         suma=0.0;
-        for (i = 0; i < n_total_particles; i++){
- 	      suma+=mx[i]*ax+my[i]*ay+mz[i]*az;
-        }  	      
-
-        //fprintf(stderr,"energia, pref=%le, suma=%le\n",pref,suma);
-
+        for (i = 0; i < n_local_part; i++){
+ 	      suma+=mx[i]*a[0]+my[i]*a[1]+mz[i]*a[2];
+        }  	   
+        MPI_Allreduce(MPI_IN_PLACE, &suma, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         en = 0.5*pref*suma;
        
      } else {
         en = 0;
      } 
-      
-
-      
-       
+     #ifdef ROTATION	             
      if (force_flag) {
- 
  
           //fprintf(stderr," number of particles= %d ",n_total_particles);   
 
-          sumix = (double *) malloc(sizeof(double)*n_total_particles);
-          sumiy = (double *) malloc(sizeof(double)*n_total_particles);
-          sumiz = (double *) malloc(sizeof(double)*n_total_particles);
+          sumix = (double *) malloc(sizeof(double)*n_local_part);
+          sumiy = (double *) malloc(sizeof(double)*n_local_part);
+          sumiz = (double *) malloc(sizeof(double)*n_local_part);
 	  
-          for (i = 0; i < n_total_particles; i++){
-	    sumix[i]=my[i]*az-mz[i]*ay;
-            sumiy[i]=mz[i]*ax-mx[i]*az;
-            sumiz[i]=mx[i]*ay-my[i]*ax;
+          for (i = 0; i < n_local_part; i++){
+	    sumix[i]=my[i]*a[2]-mz[i]*a[1];
+            sumiy[i]=mz[i]*a[0]-mx[i]*a[2];
+            sumiz[i]=mx[i]*a[1]-my[i]*a[0];
 	  }
-	  
-   
-   
+	    
          // for (i = 0; i < n_total_particles; i++){
   	 //    fprintf(stderr,"part %d, correccions torque  x:%le, y:%le, z:%le\n",i,sumix[i],sumiy[i],sumiz[i]);
          // }
 	      
-          #ifdef ROTATION	      
+          ip=0;
           for (c = 0; c < local_cells.n; c++) {
              np	= local_cells.cell[c]->n;
              part = local_cells.cell[c]->part;
              for (i = 0; i < np; i++){
-	     
-	        ip=part[i].p.identity;
-		
-	        // fprintf(stderr,"part %d, torque abans %le %le %le\n",ip,part[i].f.torque[0],part[i].f.torque[1],part[i].f.torque[2]);
-	      
 		part[i].f.torque[0] -= pref*sumix[ip];
 		part[i].f.torque[1] -= pref*sumiy[ip];
 		part[i].f.torque[2] -= pref*sumiz[ip];
-		
-	       // fprintf(stderr,"part %d, torque despres %le %le %le\n",ip,part[i].f.torque[0],part[i].f.torque[1],part[i].f.torque[2]);
+		ip++;
  	     }	
           }
-          #endif
+          
 	     
 	  free(sumix);     
   	  free(sumiy);     
 	  free(sumiz);     
      }
-       
+    #endif
+
     free(mx);	 
     free(my);	 
     free(mz);	 
-    	
-  } else {
-        //The code is not prepared to run in more than one node
-      
-      fprintf(stderr,"dipolar-P3M: Non metallic environment is  not ready to work in more than one Node, Sorry ....");
-      fprintf(stderr," I am NOT computing the surface term for the dipolar interaction.neither fortorques not for the energy...");
-      return 0.;
-
-  }
- 
  	    
   return en;
  
@@ -2642,12 +2610,12 @@ int DP3M_sanity_checks()
     ERROR_SPRINTF(errtxt, "{041 dipolar P3M requires periodicity 1 1 1} ");
     ret = 1;
   }
-  
+  /*
   if (n_nodes != 1) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{110 dipolar P3M does not run in parallel} ");
     ret = 1;
-  }
+  } */
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{042 dipolar P3M at present requires the domain decomposition cell system} ");
@@ -2791,7 +2759,9 @@ void P3M_scaleby_box_l_dipoles() {
  void compute_constants_energy_dipolar() {
       double  Eself, Ukp3m;
       double volume;
- 
+      
+      P3M_TRACE(fprintf(stderr, "%d: compute_constants_energy_dipolar().\n", this_node));
+      
        if(Dflag_constants_energy_dipolar==1) { 
  
  /*             double sumi1_value,sumi2_value, Eself, Ukp3m, Uk, Ur_cut;
@@ -2805,6 +2775,9 @@ void P3M_scaleby_box_l_dipoles() {
 	     */
 	     
 	     Ukp3m=P3M_Average_dipolar_SelfEnergy(box_l[0],p3m.Dmesh[0]);
+	     
+	     P3M_TRACE(fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
+	     
              Eself=-(2*pow(p3m.Dalpha_L*box_l_i[0],3) * wupii/3.0);
              volume=box_l[0]*box_l[1]*box_l[2];
 

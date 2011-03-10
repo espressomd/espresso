@@ -50,9 +50,6 @@
 #error MODES requires the fftw
 #endif
 
-#ifdef LB
-#error LB requires the fftw
-#endif
 
 #endif
 
@@ -111,15 +108,7 @@ int tclcallback_version(Tcl_Interp *interp)
 int tclcallback_compilation(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
-#ifdef DEBUG
-  Tcl_AppendResult(interp, "{ " DEBUG " } ", (char *) NULL);
-#endif
-#ifdef PROFILING
-  Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
-#endif
-#if FFTW == 2
-  Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
-#elif FFTW == 3
+#ifdef FFTW
   Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
 #endif
 #ifdef TK
@@ -232,6 +221,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #endif
 #ifdef NPT
   Tcl_AppendResult(interp, "{ NPT } ", (char *) NULL);
+#endif
+#ifdef LB_GPU
+  Tcl_AppendResult(interp, "{ LB_GPU } ", (char *) NULL);
 #endif
 #ifdef TRANS_DPD
   Tcl_AppendResult(interp, "{ TRANS_DPD } ", (char *) NULL);

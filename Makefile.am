@@ -17,19 +17,18 @@
 #
 SUBDIRS = src . scripts tools testsuite doc
 
+ACLOCAL_AMFLAGS = -Iconfig
+
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = darwinlink.sh \
-	autogen.sh samples cmake CMakeLists.txt \
-        acconfig.h.cmakein packages \
-	$(extra)
+EXTRA_DIST = darwinlink.sh bootstrap.sh samples packages $(extra)
 
 #################################################################
 # Installation of the main program
 #################################################################
 # Two binaries are generated: Espresso for the build dir,
 # Espresso.install for the installation dir. 
-# The ".install" suffix is removed upon installation
+# The ".install" suffix is removed upon installation.
 
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
