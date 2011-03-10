@@ -92,9 +92,11 @@ libEspresso_a_SOURCES = \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
+	lb_boundaries_gpu.c lb_boundaries_gpu.h \
+	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
-        pwdist.h \
+    pwdist.h \
 	angledist.h \
 	endangledist.h \
 	buckingham.h \
@@ -106,7 +108,7 @@ libEspresso_a_SOURCES = \
 	fene.h \
 	gb.h \
 	harmonic.h \
-        hertzian.h \
+    hertzian.h \
 	imd.h \
 	ljcos2.h \
 	ljcos.h \
@@ -177,7 +179,8 @@ SUFFIXES=.cu
 
 CUDA_SOURCES= \
 	cuda_init.cu \
-	cuda_init.h
+	cuda_init.h \
+	lbgpu.cu lbgpu.h
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
 endif

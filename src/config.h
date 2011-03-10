@@ -51,7 +51,7 @@
 #define P3M_EPSILON 0.0
 
 /** P3M: Default for boundary condition in magnetic calculations */
-#define P3M_EPSILON_MAGNETIC 1.0
+#define P3M_EPSILON_MAGNETIC 0.0
 
 /** P3M: Default for offset of first mesh point from the origin (left
     down corner of the simulation box. */
@@ -165,6 +165,12 @@
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
+#define USE_TEMPORARY
+#define LATTICE
+//#define ALTERNATIVE_INTEGRATOR
+#endif
+
+#ifdef LB_GPU
 #define USE_TEMPORARY
 #define LATTICE
 //#define ALTERNATIVE_INTEGRATOR
