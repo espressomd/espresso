@@ -67,8 +67,9 @@ EXTRA_DIST = $(tests) \
 # run the testsuite
 check-local: runtest.sh
 	if test -n "$(processors)"; then \
-	  procopt=-p "$(processors)"; \
-	fi; \
-	@builddir@/runtest.sh $$procopt $(tests)
+	  @builddir@/runtest.sh -p "${processors}" $(tests); \
+	else \
+	  @builddir@/runtest.sh $(tests); \
+	fi
 
 DISTCLEANFILES=runtest.sh
