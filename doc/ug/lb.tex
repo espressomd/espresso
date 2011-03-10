@@ -90,9 +90,10 @@ modes. Due to their somewhat obscure nature they are to be given
 directly in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau}, \lit{friction}. For the other
-parameters, the following are taken: \var{bulk\_viscosity}=0, ,
-\var{gamma\_odd}=0, \var{gamma\_even}=0,  \var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
+set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
+\lit{friction}. For the other parameters, the following are taken:
+\var{bulk\_viscosity}=0, , \var{gamma\_odd}=0, \var{gamma\_even}=0,
+\var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
 
 \section{LB as a thermostat}
 \begin{essyntax}
@@ -114,11 +115,10 @@ the given temperature, according to a fluctuation dissipation theorem.
 No other thermostatting mechanism is necessary then. Please any of these
 off before starting the LB thermostatting mechanism.
 
-
-The LBM implementation provides a fully thermalized LB fluid, \ie all nonconserved modes,
-including the pressure tensor, fluctuate correctly according to the 
-given temperature and the relaxation parameters. All fluctuations can
-be switched off by setting the temperature to 0.
+The LBM implementation provides a fully thermalized LB fluid, \ie all
+nonconserved modes, including the pressure tensor, fluctuate correctly
+according to the given temperature and the relaxation parameters. All
+fluctuations can be switched off by setting the temperature to 0.
 
 
 \section{Reading and setting single lattice nodes}
@@ -128,9 +128,10 @@ be switched off by setting the temperature to 0.
   \required{LB}
   \end{features}
 \end{essyntax}
-The \lit{lbnode} command allows to inspect (\lit{print}) and modify (\lit{set}) single LB nodes. 
-Note that the indexing in every direction starts with 0. 
-For both commands you have to specify what quantity should be printed
+The \lit{lbnode} command allows to inspect (\lit{print}) and modify
+(\lit{set}) single LB nodes.  Note that the indexing in every
+direction starts with 0.  For both commands you have to specify what
+quantity should be printed
 or modified. Print allows the following arguments: \\
 \begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
   \lit{rho}\ & the density (scalar). \\
@@ -144,24 +145,25 @@ The line
 \begin{tclcode}
 puts [ lbnode 0 0 0 print u ]
 \end{tclcode}
-prints the fluid velocity in node 0 0 0 to the screen.
-The command \lit{set} allows to change the density or fluid velocity in a single node. Setting
-the other quantities can easily be implemented.
+prints the fluid velocity in node 0 0 0 to the screen.  The command
+\lit{set} allows to change the density or fluid velocity in a single
+node. Setting the other quantities can easily be implemented.
 Example:
 \begin{tclcode}
 puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{tclcode}
 
 \section{Setting up boundary conditions}
-If nothing else is specified periodic boundary conditions are assumed 
-for the LB fluid. The \lit{lbboundary} command allows to set up
-other (internal or external) boundaries.
 \begin{essyntax}
   lbboundary \var{shape} \var{shape\_args} 
   \begin{features}
   \required{LB_BOUNDARIES}
   \end{features}
 \end{essyntax}
+If nothing else is specified periodic boundary conditions are assumed 
+for the LB fluid. The \lit{lbboundary} command allows to set up
+other (internal or external) boundaries.
+
 The \lit{lbboundary} command syntax is very close to the
 \lit{constraint} syntax, as usually one wants the hydrodynamic
 boundary conditions to be shaped similar to the MD
@@ -193,15 +195,34 @@ the location of the boundary is unfortunately not independent of the
 viscosity. This can \eg be seen when using the sample script
 \lit{poisseuille.tcl} with a high viscosity.
 
-\section{GPU implementation of the LBM}
-A very recent development is an implementation of the LBM for GPU using
-the Nvidia CUDA framework. On CUDA-supporting machines this can be activated
-by configuring with \lit{configure --with-cuda=/path/to/cuda} and compiling
-with the  \lit{LB_GPU} flag set in \lit{myconfig.h}. The GPU is switched on
-by the command \lit{lbfluid gpu} implying that all following LB-related commands
-will be executed for the GPU implementation. If, however the CPU implementation
-is to be used, this can be specified by the command  \lit{lbfluid cpu}.
-Currently only a subset of
-the CPU commands are available for the GPU implementation.
-For boundary conditions analogous to the CPU implementation, the flag \lit{LB_BOUNDARY_GPU} 
-has to be set in \lit{myconfig.h}.
+\section{Choosing between the GPU and CPU implementations}
+\begin{essyntax}
+  \variant{1} lbfluid cpu
+  \variant{2} lbfluid gpu
+  \begin{features}
+    \required[1]{LB}
+    \required[2]{LB_GPU}
+  \end{features}
+\end{essyntax}
+
+A very recent development is an implementation of the LBM for NVIDIA
+GPUs using the CUDA framework.  On CUDA-supporting machines this can
+be activated by configuring with \lit{configure
+  --with-cuda=/path/to/cuda} and activating the feature \lit{LB_GPU}.
+Within the \es-Tcl-script, the \lit{lbfluid} command can be used to
+choose between the CPU and GPU implementations of the
+Lattice-Boltzmann algorithm.  Variant \variant{1} is the default and
+turns on the standard CPU implementation of the Lattice-Boltzmann
+fluid, while variant \variant{2} turns on the GPU implementation,
+implying that all following LB-related commands are executed on the
+GPU. 
+
+Currently only a subset of the CPU commands are available for the GPU
+implementation.  For boundary conditions analogous to the CPU
+implementation, the feature \lit{LB_BOUNDARIES_GPU} has to be
+activated.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "ug"
+%%% End:
