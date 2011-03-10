@@ -74,5 +74,7 @@ check-local: runtest.sh
 	else \
 	  @builddir@/runtest.sh $(tests); \
 	fi
-
-DISTCLEANFILES=runtest.sh
+DISTCLEANFILES=\
+	runtest.sh \
+	fftw3_1d_wisdom_forw_n32.file \
+	fftw3_1d_wisdom_back_n32.file

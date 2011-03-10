@@ -18,6 +18,7 @@
 
 # List headers that are not used by the program here
 noinst_HEADERS = \
+	myconfig-default.h \
 	p3m-charges.c p3m-dipoles.h \
 	p3m-dipoles.c p3m-charges.h \
 	p3m-assignment.c
@@ -96,7 +97,7 @@ libEspresso_a_SOURCES = \
 	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
-    pwdist.h \
+	pwdist.h \
 	angledist.h \
 	endangledist.h \
 	buckingham.h \
@@ -108,7 +109,7 @@ libEspresso_a_SOURCES = \
 	fene.h \
 	gb.h \
 	harmonic.h \
-    hertzian.h \
+	hertzian.h \
 	imd.h \
 	ljcos2.h \
 	ljcos.h \
