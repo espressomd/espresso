@@ -1136,12 +1136,14 @@ void calc_influence_function_energy()
     g_energy = (double *) realloc(g_energy, size*sizeof(double));
     ind = 0;
 
+
+
    for(n[0]=start[0]; n[0]<end[0]; n[0]++) {
         for(n[1]=start[1]; n[1]<end[1]; n[1]++) {
             for(n[2]=start[2]; n[2]<end[2]; n[2]++) {
                 ind = (n[2]-start[2])
-                    + fft_plan[3].new_mesh[0] * (n[1]-start[1])
-                    + fft_plan[3].new_mesh[1] * fft_plan[3].new_mesh[0]*(n[0]-start[0]);
+                    + fft_plan[3].new_mesh[2] * (n[1]-start[1])
+                    + fft_plan[3].new_mesh[2] * fft_plan[3].new_mesh[1]*(n[0]-start[0]);
                 if( (n[KX]%(p3m.mesh[RX]/2)==0) && (n[KY]%(p3m.mesh[RY]/2)==0) && (n[KZ]%(p3m.mesh[RZ]/2)==0) ) {
                     g_energy[ind] = 0.0;
                 }
