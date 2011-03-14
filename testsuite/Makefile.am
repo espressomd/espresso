@@ -19,8 +19,8 @@
 tests = \
 	nve_pe.tcl npt.tcl \
 	madelung.tcl p3m.tcl el2d.tcl \
-	p3m_magnetostatics.tcl \
-	el2d_nonneutral.tcl el2d_die.tcl mmm1d.tcl dh.tcl \
+	p3m_magnetostatics.tcl p3m_magnetostatics2.tcl \
+	el2d_nonneutral.tcl el2d_die.tcl mdlc.tcl mmm1d.tcl dh.tcl \
 	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
 	harm.tcl fene.tcl \
 	kinetic.tcl thermostat.tcl \
@@ -52,7 +52,8 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	constraints_system.data \
         p3m_magnetostatics_system.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
-	p3m_system.data el2d_system.data el2d_system_die.data\
+	p3m_system.data el2d_system.data el2d_system_die.data \
+	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
 	gb_system.data \
