@@ -82,15 +82,14 @@ close $pos_dip_data
 
 thermostat off 
 
-#puts "\n\ndipolar P3M test case is running ..." 
+puts "MDLC test case is running ..." 
 # switch on magnetic p3m
 #puts "\n  Tuning p3m parameters...."  
 
-puts [inter magnetic $bjerrum p3m tunev2 mesh 16 accuracy $accuracy_p3m]
-puts [inter magnetic]
+#puts [inter magnetic $bjerrum p3m tunev2 mesh 16 accuracy $accuracy_p3m]
+#puts [inter magnetic]
 
-#puts "\n  Tuning is done.."
-
+inter magnetic $bjerrum p3m 26.7723205659024 16 4 0.109394851183892 9.97941572136326e-06
 inter magnetic epsilon metallic
 
 # calculating the gap-size 
