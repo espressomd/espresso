@@ -197,7 +197,7 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
       }
     }
     else if (ind[dir] > lattice->grid[dir]) {
-      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC)
+      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC*local_box_l[dir])
 	ind[dir] = lattice->grid[dir];
       else
 	fprintf(stderr,"%d: map_position_to_lattice: position (%f,%f,%f) not inside a local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",this_node,pos[0],pos[1],pos[2],dir,ind[dir],rel,lpos);
