@@ -17,7 +17,7 @@
 #
 SUBDIRS = src . scripts tools testsuite doc
 
-ACLOCAL_AMFLAGS = -Iconfig
+ACLOCAL_AMFLAGS = -I config
 
 # List files that should go into the distribution but are not required
 # by any other means
