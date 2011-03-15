@@ -146,13 +146,6 @@ MDINLINE void test() {}],[test();])
 AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
 
 ##################################
-# test linking
-case $target_os in
-*darwin*) LD="`pwd`/darwinlink.sh $CC" ;;
-*) LD=$CC ;;
-esac
-
-##################################
 # miscellaneous
 AC_PROG_CC_STDC
 AM_PROG_CC_C_O
@@ -248,8 +241,7 @@ if test .$use_tcl = .; then
 [If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 /Library/Frameworks/Tcl.framework/Tcl.]) ;;
-	*) ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
+	*) AC_MSG_FAILURE([
 ********************************************************************************
 * Could not link against the (static) Tcl library (libtcl*.a).                 *
 * Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
@@ -315,8 +307,7 @@ if test .$with_tk != .no; then
 		(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 there is a link from lib<tkversion>.dylib to the Tk library, which usually is
 /Library/Frameworks/Tk.framework/Tk.]) ;;
-		(*) ES_NOTE_64BIT
-		    AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		(*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
 		esac
 	fi
 	if test .$use_tk = .tk; then
@@ -359,8 +350,7 @@ AS_IF([test x$with_fftw = xno], [fftw_found=no],
 
 AS_IF([test x$fftw_found = xno],[
   AS_IF([test x$with_fftw = xyes],[
-    ES_NOTE_64BIT
-    AC_MSG_FAILURE([FFTW3 requested, but FFTW3 was not found!])
+    AC_MSG_FAILURE([FFTW requested, but FFTW was not found!])
     ],[ AS_IF([test x$with_fftw = xguess], [
           AC_MSG_WARN([FFTW3 not found. Some features will not be available!])
          ])

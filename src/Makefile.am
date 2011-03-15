@@ -25,7 +25,6 @@ noinst_HEADERS = \
 
 # List the sources of the Espresso binary here
 libEspresso_a_SOURCES = \
-	main.c \
 	config.c config.h \
 	initialize.c initialize.h \
 	global.c global.h \
