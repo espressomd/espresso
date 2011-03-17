@@ -50,7 +50,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
-        p3m_magnetostatics_system.data \
+        p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
 	p3m_system.data el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \

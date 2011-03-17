@@ -85,7 +85,7 @@ if { [catch {
     close $outp
     
     #----- validate the trajectories against the known correct solution ---------------
-    set outp  [open "p3m_magnetostatics_expected.data" r]  
+    set outp  [open "p3m_magnetostatics.data" r]  
     set outp1 [open "dummy.dat" r]  
     for {set i_step 0} { $i_step <= 5 } {incr i_step} {   
       for {set i 0} { $i < 2} {incr i} {
