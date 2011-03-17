@@ -59,10 +59,10 @@ doc: ug
 ug: ug.pdf
 ug.pdf: $(ug_FILES)
 if HAVE_LATEX
-	cd "$(srcdir)"; \
+	cd $(srcdir); \
 		$(AWK) -f assemble_quickref.awk $(ug_TEXFILES) \
-			> "$(abs_builddir)/quickref.inp"
-	sh ../latexit.sh "$(srcdir)" ug || rm uf.pdf
+			> $(abs_builddir)/quickref.inp
+	sh ../latexit.sh $(srcdir) ug || rm uf.pdf
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."

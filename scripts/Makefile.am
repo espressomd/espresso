@@ -38,15 +38,15 @@ EXTRA_DIST=$(ESSCRIPTS)
 # using INSTALL_DATA here as the scripts should not be executable
 all:
 	for file in $(ESSCRIPTS); do \
-	  if test ! -e "$$file" || test ! "$$file" -ef "$(abs_srcdir)/$$file"; then \
-	    $(INSTALL_DATA) "$(abs_srcdir)/$$file" "$(abs_builddir)"; \
+	  if test ! -e $$file || test ! $$file -ef $(abs_srcdir)/$$file; then \
+	    $(INSTALL_DATA) $(abs_srcdir)/$$file $(abs_builddir); \
 	  fi; \
 	done
 
 clean-local:
 	for file in $(ESSCRIPTS); do \
-	  if test -e "$$file" && test ! "$$file" -ef "$(abs_srcdir)/$$file"; then \
-	    rm -f "$$file"; \
+	  if test -e $$file && test ! $$file -ef $(abs_srcdir)/$$file; then \
+	    rm -f $$file; \
 	  fi; \
 	done
 
