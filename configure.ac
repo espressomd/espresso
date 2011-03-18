@@ -453,8 +453,8 @@ AC_SUBST(myconfig)
 
 ##################################
 # Number of CPUs
-AX_COUNT_CPUS
-AC_ARG_VAR(CPU_COUNT,[number of CPUS available on this machine])
+AS_IF([test "X$CPU_COUNT" = "X"], [AX_COUNT_CPUS])
+AC_ARG_VAR(CPU_COUNT,[number of tasks to run in test runs])
 AC_SUBST(CPU_COUNT)
 
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
@@ -525,7 +525,7 @@ Other settings:
 ---------------
 local config header	= $myconfig
 installation prefix	= $prefix
-number of CPUs		= $CPU_COUNT
+number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
 mpiexec	     		= $MPIEXEC
 pdflatex		= $PDFLATEX
