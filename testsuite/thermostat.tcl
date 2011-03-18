@@ -59,9 +59,7 @@ if { [catch {
     set curtemp1 0
 
     for {set i 0} { $i < 100} { incr i } {
-    integrate $intstep
-	puts -nonewline " $i percent done\r"
-	flush stdout
+	integrate $intstep
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
 	set curtemp [expr $cureng/$n_part/($deg_free/2.)] 
