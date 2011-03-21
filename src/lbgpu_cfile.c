@@ -56,7 +56,7 @@ static int max_ran = 1000000;
 //static double tau;
 
 /** measures the MD time since the last fluid update */
-static float fluidstep = 0.0;
+static int fluidstep = 0;
 
 /** c_sound_square in LB units*/
 static float c_sound_sq = 1.f/3.f;
@@ -78,10 +78,13 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 void lattice_boltzmann_update_gpu() {
 
-  fluidstep += (float)time_step;
-  
-  if (fluidstep>=lbpar_gpu.tau) {
-    fluidstep=0.0;
+  int factor = (int)round(lbpar_gpu.tau/time_step);
+
+  fluidstep += 1;
+
+  if (fluidstep>=factor) {
+    fluidstep=0;
+
     lb_integrate_GPU();
 
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
