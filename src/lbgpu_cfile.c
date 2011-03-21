@@ -62,6 +62,7 @@ static int fluidstep = 0;
 static float c_sound_sq = 1.f/3.f;
 
 //clock_t start, end;
+int i;
 
 static FILE *datei;
 //static char file[300];

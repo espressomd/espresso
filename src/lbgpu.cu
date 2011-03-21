@@ -79,7 +79,6 @@ static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
 static __constant__ LB_parameters_gpu para;
-static __constant__ int number_of_bnodes;
 static __constant__ float c_sound_sq = 1.f/3.f;
 
 /**cudasteams for parallel computing on cpu and gpu */
@@ -1350,8 +1349,8 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   threads_per_block = 64;
   blocks_per_grid_y = 4;
 
-  blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block - 1) /(threads_per_block * blocks_per_grid_y);
-  if(blocks_per_grid_x < 1) blocks_per_grid_x = 1;
+  blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+
   dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
   cudaStreamCreate(&stream[0]);
   /** values for the particle kernel */
@@ -1415,7 +1414,6 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
   size_of_boundindex = number_of_boundnodes*sizeof(int);
-  cudaMemcpyToSymbol(number_of_bnodes, &number_of_boundnodes, sizeof(int));
   cuda_safe_mem(cudaMalloc((void**)&boundindex, size_of_boundindex));
   cudaMemcpy(boundindex, host_boundindex, size_of_boundindex, cudaMemcpyHostToDevice);
 
@@ -1424,13 +1422,13 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
   threads_per_block_bound = 64;
   blocks_per_grid_bound_y = 4;
 
-  blocks_per_grid_bound_x = (number_of_bnodes + threads_per_block_bound - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
-  if(blocks_per_grid_bound_x < 1) blocks_per_grid_bound_x = 1;
+  blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
   dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
 #if 0
   KERNELCALL(init_boundaries_hardcoded, dim_grid_bound, threads_per_block_bound, (nodes_a, nodes_b));
 #endif
+
   KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
 
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
@@ -1510,7 +1508,6 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
 /**-------------------------------------------------------------------------*/
 void lb_integrate_GPU(){
   
-  //dim3 dim_grid(blocks_per_grid_x, blocks_per_grid_y);
   /**call of fluid step*/
   if (intflag == 1){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
@@ -1555,7 +1552,6 @@ void lb_free_GPU(){
   cudaFree(particle_data);
   cudaFree(&node_f);
   cudaFree(part);
-  cudaFree(&number_of_bnodes);
   cudaStreamDestroy(stream[0]);
 }
 #endif /* LB_GPU */

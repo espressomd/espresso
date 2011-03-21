@@ -79,14 +79,15 @@ require_feature "LB_GPU"
 #############################################################
 set int_steps     	1
 puts $int_steps
-set int_times		20
+set int_times		1000
+puts $int_times
 
 set time_step     0.01
-set tau           0.1
+set tau           0.01
 
 set agrid         1.0
 
-set box_l         240
+set box_l         128
 set box_l_x       128.0
 
 set dens          1.0
@@ -125,7 +126,7 @@ cellsystem domain_decomposition -no_verlet_list
 #puts [inter]
 
 puts [setmd cell_grid]
-part 0 pos 10 10 10
+#part 0 pos 10 10 10
 # Fluid
 #############################################################
 lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 1 0 0
@@ -148,7 +149,7 @@ lbboundary wall normal 0 -1 0 dist [expr -$box_l+1]
 # load colloid from file
 #read_data "~/espresso/testsuite/lb_system.data"
 
-part 0 pos 10 10 10
+#part 0 pos 10 10 10
 #part 0 v 0. 0. -10.5
 #set k	0
 #set m	5
@@ -223,7 +224,7 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 	#}
 	#lbprint field lb_field/datei$i.vtk
     integrate $int_steps
-	puts [part 0 print pos]
+    #puts [part 0 print pos]
     #puts -nonewline [analyze energy]
 
 #imd positions
@@ -266,7 +267,7 @@ puts "\n"
 #set avg_temp [expr $avg_temp/$int_times]
 #set var_temp [expr $var_temp/$int_times - $avg_temp*$avg_temp]
 #set rel_temp_error [expr abs(($avg_temp-[setmd temp])/[setmd temp])]
-
+#lbprint v vtk /home/dominic/espresso/testsuite/field.vtk
 puts "\n"
 #puts "Maximal mass deviation $max_dmass"
 #puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
