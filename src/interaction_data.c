@@ -1098,15 +1098,6 @@ void calc_maximal_cutoff()
     if (max_cut_non_bonded < 0)
       max_cut_non_bonded = 0;
     break;
-  case COULOMB_MAGGS:
-    /* for the Yukawa subtraction scheme 
-       the real cut off is needed */
-    if((maggs.yukawa == 1) && (max_cut_non_bonded < maggs.r_cut))
-      max_cut_non_bonded = maggs.r_cut;
-    /* the cell size depends also on the grid spacing */
-    if((maggs.yukawa == 0) && (max_cut < maggs.a))
-      max_cut = maggs.a;  
-    break;
   }
 #endif /*ifdef ELECTROSTATICS */
 
@@ -1148,7 +1139,6 @@ int check_obs_calc_initialized()
   case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
 #endif
   case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
-  case COULOMB_MAGGS: if (Maggs_sanity_checks()) state = 0; break;
   }
 #endif /* ifdef ELECTROSTATICS */
 
