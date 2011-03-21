@@ -99,6 +99,8 @@
 
 //#define LB
 //#define LB_ELECTROHYDRODYNAMICS
+//#define LB_GPU
+//#define LB_BOUNDARIES_GPU
 
 /**********************************************************************/
 /*                           interactions                             */

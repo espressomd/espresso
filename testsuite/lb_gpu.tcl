@@ -72,8 +72,8 @@ proc require_feature {feature} {
 #############################################################
 set errf [lindex $argv 1]
 
-#require_feature "LB_GPU"
-require_feature "LB"
+require_feature "LB_GPU"
+#require_feature "LB"
 
 # Integration parameters
 #############################################################
@@ -81,12 +81,12 @@ set int_steps     	1
 puts $int_steps
 set int_times		20
 
-set time_step     0.02
-set tau           0.02
+set time_step     0.01
+set tau           0.1
 
 set agrid         1.0
 
-set box_l         160
+set box_l         240
 set box_l_x       128.0
 
 set dens          1.0
@@ -138,17 +138,17 @@ thermostat lb $temp
 #		lbnode_exf_gpu 0 $i $j set force 1 0 0
 #		}
 #	}
-#lbboundary wall normal 0 0 1 dist 0
-#lbboundary wall normal 0 0 -1 dist [expr -$box_l+1]
+lbboundary wall normal 0 0 1 dist 0
+lbboundary wall normal 0 0 -1 dist [expr -$box_l+1]
 
-#lbboundary wall normal 0 1 0 dist 0
-#lbboundary wall normal 0 -1 0 dist [expr -$box_l+1]
+lbboundary wall normal 0 1 0 dist 0
+lbboundary wall normal 0 -1 0 dist [expr -$box_l+1]
 # Particles
 #############################################################
 # load colloid from file
 #read_data "~/espresso/testsuite/lb_system.data"
 
-#part 0 pos 10 10 10
+part 0 pos 10 10 10
 #part 0 v 0. 0. -10.5
 #set k	0
 #set m	5
@@ -164,7 +164,7 @@ thermostat lb $temp
 #}
 #part deleteall
 #part 0 pos 0 5 15
-puts [setmd n_part]
+#puts [setmd n_part]
 # here you can create the necessary snapshot
 #write_data "lb_system.data"
 
