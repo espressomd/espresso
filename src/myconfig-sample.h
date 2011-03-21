@@ -48,7 +48,6 @@
 /*                       general core features                        */
 /**********************************************************************/
 
-<<<<<<< HEAD:myconfig-sample.h
 //#define PARTIAL_PERIODIC
 //#define ELECTROSTATICS
 //#define ROTATION

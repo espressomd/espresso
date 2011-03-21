@@ -1,10 +1,7 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
 # Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
-#  
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#    Max-Planck-Institute for Polymer Research, Theory Group
+#
 # This file is part of ESPResSo.
 #  
 # ESPResSo is free software: you can redistribute it and/or modify

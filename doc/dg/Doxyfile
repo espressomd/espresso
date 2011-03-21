@@ -30,7 +30,7 @@ PROJECT_NUMBER         =
 # If a relative path is entered, it will be relative to the location 
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = .
+OUTPUT_DIRECTORY       =
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 
 # 4096 sub-directories (in 2 levels) under the output directory of each output 
@@ -459,7 +459,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = $(SRCDIR) \
+INPUT                  = $(SRCDIR)/src \
                          $(SRCDIR)/doc/dg/pages \
                          background_errors.doc
 
@@ -472,7 +472,6 @@ INPUT                  = $(SRCDIR) \
 
 FILE_PATTERNS          = *.h \
                          *.c \
-                         *.cpp \
                          *.doc
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories 

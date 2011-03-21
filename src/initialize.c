@@ -750,6 +750,9 @@ void on_ghost_flags_change()
 #endif
 }
 
+#define REGISTER_COMMAND(name, routine)					\
+  Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
+
 static void init_tcl(Tcl_Interp *interp)
 {
   char cwd[1024];
@@ -758,9 +761,6 @@ static void init_tcl(Tcl_Interp *interp)
   /*
     installation of tcl commands
   */
-
-#define REGISTER_COMMAND(name, routine)					\
-  Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
   /* in cells.c */
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
