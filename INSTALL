@@ -18,16 +18,16 @@ means, the user's guide can be found on the ESPResSo-Homepage at
 
 QUICK START
 -----------
-In many cases, once you have obtained the sources, compiling and
+In most cases, once you have obtained the sources, compiling and
 running ESPResSo requires only two steps:
 
 > configure
 > make
  
-If you have development sources, it might be necessary to first
-execute
+If you have the development sources (obtained from out git source code
+repository), you first have to execute
 
-> ./autogen.sh
+> ./bootstrap.sh
 
 to generate the required configure script. 
 

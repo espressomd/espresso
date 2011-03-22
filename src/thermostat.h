@@ -36,6 +36,7 @@
 #include "cells.h"
 #include "lb.h"
 #include "dpd.h"
+#include "lbgpu.h"
 
 /** \name Thermostat switches*/
 /************************************************************/

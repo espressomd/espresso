@@ -80,7 +80,6 @@
 //#define VIRTUAL_SITES_THERMOSTAT
 //#define THERMOSTAT_IGNORE_NON_VIRTUAL
 
-
 /**********************************************************************/
 /*                        integrator features                         */
 /**********************************************************************/
@@ -95,7 +94,13 @@
 //#define DPD_MASS_RED
 //#define DPD_MASS_LIN
 
+/**********************************************************************/
+/*                        Lattice Boltzmann                           */
+/**********************************************************************/
 //#define LB
+//#define LB_GPU
+//#define LB_BOUNDARIES
+//#define LB_BOUNDARIES_GPU
 //#define LB_ELECTROHYDRODYNAMICS
 
 /**********************************************************************/

@@ -30,6 +30,7 @@
 #include "communication.h"
 #include "lb.h"
 #include "statistics_fluid.h"
+#include "lbgpu.h"
 
 #ifdef LB
 
@@ -472,9 +473,10 @@ static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, 
     return TCL_OK;
 
 }
-
+#endif /* LB */
 /** Parser for fluid related analysis functions. */
-int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
+int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
+#ifdef LB
     int err = TCL_ERROR;
 
     if (argc==0) {
@@ -498,6 +500,50 @@ int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
     }
 
     return err;
+#else /* !defined LB */
+  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+  return TCL_ERROR;
+#endif
 }
 
-#endif /* LB */
+int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
+#ifdef LB_GPU
+    int err = TCL_ERROR;
+
+    if (argc==0) {
+	Tcl_AppendResult(interp, "usage: analyze fluid gpu <what>", (char *)NULL);
+	return TCL_ERROR;
+    } 
+
+    if (ARG0_IS_S("mass"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
+    else if (ARG0_IS_S("momentum"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+    else if (ARG0_IS_S("temperature"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
+    else if (ARG0_IS_S("velprof"))
+		fprintf(stderr, "sry not implemented yet");
+      //err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);
+    else {
+	Tcl_AppendResult(interp, "unkown feature \"", argv[0], "\" of analyze fluid", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    return err;
+#else /* !defined LB_GPU */
+  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
+  return TCL_ERROR;
+#endif
+}
+
+int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
+
+  if (lattice_switch & LATTICE_LB_GPU)
+      return tclcommand_analyze_parse_fluid_gpu(interp, argc, argv);
+  else
+      return tclcommand_analyze_parse_fluid_cpu(interp, argc, argv);
+
+}

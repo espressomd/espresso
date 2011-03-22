@@ -194,16 +194,16 @@ typedef void (SlaveCallback)(int node, int param);
 #define REQ_SET_RINERTIA  54
 /** Action number for \ref mpi_bcast_constraint */
 #define REQ_BCAST_LBBOUNDARY 55
-/** Action number for \ref mpi_recv_fluid_border_flag */
-#define REQ_LB_GET_BORDER_FLAG 56
 /** Action number for \ref mpi_send_mu_E. */
-#define REQ_SET_MU_E     57
-/** Action number for \ref mpi_recv_fluid_populations. */
-#define REQ_GET_FLUID_POP 58
-/** Action number for \ref mpi_send_vs_relative. */
-#define REQ_SET_VS_RELATIVE 59
+#define REQ_SET_MU_E     56
 /** Action mumber for \ref mpi_bcast_max_mu. */
-#define REQ_MAX_MU 60 
+#define REQ_MAX_MU 57
+/** Action number for \ref mpi_send_vs_relative. */
+#define REQ_SET_VS_RELATIVE 58
+/** Action number for \ref mpi_recv_fluid_populations. */
+#define REQ_GET_FLUID_POP 59
+/** Action number for \ref mpi_recv_fluid_border_flag */
+#define REQ_LB_GET_BORDER_FLAG 60
 
 /** Total number of action numbers. */
 #define REQ_MAXIMUM 61
@@ -273,11 +273,9 @@ void mpi_ljangle_cap_forces_slave(int node, int parm);
 void mpi_send_virtual_slave(int node, int parm);
 void mpi_bcast_tf_params_slave(int node, int parm);
 void mpi_send_rotational_inertia_slave(int node, int parm);
-void mpi_recv_fluid_populations_slave(int node, int parm);
 void mpi_send_vs_relative_slave(int pnode, int part);
 void mpi_bcast_max_mu_slave(int node, int parm);
-/*@}*/
-
+void mpi_recv_fluid_populations_slave(int node, int parm);
 /** A list of which function has to be called for
     the issued command. */
 static SlaveCallback *slave_callbacks[] = {
@@ -331,18 +329,19 @@ static SlaveCallback *slave_callbacks[] = {
   mpi_recv_fluid_slave,             /* 47: REQ_GET_FLUID */
   mpi_local_stress_tensor_slave,    /* 48: REQ_GET_LOCAL_STRESS_TENSOR */
   mpi_ljangle_cap_forces_slave,     /* 49: REQ_BCAST_LAFC */
-  mpi_send_virtual_slave,         /* 50: REQ_SET_ISVI */
+  mpi_send_virtual_slave,           /* 50: REQ_SET_ISVI */
   mpi_bcast_tf_params_slave,        /* 51: REQ_BCAST_TF */
   mpi_iccp3m_iteration_slave,       /* 52: REQ_ICCP3M_ITERATION */
   mpi_iccp3m_init_slave,            /* 53: REQ_ICCP3M_INIT */
   mpi_send_rotational_inertia_slave,/* 54: REQ_SET_RINERTIA */
-  mpi_bcast_lbboundary_slave,      /* 55: REQ_BCAST_LBBOUNDARY */
-  mpi_recv_fluid_border_flag_slave, /* 56: REQ_LB_GET_BORDER_FLAG */
-  mpi_send_mu_E_slave,		    /* 57: REQ_SET_MU_E */
-  mpi_recv_fluid_populations_slave,  /* 58: REQ_GET_FLUID_POP */
-  mpi_send_vs_relative_slave,	     /* 59: REQ_SET_VS_RELATIVE */
-  mpi_bcast_max_mu_slave           /* 60: REQ_MAX_MU */
+  mpi_bcast_lbboundary_slave,       /* 55: REQ_BCAST_LBBOUNDARY */
+  mpi_send_mu_E_slave,              /* 56: REQ_SET_MU_E */
+  mpi_bcast_max_mu_slave,           /* 57: REQ_MAX_MU */
+  mpi_send_vs_relative_slave,       /* 58: REQ_SET_VS_RELATIVE */
+  mpi_recv_fluid_populations_slave, /* 59: REQ_GET_FLUID_POP */
+  mpi_recv_fluid_border_flag_slave, /* 60: REQ_LB_GET_BORDER_FLAG */
 };
+
 
 /** Names to be printed when communication debugging is on. */
 char *names[] = {
@@ -409,14 +408,14 @@ char *names[] = {
   "SET_ISVI",       /* 50 */
   "REQ_BCAST_TF",   /* 51 */
   "REQ_ICCP3M_ITERATION", /* 52 */
-  "REQ_ICCP3M_INIT",      /* 53 */
+  "REQ_ICCP3M_INIT",/* 53 */
   "SET_RINERTIA",   /* 54 */
   "REQ_BCAST_LBBOUNDARY", /* 55 */
-  "REQ_LB_GET_BORDER_FLAG" /* 56 */
-  "SET_MU_E", /* 57 */
-  "REQ_GET_FLUID_POP" /* 58 */
-  "SET_VS_RELATIVE", /* 59 */
-  "REQ_MAX_MU", /* 60 */
+  "SET_MU_E",       /* 56 */
+  "REQ_MAX_MU",     /* 57 */
+  "SET_VS_RELATIVE",/* 58 */
+  "REQ_GET_FLUID_POP", /* 59 */
+  "REQ_LB_GET_BORDER_FLAG" /* 60 */
   "SET_VS_RELATIVE", /* 61 */
 };
 

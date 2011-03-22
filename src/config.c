@@ -109,7 +109,7 @@ int tclcallback_compilation(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
 #ifdef FFTW
-  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
+  Tcl_AppendResult(interp, "{ FFTW } ", (char *) NULL);
 #endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);
@@ -221,6 +221,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #endif
 #ifdef NPT
   Tcl_AppendResult(interp, "{ NPT } ", (char *) NULL);
+#endif
+#ifdef LB_GPU
+  Tcl_AppendResult(interp, "{ LB_GPU } ", (char *) NULL);
 #endif
 #ifdef TRANS_DPD
   Tcl_AppendResult(interp, "{ TRANS_DPD } ", (char *) NULL);

@@ -22,6 +22,11 @@
  * Lattice data structures 
  * 
  */
+/** Lattice Boltzmann */
+#define LATTICE_LB   1
+
+/** Lattice Boltzmann */
+#define LATTICE_LB_GPU   2
 
 #ifndef LATTICE_H
 #define LATTICE_H
@@ -41,7 +46,10 @@ extern int lattice_switch;
 #ifdef LATTICE
 
 /** Lattice Boltzmann */
-#define LATTICE_LB   1
+//#define LATTICE_LB   1
+
+/** Lattice Boltzmann */
+//#define LATTICE_LB_GPU   2
 
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be
@@ -189,7 +197,7 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
       }
     }
     else if (ind[dir] > lattice->grid[dir]) {
-      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC)
+      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC*local_box_l[dir])
 	ind[dir] = lattice->grid[dir];
       else
 	fprintf(stderr,"%d: map_position_to_lattice: position (%f,%f,%f) not inside a local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",this_node,pos[0],pos[1],pos[2],dir,ind[dir],rel,lpos);

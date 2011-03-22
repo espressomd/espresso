@@ -51,7 +51,7 @@
 #define P3M_EPSILON 0.0
 
 /** P3M: Default for boundary condition in magnetic calculations */
-#define P3M_EPSILON_MAGNETIC 1.0
+#define P3M_EPSILON_MAGNETIC 0.0
 
 /** P3M: Default for offset of first mesh point from the origin (left
     down corner of the simulation box. */
@@ -70,7 +70,7 @@
     in the calculation of the optimal influence function (aliasing
     sums). */
 #ifndef P3M_BRILLOUIN
-#define P3M_BRILLOUIN 1
+#define P3M_BRILLOUIN 0
 #endif
 /** P3M: Maximal mesh size that will be checked. The current setting
          limits the memory consumption to below 1GB, which is probably
@@ -165,6 +165,12 @@
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
+#define USE_TEMPORARY
+#define LATTICE
+//#define ALTERNATIVE_INTEGRATOR
+#endif
+
+#ifdef LB_GPU
 #define USE_TEMPORARY
 #define LATTICE
 //#define ALTERNATIVE_INTEGRATOR

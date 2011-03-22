@@ -12,6 +12,9 @@ User-visible changes
   significantly overhauled and it has been documented for the first
   time.
 
+* A CUDA implementation for NVIDIA GPUs of the Lattice-Boltzmann
+  algorithm is included.
+
 * The P3M algorithm for electrostatic and dipolar (magnetostatic)
   interactions has been extended.
 
@@ -35,7 +38,7 @@ User-visible changes
   relative to another particle (VIRTUAL_SITES_RELATIVE).  This allows
   to create rigid structures within ESPResSo.
 
-* Some constraints can now be made penetrable or reflecting.
+* Some constraints can now be made penetrable and reflecting.
 
 * The build system has been overhauled and simplified.
 

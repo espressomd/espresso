@@ -56,6 +56,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
+#include "lbgpu.h"
 
 /************************************************
  * DEFINES
@@ -394,7 +395,9 @@ void integrate_vv(int n_steps)
 #ifdef LB
     transfer_momentum = 0;
 #endif
-
+#ifdef LB_GPU
+    transfer_momentum_gpu = 0;
+#endif
 //VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     update_mol_vel_pos();
@@ -507,6 +510,9 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef LB
     transfer_momentum = 1;
 #endif
+#ifdef LB_GPU
+    transfer_momentum_gpu = 1;
+#endif
 
     force_calc();
 
@@ -536,6 +542,12 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef LB
   if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
   if (check_runtime_errors()) break;
+#endif
+
+#ifdef LB_GPU
+  if(this_node == 0){
+	if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
+  }
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -631,12 +643,19 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data)
 int tclcallback_time_step(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
+  float ts = (float)data;
   if (data < 0.0) {
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);
   }
 #ifdef LB
   else if ((lbpar.tau >= 0.0) && (data > lbpar.tau)) {
+    Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
+    return (TCL_ERROR);
+  }
+#endif
+#ifdef LB_GPU	
+  else if ((lbpar_gpu.tau >= 0.0) && (ts > lbpar_gpu.tau)) { 
     Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
     return (TCL_ERROR);
   }

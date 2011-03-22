@@ -17,7 +17,7 @@
 #
 EXTRA_DIST=\
 	background_errors.sh background_errors.awk \
-	doxygen.cfg header.html \
+	Doxyfile header.html \
         pages/build.doc \
         pages/cvs.doc \
         pages/doxygen.doc \
@@ -54,7 +54,7 @@ if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
 	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/*.c $(top_srcdir)/*.h 
 	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
-	  $(DOXYGEN) $(srcdir)/doxygen.cfg \
+	  $(DOXYGEN) $(srcdir)/Doxyfile \
 	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
