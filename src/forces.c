@@ -49,6 +49,7 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
+#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -65,7 +66,12 @@ void init_forces();
 
 void force_calc()
 {
-  init_forces();
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
+#endif
+
+   init_forces();
   
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -85,7 +91,7 @@ void force_calc()
     nsq_calculate_ia();
     
   }
-  
+
   calc_long_range_forces();
 
 #ifdef LB
@@ -99,6 +105,10 @@ void force_calc()
 #ifdef METADYNAMICS
     /* Metadynamics main function */
     meta_perform();
+#endif
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
 #endif
 
 /* this must be the last force to be calculated (Mehmet)*/

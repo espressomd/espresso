@@ -18,13 +18,13 @@
 
 # List headers that are not used by the program here
 noinst_HEADERS = \
+	myconfig-default.h \
 	p3m-charges.c p3m-dipoles.h \
 	p3m-dipoles.c p3m-charges.h \
 	p3m-assignment.c
 
 # List the sources of the Espresso binary here
 libEspresso_a_SOURCES = \
-	main.c \
 	config.c config.h \
 	initialize.c initialize.h \
 	global.c global.h \
@@ -93,9 +93,11 @@ libEspresso_a_SOURCES = \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
+	lb_boundaries_gpu.c lb_boundaries_gpu.h \
+	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
-        pwdist.h \
+	pwdist.h \
 	angledist.h \
 	endangledist.h \
 	buckingham.h \
@@ -107,7 +109,7 @@ libEspresso_a_SOURCES = \
 	fene.h \
 	gb.h \
 	harmonic.h \
-        hertzian.h \
+	hertzian.h \
 	imd.h \
 	ljcos2.h \
 	ljcos.h \
@@ -129,17 +131,23 @@ libEspresso_a_SOURCES = \
 noinst_LIBRARIES = libEspresso.a
 
 #################################################################
+# Build the blockfile library
+#################################################################
+libespressobf_a_SOURCES = blockfile.c blockfile.h
+libespressobf_a_CPPFLAGS = -DBLOCKFILE_STDIO
+
+lib_LIBRARIES = libespressobf.a
+
+#################################################################
 # Handling of myconfig.h
 #################################################################
 FORCE:
 myconfig-final.h: FORCE
 	config_files="\
 	  $(top_builddir)/$(myconfig) \
-	  $(top_builddir)/src/$(myconfig) \
-	  $(top_srcdir)/$(myconfig) \
-	  $(top_srcdir)/src/$(myconfig)"; \
+	  $(top_srcdir)/$(myconfig)"; \
 	if test $(myconfig) = myconfig.h; then \
-	  config_files="$$config_files $(top_builddir)/src/myconfig-default.h"; \
+	  config_files="$$config_files $(top_srcdir)/src/myconfig-default.h"; \
 	fi; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
@@ -180,7 +188,8 @@ SUFFIXES=.cu
 
 CUDA_SOURCES= \
 	cuda_init.cu \
-	cuda_init.h
+	cuda_init.h \
+	lbgpu.cu lbgpu.h
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
 endif

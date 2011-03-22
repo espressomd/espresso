@@ -51,4 +51,3 @@ void gpu_init()
     errexit();
   }
 }
-

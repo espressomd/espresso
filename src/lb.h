@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -50,7 +51,24 @@
 #define LBPAR_FRICTION  4 /**< friction coefficient for viscous coupling between particles and fluid */
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
+
 /*@}*/
+  /** Some general remarks:
+   * This file implements the LB D3Q19 method to Espresso. The LB_Model
+   * construction is preserved for historical reasons and might be removed
+   * soon. It is constructed as a multi-relaxation time LB, thus all populations
+   * are converted to modes, then collision is performed and transfered back
+   * to population space, where the streaming is performed. 
+   *
+   * For performance reasons it is clever to do streaming and collision at the same time
+   * because every fluid node has to be read and written only once. This increases
+   * mainly cache efficiency. 
+   * Two alternatives are implemented: stream_collide and collide_stream.
+   *
+   * The hydrodynamic fields, corresponding to density, velocity and stress, are
+   * stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
+   * which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
+   */
 
 /** Description of the LB Model in terms of the unit vectors of the 
  *  velocity sub-lattice and the corresponding coefficients 
@@ -61,13 +79,16 @@ typedef const struct {
   int n_veloc ;
 
   /** unit vectors of the velocity sublattice */
-  double (*c)[3] ;
+  double (*c)[3];
 
   /** coefficients in the pseudo-equilibrium distribution */
   double (*coeff)[4];
 
   /** weights in the functional for the equilibrium distribution */
   double (*w);
+
+  /** basis of moment space */
+  double **e;
 
   /** speed of sound squared */
   double c_sound_sq;
@@ -76,6 +97,9 @@ typedef const struct {
 
 /** Data structure for fluid on a local lattice site */
 typedef struct {
+
+  /** flag indicating whether fields have to be recomputed */
+  int recalc_fields;
 
   /** local density */
   double rho[1];
@@ -86,19 +110,21 @@ typedef struct {
   /** local stress tensor */
   double pi[6];
 
-  /** local populations of the velocity directions */
-  double *n;
-#ifndef D3Q19
-  /** temporary storage for populations */
-  double *n_tmp;
-#endif
+  /* local populations of the velocity directions
+   *  are stored seperately to achieve higher performance */
 
-#ifdef CONSTRAINTS
+  /** flag indicating whether a force is acting on the node */
+  int has_force;
+
+  /** local force density TODO: FORCE DENSITY or  FORCE?*/
+  double force[3];
+
+#ifdef LB_BOUNDARIES
    /** flag indicating whether this site belongs to a boundary */
    int boundary;
 
   /** normal vector of the boundary surface */
-  double *nvec;
+  double *nvec; //doesn't work like that any more, I think (georg, 17.08.10)
 #endif
 
 } LB_FluidNode;
@@ -127,8 +153,11 @@ typedef struct {
    * lead to numerical artifacts with low order integrators */
   double friction;
 
-  /** external force applied to the fluid at each lattice site (LJ units) */
-  double ext_force[3];
+  /** external force applied to the fluid at each lattice site (MD units) */
+  double ext_force[3]; /* Open question: Do we want a local force or global force? */
+  double rho_lb_units;
+  double gamma_odd;
+  double gamma_even;
           
 } LB_Parameters;
 
@@ -141,22 +170,37 @@ extern LB_Parameters lbpar;
 /** The underlying lattice */
 extern Lattice lblattice;
 
-/** Pointer to the fluid nodes */
-extern LB_FluidNode *lbfluid;
+/** Pointer to the velocity populations of the fluid.
+ * lbfluid[0] contains pre-collision populations, lbfluid[1]
+ * contains post-collision populations*/
+extern double **lbfluid[2];
+
+/** Pointer to the hydrodynamic fields of the fluid */
+extern LB_FluidNode *lbfields;
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum;
 
 /** Eigenvalue of collision operator corresponding to shear viscosity. */
-//extern double lblambda;
+extern double lblambda;
 
 /** Eigenvalue of collision operator corresponding to bulk viscosity. */
-//extern double lblambda_bulk;
+extern double lblambda_bulk;
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** Updates the Lattice Boltzmann system for one time step.
+ * This function performs the collision step and the streaming step.
+ * If external forces are present, they are applied prior to the collisions.
+ * If boundaries are present, it also applies the boundary conditions.
+ */
+void lattice_boltzmann_update();
+
+/** (Pre-)initializes data structures. */
+void lb_pre_init();
 
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
@@ -171,20 +215,26 @@ void lb_reinit_parameters();
 /** (Re-)initializes the fluid. */
 void lb_reinit_fluid();
 
+/** Resets the forces on the fluid nodes */
+void lb_reinit_forces();
+
 /** Sets the density and momentum on a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
+ * @param node  Pointer to the Node of the lattice site within the local domain (Input)
  * @param rho   Local density of the fluid (Input)
  * @param j     Local momentum of the fluid (Input)
  */
-void lb_set_local_fields(int index, const double rho, const double *v, const double *pi);
+void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, const double *pi);
 
 /** Returns the mass, momentum and stress of a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
+ * @param node  The index of the lattice site within the local domain (Input)
  * @param rho   Local density of the fluid (Output)
  * @param j     Local momentum of the fluid (Output)
  * @param pi    Local stress tensor of the fluid (Output)
  */
-void lb_get_local_fields(int index, double *rho, double *j, double *pi);
+void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi);
+
+/** Calculates the equilibrium distributions. */
+void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
  * This function performs the collision step and the streaming step.
@@ -205,26 +255,27 @@ void calc_particle_lattice_ia();
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param local_node The local lattice site (Input).
  */
-MDINLINE void lb_calc_local_rho(LB_FluidNode *local_node) {
-
-  double *local_n = local_node->n;
-  double *local_rho = local_node->rho;
-  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
+  // unit conversion: mass density
+  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
 #ifdef D3Q19
-  *local_rho =   avg_rho
-               + local_n[0] 
-               + local_n[1]  + local_n[2]  
-               + local_n[3]  + local_n[4]  
-               + local_n[5]  + local_n[6] 
-               + local_n[7]  + local_n[8]  + local_n[9]  + local_n[10] 
-               + local_n[11] + local_n[12] + local_n[13] + local_n[14] 
-               + local_n[15] + local_n[16] + local_n[17] + local_n[18];
+  *rho =   avg_rho
+         + lbfluid[0][0][index]
+         + lbfluid[0][1][index]  + lbfluid[0][2][index]
+         + lbfluid[0][3][index]  + lbfluid[0][4][index]
+         + lbfluid[0][5][index]  + lbfluid[0][6][index] 
+         + lbfluid[0][7][index]  + lbfluid[0][8][index]  
+	 + lbfluid[0][9][index]  + lbfluid[0][10][index]
+         + lbfluid[0][11][index] + lbfluid[0][12][index] 
+	 + lbfluid[0][13][index] + lbfluid[0][14][index] 
+         + lbfluid[0][15][index] + lbfluid[0][16][index] 
+	 + lbfluid[0][17][index] + lbfluid[0][18][index];
 #else
   int i;
-  *local_rho = 0.0;
+  *rho = avg_rho;
   for (i=0;i<lbmodel.n_veloc;i++) {
-    *local_rho += local_n[i] + lbmodel.coeff[i][0]*avg_rho;
+    *rho += lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
   }
 #endif
 
@@ -234,34 +285,44 @@ MDINLINE void lb_calc_local_rho(LB_FluidNode *local_node) {
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param local_node The local lattice site (Input).
  */
-MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
-
-  double *local_n = local_node->n;
-  double *local_j = local_node->j;
+MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
 #ifdef D3Q19
-  local_j[0] =   local_n[1]  - local_n[2] 
-               + local_n[7]  - local_n[8]  + local_n[9]  - local_n[10] 
-               + local_n[11] - local_n[12] + local_n[13] - local_n[14];
-  local_j[1] =   local_n[3]  - local_n[4]
-               + local_n[7]  - local_n[8]  - local_n[9]  + local_n[10]
-               + local_n[15] - local_n[16] + local_n[17] - local_n[18]; 
-  local_j[2] =   local_n[5]  - local_n[6]  
-               + local_n[11] - local_n[12] - local_n[13] + local_n[14]
-               + local_n[15] - local_n[16] - local_n[17] + local_n[18];
+  j[0] =   lbfluid[0][1][index]  - lbfluid[0][2][index]
+         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
+         + lbfluid[0][9][index]  - lbfluid[0][10][index] 
+         + lbfluid[0][11][index] - lbfluid[0][12][index] 
+         + lbfluid[0][13][index] - lbfluid[0][14][index];
+  j[1] =   lbfluid[0][3][index]  - lbfluid[0][4][index]
+         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
+         - lbfluid[0][9][index]  + lbfluid[0][10][index]
+         + lbfluid[0][15][index] - lbfluid[0][16][index] 
+         + lbfluid[0][17][index] - lbfluid[0][18][index]; 
+  j[2] =   lbfluid[0][5][index]  - lbfluid[0][6][index]  
+         + lbfluid[0][11][index] - lbfluid[0][12][index] 
+         - lbfluid[0][13][index] + lbfluid[0][14][index]
+         + lbfluid[0][15][index] - lbfluid[0][16][index] 
+         - lbfluid[0][17][index] + lbfluid[0][18][index];
 #else
   int i;
   double tmp;
-  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
-  local_j[0] = 0.0;
-  local_j[1] = 0.0;
-  local_j[2] = 0.0;
+  //double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  j[0] = 0.0;
+  j[1] = 0.0;
+  j[2] = 0.0;
   for (i=0;i<lbmodel.n_veloc;i++) {
-    tmp = local_n[i] + lbmodel.coeff[i][0]*avg_rho;
-    local_j[0] += lbmodel.c[i][0] * tmp;
-    local_j[1] += lbmodel.c[i][1] * tmp;
-    local_j[2] += lbmodel.c[i][2] * tmp;
+    tmp = lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
+    j[0] += lbmodel.c[i][0] * tmp;
+    j[1] += lbmodel.c[i][1] * tmp;
+    j[2] += lbmodel.c[i][2] * tmp;
   }
+#endif
+
+#ifdef EXTERNAL_FORCES
+  /* the coupling forces are not yet included self-consistently */
+  j[0] += 0.5*lbpar.ext_force[0];
+  j[1] += 0.5*lbpar.ext_force[1];
+  j[2] += 0.5*lbpar.ext_force[2];
 #endif
 
 }
@@ -271,46 +332,53 @@ MDINLINE void lb_calc_local_j(LB_FluidNode *local_node) {
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param local_node The local lattice site (Input).
  */
-MDINLINE void lb_calc_local_pi(LB_FluidNode *local_node) {
+MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
 
-  double *local_n  = local_node->n;
-  double *local_pi = local_node->pi;
-  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
     
 #ifdef D3Q19
-  local_pi[0] =   avg_rho/3.0
-                + local_n[1]  + local_n[2]  
-                + local_n[7]  + local_n[8]  + local_n[9]  + local_n[10] 
-                + local_n[11] + local_n[12] + local_n[13] + local_n[14];
-  local_pi[2] =   avg_rho/3.0
-                + local_n[3]  + local_n[4]  
-                + local_n[7]  + local_n[8]  + local_n[9]  + local_n[10]
-                + local_n[15] + local_n[16] + local_n[17] + local_n[18];
-  local_pi[5] =   avg_rho/3.0
-                + local_n[5]  + local_n[6]  
-                + local_n[11] + local_n[12] + local_n[13] + local_n[14] 
-                + local_n[15] + local_n[16] + local_n[17] + local_n[18];
-  local_pi[1] =   local_n[7]  + local_n[8]  - local_n[9]  - local_n[10];
-  local_pi[3] =   local_n[11] + local_n[12] - local_n[13] - local_n[14];
-  local_pi[4] =   local_n[15] + local_n[16] - local_n[17] - local_n[18];
+  pi[0] =   avg_rho/3.0
+          + lbfluid[0][1][index]  + lbfluid[0][2][index]  
+          + lbfluid[0][7][index]  + lbfluid[0][8][index]  
+          + lbfluid[0][9][index]  + lbfluid[0][10][index] 
+          + lbfluid[0][11][index] + lbfluid[0][12][index] 
+          + lbfluid[0][13][index] + lbfluid[0][14][index];
+  pi[2] =   avg_rho/3.0
+          + lbfluid[0][3][index]  + lbfluid[0][4][index]  
+          + lbfluid[0][7][index]  + lbfluid[0][8][index]  
+          + lbfluid[0][9][index]  + lbfluid[0][10][index]
+          + lbfluid[0][15][index] + lbfluid[0][16][index] 
+          + lbfluid[0][17][index] + lbfluid[0][18][index];
+  pi[5] =   avg_rho/3.0
+          + lbfluid[0][5][index]  + lbfluid[0][6][index]  
+          + lbfluid[0][11][index] + lbfluid[0][12][index] 
+          + lbfluid[0][13][index] + lbfluid[0][14][index] 
+          + lbfluid[0][15][index] + lbfluid[0][16][index] 
+          + lbfluid[0][17][index] + lbfluid[0][18][index];
+  pi[1] =   lbfluid[0][7][index]  + lbfluid[0][8][index]  
+          - lbfluid[0][9][index]  - lbfluid[0][10][index];
+  pi[3] =   lbfluid[0][11][index] + lbfluid[0][12][index] 
+          - lbfluid[0][13][index] - lbfluid[0][14][index];
+  pi[4] =   lbfluid[0][15][index] + lbfluid[0][16][index] 
+          - lbfluid[0][17][index] - lbfluid[0][18][index];
 #else
   int i;
   double tmp;
   double (*c)[3] = lbmodel.c;
-  local_pi[0] = 0.0;
-  local_pi[1] = 0.0;
-  local_pi[2] = 0.0;
-  local_pi[3] = 0.0;
-  local_pi[4] = 0.0;
-  local_pi[5] = 0.0;
+  pi[0] = 0.0;
+  pi[1] = 0.0;
+  pi[2] = 0.0;
+  pi[3] = 0.0;
+  pi[4] = 0.0;
+  pi[5] = 0.0;
   for (i=0;i<lbmodel.n_veloc;i++) {
-    tmp = local_n[i] + lbmodel.coeff[i][0]*avg_rho;
-    local_pi[0] += c[i][0] * c[i][0] * tmp;
-    local_pi[1] += c[i][0] * c[i][1] * tmp;
-    local_pi[2] += c[i][1] * c[i][1] * tmp;
-    local_pi[3] += c[i][0] * c[i][2] * tmp;
-    local_pi[4] += c[i][1] * c[i][2] * tmp;
-    local_pi[5] += c[i][2] * c[i][2] * tmp;
+    tmp = lbfluid[0][i][index] + lbmodel.coeff[i][0]*avg_rho;
+    pi[0] += c[i][0] * c[i][0] * tmp;
+    pi[1] += c[i][0] * c[i][1] * tmp;
+    pi[2] += c[i][1] * c[i][1] * tmp;
+    pi[3] += c[i][0] * c[i][2] * tmp;
+    pi[4] += c[i][1] * c[i][2] * tmp;
+    pi[5] += c[i][2] * c[i][2] * tmp;
   }
 #endif
 
@@ -325,102 +393,183 @@ MDINLINE void lb_calc_local_pi(LB_FluidNode *local_node) {
  * @param calc_pi_flag Flag indicating whether stress tensor should be
  *                     computed.
  */
-MDINLINE void lb_calc_local_fields(LB_FluidNode *local_node,int calc_pi_flag) {
+MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
 
-  double *local_n   = local_node->n;
-  double *local_rho = local_node->rho;
-  double *local_j   = local_node->j;
-  double *local_pi  = local_node->pi;
-  double avg_rho = lbpar.rho*(lbpar.agrid*lbpar.agrid*lbpar.agrid);
+  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
 #ifdef D3Q19
-  *local_rho =   avg_rho
-               + local_n[0]  
-               + local_n[1]  + local_n[2]  
-               + local_n[3]  + local_n[4] 
-               + local_n[5]  + local_n[6]  
-               + local_n[7]  + local_n[8]  + local_n[9]  + local_n[10] 
-               + local_n[11] + local_n[12] + local_n[13] + local_n[14]
-               + local_n[15] + local_n[16] + local_n[17] + local_n[18];
+#ifdef LB_BOUNDARIES
+  if ( lbfields[index].boundary ) {
+    *rho = avg_rho;
+    j[0] = 0.; j[1] = 0.;  j[2] = 0.;
+    pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;
+    return;
+  }
+#endif
+  *rho =   avg_rho
+         + lbfluid[0][0][index]  
+         + lbfluid[0][1][index]  + lbfluid[0][2][index]  
+         + lbfluid[0][3][index]  + lbfluid[0][4][index] 
+         + lbfluid[0][5][index]  + lbfluid[0][6][index]  
+         + lbfluid[0][7][index]  + lbfluid[0][8][index]  
+         + lbfluid[0][9][index]  + lbfluid[0][10][index] 
+         + lbfluid[0][11][index] + lbfluid[0][12][index] 
+         + lbfluid[0][13][index] + lbfluid[0][14][index]
+         + lbfluid[0][15][index] + lbfluid[0][16][index] 
+         + lbfluid[0][17][index] + lbfluid[0][18][index];
 
-  local_j[0] =   local_n[1]  - local_n[2]
-               + local_n[7]  - local_n[8]  + local_n[9]  - local_n[10]
-               + local_n[11] - local_n[12] + local_n[13] - local_n[14];
-  local_j[1] =   local_n[3]  - local_n[4]
-               + local_n[7]  - local_n[8]  - local_n[9]  + local_n[10]
-               + local_n[15] - local_n[16] + local_n[17] - local_n[18]; 
-  local_j[2] =   local_n[5]  - local_n[6]
-               + local_n[11] - local_n[12] - local_n[13] + local_n[14]
-               + local_n[15] - local_n[16] - local_n[17] + local_n[18];
+  j[0] =   lbfluid[0][1][index]  - lbfluid[0][2][index]
+         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
+         + lbfluid[0][9][index]  - lbfluid[0][10][index]
+         + lbfluid[0][11][index] - lbfluid[0][12][index] 
+         + lbfluid[0][13][index] - lbfluid[0][14][index];
+  j[1] =   lbfluid[0][3][index]  - lbfluid[0][4][index]
+         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
+         - lbfluid[0][9][index]  + lbfluid[0][10][index]
+         + lbfluid[0][15][index] - lbfluid[0][16][index] 
+         + lbfluid[0][17][index] - lbfluid[0][18][index]; 
+  j[2] =   lbfluid[0][5][index]  - lbfluid[0][6][index]
+         + lbfluid[0][11][index] - lbfluid[0][12][index] 
+         - lbfluid[0][13][index] + lbfluid[0][14][index]
+         + lbfluid[0][15][index] - lbfluid[0][16][index] 
+         - lbfluid[0][17][index] + lbfluid[0][18][index];
   
-  if (calc_pi_flag) {
-    local_pi[0] =   avg_rho/3.0
-                  + local_n[1]  + local_n[2]  
-                  + local_n[7]  + local_n[8]  + local_n[9]  + local_n[10]
-                  + local_n[11] + local_n[12] + local_n[13] + local_n[14];
-    local_pi[2] =   avg_rho/3.0
-                  + local_n[3]  + local_n[4]
-                  + local_n[7]  + local_n[8]  + local_n[9]  + local_n[10]
-                  + local_n[15] + local_n[16] + local_n[17] + local_n[18];
-    local_pi[5] =   avg_rho/3.0
-                  + local_n[5]  + local_n[6]
-                  + local_n[11] + local_n[12] + local_n[13] + local_n[14]
-                  + local_n[15] + local_n[16] + local_n[17] + local_n[18];
-    local_pi[1] =   local_n[7]  - local_n[9] + local_n[8] - local_n[10];
-    local_pi[3] =   local_n[11] + local_n[12] - local_n[13] - local_n[14];
-    local_pi[4] =   local_n[15] + local_n[16] - local_n[17] - local_n[18];
+  if (pi) {
+    pi[0] =   avg_rho/3.0
+            + lbfluid[0][1][index]  + lbfluid[0][2][index]  
+            + lbfluid[0][7][index]  + lbfluid[0][8][index]  
+            + lbfluid[0][9][index]  + lbfluid[0][10][index]
+            + lbfluid[0][11][index] + lbfluid[0][12][index] 
+            + lbfluid[0][13][index] + lbfluid[0][14][index];
+    pi[2] =   avg_rho/3.0
+            + lbfluid[0][3][index]  + lbfluid[0][4][index]
+            + lbfluid[0][7][index]  + lbfluid[0][8][index]  
+            + lbfluid[0][9][index]  + lbfluid[0][10][index]
+            + lbfluid[0][15][index] + lbfluid[0][16][index] 
+            + lbfluid[0][17][index] + lbfluid[0][18][index];
+    pi[5] =   avg_rho/3.0
+            + lbfluid[0][5][index]  + lbfluid[0][6][index]
+            + lbfluid[0][11][index] + lbfluid[0][12][index] 
+            + lbfluid[0][13][index] + lbfluid[0][14][index]
+            + lbfluid[0][15][index] + lbfluid[0][16][index] 
+            + lbfluid[0][17][index] + lbfluid[0][18][index];
+    pi[1] =   lbfluid[0][7][index]  - lbfluid[0][9][index] 
+            + lbfluid[0][8][index]  - lbfluid[0][10][index];
+    pi[3] =   lbfluid[0][11][index] + lbfluid[0][12][index] 
+            - lbfluid[0][13][index] - lbfluid[0][14][index];
+    pi[4] =   lbfluid[0][15][index] + lbfluid[0][16][index]
+            - lbfluid[0][17][index] - lbfluid[0][18][index];
 
   }
-#else
+#else /* if not D3Q19 */
   int i;
   double tmp;
   double (*c)[3] = lbmodel.c;
 
-  *local_rho = 0.0;
+  *rho = 0.0;
 
-  local_j[0] = 0.0;
-  local_j[1] = 0.0;
-  local_j[2] = 0.0;
+  j[0] = 0.0;
+  j[1] = 0.0;
+  j[2] = 0.0;
 
   if (calc_pi_flag) {
-    local_pi[0] = 0.0;
-    local_pi[1] = 0.0;
-    local_pi[2] = 0.0;
-    local_pi[3] = 0.0;
-    local_pi[4] = 0.0;
-    local_pi[5] = 0.0;
+    pi[0] = 0.0;
+    pi[1] = 0.0;
+    pi[2] = 0.0;
+    pi[3] = 0.0;
+    pi[4] = 0.0;
+    pi[5] = 0.0;
   }
 
   for (i=0;i<lbmodel.n_veloc;i++) {
-    tmp = local_n[i] + lbmodel.coeff[i][0]*avg_rho;
+    tmp = lbfluid[0][i][index] + lbmodel.coeff[i][0]*avg_rho;
     
-    *local_rho += tmp;
+    *rho += tmp;
 
-    local_j[0] += c[i][0] * tmp;
-    local_j[1] += c[i][1] * tmp;
-    local_j[2] += c[i][2] * tmp;
+    j[0] += c[i][0] * tmp;
+    j[1] += c[i][1] * tmp;
+    j[2] += c[i][2] * tmp;
 
     if (calc_pi_flag) {
-      local_pi[0] += c[i][0] * c[i][0] * tmp;
-      local_pi[1] += c[i][0] * c[i][1] * tmp;
-      local_pi[2] += c[i][1] * c[i][1] * tmp;
-      local_pi[3] += c[i][0] * c[i][2] * tmp;
-      local_pi[4] += c[i][1] * c[i][2] * tmp;
-      local_pi[5] += c[i][2] * c[i][2] * tmp;
+      pi[0] += c[i][0] * c[i][0] * tmp;
+      pi[1] += c[i][0] * c[i][1] * tmp;
+      pi[2] += c[i][1] * c[i][1] * tmp;
+      pi[3] += c[i][0] * c[i][2] * tmp;
+      pi[4] += c[i][1] * c[i][2] * tmp;
+      pi[5] += c[i][2] * c[i][2] * tmp;
     }
 
   }
 #endif
 
+#ifdef EXTERNAL_FORCES
+  /* the coupling forces are not yet included self-consistently */
+  j[0] += 0.5*lbpar.ext_force[0];
+  j[1] += 0.5*lbpar.ext_force[1];
+  j[2] += 0.5*lbpar.ext_force[2];
+#endif
+
 }
 
-#endif /* LB */
+#ifdef LB_BOUNDARIES
+MDINLINE void lb_local_fields_get_border_flag(index_t index, int *border) {
+  *border = lbfields[index].boundary;
+}
+#endif
 
-/** Parser for the \ref lbnode command.  TODO: not registered!! */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
+#endif // LB
 /** Parser for the TCL command \ref lbfluid. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** Parser for the \ref lbnode command. */
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+#ifdef LB
+
+/** Calculate the local fluid momentum.
+ * The calculation is implemented explicitly for the special case of D3Q19.
+ * @param local_node The local lattice site (Input).
+ */
+MDINLINE void lb_get_populations(index_t index, double* pop) {
+  int i=0;
+  for (i=0; i<19; i++) {
+    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho;
+  }
+}
+
+/* A C level interface to the LB fluid */ 
+int lb_lbfluid_set_density(double p_dens);
+int lb_lbfluid_set_agrid(double p_agrid);
+int lb_lbfluid_set_visc(double p_visc);
+int lb_lbfluid_set_tau(double p_tau);
+int lb_lbfluid_set_bulk_visc(double p_bulk_visc);
+int lb_lbfluid_set_gamma_odd(double p_gamma_odd);
+int lb_lbfluid_set_gamma_even(double p_gamma_even);
+int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
+int lb_lbfluid_set_friction(double p_friction);
+
+int lb_lbfluid_get_density(double* p_dens);
+int lb_lbfluid_get_agrid(double* p_agrid);
+int lb_lbfluid_get_visc(double* p_visc);
+int lb_lbfluid_get_bulk_visc(double* p_bulk_visc);
+int lb_lbfluid_get_tau(double* p_tau);
+int lb_lbfluid_get_gamma_odd(double* p_gamma_odd);
+int lb_lbfluid_get_gamma_even(double* p_gamma_even);
+int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz);
+int lb_lbfluid_get_friction(double* p_friction);
+
+int lb_lbnode_get_rho(int* ind, double* p_rho);
+int lb_lbnode_get_u(int* ind, double* u);
+int lb_lbnode_get_pi(int* ind, double* pi);
+int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
+int lb_lbnode_get_pop(int* ind, double* pop);
+
+int lb_lbnode_set_rho(int* ind, double rho);
+int lb_lbnode_set_u(int* ind, double* u);
+int lb_lbnode_set_pi(int* ind, double* pi);
+int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
+int lb_lbnode_set_pop(int* ind, double* pop);
+
+#endif /* LB */
 
 #endif /* LB_H */
 
