@@ -17,14 +17,13 @@
 #
 EXTRA_DIST=\
 	background_errors.sh background_errors.awk \
-	Doxyfile header.html \
+	Doxyfile \
+	header.html \
         pages/build.doc \
-        pages/cvs.doc \
         pages/doxygen.doc \
         pages/header.doc \
         pages/new_files.doc \
         pages/progguide.doc \
-        pages/testsuite.doc \
         pages/ug.doc \
         figs/bond_angle.fig \
         figs/bond_angle.gif \
@@ -52,7 +51,7 @@ doc: dg
 dg:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
-	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/*.c $(top_srcdir)/*.h 
+	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
 	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
 	  $(DOXYGEN) $(srcdir)/Doxyfile \
 	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
