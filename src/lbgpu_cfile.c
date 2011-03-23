@@ -753,7 +753,7 @@ static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], in
     /** print of the calculated phys values */
     fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
   }
-
+  fclose(datei);
   return TCL_OK;
 }
 static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
