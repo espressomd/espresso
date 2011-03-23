@@ -18,7 +18,6 @@
 EXTRA_DIST=\
 	background_errors.sh background_errors.awk \
 	Doxyfile \
-	header.html \
         pages/build.doc \
         pages/doxygen.doc \
         pages/header.doc \
