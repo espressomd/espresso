@@ -1,6 +1,8 @@
 /*
- Copyright (C) 2010 The ESPResSo project
- Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+ Copyright (C) 2010,2011 Florian Fahrenberger
+ Copyright (C) 2010,2011 The ESPResSo project
+ Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
  
  This file is part of ESPResSo.
  
@@ -69,8 +71,32 @@
 #define SELF_FACTOR_1 1.57364595
 #define SELF_FACTOR_2 1.5078141
 
+/* Define numbers for directions and dimensions: */
+#define SPACE_DIM 3                 /* number of dimensions */
+#define NOWHERE -1                  /* not a direction */
+#define NDIRS 6				        /* number of directions */
+#define XPLUS 0                     /* add for specific direction */
+#define YPLUS 1
+#define ZPLUS 2
+#define ZMINUS 3
+#define YMINUS 4
+#define XMINUS 5
+#define OPP_DIR(dir)	(5-(dir))	/* Opposite direction */
 
 
+/* Three often used macros for looping over 3D */
+#define FOR3D(dir) for(dir=0; dir<SPACE_DIM; dir++)
+
+#define FORALL_INNER_SITES(i,j,k) \
+for(i=lparams.inner_left_down[0];i<lparams.inner_up_right[0];i++) \
+for(j=lparams.inner_left_down[1];j<lparams.inner_up_right[1];j++) \
+for(k=lparams.inner_left_down[2];k<lparams.inner_up_right[2];k++) 
+
+#define FORALL_SITES(i,j,k) \
+for(i=0;i<lparams.dim[0];i++) \
+for(j=0;j<lparams.dim[1];j++) \
+for(k=0;k<lparams.dim[2];k++) 
+/* from ifndef MAGGS_H */
 
 /************************************************/
 /*           data types and structures          */
