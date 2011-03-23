@@ -26,14 +26,15 @@
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interpretes the Tcl
-    script, all other nodes wait in \ref mpi_loop for the master node to
-    issue an action using \ref mpi_issue. \ref mpi_loop immediately
-    executes an MPI_Bcast and therefore waits for the master node to broadcast
-    a command, which is done by \ref mpi_issue. The request consists of
-    three integers, the first one describing the action issued, the second
-    and third an arbitrary parameter depending on the action issued. If applicable,
-    the second parameter is the node number of the slave this request is dedicated
-    to.
+    script, all other nodes wait in \ref mpi_loop for the master node
+    to issue an action using \ref mpi_issue or mpi_call. \ref mpi_loop
+    immediately executes an MPI_Bcast and therefore waits for the
+    master node to broadcast a command, which is done by \ref
+    mpi_issue. The request consists of three integers, the first one
+    describing the action issued, the second and third an arbitrary
+    parameter depending on the action issued. If applicable, the
+    second parameter is the node number of the slave this request is
+    dedicated to.
 
     Adding new actions (e. g. to implement new Tcl commands) is
     simple. First, the action has to be assigned a new action number
@@ -115,11 +116,18 @@ void mpi_bcast_event(int event);
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
     \param id   the particle to move.
-    \param new  if non-zero, the particle is new
     \param node the node to attach it to.
     \param pos  the particles position.
 */
-void mpi_place_particle(int node, int id, int new, double pos[3]);
+void mpi_place_particle(int node, int id, double pos[3]);
+
+/** Issue REQ_PLACE: create particle at a position on a node.
+    Also calls \ref on_particle_change.
+    \param id   the particle to create.
+    \param node the node to attach it to.
+    \param pos  the particles position.
+*/
+void mpi_place_new_particle(int node, int id, double pos[3]);
 
 /** Issue REQ_SET_V: send particle velocity.
     Also calls \ref on_particle_change.
