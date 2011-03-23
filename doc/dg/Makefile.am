@@ -52,7 +52,7 @@ if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
 	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
 	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
-	  $(DOXYGEN) $(srcdir)/Doxyfile > dg.log 2> dg.log
+	  $(DOXYGEN) $(srcdir)/Doxyfile
 	@echo "See doxygen's warnings in dg.log."
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
