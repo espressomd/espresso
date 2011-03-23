@@ -67,225 +67,96 @@ int n_nodes = -1;
 /**********************************************
  * slave callbacks.
  **********************************************/
-
-/** slave callback procedure */
 typedef void (SlaveCallback)(int node, int param);
 
-#define SOME_TAG 42
+// if you want to add a callback, add it here, and here only
+#define CALLBACK_LIST \
+  CB(mpi_stop_slave) \
+  CB(mpi_bcast_parameter_slave) \
+  CB(mpi_who_has_slave) \
+  CB(mpi_bcast_event_slave) \
+  CB(mpi_place_particle_slave) \
+  CB(mpi_send_v_slave) \
+  CB(mpi_send_f_slave) \
+  CB(mpi_send_q_slave) \
+  CB(mpi_send_type_slave) \
+  CB(mpi_send_bond_slave) \
+  CB(mpi_recv_part_slave) \
+  CB(mpi_integrate_slave) \
+  CB(mpi_bcast_ia_params_slave) \
+  CB(mpi_bcast_n_particle_types_slave) \
+  CB(mpi_gather_stats_slave) \
+  CB(mpi_set_time_step_slave) \
+  CB(mpi_get_particles_slave) \
+  CB(mpi_bcast_coulomb_params_slave) \
+  CB(mpi_send_ext_slave) \
+  CB(mpi_place_new_particle_slave) \
+  CB(mpi_remove_particle_slave) \
+  CB(mpi_bcast_constraint_slave) \
+  CB(mpi_random_seed_slave) \
+  CB(mpi_random_stat_slave) \
+  CB(mpi_lj_cap_forces_slave) \
+  CB(mpi_tab_cap_forces_slave) \
+  CB(mpi_bit_random_seed_slave) \
+  CB(mpi_bit_random_stat_slave) \
+  CB(mpi_get_constraint_force_slave) \
+  CB(mpi_rescale_particles_slave) \
+  CB(mpi_bcast_cell_structure_slave) \
+  CB(mpi_send_quat_slave) \
+  CB(mpi_send_omega_slave) \
+  CB(mpi_send_torque_slave) \
+  CB(mpi_send_mol_id_slave) \
+  CB(mpi_bcast_nptiso_geom_slave) \
+  CB(mpi_update_mol_ids_slave) \
+  CB(mpi_sync_topo_part_info_slave) \
+  CB(mpi_send_mass_slave) \
+  CB(mpi_buck_cap_forces_slave) \
+  CB(mpi_gather_runtime_errors_slave) \
+  CB(mpi_send_exclusion_slave) \
+  CB(mpi_morse_cap_forces_slave) \
+  CB(mpi_bcast_lb_params_slave) \
+  CB(mpi_send_dip_slave) \
+  CB(mpi_send_dipm_slave) \
+  CB(mpi_send_fluid_slave) \
+  CB(mpi_recv_fluid_slave) \
+  CB(mpi_local_stress_tensor_slave) \
+  CB(mpi_ljangle_cap_forces_slave) \
+  CB(mpi_send_virtual_slave) \
+  CB(mpi_bcast_tf_params_slave) \
+  CB(mpi_iccp3m_iteration_slave) \
+  CB(mpi_iccp3m_init_slave) \
+  CB(mpi_send_rotational_inertia_slave) \
+  CB(mpi_bcast_lbboundary_slave) \
+  CB(mpi_send_mu_E_slave) \
+  CB(mpi_bcast_max_mu_slave) \
+  CB(mpi_send_vs_relative_slave) \
+  CB(mpi_recv_fluid_populations_slave) \
+  CB(mpi_recv_fluid_border_flag_slave)
 
+// create the forward declarations
+#define CB(name) void name(int node, int param);
+CALLBACK_LIST
 
-/*@}*/
-
-/** \name Slave Callbacks
-    These functions are the slave node counterparts for the
-    commands the master node issues. The master node function *
-    corresponds to the slave node function *_slave.
-*/
-/*@{*/
-void mpi_stop_slave(int node, int parm);
-void mpi_bcast_parameter_slave(int node, int parm);
-void mpi_who_has_slave(int node, int parm);
-void mpi_bcast_event_slave(int node, int parm);
-void mpi_place_particle_slave(int node, int parm);
-void mpi_place_new_particle_slave(int node, int parm);
-void mpi_send_v_slave(int node, int parm);
-void mpi_send_f_slave(int node, int parm);
-void mpi_send_q_slave(int node, int parm);
-void mpi_send_mu_E_slave(int node, int parm);
-void mpi_send_type_slave(int node, int parm);
-void mpi_send_bond_slave(int node, int parm);
-void mpi_recv_part_slave(int node, int parm);
-void mpi_integrate_slave(int node, int parm);
-void mpi_iccp3m_iteration_slave(int node, int parm);
-void mpi_iccp3m_init_slave(int node, int parm);
-void mpi_bcast_ia_params_slave(int node, int parm);
-void mpi_bcast_n_particle_types_slave(int node, int parm);
-void mpi_gather_stats_slave(int node, int parm);
-void mpi_set_time_step_slave(int node, int parm);
-void mpi_get_particles_slave(int node, int parm);
-void mpi_bcast_coulomb_params_slave(int node, int parm);
-void mpi_send_ext_slave(int node, int parm);
-void mpi_remove_particle_slave(int node, int parm);
-void mpi_bcast_constraint_slave(int node, int parm);
-void mpi_bcast_lbboundary_slave(int node, int parm);
-void mpi_random_seed_slave(int node, int parm);
-void mpi_random_stat_slave(int node, int parm);
-void mpi_lj_cap_forces_slave(int node, int parm);
-void mpi_tab_cap_forces_slave(int node, int parm);
-void mpi_bit_random_seed_slave(int node, int parm);
-void mpi_bit_random_stat_slave(int node, int parm);
-void mpi_get_constraint_force_slave(int node, int parm);
-void mpi_rescale_particles_slave(int node, int parm);
-void mpi_bcast_cell_structure_slave(int node, int parm);
-void mpi_send_quat_slave(int node, int parm);
-void mpi_send_omega_slave(int node, int parm);
-void mpi_send_torque_slave(int node, int parm);
-void mpi_send_mol_id_slave(int node, int parm);
-void mpi_bcast_nptiso_geom_slave(int node, int parm);
-void mpi_update_mol_ids_slave(int node, int parm);
-void mpi_sync_topo_part_info_slave(int node, int parm);
-void mpi_send_mass_slave(int node, int parm);
-void mpi_buck_cap_forces_slave(int node, int parm);
-void mpi_gather_runtime_errors_slave(int node, int parm);
-void mpi_send_exclusion_slave(int node, int parm);
-void mpi_morse_cap_forces_slave(int node, int parm);
-void mpi_bcast_lb_params_slave(int node, int parm);
-void mpi_send_dip_slave(int node, int parm);
-void mpi_send_dipm_slave(int node, int parm);
-void mpi_send_fluid_slave(int node, int parm);
-void mpi_recv_fluid_slave(int node, int parm);
-void mpi_recv_fluid_border_flag_slave(int node, int parm);
-void mpi_local_stress_tensor_slave(int node, int parm);
-void mpi_ljangle_cap_forces_slave(int node, int parm);
-void mpi_send_virtual_slave(int node, int parm);
-void mpi_bcast_tf_params_slave(int node, int parm);
-void mpi_send_rotational_inertia_slave(int node, int parm);
-void mpi_send_vs_relative_slave(int pnode, int part);
-void mpi_bcast_max_mu_slave(int node, int parm);
-void mpi_recv_fluid_populations_slave(int node, int parm);
-/** A list of which function has to be called for
-    the issued command. */
+// create the list of callbacks
+#undef CB
+#define CB(name) name,
 static SlaveCallback *slave_callbacks[] = {
-  mpi_stop_slave,
-  mpi_bcast_parameter_slave,
-  mpi_who_has_slave,
-  mpi_bcast_event_slave,
-  mpi_place_particle_slave,
-  mpi_send_v_slave,
-  mpi_send_f_slave,
-  mpi_send_q_slave,
-  mpi_send_type_slave,
-  mpi_send_bond_slave,
-  mpi_recv_part_slave,
-  mpi_integrate_slave,
-  mpi_bcast_ia_params_slave,
-  mpi_bcast_n_particle_types_slave,
-  mpi_gather_stats_slave,
-  mpi_set_time_step_slave,
-  mpi_get_particles_slave,
-  mpi_bcast_coulomb_params_slave,
-  mpi_send_ext_slave,
-  mpi_place_new_particle_slave,
-  mpi_remove_particle_slave,
-  mpi_bcast_constraint_slave,
-  mpi_random_seed_slave,
-  mpi_random_stat_slave,
-  mpi_lj_cap_forces_slave,
-  mpi_tab_cap_forces_slave,
-  mpi_bit_random_seed_slave,
-  mpi_bit_random_stat_slave,
-  mpi_get_constraint_force_slave,
-  mpi_rescale_particles_slave,
-  mpi_bcast_cell_structure_slave,
-  mpi_send_quat_slave,
-  mpi_send_omega_slave,
-  mpi_send_torque_slave,
-  mpi_send_mol_id_slave,
-  mpi_bcast_nptiso_geom_slave,
-  mpi_update_mol_ids_slave,
-  mpi_sync_topo_part_info_slave,
-  mpi_send_mass_slave,
-  mpi_buck_cap_forces_slave,
-  mpi_gather_runtime_errors_slave,
-  mpi_send_exclusion_slave,
-  mpi_morse_cap_forces_slave,
-  mpi_bcast_lb_params_slave,
-  mpi_send_dip_slave,
-  mpi_send_dipm_slave,
-  mpi_send_fluid_slave,
-  mpi_recv_fluid_slave,
-  mpi_local_stress_tensor_slave,
-  mpi_ljangle_cap_forces_slave,
-  mpi_send_virtual_slave,
-  mpi_bcast_tf_params_slave,
-  mpi_iccp3m_iteration_slave,
-  mpi_iccp3m_init_slave,
-  mpi_send_rotational_inertia_slave,
-  mpi_bcast_lbboundary_slave,
-  mpi_send_mu_E_slave,
-  mpi_bcast_max_mu_slave,
-  mpi_send_vs_relative_slave,
-  mpi_recv_fluid_populations_slave,
-  mpi_recv_fluid_border_flag_slave,
+  CALLBACK_LIST
 };
 
 const int N_CALLBACKS = sizeof(slave_callbacks)/sizeof(SlaveCallback*);
 
-/** Names to be printed when communication debugging is on. */
+// create the list of names
+#undef CB
+#define CB(name) #name,
+
 char *names[] = {
-  "TERM"      ,     /*  0 */
-  "BCAST_PAR" ,     /*  1 */
-  "WHO_HAS"   ,     /*  2 */
-  "EVENT"     ,     /*  3 */
-  "SET_POS"   ,     /*  4 */
-
-  "SET_V"     ,     /*  5 */
-  "SET_F"     ,     /*  6 */
-  "SET_Q"     ,     /*  7 */
-  "SET_TYPE"  ,     /*  8 */
-  "SET_BOND"  ,     /*  9 */
-
-  "GET_PART"  ,     /* 10 */
-  "INTEGRATE" ,     /* 11 */
-  "BCAST_IA"  ,     /* 12 */
-  "BCAST_IAS" ,     /* 13 */
-  "GATHER"    ,     /* 14 */
-
-  "TIME_STEP" ,     /* 15 */
-  "GET_PARTS" ,     /* 16 */
-  "BCAST_CIA" ,     /* 17 */
-  "SEND_EXT"  ,     /* 18 */
-  "PLACE_NEW" ,     /* 19 */
-
-  "REM_PART"  ,     /* 20 */
-  "BCAST_CON" ,     /* 21 */
-  "RAND_SEED" ,     /* 22 */
-  "RAND_STAT" ,     /* 23 */
-  "BCAST_LFC" ,     /* 24 */
-
-  "BCAST_TFC" ,     /* 25 */
-  "BIT_RAND_SEED",  /* 26 */
-  "BIT_RAND_STAT",  /* 27 */
-  "GET_CONSTR",     /* 28 */
-  "RESCALE_PART",   /* 29 */
-
-  "BCAST_CS",       /* 30 */
-  "SET_QUAT"  ,     /* 31 */
-  "SET_OMEGA",      /* 32 */
-  "SET_TORQUE",     /* 33 */
-  "SET_MOLID",      /* 34 */
-
-  "BCAST_NPT_GEOM", /* 35 */
-  "UPDATE_MOL_IDS", /* 36 */
-  "SYNC_TOPO",      /* 37 */
-  "SET_MASS",       /* 38 */
-  "BCAST_BFC" ,     /* 39 */
-
-  "GET_ERRS",       /* 40 */
-  "SET_EXCL",       /* 41 */
-  "BCAST_MFC" ,     /* 42 */
-  "BCAST_LB",       /* 43 */
-  "SET_DIP",        /* 44 */
-
-  "SET_DIPM",       /* 45 */
-  "SET_FLUID",      /* 46 */
-  "GET_FLUID",      /* 47 */
-  "GET_LOCAL_STRESS_TENSOR", /* 48 */
-  "BCAST_LAFC",     /* 49 */
-
-  "SET_ISVI",       /* 50 */
-  "REQ_BCAST_TF",   /* 51 */
-  "REQ_ICCP3M_ITERATION", /* 52 */
-  "REQ_ICCP3M_INIT",/* 53 */
-  "SET_RINERTIA",   /* 54 */
-  "REQ_BCAST_LBBOUNDARY", /* 55 */
-  "SET_MU_E",       /* 56 */
-  "REQ_MAX_MU",     /* 57 */
-  "SET_VS_RELATIVE",/* 58 */
-  "REQ_GET_FLUID_POP", /* 59 */
-  "REQ_LB_GET_BORDER_FLAG" /* 60 */
-  "SET_VS_RELATIVE", /* 61 */
+  CALLBACK_LIST
 };
+
+// tag which is used by MPI send/recv inside the slave functions
+#define SOME_TAG 42
+
 
 /** The requests are compiled statically here, so that after a crash
     you can get the last issued request from the debugger. */ 
@@ -324,8 +195,9 @@ void mpi_init(int *argc, char ***argv)
 static void mpi_call(SlaveCallback cb, int node, int param) {
   // find req number in callback array
   int reqcode;
-  for (reqcode = 0; reqcode < N_CALLBACKS; reqcode++)
+  for (reqcode = 0; reqcode < N_CALLBACKS; reqcode++) {
     if (cb == slave_callbacks[reqcode]) break;
+  }
 
   if (reqcode >= N_CALLBACKS) {
     fprintf(stderr, "%d: INTERNAL ERROR: unknown callback %d called\n", this_node, reqcode);
@@ -2758,3 +2630,4 @@ void mpi_loop()
 		       names[request[0]], request[1], request[2]));
   }
 }
+

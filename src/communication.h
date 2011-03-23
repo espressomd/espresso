@@ -26,24 +26,20 @@
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interpretes the Tcl
-    script, all other nodes wait in \ref mpi_loop for the master node
-    to issue an action using \ref mpi_issue or mpi_call. \ref mpi_loop
-    immediately executes an MPI_Bcast and therefore waits for the
-    master node to broadcast a command, which is done by \ref
-    mpi_issue. The request consists of three integers, the first one
-    describing the action issued, the second and third an arbitrary
-    parameter depending on the action issued. If applicable, the
-    second parameter is the node number of the slave this request is
-    dedicated to.
+    script, all other nodes wait in mpi_loop() for the master node to
+    issue an action using mpi_call(). \ref mpi_loop immediately
+    executes an MPI_Bcast and therefore waits for the master node to
+    broadcast a command, which is done by mpi_call(). The request
+    consists of three integers, the first one describing the action
+    issued, the second and third an arbitrary parameter depending on
+    the action issued. If applicable, the second parameter is the node
+    number of the slave this request is dedicated to.
 
-    Adding new actions (e. g. to implement new Tcl commands) is
-    simple. First, the action has to be assigned a new action number
-    (the defines like \ref REQ_BCAST_PAR) by adding a new define and
-    increasing \ref REQ_MAXIMUM. Then you write a mpi_* procedure that
-    does a
-    \verbatim mpi_issue(request, node, param)\endverbatim
-    where pnode and param are arbitrary values which will be passed to the slave
-    procedure.
+    To add new actions (e. g. to implement new Tcl commands), do the
+    following:
+    * write the mpi_* function that is executed on the master
+    * write the mpi_*_slave function
+    * Add your slave function to CALLBACK_LIST in communication.c
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
