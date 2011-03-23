@@ -39,7 +39,7 @@ EXTRA_DIST=\
         figs/ghost_communication.gif \
         figs/linked_cells.fig \
         figs/linked_cells.gif \
-        figs/logo.gif \
+        figs/logo.png \
         figs/move_to_p_buf.fig \
         figs/move_to_p_buf.gif \
         figs/particles.fig \
@@ -52,8 +52,9 @@ if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
 	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
 	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
-	  $(DOXYGEN) $(srcdir)/Doxyfile \
-	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
+	  $(DOXYGEN) $(srcdir)/Doxyfile
+ # \
+ # 	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
 	@echo "*  file://`pwd`/html/index.html"

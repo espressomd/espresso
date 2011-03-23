@@ -37,9 +37,9 @@
 
     To add new actions (e. g. to implement new Tcl commands), do the
     following:
-    * write the mpi_* function that is executed on the master
-    * write the mpi_*_slave function
-    * Add your slave function to CALLBACK_LIST in communication.c
+    - write the mpi_* function that is executed on the master
+    - write the mpi_*_slave function
+    - Add your slave function to CALLBACK_LIST in communication.c
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
