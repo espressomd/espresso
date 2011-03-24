@@ -61,7 +61,9 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
 #endif
+#ifndef GAUSSRANDOM
 #define GAUSSRANDOM
+#endif
 /** The underlying lattice structure */
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
 
@@ -1694,32 +1696,33 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
 }
 
 MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
-    double rootrho = sqrt(mode[0]+lbpar.rho*agrid*agrid*agrid);
+    double rootrho = sqrt(12.0*mode[0]+lbpar.rho*agrid*agrid*agrid);
+    double rootrho_gauss = sqrt(mode[0]+lbpar.rho*agrid*agrid*agrid);
     double fluct[6];
 
 #ifdef GAUSSRANDOM
     /* stress modes */
-    mode[4] += (fluct[0] = rootrho*lb_phi[4]*gaussian_random());
-    mode[5] += (fluct[1] = rootrho*lb_phi[5]*gaussian_random());
-    mode[6] += (fluct[2] = rootrho*lb_phi[6]*gaussian_random());
-    mode[7] += (fluct[3] = rootrho*lb_phi[7]*gaussian_random());
-    mode[8] += (fluct[4] = rootrho*lb_phi[8]*gaussian_random());
-    mode[9] += (fluct[5] = rootrho*lb_phi[9]*gaussian_random());
+    mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random());
+    mode[5] += (fluct[1] = rootrho_gauss*lb_phi[5]*gaussian_random());
+    mode[6] += (fluct[2] = rootrho_gauss*lb_phi[6]*gaussian_random());
+    mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random());
+    mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random());
+    mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random());
     //if (index == lblattice.halo_offset) {
     //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
     //}
     
 #ifndef OLD_FLUCT
     /* ghost modes */
-    mode[10] += rootrho*lb_phi[10]*gaussian_random();
-    mode[11] += rootrho*lb_phi[11]*gaussian_random();
-    mode[12] += rootrho*lb_phi[12]*gaussian_random();
-    mode[13] += rootrho*lb_phi[13]*gaussian_random();
-    mode[14] += rootrho*lb_phi[14]*gaussian_random();
-    mode[15] += rootrho*lb_phi[15]*gaussian_random();
-    mode[16] += rootrho*lb_phi[16]*gaussian_random();
-    mode[17] += rootrho*lb_phi[17]*gaussian_random();
-    mode[18] += rootrho*lb_phi[18]*gaussian_random();
+    mode[10] += rootrho_gauss*lb_phi[10]*gaussian_random();
+    mode[11] += rootrho_gauss*lb_phi[11]*gaussian_random();
+    mode[12] += rootrho_gauss*lb_phi[12]*gaussian_random();
+    mode[13] += rootrho_gauss*lb_phi[13]*gaussian_random();
+    mode[14] += rootrho_gauss*lb_phi[14]*gaussian_random();
+    mode[15] += rootrho_gauss*lb_phi[15]*gaussian_random();
+    mode[16] += rootrho_gauss*lb_phi[16]*gaussian_random();
+    mode[17] += rootrho_gauss*lb_phi[17]*gaussian_random();
+    mode[18] += rootrho_gauss*lb_phi[18]*gaussian_random();
 #endif
 
 #else

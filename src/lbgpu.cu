@@ -327,50 +327,51 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 /*-------------------------------------------------------*/
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
 
-  float rootrho = sqrt(mode[0]+para.rho*para.agrid*para.agrid*para.agrid);
+  //float rootrho = sqrt(mode[0]+para.rho*para.agrid*para.agrid*para.agrid);
+  float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
 #ifdef GAUSSRANDOM
   /* stress modes */
   gaussian_random(rn);
-  mode[4] += rootrho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * rn->randomnr[1];
-  mode[5] += rootrho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
+  mode[4] += sqrt(Rho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk)))) * rn->randomnr[1];
+  mode[5] += sqrt(Rho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[6] += rootrho*(para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[1];
-  mode[7] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
+  mode[6] += sqrt(Rho*(para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[1];
+  mode[7] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[8] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[1];
-  mode[9] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
+  mode[8] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[1];
+  mode[9] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
  
   /* ghost modes */
   gaussian_random(rn);
-  mode[10] += rootrho*(para.mu*(2.f/3.f)) * rn->randomnr[1];
-  mode[11] += rootrho*(para.mu*(2.f/3.f)) * rn->randomnr[0];
+  mode[10] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[1];
+  mode[11] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[12] += rootrho*(para.mu*(2.f/3.f)) * rn->randomnr[1];
-  mode[13] += rootrho*(para.mu*(2.f/9.f)) * rn->randomnr[0];
+  mode[12] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[1];
+  mode[13] += sqrt(Rho*(para.mu*(2.f/9.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[14] += rootrho*(para.mu*(2.f/9.f)) * rn->randomnr[1];
-  mode[15] += rootrho*(para.mu*(2.f/9.f)) * rn->randomnr[0];
+  mode[14] += sqrt(Rho*(para.mu*(2.f/9.f))) * rn->randomnr[1];
+  mode[15] += sqrt(Rho*(para.mu*(2.f/9.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[16] += rootrho*(para.mu*(2.f)) * rn->randomnr[1];
-  mode[17] += rootrho*(para.mu*(4.f/9.f)) * rn->randomnr[0];
+  mode[16] += sqrt(Rho*(para.mu*(2.f))) * rn->randomnr[1];
+  mode[17] += sqrt(Rho*(para.mu*(4.f/9.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[18] += rootrho*(para.mu*(4.f/3.f)) * rn->randomnr[1];
+  mode[18] += sqrt(Rho*(para.mu*(4.f/3.f))) * rn->randomnr[1];
 #else
   /* stress modes */
   random_01(rn_part);
-  mode[4] += rootrho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * (rn->randomnr[1]-0.5f);
-  mode[5] += rootrho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
+  mode[4] += sqrt(12.f*Rho*para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * (rn->randomnr[1]-0.5f);
+  mode[5] += sqrt(12.f*Rho*para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
 
   random_01(rn_part);
-  mode[6] += rootrho*(para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
-  mode[7] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
+  mode[6] += sqrt(12.f*Rho*para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
+  mode[7] += sqrt(12.f*Rho*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
 
   random_01(rn_part);;
   mode[8] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
@@ -378,23 +379,23 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
  
   /* ghost modes */
   random_01(rn_part);
-  mode[10] += rootrho*(para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
-  mode[11] += rootrho*(para.mu*(2.f/3.f)) * (rn->randomnr[0]-0.5f);
+  mode[10] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
+  mode[11] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[0]-0.5f);
 
   random_01(rn_part);
-  mode[12] += rootrho*(para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
-  mode[13] += rootrho*(para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
+  mode[12] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
+  mode[13] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
 
   random_01(rn_part);
-  mode[14] += rootrho*(para.mu*(2.f/9.f)) * (rn->randomnr[1]-0.5f);
-  mode[15] += rootrho*(para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
+  mode[14] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[1]-0.5f);
+  mode[15] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
 
   random_01(rn_part);
-  mode[16] += rootrho*(para.mu*(2.f)) * (rn->randomnr[1]-0.5f);
-  mode[17] += rootrho*(para.mu*(4.f/9.f)) * (rn->randomnr[0]-0.5f);
+  mode[16] += sqrt(12.f*Rho*para.mu*(2.f)) * (rn->randomnr[1]-0.5f);
+  mode[17] += sqrt(12.f*Rho*para.mu*(4.f/9.f)) * (rn->randomnr[0]-0.5f);
 
   random_01(rn_part);
-  mode[18] += rootrho*(para.mu*(4.f/3.f)) * (rn->randomnr[1]-0.5f);
+  mode[18] += sqrt(12.f*Rho*para.mu*(4.f/3.f)) * (rn->randomnr[1]-0.5f);
 #endif
 }
 /*-------------------------------------------------------*/
@@ -782,7 +783,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 	
-#if 0
+#if 1
 	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
   if(n_a.boundary[node_index[0]] == 1){
     delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
@@ -825,7 +826,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
     delta[6] = temp_delta_half[0] * temp_delta[4] * temp_delta[5];
   }
 #endif
-#if 0
+#if 1
   if(n_a.boundary[node_index[0]] == 1)delta[0] = 0.f;
 
   if(n_a.boundary[node_index[1]] == 1)delta[1] = 0.f;
@@ -1569,7 +1570,7 @@ void lb_get_values_GPU(LB_values_gpu *host_values){
 
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
 
-  cudaThreadSynchronize();
+  //cudaThreadSynchronize();
 
 }
 /** setup and call kernel for getting macroscopic fluid values of a single node*/
@@ -1586,8 +1587,8 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
   KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, nodes_a));
   cudaMemcpy(host_print_values, device_print_values, sizeof(LB_values_gpu), cudaMemcpyDeviceToHost);
   cuda_safe_kernel(cudaGetLastError());
-
-  cudaThreadSynchronize();
+  cudaFree(device_print_values);
+  //cudaThreadSynchronize();
 }
 
 void calc_fluid_momentum_GPU(double* mom) {
