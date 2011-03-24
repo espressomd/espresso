@@ -106,3 +106,5 @@ testsuite/Makefile
 testsuite/runtest.sh
 tools/Makefile
 tools/es_mpiexec
+Espresso-main.o
+Espresso_install-main.o
