@@ -506,6 +506,23 @@ int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv
 #endif
 }
 
+
+static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double mom[3];
+
+  calc_fluid_momentum_GPU(mom);
+  
+  Tcl_PrintDouble(interp, mom[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, mom[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, mom[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+
+  return TCL_OK;
+}
+
 int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
     int err = TCL_ERROR;
@@ -519,8 +536,7 @@ int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv
 		fprintf(stderr, "sry not implemented yet");
       //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("momentum"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_momentum_gpu(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("temperature"))
 		fprintf(stderr, "sry not implemented yet");
       //err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
