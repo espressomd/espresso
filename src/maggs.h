@@ -67,7 +67,7 @@ extern MAGGS_struct maggs;
 /**********************************************/
 
 /* initialize, parse command and set parameters: */
-void Maggs_init(); /* called from: initialize.c */
+void maggs_init(); /* called from: initialize.c */
 int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
 int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh);
 
@@ -84,7 +84,7 @@ double maggs_magnetic_energy();
 int maggs_count_charged_particles();
 
 /* Clean up, print results: */
-void Maggs_exit();
+void maggs_exit();
 int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 

@@ -62,7 +62,7 @@
 #include "domain_decomposition.h"
 
 /* MPI tags for the maggs communications: */
-/* Used in Maggs_init() -> calc_glue_patch(). */
+/* Used in maggs_init() -> calc_glue_patch(). */
 #define REQ_MAGGS_SPREAD 300
 #define REQ_MAGGS_EQUIL  301
 
@@ -233,8 +233,8 @@ static t_dirs* neighbor;
 // int tclprint_to_result_Maggs(Tcl_Interp *interp) /* print result for TCL interface */
 
 /****** init and exit ******/
-// Maggs_init(); /* initialize: check parameters, assign memory, calculate initial field */
-// Maggs_exit(); /* free memory */
+// maggs_init(); /* initialize: check parameters, assign memory, calculate initial field */
+// maggs_exit(); /* free memory */
 
 
 
@@ -1979,7 +1979,7 @@ int tclprint_to_result_Maggs(Tcl_Interp *interp)
  Checks if given parameters make sense.
  Sets maggs structure variables.
  Calls calculation of initial D-field. */
-void Maggs_init()
+void maggs_init()
 {
 	
 	int d, ncharges;
@@ -1987,14 +1987,14 @@ void Maggs_init()
 	
 	if(maggs.bjerrum == 0.) {
 		if(this_node==0) 
-			MAGGS_TRACE(fprintf(stderr,"0: Maggs_init: Bjerrum length is zero.\n");
+			MAGGS_TRACE(fprintf(stderr,"0: maggs_init: Bjerrum length is zero.\n");
 						fprintf(stderr,"   Electrostatics switched off!\n"));    
 	}
 	else {
-		MAGGS_TRACE(fprintf(stderr,"\n%d: Maggs_init: \n",this_node));
+		MAGGS_TRACE(fprintf(stderr,"\n%d: maggs_init: \n",this_node));
 		if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
 			if(this_node==0) {
-				fprintf(stderr,"0: Maggs_init: SERIOUS WARNING:\n"); 
+				fprintf(stderr,"0: maggs_init: SERIOUS WARNING:\n"); 
 				fprintf(stderr,"   No long range interactions for non cubic box.\n"); 
 				fprintf(stderr,"   Switch off long range interactions! \n");
 			}
@@ -2008,7 +2008,7 @@ void Maggs_init()
 		
 		if(maggs.mesh%max_node_grid != 0) {
 			if(this_node==0) {
-				fprintf(stderr,"%d: Maggs_init: SERIOUS WARNING:\n", this_node); 
+				fprintf(stderr,"%d: maggs_init: SERIOUS WARNING:\n", this_node); 
 				fprintf(stderr,"   Number of mesh points is incompatible with number of processes.\n"); 
 				errexit();
 			}
@@ -2043,8 +2043,9 @@ void Maggs_init()
 	}
 }
 
-/** Frees the dynamically allocated memory */
-void Maggs_exit()
+/** Frees the dynamically allocated memory
+ Currently not called from anywhere. */
+void maggs_exit()
 {
 	free(lattice);
 	free(neighbor);
