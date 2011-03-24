@@ -628,6 +628,11 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
     node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
     node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
   }
+  else{
+  node_f.force[0][index] = 0.f;
+  node_f.force[1][index] = 0.f;
+  node_f.force[2][index] = 0.f;
+  }
 #else
   /* reset force */
   node_f.force[0][index] = 0.f;
@@ -658,15 +663,15 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
 
   if(singlenode == 1){
     d_v[0].rho = Rho;
-    d_v[0].v[0] = mode[1]/Rho;
-    d_v[0].v[1] = mode[2]/Rho;
-    d_v[0].v[2] = mode[3]/Rho;
+    d_v[0].v[0] = mode[1]/Rho/para.agrid/para.tau;
+    d_v[0].v[1] = mode[2]/Rho/para.agrid/para.tau;
+    d_v[0].v[2] = mode[3]/Rho/para.agrid/para.tau;
   }
   else{
     d_v[index].rho = Rho;
-    d_v[index].v[0] = mode[1]/Rho;
-    d_v[index].v[1] = mode[2]/Rho;
-    d_v[index].v[2] = mode[3]/Rho;
+    d_v[index].v[0] = mode[1]/Rho/para.agrid/para.tau;
+    d_v[index].v[1] = mode[2]/Rho/para.agrid/para.tau;
+    d_v[index].v[2] = mode[3]/Rho/para.agrid/para.tau;
   }
 #if 0
   if(singlenode == 1){
@@ -722,13 +727,13 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
 /*-------------------------------------------------------*/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))*/
 /*@{
- * @param n_a				Pointer to local node residing in array a (Input)
- * @param *delta			Pointer for the weighting of particle position (Output)
- * @param *delta_j			Pointer for the weighting of particle momentum (Output)
+ * @param n_a			Pointer to local node residing in array a (Input)
+ * @param *delta		Pointer for the weighting of particle position (Output)
+ * @param *delta_j		Pointer for the weighting of particle momentum (Output)
  * @param *particle_data	Pointer to the particle position and velocity (Input)
  * @param *particle_force	Pointer to the particle force (Input)
  * @param part_index		particle id / thread id (Input)
- * @param *rn				Pointer to randomnumber array of the particle
+ * @param *rn			Pointer to randomnumber array of the particle
  * @param node_index		node index around (8) particle (Output)
 }*/
 /*-------------------------------------------------------*/
@@ -886,8 +891,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
 	(Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))*/
 /*@{
 
- * @param *delta			Pointer for the weighting of particle position (Input)
- * @param *delta_j			Pointer for the weighting of particle momentum (Input)
+ * @param *delta		Pointer for the weighting of particle position (Input)
+ * @param *delta_j		Pointer for the weighting of particle momentum (Input)
  * @param node_index		node index around (8) particle (Input)
  * @param node_f    		Pointer to the node force (Output).
 }*/
@@ -1085,6 +1090,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
+#ifdef EXTERNAL_FORCE
     if(para.external_force){
       node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
       node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
@@ -1095,9 +1101,14 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
       node_f.force[1][index] = 0.0f;
       node_f.force[2][index] = 0.0f;
     }
+#else
+    node_f.force[0][index] = 0.0f;
+    node_f.force[1][index] = 0.0f;
+    node_f.force[2][index] = 0.0f;
+#endif
   }
 }
-#if 1
+
 /*-------------------------------------------------------*/
 /**hard coded boundary kernel for custom made boundaries */
 /**just for advanced LB users to setup special boundaries or mark some nodes with
@@ -1140,7 +1151,7 @@ __global__ void init_boundaries_hardcoded(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 #endif	
   }
 }
-#endif
+
 /*-------------------------------------------------------*/
 /**set the boundary flag for all boundary nodes */
 /*@{
@@ -1200,7 +1211,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
     if (para.fluct) thermalize_modes(mode, index, &rng);
 #ifdef EXTERNAL_FORCES
     /**if external force is used apply node force */
-    if (para.external_force) apply_forces(index, mode, node_f);
+    apply_forces(index, mode, node_f);
 #else
     /**if partcles are used apply node forces*/
     if (para.number_of_particles) apply_forces(index, mode, node_f); 
@@ -1608,13 +1619,11 @@ void lb_integrate_GPU(){
 
 #if 0		
     KERNELCALL(reset_population, dim_grid, threads_per_block, (nodes_b, nodes_a));
-
 #endif
 #ifdef LB_BOUNDARIES_GPU		
     if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
 			
     if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
-
 #endif
     intflag = 0;
   }
@@ -1627,7 +1636,6 @@ void lb_integrate_GPU(){
     if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
 			
     if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
-
 #endif
     intflag = 1;
   }             
