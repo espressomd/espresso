@@ -20,7 +20,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
  */
 
-/* \file maggs.c
+/** \file maggs.c
  *  Maxwell Equations Molecular Dynamics (MEMD) method for electrostatic
  *  interactions.
  *
@@ -106,7 +106,7 @@ typedef int      t_ivector [SPACE_DIM]; /* integer vector for position in grid *
 typedef double   t_dvector [SPACE_DIM]; /* double vector for fields etc. */
 typedef int      t_dirs    [NDIRS];     /* integer vector for directions */
 
-/* Structure of local lattice parameters. */
+/** Structure of local lattice parameters. */
 typedef struct {
 	t_dvector left_down_position;        /* spatial position of left down grid point */  
 	t_dvector upper_right_position;      /* spatial positon of upper right grid point */ 
@@ -120,7 +120,7 @@ typedef struct {
 	int volume;                          /* number of lattice sites in local domain */
 } lattice_parameters;
 
-/* surface_patch structure for communication. */
+/** surface_patch structure for communication. */
 typedef struct {
 	int offset;        /* source offset for the site index */
 	int doffset;       /* destination offset for the site index */
@@ -131,7 +131,7 @@ typedef struct {
 	int volume;        /* number of lattice sites in surface patch */
 } t_surf_patch;
 
-/* structure for properties of each lattice site */
+/** structure for properties of each lattice site */
 typedef struct {
 	double    charge;                     /* charge on site */
 	double    permittivity[SPACE_DIM];    /* dielectric properties on adjoined bonds. */
@@ -246,15 +246,17 @@ static t_dirs* neighbor;
 /****** small helper functions: ******/
 /*************************************/
 
+/** Turns the 3D index into a linear index.
+ adim contains the dimensions of the lattice in
+ the 3 directions: adim[0] = x_max, ..., adim[2] = z_max
+ z is the first index!!! */
 int maggs_get_linear_index(int x, int y, int z, int latticedim[SPACE_DIM])
-/* Turns the 3D index into a linear index. */
-/* adim contains the dimensions of the lattice in */
-/* the 3 directions: adim[0] = x_max, ..., adim[2] = z_max */
-/* z is the first index!!! */
 {
 	return (z + latticedim[ZPLUS]*(y + latticedim[YPLUS]*x));
 }
 
+/** Counts the total number of charged particles on 
+ all processors. */
 int maggs_count_charged_particles()
 {  
 	Cell *cell;
@@ -279,9 +281,9 @@ int maggs_count_charged_particles()
 }
 
 
+/** Index shift is calculated for moving in various
+ directions with the linear index. */
 int maggs_get_offset(int index_shift, int index_base, int axes, int adim[3])
-/* Index shift is calculated for moving in various */
-/* directions with the linear index. */
 {
 	int dif;
 	dif = index_shift - index_base;
@@ -292,9 +294,9 @@ int maggs_get_offset(int index_shift, int index_base, int axes, int adim[3])
 }
 
 
+/** For any direction j, write the two other directions
+ into the pointers in circular permutation. */
 void maggs_calc_directions(int j, int* dir1, int*dir2)
-/* For any direction j, write the two other directions */
-/* into the pointers in circular permutation. */
 {
 	*dir1 = *dir2 = -1;
 	switch(j) {
@@ -313,10 +315,10 @@ void maggs_calc_directions(int j, int* dir1, int*dir2)
 	}  
 }
 
+/** Calculates the finite differences rotation in real space in mue-nue plane:
+ \dot{D} = \nabla \times B (and prefactors plus current)
+ The given "double* field" should be a B-Field!! */
 double maggs_calc_curl(int mue, int nue, double* field, int* Neighbor, int index)
-/* Calculates the finite differences rotation in real space in mue-nue plane: */
-/* \dot{D} = \nabla \times B (and prefactors plus current)*/
-/* The given "double* field" should be a B-Field!! */
 {
 	double result;
 	
@@ -326,10 +328,10 @@ double maggs_calc_curl(int mue, int nue, double* field, int* Neighbor, int index
 	return result;
 }
 
+/** Calculates the finite differences rotation in dual space in mue-nue plane:
+ \dot{B} = - \nabla \times D / (\epsilon)
+ The given "double* field" should be a D-Field!! */
 double maggs_calc_dual_curl(int mue, int nue, double* field, int* Neighbor, int index)
-/* Calculates the finite differences rotation in dual space in mue-nue plane: */
-/* \dot{B} = - \nabla \times D / (\epsilon) */
-/* The given "double* field" should be a D-Field!! */
 {
 	double res;
 	
@@ -340,10 +342,10 @@ double maggs_calc_dual_curl(int mue, int nue, double* field, int* Neighbor, int 
 }
 
 
+/** updates all E-fields on links of the plaquette
+ and the surroundings. delta was calculated before
+ in function "maggs_perform_rot_move_inplane". */
 void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double delta)
-/* updates all E-fields on links of the plaquette */
-/* and the surroundings. delta was calculated before */
-/* in function "maggs_perform_rot_move_inplane". */
 {
 	int i = 3*index;
 	Dfield[i+mue]             += delta;
@@ -361,8 +363,8 @@ void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double d
 /****** setup everything: ******/
 /*******************************/
 
+/** set and calculate the system wide parameters */
 int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh)
-/* set and calculate the system wide parameters */
 {
 	if (f_mass <=0.) {
 		Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
@@ -383,9 +385,9 @@ int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int 
 	return TCL_OK;
 }
 
+/** parse TCL command.
+ number of parameters is checked and maggs_set_parameters function is called. */
 int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
-/* parse TCL command. */
-/* number of parameters is checked and maggs_set_parameters function is called. */
 {
 	int mesh;
 	double f_mass;
@@ -415,8 +417,8 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
 }
 
 
+/** sets up nearest neighbors for each site in linear index */
 void maggs_setup_neighbors()
-/* sets up nearest neighbors for each site in linear index */
 {
 	int ix = 0;
 	int iy = 0;
@@ -484,9 +486,9 @@ void maggs_setup_neighbors()
 }
 
 
+/** Set up lattice, calculate dimensions and lattice parameters
+ Allocate memory for lattice sites and fields */
 void maggs_setup_local_lattice()
-/* Set up lattice, calculate dimensions and lattice parameters */
-/* Allocate memory for lattice sites and fields */
 {
 	int i;
 	int ix = 0;
@@ -556,8 +558,8 @@ void maggs_setup_local_lattice()
 }
 
 
+/** sets up surface patches for all domains. */
 void maggs_calc_surface_patches(t_surf_patch* surface_patch)
-/* sets up surface patches for all domains. */
 {
 	/* x=lparams.size[0] plane */
 	surface_patch[0].offset   = lparams.dim[2]*lparams.dim[1]*lparams.size[0];    /*(size[0],0,0) point */
@@ -621,9 +623,9 @@ void maggs_calc_surface_patches(t_surf_patch* surface_patch)
 }
 
 
+/** sets up MPI communications for domain surfaces */
 void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, MPI_Datatype *yz, 
 							t_surf_patch *surface_patch)
-/* sets up MPI communications for domain surfaces */
 {
 	MPI_Type_contiguous(dim*surface_patch[0].stride*sizeof(double),MPI_BYTE,yz);  
 	MPI_Type_commit(yz);
@@ -645,9 +647,9 @@ void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, M
 /****** Surface patch communication ******/
 /*****************************************/
 
+/** MPI communication of surface region.
+ works for D- and B-fields. */
 void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
-/* MPI communication of surface region. */
-/* works for D- and B-fields. */
 {
 	static int init = 1;
 	static MPI_Datatype xyPlane,xzPlane,yzPlane; 
@@ -762,9 +764,9 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
 /****** interpolate charges on lattice: ******/
 /*********************************************/
 
+/** Interpolation function in one dimension.
+ Currently only linear interpolation conserves charge. */
 double maggs_interpol1D(double x)
-/* Interpolation function in one dimension. */
-/* Currently only linear interpolation conserves charge. */
 {	
 	return x;
 	/* Cosine interpolation would be: */
@@ -772,11 +774,11 @@ double maggs_interpol1D(double x)
 }
 
 
+/** Does the actual interpolating calculation.
+ int *first: 3dim-array lattice position,
+ double *rel: 3dim-array relative position in cube,
+ double q: charge to interpolate */
 void maggs_interpolate_charge(int *first, double *rel, double q)
-/* Does the actual interpolating calculation. */
-/* int *first: 3dim-array lattice position, */
-/* double *rel: 3dim-array relative position in cube, */
-/* double q: charge to interpolate */
 {
 	int i, k, l, m, index, temp_ind;
 	int help_index[3];
@@ -820,8 +822,8 @@ void maggs_interpolate_charge(int *first, double *rel, double q)
 	}		
 }
 
+/** add charges from ghost cells to lattice sites. */
 void maggs_accumulate_charge_from_ghosts()
-/* add charges from ghost cells to lattice sites. */
 {
 	Cell *cell;
 	Particle* p;
@@ -859,9 +861,9 @@ void maggs_accumulate_charge_from_ghosts()
 }
 
 
+/** finds current lattice site of each particle.
+ calculates charge interpolation on cube. */
 void maggs_distribute_particle_charges()
-/* finds current lattice site of each particle. */
-/* calculates charge interpolation on cube. */
 {	
 	Cell *cell;
 	Particle* p;
@@ -892,11 +894,11 @@ void maggs_distribute_particle_charges()
 	maggs_accumulate_charge_from_ghosts();	
 }
 	
+/** Does the actual calculation of the gradient. Parameters:
+ double *rel: 3dim-array of relative position in cube,
+ double q: charge,
+ double *grad: huge gradient array to write into */
 void maggs_calc_charge_gradients(double *rel, double q, double *grad)
-/* Does the actual calculation of the gradient. Parameters: */
-/* double *rel: 3dim-array of relative position in cube, */
-/* double q: charge, */
-/* double *grad: huge gradient array to write into */
 {
 	int i,l,m,index, d;
 	double help[3];
@@ -924,9 +926,9 @@ void maggs_calc_charge_gradients(double *rel, double q, double *grad)
 
 
 
+/** finds correct lattice cube for particles.
+ calculates charge gradients on this cube. */
 void maggs_update_charge_gradients(double *grad)
-/* finds correct lattice cube for particles. */
-/* calculates charge gradients on this cube. */
 {
 	Cell *cell;
 	Particle* p;
@@ -967,10 +969,10 @@ void maggs_update_charge_gradients(double *grad)
 /****** initialization procedure: ******/
 /***************************************/
 
+/** For energy minimization:
+ returns maximum of curl(E) from all sites.
+ May also be used to verify constraint surface condition. */
 double maggs_check_curl_E()
-/* For energy minimization: */
-/* returns maximum of curl(E) from all sites. */
-/* May also be used to verify constraint surface condition. */
 {
 	int i, ix, iy, iz;
 	double curl, maxcurl, gmaxcurl;
@@ -998,9 +1000,9 @@ double maggs_check_curl_E()
 	return gmaxcurl;
 }
 
+/** If curl(E) is not zero, update plaquette with corrections.
+ coordinate "int n" is the normal direction to the plaquette */
 void maggs_perform_rot_move_inplane(int i, int n)
-/* If curl(E) is not zero, update plaquette with corrections. */
-/* coordinate "int n" is the normal direction to the plaquette */
 {
 	int mue, nue;
 	int * anchor_neighb;
@@ -1036,9 +1038,9 @@ void maggs_perform_rot_move_inplane(int i, int n)
 }
 
 
+/** For energy minimization:
+ Relax B-fields in all directions. */
 void maggs_minimize_transverse_field()
-/* For energy minimization: */
-/* Relax B-fields in all directions. */
 {
 	int k, l, m;
 	int i, d;
@@ -1094,10 +1096,10 @@ void maggs_minimize_transverse_field()
 }
 
 
+/** calculates initial electric field configuration.
+ currently uses simple and slow method of plaquettes and links.
+ energy minimization takes up lots of time. */
 void maggs_calc_init_e_field()
-/* calculates initial electric field configuration. */
-/* currently uses simple and slow method of plaquettes and links. */
-/* energy minimization takes up lots of time. */
 {
 	int xsizeplus, ysizeplus;
 	double localqy, localqz;
@@ -1397,10 +1399,10 @@ void maggs_calc_init_e_field()
 /****** calculate currents and E-fields ******/
 /*********************************************/
 
+/** calculate the charge flux in direction "dir".
+ parameter "help" is the relative position in the cube
+ to the opposite of left down front lattice site. */
 void maggs_calc_charge_fluxes_1D(double q, double *help, double *flux, int dir)
-/* calculate the charge flux in direction "dir". */
-/* parameter "help" is the relative position in the cube */
-/* to the opposite of left down front lattice site. */
 {
 	/* at the moment works only for linear interpolation */
 	int index, dir1, dir2;
@@ -1424,11 +1426,11 @@ void maggs_calc_charge_fluxes_1D(double q, double *help, double *flux, int dir)
 	}
 }
 
+/** Extend particle trajectories on
+ the one time step and check if
+ the trajectory intersects the cell
+ boundary in direction dir */
 int maggs_check_intersect_1D(double delta, double r_new, int dir, int first, double *t_step, int identity)
-/* Extend particle trajectories on */
-/* the one time step and check if */
-/* the trajectory intersects the cell */
-/* boundary in direction dir */
 {	
 	int candidateplane = -1; /* force alloc error */
 	int f_crossing; 
@@ -1461,10 +1463,9 @@ int maggs_check_intersect_1D(double delta, double r_new, int dir, int first, dou
 	return f_crossing;
 }
 
+/** updates field on link coupling it with current.
+ Force is multiplied by the time_step */
 void maggs_calc_e_field_on_link_1D(int index, double *flux, double v, int dir)
-/* updates field on link coupling it with current.
- * Force is multiplied by the time_step
- */
 {  
 	int l, m, ind_flux, dir1, dir2;
 	int temp_ind;
@@ -1506,8 +1507,8 @@ void maggs_calc_e_field_on_link_1D(int index, double *flux, double v, int dir)
 }
 
 
+/** loop over all cells and call current functions */
 void maggs_add_current_on_segment(Particle *p, int ghost_cell)
-/* loop over all cells and call current functions */
 {
 	int d;
 	int icoord, dir;
@@ -1597,12 +1598,12 @@ void maggs_add_current_on_segment(Particle *p, int ghost_cell)
 }
 
 
+/** Calculate fluxes and couple them
+ with fields symplectically.
+ It is assumed that the particle
+ can not cross more than one
+ cell boundary per direction        */
 void maggs_couple_current_to_Dfield()
-/* Calculate fluxes and couple them   */
-/* with fields symplectically.        */
-/* It is assumed that the particle    */
-/* can not cross more than one        */
-/* cell boundary per direction        */
 {
 	Cell *cell;
 	Particle* p;
@@ -1660,10 +1661,10 @@ void maggs_couple_current_to_Dfield()
 /****** calculate B-fields and forces ******/
 /*******************************************/
 
+/** propagate the B-field via \dot{B} = \nabla\times D (and prefactor)
+ CAREFUL: Usually this function is called twice, with dt/2 each time
+ to ensure a time reversible integration scheme! */
 void maggs_propagate_B_field(double dt)
-/* propagate the B-field via \dot{B} = \nabla\times D (and prefactor) */
-/* CAREFUL: Usually this function is called twice, with dt/2 each time */
-/* to ensure a time reversible integration scheme! */
 {
 	int x, y, z, i, offset, index;
 	int xoffset, yoffset;
@@ -1692,9 +1693,9 @@ void maggs_propagate_B_field(double dt)
 	maggs_exchange_surface_patch(Bfield, 3, 0);
 }
 
+/** calculate D-field from B-field according to
+ \dot{D} = \nabla\times B (and prefactors) */
 void maggs_add_transverse_field(double dt)
-/* calculate D-field from B-field according to */
-/* \dot{D} = \nabla\times B (and prefactors) */
 {
 	int i, index;
 	double invasq; 
@@ -1729,10 +1730,10 @@ void maggs_add_transverse_field(double dt)
 }
 
 
+/** For each particle P, calculates self energy influence
+ with direct Greens function, assuming constant permittivity
+ on each lattice site. */
 void maggs_calc_self_influence(Particle* P)
-/* For each particle P, calculates self energy influence */
-/* with direct Greens function, assuming constant permittivity */
-/* on each lattice site. */
 {
 	int k;
 	//	int ix, iy, iz;
@@ -1791,9 +1792,9 @@ void maggs_calc_self_influence(Particle* P)
 	}
 }
 
+/** Calculate the actual force from the E-Field
+ This is, where the actual INTERLACING happens! */
 void maggs_calc_part_link_forces(Particle *p, int index, double *grad)
-/* Calculate the actual force from the E-Field */
-/* This is, where the actual INTERLACING happens! */
 {
 	static int init = 1;
 	static int help_index[SPACE_DIM];
@@ -1840,11 +1841,11 @@ void maggs_calc_part_link_forces(Particle *p, int index, double *grad)
 }
 
 
+/** Public function.
+ Calculates the actual force on each particle
+ by calling all other needed functions (except
+ for maggs_propagate_B_field) */
 void maggs_calc_forces()
-/* Public function. */
-/* Calculates the actual force on each particle */
-/* by calling all other needed functions (except */
-/* for maggs_propagate_B_field) */
 { 
 	Cell *cell;
 	static int init = 1;
@@ -1911,9 +1912,9 @@ void maggs_calc_forces()
 /****** get energy and print out stuff ******/
 /********************************************/
 
+/** integrates 0.5*D*E over the whole system
+ public function! */
 double maggs_electric_energy()
-/* integrates 0.5*D*E over the whole system */
-/* public function! */
 {
 	int x, y, z, i, k;
 	double localresult = 0.;
@@ -1931,10 +1932,10 @@ double maggs_electric_energy()
 }
 
 
+/** Public funxtion.
+ Integrates the B-field over the whole system to get the
+ energy of the magnetic field. */
 double maggs_magnetic_energy()
-/* Public funxtion. */
-/* Integrates the B-field over the whole system to get the */
-/* energy of the magnetic field. */
 {
 	int x, y, z, i;
 	double result = 0.;
@@ -1949,8 +1950,8 @@ double maggs_magnetic_energy()
 	return result;
 }
 
+/** print out current setup of maggs method */
 int tclprint_to_result_Maggs(Tcl_Interp *interp)
-/* print out current setup of maggs method */
 {
 	char buffer[TCL_DOUBLE_SPACE];
 	
@@ -1974,11 +1975,11 @@ int tclprint_to_result_Maggs(Tcl_Interp *interp)
 /****** init and exit ******/
 /***************************/
 
+/** Initialization function.
+ Checks if given parameters make sense.
+ Sets maggs structure variables.
+ Calls calculation of initial D-field. */
 void Maggs_init()
-/* Initialization function. */
-/* Checks if given parameters make sense. */
-/* Sets maggs structure variables. */
-/* Calls calculation of initial D-field. */
 {
 	
 	int d, ncharges;
@@ -2042,8 +2043,8 @@ void Maggs_init()
 	}
 }
 
+/** Frees the dynamically allocated memory */
 void Maggs_exit()
-/* Frees the dynamically allocated memory */
 {
 	free(lattice);
 	free(neighbor);
