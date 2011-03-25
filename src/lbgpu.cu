@@ -327,7 +327,6 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 /*-------------------------------------------------------*/
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
 
-  //float rootrho = sqrt(mode[0]+para.rho*para.agrid*para.agrid*para.agrid);
   float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
 #ifdef GAUSSRANDOM
@@ -365,36 +364,36 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   mode[18] += sqrt(Rho*(para.mu*(4.f/3.f))) * rn->randomnr[1];
 #else
   /* stress modes */
-  random_01(rn_part);
+  random_01(rn);
   mode[4] += sqrt(12.f*Rho*para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * (rn->randomnr[1]-0.5f);
   mode[5] += sqrt(12.f*Rho*para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
 
-  random_01(rn_part);
+  random_01(rn);
   mode[6] += sqrt(12.f*Rho*para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
   mode[7] += sqrt(12.f*Rho*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
 
-  random_01(rn_part);;
-  mode[8] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
-  mode[9] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
+  random_01(rn);
+  mode[8] += sqrt(12.f*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
+  mode[9] += sqrt(12.f*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
  
   /* ghost modes */
-  random_01(rn_part);
+  random_01(rn);
   mode[10] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
   mode[11] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[0]-0.5f);
 
-  random_01(rn_part);
+  random_01(rn);
   mode[12] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
   mode[13] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
 
-  random_01(rn_part);
+  random_01(rn);
   mode[14] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[1]-0.5f);
   mode[15] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
 
-  random_01(rn_part);
+  random_01(rn);
   mode[16] += sqrt(12.f*Rho*para.mu*(2.f)) * (rn->randomnr[1]-0.5f);
   mode[17] += sqrt(12.f*Rho*para.mu*(4.f/9.f)) * (rn->randomnr[0]-0.5f);
 
-  random_01(rn_part);
+  random_01(rn);
   mode[18] += sqrt(12.f*Rho*para.mu*(4.f/3.f)) * (rn->randomnr[1]-0.5f);
 #endif
 }
@@ -783,7 +782,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 	
-#if 1
+#if 0
 	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
   if(n_a.boundary[node_index[0]] == 1){
     delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
@@ -826,7 +825,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
     delta[6] = temp_delta_half[0] * temp_delta[4] * temp_delta[5];
   }
 #endif
-#if 1
+#if 0
   if(n_a.boundary[node_index[0]] == 1)delta[0] = 0.f;
 
   if(n_a.boundary[node_index[1]] == 1)delta[1] = 0.f;
@@ -1341,22 +1340,27 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
 }
 __global__ void momentum(LB_nodes_gpu n_a, float* sum, LB_node_force_gpu node_f) {
   float mode[19];
-  //unsigned int singlenode = 0;
+
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-#if 0
-  LB_values_gpu d_v;
-  d_v.v[0]=0;
-  d_v.v[1]=0;
-  d_v.v[2]=0;
-#endif 
 
   if(index<para.number_of_nodes){
     calc_mode(mode, n_a, index);
- //   calc_values(n_a, mode, &d_v, index, singlenode);
+
+    atomicadd(&(sum[0]), mode[1]+node_f.force[0][index]);
+    atomicadd(&(sum[1]), mode[2]+node_f.force[1][index]);
+    atomicadd(&(sum[2]), mode[3]+node_f.force[2][index]);
   }
-  atomicadd(&(sum[0]), mode[1]+node_f.force[0][index]);
-  atomicadd(&(sum[1]), mode[2]+node_f.force[1][index]);
-  atomicadd(&(sum[2]), mode[3]+node_f.force[2][index]);
+}
+__global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force_gpu node_f) {
+  float mode[19];
+  float jsquared;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if(index<para.number_of_nodes){
+    calc_mode(mode, n_a, index);
+    jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
+    atomicadd(cpu_jsquared, jsquared);
+  }
 }
 
 void cuda_safe_mem(cudaError_t err){
@@ -1591,11 +1595,11 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
   //cudaThreadSynchronize();
 }
 
-void calc_fluid_momentum_GPU(double* mom) {
+void calc_fluid_momentum_GPU(double* mom){
   float* tot_momentum;
   float cpu_momentum[3] = { 0.f, 0.f, 0.f};
-  cudaMalloc((void**)&tot_momentum, 3*sizeof(float));
-  cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
+  //cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
   if (intflag == 1){
     KERNELCALL(momentum, dim_grid, threads_per_block,(nodes_a, tot_momentum, node_f));
   } else {
@@ -1605,9 +1609,23 @@ void calc_fluid_momentum_GPU(double* mom) {
   cudaMemcpy(cpu_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
   
   cudaFree(tot_momentum);
-  mom[0]=cpu_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau;
-  mom[1]=cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau;
-  mom[2]=cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau;
+  mom[0]=(double)(cpu_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[1]=(double)(cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[2]=(double)(cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
+}
+
+void calc_fluid_temperature_GPU(double* cpu_temp){
+  float cpu_jsquared = 0.f;
+  float* gpu_jsquared;
+  cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
+  if (intflag == 1){
+    KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_a, gpu_jsquared, node_f));
+  } else {
+    KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_b, gpu_jsquared, node_f));
+  }
+  cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
+
+  cpu_temp[0] = (double)(cpu_jsquared*1./(lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*pow(lbpar_gpu.agrid,4)));
 }
 /**-------------------------------------------------------------------------*/
 			/**setup and call integrate kernel from the host */

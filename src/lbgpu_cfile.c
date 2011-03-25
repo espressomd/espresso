@@ -101,10 +101,11 @@ void lb_calc_particle_lattice_ia_gpu() {
     mpi_get_particles_lb(host_data);
 
     if(this_node == 0){
-
+#if 0
       LB_TRACE (for (i=0;i<n_total_particles;i++) {
       fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
     })
+#endif
 /**----------------------------------------*/
 /**Call of the particle interaction kernel */
 /**----------------------------------------*/
@@ -125,10 +126,11 @@ void lb_send_forces_gpu(){
       if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
 
       LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
+#if 0
       LB_TRACE (for (i=0;i<n_total_particles;i++) {
         fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
       })
-
+#endif
     }
     mpi_send_forces_lb(host_forces);
   }
