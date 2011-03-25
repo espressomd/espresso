@@ -939,6 +939,7 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
  * @param part_index		index of the particle == thread index (Input).		
 }*/
 /*-------------------------------------------------------*/
+#if 0
 __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int part_index){
 
   if(particle_data[part_index].p[0]/para.agrid < 0.f || particle_data[part_index].p[0]/para.agrid > para.dim_x){
@@ -951,6 +952,7 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
     printf("particle out of box! (dim_z) \t %u \t %f \n", part_index, particle_data[part_index].p[2]); 
   }
 }
+#endif
 /*-------------------------------------------------------*/
 /**kernel to calculate local populations from hydrodynamic fields given by the tcl values.
  *
@@ -1360,11 +1362,9 @@ __global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force
 
   if(index<para.number_of_nodes){
     calc_mode(mode, n_a, index);
-#if 1
     if(n_a.boundary[index]){
       jsquared = 0.f;
     }
-#endif
     else{
       jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
     }
@@ -1379,13 +1379,7 @@ void cuda_safe_mem(cudaError_t err){
       exit(EXIT_FAILURE);
     }
 }
-void cuda_safe_kernel(cudaError_t err){
-    if( cudaSuccess != err) {                                             
-      fprintf(stderr, "cuda kernel failed!\n");
-      printf("CUDA error: %s\n", cudaGetErrorString(err));
-      exit(EXIT_FAILURE);
-    }
-}
+
 #define KERNELCALL(_f, _a, _b, _params) \
 _f<<<_a, _b, 0, stream[0]>>>_params; \
 _err=cudaGetLastError(); \
@@ -1579,11 +1573,7 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
 void lb_get_values_GPU(LB_values_gpu *host_values){
 
   KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_values));
-  cuda_safe_kernel(cudaGetLastError());	
-
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
-
-  //cudaThreadSynchronize();
 
 }
 /** setup and call kernel for getting macroscopic fluid values of a single node*/
@@ -1599,9 +1589,8 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
 
   KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, nodes_a));
   cudaMemcpy(host_print_values, device_print_values, sizeof(LB_values_gpu), cudaMemcpyDeviceToHost);
-  cuda_safe_kernel(cudaGetLastError());
   cudaFree(device_print_values);
-  //cudaThreadSynchronize();
+
 }
 
 void calc_fluid_momentum_GPU(double* mom){
