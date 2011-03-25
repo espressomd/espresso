@@ -262,6 +262,15 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete);
 */
 void mpi_send_exclusion(int part, int part2, int delete);
 
+
+/** Issue REQ_SET_SCATTERING_LENGTH: send particle scattering length.
+    Also calls \ref on_particle_change.
+    \param part the particle.
+    \param node the node it is attached to.
+    \param b its new scattering length.
+*/
+void mpi_send_scattering_length(int node, int part, double b);
+
 /** Issue REQ_REM_PART: remove a particle.
     Also calls \ref on_particle_change.
     \param id   the particle to remove.

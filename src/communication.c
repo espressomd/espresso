@@ -131,7 +131,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_max_mu_slave) \
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
-  CB(mpi_recv_fluid_border_flag_slave)
+  CB(mpi_recv_fluid_border_flag_slave) \
+  CB(mpi_send_scattering_length_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2602,3 +2603,28 @@ void mpi_loop()
   }
 }
 
+/****************** REQ_SET_SCATTERING_LENGTH ************/
+void mpi_send_scattering_length(int pnode, int part, double scattering_length)
+{
+  mpi_call(mpi_send_scattering_length_slave, pnode, part);
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.scattering_length = scattering_length;
+  }
+  else {
+    MPI_Send(&scattering_length, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+}
+
+void mpi_send_scattering_length_slave(int pnode, int part)
+{
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.scattering_length, 1, MPI_DOUBLE, 0, SOME_TAG,
+    MPI_COMM_WORLD, &status);
+  }
+  on_particle_change();
+}

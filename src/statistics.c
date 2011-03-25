@@ -30,6 +30,7 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "statistics_fluid.h"
+#include "statistics_correlation.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
@@ -43,6 +44,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "initialize.h"
+
 
 /** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
@@ -3746,7 +3748,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   else if (ARG1_IS_S(name)) err = parser(interp, argc - 2, argv + 2)
 #define REGISTER_ANALYSIS_W_ARG(name, parser, arg)			\
   else if (ARG1_IS_S(name)) err = parser(interp, arg, argc - 2, argv + 2)
-
+ 
   /* for the elses below */
   if (0);
   REGISTER_ANALYZE_OPTION("set", tclcommand_analyze_parse_set);
@@ -3755,6 +3757,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
 #endif
   REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
 
+  REGISTER_ANALYZE_OPTION("correlation", tclcommand_analyze_parse_correlation);
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
   REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);
