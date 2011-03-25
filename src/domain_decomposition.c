@@ -450,7 +450,7 @@ Cell *dd_save_position_to_cell(double pos[3])
     /* particles outside our box. Still take them if
        VERY close or nonperiodic boundary */
     if (cpos[i] < 1) {
-      if (lpos > -ROUND_ERROR_PREC
+      if (lpos > -ROUND_ERROR_PREC*box_l[i]
 #ifdef PARTIAL_PERIODIC
 	  || (!PERIODIC(i) && boundary[2*i])
 #endif
@@ -460,7 +460,7 @@ Cell *dd_save_position_to_cell(double pos[3])
 	return NULL;
     }
     else if (cpos[i] > dd.cell_grid[i]) {
-      if (lpos < local_box_l[i] + ROUND_ERROR_PREC
+      if (lpos < local_box_l[i] + ROUND_ERROR_PREC*box_l[i]
 #ifdef PARTIAL_PERIODIC
 	  || (!PERIODIC(i) && boundary[2*i+1])
 #endif
@@ -487,7 +487,7 @@ Cell *dd_position_to_cell(double pos[3])
     if (cpos[i] < 1) {
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
-      if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC) {
+      if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC*box_l[i]) {
 	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
 	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
@@ -496,7 +496,7 @@ Cell *dd_position_to_cell(double pos[3])
     else if (cpos[i] > dd.cell_grid[i]) {
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
-      if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC) {
+      if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC*box_l[i]) {
 	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
 	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
@@ -747,7 +747,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 	  for (p = 0; p < cell->n; p++) {
 	    part = &cell->part[p];
 	    /* Move particles to the left side */
-	    if(part->r.p[dir] - my_left[dir] < -ROUND_ERROR_PREC) {
+	    if(part->r.p[dir] - my_left[dir] < -ROUND_ERROR_PREC*box_l[dir]) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir]==0) ) 
 #endif
@@ -759,7 +759,7 @@ void  dd_exchange_and_sort_particles(int global_flag)
 		}
 	    }
 	    /* Move particles to the right side */
-	    else if(part->r.p[dir] - my_right[dir] >= ROUND_ERROR_PREC) {
+	    else if(part->r.p[dir] - my_right[dir] >= ROUND_ERROR_PREC*box_l[dir]) {
 #ifdef PARTIAL_PERIODIC 
 	      if( PERIODIC(dir) || (boundary[2*dir+1]==0) ) 
 #endif

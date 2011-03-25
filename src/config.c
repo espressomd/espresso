@@ -109,7 +109,7 @@ int tclcallback_compilation(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
 #ifdef FFTW
-  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
+  Tcl_AppendResult(interp, "{ FFTW } ", (char *) NULL);
 #endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);
