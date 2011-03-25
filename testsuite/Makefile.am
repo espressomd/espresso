@@ -33,7 +33,8 @@ tests = \
 	mass.tcl \
 	lb.tcl \
         tunable_slip.tcl \
-	virtual-sites.tcl
+	virtual-sites.tcl \
+	maggs.tcl
 
 deactivated_tests = \
 	lb_gpu.tcl \
@@ -68,7 +69,9 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	pe_micelle.tcl pe_micelle.data \
 	uwerr_test.tcl uwerr_test.data \
 	\
-	gen_fene.tcl gen_harm.tcl
+	gen_fene.tcl gen_harm.tcl \
+	\
+	maggs_correct_rdf.data
 
 # run the testsuite
 check-local: runtest.sh

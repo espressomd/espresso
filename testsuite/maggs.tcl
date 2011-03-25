@@ -67,8 +67,8 @@ if { [catch {
     set min_dist     0.9
 
     # integration
-    set int_steps    2000
-    set int_n_times  40
+    set int_steps    200
+    set int_n_times  10
 
     set tcl_precision 7
 
@@ -137,12 +137,12 @@ if { [catch {
     #      Integration                                          #
     #############################################################
 
-    set accepted_error 0.1
+    set accepted_error 0.3
 
     set r_bins [expr $num_part/10]
 
     #open file with correct RDF
-    set f_correct  [open "maggs_correct_rdf.dat" r]
+    set f_correct  [open "maggs_correct_rdf.data" r]
     for {set i 0} { $i < $r_bins } {incr i} {
 	gets $f_correct in_string
 	set correct_rdf($i) [lindex $in_string 1]
@@ -173,7 +173,8 @@ if { [catch {
 	    }
 	} 
 	
-	puts -nonewline "done [expr $i+1] loops at time=[setmd time] with error=$max_error \r"
+#	puts -nonewline "done [expr $i+1] loops at time=[setmd time] with error=$max_error \r"
+	puts "done [expr $i+1] loops at time=[setmd time] with error<=$max_error"
 	flush stdout
 	
     }
