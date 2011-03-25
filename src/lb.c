@@ -61,9 +61,9 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
 #endif
-//#ifndef GAUSSRANDOM
-//#define GAUSSRANDOM
-//#endif
+#ifndef GAUSSRANDOM
+#define GAUSSRANDOM
+#endif
 /** The underlying lattice structure */
 Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
 

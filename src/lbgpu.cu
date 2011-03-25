@@ -1345,7 +1345,9 @@ __global__ void momentum(LB_nodes_gpu n_a, float* sum, LB_node_force_gpu node_f)
 
   if(index<para.number_of_nodes){
     calc_mode(mode, n_a, index);
-
+    if(n_a.boundary[index]){
+      mode[1] = mode[2] = mode[3] = 0.f;
+    }
     atomicadd(&(sum[0]), mode[1]+node_f.force[0][index]);
     atomicadd(&(sum[1]), mode[2]+node_f.force[1][index]);
     atomicadd(&(sum[2]), mode[3]+node_f.force[2][index]);
@@ -1353,12 +1355,19 @@ __global__ void momentum(LB_nodes_gpu n_a, float* sum, LB_node_force_gpu node_f)
 }
 __global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force_gpu node_f) {
   float mode[19];
-  float jsquared;
+  float jsquared = 0.f;
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     calc_mode(mode, n_a, index);
-    jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
+#if 1
+    if(n_a.boundary[index]){
+      jsquared = 0.f;
+    }
+#endif
+    else{
+      jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
+    }
     atomicadd(cpu_jsquared, jsquared);
   }
 }
@@ -1599,7 +1608,7 @@ void calc_fluid_momentum_GPU(double* mom){
   float* tot_momentum;
   float cpu_momentum[3] = { 0.f, 0.f, 0.f};
   cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
-  //cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
   if (intflag == 1){
     KERNELCALL(momentum, dim_grid, threads_per_block,(nodes_a, tot_momentum, node_f));
   } else {
@@ -1618,6 +1627,7 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
   float cpu_jsquared = 0.f;
   float* gpu_jsquared;
   cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
+  cudaMemcpy(gpu_jsquared, &cpu_jsquared, sizeof(float), cudaMemcpyHostToDevice);
   if (intflag == 1){
     KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_a, gpu_jsquared, node_f));
   } else {
@@ -1625,7 +1635,7 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
   }
   cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
 
-  cpu_temp[0] = (double)(cpu_jsquared*1./(lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*pow(lbpar_gpu.agrid,4)));
+  cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
 /**-------------------------------------------------------------------------*/
 			/**setup and call integrate kernel from the host */
