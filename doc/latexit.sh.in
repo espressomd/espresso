@@ -4,8 +4,19 @@ TEXFILE=$2
 TEXINPUTS=.:$SRCDIR:@abs_srcdir@:
 BIBINPUTS=.:$SRCDIR:
 export TEXINPUTS BIBINPUTS
-@PDFLATEX@ $TEXFILE 
-test -e $TEXFILE.ind && @MAKEINDEX@ $TEXFILE
-@BIBTEX@ $TEXFILE 
-@PDFLATEX@ $TEXFILE 
-@PDFLATEX@ $TEXFILE 
+
+echo "Running LaTeX stage 1..."
+@PDFLATEX@ $TEXFILE > /dev/null
+if test -e $TEXFILE.ind; then
+    echo "Running makeindex..."
+    @MAKEINDEX@ $TEXFILE
+fi
+
+echo "Running bibtex..."
+@BIBTEX@ $TEXFILE
+
+echo "Running LaTeX stage 2..."
+@PDFLATEX@ $TEXFILE > /dev/null
+
+echo "Running LaTeX stage 3..."
+@PDFLATEX@ $TEXFILE > /dev/null

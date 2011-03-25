@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,15 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file p3m-assignement.c  General functions related to the assignement functions for the P3M algorithms.
+/** \file p3m-assignment.c  General functions related to the assignement functions for the P3M algorithms.
  *
- *  For more information about the p3m algorithm,
- *  see \ref p3m.h "p3m.h"
- *  see \ref p3m-charges.c  "p3m-charges.c"
- *  see \ref p3m-charges.h  "p3m-charges.h"
- *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
- *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignment.c  "p3m-assignment.c"
 */
 
 
