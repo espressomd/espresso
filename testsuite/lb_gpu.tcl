@@ -116,7 +116,7 @@ puts [setmd cell_grid]
 #part 0 pos 10 10 10
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 1 0 0
+lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 0.5 0 0
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
 thermostat lb $temp
 

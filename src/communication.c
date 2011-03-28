@@ -920,8 +920,8 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_dis
     p->p.vs_relative_distance = vs_distance;
   }
   else {
-    MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
-    MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
+    MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
+    MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -933,9 +933,9 @@ void mpi_send_vs_relative_slave(int pnode, int part)
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, REQ_SET_VS_RELATIVE,
+        MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, SOME_TAG,
 	     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, REQ_SET_VS_RELATIVE,
+    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG,
 	     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 

@@ -88,8 +88,8 @@ static size_t size_of_boundindex;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
-static __constant__ LB_parameters_gpu para;
-static __constant__ float c_sound_sq = 1.f/3.f;
+static __device__ __constant__ LB_parameters_gpu para;
+static const float c_sound_sq = 1.f/3.f;
 
 /**cudasteams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
@@ -877,8 +877,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   particle_force[part_index].f[1] += para.lb_coupl_pref*(rn_part->randomnr[1]-0.5f);
   random_01(rn_part);
   particle_force[part_index].f[2] += para.lb_coupl_pref*(rn_part->randomnr[0]-0.5f);
-#endif
-	  
+#endif	  
   /* delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
@@ -942,6 +941,7 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
 #if 0
 __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int part_index){
 
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi with native printf
   if(particle_data[part_index].p[0]/para.agrid < 0.f || particle_data[part_index].p[0]/para.agrid > para.dim_x){
     printf("particle out of box! (dim_x) \t %u \t %f \n", part_index, particle_data[part_index].p[0]); 
   }
@@ -951,6 +951,8 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
   if(particle_data[part_index].p[2]/para.agrid < 0.f || particle_data[part_index].p[2]/para.agrid > para.dim_z){
     printf("particle out of box! (dim_z) \t %u \t %f \n", part_index, particle_data[part_index].p[2]); 
   }
+#endif
+
 }
 #endif
 /*-------------------------------------------------------*/
@@ -1372,14 +1374,14 @@ __global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force
   }
 }
 
-void cuda_safe_mem(cudaError_t err){
+void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     if( cudaSuccess != err) {                                             
-      fprintf(stderr, "Could not allocate gpu memory.\n");
+      fprintf(stderr, "Could not allocate gpu memory at %s:%u.\n", file, line);
       printf("CUDA error: %s\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
     }
 }
-
+#define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 #define KERNELCALL(_f, _a, _b, _params) \
 _f<<<_a, _b, 0, stream[0]>>>_params; \
 _err=cudaGetLastError(); \
@@ -1421,7 +1423,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 	
   /**write parameters in const memory*/
-  cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
   /**check flag if lb gpu init works*/
   cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
   h_gpu_check = (int*)malloc(sizeof(int));
@@ -1449,7 +1451,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
   h_gpu_check[0] = 0;
-  cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
 
   cudaThreadSynchronize();
 
@@ -1464,18 +1466,28 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 }*/
 /**-------------------------------------------------------------------------*/
-void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
+void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
+
+  /* Allocate struct for particle positions */
+  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
+  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
+  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
+
+  cudaFreeHost(*host_data);
+
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
+  //pinned memory mode - use special function to get OS-pinned memory
+  cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
+#else
+  cudaMallocHost((void**)host_data, size_of_positions);
+#endif
 
   cudaFree(particle_force);
   cudaFree(particle_data);
   cudaFree(part);
 
-  cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
-
-  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
-  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
-  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+ 
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
@@ -1527,7 +1539,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
   cuda_safe_mem(cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces));
   cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
 
-  if(para.external_force == 0)cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)); 
+  if(para.external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
   threads_per_block_exf = 64;
   blocks_per_grid_exf_y = 4;

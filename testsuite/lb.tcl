@@ -56,7 +56,7 @@ proc write_data {file} {
 # Integration parameters
 #############################################################
 set int_steps     10
-set int_times     10
+set int_times     1000
 
 set time_step     0.005
 set tau           0.02
@@ -66,8 +66,8 @@ set agrid         1.0
 set box_l         30.0
 
 set dens          0.85
-set viscosity     3.0
-set friction      20.0
+set viscosity     30.0
+set friction      2.0
 
 set temp          1.0
 
@@ -96,7 +96,7 @@ cellsystem domain_decomposition -no_verlet_list
 
 # Fluid
 #############################################################
-lbfluid dens $dens visc $viscosity agrid $agrid tau $tau
+lbfluid cpu dens $dens visc $viscosity agrid $agrid tau $tau
 lbfluid friction $friction
 
 thermostat lb $temp
@@ -104,8 +104,8 @@ thermostat lb $temp
 # Particles
 #############################################################
 # load colloid from file
-read_data "lb_system.data"
-
+#read_data "lb_system.data"
+part 0 pos 10 10 10
 # here you can create the necessary snapshot
 #write_data "lb_system.data"
 
@@ -149,7 +149,7 @@ set var_temp  0.0
 
 for { set i 1 } { $i <= $int_times } { incr i } {
 
-    puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\r"; flush stdout
+ #   puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\r"; flush stdout
     integrate $int_steps
 
     # check fluid mass conservation
@@ -180,7 +180,7 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 
     # temperature of the fluid
     set fluid_temp [analyze fluid temp]
-
+    puts "part [part 0 print pos v f]"
 }    
 
 #############################################################
