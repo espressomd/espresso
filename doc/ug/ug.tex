@@ -94,6 +94,11 @@ idxtotoc                        % add the index to the TOC
 % \index{Some example|mainindex}
 \newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
 
+% Set here whether or not to show TODO-boxes
+\newboolean{showboxes}
+\setboolean{showboxes}{false}
+
+\ifshowboxes
 \newcommand{\todo}[1]{
   \marginpar{%
     \setlength{\fboxrule}{1pt}
@@ -104,6 +109,12 @@ idxtotoc                        % add the index to the TOC
     }%
   }%
 }
+\else
+\newcommand{\todo}[1]{
+% don't show anything. can be adapted if needed.
+}
+\fi
+
 
 \makeatletter
 \renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
