@@ -85,7 +85,7 @@ done
 
 # link all files from the src directory to the run directory, if they are not identical
 for file in `ls $srcdir/`; do
-    if ! test -f $file; then
+    if test -f $srcdir/$file && ! test -f $file; then
 	echo @LN_S@ $srcdir/$file .
 	@LN_S@ $srcdir/$file .
     fi

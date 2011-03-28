@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+SUBDIRS = configs .
+
 # all the test scripts
 tests = \
 	nve_pe.tcl npt.tcl \
@@ -31,13 +33,11 @@ tests = \
 	rotation.tcl \
 	constraints.tcl \
 	mass.tcl \
-	lb.tcl \
+	lb.tcl lb_gpu.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 
-deactivated_tests = \
-	lb_gpu.tcl \
-	p3m_magnetostatics2.tcl
+deactivated_tests =
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) $(deactivated_tests) \

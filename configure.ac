@@ -480,6 +480,7 @@ AC_CONFIG_FILES([
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
+	testsuite/configs/Makefile
 	doc/Makefile
 	doc/latexit.sh
 	doc/dg/Makefile
