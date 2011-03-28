@@ -168,7 +168,8 @@ thermostat, or via a thermostat and a special DPD interaction between
 particle types.  The latter allows the user to specify friction
 coefficients on a per-interaction basis.
 
-\subsubsection{Thermostat DPD}\index{sec:DPDthermostat}
+\subsubsection{Thermostat DPD}
+\index{label:DPDthermostat}
 
 \begin{essyntax}
   thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF
@@ -238,10 +239,14 @@ temperature jumps during a simulation are. The dpd thermostat does not
 act on the system center of mass motion.  Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you
 can achieve by using the command \keyword{galileiTransformParticles}
-(see section \vref{tcl:galileiTransformParticles}) . This may be
+%currently no documentation on that! So the link is commented out:
+%(see section \vref{tcl:galileiTransformParticles})
+. This may be
 repeated once in a while for long runs due to round off errors (check
-this with the command \keyword{system_com_vel} from section
-\vref{tcl:system-com-vel}).
+this with the command \keyword{system_com_vel}
+%currently no documentation on that! So the link is commented out:
+%from section \vref{tcl:system-com-vel})
+.
 
 Two restrictions apply for the dpd implementation of \es:
 
@@ -307,6 +312,7 @@ $$ M_{ij}=\frac{m_i+m_j}{2} $$
 The prefactors are such that equal masses result in a factor 1.
 
 \subsection{Isotropic NPT thermostat}
+\label{ssec:NPTthermostat}
 \begin{essyntax}
   thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
   \begin{features}
@@ -334,7 +340,7 @@ Returns the thermostat parameters. \todo{Document return format.}
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}
-
+\label{sec:NEMD}
 \index{NEMD}
 
 \begin{essyntax}

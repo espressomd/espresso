@@ -268,7 +268,8 @@ proc swap {id temp1 temp2} {
   set epot [expr [analyze energy total] - [analyze energy kinetic]]
   return "[expr $epot/$temp1] [expr $epot/$temp2]"
 }
-\end{verbatim} % make emacs happy: $
+\end{verbatim}
+% make emacs happy: $
 Note that only the potential energy is taken into account. The temperature enters only indirectly
 through the inverse temperature prefactor, see Eqn.~\eqref{eq:ptacceptance}.
 
@@ -285,7 +286,8 @@ instances, which are identical to the master script, except that they execute
 \begin{verbatim}
 parallel_tempering::main -connect $host -load 30 \
     -init init -swap swap -perform perform
-\end{verbatim} % make emacs happy: $
+\end{verbatim}
+% make emacs happy: $
 Here, {\tt host} is a variable containing the TCP/IP hostname of the computer running the master
 process. Note that the master process waits until enough processes have connected to start the
 simulation. In the example, there are 300 temperatures, and each process, including the master
