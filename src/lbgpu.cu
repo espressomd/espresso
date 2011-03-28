@@ -284,9 +284,9 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   * inlcude one half-step of the force action.  See the
   * Chapman-Enskog expansion in [Ladd & Verberg]. */
 
-  j[0] += 0.5f*node_f.force[0][index];
-  j[1] += 0.5f*node_f.force[1][index];
-  j[2] += 0.5f*node_f.force[2][index];
+  j[0] += 0.5f*node_f.force[0*para.number_of_nodes + index];
+  j[1] += 0.5f*node_f.force[1*para.number_of_nodes + index];
+  j[2] += 0.5f*node_f.force[2*para.number_of_nodes + index];
 
   /* equilibrium part of the stress modes (eq13 schiller)*/
   pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
@@ -598,21 +598,21 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
   /* hydrodynamic momentum density is redefined when forces present */
-  u[0] = (mode[1] + 0.5f*node_f.force[0][index])/Rho;
-  u[1] = (mode[2] + 0.5f*node_f.force[1][index])/Rho;
-  u[2] = (mode[3] + 0.5f*node_f.force[2][index])/Rho;
+  u[0] = (mode[1] + 0.5f*node_f.force[0*para.number_of_nodes + index])/Rho;
+  u[1] = (mode[2] + 0.5f*node_f.force[1*para.number_of_nodes + index])/Rho;
+  u[2] = (mode[3] + 0.5f*node_f.force[2*para.number_of_nodes + index])/Rho;
 
-  C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1][index]+u[1]*node_f.force[0][index]);
-  C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2][index]+u[2]*node_f.force[0][index]);
-  C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2][index]+u[2]*node_f.force[1][index]);
+  C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1*para.number_of_nodes + index]+u[1]*node_f.force[0*para.number_of_nodes + index]);
+  C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[0*para.number_of_nodes + index]);
+  C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[1*para.number_of_nodes + index]);
 
   /* update momentum modes */
-  mode[1] += node_f.force[0][index];
-  mode[2] += node_f.force[1][index];
-  mode[3] += node_f.force[2][index];
+  mode[1] += node_f.force[0*para.number_of_nodes + index];
+  mode[2] += node_f.force[1*para.number_of_nodes + index];
+  mode[3] += node_f.force[2*para.number_of_nodes + index];
   	
   /* update stress modes */
   mode[4] += C[0] + C[2] + C[5];
@@ -624,20 +624,20 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 
 #ifdef EXTERNAL_FORCES
   if(para.external_force){
-    node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
   }
   else{
-  node_f.force[0][index] = 0.f;
-  node_f.force[1][index] = 0.f;
-  node_f.force[2][index] = 0.f;
+  node_f.force[0*para.number_of_nodes + index] = 0.f;
+  node_f.force[1*para.number_of_nodes + index] = 0.f;
+  node_f.force[2*para.number_of_nodes + index] = 0.f;
   }
 #else
   /* reset force */
-  node_f.force[0][index] = 0.f;
-  node_f.force[1][index] = 0.f;
-  node_f.force[2][index] = 0.f;
+  node_f.force[0*para.number_of_nodes + index] = 0.f;
+  node_f.force[1*para.number_of_nodes + index] = 0.f;
+  node_f.force[2*para.number_of_nodes + index] = 0.f;
 #endif
 }
 /*-------------------------------------------------------*/
@@ -899,37 +899,37 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
 /*-------------------------------------------------------*/
 __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu node_f){
 
-  atomicadd(&(node_f.force[0][node_index[0]]), (delta[0]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[0]]), (delta[0]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[0]]), (delta[0]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[1]]), (delta[1]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[1]]), (delta[1]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[1]]), (delta[1]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[2]]), (delta[2]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[2]]), (delta[2]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[2]]), (delta[2]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[3]]), (delta[3]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[3]]), (delta[3]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[3]]), (delta[3]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[4]]), (delta[4]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[4]]), (delta[4]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[4]]), (delta[4]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[5]]), (delta[5]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[5]]), (delta[5]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[5]]), (delta[5]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[6]]), (delta[6]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[6]]), (delta[6]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[6]]), (delta[6]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[7]]), (delta[7]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[7]]), (delta[7]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[7]]), (delta[7]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
 
 }
 /*-------------------------------------------------------*/
@@ -1094,19 +1094,19 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   if(index<para.number_of_nodes){
 #ifdef EXTERNAL_FORCE
     if(para.external_force){
-      node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
     }
     else{
-      node_f.force[0][index] = 0.0f;
-      node_f.force[1][index] = 0.0f;
-      node_f.force[2][index] = 0.0f;
+      node_f.force[0*para.number_of_nodes + index] = 0.0f;
+      node_f.force[1*para.number_of_nodes + index] = 0.0f;
+      node_f.force[2*para.number_of_nodes + index] = 0.0f;
     }
 #else
-    node_f.force[0][index] = 0.0f;
-    node_f.force[1][index] = 0.0f;
-    node_f.force[2][index] = 0.0f;
+    node_f.force[0*para.number_of_nodes + index] = 0.0f;
+    node_f.force[1*para.number_of_nodes + index] = 0.0f;
+    node_f.force[2*para.number_of_nodes + index] = 0.0f;
 #endif
   }
 }
@@ -1324,9 +1324,9 @@ __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodefo
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<n_extern_nodeforces){
-    node_f.force[0][extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1][extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2][extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
   }
 }
 __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nodes_gpu n_a){
@@ -1350,9 +1350,9 @@ __global__ void momentum(LB_nodes_gpu n_a, float* sum, LB_node_force_gpu node_f)
     if(n_a.boundary[index]){
       mode[1] = mode[2] = mode[3] = 0.f;
     }
-    atomicadd(&(sum[0]), mode[1]+node_f.force[0][index]);
-    atomicadd(&(sum[1]), mode[2]+node_f.force[1][index]);
-    atomicadd(&(sum[2]), mode[3]+node_f.force[2][index]);
+    atomicadd(&(sum[0]), mode[1]+node_f.force[0*para.number_of_nodes + index]);
+    atomicadd(&(sum[1]), mode[2]+node_f.force[1*para.number_of_nodes + index]);
+    atomicadd(&(sum[2]), mode[3]+node_f.force[2*para.number_of_nodes + index]);
   }
 }
 __global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force_gpu node_f) {
@@ -1415,10 +1415,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
 
-  for(int i=0; i<3; i++){
-    cuda_safe_mem(cudaMalloc((void**)&node_f.force[i], lbpar_gpu->number_of_nodes * sizeof(float)));
-  }
-  
+  cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));  
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));	
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
