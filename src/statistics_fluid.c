@@ -109,7 +109,7 @@ void lb_calc_fluid_temp(double *result) {
     }
   }
 
-  temp *= 1./(lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*pow(lblattice.agrid,4));
+  temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid);
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 }
@@ -506,12 +506,41 @@ int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv
 #endif
 }
 
+
+static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double mom[3];
+
+  calc_fluid_momentum_GPU(mom);
+  
+  Tcl_PrintDouble(interp, mom[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, mom[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, mom[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+
+  return TCL_OK;
+}
+
+static int tclcommand_analyze_fluid_parse_temperature_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double cpu_temp[1];
+
+  calc_fluid_temperature_GPU(cpu_temp);
+  
+  Tcl_PrintDouble(interp, cpu_temp[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
+  return TCL_OK;
+}
+
 int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
     int err = TCL_ERROR;
 
     if (argc==0) {
-	Tcl_AppendResult(interp, "usage: analyze fluid gpu <what>", (char *)NULL);
+	Tcl_AppendResult(interp, "usage: analyze fluid <what>", (char *)NULL);
 	return TCL_ERROR;
     } 
 
@@ -519,11 +548,10 @@ int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv
 		fprintf(stderr, "sry not implemented yet");
       //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("momentum"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_momentum_gpu(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("temperature"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_temperature_gpu(interp, argc - 1, argv + 1);
+
     else if (ARG0_IS_S("velprof"))
 		fprintf(stderr, "sry not implemented yet");
       //err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);

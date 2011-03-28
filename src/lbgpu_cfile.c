@@ -56,12 +56,13 @@ static int max_ran = 1000000;
 //static double tau;
 
 /** measures the MD time since the last fluid update */
-static float fluidstep = 0.0;
+static int fluidstep = 0;
 
 /** c_sound_square in LB units*/
 static float c_sound_sq = 1.f/3.f;
 
 //clock_t start, end;
+int i;
 
 static FILE *datei;
 //static char file[300];
@@ -78,10 +79,13 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 void lattice_boltzmann_update_gpu() {
 
-  fluidstep += (float)time_step;
-  
-  if (fluidstep>=lbpar_gpu.tau) {
-    fluidstep=0.0;
+  int factor = (int)round(lbpar_gpu.tau/time_step);
+
+  fluidstep += 1;
+
+  if (fluidstep>=factor) {
+    fluidstep=0;
+
     lb_integrate_GPU();
 
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
@@ -97,10 +101,11 @@ void lb_calc_particle_lattice_ia_gpu() {
     mpi_get_particles_lb(host_data);
 
     if(this_node == 0){
-
+#if 0
       LB_TRACE (for (i=0;i<n_total_particles;i++) {
       fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
     })
+#endif
 /**----------------------------------------*/
 /**Call of the particle interaction kernel */
 /**----------------------------------------*/
@@ -121,10 +126,11 @@ void lb_send_forces_gpu(){
       if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
 
       LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
+#if 0
       LB_TRACE (for (i=0;i<n_total_particles;i++) {
         fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
       })
-
+#endif
     }
     mpi_send_forces_lb(host_forces);
   }
@@ -749,7 +755,7 @@ static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], in
     /** print of the calculated phys values */
     fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
   }
-
+  fclose(datei);
   return TCL_OK;
 }
 static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
