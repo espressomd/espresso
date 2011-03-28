@@ -21,9 +21,9 @@ SUBDIRS = dg ug tutorials maggs_doc
 doc: ug dg tutorials
 dg: FORCE
 	cd dg; $(MAKE) --print-directory $@
-ug: FORCE
+ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
-tutorials: FORCE
+tutorials: latexit.sh FORCE
 	cd tutorials; $(MAKE) --print-directory $@
 FORCE:
 
