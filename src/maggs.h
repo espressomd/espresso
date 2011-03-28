@@ -45,8 +45,10 @@
 
 
 /* protect header file: */
-#ifndef MAGGS_H
-#define MAGGS_H
+#ifndef _MAGGS_H
+#define _MAGGS_H
+
+#include "config.h"
 
 #ifdef ELECTROSTATICS
 

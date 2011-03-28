@@ -43,7 +43,7 @@ tests = \
 	maggs.tcl \
 	mass.tcl \
 	mdlc.tcl \
-	mmm1d.tcl 
+	mmm1d.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \

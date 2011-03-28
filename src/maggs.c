@@ -43,7 +43,6 @@
  *  
  */
 
-#ifdef ELECTROSTATICS
 
 #include <mpi.h>
 #include <stdio.h>
@@ -61,6 +60,8 @@
 #include "thermostat.h"
 #include "cells.h"
 #include "domain_decomposition.h"
+
+#ifdef ELECTROSTATICS
 
 /* MPI tags for the maggs communications: */
 /* Used in maggs_init() -> calc_glue_patch(). */
