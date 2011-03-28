@@ -48,6 +48,8 @@
 #ifndef MAGGS_H
 #define MAGGS_H
 
+#ifdef ELECTROSTATICS
+
 /* maggs structure. Contains global system information. */
 typedef struct {
 	double f_mass;         /* = 1/c^2    speed of light parameter. */
@@ -88,4 +90,5 @@ void maggs_exit();
 int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 
+#endif
 #endif

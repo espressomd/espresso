@@ -43,6 +43,7 @@
  *  
  */
 
+#ifdef ELECTROSTATICS
 
 #include <mpi.h>
 #include <stdio.h>
@@ -2053,3 +2054,4 @@ void maggs_exit()
 	free(Bfield);
 }
 
+#endif // ELECTROSTATICS

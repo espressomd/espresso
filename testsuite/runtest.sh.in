@@ -58,7 +58,7 @@ echo "processors=$processors"
 testcases=$TESTCASES
 test $# -ge 1 && testcases="$@"
 
-# check if variables are available
+# check if testcases are available
 if test -z "$testcases"; then
     echo "No testcases specified!"
     usage

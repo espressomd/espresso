@@ -17,26 +17,44 @@
 #
 SUBDIRS = configs .
 
-# all the test scripts
+# alphabetically sorted list of test scripts
 tests = \
-	nve_pe.tcl npt.tcl \
-	madelung.tcl p3m.tcl el2d.tcl \
-	p3m_magnetostatics.tcl p3m_magnetostatics2.tcl \
-	el2d_nonneutral.tcl el2d_die.tcl mdlc.tcl mmm1d.tcl dh.tcl \
-	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
-	harm.tcl fene.tcl \
-	kinetic.tcl thermostat.tcl \
-	intpbc.tcl intppbc.tcl \
-	layered.tcl nsquare.tcl \
-	comforce.tcl comfixed.tcl \
 	analysis.tcl \
-	rotation.tcl \
+	comforce.tcl \
+	comfixed.tcl \
 	constraints.tcl \
+	dh.tcl \
+	el2d.tcl \
+	el2d_die.tcl \
+	el2d_nonneutral.tcl \
+	fene.tcl \
+	gb.tcl \
+	harm.tcl \
+	intpbc.tcl \
+	intppbc.tcl \
+	kinetic.tcl \
+	layered.tcl \
+	lb.tcl \
+	lb_gpu.tcl \
+	lj.tcl \
+	lj-cos.tcl \
+	lj-generic.tcl \
+	madelung.tcl \
+	maggs.tcl \
 	mass.tcl \
-	lb.tcl lb_gpu.tcl \
+	mdlc.tcl \
+	mmm1d.tcl 
+	npt.tcl \
+	nsquare.tcl \
+	nve_pe.tcl \
+	p3m.tcl \
+	p3m_magnetostatics.tcl \
+	p3m_magnetostatics2.tcl \
+	rotation.tcl \
+	tabulated.tcl 
+	thermostat.tcl \
         tunable_slip.tcl \
-	virtual-sites.tcl \
-	maggs.tcl
+	virtual-sites.tcl
 
 deactivated_tests =
 
