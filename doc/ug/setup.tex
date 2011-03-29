@@ -503,6 +503,27 @@ where \var{kind} determines the type of AdResS simulation:\newline
 For more details on the method itself see \cite{praprotnik05,praprotnik08,poblete10}.
 And for further information about the technical implementation see \cite{junghans10}.
 
+\section{CUDA}
+\label{sec:cuda}
+\begin{essyntax}
+  \variant{1} cuda list
+  \variant{2} cuda setdevice \var{id}
+  \variant{3} cuda getdevice
+\end{essyntax}
+
+This command can be used to choose the GPU for all subsequent
+GPU-computations. Note that due to driver limitations, the GPU cannot
+be changed anymore after the first GPU-using command has been issued,
+for example \texttt{lbfluid}. If you do not choose the GPU manually
+before that, CUDA internally chooses one, which is normally the most
+powerful GPU available, but load-independent.
+
+Variant \variant{1} lists the available devices by their ids and brand
+names. Variant \variant{2} allows to choose the device by its id,
+which can be determined using \texttt{cuda list}, or for example the
+\texttt{deviceQuery} example code in the CUDA SDK. Variant \variant{3}
+finally gives the id of the currently active GPU.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

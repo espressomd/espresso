@@ -56,12 +56,13 @@ static int max_ran = 1000000;
 //static double tau;
 
 /** measures the MD time since the last fluid update */
-static float fluidstep = 0.0;
+static int fluidstep = 0;
 
 /** c_sound_square in LB units*/
 static float c_sound_sq = 1.f/3.f;
 
 //clock_t start, end;
+int i;
 
 static FILE *datei;
 //static char file[300];
@@ -78,10 +79,13 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 void lattice_boltzmann_update_gpu() {
 
-  fluidstep += (float)time_step;
-  
-  if (fluidstep>=lbpar_gpu.tau) {
-    fluidstep=0.0;
+  int factor = (int)round(lbpar_gpu.tau/time_step);
+
+  fluidstep += 1;
+
+  if (fluidstep>=factor) {
+    fluidstep=0;
+
     lb_integrate_GPU();
 
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
@@ -97,10 +101,11 @@ void lb_calc_particle_lattice_ia_gpu() {
     mpi_get_particles_lb(host_data);
 
     if(this_node == 0){
-
+#if 0
       LB_TRACE (for (i=0;i<n_total_particles;i++) {
       fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
     })
+#endif
 /**----------------------------------------*/
 /**Call of the particle interaction kernel */
 /**----------------------------------------*/
@@ -121,10 +126,11 @@ void lb_send_forces_gpu(){
       if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
 
       LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
-      LB_TRACE (for (i=0;i<n_total_particles;i++) {
+#if 0
+for (i=0;i<n_total_particles;i++) {
         fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
-      })
-
+      }
+#endif
     }
     mpi_send_forces_lb(host_forces);
   }
@@ -132,32 +138,21 @@ void lb_send_forces_gpu(){
 /** allocation of the needed memory for phys. values and particle data residing in the cpu memory*/
 void lb_pre_init_gpu() {
 	 
-  lbpar_gpu.number_of_particles = n_total_particles;
+  lbpar_gpu.number_of_particles = 0;
 
-  LB_TRACE (fprintf(stderr,"#particles \t %u \n", lbpar_gpu.number_of_particles));
   LB_TRACE (fprintf(stderr,"#nodes \t %u \n", lbpar_gpu.number_of_nodes));
-  /**-----------------------------------------------------*/
-  /** allocating of the needed memory for several structs */
-  /**-----------------------------------------------------*/
+
+  /*-----------------------------------------------------*/
+  /* allocating of the needed memory for several structs */
+  /*-----------------------------------------------------*/
   
-  /**Struct holding calc phys values rho, j, phi of every node*/
+  /* Struct holding calc phys values rho, j, phi of every node */
   size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
   host_values = (LB_values_gpu*)malloc(size_of_values);
 
-  /**Allocate struct for particle forces */
-  size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
-  host_forces = (LB_particle_force_gpu*)malloc(size_of_forces);
-
-  /**Allocate struct for particle positions */
-  size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle_gpu);
-#if CUDART_VERSION >= 2020
-  //pinned memory mode - use special function to get OS-pinned memory
-  cudaHostAlloc((void**)&host_data, size_of_positions, cudaHostAllocWriteCombined);
-#else
-  cudaMallocHost((void**)&host_data, size_of_positions);
-#endif
   LB_TRACE (fprintf(stderr,"lb_pre_init_gpu \n"));
 }
+
 /** (re-)allocation of the memory needed for the phys. values and if needed memory for the nodes (v[19] etc.)
 	located in the cpu memory*/ 
 static void lb_realloc_fluid_gpu() {
@@ -186,20 +181,11 @@ void lb_realloc_particles_gpu(){
   size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
   host_forces = realloc(host_forces, size_of_forces);
 
-  /**Allocate struct for particle positions */
-  size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle_gpu);
-#if CUDART_VERSION >= 2020
-  //pinned memory mode - use special function to get OS-pinned memory
-  cudaHostAlloc((void**)&host_data, size_of_positions, cudaHostAllocWriteCombined);
-#else
-  cudaMallocHost((void**)&host_data, size_of_positions);
-#endif
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
-  lb_realloc_particle_GPU(&lbpar_gpu);
+  lb_realloc_particle_GPU(&lbpar_gpu, &host_data);
 }
-
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
@@ -749,7 +735,7 @@ static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], in
     /** print of the calculated phys values */
     fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
   }
-
+  fclose(datei);
   return TCL_OK;
 }
 static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
