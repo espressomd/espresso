@@ -15,6 +15,11 @@ User-visible changes
 * A CUDA implementation for NVIDIA GPUs of the Lattice-Boltzmann
   algorithm is included.
 
+* The Maggs algorithm (or Maxwell Equation Molecular Dynamics, MEMD)
+  for computing electrostatic interactions has been included and
+  documented. The algorithm is a fast and scalable alternative for P3M
+  or other such algorithms.
+
 * The P3M algorithm for electrostatic and dipolar (magnetostatic)
   interactions has been extended.
 
