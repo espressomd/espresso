@@ -41,8 +41,9 @@ void update_mol_pos_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-  printf(stderr,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
-  return;
+   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   ERROR_SPRINTF(errtxt,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   return;
  }
  
  // Calculate the quaternion defining the orientation of the vecotr connectinhg
@@ -104,8 +105,9 @@ void update_mol_vel_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-  printf(stderr,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
-  return;
+   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   ERROR_SPRINTF(errtxt, "virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   return;
  }
  
  // Calculate the quaternion defining the orientation of the vecotr connectinhg
