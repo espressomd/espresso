@@ -21,64 +21,177 @@
 
 \todo{Make the following lists full text.}
 
-\begin{itemize}
-\item \es{} is a generic soft matter simulation packages
-\item for molecular dynamics simulations in soft matter research
-\item focussed on coarse-grained models
-\item employs modern algorithms (Lattice-Boltzmann, DPD, P3M, \ldots)
-\item written in C for maximal portability
-\item Tcl-controlled
-\item parallelized
-\end{itemize}
+\es is a simulation package designed to perform Molecular Dynamics (MD)
+and Monte Carlo (MC) simulations of a variety of soft matter systems.
+It features a broad range of interaction potentials which opens up
+possibilities for performing simulations using models with 
+various levels of coarse-graining. It also includes modern and
+efficient algorithms for treatment of electrostatics (P3M, MMM-type 
+algorithms, Maggs algorithm, \ldots), hydrodynamic interactions
+(DPD, Lattice-Boltzmann), and magnetic interactions. It is 
+designed to exploit the capabilities of modern parallel computational
+environments. The program is being continuously extended to keep
+the pace with current developments both in the algorithms and software.
+
+The kernel of \es is written in C with computational efficiency in mind.
+Interaction between the user and the simulation engine is provided
+via a Tcl scripting interface. This enables setup of arbitrarily
+complex systems which users might want to simulate in future, 
+as well as modifying simulation parameters during runtime.
+
+%\begin{itemize}
+%\item \es{} is a generic soft matter simulation packages
+%\item for molecular dynamics simulations in soft matter research
+%\item focussed on coarse-grained models
+%\item employs modern algorithms (Lattice-Boltzmann, DPD, P3M, \ldots)
+%\item written in C for maximal portability
+%\item Tcl-controlled
+%\item parallelized
+%\end{itemize}
 
 \section{Guiding principles}
 \label{sec:ideas}
 
-(from paper: 2.1 Goals and principles)
+\es is a tool for performing computer simulation and this user guide
+describes how to use this tool. However, it should be borne in mind
+that being able to operate a tool is not sufficient to obtain 
+physically meaningful results. It is always the responsibility of the user
+to understand the principles behind the model, simulation
+and analysis methods he is using. \es will \emph{not} do that for you!
 
-\es
-\begin{itemize}
-\item does \emph{not} do the physics for you!
-\item requires you to understand what you do (can not be used as a
-  black box)
-\item gives you maximal freedom (flexibility)
-\item is extensible
-\item integrates system setup, simulation and analysis, as this can't
-  be strictly separated in soft matter simulations
-\item has no predefined units
-\item sets as few defaults as possible
-\end{itemize}
+It is expected that the users of \es and readers of this user guide 
+have a thorough understanding of simulation methods and algorithms
+they are planning to use. It not necessary to understand everything
+what is contained in \es, but it is inevitable to understand
+all methods which you are planning to use. Using the program as a black box
+without proper understanding of the background will most probably result
+in wasted user and computer time with no useful output.
+
+To enable future extensions, the functionality of the program is kept
+as general as possible. It is modularized, so that extensions to some
+parts of the program (e.g.\ implementing a new potential) can be done
+by modifying or adding only few files, leaving most of the 
+code intact.
+
+To facilitate the understanding and the extensibility, much emphasis is put on readability of the code. Hard-coded assembler loops are 
+generally avoided in hope that the overhead in computer time
+will be more than compensated for by saving much of the user time 
+while trying to understand what the code is supposed to do.
+
+Hand-in-hand with the extensibility and readability of the code comes 
+the flexibility of the whole program. On the one hand, it is provided
+by the generalized functionality of its parts, avoiding highly specialized
+functions. An example can be the implementation of the Generic Lennard-Jones
+potential described in section~\ref{sec:GenLennardJones} where the user
+can change all available parameters. In general where possible, default
+values are avoided, providing the user with the possibility of choice.
+
+On the other hand, flexibility of \es stems from the employment of Tcl at
+the steering level. Apart from the ability to modify the simulation and
+system parameters at runtime, many simple tasks which are not computationally
+critical can be implemented at this level, without even touching the C-kernel.
+For example, simple problem-specific analysis routines can be implemented
+in this way and made to interact with the simulation core.
+Another example of the program's flexibility is the possibility  integrate
+system setup, simulation and analysis in one single control script. \es
+provides tool to create particles and set up interactions between them. 
+Capping of forces helps prevent system blow-up when initially some particles
+are placed on top of each other. Using the Tcl interface, one can simulate
+the randomly setup system with capped forces, interactively check whether
+it is safe to remove the cap and switch on the full interactions and then 
+perform the actual productive simulation.
+
+Last, but not least, a lot of attention is dedicated to computational
+efficiency. Because the requirement of efficiency is somewhat in conflict
+with the requirements presented above, a compromise is sought to make the
+program efficient while strictly preserving the readability and flexibility.
+
+%(from paper: 2.1 Goals and principles)
+%
+%\begin{itemize}
+%\item does \emph{not} do the physics for you!
+%\item requires you to understand what you do (can not be used as a
+%  black box)
+%\item gives you maximal freedom (flexibility)
+%\item is extensible
+%\item integrates system setup, simulation and analysis, as this can't
+%  be strictly separated in soft matter simulations
+%\item has no predefined units
+%\item sets as few defaults as possible
+%\end{itemize}
 
 \section{Algorithms contained in \es}
 
 The following algorithms are implemented in \es{}:
 
 \begin{itemize}
-\item ensembles: NVE, NVT, NpT
-\item charged systems:
+\item Ensembles: 
+  \begin{itemize} 
+  \item NVE
+  \item NVT
+  \item NpT
+  \end{itemize}
+\item Algorithms for charged systems:
   \begin{itemize}
   \item P3M for fully periodic systems
   \item ELC and MMM-family of algorithms for charged systems with
     non-periodic boundary conditions
-  \item Maggs algorithm 
+  \item MEMD (Maggs algorithm)
   \end{itemize}
 \item Hydrodynamics:
   \begin{itemize}
   \item DPD (as a thermostat)
   \item Lattice-Boltzmann
   \end{itemize}
+\item Non-equilibrium MD to simulate shear flow
+\item Parallel tempering
+\item Metadynamics
+\item Rigid bodies via virtual sites
 \end{itemize}
 
 \section{Basic program structure}
 \label{sec:structure}
 
-(from paper: 2.2 Basic program structure)
+As already mentioned, \es contains of two components.
+The simulation engine is written in C for the sake
+of computational efficiency. The steering or control
+level is interfaced to the kernel via an interpreter 
+of the Tcl scripting language.
 
-\begin{itemize}
-\item Control level: \texttt{Tcl}
-\item ``Kernel'' written in \texttt{C}
-\item This user's guide will focus on the control level
-\end{itemize}
+The kernel performs all computationally demanding tasks. Before all,
+integration of Newton's equations of motion, including calculation
+of energies and forces. It also takes care of internal organization 
+of data, storing the data about particles, communication between 
+different processors or cells of the cell-system. The kernel is modularized
+so that basic functions are accessed via a set of well-defined
+lean interfaces, hiding the details of the complex numerical
+algorithms.
+
+The Tcl interpreter contains several special commands as an
+extension to Tcl, which provide the interaction with the
+simulation engine. Thus, the user has at hand the full realm
+of Tcl commands and constructs plus a few commands to communicate
+with the simulation engine. The interfacing commands are designed
+so that they can both set properties of the system (set up particles,
+interactions, thermostat) and retrieve information about the already 
+set-up entities. The standard Tcl constructs allow for a flexible 
+decision-making in the course of the simulation. This can be for example
+exploited to check whether a simulation has reached the desired state.
+With a certain overhead in efficiency, it can also be used to reject/accept
+new configurations in combined MD/MC schemes. In principle, any parameter
+which is accessible from the Tcl level can be changed at any moment of runtime.
+In this way methods like thermodynamic integration become readily accessible.
+
+The focus of the user guide is documenting the Tcl commands, their behaviour
+and use in the simulation. It only describes certain technical details 
+of implementation which are necessary for understanding how the commands work.
+
+%(from paper: 2.2 Basic program structure)
+%\begin{itemize}
+%\item Control level: \texttt{Tcl}
+%\item ``Kernel'' written in \texttt{C}
+%\item This user's guide will focus on the control level
+%\end{itemize}
 
 \section{On units}
 \label{sec:units}
@@ -92,7 +205,7 @@ What is probably one of the most confusing subjects for beginners of
 \es is, that \es does not predefine any units.  While most MD programs
 specify a set of units, like, for example, that all lengths are
 measured in \AA ngstr\"om or nanometers, times are measured in nano- or
-picoseconds and energies are measured in $\frac{kJ}{\mathrm{mol}}$,
+picoseconds and energies are measured in $\mathrm{kJ/mol}$,
 \es does not do so.
 
 Instead, the length-, time- and energy scales can be freely chosen by
@@ -161,9 +274,9 @@ and use \es:
 
 Throughout the user's guide, formal definitions of the syntax of
 several Tcl-commands can be found. The following conventions are used
-in these decriptions:
+in these descriptions:
 \begin{itemize}
-\item Different \emph{variants} of a command are labelled \variant{1},
+\item Different \emph{variants} of a command are labeled \variant{1},
   \variant{2}, \ldots
 \item Keywords and literals of the command that have to be typed
   exactly as given are written in \lit{typewriter} font.
@@ -173,7 +286,7 @@ in these decriptions:
   type.
 \item \texttt{\alt{\var{alt1} \asep \var{alt2}}} specifies, that one
   of the alternatives \var{alt1} or \var{alt2} can be used.
-\item \texttt{\opt{\var{argument}}} specifies, that the arugment
+\item \texttt{\opt{\var{argument}}} specifies, that the augment
   \var{argument} is optional, \ie{} it can be omitted.
 \item When an optional argument or a whole command is marked by a
   superscript label (\fmark{1}), this denotes that the argument can
