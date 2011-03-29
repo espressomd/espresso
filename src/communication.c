@@ -2547,9 +2547,8 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
   if (node==this_node) {
     lb_get_populations(index, pop);
   } else {
-    double data[10];
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
-        MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 #endif
 }

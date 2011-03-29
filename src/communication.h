@@ -228,6 +228,10 @@ void mpi_send_dipm(int node, int part, double dipm);
 void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
+#ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_distance)
+#endif
+
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -481,7 +485,6 @@ int mpi_iccp3m_init(int dummy);
  * @param j     local fluid velocity
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
-
 
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result

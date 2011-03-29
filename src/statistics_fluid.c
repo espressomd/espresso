@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -474,6 +475,7 @@ static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, 
 
 }
 #endif /* LB */
+
 /** Parser for fluid related analysis functions. */
 int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
@@ -506,7 +508,7 @@ int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv
 #endif
 }
 
-
+#ifdef LB_GPU
 static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
   char buffer[TCL_DOUBLE_SPACE];
   double mom[3];
@@ -534,6 +536,7 @@ static int tclcommand_analyze_fluid_parse_temperature_gpu(Tcl_Interp* interp, in
 
   return TCL_OK;
 }
+#endif
 
 int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
