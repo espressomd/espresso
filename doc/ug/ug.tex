@@ -52,6 +52,10 @@ idxtotoc                        % add the index to the TOC
 \usepackage{units}
 \usepackage[numbers]{natbib}
 
+% For building the distribution docs, disable todo boxes.
+\usepackage[disable]{todonotes}
+%\usepackage{todonotes}
+
 % Make '_' a normal character
 \usepackage{underscore}
 
@@ -93,17 +97,6 @@ idxtotoc                        % add the index to the TOC
 % required so that we can set index numbers bold
 % \index{Some example|mainindex}
 \newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
-
-\newcommand{\todo}[1]{
-  \marginpar{%
-    \setlength{\fboxrule}{1pt}
-    \fcolorbox[gray]{0}{0.9}{%
-      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
-        \bfseries\raggedright\scriptsize #1%
-      }%
-    }%
-  }%
-}
 
 \makeatletter
 \renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
@@ -264,7 +257,11 @@ idxtotoc                        % add the index to the TOC
 %\date{\today}
 \maketitle
 
+\listoftodos
+\cleardoublepage
+
 \pdfbookmark{Contents}{toc}
+\setcounter{tocdepth}{1}
 \tableofcontents
 
 \include{introduction}
