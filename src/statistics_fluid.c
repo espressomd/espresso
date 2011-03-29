@@ -320,34 +320,6 @@ static void lb_master_calc_velprof(double *result, int vcomp, int pdir, int x1, 
   mpi_gather_stats(8, result, params, NULL, NULL);
 
 }
-/* TODO: This function is not used anywhere. To be removed?  */
-/** Fourier transform the stress tensor into k-space using FFTW */
-static void lb_calc_fourier_pi() {
-
-    //static fftw_plan plan;
-  static int initialized = 0;
-  //static double *data;
-  //static fftw_complex *result;
-
-  /* prepare plan for FFTW */
-  if (!initialized) {
-      //fftw_destroy_plan(plan);
-      //fftw_free(data);
-    //data = fftw_malloc(volume*nfields*sizeof(double));
-    //result = fftw_malloc((volume/2+1)*nfields*sizeof(fftw_complex));
-    //plan = fftw_plan_many_dft_r2c(3,grid,6,data,NULL,nfields,1,result,NULL,nfields,1,FFTW_PATIENT);
-  }
-
-  /* prepare data: collect lattice from all nodes */
-
-  /* compute 3d real-to-complex Fourier transform */
-  //fftw_execute(plan);
-
-  /* */
-
-}
-
-/***********************************************************************/
 
 static int tclcommand_analyze_fluid_parse_mass(Tcl_Interp *interp, int argc, char** argv) {
   char buffer[TCL_DOUBLE_SPACE];

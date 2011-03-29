@@ -43,7 +43,6 @@
 #include "parser.h"
 #include "rotation.h"
 #include "virtual_sites.h"
-#include "virtual_sites_relative.h"
 
 /************************************************
  * defines

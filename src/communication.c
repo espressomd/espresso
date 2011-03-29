@@ -56,6 +56,7 @@
 #include "iccp3m.h"
 #include "statistics_chain.h"
 #include "statistics_fluid.h"
+#include "virtual_sites.h"
 #include "topology.h"
 #include "errorhandling.h"
 #include "molforces.h"

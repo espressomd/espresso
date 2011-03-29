@@ -17,6 +17,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#ifndef _VIRTUAL_SITES_COM_H
+#define _VIRTUAL_SITES_COM_H
+
+#include "config.h"
+
 #ifdef VIRTUAL_SITES_COM
 
 // The following three functions have to be provided by all implementations
@@ -42,8 +47,6 @@ double get_mol_dist(Particle *p1,Particle *p2);
 //Distance between molecules in the partcfg data structure
 double get_mol_dist_partcfg(Particle *p1,Particle *p2);
 
-
-// Unknown
 // Analyze the pressure on the molecule level
 int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);
 // Analyze kinetic energy of the molecules
@@ -54,3 +57,4 @@ int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, ch
 int tclcommand_analyze_parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv);
 #endif
 
+#endif
