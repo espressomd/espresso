@@ -53,13 +53,13 @@ Features can be activated in the configuration header
 \item \newfeature{DIPOLES} This activates the dipole-moment property of
   particles; you probably also want to activate MAGNETOSTATICS to get any
   interactions for the dipoles. Requires \texttt{ROTATION}.
-\item \newfeature{ROTATION} Switch on rotational degrees of freedom for
-  the particles, as well as the corresponding quaternion integrator.
-  See section \vref{sec:rotation} for details. Note, that when the
-  feature is activated, every particle has three additional degrees of
-  freedom, which for example means that the kinetic energy changes at
-  constant temperature is twice as large.
-  \todo{Docs for rotation missing}
+\item \newfeature{ROTATION} Switch on rotational degrees of freedom
+  for the particles, as well as the corresponding quaternion
+  integrator.  See section \vref{ssec:particleproperties} for
+  details. Note, that when the feature is activated, every particle
+  has three additional degrees of freedom, which for example means
+  that the kinetic energy changes at constant temperature is twice as
+  large.  \todo{Docs for rotation missing}
 \item \newfeature{EXTERNAL\_FORCES} Allows to define an arbitrary
   constant force for each particle individually. Also allows to fix
   individual coordinates of particles, \eg keep them at a fixed
@@ -92,9 +92,9 @@ In addition, there are switches that enable additional features in the
 integrator or thermostat:
 \begin{itemize}
 \item \newfeature{NEMD} Enables the non-equilbrium (shear) MD support
-  (see section \vref{sec:NEMD}).\todo{Docs missing}
+  (see section \vref{sec:NEMD}).
 \item \newfeature{NPT} Enables an on--the--fly NPT integration scheme
-  (see section \vref{sec:NPT}).\todo{Docs missing}
+  (see section \vref{ssec:NPTthermostat}).
 \item \newfeature{DPD} Enables the dissipative particle dynamics
   thermostat (see section \vref{sec:DPD}).
 \item \newfeature{TRANS\_DPD} Enables the transversal dissipative
@@ -108,7 +108,7 @@ integrator or thermostat:
 \item \newfeature{DPD\_MASS\_LIN} Enables masses in DPD using absolute
   mass units.
 \item \newfeature{LB} Enables the lattice-Boltzmann fluid code (see
-  section \vref{sec:LB}).\todo{Docs missing}
+  section \vref{sec:lb}).
 \end{itemize}
 
 \section{Interactions}

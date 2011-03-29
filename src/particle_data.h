@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef PARTICLE_DATA_H
-#define PARTICLE_DATA_H
+#ifndef _PARTICLE_DATA_H
+#define _PARTICLE_DATA_H
 /** \file particle_data.h
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"

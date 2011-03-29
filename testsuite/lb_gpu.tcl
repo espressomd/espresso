@@ -268,7 +268,6 @@ puts "\n"
     error_exit $res
 }
 
-exec rm -f $errf
 #after 10000
 exit 0
 

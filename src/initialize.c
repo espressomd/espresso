@@ -301,7 +301,7 @@ void on_observable_calc()
       EWALD_count_charged_particles();
       break;
     case COULOMB_MAGGS: 
-      Maggs_init(); 
+      maggs_init(); 
       break;
     default: break;
     }
@@ -377,7 +377,7 @@ void on_coulomb_change()
     MMM2D_init();
     break;
   case COULOMB_MAGGS: 
-    Maggs_init(); 
+    maggs_init(); 
     break;
   default: break;
   }

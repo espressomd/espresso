@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -168,7 +169,8 @@ thermostat, or via a thermostat and a special DPD interaction between
 particle types.  The latter allows the user to specify friction
 coefficients on a per-interaction basis.
 
-\subsubsection{Thermostat DPD}\index{sec:DPDthermostat}
+\subsubsection{Thermostat DPD}
+\index{label:DPDthermostat}
 
 \begin{essyntax}
   thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF
@@ -237,11 +239,11 @@ propably want to try this out yourself to get a feeling for how fast
 temperature jumps during a simulation are. The dpd thermostat does not
 act on the system center of mass motion.  Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you
-can achieve by using the command \keyword{galileiTransformParticles}
-(see section \vref{tcl:galileiTransformParticles}) . This may be
+can achieve by using the command \keyword{galileiTransformParticles}.
+\todo{Docs for galileiTransformParticles is missing} This may be
 repeated once in a while for long runs due to round off errors (check
-this with the command \keyword{system_com_vel} from section
-\vref{tcl:system-com-vel}).
+this with the command \keyword{system_com_vel}).  \todo{Docs from
+  system_com_vel is missing}
 
 Two restrictions apply for the dpd implementation of \es:
 
@@ -307,6 +309,7 @@ $$ M_{ij}=\frac{m_i+m_j}{2} $$
 The prefactors are such that equal masses result in a factor 1.
 
 \subsection{Isotropic NPT thermostat}
+\label{ssec:NPTthermostat}
 \begin{essyntax}
   thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
   \begin{features}
@@ -334,7 +337,7 @@ Returns the thermostat parameters. \todo{Document return format.}
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}
-
+\label{sec:NEMD}
 \index{NEMD}
 
 \begin{essyntax}

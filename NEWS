@@ -38,19 +38,21 @@ User-visible changes
   relative to another particle (VIRTUAL_SITES_RELATIVE).  This allows
   to create rigid structures within ESPResSo.
 
+* The User's Guide has been significantly updated and extended.
+
 * Some constraints can now be made penetrable and reflecting.
 
+* "Espresso" is now the actual binary instead of a wrapper shell
+  script that automatically calls MPI. This means that it is necessary
+  to call "mpiexec" or "mpirun" youself to run ESPResSo in an MPI
+  environment.
+
+* The directory where the scripts are installed is now compiled into
+  the binary, i.e. it is not necessary anymore to set the environment
+  variable ESPRESSO_SCRIPTS. Still, it will heed the environment
+  variable if it is set.
+
 * The build system has been overhauled and simplified.
-
-  * "Espresso" is now the actual binary instead of a wrapper shell
-    script that automatically calls MPI. This means that it is
-    necessary to call "mpiexec" or "mpirun" youself to run ESPResSo in
-    an MPI environment.
-
-  * The directory where the scripts are installed is now compiled into
-    the binary, i.e. it is not necessary anymore to set the
-    environment variable ESPRESSO_SCRIPTS. Still, it will heed the
-    environment variable if it is set.
 
   * Running "make check" will run the testsuite with a single number
     of processors, which gives a significant speedup. "configure" will
@@ -111,7 +113,18 @@ Changes visible for developers
 ------------------------------
 
 * The source code repository has been moved from CVS to git, and it
-  has moved to GNU Savannah (see above).
+  has moved to GNU Savannah (see above) and github. The main
+  development code repository is
+
+    https://github.com/espressomd/espresso
+
+* We have an automated build server (Jenkins) at 
+
+    http://espressomd.org/jenkins/ 
+
+  that automatically builds and checks the ESPResSo package whenever
+  new code is pushed to the main development repository.  Every night,
+  a number of additional tests are performed
 
 * The .c/.h/.cu source files have been moved to the subdirectory
   src/. The Espresso binary is still placed in the top-level build
@@ -127,6 +140,10 @@ Changes visible for developers
   same naming conventions. These are described here:
 
     git log 3d4d6f31655a8d96e47c8f80e10f27f6b764f8df
+
+* Adding a new MPI function to communication.c has been significantly
+  simplified. It is enough to add the function in the C file at a
+  single location.
 
 ========================================================================
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.

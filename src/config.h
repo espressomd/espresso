@@ -118,15 +118,11 @@
 
 //inter_rf needs ELECTROSTATICS
 #ifdef INTER_RF
-#ifndef ELECTROSTATICS
 #define ELECTROSTATICS
-#endif
 #endif
 
 #ifdef GAY_BERNE
-#ifndef ROTATION
 #define ROTATION
-#endif
 #endif
 
 /* activate P3M only with FFTW */
@@ -138,36 +134,34 @@
 /* activate dipolar P3M only with FFTW */
 #if defined(MAGNETOSTATICS) && defined(FFTW)
 #define ELP3M
-#ifndef DIPOLES
-#define DIPOLES
-#endif
 #endif
 
 
 /* MAGNETOSTATICS implies the use of DIPOLES */
-#if defined(MAGNETOSTATICS)
-#ifndef DIPOLES
+#ifdef MAGNETOSTATICS
 #define DIPOLES
-#endif
 #endif
 
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
 #ifdef LB_ELECTROHYDRODYNAMICS
-#ifndef LB
 #define LB
 #endif
+
+/* LB_BOUNDARIES need constraints */
+#ifdef LB_BOUNDARIES
+#define LB
+#define CONSTRAINTS 
 #endif
 
-/* LB_BOUNDARIES need constraints, obviously... */
-#if defined(LB_BOUNDARIES) && !defined(CONSTRAINTS)
-#define CONSTRAINTS 
+#ifdef LB_BOUNDARIES_GPU
+#define LB_GPU
+#define CONSTRAINTS
 #endif
 
 /* Lattice Boltzmann needs lattice structures and temporary particle data */
 #ifdef LB
 #define USE_TEMPORARY
 #define LATTICE
-//#define ALTERNATIVE_INTEGRATOR
 #endif
 
 #ifdef LB_GPU
@@ -231,9 +225,7 @@
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-#ifndef ROTATION
 #define ROTATION
-#endif
 #endif
 
 /*@}*/
