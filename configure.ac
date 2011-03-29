@@ -488,7 +488,7 @@ AC_CONFIG_FILES([
 	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	myconfig-sample.h:src/myconfig-sample.h.in
+	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
