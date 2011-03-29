@@ -87,13 +87,13 @@ set:
 \item[max_range] (double, \ro) Maximal range of real space
   interactions: \var{max_cut} + \var{skin}.
 \item[max_skin] (double, \ro) Maximal skin to be used for the link
-  cell/verlet algorithm. This is the minimum of \var{cell_size} -
-  \var{max_range}. \todo{???}
-\item[min_num_cells] (int) \todo{???} Minimal number of cells for the
-  link cell algorithm. Reasonable values range in $1e-6 N^2$ to $1e-7
+  cell/verlet algorithm. This is the minimum of \var{cell\_size} -
+  \var{max\_range}.
+\item[min_num_cells] (int) Minimal number of cells for the link cell
+  algorithm. Reasonable values range in $10^{-6} N^2$ to $10^{-7}
   N^2$. In general just make sure that the Verlet lists are not
   incredibly large. By default the minimum is 0, but for the automatic
-  P3M tuning it may be wise to larger values for high particle
+  P3M tuning it may be wise to set larger values for high particle
   numbers.
 \item[n_layers] (int, \ro) Number of layers in cell structure LAYERED
   (see section \vref{sec:cell-systems}).
@@ -156,7 +156,8 @@ thermostats.
 
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a
-function of the particle velocities.  \todo{Reference}
+function of the particle velocities. For a more detailed explanation,
+refer to \cite{berendsen84a, grest86a}.
 
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.
@@ -317,9 +318,9 @@ The prefactors are such that equal masses result in a factor 1.
   \end{features}
 \end{essyntax}
 
-This theormstat is based on the Anderson thermostat and will
-thermalize the box geometry. It will only do isotropic changes of the
-box.\todo{Docs, reference}
+This theormstat is based on the Anderson thermostat (see
+\cite{andersen80a}) and will thermalize the box geometry. It will only
+do isotropic changes of the box.\todo{More Docs}
 
 \subsection{Turning off all thermostats}
 \begin{essyntax}
@@ -333,7 +334,10 @@ Turns off all thermostats and sets all thermostat variables to zero.
   thermostat
 \end{essyntax}
 
-Returns the thermostat parameters. \todo{Document return format.}
+Returns the thermostat parameters. A TCL list is given containing all
+the parameters needed to set the specific thermostat. (exactly the
+same as the input command line, without the preceding
+\texttt{thermostat}).
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}

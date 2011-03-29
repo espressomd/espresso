@@ -77,4 +77,4 @@ MOSTLYCLEANFILES = \
 	*.aux *.aux.bak\
 	ug.bbl ug.blg \
 	ug.idx ug.idx.bak ug.ilg ug.ind\
-	ug.log ug.out ug.toc
+	ug.log ug.out ug.toc ug.tdo
