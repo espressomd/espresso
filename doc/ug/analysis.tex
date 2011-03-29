@@ -603,11 +603,9 @@ The command is implemented in parallel.
 \end{code}
 specifying the local pressure tensor in each bin.
 
-\section{Topologies}
+\section{Analyze groups of particles (molecules)}
 \analyzeindex{topologies}
 \label{analyze:set}
-
-\todo{Topologies is probably not the best name for this section}
 
 The following set of functions is designed to facilitate analysis 
 of molecules. Molecules are expected to be a group of particles
@@ -734,9 +732,9 @@ configurations (see section \vref{sec:stored-configs}).
 The index corresponds to the number of beads between the two monomers
 considered (0 = next neighbours, 1 = one monomer in between, \dots).
 
-\subsubsection{Bond distances}
-\analyzeindex{bond distances}
-\todo{Why is this called bond distances? It has nothing to do with bonds.}
+\subsubsection{Internal distances II (specific monomer)}
+\analyzeindex{bond distances internal first monomer}
+
 \begin{essyntax}
   analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -829,13 +827,12 @@ given by \var{rmin} and \var{rmax} and it is divided into
 \}
 \end{code}
 
-\subsubsection{g123}
+\subsubsection{Mean square displacement of chains}
 \label{analyze:<g1>}
 \label{analyze:<g2>}
 \label{analyze:<g3>}
 \label{analyze:g123}
 
-\todo{Title?}
 \begin{essyntax}
   \variant{1} analyze \alt{<g1>\asep<g2>\asep<g3>} 
   \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
