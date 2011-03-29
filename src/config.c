@@ -111,6 +111,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef FFTW
   Tcl_AppendResult(interp, "{ FFTW } ", (char *) NULL);
 #endif
+#ifdef CUDA
+  Tcl_AppendResult(interp, "{ CUDA } ", (char *) NULL);
+#endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);
 #endif

@@ -88,8 +88,8 @@ static size_t size_of_boundindex;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
-static __constant__ LB_parameters_gpu para;
-static __constant__ float c_sound_sq = 1.f/3.f;
+static __device__ __constant__ LB_parameters_gpu para;
+static const float c_sound_sq = 1.f/3.f;
 
 /**cudasteams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
@@ -193,69 +193,69 @@ __device__ void index_to_xyz(unsigned int index, unsigned int *xyz){
 __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode){
 
   /* mass mode */
-  mode[0] = n_a.vd[0][index] + n_a.vd[1][index] + n_a.vd[2][index]
-          + n_a.vd[3][index] + n_a.vd[4][index] + n_a.vd[5][index]
-          + n_a.vd[6][index] + n_a.vd[7][index] + n_a.vd[8][index]
-          + n_a.vd[9][index] + n_a.vd[10][index] + n_a.vd[11][index] + n_a.vd[12][index]
-          + n_a.vd[13][index] + n_a.vd[14][index] + n_a.vd[15][index] + n_a.vd[16][index]
-          + n_a.vd[17][index] + n_a.vd[18][index];
+  mode[0] = n_a.vd[0*para.number_of_nodes + index] + n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]
+          + n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index] + n_a.vd[5*para.number_of_nodes + index]
+          + n_a.vd[6*para.number_of_nodes + index] + n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index]
+          + n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index] + n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]
+          + n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index] + n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]
+          + n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index];
 
   /* momentum modes */
-  mode[1] = (n_a.vd[1][index] - n_a.vd[2][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-          + (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-          + (n_a.vd[13][index] - n_a.vd[14][index]);
-  mode[2] = (n_a.vd[3][index] - n_a.vd[4][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-          - (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-          + (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[3] = (n_a.vd[5][index] - n_a.vd[6][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-          - (n_a.vd[13][index] - n_a.vd[14][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-          - (n_a.vd[17][index] - n_a.vd[18][index]);
+  mode[1] = (n_a.vd[1*para.number_of_nodes + index] - n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+          + (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+          + (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]);
+  mode[2] = (n_a.vd[3*para.number_of_nodes + index] - n_a.vd[4*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+          - (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+          + (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[3] = (n_a.vd[5*para.number_of_nodes + index] - n_a.vd[6*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+          - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+          - (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
 
   /* stress modes */
-  mode[4] = -(n_a.vd[0][index]) + n_a.vd[7][index] + n_a.vd[8][index] + n_a.vd[9][index] + n_a.vd[10][index]
-          + n_a.vd[11][index] + n_a.vd[12][index] + n_a.vd[13][index] + n_a.vd[14][index]
-          + n_a.vd[15][index] + n_a.vd[16][index] + n_a.vd[17][index] + n_a.vd[18][index];
-  mode[5] = n_a.vd[1][index] + n_a.vd[2][index] - (n_a.vd[3][index] + n_a.vd[4][index])
-          + (n_a.vd[11][index] + n_a.vd[12][index]) + (n_a.vd[13][index] + n_a.vd[14][index])
-          - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index]);
-  mode[6] = (n_a.vd[1][index] + n_a.vd[2][index]) + (n_a.vd[3][index] + n_a.vd[4][index])
-          - (n_a.vd[11][index] + n_a.vd[12][index]) - (n_a.vd[13][index] + n_a.vd[14][index])
-          - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index])
-          - 2.f*(n_a.vd[5][index] + n_a.vd[6][index] - (n_a.vd[7][index] + n_a.vd[8][index])
-          - (n_a.vd[9][index] +n_a.vd[10][index]));
-  mode[7] = n_a.vd[7][index] + n_a.vd[8][index] - (n_a.vd[9][index] + n_a.vd[10][index]);
-  mode[8] = n_a.vd[11][index] + n_a.vd[12][index] - (n_a.vd[13][index] + n_a.vd[14][index]);
-  mode[9] = n_a.vd[15][index] + n_a.vd[16][index] - (n_a.vd[17][index] + n_a.vd[18][index]);
+  mode[4] = -(n_a.vd[0*para.number_of_nodes + index]) + n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index] + n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]
+          + n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index] + n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index]
+          + n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index] + n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index];
+  mode[5] = n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index] - (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+          + (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) + (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+          - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]);
+  mode[6] = (n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+          - (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+          - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index])
+          - 2.f*(n_a.vd[5*para.number_of_nodes + index] + n_a.vd[6*para.number_of_nodes + index] - (n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index])
+          - (n_a.vd[9*para.number_of_nodes + index] +n_a.vd[10*para.number_of_nodes + index]));
+  mode[7] = n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index] - (n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]);
+  mode[8] = n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index] - (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index]);
+  mode[9] = n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index] - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]);
 
   /* kinetic modes */
-  mode[10] = -2.f*(n_a.vd[1][index] - n_a.vd[2][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-           + (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-           + (n_a.vd[13][index] - n_a.vd[14][index]);
-  mode[11] = -2.f*(n_a.vd[3][index] - n_a.vd[4][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-           - (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-           + (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[12] = -2.f*(n_a.vd[5][index] - n_a.vd[6][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-           - (n_a.vd[13][index] - n_a.vd[14][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-           - (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[13] = (n_a.vd[7][index] - n_a.vd[8][index]) + (n_a.vd[9][index] - n_a.vd[10][index])
-           - (n_a.vd[11][index] - n_a.vd[12][index]) - (n_a.vd[13][index] - n_a.vd[14][index]);
-  mode[14] = (n_a.vd[7][index] - n_a.vd[8][index]) - (n_a.vd[9][index] - n_a.vd[10][index])
-           - (n_a.vd[15][index] - n_a.vd[16][index]) - (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[15] = (n_a.vd[11][index] - n_a.vd[12][index]) - (n_a.vd[13][index] - n_a.vd[14][index])
-           - (n_a.vd[15][index] - n_a.vd[16][index]) + (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[16] = n_a.vd[0][index] + n_a.vd[7][index] + n_a.vd[8][index] + n_a.vd[9][index] + n_a.vd[10][index]
-           + n_a.vd[11][index] + n_a.vd[12][index] + n_a.vd[13][index] + n_a.vd[14][index]
-           + n_a.vd[15][index] + n_a.vd[16][index] + n_a.vd[17][index] + n_a.vd[18][index]
-           - 2.f*((n_a.vd[1][index] + n_a.vd[2][index]) + (n_a.vd[3][index] + n_a.vd[4][index])
-           + (n_a.vd[5][index] + n_a.vd[6][index]));
-  mode[17] = -(n_a.vd[1][index] + n_a.vd[2][index]) + (n_a.vd[3][index] + n_a.vd[4][index])
-           + (n_a.vd[11][index] + n_a.vd[12][index]) + (n_a.vd[13][index] + n_a.vd[14][index])
-           - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index]);
-  mode[18] = -(n_a.vd[1][index] + n_a.vd[2][index]) - (n_a.vd[3][index] + n_a.vd[4][index])
-           - (n_a.vd[11][index] + n_a.vd[12][index]) - (n_a.vd[13][index] + n_a.vd[14][index])
-           - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index])
-           + 2.f*((n_a.vd[5][index] + n_a.vd[6][index]) + (n_a.vd[7][index] + n_a.vd[8][index])
-           + (n_a.vd[9][index] + n_a.vd[10][index]));
+  mode[10] = -2.f*(n_a.vd[1*para.number_of_nodes + index] - n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+           + (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+           + (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]);
+  mode[11] = -2.f*(n_a.vd[3*para.number_of_nodes + index] - n_a.vd[4*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+           - (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+           + (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[12] = -2.f*(n_a.vd[5*para.number_of_nodes + index] - n_a.vd[6*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+           - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+           - (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[13] = (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index]) + (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index])
+           - (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]);
+  mode[14] = (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index]) - (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[15] = (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index]) + (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[16] = n_a.vd[0*para.number_of_nodes + index] + n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index] + n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]
+           + n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index] + n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index]
+           + n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index] + n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]
+           - 2.f*((n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+           + (n_a.vd[5*para.number_of_nodes + index] + n_a.vd[6*para.number_of_nodes + index]));
+  mode[17] = -(n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+           + (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) + (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]);
+  mode[18] = -(n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) - (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+           - (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index])
+           + 2.f*((n_a.vd[5*para.number_of_nodes + index] + n_a.vd[6*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index])
+           + (n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]));
 
 }
 /*-------------------------------------------------------*/
@@ -284,9 +284,9 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   * inlcude one half-step of the force action.  See the
   * Chapman-Enskog expansion in [Ladd & Verberg]. */
 
-  j[0] += 0.5f*node_f.force[0][index];
-  j[1] += 0.5f*node_f.force[1][index];
-  j[2] += 0.5f*node_f.force[2][index];
+  j[0] += 0.5f*node_f.force[0*para.number_of_nodes + index];
+  j[1] += 0.5f*node_f.force[1*para.number_of_nodes + index];
+  j[2] += 0.5f*node_f.force[2*para.number_of_nodes + index];
 
   /* equilibrium part of the stress modes (eq13 schiller)*/
   pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
@@ -444,25 +444,25 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
   unsigned int y = xyz[1];
   unsigned int z = xyz[2];
 
-  n_b.vd[0][x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/3.f * (mode[0] - mode[4] + mode[16]);
-  n_b.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[1] + mode[5] + mode[6] - mode[17] - mode[18] - 2.f*(mode[10] + mode[16]));
-  n_b.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[1] + mode[5] + mode[6] - mode[17] - mode[18] + 2.f*(mode[10] - mode[16]));
-  n_b.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[2] - mode[5] + mode[6] + mode[17] - mode[18] - 2.f*(mode[11] + mode[16]));
-  n_b.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[2] - mode[5] + mode[6] + mode[17] - mode[18] + 2.f*(mode[11] - mode[16]));
-  n_b.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/18.f * (mode[0] + mode[3] - 2.f*(mode[6] + mode[12] + mode[16] - mode[18]));
-  n_b.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/18.f * (mode[0] - mode[3] - 2.f*(mode[6] - mode[12] + mode[16] - mode[18]));
-  n_b.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] + mode[2] + mode[4] + 2.f*mode[6] + mode[7] + mode[10] + mode[11] + mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] - mode[2] + mode[4] + 2.f*mode[6] + mode[7] - mode[10] - mode[11] - mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] - mode[2] + mode[4] + 2.f*mode[6] - mode[7] + mode[10] - mode[11] + mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] + mode[2] + mode[4] + 2.f*mode[6] - mode[7] - mode[10] + mode[11] - mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] + mode[3] + mode[4] + mode[5] - mode[6] + mode[8] + mode[10] + mode[12] - mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] - mode[3] + mode[4] + mode[5] - mode[6] + mode[8] - mode[10] - mode[12] + mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] - mode[3] + mode[4] + mode[5] - mode[6] - mode[8] + mode[10] - mode[12] - mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] + mode[3] + mode[4] + mode[5] - mode[6] - mode[8] - mode[10] + mode[12] + mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] + mode[3] + mode[4] - mode[5] - mode[6] + mode[9] + mode[11] + mode[12] - mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
-  n_b.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] - mode[3] + mode[4] - mode[5] - mode[6] + mode[9] - mode[11] - mode[12] + mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
-  n_b.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] - mode[3] + mode[4] - mode[5] - mode[6] - mode[9] + mode[11] - mode[12] - mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
-  n_b.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] + mode[3] + mode[4] - mode[5] - mode[6] - mode[9] - mode[11] + mode[12] + mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[0*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/3.f * (mode[0] - mode[4] + mode[16]);
+  n_b.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[1] + mode[5] + mode[6] - mode[17] - mode[18] - 2.f*(mode[10] + mode[16]));
+  n_b.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[1] + mode[5] + mode[6] - mode[17] - mode[18] + 2.f*(mode[10] - mode[16]));
+  n_b.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[2] - mode[5] + mode[6] + mode[17] - mode[18] - 2.f*(mode[11] + mode[16]));
+  n_b.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[2] - mode[5] + mode[6] + mode[17] - mode[18] + 2.f*(mode[11] - mode[16]));
+  n_b.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/18.f * (mode[0] + mode[3] - 2.f*(mode[6] + mode[12] + mode[16] - mode[18]));
+  n_b.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/18.f * (mode[0] - mode[3] - 2.f*(mode[6] - mode[12] + mode[16] - mode[18]));
+  n_b.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] + mode[2] + mode[4] + 2.f*mode[6] + mode[7] + mode[10] + mode[11] + mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] - mode[2] + mode[4] + 2.f*mode[6] + mode[7] - mode[10] - mode[11] - mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] - mode[2] + mode[4] + 2.f*mode[6] - mode[7] + mode[10] - mode[11] + mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] + mode[2] + mode[4] + 2.f*mode[6] - mode[7] - mode[10] + mode[11] - mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] + mode[3] + mode[4] + mode[5] - mode[6] + mode[8] + mode[10] + mode[12] - mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] - mode[3] + mode[4] + mode[5] - mode[6] + mode[8] - mode[10] - mode[12] + mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] - mode[3] + mode[4] + mode[5] - mode[6] - mode[8] + mode[10] - mode[12] - mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] + mode[3] + mode[4] + mode[5] - mode[6] - mode[8] - mode[10] + mode[12] + mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] + mode[3] + mode[4] - mode[5] - mode[6] + mode[9] + mode[11] + mode[12] - mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] - mode[3] + mode[4] - mode[5] - mode[6] + mode[9] - mode[11] - mode[12] + mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] - mode[3] + mode[4] - mode[5] - mode[6] - mode[9] + mode[11] - mode[12] - mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] + mode[3] + mode[4] - mode[5] - mode[6] - mode[9] - mode[11] + mode[12] + mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
 
 }
 /*-------------------------------------------------------*/
@@ -490,24 +490,24 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     unsigned int z = xyz[2];
 
     /* stream vd from boundary node back to origin node */
-    n_a.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[2][index];
-    n_a.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[1][index];
-    n_a.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[4][index];
-    n_a.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[3][index];
-    n_a.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[6][index];
-    n_a.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[5][index];
-    n_a.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[8][index];
-    n_a.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[7][index];
-    n_a.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[10][index];
-    n_a.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[9][index];
-    n_a.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[12][index];
-    n_a.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[11][index]; 
-    n_a.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[14][index]; 
-    n_a.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[13][index]; 
-    n_a.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[16][index];
-    n_a.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[15][index];
-    n_a.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[18][index]; 
-    n_a.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[17][index];
+    n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[2*para.number_of_nodes + index];
+    n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[1*para.number_of_nodes + index];
+    n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[4*para.number_of_nodes + index];
+    n_a.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[3*para.number_of_nodes + index];
+    n_a.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[6*para.number_of_nodes + index];
+    n_a.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[5*para.number_of_nodes + index];
+    n_a.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[8*para.number_of_nodes + index];
+    n_a.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[7*para.number_of_nodes + index];
+    n_a.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[10*para.number_of_nodes + index];
+    n_a.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[9*para.number_of_nodes + index];
+    n_a.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[12*para.number_of_nodes + index];
+    n_a.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[11*para.number_of_nodes + index]; 
+    n_a.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[14*para.number_of_nodes + index]; 
+    n_a.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[13*para.number_of_nodes + index]; 
+    n_a.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[16*para.number_of_nodes + index];
+    n_a.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[15*para.number_of_nodes + index];
+    n_a.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[18*para.number_of_nodes + index]; 
+    n_a.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[17*para.number_of_nodes + index];
   }
 }
 /*-------------------------------------------------------*/
@@ -527,24 +527,24 @@ __device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned i
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
-    n_b.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
-    n_b.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
-    n_b.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
+    n_b.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
+    n_b.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
   }
 }
 
@@ -562,25 +562,25 @@ __device__ void reset_pop(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index
   /* delete populations */
 #if 1
   if(n_b.boundary[index] == 2){
-    n_b.vd[0][index] = n_b.vd[0][index+1];
-    n_b.vd[1][index] = n_b.vd[1][index+1];
-    n_b.vd[2][index] = n_b.vd[2][index+1];
-    n_b.vd[3][index] = n_b.vd[3][index+1];
-    n_b.vd[4][index] = n_b.vd[4][index+1];
-    n_b.vd[5][index] = n_b.vd[5][index+1];
-    n_b.vd[6][index] = n_b.vd[6][index+1];
-    n_b.vd[7][index]  = n_b.vd[7][index+1];
-    n_b.vd[8][index]  = n_b.vd[8][index+1];
-    n_b.vd[9][index]  = n_b.vd[9][index+1];
-    n_b.vd[10][index] = n_b.vd[10][index+1];
-    n_b.vd[11][index] = n_b.vd[11][index+1];
-    n_b.vd[12][index] = n_b.vd[12][index+1];
-    n_b.vd[13][index] = n_b.vd[13][index+1];
-    n_b.vd[14][index] = n_b.vd[14][index+1];
-    n_b.vd[15][index] = n_b.vd[15][index+1];
-    n_b.vd[16][index] = n_b.vd[16][index+1];
-    n_b.vd[17][index] = n_b.vd[17][index+1];
-    n_b.vd[18][index] = n_b.vd[18][index+1];
+    n_b.vd[0*para.number_of_nodes + index] = n_b.vd[0*para.number_of_nodes + index+1];
+    n_b.vd[1*para.number_of_nodes + index] = n_b.vd[1*para.number_of_nodes + index+1];
+    n_b.vd[2*para.number_of_nodes + index] = n_b.vd[2*para.number_of_nodes + index+1];
+    n_b.vd[3*para.number_of_nodes + index] = n_b.vd[3*para.number_of_nodes + index+1];
+    n_b.vd[4*para.number_of_nodes + index] = n_b.vd[4*para.number_of_nodes + index+1];
+    n_b.vd[5*para.number_of_nodes + index] = n_b.vd[5*para.number_of_nodes + index+1];
+    n_b.vd[6*para.number_of_nodes + index] = n_b.vd[6*para.number_of_nodes + index+1];
+    n_b.vd[7*para.number_of_nodes + index]  = n_b.vd[7*para.number_of_nodes + index+1];
+    n_b.vd[8*para.number_of_nodes + index]  = n_b.vd[8*para.number_of_nodes + index+1];
+    n_b.vd[9*para.number_of_nodes + index]  = n_b.vd[9*para.number_of_nodes + index+1];
+    n_b.vd[10*para.number_of_nodes + index] = n_b.vd[10*para.number_of_nodes + index+1];
+    n_b.vd[11*para.number_of_nodes + index] = n_b.vd[11*para.number_of_nodes + index+1];
+    n_b.vd[12*para.number_of_nodes + index] = n_b.vd[12*para.number_of_nodes + index+1];
+    n_b.vd[13*para.number_of_nodes + index] = n_b.vd[13*para.number_of_nodes + index+1];
+    n_b.vd[14*para.number_of_nodes + index] = n_b.vd[14*para.number_of_nodes + index+1];
+    n_b.vd[15*para.number_of_nodes + index] = n_b.vd[15*para.number_of_nodes + index+1];
+    n_b.vd[16*para.number_of_nodes + index] = n_b.vd[16*para.number_of_nodes + index+1];
+    n_b.vd[17*para.number_of_nodes + index] = n_b.vd[17*para.number_of_nodes + index+1];
+    n_b.vd[18*para.number_of_nodes + index] = n_b.vd[18*para.number_of_nodes + index+1];
   }
 #endif
 }
@@ -598,21 +598,21 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
   /* hydrodynamic momentum density is redefined when forces present */
-  u[0] = (mode[1] + 0.5f*node_f.force[0][index])/Rho;
-  u[1] = (mode[2] + 0.5f*node_f.force[1][index])/Rho;
-  u[2] = (mode[3] + 0.5f*node_f.force[2][index])/Rho;
+  u[0] = (mode[1] + 0.5f*node_f.force[0*para.number_of_nodes + index])/Rho;
+  u[1] = (mode[2] + 0.5f*node_f.force[1*para.number_of_nodes + index])/Rho;
+  u[2] = (mode[3] + 0.5f*node_f.force[2*para.number_of_nodes + index])/Rho;
 
-  C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1][index]+u[1]*node_f.force[0][index]);
-  C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2][index]+u[2]*node_f.force[0][index]);
-  C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2][index]+u[2]*node_f.force[1][index]);
+  C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1*para.number_of_nodes + index]+u[1]*node_f.force[0*para.number_of_nodes + index]);
+  C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[0*para.number_of_nodes + index]);
+  C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[1*para.number_of_nodes + index]);
 
   /* update momentum modes */
-  mode[1] += node_f.force[0][index];
-  mode[2] += node_f.force[1][index];
-  mode[3] += node_f.force[2][index];
+  mode[1] += node_f.force[0*para.number_of_nodes + index];
+  mode[2] += node_f.force[1*para.number_of_nodes + index];
+  mode[3] += node_f.force[2*para.number_of_nodes + index];
   	
   /* update stress modes */
   mode[4] += C[0] + C[2] + C[5];
@@ -624,20 +624,20 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 
 #ifdef EXTERNAL_FORCES
   if(para.external_force){
-    node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
   }
   else{
-  node_f.force[0][index] = 0.f;
-  node_f.force[1][index] = 0.f;
-  node_f.force[2][index] = 0.f;
+  node_f.force[0*para.number_of_nodes + index] = 0.f;
+  node_f.force[1*para.number_of_nodes + index] = 0.f;
+  node_f.force[2*para.number_of_nodes + index] = 0.f;
   }
 #else
   /* reset force */
-  node_f.force[0][index] = 0.f;
-  node_f.force[1][index] = 0.f;
-  node_f.force[2][index] = 0.f;
+  node_f.force[0*para.number_of_nodes + index] = 0.f;
+  node_f.force[1*para.number_of_nodes + index] = 0.f;
+  node_f.force[2*para.number_of_nodes + index] = 0.f;
 #endif
 }
 /*-------------------------------------------------------*/
@@ -703,23 +703,23 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
 __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index){
 	
   /* mass mode */
-  mode[0] = n_a.vd[0][node_index] + n_a.vd[1][node_index] + n_a.vd[2][node_index]
-          + n_a.vd[3][node_index] + n_a.vd[4][node_index] + n_a.vd[5][node_index]
-          + n_a.vd[6][node_index] + n_a.vd[7][node_index] + n_a.vd[8][node_index]
-          + n_a.vd[9][node_index] + n_a.vd[10][node_index] + n_a.vd[11][node_index] + n_a.vd[12][node_index]
-          + n_a.vd[13][node_index] + n_a.vd[14][node_index] + n_a.vd[15][node_index] + n_a.vd[16][node_index]
-          + n_a.vd[17][node_index] + n_a.vd[18][node_index];
+  mode[0] = n_a.vd[0*para.number_of_nodes + node_index] + n_a.vd[1*para.number_of_nodes + node_index] + n_a.vd[2*para.number_of_nodes + node_index]
+          + n_a.vd[3*para.number_of_nodes + node_index] + n_a.vd[4*para.number_of_nodes + node_index] + n_a.vd[5*para.number_of_nodes + node_index]
+          + n_a.vd[6*para.number_of_nodes + node_index] + n_a.vd[7*para.number_of_nodes + node_index] + n_a.vd[8*para.number_of_nodes + node_index]
+          + n_a.vd[9*para.number_of_nodes + node_index] + n_a.vd[10*para.number_of_nodes + node_index] + n_a.vd[11*para.number_of_nodes + node_index] + n_a.vd[12*para.number_of_nodes + node_index]
+          + n_a.vd[13*para.number_of_nodes + node_index] + n_a.vd[14*para.number_of_nodes + node_index] + n_a.vd[15*para.number_of_nodes + node_index] + n_a.vd[16*para.number_of_nodes + node_index]
+          + n_a.vd[17*para.number_of_nodes + node_index] + n_a.vd[18*para.number_of_nodes + node_index];
 
   /* momentum modes */
-  mode[1] = (n_a.vd[1][node_index] - n_a.vd[2][node_index]) + (n_a.vd[7][node_index] - n_a.vd[8][node_index])
-          + (n_a.vd[9][node_index] - n_a.vd[10][node_index]) + (n_a.vd[11][node_index] - n_a.vd[12][node_index])
-          + (n_a.vd[13][node_index] - n_a.vd[14][node_index]);
-  mode[2] = (n_a.vd[3][node_index] - n_a.vd[4][node_index]) + (n_a.vd[7][node_index] - n_a.vd[8][node_index])
-          - (n_a.vd[9][node_index] - n_a.vd[10][node_index]) + (n_a.vd[15][node_index] - n_a.vd[16][node_index])
-          + (n_a.vd[17][node_index] - n_a.vd[18][node_index]);
-  mode[3] = (n_a.vd[5][node_index] - n_a.vd[6][node_index]) + (n_a.vd[11][node_index] - n_a.vd[12][node_index])
-          - (n_a.vd[13][node_index] - n_a.vd[14][node_index]) + (n_a.vd[15][node_index] - n_a.vd[16][node_index])
-          - (n_a.vd[17][node_index] - n_a.vd[18][node_index]);
+  mode[1] = (n_a.vd[1*para.number_of_nodes + node_index] - n_a.vd[2*para.number_of_nodes + node_index]) + (n_a.vd[7*para.number_of_nodes + node_index] - n_a.vd[8*para.number_of_nodes + node_index])
+          + (n_a.vd[9*para.number_of_nodes + node_index] - n_a.vd[10*para.number_of_nodes + node_index]) + (n_a.vd[11*para.number_of_nodes + node_index] - n_a.vd[12*para.number_of_nodes + node_index])
+          + (n_a.vd[13*para.number_of_nodes + node_index] - n_a.vd[14*para.number_of_nodes + node_index]);
+  mode[2] = (n_a.vd[3*para.number_of_nodes + node_index] - n_a.vd[4*para.number_of_nodes + node_index]) + (n_a.vd[7*para.number_of_nodes + node_index] - n_a.vd[8*para.number_of_nodes + node_index])
+          - (n_a.vd[9*para.number_of_nodes + node_index] - n_a.vd[10*para.number_of_nodes + node_index]) + (n_a.vd[15*para.number_of_nodes + node_index] - n_a.vd[16*para.number_of_nodes + node_index])
+          + (n_a.vd[17*para.number_of_nodes + node_index] - n_a.vd[18*para.number_of_nodes + node_index]);
+  mode[3] = (n_a.vd[5*para.number_of_nodes + node_index] - n_a.vd[6*para.number_of_nodes + node_index]) + (n_a.vd[11*para.number_of_nodes + node_index] - n_a.vd[12*para.number_of_nodes + node_index])
+          - (n_a.vd[13*para.number_of_nodes + node_index] - n_a.vd[14*para.number_of_nodes + node_index]) + (n_a.vd[15*para.number_of_nodes + node_index] - n_a.vd[16*para.number_of_nodes + node_index])
+          - (n_a.vd[17*para.number_of_nodes + node_index] - n_a.vd[18*para.number_of_nodes + node_index]);
 }
 /*********************************************************/
 /** \name Coupling part */
@@ -877,8 +877,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   particle_force[part_index].f[1] += para.lb_coupl_pref*(rn_part->randomnr[1]-0.5f);
   random_01(rn_part);
   particle_force[part_index].f[2] += para.lb_coupl_pref*(rn_part->randomnr[0]-0.5f);
-#endif
-	  
+#endif	  
   /* delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
@@ -899,37 +898,37 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
 /*-------------------------------------------------------*/
 __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu node_f){
 
-  atomicadd(&(node_f.force[0][node_index[0]]), (delta[0]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[0]]), (delta[0]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[0]]), (delta[0]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[1]]), (delta[1]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[1]]), (delta[1]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[1]]), (delta[1]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[2]]), (delta[2]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[2]]), (delta[2]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[2]]), (delta[2]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[3]]), (delta[3]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[3]]), (delta[3]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[3]]), (delta[3]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[4]]), (delta[4]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[4]]), (delta[4]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[4]]), (delta[4]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[5]]), (delta[5]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[5]]), (delta[5]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[5]]), (delta[5]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[6]]), (delta[6]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[6]]), (delta[6]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[6]]), (delta[6]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[7]]), (delta[7]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[7]]), (delta[7]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[7]]), (delta[7]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
 
 }
 /*-------------------------------------------------------*/
@@ -942,6 +941,7 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
 #if 0
 __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int part_index){
 
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi with native printf
   if(particle_data[part_index].p[0]/para.agrid < 0.f || particle_data[part_index].p[0]/para.agrid > para.dim_x){
     printf("particle out of box! (dim_x) \t %u \t %f \n", part_index, particle_data[part_index].p[0]); 
   }
@@ -951,6 +951,8 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
   if(particle_data[part_index].p[2]/para.agrid < 0.f || particle_data[part_index].p[2]/para.agrid > para.dim_z){
     printf("particle out of box! (dim_z) \t %u \t %f \n", part_index, particle_data[part_index].p[2]); 
   }
+#endif
+
 }
 #endif
 /*-------------------------------------------------------*/
@@ -1003,43 +1005,43 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
     float tmp1,tmp2;
 
     /* update the q=0 sublattice */
-    n_a.vd[0][index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
+    n_a.vd[0*para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
 
     /* update the q=1 sublattice */
     rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
 
-    n_a.vd[1][index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[2][index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[3][index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[4][index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[5][index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
-    n_a.vd[6][index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[1*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[2*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[3*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[4*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[5*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[6*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
 
     /* update the q=2 sublattice */
     rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
 
     tmp1 = local_pi[0] + local_pi[2];
     tmp2 = 2.0f*local_pi[1];
-    n_a.vd[7][index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[8][index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[9][index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[10][index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[7*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[8*para.number_of_nodes + index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[9*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[10*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     tmp1 = local_pi[0] + local_pi[5];
     tmp2 = 2.0f*local_pi[3];
 
-    n_a.vd[11][index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[12][index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[13][index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[14][index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[11*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[12*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[13*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[14*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     tmp1 = local_pi[2] + local_pi[5];
     tmp2 = 2.0f*local_pi[4];
 
-    n_a.vd[15][index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[16][index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[17][index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[18][index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[15*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[16*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[17*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[18*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     /*set different seed for randomgen on every node */
     n_a.seed[index] = para.your_seed + index;
@@ -1094,19 +1096,19 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   if(index<para.number_of_nodes){
 #ifdef EXTERNAL_FORCE
     if(para.external_force){
-      node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
     }
     else{
-      node_f.force[0][index] = 0.0f;
-      node_f.force[1][index] = 0.0f;
-      node_f.force[2][index] = 0.0f;
+      node_f.force[0*para.number_of_nodes + index] = 0.0f;
+      node_f.force[1*para.number_of_nodes + index] = 0.0f;
+      node_f.force[2*para.number_of_nodes + index] = 0.0f;
     }
 #else
-    node_f.force[0][index] = 0.0f;
-    node_f.force[1][index] = 0.0f;
-    node_f.force[2][index] = 0.0f;
+    node_f.force[0*para.number_of_nodes + index] = 0.0f;
+    node_f.force[1*para.number_of_nodes + index] = 0.0f;
+    node_f.force[2*para.number_of_nodes + index] = 0.0f;
 #endif
   }
 }
@@ -1324,9 +1326,9 @@ __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodefo
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<n_extern_nodeforces){
-    node_f.force[0][extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1][extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2][extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
   }
 }
 __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nodes_gpu n_a){
@@ -1350,9 +1352,9 @@ __global__ void momentum(LB_nodes_gpu n_a, float* sum, LB_node_force_gpu node_f)
     if(n_a.boundary[index]){
       mode[1] = mode[2] = mode[3] = 0.f;
     }
-    atomicadd(&(sum[0]), mode[1]+node_f.force[0][index]);
-    atomicadd(&(sum[1]), mode[2]+node_f.force[1][index]);
-    atomicadd(&(sum[2]), mode[3]+node_f.force[2][index]);
+    atomicadd(&(sum[0]), mode[1]+node_f.force[0*para.number_of_nodes + index]);
+    atomicadd(&(sum[1]), mode[2]+node_f.force[1*para.number_of_nodes + index]);
+    atomicadd(&(sum[2]), mode[3]+node_f.force[2*para.number_of_nodes + index]);
   }
 }
 __global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force_gpu node_f) {
@@ -1372,14 +1374,14 @@ __global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force
   }
 }
 
-void cuda_safe_mem(cudaError_t err){
+void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     if( cudaSuccess != err) {                                             
-      fprintf(stderr, "Could not allocate gpu memory.\n");
+      fprintf(stderr, "Could not allocate gpu memory at %s:%u.\n", file, line);
       printf("CUDA error: %s\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
     }
 }
-
+#define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 #define KERNELCALL(_f, _a, _b, _params) \
 _f<<<_a, _b, 0, stream[0]>>>_params; \
 _err=cudaGetLastError(); \
@@ -1406,25 +1408,22 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cuda_safe_mem(cudaMalloc((void**)&device_values, size_of_values));
 
-  for(int i=0; i<19; i++){
-    cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd[i], lbpar_gpu->number_of_nodes * sizeof(float)));
-    cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd[i], lbpar_gpu->number_of_nodes * sizeof(float)));                                           
-  }
+
+  cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd, lbpar_gpu->number_of_nodes * 19 * sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd, lbpar_gpu->number_of_nodes * 19 * sizeof(float)));                                           
+
   cuda_safe_mem(cudaMalloc((void**)&nodes_a.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
 
-  for(int i=0; i<3; i++){
-    cuda_safe_mem(cudaMalloc((void**)&node_f.force[i], lbpar_gpu->number_of_nodes * sizeof(float)));
-  }
-  
+  cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));  
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));	
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 	
   /**write parameters in const memory*/
-  cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
   /**check flag if lb gpu init works*/
   cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
   h_gpu_check = (int*)malloc(sizeof(int));
@@ -1452,7 +1451,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
   h_gpu_check[0] = 0;
-  cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
 
   cudaThreadSynchronize();
 
@@ -1467,18 +1466,28 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 }*/
 /**-------------------------------------------------------------------------*/
-void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
+void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
+
+  /* Allocate struct for particle positions */
+  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
+  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
+  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
+
+  cudaFreeHost(*host_data);
+
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
+  //pinned memory mode - use special function to get OS-pinned memory
+  cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
+#else
+  cudaMallocHost((void**)host_data, size_of_positions);
+#endif
 
   cudaFree(particle_force);
   cudaFree(particle_data);
   cudaFree(part);
 
-  cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
-
-  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
-  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
-  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+ 
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
@@ -1530,7 +1539,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
   cuda_safe_mem(cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces));
   cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
 
-  if(para.external_force == 0)cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)); 
+  if(para.external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
   threads_per_block_exf = 64;
   blocks_per_grid_exf_y = 4;

@@ -74,7 +74,7 @@ set tau           0.01
 
 set agrid         1.0
 
-set box_l         128
+set box_l         64
 set box_l_x       128.0
 
 set dens          1.0
@@ -82,7 +82,7 @@ set viscosity     3.0
 #set bulk_viscosity 0.1
 set friction      5.0
 #equ velo 0.025
-set temp          1.0
+set temp          0.0
 
 set skin          0.5
 
@@ -106,7 +106,7 @@ puts [setmd time_step]
 setmd box_l $box_l $box_l $box_l
 puts [setmd box_l]
 setmd periodic 1 1 1
-cellsystem domain_decomposition -no_verlet_list
+#cellsystem domain_decomposition -no_verlet_list
 #cellsystem nsquare
 
 #inter 0 0 lennard-jones 1 1 12.5 0 0
@@ -116,7 +116,7 @@ puts [setmd cell_grid]
 #part 0 pos 10 10 10
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 1 0 0
+lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 0.5 0 0
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
 thermostat lb $temp
 
@@ -254,7 +254,7 @@ puts "\n"
 #set avg_temp [expr $avg_temp/$int_times]
 #set var_temp [expr $var_temp/$int_times - $avg_temp*$avg_temp]
 #set rel_temp_error [expr abs(($avg_temp-[setmd temp])/[setmd temp])]
-#lbprint v vtk /home/dominic/espresso/testsuite/field.vtk
+lbprint v vtk field.vtk
 puts "\n"
 #puts "Maximal mass deviation $max_dmass"
 #puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
