@@ -56,8 +56,9 @@ compile software easily on a wide range of platforms.
 \label{sec:configure}
 \index{configure}
 
-% Description of basic options: --prefix, --exec-prefix, CPPFLAGS,
-% CFLAGS, LDFLAGS
+\todo[inline]{Description of basic options: \keyword{--prefix},
+  \keyword{--exec-prefix}, \keyword{CPPFLAGS}, \keyword{CFLAGS},
+  \keyword{LDFLAGS}}
 
 The first step of building \es is to run the shell script
 \codebox{configure} which is to be found in the top level source
@@ -219,6 +220,13 @@ following targets are available:
 \item[\texttt{uninstall}] Uninstalls \es, \ie removes all files that
   were installed during \texttt{make install}. The variables are
   identical to the variables of the \texttt{install}-target.
+\item[\texttt{ug\ \ }] Creates the User guide in the \texttt{doc/ug}
+  subdirectory.
+\item[\texttt{dg\ \ }] Creates the Developers' guide in the \texttt{doc/dg}
+  subdirectory.
+\item[\texttt{doc\ }] Creates both the whole documentation, \ie both the
+  User guide and the Developers' guide. Both can be found in the \texttt{doc/}
+  subdirecotry.
 \end{description}
 
 A number of options are available when calling \texttt{make}.  The

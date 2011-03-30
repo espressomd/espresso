@@ -56,7 +56,7 @@ proc write_data {file} {
 # Integration parameters
 #############################################################
 set int_steps     10
-set int_times     1000
+set int_times     100
 
 set time_step     0.005
 set tau           0.02
@@ -180,7 +180,7 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 
     # temperature of the fluid
     set fluid_temp [analyze fluid temp]
-    puts "part [part 0 print pos v f]"
+    # puts "part [part 0 print pos v f]"
 }    
 
 #############################################################

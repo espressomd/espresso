@@ -19,6 +19,11 @@
 \chapter{Input / Output}
 \label{cha:io}
 
+The checkpointing feature in \es{} is still working, but is assigned a
+major overhaul. Be aware that things might change in the future and
+that this documentation chapter might not be up-to-date and not
+complete or well-written.
+
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
 \newescommand{blockfile}
@@ -175,9 +180,10 @@ to \var{channel}.
 \end{essyntax}
 
 Variants \variant{1} and \variant{2} write the full information on the
-current states of the respecitve random number generators (see section
-\vref{sec:rng}) on any node to \var{channel}.  Using this information,
-it is possible to recover the exact states of the generators.
+current states of the respecitive random number generators (see
+sections \vref{ssec:trandom} and \vref{ssec:bitrandom}) on any node to
+\var{channel}.  Using this information, it is possible to recover the
+exact states of the generators.
 
 Variants \variant{3} and \variant{4} write only the seed(s) which were
 used to initialize the random number generators. Note that this
@@ -318,12 +324,19 @@ This is basically all you need to restore the information in the
 blockfile, overwriting the current settings in \es.
 
 
-\section{Checkpointing}
+\section{Checkpointing (deprecated)}
 \newescommand[checkpoint-set]{checkpoint_set}
 \newescommand[checkpoint-read]{checkpoint_read}
 
+The checkpointing feature in \es{} is marked deprecated and will no
+longer be maintained in future versions. It is still usable, but be
+aware that if you use newer features in your simulation, not all
+necessary parameters might be saved and restored when writing a
+standard checkpoint. Try to use blockfiles instead and think about
+what variables you need stored.
+
 The following procedures may be used to save and restore checkpoints
-to minimize the hassel involved when your simulations crashes after
+to minimize the hassel involved when your simulation crashes after
 long runs.
 
 \subsection{Creating a checkpoint}
@@ -408,7 +421,7 @@ bonds, and no interactions are written.  Defaults to all particle
 properties.  If the suffix of \var{path} is \lit{.gz}, the output will
 be compressed.
 
-\subsection{Writing a checkpoint 3}
+\subsection{Writing a checkpoint 3 (deprecated)}
 \begin{essyntax}
   \variant{2} polyBlockWriteAll \var{destination} 
   \optlong{\alt{\var{tclvar} \asep all} 
@@ -425,9 +438,11 @@ saves the tcl-variables specified by \var{tclvar} (if \lit{all}, then
 all the variables in the active script are stored), it saves all the
 stored configurations if \var{whatever} is whatever, but \lit{-}.
 Furthermore, it saves the state (\lit{state}) or the seed (\lit{seed})
-of the random number generator.  With this one can set real
-checkpoints which should reproduce the script-state as precisely as
-possible.
+of the random number generator.
+
+Attention: This feature is deprecated, and for newer algorithms or
+implementations might not write and read \emph{all} necessary
+variables.
 
 \section{Writing PDB/PSF files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format
@@ -623,7 +638,7 @@ time. Note, that before you can transfer coordinates to VMD, VMD needs
 to be aware of the structure of the system. For that, you first need
 to load a corresponding structure file (PSF or VSF) into VMD. Also
 note, that the command \lit{prepare_vmd_connection} (see section
-\vref{es:prepare-vmd-connection}) can be used to automatically set up
+\vref{tcl:prepare-vmd-connection}) can be used to automatically set up
 the VMD connection and transfer the structure file.
 
 By specifying \lit{-unfolded}, the unfolded coordinates of the

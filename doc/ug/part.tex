@@ -24,6 +24,7 @@
 \newescommand{part}
 
 \subsection{Defining particle properties}
+\label{ssec:particleproperties}
 
 \begin{essyntax}
   part
@@ -430,7 +431,7 @@ The polymer is created starting from particle ID 0. Nodes are assigned type 0,
 monomers (both charged and uncharged) are type 1 and counterions type 2.
 For inter-particle bonds interaction $0$ is taken which must be a two-particle bond.
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \label{fig:diamond}
   \begin{center}
   \includegraphics[height=6cm]{figures/diamond}
@@ -478,9 +479,8 @@ the icosaeder. For inter-particle bonds interaction $0$ is taken which
 must be a two-particle bond. Two particle types are used for the
 pentagons and the interconnecting links. For an example, see figure \ref{fig:fullerene}.
 
-\begin{figure}[h]
-  \label{fig:diamond}
-  \begin{center}
+\begin{figure}[ht]
+ \begin{center}
   \includegraphics[height=6cm]{figures/fullerene}
   \caption{Icosaeder with \var{monomers\_per\_chain}=15.}
   \label{fig:fullerene}

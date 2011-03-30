@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -86,13 +87,13 @@ set:
 \item[max_range] (double, \ro) Maximal range of real space
   interactions: \var{max_cut} + \var{skin}.
 \item[max_skin] (double, \ro) Maximal skin to be used for the link
-  cell/verlet algorithm. This is the minimum of \var{cell_size} -
-  \var{max_range}. \todo{???}
-\item[min_num_cells] (int) \todo{???} Minimal number of cells for the
-  link cell algorithm. Reasonable values range in $1e-6 N^2$ to $1e-7
+  cell/verlet algorithm. This is the minimum of \var{cell\_size} -
+  \var{max\_range}.
+\item[min_num_cells] (int) Minimal number of cells for the link cell
+  algorithm. Reasonable values range in $10^{-6} N^2$ to $10^{-7}
   N^2$. In general just make sure that the Verlet lists are not
   incredibly large. By default the minimum is 0, but for the automatic
-  P3M tuning it may be wise to larger values for high particle
+  P3M tuning it may be wise to set larger values for high particle
   numbers.
 \item[n_layers] (int, \ro) Number of layers in cell structure LAYERED
   (see section \vref{sec:cell-systems}).
@@ -155,7 +156,8 @@ thermostats.
 
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a
-function of the particle velocities.  \todo{Reference}
+function of the particle velocities. For a more detailed explanation,
+refer to \cite{berendsen84a, grest86a}.
 
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.
@@ -168,7 +170,8 @@ thermostat, or via a thermostat and a special DPD interaction between
 particle types.  The latter allows the user to specify friction
 coefficients on a per-interaction basis.
 
-\subsubsection{Thermostat DPD}\index{sec:DPDthermostat}
+\subsubsection{Thermostat DPD}
+\index{label:DPDthermostat}
 
 \begin{essyntax}
   thermostat dpd \var{temperature} \var{gamma} \var{r\_cut} \opt{ WF
@@ -237,11 +240,11 @@ propably want to try this out yourself to get a feeling for how fast
 temperature jumps during a simulation are. The dpd thermostat does not
 act on the system center of mass motion.  Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you
-can achieve by using the command \keyword{galileiTransformParticles}
-(see section \vref{tcl:galileiTransformParticles}) . This may be
+can achieve by using the command \keyword{galileiTransformParticles}.
+\todo{Docs for galileiTransformParticles is missing} This may be
 repeated once in a while for long runs due to round off errors (check
-this with the command \keyword{system_com_vel} from section
-\vref{tcl:system-com-vel}).
+this with the command \keyword{system_com_vel}).  \todo{Docs from
+  system_com_vel is missing}
 
 Two restrictions apply for the dpd implementation of \es:
 
@@ -307,6 +310,7 @@ $$ M_{ij}=\frac{m_i+m_j}{2} $$
 The prefactors are such that equal masses result in a factor 1.
 
 \subsection{Isotropic NPT thermostat}
+\label{ssec:NPTthermostat}
 \begin{essyntax}
   thermostat npt_isotropic \var{temperature} \var{gamma0} \var{gammaV}
   \begin{features}
@@ -314,9 +318,13 @@ The prefactors are such that equal masses result in a factor 1.
   \end{features}
 \end{essyntax}
 
-This theormstat is based on the Anderson thermostat and will
-thermalize the box geometry. It will only do isotropic changes of the
-box.\todo{Docs, reference}
+This theormstat is based on the Anderson thermostat (see
+\cite{andersen80a, mann05d}) and will thermalize the box geometry. It
+will only do isotropic changes of the box.
+
+Be aware that this feature is neither properly examined for all
+systems nor is it maintained regularly. If you use it and notice
+strange behaviour, please contribute to solving the problem.
 
 \subsection{Turning off all thermostats}
 \begin{essyntax}
@@ -330,11 +338,14 @@ Turns off all thermostats and sets all thermostat variables to zero.
   thermostat
 \end{essyntax}
 
-Returns the thermostat parameters. \todo{Document return format.}
+Returns the thermostat parameters. A TCL list is given containing all
+the parameters needed to set the specific thermostat. (exactly the
+same as the input command line, without the preceding
+\texttt{thermostat}).
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}
-
+\label{sec:NEMD}
 \index{NEMD}
 
 \begin{essyntax}

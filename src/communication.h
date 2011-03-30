@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef COMM_H
-#define COMM_H
+#ifndef _COMMUNICATION_H
+#define _COMMUNICATION_H
 /** \file communication.h
     This file contains the asynchronous MPI communication.
  
@@ -226,6 +226,10 @@ void mpi_send_dipm(int node, int part, double dipm);
     \param isVirtual its new isVirtual.
 */
 void mpi_send_virtual(int node, int part, int isVirtual);
+#endif
+
+#ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
 #endif
 
 /** Issue REQ_SET_TYPE: send particle type.
@@ -481,7 +485,6 @@ int mpi_iccp3m_init(int dummy);
  * @param j     local fluid velocity
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
-
 
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result

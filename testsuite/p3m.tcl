@@ -23,6 +23,7 @@ source "tests_common.tcl"
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
+require_feature "MOL_CUT" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"

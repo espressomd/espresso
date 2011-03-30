@@ -1,6 +1,5 @@
 /*
   Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
   
@@ -19,6 +18,7 @@
 */
 #ifdef VIRTUAL_SITES_RELATIVE
 
+#include "virtual_sites_relative.h"
 #include "rotation.h"
 
 // This is the "relative" implementation for virtual sites.
@@ -41,8 +41,9 @@ void update_mol_pos_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-  printf(stderr,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
-  return;
+   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   ERROR_SPRINTF(errtxt,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   return;
  }
  
  // Calculate the quaternion defining the orientation of the vecotr connectinhg
@@ -104,8 +105,9 @@ void update_mol_vel_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-  printf(stderr,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
-  return;
+   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   ERROR_SPRINTF(errtxt, "virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
+   return;
  }
  
  // Calculate the quaternion defining the orientation of the vecotr connectinhg
