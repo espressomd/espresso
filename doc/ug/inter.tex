@@ -1096,9 +1096,10 @@ algorithm.  Note that for this function to work properly, your system
 should already contain an initial configuration of charges and the
 correct initial box size. Also note that both provided tuning
 algorithms work very well on homogenous charge distributions, but
-might not achieve the requested precision for highly symmetric
-systems. Because of the nature of the P3M algorithm, systems are
-problematic where most charges are placed in one plane, or on a grid.
+might not achieve the requested precision for highly inhomogenous or
+symmetric systems. For example, because of the nature of the P3M
+algorithm, systems are problematic where most charges are placed in
+one plane, one small region, or on a regular grid.
 
 The function employs the analytical expression of the error estimate
 for the P3M method \cite[8.23]{hockney88} and its real space error
