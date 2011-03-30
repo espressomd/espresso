@@ -62,7 +62,8 @@ if HAVE_LATEX
 	cd $(srcdir); \
 		$(AWK) -f assemble_quickref.awk $(ug_TEXFILES) \
 			> $(abs_builddir)/quickref.inp
-	sh ../latexit.sh $(srcdir) ug || rm uf.pdf
+	sh ../latexit.sh $(srcdir) ug || rm ug.pdf
+	@echo "See LaTeX output in ug.log"
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."
@@ -76,4 +77,4 @@ MOSTLYCLEANFILES = \
 	*.aux *.aux.bak\
 	ug.bbl ug.blg \
 	ug.idx ug.idx.bak ug.ilg ug.ind\
-	ug.log ug.out ug.toc
+	ug.log ug.out ug.toc ug.tdo

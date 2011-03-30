@@ -167,7 +167,7 @@ ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
 \begin{essyntax}
   analyze cell_gpb \var{Manning parameter} \var{outer cell radius}
   \var{inner cell radius} \opt{\var{accuracy}
-    \opt{\var{number of interations}}}
+    \opt{\var{number of interactions}}}
 \end{essyntax}
 
 \todo{Document the usage and what it is!}
@@ -183,7 +183,7 @@ Outputs the folded positions of particles. Without any parameters, the
 positions of all particles are given, folded to the box length. The
 optional parameter \keyword{-molecule} ensures that molecules
 (particle groups) are kept intact. The optional shift parameters can
-be used to shift the not seperated molecules if needed.
+be used to shift the not separated molecules if needed.
 
 \subsection{Vkappa}
 \label{analyze:Vkappa}
@@ -233,7 +233,7 @@ The output corresponds to the blockfile format (see section
 Returns the spherically averaged structure factor $S(q)$ for particles
 of a given type \var{type}. The $S(q)$ is calculated for all possible
 wave vectors, $\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}$. Do
-not chose parameter \var{order} too large, becase the number of
+not chose parameter \var{order} too large, because the number of
 calculations grows as $\var{order}^3$. 
 
 
@@ -260,12 +260,12 @@ configurations stored with \codebox{analyze append} (see section
 \vref{sec:stored-configs}) are stored at equidistant time intervals.
 $G(r,t)$ is calculated for each multiple of this time intervals. For
 each time t the distribution of particle displacements is calculated
-acoording to the specification given by \var{rmin}, \var{rmax} and
+according to the specification given by \var{rmin}, \var{rmax} and
 \var{rbins}. Optional argument \var{tmax} defines the maximum value
 of $t$ for which $G(r,t)$ is calculated. If it is omitted or set to
 zero, maximum possible value is used.
 If the particles perform a random walk (\ie a normal
-diffusion process) $G(r,t)/r^2$ is a gaussian distribution for all
+diffusion process) $G(r,t)/r^2$ is a Gaussian distribution for all
 times.  Deviations of this behavior hint on another diffusion process
 or on the fact that your system has not reached the diffusive regime.
 In this case it is also very questionable to calculate a diffusion
@@ -295,7 +295,7 @@ yields $1$.
 \end{essyntax}
 Returns the center of mass of particles of the given type.
 
-\subsection{Moment of intertia matrix}
+\subsection{Moment of inertia matrix}
 \label{analyze:momentofinteratiamatrix}
 \label{analyze:find-principal-axis}
 \analyzeindex{moment of inertia matrix}
@@ -319,8 +319,8 @@ eigenvectors of the matrix.
 \end{essyntax}
 Analyze the gyration tensor of particles of a given type \var{typeid},
 or of all particles in the system if no type is given.
-Returns a tcl-list containing the squared radius of gyration,
- three shape discriptors (asphericity, acylindricity,
+Returns a Tcl-list containing the squared radius of gyration,
+ three shape descriptors (asphericity, acylindricity,
  and relative shape anisotropy), eigenvalues of the gyration tensor and their
 corresponding eigenvectors. The eigenvalues are sorted in descending order.
 
@@ -348,7 +348,7 @@ particles.
 \analyzeindex{pearl-necklace structures}
 
 \begin{essyntax}
- analyze necklace \var{pearl\_treshold} \var{back\_dist} \var{space\_dist}
+ analyze necklace \var{pearl\_threshold} \var{back\_dist} \var{space\_dist}
 \var{first} \var{length} 
 \end{essyntax}
 Algorithm for identifying pearl necklace structures for
@@ -386,7 +386,7 @@ LJ_cut+LJ_offset to any particle as defined by the LJ interaction
 parameters between the probe particle type and other particle types.\
 How to use this function:\ Define interactions between all (or the
 ones you are interested in) particle types in your system and a
-fictious particle type.  Practically one uses the van der Waals radius
+fictitious particle type.  Practically one uses the van der Waals radius
 of the particles plus the size of the probe you want to use as the
 Lennard Jones cutoff. The mesh spacing is the box length divided by
 the \var{mesh_size}.
@@ -400,7 +400,7 @@ the \var{mesh_size}.
 \} 
 \end{code}
 
-A hole is defined as a continous cluster of mesh elements that belong
+A hole is defined as a continuous cluster of mesh elements that belong
 to the unoccupied volume. Since the function is quite rudimentary it
 gives back the whole information suitable for further processing on
 the script level. \var{sizes} and \var{surfaces} are given in number
@@ -537,7 +537,7 @@ means that when the ROTATION option is compiled in the instantaneous pressure ca
 \keyword{analyze pressure} will be different from the pressure implied by
 the stress tensor.  However, the time averages should be in agreement.
 
-If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
+If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
 stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
 only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
 For all electrostatic interactions only the real space part is included.
@@ -583,7 +583,7 @@ tensor is calculated using the Irving Kirkwood method.  That is, a given interac
 towards the stress tensor in a bin proportional to the fraction of the line connecting the two
 particles that is within the bin.
 
-If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
+If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
 local stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
 only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
 For all electrostatic interactions only the real space part is included.
@@ -603,11 +603,9 @@ The command is implemented in parallel.
 \end{code}
 specifying the local pressure tensor in each bin.
 
-\section{Topologies}
+\section{Analyze groups of particles (molecules)}
 \analyzeindex{topologies}
 \label{analyze:set}
-
-\todo{Topologies is probably not the best name for this section}
 
 The following set of functions is designed to facilitate analysis 
 of molecules. Molecules are expected to be a group of particles
@@ -703,7 +701,7 @@ configurations (see section \vref{sec:stored-configs}).
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 Returns the hydrodynamic radius averaged over all chains.  
-If \lit{<rh>} is used, the hydodynamic radius is averaged over all stored
+If \lit{<rh>} is used, the hydrodynamic radius is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 The following formula is used for the computation:
 \begin{equation}
@@ -711,7 +709,7 @@ The following formula is used for the computation:
 \frac{1}{R_{\mathrm H}} = \frac{2}{N^2} \sum\limits_{i=1}^{N} \sum\limits_{j=i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
 \end{equation}
 The above-mentioned formula is only valid under certain assumptions.
-For more information, see Chapter 4 and eqaution 4.102 in~\cite{doi86a}.
+For more information, see Chapter 4 and equation 4.102 in~\cite{doi86a}.
 \minisec{Output format}
 \begin{code}
 \{ \var{rh} \var{error\_of\_rh} \}
@@ -734,9 +732,9 @@ configurations (see section \vref{sec:stored-configs}).
 The index corresponds to the number of beads between the two monomers
 considered (0 = next neighbours, 1 = one monomer in between, \dots).
 
-\subsubsection{Bond distances}
-\analyzeindex{bond distances}
-\todo{Why is this called bond distances? It has nothing to do with bonds.}
+\subsubsection{Internal distances II (specific monomer)}
+\analyzeindex{bond distances internal first monomer}
+
 \begin{essyntax}
   analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -760,7 +758,7 @@ configurations (see section \vref{sec:stored-configs}).
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 
-Analyses the bond lengths of the chains in the system.  Returns its average, the
+Analyzes the bond lengths of the chains in the system.  Returns its average, the
 standard deviation, the maximum and the minimum.  If you want to look
 only at specific chains, use the optional arguments, \ie $\var{chain\_start} =
 2*\var{MPC}$ and $\var{n\_chains} = 1$ to only include the third
@@ -829,13 +827,12 @@ given by \var{rmin} and \var{rmax} and it is divided into
 \}
 \end{code}
 
-\subsubsection{g123}
+\subsubsection{Mean square displacement of chains}
 \label{analyze:<g1>}
 \label{analyze:<g2>}
 \label{analyze:<g3>}
 \label{analyze:g123}
 
-\todo{Title?}
 \begin{essyntax}
   \variant{1} analyze \alt{<g1>\asep<g2>\asep<g3>} 
   \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
@@ -1009,7 +1006,7 @@ variant \variant{3}, returning just these values as tiny tcl-list.
   \var{f} \opt{\var{s\_tau} \opt{\var{f\_args}}} \opt{plot}
 \end{essyntax}
 Calculates the mean value, the error and the error of the error for an
-arbitrary numerical time series accordings to \citet{wolff04a}.
+arbitrary numerical time series according to \citet{wolff04a}.
 
 \begin{arguments}
 \item[\var{data}] is a matrix filled with the primary estimates

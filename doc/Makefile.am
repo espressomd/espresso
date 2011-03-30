@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -15,15 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = dg ug tutorials maggs_doc
+SUBDIRS = dg ug tutorials
 
 .PHONY: FORCE doc dg ug tutorials
 doc: ug dg tutorials
 dg: FORCE
 	cd dg; $(MAKE) --print-directory $@
-ug: FORCE
+ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
-tutorials: FORCE
+tutorials: latexit.sh FORCE
 	cd tutorials; $(MAKE) --print-directory $@
 FORCE:
 

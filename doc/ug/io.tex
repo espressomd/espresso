@@ -19,6 +19,11 @@
 \chapter{Input / Output}
 \label{cha:io}
 
+The checkpointing and writing of blockfiles in \es{} is still working,
+but is assigned a major overhaul. Be aware that things might change in
+the future and that this documentation chapter might not be completely
+up-to-date and not complete or well-written.
+
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
 \newescommand{blockfile}
@@ -175,9 +180,10 @@ to \var{channel}.
 \end{essyntax}
 
 Variants \variant{1} and \variant{2} write the full information on the
-current states of the respecitve random number generators (see section
-\vref{sec:rng}) on any node to \var{channel}.  Using this information,
-it is possible to recover the exact states of the generators.
+current states of the respecitive random number generators (see
+sections \vref{ssec:trandom} and \vref{ssec:bitrandom}) on any node to
+\var{channel}.  Using this information, it is possible to recover the
+exact states of the generators.
 
 Variants \variant{3} and \variant{4} write only the seed(s) which were
 used to initialize the random number generators. Note that this
@@ -623,7 +629,7 @@ time. Note, that before you can transfer coordinates to VMD, VMD needs
 to be aware of the structure of the system. For that, you first need
 to load a corresponding structure file (PSF or VSF) into VMD. Also
 note, that the command \lit{prepare_vmd_connection} (see section
-\vref{es:prepare-vmd-connection}) can be used to automatically set up
+\vref{tcl:prepare-vmd-connection}) can be used to automatically set up
 the VMD connection and transfer the structure file.
 
 By specifying \lit{-unfolded}, the unfolded coordinates of the

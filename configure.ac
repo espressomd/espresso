@@ -1,5 +1,6 @@
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
-# Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +19,10 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT(ESPResSo, [2.9.0], [espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[2.9.0],[espressomd-users@nongnu.org])
 
-AC_PREREQ(2.50)
-AC_CONFIG_SRCDIR([main.c])
+AC_PREREQ([2.59])
+AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -29,7 +30,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
+AM_INIT_AUTOMAKE([1.10 gnu])
 AM_MAINTAINER_MODE
 
 cat <<EOF
@@ -44,7 +45,7 @@ m4_define([_AC_PROG_CC_G],[])
 #### MPI ####
 #############
 # Check for --with-mpi
-AC_ARG_WITH(mpi, [AC_HELP_STRING([--with-mpi],
+AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
     [compile with MPI (parallelization) support. If none is found, the
      fake implementation for only one processor is used. Default: auto])
 ],,[with_mpi=auto])
@@ -100,30 +101,21 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# test whether to enable debugging
-AC_ARG_ENABLE(debug,
-	AC_HELP_STRING(--enable-debug,
-		[Turn on debugging]),
-	,enable_debug=no)
-if test .$enable_debug = .yes; then
-   AC_DEFINE(DEBUG,,[Turn on debugging?])
-fi
-
-##################################
-# test whether to enable profiling
-AC_ARG_ENABLE(profiling,
-	AC_HELP_STRING(--enable-profiling,
-		[Turn on profiling]),
-	,enable_profiling=no)
-if test .$enable_profiling = .yes; then
-   AC_DEFINE(PROFILING,,[Turn on profiling?])
-fi
-
-##################################
 # test for -O5
 AC_MSG_CHECKING([whether the compiler accepts -O5])
 saved_CFLAGS=$CFLAGS
 CFLAGS="-O5 $CFLAGS"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+  AC_MSG_RESULT(yes);try_add_flag_res=yes
+],[
+  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+])
+
+##################################
+# test for -Wall
+AC_MSG_CHECKING([whether the compiler accepts -Wall])
+saved_CFLAGS=$CFLAGS
+CFLAGS="-Wall $CFLAGS"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
   AC_MSG_RESULT(yes);try_add_flag_res=yes
 ],[
@@ -152,13 +144,6 @@ MDINLINE void test() {}],[test();])
     AC_MSG_RESULT([$mdinline])
 ])
 AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
-
-##################################
-# test linking
-case $target_os in
-*darwin*) LD="`pwd`/darwinlink.sh $CC" ;;
-*) LD=$CC ;;
-esac
 
 ##################################
 # miscellaneous
@@ -214,7 +199,6 @@ AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
-AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([atexit floor getcwd gethostbyname memset pow rint select socket sqrt])
@@ -231,7 +215,8 @@ LIBS="$LIBS -lm"
 # check for tcl
 AC_DEFINE([USE_NON_CONST],1,[prevent TCL from defining const ptrs])
 
-AC_ARG_WITH(tcl,AC_HELP_STRING([--with-tcl=VERSION],[specify the tcl library to use (e.g. tcl8.4)]),
+AC_ARG_WITH(tcl,AS_HELP_STRING([--with-tcl=VERSION],
+            [specify the tcl library to use (e.g. tcl8.4)]),
             [], [with_tcl=yes])
 dnl with_tcl=yes  try to find a working TCL version, bail out if none is found
 dnl with_tcl=no   bail out
@@ -256,8 +241,7 @@ if test .$use_tcl = .; then
 [If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 /Library/Frameworks/Tcl.framework/Tcl.]) ;;
-	*) ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
+	*) AC_MSG_FAILURE([
 ********************************************************************************
 * Could not link against the (static) Tcl library (libtcl*.a).                 *
 * Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
@@ -288,8 +272,7 @@ fi
 ##################################
 # check for tk
 AC_ARG_WITH(tk,
-	AC_HELP_STRING([--with-tk=VERSION],
-		[whether to use Tk, and which version to use]),
+	AS_HELP_STRING([--with-tk=VERSION],[whether to use Tk, and which version to use]),
 	[], [with_tk=no])
 dnl with_tk=no   don't use Tk
 dnl with_tk=yes  try to find a working Tk version, bail out if none is found
@@ -324,8 +307,7 @@ if test .$with_tk != .no; then
 		(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 there is a link from lib<tkversion>.dylib to the Tk library, which usually is
 /Library/Frameworks/Tk.framework/Tk.]) ;;
-		(*) ES_NOTE_64BIT
-		    AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		(*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
 		esac
 	fi
 	if test .$use_tk = .tk; then
@@ -351,113 +333,37 @@ fi
 
 ##################################
 # check for FFTW
-AC_DEFUN([ES_CHECK_FFTW3],[
- 	ES_ADDPATH_CHECK_LIB(fftw3, fftw_plan_many_dft, [fftw3_found=yes], [fftw3_found=no])
-	if test x$fftw3_found = xyes; then
-		ES_ADDPATH_CHECK_HEADER(fftw3.h, [], [fftw3_found=no])
-	fi
-])
-
-AC_DEFUN([ES_CHECK_FFTW2],[
-	dnl we just assume that fftw and rfftw are in the same directory
-	dnl if this is not the case for you, consider cleaning up your system...
-	dnl first we check for the d* (SuSE) versions, then the normal ones
-	dnl At the end we have to include rfftw before fftw on some systems, but testing
-	dnl is only possible for fftw
-	saved_LIBS=$LIBS
- 	ES_ADDPATH_CHECK_LIB(dfftw, fftw_create_plan_specific, [fftw2_found=yes], [fftw2_found=no])
-	if test x$fftw2_found = xyes; then
-		LIBS="$saved_LIBS -ldrfftw -ldfftw"
-	else
-	 	ES_ADDPATH_CHECK_LIB(fftw, fftw_create_plan_specific, [fftw2_found=yes], [fftw2_found=no])
-		if test x$fftw2_found = xyes; then
-			LIBS="$LIBS -lrfftw -lfftw"
-		fi
-	fi
-	if test x$fftw2_found = xyes; then
-		ES_ADDPATH_CHECK_HEADER(fftw.h, [], [fftw2_found=no])
-	fi
-])
-
+# with_fftw=no    don't use FFTW
+# with_fftw=yes   try to find a working FFTW, bail out if none is found
+# not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AC_HELP_STRING([--with-fftw=VERSION],
-		[specify the version of FFTW to use (2 or 3)]),
+	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
-dnl with_fftw=no    don't use FFTW
-dnl with_fftw=yes   try to find a working FFTW, bail out if none is found
-dnl with_fftw=  (not set) try to find a working FFTW, continue if none is found
-dnl otherwise       use the specified version
 
-if test x"$with_fftw" = xguess || test x"$with_fftw" = xyes; then
-	# determine fftw automatically
-	ES_CHECK_FFTW3
-	if test x$fftw3_found = xyes; then
-	   use_fftw=3
-	else
-	  ES_CHECK_FFTW2
-	  if test x$fftw2_found = xyes; then
-	     use_fftw=2
-	  elif test x$with_fftw = xguess; then
-	      # no fftw was found, and none was requested
-	      use_fftw=none
-	  else
-              # no fftw was found, but the user wanted one (--with-fftw)
-	      ES_NOTE_64BIT
-	      AC_MSG_FAILURE([
-********************************************************************************
-* Could not find FFTW!                                                         *
-********************************************************************************
-])
-	  fi
-	fi
-elif test x$with_fftw = x3; then
-        use_fftw=3
-	ES_CHECK_FFTW3
-	if test x$fftw3_found != xyes; then
-	   ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
-********************************************************************************
-* Could not find FFTW3!                                                        *
-* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)   *
-* Please add the include path to CPPFLAGS                                      *
-* (e.g. configure CPPFLAGS=-I/usr/include).                                    *
-********************************************************************************
-])
-	fi
-elif test x$with_fftw = x2; then
-	use_fftw=2
-	ES_CHECK_FFTW2
-	if test x$fftw2_found != xyes; then
-	   ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
-************************************************************************
-* Could not find FFTW2!                                                        *
-* Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)   *
-* Please add the include path to CPPFLAGS                                      *
-* (e.g. configure CPPFLAGS=-I/usr/include).                                    *
-********************************************************************************
-])
-	fi
-elif test x$with_fftw = xno; then
-     use_fftw=none
-else
-  AC_MSG_ERROR([specified bad FFTW version ($with_fftw)])
-fi
+AS_IF([test x$with_fftw = xno], [fftw_found=no],
+  [ AC_SEARCH_LIBS(fftw_plan_many_dft, [fftw3], [fftw_found=yes], [fftw_found=no])
+    AS_IF([test x$fftw_found = xyes],
+      [AC_CHECK_HEADER([fftw3.h],, [fftw_found=no])])
+  ])
 
-# after this, use_fftw should be set correctly
-if test x$use_fftw != xnone; then
-	# save the result
-	AC_DEFINE_UNQUOTED(FFTW, $use_fftw, [Whether to use the FFTW library, and which version to use])
-fi
+AS_IF([test x$fftw_found = xno],[
+  AS_IF([test x$with_fftw = xyes],[
+    AC_MSG_FAILURE([FFTW requested, but FFTW was not found!])
+    ],[ AS_IF([test x$with_fftw = xguess], [
+          AC_MSG_WARN([FFTW3 not found. Some features will not be available!])
+         ])
+    ])
+  ])
+
+AC_DEFINE_UNQUOTED(FFTW,$fftw_found,[Whether FFTW is available])
 
 ##################################
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
 AC_ARG_WITH([cuda],
-	AC_HELP_STRING([--with-cuda=CUDAINSTALLDIR],
-		[specify where CUDA is installed.
+	AS_HELP_STRING([--with-cuda=CUDAINSTALLDIR],[specify where CUDA is installed.
 		The cuda compiler can also be specified by setting the NVCC
 		environment variable. The CUDA library and header can be
 		manually specified by using CPPFLAGS, LDFLAGS and LIBS.]),
@@ -494,7 +400,7 @@ if test x$with_cuda != xno; then
    # if no other compute capability is defined by the user, we need at least 1.1
    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS -arch=compute_11"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -arch=compute_20 -code=sm_20"
    esac
    # use nvcc
    save_CC=$CC
@@ -525,7 +431,7 @@ EOF
 # check for efence
 AC_MSG_CHECKING([whether to use efence])
 AC_ARG_WITH(efence,
-  AC_HELP_STRING([--with-efence],[use ElectricFence memory debugging for the debug binary]),
+  AS_HELP_STRING([--with-efence],[use ElectricFence memory debugging for the debug binary]),
     ,with_efence=no)
 if test .$with_efence = .yes; then
   AC_CHECK_LIB(efence,malloc,,AC_MSG_FAILURE([could not link against the efence library]))
@@ -537,9 +443,8 @@ AC_MSG_RESULT($with_efence)
 ##################################
 # Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
-  AC_HELP_STRING(--with-myconfig=FILE,
-    [default name of the local config file [[myconfig.h]]]),
-[ test .$with_myconfig = .no && with_myconfig=myconfig.h],
+  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [myconfig.h]]),
+[ test .$with_myconfig = .no && with_myconfig=myconfig.h ],
 [ with_myconfig=myconfig.h ])
 AC_MSG_CHECKING([the name of the configuration header])
 myconfig=$with_myconfig
@@ -548,8 +453,8 @@ AC_SUBST(myconfig)
 
 ##################################
 # Number of CPUs
-AX_COUNT_CPUS
-AC_ARG_VAR(CPU_COUNT,[number of CPUS available on this machine])
+AS_IF([test "X$CPU_COUNT" = "X"], [AX_COUNT_CPUS])
+AC_ARG_VAR(CPU_COUNT,[number of tasks to run in test runs])
 AC_SUBST(CPU_COUNT)
 
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
@@ -568,20 +473,21 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
-AC_CONFIG_HEADERS([acconfig.h])
+AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
+	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
+	testsuite/configs/Makefile
 	doc/Makefile
 	doc/latexit.sh
 	doc/dg/Makefile
 	doc/ug/Makefile
-	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	config/$myconfig:config/myconfig-default.h.in
+	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
@@ -612,14 +518,14 @@ Libraries:
 ----------
 Tcl version		= $use_tcl
 Tk version		= $use_tk
-FFTW version		= $use_fftw
+FFTW 			= $fftw_found
 efence			= $with_efence
 
 Other settings:
 ---------------
 local config header	= $myconfig
 installation prefix	= $prefix
-number of CPUs		= $CPU_COUNT
+number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
 mpiexec	     		= $MPIEXEC
 pdflatex		= $PDFLATEX

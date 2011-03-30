@@ -19,11 +19,74 @@
 \chapter{Getting involved}
 \label{chap:devel}
 
+Up to date information about the development of \es
+can be found at the web page \url{http://espressomd.org}
+As the important information can change in time, we will not describe
+its contents in detail but rather request the reader to
+go directly to the URL.
+Among other things, one can find information about the following topics there:
+
 \begin{itemize}
-\item What to do when you want to become involved
-\item How to submit a bug report
-\item Reference to developer's guide
+\item FAQ
+\item Latest stable release of \es and older releases
+\item Obtaining development version of \es
+\item Archives of both developers' and users' mailing lists
+\item Registering to \es mailing lists
+\item Submitting a bug report
 \end{itemize}
+
+\section{Community support and mailing lists}
+
+If you have any questions concerning \es which you cannot
+resolve by yourself, you may post a message to
+the mailing list. Instructions on how to register to the mailing
+lists and post messages can be found on the homepage 
+\url{http://espressomd.org}.
+Before posting a question and waiting for someone to answer, 
+it may be useful to search the mailing list archives or FAQ and 
+see if you can get the answer immediately.
+For several reasons it is recommended to send all questions 
+to the mailing lists rather than to contact individual developers:
+\begin{itemize}
+  \item All registered users get your message and you have a higher 
+  probability that it is answered soon.
+  \item Your question and the answers are archived and the archives
+  can be searched by others.
+  \item The answer may be useful also to other registered users.
+  \item There may not be a unique answer to your problem and it may 
+  be useful to get suggestions from different people.
+\end{itemize}
+
+Please remember that this is a community mailing list. It is other
+users and developers who are answering your questions. They do it
+in their free time and are not paid for doing it.
+
+
+\section{Contributing your own code}
+
+If you are planning to make an extension to \es or 
+already have a piece of your own code which could be useful 
+to others, you are very welcome to contribute it to 
+the community. 
+
+Before you start making any changes to the code, you
+should obtain the current development version of it.
+
+For more information, refer to the homepage \url{http://espressomd.org}
+
+\section{Developers' guide}
+\label{sec:dg}
+
+Besides User guide, \es also contains a Developers' guide
+which is a programmers' documentation automatically built 
+using Doxygen. It provides a cross-referenced documentation
+of all functions and data structures available in \es source
+code. It can be built by typing
+\begin{code}
+  make dg
+\end{code}
+in the build directory. After it has been built, it can be found
+in the subdirectory of the build directory: \texttt{doc/dg/html/index.html}.
 
 %%% Local Variables: 
 %%% mode: latex

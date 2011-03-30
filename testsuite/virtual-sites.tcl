@@ -144,7 +144,6 @@ for {set i 0} {$i<10000} {incr i } {
  set v [part 0 print v]
  set v1 [part 1 print v]
  set v2 [part 2 print v]
-puts -nonewline "[expr 100*$i/10000] %\r"
  if { [veclen [vecsub [vecadd $v1 $v2] [vecscale 2 $v]]] >1E-5 } {
   error_exit "Error: Velocities of outer particles do not add up to twice the velocity of center of mass."
   puts "[vecadd $v1 $v2] $v"

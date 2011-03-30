@@ -23,6 +23,7 @@ source "tests_common.tcl"
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
+require_feature "MOL_CUT" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -83,9 +84,9 @@ if { [catch {
     
     set rel_eng_error [expr abs(($cureng - $energy)/$energy)]
     puts "p3m-charges: relative energy deviations: $rel_eng_error"
-#    if { $rel_eng_error > $epsilon } {
-#	error "p3m-charges: relative energy error too large"
-#    }
+    if { $rel_eng_error > $epsilon } {
+      error "p3m-charges: relative energy error too large"
+    }
 
    #pressure ................
 
@@ -110,13 +111,13 @@ if { [catch {
 
 	set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
     }
-#    set rfe [expr sqrt($rmsf/($tot*[setmd n_part]))]
+
     set rfe [expr $rmsf]
     set rmsf [expr sqrt($rmsf/[setmd n_part])]
     puts "p3m-charges: rms force deviation $rmsf ($rfe $tot)"
- #   if { $rmsf > $epsilon } {
-#	error "p3m-charges: force error too large"
- #   }
+    if { $rmsf > $epsilon } {
+	error "p3m-charges: force error too large"
+   }
    
    
      #end this part of the p3m-checks by cleaning the system .... 

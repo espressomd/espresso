@@ -1,5 +1,6 @@
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#    Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -22,6 +23,7 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
+require_feature "LENNARD_JONES"
 
 puts "-------------------------------------------"
 puts "- Testcase el2d.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -196,7 +198,9 @@ if { [catch {
 	flush stdout
 
 	setmd periodic 1 1 1
-	inter coulomb 1.0 p3m 16.3929265333 32 4 0.142069354322 9.78886014586e-05
+#	puts [inter coulomb 1.0 p3m tunev2 mesh 32 accuracy [expr $epsilon/100]]
+#	puts [inter coulomb]
+	inter coulomb 1.0 p3m 23.604769685437496 32 4 0.10992440801123361 9.902067928578912e-6
 	inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
 	inter coulomb elc 1e-4 [expr 0.1*[lindex [setmd box_l] 2]]
 
