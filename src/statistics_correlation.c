@@ -1791,7 +1791,7 @@ int interacts_with (void* params_p, double* A, unsigned int n_A) {
       pos2[2]=partCfg[ids2->e[j]].r.p[2];
       get_mi_vector(dist,pos1,pos2);
       dist2= dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2];
-      if(dist2<cutoff2) {
+      if(dist2<cutoff2 && ids1->e[i] != ids2->e[j]) {
         A[i] = 1;
 	break;
 	// interaction found for i, go for next
