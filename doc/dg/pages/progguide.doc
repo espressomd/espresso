@@ -47,9 +47,9 @@
 	given which checks if the given value is valid and stores it. It is also responsible for	
 	dispatching the new value to the other nodes, if necessary. The easiest way to do that is by using
 	\ref mpi_bcast_parameter, which will transfer the value to the other nodes. A simple example
-	is \ref box_l with the callback procedure \ref boxl_callback. For \ref mpi_bcast_parameter
+	is \ref box_l with the callback procedure boxl_callback. For \ref mpi_bcast_parameter
 	to work, it is necessary that they occur in the \ref FIELD_BOXL "variables enumeration".
-	So please keep this list in sync! Another list to keep up to date is the \ref desc_var.
+	So please keep this list in sync!
 
 \section add_bonded Adding new bonded interactions
 	Every interaction resides in an own header file. A simple example for a bonded interaction
@@ -93,12 +93,12 @@
 		than the interaction range of the new interaction, typically the bond length. This value is always used as calculated
 		by \ref calc_maximal_cutoff, therefore it is not strictly necessary that the maximal interaction range is stored
 		explicitly. </li>
-	<li>	Add a print block for the new interaction to \ref printBondedIAToResult. The print format should be such
+	<li>	Add a print block for the new interaction to \ref tclcommand_inter_print_bonded . The print format should be such
 		that the output can be used as input to inter, and defines the same bond type. </li>
-	<li>	in \ref inter_parse_bonded, add a parser for the parameters. See the \ref parsing section below. </li>
+	<li>	in \ref tclcommand_inter_parse_bonded, add a parser for the parameters. See the \ref parsing section below. </li>
 	</ol>
 	Besides this, you have enter the force rsp. energy calculation routines in \ref add_bonded_force, \ref add_bonded_energy,
-	\ref add_bonded_virials and \ref calc_p_tensor. The pressure occurs twice, once for the parallelized isotropic pressure and
+	\ref add_bonded_virials and \ref pressure_calc. The pressure occurs twice, once for the parallelized isotropic pressure and
 	once for the tensorial pressure calculation. For pair forces, the pressure is calculated using the virials, for many body
 	interactions currently no pressure is calculated.
 
@@ -116,7 +116,7 @@
 	<li>	\verbatim int print*IAToResult(Tcl_Interp *interp, int i, int j) \endverbatim
 		writes out the interaction parameters between particles of type i and j to the interpreters result such that the result
 		can be fed into the inter command again to obtain the same interaction. The \ref IA_parameters pointer can be obtained
-		conveniently via \ref get_ia_param(i,j). </li>
+		conveniently via \ref get_ia_param (i,j). </li>
 	<li>	\verbatim
 		int *_parser(Tcl_Interp * interp, int part_type_a, int part_type_b, int argc, char ** argv)
 		\endverbatim
@@ -140,10 +140,10 @@
 	<li> \ref checkIfParticlesInteract has to be modified to also check for the no interaction condition for the new interaction (typically zero cutoff).
 	<li> \ref calc_maximal_cutoff has to modified such that max_cut is larger than the maximal cutoff your interaction needs. Again, the code always uses
 		the result from this function, therefore the cutoff does not have to be stored explicitly in the interaction parameters.	
-	<li> add your print*IAToResult routine to \ref printNonbondedIAToResult.
-	<li> add the *_parser routine to \ref inter_parse_bonded.
+	<li> add your print*IAToResult routine to \ref tclprint_to_result_NonbondedIA.
+	<li> add the *_parser routine to \ref tclcommand_inter_parse_bonded.
 	</ol>
-	After this, add the force calculation to \ref add_non_bonded_pair_force, \ref add_non_bonded_pair_virials and \ref calc_p_tensor, and the energy calculation to
+	After this, add the force calculation to \ref add_non_bonded_pair_force, \ref add_non_bonded_pair_virials and \ref pressure_calc, and the energy calculation to
 	\ref add_non_bonded_pair_energy. 
 
 	After the new nonbonded interaction works properly, it would be a good idea to add a testcase to the testsuite, so that changes
@@ -162,7 +162,7 @@
 
 \section part_org Particle data organization
 
-	The particle data organization is described in \ref tcl_cellsystem, its implementation is briefly described in \ref cells.h and
+	The particle data organization is described in the TCL command cellsystem, its implementation is briefly described in \ref cells.h and
 	\ref ghosts.h. Here only some details on how to access the data is assembled. Writing a new cellsystem almost always requires
 	deep interactions with the most low level parts of the code and cannot be explained in detail here.
 
@@ -224,7 +224,7 @@
 	anymore, but now the user can place the particles anew and perhaps decrease the time step such that the simulation
 	can continue without error. However, most often the recovery requires no special action.
 
-    	To issue an background error, call errtxt=\ref runtime_error(length), where length should be the maximal length of the
+    	To issue an background error, call errtxt=\ref runtime_error (length), where length should be the maximal length of the
     	error message (you can use TCL_DOUBLE_SPACE rsp. TCL_INTEGER_SPACE to obtain space for a double rsp. integer).
     	The function returns a pointer to the current end of the string in \ref error_msg. After doing so, you should use the 
 	"ERROR_SPRINTF" - macro, which substitutes to a simple "sprintf", so that your errormessage will automatically be added
