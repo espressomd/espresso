@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -20,8 +21,8 @@
 #include "utils.h"
 #include "parser.h"
 
-#ifndef LJCOS_H
-#define LJCOS_H
+#ifndef _LJCOS_H
+#define _LJCOS_H
 /** \file ljcos.h
  *  Routines to calculate the lennard jones+cosine energy and/or force 
  *  for a particle pair.
