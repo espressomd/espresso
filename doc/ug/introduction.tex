@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%    Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -58,78 +59,67 @@ physically meaningful results. It is always the responsibility of the user
 to understand the principles behind the model, simulation
 and analysis methods he is using. \es will \emph{not} do that for you!
 
-It is expected that the users of \es and readers of this user guide 
+It is expected that the users of \es and readers of this user guide
 have a thorough understanding of simulation methods and algorithms
 they are planning to use. They should have passed a basic course on
 molecular simulations or read one of the renown textbooks, \eg
-\cite{frenkel02b}.  It is not necessary to understand everything
-what is contained in \es, but it is inevitable to understand
-all methods which you want to use. Using the program as a black box
-without proper understanding of the background will most probably result
-in wasted user and computer time with no useful output.
+\cite{frenkel02b}.  It is not necessary to understand everything that
+is contained in \es, but it is inevitable to understand all methods
+which you want to use.  Using the program as a black box without
+proper understanding of the background will most probably result in
+wasted user and computer time with no useful output.
 
 To enable future extensions, the functionality of the program is kept
-as general as possible. It is modularized, so that extensions to some
-parts of the program (e.g.\ implementing a new potential) can be done
-by modifying or adding only few files, leaving most of the 
-code intact.
+as general as possible.  It is modularized, so that extensions to some
+parts of the program (\eg implementing a new potential) can be done by
+modifying or adding only few files, leaving most of the code
+untouched.
 
-To facilitate the understanding and the extensibility, much emphasis is put on readability of the code. Hard-coded assembler loops are 
-generally avoided in hope that the overhead in computer time
-will be more than compensated for by saving much of the user time 
-while trying to understand what the code is supposed to do.
+To facilitate the understanding and the extensibility, much emphasis
+is put on readability of the code.  Hard-coded assembler loops are
+generally avoided in hope that the overhead in computer time will be
+more than compensated for by saving much of the user time while trying
+to understand what the code is supposed to do.
 
-Hand-in-hand with the extensibility and readability of the code comes 
-the flexibility of the whole program. On the one hand, it is provided
-by the generalized functionality of its parts, avoiding highly specialized
-functions. An example can be the implementation of the Generic Lennard-Jones
-potential described in section~\ref{sec:GenLennardJones} where the user
-can change all available parameters. Where possible, default
-values are avoided, providing the user with the possibility of choice.
-\es cannot be aware if your particles are representing atoms or billiard
-balls, so it cannot check if the chosen parameters make sense and it
-is the user's responsibility to make sure they do.
+Hand-in-hand with the extensibility and readability of the code comes
+the flexibility of the whole program.  On the one hand, it is provided
+by the generalized functionality of its parts, avoiding highly
+specialized functions.  An example can be the implementation of the
+Generic Lennard-Jones potential described in
+section~\ref{sec:GenLennardJones} where the user can change all
+available parameters. Where possible, default values are avoided,
+providing the user with the possibility of choice.  \es cannot be
+aware if your particles are representing atoms or billiard balls, so
+it cannot check if the chosen parameters make sense and it is the
+user's responsibility to make sure they do.
 
-On the other hand, flexibility of \es stems from the employment of Tcl at
-the steering level. Apart from the ability to modify the simulation and
-system parameters at runtime, many simple tasks which are not computationally
-critical can be implemented at this level, without even touching the C-kernel.
-For example, simple problem-specific analysis routines can be implemented
-in this way and made interact with the simulation core.
-Another example of the program's flexibility is the possibility  integrate
-system setup, simulation and analysis in one single control script. \es
-provides commands to create particles and set up interactions between them. 
-Capping of forces helps prevent system blow-up when initially some particles
-are placed on top of each other. Using the Tcl interface, one can simulate
-the randomly set-up system with capped forces, interactively check whether
-it is safe to remove the cap and switch on the full interactions and then 
-perform the actual productive simulation.
+On the other hand, flexibility of \es stems from the employment of Tcl
+at the steering level. Apart from the ability to modify the simulation
+and system parameters at runtime, many simple tasks which are not
+computationally critical can be implemented at this level, without
+even touching the C-kernel.  For example, simple problem-specific
+analysis routines can be implemented in this way and made interact
+with the simulation core.  Another example of the program's
+flexibility is the possibility integrate system setup, simulation and
+analysis in one single control script. \es provides commands to create
+particles and set up interactions between them.  Capping of forces
+helps prevent system blow-up when initially some particles are placed
+on top of each other. Using the Tcl interface, one can simulate the
+randomly set-up system with capped forces, interactively check whether
+it is safe to remove the cap and switch on the full interactions and
+then perform the actual productive simulation.
 
 Last, but not least, a lot of attention is dedicated to computational
-efficiency. Because the requirement of efficiency is somewhat in conflict
-with the requirements presented above, a compromise is sought to make the
-program efficient while strictly preserving the readability and flexibility.
-An important issue to efficiency is that all computationally expensive algorithms
-implemented in the kernel can run efficiently on parallel architectures.
+efficiency. Because the requirement of efficiency is somewhat in
+conflict with the requirements presented above, a compromise is sought
+to make the program efficient while strictly preserving the
+readability and flexibility.  An important issue to efficiency is that
+all computationally expensive algorithms implemented in the kernel can
+run efficiently on parallel architectures.
 
-%(from paper: 2.1 Goals and principles)
-%
-%\begin{itemize}
-%\item does \emph{not} do the physics for you!
-%\item requires you to understand what you do (can not be used as a
-%  black box)
-%\item gives you maximal freedom (flexibility)
-%\item is extensible
-%\item integrates system setup, simulation and analysis, as this can't
-%  be strictly separated in soft matter simulations
-%\item has no predefined units
-%\item sets as few defaults as possible
-%\end{itemize}
+\section{Available simulation methods}
 
-\section{Algorithms contained in \es}
-\todo{Maybe available simulation methods would be a better name?}
-
-The following algorithms are implemented in \es{}:
+The following algorithms are implemented in \es:
 
 \begin{itemize}
 \item Ensembles: 
@@ -166,41 +156,36 @@ level is interfaced to the kernel via an interpreter
 of the Tcl scripting language.
 
 The kernel performs all computationally demanding tasks. Before all,
-integration of Newton's equations of motion, including calculation
-of energies and forces. It also takes care of internal organization 
-of data, storing the data about particles, communication between 
-different processors or cells of the cell-system. The kernel is modularized
-so that basic functions are accessed via a set of well-defined
-lean interfaces, hiding the details of the complex numerical
-algorithms.
+integration of Newton's equations of motion, including calculation of
+energies and forces. It also takes care of internal organization of
+data, storing the data about particles, communication between
+different processors or cells of the cell-system. The kernel is
+modularized so that basic functions are accessed via a set of
+well-defined lean interfaces, hiding the details of the complex
+numerical algorithms.
 
-The Tcl interpreter contains several special commands as an
-extension to Tcl, which provide the interaction with the
-simulation engine. Thus, the user has at hand the full realm
-of Tcl commands and constructs plus a few commands to communicate
-with the simulation engine. The interfacing commands are designed
-so that they can both set properties of the system (set up particles,
-interactions, thermostat) and retrieve information about the already 
-set-up entities. The standard Tcl constructs allow for a flexible 
-decision-making in the course of the simulation. This can be for example
-exploited to check whether a simulation has reached the desired state.
-With a certain overhead in efficiency, it can also be used to reject/accept
-new configurations in combined MD/MC schemes. In principle, any parameter
-which is accessible from the Tcl level can be changed at any moment of runtime.
-In this way methods like thermodynamic integration become readily accessible.
+The Tcl interpreter contains several special commands as an extension
+to Tcl, which provide the interaction with the simulation
+engine. Thus, the user has at hand the full realm of Tcl commands and
+constructs plus a few commands to communicate with the simulation
+engine. The interfacing commands are designed so that they can both
+set properties of the system (set up particles, interactions,
+thermostat) and retrieve information about the already set-up
+entities. The standard Tcl constructs allow for a flexible
+decision-making in the course of the simulation. This can be for
+example exploited to check whether a simulation has reached the
+desired state.  With a certain overhead in efficiency, it can also be
+used to reject/accept new configurations in combined MD/MC schemes. In
+principle, any parameter which is accessible from the Tcl level can be
+changed at any moment of runtime.  In this way methods like
+thermodynamic integration become readily accessible.
 
-The focus of the user guide is documenting the Tcl commands, their behaviour
-and use in the simulation. It only describes certain technical details 
-of implementation which are necessary for understanding how the commands work.
-Technical documentation of the code and program structure is contained in the 
-Developers' guide (see section~\ref{sec:dg}).
-
-%(from paper: 2.2 Basic program structure)
-%\begin{itemize}
-%\item Control level: \texttt{Tcl}
-%\item ``Kernel'' written in \texttt{C}
-%\item This user's guide will focus on the control level
-%\end{itemize}
+The focus of the user guide is documenting the Tcl commands, their
+behaviour and use in the simulation. It only describes certain
+technical details of implementation which are necessary for
+understanding how the commands work.  Technical documentation of the
+code and program structure is contained in the Developers' guide (see
+section~\ref{sec:dg}).
 
 \section{On units}
 \label{sec:units}
@@ -213,9 +198,9 @@ Developers' guide (see section~\ref{sec:dg}).
 What is probably one of the most confusing subjects for beginners of
 \es is, that \es does not predefine any units.  While most MD programs
 specify a set of units, like, for example, that all lengths are
-measured in \AA ngstr\"om or nanometers, times are measured in nano- or
-picoseconds and energies are measured in $\mathrm{kJ/mol}$,
-\es does not do so.
+measured in \AA ngstr\"om or nanometers, times are measured in nano-
+or picoseconds and energies are measured in $\mathrm{kJ/mol}$, \es
+does not do so.
 
 Instead, the length-, time- and energy scales can be freely chosen by
 the user.  A length of $1.0$ can mean a nanometer, an \AA ngstr\"om,
@@ -257,23 +242,14 @@ and use \es:
   separate development packages. If you want to use a graphical user
   interface (GUI) for your simulation scripts, you will also need Tk.
   
-\item[FFTW] \index{FFTW} In addition, \es{} needs the FFTW library
+\item[FFTW] \index{FFTW} For some algorithms (\eg P$^3$M), \es needs
+  the FFTW library version 3 or later
   \footnote{\url{http://www.fftw.org/}} for Fourier transforms.
-  ESPResSo can work with both the 2.1.x and 3.0.x series. Again, the
-  header files are required.
+  Again, the header files are required.
   
-\item[MPI] \index{MPI} Finally, if you want to use \es{} in parallel,
-  you need a working MPI environment (version 1.2). Currently, the
-  following MPI implementations are supported:
-  \begin{itemize}
-  \item LAM/MPI is the preferred variant
-  \item MPICH, which seems to be considerably slower than LAM/MPI in
-    our benchmarks.
-  \item On AIX systems, \es{} can also use the native POE parallel
-    environment.
-  \item On DEC/Compaq/HP OSF/Tru64, \es{} can also use the native
-    dmpirun MPI environment.
-  \end{itemize}
+\item[MPI] \index{MPI} Finally, if you want to use \es in parallel,
+  you need a working MPI environment (that implements the MPI standard
+  version 1.2).
 \end{description}
 
 
