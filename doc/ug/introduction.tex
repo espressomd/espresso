@@ -19,17 +19,16 @@
 \chapter{Introduction}
 \label{chap:intro}
 
-\todo{Make the following lists full text.}
-
 \es is a simulation package designed to perform Molecular Dynamics (MD)
-and Monte Carlo (MC) simulations of a variety of soft matter systems.
-It features a broad range of interaction potentials which opens up
+and Monte Carlo (MC) simulations.  It is meant to be a universal tool for 
+simulations of a variety of soft matter systems. 
+\es features a broad range of interaction potentials which opens up
 possibilities for performing simulations using models with 
-various levels of coarse-graining. It also includes modern and
+different levels of coarse-graining. It also includes modern and
 efficient algorithms for treatment of electrostatics (P3M, MMM-type 
 algorithms, Maggs algorithm, \ldots), hydrodynamic interactions
 (DPD, Lattice-Boltzmann), and magnetic interactions. It is 
-designed to exploit the capabilities of modern parallel computational
+designed to exploit the capabilities of parallel computational
 environments. The program is being continuously extended to keep
 the pace with current developments both in the algorithms and software.
 
@@ -61,9 +60,11 @@ and analysis methods he is using. \es will \emph{not} do that for you!
 
 It is expected that the users of \es and readers of this user guide 
 have a thorough understanding of simulation methods and algorithms
-they are planning to use. It not necessary to understand everything
+they are planning to use. They should have passed a basic course on
+molecular simulations or read one of the renown textbooks, \eg
+\cite{frenkel02b}.  It is not necessary to understand everything
 what is contained in \es, but it is inevitable to understand
-all methods which you are planning to use. Using the program as a black box
+all methods which you want to use. Using the program as a black box
 without proper understanding of the background will most probably result
 in wasted user and computer time with no useful output.
 
@@ -83,21 +84,24 @@ the flexibility of the whole program. On the one hand, it is provided
 by the generalized functionality of its parts, avoiding highly specialized
 functions. An example can be the implementation of the Generic Lennard-Jones
 potential described in section~\ref{sec:GenLennardJones} where the user
-can change all available parameters. In general where possible, default
+can change all available parameters. Where possible, default
 values are avoided, providing the user with the possibility of choice.
+\es cannot be aware if your particles are representing atoms or billiard
+balls, so it cannot check if the chosen parameters make sense and it
+is the user's responsibility to make sure they do.
 
 On the other hand, flexibility of \es stems from the employment of Tcl at
 the steering level. Apart from the ability to modify the simulation and
 system parameters at runtime, many simple tasks which are not computationally
 critical can be implemented at this level, without even touching the C-kernel.
 For example, simple problem-specific analysis routines can be implemented
-in this way and made to interact with the simulation core.
+in this way and made interact with the simulation core.
 Another example of the program's flexibility is the possibility  integrate
 system setup, simulation and analysis in one single control script. \es
-provides tool to create particles and set up interactions between them. 
+provides commands to create particles and set up interactions between them. 
 Capping of forces helps prevent system blow-up when initially some particles
 are placed on top of each other. Using the Tcl interface, one can simulate
-the randomly setup system with capped forces, interactively check whether
+the randomly set-up system with capped forces, interactively check whether
 it is safe to remove the cap and switch on the full interactions and then 
 perform the actual productive simulation.
 
@@ -105,6 +109,8 @@ Last, but not least, a lot of attention is dedicated to computational
 efficiency. Because the requirement of efficiency is somewhat in conflict
 with the requirements presented above, a compromise is sought to make the
 program efficient while strictly preserving the readability and flexibility.
+An important issue to efficiency is that all computationally expensive algorithms
+implemented in the kernel can run efficiently on parallel architectures.
 
 %(from paper: 2.1 Goals and principles)
 %
@@ -121,6 +127,7 @@ program efficient while strictly preserving the readability and flexibility.
 %\end{itemize}
 
 \section{Algorithms contained in \es}
+\todo{Maybe available simulation methods would be a better name?}
 
 The following algorithms are implemented in \es{}:
 
@@ -185,6 +192,8 @@ In this way methods like thermodynamic integration become readily accessible.
 The focus of the user guide is documenting the Tcl commands, their behaviour
 and use in the simulation. It only describes certain technical details 
 of implementation which are necessary for understanding how the commands work.
+Technical documentation of the code and program structure is contained in the 
+Developers' guide (see section~\ref{sec:dg}).
 
 %(from paper: 2.2 Basic program structure)
 %\begin{itemize}
