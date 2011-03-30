@@ -203,9 +203,11 @@ puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
 puts "\nAverage temperature $avg_temp (relative deviation $rel_temp_error)\n"
 puts "fluid temperature [analyze fluid temp] (relative deviation $rel_fluid_temp_error)\n\n"
 if { $rel_temp_error > $temp_prec } {
-    error "relative temperature deviation too large"
+    error "relative particle temperature deviation too large"
 }
-
+if { $rel_fluid_temp_error > $temp_prec } {
+    error "relative fluid temperature deviation too large"
+}
 } res ] } {
    error_exit $res
 }
