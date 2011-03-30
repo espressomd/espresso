@@ -652,7 +652,9 @@ int tclcallback_skin(Tcl_Interp *interp, void *_data)
 int tclcallback_time_step(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
+#ifdef LB_GPU
   float ts = (float)data;
+#endif
   if (data < 0.0) {
     Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
     return (TCL_ERROR);

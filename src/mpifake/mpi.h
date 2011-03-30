@@ -82,6 +82,7 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 #define MPI_MAX mpifake_copy
 #define MPI_COPY mpifake_copy
 
+#define MPI_STATUS_IGNORE NULL
 #define MPI_SUCCESS 1
 
 #define MPI_COMM_WORLD NULL

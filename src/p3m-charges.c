@@ -756,8 +756,6 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
     double k_space_energy=0.0, node_k_space_energy=0.0;
     /* directions */
     double *d_operator = NULL;
-    /* kspace loop index */
-    int n[3], end[3], start[3];
 
     P3M_TRACE(fprintf(stderr,"%d: p3m_perform: \n",this_node));
 //     fprintf(stderr, "calculating kspace forces\n");

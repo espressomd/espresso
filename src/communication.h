@@ -26,23 +26,20 @@
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interpretes the Tcl
-    script, all other nodes wait in \ref mpi_loop for the master node to
-    issue an action using \ref mpi_issue. \ref mpi_loop immediately
-    executes an MPI_Bcast and therefore waits for the master node to broadcast
-    a command, which is done by \ref mpi_issue. The request consists of
-    three integers, the first one describing the action issued, the second
-    and third an arbitrary parameter depending on the action issued. If applicable,
-    the second parameter is the node number of the slave this request is dedicated
-    to.
+    script, all other nodes wait in mpi_loop() for the master node to
+    issue an action using mpi_call(). \ref mpi_loop immediately
+    executes an MPI_Bcast and therefore waits for the master node to
+    broadcast a command, which is done by mpi_call(). The request
+    consists of three integers, the first one describing the action
+    issued, the second and third an arbitrary parameter depending on
+    the action issued. If applicable, the second parameter is the node
+    number of the slave this request is dedicated to.
 
-    Adding new actions (e. g. to implement new Tcl commands) is
-    simple. First, the action has to be assigned a new action number
-    (the defines like \ref REQ_BCAST_PAR) by adding a new define and
-    increasing \ref REQ_MAXIMUM. Then you write a mpi_* procedure that
-    does a
-    \verbatim mpi_issue(request, node, param)\endverbatim
-    where pnode and param are arbitrary values which will be passed to the slave
-    procedure.
+    To add new actions (e. g. to implement new Tcl commands), do the
+    following:
+    - write the mpi_* function that is executed on the master
+    - write the mpi_*_slave function
+    - Add your slave function to CALLBACK_LIST in communication.c
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
@@ -115,11 +112,18 @@ void mpi_bcast_event(int event);
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
     \param id   the particle to move.
-    \param new  if non-zero, the particle is new
     \param node the node to attach it to.
     \param pos  the particles position.
 */
-void mpi_place_particle(int node, int id, int new, double pos[3]);
+void mpi_place_particle(int node, int id, double pos[3]);
+
+/** Issue REQ_PLACE: create particle at a position on a node.
+    Also calls \ref on_particle_change.
+    \param id   the particle to create.
+    \param node the node to attach it to.
+    \param pos  the particles position.
+*/
+void mpi_place_new_particle(int node, int id, double pos[3]);
 
 /** Issue REQ_SET_V: send particle velocity.
     Also calls \ref on_particle_change.

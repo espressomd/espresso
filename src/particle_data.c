@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -2188,9 +2189,11 @@ int place_particle(int part, double p[3])
       particle_node[i] = -1;
 
     retcode = TCL_CONTINUE;
-  }
 
-  mpi_place_particle(pnode, part, new, p);
+    mpi_place_new_particle(pnode, part, p);
+  } else {
+    mpi_place_particle(pnode, part, p);
+  }
 
   return retcode;
 }
@@ -2910,19 +2913,18 @@ void send_particles(ParticleList *particles, int node)
 void recv_particles(ParticleList *particles, int node)
 {
   int transfer=0, read, pc;
-  MPI_Status status;
   IntList local_dyn;
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
   MPI_Recv(&transfer, 1, MPI_INT, node,
-	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
 
   realloc_particlelist(particles, particles->n + transfer);
   MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
-	   REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+	   REQ_SNDRCV_PART, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   particles->n += transfer;
 
   init_intlist(&local_dyn);
@@ -2948,7 +2950,7 @@ void recv_particles(ParticleList *particles, int node)
   if (local_dyn.n > 0) {
     alloc_intlist(&local_dyn, local_dyn.n);
     MPI_Recv(local_dyn.e, local_dyn.n*sizeof(int), MPI_BYTE, node,
-	     REQ_SNDRCV_PART, MPI_COMM_WORLD, &status);
+	     REQ_SNDRCV_PART, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
   read = 0;
   for (pc = particles->n - transfer; pc < particles->n; pc++) {
