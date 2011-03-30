@@ -189,6 +189,8 @@ void lb_realloc_particles_gpu(){
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
+  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
+
   lb_init_GPU(&lbpar_gpu);
 
   LB_TRACE (fprintf(stderr,"lb_reinit_fluid_gpu \n"));

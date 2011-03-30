@@ -843,7 +843,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   if(n_a.boundary[node_index[7]] == 1)delta[7] = 0.f;
 #endif
 
- #pragma unroll
+ //#pragma unroll
+#if 0
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
     Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
@@ -851,6 +852,47 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
     interpolated_u2 += delta[i]*mode[2]/(Rho);
     interpolated_u3 += delta[i]*mode[3]/(Rho);
   }
+#endif
+    calc_mode(mode, n_a, node_index[0]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[0]*mode[1]/(Rho);
+    interpolated_u2 += delta[0]*mode[2]/(Rho);
+    interpolated_u3 += delta[0]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[1]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[1]*mode[1]/(Rho);
+    interpolated_u2 += delta[1]*mode[2]/(Rho);
+    interpolated_u3 += delta[1]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[2]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[2]*mode[1]/(Rho);
+    interpolated_u2 += delta[2]*mode[2]/(Rho);
+    interpolated_u3 += delta[2]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[3]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[3]*mode[1]/(Rho);
+    interpolated_u2 += delta[3]*mode[2]/(Rho);
+    interpolated_u3 += delta[3]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[4]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[4]*mode[1]/(Rho);
+    interpolated_u2 += delta[4]*mode[2]/(Rho);
+    interpolated_u3 += delta[4]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[5]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[5]*mode[1]/(Rho);
+    interpolated_u2 += delta[5]*mode[2]/(Rho);
+    interpolated_u3 += delta[5]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[6]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[6]*mode[1]/(Rho);
+    interpolated_u2 += delta[6]*mode[2]/(Rho);
+    interpolated_u3 += delta[6]*mode[3]/(Rho);
+    calc_mode(mode, n_a, node_index[7]);
+    Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
+    interpolated_u1 += delta[7]*mode[1]/(Rho);
+    interpolated_u2 += delta[7]*mode[2]/(Rho);
+    interpolated_u3 += delta[7]*mode[3]/(Rho);
 
 	/* calculate viscous force
 	* take care to rescale velocities with time_step and transform to MD units
