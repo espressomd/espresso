@@ -22,6 +22,7 @@ tests = \
 	analysis.tcl \
 	comforce.tcl \
 	comfixed.tcl \
+	command_syntax.tcl \
 	constraints.tcl \
 	dh.tcl \
 	el2d.tcl \
