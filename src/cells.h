@@ -42,7 +42,7 @@
     </ul>
   
     One can switch between different cell systems with the tcl command
-    \ref tcl_cellsystem implemented in \ref cells::cellsystem.
+    cellsystem implemented in \ref cells.c .
   
     Some structures are common to all cell systems: 
   
@@ -173,7 +173,7 @@ extern CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
-/** implementation of the Tcl command \ref tcl_cellsystem */
+/** implementation of the Tcl command cellsystem */
 int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv);
 

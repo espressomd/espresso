@@ -78,7 +78,7 @@ extern double nptiso_gammav;
  * functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tcl_thermostat. This function
+/** Implementation of the tcl command \ref tclcommand_thermostat. This function
     allows to change the used thermostat and to set its parameters.
  */
 int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);

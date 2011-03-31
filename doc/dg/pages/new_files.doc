@@ -28,7 +28,7 @@ you need to do the following:
   <tt>configure</tt> and the different <tt>Makefile.in</tt>
 - (ideally, you should also check the distribution by running 
    <tt>\ref create_distro "make distcheck"</tt>
-- add the new file(s) and changed Makefiles to the \ref our_cvs "CVS"
+- add the new file(s) and changed Makefiles to the GIT repository.
 
 \section automake_file Adding the file to automake
 

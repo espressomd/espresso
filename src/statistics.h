@@ -102,12 +102,12 @@ extern int n_part_conf;
 /************************************************************/
 /*@{*/
 
-/** Implements the Tcl command \ref tcl_analyze. This allows for basic system analysis,
+/** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
     both online and offline.
 */
 int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-/** EXPERIMENTAL: Implements the Tcl command \ref tcl_acf for online calculation of autocorrelation functions. */
+/** EXPERIMENTAL: Implements the Tcl command \ref acf_cmd for online calculation of autocorrelation functions. */
 int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** the minimal distance of two particles with types in set1 rsp. set2.

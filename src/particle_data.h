@@ -284,7 +284,7 @@ extern int *partBondPartners;
  * Functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tcl_part. This command allows to
+/** Implementation of the tcl command \ref tclcommand_part. This command allows to
     modify particle data. */
 int tclcommand_part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);

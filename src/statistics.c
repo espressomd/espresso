@@ -44,7 +44,8 @@
 #include "virtual_sites.h"
 #include "initialize.h"
 
-/** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
+/** Previous particle configurations (needed for offline analysis and
+    correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
 
 /** Variables for measuring the compressibility from volume fluctuations.
