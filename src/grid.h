@@ -33,7 +33,6 @@
  *  For the 6 directions \anchor directions we have the following convention:
  *
  *  \image html directions.gif "Convention for the order of the directions"
- *  \image latex directions.eps "Convention for the order of the directions" width=6cm
  *
  *  The Figure illustrates the direction convetion used for arrays
  *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries

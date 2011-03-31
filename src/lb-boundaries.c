@@ -418,14 +418,14 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 void lb_init_boundaries() {
   int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
-  double pos[3], dist, dist_tmp, dist_vec[3];
+  double pos[3], dist, dist_tmp=0.0, dist_vec[3];
 	
-	map_node_array(this_node, node_domain_position);
+  map_node_array(this_node, node_domain_position);
 	
-	offset[0] = node_domain_position[0]*lblattice.grid[0];
-	offset[1] = node_domain_position[1]*lblattice.grid[1];
-	offset[2] = node_domain_position[2]*lblattice.grid[2];
-
+  offset[0] = node_domain_position[0]*lblattice.grid[0];
+  offset[1] = node_domain_position[1]*lblattice.grid[1];
+  offset[2] = node_domain_position[2]*lblattice.grid[2];
+  
   for (n=0;n<lblattice.halo_grid_volume;n++) {
     lbfields[n].boundary = 0;
   }

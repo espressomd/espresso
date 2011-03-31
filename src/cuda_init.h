@@ -19,14 +19,8 @@
 #ifndef CUDA_INIT_H
 #define CUDA_INIT_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-  void gpu_init();
-
-#ifdef __cplusplus
-}
-#endif
+/** Command to set the CUDA device to use. */
+int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
+		    int argc, char **argv);
 
 #endif

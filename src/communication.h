@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef COMM_H
-#define COMM_H
+#ifndef _COMMUNICATION_H
+#define _COMMUNICATION_H
 /** \file communication.h
     This file contains the asynchronous MPI communication.
  
@@ -45,9 +45,9 @@
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
     arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref #callbacks (the array index gives your action number.
-    Last but not least for debugging purposes you can add a nice name
-    to \ref #names in the same way.  */
+    added to \ref CALLBACK_LIST "callbacks".  Last but not least for
+    debugging purposes you can add a nice name to \ref #names in the
+    same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -228,6 +228,10 @@ void mpi_send_dipm(int node, int part, double dipm);
 void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
+#ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+#endif
+
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -311,7 +315,7 @@ void mpi_bcast_tf_params(int i);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
+/** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
     <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
@@ -481,7 +485,6 @@ int mpi_iccp3m_init(int dummy);
  * @param j     local fluid velocity
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
-
 
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result

@@ -122,10 +122,8 @@ MDINLINE double g2_DLC_dip(double g,double x) {
      }
    }
    
-   //Next line will be for the multi-procesor version ...  
    MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-   // For the one node version is enough the next line
-   
+
    M= sqrt(tot_sums[0]*tot_sums[0]+tot_sums[1]*tot_sums[1]+tot_sums[2]*tot_sums[2]);
    Mz=tot_sums[2]; 
    Mx=tot_sums[0]; 

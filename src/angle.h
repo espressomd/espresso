@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -215,8 +216,14 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   }
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
-  fprintf(stderr, "WARNING: calc_angle_3body_forces not implemented for cossquare potential, cannot calculate stress tensor");
-  pot_dep = 0; /* better zero than an undefined value ...*/
+  {
+    double K, cos_phi0;
+    K = iaparams->p.angle.bend;
+    cos_phi0 = iaparams->p.angle.cos_phi0;
+    
+    // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi * sin_phi)]
+    pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
+  }
 #endif
 
   fac = pot_dep / sin_phi;

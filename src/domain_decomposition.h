@@ -37,7 +37,6 @@
  *  cell grid below.
  *
  *  \image html  linked_cells.gif "Linked cells structure"
- *  \image latex linked_cells.eps "Linked cells structure" 
  *
  *  2D representation of a linked cell grid: cell_grid =
  *  {4,4}, ghost_cell_grid = {6,6}
@@ -124,8 +123,8 @@ typedef struct {
 extern DomainDecomposition dd;
 
 /** Maximal skin size. This is a global variable wwhich can be read
-    out by the user via \ref global::setmd in order to optimize the cell
-    grid */
+    out by the user via the TCL command setmd in order to optimize the
+    cell grid */
 extern double max_skin;
 
 /** Maximal number of cells per node. In order to avoid memory
@@ -135,7 +134,7 @@ extern double max_skin;
  *  n_cells, is larger than max_num_cells the cell grid is
  *  reduced. max_num_cells has to be larger than 27, e.g one inner
  *  cell.  max_num_cells is initialized with the default value
- *  specified in \ref config.h: \ref CELLS_MAX_NUM_CELLS.
+ *  specified in \ref config.h as \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 

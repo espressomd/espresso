@@ -20,7 +20,7 @@
 */
 /** \file config.c
  *
- *  contains \ref code_info and version stuff.
+ *  contains code_info and version stuff.
 */
 #include <tcl.h>
 #include "utils.h"
@@ -110,6 +110,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
 #ifdef FFTW
   Tcl_AppendResult(interp, "{ FFTW } ", (char *) NULL);
+#endif
+#ifdef CUDA
+  Tcl_AppendResult(interp, "{ CUDA } ", (char *) NULL);
 #endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);

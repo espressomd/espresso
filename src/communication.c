@@ -56,6 +56,7 @@
 #include "iccp3m.h"
 #include "statistics_chain.h"
 #include "statistics_fluid.h"
+#include "virtual_sites.h"
 #include "topology.h"
 #include "errorhandling.h"
 #include "molforces.h"
@@ -920,8 +921,8 @@ void mpi_send_vs_relative(int pnode, int part, int vs_relative_to, double vs_dis
     p->p.vs_relative_distance = vs_distance;
   }
   else {
-    MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
-    MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, REQ_SET_VS_RELATIVE, MPI_COMM_WORLD);
+    MPI_Send(&vs_relative_to, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
+    MPI_Send(&vs_distance, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -933,9 +934,9 @@ void mpi_send_vs_relative_slave(int pnode, int part)
 #ifdef VIRTUAL_SITES_RELATIVE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, REQ_SET_VS_RELATIVE,
+        MPI_Recv(&p->p.vs_relative_to_particle_id, 1, MPI_INT, 0, SOME_TAG,
 	     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, REQ_SET_VS_RELATIVE,
+    MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG,
 	     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
@@ -1241,7 +1242,7 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i)
 {
 #ifdef ADRESS
@@ -2547,9 +2548,8 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
   if (node==this_node) {
     lb_get_populations(index, pop);
   } else {
-    double data[10];
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
-        MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 #endif
 }

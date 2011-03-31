@@ -58,18 +58,23 @@ proc write_data {file} {
 #############################################################
 set errf [lindex $argv 1]
 
+
+require_feature "LB_GPU"
+#require_feature "LB"
+
 # Integration parameters
 #############################################################
 set int_steps     	1
 puts $int_steps
-set int_times		20
+set int_times		1000
+puts $int_times
 
-set time_step     0.02
-set tau           0.02
+set time_step     0.01
+set tau           0.01
 
 set agrid         1.0
 
-set box_l         208
+set box_l         64
 set box_l_x       128.0
 
 set dens          1.0
@@ -77,7 +82,7 @@ set viscosity     3.0
 #set bulk_viscosity 0.1
 set friction      5.0
 #equ velo 0.025
-set temp          1.0
+set temp          0.0
 
 set skin          0.5
 
@@ -101,17 +106,17 @@ puts [setmd time_step]
 setmd box_l $box_l $box_l $box_l
 puts [setmd box_l]
 setmd periodic 1 1 1
-cellsystem domain_decomposition -no_verlet_list
+#cellsystem domain_decomposition -no_verlet_list
 #cellsystem nsquare
 
 #inter 0 0 lennard-jones 1 1 12.5 0 0
 #puts [inter]
 
 puts [setmd cell_grid]
-
+#part 0 pos 10 10 10
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 0 0 0
+lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau friction $friction ext_force 0.5 0 0
 #bulk_viscosity $bulk_viscosity ext_force 0.03 0 0
 thermostat lb $temp
 
@@ -121,17 +126,17 @@ thermostat lb $temp
 #		lbnode_exf_gpu 0 $i $j set force 1 0 0
 #		}
 #	}
-#lbboundary wall normal 0 0 1 dist 0
-#lbboundary wall normal 0 0 -1 dist [expr -$box_l+1]
+lbboundary wall normal 0 0 1 dist 0
+lbboundary wall normal 0 0 -1 dist [expr -$box_l+1]
 
-#lbboundary wall normal 0 1 0 dist 0
-#lbboundary wall normal 0 -1 0 dist [expr -$box_l+1]
+lbboundary wall normal 0 1 0 dist 0
+lbboundary wall normal 0 -1 0 dist [expr -$box_l+1]
 # Particles
 #############################################################
 # load colloid from file
 #read_data "~/espresso/testsuite/lb_system.data"
 
-part 0 pos 10 10 10
+#part 0 pos 10 10 10
 #part 0 v 0. 0. -10.5
 #set k	0
 #set m	5
@@ -147,7 +152,7 @@ part 0 pos 10 10 10
 #}
 #part deleteall
 #part 0 pos 0 5 15
-puts [setmd n_part]
+#puts [setmd n_part]
 # here you can create the necessary snapshot
 #write_data "lb_system.data"
 
@@ -206,7 +211,7 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 	#}
 	#lbprint field lb_field/datei$i.vtk
     integrate $int_steps
-	puts [part 0 print pos]
+    #puts [part 0 print pos]
     #puts -nonewline [analyze energy]
 
 #imd positions
@@ -249,7 +254,7 @@ puts "\n"
 #set avg_temp [expr $avg_temp/$int_times]
 #set var_temp [expr $var_temp/$int_times - $avg_temp*$avg_temp]
 #set rel_temp_error [expr abs(($avg_temp-[setmd temp])/[setmd temp])]
-
+lbprint v vtk field.vtk
 puts "\n"
 #puts "Maximal mass deviation $max_dmass"
 #puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
@@ -263,7 +268,6 @@ puts "\n"
     error_exit $res
 }
 
-exec rm -f $errf
 #after 10000
 exit 0
 

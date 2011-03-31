@@ -518,10 +518,10 @@ MDINLINE void lb_local_fields_get_border_flag(index_t index, int *border) {
 #endif
 
 #endif // LB
-/** Parser for the TCL command \ref lbfluid. */
+/** Parser for the TCL command lbfluid. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-/** Parser for the \ref lbnode command. */
+/** Parser for the lbnode command. */
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 #ifdef LB
 

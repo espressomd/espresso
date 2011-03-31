@@ -480,14 +480,14 @@ AC_CONFIG_FILES([
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile
+	testsuite/configs/Makefile
 	doc/Makefile
 	doc/latexit.sh
 	doc/dg/Makefile
 	doc/ug/Makefile
-	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	myconfig-sample.h:src/myconfig-sample.h.in
+	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])

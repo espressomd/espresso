@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2011 Olaf Lenz
 #
 # This file is part of ESPResSo.
 #
@@ -14,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-EXTRA_DIST=memd.tex \
-        figs/cell.eps \
-        figs/charge_assig_cube.eps \
-        figs/initializationE.eps \
-        figs/initializationE.pdf
+#
+EXTRA_DIST= \
+	myconfig-maxset.h \
+	myconfig-LB.h \
+	myconfig-LBGPU.h

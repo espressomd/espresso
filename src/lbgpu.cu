@@ -23,6 +23,9 @@ extern "C" {
 }
 
 #ifdef LB_GPU
+#ifndef GAUSSRANDOM
+#define GAUSSRANDOM
+#endif
 
 /**defining structures residing in global memory */
 /** struct for phys. values */
@@ -48,21 +51,33 @@ static int *h_gpu_check = NULL;
 
 /** values for the kernel call */
 static int threads_per_block;
-static int blocks_per_grid;
+static int blocks_per_grid_x;
+static int blocks_per_grid_y;
+dim3 dim_grid(blocks_per_grid_x, blocks_per_grid_y, 1);
 
 /** values for the particle kernel */
 static int threads_per_block_particles;
-static int blocks_per_grid_particles;
-
+static int blocks_per_grid_particles_x;
+static int blocks_per_grid_particles_y;
+dim3 dim_grid_particles(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 /** values for the boundary init kernel */
 static int threads_per_block_bound;
-static int blocks_per_grid_bound;
+static int blocks_per_grid_bound_x;
+static int blocks_per_grid_bound_y;
+dim3 dim_grid_bound(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
+
 
 static int threads_per_block_exf;
-static int blocks_per_grid_exf;
+static int blocks_per_grid_exf_x;
+static int blocks_per_grid_exf_y;
+dim3 dim_grid_exf(blocks_per_grid_exf_x, blocks_per_grid_exf_y, 1);
 
 static int threads_per_block_print;
-static int blocks_per_grid_print;
+static int blocks_per_grid_print_x;
+static int blocks_per_grid_print_y;
+dim3 dim_grid_print(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
+
+
 static unsigned int intflag = 1;
 /**defining size values for allocating global memory */
 static size_t size_of_values;
@@ -73,14 +88,14 @@ static size_t size_of_boundindex;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
-static __constant__ LB_parameters_gpu para;
-static __constant__ int number_of_bnodes;
-static __constant__ float c_sound_sq = 1.f/3.f;
+static __device__ __constant__ LB_parameters_gpu para;
+static const float c_sound_sq = 1.f/3.f;
 
 /**cudasteams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
 cudaError_t err;
+cudaError_t _err;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /**device funktions call by kernel funktions */
@@ -178,69 +193,69 @@ __device__ void index_to_xyz(unsigned int index, unsigned int *xyz){
 __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode){
 
   /* mass mode */
-  mode[0] = n_a.vd[0][index] + n_a.vd[1][index] + n_a.vd[2][index]
-          + n_a.vd[3][index] + n_a.vd[4][index] + n_a.vd[5][index]
-          + n_a.vd[6][index] + n_a.vd[7][index] + n_a.vd[8][index]
-          + n_a.vd[9][index] + n_a.vd[10][index] + n_a.vd[11][index] + n_a.vd[12][index]
-          + n_a.vd[13][index] + n_a.vd[14][index] + n_a.vd[15][index] + n_a.vd[16][index]
-          + n_a.vd[17][index] + n_a.vd[18][index];
+  mode[0] = n_a.vd[0*para.number_of_nodes + index] + n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]
+          + n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index] + n_a.vd[5*para.number_of_nodes + index]
+          + n_a.vd[6*para.number_of_nodes + index] + n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index]
+          + n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index] + n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]
+          + n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index] + n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]
+          + n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index];
 
   /* momentum modes */
-  mode[1] = (n_a.vd[1][index] - n_a.vd[2][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-          + (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-          + (n_a.vd[13][index] - n_a.vd[14][index]);
-  mode[2] = (n_a.vd[3][index] - n_a.vd[4][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-          - (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-          + (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[3] = (n_a.vd[5][index] - n_a.vd[6][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-          - (n_a.vd[13][index] - n_a.vd[14][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-          - (n_a.vd[17][index] - n_a.vd[18][index]);
+  mode[1] = (n_a.vd[1*para.number_of_nodes + index] - n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+          + (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+          + (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]);
+  mode[2] = (n_a.vd[3*para.number_of_nodes + index] - n_a.vd[4*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+          - (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+          + (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[3] = (n_a.vd[5*para.number_of_nodes + index] - n_a.vd[6*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+          - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+          - (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
 
   /* stress modes */
-  mode[4] = -(n_a.vd[0][index]) + n_a.vd[7][index] + n_a.vd[8][index] + n_a.vd[9][index] + n_a.vd[10][index]
-          + n_a.vd[11][index] + n_a.vd[12][index] + n_a.vd[13][index] + n_a.vd[14][index]
-          + n_a.vd[15][index] + n_a.vd[16][index] + n_a.vd[17][index] + n_a.vd[18][index];
-  mode[5] = n_a.vd[1][index] + n_a.vd[2][index] - (n_a.vd[3][index] + n_a.vd[4][index])
-          + (n_a.vd[11][index] + n_a.vd[12][index]) + (n_a.vd[13][index] + n_a.vd[14][index])
-          - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index]);
-  mode[6] = (n_a.vd[1][index] + n_a.vd[2][index]) + (n_a.vd[3][index] + n_a.vd[4][index])
-          - (n_a.vd[11][index] + n_a.vd[12][index]) - (n_a.vd[13][index] + n_a.vd[14][index])
-          - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index])
-          - 2.f*(n_a.vd[5][index] + n_a.vd[6][index] - (n_a.vd[7][index] + n_a.vd[8][index])
-          - (n_a.vd[9][index] +n_a.vd[10][index]));
-  mode[7] = n_a.vd[7][index] + n_a.vd[8][index] - (n_a.vd[9][index] + n_a.vd[10][index]);
-  mode[8] = n_a.vd[11][index] + n_a.vd[12][index] - (n_a.vd[13][index] + n_a.vd[14][index]);
-  mode[9] = n_a.vd[15][index] + n_a.vd[16][index] - (n_a.vd[17][index] + n_a.vd[18][index]);
+  mode[4] = -(n_a.vd[0*para.number_of_nodes + index]) + n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index] + n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]
+          + n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index] + n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index]
+          + n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index] + n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index];
+  mode[5] = n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index] - (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+          + (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) + (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+          - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]);
+  mode[6] = (n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+          - (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+          - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index])
+          - 2.f*(n_a.vd[5*para.number_of_nodes + index] + n_a.vd[6*para.number_of_nodes + index] - (n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index])
+          - (n_a.vd[9*para.number_of_nodes + index] +n_a.vd[10*para.number_of_nodes + index]));
+  mode[7] = n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index] - (n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]);
+  mode[8] = n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index] - (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index]);
+  mode[9] = n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index] - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]);
 
   /* kinetic modes */
-  mode[10] = -2.f*(n_a.vd[1][index] - n_a.vd[2][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-           + (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-           + (n_a.vd[13][index] - n_a.vd[14][index]);
-  mode[11] = -2.f*(n_a.vd[3][index] - n_a.vd[4][index]) + (n_a.vd[7][index] - n_a.vd[8][index])
-           - (n_a.vd[9][index] - n_a.vd[10][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-           + (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[12] = -2.f*(n_a.vd[5][index] - n_a.vd[6][index]) + (n_a.vd[11][index] - n_a.vd[12][index])
-           - (n_a.vd[13][index] - n_a.vd[14][index]) + (n_a.vd[15][index] - n_a.vd[16][index])
-           - (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[13] = (n_a.vd[7][index] - n_a.vd[8][index]) + (n_a.vd[9][index] - n_a.vd[10][index])
-           - (n_a.vd[11][index] - n_a.vd[12][index]) - (n_a.vd[13][index] - n_a.vd[14][index]);
-  mode[14] = (n_a.vd[7][index] - n_a.vd[8][index]) - (n_a.vd[9][index] - n_a.vd[10][index])
-           - (n_a.vd[15][index] - n_a.vd[16][index]) - (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[15] = (n_a.vd[11][index] - n_a.vd[12][index]) - (n_a.vd[13][index] - n_a.vd[14][index])
-           - (n_a.vd[15][index] - n_a.vd[16][index]) + (n_a.vd[17][index] - n_a.vd[18][index]);
-  mode[16] = n_a.vd[0][index] + n_a.vd[7][index] + n_a.vd[8][index] + n_a.vd[9][index] + n_a.vd[10][index]
-           + n_a.vd[11][index] + n_a.vd[12][index] + n_a.vd[13][index] + n_a.vd[14][index]
-           + n_a.vd[15][index] + n_a.vd[16][index] + n_a.vd[17][index] + n_a.vd[18][index]
-           - 2.f*((n_a.vd[1][index] + n_a.vd[2][index]) + (n_a.vd[3][index] + n_a.vd[4][index])
-           + (n_a.vd[5][index] + n_a.vd[6][index]));
-  mode[17] = -(n_a.vd[1][index] + n_a.vd[2][index]) + (n_a.vd[3][index] + n_a.vd[4][index])
-           + (n_a.vd[11][index] + n_a.vd[12][index]) + (n_a.vd[13][index] + n_a.vd[14][index])
-           - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index]);
-  mode[18] = -(n_a.vd[1][index] + n_a.vd[2][index]) - (n_a.vd[3][index] + n_a.vd[4][index])
-           - (n_a.vd[11][index] + n_a.vd[12][index]) - (n_a.vd[13][index] + n_a.vd[14][index])
-           - (n_a.vd[15][index] + n_a.vd[16][index]) - (n_a.vd[17][index] + n_a.vd[18][index])
-           + 2.f*((n_a.vd[5][index] + n_a.vd[6][index]) + (n_a.vd[7][index] + n_a.vd[8][index])
-           + (n_a.vd[9][index] + n_a.vd[10][index]));
+  mode[10] = -2.f*(n_a.vd[1*para.number_of_nodes + index] - n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+           + (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+           + (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]);
+  mode[11] = -2.f*(n_a.vd[3*para.number_of_nodes + index] - n_a.vd[4*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index])
+           - (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+           + (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[12] = -2.f*(n_a.vd[5*para.number_of_nodes + index] - n_a.vd[6*para.number_of_nodes + index]) + (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index])
+           - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]) + (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index])
+           - (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[13] = (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index]) + (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index])
+           - (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index]);
+  mode[14] = (n_a.vd[7*para.number_of_nodes + index] - n_a.vd[8*para.number_of_nodes + index]) - (n_a.vd[9*para.number_of_nodes + index] - n_a.vd[10*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[15] = (n_a.vd[11*para.number_of_nodes + index] - n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] - n_a.vd[14*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] - n_a.vd[16*para.number_of_nodes + index]) + (n_a.vd[17*para.number_of_nodes + index] - n_a.vd[18*para.number_of_nodes + index]);
+  mode[16] = n_a.vd[0*para.number_of_nodes + index] + n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index] + n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]
+           + n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index] + n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index]
+           + n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index] + n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]
+           - 2.f*((n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+           + (n_a.vd[5*para.number_of_nodes + index] + n_a.vd[6*para.number_of_nodes + index]));
+  mode[17] = -(n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) + (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+           + (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) + (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index]);
+  mode[18] = -(n_a.vd[1*para.number_of_nodes + index] + n_a.vd[2*para.number_of_nodes + index]) - (n_a.vd[3*para.number_of_nodes + index] + n_a.vd[4*para.number_of_nodes + index])
+           - (n_a.vd[11*para.number_of_nodes + index] + n_a.vd[12*para.number_of_nodes + index]) - (n_a.vd[13*para.number_of_nodes + index] + n_a.vd[14*para.number_of_nodes + index])
+           - (n_a.vd[15*para.number_of_nodes + index] + n_a.vd[16*para.number_of_nodes + index]) - (n_a.vd[17*para.number_of_nodes + index] + n_a.vd[18*para.number_of_nodes + index])
+           + 2.f*((n_a.vd[5*para.number_of_nodes + index] + n_a.vd[6*para.number_of_nodes + index]) + (n_a.vd[7*para.number_of_nodes + index] + n_a.vd[8*para.number_of_nodes + index])
+           + (n_a.vd[9*para.number_of_nodes + index] + n_a.vd[10*para.number_of_nodes + index]));
 
 }
 /*-------------------------------------------------------*/
@@ -269,9 +284,9 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   * inlcude one half-step of the force action.  See the
   * Chapman-Enskog expansion in [Ladd & Verberg]. */
 
-  j[0] += 0.5f*node_f.force[0][index];
-  j[1] += 0.5f*node_f.force[1][index];
-  j[2] += 0.5f*node_f.force[2][index];
+  j[0] += 0.5f*node_f.force[0*para.number_of_nodes + index];
+  j[1] += 0.5f*node_f.force[1*para.number_of_nodes + index];
+  j[2] += 0.5f*node_f.force[2*para.number_of_nodes + index];
 
   /* equilibrium part of the stress modes (eq13 schiller)*/
   pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
@@ -312,41 +327,75 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 /*-------------------------------------------------------*/
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
 
-  float rootrho = sqrt(mode[0]+para.rho*para.agrid*para.agrid*para.agrid);
+  float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
+#ifdef GAUSSRANDOM
   /* stress modes */
   gaussian_random(rn);
-  mode[4] += rootrho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * rn->randomnr[1];
-  mode[5] += rootrho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
+  mode[4] += sqrt(Rho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk)))) * rn->randomnr[1];
+  mode[5] += sqrt(Rho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[6] += rootrho*(para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[1];
-  mode[7] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
+  mode[6] += sqrt(Rho*(para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[1];
+  mode[7] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[8] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[1];
-  mode[9] += rootrho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * rn->randomnr[0];
+  mode[8] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[1];
+  mode[9] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
  
   /* ghost modes */
   gaussian_random(rn);
-  mode[10] += rootrho*(para.mu*(2.f/3.f)) * rn->randomnr[1];
-  mode[11] += rootrho*(para.mu*(2.f/3.f)) * rn->randomnr[0];
+  mode[10] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[1];
+  mode[11] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[12] += rootrho*(para.mu*(2.f/3.f)) * rn->randomnr[1];
-  mode[13] += rootrho*(para.mu*(2.f/9.f)) * rn->randomnr[0];
+  mode[12] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[1];
+  mode[13] += sqrt(Rho*(para.mu*(2.f/9.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[14] += rootrho*(para.mu*(2.f/9.f)) * rn->randomnr[1];
-  mode[15] += rootrho*(para.mu*(2.f/9.f)) * rn->randomnr[0];
+  mode[14] += sqrt(Rho*(para.mu*(2.f/9.f))) * rn->randomnr[1];
+  mode[15] += sqrt(Rho*(para.mu*(2.f/9.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[16] += rootrho*(para.mu*(2.f)) * rn->randomnr[1];
-  mode[17] += rootrho*(para.mu*(4.f/9.f)) * rn->randomnr[0];
+  mode[16] += sqrt(Rho*(para.mu*(2.f))) * rn->randomnr[1];
+  mode[17] += sqrt(Rho*(para.mu*(4.f/9.f))) * rn->randomnr[0];
 
   gaussian_random(rn);
-  mode[18] += rootrho*(para.mu*(4.f/3.f)) * rn->randomnr[1];
+  mode[18] += sqrt(Rho*(para.mu*(4.f/3.f))) * rn->randomnr[1];
+#else
+  /* stress modes */
+  random_01(rn);
+  mode[4] += sqrt(12.f*Rho*para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * (rn->randomnr[1]-0.5f);
+  mode[5] += sqrt(12.f*Rho*para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
 
+  random_01(rn);
+  mode[6] += sqrt(12.f*Rho*para.mu*(4.f/3.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
+  mode[7] += sqrt(12.f*Rho*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
+
+  random_01(rn);
+  mode[8] += sqrt(12.f*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
+  mode[9] += sqrt(12.f*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
+ 
+  /* ghost modes */
+  random_01(rn);
+  mode[10] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
+  mode[11] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[0]-0.5f);
+
+  random_01(rn);
+  mode[12] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
+  mode[13] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
+
+  random_01(rn);
+  mode[14] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[1]-0.5f);
+  mode[15] += sqrt(12.f*Rho*para.mu*(2.f/9.f)) * (rn->randomnr[0]-0.5f);
+
+  random_01(rn);
+  mode[16] += sqrt(12.f*Rho*para.mu*(2.f)) * (rn->randomnr[1]-0.5f);
+  mode[17] += sqrt(12.f*Rho*para.mu*(4.f/9.f)) * (rn->randomnr[0]-0.5f);
+
+  random_01(rn);
+  mode[18] += sqrt(12.f*Rho*para.mu*(4.f/3.f)) * (rn->randomnr[1]-0.5f);
+#endif
 }
 /*-------------------------------------------------------*/
 /**normalization of the modes need befor backtransformation into velocity space*/
@@ -395,25 +444,25 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
   unsigned int y = xyz[1];
   unsigned int z = xyz[2];
 
-  n_b.vd[0][x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/3.f * (mode[0] - mode[4] + mode[16]);
-  n_b.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[1] + mode[5] + mode[6] - mode[17] - mode[18] - 2.f*(mode[10] + mode[16]));
-  n_b.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[1] + mode[5] + mode[6] - mode[17] - mode[18] + 2.f*(mode[10] - mode[16]));
-  n_b.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[2] - mode[5] + mode[6] + mode[17] - mode[18] - 2.f*(mode[11] + mode[16]));
-  n_b.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[2] - mode[5] + mode[6] + mode[17] - mode[18] + 2.f*(mode[11] - mode[16]));
-  n_b.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/18.f * (mode[0] + mode[3] - 2.f*(mode[6] + mode[12] + mode[16] - mode[18]));
-  n_b.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/18.f * (mode[0] - mode[3] - 2.f*(mode[6] - mode[12] + mode[16] - mode[18]));
-  n_b.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] + mode[2] + mode[4] + 2.f*mode[6] + mode[7] + mode[10] + mode[11] + mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] - mode[2] + mode[4] + 2.f*mode[6] + mode[7] - mode[10] - mode[11] - mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] - mode[2] + mode[4] + 2.f*mode[6] - mode[7] + mode[10] - mode[11] + mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] + mode[2] + mode[4] + 2.f*mode[6] - mode[7] - mode[10] + mode[11] - mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
-  n_b.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] + mode[3] + mode[4] + mode[5] - mode[6] + mode[8] + mode[10] + mode[12] - mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] - mode[3] + mode[4] + mode[5] - mode[6] + mode[8] - mode[10] - mode[12] + mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] - mode[3] + mode[4] + mode[5] - mode[6] - mode[8] + mode[10] - mode[12] - mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] + mode[3] + mode[4] + mode[5] - mode[6] - mode[8] - mode[10] + mode[12] + mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
-  n_b.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] + mode[3] + mode[4] - mode[5] - mode[6] + mode[9] + mode[11] + mode[12] - mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
-  n_b.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] - mode[3] + mode[4] - mode[5] - mode[6] + mode[9] - mode[11] - mode[12] + mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
-  n_b.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] - mode[3] + mode[4] - mode[5] - mode[6] - mode[9] + mode[11] - mode[12] - mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
-  n_b.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] + mode[3] + mode[4] - mode[5] - mode[6] - mode[9] - mode[11] + mode[12] + mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[0*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/3.f * (mode[0] - mode[4] + mode[16]);
+  n_b.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[1] + mode[5] + mode[6] - mode[17] - mode[18] - 2.f*(mode[10] + mode[16]));
+  n_b.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[1] + mode[5] + mode[6] - mode[17] - mode[18] + 2.f*(mode[10] - mode[16]));
+  n_b.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] + mode[2] - mode[5] + mode[6] + mode[17] - mode[18] - 2.f*(mode[11] + mode[16]));
+  n_b.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/18.f * (mode[0] - mode[2] - mode[5] + mode[6] + mode[17] - mode[18] + 2.f*(mode[11] - mode[16]));
+  n_b.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/18.f * (mode[0] + mode[3] - 2.f*(mode[6] + mode[12] + mode[16] - mode[18]));
+  n_b.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/18.f * (mode[0] - mode[3] - 2.f*(mode[6] - mode[12] + mode[16] - mode[18]));
+  n_b.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] + mode[2] + mode[4] + 2.f*mode[6] + mode[7] + mode[10] + mode[11] + mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] - mode[2] + mode[4] + 2.f*mode[6] + mode[7] - mode[10] - mode[11] - mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] + mode[1] - mode[2] + mode[4] + 2.f*mode[6] - mode[7] + mode[10] - mode[11] + mode[13] - mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = 1.f/36.f * (mode[0] - mode[1] + mode[2] + mode[4] + 2.f*mode[6] - mode[7] - mode[10] + mode[11] - mode[13] + mode[14] + mode[16] + 2.f*mode[18]);
+  n_b.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] + mode[3] + mode[4] + mode[5] - mode[6] + mode[8] + mode[10] + mode[12] - mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] - mode[3] + mode[4] + mode[5] - mode[6] + mode[8] - mode[10] - mode[12] + mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[1] - mode[3] + mode[4] + mode[5] - mode[6] - mode[8] + mode[10] - mode[12] - mode[13] - mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[1] + mode[3] + mode[4] + mode[5] - mode[6] - mode[8] - mode[10] + mode[12] + mode[13] + mode[15] + mode[16] + mode[17] - mode[18]);
+  n_b.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] + mode[3] + mode[4] - mode[5] - mode[6] + mode[9] + mode[11] + mode[12] - mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] - mode[3] + mode[4] - mode[5] - mode[6] + mode[9] - mode[11] - mode[12] + mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = 1.f/36.f * (mode[0] + mode[2] - mode[3] + mode[4] - mode[5] - mode[6] - mode[9] + mode[11] - mode[12] - mode[14] + mode[15] + mode[16] - mode[17] - mode[18]);
+  n_b.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = 1.f/36.f * (mode[0] - mode[2] + mode[3] + mode[4] - mode[5] - mode[6] - mode[9] - mode[11] + mode[12] + mode[14] - mode[15] + mode[16] - mode[17] - mode[18]);
 
 }
 /*-------------------------------------------------------*/
@@ -441,24 +490,24 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     unsigned int z = xyz[2];
 
     /* stream vd from boundary node back to origin node */
-    n_a.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[2][index];
-    n_a.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[1][index];
-    n_a.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[4][index];
-    n_a.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[3][index];
-    n_a.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[6][index];
-    n_a.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[5][index];
-    n_a.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[8][index];
-    n_a.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[7][index];
-    n_a.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[10][index];
-    n_a.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[9][index];
-    n_a.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[12][index];
-    n_a.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[11][index]; 
-    n_a.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[14][index]; 
-    n_a.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[13][index]; 
-    n_a.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[16][index];
-    n_a.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[15][index];
-    n_a.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[18][index]; 
-    n_a.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[17][index];
+    n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[2*para.number_of_nodes + index];
+    n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[1*para.number_of_nodes + index];
+    n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[4*para.number_of_nodes + index];
+    n_a.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[3*para.number_of_nodes + index];
+    n_a.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[6*para.number_of_nodes + index];
+    n_a.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[5*para.number_of_nodes + index];
+    n_a.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[8*para.number_of_nodes + index];
+    n_a.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[7*para.number_of_nodes + index];
+    n_a.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[10*para.number_of_nodes + index];
+    n_a.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[9*para.number_of_nodes + index];
+    n_a.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[12*para.number_of_nodes + index];
+    n_a.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[11*para.number_of_nodes + index]; 
+    n_a.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[14*para.number_of_nodes + index]; 
+    n_a.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[13*para.number_of_nodes + index]; 
+    n_a.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[16*para.number_of_nodes + index];
+    n_a.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[15*para.number_of_nodes + index];
+    n_a.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[18*para.number_of_nodes + index]; 
+    n_a.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[17*para.number_of_nodes + index];
   }
 }
 /*-------------------------------------------------------*/
@@ -478,24 +527,24 @@ __device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned i
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
-    n_b.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[1][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
-    n_b.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[2][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
-    n_b.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[3][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[4][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[5][x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[6][x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[7][(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[8][(para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[9][(x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[10][(para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
-    n_b.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[11][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[12][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[13][(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[14][(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[15][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
-    n_b.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[16][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[17][x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
-    n_b.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[18][x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
+    n_b.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
+    n_b.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
+    n_b.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
+    n_b.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_a.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)];
+    n_b.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_a.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)];
   }
 }
 
@@ -513,25 +562,25 @@ __device__ void reset_pop(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index
   /* delete populations */
 #if 1
   if(n_b.boundary[index] == 2){
-    n_b.vd[0][index] = n_b.vd[0][index+1];
-    n_b.vd[1][index] = n_b.vd[1][index+1];
-    n_b.vd[2][index] = n_b.vd[2][index+1];
-    n_b.vd[3][index] = n_b.vd[3][index+1];
-    n_b.vd[4][index] = n_b.vd[4][index+1];
-    n_b.vd[5][index] = n_b.vd[5][index+1];
-    n_b.vd[6][index] = n_b.vd[6][index+1];
-    n_b.vd[7][index]  = n_b.vd[7][index+1];
-    n_b.vd[8][index]  = n_b.vd[8][index+1];
-    n_b.vd[9][index]  = n_b.vd[9][index+1];
-    n_b.vd[10][index] = n_b.vd[10][index+1];
-    n_b.vd[11][index] = n_b.vd[11][index+1];
-    n_b.vd[12][index] = n_b.vd[12][index+1];
-    n_b.vd[13][index] = n_b.vd[13][index+1];
-    n_b.vd[14][index] = n_b.vd[14][index+1];
-    n_b.vd[15][index] = n_b.vd[15][index+1];
-    n_b.vd[16][index] = n_b.vd[16][index+1];
-    n_b.vd[17][index] = n_b.vd[17][index+1];
-    n_b.vd[18][index] = n_b.vd[18][index+1];
+    n_b.vd[0*para.number_of_nodes + index] = n_b.vd[0*para.number_of_nodes + index+1];
+    n_b.vd[1*para.number_of_nodes + index] = n_b.vd[1*para.number_of_nodes + index+1];
+    n_b.vd[2*para.number_of_nodes + index] = n_b.vd[2*para.number_of_nodes + index+1];
+    n_b.vd[3*para.number_of_nodes + index] = n_b.vd[3*para.number_of_nodes + index+1];
+    n_b.vd[4*para.number_of_nodes + index] = n_b.vd[4*para.number_of_nodes + index+1];
+    n_b.vd[5*para.number_of_nodes + index] = n_b.vd[5*para.number_of_nodes + index+1];
+    n_b.vd[6*para.number_of_nodes + index] = n_b.vd[6*para.number_of_nodes + index+1];
+    n_b.vd[7*para.number_of_nodes + index]  = n_b.vd[7*para.number_of_nodes + index+1];
+    n_b.vd[8*para.number_of_nodes + index]  = n_b.vd[8*para.number_of_nodes + index+1];
+    n_b.vd[9*para.number_of_nodes + index]  = n_b.vd[9*para.number_of_nodes + index+1];
+    n_b.vd[10*para.number_of_nodes + index] = n_b.vd[10*para.number_of_nodes + index+1];
+    n_b.vd[11*para.number_of_nodes + index] = n_b.vd[11*para.number_of_nodes + index+1];
+    n_b.vd[12*para.number_of_nodes + index] = n_b.vd[12*para.number_of_nodes + index+1];
+    n_b.vd[13*para.number_of_nodes + index] = n_b.vd[13*para.number_of_nodes + index+1];
+    n_b.vd[14*para.number_of_nodes + index] = n_b.vd[14*para.number_of_nodes + index+1];
+    n_b.vd[15*para.number_of_nodes + index] = n_b.vd[15*para.number_of_nodes + index+1];
+    n_b.vd[16*para.number_of_nodes + index] = n_b.vd[16*para.number_of_nodes + index+1];
+    n_b.vd[17*para.number_of_nodes + index] = n_b.vd[17*para.number_of_nodes + index+1];
+    n_b.vd[18*para.number_of_nodes + index] = n_b.vd[18*para.number_of_nodes + index+1];
   }
 #endif
 }
@@ -549,21 +598,21 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
   /* hydrodynamic momentum density is redefined when forces present */
-  u[0] = (mode[1] + 0.5f*node_f.force[0][index])/Rho;
-  u[1] = (mode[2] + 0.5f*node_f.force[1][index])/Rho;
-  u[2] = (mode[3] + 0.5f*node_f.force[2][index])/Rho;
+  u[0] = (mode[1] + 0.5f*node_f.force[0*para.number_of_nodes + index])/Rho;
+  u[1] = (mode[2] + 0.5f*node_f.force[1*para.number_of_nodes + index])/Rho;
+  u[2] = (mode[3] + 0.5f*node_f.force[2*para.number_of_nodes + index])/Rho;
 
-  C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2][index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0][index] + u[1]*node_f.force[1][index] + u[2]*node_f.force[2][index]);
-  C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1][index]+u[1]*node_f.force[0][index]);
-  C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2][index]+u[2]*node_f.force[0][index]);
-  C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2][index]+u[2]*node_f.force[1][index]);
+  C[0] = (1.f + para.gamma_bulk)*u[0]*node_f.force[0*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[2] = (1.f + para.gamma_bulk)*u[1]*node_f.force[1*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[5] = (1.f + para.gamma_bulk)*u[2]*node_f.force[2*para.number_of_nodes + index] + 1.f/3.f*(para.gamma_bulk-para.gamma_shear)*(u[0]*node_f.force[0*para.number_of_nodes + index] + u[1]*node_f.force[1*para.number_of_nodes + index] + u[2]*node_f.force[2*para.number_of_nodes + index]);
+  C[1] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[1*para.number_of_nodes + index]+u[1]*node_f.force[0*para.number_of_nodes + index]);
+  C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[0*para.number_of_nodes + index]);
+  C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[1*para.number_of_nodes + index]);
 
   /* update momentum modes */
-  mode[1] += node_f.force[0][index];
-  mode[2] += node_f.force[1][index];
-  mode[3] += node_f.force[2][index];
+  mode[1] += node_f.force[0*para.number_of_nodes + index];
+  mode[2] += node_f.force[1*para.number_of_nodes + index];
+  mode[3] += node_f.force[2*para.number_of_nodes + index];
   	
   /* update stress modes */
   mode[4] += C[0] + C[2] + C[5];
@@ -575,15 +624,20 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 
 #ifdef EXTERNAL_FORCES
   if(para.external_force){
-    node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+  }
+  else{
+  node_f.force[0*para.number_of_nodes + index] = 0.f;
+  node_f.force[1*para.number_of_nodes + index] = 0.f;
+  node_f.force[2*para.number_of_nodes + index] = 0.f;
   }
 #else
   /* reset force */
-  node_f.force[0][index] = 0.f;
-  node_f.force[1][index] = 0.f;
-  node_f.force[2][index] = 0.f;
+  node_f.force[0*para.number_of_nodes + index] = 0.f;
+  node_f.force[1*para.number_of_nodes + index] = 0.f;
+  node_f.force[2*para.number_of_nodes + index] = 0.f;
 #endif
 }
 /*-------------------------------------------------------*/
@@ -609,15 +663,15 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
 
   if(singlenode == 1){
     d_v[0].rho = Rho;
-    d_v[0].v[0] = mode[1]/Rho;
-    d_v[0].v[1] = mode[2]/Rho;
-    d_v[0].v[2] = mode[3]/Rho;
+    d_v[0].v[0] = mode[1]/Rho/para.agrid/para.tau;
+    d_v[0].v[1] = mode[2]/Rho/para.agrid/para.tau;
+    d_v[0].v[2] = mode[3]/Rho/para.agrid/para.tau;
   }
   else{
     d_v[index].rho = Rho;
-    d_v[index].v[0] = mode[1]/Rho;
-    d_v[index].v[1] = mode[2]/Rho;
-    d_v[index].v[2] = mode[3]/Rho;
+    d_v[index].v[0] = mode[1]/Rho/para.agrid/para.tau;
+    d_v[index].v[1] = mode[2]/Rho/para.agrid/para.tau;
+    d_v[index].v[2] = mode[3]/Rho/para.agrid/para.tau;
   }
 #if 0
   if(singlenode == 1){
@@ -649,23 +703,23 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
 __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index){
 	
   /* mass mode */
-  mode[0] = n_a.vd[0][node_index] + n_a.vd[1][node_index] + n_a.vd[2][node_index]
-          + n_a.vd[3][node_index] + n_a.vd[4][node_index] + n_a.vd[5][node_index]
-          + n_a.vd[6][node_index] + n_a.vd[7][node_index] + n_a.vd[8][node_index]
-          + n_a.vd[9][node_index] + n_a.vd[10][node_index] + n_a.vd[11][node_index] + n_a.vd[12][node_index]
-          + n_a.vd[13][node_index] + n_a.vd[14][node_index] + n_a.vd[15][node_index] + n_a.vd[16][node_index]
-          + n_a.vd[17][node_index] + n_a.vd[18][node_index];
+  mode[0] = n_a.vd[0*para.number_of_nodes + node_index] + n_a.vd[1*para.number_of_nodes + node_index] + n_a.vd[2*para.number_of_nodes + node_index]
+          + n_a.vd[3*para.number_of_nodes + node_index] + n_a.vd[4*para.number_of_nodes + node_index] + n_a.vd[5*para.number_of_nodes + node_index]
+          + n_a.vd[6*para.number_of_nodes + node_index] + n_a.vd[7*para.number_of_nodes + node_index] + n_a.vd[8*para.number_of_nodes + node_index]
+          + n_a.vd[9*para.number_of_nodes + node_index] + n_a.vd[10*para.number_of_nodes + node_index] + n_a.vd[11*para.number_of_nodes + node_index] + n_a.vd[12*para.number_of_nodes + node_index]
+          + n_a.vd[13*para.number_of_nodes + node_index] + n_a.vd[14*para.number_of_nodes + node_index] + n_a.vd[15*para.number_of_nodes + node_index] + n_a.vd[16*para.number_of_nodes + node_index]
+          + n_a.vd[17*para.number_of_nodes + node_index] + n_a.vd[18*para.number_of_nodes + node_index];
 
   /* momentum modes */
-  mode[1] = (n_a.vd[1][node_index] - n_a.vd[2][node_index]) + (n_a.vd[7][node_index] - n_a.vd[8][node_index])
-          + (n_a.vd[9][node_index] - n_a.vd[10][node_index]) + (n_a.vd[11][node_index] - n_a.vd[12][node_index])
-          + (n_a.vd[13][node_index] - n_a.vd[14][node_index]);
-  mode[2] = (n_a.vd[3][node_index] - n_a.vd[4][node_index]) + (n_a.vd[7][node_index] - n_a.vd[8][node_index])
-          - (n_a.vd[9][node_index] - n_a.vd[10][node_index]) + (n_a.vd[15][node_index] - n_a.vd[16][node_index])
-          + (n_a.vd[17][node_index] - n_a.vd[18][node_index]);
-  mode[3] = (n_a.vd[5][node_index] - n_a.vd[6][node_index]) + (n_a.vd[11][node_index] - n_a.vd[12][node_index])
-          - (n_a.vd[13][node_index] - n_a.vd[14][node_index]) + (n_a.vd[15][node_index] - n_a.vd[16][node_index])
-          - (n_a.vd[17][node_index] - n_a.vd[18][node_index]);
+  mode[1] = (n_a.vd[1*para.number_of_nodes + node_index] - n_a.vd[2*para.number_of_nodes + node_index]) + (n_a.vd[7*para.number_of_nodes + node_index] - n_a.vd[8*para.number_of_nodes + node_index])
+          + (n_a.vd[9*para.number_of_nodes + node_index] - n_a.vd[10*para.number_of_nodes + node_index]) + (n_a.vd[11*para.number_of_nodes + node_index] - n_a.vd[12*para.number_of_nodes + node_index])
+          + (n_a.vd[13*para.number_of_nodes + node_index] - n_a.vd[14*para.number_of_nodes + node_index]);
+  mode[2] = (n_a.vd[3*para.number_of_nodes + node_index] - n_a.vd[4*para.number_of_nodes + node_index]) + (n_a.vd[7*para.number_of_nodes + node_index] - n_a.vd[8*para.number_of_nodes + node_index])
+          - (n_a.vd[9*para.number_of_nodes + node_index] - n_a.vd[10*para.number_of_nodes + node_index]) + (n_a.vd[15*para.number_of_nodes + node_index] - n_a.vd[16*para.number_of_nodes + node_index])
+          + (n_a.vd[17*para.number_of_nodes + node_index] - n_a.vd[18*para.number_of_nodes + node_index]);
+  mode[3] = (n_a.vd[5*para.number_of_nodes + node_index] - n_a.vd[6*para.number_of_nodes + node_index]) + (n_a.vd[11*para.number_of_nodes + node_index] - n_a.vd[12*para.number_of_nodes + node_index])
+          - (n_a.vd[13*para.number_of_nodes + node_index] - n_a.vd[14*para.number_of_nodes + node_index]) + (n_a.vd[15*para.number_of_nodes + node_index] - n_a.vd[16*para.number_of_nodes + node_index])
+          - (n_a.vd[17*para.number_of_nodes + node_index] - n_a.vd[18*para.number_of_nodes + node_index]);
 }
 /*********************************************************/
 /** \name Coupling part */
@@ -673,13 +727,13 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
 /*-------------------------------------------------------*/
 /**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))*/
 /*@{
- * @param n_a				Pointer to local node residing in array a (Input)
- * @param *delta			Pointer for the weighting of particle position (Output)
- * @param *delta_j			Pointer for the weighting of particle momentum (Output)
+ * @param n_a			Pointer to local node residing in array a (Input)
+ * @param *delta		Pointer for the weighting of particle position (Output)
+ * @param *delta_j		Pointer for the weighting of particle momentum (Output)
  * @param *particle_data	Pointer to the particle position and velocity (Input)
  * @param *particle_force	Pointer to the particle force (Input)
  * @param part_index		particle id / thread id (Input)
- * @param *rn				Pointer to randomnumber array of the particle
+ * @param *rn			Pointer to randomnumber array of the particle
  * @param node_index		node index around (8) particle (Output)
 }*/
 /*-------------------------------------------------------*/
@@ -770,7 +824,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
     delta[5] = temp_delta[3] * temp_delta_half[1] * temp_delta[5];
     delta[6] = temp_delta_half[0] * temp_delta[4] * temp_delta[5];
   }
-
+#endif
+#if 0
   if(n_a.boundary[node_index[0]] == 1)delta[0] = 0.f;
 
   if(n_a.boundary[node_index[1]] == 1)delta[1] = 0.f;
@@ -822,8 +877,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   particle_force[part_index].f[1] += para.lb_coupl_pref*(rn_part->randomnr[1]-0.5f);
   random_01(rn_part);
   particle_force[part_index].f[2] += para.lb_coupl_pref*(rn_part->randomnr[0]-0.5f);
-#endif
-	  
+#endif	  
   /* delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
@@ -836,45 +890,45 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
 	(Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))*/
 /*@{
 
- * @param *delta			Pointer for the weighting of particle position (Input)
- * @param *delta_j			Pointer for the weighting of particle momentum (Input)
+ * @param *delta		Pointer for the weighting of particle position (Input)
+ * @param *delta_j		Pointer for the weighting of particle momentum (Input)
  * @param node_index		node index around (8) particle (Input)
  * @param node_f    		Pointer to the node force (Output).
 }*/
 /*-------------------------------------------------------*/
 __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu node_f){
 
-  atomicadd(&(node_f.force[0][node_index[0]]), (delta[0]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[0]]), (delta[0]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[0]]), (delta[0]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[1]]), (delta[1]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[1]]), (delta[1]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[1]]), (delta[1]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[2]]), (delta[2]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[2]]), (delta[2]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[2]]), (delta[2]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[3]]), (delta[3]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[3]]), (delta[3]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[3]]), (delta[3]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[4]]), (delta[4]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[4]]), (delta[4]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[4]]), (delta[4]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[5]]), (delta[5]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[5]]), (delta[5]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[5]]), (delta[5]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[6]]), (delta[6]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[6]]), (delta[6]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[6]]), (delta[6]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[2]));
 
-  atomicadd(&(node_f.force[0][node_index[7]]), (delta[7]*delta_j[0]));
-  atomicadd(&(node_f.force[1][node_index[7]]), (delta[7]*delta_j[1]));
-  atomicadd(&(node_f.force[2][node_index[7]]), (delta[7]*delta_j[2]));
+  atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0]));
+  atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1]));
+  atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
 
 }
 /*-------------------------------------------------------*/
@@ -884,8 +938,10 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
  * @param part_index		index of the particle == thread index (Input).		
 }*/
 /*-------------------------------------------------------*/
+#if 0
 __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int part_index){
 
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi with native printf
   if(particle_data[part_index].p[0]/para.agrid < 0.f || particle_data[part_index].p[0]/para.agrid > para.dim_x){
     printf("particle out of box! (dim_x) \t %u \t %f \n", part_index, particle_data[part_index].p[0]); 
   }
@@ -895,7 +951,10 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
   if(particle_data[part_index].p[2]/para.agrid < 0.f || particle_data[part_index].p[2]/para.agrid > para.dim_z){
     printf("particle out of box! (dim_z) \t %u \t %f \n", part_index, particle_data[part_index].p[2]); 
   }
+#endif
+
 }
+#endif
 /*-------------------------------------------------------*/
 /**kernel to calculate local populations from hydrodynamic fields given by the tcl values.
  *
@@ -911,7 +970,7 @@ __device__ void check_part_posis(LB_particle_gpu *particle_data, unsigned int pa
 /*-------------------------------------------------------*/
 __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, int *gpu_check) {
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
 
@@ -946,43 +1005,43 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
     float tmp1,tmp2;
 
     /* update the q=0 sublattice */
-    n_a.vd[0][index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
+    n_a.vd[0*para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
 
     /* update the q=1 sublattice */
     rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
 
-    n_a.vd[1][index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[2][index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[3][index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[4][index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[5][index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
-    n_a.vd[6][index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[1*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[2*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[3*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[4*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[5*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[6*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
 
     /* update the q=2 sublattice */
     rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
 
     tmp1 = local_pi[0] + local_pi[2];
     tmp2 = 2.0f*local_pi[1];
-    n_a.vd[7][index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[8][index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[9][index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[10][index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[7*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[8*para.number_of_nodes + index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[9*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[10*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     tmp1 = local_pi[0] + local_pi[5];
     tmp2 = 2.0f*local_pi[3];
 
-    n_a.vd[11][index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[12][index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[13][index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[14][index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[11*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[12*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[13*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[14*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     tmp1 = local_pi[2] + local_pi[5];
     tmp2 = 2.0f*local_pi[4];
 
-    n_a.vd[15][index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[16][index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[17][index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[18][index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[15*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[16*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[17*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[18*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     /*set different seed for randomgen on every node */
     n_a.seed[index] = para.your_seed + index;
@@ -997,7 +1056,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 /*-------------------------------------------------------*/
 __global__ void init_particle_force(LB_particle_force_gpu *particle_force, LB_particle_seed_gpu *part){
 	
-  unsigned int part_index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 	
   if(part_index<para.number_of_particles){
     particle_force[part_index].f[0] = 0.0f;
@@ -1016,7 +1075,7 @@ __global__ void init_particle_force(LB_particle_force_gpu *particle_force, LB_pa
 /*-------------------------------------------------------*/
 __global__ void reset_particle_force(LB_particle_force_gpu *particle_force){
 	
-  unsigned int part_index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 	
   if(part_index<para.number_of_particles){
     particle_force[part_index].f[0] = 0.0f;
@@ -1032,22 +1091,28 @@ __global__ void reset_particle_force(LB_particle_force_gpu *particle_force){
 /*-------------------------------------------------------*/
 __global__ void reinit_node_force(LB_node_force_gpu node_f){
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
+#ifdef EXTERNAL_FORCE
     if(para.external_force){
-      node_f.force[0][index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[1][index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[2][index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
     }
     else{
-      node_f.force[0][index] = 0.0f;
-      node_f.force[1][index] = 0.0f;
-      node_f.force[2][index] = 0.0f;
+      node_f.force[0*para.number_of_nodes + index] = 0.0f;
+      node_f.force[1*para.number_of_nodes + index] = 0.0f;
+      node_f.force[2*para.number_of_nodes + index] = 0.0f;
     }
+#else
+    node_f.force[0*para.number_of_nodes + index] = 0.0f;
+    node_f.force[1*para.number_of_nodes + index] = 0.0f;
+    node_f.force[2*para.number_of_nodes + index] = 0.0f;
+#endif
   }
 }
-#if 1
+
 /*-------------------------------------------------------*/
 /**hard coded boundary kernel for custom made boundaries */
 /**just for advanced LB users to setup special boundaries or mark some nodes with
@@ -1059,7 +1124,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 /*-------------------------------------------------------*/
 __global__ void init_boundaries_hardcoded(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 	
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){	
 #if 1
@@ -1090,7 +1155,7 @@ __global__ void init_boundaries_hardcoded(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 #endif	
   }
 }
-#endif
+
 /*-------------------------------------------------------*/
 /**set the boundary flag for all boundary nodes */
 /*@{
@@ -1101,7 +1166,7 @@ __global__ void init_boundaries_hardcoded(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 /*-------------------------------------------------------*/
 __global__ void init_boundaries(int *boundindex, int number_of_boundnodes, LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<number_of_boundnodes){
     n_a.boundary[boundindex[index]] = n_b.boundary[boundindex[index]] = 1;
@@ -1116,7 +1181,7 @@ __global__ void init_boundaries(int *boundindex, int number_of_boundnodes, LB_no
 /*-------------------------------------------------------*/
 __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     n_a.boundary[index] = n_b.boundary[index] = 0;
@@ -1134,7 +1199,7 @@ __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v, LB_node_force_gpu node_f){
     
   /**every node is connected to a thread via the index*/
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   /**the 19 moments (modes) are only temporary register values */
   float mode[19];
   LB_randomnr_gpu rng;
@@ -1150,7 +1215,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
     if (para.fluct) thermalize_modes(mode, index, &rng);
 #ifdef EXTERNAL_FORCES
     /**if external force is used apply node force */
-    if (para.external_force) apply_forces(index, mode, node_f);
+    apply_forces(index, mode, node_f);
 #else
     /**if partcles are used apply node forces*/
     if (para.number_of_particles) apply_forces(index, mode, node_f); 
@@ -1175,7 +1240,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
 /*-------------------------------------------------------*/
 __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, LB_node_force_gpu node_f, LB_particle_seed_gpu *part){
 	
-  unsigned int part_index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
   float delta[8];
   float delta_j[3];
@@ -1203,7 +1268,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *partic
 /*-------------------------------------------------------*/
 __global__ void bb_read(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     bounce_back_read(n_b, n_a, index);
@@ -1218,7 +1283,7 @@ __global__ void bb_read(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 /*-------------------------------------------------------*/
 __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     bounce_back_write(n_b, n_a, index);
@@ -1232,7 +1297,7 @@ __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 /*-------------------------------------------------------*/
 __global__ void reset_population(LB_nodes_gpu n_b, LB_nodes_gpu n_a){
  	
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     reset_pop(n_b, n_a, index);
@@ -1248,7 +1313,7 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
 
   float mode[19];
   unsigned int singlenode = 0;
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     calc_mode(mode, n_a, index);
@@ -1258,36 +1323,72 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
 
 __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodeforce_gpu *extern_nodeforces, LB_node_force_gpu node_f){
 
-  unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<n_extern_nodeforces){
-    node_f.force[0][extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1][extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2][extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
   }
 }
 __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nodes_gpu n_a){
 	
   float mode[19];
   unsigned int singlenode = 1;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
-  if(blockDim.x * blockIdx.x + threadIdx.x == 0){
+  if(index == 0){
     calc_mode(mode, n_a, single_nodeindex);
     calc_values(n_a, mode, d_p_v, single_nodeindex, singlenode);
   }	
 }
+__global__ void momentum(LB_nodes_gpu n_a, float* sum, LB_node_force_gpu node_f) {
+  float mode[19];
 
-void cuda_safe_mem(cudaError_t err){
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if(index<para.number_of_nodes){
+    calc_mode(mode, n_a, index);
+    if(n_a.boundary[index]){
+      mode[1] = mode[2] = mode[3] = 0.f;
+    }
+    atomicadd(&(sum[0]), mode[1]+node_f.force[0*para.number_of_nodes + index]);
+    atomicadd(&(sum[1]), mode[2]+node_f.force[1*para.number_of_nodes + index]);
+    atomicadd(&(sum[2]), mode[3]+node_f.force[2*para.number_of_nodes + index]);
+  }
+}
+__global__ void temperature(LB_nodes_gpu n_a, float* cpu_jsquared, LB_node_force_gpu node_f) {
+  float mode[19];
+  float jsquared = 0.f;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if(index<para.number_of_nodes){
+    calc_mode(mode, n_a, index);
+    if(n_a.boundary[index]){
+      jsquared = 0.f;
+    }
+    else{
+      jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
+    }
+    atomicadd(cpu_jsquared, jsquared);
+  }
+}
+
+void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     if( cudaSuccess != err) {                                             
-      fprintf(stderr, "Could not allocate gpu memory.\n");
+      fprintf(stderr, "Could not allocate gpu memory at %s:%u.\n", file, line);
+      printf("CUDA error: %s\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
     }
 }
-void cuda_safe_kernel(cudaError_t err){
-    if( cudaSuccess != err) {                                             
-      fprintf(stderr, "cuda kernel failed! (maybe your dimensions are to large).\n");
-      exit(EXIT_FAILURE);
-    }
+#define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
+#define KERNELCALL(_f, _a, _b, _params) \
+_f<<<_a, _b, 0, stream[0]>>>_params; \
+_err=cudaGetLastError(); \
+if (_err!=cudaSuccess){ \
+  printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
+  fprintf(stderr, "error calling %s with #thpb %d in %s:%u\n", #_f, _b, __FILE__, __LINE__); \
+  exit(EXIT_FAILURE); \
 }
 /**********************************************************************/
 /* Host funktions to setup and call kernels*/
@@ -1307,56 +1408,50 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cuda_safe_mem(cudaMalloc((void**)&device_values, size_of_values));
 
-  for(int i=0; i<19; i++){
-    cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd[i], lbpar_gpu->number_of_nodes * sizeof(float)));
-    cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd[i], lbpar_gpu->number_of_nodes * sizeof(float)));                                           
-  }
+
+  cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd, lbpar_gpu->number_of_nodes * 19 * sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd, lbpar_gpu->number_of_nodes * 19 * sizeof(float)));                                           
+
   cuda_safe_mem(cudaMalloc((void**)&nodes_a.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
 
-  for(int i=0; i<3; i++){
-    cuda_safe_mem(cudaMalloc((void**)&node_f.force[i], lbpar_gpu->number_of_nodes * sizeof(float)));
-  }
-  
+  cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));  
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));	
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 	
   /**write parameters in const memory*/
-  cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
   /**check flag if lb gpu init works*/
   cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
-  if((lbpar_gpu->dim_x*lbpar_gpu->dim_y*lbpar_gpu->dim_z/64) > 65535){
-    threads_per_block = 128;
-  }else
-    threads_per_block = 64;
+  threads_per_block = 64;
+  blocks_per_grid_y = 4;
+  blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
 
-  blocks_per_grid = (lbpar_gpu->number_of_nodes + threads_per_block - 1) /(threads_per_block);
-
+  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  cudaStreamCreate(&stream[0]);
   /** values for the particle kernel */
   threads_per_block_particles = 64;
-  blocks_per_grid_particles = (lbpar_gpu->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
+  blocks_per_grid_particles_y = 4;
+  blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
 
-  reset_boundaries<<<blocks_per_grid, threads_per_block>>>(nodes_a, nodes_b);
-  cuda_safe_kernel(cudaGetLastError());	
+  dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+
+  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
+
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  calc_n_equilibrium<<<blocks_per_grid, threads_per_block>>>(nodes_a, node_f, gpu_check);
-  cuda_safe_kernel(cudaGetLastError());	
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));	
   /** init part forces with zero*/
-  if(lbpar_gpu->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
-  cuda_safe_kernel(cudaGetLastError());	
-  reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);
-  cuda_safe_kernel(cudaGetLastError());	
-
-  cudaStreamCreate(&stream[0]);
+  if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
+  KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
   h_gpu_check[0] = 0;
-  cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost);
+  cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
 
   cudaThreadSynchronize();
 
@@ -1371,30 +1466,40 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 }*/
 /**-------------------------------------------------------------------------*/
-void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
+void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
+
+  /* Allocate struct for particle positions */
+  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
+  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
+  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
+
+  cudaFreeHost(*host_data);
+
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
+  //pinned memory mode - use special function to get OS-pinned memory
+  cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
+#else
+  cudaMallocHost((void**)host_data, size_of_positions);
+#endif
 
   cudaFree(particle_force);
   cudaFree(particle_data);
   cudaFree(part);
 
-  cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu));
-
-  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
-  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
-  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+ 
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 
   /** values for the particle kernel */
   threads_per_block_particles = 64;
-  blocks_per_grid_particles = (lbpar_gpu->number_of_particles + threads_per_block_particles - 1)/(threads_per_block_particles);
+  blocks_per_grid_particles_y = 4;
+  blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
 
-  if(lbpar_gpu->number_of_particles) init_particle_force<<<blocks_per_grid_particles, threads_per_block_particles>>>(particle_force, part);
-	
-  if(lbpar_gpu->number_of_particles) reinit_node_force<<<blocks_per_grid, threads_per_block>>>(node_f);
-	
+  dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+
+  if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
 
 /**-------------------------------------------------------------------------*/
@@ -1407,42 +1512,43 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu){
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
   size_of_boundindex = number_of_boundnodes*sizeof(int);
-  cudaMemcpyToSymbol(number_of_bnodes, &number_of_boundnodes, sizeof(int));
-  cudaMalloc((void**)&boundindex, size_of_boundindex);
+  cuda_safe_mem(cudaMalloc((void**)&boundindex, size_of_boundindex));
   cudaMemcpy(boundindex, host_boundindex, size_of_boundindex, cudaMemcpyHostToDevice);
 
-  reset_boundaries<<<blocks_per_grid, threads_per_block>>>(nodes_a, nodes_b);
-  cuda_safe_kernel(cudaGetLastError());	
+  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
-  if((lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z/64) > 65535){
-    threads_per_block_bound = 128;
-  }else
-    threads_per_block_bound = 64;
-  blocks_per_grid_bound = (number_of_boundnodes + threads_per_block_bound -1)/(threads_per_block_bound);
+  threads_per_block_bound = 64;
+  blocks_per_grid_bound_y = 4;
+  blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_bound_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
+
+  dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
 #if 0
-  init_boundaries_hardcoded<<<blocks_per_grid_bound, threads_per_block_bound>>>(nodes_a, nodes_b);
+  KERNELCALL(init_boundaries_hardcoded, dim_grid_bound, threads_per_block_bound, (nodes_a, nodes_b));
 #endif
-  init_boundaries<<<blocks_per_grid_bound, threads_per_block_bound>>>(boundindex, number_of_boundnodes, nodes_a, nodes_b);
-  cuda_safe_kernel(cudaGetLastError());	
-  calc_n_equilibrium<<<blocks_per_grid, threads_per_block>>>(nodes_a, node_f, gpu_check);
-  cuda_safe_kernel(cudaGetLastError());	
+
+  KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
+
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
+
   cudaThreadSynchronize();
 }
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu){
 
   size_of_extern_nodeforces = n_extern_nodeforces*sizeof(LB_extern_nodeforce_gpu);
-  cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces);
+  cuda_safe_mem(cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces));
   cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
 
-  if(para.external_force == 0)cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)); 
+  if(para.external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
-  threads_per_block_exf = 128;
+  threads_per_block_exf = 64;
+  blocks_per_grid_exf_y = 4;
+  blocks_per_grid_exf_x = (n_extern_nodeforces + threads_per_block_exf * blocks_per_grid_exf_y - 1) /(threads_per_block_exf * blocks_per_grid_exf_y);
 
-  blocks_per_grid_exf = (n_extern_nodeforces + threads_per_block_exf -1)/(threads_per_block_exf);
+  dim_grid_exf = make_uint3(blocks_per_grid_exf_x, blocks_per_grid_exf_y, 1);
 	
-  init_extern_nodeforces<<<blocks_per_grid_exf, threads_per_block_exf>>>(n_extern_nodeforces, extern_nodeforces, node_f);
-  cuda_safe_kernel(cudaGetLastError());	
+  KERNELCALL(init_extern_nodeforces, dim_grid_exf, threads_per_block_exf, (n_extern_nodeforces, extern_nodeforces, node_f));
+	
 }
 
 /**-------------------------------------------------------------------------*/
@@ -1457,8 +1563,8 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
   cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
 
   /** call of the particle kernel */
-  calc_fluid_particle_ia<<<blocks_per_grid_particles, threads_per_block_particles, 0, stream[0]>>>(nodes_a, particle_data, particle_force, node_f, part);
-  cuda_safe_kernel(cudaGetLastError());	
+  KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (nodes_a, particle_data, particle_force, node_f, part));
+  	
 }
 /** setup and call kernel to copy particle forces to host */
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
@@ -1467,70 +1573,96 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
   cudaMemcpy(host_forces, particle_force, size_of_forces, cudaMemcpyDeviceToHost);
 
   /** reset part forces with zero*/
-  reset_particle_force<<<blocks_per_grid_particles, threads_per_block_particles, 0,  stream[0]>>>(particle_force);
-  cuda_safe_kernel(cudaGetLastError());	
+  KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force));
+	
   cudaThreadSynchronize();
 }
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes*/
 void lb_get_values_GPU(LB_values_gpu *host_values){
 
-  values<<<blocks_per_grid, threads_per_block>>>(nodes_a, device_values);
-  cuda_safe_kernel(cudaGetLastError());	
-
+  KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_values));
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
-
-  cudaThreadSynchronize();
 
 }
 /** setup and call kernel for getting macroscopic fluid values of a single node*/
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){ 
       
   LB_values_gpu *device_print_values;
-  cudaMalloc((void**)&device_print_values, sizeof(LB_values_gpu));	
+  cuda_safe_mem(cudaMalloc((void**)&device_print_values, sizeof(LB_values_gpu)));	
   threads_per_block_print = 1;
-  blocks_per_grid_print = 1;
-  lb_print_node<<<blocks_per_grid_print, threads_per_block_print>>>(single_nodeindex, device_print_values, nodes_a);
-  cudaMemcpy(host_print_values, device_print_values, sizeof(LB_values_gpu), cudaMemcpyDeviceToHost);
-  cuda_safe_kernel(cudaGetLastError());
+  blocks_per_grid_print_y = 1;
+  blocks_per_grid_print_x = 1;
 
-  cudaThreadSynchronize();
+  dim_grid_print = make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
+
+  KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, nodes_a));
+  cudaMemcpy(host_print_values, device_print_values, sizeof(LB_values_gpu), cudaMemcpyDeviceToHost);
+  cudaFree(device_print_values);
+
 }
 
+void calc_fluid_momentum_GPU(double* mom){
+  float* tot_momentum;
+  float cpu_momentum[3] = { 0.f, 0.f, 0.f};
+  cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
+  cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+  if (intflag == 1){
+    KERNELCALL(momentum, dim_grid, threads_per_block,(nodes_a, tot_momentum, node_f));
+  } else {
+    KERNELCALL(momentum, dim_grid, threads_per_block,(nodes_b, tot_momentum, node_f));
+  }
+  
+  cudaMemcpy(cpu_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
+  
+  cudaFree(tot_momentum);
+  mom[0]=(double)(cpu_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[1]=(double)(cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[2]=(double)(cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
+}
+
+void calc_fluid_temperature_GPU(double* cpu_temp){
+  float cpu_jsquared = 0.f;
+  float* gpu_jsquared;
+  cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
+  cudaMemcpy(gpu_jsquared, &cpu_jsquared, sizeof(float), cudaMemcpyHostToDevice);
+  if (intflag == 1){
+    KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_a, gpu_jsquared, node_f));
+  } else {
+    KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_b, gpu_jsquared, node_f));
+  }
+  cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
+
+  cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
+}
 /**-------------------------------------------------------------------------*/
 			/**setup and call integrate kernel from the host */
 /**-------------------------------------------------------------------------*/
 void lb_integrate_GPU(){
-		
+  
   /**call of fluid step*/
   if (intflag == 1){
-    (integrate<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b, device_values, node_f));
-    cuda_safe_kernel(cudaGetLastError());
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
+
 #if 0		
-    reset_population<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_b, nodes_a);
-    cuda_safe_kernel(cudaGetLastError());
+    KERNELCALL(reset_population, dim_grid, threads_per_block, (nodes_b, nodes_a));
 #endif
 #ifdef LB_BOUNDARIES_GPU		
-    if (lb_boundaries_bb_gpu == 1) bb_read<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b);
-      cuda_safe_kernel(cudaGetLastError());			
-    if (lb_boundaries_bb_gpu == 1) bb_write<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b);
-      cuda_safe_kernel(cudaGetLastError());
+    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
+			
+    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
 #endif
     intflag = 0;
   }
   else{
-    integrate<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_b, nodes_a, device_values, node_f);
-    cuda_safe_kernel(cudaGetLastError());
+    KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_values, node_f));
 #if 0		
-    reset_population<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_a, nodes_b);
-    cuda_safe_kernel(cudaGetLastError());
+    KERNELCALL(reset_population, dim_grid, threads_per_block, (nodes_a, nodes_b));
 #endif
 #ifdef LB_BOUNDARIES_GPU		
-    if (lb_boundaries_bb_gpu == 1) bb_read<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_b, nodes_a);
-      cuda_safe_kernel(cudaGetLastError());
+    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
 			
-    if (lb_boundaries_bb_gpu == 1) bb_write<<<blocks_per_grid, threads_per_block, 0,  stream[0]>>>(nodes_b, nodes_a);
-      cuda_safe_kernel(cudaGetLastError());
+    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
 #endif
     intflag = 1;
   }             
@@ -1549,7 +1681,6 @@ void lb_free_GPU(){
   cudaFree(particle_data);
   cudaFree(&node_f);
   cudaFree(part);
-  cudaFree(&number_of_bnodes);
   cudaStreamDestroy(stream[0]);
 }
 #endif /* LB_GPU */
