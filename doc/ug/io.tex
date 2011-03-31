@@ -328,6 +328,12 @@ blockfile, overwriting the current settings in \es.
 \newescommand[checkpoint-set]{checkpoint_set}
 \newescommand[checkpoint-read]{checkpoint_read}
 
+\emph{Warning: the checkpointing commands are deprecated!\\
+They are no longer properly maintainged and it is possible
+that new features are not checkpointed. Therefore it is 
+recommended that you write your own problem-specific
+checkpointing function.}
+  
 The following procedures may be used to save and restore checkpoints
 to minimize the hassel involved when your simulations crashes after
 long runs.
