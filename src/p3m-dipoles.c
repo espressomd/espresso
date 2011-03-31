@@ -26,7 +26,7 @@
  *  see \ref p3m-charges.h  "p3m-charges.h"
  *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
  *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignement.c  "p3m-assignement.c"
+ *  see \ref p3m-assignment.c  "p3m-assignment.c"
  
  NB: In general the magnetic dipole-dipole functions bear the same name than the charge-charge but,
      adding in front of the name a D   and replacing where "charge" appears by "dipole". In this way

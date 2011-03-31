@@ -26,7 +26,7 @@
     This file contains the defaults for Espresso. To modify them, add
     an appropriate line in myconfig.h. To find a list of features that
     can be compiled into Espresso, refer to myconfig-sample.h or to
-    \ref tcl_features "the documentation of the features".
+    the documentation of the features.
  */
 
 /* Include the defines created by configure. */

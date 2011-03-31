@@ -49,7 +49,7 @@ extern double adress_vars[7];
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-/** Implements the Tcl command \ref tcl_adress. This allows for seetings for adress
+/** Implements the Tcl command "adress". This allows for seetings for adress
 */
 int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 

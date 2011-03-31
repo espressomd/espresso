@@ -373,7 +373,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
   else
     return tclcommand_lbnode_cpu(interp, argc, argv);
 }
-/** Parser for the \ref lbnode command. */
+/** Parser for the \ref tclcommand_lbnode command. */
 int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int coord[3];

@@ -37,7 +37,7 @@
 
     To access the information on the compilation status of the code
     you are working with in your ESPResSo Tcl-script, use the
-    corresponding \ref tcl_features "Tcl-commands".
+    corresponding Tcl-commands.
 
     If you add a new feature to ESPResSo, you also have to add the
     corresponding lines to the function \ref tclcallback_compilation

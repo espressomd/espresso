@@ -45,9 +45,9 @@
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
     arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref #callbacks (the array index gives your action number.
-    Last but not least for debugging purposes you can add a nice name
-    to \ref #names in the same way.  */
+    added to \ref CALLBACK_LIST "callbacks".  Last but not least for
+    debugging purposes you can add a nice name to \ref #names in the
+    same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -315,7 +315,7 @@ void mpi_bcast_tf_params(int i);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
+/** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
     <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.

@@ -51,7 +51,7 @@
  *  see \ref p3m-charges.h  "p3m-charges.h"
  *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
  *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignement.c  "p3m-assignement.c"
+ *  see \ref p3m-assignment.c  "p3m-assignment.c"
  */
 
 #ifdef ELECTROSTATICS

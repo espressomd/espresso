@@ -126,7 +126,7 @@ extern int nemd_method;
 
 /** tcl procedure for nemd steering.
     USAGE: nemd \<n_slabs\> \<n_exchange\>   
-    see also \ref tcl_nemd
+    see also \ref tclcommand_nemd
 */
 int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);

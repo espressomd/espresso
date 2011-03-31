@@ -1242,7 +1242,7 @@ void mpi_bcast_ia_params_slave(int i, int j)
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i)
 {
 #ifdef ADRESS

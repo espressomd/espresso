@@ -20,7 +20,7 @@
 */
 /** \file config.c
  *
- *  contains \ref code_info and version stuff.
+ *  contains code_info and version stuff.
 */
 #include <tcl.h>
 #include "utils.h"

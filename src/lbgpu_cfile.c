@@ -844,7 +844,7 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
   return TCL_OK;
 }
 #endif /* LB_GPU */
-/** Parser for the \ref lbnode command. */
+/** Parser for the lbnode command. */
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
 
@@ -965,7 +965,7 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
 }
 #endif /* LB_GPU */
 
-/** Parser for the \ref lbfluid command gpu. */
+/** Parser for the lbfluid command gpu. */
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
   int err = TCL_OK;
