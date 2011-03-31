@@ -221,7 +221,8 @@ void lb_reinit_forces();
 /** Sets the density and momentum on a local lattice site.
  * @param node  Pointer to the Node of the lattice site within the local domain (Input)
  * @param rho   Local density of the fluid (Input)
- * @param j     Local momentum of the fluid (Input)
+ * @param v     Local momentum of the fluid (Input)
+ * @param pi    Local pressure of the fluid (Input)
  */
 void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, const double *pi);
 
@@ -233,7 +234,12 @@ void lb_set_local_fields(LB_FluidNode *node, const double rho, const double *v, 
  */
 void lb_get_local_fields(LB_FluidNode *node, double *rho, double *j, double *pi);
 
-/** Calculates the equilibrium distributions. */
+/** Calculates the equilibrium distributions.
+    @param index Index of the local site
+    @param rho local fluid density
+    @param j local fluid speed
+    @param pi local fluid pressure
+*/
 void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi);
 
 /** Propagates the Lattice Boltzmann system for one time step.
@@ -253,7 +259,8 @@ void calc_particle_lattice_ia();
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param local_node The local lattice site (Input).
+ * @param index The local lattice site (Input).
+ * @param rho local fluid density
  */
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
@@ -283,7 +290,8 @@ MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param local_node The local lattice site (Input).
+ * @param index The local lattice site (Input).
+ * @param j local fluid speed
  */
 MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
@@ -330,7 +338,8 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
 /* TODO: This function is not used anywhere. To be removed?  */
 /** Calculate the local fluid stress.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param local_node The local lattice site (Input).
+ * @param index The local lattice site (Input).
+ * @param pi local fluid pressure
  */
 MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
 
@@ -389,9 +398,10 @@ MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
  *
  * Original Author: Ahlrichs 06/11/97, 29/03/98
  *
- * @param local_node   The local lattice site.
- * @param calc_pi_flag Flag indicating whether stress tensor should be
- *                     computed.
+ * @param index   Index of the local lattice site.
+ * @param rho     local fluid density
+ * @param j       local fluid speed
+ * @param pi      local fluid pressure
  */
 MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
 
@@ -527,7 +537,8 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param local_node The local lattice site (Input).
+ * @param index The local lattice site (Input).
+ * @param pop fluid population
  */
 MDINLINE void lb_get_populations(index_t index, double* pop) {
   int i=0;

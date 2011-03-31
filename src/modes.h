@@ -80,9 +80,14 @@ void map_to_2dgrid();
 
     \param id The particle identifier
     \param partCfg An array of sorted particles
-    \param zref The average z position of all particles
 
+    \param zref The average z position of all particles. This is used
+    to check for stray lipids
 
+    \param director director
+    \param refdir is a vector indicating the direction indicating
+    up. This is usually the zaxis. If it is not the z axis then lipids
+    will not be returned as stray.
  */
 int lipid_orientation( int id, Particle* partCfg , double zref, double director[3],double refvec[3]);
 
@@ -110,6 +115,7 @@ int calc_fluctuations ( double* height_grid, int switch_fluc );
     \param beadids The list of bead types for which profiles will be generated
     \param hrange The vertical range from the bilayer midplane over which the profiles are calculated
     \param density_profile The pre-allocated density profile into which data is written
+    \param usegrid switch to determine whether grid should be used
  */
 int bilayer_density_profile ( IntList *beadids, double hrange , DoubleList *density_profile, int usegrid );
 int bilayer_density_profile_sphere (IntList *beadids, double rrange , DoubleList *density_profile, double radius, double center[3]);

@@ -92,11 +92,11 @@ MDINLINE int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int
 }
 
 /** Computes the three body angle interaction force and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -242,11 +242,11 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
 }
 
 
-/** Computes the three body angle interaction energy (see \ref #inter, \ref #analyze). 
+/** Computes the three body angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param _energy   return energy pointer.
     @return 0.
 */

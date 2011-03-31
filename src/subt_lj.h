@@ -71,7 +71,9 @@ MDINLINE int tclcommand_inter_parse_subt_lj(Tcl_Interp *interp, int bond_type, i
     and adds this force to the particle forces (see \ref tclcommand_inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param type_num  bond type number of this interaction (see \ref tclcommand_inter).
+    @param iaparams  Parameters of interaction
+    @param dx        change in position
+    @param force     force on particles
     @return true if bond is broken
 */
 MDINLINE int calc_subt_lj_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])

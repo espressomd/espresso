@@ -67,7 +67,7 @@ int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** 
                         If -1, the far cutoff is determined by maxPWerror.
 			Manual setting is probably only good for testing
     @param delta_top    dielectric contrast at top of the simulation box
-    @param delta_bot    dielectric contrast at bottom of the simulation box
+    @param delta_mid    dielectric contrast in the middle of the simulation box
 */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_mid);
 

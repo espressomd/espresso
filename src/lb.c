@@ -1366,17 +1366,6 @@ void lb_release() {
 /***********************************************************************/
 /*@{*/
 
-/** Calculate local populations from hydrodynamic fields.
- *
- * The mapping is given in terms of the equilibrium distribution.
- *
- * Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
- * Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
- *
- * @param local_node Pointer to the local lattice site (Input).
- * @param trace      Trace of the local stress tensor (Input).
- * @param trace_eq   Trace of equilibriumd part of local stress tensor (Input).
- */
 void lb_calc_n_equilibrium(const index_t index, const double rho, const double *v, double *pi) {
 
   const double rhoc_sq = rho*lbmodel.c_sound_sq;

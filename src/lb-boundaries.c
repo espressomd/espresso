@@ -42,9 +42,6 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
 int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
-/** Initialize a planar boundary specified by a wall constraint.
- * @param plane The \ref Constraint_wall struct describing the boundary.
- */
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {
   LB_Boundary *lbb = &lb_boundaries[i];
