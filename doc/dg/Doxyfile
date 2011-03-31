@@ -1417,7 +1417,43 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator
 # instead of the = operator.
 
-PREDEFINED             = 
+PREDEFINED             = PARTIAL_PERIODIC \
+                             ELECTROSTATICS \
+                             ROTATION \
+                             ROTATIONAL_INTERIA  \
+                             DIPOLES \
+                             MAGNETOSTATICS \
+                             EXTERNAL_FORCES \
+                             CONSTRAINTS \
+                             MASS \
+                             EXCLUSIONS \
+                             COMFORCE \
+                             COMFIXED \
+                             MOLFORCES \
+                             MODES \
+                             BOND_VIRTUAL \
+                             NEMD \
+                             NPT  \
+                             LB \
+                             LB_BOUNDARIES \
+                             LB_ELECTROHYDRODYNAMICS \
+                             TABULATED \
+                             LENNARD_JONES \
+                             LENNARD_JONES_GENERIC \
+                             LJCOS \
+                             LJCOS2 \
+                             LJ_ANGLE \
+                             GAY_BERNE \
+                             SMOOTH_STEP \
+                             HERTZIAN \
+                             BMHTF_NACL \
+                             MORSE \
+                             BUCKINGHAM \
+                             SOFT_SPHERE \
+                             INTER_RF \
+                             BOND_ANGLE_COSINE \
+                             BOND_ANGLEDIST \
+                             VIRTUAL_SITES_RELATIVE
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.
