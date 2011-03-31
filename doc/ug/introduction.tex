@@ -100,7 +100,7 @@ computationally critical can be implemented at this level, without
 even touching the C-kernel.  For example, simple problem-specific
 analysis routines can be implemented in this way and made interact
 with the simulation core.  Another example of the program's
-flexibility is the possibility integrate system setup, simulation and
+flexibility is the possibility to integrate system setup, simulation and
 analysis in one single control script. \es provides commands to create
 particles and set up interactions between them.  Capping of forces
 helps prevent system blow-up when initially some particles are placed
@@ -108,14 +108,6 @@ on top of each other. Using the Tcl interface, one can simulate the
 randomly set-up system with capped forces, interactively check whether
 it is safe to remove the cap and switch on the full interactions and
 then perform the actual productive simulation.
-
-Last, but not least, a lot of attention is dedicated to computational
-efficiency. Because the requirement of efficiency is somewhat in
-conflict with the requirements presented above, a compromise is sought
-to make the program efficient while strictly preserving the
-readability and flexibility.  An important issue to efficiency is that
-all computationally expensive algorithms implemented in the kernel can
-run efficiently on parallel architectures.
 
 \section{Available simulation methods}
 
