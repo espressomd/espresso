@@ -28,11 +28,11 @@
 #############################################################
 source "tests_common.tcl"
 
-require_feature "LB"
+require_feature "LB_GPU"
 require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
-puts "- Testcase lb.tcl running on [format %02d [setmd n_nodes]] nodes  -"
+puts "- Testcase lbgpu.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "----------------------------------------"
 
 #############################################################
