@@ -26,9 +26,7 @@
 
     Instead, create a copy of this file at any of these locations:
     myconfig.h
-    src/myconfig.h
     /auto.anoa/home/dominic/espresso/myconfig.h
-    /auto.anoa/home/dominic/espresso/src/myconfig.h
 
     Then uncomment any of the following lines to activate the
     corresponding feature of ESPResSo. It is recommended to activate
@@ -96,7 +94,13 @@
 //#define DPD_MASS_RED
 //#define DPD_MASS_LIN
 
+/**********************************************************************/
+/*                        Lattice Boltzmann                           */
+/**********************************************************************/
 //#define LB
+//#define LB_GPU
+//#define LB_BOUNDARIES
+//#define LB_BOUNDARIES_GPU
 //#define LB_ELECTROHYDRODYNAMICS
 //#define LB_GPU
 //#define LB_BOUNDARIES_GPU
