@@ -160,10 +160,17 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	      int dta;
 	      if (Tcl_GetInt(interp, argv[2 + j], &dta))
 		return (TCL_ERROR);
-	      if (dta)
-		*(int *)databuf |= (1L << j);
-	      else
-		*(int *)databuf &= ~(1L << j);
+	      if (dta) {
+          int nbyte = j / 8;
+          int nbit = j % 8;
+          databuf[nbyte] |= 1 << nbit;
+//		*(int *)databuf |= (1L << j);
+        } else {
+          int nbyte = j / 8;
+          int nbit = j % 8;
+          databuf[nbyte] &= ~(1 << nbit);
+//     *(int *)databuf &= ~(1L << j);
+        }
 	      break;
 	    }
 	    case TYPE_DOUBLE:
