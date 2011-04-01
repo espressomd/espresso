@@ -40,6 +40,7 @@ int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char *
 int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
 
 /** Initialize a planar boundary specified by a wall constraint.
@@ -95,6 +96,27 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
     Tcl_PrintDouble(interp, lbb->c.cyl.direction, buffer);
     Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
     break;
+  case LB_BOUNDARY_POR:
+    Tcl_PrintDouble(interp, lbb->c.pore.pos[0], buffer);
+    Tcl_AppendResult(interp, "pore center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.axis[0], buffer);
+    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.axis[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.axis[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.rad_left, buffer);
+    Tcl_AppendResult(interp, " rad_left ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.rad_right, buffer);
+    Tcl_AppendResult(interp, " rad_right ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, lbb->c.pore.length, buffer);
+    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
+    break;
+
 
   default:
     sprintf(buffer, "%d", lbb->type);
@@ -347,6 +369,114 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   return (TCL_OK);
 }
 
+int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp,
+		    int argc, char **argv)
+{
+  double axis_len;
+  int i;
+
+  lbb->type = LB_BOUNDARY_POR;
+  /* invalid entries to start of */
+  lbb->c.pore.pos[0] = 
+    lbb->c.pore.pos[1] = 
+    lbb->c.pore.pos[2] = 0;
+  lbb->c.pore.axis[0] = 
+    lbb->c.pore.axis[1] = 
+    lbb->c.pore.axis[2] = 0;
+  lbb->c.pore.rad_left = 0;
+  lbb->c.pore.rad_right = 0;
+  lbb->c.pore.length = 0;
+  lbb->c.pore.reflecting = 0;
+  lbb->c.pore.smoothing_radius = 1.;
+  while (argc > 0) {
+    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "lbboundary pore center <x> <y> <z> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.pos[0])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.pos[1])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[3], &(lbb->c.pore.pos[2])) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 4; argv += 4;
+    }
+    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "lbboundary pore axis <rx> <ry> <rz> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.axis[0])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.axis[1])) == TCL_ERROR ||
+	  Tcl_GetDouble(interp, argv[3], &(lbb->c.pore.axis[2])) == TCL_ERROR)
+	return (TCL_ERROR);
+
+      argc -= 4; argv += 4;    
+    }
+    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary pore radius <rad> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.smoothing_radius)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "radii", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary pore radii <rad_left> <rad_right> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }  
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.rad_left)) == TCL_ERROR)
+	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.rad_right)) == TCL_ERROR)
+	return (TCL_ERROR);
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
+      if (argc < 1) {
+	Tcl_AppendResult(interp, "lbboundary pore length <len/2> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.length)) == TCL_ERROR)
+	return (TCL_ERROR);
+//      lbb->c.pore.length *= 2;
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  axis_len=0.;
+  for (i=0;i<3;i++)
+    axis_len += SQR(lbb->c.pore.axis[i]);
+
+  if (lbb->c.pore.rad_left < 0. || lbb->c.pore.rad_right < 0. || axis_len < 1e-30 ||
+      lbb->c.pore.length <= 0) {
+    Tcl_AppendResult(interp, "usage: lbboundary pore center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length/2>",
+		     (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  /*normalize the axis vector */
+  axis_len = sqrt (axis_len);
+  for (i=0;i<3;i++) {
+    lbb->c.pore.axis[i] /= axis_len;
+  }
+  
+  return (TCL_OK);
+}
+
+
 #endif /* LB_BOUNDARIES */
 int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbboundary_gpu(Tcl_Interp *interp, int argc, char **argv);
@@ -379,6 +509,10 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
     status = tclcommand_lbboundary_cylinder(generate_lbboundary(),interp, argc - 2, argv + 2);
     mpi_bcast_lbboundary(-1);
   }
+  else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
+    status = tclcommand_lbboundary_pore(generate_lbboundary(),interp, argc - 2, argv + 2);
+    mpi_bcast_lbboundary(-1);
+  }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
     if(argc < 3) {
       /* delete all */
@@ -400,7 +534,7 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
     status = TCL_OK;
   }
   else {
-    Tcl_AppendResult(interp, "possible lb_boundaries: wall sphere cylinder lbboundary delete {c} to delete lbboundary or lb_boundaries",(char *) NULL);
+    Tcl_AppendResult(interp, "possible lb_boundaries: wall sphere cylinder lbboundary pore delete {c} to delete lbboundary or lb_boundaries",(char *) NULL);
     return (TCL_ERROR);
   }
 
@@ -449,6 +583,9 @@ void lb_init_boundaries() {
               break;
             case LB_BOUNDARY_CYL:
               calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_POR:
+              calculate_pore_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist_tmp, dist_vec);
               break;
             default:
               errtxt = runtime_error(128);
