@@ -404,19 +404,33 @@ void EWALD_on_resort_particles()
 
   EWALD_TRACE(fprintf(stderr,"%d: EWALD_on_resort_particles, n_localpart=%d\n",this_node,n_localpart));
 
+  for (i=0; i<n_scx; i++) {
+    free(scx[i]);
+  }
+  for (i=0; i<n_scy; i++) {
+    free(scy[i]);
+  }
+  for (i=0; i<n_scz; i++) {
+    free(scz[i]);
+  }
+
   n_scx = (int)(ceil(ewald.kmax) + 1);
   n_scy = (int)(2*ceil(ewald.kmax) + 1);
   n_scz = (int)(2*ceil(ewald.kmax) + 1);
   scxoff = 0;
   scyoff = (int)(ceil(ewald.kmax));
   sczoff = (int)(ceil(ewald.kmax));
-  scx=realloc(scx,total_kvectors*sizeof(SCCache*));
-  scy=realloc(scy,total_kvectors*sizeof(SCCache*));
-  scz=realloc(scz,total_kvectors*sizeof(SCCache*));
-  for (i=0; i<total_kvectors; i++) {
-    scx[i]=realloc(scx[i],n_localpart*sizeof(SCCache));
-    scy[i]=realloc(scy[i],n_localpart*sizeof(SCCache));
-    scz[i]=realloc(scz[i],n_localpart*sizeof(SCCache));
+  scx=realloc(scx,n_scx*sizeof(SCCache*));
+  scy=realloc(scy,n_scy*sizeof(SCCache*));
+  scz=realloc(scz,n_scz*sizeof(SCCache*));
+  for (i=0; i<n_scx; i++) {
+    scx[i]=malloc(n_localpart*sizeof(SCCache));
+  }
+  for (i=0; i<n_scy; i++) {
+    scy[i]=malloc(n_localpart*sizeof(SCCache));
+  }
+  for (i=0; i<n_scz; i++) {
+    scz[i]=malloc(n_localpart*sizeof(SCCache));
   }
   sums= realloc(sums,total_kvectors*sizeof(double));
   sumc= realloc(sumc,total_kvectors*sizeof(double));
