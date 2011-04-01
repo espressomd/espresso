@@ -28,7 +28,7 @@
 #############################################################
 source "tests_common.tcl"
 
-require_feature "LB"
+require_feature "LB_GPU"
 require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
