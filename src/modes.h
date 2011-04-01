@@ -89,7 +89,7 @@ void map_to_2dgrid();
     up. This is usually the zaxis. If it is not the z axis then lipids
     will not be returned as stray.
  */
-int lipid_orientation( int id, Particle* partCfg , double zref, double director[3],double refvec[3]);
+int lipid_orientation( int id, Particle* partCfg , double zref, double director[3],double refdir[3]);
 
 /**
    This routine calculates the orientational order parameter for a
