@@ -71,22 +71,48 @@ the community.
 Before you start making any changes to the code, you
 should obtain the current development version of it.
 For more information about how to obtain the
-development version, refer to the homepage \url{http://espressomd.org}
+development version, refer to the homepage \url{http://espressomd.org}.
+
+It is also generally a good idea to contact the mailing lists before
+you start major coding projects. It might be that someone else is
+already working on the problem or has a solution at hand.
 
 \section{Developers' guide}
 \label{sec:dg}
 
-Besides User guide, \es also contains a Developers' guide
-which is a programmer documentation automatically built
-from comments in the source code and using Doxygen. 
-It provides a cross-referenced documentation
-of all functions and data structures available in \es source
-code. It can be built by typing
+Besides the User guide, \es also contains a Developers' guide which is
+a programmer documentation automatically built from comments in the
+source code and using Doxygen.  It provides a cross-referenced
+documentation of all functions and data structures available in \es
+source code. It can be built by typing
 \begin{code}
   make dg
 \end{code}
 in the build directory. Afterwards it can be found
 in the subdirectory of the build directory: \texttt{doc/dg/html/index.html}.
+
+A recent version of this guide can also be found on the \es{} homepage
+\url{http://espressomd.org}.
+
+\section{User's guide}
+
+If, while reading this user guide, you notice any mistakes or badly
+(if at all) described features or commands, you are very welcome to
+contribute to the guide and have others benefit from your knowledge.
+
+For this, you should also checkout the development version as
+described on the homepage. As the user guide, like all \es{} code, is
+always in flow and changes are made regularly, there are already many
+paragraphs marked with a ``todo'' box. To turn on these boxes, edit
+the main file \texttt{doc/ug/ug.tex} and adapt the inclusion of the
+\LaTeX{} package \texttt{todonotes}.
+
+You can then build the user guide by typing
+\begin{code}
+  make ug
+\end{code}
+
+
 
 %%% Local Variables: 
 %%% mode: latex
