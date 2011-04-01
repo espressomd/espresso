@@ -77,6 +77,8 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */
 /*-----------------------------------------------------------*/
+/** lattice boltzmann update gpu called from integrate.c
+*/
 void lattice_boltzmann_update_gpu() {
 
   int factor = (int)round(lbpar_gpu.tau/time_step);
@@ -93,8 +95,8 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
-/** Calculate particle lattice interactions.*/
-
+/** Calculate particle lattice interactions called from forces.c
+*/
 void lb_calc_particle_lattice_ia_gpu() {
 
   if (transfer_momentum_gpu) {
@@ -106,9 +108,7 @@ void lb_calc_particle_lattice_ia_gpu() {
         fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
       }
 #endif
-/**----------------------------------------*/
-/**Call of the particle interaction kernel */
-/**----------------------------------------*/
+
     if(lbpar_gpu.number_of_particles) lb_particle_GPU(host_data);
 
     LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
@@ -116,9 +116,9 @@ void lb_calc_particle_lattice_ia_gpu() {
     }
   }
 }
-/**----------------------------------------*/
-/**copy forces from gpu to cpu and call mpi routines to add forces to particles */
-/**----------------------------------------*/
+
+/**copy forces from gpu to cpu and call mpi routines to add forces to particles
+*/
 void lb_send_forces_gpu(){
 
   if (transfer_momentum_gpu) {
@@ -135,7 +135,8 @@ void lb_send_forces_gpu(){
     mpi_send_forces_lb(host_forces);
   }
 }
-/** allocation of the needed memory for phys. values and particle data residing in the cpu memory*/
+/** allocation of the needed memory for phys. values and particle data residing in the cpu memory
+*/
 void lb_pre_init_gpu() {
 	 
   lbpar_gpu.number_of_particles = 0;
@@ -153,8 +154,8 @@ void lb_pre_init_gpu() {
   LB_TRACE (fprintf(stderr,"lb_pre_init_gpu \n"));
 }
 
-/** (re-)allocation of the memory needed for the phys. values and if needed memory for the nodes (v[19] etc.)
-	located in the cpu memory*/ 
+/** (re-)allocation of the memory needed for the phys. values and if needed memory for the nodes located in the cpu memory
+*/ 
 static void lb_realloc_fluid_gpu() {
 	 
   LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
@@ -200,7 +201,6 @@ void lb_reinit_fluid_gpu() {
 /*not needed in Espresso but still not deleted*/
 void lb_release_gpu(){
 
-  // free host memory
   free(host_nodes);
   free(host_values);
   free(host_forces);
@@ -846,7 +846,8 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
   return TCL_OK;
 }
 #endif /* LB_GPU */
-/** Parser for the \ref lbnode command. */
+/** Parser for the \ref lbnode command. 
+*/
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
 
@@ -933,7 +934,8 @@ int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #endif /* LB_GPU */
 }
 #ifdef LB_GPU
-/** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g. */
+/** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g.
+*/
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   int err=TCL_ERROR;
@@ -967,7 +969,8 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
 }
 #endif /* LB_GPU */
 
-/** Parser for the \ref lbfluid command gpu. */
+/** Parser for the \ref lbfluid command gpu.
+*/
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
   int err = TCL_OK;
