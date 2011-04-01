@@ -102,9 +102,9 @@ void lb_calc_particle_lattice_ia_gpu() {
 
     if(this_node == 0){
 #if 0
-      LB_TRACE (for (i=0;i<n_total_particles;i++) {
-      fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
-    })
+      for (i=0;i<n_total_particles;i++) {
+        fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
+      }
 #endif
 /**----------------------------------------*/
 /**Call of the particle interaction kernel */
@@ -127,9 +127,9 @@ void lb_send_forces_gpu(){
 
       LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
 #if 0
-for (i=0;i<n_total_particles;i++) {
-        fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
-      }
+        for (i=0;i<n_total_particles;i++) {
+          fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
+        }
 #endif
     }
     mpi_send_forces_lb(host_forces);
@@ -188,6 +188,8 @@ void lb_realloc_particles_gpu(){
 }
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
+
+  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   lb_init_GPU(&lbpar_gpu);
 
@@ -1015,7 +1017,7 @@ int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 }
 
 #ifdef LB_GPU
-/* printing the hole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
+/** printing the hole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
 int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   int err = TCL_OK;
