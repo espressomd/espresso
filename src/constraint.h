@@ -288,7 +288,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
   slope=(c2_r-c1_r)/(c2_z-c1_z);
  
   /* Check if we are in the region of the left wall */
-  if (( (r > c1_r) && (z < c1_z) ) || ( ( z < 0 ) && (r>max(c1_r, c2_r)))) {
+  if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
     dist_vector_z=-z - c->length;
     dist_vector_r=0;
     *dist = -z - c->length;
@@ -296,7 +296,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
     return;
   }
   /* Check if we are in the region of the right wall */
-  if (( (r > c2_r) && (z < c2_z) ) || ( ( z > 0 ) && (r>max(c1_r, c2_r)))) {
+  if (( (r >= c2_r) && (z <= c2_z) ) || ( ( z >= 0 ) && (r>=max(c1_r, c2_r)))) {
     dist_vector_z=-z + c->length;
     dist_vector_r=0;
     *dist = +z - c->length;
@@ -319,8 +319,8 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
   dist_vector_r = p1_r-r;
   dist_vector_z = p1_z-z;
 
-  if ( p1_z>c1_z && p1_z<c2_z ) {
-    if ( dist_vector_r < 0  ) {
+  if ( p1_z>=c1_z && p1_z<=c2_z ) {
+    if ( dist_vector_r <= 0  ) {
       if (z<0) {
         dist_vector_z=-z - c->length;
         dist_vector_r=0;
@@ -345,7 +345,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
 
 
   /* Check if we are in the range of the left smoothing circle */
-  if (p1_z < c1_z ) {
+  if (p1_z <= c1_z ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
     *dist = norm - c->smoothing_radius;
@@ -355,7 +355,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
     return;
   }
   /* Check if we are in the range of the right smoothing circle */
-  if (p1_z > c2_z ) {
+  if (p1_z >= c2_z ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
     *dist = norm - c->smoothing_radius;
     dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_r);
