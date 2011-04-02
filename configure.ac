@@ -405,15 +405,13 @@ if test x$with_cuda != xno; then
    # use nvcc
    save_CC=$CC
    save_CFLAGS=$CFLAGS
+   # autoconf currently doesn't allow to define new languages like cuda, so try to work around it
    CC=$NVCC
-   CFLAGS="$NVCCFLAGS -x cu"
+   CFLAGS="$NVCCFLAGS"
    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	#include <cuda.h>
-	__global__ void test()
-	{}
    ],[
-	dim3 block(1), grid(1);
-	test<<<block,grid>>>();
+	cudaGetDevice(0);
    ])], [AC_MSG_RESULT(yes)], [AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])])
    CC=$save_CC
    CFLAGS=$save_CFLAGS
