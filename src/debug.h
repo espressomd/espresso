@@ -291,3 +291,10 @@ extern int check_id;
 /** Equals { cmd } iff LB_DEBUG is set. */
 #define LB_TRACE(cmd)
 #endif
+
+#ifdef NAN_DEBUG
+#define NANCHECK(expr) { if(isnan(expr)) fprintf(stderr, "nan in expression expr %s in %s:%d\n", #expr, __FILE__, __LINE__); }
+#else
+/** Equals { cmd } iff LB_DEBUG is set. */
+#define NANCHECK(expr)
+#endif
