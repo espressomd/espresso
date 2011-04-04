@@ -1687,7 +1687,7 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
 MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
 #ifdef GAUSSRANDOM
-    double rootrho_gauss = sqrt(mode[0]+lbpar.rho*agrid*agrid*agrid);
+    double rootrho_gauss = sqrt(abs(mode[0]+lbpar.rho*agrid*agrid*agrid));
 
     /* stress modes */
     mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random());
