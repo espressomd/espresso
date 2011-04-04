@@ -27,6 +27,33 @@ extern "C" {
 
 }
 
+/** \name minimally required compute capability. */
+/*@{*/
+static const int computeCapabilityMinMajor = 1;
+static const int computeCapabilityMinMinor = 1;
+/*@}*/
+
+/** returns 1 if and only if the GPU with the given id is usable for
+    CUDA computations.  Only devices with compute capability of 1.1 or
+    higher are ok, since atomic operations are required for
+    CUDA-LB. */
+static int check_gpu(int dev)
+{
+  cudaDeviceProp deviceProp;
+  if (cudaGetDeviceProperties(&deviceProp, dev) != cudaSuccess) {
+    return 0;
+  }
+  if (deviceProp.major < computeCapabilityMinMajor ||
+      (deviceProp.major == computeCapabilityMinMajor &&
+       deviceProp.minor < computeCapabilityMinMinor)) {
+    return 0;
+  }
+  return 1;
+}
+
+/** prints a list of the available GPUs to the result of the Tcl interpreter.
+    Only devices with compute capability of 1.1 or higher are listed, since
+    atomic operations are required for CUDA-LB. */
 static int list_gpus(Tcl_Interp *interp)
 {
   int deviceCount, dev;
@@ -38,9 +65,9 @@ static int list_gpus(Tcl_Interp *interp)
 
   // look for devices with compute capability > 1.1 (for atomic operations)
   for (dev = 0; dev < deviceCount; ++dev) {
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, dev);
-    if (deviceProp.major > 1 || (deviceProp.major == 1 && deviceProp.minor >= 1)) {
+    if (check_gpu(dev)) {
+      cudaDeviceProp deviceProp;
+      cudaGetDeviceProperties(&deviceProp, dev);
       char id[4 + 64 + TCL_INTEGER_SPACE];
       sprintf(id, " {%d %.64s}", dev, deviceProp.name);
       Tcl_AppendResult(interp, id, NULL);
@@ -70,6 +97,10 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
     cudaError_t error;
     if (argc <= 1 || !ARG1_IS_I(dev)) {
       Tcl_AppendResult(interp, "expected: cuda setdevice <devnr>", (char *)NULL);
+      return TCL_ERROR;
+    }
+    if (!check_gpu(dev)) {
+      Tcl_AppendResult(interp, "GPU not present or compute model not sufficient", (char *)NULL);
       return TCL_ERROR;
     }
     error = cudaSetDevice(dev);
