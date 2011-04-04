@@ -67,6 +67,8 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
+#include "statistics_observable.h"
+#include "statistics_correlation.h"
 
 #ifdef CUDA
 #include "cuda_init.h"
@@ -749,6 +751,9 @@ static void init_tcl(Tcl_Interp *interp)
   /* in metadynamics.c */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
 #endif
+  REGISTER_COMMAND("observable", tclcommand_observable);
+  REGISTER_COMMAND("correlation", tclcommand_correlation);
+
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)
