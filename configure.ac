@@ -30,7 +30,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.9 gnu subdir-objects])
+AM_INIT_AUTOMAKE([1.10 gnu])
 AM_MAINTAINER_MODE
 
 cat <<EOF
@@ -101,24 +101,6 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# test whether to enable debugging
-AC_ARG_ENABLE(debug,
-	AS_HELP_STRING([--enable-debug],[Turn on debugging]),
-	,enable_debug=no)
-if test .$enable_debug = .yes; then
-   AC_DEFINE(DEBUG,,[Turn on debugging?])
-fi
-
-##################################
-# test whether to enable profiling
-AC_ARG_ENABLE(profiling,
-	AS_HELP_STRING([--enable-profiling],[Turn on profiling]),
-	,enable_profiling=no)
-if test .$enable_profiling = .yes; then
-   AC_DEFINE(PROFILING,,[Turn on profiling?])
-fi
-
-##################################
 # test for -O5
 AC_MSG_CHECKING([whether the compiler accepts -O5])
 saved_CFLAGS=$CFLAGS
@@ -162,13 +144,6 @@ MDINLINE void test() {}],[test();])
     AC_MSG_RESULT([$mdinline])
 ])
 AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
-
-##################################
-# test linking
-case $target_os in
-*darwin*) LD="`pwd`/darwinlink.sh $CC" ;;
-*) LD=$CC ;;
-esac
 
 ##################################
 # miscellaneous
@@ -266,8 +241,7 @@ if test .$use_tcl = .; then
 [If you have Tcl installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 there is a link from lib<tclversion>.dylib to the Tcl library, which usually is
 /Library/Frameworks/Tcl.framework/Tcl.]) ;;
-	*) ES_NOTE_64BIT
-	   AC_MSG_FAILURE([
+	*) AC_MSG_FAILURE([
 ********************************************************************************
 * Could not link against the (static) Tcl library (libtcl*.a).                 *
 * Please add the library path to LDFLAGS (e.g. configure LDFLAGS=-L/usr/lib)!  *
@@ -333,8 +307,7 @@ if test .$with_tk != .no; then
 		(*darwin*) AC_MSG_ERROR([If you have Tk installed, make sure that in one of the library paths, e.g. /usr/local/lib,
 there is a link from lib<tkversion>.dylib to the Tk library, which usually is
 /Library/Frameworks/Tk.framework/Tk.]) ;;
-		(*) ES_NOTE_64BIT
-		    AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
+		(*) AC_MSG_FAILURE([Tk library $with_tk not found]) ;;
 		esac
 	fi
 	if test .$use_tk = .tk; then
@@ -377,8 +350,7 @@ AS_IF([test x$with_fftw = xno], [fftw_found=no],
 
 AS_IF([test x$fftw_found = xno],[
   AS_IF([test x$with_fftw = xyes],[
-    ES_NOTE_64BIT
-    AC_MSG_FAILURE([FFTW3 requested, but FFTW3 was not found!])
+    AC_MSG_FAILURE([FFTW requested, but FFTW was not found!])
     ],[ AS_IF([test x$with_fftw = xguess], [
           AC_MSG_WARN([FFTW3 not found. Some features will not be available!])
          ])
@@ -428,7 +400,7 @@ if test x$with_cuda != xno; then
    # if no other compute capability is defined by the user, we need at least 1.1
    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS -arch=compute_11"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -arch=compute_20 -code=sm_20"
    esac
    # use nvcc
    save_CC=$CC
@@ -481,8 +453,8 @@ AC_SUBST(myconfig)
 
 ##################################
 # Number of CPUs
-AX_COUNT_CPUS
-AC_ARG_VAR(CPU_COUNT,[number of CPUS available on this machine])
+AS_IF([test "X$CPU_COUNT" = "X"], [AX_COUNT_CPUS])
+AC_ARG_VAR(CPU_COUNT,[number of tasks to run in test runs])
 AC_SUBST(CPU_COUNT)
 
 AC_ARG_VAR(LIBS,[use this to specify additional libraries to link against, e.g. -lmx])
@@ -515,7 +487,6 @@ AC_CONFIG_FILES([
 	doc/maggs_doc/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
-	src/myconfig-default.h:src/myconfig-default.h.in
 	myconfig-sample.h:src/myconfig-sample.h.in
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
@@ -554,7 +525,7 @@ Other settings:
 ---------------
 local config header	= $myconfig
 installation prefix	= $prefix
-number of CPUs		= $CPU_COUNT
+number of test tasks    = $CPU_COUNT
 mympiexec               = $MYMPIEXEC
 mpiexec	     		= $MPIEXEC
 pdflatex		= $PDFLATEX

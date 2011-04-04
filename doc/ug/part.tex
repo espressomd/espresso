@@ -270,10 +270,13 @@ set up to be \var{bond\_length}.
 \item[\var{num\_polymers}] Sets the number of polymer chains.
 \item[\var{monomers\_per\_chain}] Sets the number of monomers per
   chain.
-\item[\var{bond\_length}] Sets the initial distance between two adjacent
-  monomers. The distance during the course of the simulation depends on the
-  applied potentials. For fixed bond length please refer to the SHAKE algorithm.
-  \todo{Link to rattle/shake.}
+\item[\var{bond\_length}] Sets the initial distance between two
+  adjacent monomers. The distance during the course of the simulation
+  depends on the applied potentials. For fixed bond length please
+  refer to the Rattle Shake algorithm\cite{andersen83a}.  The algorithm
+  is based on Verlet algorithm and satisfy internal constraints for
+  molecular models with internal constrains, using Lagrange
+  multipliers.
 \item[\opt{start \var{pid}}] Sets the particle number of the
   start monomer to be used with the \keyword{part} command. This
   defaults to 0.

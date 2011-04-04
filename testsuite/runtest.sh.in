@@ -1,7 +1,8 @@
 #!/bin/sh
 #
-# Copyright (C) 2006,2007,2008,2009,2010 Olaf Lenz, Axel Arnold
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#    Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
 #
@@ -21,8 +22,8 @@
 
 usage() {
     cat <<EOF
-Usage: $0 [-p PROCESSOR] [TESTCASES]...
-  Run TESTCASE on PROCESSOR processors.
+Usage: $0 [-p PROCESSORS] [TESTCASES]...
+  Run TESTCASES on PROCESSORS processors.
   Instead of specifying PROCESSORS and TESTCASES on the command line,
   you can set the environment variables TESTCASES and PROCESSORS.
 EOF
@@ -43,7 +44,7 @@ cd ${0%runtest.sh}
 if test x@MPI_FAKE@ = "xyes" || test @CPU_COUNT@ = "1"; then 
   processors=1
 elif test "$1" = "-p"; then
-  processors=$2
+  processors="$2"
   shift 2
 elif test -n "$PROCESSORS"; then
   processors=$PROCESSORS

@@ -17,14 +17,12 @@
 #
 EXTRA_DIST=\
 	background_errors.sh background_errors.awk \
-	doxygen.cfg header.html \
+	Doxyfile \
         pages/build.doc \
-        pages/cvs.doc \
         pages/doxygen.doc \
         pages/header.doc \
         pages/new_files.doc \
         pages/progguide.doc \
-        pages/testsuite.doc \
         pages/ug.doc \
         figs/bond_angle.fig \
         figs/bond_angle.gif \
@@ -41,7 +39,7 @@ EXTRA_DIST=\
         figs/ghost_communication.gif \
         figs/linked_cells.fig \
         figs/linked_cells.gif \
-        figs/logo.gif \
+        figs/logo.png \
         figs/move_to_p_buf.fig \
         figs/move_to_p_buf.gif \
         figs/particles.fig \
@@ -52,10 +50,10 @@ doc: dg
 dg:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
-	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/*.c $(top_srcdir)/*.h 
+	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
 	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
-	  $(DOXYGEN) $(srcdir)/doxygen.cfg \
-	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
+	  $(DOXYGEN) $(srcdir)/Doxyfile
+	@echo "See doxygen's warnings in dg.log."
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
 	@echo "*  file://`pwd`/html/index.html"

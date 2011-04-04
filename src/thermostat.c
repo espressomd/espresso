@@ -190,7 +190,7 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
   }
 #endif
 
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
  /* lb */
   if(thermo_switch & THERMO_LB) {
     Tcl_PrintDouble(interp, temperature, buffer);
@@ -222,6 +222,9 @@ int tclcommand_thermostat_print_usage(Tcl_Interp *interp, int argc, char **argv)
 #endif
 #ifdef LB
   Tcl_AppendResult(interp, "'", argv[0], " set lb <temperature>" , (char *)NULL);
+#endif
+#ifdef LB_GPU
+  Tcl_AppendResult(interp, "'", argv[0], " set lb_gpu <temperature>" , (char *)NULL);
 #endif
   return (TCL_ERROR);
 }
@@ -259,8 +262,8 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
   else if ( ARG1_IS_S("npt_isotropic") )
     err = tclcommand_thermostat_parse_npt_isotropic(interp, argc, argv);
 #endif
-#ifdef LB
-  else if ( ARG1_IS_S("lb") )
+#if defined(LB) || defined(LB_GPU)
+  else if ( ARG1_IS_S("lb"))
     err = tclcommand_thermostat_parse_lb(interp, argc-1, argv+1);
 #endif
   else {
@@ -269,7 +272,6 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
   }
   return mpi_gather_runtime_errors(interp, err);
 }
-
 
 
 void thermo_init_langevin() 
@@ -351,11 +353,11 @@ void thermo_cool_down()
 
 int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
   double temp;
 
   /* get lb interaction type */
-  if (argc < 1) {
+  if (argc < 2) {
     Tcl_AppendResult(interp, "lattice-Boltzmann needs 1 parameter: "
 		     "<temperature>",
 		     (char *) NULL);

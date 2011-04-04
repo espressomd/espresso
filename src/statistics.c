@@ -737,7 +737,8 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type,int bins,do
 void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2, 
 	      double r_min, double r_max, int r_bins, double *rdf)
 {
-  int i,j,t1,t2,ind,cnt=0;
+  long int cnt=0;
+  int i,j,t1,t2,ind;
   int mixed_flag=0,start;
   double inv_bin_width=0.0,bin_width=0.0, dist;
   double volume, bin_volume, r_in, r_out;
@@ -788,7 +789,8 @@ void calc_rdf(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 		 double r_min, double r_max, int r_bins, double *rdf, int n_conf)
 {
-  int i,j,k,l,t1,t2,ind,cnt=0,cnt_conf=1;
+  long int cnt=0;
+  int i,j,k,l,t1,t2,ind,cnt_conf=1;
   int mixed_flag=0,start;
   double inv_bin_width=0.0,bin_width=0.0, dist;
   double volume, bin_volume, r_in, r_out;
@@ -3750,7 +3752,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   /* for the elses below */
   if (0);
   REGISTER_ANALYZE_OPTION("set", tclcommand_analyze_parse_set);
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
   REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
   REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
