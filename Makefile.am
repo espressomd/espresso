@@ -21,7 +21,10 @@ ACLOCAL_AMFLAGS = -I config
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = bootstrap.sh samples packages $(extra)
+EXTRA_DIST = bootstrap.sh baseversion.txt samples packages $(extra)
+
+baseversion.txt: FORCE
+	$(top_srcdir)/config/genversion.sh $(top_srcdir) > baseversion.txt
 
 #################################################################
 # Installation of the main program
@@ -48,7 +51,6 @@ install-exec-hook:
 
 uninstall-local:
 	-rm -f $(DESTDIR)$(bindir)/Espresso
-
 
 #################################################################
 # Documentation
