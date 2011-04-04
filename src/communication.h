@@ -450,6 +450,7 @@ void mpi_bcast_lb_params(int field);
  * @param index index of the lattice site
  * @param rho   local fluid density
  * @param j     local fluid velocity
+ * @param pi    local fluid pressure
  */
 void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
 
@@ -458,13 +459,14 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  * @param index index of the lattice site
  * @param rho   local fluid density
  * @param j     local fluid velocity
+ * @param pi    local fluid pressure
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
- * @param node   processor to send to
- * @param index  index of the lattice site
- * @param border local border flag
+ * @param node     processor to send to
+ * @param index    index of the lattice site
+ * @param boundary local border flag
  */
 void mpi_recv_fluid_border_flag(int node, int index, int *boundary);
 
@@ -481,8 +483,7 @@ int mpi_iccp3m_init(int dummy);
 /** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
  * @param node  processor to send to
  * @param index index of the lattice site
- * @param rho   local fluid density
- * @param j     local fluid velocity
+ * @param pop   local fluid population
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
 

@@ -56,7 +56,7 @@ proc write_data {file} {
 # Integration parameters
 #############################################################
 set int_steps     10
-set int_times     100
+set int_times     10
 
 set time_step     0.005
 set tau           0.02
@@ -104,8 +104,8 @@ thermostat lb $temp
 # Particles
 #############################################################
 # load colloid from file
-#read_data "lb_system.data"
-part 0 pos 10 10 10
+read_data "lb_system.data"
+#part 0 pos 10 10 10
 # here you can create the necessary snapshot
 #write_data "lb_system.data"
 
@@ -149,7 +149,7 @@ set var_temp  0.0
 
 for { set i 1 } { $i <= $int_times } { incr i } {
 
- #   puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\r"; flush stdout
+    puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\r"; flush stdout
     integrate $int_steps
 
     # check fluid mass conservation
@@ -195,6 +195,7 @@ puts "Maximal mass deviation $max_dmass"
 puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
 
 puts "\nAverage temperature $avg_temp (relative deviation $rel_temp_error)\n"
+puts "fluid temperature [analyze fluid temp]\n"
 #if { $rel_temp_error > $temp_prec } {
 #    error "relative temperature deviation too large"
 #}

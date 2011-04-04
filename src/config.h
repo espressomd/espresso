@@ -59,7 +59,11 @@
 
 /*@}*/
 
+#ifndef DOXYGEN_RUN
 #include <myconfig-final.h>
+#else
+#include <myconfig-sample.h>
+#endif
 
 /*********************************************************/
 /** \name Parameters from myconfig.h that need to be set */

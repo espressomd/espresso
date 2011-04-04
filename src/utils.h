@@ -896,11 +896,7 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
 /*************************************************************/
 /*@{*/
 
-/** replaces one of TCLs standart channels with a named pipe
-    \param channel  either "stdout", "stdin" or "stderr"
-    \param pipename path to the named pipe
- */
-
+/** replaces one of TCLs standart channels with a named pipe */
 int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
