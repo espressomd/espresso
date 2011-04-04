@@ -75,7 +75,7 @@ set skin          0.5
 
 set mom_prec      1.e-2
 set mass_prec     1.e-8
-set temp_prec     0.7
+set temp_prec     1.e-2
 
 # Other parameters
 #############################################################
@@ -194,14 +194,15 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 set avg_temp [expr $avg_temp/$int_times]
 set var_temp [expr $var_temp/$int_times - $avg_temp*$avg_temp]
 set rel_temp_error [expr abs(($avg_temp-[setmd temp])/[setmd temp])]
-set rel_fluid_temp_error [expr $fluid_temp-$temp]
+set rel_fluid_temp_error [expr $fluid_temp-[setmd temp]]
 
 puts "\n"
 puts "Maximal mass deviation $max_dmass"
 puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
 
 puts "\nAverage temperature $avg_temp (relative deviation $rel_temp_error)\n"
-puts "fluid temperature [analyze fluid temp] (relative deviation $rel_fluid_temp_error)\n\n"
+puts "fluid temperature [analyze fluid temp] (relative deviation $rel_fluid_temp_error)\n"
+
 #if { $rel_temp_error > $temp_prec } {
 #    error "relative particle temperature deviation too large"
 #}

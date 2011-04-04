@@ -144,9 +144,9 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn){
 
   float x1, x2;
   float r2, fac;
-  /* On every second call two gaussian random numbers are calculated
+  /** On every second call two gaussian random numbers are calculated
    via the Box-Muller transformation.*/
-  /* draw two uniform random numbers in the unit circle */
+  /** draw two uniform random numbers in the unit circle */
   do {
     random_01(rn);
     x1 = 2.f*rn->randomnr[0]-1.f;
@@ -154,7 +154,7 @@ __device__ void gaussian_random(LB_randomnr_gpu *rn){
     r2 = x1*x1 + x2*x2;
   } while (r2 >= 1.f || r2 == 0.f);
 
-  /* perform Box-Muller transformation */
+  /** perform Box-Muller transformation */
   fac = sqrtf(-2.f*__logf(r2)/r2);
   rn->randomnr[0] = x2*fac;
   rn->randomnr[1] = x1*fac;
@@ -259,7 +259,7 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
   float j[3], pi_eq[6];
 
-  /* re-construct the real density
+  /** re-construct the real density
   * remember that the populations are stored as differences to their
   * equilibrium value */
 
@@ -267,7 +267,7 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   j[1] = mode[2];
   j[2] = mode[3];
 
-  /* if forces are present, the momentum density is redefined to
+  /** if forces are present, the momentum density is redefined to
   * inlcude one half-step of the force action.  See the
   * Chapman-Enskog expansion in [Ladd & Verberg]. */
 
@@ -275,7 +275,7 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   j[1] += 0.5f*node_f.force[1*para.number_of_nodes + index];
   j[2] += 0.5f*node_f.force[2*para.number_of_nodes + index];
 
-  /* equilibrium part of the stress modes (eq13 schiller)*/
+  /** equilibrium part of the stress modes (eq13 schiller)*/
   pi_eq[0] = ((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2]))/Rho;
   pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/Rho;
   pi_eq[2] = (((j[0]*j[0])+(j[1]*j[1])+(j[2]*j[2])) - 3.0f*(j[2]*j[2]))/Rho;
@@ -283,7 +283,7 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   pi_eq[4] = j[0]*j[2]/Rho;
   pi_eq[5] = j[1]*j[2]/Rho;
 
-  /* relax the stress modes (eq14 schiller)*/
+  /** relax the stress modes (eq14 schiller)*/
   mode[4] = pi_eq[0] + para.gamma_bulk*(mode[4] - pi_eq[0]);
   mode[5] = pi_eq[1] + para.gamma_shear*(mode[5] - pi_eq[1]);
   mode[6] = pi_eq[2] + para.gamma_shear*(mode[6] - pi_eq[2]);
@@ -291,8 +291,8 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   mode[8] = pi_eq[4] + para.gamma_shear*(mode[8] - pi_eq[4]);
   mode[9] = pi_eq[5] + para.gamma_shear*(mode[9] - pi_eq[5]);
 
-  /* relax the ghost modes (project them out) */
-  /* ghost modes have no equilibrium part due to orthogonality */
+  /** relax the ghost modes (project them out) */
+  /** ghost modes have no equilibrium part due to orthogonality */
   mode[10] = para.gamma_odd*mode[10];
   mode[11] = para.gamma_odd*mode[11];
   mode[12] = para.gamma_odd*mode[12];
@@ -315,7 +315,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
 #ifdef GAUSSRANDOM
-  /* stress modes */
+  /** stress modes */
   gaussian_random(rn);
   mode[4] += sqrt(Rho*(para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk)))) * rn->randomnr[1];
   mode[5] += sqrt(Rho*(para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
@@ -328,7 +328,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   mode[8] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[1];
   mode[9] += sqrt(Rho*(para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear)))) * rn->randomnr[0];
  
-  /* ghost modes */
+  /** ghost modes */
   gaussian_random(rn);
   mode[10] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[1];
   mode[11] += sqrt(Rho*(para.mu*(2.f/3.f))) * rn->randomnr[0];
@@ -348,7 +348,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   gaussian_random(rn);
   mode[18] += sqrt(Rho*(para.mu*(4.f/3.f))) * rn->randomnr[1];
 #else
-  /* stress modes */
+  /** stress modes */
   random_01(rn);
   mode[4] += sqrt(12.f*Rho*para.mu*(2.f/3.f)*(1.f-(para.gamma_bulk*para.gamma_bulk))) * (rn->randomnr[1]-0.5f);
   mode[5] += sqrt(12.f*Rho*para.mu*(4.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
@@ -361,7 +361,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   mode[8] += sqrt(12.f*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[1]-0.5f);
   mode[9] += sqrt(12.f*para.mu*(1.f/9.f)*(1.f-(para.gamma_shear*para.gamma_shear))) * (rn->randomnr[0]-0.5f);
  
-  /* ghost modes */
+  /** ghost modes */
   random_01(rn);
   mode[10] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[1]-0.5f);
   mode[11] += sqrt(12.f*Rho*para.mu*(2.f/3.f)) * (rn->randomnr[0]-0.5f);
@@ -388,8 +388,7 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 */
 __device__ void normalize_modes(float* mode){
 
-  /* normalization factors enter in the back transformation */
-  /* the following values are the (weighted) lengths of the vectors */
+  /** normalization factors enter in the back transformation */
   mode[0] *= 1.f;
   mode[1] *= 3.f;
   mode[2] *= 3.f;
@@ -467,7 +466,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
-    /* stream vd from boundary node back to origin node */
+    /** store vd temporary in second lattice to avoid race conditions */
     n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[2*para.number_of_nodes + index];
     n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[1*para.number_of_nodes + index];
     n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[4*para.number_of_nodes + index];
@@ -503,6 +502,7 @@ __device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned i
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
+    /** stream vd from boundary node back to origin node */
     n_b.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
     n_b.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z];
     n_b.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z];
@@ -533,7 +533,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   float Rho, u[3], C[6];
   Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
-  /* hydrodynamic momentum density is redefined when forces present */
+  /** hydrodynamic momentum density is redefined when forces present */
   u[0] = (mode[1] + 0.5f*node_f.force[0*para.number_of_nodes + index])/Rho;
   u[1] = (mode[2] + 0.5f*node_f.force[1*para.number_of_nodes + index])/Rho;
   u[2] = (mode[3] + 0.5f*node_f.force[2*para.number_of_nodes + index])/Rho;
@@ -545,12 +545,12 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   C[3] = 1.f/2.f*(1.f+para.gamma_shear)*(u[0]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[0*para.number_of_nodes + index]);
   C[4] = 1.f/2.f*(1.f+para.gamma_shear)*(u[1]*node_f.force[2*para.number_of_nodes + index]+u[2]*node_f.force[1*para.number_of_nodes + index]);
 
-  /* update momentum modes */
+  /** update momentum modes */
   mode[1] += node_f.force[0*para.number_of_nodes + index];
   mode[2] += node_f.force[1*para.number_of_nodes + index];
   mode[3] += node_f.force[2*para.number_of_nodes + index];
   	
-  /* update stress modes */
+  /** update stress modes */
   mode[4] += C[0] + C[2] + C[5];
   mode[5] += C[0] - C[2];
   mode[6] += C[0] + C[2] - 2.f*C[5];
@@ -570,7 +570,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   node_f.force[2*para.number_of_nodes + index] = 0.f;
   }
 #else
-  /* reset force */
+  /** reset force */
   node_f.force[0*para.number_of_nodes + index] = 0.f;
   node_f.force[1*para.number_of_nodes + index] = 0.f;
   node_f.force[2*para.number_of_nodes + index] = 0.f;
@@ -609,7 +609,7 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
   }
 #if 0
   if(singlenode == 1){
-    /* equilibrium part of the stress modes */
+    /** equilibrium part of the stress modes */
     /**to print out the stress tensor entries, ensure that in lbgpu.h struct the values are available*/
     d_v[0].pi[0] = ((mode[1]*mode[1]) + (mode[2]*mode[2]) + (mode[3]*mode[3]))/para.rho;
     d_v[0].pi[1] = ((mode[1]*mode[1]) - (mode[2]*mode[2]))/para.rho;
@@ -634,7 +634,7 @@ __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, u
 */
 __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index){
 	
-  /* mass mode */
+  /** mass mode */
   mode[0] = n_a.vd[0*para.number_of_nodes + node_index] + n_a.vd[1*para.number_of_nodes + node_index] + n_a.vd[2*para.number_of_nodes + node_index]
           + n_a.vd[3*para.number_of_nodes + node_index] + n_a.vd[4*para.number_of_nodes + node_index] + n_a.vd[5*para.number_of_nodes + node_index]
           + n_a.vd[6*para.number_of_nodes + node_index] + n_a.vd[7*para.number_of_nodes + node_index] + n_a.vd[8*para.number_of_nodes + node_index]
@@ -642,7 +642,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
           + n_a.vd[13*para.number_of_nodes + node_index] + n_a.vd[14*para.number_of_nodes + node_index] + n_a.vd[15*para.number_of_nodes + node_index] + n_a.vd[16*para.number_of_nodes + node_index]
           + n_a.vd[17*para.number_of_nodes + node_index] + n_a.vd[18*para.number_of_nodes + node_index];
 
-  /* momentum modes */
+  /** momentum modes */
   mode[1] = (n_a.vd[1*para.number_of_nodes + node_index] - n_a.vd[2*para.number_of_nodes + node_index]) + (n_a.vd[7*para.number_of_nodes + node_index] - n_a.vd[8*para.number_of_nodes + node_index])
           + (n_a.vd[9*para.number_of_nodes + node_index] - n_a.vd[10*para.number_of_nodes + node_index]) + (n_a.vd[11*para.number_of_nodes + node_index] - n_a.vd[12*para.number_of_nodes + node_index])
           + (n_a.vd[13*para.number_of_nodes + node_index] - n_a.vd[14*para.number_of_nodes + node_index]);
@@ -721,9 +721,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   }
 
 
-  /* calculate viscous force
-  * take care to rescale velocities with time_step and transform to MD units
-  * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  /** calculate viscous force
+   * take care to rescale velocities with time_step and transform to MD units
+   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 #ifdef LB_ELECTROHYDRODYNAMICS
   particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
   particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
@@ -747,7 +747,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   random_01(rn_part);
   particle_force[part_index].f[2] += para.lb_coupl_pref*(rn_part->randomnr[0]-0.5f);
 #endif	  
-  /* delta_j for transform momentum transfer to lattice units which is done in calc_node_force
+  /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
   delta_j[1] = - particle_force[part_index].f[1]*para.time_step*para.tau/para.agrid;
@@ -814,8 +814,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 
   if(index<para.number_of_nodes){
 
-    /*temp gesetzt aus lb_reinit_fluid() wären Anfangs-Werte die aus tcl übergeben werden*/
-    /* default values for fields in lattice units */
+    /** default values for fields in lattice units */
     gpu_check[0] = 1;
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
@@ -834,7 +833,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 
     local_pi = pi;
 
-    /* reduce the pressure tensor to the part needed here */
+    /** reduce the pressure tensor to the part needed here */
     local_pi[0] -= rhoc_sq;
     local_pi[2] -= rhoc_sq;
     local_pi[5] -= rhoc_sq;
@@ -844,10 +843,10 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
     float rho_times_coeff;
     float tmp1,tmp2;
 
-    /* update the q=0 sublattice */
+    /** update the q=0 sublattice */
     n_a.vd[0*para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
 
-    /* update the q=1 sublattice */
+    /** update the q=1 sublattice */
     rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
 
     n_a.vd[1*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
@@ -857,7 +856,7 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
     n_a.vd[5*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
     n_a.vd[6*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
 
-    /* update the q=2 sublattice */
+    /** update the q=2 sublattice */
     rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
 
     tmp1 = local_pi[0] + local_pi[2];
@@ -883,14 +882,14 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
     n_a.vd[17*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
     n_a.vd[18*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
-    /*set different seed for randomgen on every node */
+    /**set different seed for randomgen on every node */
     n_a.seed[index] = para.your_seed + index;
   }
 }
 
 /** kernel for the initalisation of the particle force array
  * @param *particle_force	Pointer to local particle force (Output)
- * @param *part				Pointer to the particle rn seed storearray (Output)
+ * @param *part			Pointer to the particle rn seed storearray (Output)
 */
 __global__ void init_particle_force(LB_particle_force_gpu *particle_force, LB_particle_seed_gpu *part){
 	
@@ -1184,7 +1183,7 @@ if (_err!=cudaSuccess){ \
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
-  // Allocate lattice-struct in device memory
+  /** Allocate structs in device memory*/
   size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
@@ -1250,7 +1249,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 */
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
 
-  /* Allocate struct for particle positions */
+  /** Allocate struct for particle positions */
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
   size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
@@ -1258,7 +1257,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   cudaFreeHost(*host_data);
 
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
-  //pinned memory mode - use special function to get OS-pinned memory
+  /**pinned memory mode - use special function to get OS-pinned memory*/
   cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
 #else
   cudaMallocHost((void**)host_data, size_of_positions);
