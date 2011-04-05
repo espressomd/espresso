@@ -165,6 +165,10 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
 AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
+AC_PATH_PROG(DOT,dot)
+if test "$DOT"; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
+AC_SUBST(HAVE_DOT)
+AC_SUBST(DOT_PATH, AS_DIRNAME(["$DOT"]))
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
 AC_PATH_PROG(MAKEINDEX,makeindex,no)
 AC_PATH_PROG(BIBTEX,bibtex,no)
@@ -400,20 +404,18 @@ if test x$with_cuda != xno; then
    # if no other compute capability is defined by the user, we need at least 1.1
    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -arch=compute_20 -code=sm_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
    esac
    # use nvcc
    save_CC=$CC
    save_CFLAGS=$CFLAGS
+   # autoconf currently doesn't allow to define new languages like cuda, so try to work around it
    CC=$NVCC
-   CFLAGS="$NVCCFLAGS -x cu"
+   CFLAGS="$NVCCFLAGS"
    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
 	#include <cuda.h>
-	__global__ void test()
-	{}
    ],[
-	dim3 block(1), grid(1);
-	test<<<block,grid>>>();
+	cudaGetDevice(0);
    ])], [AC_MSG_RESULT(yes)], [AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])])
    CC=$save_CC
    CFLAGS=$save_CFLAGS
@@ -482,11 +484,11 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
-	doc/latexit.sh
 	doc/dg/Makefile
 	doc/ug/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
+	doc/latexit.sh
 	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
@@ -532,6 +534,7 @@ pdflatex		= $PDFLATEX
 makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
+dot			= $DOT
 
 EOF
 

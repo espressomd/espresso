@@ -120,7 +120,10 @@ int tclcallback_ro(Tcl_Interp *interp, void *data)
 int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv)
 {
-  char databuf[MAX_DIMENSION*(sizeof(int) + sizeof(double))];
+  union {
+    int    intbuf[MAX_DIMENSION];
+    double doublebuf[MAX_DIMENSION];
+  } databuf;
   char buffer[TCL_DOUBLE_SPACE + 5];
   int i, j;
   int all = (argc == 1), writing = (argc >= 3);
@@ -153,28 +156,29 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  for (j = 0; j < fields[i].dimension; j++) {
 	    switch (fields[i].type) {
 	    case TYPE_INT:
-	      if (Tcl_GetInt(interp, argv[2 + j], (int *)databuf + j) == TCL_ERROR)
+	      if (Tcl_GetInt(interp, argv[2 + j], databuf.intbuf + j) == TCL_ERROR)
 		return (TCL_ERROR);
 	      break;
 	    case TYPE_BOOL: {
 	      int dta;
 	      if (Tcl_GetInt(interp, argv[2 + j], &dta))
 		return (TCL_ERROR);
-	      if (dta)
-		*(int *)databuf |= (1L << j);
-	      else
-		*(int *)databuf &= ~(1L << j);
+	      if (dta) {
+		databuf.intbuf[0] |= (1L << j);
+	      } else {
+		databuf.intbuf[0] &= ~(1L << j);
+	      }
 	      break;
 	    }
 	    case TYPE_DOUBLE:
-	      if (Tcl_GetDouble(interp, argv[2 + j], (double *)databuf + j))
+	      if (Tcl_GetDouble(interp, argv[2 + j], databuf.doublebuf + j))
 		return (TCL_ERROR);
 	      break;
 	    default: ;
 	    }
 	  }
 
-	  if (fields[i].changeproc(interp, databuf) != TCL_OK)
+	  if (fields[i].changeproc(interp, databuf.intbuf) != TCL_OK)
 	    return mpi_gather_runtime_errors(interp, TCL_ERROR);
 	  /* fall through to write out the set value immediately again */
 	}

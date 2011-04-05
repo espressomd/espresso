@@ -44,7 +44,7 @@
  */
 
 
-/* protect header file: */
+/** protect header file: */
 #ifndef _MAGGS_H
 #define _MAGGS_H
 
@@ -52,45 +52,85 @@
 
 #ifdef ELECTROSTATICS
 
-/* maggs structure. Contains global system information. */
+/** \name External structure */
+/*@{*/
+
+/** \struct MAGGS_struct 
+    Maggs structure. Contains global system information for MEMD algorithm
+*/
 typedef struct {
-	double f_mass;         /* = 1/c^2    speed of light parameter. */
-	double invsqrt_f_mass; /* inverse of square root of f_mass. */
-	double prefactor;      /* prefactor to convert field to force. */
-	double pref2;          /* prefactor / (4*pi) */
-	double bjerrum;        /* bjerrum length of the system. */
-	int    mesh;           /* mesh size in one dimension */
-	double inva;           /* = 1/a = mesh / box_length */
-	double a;              /* size of mesh cube */
+  /** = 1/c^2    speed of light parameter. */
+  double f_mass;
+  /** inverse of square root of f_mass. */
+  double invsqrt_f_mass;
+  /** prefactor to convert field to force. */
+  double prefactor;
+  /** prefactor / (4*pi) */
+  double pref2;
+  /** bjerrum length of the system. */
+  double bjerrum;
+  /** mesh size in one dimension */
+  int    mesh;
+  /** = 1/a = mesh / box_length */
+  double inva;
+  /** size of mesh cube */
+  double a;
 } MAGGS_struct;
 extern MAGGS_struct maggs;
+/*@}*/
 
+/*****************************/
+/** \name External functions */
+/*****************************/
 
-/**********************************************/
-/* Functions to be called from external code: */
-/**********************************************/
+/*@{*/
 
-/* initialize, parse command and set parameters: */
-void maggs_init(); /* called from: initialize.c */
+/** initialization function, parse command and set parameters.
+    Called from \ref initialize.c
+*/
+void maggs_init(); /** called from: initialize.c */
+
+/** parse TCL command. The number of parameters is checked and
+    maggs_set_parameters function is called.
+    @return 0 for success, -1 otherwise
+    @param interp  TCL Interpreter handle
+    @param argc    number of TCL arguments after "inter coulomb $bjerrum maggs"
+    @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
+*/
 int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
+
+/** set the main parameters for the algorithm.
+    @param interp    TCL Interpreter handle
+    @param bjerrum   Bjerrum length for the system
+    @param f_mass    parameter to tune the speed of light (1/c^2)
+    @param mesh      Mesh size in one dimension
+ */
 int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh);
 
-/* for integration routine. */
-void maggs_propagate_B_field(double dt); /* called from integrate.c (twice, with dt/2) */
-void maggs_calc_forces(); /* called from forces.c */
+/** Propagate the B-field in the system.
+    Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.
+    @param dt Timestep for which to propagate the field.
+*/
+void maggs_propagate_B_field(double dt);
 
-/* get electric and magnetic energy. Called from energy.c */
+/** Calculate the forces on all particles. Writes the result directly into the force pointer. */
+void maggs_calc_forces();
+
+/** Get the electric energy of the system as return value */
 double maggs_electric_energy();
+/** Get the magnetic energy of the artificial transversal field component as return value */
 double maggs_magnetic_energy();
 
-/* Count the number of charges in the whole system. */
-/* Called from communication.c */
+/** Count the number of charges in the whole system. */
 int maggs_count_charged_particles();
 
-/* Clean up, print results: */
+/** Clean up, free memory. Not used at the moment. */
 void maggs_exit();
+
+/** Print out the results. */
 int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
+/*@}*/
 
 #endif
 #endif

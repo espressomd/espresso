@@ -1650,7 +1650,7 @@ MDINLINE double Dperform_aliasing_sums_energy(int n[3], double nominator[1])
 
     After checking if the total error fulfils the accuracy goal the
     time needed for one force calculation (including verlet list
-    update) is measured via \ref mpi_integrate(0).
+    update) is measured via \ref mpi_integrate (0).
 
     The function returns a log of the performed tuning.
 

@@ -152,7 +152,7 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
  *
  * \param  lattice pointer to the lattice
  * \param  ind     global coordinates of the lattice site (Input)
- * \param  ind     local coordinates of the lattice site (Output)
+ * \param  grid    local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
 MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
