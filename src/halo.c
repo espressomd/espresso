@@ -194,6 +194,7 @@ MDINLINE void halo_copy_vector(void *r_buffer, void *s_buffer, int count, Fieldt
 /** Copy lattice data with layout described by fieldtype.
  * @param r_buffer data destination
  * @param s_buffer data source
+ * @param count    amount of data to copy
  * @param type     field layout type
  */
 MDINLINE void halo_dtcopy(void *r_buffer, void *s_buffer, int count, Fieldtype type) { 
@@ -339,6 +340,7 @@ void release_halo_communication(HaloCommunicator *hc) {
 /** Perform communication according to the parallelization scheme
  *  described by the halo communicator
  * @param hc halo communicator describing the parallelization scheme
+ * @param base base plane of local node
  */
 void halo_communication(HaloCommunicator *hc, void *base) {
   int n, comm_type, s_node, r_node;

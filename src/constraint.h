@@ -212,6 +212,10 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
   }
 }
 
+MDINLINE double max(double x1, double x2) {
+  return x1>x2?x1:x2;
+}
+
 MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_pore *c, double *dist, double *vec)
 {
   int i;
@@ -220,14 +224,13 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
                                pore, origin at pore centera */
   double z_vec[3], r_vec[3]; /* cartesian vectors that correspond to these coordinates */
   double e_z[3], e_r[3];    /* unit vectors in the cylindrical coordinate system */
-//  double d_per, d_per_sh, d_par, d_par_sh, d_real, d_real_2,
-//    d_per_vec[3], d_par_vec[3], d_real_vec[3];
   /* helper variables, for performance reasons should the be move the the
    * constraint struct*/
      double slope, average_radius, z_left, z_right;
   /* and another helper that is hopefully optmized out */
-     double norm, help_dist, z_0;
+     double norm;
      double c1_r, c1_z, c2_r, c2_z;
+     double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r, temp;
 
      
      c->smoothing_radius = 1.;
@@ -263,7 +266,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
     norm += z_vec[i]*z_vec[i]; 
   norm = sqrt(norm);
   for(i=0;i<3;i++) 
-    e_z[i] = z_vec[i]/norm;
+    e_z[i] = c->axis[i];
   norm = 0;
   for(i=0;i<3;i++) 
     norm += r_vec[i]*r_vec[i]; 
@@ -282,20 +285,22 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_left - c1_z ) );
   c2_r = c->rad_left + slope * ( z_right + c->length ) +
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
-//  printf("r %f z %f c1_r %f c1_z %f c2_r %f c2_z%f\n", r, z, c1_r, c1_z, c2_r, c2_z);
+  slope=(c2_r-c1_r)/(c2_z-c1_z);
  
   /* Check if we are in the region of the left wall */
-  if ( r > c1_r && z < c1_z ) {
+  if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
+    dist_vector_z=-z - c->length;
+    dist_vector_r=0;
     *dist = -z - c->length;
-    for (i=0; i<3;i++) 
-      vec[i] = -e_z[i]*(*dist) ;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
   /* Check if we are in the region of the right wall */
-  if ( r > c2_r && z > c2_z ) {
+  if (( (r >= c2_r) && (z <= c2_z) ) || ( ( z >= 0 ) && (r>=max(c1_r, c2_r)))) {
+    dist_vector_z=-z + c->length;
+    dist_vector_r=0;
     *dist = +z - c->length;
-    for (i=0; i<3;i++) 
-      vec[i] = +e_z[i]*(*dist) ;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
 
@@ -304,37 +309,61 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
 
   /* the distance of the particle from the pore cylinder/cone calculated by projection on the
    * cone normal. Should be > 0 if particle is inside the pore */
-  help_dist = (- ( r - average_radius ) + (z * slope)); ///sqrt(1+slope*slope);
-  z_0 = z + help_dist * slope / sqrt(1+slope*slope);
 
-  /* Check if we are in the range of the cone in the center */
-  if (z_0 > z_left && z_0 < z_right) { 
-    *dist = help_dist;
-    for (i=0; i<3;i++) 
-      vec[i]= - e_r[i] * help_dist; 
+  cone_vector_z=1/sqrt(1+slope*slope);
+  cone_vector_r=slope/sqrt(1+slope*slope);
+
+  p1_r = c1_r+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_r;
+  p1_z = c1_z+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_z;
+
+  dist_vector_r = p1_r-r;
+  dist_vector_z = p1_z-z;
+
+  if ( p1_z>=c1_z && p1_z<=c2_z ) {
+    if ( dist_vector_r <= 0  ) {
+      if (z<0) {
+        dist_vector_z=-z - c->length;
+        dist_vector_r=0;
+        *dist = -z - c->length;
+        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+        return;
+      } else {
+        dist_vector_z=-z + c->length;
+        dist_vector_r=0;
+        *dist = +z - c->length;
+        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+        return;
+      }
+    }
+    temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
+    *dist=temp-c->smoothing_radius;
+    dist_vector_r-=dist_vector_r/temp*c->smoothing_radius;
+    dist_vector_z-=dist_vector_z/temp*c->smoothing_radius;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
+
+
   /* Check if we are in the range of the left smoothing circle */
-  if ( z_0 < z_left ) {
+  if (p1_z <= c1_z ) {
     /* distance from the smoothing center */
     norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
     *dist = norm - c->smoothing_radius;
-    for (i=0; i<3;i++) 
-      vec[i] = (c->smoothing_radius/norm - 1)*(z - c1_z)*e_z[i] - (c->smoothing_radius/norm -1)*(r - c1_r)*e_r[i];
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c1_r);
+    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c1_z);
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
   /* Check if we are in the range of the right smoothing circle */
-  if ( z_0 > z_right ) {
+  if (p1_z >= c2_z ) {
     norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
     *dist = norm - c->smoothing_radius;
-    for (i=0; i<3;i++) 
-      vec[i] = -(c->smoothing_radius/norm - 1)*(z - c2_z)*e_z[i] - (c->smoothing_radius/norm -1)*(r - c2_r)*e_r[i];
-//    if (*dist < -0.3)
-//      printf("warning - reflection w length %f in right smoo area\n", *dist);
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_r);
+    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
     return;
   }
   exit(printf("should never be reached, z %f, r%f\n",z, r));
-
 }
 
 MDINLINE void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
@@ -449,16 +478,34 @@ MDINLINE double ext_magn_field_energy(Particle *p1, Constraint_ext_magn_field *c
 MDINLINE void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
   double vec[3];
   double norm; 
-  memcpy(vec, distance_vec, 3*sizeof(double));
-//      printf("distance vector %f %f %f\n", vec[0], vec[1], vec[2]);
-//      printf("reflecting particle %d at position %f %f %f new position %f %f %f\n", p1->p.identity, p1->r.p[0], p1->r.p[1], p1->r.p[2    ], p1->r.p[0]-2*vec[0], p1->r.p[1]-2*vec[1], p1->r.p[2]-2*vec[2]);
-      reflection_happened = 1;
+
+/* For Debugging your can show the folded coordinates of the particle before
+ * and after the reflecting by uncommenting these lines 
+      double folded_pos[3];
+      int img[3];
+
+      memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+      memcpy(img, p1->l.i, 3*sizeof(int));
+      fold_position(folded_pos, img);
+
+      memcpy(vec, distance_vec, 3*sizeof(double));
+      printf("position before reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); */
+
+
+       reflection_happened = 1;
+       norm=sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
        p1->r.p[0] = p1->r.p[0]-2*vec[0];
        p1->r.p[1] = p1->r.p[1]-2*vec[1];
        p1->r.p[2] = p1->r.p[2]-2*vec[2];
+
+/*  This can show the position after reflection      
+       memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+       memcpy(img, p1->l.i, 3*sizeof(int));
+       fold_position(folded_pos, img);
+       printf("position after reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); */
+
        /* vec seams to be the vector that points from the wall to the particle*/
        /* now normalize it */ 
-       norm=sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
        if ( reflecting==1 ) {
          vec[0] /= norm;
          vec[1] /= norm;
@@ -466,12 +513,9 @@ MDINLINE void reflect_particle(Particle *p1, double *distance_vec, int reflectin
          /* calculating scalar product - reusing var norm */
          norm = vec[0] *  p1->m.v[0] + vec[1] * p1->m.v[1] + vec[2] * p1->m.v[2];
          /* now add twice the normal component to the velcity */
-   //      printf("normal vector %f %f %f\n", vec[0], vec[1], vec[2]);
-   //      printf("velocity before %f %f %f ", p1->m.v[0], p1->m.v[1], p1->m.v[2]);
           p1->m.v[0] = p1->m.v[0]-2*vec[0]*norm; /* norm is still the scalar product! */
           p1->m.v[1] = p1->m.v[1]-2*vec[1]*norm;
           p1->m.v[2] = p1->m.v[2]-2*vec[2]*norm;
-  //       printf("velocity after %f %f %f\n", p1->m.v[0], p1->m.v[1], p1->m.v[2]);
        } else if (reflecting == 2) {
          /* if bounce back, invert velocity */
           p1->m.v[0] =-p1->m.v[0]; /* norm is still the scalar product! */
@@ -611,7 +655,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
     case CONSTRAINT_PORE: 
       if(checkIfInteraction(ia_params)) {
 	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
-	if ( dist > 0 ) {
+	if ( dist >= 0 ) {
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,
 				     torque1, torque2);

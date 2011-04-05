@@ -490,9 +490,7 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ELECTROSTATICS
     if(coulomb.method == COULOMB_MAGGS) {
-      propagate_B_field(0.5*time_step); 
-      if(maggs.yukawa)
-	maggs_propagate_psi_vel_pos(time_step);
+      maggs_propagate_B_field(0.5*time_step); 
     }
 #endif
 
@@ -573,10 +571,7 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ELECTROSTATICS
     if(coulomb.method == COULOMB_MAGGS) {
-      propagate_B_field(0.5*time_step); 
-      if(maggs.yukawa)
-	maggs_propagate_psi_vel(0.5*time_step);
-      MAGGS_TRACE(check_gauss_law();); 
+      maggs_propagate_B_field(0.5*time_step); 
     }
 #endif
 

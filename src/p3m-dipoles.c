@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -25,7 +26,7 @@
  *  see \ref p3m-charges.h  "p3m-charges.h"
  *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
  *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignement.c  "p3m-assignement.c"
+ *  see \ref p3m-assignment.c  "p3m-assignment.c"
  
  NB: In general the magnetic dipole-dipole functions bear the same name than the charge-charge but,
      adding in front of the name a D   and replacing where "charge" appears by "dipole". In this way
@@ -1649,7 +1650,7 @@ MDINLINE double Dperform_aliasing_sums_energy(int n[3], double nominator[1])
 
     After checking if the total error fulfils the accuracy goal the
     time needed for one force calculation (including verlet list
-    update) is measured via \ref mpi_integrate(0).
+    update) is measured via \ref mpi_integrate (0).
 
     The function returns a log of the performed tuning.
 

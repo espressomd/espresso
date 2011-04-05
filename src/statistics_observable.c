@@ -282,7 +282,6 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   observables=(observable**) realloc(observables, (n_observables+1)*sizeof(observable*)); 
   if (argc<2) {
     Tcl_AppendResult(interp, "Usage!!!\n", (char *)NULL);
-    free(observables[n_observables]);
     return TCL_ERROR;
   }
 

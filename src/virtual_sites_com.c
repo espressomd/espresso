@@ -17,17 +17,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifdef VIRTUAL_SITES_COM
-void update_mol_vel_particle(Particle *p);
-void update_mol_pos_particle(Particle *p);
+#include "virtual_sites_com.h"
 
+#ifdef VIRTUAL_SITES_COM
+
+//forward declarations
 void calc_mol_vel(Particle *p_com,double v_com[3]);
 void calc_mol_pos(Particle *p_com,double r_com[3]);
 int calc_mol_pos_cfg(Particle *p_com,double r_com[3]);
 void put_mol_force_on_parts(Particle *p_com);
-
-
-
 
 void update_mol_vel_particle(Particle *p){
    int j;

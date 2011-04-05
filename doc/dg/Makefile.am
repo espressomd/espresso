@@ -47,13 +47,14 @@ EXTRA_DIST=\
 
 .PHONY: doc dg
 doc: dg
+
 dg:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
 	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
-	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
+	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)" \
+	HAVE_DOT=$(HAVE_DOT) DOT_PATH=$(DOT_PATH) \
 	  $(DOXYGEN) $(srcdir)/Doxyfile
-	@echo "See doxygen's warnings in dg.log."
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
 	@echo "*  file://`pwd`/html/index.html"

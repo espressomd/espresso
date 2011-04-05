@@ -89,7 +89,7 @@ typedef struct {
 
 /** \name Exported Variables
     Previous particle configurations (needed for offline analysis
-    and correlation analysis in \ref #analyze)
+    and correlation analysis in \ref tclcommand_analyze)
 */
 /************************************************************/
 /*@{*/
@@ -102,12 +102,12 @@ extern int n_part_conf;
 /************************************************************/
 /*@{*/
 
-/** Implements the Tcl command \ref tcl_analyze. This allows for basic system analysis,
+/** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
     both online and offline.
 */
 int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-/** EXPERIMENTAL: Implements the Tcl command \ref tcl_acf for online calculation of autocorrelation functions. */
+/** EXPERIMENTAL: Implements the Tcl command \ref acf_cmd for online calculation of autocorrelation functions. */
 int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** the minimal distance of two particles with types in set1 rsp. set2.
@@ -138,7 +138,9 @@ int aggregation(double dist_criteria2, int min_contact, int s_mol_id, int f_mol_
 /** returns all particles within a given radius r_catch around a position.
     @param pos position of sphere of point
     @param r_catch the radius around the position
-    @param il the list where to store the particles indices */
+    @param il the list where to store the particles indices
+    @param planedims orientation of coordinate system
+*/
 void nbhood(double pos[3], double r_catch, IntList *il, int planedims[3]);
 
 /** minimal distance to point.
@@ -164,10 +166,10 @@ double distto(double pos[3], int pid);
                   and a third entry which is -1.0 if \f$\gamma\f$ is imaginary, +1.0 else. */
 void calc_cell_gpb(double xi_m, double Rc, double ro, double gacc, int maxtry, double *result);
 
-/** appends particles' positions in 'partCfg' to \ref #configs */
+/** appends particles' positions in 'partCfg' to onfigs */
 void analyze_append();
 
-/** appends the configuration stored in 'config[3*count]' to \ref #configs
+/** appends the configuration stored in 'config[3*count]' to configs
     @param config the configuration which should be added 
     @param count  how many particles in 'config' */
 void analyze_configs(double *config, int count);
@@ -343,13 +345,14 @@ void angularmomentum(int type, double *com);
 
 
 /** calculate the center of mass of a special type of a saved configuration
- *  \param k     number of the saved configuration
- *  \param type  type of the particle, -1 for all
- *  \param com   center of mass position
+ *  \param k       number of the saved configuration
+ *  \param type_1  type of the particle, -1 for all
+ *  \param com     center of mass position
  */
 void centermass_conf(int k, int type_1, double *com);
 
 /** return the approx diffusion constant of a special type of particle
+ *  \param interp  TCL interpreter handle
  *  \param type_m  type of the particle, -1 for all
  *  \param n_time_steps number of timestep between saved configurations
  *  \param n_conf  number of saved contributions taken into account

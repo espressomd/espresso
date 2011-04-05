@@ -25,10 +25,10 @@
     The dielectric properties of a dielectric medium in the bulk of the simulation box are taken into account
     by reproducing the jump in the electric field at the inface with charge surface segments. The charge
     density of the surface segments have to be determined self-consistently using an iterative scheme.
-    It can at presently -- despite its name -- be used with P3M, ELCP3M, MMM2D and MMM1D. 
-    For details see:
-    <it> S. Tyagi, M. Suzen, M. Sega, C. Holm, M. Barbosa: A linear-scaling method for computing induced 
-    charges on arbitrary dielectric boundaries in large system simulations (Preprint) </it> 
+    It can at presently - despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. 
+    For details see:<br>
+    S. Tyagi, M. Suzen, M. Sega, C. Holm, M. Barbosa: A linear-scaling method for computing induced 
+    charges on arbitrary dielectric boundaries in large system simulations (Preprint)
 
     To set up ICCP3M first the dielectric boundary has to be modelled by espresso particles 0..n where 
     n has to be passed as a parameter to ICCP3M. This is still a bit inconvenient, as it forces the user
@@ -236,10 +236,6 @@ MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
       break;
     case COULOMB_MMM2D:
       add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
-      break;
-    case COULOMB_MAGGS:
-      if(maggs.yukawa == 1)
-        add_maggs_yukawa_pair_force(p1,p2,d,dist2,dist,force);
       break;
     case COULOMB_NONE:
       break;

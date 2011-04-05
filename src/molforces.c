@@ -37,7 +37,7 @@
  *  The centre of mass can be fixed to an absolute position or to a relative position in the
  *  simulation box.
  *  The molecular trap forces is distributed evenly upon all particles in a molecule.
- *  (see \file topology.c and file \molforces.c)  
+ *  (see \ref topology.c and \ref molforces.c)  
  */
 
 #ifdef MOLFORCES

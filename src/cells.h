@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef CELLS_H
-#define CELLS_H
+#ifndef _CELLS_H
+#define _CELLS_H
 /** \file cells.h
     This file contains everything related to the cell structure / cell
     system.
@@ -41,7 +42,7 @@
     </ul>
   
     One can switch between different cell systems with the tcl command
-    \ref tcl_cellsystem implemented in \ref cells::cellsystem.
+    cellsystem implemented in \ref cells.c .
   
     Some structures are common to all cell systems: 
   
@@ -172,7 +173,7 @@ extern CellStructure cell_structure;
 /************************************************************/
 /*@{*/
 
-/** implementation of the Tcl command \ref tcl_cellsystem */
+/** implementation of the Tcl command cellsystem */
 int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
 	       int argc, char **argv);
 

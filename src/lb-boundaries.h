@@ -50,6 +50,8 @@
 #define LB_BOUNDARY_SPH 2
 /** (finite) cylinder shaped constraint applied */
 #define LB_BOUNDARY_CYL 3
+/** a pore geometry */
+#define LB_BOUNDARY_POR 4
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -67,6 +69,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_pore pore;
   } c;
 } LB_Boundary;
 

@@ -51,7 +51,7 @@
  *  see \ref p3m-charges.h  "p3m-charges.h"
  *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
  *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignement.c  "p3m-assignement.c"
+ *  see \ref p3m-assignment.c  "p3m-assignment.c"
  */
 
 #ifdef ELECTROSTATICS
@@ -149,7 +149,7 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 
     After checking if the total error fulfils the accuracy goal the
     time needed for one force calculation (including verlet list
-    update) is measured via \ref mpi_integrate(0).
+    update) is measured via \ref mpi_integrate (0).
 
     The function returns a log of the performed tuning.
 

@@ -857,7 +857,7 @@ static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *i
 int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
   double pos[3];
   double vec[3];
-  double dist = 1e100;
+  double dist=1e100;
   double mindist = 1e100;
   int n;
   char buffer[TCL_DOUBLE_SPACE];

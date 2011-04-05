@@ -15,29 +15,49 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# all the test scripts
+SUBDIRS = configs .
+
+# alphabetically sorted list of test scripts
 tests = \
-	nve_pe.tcl npt.tcl \
-	madelung.tcl p3m.tcl el2d.tcl \
-	p3m_magnetostatics.tcl p3m_magnetostatics2.tcl \
-	el2d_nonneutral.tcl el2d_die.tcl mdlc.tcl mmm1d.tcl dh.tcl \
-	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
-	harm.tcl fene.tcl \
-	kinetic.tcl thermostat.tcl \
-	intpbc.tcl intppbc.tcl \
-	layered.tcl nsquare.tcl \
-	comforce.tcl comfixed.tcl \
 	analysis.tcl \
-	rotation.tcl \
+	comforce.tcl \
+	comfixed.tcl \
+	command_syntax.tcl \
 	constraints.tcl \
-	mass.tcl \
+	dh.tcl \
+	el2d.tcl \
+	el2d_die.tcl \
+	el2d_nonneutral.tcl \
+	fene.tcl \
+	gb.tcl \
+	harm.tcl \
+	intpbc.tcl \
+	intppbc.tcl \
+	kinetic.tcl \
+	layered.tcl \
 	lb.tcl \
+	lb_gpu.tcl \
+	lj.tcl \
+	lj-cos.tcl \
+	lj-generic.tcl \
+	madelung.tcl \
+	maggs.tcl \
+	mass.tcl \
+	mdlc.tcl \
+	mmm1d.tcl \
+	npt.tcl \
+	nsquare.tcl \
+	nve_pe.tcl \
+	p3m.tcl \
+	p3m_magnetostatics.tcl \
+	p3m_magnetostatics2.tcl \
+	rotation.tcl \
+	tabulated.tcl 
+	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 
-deactivated_tests = \
-	lb_gpu.tcl \
-	p3m_magnetostatics2.tcl
+deactivated_tests =
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) $(deactivated_tests) \
@@ -68,7 +88,9 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	pe_micelle.tcl pe_micelle.data \
 	uwerr_test.tcl uwerr_test.data \
 	\
-	gen_fene.tcl gen_harm.tcl
+	gen_fene.tcl gen_harm.tcl \
+	\
+	maggs_correct_rdf.data
 
 # run the testsuite
 check-local: runtest.sh

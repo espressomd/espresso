@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -91,11 +92,11 @@ MDINLINE int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int
 }
 
 /** Computes the three body angle interaction force and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -215,8 +216,14 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   }
 #endif
 #ifdef BOND_ANGLE_COSSQUARE
-  fprintf(stderr, "WARNING: calc_angle_3body_forces not implemented for cossquare potential, cannot calculate stress tensor");
-  pot_dep = 0; /* better zero than an undefined value ...*/
+  {
+    double K, cos_phi0;
+    K = iaparams->p.angle.bend;
+    cos_phi0 = iaparams->p.angle.cos_phi0;
+    
+    // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi * sin_phi)]
+    pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
+  }
 #endif
 
   fac = pot_dep / sin_phi;
@@ -235,11 +242,11 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
 }
 
 
-/** Computes the three body angle interaction energy (see \ref #inter, \ref #analyze). 
+/** Computes the three body angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param _energy   return energy pointer.
     @return 0.
 */

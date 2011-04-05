@@ -33,9 +33,9 @@
  *  \ref integrate::skin /
  *  2.0. You can tune the verlet pair algorithm with the variable
  *  \ref integrate::skin 
- *  which you can set via the \ref global::setmd command. You can also
+ *  which you can set via the \ref tclcommand_setmd command. You can also
  *  acces the average number of integration steps the verlet lists
- *  have been reused with \ref global::setmd \ref verlet_reuse.
+ *  have been reused with \ref tclcommand_setmd \ref verlet_reuse.
  *
  *  The verlet algorithm uses the data type \ref PairList to store
  *  interacting particle pairs.

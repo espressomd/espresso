@@ -112,12 +112,12 @@ typedef struct {
 
 /** Creates a fieldtype describing the data layout 
  *  @param count   number of subtypes (Input)
- *  @param lens    array of lenghts of the subtytpes (Input)
+ *  @param lengths array of lenghts of the subtytpes (Input)
  *  @param disps   array of displacements the subtypes (Input)
  *  @param extent  extent of the whole new fieldtype (Input)
  *  @param newtype newly created fieldtype (Input/Output)
  */
-void halo_create_fieldtype(int count, int *lens, int *disps, int extent, Fieldtype *newtype);
+void halo_create_fieldtype(int count, int *lengths, int *disps, int extent, Fieldtype *newtype);
 
 /** Creates a field vector layout
  *  @param vblocks number of vector blocks(Input) 
@@ -151,6 +151,7 @@ void release_halo_communication(HaloCommunicator *hc);
 /** Perform communication according to the parallelization scheme
  *  described by the halo communicator
  * @param hc halo communicator describing the parallelization scheme
+ * @param base base plane of local node
  */
 void halo_communication(HaloCommunicator *hc, void *base);
 
