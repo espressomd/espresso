@@ -484,11 +484,11 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
-	doc/latexit.sh
 	doc/dg/Makefile
 	doc/ug/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
+	doc/latexit.sh
 	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
