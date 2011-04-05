@@ -60,6 +60,7 @@
 #include "thermostat.h"
 #include "cells.h"
 #include "domain_decomposition.h"
+#include "errorhandling.h"
 
 #ifdef ELECTROSTATICS
 
@@ -357,6 +358,58 @@ void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double d
   Dfield[3*Neighbor[mue]+nue] += delta;
   Dfield[3*Neighbor[nue]+mue] -= delta;
   Dfield[i+nue]             -= delta;  
+}
+
+
+/** Basic sanity checks to see if the code will run. */
+int maggs_sanity_checks()
+{
+  char *errtxt;
+  int ret = 0;
+  int d;
+  int max_node_grid = 1;
+
+  FOR3D(d) if(node_grid[d] > max_node_grid) max_node_grid = node_grid[d];
+	
+  if (maggs.bjerrum == 0.) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{301 MEMD: bjerrum length is zero.} ");
+    ret = -1;
+  }
+  else if ( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{302 MEMD needs cubic box.} ");
+    ret = -1;
+  }
+  else if ( maggs.mesh%max_node_grid != 0 ) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{303 MEMD: meshsize is incompatible with number of processes.} ");
+    ret = -1;
+  }
+  /*
+  else if ( maggs_count_charged_particles() == 0 ) {
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{304 MEMD: No charges in the system.} ");
+      ret = -1;
+  }
+  */
+  else if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{305 MEMD requires domain-decomposition cellsystem.} ");
+    ret = -1;
+  }
+  else if (dd.use_vList) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{306 MEMD requires no Verlet Lists.} ");
+    ret = -1;
+  }
+  else if (maggs.f_mass < 2. * time_step * time_step * maggs.a * maggs.a) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{307 MEMD: Speed of light is set too high. Increase f_mass.} ");
+    ret = -1;      
+  }
+  
+  return ret;
 }
 
 
@@ -1189,7 +1242,7 @@ void maggs_calc_init_e_field()
 	}
       }
       else 
-	if (fabs(Dfield[3*index+ZPLUS]) > 10.*ROUND_ERROR_PREC) {
+	if (fabs(Dfield[3*index+ZPLUS]) > 100.*ROUND_ERROR_PREC) {
 	  fprintf(stderr, "%d: Error in the calculation of Ez(%d,%d,%d)=%f!!\n", 
 		  this_node,lattice[index].r[0], lattice[index].r[1], lattice[index].r[2],
 		  Dfield[3*index+ZPLUS]);
@@ -1230,7 +1283,7 @@ void maggs_calc_init_e_field()
 	    MPI_Send(&Dfield[3*index+YPLUS], 1, MPI_DOUBLE, node_neighbors[3], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
 	}
 	else
-	  if (fabs(Dfield[3*index+YPLUS]) > 10.*ROUND_ERROR_PREC)
+	  if (fabs(Dfield[3*index+YPLUS]) > 100.*ROUND_ERROR_PREC)
 	    fprintf(stderr, "%d: Error in the calculation of Ey(%d,%d,%d)=%f!!\n",
 		    this_node, lattice[index].r[0], lattice[index].r[1], lattice[index].r[2],
 		    Dfield[3*index+YPLUS]);	  
@@ -1255,7 +1308,7 @@ void maggs_calc_init_e_field()
 	    MPI_Send(&Dfield[3*index+XPLUS], 1, MPI_DOUBLE, node_neighbors[1], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
 	}
 	else
-	  if (fabs(Dfield[3*index+XPLUS]) > 10.*ROUND_ERROR_PREC)
+	  if (fabs(Dfield[3*index+XPLUS]) > 100.*ROUND_ERROR_PREC)
 	    fprintf(stderr, "%d: Error in the calculation of Ex(%d,%d,%d)=%f!!\n",
 		    this_node, lattice[index].r[0], lattice[index].r[1], lattice[index].r[2],
 		    Dfield[3*index+XPLUS]);	  
@@ -1983,50 +2036,10 @@ int tclprint_to_result_Maggs(Tcl_Interp *interp)
 /***************************/
 
 /** Initialization function.
-    Checks if given parameters make sense.
     Sets maggs structure variables.
     Calls calculation of initial D-field. */
 void maggs_init()
 {
-	
-  int d, ncharges;
-  int max_node_grid;
-	
-  if(maggs.bjerrum == 0.) {
-    if(this_node==0) 
-      MAGGS_TRACE(fprintf(stderr,"0: maggs_init: Bjerrum length is zero.\n");
-		  fprintf(stderr,"   Electrostatics switched off!\n"));    
-  }
-  else {
-    MAGGS_TRACE(fprintf(stderr,"\n%d: maggs_init: \n",this_node));
-    if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-      if(this_node==0) {
-	fprintf(stderr,"0: maggs_init: SERIOUS WARNING:\n"); 
-	fprintf(stderr,"   No long range interactions for non cubic box.\n"); 
-	fprintf(stderr,"   Switch off long range interactions! \n");
-      }
-      maggs.bjerrum =  0.0;
-      return;
-    } 
-		
-    max_node_grid = 1;
-    FOR3D(d) if(node_grid[d] > max_node_grid) 
-      max_node_grid = node_grid[d];
-		
-    if(maggs.mesh%max_node_grid != 0) {
-      if(this_node==0) {
-	fprintf(stderr,"%d: maggs_init: SERIOUS WARNING:\n", this_node); 
-	fprintf(stderr,"   Number of mesh points is incompatible with number of processes.\n"); 
-	errexit();
-      }
-    }
-		
-    ncharges = maggs_count_charged_particles();
-    if(this_node == 0 && ncharges == 0) {
-      fprintf(stderr,"\nFailed to initialize fields - no charged particles in the system!\n");
-      errexit();
-    }
-		
     maggs.inva  = (double) maggs.mesh/box_l[0]; 
     maggs.a     = 1.0/maggs.inva;
     if (temperature>0.0) {
@@ -2036,8 +2049,13 @@ void maggs_init()
       maggs.prefactor  = sqrt(4. * M_PI * maggs.bjerrum);
       maggs.pref2      = maggs.bjerrum;
     }			
-		
-		
+    
+    if (maggs_sanity_checks()) {
+      maggs.bjerrum = 0.0;
+      coulomb.bjerrum = 0.0;
+      return;
+    }
+    		
     maggs_setup_local_lattice();
 		
     /* update max_cut */
@@ -2046,8 +2064,6 @@ void maggs_init()
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
     //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
-    MAGGS_TRACE(fprintf(stderr,"%d: maggs initialized\n",this_node));
-  }
 }
 
 /** Frees the dynamically allocated memory
@@ -2059,5 +2075,7 @@ void maggs_exit()
   free(Dfield);
   free(Bfield);
 }
+
+
 
 #endif // ELECTROSTATICS
