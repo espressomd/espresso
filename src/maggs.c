@@ -72,6 +72,9 @@
 /* (stemming from epsilon_zero and 4*pi) */
 #define SELF_FACTOR_1 1.57364595
 #define SELF_FACTOR_2 1.5078141
+// from lattice Green's function: 0.5054620197
+// and 0.126365505
+// e_0 = 8.85418781762 * 10^-12
 
 /* Define numbers for directions and dimensions: */
 #define SPACE_DIM 3                 /* number of dimensions */
