@@ -30,7 +30,9 @@ namespace eval mbtools::utils {
     namespace export acorr
     namespace export normalize
     namespace export scalevec
+    namespace export min_vec 
     namespace export distance
+    namespace export distance_min
     namespace export find_proportions
     namespace export matrix_multiply
     namespace export matrix_vec_multiply
@@ -222,6 +224,26 @@ proc ::mbtools::utils::acorr { data } {
 	return $acorr
 }
 
+# ::mbtools::utils::min_vec --
+#
+# Minimal vector between two vectors
+#
+proc ::mbtools::utils::min_vec { vec1 vec2 } {
+
+
+    if { [ llength $vec1 ] != [llength $vec2] } {
+	mmsg::err [namespace current] "cannot find distance between vectors $vec1 and $vec2 because they are different lengths"
+    }
+    
+    set box [setmd box_l]
+    set sum 0
+    for {set i 0 } { $i < [llength $vec1] } { incr i } {
+	lappend diff [expr [lindex $vec1 $i] - [lindex $vec2 $i]]
+	lappend add [expr -floor(([lindex $diff $i]/[lindex $box $i])+0.5)*[lindex $box $i]]
+    }
+    set vec [vecadd $diff $add]
+    return $vec
+}
 
 # ::mbtools::utils::distance --
 #
@@ -241,6 +263,28 @@ proc ::mbtools::utils::distance { vec1 vec2 } {
     }
 
     return [expr sqrt($sum)]
+}
+
+
+# ::mbtools::utils::distance_min --
+#
+# Minimal distance between two vectors
+#
+proc ::mbtools::utils::distance_min { vec1 vec2 } {
+
+
+    if { [ llength $vec1 ] != [llength $vec2] } {
+	mmsg::err [namespace current] "cannot find distance between vectors $vec1 and $vec2 because they are different lengths"
+    }
+    
+    set box [setmd box_l]
+    set sum 0
+    for {set i 0 } { $i < [llength $vec1] } { incr i } {
+	lappend diff [expr [lindex $vec1 $i] - [lindex $vec2 $i]]
+	lappend add [expr -floor(([lindex $diff $i]/[lindex $box $i])+0.5)*[lindex $box $i]]
+    }
+    set vec [vecadd $diff $add]
+    return [veclen $vec]
 }
 
 
