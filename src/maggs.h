@@ -75,6 +75,7 @@ typedef struct {
   double inva;
   /** size of mesh cube */
   double a;
+  double alpha[8][8];
 } MAGGS_struct;
 extern MAGGS_struct maggs;
 /*@}*/

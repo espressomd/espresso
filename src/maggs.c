@@ -154,7 +154,7 @@ typedef struct {
 /************************************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
-MAGGS_struct maggs = { 0. ,0. ,0. ,0. ,0. ,0 , 0., 0.};
+MAGGS_struct maggs = { 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
 
 /* local mesh. */
 static lattice_parameters lparams;
@@ -1027,6 +1027,76 @@ void maggs_update_charge_gradients(double *grad)
 /****** initialization procedure: ******/
 /***************************************/
 
+
+void calc_self_energy_coeffs()
+{
+  double factor, prefac;
+  int px = 0;
+  int py = 0;
+  int pz = 0;
+  int i, j, k, l, m, index;
+  double sx = 0.;
+  double sy = 0.;
+  double sz = 0.;
+  double sxy = 0.;
+  double sxyz = 0.;
+  double nomx, nomy, nomz;
+  double inva = maggs.inva;
+  double invasq = inva*inva;
+  double n[8][SPACE_DIM];// = {{0.,0.,0.}, {1.,0.,0.}, {0.,1.,0.}, {1.,1.,0.}, 
+  // {0.,0.,1.}, {1.,0.,1.}, {0.,1.,1.}, {1.,1.,1.}};
+
+  index = 0;
+  for(i=0;i<2;i++)
+    for(j=0;j<2;j++)
+      for(k=0;k<2;k++) {
+	n[index][2] = m; 
+	n[index][1] = l; 
+	n[index][0] = k; 
+	index++;
+  }
+
+  factor = M_PI / maggs.mesh;
+  prefac = 1. / maggs.mesh;
+  prefac = 0.5 * prefac * prefac * prefac * SQR(maggs.prefactor);
+  
+  for(i=0;i<8;i++) 
+    {
+      for(j=0;j<8;j++) 
+	{
+	  maggs.alpha[i][j] = 0.;
+	  for(px = 0; px < maggs.mesh; ++px)
+	    {
+	      sx = sin( factor * px );
+	      sx = sx * sx;
+	      nomx = 2.*factor*px*(n[i][0] - n[j][0]);
+	      for(py = 0; py < maggs.mesh; ++py)
+		{
+		  sy = sin( factor * py );
+		  sy = sy * sy; 
+		  nomy = 2.*factor*py*(n[i][1] - n[j][1]);
+		  sxy = sx + sy;
+		  for(pz = 0; pz < maggs.mesh; ++pz)
+		    {
+		      sz = sin( factor * pz );
+		      sz = sz * sz;
+		      nomz = 2.*factor*pz*(n[i][2] - n[j][2]);
+		      sxyz = sxy + sz;
+		      sxyz *= 4.;
+		      if(sxyz > 0)
+			{
+			  maggs.alpha[i][j] += cos(nomx + nomy + nomz) / sxyz;
+ 			}
+		    }
+		}
+	    }
+	  /* invasq is needed for the calculation of forces */
+	  maggs.alpha[i][j] = invasq * prefac * maggs.alpha[i][j];
+	}
+    }
+		      
+}
+
 /** For energy minimization:
     returns maximum of curl(E) from all sites.
     May also be used to verify constraint surface condition. */
@@ -1787,6 +1857,102 @@ void maggs_add_transverse_field(double dt)
   } 
 	
   maggs_exchange_surface_patch(Dfield, 3, 0);
+}
+
+
+void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
+{
+  int i, k, l, m, index;
+  int grad_ind;
+  int help_index[3];
+  double help_x;
+
+  help_x = 1. - rel_x;     /* relative pos. w.r.t. first */  
+
+  help_index[0] = 4;
+  help_index[1] = 2; 
+  help_index[2] = 1;
+
+  grad_ind = 0;
+  index = 0;
+  for(i=0;i<8;i++) rho[i] = 0.;
+
+  for(k=0;k<2;k++){   /* jumps from x- to x+ */
+    for(l=0;l<2;l++){  /* jumps from y- to y+ */
+      for(m=0;m<2;m++){ /* jumps from z- to z+ */
+	// without q!!!
+	if(k==0) rho[index] += - help_x * grad[grad_ind];
+	else {
+	  rho[index] += - rel_x * grad[grad_ind%4];
+	}
+
+	grad_ind ++;
+	index+=help_index[2];
+	help_index[2]=-help_index[2];
+      }
+      index+=help_index[1];
+      help_index[1]=-help_index[1];
+    }
+    index+=help_index[0];
+    help_index[0]=-help_index[0];
+  }
+}
+
+void calc_part_self_force(Particle *p)
+{
+  int i, j, k, ip;
+  double self, temp;
+  static int help_index[SPACE_DIM];
+
+  int dir1, dir2, d, grad_ind;
+  int l, m, index, temp_ind;
+  double grad[24];
+  double grad2[24];
+  double rho[8];
+  double *force = p->f.f;
+  double rel = 0.;
+
+  help_index[0] = 12;
+  help_index[1] = 6;
+  help_index[2] = 3; 
+
+  maggs_calc_charge_gradients(&rel, p->p.q, &grad[ip]);
+  interpolate_part_charge_from_grad(rel, grad, rho);
+  index = 0;
+  grad_ind = 0;
+  FOR3D(d) {
+    maggs_calc_directions(d, &dir1, &dir2);
+    for(l=0;l<2;l++){  /* jumps from dir2- to dir2+ */
+      for(m=0;m<2;m++){ /* jumps from dir1- to dir1+ */          
+
+	temp_ind = index + d;
+	grad2[temp_ind] = grad[grad_ind];
+	grad2[temp_ind + help_index[d]] = -grad[grad_ind];
+
+	grad_ind++;
+	index+=help_index[dir1];
+	help_index[dir1]=-help_index[dir1];
+      }
+      index+=help_index[dir2];
+      help_index[dir2]=-help_index[dir2];
+
+    }
+  }
+
+  FOR3D(k) {
+    self = 0.; 
+    for(i=0;i<8;i++) {
+
+      temp = rho[i]*grad2[i*SPACE_DIM + k];
+      self += maggs.alpha[i][i] * temp;
+
+      for(j=i+1;j<8;j++) {
+	temp = rho[i]*grad2[j*SPACE_DIM + k] + rho[j]*grad2[i*SPACE_DIM + k];
+	self += maggs.alpha[i][j] * temp;
+      }
+    }
+    force[k] += 2. * self; 
+  }
 }
 
 

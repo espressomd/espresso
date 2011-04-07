@@ -9,6 +9,7 @@ src/acconfig.h
 aclocal.m4
 autom4te.cache
 .deps/
+myconfig.h
 
 # created by configure
 src/myconfig-final.h
