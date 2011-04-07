@@ -64,7 +64,7 @@ if HAVE_LATEX
 	cd $(srcdir); \
 		$(AWK) -f assemble_quickref.awk $(ug_TEXFILES) \
 			> $(abs_builddir)/quickref.inp
-	sh ../latexit.sh $(srcdir) ug || rm ug.pdf
+	sh ../latexit.sh $(srcdir) ug || test -f ug.pdf && rm ug.pdf
 	@echo "See LaTeX output in ug.log"
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
