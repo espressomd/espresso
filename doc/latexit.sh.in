@@ -11,9 +11,10 @@ echo "Running LaTeX stage 1..."
 
 $PDFLATEX $TEXFILE
 EC=$?
-if [ $EC -ne 0 ]; then
+if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 1 failed."
-    echo "See LaTeX output in $TEXFILE.log."
+    echo "See LaTeX output in $TEXFILE.log." 
+    test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
 
@@ -23,22 +24,26 @@ if test -e $TEXFILE.ind; then
 fi
 
 echo "Running bibtex..."
-@BIBTEX@ $TEXFILE || exit $?
+# Don't fail on bibtex error: it fails if no .bib-file is there!
+@BIBTEX@ $TEXFILE
+
 
 echo "Running LaTeX stage 2..."
 $PDFLATEX $TEXFILE 
 EC=$?
-if [ $EC -ne 0 ]; then
+if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 2 failed."
     echo "See LaTeX output in $TEXFILE.log."
+    test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
 
 echo "Running LaTeX stage 3..."
 $PDFLATEX $TEXFILE 
 EC=$?
-if [ $EC -ne 0 ]; then
+if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 3 failed."
     echo "See LaTeX output in $TEXFILE.log."
+    test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
