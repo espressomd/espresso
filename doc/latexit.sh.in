@@ -47,3 +47,5 @@ if test $EC -ne 0; then
     test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
+
+echo "See LaTeX output in $TEXFILE.log."
