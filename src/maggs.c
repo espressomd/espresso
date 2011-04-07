@@ -104,9 +104,9 @@
       for(k=0;k<lparams.dim[2];k++) 
 /* from ifndef MAGGS_H */
 
-/************************************************/
-/*           data types and structures          */
-/************************************************/
+/***************************************/
+/**<h3> data types and structures </h3>*/
+/***************************************/
 
 typedef int      t_ivector [SPACE_DIM]; /* integer vector for position in grid */
 typedef double   t_dvector [SPACE_DIM]; /* double vector for fields etc. */
@@ -149,9 +149,9 @@ typedef struct {
 
 
 
-/************************************************/
-/*             global variables                 */
-/************************************************/
+/*******************************/
+/**<h3> global variables </h3> */
+/*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
 MAGGS_struct maggs = { 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
@@ -172,9 +172,9 @@ static t_dirs* neighbor;
 
 
 
-/************************************************************/
-/*    Private Functions list with short comment             */
-/************************************************************/
+/*******************************************************/
+/**<h3> Private Functions list with short comment </h3>*/
+/*******************************************************/
 /*
  * This is supposed to give an overview on the contained functions.
  * Declaration is not needed, since the functions are in right order,
@@ -249,7 +249,7 @@ static t_dirs* neighbor;
 
 
 /*************************************/
-/****** small helper functions: ******/
+/**<h3> small helper functions: </h3>*/
 /*************************************/
 
 /** Turns the 3D index into a linear index.
@@ -459,7 +459,7 @@ int maggs_sanity_checks()
 
 
 /*******************************/
-/****** setup everything: ******/
+/**<h3> setup everything: </h3>*/
 /*******************************/
 
 /** set and calculate the system wide parameters
@@ -756,7 +756,7 @@ void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, M
 
 
 /*****************************************/
-/****** Surface patch communication ******/
+/**<h3> Surface patch communication </h3>*/
 /*****************************************/
 
 /** MPI communication of surface region.
@@ -877,7 +877,7 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
 
 
 /*********************************************/
-/****** interpolate charges on lattice: ******/
+/**<h3> interpolate charges on lattice: </h3>*/
 /*********************************************/
 
 /** Interpolation function in one dimension.
@@ -1089,7 +1089,7 @@ void maggs_update_charge_gradients(double *grad)
 
 
 /***************************************/
-/****** initialization procedure: ******/
+/**<h3> initialization procedure: </h3>*/
 /***************************************/
 
 /** Calculate the self energy coefficients for the system, if
@@ -1594,7 +1594,7 @@ void maggs_calc_init_e_field()
 
 
 /*********************************************/
-/****** calculate currents and E-fields ******/
+/**<h3> calculate currents and E-fields </h3>*/
 /*********************************************/
 
 /** calculate the charge flux in direction "dir".
@@ -1871,7 +1871,7 @@ void maggs_couple_current_to_Dfield()
 
 
 /*******************************************/
-/****** calculate B-fields and forces ******/
+/**<h3> calculate B-fields and forces </h3>*/
 /*******************************************/
 
 /** propagate the B-field via \dot{B} = \nabla\times D (and prefactor)
@@ -2231,7 +2231,7 @@ void maggs_calc_forces()
 
 
 /********************************************/
-/****** get energy and print out stuff ******/
+/**<h3> get energy and print out stuff </h3>*/
 /********************************************/
 
 /** integrates 0.5*D*E over the whole system
@@ -2301,7 +2301,7 @@ int tclprint_to_result_Maggs(Tcl_Interp *interp)
 
 
 /***************************/
-/****** init and exit ******/
+/**<h3> init and exit </h3>*/
 /***************************/
 
 /** Initialization function.
