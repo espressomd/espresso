@@ -58,7 +58,7 @@
 
 /* only include from within p3m.h */
 #ifndef P3M_H_CURRENT
-#error never include this file file directly, include p3m.h
+#error never include this file directly, include p3m.h
 #endif
 
 /** local mesh. */
