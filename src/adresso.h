@@ -60,10 +60,10 @@ int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int 
 #ifndef VIRTUAL_SITES_COM
  #error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
 #endif
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
 int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
-/** #endif */
+/* #endif */
 
 #ifdef INTERFACE_CORRECTION
 /* The list for storing the interpolation function of interface correction */
@@ -495,7 +495,7 @@ MDINLINE void add_adress_tab_pair_force(Particle *p1, Particle *p2, IA_parameter
 }
 #endif
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 
 MDINLINE double inverse_weight(double w){
   if(adress_vars[0] == 2) {
@@ -692,7 +692,7 @@ MDINLINE void add_thermodynamic_force(Particle * p){
   }
 }
 
-/** #endif */
+/* #endif */
 
 #endif
 /*@}*/

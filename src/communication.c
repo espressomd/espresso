@@ -1307,9 +1307,9 @@ void mpi_bcast_n_particle_types(int ns)
 void mpi_bcast_n_particle_types_slave(int pnode, int ns)
 {
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   realloc_tf_params(ns);
-  /** #endif */
+  /* #endif */
 #endif
   realloc_ia_params(ns);
 }

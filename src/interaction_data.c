@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -67,9 +68,9 @@ int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 TF_parameters *tf_params = NULL;
-/** #endif */
+/* #endif */
 #endif
 
 #if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
@@ -118,11 +119,11 @@ DoubleList adress_tab_forces;
 DoubleList adress_tab_energies;
 #endif
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 /** Array containing the thermodynamic forces **/
 DoubleList thermodynamic_forces;
 DoubleList thermodynamic_f_energies;
-/** #endif */
+/* #endif */
 #endif
 
 ///
@@ -151,12 +152,12 @@ void adress_force_and_energy_tables_init() {
 }
 #endif
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void tf_tables_init() {
   init_doublelist(&thermodynamic_forces);
   init_doublelist(&thermodynamic_f_energies);
 }
-/** #endif */
+/* #endif */
 #endif
 
 
@@ -357,7 +358,7 @@ void initialize_ia_params(IA_parameters *params) {
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void initialize_tf_params(TF_parameters *params){
   params->TF_TAB_npoints = 0;
   params->TF_TAB_startindex = 0;
@@ -569,7 +570,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void copy_tf_params(TF_parameters *dst, TF_parameters *src){
   dst->TF_TAB_npoints = src->TF_TAB_npoints;
   dst->TF_TAB_startindex = src->TF_TAB_startindex;
@@ -579,7 +580,7 @@ void copy_tf_params(TF_parameters *dst, TF_parameters *src){
   dst->TF_TAB_stepsize = src->TF_TAB_stepsize;
   strcpy(dst->TF_TAB_filename,src->TF_TAB_filename);
 }
-/** #endif */
+/* #endif */
 #endif
 
 /** returns non-zero if there is a nonbonded interaction defined */
@@ -691,13 +692,13 @@ if (data->TUNABLE_SLIP_r_cut != 0)
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 int checkIfTF(TF_parameters *data){
   if (data->TF_TAB_maxval !=0)
     return 1;
   return 0;
 }
-/** #endif */
+/* #endif */
 #endif
 
 char *get_name_of_bonded_ia(int i) {
@@ -770,7 +771,7 @@ void realloc_ia_params(int nsize)
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void realloc_tf_params(int nsize)
 {
   int i;
@@ -800,7 +801,7 @@ void realloc_tf_params(int nsize)
   
   tf_params = new_params;
 }
-/** #endif */
+/* #endif */
 #endif
 
 void make_particle_type_exist(int type)
@@ -1573,7 +1574,7 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 int tclprint_to_result_TF(Tcl_Interp *interp, int i)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -1593,7 +1594,7 @@ int tclprint_to_result_TF(Tcl_Interp *interp, int i)
   
   return(TCL_OK);
 }
-/** #endif */
+/* #endif */
 #endif
 
 int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
@@ -1962,7 +1963,7 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 /* TODO: This function is not used anywhere. To be removed?  */
 int tf_print(Tcl_Interp * interp, int part_type)
 {
@@ -1975,7 +1976,7 @@ int tf_print(Tcl_Interp * interp, int part_type)
     
     return tclprint_to_result_TF(interp, part_type);
 }
-/** #endif */
+/* #endif */
 #endif
 
 

@@ -110,9 +110,9 @@ int on_program_start(Tcl_Interp *interp)
 #ifdef INTERFACE_CORRECTION
   adress_force_and_energy_tables_init();
 #endif
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   tf_tables_init();
-  /** #endif */
+  /* #endif */
 #endif
 #ifdef ELP3M
   fft_pre_init();
@@ -821,9 +821,9 @@ static void init_tcl(Tcl_Interp *interp)
   /* in adresso.h */
   REGISTER_COMMAND("adress", tclcommand_adress);
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   REGISTER_COMMAND("thermodynamic_force", tclcommand_thermodynamic_force);
-  /** #endif */
+  /* #endif */
   REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
 #endif
 #ifdef METADYNAMICS
