@@ -421,15 +421,20 @@ int maggs_sanity_checks()
     ERROR_SPRINTF(errtxt, "{302 MEMD needs cubic box.} ");
     ret = -1;
   }
+  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{303 MEMD requires periodicity 1 1 1} ");
+    ret = 1;
+  }
   else if ( maggs.mesh%max_node_grid != 0 ) {
     errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{303 MEMD: meshsize is incompatible with number of processes.} ");
+    ERROR_SPRINTF(errtxt, "{304 MEMD: meshsize is incompatible with number of processes.} ");
     ret = -1;
   }
   /*
   else if ( maggs_count_charged_particles() == 0 ) {
       errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{304 MEMD: No charges in the system.} ");
+      ERROR_SPRINTF(errtxt, "{30? MEMD: No charges in the system.} ");
       ret = -1;
   }
   */
@@ -449,6 +454,22 @@ int maggs_sanity_checks()
     ERROR_SPRINTF(errtxt, "{307 MEMD: Speed of light is set too high. Increase f_mass.} ");
     ret = -1;      
   }
+#ifdef EXTERNAL_FORCES
+  /** check for fixed particles */
+  for (int cellnumber = 0; cellnumber < local_cells.n; cellnumber++) {
+    Cell *cell = local_cells.cell[cellnumber];
+    Particle *p  = cell->part;
+    int np = cell->n;
+    for(int i = 0; i < np; i++) {
+      if ( (p[i].p.q != 0.0) & p[i].l.ext_flag & COORDS_FIX_MASK) {
+	errtxt = runtime_error(128);
+	ERROR_SPRINTF(errtxt, "{308 MEMD does not work with fixed particles.} ");
+	ret = -1;
+      }
+    }
+  }  
+#endif
+
   
   return ret;
 }
