@@ -41,6 +41,7 @@ int observable_particle_positions(void* typelist, double* A, unsigned int n_A);
 #ifdef ELECTROSTATICS
 int observable_particle_currents(void* typelist, double* A, unsigned int n_A);
 int observable_currents(void* typelist, double* A, unsigned int n_A);
+int observable_dipole_moment(void* typelist, double* A, unsigned int n_A);
 #endif
 
 

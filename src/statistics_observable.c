@@ -124,6 +124,23 @@ int tclcommand_observable_currents(Tcl_Interp* interp, int argc, char** argv, in
 #endif
 } 
 
+int tclcommand_observable_dipole_moment(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+#ifdef ELECTROSTATICS
+  int temp;
+  IntList* ids;
+  obs->fun = &observable_dipole_moment;
+  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) 
+    return TCL_ERROR;
+  obs->args=(void*)ids;
+  obs->n=3;
+  *change=1+temp;
+  return TCL_OK;
+#else
+  Tcl_AppendResult(interp, "Feature ELECTROSTATICS needed for observable currents", (char *)NULL);
+  return TCL_ERROR;
+#endif
+}
+
 int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   int order, order2;
   int* order_p;
@@ -247,9 +264,9 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
 
 
 #define REGISTER_OBSERVABLE(name,parser) \
-  if (ARG1_IS_S(#name)) { \
+  if (ARG_IS_S(2,#name)) { \
     observables[n_observables]=malloc(sizeof(observable)); \
-    if (parser(interp, argc-1, argv+1, &temp, observables[n_observables]) ==TCL_OK) { \
+    if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) ==TCL_OK) { \
       n_observables++; \
       argc-=1+temp; \
       argv+=1+temp; \
@@ -275,6 +292,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   IntList* ids;
   IntList* ids1;
   iw_params* iw_params_p;
+  int no;
   
   profile_data* pdata=0;
   radial_profile_data* rpdata=0;
@@ -291,18 +309,29 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     return TCL_OK;
   }
 
-  REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities);
-  REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity);
-  REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions);
-  REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents);
-  REGISTER_OBSERVABLE(currents, tclcommand_observable_currents);
-  REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor);
-  REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with);
-//  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing);
-//  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile);
-  REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile);
-//  REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
-  REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile);
+  
+  if (argc > 1 && ARG1_IS_I(no)) {
+    printf("observable %d\n", no);
+  }
+  if (argc > 2 && ARG1_IS_I(no) && no == n_observables) {
+    printf("parsing new observable\n");
+
+    REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities);
+    REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity);
+    REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions);
+    REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents);
+    REGISTER_OBSERVABLE(currents, tclcommand_observable_currents);
+    REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment);
+    REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor);
+    REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with);
+  //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing);
+  //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile);
+    REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile);
+  //  REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
+    REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile);
+    Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
+    return TCL_ERROR;
+  }
   
   if (ARG1_IS_I(n)) {
     if (n>=n_observables) {
@@ -446,6 +475,26 @@ int observable_currents(void* idlist, double* A, unsigned int n_A) {
     j[0] += charge * partCfg[ids->e[i]].m.v[0]/time_step;
     j[1] += charge * partCfg[ids->e[i]].m.v[1]/time_step;
     j[2] += charge * partCfg[ids->e[i]].m.v[2]/time_step;
+  }
+  A[0]=j[0];
+  A[1]=j[1];
+  A[2]=j[2];
+  return 0;
+}
+int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  double charge;
+  double j[3] = {0. , 0., 0. } ;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] > n_total_particles)
+      return 1;
+    charge = partCfg[ids->e[i]].p.q;
+    j[0] += charge * partCfg[ids->e[i]].r.p[0];
+    j[1] += charge * partCfg[ids->e[i]].r.p[1];
+    j[2] += charge * partCfg[ids->e[i]].r.p[2];
   }
   A[0]=j[0];
   A[1]=j[1];

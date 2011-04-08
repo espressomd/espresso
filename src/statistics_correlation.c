@@ -413,7 +413,10 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     while (argc > 0) {
       if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
-          printf("giving observable %d\n", temp);
+          if (temp>=n_observables) {
+             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist", (char *)NULL);
+             return TCL_ERROR;
+          }
           A=observables[temp];
           dim_A=observables[temp]->n;
           change+=2; argv+=2; argc-=2;
@@ -423,6 +426,10 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
         }
       } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
+          if (temp>=n_observables) {
+             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist", (char *)NULL);
+             return TCL_ERROR;
+          }
           B=observables[temp];
           dim_B=observables[temp]->n;
           change+=2; argv+=2; argc-=2;
