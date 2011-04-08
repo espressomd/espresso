@@ -1133,6 +1133,8 @@ void calc_self_energy_coeffs()
   double n[8][SPACE_DIM];// = {{0.,0.,0.}, {1.,0.,0.}, {0.,1.,0.}, {1.,1.,0.}, 
   // {0.,0.,1.}, {1.,0.,1.}, {0.,1.,1.}, {1.,1.,1.}};
 
+  m=0;
+  l=0;
   index = 0;
   for(i=0;i<2;i++)
     for(j=0;j<2;j++)
@@ -1973,6 +1975,7 @@ void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
 {
   int i, k, l, m, index;
   int grad_ind;
+
   int help_index[3];
   double help_x;
 
@@ -2012,7 +2015,7 @@ void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
 */
 void calc_part_self_force(Particle *p)
 {
-  int i, j, k, ip;
+  int i, j, k, ip=0;
   double self, temp;
   static int help_index[SPACE_DIM];
 
