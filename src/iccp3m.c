@@ -711,7 +711,7 @@ void calc_long_range_forces_iccp3m()
 #ifdef NPT
         if(integ_switch == INTEG_METHOD_NPT_ISO) exit(0);
 #endif
-        P3M_calc_kspace_forces(1,0);
+        P3M_calc_kspace_forces_for_charges(1,0);
     break;
 #endif
     case COULOMB_MMM2D:

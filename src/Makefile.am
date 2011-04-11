@@ -18,10 +18,7 @@
 
 # List headers that are not used by the program here
 noinst_HEADERS = \
-	myconfig-default.h \
-	p3m-charges.c p3m-dipoles.h \
-	p3m-dipoles.c p3m-charges.h \
-	p3m-assignment.c
+	myconfig-default.h
 
 # List the sources of the Espresso binary here
 libEspresso_a_SOURCES = \
@@ -49,7 +46,9 @@ libEspresso_a_SOURCES = \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
+	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
+	p3m-dipoles.c p3m-dipoles.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
 	fft.c fft.h \
