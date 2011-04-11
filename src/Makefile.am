@@ -48,7 +48,7 @@ libEspresso_a_SOURCES = \
 	iccp3m.c iccp3m.h \
 	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
-	p3m-dipoles.c p3m-dipoles.h \
+	p3m-magnetostatics.c p3m-magnetostatics.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
 	fft.c fft.h \

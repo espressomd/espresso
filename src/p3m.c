@@ -39,11 +39,6 @@
 
 #ifdef ELP3M
 
-/* defined only within this header file, for checking that system
-   (electro/magnetostatic) specific files are only included from
-   here. */
-#define P3M_C_CURRENT
-
 /************************************************
  * variables
  ************************************************/
@@ -246,6 +241,8 @@ void static calc_influence_function_energy(void);
  */
 MDINLINE double perform_aliasing_sums_force(int n[3], double nominator[3]);
 MDINLINE double perform_aliasing_sums_energy(int n[3]);
+
+int tclcommand_inter_coulomb_print_p3m_adaptive_tune_parameters(Tcl_Interp *interp);
 
 /*@}*/
 

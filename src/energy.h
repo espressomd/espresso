@@ -31,6 +31,7 @@
 
 /* include the energy files */
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"

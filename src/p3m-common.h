@@ -49,10 +49,8 @@
  *  </ul>
  *
  */
-
+#include "config.h"
 #include "utils.h"
-#include "interaction_data.h"
-#include "integrate.h"
 
 #ifdef ELP3M
 

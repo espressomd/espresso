@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef FORCES_H
-#define FORCES_H
+#ifndef _FORCES_H
+#define _FORCES_H
 /** \file forces.h Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -40,6 +40,7 @@
 
 /* include the force files */
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 #include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"

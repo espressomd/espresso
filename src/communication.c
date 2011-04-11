@@ -1730,7 +1730,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     // fall through
   #endif  
   case DIPOLAR_P3M:
-    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&Dp3m, sizeof(Dp3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
 #endif
 #ifdef DAWAANR

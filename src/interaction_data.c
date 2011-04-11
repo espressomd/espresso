@@ -1106,8 +1106,8 @@ void calc_maximal_cutoff()
 #if  defined(MAGNETOSTATICS) && defined(ELP3M) 
   switch (coulomb.Dmethod) {
   case DIPOLAR_P3M:
-    if (max_cut_non_bonded < p3m.Dr_cut)
-      max_cut_non_bonded = p3m.Dr_cut;
+    if (max_cut_non_bonded < Dp3m.r_cut)
+      max_cut_non_bonded = Dp3m.r_cut;
     break;
   }       
 #endif /*ifdef MAGNETOSTATICS */
@@ -1328,14 +1328,14 @@ int dipolar_set_Dbjerrum(double bjerrum)
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
-      p3m.Dalpha    = 0.0;
-      p3m.Dalpha_L  = 0.0;
-      p3m.Dr_cut    = 0.0;
-      p3m.Dr_cut_iL = 0.0;
-      p3m.Dmesh[0]  = 0;
-      p3m.Dmesh[1]  = 0;
-      p3m.Dmesh[2]  = 0;
-      p3m.Dcao      = 0;
+      Dp3m.alpha    = 0.0;
+      Dp3m.alpha_L  = 0.0;
+      Dp3m.r_cut    = 0.0;
+      Dp3m.r_cut_iL = 0.0;
+      Dp3m.mesh[0]  = 0;
+      Dp3m.mesh[1]  = 0;
+      Dp3m.mesh[2]  = 0;
+      Dp3m.cao      = 0;
       break;
 #endif
     }

@@ -48,10 +48,10 @@
  *  </ul>
  */
 
-#include "config.h"
 #include "p3m-common.h"
+#include "interaction_data.h"
 
-#ifdef ELECTROSTATICS
+#ifdef ELP3M
 
 /************************************************
  * data types
