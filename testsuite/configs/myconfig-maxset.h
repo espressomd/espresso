@@ -2,8 +2,8 @@
 #define ELECTROSTATICS
 #define ROTATION
 #define ROTATIONAL_INTERIA
-#define DIPOLES
 #define MAGNETOSTATICS
+#define MDLC
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
