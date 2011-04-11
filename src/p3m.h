@@ -47,14 +47,6 @@
  *       PhdThesis, Universit{\"a}t Mainz, 2000
  *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
  *  </ul>
- *
- *  For more information about the p3m algorithm,
- *  see \ref p3m.h "p3m.h"
- *  see \ref p3m-charges.c  "p3m-charges.c"
- *  see \ref p3m-charges.h  "p3m-charges.h"
- *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
- *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignment.c  "p3m-assignment.c"
  */
 
 #include "utils.h"
@@ -152,68 +144,9 @@ typedef struct {
 #endif
 } p3m_struct;
 
-/** Structure for local mesh parameters. */
-typedef struct {
-  /* local mesh characterization. */
-  /** dimension (size) of local mesh. */
-  int dim[3];
-  /** number of local mesh points. */
-  int size;
-  /** index of lower left corner of the 
-      local mesh in the global mesh. */
-  int ld_ind[3];
-  /** position of the first local mesh point. */
-  double ld_pos[3];
-  /** dimension of mesh inside node domain. */
-  int inner[3];
-  /** inner left down grid point */
-  int in_ld[3];
-  /** inner up right grid point + (1,1,1)*/
-  int in_ur[3];
-  /** number of margin mesh points. */
-  int margin[6];
-  /** number of margin mesh points from neighbour nodes */
-  int r_margin[6];
-  /** offset between mesh lines of the last dimension */
-  int q_2_off;
-  /** offset between mesh lines of the two last dimensions */
-  int q_21_off;
-} local_mesh;
-
-/** Structure for send/recv meshs. */
-typedef struct {
-  /** dimension of sub meshs to send. */
-  int s_dim[6][3];
-  /** left down corners of sub meshs to send. */
-  int s_ld[6][3];
-  /** up right corners of sub meshs to send. */
-  int s_ur[6][3];
-  /** sizes for send buffers. */
-  int s_size[6];
-  /** dimensionof sub meshs to recv. */
-  int r_dim[6][3];
-  /** left down corners of sub meshs to recv. */
-  int r_ld[6][3];
-  /** up right corners of sub meshs to recv. */
-  int r_ur[6][3];
-  /** sizes for recv buffers. */
-  int r_size[6];
-  /** maximal size for send/recv buffers. */
-  int max;
-} send_mesh;
-
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
 
 /** P3M parameters. */
 extern p3m_struct p3m;
-
-//The following are defined in p3m.c :
-
-#define CA_INCREMENT 32  
-
-/*@}*/
 
 /** \name Exported Functions */
 /************************************************************/
@@ -233,18 +166,6 @@ void P3M_exit();
 
 /*@}*/
 
-
-/**************** headers for each specific p3m algorithm ********************************************/
-
-#ifdef ELECTROSTATICS
-#include "p3m-charges.h"  /* charge-charge interaction */
-#endif
-
-#ifdef MAGNETOSTATICS
-#include "p3m-dipoles.h"  /* magnetic dipole-dipole interaction */
-#endif 
-
-#undef P3M_H_CURRENT
 
 #endif /* of ifdef ELP3M */
 
