@@ -2079,11 +2079,7 @@ void   P3M_init_charges() {
 
     calc_send_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
-    /* DEBUG */
-    for(n=0;n<n_nodes;n++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
-      if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
-    }
+    P3M_TRACE(p3m_print_send_mesh(sm));
     if(sm.max != send_recv_grid_size) {
       send_recv_grid_size=sm.max;
       send_grid = (double *) realloc(send_grid, sizeof(double)*sm.max);
