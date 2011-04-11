@@ -20,28 +20,19 @@
 */
 /** \file p3m-dipoles.c  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
- *  For more information about the p3m algorithm,
- *  see \ref p3m.h "p3m.h"
- *  see \ref p3m-charges.c  "p3m-charges.c"
- *  see \ref p3m-charges.h  "p3m-charges.h"
- *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
- *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignment.c  "p3m-assignment.c"
- 
- NB: In general the magnetic dipole-dipole functions bear the same name than the charge-charge but,
-     adding in front of the name a D   and replacing where "charge" appears by "dipole". In this way
-     one can recognize the similarity of the functions but avoiding nasty confusions in their use.
+ NB: In general the magnetic dipole-dipole functions bear the same
+     name than the charge-charge but, adding in front of the name a D
+     and replacing where "charge" appears by "dipole". In this way one
+     can recognize the similarity of the functions but avoiding nasty
+     confusions in their use.
 
  PS: By default the magnetic epsilon is metallic = 0.  
 */
 
+#include "p3m-dipoles.h"
+
 #ifdef MAGNETOSTATICS
 
-/* only include from within p3m.c */
-#ifndef P3M_C_CURRENT
-#error never compile this file file directly, it is part of p3m.c
-#endif
-  
 /************************************************
  * DEFINES
  ************************************************/
@@ -56,6 +47,13 @@
 
 
 /********** definition of Variables *************/
+p3m_struct p3m = { 
+  0.0, 0.0, 
+  {0,0,0}, {P3M_MESHOFF, P3M_MESHOFF, P3M_MESHOFF}, 
+  0, P3M_N_INTERPOL, 0.0, P3M_EPSILON_MAGNETIC, 
+  {0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0}, 0.0, 0.0, 0, 0, {0, 0, 0},
+};
+
 /** interpolation of the charge assignment function. */
   double *Dint_caf[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
@@ -803,8 +801,41 @@ int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc
   return TCL_OK;
 }
 
-/*****************************************************************************/
+int tclprint_to_result_DipolarP3M(Tcl_Interp *interp)
+{
+#ifdef MAGNETOSTATICS
+  char buffer[TCL_DOUBLE_SPACE];
 
+  Tcl_PrintDouble(interp, p3m.Dr_cut, buffer);
+  Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",p3m.Dmesh[0]);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",p3m.Dcao);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.Dalpha, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.Daccuracy, buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+  Tcl_AppendResult(interp, "} {magnetic epsilon ", (char *) NULL);
+  if (p3m.Depsilon == P3M_EPSILON_METALLIC)
+    Tcl_AppendResult(interp, "metallic ", (char *) NULL);
+  else {
+    Tcl_PrintDouble(interp, p3m.Depsilon, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  }
+  sprintf(buffer,"%d",p3m.Dinter);
+  Tcl_AppendResult(interp, "n_interpol ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.Dmesh_off[0], buffer);
+  Tcl_AppendResult(interp, "mesh_off ", buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.Dmesh_off[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, p3m.Dmesh_off[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *) NULL);
+#endif 
+
+  return TCL_OK;
+}
 
 void interpolate_dipole_assignment_function()
 {
@@ -829,11 +860,6 @@ void interpolate_dipole_assignment_function()
                     Dint_caf[i][j+p3m.Dinter] = P3M_caf(i, j*dInterpol,p3m.Dcao);
          }
 }
-
-
-
-/*****************************************************************************/
-
 
 /* assign the dipoles */
 void P3M_dipole_assign(void)
@@ -2311,6 +2337,20 @@ static int tclcommand_inter_magnetic_print_p3m_adaptive_tune_parameters(Tcl_Inte
   return (TCL_OK);
 }
 
+void p3m_print_p3m_struct(p3m_struct ps) {
+  fprintf(stderr,"%d: dipolar p3m_struct: \n",this_node);
+  fprintf(stderr,"   Dalpha_L=%f, Dr_cut_iL=%f \n",
+	  ps.Dalpha_L,ps.Dr_cut_iL);
+  fprintf(stderr,"   Dmesh=(%d,%d,%d), Dmesh_off=(%.4f,%.4f,%.4f)\n",
+	  ps.Dmesh[0],ps.Dmesh[1],ps.Dmesh[2],
+	  ps.Dmesh_off[0],ps.Dmesh_off[1],ps.Dmesh_off[2]);
+  fprintf(stderr,"   Dcao=%d, Dinter=%d, Depsilon=%f\n",
+	  ps.Dcao,ps.Dinter,ps.Depsilon);
+  fprintf(stderr,"   Dcao_cut=(%f,%f,%f)\n",
+	  ps.Dcao_cut[0],ps.Dcao_cut[1],ps.Dcao_cut[2]);
+  fprintf(stderr,"   Da=(%f,%f,%f), Dai=(%f,%f,%f)\n",
+	  ps.Da[0],ps.Da[1],ps.Da[2],ps.Dai[0],ps.Dai[1],ps.Dai[2]);
+}
 
 /*****************************************************************************/
 
@@ -2880,6 +2920,16 @@ void   P3M_init_dipoles() {
   }
 
 
+}
+
+void P3M_free_dipoles() {
+  for (i=0;i<3;i++) free(Drs_mesh_dip[i]);
+  free(Dca_frac);
+  free(Dca_fmp);
+  free(Dsend_grid);
+  free(Drecv_grid);
+  free(Drs_mesh);
+  free(Dks_mesh); 
 }
 
 /*****************************************************************************/

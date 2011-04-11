@@ -31,28 +31,48 @@
  *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
  *  </ul>
  *
- *  For more information about the p3m algorithm,
- *  see \ref p3m.h "p3m.h"
- *  see \ref p3m-charges.c  "p3m-charges.c"
- *  see \ref p3m-charges.h  "p3m-charges.h"
- *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
- *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignment.c  "p3m-assignment.c"
  */
 
 #ifdef MAGNETOSTATICS
 
-/* only include from within p3m.h */
-#ifndef P3M_H_CURRENT
-#error never include this file file directly, include p3m.h
-#endif
+/** Structure to hold dipolar P3M parameters and some dependend variables. */
+typedef struct {
+    /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
+  double Dalpha_L;
+  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
+  double Dr_cut_iL;
+  /** number of mesh points per coordinate direction (>0). */
+  int    Dmesh[3];
+  /** offset of the first mesh point (lower left 
+      corner) from the coordinate origin ([0,1[). */
+  double Dmesh_off[3];
+  /** charge assignment order ([0,7]). */
+  int    Dcao;
+  /** number of interpolation points for charge assignment function */
+  int    Dinter;
+  /** Accuracy of the actual parameter set. */
+  double Daccuracy;
 
-/** local mesh. */
-extern local_mesh Dlm;
-/** send/recv mesh sizes */
-extern send_mesh  Dsm;
-
-//The following are defined in p3m-dipoles.c :
+  /** epsilon of the "surrounding dielectric". */
+  double Depsilon;
+  /** Cutoff for charge assignment. */
+  double Dcao_cut[3];
+  /** mesh constant. */
+  double Da[3];
+  /** inverse mesh constant. */
+  double Dai[3];
+  /** unscaled \ref alpha_L for use with fast inline functions only */
+  double Dalpha;
+  /** unscaled \ref r_cut_iL for use with fast inline functions only */
+  double Dr_cut;
+  /** full size of the interpolated assignment function */
+  int Dinter2;
+  /** number of points unto which a single charge is interpolated, i.e. p3m.Dcao^3 */
+  int Dcao3;
+  /** additional points around the charge assignment mesh, for method like dielectric ELC
+      creating virtual charges. */
+  double Dadditional_mesh[3];
+} p3m_struct;
 
 extern int Dca_num;
 extern double  *Dca_frac;
@@ -70,6 +90,9 @@ int tclcommand_inter_magnetic_parse_p3m(Tcl_Interp * interp, int argc, char ** a
 
 /** dipolar p3m parser, optional parameters */
 int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
+
+/** print the p3m parameters to the interpreters result */
+int tclprint_to_result_DipolarP3M(Tcl_Interp *interp);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
@@ -355,5 +378,4 @@ MDINLINE double p3m_dipolar_pair_energy(Particle *p1, Particle *p2,
   return 0.0;
 }
 
-/*@}*/
-#endif /* of defined(MAGNETOSTATICS) */
+#endif /* MAGNETOSTATICS */
