@@ -360,8 +360,8 @@ AS_IF([test x$fftw_found = xno],[
          ])
     ])
   ])
-
-AC_DEFINE_UNQUOTED(FFTW,$fftw_found,[Whether FFTW is available])
+AS_IF([test x$fftw_found = xyes],[
+  AC_DEFINE(FFTW,[],[Whether FFTW is available])])
 
 ##################################
 # check for CUDA
