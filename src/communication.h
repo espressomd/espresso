@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef COMM_H
-#define COMM_H
+#ifndef _COMMUNICATION_H
+#define _COMMUNICATION_H
 /** \file communication.h
     This file contains the asynchronous MPI communication.
  
@@ -45,9 +46,9 @@
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
     arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref #callbacks (the array index gives your action number.
-    Last but not least for debugging purposes you can add a nice name
-    to \ref #names in the same way.  */
+    added to \ref CALLBACK_LIST "callbacks".  Last but not least for
+    debugging purposes you can add a nice name to \ref #names in the
+    same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -228,6 +229,10 @@ void mpi_send_dipm(int node, int part, double dipm);
 void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
+#ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+#endif
+
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -300,9 +305,9 @@ int mpi_integrate(int n_steps);
 void mpi_bcast_ia_params(int i, int j);
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i);
-/** #endif */
+/* #endif */
 #endif
 
 
@@ -311,7 +316,7 @@ void mpi_bcast_tf_params(int i);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
+/** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
     <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
@@ -446,6 +451,7 @@ void mpi_bcast_lb_params(int field);
  * @param index index of the lattice site
  * @param rho   local fluid density
  * @param j     local fluid velocity
+ * @param pi    local fluid pressure
  */
 void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
 
@@ -454,13 +460,14 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  * @param index index of the lattice site
  * @param rho   local fluid density
  * @param j     local fluid velocity
+ * @param pi    local fluid pressure
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
 /** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
- * @param node   processor to send to
- * @param index  index of the lattice site
- * @param border local border flag
+ * @param node     processor to send to
+ * @param index    index of the lattice site
+ * @param boundary local border flag
  */
 void mpi_recv_fluid_border_flag(int node, int index, int *boundary);
 
@@ -477,11 +484,9 @@ int mpi_iccp3m_init(int dummy);
 /** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
  * @param node  processor to send to
  * @param index index of the lattice site
- * @param rho   local fluid density
- * @param j     local fluid velocity
+ * @param pop   local fluid population
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
-
 
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result

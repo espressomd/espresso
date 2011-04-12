@@ -17,12 +17,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file mmm2d.h  MMM2D algorithm for long range coulomb interaction in 2d+h geometries.
-    Implementation of the MMM2D method for the calculation of the electrostatic interaction for two dimensionally
-    periodic systems. For details on the method see \ref MMM_general. The MMM2D method works only with the layered
-    or nsquared \ref tcl_cellsystem "cell system". The tuning is not automated, since the only tunable parameter
-    is the cell size, which can be changed easily in Tcl. Moreover, only a few values make sense to be tested,
-    since in general the number of cells will be between 5 and 20.
+/** \file mmm2d.h MMM2D algorithm for long range coulomb interaction
+    in 2d+h geometries.  Implementation of the MMM2D method for the
+    calculation of the electrostatic interaction for two dimensionally
+    periodic systems. For details on the method see MMM general. The
+    MMM2D method works only with the layered or nsquared \ref
+    tclcommand_cellsystem "cell system". The tuning is not automated,
+    since the only tunable parameter is the cell size, which can be
+    changed easily in Tcl. Moreover, only a few values make sense to
+    be tested, since in general the number of cells will be between 5
+    and 20.
  */
 #ifndef MMM2D_H
 #define MMM2D_H
@@ -63,7 +67,7 @@ int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** 
                         If -1, the far cutoff is determined by maxPWerror.
 			Manual setting is probably only good for testing
     @param delta_top    dielectric contrast at top of the simulation box
-    @param delta_bot    dielectric contrast at bottom of the simulation box
+    @param delta_mid    dielectric contrast in the middle of the simulation box
 */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_mid);
 

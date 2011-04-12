@@ -162,7 +162,7 @@ void calc_long_range_forces()
       EWALD_calc_kspace_forces(1,0);
     break;
   case COULOMB_MAGGS:
-    maggs_calc_e_forces();
+    maggs_calc_forces();
     break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
@@ -307,11 +307,11 @@ MDINLINE void init_local_particle_force(Particle *part)
 #endif
 
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   if(ifParticleIsVirtual(part))
     if(part->p.adress_weight > 0 && part->p.adress_weight < 1)
       add_thermodynamic_force(part);
-  /** #endif */  
+  /* #endif */  
 #endif
 }
 

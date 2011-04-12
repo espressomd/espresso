@@ -244,7 +244,6 @@ MDINLINE double perform_aliasing_sums_energy(int n[3]);
 
 /** Calculates the real space contribution to the rms error in the force (as described 
    by Kolafa and Perram). 
-   \param box_size size of cubic simulation box. 
    \param prefac   Prefactor of coulomb interaction.
    \param r_cut_iL rescaled real space cutoff for p3m method.
    \param n_c_part number of charged particles in the system.
@@ -258,7 +257,6 @@ double static P3M_real_space_error(double prefac, double r_cut_iL, int n_c_part,
     P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
     order to obtain the rms error in the force for a system of N
     randomly distributed particles in a cubic box (k space part).
-    \param box_size size of cubic simulation box. 
     \param prefac   Prefactor of coulomb interaction.
     \param mesh     number of mesh points in one direction.
     \param cao      charge assignment order.
@@ -267,7 +265,6 @@ double static P3M_real_space_error(double prefac, double r_cut_iL, int n_c_part,
     \param alpha_L  rescaled ewald splitting parameter.
     \return reciprocal (k) space error
 */
-
 double static P3M_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, double sum_q2, double alpha_L);
 
 
@@ -2082,11 +2079,7 @@ void   P3M_init_charges() {
 
     calc_send_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
-    /* DEBUG */
-    for(n=0;n<n_nodes;n++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
-      if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
-    }
+    P3M_TRACE(p3m_print_send_mesh(sm));
     if(sm.max != send_recv_grid_size) {
       send_recv_grid_size=sm.max;
       send_grid = (double *) realloc(send_grid, sizeof(double)*sm.max);

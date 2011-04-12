@@ -90,10 +90,10 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
 		  therefore doesn't make sense to use it without NpT. */
 void master_pressure_calc(int v_comp);
 
-/** Initializes stat to be used by \ref calc_p_tensor. */
+/** Initializes stat to be used by \ref pressure_calc. */
 void init_p_tensor(Observable_stat *stat);
 
-/** Initializes stat_nb to be used by \ref calc_p_tensor. */
+/** Initializes stat_nb to be used by \ref pressure_calc. */
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 
 /*********************************/

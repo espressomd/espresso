@@ -105,7 +105,7 @@ MDINLINE int tclcommand_inter_coulomb_parse_dh(Tcl_Interp * interp, int argc, ch
 }
 
 /** Computes the Debye_Hueckel pair force and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param d         Vector pointing from p1 to p2.

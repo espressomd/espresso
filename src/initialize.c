@@ -92,12 +92,6 @@ int on_program_start(Tcl_Interp *interp)
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
-#ifdef CUDA
-if(this_node == 0){
-  gpu_init();
-}
-#endif
-
   /*
     call the initialization of the modules here
   */
@@ -116,16 +110,16 @@ if(this_node == 0){
 #ifdef INTERFACE_CORRECTION
   adress_force_and_energy_tables_init();
 #endif
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   tf_tables_init();
-  /** #endif */
+  /* #endif */
 #endif
 #ifdef ELP3M
   fft_pre_init();
 #endif
 
 #ifdef LB_GPU
-if(this_node == 0){
+  if(this_node == 0){
     lb_pre_init_gpu();
   }
 #endif
@@ -307,7 +301,7 @@ void on_observable_calc()
       EWALD_count_charged_particles();
       break;
     case COULOMB_MAGGS: 
-      Maggs_init(); 
+      maggs_init(); 
       break;
     default: break;
     }
@@ -383,7 +377,7 @@ void on_coulomb_change()
     MMM2D_init();
     break;
   case COULOMB_MAGGS: 
-    Maggs_init(); 
+    maggs_init(); 
     break;
   default: break;
   }
@@ -827,9 +821,9 @@ static void init_tcl(Tcl_Interp *interp)
   /* in adresso.h */
   REGISTER_COMMAND("adress", tclcommand_adress);
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   REGISTER_COMMAND("thermodynamic_force", tclcommand_thermodynamic_force);
-  /** #endif */
+  /* #endif */
   REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
 #endif
 #ifdef METADYNAMICS
@@ -842,6 +836,10 @@ static void init_tcl(Tcl_Interp *interp)
 
   REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
+#ifdef CUDA
+  REGISTER_COMMAND("cuda", tclcommand_cuda);
+#endif
+
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)

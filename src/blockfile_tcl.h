@@ -21,14 +21,14 @@
     Contains only the tcl interface for block coded files.
 
     It is the header file for \ref blockfile_tcl.c "blockfile_tcl.c" and provides the
-    tcl command \ref tcl_blockfile.
+    tcl command blockfile.
 */
 #ifndef BLOCKFILE_TCL_H
 #define BLOCKFILE_TCL_H
 #include "config.h"
 #include <tcl.h>
 
-/** Implementation of the Tcl command \ref tcl_blockfile. Allows to read and write
+/** Implementation of the Tcl command blockfile. Allows to read and write
     blockfile comfortably from Tcl. */
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);

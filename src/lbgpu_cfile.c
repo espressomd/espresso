@@ -1,19 +1,21 @@
-/* $Id$
- *
- * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
- * It is therefore subject to the ESPResSo license agreement which you
- * accepted upon receiving the distribution and by which you are
- * legally bound while utilizing this file in any form or way.
- * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- * You should have received a copy of that license along with this
- * program; if not, refer to http://www.espresso.mpg.de/license.html
- * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group, 
- * PO Box 3148, 55021 Mainz, Germany. 
- * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
- */
+/*
+  Copyright (C) 2010,2011 The ESPResSo project
 
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include <mpi.h>
 #include <stdio.h>
 #include <math.h>
@@ -56,12 +58,13 @@ static int max_ran = 1000000;
 //static double tau;
 
 /** measures the MD time since the last fluid update */
-static float fluidstep = 0.0;
+static int fluidstep = 0;
 
 /** c_sound_square in LB units*/
 static float c_sound_sq = 1.f/3.f;
 
 //clock_t start, end;
+int i;
 
 static FILE *datei;
 //static char file[300];
@@ -76,12 +79,17 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */
 /*-----------------------------------------------------------*/
+/** lattice boltzmann update gpu called from integrate.c
+*/
 void lattice_boltzmann_update_gpu() {
 
-  fluidstep += (float)time_step;
-  
-  if (fluidstep>=lbpar_gpu.tau) {
-    fluidstep=0.0;
+  int factor = (int)round(lbpar_gpu.tau/time_step);
+
+  fluidstep += 1;
+
+  if (fluidstep>=factor) {
+    fluidstep=0;
+
     lb_integrate_GPU();
 
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
@@ -89,21 +97,20 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
-/** Calculate particle lattice interactions.*/
-
+/** Calculate particle lattice interactions called from forces.c
+*/
 void lb_calc_particle_lattice_ia_gpu() {
 
   if (transfer_momentum_gpu) {
     mpi_get_particles_lb(host_data);
 
     if(this_node == 0){
+#if 0
+      for (i=0;i<n_total_particles;i++) {
+        fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
+      }
+#endif
 
-      LB_TRACE (for (i=0;i<n_total_particles;i++) {
-      fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
-    })
-/**----------------------------------------*/
-/**Call of the particle interaction kernel */
-/**----------------------------------------*/
     if(lbpar_gpu.number_of_particles) lb_particle_GPU(host_data);
 
     LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
@@ -111,9 +118,9 @@ void lb_calc_particle_lattice_ia_gpu() {
     }
   }
 }
-/**----------------------------------------*/
-/**copy forces from gpu to cpu and call mpi routines to add forces to particles */
-/**----------------------------------------*/
+
+/**copy forces from gpu to cpu and call mpi routines to add forces to particles
+*/
 void lb_send_forces_gpu(){
 
   if (transfer_momentum_gpu) {
@@ -121,45 +128,36 @@ void lb_send_forces_gpu(){
       if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
 
       LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
-      LB_TRACE (for (i=0;i<n_total_particles;i++) {
-        fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
-      })
-
+#if 0
+        for (i=0;i<n_total_particles;i++) {
+          fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
+        }
+#endif
     }
     mpi_send_forces_lb(host_forces);
   }
 }
-/** allocation of the needed memory for phys. values and particle data residing in the cpu memory*/
+/** allocation of the needed memory for phys. values and particle data residing in the cpu memory
+*/
 void lb_pre_init_gpu() {
 	 
-  lbpar_gpu.number_of_particles = n_total_particles;
+  lbpar_gpu.number_of_particles = 0;
 
-  LB_TRACE (fprintf(stderr,"#particles \t %u \n", lbpar_gpu.number_of_particles));
   LB_TRACE (fprintf(stderr,"#nodes \t %u \n", lbpar_gpu.number_of_nodes));
-  /**-----------------------------------------------------*/
-  /** allocating of the needed memory for several structs */
-  /**-----------------------------------------------------*/
+
+  /*-----------------------------------------------------*/
+  /* allocating of the needed memory for several structs */
+  /*-----------------------------------------------------*/
   
-  /**Struct holding calc phys values rho, j, phi of every node*/
+  /* Struct holding calc phys values rho, j, phi of every node */
   size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
   host_values = (LB_values_gpu*)malloc(size_of_values);
 
-  /**Allocate struct for particle forces */
-  size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
-  host_forces = (LB_particle_force_gpu*)malloc(size_of_forces);
-
-  /**Allocate struct for particle positions */
-  size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle_gpu);
-#if CUDART_VERSION >= 2020
-  //pinned memory mode - use special function to get OS-pinned memory
-  cudaHostAlloc((void**)&host_data, size_of_positions, cudaHostAllocWriteCombined);
-#else
-  cudaMallocHost((void**)&host_data, size_of_positions);
-#endif
   LB_TRACE (fprintf(stderr,"lb_pre_init_gpu \n"));
 }
-/** (re-)allocation of the memory needed for the phys. values and if needed memory for the nodes (v[19] etc.)
-	located in the cpu memory*/ 
+
+/** (re-)allocation of the memory needed for the phys. values and if needed memory for the nodes located in the cpu memory
+*/ 
 static void lb_realloc_fluid_gpu() {
 	 
   LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
@@ -186,22 +184,15 @@ void lb_realloc_particles_gpu(){
   size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
   host_forces = realloc(host_forces, size_of_forces);
 
-  /**Allocate struct for particle positions */
-  size_t size_of_positions = lbpar_gpu.number_of_particles * sizeof(LB_particle_gpu);
-#if CUDART_VERSION >= 2020
-  //pinned memory mode - use special function to get OS-pinned memory
-  cudaHostAlloc((void**)&host_data, size_of_positions, cudaHostAllocWriteCombined);
-#else
-  cudaMallocHost((void**)&host_data, size_of_positions);
-#endif
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
-  lb_realloc_particle_GPU(&lbpar_gpu);
+  lb_realloc_particle_GPU(&lbpar_gpu, &host_data);
 }
-
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
+
+  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   lb_init_GPU(&lbpar_gpu);
 
@@ -212,7 +203,6 @@ void lb_reinit_fluid_gpu() {
 /*not needed in Espresso but still not deleted*/
 void lb_release_gpu(){
 
-  // free host memory
   free(host_nodes);
   free(host_values);
   free(host_forces);
@@ -749,7 +739,7 @@ static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], in
     /** print of the calculated phys values */
     fprintf(datei, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
   }
-
+  fclose(datei);
   return TCL_OK;
 }
 static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
@@ -858,7 +848,8 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
   return TCL_OK;
 }
 #endif /* LB_GPU */
-/** Parser for the \ref lbnode command. */
+/** Parser for the \ref lbnode command. 
+*/
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
 
@@ -945,7 +936,8 @@ int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #endif /* LB_GPU */
 }
 #ifdef LB_GPU
-/** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g. */
+/** Parser for the \ref lbnode_extforce command. Can be used in future to set more values like rho,u e.g.
+*/
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   int err=TCL_ERROR;
@@ -979,7 +971,8 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
 }
 #endif /* LB_GPU */
 
-/** Parser for the \ref lbfluid command gpu. */
+/** Parser for the \ref lbfluid command gpu.
+*/
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
   int err = TCL_OK;
@@ -1029,7 +1022,7 @@ int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 }
 
 #ifdef LB_GPU
-/* printing the hole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
+/** printing the hole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
 int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   int err = TCL_OK;

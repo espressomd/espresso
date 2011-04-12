@@ -211,16 +211,41 @@ be activated by configuring with \lit{configure
   --with-cuda=/path/to/cuda} and activating the feature \lit{LB_GPU}.
 Within the \es-Tcl-script, the \lit{lbfluid} command can be used to
 choose between the CPU and GPU implementations of the
-Lattice-Boltzmann algorithm.  Variant \variant{1} is the default and
-turns on the standard CPU implementation of the Lattice-Boltzmann
-fluid, while variant \variant{2} turns on the GPU implementation,
-implying that all following LB-related commands are executed on the
-GPU. 
+Lattice-Boltzmann algorithm, for further information on CUDA support
+see section~\ref{sec:cuda}.
+
+Variant \variant{1} is the default and turns on the standard CPU
+implementation of the Lattice-Boltzmann fluid, while variant
+\variant{2} turns on the GPU implementation, implying that all
+following LB-related commands are executed on the GPU.
 
 Currently only a subset of the CPU commands are available for the GPU
 implementation.  For boundary conditions analogous to the CPU
 implementation, the feature \lit{LB_BOUNDARIES_GPU} has to be
 activated.
+
+\section{Electrohydrodynamics}
+
+\begin{essyntax}
+  setmd mu_E \var{\mu E_x} \var{\mu E_y} \var{\mu E_z}
+  \begin{features}
+    \required{LB}
+    \required{LB_ELECTROHYDRODYNAMICS}
+  \end{features}
+\end{essyntax}
+
+If the feature \lit{LB_ELECTROHYDRODYNAMICS} is activated, the
+(non-GPU) Lattice Boltzmann Code can be used to implicitely model
+surrounding salt ions in an external electric field by having the
+charged particles create flow.
+
+For that to work, you need to set the electrophoretic mobility
+(multiplied by the external $E$-field) $\mu E$ in all 3 dimensions for
+your system. The three given parameters are float values and should,
+for a meaningful system, be less than $1.0$.
+
+For more information on this method and how it works, read the
+publication~\cite{hickey10a}.
 
 %%% Local Variables:
 %%% mode: latex

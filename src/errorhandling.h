@@ -19,7 +19,7 @@
 */
 /** \file errorhandling.h
     This file contains the errorhandling code for severe errors, like a broken bond or illegal parameter
-    combinations. See section \ref errors "Errorhandling" for details on the error format and
+    combinations. See section "Errorhandling" for details on the error format and
     \ref errorhandling "Errorhandling for developers" for implementation hints.
 */
 #ifndef ERRORHANDLING_H

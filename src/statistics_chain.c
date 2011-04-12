@@ -27,7 +27,7 @@
 #include "communication.h"
 #include "cells.h"
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref #analyze) */
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref tclcommand_analyze) */
 /*@{*/
 float *partCoord_g=NULL, *partCM_g=NULL;
 int n_part_g = 0, n_chains_g = 0;
