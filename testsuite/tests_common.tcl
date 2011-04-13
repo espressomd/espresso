@@ -27,9 +27,9 @@ proc error_exit {error} {
 proc has_feature {feature {off ""}} {
     if {($off == ""    && ! [regexp "{ $feature }" [code_info]]) ||
 	($off == "off" &&   [regexp "{ $feature }" [code_info]])} {
-	return 0;
+	return 0
     } else {
-	return 1;
+	return 1
     }
 }
 
