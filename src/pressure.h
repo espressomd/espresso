@@ -173,20 +173,16 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 	ret=0;
         break; 
 #endif
-#ifdef DAWAANR
     case  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
         /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles DAWAANR .... pressure.h \n");
 	ret=0;
         break; 
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
     case  DIPOLAR_DS:
         /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles MAGNETIC DIRECT SUM .... pressure.h \n");
 	ret=0;
         break; 
-#endif
 
       default:
       ret = 0;

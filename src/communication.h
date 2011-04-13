@@ -488,6 +488,9 @@ int mpi_iccp3m_init(int dummy);
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
 
+/** Part of MDLC
+ */
+void mpi_bcast_max_mu();
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.

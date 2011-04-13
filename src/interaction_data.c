@@ -1146,17 +1146,11 @@ int check_obs_calc_initialized()
 #if  defined(MAGNETOSTATICS)
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-#ifdef MDLC
   case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
-#endif
   case DIPOLAR_P3M: if (DP3M_sanity_checks()) state = 0; break;
 #endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
   case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
-#endif
   case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
-#endif
   }
 #endif /* ifdef  MAGNETOSTATICS */
 
@@ -1361,18 +1355,16 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (! ARG0_IS_D(d1)) {
-  #ifdef ELP3M
     Tcl_ResetResult(interp);
     
-    #ifdef MDLC  
-    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
+    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
 
-     if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
+#ifdef ELP3M
+    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
-   #endif 
-      
-   if (coulomb.Dmethod == DIPOLAR_P3M)
+    
+    if (coulomb.Dmethod == DIPOLAR_P3M)
       return tclcommand_inter_magnetic_parse_p3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter magnetic <Dbjerrum>",
@@ -1381,7 +1373,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
     }
 #else
     return TCL_ERROR;
- #endif
+#endif
   }
 
 
@@ -1420,9 +1412,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
 #endif
 
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
   REGISTER_DIPOLAR("mdds", tclcommand_inter_magnetic_parse_mdds);
-#endif
 
 
   /* fallback */
@@ -1731,28 +1721,20 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, coulomb.Dbjerrum, buffer);
   Tcl_AppendResult(interp, "{magnetic ", buffer, " ", (char *) NULL);
   switch (coulomb.Dmethod) {
-    #ifdef ELP3M
-     #ifdef MDLC
-       case DIPOLAR_MDLC_P3M:
-        tclprint_to_result_DipolarP3M(interp);   
-        tclprint_to_result_MDLC(interp);
-        break;
-     #endif	
-    case DIPOLAR_P3M: tclprint_to_result_DipolarP3M(interp); break;
-   #endif
-   #if  defined(MDLC) && defined(MAGNETIC_DIPOLAR_DIRECT_SUM)
-     case DIPOLAR_MDLC_DS:
-        tclprint_to_result_Magnetic_dipolar_direct_sum_(interp);
-        tclprint_to_result_MDLC(interp);
-        break;
-  #endif
-  #ifdef DAWAANR	
-    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
- #endif
- #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-    case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
+#ifdef ELP3M
+  case DIPOLAR_MDLC_P3M:
+    tclprint_to_result_DipolarP3M(interp);   
+    tclprint_to_result_MDLC(interp);
+    break;
+  case DIPOLAR_P3M: tclprint_to_result_DipolarP3M(interp); break;
 #endif
-    default: break;
+  case DIPOLAR_MDLC_DS:
+    tclprint_to_result_Magnetic_dipolar_direct_sum_(interp);
+    tclprint_to_result_MDLC(interp);
+    break;
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
+  case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
+  default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
 
