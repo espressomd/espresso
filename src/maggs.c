@@ -997,7 +997,7 @@ void maggs_accumulate_charge_from_ghosts()
 	  first[d]      = (int) pos[d];
 	  rel[d]        = pos[d] - first[d];
 	}
-      	fprintf(stderr,"pos: %f %f %f\n", p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]);
+	//      	fprintf(stderr,"pos: %f %f %f\n", p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]);
 	maggs_interpolate_charge(first, rel, q);
       }
     }      
