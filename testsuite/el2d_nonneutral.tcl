@@ -20,6 +20,7 @@
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
+require_feature "FFTW"
 require_feature "PARTIAL_PERIODIC"
 require_feature "CONSTRAINTS"
 

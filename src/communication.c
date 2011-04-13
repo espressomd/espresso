@@ -1724,27 +1724,19 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case DIPOLAR_NONE:
     break;
 #ifdef ELP3M
- #ifdef MDLC
   case DIPOLAR_MDLC_P3M:
     MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
-  #endif  
   case DIPOLAR_P3M:
     MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
 #endif
-#ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA :
    break;
-#endif
-#ifdef   MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
  case  DIPOLAR_MDLC_DS:
      //fall trough
-#endif 
  case  DIPOLAR_DS:
     break;   
-#endif 
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: cannot bcast dipolar params for unknown method %d\n", this_node, coulomb.Dmethod);
     errexit();
@@ -2565,20 +2557,20 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
 }
 
 void mpi_bcast_max_mu_slave(int node, int dummy) {
- #ifdef MDLC
+#ifdef MAGNETOSTATICS
+  
+  get_mu_max();
  
- get_mu_max();
- 
- #endif
+#endif
 }
 
-void mpi_bcast_max_mu(void) {
-  #ifdef MDLC
+void mpi_bcast_max_mu() {
+#ifdef MAGNETOSTATICS
   mpi_call(mpi_bcast_max_mu_slave, -1, 0);
   
   get_mu_max();
   
-  #endif
+#endif
 }
 
 /*********************** MAIN LOOP for slaves ****************/

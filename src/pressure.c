@@ -200,28 +200,21 @@ void calc_long_range_virials()
 #ifdef MAGNETOSTATICS
   /* calculate k-space part of magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-#ifdef DAWAANR 
      case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     fprintf(stderr, "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
     break;
-#endif 
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
- case DIPOLAR_MDLC_DS:
+  case DIPOLAR_MDLC_DS:
     fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
     break;
-#endif    
-    case DIPOLAR_DS:
+  case DIPOLAR_DS:
     fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM pressure not implemented\n");
     break;
-#endif 
+
    
 #ifdef ELP3M
-#ifdef MDLC
   case DIPOLAR_MDLC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
     break;
-#endif    
   case DIPOLAR_P3M: {
     int k;
     P3M_dipole_assign();
@@ -872,16 +865,12 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
 	break;
 #endif
-#ifdef DAWAANR
       case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle DAWAANR magnetostatics so it is left out\n");  
 	break;
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
       case DIPOLAR_DS:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");  
 	break;
-#endif
 
       default:
 	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
