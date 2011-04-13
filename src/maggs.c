@@ -105,7 +105,7 @@
 /* from ifndef MAGGS_H */
 
 /***************************************/
-/**<h3> data types and structures </h3>*/
+/****** data types and structures ******/
 /***************************************/
 
 typedef int      t_ivector [SPACE_DIM]; /* integer vector for position in grid */
@@ -150,7 +150,7 @@ typedef struct {
 
 
 /*******************************/
-/**<h3> global variables </h3> */
+/****** global variables ***** */
 /*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
@@ -173,7 +173,7 @@ static t_dirs* neighbor;
 
 
 /*******************************************************/
-/**<h3> Private Functions list with short comment </h3>*/
+/*      Private Functions list with short comment      */
 /*******************************************************/
 /*
  * This is supposed to give an overview on the contained functions.
@@ -249,7 +249,7 @@ static t_dirs* neighbor;
 
 
 /*************************************/
-/**<h3> small helper functions: </h3>*/
+/****** small helper functions: ******/
 /*************************************/
 
 /** Turns the 3D index into a linear index.
@@ -340,7 +340,7 @@ void maggs_calc_directions(int j, int* dir1, int*dir2)
 }
 
 /** Calculates the finite differences rotation in real space in mue-nue plane:
-    \dot{D} = \nabla \times B (and prefactors plus current)
+    \f$\frac{\partial}{\partial t}{D} = \nabla \times B\f$ (and prefactors plus current)
     The given "double* field" should be a B-Field!!
     @return rotation result
     @param mue       direction 1 of plane to rotate in
@@ -360,7 +360,7 @@ double maggs_calc_curl(int mue, int nue, double* field, int* Neighbor, int index
 }
 
 /** Calculates the finite differences rotation in dual space in mue-nue plane:
-    \dot{B} = - \nabla \times D / (\epsilon)
+    \f$\frac{\partial}{\partial t}{B} = - \nabla \times D / (\epsilon)\f$
     The given "double* field" should be a D-Field!!
     @return rotation result
     @param mue       direction 1 of plane to rotate in
@@ -454,6 +454,11 @@ int maggs_sanity_checks()
     ERROR_SPRINTF(errtxt, "{307 MEMD: Speed of light is set too high. Increase f_mass.} ");
     ret = -1;      
   }
+  else if (maggs.a < skin) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{308 MEMD: Skin should be smaller than MEMD mesh size.} ");
+    ret = -1;
+  }
 #ifdef EXTERNAL_FORCES
   /** check for fixed particles */
   for (int cellnumber = 0; cellnumber < local_cells.n; cellnumber++) {
@@ -463,13 +468,12 @@ int maggs_sanity_checks()
     for(int i = 0; i < np; i++) {
       if ( (p[i].p.q != 0.0) & p[i].l.ext_flag & COORDS_FIX_MASK) {
 	errtxt = runtime_error(128);
-	ERROR_SPRINTF(errtxt, "{308 MEMD does not work with fixed particles.} ");
+	ERROR_SPRINTF(errtxt, "{309 MEMD does not work with fixed particles.} ");
 	ret = -1;
       }
     }
   }  
 #endif
-
   
   return ret;
 }
@@ -478,16 +482,15 @@ int maggs_sanity_checks()
 
 
 
-
 /*******************************/
-/**<h3> setup everything: </h3>*/
+/****** setup everything: ******/
 /*******************************/
 
 /** set and calculate the system wide parameters
     @return zero if successful
     @param interp    TCL interpreter handle
     @param bjerrum   Bjerrum length to set
-    @param f_mass    1/c^2 to set
+    @param f_mass    \f$1/c^2\f$ to set
     @param mesh      Mesh size in 1D of the system
 */
 int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh)
@@ -777,7 +780,7 @@ void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, M
 
 
 /*****************************************/
-/**<h3> Surface patch communication </h3>*/
+/****** Surface patch communication ******/
 /*****************************************/
 
 /** MPI communication of surface region.
@@ -898,7 +901,7 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
 
 
 /*********************************************/
-/**<h3> interpolate charges on lattice: </h3>*/
+/****** interpolate charges on lattice: ******/
 /*********************************************/
 
 /** Interpolation function in one dimension.
@@ -927,7 +930,7 @@ void maggs_interpolate_charge(int *first, double *rel, double q)
   double help[SPACE_DIM];
 	
   FOR3D(i) help[i] = 1. - rel[i];     /** relative pos. w.r.t. first */
-	
+  //  printf("first: %d %d %d\n", first[0], first[1], first[2]);
   /** calculate charges at each vertex */
   index = maggs_get_linear_index(first[0],first[1],first[2],lparams.dim);
 	
@@ -994,6 +997,7 @@ void maggs_accumulate_charge_from_ghosts()
 	  first[d]      = (int) pos[d];
 	  rel[d]        = pos[d] - first[d];
 	}
+      	fprintf(stderr,"pos: %f %f %f\n", p[i].r.p[0], p[i].r.p[1], p[i].r.p[2]);
 	maggs_interpolate_charge(first, rel, q);
       }
     }      
@@ -1110,7 +1114,7 @@ void maggs_update_charge_gradients(double *grad)
 
 
 /***************************************/
-/**<h3> initialization procedure: </h3>*/
+/****** initialization procedure: ******/
 /***************************************/
 
 /** Calculate the self energy coefficients for the system, if
@@ -1617,7 +1621,7 @@ void maggs_calc_init_e_field()
 
 
 /*********************************************/
-/**<h3> calculate currents and E-fields </h3>*/
+/****** calculate currents and E-fields ******/
 /*********************************************/
 
 /** calculate the charge flux in direction "dir".
@@ -1894,10 +1898,10 @@ void maggs_couple_current_to_Dfield()
 
 
 /*******************************************/
-/**<h3> calculate B-fields and forces </h3>*/
+/****** calculate B-fields and forces ******/
 /*******************************************/
 
-/** propagate the B-field via \dot{B} = \nabla\times D (and prefactor)
+/** propagate the B-field via \f$\frac{\partial}{\partial t}{B} = \nabla\times D\f$ (and prefactor)
     CAREFUL: Usually this function is called twice, with dt/2 each time
     to ensure a time reversible integration scheme!
     @param dt time step for update. Should be half the MD time step
@@ -1932,7 +1936,7 @@ void maggs_propagate_B_field(double dt)
 }
 
 /** calculate D-field from B-field according to
-    \dot{D} = \nabla\times B (and prefactors)
+    \f$\frac{\partial}{\partial t}{D} = \nabla\times B\f$ (and prefactors)
     @param dt MD time step
 */
 void maggs_add_transverse_field(double dt)
@@ -2074,7 +2078,7 @@ void calc_part_self_force(Particle *p)
 /** For each particle P, calculates self energy influence
     with direct Greens function, assuming constant permittivity
     on each lattice site.
-    @param p Particle pointer
+    @param P Particle pointer
 */
 void maggs_calc_self_influence(Particle* P)
 {
@@ -2255,7 +2259,7 @@ void maggs_calc_forces()
 
 
 /********************************************/
-/**<h3> get energy and print out stuff </h3>*/
+/****** get energy and print out stuff ******/
 /********************************************/
 
 /** integrates 0.5*D*E over the whole system
@@ -2325,7 +2329,7 @@ int tclprint_to_result_Maggs(Tcl_Interp *interp)
 
 
 /***************************/
-/**<h3> init and exit </h3>*/
+/****** init and exit ******/
 /***************************/
 
 /** Initialization function.

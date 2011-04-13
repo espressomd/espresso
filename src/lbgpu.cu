@@ -1156,7 +1156,6 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
 }
 
 /**erroroutput for memory allocation and memory copy
- * @param 
 */
 void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     if( cudaSuccess != err) {                                             
