@@ -105,7 +105,6 @@ cudaError_t _err;
 /*-------------------------------------------------------*/
 
 /** atomic add function for sveral cuda architectures 
- * @param 
 */
 __device__ inline void atomicadd(float* address, float value){
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
@@ -249,7 +248,6 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
 }
 
 /**lb_relax_modes, means collision update of the modes
- * @param n_a		Pointer to local node residing in array a (Input)
  * @param index		node index / thread index (Input)
  * @param mode		Pointer to the local register values mode (Input/Output)
  * @param node_f	Pointer to local node force (Input)
@@ -582,6 +580,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
  * @param mode		Pointer to the local register values mode (Input)
  * @param n_a		Pointer to local node residing in array a for boundary flag(Input)
  * @param *d_v		Pointer to local device values (Input/Output)
+ * @param singlenode	Flag, if there is only one node
 */
 __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, unsigned int index, unsigned int singlenode){
 
@@ -663,7 +662,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param *particle_data	Pointer to the particle position and velocity (Input)
  * @param *particle_force	Pointer to the particle force (Input)
  * @param part_index		particle id / thread id (Input)
- * @param *rn			Pointer to randomnumber array of the particle
+ * @param *rn_part		Pointer to randomnumber array of the particle
  * @param node_index		node index around (8) particle (Output)
 */
 __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
@@ -947,7 +946,8 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 }
 
 /**set the boundary flag for all boundary nodes
- * @param *boundindex	Pointer to the 1d index of the boundnode (Input)
+ * @param *boundindex	     	Pointer to the 1d index of the boundnode (Input)
+ * @param number_of_boundnodes	The number of boundary nodes
  * @param n_a			Pointer to local node residing in array a (Input)
  * @param n_b			Pointer to local node residing in array b (Input)
 */
@@ -1245,6 +1245,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
 /**setup and call particle reallocation from the host
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
+ * @param **host_data	Pointer to host information data
 */
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
 
