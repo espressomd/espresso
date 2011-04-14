@@ -55,7 +55,10 @@ tests = \
 	tabulated.tcl 
 	thermostat.tcl \
         tunable_slip.tcl \
-	virtual-sites.tcl
+	virtual-sites.tcl \
+	p3m-wall.tcl \
+  p3m_simple_noncubic.tcl
+
 
 deactivated_tests =
 

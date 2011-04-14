@@ -1873,9 +1873,9 @@ int P3M_sanity_checks()
     ERROR_SPRINTF(errtxt,"{047 P3M_init: skin is not yet set} ");
     ret = 1;
   }
-  if (p3m.alpha < 0.0 || p3m.alpha > 1.0) {
+  if (p3m.alpha < 0.0 ) {
     errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be between 0 and 1.} ");
+    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be >0.} ");
     ret = 1;
   }
     
@@ -2042,7 +2042,6 @@ void P3M_calc_kspace_stress (double* stress) {
 
 
 void   P3M_init_charges() {
-  int n;
 
   if(coulomb.bjerrum == 0.0) {       
     p3m.r_cut    = 0.0;
