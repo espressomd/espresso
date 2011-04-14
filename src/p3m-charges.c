@@ -826,8 +826,8 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
                 for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
                     for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
                         /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-                        rs_mesh[ind] = -(ks_mesh[ind+1] * d_operator[ j[d]+fft_plan[3].start[d] ]); ind++;
-                        rs_mesh[ind] =   ks_mesh[ind-1] * d_operator[ j[d]+fft_plan[3].start[d] ];  ind++;
+                        rs_mesh[ind] = -2.0*PI*(ks_mesh[ind+1] * d_operator[ j[d]+fft_plan[3].start[d] ])/box_l[d_rs]; ind++;
+                        rs_mesh[ind] =   2.0*PI*ks_mesh[ind-1] * d_operator[ j[d]+fft_plan[3].start[d] ]/box_l[d_rs];  ind++;
                     }
                 }
             }
@@ -1068,7 +1068,7 @@ void calc_influence_function_force()
                     fak2 = SQR(d_op[RX][n[KX]]/box_l[RX])+SQR(d_op[RY][n[KY]]/box_l[RY])+SQR(d_op[RZ][n[KZ]]/box_l[RZ]);
 
                     fak3 = fak1/(fak2 * SQR(denominator));
-                    g_force[ind] = fak3/(PI*PI*PI);
+                    g_force[ind] = 2*fak3/(PI);
                 }
             }
         }
