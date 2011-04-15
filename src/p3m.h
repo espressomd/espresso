@@ -20,12 +20,11 @@
 */
 #ifndef _P3M_H 
 #define _P3M_H
-/** \file p3m.h   main header-file for P3M algorithms intended to deal with long-range forces.
+/** \file P3M algorithm for long range coulomb interaction.
  *
  *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
  *  Ewald summation. Details of the used method can be found in
- *  Hockney/Eastwood and Deserno/Holm. The file p3m contains only the
- *  Particle-Mesh part.
+ *  Hockney/Eastwood and Deserno/Holm.
  *
  *  Further reading: 
  *  <ul>
@@ -47,28 +46,12 @@
  *       PhdThesis, Universit{\"a}t Mainz, 2000
  *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
  *  </ul>
- *
- *  For more information about the p3m algorithm,
- *  see \ref p3m.h "p3m.h"
- *  see \ref p3m-charges.c  "p3m-charges.c"
- *  see \ref p3m-charges.h  "p3m-charges.h"
- *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
- *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignment.c  "p3m-assignment.c"
  */
 
-#include "utils.h"
+#include "p3m-common.h"
 #include "interaction_data.h"
-#include "integrate.h"
 
 #ifdef ELP3M
-
-/* defined only within this header file, for checking that system (electro/magnetostatic)
-   specific files are only included from here. */
-#define P3M_H_CURRENT
-
-/** This value for p3m.epsilon indicates metallic boundary conditions. */
-#define P3M_EPSILON_METALLIC 0.0
 
 /************************************************
  * data types
@@ -76,7 +59,6 @@
 
 /** Structure to hold P3M parameters and some dependend variables. */
 typedef struct {
-#ifdef ELECTROSTATICS
   /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
   double alpha_L;
   /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
@@ -112,139 +94,162 @@ typedef struct {
   /** additional points around the charge assignment mesh, for method like dielectric ELC
       creating virtual charges. */
   double additional_mesh[3];
-#endif  
-#ifdef MAGNETOSTATICS 
-    /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
-  double Dalpha_L;
-  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
-  double Dr_cut_iL;
-  /** number of mesh points per coordinate direction (>0). */
-  int    Dmesh[3];
-  /** offset of the first mesh point (lower left 
-      corner) from the coordinate origin ([0,1[). */
-  double Dmesh_off[3];
-  /** charge assignment order ([0,7]). */
-  int    Dcao;
-  /** number of interpolation points for charge assignment function */
-  int    Dinter;
-  /** Accuracy of the actual parameter set. */
-  double Daccuracy;
-
-  /** epsilon of the "surrounding dielectric". */
-  double Depsilon;
-  /** Cutoff for charge assignment. */
-  double Dcao_cut[3];
-  /** mesh constant. */
-  double Da[3];
-  /** inverse mesh constant. */
-  double Dai[3];
-  /** unscaled \ref alpha_L for use with fast inline functions only */
-  double Dalpha;
-  /** unscaled \ref r_cut_iL for use with fast inline functions only */
-  double Dr_cut;
-  /** full size of the interpolated assignment function */
-  int Dinter2;
-  /** number of points unto which a single charge is interpolated, i.e. p3m.Dcao^3 */
-  int Dcao3;
-  /** additional points around the charge assignment mesh, for method like dielectric ELC
-      creating virtual charges. */
-  double Dadditional_mesh[3];
-#endif
 } p3m_struct;
-
-/** Structure for local mesh parameters. */
-typedef struct {
-  /* local mesh characterization. */
-  /** dimension (size) of local mesh. */
-  int dim[3];
-  /** number of local mesh points. */
-  int size;
-  /** index of lower left corner of the 
-      local mesh in the global mesh. */
-  int ld_ind[3];
-  /** position of the first local mesh point. */
-  double ld_pos[3];
-  /** dimension of mesh inside node domain. */
-  int inner[3];
-  /** inner left down grid point */
-  int in_ld[3];
-  /** inner up right grid point + (1,1,1)*/
-  int in_ur[3];
-  /** number of margin mesh points. */
-  int margin[6];
-  /** number of margin mesh points from neighbour nodes */
-  int r_margin[6];
-  /** offset between mesh lines of the last dimension */
-  int q_2_off;
-  /** offset between mesh lines of the two last dimensions */
-  int q_21_off;
-} local_mesh;
-
-/** Structure for send/recv meshs. */
-typedef struct {
-  /** dimension of sub meshs to send. */
-  int s_dim[6][3];
-  /** left down corners of sub meshs to send. */
-  int s_ld[6][3];
-  /** up right corners of sub meshs to send. */
-  int s_ur[6][3];
-  /** sizes for send buffers. */
-  int s_size[6];
-  /** dimensionof sub meshs to recv. */
-  int r_dim[6][3];
-  /** left down corners of sub meshs to recv. */
-  int r_ld[6][3];
-  /** up right corners of sub meshs to recv. */
-  int r_ur[6][3];
-  /** sizes for recv buffers. */
-  int r_size[6];
-  /** maximal size for send/recv buffers. */
-  int max;
-} send_mesh;
-
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
 
 /** P3M parameters. */
 extern p3m_struct p3m;
-
-//The following are defined in p3m.c :
-
-#define CA_INCREMENT 32  
-
-/*@}*/
+extern local_mesh lm;
+extern double* rs_mesh;
+extern int p3m_sum_qpart;
+extern double p3m_sum_q2;
+extern double p3m_square_sum_q;
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
+/** Initialize all structures, parameters and arrays needed for the 
+ *  P3M algorithm for charge-charge interactions.
+ */
+void  P3M_init_charges(void);
+
+/** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
+void P3M_scaleby_box_l_charges();
+
+/// parse the optimization parameters of p3m and the tuner
+int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
+
+/// parse the basic p3m parameters
+int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
+
+/** compute the k-space part of forces and energies for the charge-charge interaction  **/
+double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag);
+
+/** computer the k-space part of the stress tensor **/
+void P3M_calc_kspace_stress (double* stress);
+
+/// sanity checks
+int P3M_sanity_checks();
+
+/** checks for correctness for charges in P3M of the cao_cut, necessary when the box length changes */
+int P3M_sanity_checks_boxl();
+
+/** Calculate number of charged particles, the sum of the squared
+    charges and the squared sum of the charges. */
+void P3M_count_charged_particles();
+
+/** Error Codes for p3m tuning (version 2) :
+    P3M_TUNE_FAIL: force evaluation failes,
+    P3M_TUNE_NO_CUTOFF: could not finde a valid realspace cutoff radius,
+    P3M_TUNE_CAOTOLARGE: Charge asignment order to large for mesh size,
+    P3M_TUNE_ELCTEST: conflict with ELC gap size.
+*/
+
+enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLARGE = 4, P3M_TUNE_ELCTEST = 8, P3M_TUNE_CUTOFF_TOO_LARGE = 16 };
+
+/** Tune P3M parameters to desired accuracy.
+
+    Usage:
+    \verbatim inter coulomb <bjerrum> p3m tune accuracy <value> [r_cut <value> mesh <value> cao <value>] \endverbatim
+
+    The parameters are tuned to obtain the desired accuracy in best
+    time, by running mpi_integrate(0) for several parameter sets.
+
+    The function utilizes the analytic expression of the error estimate 
+    for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in 
+    order to obtain the rms error in the force for a system of N randomly 
+    distributed particles in a cubic box.
+    For the real space error the estimate of Kolafa/Perram is used. 
+
+    Parameter range if not given explicit values: For \ref p3m_struct::r_cut_iL
+    the function uses the values (\ref min_local_box_l -\ref #skin) /
+    (n * \ref box_l), n being an integer (this implies the assumption that \ref
+    p3m_struct::r_cut_iL is the largest cutoff in the system!). For \ref
+    p3m_struct::mesh the function uses the two values which matches best the
+    equation: number of mesh point = number of charged particles. For
+    \ref p3m_struct::cao the function considers all possible values.
+
+    For each setting \ref p3m_struct::alpha_L is calculated assuming that the
+    error contributions of real and reciprocal space should be equal.
+
+    After checking if the total error fulfils the accuracy goal the
+    time needed for one force calculation (including verlet list
+    update) is measured via \ref mpi_integrate (0).
+
+    The function returns a log of the performed tuning.
+
+    The function is based on routines of the program HE_Q.c written by M. Deserno.
+ */
+int tclcommand_inter_coulomb_print_p3m_tune_parameters(Tcl_Interp *interp);
+
+/** assign the physical charges using the tabulated charge assignment function.
+    If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
+    cur_ca_frac. */
+void P3M_charge_assign();
+
+/** assign a single charge into the current charge grid. cp_cnt gives the a running index,
+    which may be smaller than 0, in which case the charge is assumed to be virtual and is not
+    stored in the ca_frac arrays. */
+void P3M_assign_charge(double q,
+		       double real_pos[3],
+		       int cp_cnt);
+
+/** shrink wrap the charge grid */
+void P3M_shrink_wrap_charge_grid(int n_charges);
+
+/** Calculate real space contribution of coulomb pair forces.
+    If NPT is compiled in, it returns the energy, which is needed for NPT. */
+MDINLINE double add_p3m_coulomb_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
+{
+  int j;
+  double fac1,fac2, adist, erfc_part_ri;
+  if(dist < p3m.r_cut) {
+    if (dist > 0.0){		//Vincent
+      adist = p3m.alpha * dist;
+#if USE_ERFC_APPROXIMATION
+      erfc_part_ri = AS_erfc_part(adist) / dist;
+      fac1 = coulomb.prefactor * chgfac  * exp(-adist*adist);
+      fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii) / dist2;
+#else
+      erfc_part_ri = erfc(adist) / dist;
+      fac1 = coulomb.prefactor * chgfac;
+      fac2 = fac1 * (erfc_part_ri + 2.0*p3m.alpha*wupii*exp(-adist*adist)) / dist2;
+#endif
+      for(j=0;j<3;j++)
+	force[j] += fac2 * d[j];
+      ESR_TRACE(fprintf(stderr,"%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",this_node,
+			dist,fac2*d[0],fac2*d[1],fac2*d[2]));
+#ifdef NPT
+      return fac1 * erfc_part_ri;
+#endif
+    }
+  }
+  return 0.0;
+}
+
+/** Calculate real space contribution of coulomb pair energy. */
+MDINLINE double p3m_coulomb_pair_energy(double chgfac, double *d,double dist2,double dist)
+{
+  double adist, erfc_part_ri;
+
+  if(dist < p3m.r_cut) {
+    adist = p3m.alpha * dist;
+#if USE_ERFC_APPROXIMATION
+    erfc_part_ri = AS_erfc_part(adist) / dist;
+    return coulomb.prefactor*chgfac*erfc_part_ri*exp(-adist*adist);
+#else
+    erfc_part_ri = erfc(adist) / dist;
+    return coulomb.prefactor*chgfac*erfc_part_ri;
+#endif
+  }
+  return 0.0;
+}
+
 /// print the p3m parameters to the interpreters result
 int tclprint_to_result_ChargeP3M(Tcl_Interp *interp);
-int tclprint_to_result_DipolarP3M(Tcl_Interp *interp);
-
-/** Calculate the k-space contribution to the coulomb interaction
-     forces for electro- and/or magnetostatic interactions, if
-    compiled in. */ 
-double P3M_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** Clean up P3M memory allocations. */
-void P3M_exit();
-
-/*@}*/
-
-
-/**************** headers for each specific p3m algorithm ********************************************/
-
-#ifdef ELECTROSTATICS
-#include "p3m-charges.h"  /* charge-charge interaction */
-#endif
-
-#ifdef MAGNETOSTATICS
-#include "p3m-dipoles.h"  /* magnetic dipole-dipole interaction */
-#endif 
-
-#undef P3M_H_CURRENT
+void P3M_free();
 
 #endif /* of ifdef ELP3M */
 
