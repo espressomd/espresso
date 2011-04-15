@@ -54,7 +54,7 @@ tests = \
 	p3m_simple_noncubic.tcl \
 	p3m-wall.tcl \
 	rotation.tcl \
-	tabulated.tcl 
+	tabulated.tcl \
 	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
