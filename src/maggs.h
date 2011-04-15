@@ -75,6 +75,8 @@ typedef struct {
   double inva;
   /** size of mesh cube */
   double a;
+  /** self energy coefficients of the system */
+  double alpha[8][8];
 } MAGGS_struct;
 extern MAGGS_struct maggs;
 /*@}*/
@@ -127,7 +129,10 @@ int maggs_count_charged_particles();
 /** Clean up, free memory. Not used at the moment. */
 void maggs_exit();
 
-/** Print out the results. */
+/** Print out the results.
+    @return 0 for success, -1 otherwise
+    @param interp TCL Interpreter handle
+*/
 int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 /*@}*/

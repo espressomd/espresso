@@ -138,35 +138,27 @@ void calc_long_range_energies()
 
 #ifdef MAGNETOSTATICS
   switch (coulomb.Dmethod) {
- #ifdef ELP3M
+#ifdef ELP3M
   case DIPOLAR_P3M:
     P3M_dipole_assign(); 
     energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
     break;
-#ifdef MDLC
   case DIPOLAR_MDLC_P3M:
-     P3M_dipole_assign(); 
+    P3M_dipole_assign(); 
     energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
     energy.dipolar[2] =add_mdlc_energy_corrections();
     break;
 #endif
- #endif
- #ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-     energy.dipolar[1] = dawaanr_calculations(0,1);
+    energy.dipolar[1] = dawaanr_calculations(0,1);
     break;
-  #endif
- #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
-   case DIPOLAR_MDLC_DS:
-     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
+  case DIPOLAR_MDLC_DS:
+    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
     energy.dipolar[2] =add_mdlc_energy_corrections();
     break;
-#endif    
   case DIPOLAR_DS:
-     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
+    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0,1);
     break;
-  #endif
   
   } 
 #endif /* ifdef MAGNETOSTATICS */
@@ -204,13 +196,9 @@ void init_energies(Observable_stat *stat)
   case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
 #endif
-#ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:   n_dipolar = 2; break;
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
  case DIPOLAR_MDLC_DS: n_dipolar=3; break;
  case DIPOLAR_DS:   n_dipolar = 2; break;
-#endif
   }
 
 #endif

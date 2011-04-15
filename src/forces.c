@@ -174,11 +174,9 @@ void calc_long_range_forces()
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-#ifdef MDLC
   case DIPOLAR_MDLC_P3M:
      add_mdlc_force_corrections();
     //fall through 
-#endif
   case DIPOLAR_P3M:
     P3M_dipole_assign();
 #ifdef NPT
@@ -196,16 +194,12 @@ void calc_long_range_forces()
       dawaanr_calculations(1,0);
       break;
 #endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
   case DIPOLAR_MDLC_DS:
      add_mdlc_force_corrections();
     //fall through 
-#endif
   case DIPOLAR_DS: 
         magnetic_dipolar_direct_sum_calculations(1,0);
       break;
-#endif
 
   }
 #endif  /*ifdef MAGNETOSTATICS */
@@ -307,11 +301,11 @@ MDINLINE void init_local_particle_force(Particle *part)
 #endif
 
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   if(ifParticleIsVirtual(part))
     if(part->p.adress_weight > 0 && part->p.adress_weight < 1)
       add_thermodynamic_force(part);
-  /** #endif */  
+  /* #endif */  
 #endif
 }
 

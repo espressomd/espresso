@@ -38,9 +38,7 @@
 #define DLC_DIPOLAR_H
 
 
-#ifdef MDLC
 #ifdef MAGNETOSTATICS
-#ifdef DIPOLES
 
 /** parameters for the MDLC method */
 typedef struct {
@@ -73,9 +71,7 @@ extern DLC_struct dlc_params;
    int       tclprint_to_result_MDLC(Tcl_Interp *interp);
    double get_mu_max(void);
    
-#endif  /*of DIPOLES */
-#endif   
-#endif  /* of ifdef MDLC */
+#endif  /* of ifdef MAGNETOSTATICS */
 
 
 #endif

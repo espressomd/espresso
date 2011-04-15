@@ -1056,6 +1056,10 @@ requires assigning charges to the particles.  This is done using the
   \end{features}
 \end{essyntax}
 
+For this feature to work, you need to have the \texttt{fftw3} library
+installed on your system. In \es{}, you can check if it is compiled in
+by checking for the feature \texttt{FFTW}.
+
 This command activates the P3M method to compute the electrostatic
 interactions between charged particles.  The different parameters are
 described in more detail in \cite{deserno98a}.
@@ -1511,8 +1515,8 @@ system is periodic (as defined by \texttt{setmd periodic}), it applies
 the minimum image convention, i.e. the interaction is effectively cut
 off at half a box length.
 
-This method should only be used if it is not possible to P3M or DLC
-and has a low accuracy.
+This method should only be used if it is not possible to use P3M or
+DLC and has a low accuracy.
 
 \subsection{Magnetic Dipolar Direct Sum (MDDS)}
 \index{MDDS method|mainindex}

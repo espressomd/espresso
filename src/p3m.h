@@ -223,11 +223,6 @@ extern p3m_struct p3m;
 int tclprint_to_result_ChargeP3M(Tcl_Interp *interp);
 int tclprint_to_result_DipolarP3M(Tcl_Interp *interp);
 
-/** Initialize all structures, parameters and arrays needed for the 
- *  P3M algorithm.
- */
-void P3M_init();
-
 /** Calculate the k-space contribution to the coulomb interaction
      forces for electro- and/or magnetostatic interactions, if
     compiled in. */ 

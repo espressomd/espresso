@@ -826,8 +826,8 @@ double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag)
                 for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
                     for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
                         /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-                        rs_mesh[ind] = -(ks_mesh[ind+1] * d_operator[ j[d]+fft_plan[3].start[d] ]); ind++;
-                        rs_mesh[ind] =   ks_mesh[ind-1] * d_operator[ j[d]+fft_plan[3].start[d] ];  ind++;
+                        rs_mesh[ind] = -2.0*PI*(ks_mesh[ind+1] * d_operator[ j[d]+fft_plan[3].start[d] ])/box_l[d_rs]; ind++;
+                        rs_mesh[ind] =   2.0*PI*ks_mesh[ind-1] * d_operator[ j[d]+fft_plan[3].start[d] ]/box_l[d_rs];  ind++;
                     }
                 }
             }
@@ -1068,7 +1068,7 @@ void calc_influence_function_force()
                     fak2 = SQR(d_op[RX][n[KX]]/box_l[RX])+SQR(d_op[RY][n[KY]]/box_l[RY])+SQR(d_op[RZ][n[KZ]]/box_l[RZ]);
 
                     fak3 = fak1/(fak2 * SQR(denominator));
-                    g_force[ind] = fak3/(PI*PI*PI);
+                    g_force[ind] = 2*fak3/(PI);
                 }
             }
         }
@@ -1873,9 +1873,9 @@ int P3M_sanity_checks()
     ERROR_SPRINTF(errtxt,"{047 P3M_init: skin is not yet set} ");
     ret = 1;
   }
-  if (p3m.alpha < 0.0 || p3m.alpha > 1.0) {
+  if (p3m.alpha < 0.0 ) {
     errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
-    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be between 0 and 1.} ");
+    ERROR_SPRINTF(errtxt,"{048 P3M_init: alpha must be >0.} ");
     ret = 1;
   }
     
@@ -2042,7 +2042,6 @@ void P3M_calc_kspace_stress (double* stress) {
 
 
 void   P3M_init_charges() {
-  int n;
 
   if(coulomb.bjerrum == 0.0) {       
     p3m.r_cut    = 0.0;
@@ -2079,11 +2078,7 @@ void   P3M_init_charges() {
 
     calc_send_mesh();
     P3M_TRACE(p3m_print_local_mesh(lm));
-    /* DEBUG */
-    for(n=0;n<n_nodes;n++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
-      if(n==this_node) P3M_TRACE(p3m_print_send_mesh(sm));
-    }
+    P3M_TRACE(p3m_print_send_mesh(sm));
     if(sm.max != send_recv_grid_size) {
       send_recv_grid_size=sm.max;
       send_grid = (double *) realloc(send_grid, sizeof(double)*sm.max);

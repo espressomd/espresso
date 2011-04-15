@@ -26,6 +26,8 @@ ug_TEXFILES = \
 	run.tex \
 	analysis.tex \
 	io.tex \
+	lb.tex \
+	maggs.tex \
 	aux.tex \
 	internal.tex \
 	contributing.tex \
@@ -62,8 +64,7 @@ if HAVE_LATEX
 	cd $(srcdir); \
 		$(AWK) -f assemble_quickref.awk $(ug_TEXFILES) \
 			> $(abs_builddir)/quickref.inp
-	sh ../latexit.sh $(srcdir) ug || rm ug.pdf
-	@echo "See LaTeX output in ug.log"
+	sh ../latexit.sh $(srcdir) ug
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."

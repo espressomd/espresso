@@ -55,7 +55,10 @@ tests = \
 	tabulated.tcl 
 	thermostat.tcl \
         tunable_slip.tcl \
-	virtual-sites.tcl
+	virtual-sites.tcl \
+	p3m-wall.tcl \
+  p3m_simple_noncubic.tcl
+
 
 deactivated_tests =
 
@@ -99,7 +102,6 @@ check-local: runtest.sh
 	else \
 	  @builddir@/runtest.sh $(tests); \
 	fi
+
 DISTCLEANFILES=\
-	runtest.sh \
-	fftw3_1d_wisdom_forw_n32.file \
-	fftw3_1d_wisdom_back_n32.file
+	fftw3_1d_wisdom_*.file

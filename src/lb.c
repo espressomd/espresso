@@ -2444,12 +2444,6 @@ void lb_calc_average_rho() {
 
 }
 
-/** Returns the hydrodynamic fields of a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Output)
- * @param j     Local momentum of the fluid (Output)
- * @param pi    Local stress tensor of the fluid (Output)
- */
 /*@}*/
 
 #ifdef ADDITIONAL_CHECKS
@@ -3005,7 +2999,7 @@ MDINLINE void lb_init_mode_transformation() {
  * Checks for negative populations and increases failcounter for each
  * occurence.
  *
- * @param  local_node Pointer to the local lattice site (Input).
+ * @param  index Index of the local lattice site (Input).
  * @return Number of negative populations on the local lattice site.
  */
 MDINLINE int lb_check_negative_n(index_t index) {
