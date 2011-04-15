@@ -68,8 +68,6 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
 int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv);
 int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv);
 int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv);
-int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, profile_data** pdata_);
-int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, radial_profile_data** pdata);
 
 
 int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
@@ -221,11 +219,13 @@ int correlation_get_correlation_time(double_correlation* self, double* correlati
 /* We can track several correlation functions at a time
 *  identified by their ids.
 */
-int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv) {
+int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char** argv) {
   int no;
   char buffer[TCL_INTEGER_SPACE];
+  argc-=1;
+  argv+=1;
   if (argc < 1)
-    return correlation_print_usage(interp);
+    return tclcommand_correlation_print_usage(interp);
   if (argc==1 && ARG0_IS_S("n_corr")) {
     sprintf(buffer,"%d ",n_correlations);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
@@ -234,13 +234,13 @@ int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** ar
   if (ARG0_IS_I(no)) {
     argc-=1;
     argv+=1;
-    return correlation_parse_corr(interp, no, argc, argv);
+    return tclcommand_correlation_parse_corr(interp, no, argc, argv);
   } else {
-    return correlation_print_usage(interp);
+    return tclcommand_correlation_print_usage(interp);
   }
 }
 
-int correlation_print_usage(Tcl_Interp* interp) {
+int tclcommand_correlation_print_usage(Tcl_Interp* interp) {
   Tcl_AppendResult(interp, "You don't know how to use correlation.", (char *)NULL);
   return TCL_ERROR;
 }
@@ -249,10 +249,10 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
   int i;
   if (argc > 0 ) {
     if (ARG0_IS_S("start")) {
-      if(correlations[no].A_fun==&tcl_input || correlations[no].is_from_file) {
-        Tcl_AppendResult(interp, "Can not use autoupdate for a correlation from a file or from tclinput\n", (char *)NULL);
-        return TCL_ERROR;
-      }
+//      if(correlations[no].A_fun==&tcl_input || correlations[no].is_from_file) {
+//        Tcl_AppendResult(interp, "Can not use autoupdate for a correlation from a file or from tclinput\n", (char *)NULL);
+//        return TCL_ERROR;
+//      }
       if(correlations[no].update_frequency > 0) {
         correlations_autoupdate = 1;
         correlations[no].autoupdate=1;
@@ -301,15 +301,13 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
 
 }
 
-int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
-  int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A) = 0;
+int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
-  void* A_args = 0;
-  unsigned int dim_A;
-  int(*B_fun)  ( void* B_args, double* B, unsigned int dim_B) = 0;
   int(*compressB)  ( double* B1, double*B2, double* B_compressed, unsigned int dim_B ) = 0;
-  void* B_args = 0;
-  unsigned int dim_B;
+  observable *A=0;
+  observable *B=0;
+  int dim_A;
+  int dim_B;
   int tau_lin = 16; // default values
   int hierarchy_depth=0; 
   double delta_t = 1;
@@ -318,7 +316,8 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   unsigned int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
-  tcl_input_data tcl_input_d;
+  int temp;
+//  tcl_input_data tcl_input_d;
   char buffer[TCL_INTEGER_SPACE+2];
   int correlation_type; // correlation type of correlation which is currently being created
   int autocorrelation=1; // by default, we are doing autocorrelation
@@ -341,23 +340,23 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
           Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize\n", buffer, (char *)NULL);
     	    return TCL_ERROR;
         }
-      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
-        correlations[no].A_args = &tcl_input_d;
-        tcl_input_d.interp=interp;
-        tcl_input_d.argv=argv+1;
-        tcl_input_d.argc=argc-1;
-        if (!correlations[no].autocorrelation) {
-          correlations[no].B_args = &tcl_input; 
-          tcl_input_d.interp=interp;
-          tcl_input_d.argv=argv+2;
-          tcl_input_d.argc=argc-2;
-        }
-        error = double_correlation_get_data(&correlations[no]);
-        if (error) {
-          Tcl_AppendResult(interp, "Error reading tclinput", (char *)NULL);
-        } else {
-          return TCL_OK;
-        }
+//      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
+//        correlations[no].A_args = &tcl_input_d;
+//        tcl_input_d.interp=interp;
+//        tcl_input_d.argv=argv+1;
+//        tcl_input_d.argc=argc-1;
+//        if (!correlations[no].autocorrelation) {
+//          correlations[no].B_args = &tcl_input; 
+//          tcl_input_d.interp=interp;
+//          tcl_input_d.argv=argv+2;
+//          tcl_input_d.argc=argc-2;
+//        }
+//        error = double_correlation_get_data(&correlations[no]);
+//        if (error) {
+//          Tcl_AppendResult(interp, "Error reading tclinput", (char *)NULL);
+//        } else {
+//          return TCL_OK;
+//        }
       } else if (ARG0_IS_S("update")) {
         error = double_correlation_get_data(&correlations[no]);
         if (error) {
@@ -367,14 +366,14 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         }
       } else if (ARG0_IS_S("autoupdate")) {
         return tclcommand_correlation_parse_autoupdate(interp, no, argc-1, argv+1);
-      } else if (ARG0_IS_S("update_from_file")) {
-        error = correlation_update_from_file(no);
-        if (error) {
-          Tcl_AppendResult(interp, "error in update_from_file", (char *)NULL);
-          return TCL_ERROR;
-        } else {
-          return TCL_OK;
-        }
+//      } else if (ARG0_IS_S("update_from_file")) {
+//        error = correlation_update_from_file(no);
+//        if (error) {
+//          Tcl_AppendResult(interp, "error in update_from_file", (char *)NULL);
+//          return TCL_ERROR;
+//        } else {
+//          return TCL_OK;
+//        }
       } else if (ARG0_IS_S("write_to_file")) {
         if (argc <2) {
           Tcl_AppendResult(interp, "You must pass a filename as argument of write_to_file", (char *)NULL);
@@ -403,23 +402,32 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
     // working correlation class instance from that.
     correlation_type=CORR_TYPE_GENERIC; // this is the default
     while (argc > 0) {
-      if ( ARG0_IS_S("first_obs") ) {
-        argc -= 1;
-        argv += 1;
-        error=parse_observable(interp, argc, argv, &change, &A_fun, &dim_A, &A_args);
-        argc -= change;
-        argv += change;
-        if (error)
+      if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
+        if (argc>1 && ARG1_IS_I(temp)) {
+          if (temp>=n_observables) {
+             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist", (char *)NULL);
+             return TCL_ERROR;
+          }
+          A=observables[temp];
+          dim_A=observables[temp]->n;
+          change+=2; argv+=2; argc-=2;
+        } else {
+          tclcommand_correlation_print_usage(interp);
           return TCL_ERROR;
-      } else if ( ARG0_IS_S("second_obs") ) {
-        argc -= 1;
-        argv += 1;
-        error = parse_observable(interp, argc, argv, &change, &B_fun, &dim_B, &B_args); 
-	      autocorrelation=0;
-        argc -= change;
-        argv += change;
-        if (error)
+        }
+      } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) {
+        if (argc>1 && ARG1_IS_I(temp)) {
+          if (temp>=n_observables) {
+             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist", (char *)NULL);
+             return TCL_ERROR;
+          }
+          B=observables[temp];
+          dim_B=observables[temp]->n;
+          change+=2; argv+=2; argc-=2;
+        } else {
+          tclcommand_correlation_print_usage(interp);
           return TCL_ERROR;
+        }
       } else if ( ARG0_IS_S("corr_operation") ) {
         argc -= 1;
         argv += 1;
@@ -446,7 +454,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         // FIXME This will be removed later
 	Tcl_AppendResult(interp, "*** CHANGE *** specify tau_max instead of hierarchy_depth *** ", (char *)NULL);
 	  return TCL_ERROR;
-      } else if ( ARG0_IS_S("delta_t") ) {
+      } else if ( ARG0_IS_S("delta_t") || ARG0_IS_S("dt") ) {
         if ( argc < 2 || !ARG1_IS_D(delta_t)) {
           Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t ", (char *)NULL);
         } else { 
@@ -465,14 +473,14 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
         argc -= 2;
         argv += 2; 
       } else if ( ARG_IS_S_EXACT(0,"compress2") ) {
-        if ( ARG_IS_S_EXACT(1,"linear") )  compressB=compress_linear; 
-        else if (ARG_IS_S_EXACT(1,"discard1")) compressB=compress_discard1;
-        else if (ARG_IS_S_EXACT(1,"discard2")) compressB=compress_discard2;
-	else {
-	  Tcl_AppendResult(interp, "Compression function ", argv[1], (char *)NULL);
-	  Tcl_AppendResult(interp, " is not implemented. ", (char *)NULL);
-	  return TCL_ERROR;
-	}
+          if ( ARG_IS_S_EXACT(1,"linear") )  compressB=compress_linear; 
+          else if (ARG_IS_S_EXACT(1,"discard1")) compressB=compress_discard1;
+          else if (ARG_IS_S_EXACT(1,"discard2")) compressB=compress_discard2;
+         	else {
+         	  Tcl_AppendResult(interp, "Compression function ", argv[1], (char *)NULL);
+         	  Tcl_AppendResult(interp, " is not implemented. ", (char *)NULL);
+         	  return TCL_ERROR;
+         	}
 	autocorrelation=0;
         argc -= 2;
         argv += 2; 
@@ -517,11 +525,11 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
   }
   if(autocorrelation) {
     dim_B=dim_A;
-    B_fun=&obs_nothing;
+//    B_fun=&obs_nothing;
     compressB=&compress_do_nothing;
   } else {
     printf("auto %d\n", autocorrelation);
-    if(B_fun==NULL && compressB!=NULL) {
+    if(B==NULL && compressB!=NULL) {
       Tcl_AppendResult(interp, "You have chosen compressB but not a function for computing observable B.\n", (char *)NULL);
        return TCL_ERROR; 
     } 
@@ -536,7 +544,7 @@ int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 
   // Now initialize the new correlation
   error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, hierarchy_depth, 1, 
-      dim_A, dim_B, dim_corr, A_fun, A_args, B_fun, B_args,
+      dim_A, dim_B, dim_corr, A, B, 
       corr_operation, compressA, compressB, correlation_type, autocorrelation);
   if ( error == 0 ) {
   printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
@@ -562,6 +570,125 @@ int observable_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
+int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p) {
+  observable_sf_params* params;
+  int order,order2,tau_lin;
+  int i,j,k,l,n;
+  double delta_t,tau_max;
+  char ibuffer[TCL_INTEGER_SPACE + 2];
+  char dbuffer[TCL_DOUBLE_SPACE];
+//  int *vals;
+  double *q_density;
+  params=(observable_sf_params*)malloc(sizeof(observable_sf_params));
+  
+  if(argc!=5) { 
+    sprintf(ibuffer, "%d ", argc);
+    Tcl_AppendResult(interp, "structure_factor  needs 5 arguments, got ", ibuffer, (char*)NULL);
+    sf_print_usage(interp);
+    return TCL_ERROR;
+  }
+  if (ARG_IS_I(1,order)) {
+    sprintf(ibuffer, "%d ", order);
+    if(order>1) {
+      params->order=order;
+      order2=order*order;
+    } else {
+      Tcl_AppendResult(interp, "order must be > 1, got ", ibuffer, (char*)NULL);
+      sf_print_usage(interp);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading order",(char*)NULL);
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_D(2,delta_t)) {
+    if (delta_t > 0.0) *delta_t_p=delta_t;
+    else {
+      Tcl_PrintDouble(interp,delta_t,dbuffer);
+      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", dbuffer,(char*)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading delta_t, got ",argv[2],(char*)NULL);
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_D(3,tau_max)) {
+    if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
+    else {
+      Tcl_PrintDouble(interp,tau_max,dbuffer);
+      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", dbuffer,(char*)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading tau_max, got",argv[3],(char*)NULL);
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_I(4,tau_lin)) {
+    if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
+    else {
+      sprintf(ibuffer, "%d", tau_lin);
+      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", ibuffer,(char*)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading tau_lin, got",argv[4],(char*)NULL);
+    sf_print_usage(interp);
+    return TCL_ERROR; 
+  }
+  // compute the number of vectors
+  l=0;
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) {
+            l++;
+	  }
+        }
+  params->dim_sf=l;
+  params->q_vals=(int*)malloc(3*l*sizeof(double));
+  q_density=(double*)malloc(order2*sizeof(double));
+  for(i=0;i<order2;i++) q_density[i]=0.0;
+  l=0;
+  // Store their values and density
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) {
+	    params->q_vals[3*l  ]=i;
+	    params->q_vals[3*l+1]=j;
+	    params->q_vals[3*l+2]=k;
+	    q_density[n-1]+=1.0;
+            l++;
+	  }
+        }
+  for(i=0;i<order2;i++) q_density[i]/=(double)l;
+  params->q_density=q_density;
+  *A_args=(void*)params;
+  *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
+  return 0;
+}
+
+// just a test function, will be removed later
+void print_sf_params(observable_sf_params *params) {
+  int i, imax;
+  int *vals;
+  printf("order: %d\n",params->order);
+  printf("dim_sf: %d\n",params->dim_sf);
+  //printf("n_bins: %d\n",params->n_bins);
+  //printf("qmax: %g\n",params->qmax);
+  //printf("q2max2: %g\n",params->q2max);
+  printf("q_vals: \n");
+  imax=params->dim_sf;
+  vals=params->q_vals;
+  for(i=0;i<imax;i++)
+    printf("i:%d %d %d %d\n",i,vals[3*i],vals[3*i+1],vals[3*i+ 2]);
+  printf("End of sf_params\n");
+  return;
+}
+
+>>>>>>> 314e3e1f84857f4ac8687c732a460fc8017daa05
 
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list){ 
@@ -586,6 +713,7 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
       return n_ids;
 }
 
+<<<<<<< HEAD
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
   int i,ret;
 //  char** temp_argv; int temp_argc;
@@ -843,6 +971,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   }
 }
 
+<<<<<<< HEAD
 int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, unsigned int* dim_A, profile_data** pdata_) {
   int temp;
   *change=0;
@@ -991,7 +1120,7 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
 
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
-                  void* A_fun, void* A_args, void* B_fun, void* B_args, void* corr_operation, 
+                  observable* A, observable* B, void* corr_operation, 
                   void* compressA, void* compressB,
 		  int correlation_type, int autocorrelation) {
   unsigned int i,j,k;
@@ -1009,10 +1138,8 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   self->dim_A = dim_A;
   self->dim_B = dim_B;
   self->dim_corr = dim_corr;
-  self->A_fun = A_fun;
-  self->A_args = A_args;
-  self->B_fun = B_fun;
-  self->B_args = B_args;
+  self->A_obs = A;
+  self->B_obs = B;
   self->corr_operation = corr_operation;
   self->compressA = compressA;
   self->compressB = compressB;
@@ -1037,9 +1164,9 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     return 7;
   if (dim_corr<1)
     return 8;
-  if (A_fun == 0)
+  if (A == 0)
     return 9;
-  if (B_fun == 0)
+  if (B == 0 && !self->autocorrelation)
     return 10;
   if (corr_operation==0)
     return 11;
@@ -1050,11 +1177,11 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   if (tau_lin%2)
     return 14;
 
-  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
-    self->is_from_file = 1;
-  } else {
-    self->is_from_file = 0;
-  }
+//  if (A_fun == &file_data_source_readline && (B_fun == &file_data_source_readline|| autocorrelation)) {
+//    self->is_from_file = 1;
+//  } else {
+//    self->is_from_file = 0;
+//  }
 
   self->A_data = (double*)malloc((tau_lin+1)*hierarchy_depth*dim_A*sizeof(double));
   if (autocorrelation) 
@@ -1178,10 +1305,10 @@ int double_correlation_get_data( double_correlation* self ) {
   self->newest[0] = ( self->newest[0] + 1 ) % (self->tau_lin +1); 
   self->n_vals[0]++;
 
-  if ( (*self->A_fun)(self->A_args, self->A[0][self->newest[0]], self->dim_A) != 0 )
+  if ( (*self->A_obs->fun)(self->A_obs->args, self->A[0][self->newest[0]], self->dim_A) != 0 )
     return 1;
   if (!self->autocorrelation)
-    if ( (*self->B_fun)(self->B_args, self->B[0][self->newest[0]], self->dim_B) != 0 )
+    if ( (*self->B_obs->fun)(self->B_obs->args, self->B[0][self->newest[0]], self->dim_B) != 0 )
       return 2;
 
   // Now we update the cumulated averages and variances of A and B
@@ -1367,7 +1494,7 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
   int j,k;
   int qi,qj,qk,qn, dim_sf, order2;
   double dt=self->dt;
-  sf_params* params=(sf_params*)self->A_args;
+  observable_sf_params* params=(observable_sf_params*)self->A_obs->args;
   char buffer[TCL_DOUBLE_SPACE];
   int *q_vals;
   double *q_density;
@@ -1568,6 +1695,7 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   return 0;
 }
 
+<<<<<<< HEAD
 int particle_velocities(void* idlist, double* A, unsigned int n_A) {
   unsigned int i;
   IntList* ids;
@@ -1896,3 +2024,4 @@ void autoupdate_correlations() {
     }
   }
 }
+

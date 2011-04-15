@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file blockfile.h
-    This contains routines to access files formatted as described in \ref blockformat.
+    This contains routines to access files formatted as described in blockformat.
     The file can be either a Tcl channel or a FILE *, which is called FILETYPE here.
     See \ref blockfile.c "blockfile.c" for more information.
 */
@@ -82,7 +82,7 @@ int block_startread(FILETYPE f, char index[MAXBLOCKTITLE]);
         terminates at the matching closing bracket, else open_braces-1 additional
 	braces will be consumed.
  @param data where to store the contained data
- @param size the size of the buffer pointed to by \ref data.
+ @param size the size of the buffer pointed to by "data".
  @param spacer if this character is read and no brace is open, i. e. open_braces=1,
         reading also terminates. A spacer of 0 disables this feature. This can be used
 	to read in for example space separated lists:
@@ -104,7 +104,7 @@ int block_writestart(FILETYPE f, char index[MAXBLOCKTITLE]);
     @return 0 on success or RETURN_CODE_ERROR
 */
 int block_writeend(FILETYPE f);
-/** write a data field to the file f. \ref type, \ref dim and \ref data are fully compatible
+/** write a data field to the file f. "type", "dim" and "data" are fully compatible
     to the fields of \ref Datafield.
     @param f the file
     @param type the field type, either \ref TYPE_INT or \ref TYPE_DOUBLE
@@ -113,7 +113,7 @@ int block_writeend(FILETYPE f);
     @return 0 on success or RETURN_CODE_ERROR
 */
 int block_write_data(FILETYPE f, int type, int dim, void *data);
-/** read a data field from file f. \ref type, \ref dim and \ref data are fully compatible
+/** read a data field from file f. "type", "dim" and "data" are fully compatible
     to the fields of \ref Datafield. The type information is also stored in the file and
     counterchecked.
     @param f the file

@@ -68,6 +68,8 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
+#include "statistics_observable.h"
+#include "statistics_correlation.h"
 
 #ifdef CUDA
 #include "cuda_init.h"
@@ -91,12 +93,6 @@ static void init_tcl(Tcl_Interp *interp);
 int on_program_start(Tcl_Interp *interp)
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
-
-#ifdef CUDA
-if(this_node == 0){
-  gpu_init();
-}
-#endif
 
   /*
     call the initialization of the modules here
@@ -125,7 +121,7 @@ if(this_node == 0){
 #endif
 
 #ifdef LB_GPU
-if(this_node == 0){
+  if(this_node == 0){
     lb_pre_init_gpu();
   }
 #endif
@@ -307,7 +303,7 @@ void on_observable_calc()
       EWALD_count_charged_particles();
       break;
     case COULOMB_MAGGS: 
-      Maggs_init(); 
+      maggs_init(); 
       break;
     default: break;
     }
@@ -383,7 +379,7 @@ void on_coulomb_change()
     MMM2D_init();
     break;
   case COULOMB_MAGGS: 
-    Maggs_init(); 
+    maggs_init(); 
     break;
   default: break;
   }
@@ -836,12 +832,19 @@ static void init_tcl(Tcl_Interp *interp)
   /* in metadynamics.c */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
 #endif
+  REGISTER_COMMAND("observable", tclcommand_observable);
+  REGISTER_COMMAND("correlation", tclcommand_correlation);
+
 #ifdef LB_GPU
   /* in lbgpu_cfile.c */
   REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
 
   REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
+#ifdef CUDA
+  REGISTER_COMMAND("cuda", tclcommand_cuda);
+#endif
+
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)

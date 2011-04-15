@@ -120,7 +120,7 @@ RandomStatus print_random_stat(void) {
 /*----------------------------------------------------------------------*/
 
 /**  Implementation of the tcl-command
-     t_random [{ int <n> | seed [<seed(0)> ... <seed(n_nodes-1)>] | stat [status-list] }]
+     t_random [{ int \<n\> | seed [\<seed(0)\> ... \<seed(n_nodes-1)\>] | stat [status-list] }]
      <ul>
      <li> Without further arguments, it returns a random double between 0 and 1.
      <li> If 'int \<n\>' is given, it returns a random integer between 0 and n-1.

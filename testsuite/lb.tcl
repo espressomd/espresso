@@ -66,8 +66,8 @@ set agrid         1.0
 set box_l         30.0
 
 set dens          0.85
-set viscosity     3.0
-set friction      20.0
+set viscosity     30.0
+set friction      2.0
 
 set temp          1.0
 
@@ -96,7 +96,7 @@ cellsystem domain_decomposition -no_verlet_list
 
 # Fluid
 #############################################################
-lbfluid dens $dens visc $viscosity agrid $agrid tau $tau
+lbfluid cpu dens $dens visc $viscosity agrid $agrid tau $tau
 lbfluid friction $friction
 
 thermostat lb $temp
@@ -105,7 +105,7 @@ thermostat lb $temp
 #############################################################
 # load colloid from file
 read_data "lb_system.data"
-
+#part 0 pos 10 10 10
 # here you can create the necessary snapshot
 #write_data "lb_system.data"
 
@@ -180,7 +180,7 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 
     # temperature of the fluid
     set fluid_temp [analyze fluid temp]
-
+    # puts "part [part 0 print pos v f]"
 }    
 
 #############################################################
@@ -195,6 +195,7 @@ puts "Maximal mass deviation $max_dmass"
 puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
 
 puts "\nAverage temperature $avg_temp (relative deviation $rel_temp_error)\n"
+puts "fluid temperature [analyze fluid temp]\n"
 #if { $rel_temp_error > $temp_prec } {
 #    error "relative temperature deviation too large"
 #}

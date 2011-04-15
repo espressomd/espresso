@@ -118,6 +118,7 @@
 #include <math.h>
 #include "tcl.h"
 #include "parser.h"
+#include "statistics_observable.h"
 
 #define MAXLINELENGTH 2048
 
@@ -187,10 +188,8 @@ typedef struct {
   int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
   // Functions producing observables A and B from the input data
-  int (*A_fun)  ( void* A_args, double* A, unsigned int dim_A);
-  void* A_args;
-  int(*B_fun)  ( void* B_args, double* B, unsigned int dim_B);
-  void* B_args;
+  observable* A_obs;
+  observable* B_obs;
 
   int is_from_file;
   int autoupdate;
@@ -202,25 +201,6 @@ extern int correlations_autoupdate;
 extern double_correlation* correlations;
 
 
-// TODO: missing destructor
-/** struct for passing arguments to structure_factor
- */
-typedef struct {
-  int order;
-  int dim_sf; // number of q vectors
-  int *q_vals; // values of q vectors
-  double *q_density; // number of q vectors per bin
-  // entries for spherical averaging
-} sf_params;
-
-// TODO: missing destructor
-/** struct for passing arguments to interacts_with 
- */
-typedef struct {
-  double cutoff;
-  IntList *ids1;
-  IntList *ids2;
-} iw_params;
 
 
 /** This struct allow to use a file as input for the correlation.
@@ -238,16 +218,17 @@ typedef struct {
 
 /** The TCL command parser 
  */
-int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv); 
-int correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
+int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char** argv);
+int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
+
 int correlation_print_usage(Tcl_Interp* interp);
 // parsing calls to pre-defined correlations
 int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p);
 // TESTING
-void print_sf_params(sf_params *params);
+//void print_sf_params(sf_params *params);
 // parsing generic correlation call
-int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), unsigned int* dim_A, void** A_args);
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
+int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, observable** obs);
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B);
 
   
 
@@ -276,7 +257,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
  */
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
-                  void* A_fun, void* A_args, void* B_fun, void* B_args, void* corr_operation, 
+                  observable* A, observable* B, void* corr_operation, 
                   void* compressA, void* compressB,
 		  int correlation_type, int autocorrelation);
 
@@ -352,56 +333,12 @@ int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_
 
 /** Obtain the particle velocities.
  */ 
-int particle_velocities(void* idlist, double* A, unsigned int n_A);
-int com_velocity(void* idlist, double* A, unsigned int n_A); 
-/** Obtain the particle positions.
- * TODO: Folded or unfolded?
- */ 
-int particle_positions(void* typelist, double* A, unsigned int n_A);
-#ifdef ELECTROSTATICS
-int particle_currents(void* typelist, double* A, unsigned int n_A);
-int currents(void* typelist, double* A, unsigned int n_A);
-#endif
-
-
-/** Calculate structure factor from positions and scattering length */
-int structure_factor(void* params, double* A, unsigned int n_A);
-
-/** See if particles from idList1 interact with any of the particles in idList2 
-input parameters are passed via struct iw_params
-*/
-int interacts_with(void* params, double* A, unsigned int n_A);
-
-/** Do nothing */
-int obs_nothing (void* params, double* A, unsigned int n_A);
-
-typedef struct { 
-  IntList* id_list;
-  double startz;
-  double stopz;
-  int nbins;
-} profile_data;
-
-typedef struct {
-  IntList* id_list;
-  double stopr;
-  double center[3];
-  int nbins;
-} radial_profile_data;
-
-int flux_profile(void* params, double* A, unsigned int n_A);
-
-int density_profile(void* params, double* A, unsigned int n_A);
-
-int lb_velocity_profile(void* params, double* A, unsigned int n_A);
-
-int radial_density_profile(void* params, double* A, unsigned int n_A);
-
-typedef struct {
-  Tcl_Interp* interp;
-  int argc;
-  char** argv;
-} tcl_input_data;
-
-int tcl_input(void* data, double* A, unsigned int n_A);
+//
+//typedef struct {
+//  Tcl_Interp* interp;
+//  int argc;
+//  char** argv;
+//} tcl_input_data;
+//
+//int tcl_input(void* data, double* A, unsigned int n_A);
 #endif

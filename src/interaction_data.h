@@ -22,8 +22,8 @@
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
 
-    interaction_data.h contains the parser \ref #inter for the
-    \ref tcl_inter Tcl command. Therefore the parsing of bonded and nonbonded
+    interaction_data.h contains the parser \ref tclcommand_inter for the
+    Tcl command "inter". Therefore the parsing of bonded and nonbonded
     interaction definition commands both is done here. It also contains
     procedures for low-level interactions setup and some helper functions.
     Moreover it contains code for the treatments of constraints.
@@ -837,7 +837,7 @@ void tf_tables_init();
 
 #endif
 
-/** Implementation of the tcl command \ref tcl_inter. This function
+/** Implementation of the tcl command "inter". This function
     allows the interaction parameters to be modified.
  */
 int tclcommand_inter(ClientData data, Tcl_Interp *interp,

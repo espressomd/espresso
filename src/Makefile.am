@@ -71,6 +71,7 @@ libEspresso_a_SOURCES = \
 	topology.c topology.h \
 	nemd.c nemd.h \
 	statistics_cluster.c statistics_cluster.h \
+	statistics_observable.c statistics_observable.h \
 	statistics_correlation.c statistics_correlation.h \
 	elc.c elc.h \
 	mdlc_correction.c  mdlc_correction.h \

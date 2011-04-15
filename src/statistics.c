@@ -30,7 +30,7 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "statistics_fluid.h"
-#include "statistics_correlation.h"
+//#include "statistics_correlation.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
@@ -45,8 +45,8 @@
 #include "virtual_sites.h"
 #include "initialize.h"
 
-
-/** Previous particle configurations (needed for offline analysis and correlation analysis in \ref #analyze) */
+/** Previous particle configurations (needed for offline analysis and
+    correlation analysis in \ref tclcommand_analyze) */
 double **configs = NULL; int n_configs = 0; int n_part_conf = 0;
 
 /** Variables for measuring the compressibility from volume fluctuations.
@@ -3756,8 +3756,7 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
   REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
-
-  REGISTER_ANALYZE_OPTION("correlation", tclcommand_analyze_parse_correlation);
+//  REGISTER_ANALYZE_OPTION("correlation", tclcommand_analyze_parse_correlation);
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
   REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);

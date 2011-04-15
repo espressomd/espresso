@@ -145,7 +145,7 @@ MDINLINE void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, do
 }
 
 /** Computes the Reaction Field pair force and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
     @param d         Vector pointing from p1 to p2.

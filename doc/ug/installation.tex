@@ -56,8 +56,9 @@ compile software easily on a wide range of platforms.
 \label{sec:configure}
 \index{configure}
 
-% Description of basic options: --prefix, --exec-prefix, CPPFLAGS,
-% CFLAGS, LDFLAGS
+\todo[inline]{Description of basic options: \keyword{--prefix},
+  \keyword{--exec-prefix}, \keyword{CPPFLAGS}, \keyword{CFLAGS},
+  \keyword{LDFLAGS}}
 
 The first step of building \es is to run the shell script
 \codebox{configure} which is to be found in the top level source
@@ -153,6 +154,16 @@ configure --help
   version.  By default, version 3 will be used if it is found,
   otherwise version 2 is used.  Note that quite a number of central
   features of \es require FFTW.
+\item[\texttt{--with-cuda=path} / \texttt{--without-cuda}] This switch
+  enables CUDA support. \texttt{path} should be the path to the CUDA
+  directory, which can be omitted if it is the NVIDIA default path,
+  i.e. \texttt{/usr/local/cuda}. The variable \texttt{NVCCFLAGS} can
+  be used to define compiler flags for the NVIDIA CUDA-compiler
+  \texttt{nvcc}. For example, \texttt{NVCCFLAGS = "{}-gencode
+    arch=compute_20,code=sm_20"{}} will compile code only for Fermi
+  cards.  Default is to compile for compute models 1.1 and 2.0,
+  i.e. everything with a G90 chip or newer.  Note that we require at
+  least compute model 1.1.
 \end{description}
 
 \section{\texttt{make}: Compiling,  testing and installing \es}
@@ -209,6 +220,13 @@ following targets are available:
 \item[\texttt{uninstall}] Uninstalls \es, \ie removes all files that
   were installed during \texttt{make install}. The variables are
   identical to the variables of the \texttt{install}-target.
+\item[\texttt{ug\ \ }] Creates the User guide in the \texttt{doc/ug}
+  subdirectory.
+\item[\texttt{dg\ \ }] Creates the Developers' guide in the \texttt{doc/dg}
+  subdirectory.
+\item[\texttt{doc\ }] Creates both the whole documentation, \ie both the
+  User guide and the Developers' guide. Both can be found in the \texttt{doc/}
+  subdirecotry.
 \end{description}
 
 A number of options are available when calling \texttt{make}.  The

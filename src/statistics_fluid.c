@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -109,7 +110,7 @@ void lb_calc_fluid_temp(double *result) {
     }
   }
 
-  temp *= 1./(lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*pow(lblattice.agrid,4));
+  temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid);
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 }
@@ -319,34 +320,6 @@ static void lb_master_calc_velprof(double *result, int vcomp, int pdir, int x1, 
   mpi_gather_stats(8, result, params, NULL, NULL);
 
 }
-/* TODO: This function is not used anywhere. To be removed?  */
-/** Fourier transform the stress tensor into k-space using FFTW */
-static void lb_calc_fourier_pi() {
-
-    //static fftw_plan plan;
-  static int initialized = 0;
-  //static double *data;
-  //static fftw_complex *result;
-
-  /* prepare plan for FFTW */
-  if (!initialized) {
-      //fftw_destroy_plan(plan);
-      //fftw_free(data);
-    //data = fftw_malloc(volume*nfields*sizeof(double));
-    //result = fftw_malloc((volume/2+1)*nfields*sizeof(fftw_complex));
-    //plan = fftw_plan_many_dft_r2c(3,grid,6,data,NULL,nfields,1,result,NULL,nfields,1,FFTW_PATIENT);
-  }
-
-  /* prepare data: collect lattice from all nodes */
-
-  /* compute 3d real-to-complex Fourier transform */
-  //fftw_execute(plan);
-
-  /* */
-
-}
-
-/***********************************************************************/
 
 static int tclcommand_analyze_fluid_parse_mass(Tcl_Interp *interp, int argc, char** argv) {
   char buffer[TCL_DOUBLE_SPACE];
@@ -474,6 +447,7 @@ static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, 
 
 }
 #endif /* LB */
+
 /** Parser for fluid related analysis functions. */
 int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
@@ -506,12 +480,42 @@ int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv
 #endif
 }
 
+#ifdef LB_GPU
+static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double mom[3];
+
+  calc_fluid_momentum_GPU(mom);
+  
+  Tcl_PrintDouble(interp, mom[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, mom[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, mom[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+
+  return TCL_OK;
+}
+
+static int tclcommand_analyze_fluid_parse_temperature_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double cpu_temp[1];
+
+  calc_fluid_temperature_GPU(cpu_temp);
+  
+  Tcl_PrintDouble(interp, cpu_temp[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
+  return TCL_OK;
+}
+#endif
+
 int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
     int err = TCL_ERROR;
 
     if (argc==0) {
-	Tcl_AppendResult(interp, "usage: analyze fluid gpu <what>", (char *)NULL);
+	Tcl_AppendResult(interp, "usage: analyze fluid <what>", (char *)NULL);
 	return TCL_ERROR;
     } 
 
@@ -519,11 +523,10 @@ int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv
 		fprintf(stderr, "sry not implemented yet");
       //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("momentum"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_momentum(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_momentum_gpu(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("temperature"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_temp(interp, argc - 1, argv + 1);
+      err = tclcommand_analyze_fluid_parse_temperature_gpu(interp, argc - 1, argv + 1);
+
     else if (ARG0_IS_S("velprof"))
 		fprintf(stderr, "sry not implemented yet");
       //err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);

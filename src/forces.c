@@ -162,7 +162,7 @@ void calc_long_range_forces()
       EWALD_calc_kspace_forces(1,0);
     break;
   case COULOMB_MAGGS:
-    maggs_calc_e_forces();
+    maggs_calc_forces();
     break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
