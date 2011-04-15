@@ -54,40 +54,6 @@
 #endif
 
 
-#ifdef DAWAANR
-
-#ifndef MAGNETOSTATICS 
-#error  DAWAANR  needs MAGNETOSTATICS in order to work
-#endif
-
-#endif
-
-
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-
-#ifndef MAGNETOSTATICS 
-#error  MAGNETIC DIRECT SUM  needs MAGNETOSTATICS in order to work
-#endif
-
-#endif
-
-
-#ifdef MDLC
-  
-  #ifndef MAGNETOSTATICS
-  #error MDLC needs MAGNETOSTATICS
-  #endif
-  
-  #if !(defined(MAGNETIC_DIPOLAR_DIRECT_SUM)  || defined( ELP3M) )
-   #error MDLC  needs either direct sum or P3M to be active
-  #endif 
-
-  #ifndef DIPOLES
-  #error MDLC has no sense without the magnetic dipoles 
-  #endif
-
-#endif
-
 #if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
   || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
   || defined(BOND_ANGLE_COSSQUARE) && defined(BOND_ANGLE_COSINE)
@@ -275,15 +241,6 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef INTERFACE_CORRECTION
   Tcl_AppendResult(interp, "{ INTERFACE_CORRECTION } ", (char *) NULL);
 #endif
-#endif
-#ifdef MDLC
-  Tcl_AppendResult(interp, "{ MDLC } ", (char *) NULL);
-#endif
-#ifdef DAWAANR
-  Tcl_AppendResult(interp, "{ DAWAANR } ", (char *) NULL);
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-  Tcl_AppendResult(interp, "{ MAGNETIC_DIPOLAR_DIRECT_SUM } ", (char *) NULL);
 #endif
  Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);

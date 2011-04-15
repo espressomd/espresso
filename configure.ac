@@ -168,7 +168,7 @@ AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
 AC_PATH_PROG(DOT,dot)
 if test "$DOT"; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
 AC_SUBST(HAVE_DOT)
-AC_SUBST(DOT_PATH, AS_DIRNAME(["$DOT"]))
+AC_SUBST(DOT_PATH, `AS_DIRNAME(["$DOT"])`)
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
 AC_PATH_PROG(MAKEINDEX,makeindex,no)
 AC_PATH_PROG(BIBTEX,bibtex,no)
@@ -360,8 +360,8 @@ AS_IF([test x$fftw_found = xno],[
          ])
     ])
   ])
-
-AC_DEFINE_UNQUOTED(FFTW,$fftw_found,[Whether FFTW is available])
+AS_IF([test x$fftw_found = xyes],[
+  AC_DEFINE(FFTW,[],[Whether FFTW is available])])
 
 ##################################
 # check for CUDA
@@ -484,11 +484,11 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
-	doc/latexit.sh
 	doc/dg/Makefile
 	doc/ug/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
+	doc/latexit.sh
 	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],

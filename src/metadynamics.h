@@ -100,7 +100,7 @@ extern double *meta_apply_direction;
  * functions
  *********************************/
 
-/** Implementation of the Tcl command \ref tcl_metadynamics. This function
+/** Implementation of the Tcl command \ref tclcommand_metadynamics. This function
  *  allows to change the parameters of metadynamics */
 int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 /** Print metadynamics options and parameters */

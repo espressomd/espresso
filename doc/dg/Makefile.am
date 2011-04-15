@@ -52,7 +52,7 @@ dg:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
 	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
-	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)" \
+	SRCDIR=$(top_srcdir) INCLUDEDIR=$(top_builddir) PACKAGE="$(PACKAGE_STRING)" \
 	HAVE_DOT=$(HAVE_DOT) DOT_PATH=$(DOT_PATH) \
 	  $(DOXYGEN) $(srcdir)/Doxyfile
 	@echo "***************************************************************************"

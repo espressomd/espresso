@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -313,9 +314,9 @@ int mpi_integrate(int n_steps);
 void mpi_bcast_ia_params(int i, int j);
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i);
-/** #endif */
+/* #endif */
 #endif
 
 
@@ -496,6 +497,9 @@ int mpi_iccp3m_init(int dummy);
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
 
+/** Part of MDLC
+ */
+void mpi_bcast_max_mu();
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.
