@@ -1,5 +1,6 @@
 # Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -15,16 +16,17 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-
+#
 
 # check the charge-charge P3M  algorithm
+source "tests_common.tcl"
 
-require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
+require_feature "MOL_CUT" off
 
 puts "---------------------------------------------------------------"
-puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase p3m_wall.tcl running on [format %02d [setmd n_nodes]] nodes:"
 puts "---------------------------------------------------------------"
 
 set epsilon 1e-3
@@ -32,7 +34,7 @@ thermostat off
 setmd time_step 0.01
 setmd skin 0.05
 
-set file "p3m-wall.dat"
+set file "p3m_wall_system.data"
 set f [open $file "r"]
 
 while {![eof $f]} { blockfile $f read auto}

@@ -25,7 +25,7 @@ require_feature "ELECTROSTATICS"
 require_feature "FFTW"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase p3m_noncubic.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 set epsilon 1e-3
