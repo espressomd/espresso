@@ -51,14 +51,13 @@ tests = \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
+	p3m_simple_noncubic.tcl \
+	p3m-wall.tcl \
 	rotation.tcl \
 	tabulated.tcl 
 	thermostat.tcl \
         tunable_slip.tcl \
-	virtual-sites.tcl \
-	p3m-wall.tcl \
-  p3m_simple_noncubic.tcl
-
+	virtual-sites.tcl
 
 deactivated_tests =
 
