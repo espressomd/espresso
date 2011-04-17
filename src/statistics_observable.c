@@ -2,6 +2,7 @@
 #include "particle_data.h"
 #include "parser.h"
 #include "integrate.h"
+#include "lb.h"
 
 observable** observables = 0;
 int n_observables = 0; 
@@ -12,7 +13,6 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list);
 int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_);
 int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata);
 int sf_print_usage(Tcl_Interp* interp);
-
 
 
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
@@ -74,6 +74,64 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
   obs->args=(void*)pdata;
   obs->n=pdata->nbins;
   *change=1+temp;
+  return TCL_OK;
+}
+
+int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+  int temp;
+  *change=0;
+  profile_data* pdata=(profile_data*)malloc(sizeof(profile_data));
+  pdata->id_list=0;
+  pdata->minz=0;
+  pdata->maxz=box_l[2];
+  pdata->nbins=0;
+  argc-=1;
+  argv+=1;
+  while (argc > 0) {
+    printf("argc %d\n", argc);
+    if ( ARG0_IS_S("minz")){
+      if (argc>1 && ARG1_IS_D(pdata->minz)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read minz\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if ( ARG0_IS_S("maxz") ) {
+      if (argc>1 && ARG1_IS_D(pdata->maxz)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read maxz\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if (ARG0_IS_S("nbins")) {
+      if (argc>1 && ARG1_IS_I(pdata->nbins)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read nbins\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else {
+      Tcl_AppendResult(interp, "Error parsing argument ", argv[0], "\n" , (char *)NULL);
+      return TCL_ERROR;
+    }
+  }
+  
+  temp=0;
+  if (pdata->nbins<1) {
+    Tcl_AppendResult(interp, "Error in profile: nbins not specified\n" , (char *)NULL);
+    temp=1;
+  }
+  if (temp)
+    return TCL_ERROR;
+  obs->fun=&observable_lb_velocity_profile;
+  obs->args=(void*)pdata;
+  obs->n=3*pdata->nbins;
   return TCL_OK;
 }
 
@@ -327,7 +385,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing);
   //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile);
     REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile);
-  //  REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
+    REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
     REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
@@ -552,6 +610,37 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
       A[bin] += 1./box_l[0]/box_l[1]/(pdata->maxz - pdata->minz)*pdata->nbins;
     }
   }
+  return 0;
+}
+
+int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+  unsigned int i, j, k;
+  double p[3], v[3];
+  int bin;
+  profile_data* pdata;
+  pdata=(profile_data*) pdata_;
+    
+  for ( i = 0; i<3*pdata->nbins; i++ ) {
+    A[i]=0;
+  }
+  for ( i = 0; i < pdata->nbins; i++ ) {
+    for ( j = 0; j < (int) box_l[0]/lbpar.agrid; j++ ) {
+      for ( k = 0; k < (int) box_l[1]/lbpar.agrid; k++ ) {
+        p[0]=j*lbpar.agrid;
+        p[1]=k*lbpar.agrid;
+        p[2]=pdata->minz+(double)i/(double)pdata->nbins*(pdata->maxz-pdata->minz);
+        if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+          return 1;
+        A[3*i+0]+=v[0];
+        A[3*i+1]+=v[1];
+        A[3*i+2]+=v[2];
+      }
+    }
+    A[3*i+0]/= (int)(box_l[0]/lbpar.agrid)*(int)(box_l[1]/lbpar.agrid);
+    A[3*i+1]/= (int)(box_l[0]/lbpar.agrid)*(int)(box_l[1]/lbpar.agrid);
+    A[3*i+2]/= (int)(box_l[0]/lbpar.agrid)*(int)(box_l[1]/lbpar.agrid);
+  }
+  
   return 0;
 }
 
@@ -832,6 +921,7 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
   else
     return TCL_OK;
 }
+
 
 int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata_) {
   int temp;

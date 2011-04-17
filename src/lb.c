@@ -146,6 +146,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   argc--; argv++;
@@ -196,6 +197,9 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   else if (ARG0_IS_S("init")) {
     lbfluid_tcl_print_usage(interp);
     return TCL_ERROR;
+  } 
+  else if (ARG0_IS_S("print_interpolated_velocity")) {
+    return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
   }
   else while (argc > 0) {
       if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
@@ -618,6 +622,7 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
   *p_fz = lbpar.ext_force[2];
   return 0;
 }
+
 
 int lb_lbnode_get_rho(int* ind, double* p_rho){
 
@@ -1491,7 +1496,7 @@ MDINLINE void lb_calc_modes(index_t index, double *mode) {
   n9p = lbfluid[0][17][index] + lbfluid[0][18][index];
   n9m = lbfluid[0][17][index] - lbfluid[0][18][index];
 //  printf("n: ");
-//  for (i=0; i<19; i++)
+//  for (int i=0; i<19; i++)
 //    printf("%f ", lbfluid[1][i][index]);
 //  printf("\n");
   
@@ -1696,9 +1701,9 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random());
     mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random());
     mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random());
-    //if (index == lblattice.halo_offset) {
-    //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
-    //}
+//    if (index == lblattice.halo_offset) {
+//      fprintf(stderr,"fluct: %f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
+//    }
     
 #ifndef OLD_FLUCT
     /* ghost modes */
@@ -1723,9 +1728,9 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     mode[7] += (fluct[3] = rootrho*lb_phi[7]*(d_random()-0.5));
     mode[8] += (fluct[4] = rootrho*lb_phi[8]*(d_random()-0.5));
     mode[9] += (fluct[5] = rootrho*lb_phi[9]*(d_random()-0.5));
-    //if (index == lblattice.halo_offset) {
-    //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
-    //}
+//    if (index == lblattice.halo_offset) {
+//      fprintf(stderr,"fluct%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
+//    }
     
 #ifndef OLD_FLUCT
     /* ghost modes */
@@ -3017,6 +3022,73 @@ MDINLINE int lb_check_negative_n(index_t index) {
   return localfails;
 }
 #endif /* ADDITIONAL_CHECKS */
+
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
+  index_t node_index[8], index;
+  double delta[6];
+  double local_rho, local_j[3], interpolated_u[3];
+  double modes[19];
+  int x,y,z;
+  LB_FluidNode *local_node;
+
+  if (n_nodes != 1)
+    return 1;
+  
+  /* determine elementary lattice cell surrounding the particle 
+     and the relative position of the particle in this cell */ 
+  map_position_to_lattice(&lblattice,p,node_index,delta);
+
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+        	
+        index = node_index[(z*2+y)*2+x];
+        
+        local_node = &lbfields[index];
+        
+        lb_calc_modes(index, modes);
+        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+        local_j[0] = modes[1];
+        local_j[1] = modes[2];
+        local_j[2] = modes[3];
+//        printf ("%f %f %f\n", modes[1], modes[2], modes[3]);
+        
+        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
+        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+
+      }
+    }
+  }
+  v[0] = interpolated_u[0]*lbpar.agrid/lbpar.tau;
+  v[1] = interpolated_u[1]*lbpar.agrid/lbpar.tau;
+  v[2] = interpolated_u[2]*lbpar.agrid/lbpar.tau;
+  return 0;
+  
+}
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
+  double p[3], v[3];
+  char buffer[TCL_DOUBLE_SPACE];
+  if (argc!=3) {
+    printf("usage: print_interpolated_velocity $x $y $z");
+    return TCL_ERROR;
+  }
+  for (int i = 0; i < 3; i++) {
+    if (!ARG_IS_D(i, p[i]))
+      printf("usage: print_interpolated_velocity $x $y $z");
+  }
+  v[0]=1.;
+  lb_lbfluid_get_interpolated_velocity(p, v);
+  for (int i = 0; i < 3; i++) {
+    Tcl_PrintDouble(interp, v[i], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+  return TCL_OK;
+}
 
 #endif
 
