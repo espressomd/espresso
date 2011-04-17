@@ -24,6 +24,7 @@ tests = \
 	comfixed.tcl \
 	command_syntax.tcl \
 	constraints.tcl \
+	constraints_reflecting.tcl \
 	dh.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
