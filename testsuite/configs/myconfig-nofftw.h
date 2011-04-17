@@ -3,7 +3,6 @@
 #define ROTATION
 #define ROTATIONAL_INTERIA
 #define MAGNETOSTATICS
-#define MDLC
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
@@ -11,7 +10,6 @@
 #define COMFORCE
 #define COMFIXED
 #define MOLFORCES
-#define MODES
 #define BOND_VIRTUAL
 
 #define NEMD

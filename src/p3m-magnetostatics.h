@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-
-/** \file p3m-dipoles.h   P3M algorithm for long range magnetic dipole-dipole interaction.
+#ifndef _P3M_MAGNETOSTATICS_H
+#define _P3M_MAGNETOSTATICS_H
+/** \file p3m-dipoles.h P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
@@ -30,36 +32,55 @@
  *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
  *  </ul>
  *
- *  For more information about the p3m algorithm,
- *  see \ref p3m.h "p3m.h"
- *  see \ref p3m-charges.c  "p3m-charges.c"
- *  see \ref p3m-charges.h  "p3m-charges.h"
- *  see \ref p3m-dipoles.c  "p3m-dipoles.c"
- *  see \ref p3m-dipoles.h  "p3m-dipoles.h"
- *  see \ref p3m-assignment.c  "p3m-assignment.c"
  */
+#include "p3m-common.h"
+#include "interaction_data.h"
 
 #ifdef MAGNETOSTATICS
 
-/* only include from within p3m.h */
-#ifndef P3M_H_CURRENT
-#error never include this file file directly, include p3m.h
-#endif
+/** Structure to hold dipolar P3M parameters and some dependend variables. */
+typedef struct {
+    /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
+  double alpha_L;
+  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
+  double r_cut_iL;
+  /** number of mesh points per coordinate direction (>0). */
+  int    mesh[3];
+  /** offset of the first mesh point (lower left 
+      corner) from the coordinate origin ([0,1[). */
+  double mesh_off[3];
+  /** charge assignment order ([0,7]). */
+  int    cao;
+  /** number of interpolation points for charge assignment function */
+  int    inter;
+  /** Accuracy of the actual parameter set. */
+  double accuracy;
 
-/** local mesh. */
-extern local_mesh Dlm;
-/** send/recv mesh sizes */
-extern send_mesh  Dsm;
+  /** epsilon of the "surrounding dielectric". */
+  double epsilon;
+  /** Cutoff for charge assignment. */
+  double cao_cut[3];
+  /** mesh constant. */
+  double a[3];
+  /** inverse mesh constant. */
+  double ai[3];
+  /** unscaled \ref alpha_L for use with fast inline functions only */
+  double alpha;
+  /** unscaled \ref r_cut_iL for use with fast inline functions only */
+  double r_cut;
+  /** full size of the interpolated assignment function */
+  int inter2;
+  /** number of points unto which a single charge is interpolated, i.e. Dp3m.cao^3 */
+  int cao3;
+  /** additional points around the charge assignment mesh, for method like dielectric ELC
+      creating virtual charges. */
+  double additional_mesh[3];
+} Dp3m_struct;
 
-//The following are defined in p3m-dipoles.c :
+/** dipolar P3M parameters. */
+extern Dp3m_struct Dp3m;
 
-extern int Dca_num;
-extern double  *Dca_frac;
-extern int *Dca_fmp;
-extern double *Drs_mesh;
 extern void Drealloc_ca_fields(int newsize);
-
-/*@}*/
 
 /** \name Exported Functions */
 /************************************************************/
@@ -69,6 +90,9 @@ int tclcommand_inter_magnetic_parse_p3m(Tcl_Interp * interp, int argc, char ** a
 
 /** dipolar p3m parser, optional parameters */
 int tclcommand_inter_magnetic_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
+
+/** print the p3m parameters to the interpreters result */
+int tclprint_to_result_DipolarP3M(Tcl_Interp *interp);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
@@ -100,135 +124,10 @@ void P3M_count_magnetic_particles();
 /** assign a single dipole into the current charge grid. cp_cnt gives the a running index,
     which may be smaller than 0, in which case the charge is assumed to be virtual and is not
     stored in the Dca_frac arrays. */
-    
-MDINLINE void P3M_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt)
-{
-  /* we do not really want to export these, but this function should be inlined */
-  double P3M_caf(int i, double x, int cao_value);
-  void Drealloc_ca_fields(int size);
-
-  extern int    *Dca_fmp;
-  extern double *Dca_frac;
-  extern double *Dint_caf[7];
-  extern double Dpos_shift;
-  extern double *Drs_mesh_dip[3];
-
-  int d, i0, i1, i2;
-  double tmp0, tmp1;
-  /* position of a particle in local mesh units */
-  double pos;
-  /* 1d-index of nearest mesh point */
-  int nmp;
-  /* distance to nearest mesh point */
-  double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
-  /* index, index jumps for Drs_mesh array */
-  int q_ind = 0;
-  double cur_ca_frac_val, *cur_ca_frac;
-
-  // make sure we have enough space
-  if (cp_cnt >= Dca_num) Drealloc_ca_fields(cp_cnt + 1);
-  // do it here, since realloc_ca_fields may change the address of Dca_frac
-  cur_ca_frac = Dca_frac + p3m.Dcao3*cp_cnt;
-
-  if (p3m.Dinter == 0) {
-    for(d=0;d<3;d++) {
-      /* particle position in mesh coordinates */
-      pos    = ((real_pos[d]-Dlm.ld_pos[d])*p3m.Dai[d]) - Dpos_shift;
-      /* nearest mesh point */
-      nmp  = (int)pos;
-      /* distance to nearest mesh point */
-      dist[d] = (pos-nmp)-0.5;
-      /* 3d-array index of nearest mesh point */
-      q_ind = (d == 0) ? nmp : nmp + Dlm.dim[d]*q_ind;
-
-#ifdef ADDITIONAL_CHECKS
-      if( pos < -skin*p3m.Dai[d] ) {
-	fprintf(stderr,"%d: dipolar Drs_mesh underflow! (pos %f)\n", this_node, real_pos[d]);
-	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		this_node,my_left[d] - skin, my_right[d] + skin);	    
-      }
-      if( (nmp + p3m.Dcao) > Dlm.dim[d] ) {
-	fprintf(stderr,"%d: dipolar Drs_mesh overflow! (pos %f, nmp=%d)\n", this_node, real_pos[d],nmp);
-	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		this_node, my_left[d] - skin, my_right[d] + skin);
-      }
-#endif
-    }
-    if (cp_cnt >= 0) Dca_fmp[cp_cnt] = q_ind;
-    
-    for(i0=0; i0<p3m.Dcao; i0++) {
-      tmp0 = P3M_caf(i0, dist[0], p3m.Dcao);
-      for(i1=0; i1<p3m.Dcao; i1++) {
-	tmp1 = tmp0 * P3M_caf(i1, dist[1],p3m.Dcao);
-	for(i2=0; i2<p3m.Dcao; i2++) {
-	  cur_ca_frac_val = tmp1 * P3M_caf(i2, dist[2],p3m.Dcao);
-	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
-	  if (mu != 0.0) {
-	    Drs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-	    Drs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-	    Drs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-	  }
-	  q_ind++;
-	}
-	q_ind += Dlm.q_2_off;
-      }
-      q_ind += Dlm.q_21_off;
-    }
-  }
-  else {
-    /* particle position in mesh coordinates */
-    for(d=0;d<3;d++) {
-      pos    = ((real_pos[d]-Dlm.ld_pos[d])*p3m.Dai[d]) - Dpos_shift;
-      nmp    = (int) pos;
-      arg[d] = (int) ((pos - nmp)*p3m.Dinter2);
-      /* for the first dimension, q_ind is always zero, so this shifts correctly */
-      q_ind = nmp + Dlm.dim[d]*q_ind;
-
-#ifdef ADDITIONAL_CHECKS
-      if( pos < -skin*p3m.Dai[d] ) {
-	fprintf(stderr,"%d: dipolar Drs_mesh underflow! (pos %f)\n", this_node, real_pos[d]);
-	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		this_node,my_left[d] - skin, my_right[d] + skin);	    
-      }
-      if( (nmp + p3m.Dcao) > Dlm.dim[d] ) {
-	fprintf(stderr,"%d: dipolar Drs_mesh overflow! (pos %f, nmp=%d)\n", this_node, real_pos[d],nmp);
-	fprintf(stderr,"%d: allowed coordinates: %f - %f\n",
-		this_node, my_left[d] - skin, my_right[d] + skin);
-      }
-#endif
-    }
-    if (cp_cnt >= 0) Dca_fmp[cp_cnt] = q_ind;
-
-    for(i0=0; i0<p3m.Dcao; i0++) {
-      tmp0 = Dint_caf[i0][arg[0]];
-      for(i1=0; i1<p3m.Dcao; i1++) {
-	tmp1 = tmp0 * Dint_caf[i1][arg[1]];
-	for(i2=0; i2<p3m.Dcao; i2++) {
-	  cur_ca_frac_val = tmp1 * Dint_caf[i2][arg[2]];
-	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
-	  if (mu != 0.0) {
-	    Drs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-	    Drs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-	    Drs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-	  }
-	  q_ind++;
-	}
-	q_ind += Dlm.q_2_off;
-      }
-      q_ind += Dlm.q_21_off;
-    }
-  }
-}
+void P3M_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt);
 
 /** shrink wrap the dipoles grid */
-MDINLINE void DP3M_shrink_wrap_dipole_grid(int n_dipoles) {
-  /* we do not really want to export these */
-  void Drealloc_ca_fields(int size);
-  
-  if( n_dipoles < Dca_num ) Drealloc_ca_fields(n_dipoles);
-}
+void DP3M_shrink_wrap_dipole_grid(int n_dipoles);
 
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
@@ -242,11 +141,11 @@ MDINLINE double add_p3m_dipolar_pair_force(Particle *p1, Particle *p2,
   double adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r, D_r;
-  double alpsq = p3m.Dalpha * p3m.Dalpha;
+  double alpsq = Dp3m.alpha * Dp3m.alpha;
   double mixmj[3], mixr[3], mjxr[3];
 
-  if(dist < p3m.Dr_cut && dist > 0) {
-    adist = p3m.Dalpha * dist;
+  if(dist < Dp3m.r_cut && dist > 0) {
+    adist = Dp3m.alpha * dist;
     #if USE_ERFC_APPROXIMATION
        erfc_part_ri = AS_erfc_part(adist) / dist;
     #else
@@ -258,11 +157,11 @@ MDINLINE double add_p3m_dipolar_pair_force(Particle *p1, Particle *p2,
   mir = p1->r.dip[0]*d[0] + p1->r.dip[1]*d[1] + p1->r.dip[2]*d[2];
   mjr = p2->r.dip[0]*d[0] + p2->r.dip[1]*d[1] + p2->r.dip[2]*d[2];
 
-  coeff = 2.0*p3m.Dalpha*wupii;
+  coeff = 2.0*Dp3m.alpha*wupii;
   dist2i = 1 / dist2;
   exp_adist2 = exp(-adist*adist);
 
-  if(p3m.Daccuracy > 5e-06)
+  if(Dp3m.accuracy > 5e-06)
     B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
   else
     B_r = (erfc(adist)/dist + coeff * exp_adist2) * dist2i;
@@ -309,15 +208,15 @@ MDINLINE double add_p3m_dipolar_pair_force(Particle *p1, Particle *p2,
 
 /** Calculate real space contribution of dipolar pair energy. */
 MDINLINE double p3m_dipolar_pair_energy(Particle *p1, Particle *p2,
-				      double *d,double dist2,double dist)
+					double *d,double dist2,double dist)
 {
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r;
-  double alpsq = p3m.Dalpha * p3m.Dalpha;
+  double alpsq = Dp3m.alpha * Dp3m.alpha;
  
-  if(dist < p3m.Dr_cut && dist > 0) {
-    adist = p3m.Dalpha * dist;
+  if(dist < Dp3m.r_cut && dist > 0) {
+    adist = Dp3m.alpha * dist;
     /*fac1 = coulomb.Dprefactor;*/
 
 #if USE_ERFC_APPROXIMATION
@@ -333,11 +232,11 @@ MDINLINE double p3m_dipolar_pair_energy(Particle *p1, Particle *p2,
     mir = p1->r.dip[0]*d[0] + p1->r.dip[1]*d[1] + p1->r.dip[2]*d[2];
     mjr = p2->r.dip[0]*d[0] + p2->r.dip[1]*d[1] + p2->r.dip[2]*d[2];
 
-    coeff = 2.0*p3m.Dalpha*wupii;
+    coeff = 2.0*Dp3m.alpha*wupii;
     dist2i = 1 / dist2;
     exp_adist2 = exp(-adist*adist);
 
-    if(p3m.Daccuracy > 5e-06)
+    if(Dp3m.accuracy > 5e-06)
       B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
     else
       B_r = (erfc(adist)/dist + coeff * exp_adist2) * dist2i;
@@ -354,5 +253,5 @@ MDINLINE double p3m_dipolar_pair_energy(Particle *p1, Particle *p2,
   return 0.0;
 }
 
-/*@}*/
-#endif /* of defined(MAGNETOSTATICS) */
+#endif /* MAGNETOSTATICS */
+#endif /* _P3M_DIPOLES_H */

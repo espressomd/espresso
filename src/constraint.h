@@ -479,8 +479,6 @@ MDINLINE void reflect_particle(Particle *p1, double *distance_vec, int reflectin
   double vec[3];
   double norm; 
 
-/* For Debugging your can show the folded coordinates of the particle before
- * and after the reflecting by uncommenting these lines 
       double folded_pos[3];
       int img[3];
 
@@ -489,7 +487,9 @@ MDINLINE void reflect_particle(Particle *p1, double *distance_vec, int reflectin
       fold_position(folded_pos, img);
 
       memcpy(vec, distance_vec, 3*sizeof(double));
-      printf("position before reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); */
+/* For Debugging your can show the folded coordinates of the particle before
+ * and after the reflecting by uncommenting these lines  */
+ //     printf("position before reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); 
 
 
        reflection_happened = 1;
@@ -498,7 +498,7 @@ MDINLINE void reflect_particle(Particle *p1, double *distance_vec, int reflectin
        p1->r.p[1] = p1->r.p[1]-2*vec[1];
        p1->r.p[2] = p1->r.p[2]-2*vec[2];
 
-/*  This can show the position after reflection      
+   /*  This can show the folded position after reflection      
        memcpy(folded_pos, p1->r.p, 3*sizeof(double));
        memcpy(img, p1->l.i, 3*sizeof(int));
        fold_position(folded_pos, img);

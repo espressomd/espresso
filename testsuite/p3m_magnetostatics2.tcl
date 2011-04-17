@@ -18,6 +18,7 @@
 source "tests_common.tcl"
 
 require_feature "MAGNETOSTATICS" 
+require_feature "FFTW"
 require_feature "ROTATION"
 
 set tcl_precision 15

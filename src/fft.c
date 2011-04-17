@@ -44,6 +44,7 @@
 #endif
 #include "fft.h"
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 
 /************************************************
  * DEFINES
@@ -669,8 +670,8 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
     Dfft_plan[i].recv_block = (int *)realloc(Dfft_plan[i].recv_block, 6*Dfft_plan[i].g_size*sizeof(int));
     Dfft_plan[i].recv_size  = (int *)realloc(Dfft_plan[i].recv_size, 1*Dfft_plan[i].g_size*sizeof(int));
 
-    Dfft_plan[i].new_size = calc_local_mesh(my_pos[i], n_grid[i], p3m.Dmesh,
-					   p3m.Dmesh_off, Dfft_plan[i].new_mesh, 
+    Dfft_plan[i].new_size = calc_local_mesh(my_pos[i], n_grid[i], Dp3m.mesh,
+					   Dp3m.mesh_off, Dfft_plan[i].new_mesh, 
 					   Dfft_plan[i].start);  
     permute_ifield(Dfft_plan[i].new_mesh,3,-(Dfft_plan[i].n_permute));
     permute_ifield(Dfft_plan[i].start,3,-(Dfft_plan[i].n_permute));
@@ -683,7 +684,7 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       node = Dfft_plan[i].group[j];
       Dfft_plan[i].send_size[j] 
 	= calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
-			  p3m.Dmesh, p3m.Dmesh_off, &(Dfft_plan[i].send_block[6*j]));
+			  Dp3m.mesh, Dp3m.mesh_off, &(Dfft_plan[i].send_block[6*j]));
       permute_ifield(&(Dfft_plan[i].send_block[6*j]),3,-(Dfft_plan[i-1].n_permute));
       permute_ifield(&(Dfft_plan[i].send_block[6*j+3]),3,-(Dfft_plan[i-1].n_permute));
       if(Dfft_plan[i].send_size[j] > Dmax_comm_size) 
@@ -698,7 +699,7 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       /* recv block: this_node from comm-group-node i (identity: node) */
       Dfft_plan[i].recv_size[j] 
 	= calc_send_block(my_pos[i], n_grid[i], &(n_pos[i-1][3*node]), n_grid[i-1],
-			  p3m.Dmesh,p3m.Dmesh_off,&(Dfft_plan[i].recv_block[6*j]));
+			  Dp3m.mesh,Dp3m.mesh_off,&(Dfft_plan[i].recv_block[6*j]));
       permute_ifield(&(Dfft_plan[i].recv_block[6*j]),3,-(Dfft_plan[i].n_permute));
       permute_ifield(&(Dfft_plan[i].recv_block[6*j+3]),3,-(Dfft_plan[i].n_permute));
       if(Dfft_plan[i].recv_size[j] > Dmax_comm_size) 

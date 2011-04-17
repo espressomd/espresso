@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -67,9 +68,9 @@ int n_interaction_types = 0;
 IA_parameters *ia_params = NULL;
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 TF_parameters *tf_params = NULL;
-/** #endif */
+/* #endif */
 #endif
 
 #if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
@@ -118,11 +119,11 @@ DoubleList adress_tab_forces;
 DoubleList adress_tab_energies;
 #endif
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 /** Array containing the thermodynamic forces **/
 DoubleList thermodynamic_forces;
 DoubleList thermodynamic_f_energies;
-/** #endif */
+/* #endif */
 #endif
 
 ///
@@ -151,12 +152,12 @@ void adress_force_and_energy_tables_init() {
 }
 #endif
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void tf_tables_init() {
   init_doublelist(&thermodynamic_forces);
   init_doublelist(&thermodynamic_f_energies);
 }
-/** #endif */
+/* #endif */
 #endif
 
 
@@ -357,7 +358,7 @@ void initialize_ia_params(IA_parameters *params) {
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void initialize_tf_params(TF_parameters *params){
   params->TF_TAB_npoints = 0;
   params->TF_TAB_startindex = 0;
@@ -569,7 +570,7 @@ void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void copy_tf_params(TF_parameters *dst, TF_parameters *src){
   dst->TF_TAB_npoints = src->TF_TAB_npoints;
   dst->TF_TAB_startindex = src->TF_TAB_startindex;
@@ -579,7 +580,7 @@ void copy_tf_params(TF_parameters *dst, TF_parameters *src){
   dst->TF_TAB_stepsize = src->TF_TAB_stepsize;
   strcpy(dst->TF_TAB_filename,src->TF_TAB_filename);
 }
-/** #endif */
+/* #endif */
 #endif
 
 /** returns non-zero if there is a nonbonded interaction defined */
@@ -691,13 +692,13 @@ if (data->TUNABLE_SLIP_r_cut != 0)
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 int checkIfTF(TF_parameters *data){
   if (data->TF_TAB_maxval !=0)
     return 1;
   return 0;
 }
-/** #endif */
+/* #endif */
 #endif
 
 char *get_name_of_bonded_ia(int i) {
@@ -770,7 +771,7 @@ void realloc_ia_params(int nsize)
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void realloc_tf_params(int nsize)
 {
   int i;
@@ -800,7 +801,7 @@ void realloc_tf_params(int nsize)
   
   tf_params = new_params;
 }
-/** #endif */
+/* #endif */
 #endif
 
 void make_particle_type_exist(int type)
@@ -1105,8 +1106,8 @@ void calc_maximal_cutoff()
 #if  defined(MAGNETOSTATICS) && defined(ELP3M) 
   switch (coulomb.Dmethod) {
   case DIPOLAR_P3M:
-    if (max_cut_non_bonded < p3m.Dr_cut)
-      max_cut_non_bonded = p3m.Dr_cut;
+    if (max_cut_non_bonded < Dp3m.r_cut)
+      max_cut_non_bonded = Dp3m.r_cut;
     break;
   }       
 #endif /*ifdef MAGNETOSTATICS */
@@ -1145,17 +1146,11 @@ int check_obs_calc_initialized()
 #if  defined(MAGNETOSTATICS)
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-#ifdef MDLC
   case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
-#endif
   case DIPOLAR_P3M: if (DP3M_sanity_checks()) state = 0; break;
 #endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
   case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
-#endif
   case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
-#endif
   }
 #endif /* ifdef  MAGNETOSTATICS */
 
@@ -1327,14 +1322,14 @@ int dipolar_set_Dbjerrum(double bjerrum)
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
-      p3m.Dalpha    = 0.0;
-      p3m.Dalpha_L  = 0.0;
-      p3m.Dr_cut    = 0.0;
-      p3m.Dr_cut_iL = 0.0;
-      p3m.Dmesh[0]  = 0;
-      p3m.Dmesh[1]  = 0;
-      p3m.Dmesh[2]  = 0;
-      p3m.Dcao      = 0;
+      Dp3m.alpha    = 0.0;
+      Dp3m.alpha_L  = 0.0;
+      Dp3m.r_cut    = 0.0;
+      Dp3m.r_cut_iL = 0.0;
+      Dp3m.mesh[0]  = 0;
+      Dp3m.mesh[1]  = 0;
+      Dp3m.mesh[2]  = 0;
+      Dp3m.cao      = 0;
       break;
 #endif
     }
@@ -1360,18 +1355,16 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (! ARG0_IS_D(d1)) {
-  #ifdef ELP3M
     Tcl_ResetResult(interp);
     
-    #ifdef MDLC  
-    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
+    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
 
-     if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
+#ifdef ELP3M
+    if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
-   #endif 
-      
-   if (coulomb.Dmethod == DIPOLAR_P3M)
+    
+    if (coulomb.Dmethod == DIPOLAR_P3M)
       return tclcommand_inter_magnetic_parse_p3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter magnetic <Dbjerrum>",
@@ -1380,7 +1373,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
     }
 #else
     return TCL_ERROR;
- #endif
+#endif
   }
 
 
@@ -1419,9 +1412,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
 #endif
 
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
   REGISTER_DIPOLAR("mdds", tclcommand_inter_magnetic_parse_mdds);
-#endif
 
 
   /* fallback */
@@ -1573,7 +1564,7 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 int tclprint_to_result_TF(Tcl_Interp *interp, int i)
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -1593,7 +1584,7 @@ int tclprint_to_result_TF(Tcl_Interp *interp, int i)
   
   return(TCL_OK);
 }
-/** #endif */
+/* #endif */
 #endif
 
 int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
@@ -1730,28 +1721,20 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, coulomb.Dbjerrum, buffer);
   Tcl_AppendResult(interp, "{magnetic ", buffer, " ", (char *) NULL);
   switch (coulomb.Dmethod) {
-    #ifdef ELP3M
-     #ifdef MDLC
-       case DIPOLAR_MDLC_P3M:
-        tclprint_to_result_DipolarP3M(interp);   
-        tclprint_to_result_MDLC(interp);
-        break;
-     #endif	
-    case DIPOLAR_P3M: tclprint_to_result_DipolarP3M(interp); break;
-   #endif
-   #if  defined(MDLC) && defined(MAGNETIC_DIPOLAR_DIRECT_SUM)
-     case DIPOLAR_MDLC_DS:
-        tclprint_to_result_Magnetic_dipolar_direct_sum_(interp);
-        tclprint_to_result_MDLC(interp);
-        break;
-  #endif
-  #ifdef DAWAANR	
-    case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
- #endif
- #ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-    case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
+#ifdef ELP3M
+  case DIPOLAR_MDLC_P3M:
+    tclprint_to_result_DipolarP3M(interp);   
+    tclprint_to_result_MDLC(interp);
+    break;
+  case DIPOLAR_P3M: tclprint_to_result_DipolarP3M(interp); break;
 #endif
-    default: break;
+  case DIPOLAR_MDLC_DS:
+    tclprint_to_result_Magnetic_dipolar_direct_sum_(interp);
+    tclprint_to_result_MDLC(interp);
+    break;
+  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: tclprint_to_result_DAWAANR(interp); break;
+  case DIPOLAR_DS: tclprint_to_result_Magnetic_dipolar_direct_sum_(interp); break;
+  default: break;
   }
   Tcl_AppendResult(interp, "}",(char *) NULL);
 
@@ -1962,7 +1945,7 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
 }
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 /* TODO: This function is not used anywhere. To be removed?  */
 int tf_print(Tcl_Interp * interp, int part_type)
 {
@@ -1975,7 +1958,7 @@ int tf_print(Tcl_Interp * interp, int part_type)
     
     return tclprint_to_result_TF(interp, part_type);
 }
-/** #endif */
+/* #endif */
 #endif
 
 

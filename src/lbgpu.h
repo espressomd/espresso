@@ -270,7 +270,7 @@ void calc_fluid_temperature_GPU(double* cpu_temp);
 }
 #endif
 
-/** Parser for the \ref lbnode command. */
+/** Parser for the TCL command lbnode. */
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
 
 /** Parser for the TCL command \ref lbfluid. */
