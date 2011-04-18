@@ -72,9 +72,15 @@ int observable_obs_nothing (void* params, double* A, unsigned int n_A);
 int observable_flux_profile(void* params, double* A, unsigned int n_A);
 typedef struct { 
   IntList* id_list;
+  double minx;
+  double maxx;
+  double miny;
+  double maxy;
   double minz;
   double maxz;
-  int nbins;
+  int xbins;
+  int ybins;
+  int zbins;
 } profile_data;
 
 int observable_density_profile(void* params, double* A, unsigned int n_A);
@@ -89,7 +95,9 @@ typedef struct {
   double minz;
   double maxz;
   double center[3];
+  double axis[3];
   int rbins;
+  int zbins;
 } radial_profile_data;
 
 
