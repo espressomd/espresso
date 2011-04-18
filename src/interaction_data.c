@@ -1408,9 +1408,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   REGISTER_DIPOLAR("p3m", tclcommand_inter_magnetic_parse_p3m);
 #endif
 
-#ifdef DAWAANR
   REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
-#endif
 
   REGISTER_DIPOLAR("mdds", tclcommand_inter_magnetic_parse_mdds);
 
