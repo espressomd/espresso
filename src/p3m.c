@@ -155,10 +155,11 @@ void static print_p3m(void) {
 void static calc_send_mesh();
 
 
-/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref p3m_struct::ai) 
-    and the cutoff for charge assignment \ref p3m_struct::cao_cut, which has to be
-    done by \ref P3M_init once and by \ref P3M_scaleby_box_l_charges whenever the \ref box_l changed.
-*/
+/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref
+    p3m_struct::ai) and the cutoff for charge assignment \ref
+    p3m_struct::cao_cut, which has to be done by \ref P3M_init_charges
+    once and by \ref P3M_scaleby_box_l_charges whenever the \ref box_l
+    changed.  */
 void static P3M_init_a_ai_cao_cut(void);
 
 
@@ -311,6 +312,7 @@ void static p3m_set_tune_params(double r_cut, int mesh, int cao,
   coulomb.prefactor = (temperature > 0) ? temperature*coulomb.bjerrum : coulomb.bjerrum;
 }
 
+/*@}*/
 
 int static p3m_set_params(double r_cut, int mesh, int cao,
 		   double alpha, double accuracy)

@@ -39,7 +39,7 @@
 #define D3Q19
 
 /** \name Parameter fields for Lattice Boltzmann
- * The numbers are referenced in \ref mpi_bcast_lb_lbpar
+ * The numbers are referenced in \ref mpi_bcast_lb_params
  * to determine what actions have to take place upon change
  * of the respective parameter. */
 /*@{*/
