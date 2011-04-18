@@ -49,6 +49,7 @@
 #include "tuning.h"
 
 #ifdef MAGNETOSTATICS
+#ifdef ELP3M
 
 /************************************************
  * DEFINES
@@ -3054,6 +3055,6 @@ void P3M_free_dipoles() {
 
 /*****************************************************************************/
 
-
-#endif  /* of defined(MAGNETOSTATICS) */
+#endif /* ELP3M */
+#endif  /* MAGNETOSTATICS */
 
