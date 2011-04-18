@@ -2,6 +2,7 @@
 #include "particle_data.h"
 #include "parser.h"
 #include "integrate.h"
+#include "lb.h"
 
 observable** observables = 0;
 int n_observables = 0; 
@@ -12,7 +13,6 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list);
 int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_);
 int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata);
 int sf_print_usage(Tcl_Interp* interp);
-
 
 
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
@@ -71,11 +71,28 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
   obs->fun = &observable_density_profile;
   if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
     return TCL_ERROR;
+  if (pdata->id_list==0) {
+    Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
+    return TCL_ERROR;
+  }
   obs->args=(void*)pdata;
   obs->n=pdata->nbins;
   *change=1+temp;
   return TCL_OK;
 }
+
+int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+  int temp;
+  profile_data* pdata;
+  obs->fun = &observable_lb_velocity_profile;
+  if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
+    return TCL_ERROR;
+  obs->args=(void*)pdata;
+  obs->n=3*pdata->nbins;
+  *change=1+temp;
+  return TCL_OK;
+}
+
 
 int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
   int temp;
@@ -83,8 +100,25 @@ int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, c
   obs->fun = &observable_radial_density_profile;
   if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
      return TCL_ERROR;
+  if (rpdata->id_list==0) {
+    Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
+    return TCL_ERROR;
+  }
   obs->args=(void*)rpdata;
-  obs->n=rpdata->nbins;
+  obs->n=rpdata->rbins;
+  *change=1+temp;
+  return TCL_OK;
+}
+
+int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+  int temp;
+  radial_profile_data* rpdata;
+  obs->fun = &observable_lb_radial_velocity_profile;
+  if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
+     return TCL_ERROR;
+  obs->args=(void*)rpdata;
+  printf("bins: %d", rpdata->rbins);
+  obs->n=2*rpdata->rbins;
   *change=1+temp;
   return TCL_OK;
 }
@@ -327,8 +361,9 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing);
   //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile);
     REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile);
-  //  REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
+    REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
     REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile);
+    REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -555,6 +590,37 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   return 0;
 }
 
+int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+  unsigned int i, j, k;
+  double p[3], v[3];
+  profile_data* pdata;
+  pdata=(profile_data*) pdata_;
+    
+  for ( i = 0; i<3*pdata->nbins; i++ ) {
+    A[i]=0;
+  }
+  for ( i = 0; i < pdata->nbins; i++ ) {
+    for ( j = 0; j < (int) box_l[0]/lbpar.agrid; j++ ) {
+      for ( k = 0; k < (int) box_l[1]/lbpar.agrid; k++ ) {
+        p[0]=j*lbpar.agrid;
+        p[1]=k*lbpar.agrid;
+        p[2]=pdata->minz+(double)i/(double)pdata->nbins*(pdata->maxz-pdata->minz);
+        if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+          return 1;
+        A[3*i+0]+=v[0];
+        A[3*i+1]+=v[1];
+        A[3*i+2]+=v[2];
+      }
+    }
+    A[3*i+0]/= (int)(box_l[0]/lbpar.agrid)*(int)(box_l[1]/lbpar.agrid);
+    A[3*i+1]/= (int)(box_l[0]/lbpar.agrid)*(int)(box_l[1]/lbpar.agrid);
+    A[3*i+2]/= (int)(box_l[0]/lbpar.agrid)*(int)(box_l[1]/lbpar.agrid);
+  }
+  
+  return 0;
+}
+
+
 int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i;
   int bin;
@@ -568,7 +634,7 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
   pdata=(radial_profile_data*) pdata_;
   ids=pdata->id_list;
     
-  for ( i = 0; i<pdata->nbins; i++ ) {
+  for ( i = 0; i<pdata->rbins; i++ ) {
     A[i]=0;
   }
   for ( i = 0; i<ids->n; i++ ) {
@@ -579,12 +645,52 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
     memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
     r=sqrt( (ppos[0]-pdata->center[0])*(ppos[0]-pdata->center[0])+(ppos[1]-pdata->center[1])*(ppos[1]-pdata->center[1]));
-    bin= (int) floor( pdata->nbins*  r/pdata->maxr);
+    bin= (int) floor( pdata->rbins*  r/pdata->maxr);
 
-    if (bin>=0 && bin < pdata->nbins) {
-      bin_volume=PI*((bin+1)*(bin+1)-bin*bin)*(pdata->maxr*pdata->maxr)/pdata->nbins/pdata->nbins*box_l[2];
+    if (bin>=0 && bin < pdata->rbins) {
+      bin_volume=PI*((bin+1)*(bin+1)-bin*bin)*(pdata->maxr*pdata->maxr)/pdata->rbins/pdata->rbins*box_l[2];
       A[bin] += 1./bin_volume;
     }
+  }
+  return 0;
+}
+
+int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+  unsigned int i, j, k;
+  double p[3], v[3];
+  double r, z, phi;
+  double v_r, v_z;
+  int bin;
+  radial_profile_data* pdata;
+  pdata=(radial_profile_data*) pdata_;
+    
+  for ( i = 0; i<2*pdata->rbins; i++ ) {
+    A[i]=0;
+  }
+  int counter =0;
+
+  for ( i = 0; i < pdata->rbins; i++ ) { // iterate over r
+    for ( j = 0; j < (int) floor((pdata->maxz-pdata->minz)/lbpar.agrid); j++ ) { // iterate over z
+      for ( k = 0; k < (int) floor(2*3.1415*pdata->maxr/lbpar.agrid); k++ ) { // iterate over phi
+        counter++;
+        r=(i+0.5)*pdata->maxr/pdata->rbins;
+        z=pdata->minz+j*lbpar.agrid;
+        phi=k*lbpar.agrid/2/3.1415/pdata->maxr;
+        p[0]=r*cos(phi)+pdata->center[0];
+        p[1]=r*sin(phi)+pdata->center[1];
+        p[2]=z+pdata->center[2];
+        if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
+          return 1;
+        v_z=v[2];
+        if (k==0) printf("pos %f %f %f v: %f %f %f\n", p[0], p[1], p[2], v[0], v[1], v[2]);
+        v_r=sqrt(v[0]*v[0]+v[1]*v[1]);
+        A[2*i+0]+=v_r;
+        A[2*i+1]+=v_z;
+      }
+    }
+    A[2*i+0]/= counter;
+    A[2*i+1]/= counter;
+    counter=0;
   }
   return 0;
 }
@@ -777,52 +883,50 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
   pdata->maxz=box_l[2];
   pdata->nbins=0;
   printf("\n");
-  if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
-    if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
-      Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
-      return TCL_ERROR;
-    } else {
-      *change+=temp;
-      argc-=temp;
-      argv+=temp;
+  while (argc>0) {
+    if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
+      if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
+        Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
+        return TCL_ERROR;
+      } else {
+        *change+=temp;
+        argc-=temp;
+        argv+=temp;
+      }
+    } 
+    if ( ARG0_IS_S("minz")){
+      if (argc>1 && ARG1_IS_D(pdata->minz)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read minz\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } 
+    if ( ARG0_IS_S("maxz") ) {
+      if (argc>1 && ARG1_IS_D(pdata->maxz)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read maxz\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } 
+    if (ARG0_IS_S("nbins")) {
+      if (argc>1 && ARG1_IS_I(pdata->nbins)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read nbins\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
     }
-  } 
-  if ( ARG0_IS_S("minz")){
-    if (argc>1 && ARG1_IS_D(pdata->minz)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in profile: could not read minz\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
-  } 
-  if ( ARG0_IS_S("maxz") ) {
-    if (argc>1 && ARG1_IS_D(pdata->maxz)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in profile: could not read maxz\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
-  } 
-  if (ARG0_IS_S("nbins")) {
-    if (argc>1 && ARG1_IS_I(pdata->nbins)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in profile: could not read nbins\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
   }
   
   temp=0;
-  if (pdata->id_list==0) {
-    Tcl_AppendResult(interp, "Error in profile: particle ids/types not specified\n" , (char *)NULL);
-    temp=1;
-  }
   if (pdata->nbins<1) {
     Tcl_AppendResult(interp, "Error in profile: nbins not specified\n" , (char *)NULL);
     temp=1;
@@ -833,87 +937,85 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
     return TCL_OK;
 }
 
+
 int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata_) {
   int temp;
   *change=0;
   radial_profile_data* pdata=(radial_profile_data*)malloc(sizeof(radial_profile_data));
   *pdata_ = pdata;
   pdata->id_list=0;
-  pdata->maxr=1e100;
-  pdata->minz=0;
-  pdata->maxz=box_l[2];
-  pdata->center[0]=1e100;pdata->center[1]=1e100;pdata->center[2]=1e100;
-  pdata->nbins=0;
+  pdata->maxr=sqrt(box_l[0]*box_l[0]/4.+ box_l[1]*box_l[1]/4.);
+  pdata->minz=-box_l[2]/2.;
+  pdata->maxz=+box_l[2]/2.;
+  pdata->center[0]=box_l[0]/2.;pdata->center[1]=box_l[1]/2.;pdata->center[2]=box_l[2]/2.;
+  pdata->rbins=0;
   if (argc < 1) {
     Tcl_AppendResult(interp, "UsageL radial_profile id $ids center $x $y $z maxr $r_max nbins $n\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
-    if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
-      Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
-      return TCL_ERROR;
+  while (argc>0) {
+    printf("argc %d\n", argc); 
+    if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
+      if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
+        Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
+        return TCL_ERROR;
+      } else {
+        *change+=temp;
+        argc-=temp;
+        argv+=temp;
+      }
+    } else if ( ARG0_IS_S("center")){
+      if (argc>3 && ARG1_IS_D(pdata->center[0]) && ARG_IS_D(2,pdata->center[1]) && ARG_IS_D(3,pdata->center[2])) {
+        argc-=4;
+        argv+=4;
+        *change+=4;
+      } else {
+        Tcl_AppendResult(interp, "Error in radial_profile: could not read center\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if  ( ARG0_IS_S("maxr") ) {
+      if (argc>1 && ARG1_IS_D(pdata->maxr)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in radial_profile: could not read maxr\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if ( ARG0_IS_S("minz")){
+      if (argc>1 && ARG1_IS_D(pdata->minz)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read minz\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if ( ARG0_IS_S("maxz") ) {
+      if (argc>1 && ARG1_IS_D(pdata->maxz)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in profile: could not read maxz\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
+    } else if (ARG0_IS_S("rbins")) {
+      if (argc>1 && ARG1_IS_I(pdata->rbins)) {
+        argc-=2;
+        argv+=2;
+        *change+=2;
+      } else {
+        Tcl_AppendResult(interp, "Error in radial_profile: could not read rbins\n" , (char *)NULL);
+        return TCL_ERROR;
+      } 
     } else {
-      *change+=temp;
-      argc-=temp;
-      argv+=temp;
+      Tcl_AppendResult(interp, "Error in radial_profile: understand argument ", argv[0], "\n" , (char *)NULL);
+      return TCL_ERROR;
     }
-  } 
-  if ( ARG0_IS_S("center")){
-    if (argc>3 && ARG1_IS_D(pdata->center[0]) && ARG_IS_D(2,pdata->center[1]) && ARG_IS_D(3,pdata->center[2])) {
-      argc-=4;
-      argv+=4;
-      *change+=4;
-    } else {
-      Tcl_AppendResult(interp, "Error in radial_profile: could not read center\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
-  } 
-  if ( ARG0_IS_S("maxr") ) {
-    if (argc>1 && ARG1_IS_D(pdata->maxr)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in radial_profile: could not read maxr\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
-  } 
-  if ( ARG0_IS_S("minz")){
-    if (argc>1 && ARG1_IS_D(pdata->minz)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in profile: could not read minz\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
-  } 
-  if ( ARG0_IS_S("maxz") ) {
-    if (argc>1 && ARG1_IS_D(pdata->maxz)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in profile: could not read maxz\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
-  } 
-  if (ARG0_IS_S("nbins")) {
-    if (argc>1 && ARG1_IS_I(pdata->nbins)) {
-      argc-=2;
-      argv+=2;
-      *change+=2;
-    } else {
-      Tcl_AppendResult(interp, "Error in radial_profile: could not read nbins\n" , (char *)NULL);
-      return TCL_ERROR;
-    } 
   }
   
   temp=0;
-  if (pdata->id_list==0) {
-    Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
-    temp=1;
-  }
   if (pdata->center[0]>1e90) {
     Tcl_AppendResult(interp, "Error in radial_profile: center not specified\n" , (char *)NULL);
     temp=1;
@@ -922,8 +1024,8 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
     Tcl_AppendResult(interp, "Error in radial_profile: maxr not specified\n" , (char *)NULL);
     temp=1;
   }
-  if (pdata->nbins<1) {
-    Tcl_AppendResult(interp, "Error in radial_profile: nbins not specified\n" , (char *)NULL);
+  if (pdata->rbins<1) {
+    Tcl_AppendResult(interp, "Error in radial_profile: rbins not specified\n" , (char *)NULL);
     temp=1;
   }
   if (temp)

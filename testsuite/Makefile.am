@@ -24,6 +24,7 @@ tests = \
 	comfixed.tcl \
 	command_syntax.tcl \
 	constraints.tcl \
+	constraints_reflecting.tcl \
 	dh.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
@@ -51,14 +52,13 @@ tests = \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
+	p3m_simple_noncubic.tcl \
+	p3m_wall.tcl \
 	rotation.tcl \
-	tabulated.tcl 
+	tabulated.tcl \
 	thermostat.tcl \
         tunable_slip.tcl \
-	virtual-sites.tcl \
-	p3m-wall.tcl \
-  p3m_simple_noncubic.tcl
-
+	virtual-sites.tcl
 
 deactivated_tests =
 
@@ -75,6 +75,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	constraints_system.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
+	p3m_wall_system.data \
 	p3m_system.data el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \

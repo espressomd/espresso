@@ -1729,7 +1729,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
   case DIPOLAR_P3M:
-    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&Dp3m, sizeof(Dp3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA :
