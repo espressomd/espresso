@@ -466,6 +466,11 @@ void on_cell_structure_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
   on_coulomb_change();
+  /* 
+#ifdef LB
+  if (!lb_sanity_checks()) return;
+#endif
+  */
 }
 
 void on_resort_particles()
