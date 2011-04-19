@@ -22,6 +22,7 @@ source "../scripts/bundle.tcl"
 
 require_feature "PARTIAL_PERIODIC"
 require_feature "CONSTRAINTS"
+require_feature "LENNARD_JONES"
 
 puts "-------------------------------------------------"
 puts "- Testcase constraints.tcl running on [format %02d [setmd n_nodes]] nodes: -"

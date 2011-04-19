@@ -17,14 +17,11 @@
 #
 SUBDIRS = src . scripts tools testsuite doc
 
-ACLOCAL_AMFLAGS = -Iconfig
+ACLOCAL_AMFLAGS = -I config
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = darwinlink.sh \
-	autogen.sh samples cmake CMakeLists.txt \
-        acconfig.h.cmakein packages \
-	$(extra)
+EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
 #################################################################
 # Installation of the main program
@@ -35,12 +32,12 @@ EXTRA_DIST = darwinlink.sh \
 
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-Espresso_SOURCES = src/scriptsdir.c
+Espresso_SOURCES = src/scriptsdir.c src/main.c
 Espresso_LDADD = src/libEspresso.a
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
-Espresso_install_SOURCES = src/scriptsdir.c
+Espresso_install_SOURCES = src/scriptsdir.c src/main.c
 Espresso_install_LDADD = src/libEspresso.a
 
 # rename Espresso after installation

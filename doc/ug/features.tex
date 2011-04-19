@@ -34,8 +34,7 @@ Features can be activated in the configuration header
 
 \section{General features}
 
-\todo{This list is not complete! To get a full list of available
-  features, look into \texttt{myconfig-sample.h}.}
+\todo{The list contains all features, but there are tons of docs missing!}
 
 \begin{itemize}
 \item \newfeature{PARTIAL\_PERIODIC} By default, all coordinates in \es{}
@@ -53,13 +52,15 @@ Features can be activated in the configuration header
 \item \newfeature{DIPOLES} This activates the dipole-moment property of
   particles; you probably also want to activate MAGNETOSTATICS to get any
   interactions for the dipoles. Requires \texttt{ROTATION}.
-\item \newfeature{ROTATION} Switch on rotational degrees of freedom for
-  the particles, as well as the corresponding quaternion integrator.
-  See section \vref{sec:rotation} for details. Note, that when the
-  feature is activated, every particle has three additional degrees of
-  freedom, which for example means that the kinetic energy changes at
-  constant temperature is twice as large.
-  \todo{Docs for rotation missing}
+\item \newfeature{MAGNETIC\_DIPOLAR\_DIRECT\_SUM}
+\item \newfeature{ROTATION} Switch on rotational degrees of freedom
+  for the particles, as well as the corresponding quaternion
+  integrator.  See section \vref{ssec:particleproperties} for
+  details. Note, that when the feature is activated, every particle
+  has three additional degrees of freedom, which for example means
+  that the kinetic energy changes at constant temperature is twice as
+  large.
+\item \newfeature{ROTATIONAL\_INERTIA}
 \item \newfeature{EXTERNAL\_FORCES} Allows to define an arbitrary
   constant force for each particle individually. Also allows to fix
   individual coordinates of particles, \eg keep them at a fixed
@@ -82,19 +83,38 @@ Features can be activated in the configuration header
 \item \newfeature{MOLFORCES} \todo{Docs missing}
 \item \newfeature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which
   allows for fixed lengths bonds between particles. \todo{How to use it?}
-\item \newfeature{VIRTUAL\_SITES} Virtual sites are particles, the position and velocity of which is not obtained by integrating equations of motion. Rather, they are placed using the position (and orientation) of other particles. This allows for rigid arrangements of particles and for placing a particle in the center of mass of a set of other particles. See section \ref{sec:virtual}.
-\item \newfeature{OLD_RW_VERSION} This switches back to the old,
-\emph{wrong} random walk code of the polymer. Only use this if you
-rely on the old behaviour and \emph{know what you are doing}.
+\item \newfeature{VIRTUAL\_SITES\_COM} Virtual sites are particles,
+  the position and velocity of which is not obtained by integrating
+  equations of motion. Rather, they are placed using the position (and
+  orientation) of other particles. The feature \lit{VIRTUAL_SITES_COM}
+  allows to place a virtual particle into the center of mass of a set
+  of other particles. See section \ref{sec:virtual} for details.
+\item \newfeature{VIRTUAL\_SITES\_RELATIVE} Virtual sites are
+  particles, the position and velocity of which is not obtained by
+  integrating equations of motion. Rather, they are placed using the
+  position (and orientation) of other particles. The feature
+  \lit{VIRTUAL_SITES_RELATIVE} allows for rigid arrangements of
+  particles. See section \ref{sec:virtual} for details.
+\item \newfeature{VIRTUAL\_SITES\_NO\_VELOCITY}
+\item \newfeature{VIRTUAL\_SITES\_THERMOSTAT}
+\item \newfeature{THERMOSTAT\_IGNORE\_NON\_VIRTUAL}
+\item \newfeature{BOND\_VIRTUAL}
+\item \newfeature{MODES}
+\item \newfeature{ADRESS}
+\item \newfeature{METADYNAMICS}
+\item \newfeature{OVERLAPPED}
+\item \newfeature{OLD\_RW\_VERSION} This switches back to the old,
+  \emph{wrong} random walk code of the polymer. Only use this if you
+  rely on the old behaviour and \emph{know what you are doing}.
 \end{itemize}
 
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 \begin{itemize}
 \item \newfeature{NEMD} Enables the non-equilbrium (shear) MD support
-  (see section \vref{sec:NEMD}).\todo{Docs missing}
+  (see section \vref{sec:NEMD}).
 \item \newfeature{NPT} Enables an on--the--fly NPT integration scheme
-  (see section \vref{sec:NPT}).\todo{Docs missing}
+  (see section \vref{ssec:NPTthermostat}).
 \item \newfeature{DPD} Enables the dissipative particle dynamics
   thermostat (see section \vref{sec:DPD}).
 \item \newfeature{TRANS\_DPD} Enables the transversal dissipative
@@ -103,12 +123,16 @@ integrator or thermostat:
   particle dynamics thermostat implemented as an interaction,
   allowing to choose different parameters between different particle
   types (see section \vref{sec:interDPD}).
+\item \newfeature{INTER\_RF} \todo{Documentation!}
 \item \newfeature{DPD\_MASS\_RED} Enables masses in DPD using reduced,
   dimensionless mass units.
 \item \newfeature{DPD\_MASS\_LIN} Enables masses in DPD using absolute
   mass units.
 \item \newfeature{LB} Enables the lattice-Boltzmann fluid code (see
-  section \vref{sec:LB}).\todo{Docs missing}
+  section \vref{sec:lb}).
+\item \newfeature{LB_ELECTROHYDRODYNAMICS} Enables the implicit
+  calculation of electro-hydrodynamics for charged particles and salt
+  ions in an electric field.
 \end{itemize}
 
 \section{Interactions}
@@ -126,6 +150,10 @@ The following switches turn on various short ranged interactions (see section
 \item \newfeature{LJCOS2} Same as LJCOS, but using a slightly different way of
   smoothing the connection to 0.
 \item \newfeature{LJ\_ANGLE} Enable the directional Lennard--Jones potential.
+\item \newfeature{GAY\_BERNE}
+\item \newfeature{HERTZIAN}
+\item \newfeature{MOL\_CUT}
+\item \newfeature{NO\_INTRA\_NB}
 \item \newfeature{MORSE} Enable the Morse potential.
 \item \newfeature{BUCKINGHAM} Enable the Buckingham potential.
 \item \newfeature{SOFT\_SPHERE} Enable the soft sphere potential.
@@ -152,6 +180,8 @@ change in the near future to three independent angle potentials:
 \item \newfeature{BOND\_ANGLE\_HARMONIC}
 \item \newfeature{BOND\_ANGLE\_COSINE}
 \item \newfeature{BOND\_ANGLE\_COSSQUARE}
+\item \newfeature{BOND\_ANGLEDIST}
+\item \newfeature{BOND\_ENDANGLEDIST}
 \end{itemize}
 
 \section{Debug messages}
@@ -208,6 +238,7 @@ looking directly at the code.
 \item \newfeature{POLY\_DEBUG}
 \item \newfeature{MOLFORCES\_DEBUG}
 \item \newfeature{LB\_DEBUG} Output from the lattice--Boltzmann code.
+\item \newfeature{VIRTUAL\_SITES\_DEBUG}
 \item \newfeature{ASYNC\_BARRIER} Introduce a barrier after each
   asynchronous command completion. Helps in detection of mismatching
   communication.

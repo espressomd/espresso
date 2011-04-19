@@ -145,10 +145,10 @@ MDINLINE int tclcommand_inter_parse_overlapped_bonded(Tcl_Interp *interp, int bo
 }
 
 /** Computes the two body overlapped bonded force.
-    Adds this force to the particle forces in forces.h (see \ref #inter). 
+    Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.
@@ -189,10 +189,10 @@ MDINLINE int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_param
   return 0;
 }
 
-/** Computes the two body overlapped angle interaction energy (see \ref #inter, \ref #analyze). 
+/** Computes the two body overlapped angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.
@@ -221,11 +221,11 @@ MDINLINE int overlap_bond_energy(Particle *p1, Particle *p2, Bonded_ia_parameter
 }
 
 /** Computes the three body overlapped angle interaction force.
-    Adds this force to the particle forces in forces.h (see \ref #inter). 
+    Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
     @param p_mid     Pointer to second/middle particle.
     @param p_left    Pointer to first/left particle.
     @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -284,11 +284,11 @@ MDINLINE int calc_overlap_angle_force(Particle *p_mid, Particle *p_left,
   return 0;
 }
 
-/** Computes the three body overlapped angle interaction energy (see \ref #inter, \ref #analyze). 
+/** Computes the three body overlapped angle interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
     @param p_mid        Pointer to first particle.
     @param p_left        Pointer to second/middle particle.
     @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param _energy   return energy pointer.
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
@@ -336,9 +336,9 @@ MDINLINE int overlap_angle_energy(Particle *p_mid, Particle *p_left,
 }
 
 /** Computes the four body overlapped dihedral interaction force.
-    Adds this force to the particle forces in forces.h (see \ref #inter). 
+    Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
     @param p1, p2, p3, p4 define the angle between the planes p1,p2,p3 and p2,p3,p4
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @return 0
@@ -408,9 +408,9 @@ MDINLINE int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
   return 0;
 }
 
-/** Computes the four body overlapped dihedral interaction energy (see \ref #inter, \ref #analyze). 
+/** Computes the four body overlapped dihedral interaction energy (see \ref tclcommand_inter, \ref tclcommand_analyze). 
     @param p1, p2, p3, p4 define the angle between the planes p1,p2,p3 and p2,p3,p4
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param _energy   return energy pointer.
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h). 

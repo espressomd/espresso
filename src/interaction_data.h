@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -22,8 +23,8 @@
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
 
-    interaction_data.h contains the parser \ref #inter for the
-    \ref tcl_inter Tcl command. Therefore the parsing of bonded and nonbonded
+    interaction_data.h contains the parser \ref tclcommand_inter for the
+    Tcl command "inter". Therefore the parsing of bonded and nonbonded
     interaction definition commands both is done here. It also contains
     procedures for low-level interactions setup and some helper functions.
     Moreover it contains code for the treatments of constraints.
@@ -432,7 +433,7 @@ typedef struct {
 /** thermodynamic force parameters */
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 typedef struct{
   int TF_TAB_npoints;
   int TF_TAB_startindex;
@@ -445,7 +446,7 @@ typedef struct{
   char TF_TAB_filename[MAXLENGTH_TF_FILENAME];
   
 } TF_parameters;
-/** #endif */
+/* #endif */
 #endif
 
 
@@ -764,11 +765,11 @@ extern DoubleList adress_tab_forces;
 /** Array containing all adress tabulated energies*/
 extern DoubleList adress_tab_energies;
 #endif
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 extern DoubleList thermodynamic_forces;
 
 extern DoubleList thermodynamic_f_energies;
-/** #endif */
+/* #endif */
 #endif
 
 /** Maximal interaction cutoff (real space/short range interactions). */
@@ -831,13 +832,13 @@ void force_and_energy_tables_init();
 /** Function for initializing adress force and energy tables */
 void adress_force_and_energy_tables_init();
 #endif
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void tf_tables_init();
-/** #endif */
+/* #endif */
 
 #endif
 
-/** Implementation of the tcl command \ref tcl_inter. This function
+/** Implementation of the tcl command "inter". This function
     allows the interaction parameters to be modified.
  */
 int tclcommand_inter(ClientData data, Tcl_Interp *interp,

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -377,7 +378,7 @@ void adress_update_weights(){
   }
 }
 
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
 {
   int i, part_type, err_code;
@@ -430,7 +431,7 @@ int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, doub
   }
   return TCL_OK;
 }
-/** #endif */
+/* #endif */
 
 int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv)
 {

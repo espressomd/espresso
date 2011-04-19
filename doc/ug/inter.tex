@@ -151,6 +151,7 @@ purely repulsive, and is often used to mimick hard sphere repulsion.
 \subsection{Generic Lennard-Jones interaction}
 \index{Generic Lennard-Jones interaction|mainindex}
 \index{interactions!Generic Lennard-Jones|mainindex}
+\label{sec:GenLennardJones}
 
 \begin{essyntax}
   inter \var{type1} 
@@ -653,7 +654,7 @@ reference \cite{smiatek08a} before using this interaction.
 This is a special interaction that is to be used in conjunction with
 the Dissipative Particle Dynamics algorithm \ref{sec:DPD} when the
 \texttt{INTER_DPD} implementation is used. The parameters correspond
-to the parameters of the DPD thermostat \vref{sec:DPDthermostat}, but
+to the parameters of the DPD thermostat \vref{sec:DPDinter}, but
 can be set individually for the different interactions.
 
 \subsection{Capping the force during warmup}
@@ -808,7 +809,7 @@ general tabulated potentials.
 \subsection{Rigid bonds}
 \index{rigid bond|mainindex}
 \index{interactions!rigid bond|mainindex}
-\index{RATTLE}
+\index{Rattle Shake algorithm}
 
 \begin{essyntax}
   inter \var{bondid}
@@ -817,8 +818,9 @@ general tabulated potentials.
   \var{velocity\_tolerance}
 \end{essyntax}
 
-\todo{Docs}
-No description so far.
+To simulate rigid bonds, \es uses the Rattle Shake algorithm which
+satisfies internal constraints for molecular models with internal
+constraints, using Lagrange multipliers.\cite{andersen83a}
 
 \subsection{Bond-angle interactions}
 \index{bond-angle interactions|mainindex}
@@ -1054,6 +1056,10 @@ requires assigning charges to the particles.  This is done using the
   \end{features}
 \end{essyntax}
 
+For this feature to work, you need to have the \texttt{fftw3} library
+installed on your system. In \es{}, you can check if it is compiled in
+by checking for the feature \texttt{FFTW}.
+
 This command activates the P3M method to compute the electrostatic
 interactions between charged particles.  The different parameters are
 described in more detail in \cite{deserno98a}.
@@ -1092,7 +1098,12 @@ such that the method provides the desired accuracy at maximum speed.
 To simplify this, \es{} provides a function to automatically tune the
 algorithm.  Note that for this function to work properly, your system
 should already contain an initial configuration of charges and the
-correct initial box size.
+correct initial box size. Also note that both provided tuning
+algorithms work very well on homogenous charge distributions, but
+might not achieve the requested precision for highly inhomogenous or
+symmetric systems. For example, because of the nature of the P3M
+algorithm, systems are problematic where most charges are placed in
+one plane, one small region, or on a regular grid.
 
 The function employs the analytical expression of the error estimate
 for the P3M method \cite[8.23]{hockney88} and its real space error
@@ -1244,13 +1255,12 @@ test force calculations. For details on the MMM family of algorithms,
 refer to appendix \vref{chap:mmm}.
 
 \subsection{Maggs' method}
-\index{Maggs' method|mainindex}
-\index{interactions!Maggs' method|mainindex}
+\index{Maggs method|mainindex}
+\index{interactions!Maggs method|mainindex}
 
 \begin{essyntax}
   inter coulomb \var{l_B}
-  maggs \var{f\_mass} \var{mesh} \var{field\_friction}
-  \opt{yukawa \var{kappa} \var{r_\mathrm{cut}}}
+  maggs \var{f\_mass} \var{mesh}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1263,24 +1273,67 @@ This is an implementation of the instantaneous 1/r Coulomb interaction
 as the potential of mean force between charges which are dynamically
 coupled to a local electromagnetic field.
 
+The algorithm currently works with the following constraints:
+
+\begin{itemize}
+  \item cellsystem has to be domain decomposition but \emph{without}
+    Verlet lists!
+  \item system has to be periodic in three dimensions.
+\end{itemize}
+
 \begin{arguments}
 \item[\var{f\_mass}] is the mass of the field degree of freedom and equals
   to the square root of the inverted speed of light.
 \item[\var{mesh}] is the number of mesh points for the interpolation
-  of the electromagnetic field.
-\item[\var{field\_friction}] is the value of the friction coefficient
-  for the transversal field degrees of freedom (reserved for future
-  development).
+  of the electromagnetic field in one dimension.
 \end{arguments}
-Unphysical self--energies that arise as a result of the lattice
-interpolation of charges, are corrected by a subtraction scheme based
-either on the exact lattice Green's function or the combination of the
-direct subtraction scheme plus the Yukawa subtraction scheme (second
-method).
 
-For the case of Yukawa screened simulation (second method) one has to
-enter screening parameter \var{kappa} and the cut-off of the Yukawa
-potential \var{r_\mathrm{cut}}.
+The arising self-interactions are treated with a modified version of
+the exact solution of the lattice Green's function for the
+problem.
+
+Currently, forces have large errors for two particles within the same
+lattice cube. This may be fixed in future development, but right now
+leads to the following rule of thumb for the parameter choices:
+
+\begin{itemize}
+  \item The lattice should be of the size of your particle size
+    (i.e. the lennard jones epsilon). That means: $\text{mesh} \approx
+    \text{box\_l} / \text{lj\_sigma}$
+  \item The integration timestep should be in a range where no
+    particle moves more than one lattice box (i.e. lennard jones
+    sigma) per timestep.
+  \item The speed of light should satisfy the stability criterion
+    $c\ll a/dt$, where $a$ is the lattice spacing and $dt$ is the
+    timestep. For the second parameter, this means $\text{f\_mass} \gg
+    dt^2/a^2$.
+\end{itemize}
+
+
+The main error of the MEMD algorithm stems from the lattice
+interpolation and is proportional to the lattice size in three
+dimensions, which means $\Delta_\text{lattice} \propto a^3$.
+
+Without derivation here, the algorithmis error is proportional to
+$1/c^2$, where $c$ is the adjustable speed of light. From the
+stability criterion, this yields
+
+\begin{equation}
+\Delta_\text{maggs} = A\cdot a^3 + B\cdot dt^2/a^2
+%\label{eq:maggserror}
+\end{equation}
+
+This means that increasing the lattice will help the algorithmic
+error, as we can tune the speed of light to a higher value. At the
+same time, it increases the interpolation error at an even higher
+rate. Therefore, momentarily it is advisable to choose the lattice
+with a rather fine mesh of the size of the particles. As a rule of
+thumb, the error will then be less than $10^{-5}$ for the particle
+force.
+
+For a more detailed description of the algorithm, see
+appendix~\vref{sec:MEMD} or the publications~\cite{maggs02a,
+  pasichnyk04a}.
 
 \subsection{Electrostatic Layer Correction (ELC)}
 \index{ELC method|mainindex}
@@ -1313,8 +1366,8 @@ to be set to \texttt{1 1 1} still, and the 3d method has to be set to
 epsilon metallic, i.e.  metallic boundary conditions. For details, see
 appendix \vref{chap:mmm}.
 
-Make sure that you read the papers on ELC before using it!!!
-\todo{references}
+Make sure that you read the papers on ELC (e.~g. \cite{brodka04a,
+  tyagi08a}) before using it!!!
 
 \section{Dipolar interaction}
 \label{sec:inter-dipolar}
@@ -1462,8 +1515,8 @@ system is periodic (as defined by \texttt{setmd periodic}), it applies
 the minimum image convention, i.e. the interaction is effectively cut
 off at half a box length.
 
-This method should only be used if it is not possible to P3M or DLC
-and has a low accuracy.
+This method should only be used if it is not possible to use P3M or
+DLC and has a low accuracy.
 
 \subsection{Magnetic Dipolar Direct Sum (MDDS)}
 \index{MDDS method|mainindex}

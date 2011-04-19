@@ -34,6 +34,10 @@ source "tests_common.tcl"
 
 require_feature "TUNABLE_SLIP"
 require_feature "DPD"
+require_feature "CONSTRAINTS"
+require_feature "EXTERNAL_FORCES"
+require_feature "VIRTUAL_SITES_RELATIVE"
+require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
 puts "- Testcase tunable_slip.tcl running on [format %02d [setmd n_nodes]] nodes  -"

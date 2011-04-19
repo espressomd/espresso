@@ -20,7 +20,7 @@
 */
 /** \file config.c
  *
- *  contains \ref code_info and version stuff.
+ *  contains code_info and version stuff.
 */
 #include <tcl.h>
 #include "utils.h"
@@ -45,51 +45,11 @@
 
 /* errors for all modules that require fftw if not present */
 #ifndef FFTW
-
 #ifdef MODES
 #error MODES requires the fftw
 #endif
-
-#ifdef LB
-#error LB requires the fftw
 #endif
 
-#endif
-
-
-#ifdef DAWAANR
-
-#ifndef MAGNETOSTATICS 
-#error  DAWAANR  needs MAGNETOSTATICS in order to work
-#endif
-
-#endif
-
-
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-
-#ifndef MAGNETOSTATICS 
-#error  MAGNETIC DIRECT SUM  needs MAGNETOSTATICS in order to work
-#endif
-
-#endif
-
-
-#ifdef MDLC
-  
-  #ifndef MAGNETOSTATICS
-  #error MDLC needs MAGNETOSTATICS
-  #endif
-  
-  #if !(defined(MAGNETIC_DIPOLAR_DIRECT_SUM)  || defined( ELP3M) )
-   #error MDLC  needs either direct sum or P3M to be active
-  #endif 
-
-  #ifndef DIPOLES
-  #error MDLC has no sense without the magnetic dipoles 
-  #endif
-
-#endif
 
 #if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
   || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
@@ -111,16 +71,11 @@ int tclcallback_version(Tcl_Interp *interp)
 int tclcallback_compilation(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, "{ Compilation status ", (char *) NULL);
-#ifdef DEBUG
-  Tcl_AppendResult(interp, "{ " DEBUG " } ", (char *) NULL);
+#ifdef FFTW
+  Tcl_AppendResult(interp, "{ FFTW } ", (char *) NULL);
 #endif
-#ifdef PROFILING
-  Tcl_AppendResult(interp, "{ " PROFILING " } ", (char *) NULL);
-#endif
-#if FFTW == 2
-  Tcl_AppendResult(interp, "{ FFTW2 } ", (char *) NULL);
-#elif FFTW == 3
-  Tcl_AppendResult(interp, "{ FFTW3 } ", (char *) NULL);
+#ifdef CUDA
+  Tcl_AppendResult(interp, "{ CUDA } ", (char *) NULL);
 #endif
 #ifdef TK
   Tcl_AppendResult(interp, "{ TK } ", (char *) NULL);
@@ -233,6 +188,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef NPT
   Tcl_AppendResult(interp, "{ NPT } ", (char *) NULL);
 #endif
+#ifdef LB_GPU
+  Tcl_AppendResult(interp, "{ LB_GPU } ", (char *) NULL);
+#endif
 #ifdef TRANS_DPD
   Tcl_AppendResult(interp, "{ TRANS_DPD } ", (char *) NULL);
 #endif
@@ -280,15 +238,6 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef INTERFACE_CORRECTION
   Tcl_AppendResult(interp, "{ INTERFACE_CORRECTION } ", (char *) NULL);
 #endif
-#endif
-#ifdef MDLC
-  Tcl_AppendResult(interp, "{ MDLC } ", (char *) NULL);
-#endif
-#ifdef DAWAANR
-  Tcl_AppendResult(interp, "{ DAWAANR } ", (char *) NULL);
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-  Tcl_AppendResult(interp, "{ MAGNETIC_DIPOLAR_DIRECT_SUM } ", (char *) NULL);
 #endif
  Tcl_AppendResult(interp, "}", (char *) NULL);
   return (TCL_OK);

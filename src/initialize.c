@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -70,25 +71,26 @@
 
 #ifdef CUDA
 #include "cuda_init.h"
+#include "lbgpu.h"
+#include "lb_boundaries_gpu.h"
 #endif
 
 // import function from scriptsdir.c
 char *get_default_scriptsdir();
 
-/** whether before integration the thermostat has to be reinitialized */
+/** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
 static int reinit_magnetostatics = 0;
+#ifdef LB_GPU
+static int lb_reinit_particles_gpu = 1;
+#endif
 
 static void init_tcl(Tcl_Interp *interp);
 
 int on_program_start(Tcl_Interp *interp)
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
-
-#ifdef CUDA
-  gpu_init();
-#endif
 
   /*
     call the initialization of the modules here
@@ -108,12 +110,21 @@ int on_program_start(Tcl_Interp *interp)
 #ifdef INTERFACE_CORRECTION
   adress_force_and_energy_tables_init();
 #endif
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   tf_tables_init();
-  /** #endif */
+  /* #endif */
 #endif
 #ifdef ELP3M
   fft_pre_init();
+#endif
+
+#ifdef LB_GPU
+  if(this_node == 0){
+    lb_pre_init_gpu();
+  }
+#endif
+#ifdef LB
+  lb_pre_init();
 #endif
 
   /*
@@ -126,7 +137,9 @@ int on_program_start(Tcl_Interp *interp)
     init_tcl(interp);
   }
   return TCL_OK;
+
 }
+
 
 void on_integration_start()
 {
@@ -193,23 +206,50 @@ void on_integration_start()
 
 #ifdef LB
   if(lattice_switch & LATTICE_LB) {
-    if (lbpar.agrid < 0.0) {
+    if (lbpar.agrid <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
     }
-    if (lbpar.tau < 0.0) {
+    if (lbpar.tau <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar.rho < 0.0) {
+    if (lbpar.rho <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
     }
-    if (lbpar.viscosity < 0.0) {
+    if (lbpar.viscosity <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
   }
+#endif
+#ifdef LB_GPU
+if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU) {
+    if (lbpar_gpu.agrid < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    }
+    if (lbpar_gpu.tau < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    }
+    if (lbpar_gpu.rho < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+    }
+    if (lbpar_gpu.viscosity < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+    }
+    if (lb_reinit_particles_gpu) {
+	lb_realloc_particles_gpu();
+	lb_reinit_particles_gpu = 0;
+    }
+  }
+}
+
 #endif
 
 #ifdef METADYNAMICS
@@ -261,7 +301,7 @@ void on_observable_calc()
       EWALD_count_charged_particles();
       break;
     case COULOMB_MAGGS: 
-      Maggs_init(); 
+      maggs_init(); 
       break;
     default: break;
     }
@@ -293,6 +333,10 @@ void on_particle_change()
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
   rebuild_verletlist = 1;
+
+#ifdef LB_GPU
+  lb_reinit_particles_gpu = 1;
+#endif
 
   invalidate_obs();
 
@@ -333,7 +377,7 @@ void on_coulomb_change()
     MMM2D_init();
     break;
   case COULOMB_MAGGS: 
-    Maggs_init(); 
+    maggs_init(); 
     break;
   default: break;
   }
@@ -381,12 +425,38 @@ void on_constraint_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
 
-#ifdef LB
-#ifdef CONSTRAINTS
+#ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
-    lb_init_constraints();
+    lb_init_boundaries();
   }
 #endif
+#ifdef LB_BOUNDARIES_GPU
+  if(this_node == 0){
+    if(lattice_switch & LATTICE_LB_GPU) {
+      lb_init_boundaries_gpu();
+    }
+  }
+#endif
+
+  recalc_forces = 1;
+}
+
+void on_lbboundary_change()
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
+  invalidate_obs();
+
+#ifdef LB_BOUNDARIES
+  if(lattice_switch & LATTICE_LB) {
+    lb_init_boundaries();
+  }
+#endif
+#ifdef LB_BOUNDARIES_GPU
+  if(this_node == 0){
+    if(lattice_switch & LATTICE_LB_GPU) {
+      lb_init_boundaries_gpu();
+    }
+  }
 #endif
 
   recalc_forces = 1;
@@ -396,6 +466,11 @@ void on_cell_structure_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
   on_coulomb_change();
+  /* 
+#ifdef LB
+  if (!lb_sanity_checks()) return;
+#endif
+  */
 }
 
 void on_resort_particles()
@@ -620,6 +695,14 @@ void on_parameter_change(int field)
     }
   }
 #endif
+
+#ifdef LB_GPU
+if(this_node == 0){
+  if (lattice_switch & LATTICE_LB_GPU) {
+    if (field == FIELD_TEMPERATURE) lb_init_gpu();
+  }
+}
+#endif
 }
 
 #ifdef LB
@@ -669,6 +752,9 @@ void on_ghost_flags_change()
 #endif
 }
 
+#define REGISTER_COMMAND(name, routine)					\
+  Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
+
 static void init_tcl(Tcl_Interp *interp)
 {
   char cwd[1024];
@@ -677,9 +763,6 @@ static void init_tcl(Tcl_Interp *interp)
   /*
     installation of tcl commands
   */
-
-#define REGISTER_COMMAND(name, routine)					\
-  Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
   /* in cells.c */
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
@@ -728,7 +811,10 @@ static void init_tcl(Tcl_Interp *interp)
   /* in bin.c */
   REGISTER_COMMAND("bin", tclcommand_bin);
   /* in lb.c */
+
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
+  REGISTER_COMMAND("lbnode", tclcommand_lbnode);
+  REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
@@ -740,15 +826,25 @@ static void init_tcl(Tcl_Interp *interp)
   /* in adresso.h */
   REGISTER_COMMAND("adress", tclcommand_adress);
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   REGISTER_COMMAND("thermodynamic_force", tclcommand_thermodynamic_force);
-  /** #endif */
+  /* #endif */
   REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
 #endif
 #ifdef METADYNAMICS
   /* in metadynamics.c */
   REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
 #endif
+#ifdef LB_GPU
+  /* in lbgpu_cfile.c */
+  REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
+
+  REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
+#endif
+#ifdef CUDA
+  REGISTER_COMMAND("cuda", tclcommand_cuda);
+#endif
+
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)

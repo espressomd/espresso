@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef THERMOSTAT_H
-#define THERMOSTAT_H
+#ifndef _THERMOSTAT_H
+#define _THERMOSTAT_H
 /** \file thermostat.h 
 
 */
@@ -26,7 +27,6 @@
 #include <tcl.h>
 #include <math.h>
 #include "utils.h"
-#include "virtual_sites.h"
 #include "particle_data.h"
 #include "parser.h"
 #include "random.h"
@@ -36,6 +36,8 @@
 #include "cells.h"
 #include "lb.h"
 #include "dpd.h"
+#include "lbgpu.h"
+#include "virtual_sites.h"
 
 /** \name Thermostat switches*/
 /************************************************************/
@@ -76,7 +78,7 @@ extern double nptiso_gammav;
  * functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tcl_thermostat. This function
+/** Implementation of the tcl command \ref tclcommand_thermostat. This function
     allows to change the used thermostat and to set its parameters.
  */
 int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
@@ -211,7 +213,7 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 }
 #endif
 
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
 int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 

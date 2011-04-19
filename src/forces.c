@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -48,6 +49,7 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
+#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -64,7 +66,12 @@ void init_forces();
 
 void force_calc()
 {
-  init_forces();
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
+#endif
+
+   init_forces();
   
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -84,7 +91,7 @@ void force_calc()
     nsq_calculate_ia();
     
   }
-  
+
   calc_long_range_forces();
 
 #ifdef LB
@@ -98,6 +105,10 @@ void force_calc()
 #ifdef METADYNAMICS
     /* Metadynamics main function */
     meta_perform();
+#endif
+
+#ifdef LB_GPU
+  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
 #endif
 
 /* this must be the last force to be calculated (Mehmet)*/
@@ -151,7 +162,7 @@ void calc_long_range_forces()
       EWALD_calc_kspace_forces(1,0);
     break;
   case COULOMB_MAGGS:
-    maggs_calc_e_forces();
+    maggs_calc_forces();
     break;
   case COULOMB_MMM2D:
     MMM2D_add_far_force();
@@ -163,11 +174,9 @@ void calc_long_range_forces()
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-#ifdef MDLC
   case DIPOLAR_MDLC_P3M:
      add_mdlc_force_corrections();
     //fall through 
-#endif
   case DIPOLAR_P3M:
     P3M_dipole_assign();
 #ifdef NPT
@@ -180,21 +189,15 @@ void calc_long_range_forces()
 
       break;
 #endif
-#ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
       dawaanr_calculations(1,0);
       break;
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
   case DIPOLAR_MDLC_DS:
      add_mdlc_force_corrections();
     //fall through 
-#endif
   case DIPOLAR_DS: 
         magnetic_dipolar_direct_sum_calculations(1,0);
       break;
-#endif
 
   }
 #endif  /*ifdef MAGNETOSTATICS */
@@ -296,11 +299,11 @@ MDINLINE void init_local_particle_force(Particle *part)
 #endif
 
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   if(ifParticleIsVirtual(part))
     if(part->p.adress_weight > 0 && part->p.adress_weight < 1)
       add_thermodynamic_force(part);
-  /** #endif */  
+  /* #endif */  
 #endif
 }
 

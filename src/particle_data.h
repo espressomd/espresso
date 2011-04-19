@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef PARTICLE_DATA_H
-#define PARTICLE_DATA_H
+#ifndef _PARTICLE_DATA_H
+#define _PARTICLE_DATA_H
 /** \file particle_data.h
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"
@@ -283,7 +284,7 @@ extern int *partBondPartners;
  * Functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tcl_part. This command allows to
+/** Implementation of the tcl command \ref tclcommand_part. This command allows to
     modify particle data. */
 int tclcommand_part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv);

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef COMM_H
-#define COMM_H
+#ifndef _COMMUNICATION_H
+#define _COMMUNICATION_H
 /** \file communication.h
     This file contains the asynchronous MPI communication.
  
@@ -26,31 +27,28 @@
 
     The asynchronous MPI communication is used during the script
     evaluation. Except for the master node that interpretes the Tcl
-    script, all other nodes wait in \ref mpi_loop for the master node to
-    issue an action using \ref mpi_issue. \ref mpi_loop immediately
-    executes an MPI_Bcast and therefore waits for the master node to broadcast
-    a command, which is done by \ref mpi_issue. The request consists of
-    three integers, the first one describing the action issued, the second
-    and third an arbitrary parameter depending on the action issued. If applicable,
-    the second parameter is the node number of the slave this request is dedicated
-    to.
+    script, all other nodes wait in mpi_loop() for the master node to
+    issue an action using mpi_call(). \ref mpi_loop immediately
+    executes an MPI_Bcast and therefore waits for the master node to
+    broadcast a command, which is done by mpi_call(). The request
+    consists of three integers, the first one describing the action
+    issued, the second and third an arbitrary parameter depending on
+    the action issued. If applicable, the second parameter is the node
+    number of the slave this request is dedicated to.
 
-    Adding new actions (e. g. to implement new Tcl commands) is
-    simple. First, the action has to be assigned a new action number
-    (the defines like \ref REQ_BCAST_PAR) by adding a new define and
-    increasing \ref REQ_MAXIMUM. Then you write a mpi_* procedure that
-    does a
-    \verbatim mpi_issue(request, node, param)\endverbatim
-    where pnode and param are arbitrary values which will be passed to the slave
-    procedure.
+    To add new actions (e. g. to implement new Tcl commands), do the
+    following:
+    - write the mpi_* function that is executed on the master
+    - write the mpi_*_slave function
+    - Add your slave function to CALLBACK_LIST in communication.c
 
     After this your procedure is free to do anything. However, it has
     to be in (MPI) sync with what your new mpi_*_slave does.  This
     procedure is called immediately after the broadcast with the
     arbitrary integer as parameter.  To this aim it has also to be
-    added to \ref #callbacks (the array index gives your action number.
-    Last but not least for debugging purposes you can add a nice name
-    to \ref #names in the same way.  */
+    added to \ref CALLBACK_LIST "callbacks".  Last but not least for
+    debugging purposes you can add a nice name to \ref #names in the
+    same way.  */
 
 /* from here we borrow the enumeration of
    the global variables */
@@ -115,11 +113,18 @@ void mpi_bcast_event(int event);
 /** Issue REQ_PLACE: move particle to a position on a node.
     Also calls \ref on_particle_change.
     \param id   the particle to move.
-    \param new  if non-zero, the particle is new
     \param node the node to attach it to.
     \param pos  the particles position.
 */
-void mpi_place_particle(int node, int id, int new, double pos[3]);
+void mpi_place_particle(int node, int id, double pos[3]);
+
+/** Issue REQ_PLACE: create particle at a position on a node.
+    Also calls \ref on_particle_change.
+    \param id   the particle to create.
+    \param node the node to attach it to.
+    \param pos  the particles position.
+*/
+void mpi_place_new_particle(int node, int id, double pos[3]);
 
 /** Issue REQ_SET_V: send particle velocity.
     Also calls \ref on_particle_change.
@@ -224,6 +229,10 @@ void mpi_send_dipm(int node, int part, double dipm);
 void mpi_send_virtual(int node, int part, int isVirtual);
 #endif
 
+#ifdef VIRTUAL_SITES_RELATIVE
+void mpi_send_vs_relative(int node, int part, int vs_relative_to, double vs_distance);
+#endif
+
 /** Issue REQ_SET_TYPE: send particle type.
     Also calls \ref on_particle_change.
     \param part the particle.
@@ -296,9 +305,9 @@ int mpi_integrate(int n_steps);
 void mpi_bcast_ia_params(int i, int j);
 
 #ifdef ADRESS
-/** #ifdef THERMODYNAMIC_FORCE */
+/* #ifdef THERMODYNAMIC_FORCE */
 void mpi_bcast_tf_params(int i);
-/** #endif */
+/* #endif */
 #endif
 
 
@@ -307,7 +316,7 @@ void mpi_bcast_tf_params(int i);
 */
 void mpi_bcast_n_particle_types(int s);
 
-/** Issue REQ_GATHER: gather data for analysis in \ref #analyze.
+/** Issue REQ_GATHER: gather data for analysis in analyze.
     \param job what to do:
     <ul>
 	<li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
@@ -378,6 +387,11 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
 
+#ifdef LB_BOUNDARIES
+/** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
+void mpi_bcast_lbboundary(int del_num);
+#endif
+
 /** Issue REQ_RANDOM_SEED: read/set seed of random number generators on each node. */
 void mpi_random_seed(int cnt, long *seed);
 
@@ -437,6 +451,7 @@ void mpi_bcast_lb_params(int field);
  * @param index index of the lattice site
  * @param rho   local fluid density
  * @param j     local fluid velocity
+ * @param pi    local fluid pressure
  */
 void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
 
@@ -445,8 +460,16 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  * @param index index of the lattice site
  * @param rho   local fluid density
  * @param j     local fluid velocity
+ * @param pi    local fluid pressure
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
+
+/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+ * @param node     processor to send to
+ * @param index    index of the lattice site
+ * @param boundary local border flag
+ */
+void mpi_recv_fluid_border_flag(int node, int index, int *boundary);
 
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
@@ -458,7 +481,16 @@ int mpi_iccp3m_iteration(int dummy);
 */
 int mpi_iccp3m_init(int dummy);
 
+/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param pop   local fluid population
+ */
+void mpi_recv_fluid_populations(int node, int index, double *pop);
 
+/** Part of MDLC
+ */
+void mpi_bcast_max_mu();
 
 /** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
     to these error messages. This called only on the master node.

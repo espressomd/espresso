@@ -1,6 +1,6 @@
 % Copyright (C) 2010,2011 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-% Max-Planck-Institute for Polymer Research, Theory Group
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -52,6 +52,10 @@ idxtotoc                        % add the index to the TOC
 \usepackage{units}
 \usepackage[numbers]{natbib}
 
+% For building the distribution docs, disable todo boxes.
+\usepackage[disable]{todonotes}
+%\usepackage{todonotes}
+
 % Make '_' a normal character
 \usepackage{underscore}
 
@@ -64,6 +68,15 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\etal}{\textit{et al.}\xspace}
+
+\newcommand{\warning}[1]{
+  \begin{center}%
+    \fcolorbox{black}{yellow}{%
+      \parbox{\linewidth-5em}{%
+        \textbf{Warning:} #1%
+      }}%
+  \end{center}%
+}
 
 \newcommand{\codebox}[1]%
 {\texttt{#1}}
@@ -93,17 +106,6 @@ idxtotoc                        % add the index to the TOC
 % required so that we can set index numbers bold
 % \index{Some example|mainindex}
 \newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
-
-\newcommand{\todo}[1]{
-  \marginpar{%
-    \setlength{\fboxrule}{1pt}
-    \fcolorbox[gray]{0}{0.9}{%
-      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
-        \bf\raggedright\scriptsize #1%
-      }%
-    }%
-  }%
-}
 
 \makeatletter
 \renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
@@ -264,7 +266,11 @@ idxtotoc                        % add the index to the TOC
 %\date{\today}
 \maketitle
 
+\listoftodos
+\cleardoublepage
+
 \pdfbookmark{Contents}{toc}
+\setcounter{tocdepth}{1}
 \tableofcontents
 
 \include{introduction}
@@ -279,6 +285,7 @@ idxtotoc                        % add the index to the TOC
 \include{analysis}
 \include{io}
 \include{aux}
+\include{lb}
 \include{mbtools}
 
 \include{internal}
@@ -288,7 +295,7 @@ idxtotoc                        % add the index to the TOC
 \include{quickref}
 \include{features}
 \include{examples}
-\include{plotting}
+\include{maggs}
 
 %% Scientific appendices: description of algorithms
 \include{mmm}

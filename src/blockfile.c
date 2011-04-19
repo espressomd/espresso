@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -22,14 +23,12 @@
     file with the option -DTCL_FILE_IO instead of the C-like FILE *
     operations Tcl channels are used for IO. This is used in Espresso
     itself, while the FILE * operations can be used in subsidiary code.
-    The FILE * version is also contained in the \ref libEspresso.
 */
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "blockfile.h"
-#include "utils.h"
 
 /** Used in the write commands as buffer size for sprintf.
     Possible incompatability. The current value allows for

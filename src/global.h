@@ -76,7 +76,7 @@ typedef struct {
 } Datafield;
 
 /** This array contains the description of all variables that can be
-    changed/adressed via the \ref tcl_setmd command. read the
+    changed/adressed via the TCL command setmd. read the
     documentation of \ref Datafield befor you add new features. */
 extern const Datafield fields[];
 
@@ -169,7 +169,7 @@ extern const Datafield fields[];
 #define FIELD_DPD_TWF          40
 /** index of \ref dpd_wf in \ref #fields */
 #define FIELD_DPD_WF           41
-/** index of \ref address_var in \ref #fields */
+/** index of address variable in \ref #fields */
 #define FIELD_ADRESS           42
 /*@}*/
 
@@ -177,11 +177,11 @@ extern const Datafield fields[];
  * misc procedures
  **********************************************/
 
-/// Implements the Tcl command \ref tcl_setmd. It allows to modify simulation parameters
+/// Implements the Tcl command setmd. It allows to modify simulation parameters
 int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
-/** Implements the Tcl command \ref tcl_code_info.  It provides information on the
+/** Implements the Tcl command code_info.  It provides information on the
     Version, Compilation status and the debug status of the used
     code. */
 int tclcommand_code_info(ClientData data, Tcl_Interp *interp,

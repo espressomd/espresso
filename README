@@ -10,7 +10,7 @@ DOCUMENTATION
 You can find documentation on how to compile, use and develop ESPResSo
 on the homepage at
 
-	http://www.espressomd.org
+	http://espressomd.org
 
 ESPResSo is intended to be used by people that have proper knowledge
 of simulation techniques and know how to use them. We do not take
@@ -56,18 +56,21 @@ doc/dg/figs/elc_errordist.gif
 doc/dg/figs/ghost_cells.fig
 doc/dg/figs/ghost_communication.fig
 doc/dg/figs/linked_cells.fig
-doc/dg/figs/logo.gif
+doc/dg/figs/logo.png
 doc/dg/figs/move_to_p_buf.fig
 doc/dg/figs/particles.fig
+doc/ug/figures/diamond.png
 doc/ug/figures/dihedral-angle.fig
+doc/ug/figures/dihedral-angle.pdf
+doc/ug/figures/fullerene.png
 doc/ug/figures/hbond.fig
+doc/ug/figures/hbond.pdf
 doc/ug/figures/logo.png
+doc/ug/figures/maggs-charge-assignment.pdf
+doc/ug/figures/maggs-initial-scheme.pdf
+doc/ug/figures/maggs-rotation.pdf
 doc/ug/figures/nacl-rdf.pdf
 doc/ug/figures/salt.png
-doc/maggs_doc/figs/cell.eps
-doc/maggs_doc/figs/charge_assig_cube.eps
-doc/maggs_doc/figs/initializationE.eps
-doc/maggs_doc/figs/initializationE.pdf
 doc/tutorials/tut2/figures/data/neutral-rho.data
 doc/tutorials/tut2/figures/data/nonneutral-rho.data
 doc/tutorials/tut2/figures/data/rdf_from_melt_00.data

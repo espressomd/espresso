@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef FORCES_H
-#define FORCES_H
+#ifndef _FORCES_H
+#define _FORCES_H
 /** \file forces.h Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -40,6 +40,7 @@
 
 /* include the force files */
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 #include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
@@ -82,13 +83,13 @@
  *  A short list, what the function is doing:
  *  <ol>
  *  <li> Initialize forces with: \ref friction_thermo_langevin (ghost forces with zero).
- *  <li> Calculate \ref tcl_bonded "bonded interaction" forces:<br>
+ *  <li> Calculate bonded interaction forces:<br>
  *       Loop all local particles (not the ghosts). 
  *       <ul>
  *       <li> FENE
  *       <li> ANGLE (cos bend potential)
  *       </ul>
- *  <li> Calculate \ref tcl_non_bonded "non-bonded short range interaction" forces:<br>
+ *  <li> Calculate non-bonded short range interaction forces:<br>
  *       Loop all \ref IA_Neighbor::vList "verlet lists" of all \ref #cells.
  *       <ul>
  *       <li> Lennard-Jones.
@@ -97,7 +98,7 @@
  *       <li> Ramp.
  *       </ul>
  *  <li> Calculate long range interaction forces:<br>
-         Uses \ref P3M_calc_kspace_forces.
+         Uses <a href=P3M_calc_kspace_forces> P3M_calc_kspace_forces </a>
  *  </ol>
  */
 void force_calc();
@@ -325,10 +326,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   case COULOMB_MMM2D:
     add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
     break;
-  case COULOMB_MAGGS:
-    if(maggs.yukawa == 1)
-      add_maggs_yukawa_pair_force(p1,p2,d,dist2,dist,force);
-    break;
   case COULOMB_NONE:
     break;
   }
@@ -345,10 +342,8 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
-#ifdef MDLC
   case  DIPOLAR_MDLC_P3M: 
    //fall trough 
-#endif
   case DIPOLAR_P3M: {
 #ifdef NPT
     double eng = add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);

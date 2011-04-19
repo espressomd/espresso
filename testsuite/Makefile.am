@@ -15,28 +15,55 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# all the test scripts
-tests= \
-	nve_pe.tcl npt.tcl \
-	madelung.tcl p3m.tcl el2d.tcl \
-	p3m-magnetostatics.tcl \
-	el2d_nonneutral.tcl el2d_die.tcl mmm1d.tcl dh.tcl \
-	lj.tcl lj-cos.tcl lj-generic.tcl tabulated.tcl gb.tcl \
-	harm.tcl fene.tcl \
-	kinetic.tcl thermostat.tcl \
-	intpbc.tcl intppbc.tcl \
-	layered.tcl nsquare.tcl \
-	comforce.tcl comfixed.tcl \
+SUBDIRS = configs .
+
+# alphabetically sorted list of test scripts
+tests = \
 	analysis.tcl \
-	rotation.tcl \
+	comforce.tcl \
+	comfixed.tcl \
+	command_syntax.tcl \
 	constraints.tcl \
-	mass.tcl \
+	constraints_reflecting.tcl \
+	dh.tcl \
+	el2d.tcl \
+	el2d_die.tcl \
+	el2d_nonneutral.tcl \
+	fene.tcl \
+	gb.tcl \
+	harm.tcl \
+	intpbc.tcl \
+	intppbc.tcl \
+	kinetic.tcl \
+	layered.tcl \
 	lb.tcl \
+	lb_gpu.tcl \
+	lj.tcl \
+	lj-cos.tcl \
+	lj-generic.tcl \
+	madelung.tcl \
+	maggs.tcl \
+	mass.tcl \
+	mdlc.tcl \
+	mmm1d.tcl \
+	npt.tcl \
+	nsquare.tcl \
+	nve_pe.tcl \
+	p3m.tcl \
+	p3m_magnetostatics.tcl \
+	p3m_magnetostatics2.tcl \
+	p3m_simple_noncubic.tcl \
+	p3m_wall.tcl \
+	rotation.tcl \
+	tabulated.tcl \
+	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 
+deactivated_tests =
+
 # add data files for the tests here
-EXTRA_DIST = $(tests) \
+EXTRA_DIST = $(tests) $(deactivated_tests) \
 	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
@@ -46,8 +73,11 @@ EXTRA_DIST = $(tests) \
 	analysis_system.data.10.gz analysis_system.data.chk \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
-        p3m-magnetostatics-t1.data \
-	p3m_system.data el2d_system.data el2d_system_die.data\
+        p3m_magnetostatics.data \
+        p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
+	p3m_wall_system.data \
+	p3m_system.data el2d_system.data el2d_system_die.data \
+	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
 	lj_system.data lj-cos_system.data \
 	gb_system.data \
@@ -62,13 +92,17 @@ EXTRA_DIST = $(tests) \
 	pe_micelle.tcl pe_micelle.data \
 	uwerr_test.tcl uwerr_test.data \
 	\
-	gen_fene.tcl gen_harm.tcl
+	gen_fene.tcl gen_harm.tcl \
+	\
+	maggs_correct_rdf.data
 
 # run the testsuite
 check-local: runtest.sh
 	if test -n "$(processors)"; then \
-	  procopt=-p "$(processors)"; \
-	fi; \
-	@builddir@/runtest.sh $$procopt $(tests)
+	  @builddir@/runtest.sh -p "${processors}" $(tests); \
+	else \
+	  @builddir@/runtest.sh $(tests); \
+	fi
 
-DISTCLEANFILES=runtest.sh
+DISTCLEANFILES=\
+	fftw3_1d_wisdom_*.file

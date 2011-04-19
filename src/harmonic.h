@@ -75,10 +75,10 @@ MDINLINE int tclcommand_inter_parse_harmonic(Tcl_Interp *interp, int bond_type, 
 }
 
 /** Computes the HARMONIC pair force and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref interaction_data.c). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref #inter).
+    @param iaparams  bond type number of the angle interaction (see \ref interaction_data.c).
     @param dx        particle distance vector
     @param force     returns force of particle 1
     @return 0.

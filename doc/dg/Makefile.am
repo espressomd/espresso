@@ -17,14 +17,12 @@
 #
 EXTRA_DIST=\
 	background_errors.sh background_errors.awk \
-	doxygen.cfg header.html \
+	Doxyfile \
         pages/build.doc \
-        pages/cvs.doc \
         pages/doxygen.doc \
         pages/header.doc \
         pages/new_files.doc \
         pages/progguide.doc \
-        pages/testsuite.doc \
         pages/ug.doc \
         figs/bond_angle.fig \
         figs/bond_angle.gif \
@@ -41,7 +39,7 @@ EXTRA_DIST=\
         figs/ghost_communication.gif \
         figs/linked_cells.fig \
         figs/linked_cells.gif \
-        figs/logo.gif \
+        figs/logo.png \
         figs/move_to_p_buf.fig \
         figs/move_to_p_buf.gif \
         figs/particles.fig \
@@ -49,13 +47,14 @@ EXTRA_DIST=\
 
 .PHONY: doc dg
 doc: dg
+
 dg:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
-	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/*.c $(top_srcdir)/*.h 
-	SRCDIR=$(top_srcdir) PACKAGE="$(PACKAGE_STRING)"\
-	  $(DOXYGEN) $(srcdir)/doxygen.cfg \
-	  | grep -ve "^\(Generating\|Parsing\|Preprocessing\)"
+	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
+	SRCDIR=$(top_srcdir) INCLUDEDIR=$(top_builddir) PACKAGE="$(PACKAGE_STRING)" \
+	HAVE_DOT=$(HAVE_DOT) DOT_PATH=$(DOT_PATH) \
+	  $(DOXYGEN) $(srcdir)/Doxyfile
 	@echo "***************************************************************************"
 	@echo "* The developer's guide is now accessible at"
 	@echo "*  file://`pwd`/html/index.html"

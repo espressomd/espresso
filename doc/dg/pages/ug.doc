@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -95,7 +96,7 @@ commands, the environment \c code exists:
 \endverbatim
     This is \e not a verbatim environment, i.e. it will evaluate
     LaTeX-commands that are used inside. Therefore, the characters 
-    \c \\,\c { and \c } need to be quoted like \c \\\\, \c \\\{, \c \\\} inside!
+    \c \\, \c { and \c } need to be quoted like \c \\\\, \c \\{, \c \\} inside!
     Also, the underscore character \c _ needs to be quoted like 
     \c \\_. On the other  hand, it is possible to use other layout
     commands (like \c \\textit) inside.
@@ -237,5 +238,20 @@ Example:
   ...
 \end{arguments}
 \endverbatim
+
+\section boxes TODO boxes
+
+To see which parts of the User guide need to be fixed or which documentation
+is missing, there is a <tt>\\todo</tt> command where one can put notes
+about what remains to be done. In the release version, the boxes are diabled
+so that they do not disturb the users. They can be turned on by commenting
+out the appropriate line in \c ug.tex :
+
+\verbatim
+  % For building the distribution docs, disable todo boxes.
+  %\usepackage[disable]{todonotes}
+  \usepackage{todonotes}
+\endverbatim
+
 
 */

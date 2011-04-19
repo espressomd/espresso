@@ -56,24 +56,18 @@ AC_REQUIRE([_AX_MPI_ONLY],[_AX_MPI_ONLY([$1])])
 AS_IF([test x"$_ax_mpi_only_mpi_wanted" = xno], 
   [ ax_mpi_only_mpi_found=no ],
   [
-    # test whether MPI_Init is available now
-    AC_CHECK_FUNC(MPI_Init,[ ax_mpi_only_mpi_found=yes ],
-    [
-      # if not, try to find it in a library
-      AC_SEARCH_LIBS(MPI_Init, [mpi mpich],
-        [ ax_mpi_only_mpi_found=yes ],
-        [ ax_mpi_only_mpi_found=no ])
-    ])
+    # test whether MPI_Init is available in one oft he libraries
+    AC_SEARCH_LIBS(MPI_Init, [mpi mpich],
+      [ ax_mpi_only_mpi_found=yes ],
+      [ ax_mpi_only_mpi_found=no ])
 
-    echo "ax_mpi_only_mpi_found=$ax_mpi_only_mpi_found"
     # Check for header
     AS_IF([test x"$ax_only_mpi_found" = xyes], [
       AC_MSG_CHECKING([for mpi.h])
-      AC_TRY_COMPILE([#include <mpi.h>],,[
-        AC_MSG_RESULT(yes)
-      ], [
-        AC_MSG_RESULT(no)
-	ax_mpi_only_mpi_found=no
+      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <mpi.h>])],
+        [ AC_MSG_RESULT(yes)], 
+        [ AC_MSG_RESULT(no)
+	  ax_mpi_only_mpi_found=no
       ])
     ])
 ])
