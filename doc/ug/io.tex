@@ -1,5 +1,6 @@
 % Copyright (C) 2010,2011 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%  Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -47,61 +48,12 @@ Whitespace will be ignored within the format (space, tab and return).
 The keyword variable should be used to indicate that a variable
 definition follows in the form \var{name} \var{data}. \var{data}
 itself is a block with title \lit{_ival_} or \lit{_dval_} denoting
-integer rsp. double values, which then follow in a whitespace
-separated list.  Such blocks can be read in conveniently using
-\lit{block_read_data} and written using \lit{block_write_data}.
+integer resp. double values, which then follow in a whitespace
+separated list.  
 
-\todo{Sample C-code doesn't work, as \es-library has been removed!}
-% An example C-code generating the example above is:
-% \begin{tclcode}
-% #include "blockfile.h"
-
-% /*
-%   Demonstration of the use of the blockfile interface.
-%   Build using gcc -Wall -o test test.c -LLinux -lEspresso.
-% */
-% int main()
-% {
-%   double epsilon = 1;
-%   double p3m_mesh_offset[3] = {.5, .5, .5};
-%   int    node_grid[3] = {2, 2, 2};
-
-%   FILE *f = fopen("demofile","w");
-%   block_writestart(f, "file");
-%   fprintf(f, "{Demonstration of the block format}\\n");
-
-%   /* variable epsilon */
-%   block_writestart(f, "variable");
-%   fprintf(f, "epsilon ");
-%   block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
-%   block_writeend(f);
-%   fprintf(f, "\\n");
-
-%   /* variable p3m_mesh_offset */
-%   block_writestart(f, "variable");
-%   fprintf(f, "p3m_mesh_offset ");
-%   block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
-%   block_writeend(f);
-%   fprintf(f, "\\n");
-
-% \end{tclcode}
-% \begin{tclcode}
-%   /* variable node_grid */
-%   block_writestart(f, "variable");
-%   fprintf(f, "node_grid ");
-%   block_write_data(f, TYPE_DOUBLE, 1, node_grid);
-%   block_writeend(f);
-%   fprintf(f, "\\n");
-
-%   /* end tag */
-%   block_writestart(f, "end");
-%   block_writeend(f);
-
-%   block_writeend(f);
-%   fclose(f);
-%   return 0;
-% }
-% \end{tclcode}
+Such blocks can be read in and written either from \es-scripts (see in
+the following subsections), or from your own C-code using the
+C-Interface (see section \ref{ssec:blockfilec}).
 
 \subsection{Writing \es's global variables}
 \index{global variables}
@@ -232,7 +184,6 @@ will write
 \end{tclcode}
 to the file \lit{data.dat}.
 
-
 \subsection{Reading blocks}
 
 \begin{essyntax}
@@ -323,6 +274,62 @@ close $in
 This is basically all you need to restore the information in the
 blockfile, overwriting the current settings in \es.
 
+\subsection{C-Interface}
+\label{ssec:blockfilec}
+
+Blockfiles can be read and written from \texttt{C}.
+
+An example C-code generating the example in the introduction above can
+be found on the following page.
+
+\newpage
+\begin{tclcode}
+#include "blockfile.h"
+
+/*
+  Demonstration of the use of the blockfile interface.
+  Build using gcc -Wall -o test test.c -LLinux -lEspresso.
+*/
+int main()
+{
+  double epsilon = 1;
+  double p3m_mesh_offset[3] = {.5, .5, .5};
+  int    node_grid[3] = {2, 2, 2};
+
+  FILE *f = fopen("demofile","w");
+  block_writestart(f, "file");
+  fprintf(f, "{Demonstration of the block format}\\n");
+
+  /* variable epsilon */
+  block_writestart(f, "variable");
+  fprintf(f, "epsilon ");
+  block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* variable p3m_mesh_offset */
+  block_writestart(f, "variable");
+  fprintf(f, "p3m_mesh_offset ");
+  block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* variable node_grid */
+  block_writestart(f, "variable");
+  fprintf(f, "node_grid ");
+  block_write_data(f, TYPE_DOUBLE, 1, node_grid);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* end tag */
+  block_writestart(f, "end");
+  block_writeend(f);
+
+  block_writeend(f);
+  fclose(f);
+  return 0;
+}
+\end{tclcode}
 
 \section{Checkpointing (deprecated)}
 \newescommand[checkpoint-set]{checkpoint_set}
