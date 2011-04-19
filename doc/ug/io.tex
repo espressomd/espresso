@@ -1,5 +1,6 @@
 % Copyright (C) 2010,2011 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%  Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -18,11 +19,6 @@
 %
 \chapter{Input / Output}
 \label{cha:io}
-
-The checkpointing feature in \es{} is still working, but is assigned a
-major overhaul. Be aware that things might change in the future and
-that this documentation chapter might not be up-to-date and not
-complete or well-written.
 
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
@@ -47,61 +43,12 @@ Whitespace will be ignored within the format (space, tab and return).
 The keyword variable should be used to indicate that a variable
 definition follows in the form \var{name} \var{data}. \var{data}
 itself is a block with title \lit{_ival_} or \lit{_dval_} denoting
-integer rsp. double values, which then follow in a whitespace
-separated list.  Such blocks can be read in conveniently using
-\lit{block_read_data} and written using \lit{block_write_data}.
+integer resp. double values, which then follow in a whitespace
+separated list.  
 
-\todo{Sample C-code doesn't work, as \es-library has been removed!}
-% An example C-code generating the example above is:
-% \begin{tclcode}
-% #include "blockfile.h"
-
-% /*
-%   Demonstration of the use of the blockfile interface.
-%   Build using gcc -Wall -o test test.c -LLinux -lEspresso.
-% */
-% int main()
-% {
-%   double epsilon = 1;
-%   double p3m_mesh_offset[3] = {.5, .5, .5};
-%   int    node_grid[3] = {2, 2, 2};
-
-%   FILE *f = fopen("demofile","w");
-%   block_writestart(f, "file");
-%   fprintf(f, "{Demonstration of the block format}\\n");
-
-%   /* variable epsilon */
-%   block_writestart(f, "variable");
-%   fprintf(f, "epsilon ");
-%   block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
-%   block_writeend(f);
-%   fprintf(f, "\\n");
-
-%   /* variable p3m_mesh_offset */
-%   block_writestart(f, "variable");
-%   fprintf(f, "p3m_mesh_offset ");
-%   block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
-%   block_writeend(f);
-%   fprintf(f, "\\n");
-
-% \end{tclcode}
-% \begin{tclcode}
-%   /* variable node_grid */
-%   block_writestart(f, "variable");
-%   fprintf(f, "node_grid ");
-%   block_write_data(f, TYPE_DOUBLE, 1, node_grid);
-%   block_writeend(f);
-%   fprintf(f, "\\n");
-
-%   /* end tag */
-%   block_writestart(f, "end");
-%   block_writeend(f);
-
-%   block_writeend(f);
-%   fclose(f);
-%   return 0;
-% }
-% \end{tclcode}
+Such blocks can be read in and written either from \es-scripts (see in
+the following subsections), or from your own C-code using the
+C-Interface (see section \ref{ssec:blockfilec}).
 
 \subsection{Writing \es's global variables}
 \index{global variables}
@@ -232,7 +179,6 @@ will write
 \end{tclcode}
 to the file \lit{data.dat}.
 
-
 \subsection{Reading blocks}
 
 \begin{essyntax}
@@ -323,23 +269,79 @@ close $in
 This is basically all you need to restore the information in the
 blockfile, overwriting the current settings in \es.
 
+\subsection{C-Interface}
+\label{ssec:blockfilec}
+
+Blockfiles can be read and written from \texttt{C}.
+
+An example C-code generating the example in the introduction above can
+be found on the following page.
+
+\newpage
+\begin{tclcode}
+#include "blockfile.h"
+
+/*
+  Demonstration of the use of the blockfile interface.
+  Build using gcc -Wall -o test test.c -LLinux -lEspresso.
+*/
+int main()
+{
+  double epsilon = 1;
+  double p3m_mesh_offset[3] = {.5, .5, .5};
+  int    node_grid[3] = {2, 2, 2};
+
+  FILE *f = fopen("demofile","w");
+  block_writestart(f, "file");
+  fprintf(f, "{Demonstration of the block format}\\n");
+
+  /* variable epsilon */
+  block_writestart(f, "variable");
+  fprintf(f, "epsilon ");
+  block_write_data(f, TYPE_DOUBLE, 1, &epsilon);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* variable p3m_mesh_offset */
+  block_writestart(f, "variable");
+  fprintf(f, "p3m_mesh_offset ");
+  block_write_data(f, TYPE_DOUBLE, 1, p3m_mesh_offset);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* variable node_grid */
+  block_writestart(f, "variable");
+  fprintf(f, "node_grid ");
+  block_write_data(f, TYPE_DOUBLE, 1, node_grid);
+  block_writeend(f);
+  fprintf(f, "\\n");
+
+  /* end tag */
+  block_writestart(f, "end");
+  block_writeend(f);
+
+  block_writeend(f);
+  fclose(f);
+  return 0;
+}
+\end{tclcode}
 
 \section{Checkpointing (deprecated)}
 \newescommand[checkpoint-set]{checkpoint_set}
 \newescommand[checkpoint-read]{checkpoint_read}
 
-The checkpointing feature in \es{} is marked deprecated and will no
-longer be maintained in future versions. It is still usable, but be
-aware that if you use newer features in your simulation, not all
-necessary parameters might be saved and restored when writing a
-standard checkpoint. Try to use blockfiles instead and think about
-what variables you need stored.
+\warning{The functions in this section are deprecated and will be
+  removed in some future version.  They might still usable in your
+  case, but be aware that if you use newer features in your
+  simulation, not all necessary parameters might be saved and restored
+  when writing a standard checkpoint. Try to use blockfiles instead
+  and think about what variables need to be stored. }
 
 The following procedures may be used to save and restore checkpoints
 to minimize the hassel involved when your simulation crashes after
 long runs.
 
-\subsection{Creating a checkpoint}
+\subsection{Creating a checkpoint (deprecated)}
 
 \begin{essyntax}
   checkpoint_set \var{destination} 
@@ -389,7 +391,7 @@ the '.chk'-file, the configs-array will nevertheless be completely
 restored to its original state although each checkpoint-file contains
 only a fraction of the whole array.
 
-\subsection{Reading a checkpoint}
+\subsection{Reading a checkpoint (deprecated)}
 \begin{essyntax}
   checkpoint_read \var{source}
 \end{essyntax}
@@ -400,7 +402,7 @@ called. If parts of the configs array are given in the files listed in
 \var{source}, it is assumed that they represent a fraction of the
 whole array.
 
-\subsection{Writing a checkpoint 2}
+\subsection{Writing a checkpoint 2 (deprecated)}
 \begin{essyntax}
   \variant{1} polyBlockWrite \var{path} 
   \alt{\var{param\_list} \asep all} \var{part\_list}
@@ -439,10 +441,6 @@ all the variables in the active script are stored), it saves all the
 stored configurations if \var{whatever} is whatever, but \lit{-}.
 Furthermore, it saves the state (\lit{state}) or the seed (\lit{seed})
 of the random number generator.
-
-Attention: This feature is deprecated, and for newer algorithms or
-implementations might not write and read \emph{all} necessary
-variables.
 
 \section{Writing PDB/PSF files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format

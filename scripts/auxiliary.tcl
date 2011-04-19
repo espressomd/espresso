@@ -5,12 +5,11 @@
 #                                                           #
 # Several additional auxiliary functions for Espresso.      #
 #                                                           #
-# Created:       01.10.2002 by BAM                          #
-#                                                           #
 #############################################################
 #
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -27,6 +26,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
+
+# Deprecation warning
+proc warn_deprecated { fname version } {
+    puts "WARNING: The function $fname is deprecated since version $version"
+    puts "         and will be removed in some future version."
+}
+
+
 # timeStamp
 # ---------
 # 
@@ -39,7 +46,6 @@
 # - 'postfix' to be added before 'suffix'; 
 #   if it is '-1', the current date will be used
 # 
-# Created:       01.10.2002 by BAM
 # 
 #############################################################
 
@@ -66,7 +72,6 @@ proc timeStamp { destination prefix postfix suffix } {
 }
 
 
-
 #
 # polyBlockWrite
 # --------------
@@ -86,11 +91,12 @@ proc timeStamp { destination prefix postfix suffix } {
 #   if an empty string ' "" 'is provided, no particles, and no bonds are written
 #   Default vaule: All the above mentioned informations.
 # 
-# Created:       08.11.2002 by BAM
 # 
 #############################################################
 
 proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q v f"} } {
+
+    warn_deprecated polyBlockWrite 3.0.0
 
     # Open output-file - compressed, if desired, or even as an open stream
     if { [regexp "^!\(.*\)" $destination dummy f] } {
@@ -124,8 +130,8 @@ proc polyBlockWrite { destination {write_param "all"} {write_part "id pos type q
     if {!$stream} { close $f }
 }
 
-
 proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
+    warn_deprecated polyBlockWriteAll 3.0.0
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" w] } else { set f [open "$destination" w] }
     polyBlockWrite "!$f"
@@ -143,6 +149,7 @@ proc polyBlockWriteAll { destination {tclvar "all"} {cfg "1"} {rdm "random"} } {
 }
 
 proc polyBlockWriteTclvar { destination {tclvar "all"} } {
+    warn_deprecated polyBlockWriteTclVar 3.0.0
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" a] } else { set f [open "$destination" "a"] }
     # Write tcl-variables, if desired
@@ -153,6 +160,7 @@ proc polyBlockWriteTclvar { destination {tclvar "all"} } {
 
 # reads the file named '$source' into Espresso
 proc polyBlockRead { source } {
+    warn_deprecated polyBlockRead 3.0.0
     if { [string compare [lindex [split $source "."] end] "gz"]==0 } { 
       set inp [open "|gzip -cd $source" r]
     } else {
@@ -161,8 +169,8 @@ proc polyBlockRead { source } {
     while { [eof $inp] != 1 } { blockfile $inp read auto }; close $inp
 }
 
-
 proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { var "all" } { ran "all" } { COMPACT_CHK 0 } } {
+    warn_deprecated checkpoint_set 3.0.0
     if { [string compare [lindex [split $destination "."] end] "gz"]==0 } {
 	set f [open "|gzip -c - >$destination" w]
 	set chk [open "[join [lrange [split $destination .] 0 [expr [llength [split $destination .]]-3]] .].chk" a]
@@ -207,6 +215,7 @@ proc checkpoint_set { destination { cnt "all" } { tclvar "all" } { ia "all" } { 
 proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { pdb_sfx 5 }} {
     variable ::ENABLE_COMPACT_CHECKPOINTS 0; global ENABLE_COMPACT_CHECKPOINTS pdb_ind
 
+    warn_deprecated read_checkpoint_in 3.0.0
     proc read_checkpoint_in { source write name pdb_sfx } { global pdb_ind ENABLE_COMPACT_CHECKPOINTS
 	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r] } else { set f [open "$source" "r"] }
 	if { [blockfile $f read auto] == "eof" } { puts "\nERROR: Blockfile '$source' doesn't contain anything! Exiting..."; exit }
@@ -262,6 +271,7 @@ proc checkpoint_read { origin { read_all_chks 1 } { write 0 } { name "anim" } { 
 
 
 proc polyConfMovWriteInit { write prfx polyConfAux } {
+    warn_deprecated ConfMovWriteInit 3.0.0
     if { $write=="yes" || $write=="movie" } {
 	set param [list output_path output_prfx write_param write_part movie_path movie_prfx N_P MPC N_CI N_pS N_nS]
 	for {set i 0} {$i < [llength $polyConfAux]} {incr i} { eval set [lindex $param $i] [lindex $polyConfAux $i] }
@@ -281,6 +291,7 @@ proc polyConfMovWriteInit { write prfx polyConfAux } {
 }
 
 proc polyConfMovWrite { write prfx digit step polyConfAux } {
+    warn_deprecated ConfMovWrite 3.0.0
     if { ($write == "yes" || $write=="movie") } {
 	set param [list output_path output_prfx write_param write_part movie_path movie_prfx]
 	for {set i 0} {$i < [llength $polyConfAux]} {incr i} { eval set [lindex $param $i] [lindex $polyConfAux $i] }
@@ -298,7 +309,6 @@ proc polyConfMovWrite { write prfx digit step polyConfAux } {
 	puts -nonewline "done)"; flush stdout
     }
 }
-
 
 proc analysisInit { stat stat_out N_P MPC simtime { noted "na" } { notedD "na" } } {
     if {[llength $stat]>0} {
@@ -573,8 +583,6 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } } {
 # Returns, if all given features have been compiled into the Espresso
 # kernel.
 # 
-# Created:       13.04.2006 by OL
-# 
 #############################################################
 
 proc has_feature { args } {
@@ -593,8 +601,6 @@ proc has_feature { args } {
 # 
 # Example:
 # require_feature "ELECTROSTATICS" "LJCOS"
-# 
-# Created:       13.04.2006 by OL
 # 
 #############################################################
 
@@ -661,8 +667,6 @@ proc degrees_of_freedom {} {
 # copy_particles set {1 2 3 4} shift 0.0 0.0 0.0
 # copy_particles set {1 2} set {3 4}
 # copy_particles range 1 4
-# 
-# Created:       03.05.2010 by AA
 # 
 #############################################################
 

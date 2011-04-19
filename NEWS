@@ -81,6 +81,12 @@ User-visible changes
     directory, you can use build directories as described in the
     User's Guide.
 
+* A number of functions have been deprecated, as they are not
+  maintained anymore. Plase do not use them in your code and replace
+  them with appropriate alternatives if you use them in your code!
+  The following functions are deprecated:
+  checkpoint_*, polyBlock*, calcOb*, calcObs*, plot*, polyConf*
+
 * FFTW2 is no longer supported.
 
 Organizational changes

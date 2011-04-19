@@ -53,8 +53,8 @@ idxtotoc                        % add the index to the TOC
 \usepackage[numbers]{natbib}
 
 % For building the distribution docs, disable todo boxes.
-%\usepackage[disable]{todonotes}
-\usepackage{todonotes}
+\usepackage[disable]{todonotes}
+%\usepackage{todonotes}
 
 % Make '_' a normal character
 \usepackage{underscore}
@@ -68,6 +68,15 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\etal}{\textit{et al.}\xspace}
+
+\newcommand{\warning}[1]{
+  \begin{center}%
+    \fcolorbox{black}{yellow}{%
+      \parbox{\linewidth-5em}{%
+        \textbf{Warning:} #1%
+      }}%
+  \end{center}%
+}
 
 \newcommand{\codebox}[1]%
 {\texttt{#1}}
@@ -286,7 +295,6 @@ idxtotoc                        % add the index to the TOC
 \include{quickref}
 \include{features}
 \include{examples}
-\include{plotting}
 \include{maggs}
 
 %% Scientific appendices: description of algorithms
