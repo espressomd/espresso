@@ -20,11 +20,6 @@
 \chapter{Input / Output}
 \label{cha:io}
 
-The checkpointing feature in \es{} is still working, but is assigned a
-major overhaul. Be aware that things might change in the future and
-that this documentation chapter might not be up-to-date and not
-complete or well-written.
-
 \section{\texttt{blockfile}: Using the structured file format}
 \label{sec:structured-file-format}
 \newescommand{blockfile}
@@ -335,18 +330,18 @@ int main()
 \newescommand[checkpoint-set]{checkpoint_set}
 \newescommand[checkpoint-read]{checkpoint_read}
 
-The checkpointing feature in \es{} is marked deprecated and will no
-longer be maintained in future versions. It is still usable, but be
-aware that if you use newer features in your simulation, not all
-necessary parameters might be saved and restored when writing a
-standard checkpoint. Try to use blockfiles instead and think about
-what variables you need stored.
+\warning{The functions in this section are deprecated and will be
+  removed in some future version.  They might still usable in your
+  case, but be aware that if you use newer features in your
+  simulation, not all necessary parameters might be saved and restored
+  when writing a standard checkpoint. Try to use blockfiles instead
+  and think about what variables need to be stored. }
 
 The following procedures may be used to save and restore checkpoints
 to minimize the hassel involved when your simulation crashes after
 long runs.
 
-\subsection{Creating a checkpoint}
+\subsection{Creating a checkpoint (deprecated)}
 
 \begin{essyntax}
   checkpoint_set \var{destination} 
@@ -396,7 +391,7 @@ the '.chk'-file, the configs-array will nevertheless be completely
 restored to its original state although each checkpoint-file contains
 only a fraction of the whole array.
 
-\subsection{Reading a checkpoint}
+\subsection{Reading a checkpoint (deprecated)}
 \begin{essyntax}
   checkpoint_read \var{source}
 \end{essyntax}
@@ -407,7 +402,7 @@ called. If parts of the configs array are given in the files listed in
 \var{source}, it is assumed that they represent a fraction of the
 whole array.
 
-\subsection{Writing a checkpoint 2}
+\subsection{Writing a checkpoint 2 (deprecated)}
 \begin{essyntax}
   \variant{1} polyBlockWrite \var{path} 
   \alt{\var{param\_list} \asep all} \var{part\_list}
@@ -446,10 +441,6 @@ all the variables in the active script are stored), it saves all the
 stored configurations if \var{whatever} is whatever, but \lit{-}.
 Furthermore, it saves the state (\lit{state}) or the seed (\lit{seed})
 of the random number generator.
-
-Attention: This feature is deprecated, and for newer algorithms or
-implementations might not write and read \emph{all} necessary
-variables.
 
 \section{Writing PDB/PSF files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format
