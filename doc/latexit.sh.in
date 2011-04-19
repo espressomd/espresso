@@ -13,7 +13,10 @@ $PDFLATEX $TEXFILE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 1 failed."
-    echo "See LaTeX output in $TEXFILE.log." 
+    echo "These are the last 20 lines of $TEXFILE.log:"
+    echo "--------------------------------------------"
+    tail -n 20 $TEXFILE.log
+    echo "--------------------------------------------"
     test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
@@ -33,7 +36,10 @@ $PDFLATEX $TEXFILE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 2 failed."
-    echo "See LaTeX output in $TEXFILE.log."
+    echo "These are the last 20 lines of $TEXFILE.log:"
+    echo "--------------------------------------------"
+    tail -n 20 $TEXFILE.log
+    echo "--------------------------------------------"
     test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
@@ -43,7 +49,10 @@ $PDFLATEX $TEXFILE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 3 failed."
-    echo "See LaTeX output in $TEXFILE.log."
+    echo "These are the last 20 lines of $TEXFILE.log:"
+    echo "--------------------------------------------"
+    tail -n 20 $TEXFILE.log
+    echo "--------------------------------------------"
     test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
 fi
