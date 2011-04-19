@@ -134,7 +134,6 @@
 #define ELP3M
 #endif
 
-
 /* activate dipolar P3M only with FFTW */
 #if defined(MAGNETOSTATICS) && defined(FFTW)
 #define ELP3M

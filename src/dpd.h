@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "thermostat.h"
 #include "interaction_data.h"
+#include "virtual_sites.h"
 
 /** DPD Friction coefficient gamma. */
 extern double dpd_gamma;

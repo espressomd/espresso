@@ -1073,7 +1073,7 @@ MDINLINE void halo_push_communication() {
 /***********************************************************************/
 
 /** Performs basic sanity checks. */
-static int lb_sanity_checks() {
+int lb_sanity_checks() {
 
   char *errtxt;
   int ret = 0;

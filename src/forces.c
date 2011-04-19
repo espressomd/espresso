@@ -189,11 +189,9 @@ void calc_long_range_forces()
 
       break;
 #endif
-#ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
       dawaanr_calculations(1,0);
       break;
-#endif
   case DIPOLAR_MDLC_DS:
      add_mdlc_force_corrections();
     //fall through 

@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file p3m-dipoles.c  P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-magnetostatics.c  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  NB: In general the magnetic dipole-dipole functions bear the same
      name than the charge-charge but, adding in front of the name a D
@@ -49,6 +49,7 @@
 #include "tuning.h"
 
 #ifdef MAGNETOSTATICS
+#ifdef ELP3M
 
 /************************************************
  * DEFINES
@@ -151,10 +152,11 @@ static int tclcommand_inter_magnetic_print_p3m_tune_parameters(Tcl_Interp *inter
  *  the margins between neighbouring nodes. */ 
 void Dcalc_send_mesh();
 
-/** Initializes for magnetic dipoles the (inverse) mesh constant \ref p3m_struct::a (\ref p3m_struct::ai) 
-    and the cutoff for charge assignment \ref p3m_struct::cao_cut, which has to be
-    done by \ref P3M_init once and by \ref P3M_scaleby_box_l_dipoles whenever the \ref box_l changed.
-*/
+/** Initializes for magnetic dipoles the (inverse) mesh constant \ref
+    p3m_struct::a (\ref p3m_struct::ai) and the cutoff for charge
+    assignment \ref p3m_struct::cao_cut, which has to be done by \ref
+    P3M_init_dipoles once and by \ref P3M_scaleby_box_l_dipoles
+    whenever the \ref box_l changed.  */
 void DP3M_init_a_ai_cao_cut();
 
 
@@ -181,10 +183,11 @@ void Dspread_force_grid(double* mesh);
 void Drealloc_ca_fields(int newsize);
 
 
-/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref p3m_struct::ai) 
-    and the cutoff for charge assignment \ref p3m_struct::cao_cut, which has to be
-    done by \ref P3M_init once and by \ref P3M_scaleby_box_l_dipoles whenever the \ref box_l changed.
-*/
+/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref
+    p3m_struct::ai) and the cutoff for charge assignment \ref
+    p3m_struct::cao_cut, which has to be done by \ref P3M_init_dipoles
+    once and by \ref P3M_scaleby_box_l_dipoles whenever the \ref box_l
+    changed.  */
 void DP3M_init_a_ai_cao_cut();
 
 
@@ -264,6 +267,7 @@ void P3M_DIPOLAR_tune_aliasing_sums(int nx, int ny, int nz,
 // To compute the value of alpha  through a bibisection method from the formula 33 of JCP115,6351,(2001).
 double JJ_rtbisection(double box_size, double prefac, double r_cut_iL, int n_c_part, double sum_q2,  double x1, double x2, double xacc, double tuned_accuracy);
 
+/*@}*/
 
 /************************************************************/
 /* functions related to the correction of the dipolar p3m-energy */
@@ -1785,15 +1789,15 @@ MDINLINE double Dperform_aliasing_sums_energy(int n[3], double nominator[1])
     distributed particles in a cubic box.
     For the real space error the estimate of Kolafa/Perram is used. 
 
-    Parameter range if not given explicit values: For \ref p3m_struct::Dr_cut_iL
+    Parameter range if not given explicit values: For \ref Dp3m_struct::r_cut_iL
     the function uses the values (\ref min_local_box_l -\ref #skin) /
     (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_struct::Dr_cut_iL is the largest cutoff in the system!). For \ref
-    p3m_struct::Dmesh the function uses the two values which matches best the
+    Dp3m_struct::r_cut_iL is the largest cutoff in the system!). For \ref
+    Dp3m_struct::mesh the function uses the two values which matches best the
     equation: number of mesh point = number of magnetic dipolar particles. For
-    \ref p3m_struct::cao the function considers all possible values.
+    \ref Dp3m_struct::cao the function considers all possible values.
 
-    For each setting \ref p3m_struct::Dalpha_L is calculated assuming that the
+    For each setting \ref Dp3m_struct::alpha_L is calculated assuming that the
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the
@@ -3054,6 +3058,6 @@ void P3M_free_dipoles() {
 
 /*****************************************************************************/
 
-
-#endif  /* of defined(MAGNETOSTATICS) */
+#endif /* ELP3M */
+#endif  /* MAGNETOSTATICS */
 

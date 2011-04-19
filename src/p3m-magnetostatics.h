@@ -20,7 +20,7 @@
 */
 #ifndef _P3M_MAGNETOSTATICS_H
 #define _P3M_MAGNETOSTATICS_H
-/** \file p3m-dipoles.h P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-magnetostatics.h P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
@@ -99,7 +99,7 @@ int tclprint_to_result_DipolarP3M(Tcl_Interp *interp);
  */
 void  P3M_init_dipoles(void);
 
-/** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
+/** Updates \ref Dp3m_struct::alpha and \ref Dp3m_struct::r_cut if \ref box_l changed. */
 void P3M_scaleby_box_l_dipoles();
 
 /// sanity checks
