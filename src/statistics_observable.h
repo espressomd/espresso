@@ -91,11 +91,15 @@ int observable_radial_density_profile(void* params, double* A, unsigned int n_A)
 int observable_lb_radial_velocity_profile(void* params, double* A, unsigned int n_A);
 typedef struct {
   IntList* id_list;
+  double minr;
   double maxr;
+  double minphi;
+  double maxphi;
   double minz;
   double maxz;
   double center[3];
   double axis[3];
+  int phibins;
   int rbins;
   int zbins;
 } radial_profile_data;

@@ -89,18 +89,31 @@ int correlation_update_from_file(unsigned int no) {
   return 0;
 }
 
-int correlation_print_average1(double_correlation* self, Tcl_Interp* interp) {
+int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int argc, char** argv) {
   int i;
   char buffer[TCL_DOUBLE_SPACE];
   if (self->n_data < 1) {
     Tcl_AppendResult(interp, buffer, "Error in print average: No input data available", (char *)NULL);
     return TCL_ERROR;
   }
-  for (i=0; i< self->dim_A; i++) {
-    Tcl_PrintDouble(interp, self->A_accumulated_average[i]/self->n_data, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
+  if (argc == 0) {
+    for (i=0; i< self->dim_A; i++) {
+      Tcl_PrintDouble(interp, self->A_accumulated_average[i]/self->n_data, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    }
   return TCL_OK;
+  } else if (ARG0_IS_S("formatted")) {
+    double* values = (double*) malloc(self->dim_A);
+    for (i=0; i< self->dim_A; i++) {
+      values[i]=self->A_accumulated_average[i]/self->n_data;
+    }
+    int change=0;
+    free(values);
+    return tclcommand_observable_print_formatted(interp, argc-1, argv+1, &change, self->A_obs, values);
+  } else {
+    Tcl_AppendResult(interp, buffer, "Error in print average: No input data available", (char *)NULL);
+    return TCL_ERROR;
+  }
 }
 
 int correlation_print_variance1(double_correlation* self, Tcl_Interp* interp) {
@@ -295,7 +308,7 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
   	  }
             return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
   } else if (ARG0_IS_S("average1")) {
-    return correlation_print_average1(&correlations[no], interp);
+    return correlation_print_average1(&correlations[no], interp, argc-1, argv+1);
   } else if (ARG0_IS_S("variance1")) {
     return correlation_print_variance1(&correlations[no], interp);
   } else if (ARG0_IS_S("correlation_time")) {
