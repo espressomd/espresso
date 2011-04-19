@@ -1125,6 +1125,9 @@ static void lb_realloc_fluid() {
   }
 
   lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
+#ifdef LB_BOUNDARIES
+  lb_init_boundaries();
+#endif
 
 }
 
@@ -2180,10 +2183,10 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
         local_node = &lbfields[index];
         
 //        if (local_node->recalc_fields) {
-          lb_calc_modes(index, modes);
+        lb_calc_modes(index, modes);
           //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
 //          local_node->recalc_fields = 0;
-//          local_node->has_force = 1;
+        local_node->has_force = 1;
 //        }
 //        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
         // unit conversion: mass density
