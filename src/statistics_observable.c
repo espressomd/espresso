@@ -37,9 +37,13 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
 int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
 
   if (obs->fun == (&observable_lb_velocity_profile)) {
-    return tclcommand_observable_print_formatted_lb_velocity_profile(interp, argc, argv, change, obs, values);
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
+  } else if (obs->fun == (&observable_density_profile)) {
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
   } else if (obs->fun == (&observable_lb_radial_velocity_profile)) {
-    return tclcommand_observable_print_formatted_lb_radial_velocity_profile(interp, argc, argv, change, obs, values);
+    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
+  } else if (obs->fun == (&observable_radial_density_profile)) {
+    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
   } else { 
     Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
     return TCL_ERROR;
@@ -47,17 +51,33 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 
 }
 
-int tclcommand_observable_print_formatted_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
+int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
   profile_data* pdata=(profile_data*) obs->args;
   char buffer[TCL_DOUBLE_SPACE];
   double data;
   int linear_index;
+  double x_offset, y_offset, z_offset, x_incr, y_incr, z_incr;
+  if (shifted) {
+    x_incr = (pdata->maxx-pdata->minx)/(pdata->xbins);
+    y_incr = (pdata->maxy-pdata->miny)/(pdata->ybins);
+    z_incr = (pdata->maxz-pdata->minz)/(pdata->zbins);
+    x_offset = pdata->minx + 0.5*x_incr;
+    y_offset = pdata->miny + 0.5*y_incr;
+    z_offset = pdata->minz + 0.5*z_incr;
+  } else {
+    x_incr = (pdata->maxx-pdata->minx)/(pdata->xbins-1);
+    y_incr = (pdata->maxy-pdata->miny)/(pdata->ybins-1);
+    z_incr = (pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    x_offset = pdata->minx;
+    y_offset = pdata->miny;
+    z_offset = pdata->minz;
+  }
   printf("Printing formatted lb_velocity_profile\n");
   for (int i = 0; i < pdata->xbins; i++) 
     for (int j = 0; j < pdata->ybins; j++) 
       for (int k = 0; k < pdata->zbins; k++) {
         if (pdata->xbins>1) {
-          Tcl_PrintDouble(interp, pdata->minx+ i*(pdata->maxx-pdata->minx)/(pdata->xbins-1) , buffer);
+          Tcl_PrintDouble(interp, x_offset + i*x_incr , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         } else {
           Tcl_PrintDouble(interp, 0 , buffer);
@@ -65,14 +85,14 @@ int tclcommand_observable_print_formatted_lb_velocity_profile(Tcl_Interp* interp
         }
 
         if (pdata->ybins>1) {
-          Tcl_PrintDouble(interp, pdata->miny+ j*(pdata->maxy-pdata->miny)/(pdata->ybins-1) , buffer);
+          Tcl_PrintDouble(interp,y_offset + j*y_incr, buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         } else {
           Tcl_PrintDouble(interp, 0 , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         }
         if (pdata->zbins>1) {
-          Tcl_PrintDouble(interp, pdata->minz+ k*(pdata->maxz-pdata->minz)/(pdata->zbins-1) , buffer);
+          Tcl_PrintDouble(interp,z_offset + k*z_incr, buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         } else {
           Tcl_PrintDouble(interp, 0 , buffer);
@@ -86,32 +106,44 @@ int tclcommand_observable_print_formatted_lb_velocity_profile(Tcl_Interp* interp
         if (pdata->zbins > 1)
           linear_index +=k;
 
-        data=values[3*linear_index+0];
-        Tcl_PrintDouble(interp, data , buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
-        data=values[3*linear_index+1];
-        Tcl_PrintDouble(interp, data , buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
-        data=values[3*linear_index+2];
-        Tcl_PrintDouble(interp, data , buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
+        for (int j = 0; j<groupsize; j++) {
+          data=values[groupsize*linear_index+j];
+          Tcl_PrintDouble(interp, data , buffer);
+          Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
+        }
         Tcl_AppendResult(interp, "\n", (char *)NULL );
       }
   return TCL_OK;
 //  Tcl_AppendResult(interp, "\n", (char *)NULL );
 }
 
-int tclcommand_observable_print_formatted_lb_radial_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
+int tclcommand_observable_print_radial_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
   radial_profile_data* pdata=(radial_profile_data*) obs->args;
   char buffer[TCL_DOUBLE_SPACE];
   double data;
   int linear_index;
-  printf("Printing formatted lb_velocity_profile\n");
+  double r_offset, phi_offset, z_offset, r_incr, phi_incr, z_incr;
+  if (shifted) {
+    r_incr = (pdata->maxr-pdata->minr)/(pdata->rbins);
+    phi_incr = (pdata->maxphi-pdata->minphi)/(pdata->phibins);
+    z_incr = (pdata->maxz-pdata->minz)/(pdata->zbins);
+    r_offset = pdata->minr + 0.5*r_incr;
+    phi_offset = pdata->minphi + 0.5*phi_incr;
+    z_offset = pdata->minz + 0.5*z_incr;
+  } else {
+    r_incr = (pdata->maxr-pdata->minr)/(pdata->rbins-1);
+    phi_incr = (pdata->maxphi-pdata->minphi)/(pdata->phibins-1);
+    z_incr = (pdata->maxz-pdata->minz)/(pdata->zbins-1);
+    r_offset = pdata->minr;
+    phi_offset = pdata->minphi;
+    z_offset = pdata->minz;
+  }
+  printf("phi_incr %f\n", phi_incr);
   for (int i = 0; i < pdata->rbins; i++) 
     for (int j = 0; j < pdata->phibins; j++) 
       for (int k = 0; k < pdata->zbins; k++) {
         if (pdata->rbins>1) {
-          Tcl_PrintDouble(interp, pdata->minr+ i*(pdata->maxr-pdata->minr)/(pdata->rbins-1) , buffer);
+          Tcl_PrintDouble(interp, r_offset + i*r_incr , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         } else {
           Tcl_PrintDouble(interp, 0 , buffer);
@@ -119,14 +151,14 @@ int tclcommand_observable_print_formatted_lb_radial_velocity_profile(Tcl_Interp*
         }
 
         if (pdata->phibins>1) {
-          Tcl_PrintDouble(interp, pdata->minphi+ j*(pdata->maxphi-pdata->minphi)/(pdata->phibins-1) , buffer);
+          Tcl_PrintDouble(interp, phi_offset + j*phi_incr , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         } else {
           Tcl_PrintDouble(interp, 0 , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         }
         if (pdata->zbins>1) {
-          Tcl_PrintDouble(interp, pdata->minz+ k*(pdata->maxz-pdata->minz)/(pdata->zbins-1) , buffer);
+          Tcl_PrintDouble(interp, z_offset + k*z_incr , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         } else {
           Tcl_PrintDouble(interp, 0 , buffer);
@@ -139,20 +171,15 @@ int tclcommand_observable_print_formatted_lb_radial_velocity_profile(Tcl_Interp*
           linear_index += j*pdata->zbins;
         if (pdata->zbins > 1)
           linear_index +=k;
-
-        data=values[3*linear_index+0];
-        Tcl_PrintDouble(interp, data , buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
-        data=values[3*linear_index+1];
-        Tcl_PrintDouble(interp, data , buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
-        data=values[3*linear_index+2];
-        Tcl_PrintDouble(interp, data , buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
+        
+        for (int j = 0; j<groupsize; j++) {
+          data=values[groupsize*linear_index+j];
+          Tcl_PrintDouble(interp, data , buffer);
+          Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
+        }
         Tcl_AppendResult(interp, "\n", (char *)NULL );
       }
   return TCL_OK;
-//  Tcl_AppendResult(interp, "\n", (char *)NULL );
 }
 
 int tclcommand_observable_particle_velocities(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
@@ -233,7 +260,7 @@ int tclcommand_observable_radial_density_profile(Tcl_Interp* interp, int argc, c
     return TCL_ERROR;
   }
   obs->args=(void*)rpdata;
-  obs->n=rpdata->rbins;
+  obs->n=rpdata->rbins*rpdata->phibins*rpdata->zbins;
   *change=1+temp;
   return TCL_OK;
 }
@@ -688,7 +715,7 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   sortPartCfg();
   pdata=(profile_data*) pdata_;
   ids=pdata->id_list;
-  double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz);
+  double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
     
   for ( i = 0; i<n_A; i++ ) {
     A[i]=0;
@@ -702,10 +729,10 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
     fold_position(ppos, img);
     binx= (int) floor( pdata->xbins*  (ppos[0]-pdata->minx)/(pdata->maxx-pdata->minx));
     biny= (int) floor( pdata->ybins*  (ppos[1]-pdata->miny)/(pdata->maxy-pdata->miny));
-    binz= (int) floor( pdata->xbins*  (ppos[2]-pdata->minz)/(pdata->maxz-pdata->minz));
+    binz= (int) floor( pdata->zbins*  (ppos[2]-pdata->minz)/(pdata->maxz-pdata->minz));
     if (binx>=0 && binx < pdata->xbins && biny>=0 && biny < pdata->ybins && binz>=0 && binz < pdata->zbins) {
       A[binx*pdata->ybins*pdata->zbins + biny*pdata->zbins + binz] += 1./bin_volume;
-    }
+    } 
   }
   return 0;
 }
@@ -873,21 +900,29 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
   
   return 0;
 }
+void transform_to_cylinder_coordinates(double x, double y, double z_, double* r, double* phi, double* z) {
+  *z =  z_;
+  *r =  sqrt(x*x+y*y);
+  *phi = atan2(y,x);
+}
 
 int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i;
-  int bin;
+  int binr, binphi, binz;
   double ppos[3];
-  double r;
+  double r, phi, z;
   int img[3];
   double bin_volume;
   IntList* ids;
-  radial_profile_data* pdata;
   sortPartCfg();
+  radial_profile_data* pdata;
   pdata=(radial_profile_data*) pdata_;
   ids=pdata->id_list;
+  double rbinsize=(pdata->maxr - pdata->minr)/pdata->rbins;
+  double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
+  double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
     
-  for ( i = 0; i<pdata->rbins; i++ ) {
+  for ( i = 0; i< n_A; i++ ) {
     A[i]=0;
   }
   for ( i = 0; i<ids->n; i++ ) {
@@ -897,13 +932,15 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
     memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
-    r=sqrt( (ppos[0]-pdata->center[0])*(ppos[0]-pdata->center[0])+(ppos[1]-pdata->center[1])*(ppos[1]-pdata->center[1]));
-    bin= (int) floor( pdata->rbins*  r/pdata->maxr);
+    transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[0]-pdata->center[0], &r, &phi, &z);
+    binr  =(int)floor((r-pdata->minr)/rbinsize);
+    binphi=(int)floor((phi-pdata->minphi)/phibinsize);
+    binz  =(int)floor((z-pdata->minz)/zbinsize);
 
-    if (bin>=0 && bin < pdata->rbins) {
-      bin_volume=PI*((bin+1)*(bin+1)-bin*bin)*(pdata->maxr*pdata->maxr)/pdata->rbins/pdata->rbins*box_l[2];
-      A[bin] += 1./bin_volume;
-    }
+    if (binr>=0 && binr < pdata->rbins && binphi>=0 && binphi < pdata->phibins && binz>=0 && binz < pdata->zbins) {
+      bin_volume=PI*((pdata->minr+(binr+1)*rbinsize)*(pdata->minr+(binr+1)*rbinsize) - (pdata->minr+(binr)*rbinsize)*(pdata->minr+(binr)*rbinsize)) *zbinsize * phibinsize/2/PI;
+      A[binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz] += 1./bin_volume;
+    } 
   }
   return 0;
 }
@@ -1258,8 +1295,8 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
   pdata->id_list=0;
   pdata->maxr=sqrt(box_l[0]*box_l[0]/4.+ box_l[1]*box_l[1]/4.);
   pdata->minr=0;
-  pdata->maxphi=2*3.1415;
-  pdata->minphi=0;
+  pdata->maxphi=PI;
+  pdata->minphi=-PI;
   pdata->minz=-box_l[2]/2.;
   pdata->maxz=+box_l[2]/2.;
   pdata->center[0]=box_l[0]/2.;pdata->center[1]=box_l[1]/2.;pdata->center[2]=box_l[2]/2.;
@@ -1294,6 +1331,8 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
         return TCL_ERROR;
       } 
     } else if ( ARG0_IS_S("axis")){
+        Tcl_AppendResult(interp, "Using arbitrary axes does not work yet!\n" , (char *)NULL);
+        return TCL_ERROR;
       if (argc>3 && ARG1_IS_D(pdata->axis[0]) && ARG_IS_D(2,pdata->axis[1]) && ARG_IS_D(3,pdata->axis[2])) {
         argc-=4;
         argv+=4;
