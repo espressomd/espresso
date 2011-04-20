@@ -74,7 +74,6 @@ int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, 
     y_offset = pdata->miny;
     z_offset = pdata->minz;
   }
-  printf("Printing formatted lb_velocity_profile\n");
   for (int i = 0; i < pdata->xbins; i++) 
     for (int j = 0; j < pdata->ybins; j++) 
       for (int k = 0; k < pdata->zbins; k++) {
@@ -108,8 +107,8 @@ int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, 
         if (pdata->zbins > 1)
           linear_index +=k;
 
-        for (int j = 0; j<groupsize; j++) {
-          data=values[groupsize*linear_index+j];
+        for (int l = 0; l<groupsize; l++) {
+          data=values[groupsize*linear_index+l];
           Tcl_PrintDouble(interp, data , buffer);
           Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
         }
@@ -140,7 +139,6 @@ int tclcommand_observable_print_radial_profile_formatted(Tcl_Interp* interp, int
     phi_offset = pdata->minphi;
     z_offset = pdata->minz;
   }
-  printf("phi_incr %f\n", phi_incr);
   for (int i = 0; i < pdata->rbins; i++) 
     for (int j = 0; j < pdata->phibins; j++) 
       for (int k = 0; k < pdata->zbins; k++) {
@@ -211,7 +209,6 @@ int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv
 int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList* ids;
   int temp;
-  printf("parsing particle positions\n");
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
      return TCL_ERROR;
   obs->fun = &observable_particle_positions;
@@ -290,7 +287,6 @@ int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int arg
   if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
      return TCL_ERROR;
   obs->args=(void*)rpdata;
-  printf("bins: %d", rpdata->rbins);
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
   *change=1+temp;
   return TCL_OK;
@@ -509,10 +505,8 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 
   
   if (argc > 1 && ARG1_IS_I(no)) {
-    printf("observable %d\n", no);
   }
   if (argc > 2 && ARG1_IS_I(no) && no == n_observables) {
-    printf("parsing new observable\n");
 
     REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities);
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity);
@@ -951,7 +945,8 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
     memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
-    transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[0]-pdata->center[0], &r, &phi, &z);
+    transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[2]-pdata->center[2], &r, &phi, &z);
+    //printf("%f %f %f %f %f %f\n", ppos[0], ppos[1], ppos[2], r*cos(phi)+pdata->center[0], r*sin(phi)+pdata->center[1], z+pdata->center[2]);
     binr  =(int)floor((r-pdata->minr)/rbinsize);
     binphi=(int)floor((phi-pdata->minphi)/phibinsize);
     binz  =(int)floor((z-pdata->minz)/zbinsize);
@@ -995,7 +990,7 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
     memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
-    transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[0]-pdata->center[0], &r, &phi, &z);
+    transform_to_cylinder_coordinates(ppos[0]-pdata->center[0], ppos[1]-pdata->center[1], ppos[2]-pdata->center[2], &r, &phi, &z);
     binr  =(int)floor((r-pdata->minr)/rbinsize);
     binphi=(int)floor((phi-pdata->minphi)/phibinsize);
     binz  =(int)floor((z-pdata->minz)/zbinsize);
@@ -1005,7 +1000,6 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
       v_r = 1/r*((ppos[0]-pdata->center[0])*v[0] + (ppos[1]-pdata->center[1])*v[1]); 
       v_phi = 1/r/r*((ppos[0]-pdata->center[0])*v[1]-(ppos[1]-pdata->center[1])*v[0]);
       v_z = v[2];
-      printf("v[2] %f\n", v_z);
       A[3*(binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz) + 0] += v_r/bin_volume;
       A[3*(binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz) + 1] += v_phi/bin_volume;
       A[3*(binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz) + 2] += v_z/bin_volume;
@@ -1207,7 +1201,6 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
   pdata->minz=0;
   pdata->maxz=box_l[2];
   pdata->zbins=1;
-  printf("\n");
   while (argc>0) {
     if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
       if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
@@ -1341,7 +1334,6 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
     return TCL_ERROR;
   }
   while (argc>0) {
-    printf("argc %d\n", argc); 
     if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
       if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
         Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
