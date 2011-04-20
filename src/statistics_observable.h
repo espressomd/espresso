@@ -88,6 +88,7 @@ int observable_density_profile(void* params, double* A, unsigned int n_A);
 int observable_lb_velocity_profile(void* params, double* A, unsigned int n_A);
 
 int observable_radial_density_profile(void* params, double* A, unsigned int n_A);
+int observable_radial_flux_density_profile(void* params, double* A, unsigned int n_A);
 int observable_lb_radial_velocity_profile(void* params, double* A, unsigned int n_A);
 typedef struct {
   IntList* id_list;
