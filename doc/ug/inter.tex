@@ -1515,8 +1515,9 @@ system is periodic (as defined by \texttt{setmd periodic}), it applies
 the minimum image convention, i.e. the interaction is effectively cut
 off at half a box length.
 
-This method should only be used if it is not possible to use P3M or
-DLC and has a low accuracy.
+In periodic systems, this method should only be used if it is not possible to use dipolar P3M or
+DLC, because those methods have a far better accuracy and are much faster.
+In a non-periodic system, the DAWAANR-method gives the exact result.
 
 \subsection{Magnetic Dipolar Direct Sum (MDDS)}
 \index{MDDS method|mainindex}
@@ -1536,7 +1537,7 @@ pairs. If the system is periodic in one or more directions, the
 interactions with further \var{value\_n\_cut} replicas of the system
 in all periodic directions is explicitly computed.
 
-As it is very slow, this method is not intendeed to do simulations,
+As it is very slow, this method is not intended to do simulations,
 but rather to check the results you get from more efficient methods
 like P3M.
   
