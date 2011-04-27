@@ -101,26 +101,30 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# test for -O5
-AC_MSG_CHECKING([whether the compiler accepts -O5])
-saved_CFLAGS=$CFLAGS
-CFLAGS="-O5 $CFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
-  AC_MSG_RESULT(yes);try_add_flag_res=yes
-],[
-  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
-])
 
-##################################
-# test for -Wall
-AC_MSG_CHECKING([whether the compiler accepts -Wall])
-saved_CFLAGS=$CFLAGS
-CFLAGS="-Wall $CFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
-  AC_MSG_RESULT(yes);try_add_flag_res=yes
-],[
-  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
-])
+#never overwrite users CFLAGS
+if test ${CFLAGS+set} != set; then
+  # test for -O5
+  AC_MSG_CHECKING([whether the compiler accepts -O5])
+  saved_CFLAGS=$CFLAGS
+  CFLAGS="-O5 $CFLAGS"
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+    AC_MSG_RESULT(yes);try_add_flag_res=yes
+  ],[
+    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+  ])
+  
+  ##################################
+  # test for -Wall
+  AC_MSG_CHECKING([whether the compiler accepts -Wall])
+  saved_CFLAGS=$CFLAGS
+  CFLAGS="-Wall $CFLAGS"
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+    AC_MSG_RESULT(yes);try_add_flag_res=yes
+  ],[
+    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+  ])
+fi
 
 ##################################
 # test inlining
