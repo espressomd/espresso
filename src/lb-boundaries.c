@@ -589,7 +589,7 @@ void lb_init_boundaries() {
               ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
           }
           
-          if (abs(dist) > abs(dist_tmp) || n == 0) {
+          if ( dist > dist_tmp || n == 0) {
             dist = dist_tmp;
           }
         }       

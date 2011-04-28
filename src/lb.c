@@ -1686,6 +1686,11 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
   mode[17] = gamma_even*mode[17];
   mode[18] = gamma_even*mode[18];
 #endif
+  LB_TRACE(
+    if (index == lblattice.halo_offset) {
+      fprintf(stderr,"modes after relaxation: %f %f %f %f %f %f %f %f \n",mode[0],mode[1],mode[2],mode[3],mode[4],mode[5], mode[6], mode[11]);
+    }
+      );
 
 }
 
@@ -3056,10 +3061,11 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
         local_j[1] = modes[2];
         local_j[2] = modes[3];
 //        printf ("%f %f %f\n", modes[1], modes[2], modes[3]);
-        
-        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
-        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
-        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+        if (!local_node->boundary) {
+          interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+          interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
+          interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+        }
 
       }
     }

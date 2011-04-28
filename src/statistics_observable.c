@@ -984,9 +984,9 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
     if (ids->e[i] >= n_total_particles)
       return 1;
 /* We use folded coordinates here */
-    v[0]=partCfg[ids->e[i]].m.v[0]*time_step;
-    v[1]=partCfg[ids->e[i]].m.v[1]*time_step;
-    v[2]=partCfg[ids->e[i]].m.v[2]*time_step;
+    v[0]=partCfg[ids->e[i]].m.v[0]/time_step;
+    v[1]=partCfg[ids->e[i]].m.v[1]/time_step;
+    v[2]=partCfg[ids->e[i]].m.v[2]/time_step;
     memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
     memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
     fold_position(ppos, img);
