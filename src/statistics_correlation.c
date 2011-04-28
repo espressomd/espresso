@@ -108,8 +108,8 @@ int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int
       values[i]=self->A_accumulated_average[i]/self->n_data;
     }
     int change=0;
-    free(values);
     return tclcommand_observable_print_formatted(interp, argc-1, argv+1, &change, self->A_obs, values);
+    free(values);
   } else {
     Tcl_AppendResult(interp, buffer, "Error in print average: No input data available", (char *)NULL);
     return TCL_ERROR;

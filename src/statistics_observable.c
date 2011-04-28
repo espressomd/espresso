@@ -46,6 +46,8 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
   } else if (obs->fun == (&observable_radial_flux_density_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else if (obs->fun == (&observable_flux_density_profile)) {
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
   } else { 
     Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
     return TCL_ERROR;
@@ -279,6 +281,22 @@ int tclcommand_observable_radial_flux_density_profile(Tcl_Interp* interp, int ar
   }
   obs->args=(void*)rpdata;
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
+  *change=1+temp;
+  return TCL_OK;
+}
+
+int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
+  int temp;
+  profile_data* pdata;
+  obs->fun = &observable_flux_density_profile;
+  if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
+     return TCL_ERROR;
+  if (pdata->id_list==0) {
+    Tcl_AppendResult(interp, "Error in radial_profile: particle ids/types not specified\n" , (char *)NULL);
+    return TCL_ERROR;
+  }
+  obs->args=(void*)pdata;
+  obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
   *change=1+temp;
   return TCL_OK;
 }
@@ -528,6 +546,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
     REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile);
     REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile);
+    REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
@@ -1005,7 +1024,6 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
       v_r = 1/r*((ppos[0]-pdata->center[0])*v[0] + (ppos[1]-pdata->center[1])*v[1]); 
       v_phi = 1/r/r*((ppos[0]-pdata->center[0])*v[1]-(ppos[1]-pdata->center[1])*v[0]);
       v_z = v[2];
-      printf("v[2] %f\n", v_z);
       A[3*(binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz) + 0] += v_r/bin_volume;
       A[3*(binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz) + 1] += v_phi/bin_volume;
       A[3*(binr*pdata->phibins*pdata->zbins + binphi*pdata->zbins + binz) + 2] += v_z/bin_volume;
@@ -1014,6 +1032,57 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
   return 0;
 }
 
+int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
+  unsigned int i;
+  int binx, biny, binz;
+  double ppos[3];
+  double x, y, z;
+  int img[3];
+  double bin_volume;
+  IntList* ids;
+  sortPartCfg();
+  profile_data* pdata;
+  pdata=(profile_data*) pdata_;
+  ids=pdata->id_list;
+  double xbinsize=(pdata->maxx - pdata->minx)/pdata->xbins;
+  double ybinsize=(pdata->maxy - pdata->miny)/pdata->ybins;
+  double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
+  double v[3];
+  double v_x, v_y, v_z;
+    
+  for ( i = 0; i< n_A; i++ ) {
+    A[i]=0;
+  }
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+/* We use folded coordinates here */
+    v[0]=partCfg[ids->e[i]].m.v[0]*time_step;
+    v[1]=partCfg[ids->e[i]].m.v[1]*time_step;
+    v[2]=partCfg[ids->e[i]].m.v[2]*time_step;
+    memcpy(ppos, partCfg[ids->e[i]].r.p, 3*sizeof(double));
+    memcpy(img, partCfg[ids->e[i]].l.i, 3*sizeof(int));
+    fold_position(ppos, img);
+    x=ppos[0];
+    y=ppos[1];
+    z=ppos[2];
+    binx  =(int)floor((x-pdata->minx)/xbinsize);
+    biny  =(int)floor((y-pdata->miny)/ybinsize);
+    binz  =(int)floor((z-pdata->minz)/zbinsize);
+
+
+    if (binx>=0 && binx < pdata->xbins && biny>=0 && biny < pdata->ybins && binz>=0 && binz < pdata->zbins) {
+      bin_volume=xbinsize*ybinsize*zbinsize;
+      v_x=v[0];
+      v_y=v[1];
+      v_z=v[2];
+      A[3*(binx*pdata->ybins*pdata->zbins + biny*pdata->zbins + binz) + 0] += v_x/bin_volume;
+      A[3*(binx*pdata->ybins*pdata->zbins + biny*pdata->zbins + binz) + 1] += v_y/bin_volume;
+      A[3*(binx*pdata->ybins*pdata->zbins + biny*pdata->zbins + binz) + 2] += v_z/bin_volume;
+    } 
+  }
+  return 0;
+}
 int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
   unsigned int i;
   IntList* ids;
