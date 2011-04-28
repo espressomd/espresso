@@ -69,7 +69,7 @@ typedef struct {
 /** Do nothing */
 int observable_obs_nothing (void* params, double* A, unsigned int n_A);
 
-int observable_flux_profile(void* params, double* A, unsigned int n_A);
+int observable_flux_density_profile(void* params, double* A, unsigned int n_A);
 typedef struct { 
   IntList* id_list;
   double minx;
