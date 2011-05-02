@@ -2152,8 +2152,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   int x,y,z;
   index_t node_index[8], index;
   double delta[6];
-  double local_rho, local_j[3], *local_f, interpolated_u[3],delta_j[3];
-  double modes[19];
+  double *local_f, interpolated_u[3],delta_j[3];
   LB_FluidNode *local_node;
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
@@ -2180,40 +2179,26 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-        	
-        index = node_index[(z*2+y)*2+x];
-        
-        local_node = &lbfields[index];
-        
-//        if (local_node->recalc_fields) {
-          lb_calc_modes(index, modes);
-          //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
-//          local_node->recalc_fields = 0;
-//          local_node->has_force = 1;
-//        }
-//        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
-        // unit conversion: mass density
-        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
-        
-        #ifdef ADDITIONAL_CHECKS
-        	old_rho[(z*2+y)*2+x] = *local_rho;
-        #endif
-        
-        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
-        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
-        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
- //       printf("int_u: %f %f %f\n", interpolated_u[0], interpolated_u[1], interpolated_u[2] );    
-
-      }
-    }
+//  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+  double lbboundary_mindist, distvec[3];
+  double pos_shifted[3];
+  lbboundary_mindist_position(p->r.p, &lbboundary_mindist, distvec);
+  if (lbboundary_mindist>lbpar.agrid/2) {
+    lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
   }
+  else if (lbboundary_mindist > 0 ) {
+    pos_shifted[0]=p->r.p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
+    pos_shifted[1]=p->r.p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
+    pos_shifted[2]=p->r.p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
+    lb_lbfluid_get_interpolated_velocity(pos_shifted, interpolated_u);
+    interpolated_u[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0];
+    interpolated_u[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1];
+    interpolated_u[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2];
+  } else {
+    interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+  }
+
+
   
 //  printf("u: %f %f %f\n", interpolated_u[0],interpolated_u[1],interpolated_u[2] );
   
@@ -3047,6 +3032,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
