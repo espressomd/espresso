@@ -408,7 +408,7 @@ if test x$with_cuda != xno; then
    # if no other compute capability is defined by the user, we need at least 1.1
    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
    esac
    # use nvcc
    save_CC=$CC
