@@ -837,7 +837,7 @@ static void init_tcl(Tcl_Interp *interp)
 #endif
 #ifdef LB_GPU
   /* in lbgpu_cfile.c */
-  REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
+  REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
 
   REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
