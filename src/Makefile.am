@@ -182,7 +182,7 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
 
 CUDA_SOURCES= \
 	cuda_init.cu \
