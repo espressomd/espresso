@@ -131,6 +131,25 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
       return TCL_ERROR;
     }
   }
+  else if (ARG0_IS_S("listdevice")) {
+    if (argc != 1) {
+      Tcl_AppendResult(interp, "cuda listdevice takes no arguments", (char *)NULL);
+      return TCL_ERROR;
+    }
+    int gpu_n;
+    cudaError_t error;
+    error = cudaGetDeviceCount(&gpu_n);
+    if (error == cudaSuccess) {
+      char buffer[TCL_INTEGER_SPACE];
+      sprintf(buffer, "%d", gpu_n);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      return TCL_OK;
+    }
+    else {
+      Tcl_AppendResult(interp, cudaGetErrorString(error), (char *)NULL);
+      return TCL_ERROR;
+    }
+  }
   else {
     Tcl_AppendResult(interp, "unknown subcommand \"", argv[0], "\"", (char *)NULL);
     return TCL_ERROR;
