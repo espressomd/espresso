@@ -416,7 +416,7 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
       }
       
     } else if(ARG0_IS_S("cao")) {
-      if(! (argc > 1 && ARG1_IS_I(cao) && cao >= -1 && cao < 7)) {
+      if(! (argc > 1 && ARG1_IS_I(cao) && cao >= -1 && cao <= 7)) {
 	Tcl_AppendResult(interp, "cao expects an integer between -1 and 7",
 			 (char *) NULL);
 	return TCL_ERROR;
