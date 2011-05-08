@@ -3,7 +3,6 @@
 #define TRANS_DPD
 #define INTER_DPD
 #define DPD_MASS_RED
-#define VIRTUAL_SITES_RELATIVE
 #define TUNABLE_SLIP
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
