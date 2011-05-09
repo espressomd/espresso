@@ -2,11 +2,19 @@
 = ESPRESSO NEWS =
 =================
 
-NOTEWORTHY CHANGES SINCE v3.0.0
-===============================
+ESPResSo 3.0.1
+==============
 
-NOTEWORTHY CHANGES SINCE v2.2.0b
-================================
+* Fixed a bug in P3M tuning.
+
+* Fixed a bug causing a segfault in FFTW on 32bit machines.
+
+* Fixed compilation with current CUDA version.
+
+* Reenabled output for P3M tuning.
+
+ESPResSo 3.0.0
+===============
 
 User-visible changes
 --------------------
