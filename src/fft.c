@@ -36,6 +36,8 @@
 #ifdef ELP3M
 
 #include <fftw3.h>
+/* our remapping of malloc interferes with fftw3's name mangling. */
+void *fftw_malloc(size_t n);
 
 #include "communication.h"
 #include "grid.h"
@@ -417,8 +419,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   /* Factor 2 for complex numbers */
   send_buf = (double *)realloc(send_buf, max_comm_size*sizeof(double));
   recv_buf = (double *)realloc(recv_buf, max_comm_size*sizeof(double));
-  (*data)  = (double *)realloc((*data), max_mesh_size*sizeof(double));
-  data_buf = (double *)realloc(data_buf, max_mesh_size*sizeof(double));
+  if (*data) fftw_free(*data);
+  (*data)  = (double *)fftw_malloc(max_mesh_size*sizeof(double));
+  if (data_buf) fftw_free(data_buf);
+  data_buf = (double *)fftw_malloc(max_mesh_size*sizeof(double));
   if(!(*data) || !data_buf || !recv_buf || !send_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
     errexit();
