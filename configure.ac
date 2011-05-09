@@ -102,8 +102,8 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 #### COMPILER CHARACTERISTICS ####
 ##################################
 
-#never overwrite users CFLAGS
-if test ${CFLAGS+set} != set; then
+# never overwrite users CFLAGS
+if test -n "$CFLAGS"; then
   # test for -O5
   AC_MSG_CHECKING([whether the compiler accepts -O5])
   saved_CFLAGS=$CFLAGS
