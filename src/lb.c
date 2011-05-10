@@ -1307,6 +1307,9 @@ void lb_reinit_fluid() {
       lbfields[index].recalc_fields = 1;
 
     }
+#ifdef LB_BOUNDARIES
+      lb_init_boundaries();
+#endif
 
     resend_halo = 0;
 
