@@ -488,8 +488,9 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
-	doc/dg/Makefile
 	doc/ug/Makefile
+	doc/doxygen/Makefile
+	doc/dg/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/tut2/Makefile 
 	doc/latexit.sh

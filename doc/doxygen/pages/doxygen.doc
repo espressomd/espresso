@@ -18,18 +18,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
 */
-/** \page our_doxygen Writing the Developer's Guide (Doxygen)
+/** \page our_doxygen Writing code documentation (Doxygen)
 
 The documentation for each function should contain a short
 description, if necessary a more detailed description and a
 description for the return value and parameters.
-<p>
-Look at the documentation of existing files and functions to get a
+
+<p> Look at the documentation of existing files and functions to get a
 feeling how it should be!
-<p>
-Doxygen is able to understand simple LaTex and HTML commands as well
-as some special command in order to give the documentation a nice
-structure and to make it more readable. In the following list you find 
+
+<p> Doxygen is able to understand simple LaTex and HTML commands as
+well as some special command in order to give the documentation a nice
+structure and to make it more readable. In the following list you find
 a short description of the most common commands we need:
 
 <ul>

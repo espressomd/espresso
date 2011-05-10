@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = dg ug tutorials
+SUBDIRS = doxygen ug tutorials
 
-.PHONY: FORCE doc dg ug tutorials
-doc: ug dg tutorials
+.PHONY: FORCE doc doxygen dg ug tutorials
+doc: doxygen dg ug tutorials
 dg: FORCE
 	cd dg; $(MAKE) --print-directory $@
+doxygen: FORCE
+	cd doxygen; $(MAKE) --print-directory $@
 ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
 tutorials: latexit.sh FORCE

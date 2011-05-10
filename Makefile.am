@@ -53,7 +53,7 @@ uninstall-local:
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc ug dg tutorials
-doc ug dg tutorials: FORCE
+.PHONY: FORCE doc doxygen ug dg tutorials
+doc doxygen ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
