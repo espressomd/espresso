@@ -552,7 +552,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
   int n;
 
   Particle* p1=0;
-  for(n=0;n<n_constraints;n++) {
+  for(n=0;n<n_lb_boundaries;n++) {
     switch(lb_boundaries[n].type) {
       case CONSTRAINT_WAL: 
 	        calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
