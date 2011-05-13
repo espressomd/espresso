@@ -207,7 +207,7 @@ MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
     /*  if ELCP3M */
     #ifdef ELC_P3M
     case COULOMB_ELC_P3M: {
-      add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+      p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
       if (elc_params.dielectric_contrast_on) {
                   errtxt = runtime_error(128);
                   ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
@@ -233,7 +233,7 @@ MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
             ERROR_SPRINTF(errtxt, "{ICCP3M and dipoles not implemented yet} ");
       
       #else        /* If it is just electrostatic P3M */
-          add_p3m_coulomb_pair_force(p2->p.q* p1->p.q,d,dist2,dist,force);
+          p3m_add_pair_force(p2->p.q* p1->p.q,d,dist2,dist,force);
       #endif  /* DIPOLES */
 
     break;

@@ -197,10 +197,10 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     switch (coulomb.method) {
 #ifdef ELP3M
     case COULOMB_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       if (elc_params.dielectric_contrast_on)
       ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
     break;
@@ -239,7 +239,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     case DIPOLAR_MDLC_P3M:  
       //fall trough
     case DIPOLAR_P3M:
-      ret = p3m_dipolar_pair_energy(p1,p2,d,dist2,dist); 
+      ret = dp3m_pair_energy(p1,p2,d,dist2,dist); 
       break;
 #endif 
     }

@@ -115,7 +115,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     switch (coulomb.method) {
 #ifdef ELP3M
     case COULOMB_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
 #endif
     case COULOMB_DH:
@@ -168,18 +168,18 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     switch (coulomb.Dmethod) {
 #ifdef ELP3M
     case  DIPOLAR_P3M:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles P3M .... pressure.h \n");
 	ret=0;
         break; 
 #endif
     case  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles DAWAANR .... pressure.h \n");
 	ret=0;
         break; 
     case  DIPOLAR_DS:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles MAGNETIC DIRECT SUM .... pressure.h \n");
 	ret=0;
         break; 

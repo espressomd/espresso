@@ -114,9 +114,9 @@ double ELC_P3M_dielectric_layers_energy_self();
 void ELC_P3M_self_forces();
 
 /// assign the additional, virtual charges, used only in energy.c
-void   ELC_P3M_charge_assign_both();
+void   ELC_p3m_charge_assign_both();
 /// assign the additional, virtual charges, used only in energy.c
-void   ELC_P3M_charge_assign_image();
+void   ELC_p3m_charge_assign_image();
 
 /// take into account the virtual charges in the charge sums, used in energy.c
 void   ELC_P3M_modify_p3m_sums_both();

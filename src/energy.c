@@ -93,30 +93,30 @@ void calc_long_range_energies()
   switch (coulomb.method) {
 #ifdef ELP3M
   case COULOMB_P3M:
-    P3M_charge_assign(); 
-    energy.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+    p3m_charge_assign(); 
+    energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
     break;
   case COULOMB_ELC_P3M:
     // assign the original charges first
     // they may not have been assigned yet
-    P3M_charge_assign(); 
+    p3m_charge_assign(); 
     if(!elc_params.dielectric_contrast_on)
-      energy.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+      energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
     else {
-      energy.coulomb[1] = 0.5*P3M_calc_kspace_forces_for_charges(0,1); 
+      energy.coulomb[1] = 0.5*p3m_calc_kspace_forces(0,1); 
       energy.coulomb[1]+= 0.5*ELC_P3M_dielectric_layers_energy_self(); 
 
       //  assign both original and image charges now
-      ELC_P3M_charge_assign_both();
+      ELC_p3m_charge_assign_both();
       ELC_P3M_modify_p3m_sums_both();
 
-      energy.coulomb[1] += 0.5*P3M_calc_kspace_forces_for_charges(0,1); 
+      energy.coulomb[1] += 0.5*p3m_calc_kspace_forces(0,1); 
 
       //assign only the image charges now
-      ELC_P3M_charge_assign_image();
+      ELC_p3m_charge_assign_image();
       ELC_P3M_modify_p3m_sums_image();
 
-      energy.coulomb[1]-= 0.5*P3M_calc_kspace_forces_for_charges(0,1); 
+      energy.coulomb[1]-= 0.5*p3m_calc_kspace_forces(0,1); 
     }
     energy.coulomb[2] = ELC_energy();
     break;
@@ -140,12 +140,12 @@ void calc_long_range_energies()
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
   case DIPOLAR_P3M:
-    P3M_dipole_assign(); 
-    energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    dp3m_dipole_assign(); 
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0,1);
     break;
   case DIPOLAR_MDLC_P3M:
-    P3M_dipole_assign(); 
-    energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    dp3m_dipole_assign(); 
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0,1);
     energy.dipolar[2] =add_mdlc_energy_corrections();
     break;
 #endif

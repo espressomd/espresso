@@ -1106,8 +1106,8 @@ void calc_maximal_cutoff()
 #if  defined(MAGNETOSTATICS) && defined(ELP3M) 
   switch (coulomb.Dmethod) {
   case DIPOLAR_P3M:
-    if (max_cut_non_bonded < Dp3m.r_cut)
-      max_cut_non_bonded = Dp3m.r_cut;
+    if (max_cut_non_bonded < dp3m.r_cut)
+      max_cut_non_bonded = dp3m.r_cut;
     break;
   }       
 #endif /*ifdef MAGNETOSTATICS */
@@ -1137,7 +1137,7 @@ int check_obs_calc_initialized()
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
 #ifdef ELP3M
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
-  case COULOMB_P3M: if (P3M_sanity_checks()) state = 0; break;
+  case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
   case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   }
@@ -1147,7 +1147,7 @@ int check_obs_calc_initialized()
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
   case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
-  case DIPOLAR_P3M: if (DP3M_sanity_checks()) state = 0; break;
+  case DIPOLAR_P3M: if (dp3m_sanity_checks()) state = 0; break;
 #endif
   case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
   case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
@@ -1322,14 +1322,14 @@ int dipolar_set_Dbjerrum(double bjerrum)
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
-      Dp3m.alpha    = 0.0;
-      Dp3m.alpha_L  = 0.0;
-      Dp3m.r_cut    = 0.0;
-      Dp3m.r_cut_iL = 0.0;
-      Dp3m.mesh[0]  = 0;
-      Dp3m.mesh[1]  = 0;
-      Dp3m.mesh[2]  = 0;
-      Dp3m.cao      = 0;
+      dp3m.alpha    = 0.0;
+      dp3m.alpha_L  = 0.0;
+      dp3m.r_cut    = 0.0;
+      dp3m.r_cut_iL = 0.0;
+      dp3m.mesh[0]  = 0;
+      dp3m.mesh[1]  = 0;
+      dp3m.mesh[2]  = 0;
+      dp3m.cao      = 0;
       break;
 #endif
     }
@@ -1365,7 +1365,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
     
     if (coulomb.Dmethod == DIPOLAR_P3M)
-      return tclcommand_inter_magnetic_parse_p3m_opt_params(interp, argc, argv);
+      return tclcommand_inter_magnetic_parse_dp3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter magnetic <Dbjerrum>",
 		       (char *) NULL);
@@ -1405,7 +1405,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
     return parser(interp, argc-1, argv+1);
 
 #ifdef ELP3M
-  REGISTER_DIPOLAR("p3m", tclcommand_inter_magnetic_parse_p3m);
+  REGISTER_DIPOLAR("p3m", tclcommand_inter_magnetic_parse_dp3m);
 #endif
 
   REGISTER_DIPOLAR("dawaanr", tclcommand_inter_magnetic_parse_dawaanr);
@@ -1685,10 +1685,10 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   switch (coulomb.method) {
 #ifdef ELP3M
   case COULOMB_ELC_P3M:
-    tclprint_to_result_ChargeP3M(interp);
+    tclprint_to_result_p3m(interp);
     tclprint_to_result_ELC(interp);
     break;
-  case COULOMB_P3M: tclprint_to_result_ChargeP3M(interp); break;
+  case COULOMB_P3M: tclprint_to_result_p3m(interp); break;
 #endif
   case COULOMB_EWALD: tclprint_to_result_EWALD(interp); break;
   case COULOMB_DH: tclprint_to_result_dh(interp); break;
@@ -1721,10 +1721,10 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
   switch (coulomb.Dmethod) {
 #ifdef ELP3M
   case DIPOLAR_MDLC_P3M:
-    tclprint_to_result_DipolarP3M(interp);   
+    tclprint_to_result_dp3m(interp);   
     tclprint_to_result_MDLC(interp);
     break;
-  case DIPOLAR_P3M: tclprint_to_result_DipolarP3M(interp); break;
+  case DIPOLAR_P3M: tclprint_to_result_dp3m(interp); break;
 #endif
   case DIPOLAR_MDLC_DS:
     tclprint_to_result_Magnetic_dipolar_direct_sum_(interp);

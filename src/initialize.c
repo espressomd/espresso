@@ -294,7 +294,7 @@ void on_observable_calc()
 #ifdef ELP3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
-      P3M_count_charged_particles();
+      p3m_count_charged_particles();
       break;
 #endif
     case COULOMB_EWALD:
@@ -316,7 +316,7 @@ void on_observable_calc()
     #ifdef ELP3M
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
-      P3M_count_magnetic_particles();
+      dp3m_count_magnetic_particles();
       break;
 #endif
     default: break;
@@ -360,7 +360,7 @@ void on_coulomb_change()
     ELC_init();
     // fall through
   case COULOMB_P3M:
-    P3M_init_charges();
+    p3m_init_charges();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -396,7 +396,7 @@ void on_coulomb_change()
     case DIPOLAR_MDLC_P3M:
        // fall through
   case DIPOLAR_P3M:
-    P3M_init_dipoles();
+    dp3m_init_dipoles();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -515,7 +515,7 @@ void on_NpT_boxl_change(double scal1) {
   switch(coulomb.method) {
 #ifdef ELP3M
   case COULOMB_P3M:
-    P3M_scaleby_box_l_charges();
+    p3m_scaleby_box_l();
     integrate_vv_recalc_maxrange();
     break;
 #endif
@@ -531,7 +531,7 @@ void on_NpT_boxl_change(double scal1) {
   switch(coulomb.Dmethod) {
 #ifdef ELP3M
   case DIPOLAR_P3M:
-    P3M_scaleby_box_l_dipoles();
+    dp3m_scaleby_box_l();
     integrate_vv_recalc_maxrange();
     break;
 #endif
@@ -587,7 +587,7 @@ void on_parameter_change(int field)
     if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
       cc = 1;
     else if (field == FIELD_BOXL) {
-      P3M_scaleby_box_l_charges();
+      p3m_scaleby_box_l();
       integrate_vv_recalc_maxrange(); 
     }
     break;
@@ -637,7 +637,7 @@ void on_parameter_change(int field)
       if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
         cc = 1;
       else if (field == FIELD_BOXL) {
-        P3M_scaleby_box_l_dipoles();
+        dp3m_scaleby_box_l();
         integrate_vv_recalc_maxrange(); 
       }
       break;

@@ -94,7 +94,7 @@ typedef struct {
   int q_2_off;
   /** offset between mesh lines of the two last dimensions */
   int q_21_off;
-} local_mesh;
+} p3m_local_mesh;
 
 /** Structure for send/recv meshs. */
 typedef struct {
@@ -116,17 +116,17 @@ typedef struct {
   int r_size[6];
   /** maximal size for send/recv buffers. */
   int max;
-} send_mesh;
+} p3m_send_mesh;
 
 /** print local mesh content. 
     \param l local mesh structure.
 */
-void p3m_print_local_mesh(local_mesh l);
+void p3m_p3m_print_local_mesh(p3m_local_mesh l);
 
 /** print send mesh content. 
  *  \param sm send mesh structure.
 */
-void p3m_print_send_mesh(send_mesh sm);
+void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
  *  ouput array with dimension dim[3] at start position start[3].  
@@ -137,68 +137,20 @@ void p3m_print_send_mesh(send_mesh sm);
  *  \param size        Dimensions of the block
  *  \param dim         Dimensions of the output grid.
 */
-void add_block(double *in, double *out, int start[3], int size[3], int dim[3]);
+void p3m_add_block(double *in, double *out, int start[3], int size[3], int dim[3]);
 
-/** One of the aliasing sums used by \ref P3M_k_space_error. 
+/** One of the aliasing sums used by \ref p3m_k_space_error. 
     (fortunately the one which is most important (because it converges
     most slowly, since it is not damped exponentially)) can be
     calculated analytically. The result (which depends on the order of
     the spline interpolation) can be written as an even trigonometric
     polynomial. The results are tabulated here (The employed formula
     is Eqn. 7.66 in the book of Hockney and Eastwood). */
-double analytic_cotangent_sum(int n, double mesh_i, int cao);
+double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
 /** Computes the  assignment function of for the \a i'th degree
     at value \a x. */
-double P3M_caf(int i, double x,int cao_value);
-
-/* These functions are used for calculation of a charge assignment function */
-/* double caf10(double x); */
-
-/* double caf20(double x); */
-/* double caf21(double x); */
-
-/* double caf30(double x); */
-/* double caf31(double x); */
-/* double caf32(double x); */
-
-/* double caf40(double x); */
-/* double caf41(double x); */
-/* double caf42(double x); */
-/* double caf43(double x); */
-
-/* double caf50(double x); */
-/* double caf51(double x); */
-/* double caf52(double x); */
-/* double caf53(double x); */
-/* double caf54(double x); */
-
-/* double caf60(double x); */
-/* double caf61(double x); */
-/* double caf62(double x); */
-/* double caf63(double x); */
-/* double caf64(double x); */
-/* double caf65(double x); */
-
-/* double caf70(double x); */
-/* double caf71(double x); */
-/* double caf72(double x); */
-/* double caf73(double x); */
-/* double caf74(double x); */
-/* double caf75(double x); */
-/* double caf76(double x); */
-
-/* the function to calculate caf without interpolation */
-/* typedef double func(double); */
-/* func *int_caf_wi[7][7] = { {caf10}, */
-/*                             {caf20, caf21}, */
-/* 			    {caf30, caf31, caf32}, */
-/* 			    {caf40, caf41, caf42, caf43}, */
-/* 			    {caf50, caf51, caf52, caf53, caf54}, */
-/* 			    {caf60, caf61, caf62, caf63, caf64, caf65}, */
-/* 			    {caf70, caf71, caf72, caf73, caf74, caf75, caf76} */
-/*                           }; */
-
+double p3m_caf(int i, double x,int cao_value);
 
 #endif /* ELP3M */
 

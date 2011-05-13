@@ -98,8 +98,8 @@ typedef struct {
 
 /** P3M parameters. */
 extern p3m_struct p3m;
-extern local_mesh lm;
-extern double* rs_mesh;
+extern p3m_local_mesh p3m_lm;
+extern double* p3m_rs_mesh;
 extern int p3m_sum_qpart;
 extern double p3m_sum_q2;
 extern double p3m_square_sum_q;
@@ -108,35 +108,32 @@ extern double p3m_square_sum_q;
 /************************************************************/
 /*@{*/
 
-/** Initialize all structures, parameters and arrays needed for the 
- *  P3M algorithm for charge-charge interactions.
- */
-void  P3M_init_charges(void);
-
-/** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
-void P3M_scaleby_box_l_charges();
+/// parse the basic p3m parameters
+int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
 
 /// parse the optimization parameters of p3m and the tuner
 int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
 
-/// parse the basic p3m parameters
-int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
+/** Initialize all structures, parameters and arrays needed for the 
+ *  P3M algorithm for charge-charge interactions.
+ */
+void p3m_init_charges(void);
+
+/** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
+void p3m_scaleby_box_l();
 
 /** compute the k-space part of forces and energies for the charge-charge interaction  **/
-double P3M_calc_kspace_forces_for_charges(int force_flag, int energy_flag);
+double p3m_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** computer the k-space part of the stress tensor **/
-void P3M_calc_kspace_stress (double* stress);
+void p3m_calc_kspace_stress (double* stress);
 
 /// sanity checks
-int P3M_sanity_checks();
-
-/** checks for correctness for charges in P3M of the cao_cut, necessary when the box length changes */
-int P3M_sanity_checks_boxl();
+int p3m_sanity_checks();
 
 /** Calculate number of charged particles, the sum of the squared
     charges and the squared sum of the charges. */
-void P3M_count_charged_particles();
+void p3m_count_charged_particles();
 
 /** Error Codes for p3m tuning (version 2) :
     P3M_TUNE_FAIL: force evaluation failes,
@@ -180,26 +177,26 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 
     The function is based on routines of the program HE_Q.c written by M. Deserno.
  */
-int tclcommand_inter_coulomb_print_p3m_tune_parameters(Tcl_Interp *interp);
+int tclcommand_inter_coulomb_p3m_print_tune_parameters(Tcl_Interp *interp);
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
     cur_ca_frac. */
-void P3M_charge_assign();
+void p3m_charge_assign();
 
 /** assign a single charge into the current charge grid. cp_cnt gives the a running index,
     which may be smaller than 0, in which case the charge is assumed to be virtual and is not
     stored in the ca_frac arrays. */
-void P3M_assign_charge(double q,
+void p3m_assign_charge(double q,
 		       double real_pos[3],
 		       int cp_cnt);
 
 /** shrink wrap the charge grid */
-void P3M_shrink_wrap_charge_grid(int n_charges);
+void p3m_shrink_wrap_charge_grid(int n_charges);
 
 /** Calculate real space contribution of coulomb pair forces.
     If NPT is compiled in, it returns the energy, which is needed for NPT. */
-MDINLINE double add_p3m_coulomb_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
+MDINLINE double p3m_add_pair_force(double chgfac, double *d,double dist2,double dist,double force[3])
 {
   int j;
   double fac1,fac2, adist, erfc_part_ri;
@@ -228,7 +225,7 @@ MDINLINE double add_p3m_coulomb_pair_force(double chgfac, double *d,double dist2
 }
 
 /** Calculate real space contribution of coulomb pair energy. */
-MDINLINE double p3m_coulomb_pair_energy(double chgfac, double *d,double dist2,double dist)
+MDINLINE double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
   double adist, erfc_part_ri;
 
@@ -246,10 +243,10 @@ MDINLINE double p3m_coulomb_pair_energy(double chgfac, double *d,double dist2,do
 }
 
 /// print the p3m parameters to the interpreters result
-int tclprint_to_result_ChargeP3M(Tcl_Interp *interp);
+int tclprint_to_result_p3m(Tcl_Interp *interp);
 
 /** Clean up P3M memory allocations. */
-void P3M_free();
+void p3m_free();
 
 #endif /* of ifdef ELP3M */
 
