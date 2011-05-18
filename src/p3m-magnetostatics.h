@@ -36,7 +36,7 @@
 #include "p3m-common.h"
 #include "interaction_data.h"
 
-#ifdef MAGNETOSTATICS
+#ifdef DP3M
 
 /** Structure to hold dipolar P3M parameters and some dependend variables. */
 typedef struct {
@@ -253,5 +253,5 @@ MDINLINE double p3m_dipolar_pair_energy(Particle *p1, Particle *p2,
   return 0.0;
 }
 
-#endif /* MAGNETOSTATICS */
+#endif /* DP3M */
 #endif /* _P3M_DIPOLES_H */

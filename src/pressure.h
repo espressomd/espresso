@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -21,8 +22,8 @@
     Pressure calculation. Really similar to \ref energy.h "energy.h".
 */
 
-#ifndef PRESSURE_H
-#define PRESSURE_H
+#ifndef _PRESSURE_H
+#define _PRESSURE_H
 
 #include "utils.h"
 #include "integrate.h"
@@ -113,7 +114,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_P3M:
       ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
@@ -166,7 +167,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* real space magnetic dipole-dipole */
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case  DIPOLAR_P3M:
         /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles P3M .... pressure.h \n");

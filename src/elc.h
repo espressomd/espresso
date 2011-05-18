@@ -23,10 +23,10 @@
     details on the method see MMM in general. The ELC method works
     together with any three dimensional method, which in Espresso is
     for example \ref p3m.h "P3M", with metallic boundary conditions.  */
-#ifndef ELC_H
-#define ELC_H
+#ifndef _ELC_H
+#define _ELC_H
 
-#if defined(ELP3M)  && defined(ELECTROSTATICS)
+#ifdef P3M
 
 /** parameters for the ELC method */
 typedef struct {
