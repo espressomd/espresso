@@ -51,7 +51,7 @@
 #include "p3m-common.h"
 #include "interaction_data.h"
 
-#ifdef ELP3M
+#ifdef P3M
 
 /************************************************
  * data types
@@ -248,6 +248,6 @@ int tclprint_to_result_p3m(Tcl_Interp *interp);
 /** Clean up P3M memory allocations. */
 void p3m_free();
 
-#endif /* of ifdef ELP3M */
+#endif /* of ifdef P3M */
 
 #endif  /*of ifndef P3M_H */

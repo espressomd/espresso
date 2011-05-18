@@ -52,7 +52,7 @@
 #include "config.h"
 #include "utils.h"
 
-#ifdef ELP3M
+#if defined(P3M) || defined(DP3M)
 
 /** This value for p3m.epsilon indicates metallic boundary conditions. */
 #define P3M_EPSILON_METALLIC 0.0
@@ -152,6 +152,6 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
     at value \a x. */
 double p3m_caf(int i, double x,int cao_value);
 
-#endif /* ELP3M */
+#endif /* P3M || DP3M */
 
 #endif /* _P3M_COMMON_H */

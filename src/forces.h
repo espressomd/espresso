@@ -289,7 +289,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M: {
     p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
     
@@ -341,7 +341,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef MAGNETOSTATICS
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case  DIPOLAR_MDLC_P3M: 
    //fall trough 
   case DIPOLAR_P3M: {
@@ -354,7 +354,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
     break;
   }
-#endif /*ifdef ELP3M */
+#endif /*ifdef DP3M */
   }  
 #endif /* ifdef MAGNETOSTATICS */
 

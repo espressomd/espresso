@@ -1064,7 +1064,7 @@ void calc_maximal_cutoff()
 #ifdef ELECTROSTATICS
   /* real space electrostatic */
   switch (coulomb.method) {
-#ifdef ELP3M 
+#ifdef P3M 
   case COULOMB_ELC_P3M:
     if (max_cut_non_bonded < elc_params.space_layer)
       max_cut_non_bonded = elc_params.space_layer;
@@ -1102,17 +1102,14 @@ void calc_maximal_cutoff()
   }
 #endif /*ifdef ELECTROSTATICS */
 
-  
-#if  defined(MAGNETOSTATICS) && defined(ELP3M) 
+#ifdef DP3M
   switch (coulomb.Dmethod) {
   case DIPOLAR_P3M:
     if (max_cut_non_bonded < dp3m.r_cut)
       max_cut_non_bonded = dp3m.r_cut;
     break;
   }       
-#endif /*ifdef MAGNETOSTATICS */
-  
-  
+#endif /*ifdef DP3M */
 
 #ifdef MOL_CUT
 if(max_cut_bonded > 0)
@@ -1135,7 +1132,7 @@ int check_obs_calc_initialized()
   switch (coulomb.method) {
   case COULOMB_MMM1D: if (MMM1D_sanity_checks()) state = 0; break;
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
@@ -1143,9 +1140,9 @@ int check_obs_calc_initialized()
   }
 #endif /* ifdef ELECTROSTATICS */
 
-#if  defined(MAGNETOSTATICS)
+#ifdef MAGNETOSTATICS
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
   case DIPOLAR_P3M: if (dp3m_sanity_checks()) state = 0; break;
 #endif
@@ -1173,7 +1170,7 @@ int coulomb_set_bjerrum(double bjerrum)
 
   if (coulomb.bjerrum == 0.0) {
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
       p3m.alpha    = 0.0;
@@ -1228,7 +1225,7 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if (! ARG0_IS_D(d1)) {
-#ifdef ELP3M
+#ifdef P3M
     Tcl_ResetResult(interp);
     if (ARG0_IS_S("elc") && ((coulomb.method == COULOMB_P3M) || (coulomb.method == COULOMB_ELC_P3M)))
       return tclcommand_inter_coulomb_parse_elc_params(interp, argc - 1, argv + 1);
@@ -1271,7 +1268,7 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
   if(ARG0_IS_S(name))					\
     return parser(interp, argc-1, argv+1);
 
-#ifdef ELP3M
+#ifdef P3M
   REGISTER_COULOMB("p3m", tclcommand_inter_coulomb_parse_p3m);
 #endif
 
@@ -1318,7 +1315,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
 
   if (coulomb.Dbjerrum == 0.0) {
     switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
@@ -1360,7 +1357,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
     if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_DS) || (coulomb.Dmethod == DIPOLAR_MDLC_DS)))
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
 
-#ifdef ELP3M
+#ifdef DP3M
     if (ARG0_IS_S("mdlc") && ((coulomb.Dmethod == DIPOLAR_P3M) || (coulomb.Dmethod == DIPOLAR_MDLC_P3M)))
       return tclcommand_inter_magnetic_parse_mdlc_params(interp, argc - 1, argv + 1);
     
@@ -1404,7 +1401,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
   if(ARG0_IS_S(name))					\
     return parser(interp, argc-1, argv+1);
 
-#ifdef ELP3M
+#ifdef DP3M
   REGISTER_DIPOLAR("p3m", tclcommand_inter_magnetic_parse_dp3m);
 #endif
 
@@ -1683,7 +1680,7 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, coulomb.bjerrum, buffer);
   Tcl_AppendResult(interp, "{coulomb ", buffer, " ", (char *) NULL);
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     tclprint_to_result_p3m(interp);
     tclprint_to_result_ELC(interp);
@@ -1719,7 +1716,7 @@ int tclprint_to_result_DipolarIA(Tcl_Interp *interp)
   Tcl_PrintDouble(interp, coulomb.Dbjerrum, buffer);
   Tcl_AppendResult(interp, "{magnetic ", buffer, " ", (char *) NULL);
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     tclprint_to_result_dp3m(interp);   
     tclprint_to_result_MDLC(interp);

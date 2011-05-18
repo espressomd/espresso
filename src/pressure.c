@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -173,7 +174,7 @@ void calc_long_range_virials()
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
     break;
@@ -211,7 +212,7 @@ void calc_long_range_virials()
     break;
 
    
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
     break;
@@ -827,7 +828,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 #ifdef ELECTROSTATICS
     if (coulomb.method != COULOMB_NONE) {
       switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
       case COULOMB_P3M:
 	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
 	break;
@@ -860,7 +861,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 #ifdef MAGNETOSTATICS
     if (coulomb.Dmethod != DIPOLAR_NONE) {
       switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
       case DIPOLAR_P3M:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
 	break;

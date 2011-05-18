@@ -125,7 +125,7 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
       ELC_P3M_modify_p3m_sums_both();
@@ -173,7 +173,7 @@ void calc_long_range_forces()
 #ifdef MAGNETOSTATICS  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
      add_mdlc_force_corrections();
     //fall through 

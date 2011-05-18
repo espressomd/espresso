@@ -34,7 +34,7 @@
 #include "p3m.h"
 #include "errorhandling.h"
 
-#if defined(ELP3M) && defined(ELECTROSTATICS)
+#ifdef P3M
 
 // #define CHECKPOINTS
 // #define LOG_FORCES

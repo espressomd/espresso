@@ -114,7 +114,7 @@ int on_program_start(Tcl_Interp *interp)
   tf_tables_init();
   /* #endif */
 #endif
-#ifdef ELP3M
+#if defined(P3M) || defined(DP3M)
   fft_pre_init();
 #endif
 
@@ -188,9 +188,9 @@ void on_integration_start()
 
     switch(coulomb.method) {
       case COULOMB_NONE:  break;
-#ifdef ELP3M
+#ifdef P3M
       case COULOMB_P3M:   break;
-#endif /*ELP3M*/
+#endif /*P3M*/
       case COULOMB_EWALD: break;
       default: {
         char *errtext = runtime_error(128);
@@ -291,7 +291,7 @@ void on_observable_calc()
   if(reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
       p3m_count_charged_particles();
@@ -313,7 +313,7 @@ void on_observable_calc()
   if(reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
     switch (coulomb.Dmethod) {
-    #ifdef ELP3M
+#ifdef DP3M
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       dp3m_count_magnetic_particles();
@@ -355,7 +355,7 @@ void on_coulomb_change()
   else
     coulomb.prefactor = coulomb.bjerrum;
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -392,7 +392,7 @@ void on_coulomb_change()
     coulomb.Dprefactor = coulomb.Dbjerrum;
   
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case DIPOLAR_MDLC_P3M:
        // fall through
   case DIPOLAR_P3M:
@@ -478,7 +478,7 @@ void on_resort_particles()
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_on_resort_particles();
     break;
@@ -496,7 +496,7 @@ void on_resort_particles()
 
 #ifdef MAGNETOSTATICS
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     /* dlc_on_resort_particles();   NOT NECESSARY DUE TO HOW WE COMPUTE THINGS*/
     break;
@@ -513,7 +513,7 @@ void on_NpT_boxl_change(double scal1) {
   
 #ifdef ELECTROSTATICS
   switch(coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     integrate_vv_recalc_maxrange();
@@ -529,7 +529,7 @@ void on_NpT_boxl_change(double scal1) {
 
 #ifdef MAGNETOSTATICS
   switch(coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
     integrate_vv_recalc_maxrange();
@@ -578,7 +578,7 @@ void on_parameter_change(int field)
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
       cc = 1;
@@ -628,7 +628,7 @@ void on_parameter_change(int field)
 
 #ifdef MAGNETOSTATICS
   switch (coulomb.Dmethod) {
-   #ifdef ELP3M
+   #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
      if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
        cc = 1;
@@ -819,7 +819,7 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
 #ifdef ELECTROSTATICS
-#ifdef ELP3M
+#ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
 #endif 
 #endif 
