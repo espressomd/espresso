@@ -1,3 +1,4 @@
+/* maximal set of features without FFTW library */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define ROTATION

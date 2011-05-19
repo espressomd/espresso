@@ -218,6 +218,9 @@ void lb_reinit_fluid();
 /** Resets the forces on the fluid nodes */
 void lb_reinit_forces();
 
+/** Checks if all LB parameters are meaningful */
+int lb_sanity_checks();
+
 /** Sets the density and momentum on a local lattice site.
  * @param node  Pointer to the Node of the lattice site within the local domain (Input)
  * @param rho   Local density of the fluid (Input)

@@ -1078,7 +1078,7 @@ MDINLINE void halo_push_communication() {
 /***********************************************************************/
 
 /** Performs basic sanity checks. */
-static int lb_sanity_checks() {
+int lb_sanity_checks() {
 
   char *errtxt;
   int ret = 0;
@@ -1130,6 +1130,9 @@ static void lb_realloc_fluid() {
   }
 
   lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
+#ifdef LB_BOUNDARIES
+  lb_init_boundaries();
+#endif
 
 }
 
@@ -1309,6 +1312,9 @@ void lb_reinit_fluid() {
       lbfields[index].recalc_fields = 1;
 
     }
+#ifdef LB_BOUNDARIES
+      lb_init_boundaries();
+#endif
 
     resend_halo = 0;
 
@@ -2187,10 +2193,10 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
         local_node = &lbfields[index];
         
 //        if (local_node->recalc_fields) {
-          lb_calc_modes(index, modes);
+        lb_calc_modes(index, modes);
           //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
 //          local_node->recalc_fields = 0;
-//          local_node->has_force = 1;
+        local_node->has_force = 1;
 //        }
 //        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
         // unit conversion: mass density

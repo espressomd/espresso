@@ -19,6 +19,7 @@
 source "tests_common.tcl"
 
 require_feature "MASS"
+require_feature "LENNARD_JONES"
 
 puts "-------------------------------------------"
 puts "- Testcase mass.tcl running on [format %02d [setmd n_nodes]] nodes: -"

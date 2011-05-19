@@ -22,12 +22,12 @@
 */
 #include "p3m-common.h"
 
-#ifdef ELP3M
+#if defined(P3M) || defined(DP3M)
 
 /** Debug function printing p3m structures */
-void p3m_print_local_mesh(local_mesh l) 
+void p3m_p3m_print_local_mesh(p3m_local_mesh l) 
 {
-  fprintf(stderr,"%d: local_mesh: dim=(%d,%d,%d), size=%d\n",this_node,
+  fprintf(stderr,"%d: p3m_local_mesh: dim=(%d,%d,%d), size=%d\n",this_node,
 	  l.dim[0],l.dim[1],l.dim[2],l.size);
   fprintf(stderr,"%d:    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n",this_node,
 	  l.ld_ind[0],l.ld_ind[1],l.ld_ind[2],
@@ -43,17 +43,17 @@ void p3m_print_local_mesh(local_mesh l)
 }
 
 /** Debug function printing p3m structures */
-void p3m_print_send_mesh(send_mesh sm) 
+void p3m_p3m_print_send_mesh(p3m_send_mesh sm) 
 {
   int i;
-  fprintf(stderr,"%d: send_mesh: max=%d\n",this_node,sm.max);
+  fprintf(stderr,"%d: p3m_send_mesh: max=%d\n",this_node,sm.max);
   for(i=0;i<6;i++) {
     fprintf(stderr,"%d:  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) s_size=%d\n",this_node,i,sm.s_dim[i][0],sm.s_dim[i][1],sm.s_dim[i][2],sm.s_ld[i][0],sm.s_ld[i][1],sm.s_ld[i][2],sm.s_ur[i][0],sm.s_ur[i][1],sm.s_ur[i][2],sm.s_size[i]);
     fprintf(stderr,"%d:         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) r_size=%d\n",this_node,sm.r_dim[i][0],sm.r_dim[i][1],sm.r_dim[i][2],sm.r_ld[i][0],sm.r_ld[i][1],sm.r_ld[i][2],sm.r_ur[i][0],sm.r_ur[i][1],sm.r_ur[i][2],sm.r_size[i]);
   }
 }
 
-void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
+void p3m_add_block(double *in, double *out, int start[3], int size[3], int dim[3])
 {
   /* fast,mid and slow changing indices */
   int f,m,s;
@@ -77,7 +77,7 @@ void add_block(double *in, double *out, int start[3], int size[3], int dim[3])
   }
 }
 
-double analytic_cotangent_sum(int n, double mesh_i, int cao)
+double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao)
 {
   double c, res=0.0;
   c = SQR(cos(PI*mesh_i*(double)n));
@@ -115,7 +115,7 @@ double analytic_cotangent_sum(int n, double mesh_i, int cao)
 
 /** Computes the  assignment function of for the \a i'th degree
     at value \a x. */
-double P3M_caf(int i, double x,int cao_value) {
+double p3m_caf(int i, double x,int cao_value) {
   switch (cao_value) {
   case 1 : return 1.0;
   case 2 : {
@@ -191,173 +191,4 @@ double P3M_caf(int i, double x,int cao_value) {
     return 0.0;
   }}}
 }
-
-/* double caf10(double x) */
-/* { double y; */
-/*    y = 1.0; */
-/*   return y; */
-/* } */
-
-/* double caf20(double x) */
-/* { double y; */
-/*    y = 0.5-x; */
-/*   return y; */
-/* } */
-
-/* double caf21(double x) */
-/* { double y; */
-/*    y = 0.5+x; */
-/*   return y; */
-/* } */
-
-/* double caf30(double x) */
-/* { double y; */
-/*    y = 0.5*SQR(0.5 - x); */
-/*   return y; */
-/* } */
-
-/* double caf31(double x) */
-/* { double y; */
-/*    y = 0.75 - SQR(x); */
-/*   return y; */
-/* } */
-
-/* double caf32(double x) */
-/* { double y; */
-/*    y = 0.5*SQR(0.5 + x); */
-/*   return y; */
-/* } */
-
-/* double caf40(double x) */
-/* { double y; */
-/*    y = ( 1.0+x*( -6.0+x*( 12.0-x* 8.0)))/48.0; */
-/*   return y; */
-/* } */
-
-/* double caf41(double x) */
-/* { double y; */
-/*    y = (23.0+x*(-30.0+x*(-12.0+x*24.0)))/48.0; */
-/*   return y; */
-/* } */
-
-/* double caf42(double x) */
-/* { double y; */
-/*    y = (23.0+x*( 30.0+x*(-12.0-x*24.0)))/48.0; */
-/*   return y; */
-/* } */
-
-/* double caf43(double x) */
-/* { double y; */
-/*    y = ( 1.0+x*(  6.0+x*( 12.0+x* 8.0)))/48.0; */
-/*   return y; */
-/* } */
-
-/* double caf50(double x) */
-/* { double y; */
-/*    y = (  1.0+x*( -8.0+x*(  24.0+x*(-32.0+x*16.0))))/384.0; */
-/*   return y; */
-/* } */
-
-/* double caf51(double x) */
-/* { double y; */
-/*    y = ( 19.0+x*(-44.0+x*(  24.0+x*( 16.0-x*16.0))))/ 96.0; */
-/*   return y; */
-/* } */
-
-/* double caf52(double x) */
-/* { double y; */
-/*    y = (115.0+x*       x*(-120.0+x*       x*48.0))  /192.0; */
-/*   return y; */
-/* } */
-
-/* double caf53(double x) */
-/* { double y; */
-/*    y = ( 19.0+x*( 44.0+x*(  24.0+x*(-16.0-x*16.0))))/ 96.0; */
-/*   return y; */
-/* } */
-
-/* double caf54(double x) */
-/* { double y; */
-/*    y = (  1.0+x*(  8.0+x*(  24.0+x*( 32.0+x*16.0))))/384.0; */
-/*   return y; */
-/* } */
-
-/* double caf60(double x) */
-/* { double y; */
-/*    y = (  1.0+x*( -10.0+x*(  40.0+x*( -80.0+x*(  80.0-x* 32.0)))))/3840.0; */
-/*   return y; */
-/* } */
-
-/* double caf61(double x) */
-/* { double y; */
-/*    y = (237.0+x*(-750.0+x*( 840.0+x*(-240.0+x*(-240.0+x*160.0)))))/3840.0; */
-/*   return y; */
-/* } */
-
-/* double caf62(double x) */
-/* { double y; */
-/*    y = (841.0+x*(-770.0+x*(-440.0+x*( 560.0+x*(  80.0-x*160.0)))))/1920.0; */
-/*   return y; */
-/* } */
-
-/* double caf63(double x) */
-/* { double y; */
-/*    y = (841.0+x*(+770.0+x*(-440.0+x*(-560.0+x*(  80.0+x*160.0)))))/1920.0; */
-/*   return y; */
-/* } */
-
-/* double caf64(double x) */
-/* { double y; */
-/*    y = (237.0+x*( 750.0+x*( 840.0+x*( 240.0+x*(-240.0-x*160.0)))))/3840.0; */
-/*   return y; */
-/* } */
-
-/* double caf65(double x) */
-/* { double y; */
-/*    y = (  1.0+x*(  10.0+x*(  40.0+x*(  80.0+x*(  80.0+x* 32.0)))))/3840.0; */
-/*   return y; */
-/* } */
-
-/* double caf70(double x) */
-/* { double y; */
-/*    y = (    1.0+x*(   -12.0+x*(   60.0+x*( -160.0+x*(  240.0+x*(-192.0+x* 64.0))))))/46080.0; */
-/*   return y; */
-/* } */
-
-/* double caf71(double x) */
-/* { double y; */
-/*    y = (  361.0+x*( -1416.0+x*( 2220.0+x*(-1600.0+x*(  240.0+x*( 384.0-x*192.0))))))/23040.0; */
-/*   return y; */
-/* } */
-
-/* double caf72(double x) */
-/* { double y; */
-/*    y = (10543.0+x*(-17340.0+x*( 4740.0+x*( 6880.0+x*(-4080.0+x*(-960.0+x*960.0))))))/46080.0; */
-/*   return y; */
-/* } */
-
-/* double caf73(double x) */
-/* { double y; */
-/*    y = ( 5887.0+x*          x*(-4620.0+x*         x*( 1680.0-x*        x*320.0)))   /11520.0; */
-/*   return y; */
-/* } */
-
-/* double caf74(double x) */
-/* { double y; */
-/*    y = (10543.0+x*( 17340.0+x*( 4740.0+x*(-6880.0+x*(-4080.0+x*( 960.0+x*960.0))))))/46080.0; */
-/*   return y; */
-/* } */
-
-/* double caf75(double x) */
-/* { double y; */
-/*    y = (  361.0+x*(  1416.0+x*( 2220.0+x*( 1600.0+x*(  240.0+x*(-384.0-x*192.0))))))/23040.0; */
-/*   return y; */
-/* } */
-
-/* double caf76(double x) */
-/* { double y; */
-/*    y = (    1.0+x*(    12.0+x*(   60.0+x*(  160.0+x*(  240.0+x*( 192.0+x* 64.0))))))/46080.0; */
-/*   return y; */
-/* } */
-
-#endif /* ELP3M */
+#endif /* defined(P3M) || defined(DP3M) */

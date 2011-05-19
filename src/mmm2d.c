@@ -1609,6 +1609,11 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
 	end = COMPLEX_STEP;
 	fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
       }
+      if (end < 0) {
+	char *errtxt = runtime_error(100);
+	ERROR_SPRINTF(errtxt, "{MMM2D: distance was negative, coordinates probably out of range } ");
+	end = 0;
+      }
       end = complexCutoff[end];
 
       for (n = 0; n < end; n++) {

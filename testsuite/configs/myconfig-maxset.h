@@ -1,3 +1,4 @@
+/* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define ROTATION

@@ -2,8 +2,19 @@
 = ESPRESSO NEWS =
 =================
 
-NOTEWORTHY CHANGES SINCE v2.2.0b
-================================
+ESPResSo 3.0.1
+==============
+
+* Fixed a bug in P3M tuning.
+
+* Fixed a bug causing a segfault in FFTW on 32bit machines.
+
+* Fixed compilation with current CUDA version.
+
+* Reenabled output for P3M tuning.
+
+ESPResSo 3.0.0
+===============
 
 User-visible changes
 --------------------
@@ -80,6 +91,12 @@ User-visible changes
     If you want to compile several binaries from a single source
     directory, you can use build directories as described in the
     User's Guide.
+
+* A number of functions have been deprecated, as they are not
+  maintained anymore. Plase do not use them in your code and replace
+  them with appropriate alternatives if you use them in your code!
+  The following functions are deprecated:
+  checkpoint_*, polyBlock*, calcOb*, calcObs*, plot*, polyConf*
 
 * FFTW2 is no longer supported.
 

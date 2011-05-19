@@ -213,7 +213,7 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 }
 #endif
 
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
 int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 

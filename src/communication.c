@@ -363,9 +363,9 @@ void mpi_bcast_event_slave(int node, int event)
 {
   switch (event) {
 #ifdef ELECTROSTATICS
-#ifdef ELP3M
+#ifdef P3M
   case P3M_COUNT_CHARGES:
-    P3M_count_charged_particles();
+    p3m_count_charged_particles();
     break;
 #endif
   case EWALD_COUNT_CHARGES:
@@ -384,13 +384,11 @@ void mpi_bcast_event_slave(int node, int event)
     break;
 #endif
 
-#ifdef MAGNETOSTATICS
-#ifdef ELP3M
+#ifdef DP3M
   case P3M_COUNT_DIPOLES:
-    P3M_count_magnetic_particles();
+    dp3m_count_magnetic_particles();
     break;
 #endif
-#endif 
 
   default:;
   }
@@ -1686,7 +1684,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
@@ -1724,12 +1722,12 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     break;
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
   case DIPOLAR_P3M:
-    MPI_Bcast(&Dp3m, sizeof(Dp3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&dp3m, sizeof(dp3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA :
