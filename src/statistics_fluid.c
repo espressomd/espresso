@@ -110,7 +110,7 @@ void lb_calc_fluid_temp(double *result) {
     }
   }
 
-  temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid);
+  temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 }
@@ -123,7 +123,7 @@ void lb_calc_densprof(double *result, int *params) {
   int index, dir[3], grid[3];
   int newroot=0, subrank, involved=0;
   double *profile;
-  MPI_Comm slice_comm = NULL;
+  MPI_Comm slice_comm;
   MPI_Status status;
 
   if (this_node !=0) params = malloc(3*sizeof(int));
@@ -214,7 +214,7 @@ void lb_calc_velprof(double *result, int *params) {
   int index, dir[3], grid[3];
   int newroot=0, subrank, involved=0;
   double rho, j[3], *velprof;
-  MPI_Comm slice_comm = NULL;
+  MPI_Comm slice_comm;
   MPI_Status status;
 
   if (this_node != 0) params = malloc(4*sizeof(int));

@@ -34,7 +34,7 @@
 #include "p3m.h"
 #include "errorhandling.h"
 
-#if defined(ELP3M) && defined(ELECTROSTATICS)
+#ifdef P3M
 
 // #define CHECKPOINTS
 // #define LOG_FORCES
@@ -1451,7 +1451,7 @@ void ELC_P3M_self_forces()
 	get_mi_vector(d, p[i].r.p, pos);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-	add_p3m_coulomb_pair_force(q,d,dist2,dist,p[i].f.f);
+	p3m_add_pair_force(q,d,dist2,dist,p[i].f.f);
       }
       if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	q=elc_params.di_mid_top*p[i].p.q*p[i].p.q;
@@ -1459,7 +1459,7 @@ void ELC_P3M_self_forces()
 	get_mi_vector(d, p[i].r.p, pos);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-	add_p3m_coulomb_pair_force(q,d,dist2,dist,p[i].f.f);
+	p3m_add_pair_force(q,d,dist2,dist,p[i].f.f);
       }
     }
   }
@@ -1467,7 +1467,7 @@ void ELC_P3M_self_forces()
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_charge_assign_both()
+void ELC_p3m_charge_assign_both()
 {
   Cell *cell;
   Particle *p;
@@ -1476,7 +1476,7 @@ void ELC_P3M_charge_assign_both()
   /* charged particle counter, charge fraction counter */
   int cp_cnt=0;
   /* prepare local FFT mesh */
-  for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
+  for(i=0; i<p3m_lm.size; i++) p3m_rs_mesh[i] = 0.0;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1484,35 +1484,35 @@ void ELC_P3M_charge_assign_both()
     np = cell->n;
     for(i = 0; i < np; i++) {
       if( p[i].p.q != 0.0 ) {
-	P3M_assign_charge(p[i].p.q, p[i].r.p,cp_cnt);
+	p3m_assign_charge(p[i].p.q, p[i].r.p,cp_cnt);
 
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
-	  P3M_assign_charge(q, pos, -1);
+	  p3m_assign_charge(q, pos, -1);
 	}
 	
 	if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
-	  P3M_assign_charge(q, pos,-1);
+	  p3m_assign_charge(q, pos,-1);
 	}
 
 	cp_cnt++;
       }
     }
   }
-  P3M_shrink_wrap_charge_grid(cp_cnt);
+  p3m_shrink_wrap_charge_grid(cp_cnt);
 }
 
-void ELC_P3M_charge_assign_image() 
+void ELC_p3m_charge_assign_image() 
 {
   Cell *cell;
   Particle *p;
   double pos[3];
   int i,c,np;
   /* prepare local FFT mesh */
-  for(i=0; i<lm.size; i++) rs_mesh[i] = 0.0;
+  for(i=0; i<p3m_lm.size; i++) p3m_rs_mesh[i] = 0.0;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1524,13 +1524,13 @@ void ELC_P3M_charge_assign_image()
 	if(p[i].r.p[2]<elc_params.space_layer) {
 	  double q=elc_params.di_mid_bot*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=-p[i].r.p[2];
-	  P3M_assign_charge(q, pos,-1);
+	  p3m_assign_charge(q, pos,-1);
 	}
 	
 	if(p[i].r.p[2]>(elc_params.h-elc_params.space_layer)) {
 	  double q=elc_params.di_mid_top*p[i].p.q;
 	  pos[0]=p[i].r.p[0]; pos[1]=p[i].r.p[1]; pos[2]=2*elc_params.h-p[i].r.p[2];
-	  P3M_assign_charge(q, pos, -1);
+	  p3m_assign_charge(q, pos, -1);
 	}
       }
     }
@@ -1553,7 +1553,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2, do
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    add_p3m_coulomb_pair_force(q,d,dist2,dist,force2);
+    p3m_add_pair_force(q,d,dist2,dist,force2);
   } 
   
   if(p1->r.p[2]>(elc_params.h-elc_params.space_layer)) {
@@ -1562,7 +1562,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2, do
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    add_p3m_coulomb_pair_force(q,d,dist2,dist,force2);
+    p3m_add_pair_force(q,d,dist2,dist,force2);
   } 
   
   if(tp2<elc_params.space_layer) {
@@ -1571,7 +1571,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2, do
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    add_p3m_coulomb_pair_force(q,d,dist2,dist,force1);
+    p3m_add_pair_force(q,d,dist2,dist,force1);
   }
   
   if(tp2>(elc_params.h-elc_params.space_layer)) {	  
@@ -1580,7 +1580,7 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2, do
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    add_p3m_coulomb_pair_force(q,d,dist2,dist,force1);
+    p3m_add_pair_force(q,d,dist2,dist,force1);
   }
 }
 
@@ -1602,7 +1602,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1, Particle *p2)
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng+=p3m_coulomb_pair_energy(q,d,dist2,dist);
+    eng+=p3m_pair_energy(q,d,dist2,dist);
     
   } 
   
@@ -1612,7 +1612,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1, Particle *p2)
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng+=p3m_coulomb_pair_energy(q,d,dist2,dist);
+    eng+=p3m_pair_energy(q,d,dist2,dist);
   } 
   
   if(tp2<elc_params.space_layer) {
@@ -1621,7 +1621,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1, Particle *p2)
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng+=p3m_coulomb_pair_energy(q,d,dist2,dist);
+    eng+=p3m_pair_energy(q,d,dist2,dist);
   }
   
   if(tp2>(elc_params.h-elc_params.space_layer)) {
@@ -1630,7 +1630,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1, Particle *p2)
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    eng+=p3m_coulomb_pair_energy(q,d,dist2,dist);
+    eng+=p3m_pair_energy(q,d,dist2,dist);
   }
 
   // fprintf(stderr,"energy is %f\n",eng);
@@ -1661,7 +1661,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
 	get_mi_vector(d, p1[i].r.p, pos);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-	eng+=p3m_coulomb_pair_energy(q,d,dist2,dist);
+	eng+=p3m_pair_energy(q,d,dist2,dist);
 	//	fprintf(stderr,"energy is %f\n",eng);
       }
 	
@@ -1671,7 +1671,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
 	get_mi_vector(d, p1[i].r.p, pos);
 	dist2 = sqrlen(d);
 	dist = sqrt(dist2);
-       	eng+=p3m_coulomb_pair_energy(q,d,dist2,dist);
+       	eng+=p3m_pair_energy(q,d,dist2,dist);
 	//	fprintf(stderr,"energy is %f\n",eng);
       }
     }

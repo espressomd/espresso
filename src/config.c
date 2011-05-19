@@ -45,12 +45,9 @@
 
 /* errors for all modules that require fftw if not present */
 #ifndef FFTW
-
 #ifdef MODES
 #error MODES requires the fftw
 #endif
-
-
 #endif
 
 

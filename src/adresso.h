@@ -76,14 +76,14 @@ int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int ar
 #endif
 
 /** Calc adress weight function of a vector
-    @param x[3] vector
+    @param x input vector
     @return weight of the vector
 */
 double adress_wf_vector(double x[3]);
 
 
 /** Calc adress weight function of a particle
-    @param x[3] vector
+    @param p input particle
     @return weight of the particle
 */
 MDINLINE double adress_wf_particle(Particle *p){

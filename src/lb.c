@@ -1073,7 +1073,7 @@ MDINLINE void halo_push_communication() {
 /***********************************************************************/
 
 /** Performs basic sanity checks. */
-static int lb_sanity_checks() {
+int lb_sanity_checks() {
 
   char *errtxt;
   int ret = 0;
@@ -1125,6 +1125,9 @@ static void lb_realloc_fluid() {
   }
 
   lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
+#ifdef LB_BOUNDARIES
+  lb_init_boundaries();
+#endif
 
 }
 
@@ -1302,6 +1305,9 @@ void lb_reinit_fluid() {
       lbfields[index].recalc_fields = 1;
 
     }
+#ifdef LB_BOUNDARIES
+      lb_init_boundaries();
+#endif
 
     resend_halo = 0;
 
@@ -1687,7 +1693,7 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
 MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
 #ifdef GAUSSRANDOM
-    double rootrho_gauss = sqrt(abs(mode[0]+lbpar.rho*agrid*agrid*agrid));
+    double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho*agrid*agrid*agrid));
 
     /* stress modes */
     mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random());
@@ -1714,7 +1720,7 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
 #endif
 
 #else
-    double rootrho = sqrt(12.0*mode[0]+lbpar.rho*agrid*agrid*agrid);
+    double rootrho = sqrt(fabs(12.0*(mode[0]+lbpar.rho*agrid*agrid*agrid)));
 
     /* stress modes */
     mode[4] += (fluct[0] = rootrho*lb_phi[4]*(d_random()-0.5));
@@ -2180,10 +2186,10 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
         local_node = &lbfields[index];
         
 //        if (local_node->recalc_fields) {
-          lb_calc_modes(index, modes);
+        lb_calc_modes(index, modes);
           //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
 //          local_node->recalc_fields = 0;
-//          local_node->has_force = 1;
+        local_node->has_force = 1;
 //        }
 //        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
         // unit conversion: mass density
@@ -2444,12 +2450,6 @@ void lb_calc_average_rho() {
 
 }
 
-/** Returns the hydrodynamic fields of a local lattice site.
- * @param index The index of the lattice site within the local domain (Input)
- * @param rho   Local density of the fluid (Output)
- * @param j     Local momentum of the fluid (Output)
- * @param pi    Local stress tensor of the fluid (Output)
- */
 /*@}*/
 
 #ifdef ADDITIONAL_CHECKS
@@ -3005,7 +3005,7 @@ MDINLINE void lb_init_mode_transformation() {
  * Checks for negative populations and increases failcounter for each
  * occurence.
  *
- * @param  local_node Pointer to the local lattice site (Input).
+ * @param  index Index of the local lattice site (Input).
  * @return Number of negative populations on the local lattice site.
  */
 MDINLINE int lb_check_negative_n(index_t index) {

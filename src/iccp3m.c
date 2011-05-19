@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -692,26 +693,24 @@ void calc_long_range_forces_iccp3m()
                 ERROR_SPRINTF(errtxt, "{ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ");
      }
   switch (coulomb.method) {
-#ifdef ELC_P3M
+#ifdef P3M
     case COULOMB_ELC_P3M:
        if (elc_params.dielectric_contrast_on) {
                 errtxt = runtime_error(128);
                 ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
        }
-       P3M_charge_assign();
-       P3M_calc_kspace_forces(1,0);
+       p3m_charge_assign();
+       p3m_calc_kspace_forces(1,0);
        ELC_add_force(); 
     break;
-#endif
 
-#ifdef ELP3M
     case COULOMB_P3M:
-         P3M_charge_assign();
+         p3m_charge_assign();
 
 #ifdef NPT
         if(integ_switch == INTEG_METHOD_NPT_ISO) exit(0);
 #endif
-        P3M_calc_kspace_forces(1,0);
+        p3m_calc_kspace_forces(1,0);
     break;
 #endif
     case COULOMB_MMM2D:

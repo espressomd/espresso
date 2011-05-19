@@ -19,7 +19,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file p3m.h  code for calculating the MDLC (magnetic dipolar layer correction).
- *  Developer: Joan J. Cerda.
  *  Purpose:   get the corrections for dipolar 3D algorithms 
  *             when applied to a slab geometry and dipolar
  *	      particles. DLC & co
@@ -31,9 +30,7 @@
  *  Restrictions: the slab must be such that the z is the short 
  *                direction. Othewise we get trash.    	      
  * 
- *  Limitations:  at this moment it is restricted to work with 1 cpu
  */
-
 
  #include "utils.h"
  #include "global.h"
@@ -41,7 +38,7 @@
  #include "domain_decomposition.h"
  #include "particle_data.h"
  #include "communication.h"
- #include "p3m.h"
+ #include "p3m-magnetostatics.h"
  #include "cells.h"
  #include "mdlc_correction.h"
 
@@ -471,7 +468,7 @@ double get_DLC_energy_dipolar(int kcut){
     double  *dip_DLC_t_x=NULL,*dip_DLC_t_y=NULL,*dip_DLC_t_z=NULL;
     double  dip_DLC_energy=0.0;
     double  mz=0.0,mx=0.0,my=0.0,volume,correc,mtot=0.0;
-#if defined(ROTATION) && defined(ELP3M)
+#if defined(ROTATION) && defined(DP3M)
     double dx,dy,dz,correps;
 #endif  
 
@@ -520,21 +517,20 @@ double get_DLC_energy_dipolar(int kcut){
 	   //See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 	   
            mz=slab_dip_count_mu(&mtot, &mx, &my);
-#ifdef ELP3M
+#ifdef DP3M
 	   if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-	     
-	     if(p3m.Depsilon == P3M_EPSILON_METALLIC) {	
+	     if(dp3m.epsilon == P3M_EPSILON_METALLIC) {	
 	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
 	     }
 	     else{   
-	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*p3m.Depsilon+1.0)); 
+	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*dp3m.epsilon+1.0)); 
 	     }
 	   }
 	   else
 #endif
 	     {
 	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
-	       fprintf(stderr,"You are not usingP3M method, therefore p3m.epsilon unknown, I assume metallic borders \n");   
+	       fprintf(stderr,"You are not using the P3M method, therefore p3m.epsilon is unknown, I assume metallic borders \n");   
 	     }  
 	         
    	 // --- Transfer the computed corrections to the Forces, Energy and torques
@@ -554,9 +550,9 @@ double get_DLC_energy_dipolar(int kcut){
    	       p[i].f.f[1] += coulomb.Dprefactor*dip_DLC_f_y[ip];
    	       p[i].f.f[2] += coulomb.Dprefactor*dip_DLC_f_z[ip]; //SDC correction term is zero for the forces
    
-#if defined(ROTATION) && defined(ELP3M)
+#if defined(ROTATION) && defined(DP3M)
 	       //in the Next lines: the second term (correc*...)is the SDC correction for the torques
-                if(p3m.Depsilon == P3M_EPSILON_METALLIC) {	
+                if(dp3m.epsilon == P3M_EPSILON_METALLIC) {	
 
                    dx=0.0;
 		   dy=0.0;
@@ -569,10 +565,10 @@ double get_DLC_energy_dipolar(int kcut){
 
 		}else{
 		
-                   correps= correc/(2.0*p3m.Depsilon+1.0);
+                   correps= correc/(2.0*dp3m.epsilon+1.0);
                    dx=correps*mx;
 		   dy=correps*my;
-		   dz=correc*(-1.0+1./(2.0*p3m.Depsilon+1.0))*mz;    
+		   dz=correc*(-1.0+1./(2.0*dp3m.epsilon+1.0))*mz;    
 		
 	           p[i].f.torque[0] +=coulomb.Dprefactor*(dip_DLC_t_x[ip]+p[i].r.dip[1]*dz  - p[i].r.dip[2]*dy ) ; 
  	           p[i].f.torque[1] +=coulomb.Dprefactor*(dip_DLC_t_y[ip]+p[i].r.dip[2]*dx  - p[i].r.dip[0]*dz ) ;
@@ -631,23 +627,22 @@ double get_DLC_energy_dipolar(int kcut){
      mz=slab_dip_count_mu(&mtot, &mx, &my);
      
      if(this_node == 0) {
-#ifdef ELP3M      
+#ifdef DP3M      
      if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-       if(p3m.Depsilon == P3M_EPSILON_METALLIC) {
+       if(dp3m.epsilon == P3M_EPSILON_METALLIC) {
 	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
        }
        else{   
-	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*p3m.Depsilon+1.0)); 
+	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*dp3m.epsilon+1.0)); 
        }
      }
      else
 #endif
        {
 	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
-	 fprintf(stderr,"You are not using P3M method, therefore p3m.Depsilon unknown, I assume metallic borders \n");   
+	 fprintf(stderr,"You are not using the P3M method, therefore dp3m.epsilon unknown, I assume metallic borders \n");   
        }  
-      
-   
+     
      return dip_DLC_energy;
      } else {
        return 0.0;
@@ -753,7 +748,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 
   
   switch (coulomb.Dmethod) {
-   #ifdef ELP3M
+   #ifdef DP3M
      case  DIPOLAR_MDLC_P3M:
      case  DIPOLAR_P3M:
        coulomb.Dmethod =DIPOLAR_MDLC_P3M;

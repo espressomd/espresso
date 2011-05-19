@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef FORCES_H
-#define FORCES_H
+#ifndef _FORCES_H
+#define _FORCES_H
 /** \file forces.h Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -40,6 +40,7 @@
 
 /* include the force files */
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 #include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
@@ -288,9 +289,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M: {
-    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
     
     // forces from the virtual charges
     // they go directly onto the particles, since they are not pairwise forces
@@ -300,11 +301,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   }
   case COULOMB_P3M: {
 #ifdef NPT
-    double eng = add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
+    double eng = p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
 #endif
     break;
   }
@@ -340,20 +341,20 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef MAGNETOSTATICS
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case  DIPOLAR_MDLC_P3M: 
    //fall trough 
   case DIPOLAR_P3M: {
 #ifdef NPT
-    double eng = add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
+    double eng = dp3m_add_pair_force(p1,p2,d,dist2,dist,force);
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
+    dp3m_add_pair_force(p1,p2,d,dist2,dist,force);
 #endif
     break;
   }
-#endif /*ifdef ELP3M */
+#endif /*ifdef DP3M */
   }  
 #endif /* ifdef MAGNETOSTATICS */
 

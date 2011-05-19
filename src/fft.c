@@ -33,9 +33,11 @@
 #include <math.h>
 #include "utils.h"
 
-#ifdef ELP3M
+#if defined(P3M) || defined(DP3M)
 
 #include <fftw3.h>
+/* our remapping of malloc interferes with fftw3's name mangling. */
+void *fftw_malloc(size_t n);
 
 #include "communication.h"
 #include "grid.h"
@@ -44,6 +46,7 @@
 #endif
 #include "fft.h"
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 
 /************************************************
  * DEFINES
@@ -64,7 +67,7 @@
  * variables
  ************************************************/
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 int fft_init_tag=0;
 
 fft_forw_plan fft_plan[4];
@@ -88,7 +91,7 @@ static fftw_complex *c_data_buf;
 
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DP3M
 int Dfft_init_tag=0;
 
 fft_forw_plan Dfft_plan[4];
@@ -186,7 +189,7 @@ int calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_off[3]
 int calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3], 
 		    int mesh[3], double mesh_off[3], int block[6]);
 
-#ifdef  ELECTROSTATICS
+#ifdef  P3M
 /** communicate the grid data according to the given fft_forw_plan. 
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
@@ -203,7 +206,7 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out);
 #endif
 
-#ifdef  MAGNETOSTATICS
+#ifdef  DP3M
 /** communicate the grid data according to the given fft_forw_plan. 
  * \param plan communication plan (see \ref fft_forw_plan).
  * \param in   input mesh.
@@ -231,12 +234,9 @@ void print_fft_plan(fft_forw_plan pl);
 
 void fft_pre_init()
 {
- 
- #if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
   int i;
- #endif
 
-  #ifdef ELECTROSTATICS
+#ifdef P3M
   for(i=0;i<4;i++) {
     fft_plan[i].group = malloc(1*n_nodes*sizeof(int));
     fft_plan[i].send_block = NULL;
@@ -244,9 +244,9 @@ void fft_pre_init()
     fft_plan[i].recv_block = NULL;
     fft_plan[i].recv_size  = NULL;
   }
-  #endif 
-  
-  #ifdef MAGNETOSTATICS
+#endif
+
+#ifdef DP3M  
   for(i=0;i<4;i++) {
     Dfft_plan[i].group = malloc(1*n_nodes*sizeof(int));
     Dfft_plan[i].send_block = NULL;
@@ -254,11 +254,11 @@ void fft_pre_init()
     Dfft_plan[i].recv_block = NULL;
     Dfft_plan[i].recv_size  = NULL;
   }
-  #endif
+#endif
 
 }
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
 {
   int i,j;
@@ -416,8 +416,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   /* Factor 2 for complex numbers */
   send_buf = (double *)realloc(send_buf, max_comm_size*sizeof(double));
   recv_buf = (double *)realloc(recv_buf, max_comm_size*sizeof(double));
-  (*data)  = (double *)realloc((*data), max_mesh_size*sizeof(double));
-  data_buf = (double *)realloc(data_buf, max_mesh_size*sizeof(double));
+  if (*data) fftw_free(*data);
+  (*data)  = (double *)fftw_malloc(max_mesh_size*sizeof(double));
+  if (data_buf) fftw_free(data_buf);
+  data_buf = (double *)fftw_malloc(max_mesh_size*sizeof(double));
   if(!(*data) || !data_buf || !recv_buf || !send_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
     errexit();
@@ -590,10 +592,9 @@ void fft_perform_back(double *data)
   /* REMARK: Result has to be in data. */
 }
 
-#endif
+#endif /* ifdef P3M */
 
-
-#ifdef MAGNETOSTATICS
+#ifdef DP3M
 int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_pnum)
 {
   int i,j;
@@ -669,8 +670,8 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
     Dfft_plan[i].recv_block = (int *)realloc(Dfft_plan[i].recv_block, 6*Dfft_plan[i].g_size*sizeof(int));
     Dfft_plan[i].recv_size  = (int *)realloc(Dfft_plan[i].recv_size, 1*Dfft_plan[i].g_size*sizeof(int));
 
-    Dfft_plan[i].new_size = calc_local_mesh(my_pos[i], n_grid[i], p3m.Dmesh,
-					   p3m.Dmesh_off, Dfft_plan[i].new_mesh, 
+    Dfft_plan[i].new_size = calc_local_mesh(my_pos[i], n_grid[i], dp3m.mesh,
+					   dp3m.mesh_off, Dfft_plan[i].new_mesh, 
 					   Dfft_plan[i].start);  
     permute_ifield(Dfft_plan[i].new_mesh,3,-(Dfft_plan[i].n_permute));
     permute_ifield(Dfft_plan[i].start,3,-(Dfft_plan[i].n_permute));
@@ -683,7 +684,7 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       node = Dfft_plan[i].group[j];
       Dfft_plan[i].send_size[j] 
 	= calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
-			  p3m.Dmesh, p3m.Dmesh_off, &(Dfft_plan[i].send_block[6*j]));
+			  dp3m.mesh, dp3m.mesh_off, &(Dfft_plan[i].send_block[6*j]));
       permute_ifield(&(Dfft_plan[i].send_block[6*j]),3,-(Dfft_plan[i-1].n_permute));
       permute_ifield(&(Dfft_plan[i].send_block[6*j+3]),3,-(Dfft_plan[i-1].n_permute));
       if(Dfft_plan[i].send_size[j] > Dmax_comm_size) 
@@ -698,7 +699,7 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       /* recv block: this_node from comm-group-node i (identity: node) */
       Dfft_plan[i].recv_size[j] 
 	= calc_send_block(my_pos[i], n_grid[i], &(n_pos[i-1][3*node]), n_grid[i-1],
-			  p3m.Dmesh,p3m.Dmesh_off,&(Dfft_plan[i].recv_block[6*j]));
+			  dp3m.mesh,dp3m.mesh_off,&(Dfft_plan[i].recv_block[6*j]));
       permute_ifield(&(Dfft_plan[i].recv_block[6*j]),3,-(Dfft_plan[i].n_permute));
       permute_ifield(&(Dfft_plan[i].recv_block[6*j+3]),3,-(Dfft_plan[i].n_permute));
       if(Dfft_plan[i].recv_size[j] > Dmax_comm_size) 
@@ -924,7 +925,7 @@ void Dfft_perform_back(double *Ddata)
   /* REMARK: Result has to be in data. */
 }
 
-#endif /*of MAGNETOSTATICS */
+#endif /* else ifdef P3M */
 
 void pack_block(double *in, double *out, int start[3], int size[3], int dim[3], int element)
 {
@@ -1174,7 +1175,7 @@ int calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
   return size;
 }
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 void forw_grid_comm(fft_forw_plan plan, double *in, double *out)
 {
   int i;
@@ -1246,7 +1247,7 @@ void back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in, dou
 
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DP3M
 void Dforw_grid_comm(fft_forw_plan plan, double *in, double *out)
 {
   int i;

@@ -31,9 +31,6 @@ int unsigned lb_boundaries_bb_gpu = 0;
 int n_lb_boundaries_gpu       = 0;
 LB_boundary_gpu *lb_boundaries_gpu = NULL;
 
-/** Initialize a planar boundary specified by a wall constraint.
- * @param plane The \ref Constraint_wall struct describing the boundary.
- */
 
 int printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {

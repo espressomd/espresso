@@ -125,17 +125,17 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
       ELC_P3M_modify_p3m_sums_both();
-      ELC_P3M_charge_assign_both();
+      ELC_p3m_charge_assign_both();
       ELC_P3M_self_forces();
     }
     else
-      P3M_charge_assign();
+      p3m_charge_assign();
 
-    P3M_calc_kspace_forces_for_charges(1,0);
+    p3m_calc_kspace_forces(1,0);
 
     if (elc_params.dielectric_contrast_on)
       ELC_P3M_restore_p3m_sums();
@@ -144,13 +144,13 @@ void calc_long_range_forces()
 
     break;
   case COULOMB_P3M:
-    P3M_charge_assign();
+    p3m_charge_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_charges(1,1);
+      nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
     else
 #endif
-      P3M_calc_kspace_forces_for_charges(1,0);
+      p3m_calc_kspace_forces(1,0);
     break;
 #endif
   case COULOMB_EWALD:
@@ -173,27 +173,25 @@ void calc_long_range_forces()
 #ifdef MAGNETOSTATICS  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
      add_mdlc_force_corrections();
     //fall through 
   case DIPOLAR_P3M:
-    P3M_dipole_assign();
+    dp3m_dipole_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_dipoles(1,1);
+      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1,1);
       fprintf(stderr,"dipolar_P3M at this moment is added to p_vir[0]\n");    
     } else
 #endif
-      P3M_calc_kspace_forces_for_dipoles(1,0);
+      dp3m_calc_kspace_forces(1,0);
 
       break;
 #endif
-#ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
       dawaanr_calculations(1,0);
       break;
-#endif
   case DIPOLAR_MDLC_DS:
      add_mdlc_force_corrections();
     //fall through 

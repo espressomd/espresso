@@ -83,14 +83,18 @@ Features can be activated in the configuration header
 \item \newfeature{MOLFORCES} \todo{Docs missing}
 \item \newfeature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which
   allows for fixed lengths bonds between particles. \todo{How to use it?}
-\item \newfeature{VIRTUAL\_SITES} Virtual sites are particles, the
-  position and velocity of which is not obtained by integrating
+\item \newfeature{VIRTUAL\_SITES\_COM} Virtual sites are particles,
+  the position and velocity of which is not obtained by integrating
   equations of motion. Rather, they are placed using the position (and
-  orientation) of other particles. This allows for rigid arrangements
-  of particles and for placing a particle in the center of mass of a
-  set of other particles. See section \ref{sec:virtual}.
-\item \newfeature{VIRTUAL\_SITES\_COM}
-\item \newfeature{VIRTUAL\_SITES\_RELATIVE}
+  orientation) of other particles. The feature \lit{VIRTUAL_SITES_COM}
+  allows to place a virtual particle into the center of mass of a set
+  of other particles. See section \ref{sec:virtual} for details.
+\item \newfeature{VIRTUAL\_SITES\_RELATIVE} Virtual sites are
+  particles, the position and velocity of which is not obtained by
+  integrating equations of motion. Rather, they are placed using the
+  position (and orientation) of other particles. The feature
+  \lit{VIRTUAL_SITES_RELATIVE} allows for rigid arrangements of
+  particles. See section \ref{sec:virtual} for details.
 \item \newfeature{VIRTUAL\_SITES\_NO\_VELOCITY}
 \item \newfeature{VIRTUAL\_SITES\_THERMOSTAT}
 \item \newfeature{THERMOSTAT\_IGNORE\_NON\_VIRTUAL}
@@ -100,8 +104,8 @@ Features can be activated in the configuration header
 \item \newfeature{METADYNAMICS}
 \item \newfeature{OVERLAPPED}
 \item \newfeature{OLD\_RW\_VERSION} This switches back to the old,
-\emph{wrong} random walk code of the polymer. Only use this if you
-rely on the old behaviour and \emph{know what you are doing}.
+  \emph{wrong} random walk code of the polymer. Only use this if you
+  rely on the old behaviour and \emph{know what you are doing}.
 \end{itemize}
 
 In addition, there are switches that enable additional features in the

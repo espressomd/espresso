@@ -42,7 +42,7 @@
 
 #include "utils.h"
 
-#ifdef ELP3M
+#if defined(P3M) || defined(DP3M)
 
 /************************************************
  * data types
@@ -120,11 +120,11 @@ typedef struct {
  *       have 4 node grids, the index 0 is used for the real space
  *       charge assignment grid).  */
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 extern fft_forw_plan fft_plan[4];
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DP3M
 extern fft_forw_plan Dfft_plan[4];
 #endif
 
@@ -138,7 +138,7 @@ extern fft_forw_plan Dfft_plan[4];
 /** Initialize some arrays connected to the 3D-FFT. */
 void  fft_pre_init();
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 /** Initialize everything connected to the 3D-FFT.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
@@ -164,7 +164,7 @@ void fft_perform_back(double *data);
 
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DP3M
 /** Initialize everything connected to the 3D-FFT related to the dipole-dipole.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).

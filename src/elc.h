@@ -23,10 +23,10 @@
     details on the method see MMM in general. The ELC method works
     together with any three dimensional method, which in Espresso is
     for example \ref p3m.h "P3M", with metallic boundary conditions.  */
-#ifndef ELC_H
-#define ELC_H
+#ifndef _ELC_H
+#define _ELC_H
 
-#if defined(ELP3M)  && defined(ELECTROSTATICS)
+#ifdef P3M
 
 /** parameters for the ELC method */
 typedef struct {
@@ -114,9 +114,9 @@ double ELC_P3M_dielectric_layers_energy_self();
 void ELC_P3M_self_forces();
 
 /// assign the additional, virtual charges, used only in energy.c
-void   ELC_P3M_charge_assign_both();
+void   ELC_p3m_charge_assign_both();
 /// assign the additional, virtual charges, used only in energy.c
-void   ELC_P3M_charge_assign_image();
+void   ELC_p3m_charge_assign_image();
 
 /// take into account the virtual charges in the charge sums, used in energy.c
 void   ELC_P3M_modify_p3m_sums_both();

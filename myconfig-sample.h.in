@@ -66,9 +66,6 @@
 /* To use address, also activate VIRTUAL_SITES and VIRTUAL_SITES_COM */
 #define ADRESS
 
-#define DAWAANR
-#define MAGNETIC_DIPOLAR_DIRECT_SUM
-#define MDLC
 #define METADYNAMICS
 #define OVERLAPPED
 
@@ -121,7 +118,6 @@
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_DPD
 #define INTER_RF
 #define MOL_CUT
 #define TUNABLE_SLIP

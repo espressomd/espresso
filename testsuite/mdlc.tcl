@@ -21,6 +21,7 @@ require_feature "MAGNETOSTATICS"
 require_feature "FFTW"
 require_feature "ROTATION"
 require_feature "CONSTRAINTS"
+require_max_nodes_per_side 2
 
 set tcl_precision 15
 
