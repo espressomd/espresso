@@ -37,7 +37,7 @@
 #include "tuning.h"
 #include "elc.h"
 
-#ifdef ELP3M
+#ifdef P3M
 
 /************************************************
  * variables
@@ -2370,5 +2370,5 @@ void p3m_print_p3m_struct(p3m_struct ps) {
 	  ps.a[0],ps.a[1],ps.a[2],ps.ai[0],ps.ai[1],ps.ai[2]);
 }
 
-#endif /* of ELP3M */
+#endif /* of P3M */
 

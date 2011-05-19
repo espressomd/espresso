@@ -468,7 +468,7 @@ double get_DLC_energy_dipolar(int kcut){
     double  *dip_DLC_t_x=NULL,*dip_DLC_t_y=NULL,*dip_DLC_t_z=NULL;
     double  dip_DLC_energy=0.0;
     double  mz=0.0,mx=0.0,my=0.0,volume,correc,mtot=0.0;
-#if defined(ROTATION) && defined(ELP3M)
+#if defined(ROTATION) && defined(DP3M)
     double dx,dy,dz,correps;
 #endif  
 
@@ -517,7 +517,7 @@ double get_DLC_energy_dipolar(int kcut){
 	   //See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 	   
            mz=slab_dip_count_mu(&mtot, &mx, &my);
-#ifdef ELP3M
+#ifdef DP3M
 	   if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
 	     if(Dp3m.epsilon == P3M_EPSILON_METALLIC) {	
 	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
@@ -550,7 +550,7 @@ double get_DLC_energy_dipolar(int kcut){
    	       p[i].f.f[1] += coulomb.Dprefactor*dip_DLC_f_y[ip];
    	       p[i].f.f[2] += coulomb.Dprefactor*dip_DLC_f_z[ip]; //SDC correction term is zero for the forces
    
-#if defined(ROTATION) && defined(ELP3M)
+#if defined(ROTATION) && defined(DP3M)
 	       //in the Next lines: the second term (correc*...)is the SDC correction for the torques
                 if(Dp3m.epsilon == P3M_EPSILON_METALLIC) {	
 
@@ -627,7 +627,7 @@ double get_DLC_energy_dipolar(int kcut){
      mz=slab_dip_count_mu(&mtot, &mx, &my);
      
      if(this_node == 0) {
-#ifdef ELP3M      
+#ifdef DP3M      
      if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
        if(Dp3m.epsilon == P3M_EPSILON_METALLIC) {
 	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
@@ -748,7 +748,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 
   
   switch (coulomb.Dmethod) {
-   #ifdef ELP3M
+   #ifdef DP3M
      case  DIPOLAR_MDLC_P3M:
      case  DIPOLAR_P3M:
        coulomb.Dmethod =DIPOLAR_MDLC_P3M;

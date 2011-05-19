@@ -22,7 +22,7 @@
 */
 #include "p3m-common.h"
 
-#ifdef ELP3M
+#if defined(P3M) || defined(DP3M)
 
 /** Debug function printing p3m structures */
 void p3m_print_local_mesh(local_mesh l) 
@@ -360,4 +360,4 @@ double P3M_caf(int i, double x,int cao_value) {
 /*   return y; */
 /* } */
 
-#endif /* ELP3M */
+#endif /* defined(P3M) || defined(DP3M) */

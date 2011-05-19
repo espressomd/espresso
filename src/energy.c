@@ -91,7 +91,7 @@ void calc_long_range_energies()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_P3M:
     P3M_charge_assign(); 
     energy.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
@@ -138,7 +138,7 @@ void calc_long_range_energies()
 
 #ifdef MAGNETOSTATICS
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_P3M:
     P3M_dipole_assign(); 
     energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
@@ -178,7 +178,7 @@ void init_energies(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:  n_coulomb = 0; break;
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M: n_coulomb = 3; break;
   case COULOMB_P3M:   n_coulomb = 2; break;
 #endif
@@ -192,7 +192,7 @@ void init_energies(Observable_stat *stat)
 
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:  n_dipolar = 1; break;
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
 #endif
