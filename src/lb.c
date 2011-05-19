@@ -1287,6 +1287,8 @@ void lb_reinit_fluid() {
     double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
+    LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
+
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 // TODO #ifdef LB_BOUNDARIES
@@ -2198,7 +2200,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
         local_j[2] = modes[3];
         
         #ifdef ADDITIONAL_CHECKS
-        	old_rho[(z*2+y)*2+x] = *local_rho;
+//        	old_rho[(z*2+y)*2+x] = *local_rho;
         #endif
         
         interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
@@ -2233,9 +2235,12 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_random = (%.6e,%.3e,%.3e)\n",this_node,p->lc.f_random[0],p->lc.f_random[1],p->lc.f_random[2]));
 
-  force[0] = force[0] + p->lc.f_random[0];
-  force[1] = force[1] + p->lc.f_random[1];
-  force[2] = force[2] + p->lc.f_random[2];
+  if(!(p->l.ext_flag & COORD_FIXED(0)))
+    force[0] = force[0] + p->lc.f_random[0];
+  if(!(p->l.ext_flag & COORD_FIXED(1)))
+    force[1] = force[1] + p->lc.f_random[1];
+  if(!(p->l.ext_flag & COORD_FIXED(2)))
+    force[2] = force[2] + p->lc.f_random[2];
 
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f_tot = (%.6e,%.3e,%.3e)\n",this_node,force[0],force[1],force[2]));
       
@@ -2265,13 +2270,13 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 
 #ifdef ADDITIONAL_CHECKS
   int i;
-  for (i=0;i<8;i++) {
-    lb_calc_local_rho(node_index[i],local_rho);
-    if (fabs(*local_rho-old_rho[i]) > ROUND_ERROR_PREC) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{108 Mass loss/gain %le in lb_viscous_momentum_exchange for particle %d} ",*local_rho-old_rho[i],p->p.identity);
-    }
-  }
+//  for (i=0;i<8;i++) {
+//    lb_calc_local_rho(node_index[i],local_rho);
+//    if (fabs(*local_rho-old_rho[i]) > ROUND_ERROR_PREC) {
+//      char *errtxt = runtime_error(128);
+//      ERROR_SPRINTF(errtxt,"{108 Mass loss/gain %le in lb_viscous_momentum_exchange for particle %d} ",*local_rho-old_rho[i],p->p.identity);
+//    }
+//  }
 #endif
 
 #if 0
@@ -2471,7 +2476,7 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
 static void lb_check_halo_regions() {
 
   index_t index;
-  int i,x,y,z, s_node, r_node, count=n_veloc;
+  int i,x,y,z, s_node, r_node, count=lbmodel.n_veloc;
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
 
@@ -2483,7 +2488,11 @@ static void lb_check_halo_regions() {
       for (y=0;y<lblattice.halo_grid[1];++y) {
 
 	index  = get_linear_index(0,y,z,lblattice.halo_grid);
-	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<lbmodel.n_veloc;i++) { s_buffer[i] = lbfluid[0][i][index];
+    if (fabs(lbfluid[0][i][index])>1)
+      printf("index %d i %d %f\n", index, i, lbfluid[0][i][index]);
+    fprintf(stderr, "index %d i %d %f\n", index, i, lbfluid[0][i][index]);
+  }
 
 	s_node = node_neighbors[1];
 	r_node = node_neighbors[0];
@@ -2492,18 +2501,18 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);
 	  }
 	}
 
 	index = get_linear_index(lblattice.grid[0]+1,y,z,lblattice.halo_grid); 
-	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 
 	s_node = node_neighbors[0];
 	r_node = node_neighbors[1];
@@ -2512,11 +2521,11 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(1,y,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(1,y,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);	  
 	  }
@@ -2540,11 +2549,11 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d z=%d\n",1,index,x,z);
 	  }
@@ -2554,7 +2563,7 @@ static void lb_check_halo_regions() {
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,lblattice.grid[1]+1,z,lblattice.halo_grid);
-	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 
 	s_node = node_neighbors[2];
 	r_node = node_neighbors[3];
@@ -2563,11 +2572,11 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,1,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,1,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d z=%d\n",1,index,x,z);
 	  }
@@ -2582,7 +2591,7 @@ static void lb_check_halo_regions() {
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,y,0,lblattice.halo_grid);
-	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 
 	s_node = node_neighbors[5];
 	r_node = node_neighbors[4];
@@ -2591,11 +2600,11 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d y=%d z=%d\n",2,index,x,y,lblattice.grid[2]);  
 	  }
@@ -2607,7 +2616,7 @@ static void lb_check_halo_regions() {
       for (x=0;x<lblattice.halo_grid[0];++x) {
 
 	index = get_linear_index(x,y,lblattice.grid[2]+1,lblattice.halo_grid);
-	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 
 	s_node = node_neighbors[4];
 	r_node = node_neighbors[5];
@@ -2616,11 +2625,11 @@ static void lb_check_halo_regions() {
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
 		       MPI_COMM_WORLD, status);
 	  index = get_linear_index(x,y,1,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(x,y,1,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<lbmodel.n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
 	  if(compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld x=%d y=%d\n",2,index,x,y);
 	  }

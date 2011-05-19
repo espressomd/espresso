@@ -582,6 +582,8 @@ int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
 
+
+static void lb_check_halo_regions();
 #endif /* LB */
 
 #endif /* LB_H */
