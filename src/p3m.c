@@ -1418,7 +1418,7 @@ static double p3m_mc_time(Tcl_Interp *interp, int mesh[3], int cao,
       break;
 
     /* bisection */
-    if ((get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) > p3m.accuracy) || (*_alpha_L > box_l[0]))
+    if ((get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) > p3m.accuracy))
       r_cut_iL_min = r_cut_iL;
     else
       r_cut_iL_max = r_cut_iL;
@@ -1458,10 +1458,6 @@ static double p3m_mc_time(Tcl_Interp *interp, int mesh[3], int cao,
     sprintf(b1,"%.3e",rs_err); sprintf(b2,"%.3e",ks_err);
     Tcl_AppendResult(interp, b1,"  ", b2,"  radius dangerously high\n", (char *) NULL);
     return -P3M_TUNE_CUTOFF_TOO_LARGE;
-  }
-  if(*_alpha_L > box_l[0]) {
-    P3M_TRACE(fprintf(stderr, "%d: alpha too large (%lf).\n", this_node, *_alpha_L/box_l[0]));
-    return -4;
   }
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
@@ -1545,9 +1541,6 @@ static double p3m_m_time(Tcl_Interp *interp, int mesh[3],
       if (tmp_time == -1) return -P3M_TUNE_FAIL;
       /* in this direction, we cannot optimise, since we get into precision trouble */
       if (tmp_time < 0) continue;
-
-      /* discard invalid values for alpha */
-      if(tmp_alpha_L > box_l[0]) continue;
 
       if (tmp_time < best_time) {
 	best_time  = tmp_time;
