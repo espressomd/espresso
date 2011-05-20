@@ -572,7 +572,10 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
       distvec[0] = vec[0];
       distvec[1] = vec[1];
       distvec[2] = vec[2];
-      
+    } else { 
+      distvec[0]=0;
+      distvec[1]=0;
+      distvec[2]=0;
     }
 
   }
