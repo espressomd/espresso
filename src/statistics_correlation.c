@@ -92,6 +92,7 @@ int correlation_update_from_file(unsigned int no) {
 int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int argc, char** argv) {
   int i;
   char buffer[TCL_DOUBLE_SPACE];
+  int err;
   if (self->n_data < 1) {
     Tcl_AppendResult(interp, buffer, "Error in print average: No input data available", (char *)NULL);
     return TCL_ERROR;
@@ -103,13 +104,14 @@ int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int
     }
   return TCL_OK;
   } else if (ARG0_IS_S("formatted")) {
-    double* values = (double*) malloc(self->dim_A);
+    double* values = (double*) malloc(self->dim_A*sizeof(double));
     for (i=0; i< self->dim_A; i++) {
       values[i]=self->A_accumulated_average[i]/self->n_data;
     }
     int change=0;
-    return tclcommand_observable_print_formatted(interp, argc-1, argv+1, &change, self->A_obs, values);
+    err=tclcommand_observable_print_formatted(interp, argc-1, argv+1, &change, self->A_obs, values);
     free(values);
+    return err;
   } else {
     Tcl_AppendResult(interp, buffer, "Error in print average: No input data available", (char *)NULL);
     return TCL_ERROR;
