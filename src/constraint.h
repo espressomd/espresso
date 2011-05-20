@@ -194,7 +194,7 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
     if (d_par < 0 )  {
       *dist = d_per ;   
       for (i=0; i<3;i++) {
-	vec[i]= d_per_vec[i] * d_per /  (d_per + c->rad) ;
+	vec[i]= d_per_vec[i] * d_per /  (d_per + c->rad+1e-100) ;
       }
     } else if ( d_per < 0) {
       *dist = d_par ;
