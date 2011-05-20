@@ -821,7 +821,6 @@ void p3m_assign_charge(double q,
 /** shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges) {
   /* we do not really want to export these */
-  void p3m_realloc_ca_fields(int size);
   if( n_charges < ca_num ) p3m_realloc_ca_fields(n_charges);
 }
 
