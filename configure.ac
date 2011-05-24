@@ -50,7 +50,7 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
      fake implementation for only one processor is used. Default: auto])
 ],,[with_mpi=auto])
 
-AX_MPI_ONLY([test x"$with_mpi" != xno],,[
+AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
     AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
   else
