@@ -458,13 +458,15 @@ Variant \variant{2} will return the total pressure only.  Variants
 \variant{3}, \variant{4} and \variant{5} return the corresponding
 contributions to the total pressure.
 
+\warning{Pressure works only with certain interactions and
+features. Read in detail before use!}
+
 \todo{Document arguments nb_inter, nb_intra, tot_nb_inter and
   tot_nb_intra}
 
-\todo{Description of how electrostatic contribution to Pressure is calculated}
-
 The pressure is calculated (if there are no electrostatic interactions) by 
 \begin{equation}
+\label{eq:ptens}
   p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
 \end{equation}
 where $f$ is the number of degrees of freedom of each particle, $V$
@@ -481,10 +483,16 @@ when the ROTATION option is turned off and
  when the ROTATION option is compiled in.  $I_{i}$ is the moment of inertia of the particle and
  $w_{i}$ is the angular velocity.
 
-Care should be taken when using constraints of any kind, since these are not accounted for
-in the pressure calculations. . Concerning bonded interactions
-only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-For all electrostatic interactions only the real space part is included.
+Note that Equation~\ref{eq:ptens} can only be applied to pair potentials and central forces.
+A different formula is used to calculate contribution from electrostatic interactions 
+in P3M. For electrostatic interactions, the $k$-space contribution is not well tested, 
+so use with caution!
+\todo{Description of how electrostatic contribution to Pressure is calculated}
+Anything outside that is currently not implemented.
+Only two-body bonded interactions (FENE, Harmonic) are included 
+(angular and dihedral are not).
+In case of rotation, virial contribution from torques is not included.
+Constraints of any kind are not currently accounted for in the pressure calculations. 
 
 The command is implemented in parallel.
 
@@ -526,6 +534,10 @@ Computes the stress tensor of the system.  The various options are equivalent to
 \keyword{analyze pressure} in \vref{analyze:pressure}. It is called a stress tensor but the sign
 convention follows that of a pressure tensor.
 
+\warning{Stress tensor works only with certain interactions and features. 
+Same restrictions as in the case of Pressure are applicable 
+(see scetion~\ref{analyze:pressure}).}
+
 The stress tensor is calculated by 
 \begin{equation}
   p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
@@ -537,13 +549,6 @@ means that when the ROTATION option is compiled in the instantaneous pressure ca
 \keyword{analyze pressure} will be different from the pressure implied by
 the stress tensor.  However, the time averages should be in agreement.
 
-If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
-stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
-only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-For all electrostatic interactions only the real space part is included.
-
-Care should be taken when using constraints of any kind, since these are not accounted for
-in the stress tensor calculations.
 
 The command is implemented in parallel.
 
