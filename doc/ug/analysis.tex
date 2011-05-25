@@ -484,14 +484,16 @@ when the ROTATION option is turned off and
  $w_{i}$ is the angular velocity.
 
 Note that Equation~\ref{eq:ptens} can only be applied to pair potentials and central forces.
+Description of how contributions from other interactions are calculated is beyond the scope
+of this manual. Three body potentials are implemented following the procedure in 
+Ref.~\cite{thompson09a}.
 A different formula is used to calculate contribution from electrostatic interactions 
-in P3M. For electrostatic interactions, the $k$-space contribution is not well tested, 
-so use with caution!
+in P3M. For electrostatic interactions, the $k$-space contribution is not 
+well tested, so use with caution!
 \todo{Description of how electrostatic contribution to Pressure is calculated}
 Anything outside that is currently not implemented.
-Only two-body bonded interactions (FENE, Harmonic) are included 
-(angular and dihedral are not).
-In case of rotation, virial contribution from torques is not included.
+Four-body dihedral potentials are not included.
+In case of rigid body rotation, virial contribution from torques is not included.
 Constraints of any kind are not currently accounted for in the pressure calculations. 
 
 The command is implemented in parallel.
