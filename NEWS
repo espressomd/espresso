@@ -5,7 +5,7 @@
 ESPResSo 3.0.1
 ==============
 
-* Fixed the following bugs: #33375, #33376
+* Fixed bugs #33375,#33376,#32005
 
 * Fixed a few bugs that were never reported via the bug tracker.
 

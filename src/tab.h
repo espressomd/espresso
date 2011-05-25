@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef TAB_H
-#define TAB_H
+#ifndef _TAB_H
+#define _TAB_H
 
 /** \file tab.h
  *  Routines to calculate the  energy and/or  force 
@@ -80,15 +81,15 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 )
     return 2;
 
-  /*Open the file containing force and energy tables */
+  /* Open the file containing force and energy tables */
   fp = fopen( filename , "r");
   if ( !fp )
     return 3;
 
-  /*Look for a line starting with # */
+  /* Look for a line starting with # */
   while ( token != EOF) {
     token = fgetc(fp);
-    if ( token == '#' ) { break; } // magic number for # symbol
+    if ( token == '#' ) { break; }
   }
   if ( token == EOF ) {
     fclose(fp);
