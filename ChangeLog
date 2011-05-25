@@ -1,3 +1,108 @@
+2011-05-25 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * configure.ac: Bumped version number.
+
+ * NEWS, src/tab.h: Updated NEWS and copyright notice.
+
+2011-05-25 Florian Fahrenberger <Florian.Fahrenberger@icp.uni-stuttgart.de>
+
+ * doc/ug/Makefile.am: added missing figure files to UGs Makefile.
+
+2011-05-24 Marcello Sega <sega@icp.uni-stuttgart.de>
+
+ * src/fene.h, src/harmonic.h: fixed undefined forces in harmonic and fene
+ bonds
+
+2011-05-25 kosovan <kosovan@icp.uni-stuttgart.de>
+
+ * doc/ug/analysis.tex, doc/ug/bibliography.bib: Small fix to documentation of
+ pressure tensor.
+
+2011-05-24 kosovan <kosovan@icp.uni-stuttgart.de>
+
+ * doc/ug/analysis.tex, src/pressure.h: Added rotational inertia to kinetic
+ virials. Updated documentation on usability of pressure and stress tensor
+ analysis routines.
+
+2011-05-24 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * NEWS: Updated NEWS.
+
+2011-05-23 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/statistics.c: Fixed analyze rdf parser
+
+2011-05-19 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/p3m.c: removed wrong checks for alpha>1 from tuning
+
+2011-05-18 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * src/communication.c, src/config.h, src/elc.c, src/elc.h, src/energy.c,
+ src/energy.h, src/fft.c, src/fft.h, src/forces.c, src/forces.h, src/iccp3m.c,
+ src/iccp3m.h, src/initialize.c, src/interaction_data.c,
+ src/mdlc_correction.c, src/p3m-common.c, src/p3m-common.h,
+ src/p3m-magnetostatics.c, src/p3m-magnetostatics.h, src/p3m.c, src/p3m.h,
+ src/pressure.c, src/pressure.h: Fixed problem with feature MAGNETOSTATICS
+ without ELECTROSTATICS.
+
+2011-05-17 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/mmm2d.c: Fixed a bug in MMM2D which caused a segfault when particle
+ coordinates were NaNs.
+
+2011-05-10 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * configure.ac: Reintroduced CJ's CFLAGS handling, with correct quoting.
+
+2011-05-10 Stefan Kesselheim <stefan@kesselheim-online.de>
+
+ * src/lb.c: corrected an error in the initialization of the lb fluid
+
+2011-05-09 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * NEWS: Updated NEWS.
+
+ * configure.ac: Removed bashism.
+
+2011-05-06 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/fft.c, src/p3m.c: fixed FFT to use fftw_malloc for alignment
+
+2011-05-03 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * testsuite/configs/myconfig-tunableslip.h, testsuite/tunable_slip.tcl:
+ Testcase tunable_slip.tcl should not use VIRTUAL_SITES_RELATIVE.
+
+2011-04-19 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/statistics_fluid.c, src/thermostat.h: Fixed two warnings
+
+2011-05-02 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/Makefile.am: [FIX] added DEFAULT_INCLUDES to NVCC flags
+
+2011-04-28 Florian Weik <fweik@icq.uni-stuttgart.de>
+
+ * src/p3m.c: p3m-charges: Reenabled tcl-output for tuning.
+
+2011-05-02 Axel Arnold <arnolda@icp.uni-stuttgart.de>
+
+ * src/Makefile.am: [FIX] added DEFAULT_INCLUDES to NVCC flags
+
+2011-04-28 Florian Weik <fweik@icq.uni-stuttgart.de>
+
+ * src/p3m.c: p3m-charges: Reenabled tcl-output for tuning.
+
+2011-04-20 Christoph Junghans <junghans@mpip-mainz.mpg.de>
+
+ * configure.ac: configure: never overwrite users CFLAGS
+
+ * configure.ac: configure: never overwrite users CFLAGS
+
+2011-04-19 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * NEWS, doc/ug/ug.tex: And back into developer mode again.
 2011-04-19 Olaf Lenz <olenz@icp.uni-stuttgart.de>
 
  * testsuite/comforce.tcl, testsuite/mdlc.tcl: Fixed mdlc test for 3 procs.
