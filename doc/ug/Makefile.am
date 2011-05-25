@@ -42,7 +42,13 @@ ug_FIGURES = \
 	figures/nacl-rdf.pdf \
 	figures/dihedral-angle.pdf \
 	figures/salt.png \
-	figures/hbond.pdf
+	figures/hbond.pdf \
+	figures/diamond.png \
+	figures/elc-errordist.pdf \
+	figures/fullerene.png \
+	figures/maggs-charge-assignment.pdf \
+	figures/maggs-initial-scheme.pdf \
+	figures/maggs-rotation.pdf
 
 ug_FILES = \
 	$(ug_TEXFILES) \
