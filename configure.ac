@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT([ESPResSo],[3.0.0],[espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[3.0.1],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([src/main.c])
