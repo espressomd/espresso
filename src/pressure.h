@@ -522,7 +522,16 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
     virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION
+#ifdef ROTATIONAL_INERTIA
+  /* the rotational part is added to the total kinetic energy;
+     Here we use the rotational inertia  */
+
+  virials.data.e[0] += (SQR(p1->m.omega[0])*p1->p.rinertia[0] +
+		       SQR(p1->m.omega[1])*p1->p.rinertia[1] +
+		       SQR(p1->m.omega[2])*p1->p.rinertia[2])*time_step*time_step;
+#else
   virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
+#endif
 #endif
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
