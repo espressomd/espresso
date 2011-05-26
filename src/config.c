@@ -98,6 +98,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef ROTATION
   Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
 #endif
+#ifdef ROTATIONAL_INERTIA
+  Tcl_AppendResult(interp, "{ ROTATIONAL_INERTIA } ", (char *) NULL);
+#endif
 #ifdef DIPOLES
   Tcl_AppendResult(interp, "{ DIPOLES } ", (char *) NULL);
 #endif
