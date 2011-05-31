@@ -131,11 +131,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     nsq_calculate_virials();
   }
   /* rescale kinetic energy (=ideal contribution) */
-#ifdef ROTATION
-  virials.data.e[0] /= (6.0*volume*time_step*time_step);
-#else
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
-#endif
 
   calc_long_range_virials();
 
