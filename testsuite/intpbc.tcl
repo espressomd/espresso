@@ -39,18 +39,12 @@ proc read_data {file} {
 }
 
 proc write_data {file} {
-    global energy pressure pressrot verlet_reuse op
+    global energy pressure verlet_reuse op
     set f [open "|gzip > $file" "w"]
     set energy [analyze energy total]
-    if { [regexp "ROTATION" [code_info]]} { 
-	set pressrot [analyze pressure total]
-	set pressure [expr $pressrot - [analyze pressure ideal]]
-    } else {
-	set pressure [analyze pressure total]
-	set pressrot [expr $pressure - 0.5*[analyze pressure ideal]]
-    }
+    set pressure [analyze pressure total];
     set verlet_reuse [setmd verlet_reuse]
-    blockfile $f write tclvariable {energy pressure pressrot verlet_reuse}
+    blockfile $f write tclvariable {energy pressure verlet_reuse}
     blockfile $f write variable box_l
     # particle block by hand as we need the OLD positions
     puts $f "{particles {id pos f}"
@@ -101,7 +95,6 @@ if { [catch {
 	error "relative energy error too large"
     }
 
-    if { [regexp "ROTATION" [code_info]]} { set pressure $pressrot }
     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
     puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
     if { $rel_prs_error > $epsilon } {
