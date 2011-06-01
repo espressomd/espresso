@@ -47,6 +47,7 @@
 #include "p3m.h"
 #include "ewald.h"
 #include "fft.h"
+#include "fft-magnetostatics.h.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
