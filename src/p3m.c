@@ -1030,7 +1030,7 @@ void p3m_gather_fft_grid(double* themesh)
     else           r_dir = s_dir-1;
     /* pack send block */ 
     if(sm.s_size[s_dir]>0) 
-      pack_block(themesh, send_grid, sm.s_ld[s_dir], sm.s_dim[s_dir], p3m_lm.dim, 1);
+      fft_pack_block(themesh, send_grid, sm.s_ld[s_dir], sm.s_dim[s_dir], p3m_lm.dim, 1);
       
     /* communication */
     if(node_neighbors[s_dir] != this_node) {
@@ -1073,7 +1073,7 @@ void p3m_spread_force_grid(double* themesh)
     else           r_dir = s_dir-1;
     /* pack send block */ 
     if(sm.s_size[s_dir]>0) 
-      pack_block(themesh, send_grid, sm.r_ld[r_dir], sm.r_dim[r_dir], p3m_lm.dim, 1);
+      fft_pack_block(themesh, send_grid, sm.r_ld[r_dir], sm.r_dim[r_dir], p3m_lm.dim, 1);
     /* communication */
     if(node_neighbors[r_dir] != this_node) {
       for(evenodd=0; evenodd<2;evenodd++) {
@@ -1096,7 +1096,7 @@ void p3m_spread_force_grid(double* themesh)
     }
     /* un pack recv block */
     if(sm.s_size[s_dir]>0) {
-      unpack_block(recv_grid, themesh, sm.s_ld[s_dir], sm.s_dim[s_dir], p3m_lm.dim, 1); 
+      fft_unpack_block(recv_grid, themesh, sm.s_ld[s_dir], sm.s_dim[s_dir], p3m_lm.dim, 1); 
     }
   }
 }

@@ -114,8 +114,11 @@ int on_program_start(Tcl_Interp *interp)
   tf_tables_init();
   /* #endif */
 #endif
-#if defined(P3M) || defined(DP3M)
+#ifdef P3M
   fft_pre_init();
+#endif
+#ifdef DP3M
+  Dfft_pre_init();
 #endif
 
 #ifdef LB_GPU

@@ -43,7 +43,7 @@
 #include "domain_decomposition.h"
 #include "particle_data.h"
 #include "communication.h"
-#include "fft.h"
+#include "fft-magnetostatics.h"
 #include "thermostat.h"
 #include "cells.h"
 #include "tuning.h"
@@ -1476,7 +1476,7 @@ void dp3m_gather_fft_grid(double* themesh)
     else           r_dir = s_dir-1;
     /* pack send block */ 
     if(Dsm.s_size[s_dir]>0) 
-      pack_block(themesh, Dsend_grid, Dsm.s_ld[s_dir], Dsm.s_dim[s_dir], Dlm.dim, 1);
+      fft_pack_block(themesh, Dsend_grid, Dsm.s_ld[s_dir], Dsm.s_dim[s_dir], Dlm.dim, 1);
       
     /* communication */
     if(node_neighbors[s_dir] != this_node) {
@@ -1523,7 +1523,7 @@ void dp3m_spread_force_grid(double* themesh)
     else           r_dir = s_dir-1;
     /* pack send block */ 
     if(Dsm.s_size[s_dir]>0) 
-      pack_block(themesh, Dsend_grid, Dsm.r_ld[r_dir], Dsm.r_dim[r_dir], Dlm.dim, 1);
+      fft_pack_block(themesh, Dsend_grid, Dsm.r_ld[r_dir], Dsm.r_dim[r_dir], Dlm.dim, 1);
     /* communication */
     if(node_neighbors[r_dir] != this_node) {
       for(evenodd=0; evenodd<2;evenodd++) {
@@ -1546,7 +1546,7 @@ void dp3m_spread_force_grid(double* themesh)
     }
     /* un pack recv block */
     if(Dsm.s_size[s_dir]>0) {
-      unpack_block(Drecv_grid, themesh, Dsm.s_ld[s_dir], Dsm.s_dim[s_dir], Dlm.dim, 1); 
+      fft_unpack_block(Drecv_grid, themesh, Dsm.s_ld[s_dir], Dsm.s_dim[s_dir], Dlm.dim, 1); 
     }
   }
 }
