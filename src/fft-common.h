@@ -207,7 +207,7 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
  * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br>
  * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out)) 
  *
- * For index definition see \ref pack_block.
+ * For index definition see \ref fft_pack_block.
  *
  *  \param in      pointer to input 3d-grid.
  *  \param out     pointer to output 3d-grid (block).
@@ -233,7 +233,7 @@ void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
  * li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br>
  * li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out)) 
  *
- * For index definition see \ref pack_block.
+ * For index definition see \ref fft_pack_block.
  *
  *  \param in      pointer to input 3d-grid.
  *  \param out     pointer to output 3d-grid (block).
@@ -249,7 +249,7 @@ void fft_pack_block_permute2(double *in, double *out, int start[3], int size[3],
 /** unpack a 3d-grid input block (size[3]) into an output 3d-grid
  *  with dimension dim[3] at start position start[3].
  *
- *  see also \ref pack_block.
+ *  see also \ref fft_pack_block.
  *
  *  \param in      pointer to input 3d-grid.
  *  \param out     pointer to output 3d-grid (block).
