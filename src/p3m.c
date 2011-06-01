@@ -2230,7 +2230,11 @@ void p3m_calc_kspace_stress (double* stress) {
 /************************************************/
 
 
-void   p3m_init_charges() {
+void p3m_pre_init(void) {
+  fft_pre_init();
+}
+
+void   p3m_init() {
   if(coulomb.bjerrum == 0.0) {       
     p3m.r_cut    = 0.0;
     p3m.r_cut_iL = 0.0;
@@ -2242,11 +2246,11 @@ void   p3m_init_charges() {
 
       fprintf(stderr,"   Electrostatics switched off!\n"));
   } else {  
-    P3M_TRACE(fprintf(stderr,"%d: p3m_init_charges: \n",this_node));
+    P3M_TRACE(fprintf(stderr,"%d: p3m_init: \n",this_node));
 
     if (p3m_sanity_checks()) return;
 
-    P3M_TRACE(fprintf(stderr,"%d: p3m_init_charges: starting\n",this_node));
+    P3M_TRACE(fprintf(stderr,"%d: p3m_init: starting\n",this_node));
 
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.mesh[0],p3m.cao,p3m.mesh_off[0],p3m.mesh_off[1],p3m.mesh_off[2]));
     p3m.cao3 = p3m.cao*p3m.cao*p3m.cao;

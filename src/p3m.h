@@ -114,10 +114,12 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
 /// parse the optimization parameters of p3m and the tuner
 int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
 
+void p3m_pre_init(void);
+
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for charge-charge interactions.
  */
-void p3m_init_charges(void);
+void p3m_init(void);
 
 /** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
 void p3m_scaleby_box_l();

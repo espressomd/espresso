@@ -56,7 +56,7 @@
  *       have 4 node grids, the index 0 is used for the real space
  *       charge assignment grid).  */
 
-extern fft_forw_plan Dfft_plan[4];
+extern fft_forw_plan dfft_plan[4];
 
 /*@}*/
 
@@ -65,7 +65,7 @@ extern fft_forw_plan Dfft_plan[4];
 /*@{*/
 
 /** Initialize some arrays connected to the 3D-FFT. */
-void  Dfft_pre_init();
+void  dfft_pre_init();
 
 /** Initialize everything connected to the 3D-FFT related to the dipole-dipole.
 
@@ -75,20 +75,20 @@ void  Dfft_pre_init();
  * \param ca_mesh_margin Pointer to CA mesh margins.
  * \param ks_pnum        Pointer to number of permutations in k-space.
  */
-int Dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
+int dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
 
 /** perform the forward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
     The assigned charges are in \a data. The result is also stored in \a data.
     \warning The content of \a data is overwritten.
     \param data DMesh.
 */
-void Dfft_perform_forw(double *data);
+void dfft_perform_forw(double *data);
 
 /** perform the backward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
     \warning The content of \a data is overwritten.
     \param data DMesh.
 */
-void Dfft_perform_back(double *data);
+void dfft_perform_back(double *data);
 
 
 #endif /* DP3M */

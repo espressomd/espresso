@@ -92,10 +92,12 @@ int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int arg
 /** print the p3m parameters to the interpreters result */
 int tclprint_to_result_dp3m(Tcl_Interp *interp);
 
+void dp3m_pre_init();
+
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
  */
-void  dp3m_init_dipoles(void);
+void  dp3m_init(void);
 
 /** Updates \ref dp3m_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();

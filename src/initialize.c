@@ -45,9 +45,8 @@
 #include "thermostat.h"
 #include "rotation.h"
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 #include "ewald.h"
-#include "fft.h"
-#include "fft-magnetostatics.h.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -116,10 +115,10 @@ int on_program_start(Tcl_Interp *interp)
   /* #endif */
 #endif
 #ifdef P3M
-  fft_pre_init();
+  p3m_pre_init();
 #endif
 #ifdef DP3M
-  Dfft_pre_init();
+  dp3m_pre_init();
 #endif
 
 #ifdef LB_GPU
@@ -364,7 +363,7 @@ void on_coulomb_change()
     ELC_init();
     // fall through
   case COULOMB_P3M:
-    p3m_init_charges();
+    p3m_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -400,7 +399,7 @@ void on_coulomb_change()
     case DIPOLAR_MDLC_P3M:
        // fall through
   case DIPOLAR_P3M:
-    dp3m_init_dipoles();
+    dp3m_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
