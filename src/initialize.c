@@ -699,7 +699,7 @@ void on_parameter_change(int field)
 #ifdef LB_GPU
 if(this_node == 0){
   if (lattice_switch & LATTICE_LB_GPU) {
-    if (field == FIELD_TEMPERATURE) lb_init_gpu();
+    if (field == FIELD_TEMPERATURE) lb_reinit_parameters_gpu();
   }
 }
 #endif
@@ -713,6 +713,21 @@ void on_lb_params_change(int field) {
   }
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid();
+  }
+
+  lb_reinit_parameters();
+
+}
+#endif
+
+#ifdef LB_GPU
+void on_lb_params_change_gpu(int field) {
+
+  if (field == LBPAR_AGRID) {
+    lb_init_gpu();
+  }
+  if (field == LBPAR_DENSITY) {
+    lb_reinit_fluid_gpu();
   }
 
   lb_reinit_parameters();

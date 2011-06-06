@@ -114,6 +114,10 @@ typedef struct {
 
   unsigned int your_seed;
 
+  float old_rho;
+
+  unsigned int reinit;
+
 } LB_parameters_gpu;
 
 /** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
@@ -265,11 +269,13 @@ void lb_calc_particle_lattice_ia_gpu();
 void lb_send_forces_gpu();
 void calc_fluid_momentum_GPU(double* mom);
 void calc_fluid_temperature_GPU(double* cpu_temp);
-
+void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
+void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
+void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 #ifdef __cplusplus
 }
 #endif
-
+void on_lb_params_change_gpu(int field);
 /** Parser for the TCL command lbnode. */
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
 

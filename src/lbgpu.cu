@@ -709,7 +709,66 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   node_index[5] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-	
+#if 1
+	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
+  if(n_a.boundary[node_index[0]] == 1){
+    delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
+    delta[2] = temp_delta[0] * temp_delta_half[4] * temp_delta[2];
+    delta[4] = temp_delta[0] * temp_delta[1] * temp_delta_half[5];
+  }
+  if(n_a.boundary[node_index[1]] == 1){		
+    delta[0] = temp_delta_half[0] * temp_delta[1] * temp_delta[2];
+    delta[3] = temp_delta[3] * temp_delta_half[4] * temp_delta[2];
+    delta[5] = temp_delta[3] * temp_delta[1] * temp_delta_half[5];
+  }
+  if(n_a.boundary[node_index[2]] == 1){		
+    delta[0] = temp_delta_half[0] * temp_delta[1] * temp_delta[2];
+    delta[3] = temp_delta[3] * temp_delta_half[4] * temp_delta[2];
+    delta[6] = temp_delta[0] * temp_delta[4] * temp_delta_half[5];
+  }
+  if(n_a.boundary[node_index[3]] == 1){		
+    delta[1] = temp_delta[3] * temp_delta_half[1] * temp_delta[2];
+    delta[2] = temp_delta_half[0] * temp_delta[4] * temp_delta[2];
+    delta[7] = temp_delta[3] * temp_delta[4] * temp_delta_half[5];
+  }
+  if(n_a.boundary[node_index[4]] == 1){		
+    delta[0] = temp_delta[0] * temp_delta[1] * temp_delta_half[2];
+    delta[5] = temp_delta_half[3] * temp_delta[1] * temp_delta[5];
+    delta[6] = temp_delta[0] * temp_delta_half[4] * temp_delta[5];
+  }
+  if(n_a.boundary[node_index[5]] == 1){		
+    delta[1] = temp_delta[3] * temp_delta[1] * temp_delta_half[2];
+    delta[4] = temp_delta_half[0] * temp_delta[1] * temp_delta[5];
+    delta[7] = temp_delta[3] * temp_delta_half[4] * temp_delta[5];
+  }
+  if(n_a.boundary[node_index[6]] == 1){		
+    delta[2] = temp_delta[0] * temp_delta[4] * temp_delta_half[2];
+    delta[4] = temp_delta[0] * temp_delta_half[1] * temp_delta[5];
+    delta[7] = temp_delta_half[3] * temp_delta[4] * temp_delta[5];
+  }
+  if(n_a.boundary[node_index[7]] == 1){		
+    delta[3] = temp_delta[3] * temp_delta[4] * temp_delta_half[2];
+    delta[5] = temp_delta[3] * temp_delta_half[1] * temp_delta[5];
+    delta[6] = temp_delta_half[0] * temp_delta[4] * temp_delta[5];
+  }
+#endif
+#if 1
+  if(n_a.boundary[node_index[0]] == 1)delta[0] = 0.f;
+
+  if(n_a.boundary[node_index[1]] == 1)delta[1] = 0.f;
+
+  if(n_a.boundary[node_index[2]] == 1)delta[2] = 0.f;
+
+  if(n_a.boundary[node_index[3]] == 1)delta[3] = 0.f;
+
+  if(n_a.boundary[node_index[4]] == 1)delta[4] = 0.f;
+
+  if(n_a.boundary[node_index[5]] == 1)delta[5] = 0.f;
+
+  if(n_a.boundary[node_index[6]] == 1)delta[6] = 0.f;
+
+  if(n_a.boundary[node_index[7]] == 1)delta[7] = 0.f;
+#endif	
   #pragma unroll
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
@@ -818,6 +877,14 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
     float v[3] = { 0.0f, 0.0f, 0.0f };
+
+  if(para.reinit != 0){
+    float mode[4];
+    calc_mode(mode, n_a, index);
+    v[0] = mode[1]/para.old_rho*para.agrid*para.agrid*para.agrid/para.agrid/para.tau;
+    v[1] = mode[2]/para.old_rho*para.agrid*para.agrid*para.agrid/para.agrid/para.tau;
+    v[2] = mode[3]/para.old_rho*para.agrid*para.agrid*para.agrid/para.agrid/para.tau;
+  }
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
     float rhoc_sq = Rho*c_sound_sq;
@@ -885,7 +952,6 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
     n_a.seed[index] = para.your_seed + index;
   }
 }
-
 /** kernel for the initalisation of the particle force array
  * @param *particle_force	Pointer to local particle force (Output)
  * @param *part			Pointer to the particle rn seed storearray (Output)
@@ -1232,6 +1298,8 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
+  lbpar_gpu->old_rho = lbpar_gpu->rho;
+
   h_gpu_check[0] = 0;
   cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
 
@@ -1241,6 +1309,15 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();	
   }	
+}
+
+void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
+
+  /**write parameters in const memory*/
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+
+  /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
 }
 
 /**setup and call particle reallocation from the host
@@ -1307,7 +1384,18 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
   cudaThreadSynchronize();
 }
+/**setup and call extern single node force initialization from the host
+ * @param n_extern_nodeforces			number of nodes on which the external force has to be applied
+ * @param *host_extern_nodeforces		Pointer to the host extern node forces
+ * @param *lbpar_gpu				Pointer to host parameter struct
+*/
+void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu){
 
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
+
+  KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
+
+}
 /**setup and call extern single node force initialization from the host
  * @param n_extern_nodeforces			number of nodes on which the external force has to be applied
  * @param *host_extern_nodeforces		Pointer to the host extern node forces
@@ -1412,7 +1500,12 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
 
   cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
+/** reinit of params */
+void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 
+  /**write parameters in const memory*/
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+}
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
   
