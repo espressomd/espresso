@@ -59,7 +59,9 @@ tests = \
 	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl \
-	mass-and-rinertia.tcl 
+	mass-and-rinertia.tcl \
+	magnetic-field.tcl
+
 
 deactivated_tests =
 
