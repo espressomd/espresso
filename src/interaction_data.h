@@ -116,7 +116,7 @@
 /*@}*/
 
 
-#ifdef  MAGNETOSTATICS
+#ifdef  DIPOLES
   /** \name Type codes for the type of dipolar interaction
     Enumeration of implemented methods for the magnetostatic
     interaction.
@@ -468,7 +468,7 @@ typedef struct {
   int method;
  #endif
 
- #ifdef MAGNETOSTATICS
+ #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
   int    Dmethod;

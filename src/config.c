@@ -92,9 +92,6 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef ELECTROSTATICS
   Tcl_AppendResult(interp, "{ ELECTROSTATICS } ", (char *) NULL);
 #endif
-#ifdef MAGNETOSTATICS
-  Tcl_AppendResult(interp, "{ MAGNETOSTATICS } ", (char *) NULL);
-#endif
 #ifdef ROTATION
   Tcl_AppendResult(interp, "{ ROTATION } ", (char *) NULL);
 #endif
