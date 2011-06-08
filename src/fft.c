@@ -169,8 +169,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     fft_plan[i].recv_block = (int *)realloc(fft_plan[i].recv_block, 6*fft_plan[i].g_size*sizeof(int));
     fft_plan[i].recv_size  = (int *)realloc(fft_plan[i].recv_size, 1*fft_plan[i].g_size*sizeof(int));
 
-    fft_plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], p3m.mesh,
-					   p3m.mesh_off, fft_plan[i].new_mesh, 
+    fft_plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], p3m.params.mesh,
+					   p3m.params.mesh_off, fft_plan[i].new_mesh, 
 					   fft_plan[i].start);  
     permute_ifield(fft_plan[i].new_mesh,3,-(fft_plan[i].n_permute));
     permute_ifield(fft_plan[i].start,3,-(fft_plan[i].n_permute));
@@ -183,7 +183,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       node = fft_plan[i].group[j];
       fft_plan[i].send_size[j] 
 	= fft_calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
-			  p3m.mesh, p3m.mesh_off, &(fft_plan[i].send_block[6*j]));
+			  p3m.params.mesh, p3m.params.mesh_off, &(fft_plan[i].send_block[6*j]));
       permute_ifield(&(fft_plan[i].send_block[6*j]),3,-(fft_plan[i-1].n_permute));
       permute_ifield(&(fft_plan[i].send_block[6*j+3]),3,-(fft_plan[i-1].n_permute));
       if(fft_plan[i].send_size[j] > max_comm_size) 
@@ -198,7 +198,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       /* recv block: this_node from comm-group-node i (identity: node) */
       fft_plan[i].recv_size[j] 
 	= fft_calc_send_block(my_pos[i], n_grid[i], &(n_pos[i-1][3*node]), n_grid[i-1],
-			  p3m.mesh,p3m.mesh_off,&(fft_plan[i].recv_block[6*j]));
+			  p3m.params.mesh,p3m.params.mesh_off,&(fft_plan[i].recv_block[6*j]));
       permute_ifield(&(fft_plan[i].recv_block[6*j]),3,-(fft_plan[i].n_permute));
       permute_ifield(&(fft_plan[i].recv_block[6*j+3]),3,-(fft_plan[i].n_permute));
       if(fft_plan[i].recv_size[j] > max_comm_size) 

@@ -166,8 +166,8 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
     dfft_plan[i].recv_block = (int *)realloc(dfft_plan[i].recv_block, 6*dfft_plan[i].g_size*sizeof(int));
     dfft_plan[i].recv_size  = (int *)realloc(dfft_plan[i].recv_size, 1*dfft_plan[i].g_size*sizeof(int));
 
-    dfft_plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], dp3m.mesh,
-					   dp3m.mesh_off, dfft_plan[i].new_mesh, 
+    dfft_plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], dp3m.params.mesh,
+					   dp3m.params.mesh_off, dfft_plan[i].new_mesh, 
 					   dfft_plan[i].start);  
     permute_ifield(dfft_plan[i].new_mesh,3,-(dfft_plan[i].n_permute));
     permute_ifield(dfft_plan[i].start,3,-(dfft_plan[i].n_permute));
@@ -180,7 +180,7 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       node = dfft_plan[i].group[j];
       dfft_plan[i].send_size[j] 
 	= fft_calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
-			  dp3m.mesh, dp3m.mesh_off, &(dfft_plan[i].send_block[6*j]));
+			  dp3m.params.mesh, dp3m.params.mesh_off, &(dfft_plan[i].send_block[6*j]));
       permute_ifield(&(dfft_plan[i].send_block[6*j]),3,-(dfft_plan[i-1].n_permute));
       permute_ifield(&(dfft_plan[i].send_block[6*j+3]),3,-(dfft_plan[i-1].n_permute));
       if(dfft_plan[i].send_size[j] > Dmax_comm_size) 
@@ -195,7 +195,7 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       /* recv block: this_node from comm-group-node i (identity: node) */
       dfft_plan[i].recv_size[j] 
 	= fft_calc_send_block(my_pos[i], n_grid[i], &(n_pos[i-1][3*node]), n_grid[i-1],
-			  dp3m.mesh,dp3m.mesh_off,&(dfft_plan[i].recv_block[6*j]));
+			  dp3m.params.mesh,dp3m.params.mesh_off,&(dfft_plan[i].recv_block[6*j]));
       permute_ifield(&(dfft_plan[i].recv_block[6*j]),3,-(dfft_plan[i].n_permute));
       permute_ifield(&(dfft_plan[i].recv_block[6*j+3]),3,-(dfft_plan[i].n_permute));
       if(dfft_plan[i].recv_size[j] > Dmax_comm_size) 
