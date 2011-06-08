@@ -44,7 +44,7 @@
 #endif
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345};
+LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345, 0.0, 0};
 
 LB_values_gpu *host_values = NULL;
 LB_nodes_gpu *host_nodes = NULL;
@@ -192,9 +192,12 @@ void lb_realloc_particles_gpu(){
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
-  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
-
-  lb_init_GPU(&lbpar_gpu);
+  //lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
+  lb_reinit_parameters_gpu();
+  if(lbpar_gpu.number_of_nodes != 0){
+    lb_reinit_GPU(&lbpar_gpu);
+    lbpar_gpu.reinit = 1;
+  }
 
   LB_TRACE (fprintf(stderr,"lb_reinit_fluid_gpu \n"));
 }
@@ -251,6 +254,8 @@ void lb_reinit_parameters_gpu() {
     lbpar_gpu.lb_coupl_pref2 = 0.0;
   }
 	LB_TRACE (fprintf(stderr,"lb_reinit_prarameters_gpu \n"));
+
+  reinit_parameters_GPU(&lbpar_gpu);
 }
 
 /** Performs a full initialization of
@@ -258,6 +263,7 @@ void lb_reinit_parameters_gpu() {
  *  and the fluid are reset to their default values. */
 void lb_init_gpu() {
 
+  //lb_free_GPU();
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
@@ -510,6 +516,8 @@ static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *ch
   *change = 1;
   lbpar_gpu.tau = (float)tau;
 
+  on_lb_params_change_gpu(0);
+
   return TCL_OK;
 }
 
@@ -551,6 +559,9 @@ static int lbfluid_parse_agrid(Tcl_Interp *interp, int argc, char *argv[], int *
   }
 
   lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+
+  on_lb_params_change_gpu(LBPAR_AGRID);
+
   LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
  
   return TCL_OK;
@@ -575,6 +586,8 @@ static int lbfluid_parse_density(Tcl_Interp *interp, int argc, char *argv[], int
   *change = 1;
   lbpar_gpu.rho = (float)density;
 
+  on_lb_params_change_gpu(LBPAR_DENSITY);
+
   return TCL_OK;
 }
 
@@ -596,6 +609,8 @@ static int lbfluid_parse_viscosity(Tcl_Interp *interp, int argc, char *argv[], i
 
   *change = 1;
   lbpar_gpu.viscosity = (float)viscosity;
+
+  on_lb_params_change_gpu(LBPAR_VISCOSITY);
  
   return TCL_OK;
 }
@@ -619,6 +634,8 @@ static int lbfluid_parse_bulk_visc(Tcl_Interp *interp, int argc, char *argv[], i
   *change =1;
   lbpar_gpu.bulk_viscosity = (float)bulk_visc;
 
+  on_lb_params_change_gpu(LBPAR_BULKVISC);
+
   return TCL_OK;
 
 }
@@ -641,6 +658,8 @@ static int lbfluid_parse_friction(Tcl_Interp *interp, int argc, char *argv[], in
 
   *change = 1;
   lbpar_gpu.friction = (float)friction;
+
+  on_lb_params_change_gpu(LBPAR_FRICTION);
 
   return TCL_OK;
 }
@@ -666,6 +685,8 @@ static int lbfluid_parse_ext_force(Tcl_Interp *interp, int argc, char *argv[], i
   lbpar_gpu.ext_force[2] = (float)ext_f[2];
 
   lbpar_gpu.external_force = 1;
+
+  lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
     
   return TCL_OK;
 }
@@ -690,6 +711,8 @@ static int lbfluid_parse_gamma_odd(Tcl_Interp *interp, int argc, char *argv[], i
   *change = 1;
   lbpar_gpu.gamma_odd = (float)g;
 
+  on_lb_params_change_gpu(0);
+
   return TCL_OK;
 }
 
@@ -712,6 +735,8 @@ static int lbfluid_parse_gamma_even(Tcl_Interp *interp, int argc, char *argv[], 
 
   *change = 1;
   lbpar_gpu.gamma_even = (float)g;
+
+  on_lb_params_change_gpu(0);
 
   return TCL_OK;
 }
