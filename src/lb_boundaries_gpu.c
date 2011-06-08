@@ -179,7 +179,7 @@ int lb_boundary_sphere(LB_boundary_gpu *lbb, Tcl_Interp *interp,
   lbb->c.sph.pos[0] = 
   lbb->c.sph.pos[1] = 
   lbb->c.sph.pos[2] = 0;
-  lbb->c.sph.rad = 0;
+  lbb->c.sph.rad = -1;
   lbb->c.sph.direction = -1;
 
   while (argc > 0) {
@@ -396,8 +396,7 @@ void lb_init_boundaries_gpu() {
   int *host_boundindex = (int*)malloc(sizeof(int));
   size_t size_of_index;
   dist_tmp = 0.;
-	
-  
+
   for(z=0; z<lbpar_gpu.dim_z; z++) {
     for(y=0; y<lbpar_gpu.dim_y; y++) {
       for (x=0; x<lbpar_gpu.dim_x; x++) {	    
@@ -414,6 +413,7 @@ void lb_init_boundaries_gpu() {
               break;
             case LB_BOUNDARY_SPH:
               calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries_gpu[n].c.sph, &dist_tmp, dist_vec);
+
               break;
             case LB_BOUNDARY_CYL:
               calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries_gpu[n].c.cyl, &dist_tmp, dist_vec);
@@ -437,6 +437,7 @@ void lb_init_boundaries_gpu() {
       }
     }
   }
+
   /**call of cuda fkt*/
   lb_init_boundaries_GPU(number_of_boundnodes, host_boundindex);
 

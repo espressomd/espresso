@@ -263,6 +263,7 @@ void lb_reinit_parameters_gpu() {
  *  and the fluid are reset to their default values. */
 void lb_init_gpu() {
 
+  //lb_free_GPU();
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 

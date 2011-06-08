@@ -79,6 +79,7 @@ dim3 dim_grid_print(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
 
 
 static unsigned int intflag = 1;
+static LB_nodes_gpu *current_nodes = NULL;
 /**defining size values for allocating global memory */
 static size_t size_of_values;
 static size_t size_of_forces;
@@ -558,9 +559,9 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 
 #ifdef EXTERNAL_FORCES
   if(para.external_force){
-    node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*powf(para.agrid,4)*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*powf(para.agrid,4)*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*powf(para.agrid,4)*para.tau*para.tau;
   }
   else{
   node_f.force[0*para.number_of_nodes + index] = 0.f;
@@ -994,9 +995,9 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   if(index<para.number_of_nodes){
 #ifdef EXTERNAL_FORCE
     if(para.external_force){
-      node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.tau*para.tau;
-      node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*powf(para.agrid,4)*para.tau*para.tau;
+      node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*powf(para.agrid,4)*para.tau*para.tau;
+      node_f.force[2*para.number_of_nodes + index] = para.ext_force[2]*powf(para.agrid,4)*para.tau*para.tau;
     }
     else{
       node_f.force[0*para.number_of_nodes + index] = 0.0f;
@@ -1156,9 +1157,9 @@ __global__ void init_extern_nodeforces(int n_extern_nodeforces, LB_extern_nodefo
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<n_extern_nodeforces){
-    node_f.force[0*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[1*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*para.agrid*para.agrid*para.tau*para.tau;
-    node_f.force[2*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*para.agrid*para.agrid*para.tau*para.tau;
+    node_f.force[0*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[0]*powf(para.agrid,4)*para.tau*para.tau;
+    node_f.force[1*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[1]*powf(para.agrid,4)*para.tau*para.tau;
+    node_f.force[2*para.number_of_nodes + extern_nodeforces[index].index] = extern_nodeforces[index].force[2]*powf(para.agrid,4)*para.tau*para.tau;
   }
 }
 
@@ -1265,9 +1266,11 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.seed, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof(unsigned int)));
 
-  cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));  
+  cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));
+//maybe coalesced alloc  
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
-  cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));	
+  cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
+	
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 	
   /**write parameters in const memory*/
@@ -1300,11 +1303,12 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   lbpar_gpu->old_rho = lbpar_gpu->rho;
 
+  intflag = 1;
+  current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
   cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
 
   cudaThreadSynchronize();
-
   if(!h_gpu_check[0]){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();	
@@ -1428,7 +1432,7 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
   cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
 
   /** call of the particle kernel */
-  KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (nodes_a, particle_data, particle_force, node_f, part));
+  KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
   	
 }
 /** setup and call kernel to copy particle forces to host */
@@ -1446,7 +1450,7 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
 /** setup and call kernel for getting macroscopic fluid values of all nodes*/
 void lb_get_values_GPU(LB_values_gpu *host_values){
 
-  KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_values));
+  KERNELCALL(values, dim_grid, threads_per_block, (*current_nodes, device_values));
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
 
 }
@@ -1461,7 +1465,8 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
 
   dim_grid_print = make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
 
-  KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, nodes_a));
+  KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, *current_nodes));
+
   cudaMemcpy(host_print_values, device_print_values, sizeof(LB_values_gpu), cudaMemcpyDeviceToHost);
   cudaFree(device_print_values);
 
@@ -1472,11 +1477,8 @@ void calc_fluid_momentum_GPU(double* mom){
   float cpu_momentum[3] = { 0.f, 0.f, 0.f};
   cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
   cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
-  if (intflag == 1){
-    KERNELCALL(momentum, dim_grid, threads_per_block,(nodes_a, tot_momentum, node_f));
-  } else {
-    KERNELCALL(momentum, dim_grid, threads_per_block,(nodes_b, tot_momentum, node_f));
-  }
+
+  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, tot_momentum, node_f));
   
   cudaMemcpy(cpu_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
   
@@ -1491,11 +1493,9 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
   float* gpu_jsquared;
   cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
   cudaMemcpy(gpu_jsquared, &cpu_jsquared, sizeof(float), cudaMemcpyHostToDevice);
-  if (intflag == 1){
-    KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_a, gpu_jsquared));
-  } else {
-    KERNELCALL(temperature, dim_grid, threads_per_block,(nodes_b, gpu_jsquared));
-  }
+
+  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, gpu_jsquared));
+
   cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
 
   cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
@@ -1508,11 +1508,11 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 }
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
-  
+
   /**call of fluid step*/
   if (intflag == 1){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
-
+    current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
     if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
 			
@@ -1522,7 +1522,7 @@ void lb_integrate_GPU(){
   }
   else{
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_values, node_f));
-
+    current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU		
     if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
 			
