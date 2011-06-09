@@ -1070,8 +1070,8 @@ void calc_maximal_cutoff()
       max_cut_non_bonded = elc_params.space_layer;
     // fall through
   case COULOMB_P3M:
-    if (max_cut_non_bonded < p3m.r_cut)
-      max_cut_non_bonded = p3m.r_cut;
+    if (max_cut_non_bonded < p3m.params.r_cut)
+      max_cut_non_bonded = p3m.params.r_cut;
     break;
 #endif
   case COULOMB_EWALD:
@@ -1105,8 +1105,8 @@ void calc_maximal_cutoff()
 #ifdef DP3M
   switch (coulomb.Dmethod) {
   case DIPOLAR_P3M:
-    if (max_cut_non_bonded < dp3m.r_cut)
-      max_cut_non_bonded = dp3m.r_cut;
+    if (max_cut_non_bonded < dp3m.params.r_cut)
+      max_cut_non_bonded = dp3m.params.r_cut;
     break;
   }       
 #endif /*ifdef DP3M */
@@ -1173,14 +1173,7 @@ int coulomb_set_bjerrum(double bjerrum)
 #ifdef P3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
-      p3m.alpha    = 0.0;
-      p3m.alpha_L  = 0.0;
-      p3m.r_cut    = 0.0;
-      p3m.r_cut_iL = 0.0;
-      p3m.mesh[0]  = 0;
-      p3m.mesh[1]  = 0;
-      p3m.mesh[2]  = 0;
-      p3m.cao      = 0;
+      p3m_set_bjerrum();
       break;
 #endif
     case COULOMB_EWALD:
@@ -1319,14 +1312,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
-      dp3m.alpha    = 0.0;
-      dp3m.alpha_L  = 0.0;
-      dp3m.r_cut    = 0.0;
-      dp3m.r_cut_iL = 0.0;
-      dp3m.mesh[0]  = 0;
-      dp3m.mesh[1]  = 0;
-      dp3m.mesh[2]  = 0;
-      dp3m.cao      = 0;
+      dp3m_set_bjerrum();
       break;
 #endif
     }

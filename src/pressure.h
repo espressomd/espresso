@@ -521,10 +521,6 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
   else
     virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
-#ifdef ROTATION
-  virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
-#endif
-
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)
     for(l=0;l<3;l++)

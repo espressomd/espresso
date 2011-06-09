@@ -75,10 +75,26 @@ typedef struct {
   /** additional points around the charge assignment mesh, for method like dielectric ELC
       creating virtual charges. */
   double additional_mesh[3];
-} dp3m_struct;
+} dp3m_parameter_struct;
+
+typedef struct {
+  dp3m_parameter_struct params;
+
+  /** local mesh. */
+  p3m_local_mesh local_mesh;
+  /** real space mesh (local) for CA/FFT.*/
+  double *rs_mesh;
+  /** real space mesh (local) for CA/FFT of the dipolar field.*/
+  double *rs_mesh_dip[3];
+
+  /** number of dipolar particles (only on master node). */
+  int sum_dip_part; 
+  /** Sum of square of magnetic dipoles (only on master node). */
+  double sum_mu2;
+} dp3m_data_struct;
 
 /** dipolar P3M parameters. */
-extern dp3m_struct dp3m;
+extern dp3m_data_struct dp3m;
 
 /** \name Exported Functions */
 /************************************************************/
@@ -92,10 +108,12 @@ int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int arg
 /** print the p3m parameters to the interpreters result */
 int tclprint_to_result_dp3m(Tcl_Interp *interp);
 
+void dp3m_pre_init();
+
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
  */
-void  dp3m_init_dipoles(void);
+void  dp3m_init(void);
 
 /** Updates \ref dp3m_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();
@@ -139,11 +157,11 @@ MDINLINE double dp3m_add_pair_force(Particle *p1, Particle *p2,
   double adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r, D_r;
-  double alpsq = dp3m.alpha * dp3m.alpha;
+  double alpsq = dp3m.params.alpha * dp3m.params.alpha;
   double mixmj[3], mixr[3], mjxr[3];
 
-  if(dist < dp3m.r_cut && dist > 0) {
-    adist = dp3m.alpha * dist;
+  if(dist < dp3m.params.r_cut && dist > 0) {
+    adist = dp3m.params.alpha * dist;
     #if USE_ERFC_APPROXIMATION
        erfc_part_ri = AS_erfc_part(adist) / dist;
     #else
@@ -155,11 +173,11 @@ MDINLINE double dp3m_add_pair_force(Particle *p1, Particle *p2,
   mir = p1->r.dip[0]*d[0] + p1->r.dip[1]*d[1] + p1->r.dip[2]*d[2];
   mjr = p2->r.dip[0]*d[0] + p2->r.dip[1]*d[1] + p2->r.dip[2]*d[2];
 
-  coeff = 2.0*dp3m.alpha*wupii;
+  coeff = 2.0*dp3m.params.alpha*wupii;
   dist2i = 1 / dist2;
   exp_adist2 = exp(-adist*adist);
 
-  if(dp3m.accuracy > 5e-06)
+  if(dp3m.params.accuracy > 5e-06)
     B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
   else
     B_r = (erfc(adist)/dist + coeff * exp_adist2) * dist2i;
@@ -211,10 +229,10 @@ MDINLINE double dp3m_pair_energy(Particle *p1, Particle *p2,
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r;
-  double alpsq = dp3m.alpha * dp3m.alpha;
+  double alpsq = dp3m.params.alpha * dp3m.params.alpha;
  
-  if(dist < dp3m.r_cut && dist > 0) {
-    adist = dp3m.alpha * dist;
+  if(dist < dp3m.params.r_cut && dist > 0) {
+    adist = dp3m.params.alpha * dist;
     /*fac1 = coulomb.Dprefactor;*/
 
 #if USE_ERFC_APPROXIMATION
@@ -230,11 +248,11 @@ MDINLINE double dp3m_pair_energy(Particle *p1, Particle *p2,
     mir = p1->r.dip[0]*d[0] + p1->r.dip[1]*d[1] + p1->r.dip[2]*d[2];
     mjr = p2->r.dip[0]*d[0] + p2->r.dip[1]*d[1] + p2->r.dip[2]*d[2];
 
-    coeff = 2.0*dp3m.alpha*wupii;
+    coeff = 2.0*dp3m.params.alpha*wupii;
     dist2i = 1 / dist2;
     exp_adist2 = exp(-adist*adist);
 
-    if(dp3m.accuracy > 5e-06)
+    if(dp3m.params.accuracy > 5e-06)
       B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
     else
       B_r = (erfc(adist)/dist + coeff * exp_adist2) * dist2i;

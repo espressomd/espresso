@@ -18,9 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _FFT_H
-#define _FFT_H
-/** \file fft.h
+
+#ifndef _FFT_MAGNETOSTATICS_H
+#define _FFT_MAGNETOSTATICS_H
+
+/** \file fft-magnetostatics.h
  *
  *  Routines, row decomposition, data structures and communication for the 3D-FFT. 
  *
@@ -36,14 +38,12 @@
  *
  *  \todo Combine the forward and backward structures.
  *  \todo The packing routines could be moved to utils.h when they are needed elsewhere.
- *
- *  For more information about FFT usage, see \ref fft.c "fft.c".  
-*/
+ */
 
 #include <config.h>
 #include "fft-common.h"
 
-#ifdef P3M
+#ifdef DP3M
 
 /** \name Exported Variables */
 /************************************************************/
@@ -56,7 +56,7 @@
  *       have 4 node grids, the index 0 is used for the real space
  *       charge assignment grid).  */
 
-extern fft_forw_plan fft_plan[4];
+extern fft_forw_plan dfft_plan[4];
 
 /*@}*/
 
@@ -65,9 +65,9 @@ extern fft_forw_plan fft_plan[4];
 /*@{*/
 
 /** Initialize some arrays connected to the 3D-FFT. */
-void fft_pre_init();
+void  dfft_pre_init();
 
-/** Initialize everything connected to the 3D-FFT.
+/** Initialize everything connected to the 3D-FFT related to the dipole-dipole.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  * \param data           Pointer Pounter to data array.
@@ -75,23 +75,21 @@ void fft_pre_init();
  * \param ca_mesh_margin Pointer to CA mesh margins.
  * \param ks_pnum        Pointer to number of permutations in k-space.
  */
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
+int dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
 
-/** perform the forward 3D FFT.
+/** perform the forward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
     The assigned charges are in \a data. The result is also stored in \a data.
     \warning The content of \a data is overwritten.
-    \param data Mesh.
+    \param data DMesh.
 */
-void fft_perform_forw(double *data);
+void dfft_perform_forw(double *data);
 
-/** perform the backward 3D FFT.
+/** perform the backward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
     \warning The content of \a data is overwritten.
-    \param data Mesh.
+    \param data DMesh.
 */
-void fft_perform_back(double *data);
+void dfft_perform_back(double *data);
 
 
-/*@}*/
-#endif
-
-#endif
+#endif /* DP3M */
+#endif /* _FFT_MAGNETOSTATICS_H */

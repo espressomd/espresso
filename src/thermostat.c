@@ -353,6 +353,7 @@ void thermo_cool_down()
 
 int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
 {
+
 #if defined(LB) || defined(LB_GPU)
   double temp;
 
@@ -377,6 +378,5 @@ int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   
 #endif
-  
   return TCL_OK;
 }
