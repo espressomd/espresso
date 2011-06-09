@@ -730,7 +730,7 @@ void on_lb_params_change_gpu(int field) {
     lb_reinit_fluid_gpu();
   }
 
-  lb_reinit_parameters();
+  lb_reinit_parameters_gpu();
 
 }
 #endif
