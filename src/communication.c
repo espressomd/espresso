@@ -42,6 +42,7 @@
 #include "lj.h"
 #include "lb.h"
 #include "lb-boundaries.h"
+#include "lb_boundaries_gpu.c"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -1845,7 +1846,8 @@ void mpi_bcast_constraint_slave(int node, int parm)
 /*************** REQ_BCAST_LBBOUNDARY ************/
 void mpi_bcast_lbboundary(int del_num)
 {
-#ifdef LB_BOUNDARIES
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+#ifdef LB
   mpi_call(mpi_bcast_lbboundary_slave, 0, del_num);
 
   if (del_num == -1) {
@@ -1857,12 +1859,19 @@ void mpi_bcast_lbboundary(int del_num)
     n_lb_boundaries = 0;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
+#endif
+ #ifdef LBGPU
+  else if (del_num == -3) {
+   // nothing, GPU code just requires to call on_lbboundary_change()
+  }
+#endif
+#ifdef LB
   else {
     memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
-
+#endif
   on_lbboundary_change();
 #endif
 }
