@@ -44,7 +44,7 @@
 #endif
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345, 0.0, 0};
+LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345, 0};
 
 LB_values_gpu *host_values = NULL;
 LB_nodes_gpu *host_nodes = NULL;
@@ -515,6 +515,7 @@ static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *ch
 
   *change = 1;
   lbpar_gpu.tau = (float)tau;
+  fprintf(stderr,"tau %f \n", lbpar_gpu.tau);
 
   on_lb_params_change_gpu(0);
 
