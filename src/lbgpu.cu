@@ -878,14 +878,6 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 
     float Rho = para.rho*para.agrid*para.agrid*para.agrid;
     float v[3] = { 0.0f, 0.0f, 0.0f };
-
-  if(para.reinit != 0){
-    float mode[4];
-    calc_mode(mode, n_a, index);
-    v[0] = mode[1]/para.old_rho*para.agrid*para.agrid*para.agrid/para.agrid/para.tau;
-    v[1] = mode[2]/para.old_rho*para.agrid*para.agrid*para.agrid/para.agrid/para.tau;
-    v[2] = mode[3]/para.old_rho*para.agrid*para.agrid*para.agrid/para.agrid/para.tau;
-  }
     float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
 
     float rhoc_sq = Rho*c_sound_sq;
@@ -1301,8 +1293,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
-  lbpar_gpu->old_rho = lbpar_gpu->rho;
-
   intflag = 1;
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
@@ -1376,18 +1366,28 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
-  threads_per_block_bound = 64;
-  blocks_per_grid_bound_y = 4;
-  blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_bound_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
+  if (n_lb_boundaries_gpu == 0) {
+    cudaThreadSynchronize();
+    return;
+  }
+  if(number_of_boundnodes == 0){
+    fprintf(stderr, "WARNING: boundary cmd executed but no boundary node found!\n");
+  }
+  else{
+    threads_per_block_bound = 64;
+    blocks_per_grid_bound_y = 4;
+    blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_bound_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
 
-  dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
+    dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
-  KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
+    KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
 
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
+    KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
+  }
 
   cudaThreadSynchronize();
 }
+
 /**setup and call extern single node force initialization from the host
  * @param n_extern_nodeforces			number of nodes on which the external force has to be applied
  * @param *host_extern_nodeforces		Pointer to the host extern node forces
@@ -1514,9 +1514,9 @@ void lb_integrate_GPU(){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
-    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
+    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
 			
-    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
+    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
 #endif
     intflag = 0;
   }
@@ -1524,9 +1524,9 @@ void lb_integrate_GPU(){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_values, node_f));
     current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU		
-    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
+    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
 			
-    if (lb_boundaries_bb_gpu == 1) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
+    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
 #endif
     intflag = 1;
   }             

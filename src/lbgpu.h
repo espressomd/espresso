@@ -114,8 +114,6 @@ typedef struct {
 
   unsigned int your_seed;
 
-  float old_rho;
-
   unsigned int reinit;
 
 } LB_parameters_gpu;
@@ -203,9 +201,8 @@ extern LB_parameters_gpu lbpar_gpu;
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum_gpu;
 
-extern unsigned int lb_boundaries_bb_gpu;
-
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
+extern int n_lb_boundaries_gpu;
 
 #ifdef __cplusplus
 }
