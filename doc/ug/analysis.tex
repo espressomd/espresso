@@ -84,8 +84,8 @@ types specified in \var{part\_type\_list\_a} around particles with
 types specified in \var{part\_type\_list\_b} with distances between
 \var{rmin} and \var{rmax}, binned into \var{rbins} bins. The
 bins are either equidistant (if $\var{log\_flag} = 0$) or
-logarithmically equidistant (if $\var{log_flag} \geq 1$). If an
-integrated distribution is required, use $\var{int_flag}=1$. The
+logarithmically equidistant (if $\var{log\_flag} \geq 1$). If an
+integrated distribution is required, use $\var{in\t_flag}=1$. The
 distance is defined as the \emph{minimal} distance between a particle
 of one group to any of the other group.
 
@@ -105,9 +105,9 @@ The output corresponds to the blockfile format (see section
 \label{analyze:radialdensitymap}
 
 \begin{essyntax}
-  analyze radial_density_map xbins ybins xrange yrange
-  \{axisofrotation\} \{centerofrotation\} \{beadtypelist\}
-  \opt{thetabins}
+  analyze radial_density_map \var{xbins} \var{ybins} \var{xrange} \var{yrange}
+  \opt{\var{axisofrotation} \var{centerofrotation} \var{beadtypelist}
+  \opt{\var{thetabins}}}
 \end{essyntax}
 
 Returns the radial density of particles around a given
@@ -116,14 +116,14 @@ axis. Parameters are:
 \todo{Someone who knows or wrote this command should check this.}
 
 \begin{itemize}
-\item \keyword{xbins} histogram bins in x direction.
-\item \keyword{ybins} histogram bins in y direction.
-\item \keyword{xrange} range for analysis in x direction.
-\item \keyword{yrange} range for analysis in y direction.
-\item \keyword{axisofrotation} rotate around given axis. (x, y, or z)
-\item \keyword{centerofrotation} rotate around given point.
-\item \keyword{beadtypelist} only analyze beads of given types.
-\item \keyword{thetabins} histogram bins in angle theta.
+\item \var{xbins} histogram bins in x direction.
+\item \var{ybins} histogram bins in y direction.
+\item \var{xrange} range for analysis in x direction.
+\item \var{yrange} range for analysis in y direction.
+\item \var{axisofrotation} rotate around given axis. (x, y, or z)
+\item \var{centerofrotation} rotate around given point.
+\item \var{beadtypelist} only analyze beads of given types.
+\item \var{thetabins} histogram bins in angle theta.
 \end{itemize}
 
 \subsection{Modes}
