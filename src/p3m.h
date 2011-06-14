@@ -57,45 +57,6 @@
  * data types
  ************************************************/
 
-/** Structure to hold P3M parameters and some dependend variables. */
-typedef struct {
-  /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
-  double alpha_L;
-  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
-  double r_cut_iL;
-  /** number of mesh points per coordinate direction (>0). */
-  int    mesh[3];
-  /** offset of the first mesh point (lower left 
-      corner) from the coordinate origin ([0,1[). */
-  double mesh_off[3];
-  /** charge assignment order ([0,7]). */
-  int    cao;
-  /** number of interpolation points for charge assignment function */
-  int    inter;
-  /** Accuracy of the actual parameter set. */
-  double accuracy;
-
-  /** epsilon of the "surrounding dielectric". */
-  double epsilon;
-  /** Cutoff for charge assignment. */
-  double cao_cut[3];
-  /** mesh constant. */
-  double a[3];
-  /** inverse mesh constant. */
-  double ai[3];
-  /** unscaled \ref alpha_L for use with fast inline functions only */
-  double alpha;
-  /** unscaled \ref r_cut_iL for use with fast inline functions only */
-  double r_cut;
-  /** full size of the interpolated assignment function */
-  int inter2;
-  /** number of points unto which a single charge is interpolated, i.e. p3m.cao^3 */
-  int cao3;
-  /** additional points around the charge assignment mesh, for method like dielectric ELC
-      creating virtual charges. */
-  double additional_mesh[3];
-} p3m_parameter_struct;
-
 typedef struct {
   p3m_parameter_struct params;
 
@@ -103,6 +64,8 @@ typedef struct {
   p3m_local_mesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
+  /** k space mesh (local) for k space calculation and FFT.*/
+  double *ks_mesh;
   
   /** number of charged particles (only on master node). */
   int sum_qpart;
@@ -110,7 +73,42 @@ typedef struct {
   double sum_q2;
   /** square of sum of charges (only on master node). */
   double square_sum_q;
-} p3m_data_struct;
+
+  /** interpolation of the charge assignment function. */
+  double *int_caf[7];
+
+  /** position shift for calc. of first assignment mesh point. */
+  double pos_shift;
+  /** help variable for calculation of aliasing sums */
+  double *meshift_x;
+  double *meshift_y;
+  double *meshift_z;
+
+  /** Spatial differential operator in k-space. We use an i*k differentiation. */
+  double *d_op[3];
+  /** Force optimised influence function (k-space) */
+  double *g_force;
+  /** Energy optimised influence function (k-space) */
+  double *g_energy;
+
+  /** number of charged particles on the node. */
+  int ca_num;
+
+  /** Charge fractions for mesh assignment. */
+  double *ca_frac;
+  /** index of first mesh point for charge assignment. */
+  int *ca_fmp;
+  /** number of permutations in k_space */
+  int ks_pnum;
+
+  /** send/recv mesh sizes */
+  p3m_send_mesh  sm;
+
+  /** Field to store grid points to send. */
+  double *send_grid; 
+  /** Field to store grid points to recv */
+  double *recv_grid;
+  } p3m_data_struct;
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;

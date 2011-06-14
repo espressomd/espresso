@@ -45,20 +45,7 @@
 
 #ifdef DP3M
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
-/** Information about the three one dimensional FFTs and how the nodes
- *  have to communicate in between.
- *
- * NOTE: FFT numbering starts with 1 for technical reasons (because we
- *       have 4 node grids, the index 0 is used for the real space
- *       charge assignment grid).  */
-
-extern fft_forw_plan dfft_plan[4];
-
-/*@}*/
+extern fft_data_struct dfft;
 
 /** \name Exported Functions */
 /************************************************************/

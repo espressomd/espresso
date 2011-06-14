@@ -32,6 +32,24 @@
 
 #if defined(P3M) || defined(DP3M)
 
+void fft_common_pre_init(fft_data_struct *fft)
+{
+  for(int i=0;i<4;i++) {
+    fft->plan[i].group = malloc(1*n_nodes*sizeof(int));
+    fft->plan[i].send_block = NULL;
+    fft->plan[i].send_size  = NULL;
+    fft->plan[i].recv_block = NULL;
+    fft->plan[i].recv_size  = NULL;
+  }
+
+  fft->init_tag = 0;
+  fft->max_comm_size = 0;
+  fft->max_mesh_size = 0;
+  fft->send_buf = NULL;
+  fft->recv_buf = NULL;
+  fft->data_buf = NULL;
+}
+
 void fft_pack_block(double *in, double *out, int start[3], int size[3], int dim[3], int element)
 {
   /* mid and slow changing indices */
