@@ -47,7 +47,7 @@ void *fftw_malloc(size_t n);
  * variables
  ************************************************/
 
-dfft_data_struct dfft;
+fft_data_struct dfft;
 
 /** communicate the grid data according to the given fft_forw_plan. 
  * \param plan communication plan (see \ref fft_forw_plan).
