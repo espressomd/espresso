@@ -433,13 +433,6 @@ void on_constraint_change()
     lb_init_boundaries();
   }
 #endif
-#ifdef LB_BOUNDARIES_GPU
-  if(this_node == 0){
-    if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries_gpu();
-    }
-  }
-#endif
 
   recalc_forces = 1;
 }

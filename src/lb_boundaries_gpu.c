@@ -25,9 +25,9 @@
 #include "lb_boundaries_gpu.h"
 #include "lbgpu.h"
 #include "interaction_data.h"
+#include "communication.h"
 
 #ifdef LB_BOUNDARIES_GPU
-int unsigned lb_boundaries_bb_gpu = 0;
 int n_lb_boundaries_gpu       = 0;
 LB_boundary_gpu *lb_boundaries_gpu = NULL;
 
@@ -348,26 +348,29 @@ int tclcommand_lbboundary_gpu(Tcl_Interp *interp,
   if (argc < 2) return lb_boundary_print_all(interp);
   
   if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
-    status = lb_boundary_wall(generate_lb_boundary(),interp, argc - 2, argv + 2);   
+    status = lb_boundary_wall(generate_lb_boundary(),interp, argc - 2, argv + 2);
+    mpi_bcast_lbboundary(-3);   
   }
   else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
     status = lb_boundary_sphere(generate_lb_boundary(),interp, argc - 2, argv + 2); 
+    mpi_bcast_lbboundary(-3);
   }
   else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
-    status = lb_boundary_cylinder(generate_lb_boundary(),interp, argc - 2, argv + 2);  
+    status = lb_boundary_cylinder(generate_lb_boundary(),interp, argc - 2, argv + 2);
+    mpi_bcast_lbboundary(-3);  
   }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
-    if(argc < 3) {      
+    if(argc < 3) { 
+      n_lb_boundaries_gpu = 0;     
       status = TCL_OK;
     }
     else {
-      if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-      if(c_num < 0 || c_num >= n_lb_boundaries_gpu) {
-	Tcl_AppendResult(interp, "Can not delete non existing lb_boundary",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      status = TCL_OK;    
+      //TODO if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
+      // if(c_num < 0 || c_num >= n_lb_boundaries_gpu) {
+      Tcl_AppendResult(interp, "Cannot delete individual lb boundaries",(char *) NULL);
+      status = TCL_ERROR;    
     }
+    mpi_bcast_lbboundary(-3);
   }
   else if (argc == 2 && Tcl_GetInt(interp, argv[1], &c_num) == TCL_OK) {
     printLbBoundaryToResult(interp, c_num);
@@ -377,8 +380,7 @@ int tclcommand_lbboundary_gpu(Tcl_Interp *interp,
     Tcl_AppendResult(interp, "possible lb_boundaries: wall sphere cylinder lb_boundary delete {c} to delete lb_boundary or lb_boundaries",(char *) NULL);
     return status;
   }
-  lb_init_boundaries_gpu();
-	lb_boundaries_bb_gpu = 1; 
+ 
   return status;
 #else /* !defined(LB_BOUNDARIES) */
   Tcl_AppendResult(interp, "LB_BOUNDARIES_GPU not compiled in!" ,(char *) NULL);
