@@ -198,7 +198,7 @@ static void p3m_calc_differential_operator(void);
  * (optimised for force calculations)
  *
  *  Each node calculates only the values for its domain in k-space
- *  (see fft_plan[3].mesh and fft_plan[3].start).
+ *  (see fft.plan[3].mesh and fft.plan[3].start).
  *
  *  See also: Hockney/Eastwood 8-22 (p275). Note the somewhat
  *  different convention for the prefactors, which is described in
@@ -875,7 +875,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
         **********************/
 
 
-      for(i=0;i<fft_plan[3].new_size;i++) {
+      for(i=0;i<fft.plan[3].new_size;i++) {
         // Use the energy optimized influence function for energy!
         node_k_space_energy += g_energy[i] * ( SQR(p3m.rs_mesh[2*i]) + SQR(p3m.rs_mesh[2*i+1]) );
       }
@@ -899,7 +899,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
         /* Force preparation */
         ind = 0;
         /* apply the influence function */
-        for(i=0; i<fft_plan[3].new_size; i++) {
+        for(i=0; i<fft.plan[3].new_size; i++) {
             ks_mesh[ind] = g_force[i] * p3m.rs_mesh[ind]; ind++;
             ks_mesh[ind] = g_force[i] * p3m.rs_mesh[ind]; ind++;
         } 
@@ -919,12 +919,12 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
             d_rs = (d+ks_pnum)%3;
             /* srqt(-1)*k differentiation */
             ind=0;
-            for(j[0]=0; j[0]<fft_plan[3].new_mesh[0]; j[0]++) {
-                for(j[1]=0; j[1]<fft_plan[3].new_mesh[1]; j[1]++) {
-                    for(j[2]=0; j[2]<fft_plan[3].new_mesh[2]; j[2]++) {
+            for(j[0]=0; j[0]<fft.plan[3].new_mesh[0]; j[0]++) {
+                for(j[1]=0; j[1]<fft.plan[3].new_mesh[1]; j[1]++) {
+                    for(j[2]=0; j[2]<fft.plan[3].new_mesh[2]; j[2]++) {
                         /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-                        p3m.rs_mesh[ind] = -2.0*PI*(ks_mesh[ind+1] * d_operator[ j[d]+fft_plan[3].start[d] ])/box_l[d_rs]; ind++;
-                        p3m.rs_mesh[ind] =   2.0*PI*ks_mesh[ind-1] * d_operator[ j[d]+fft_plan[3].start[d] ]/box_l[d_rs];  ind++;
+                        p3m.rs_mesh[ind] = -2.0*PI*(ks_mesh[ind+1] * d_operator[ j[d]+fft.plan[3].start[d] ])/box_l[d_rs]; ind++;
+                        p3m.rs_mesh[ind] =   2.0*PI*ks_mesh[ind-1] * d_operator[ j[d]+fft.plan[3].start[d] ]/box_l[d_rs];  ind++;
                     }
                 }
             }
@@ -1143,17 +1143,17 @@ void p3m_calc_influence_function_force()
     p3m_calc_meshift();
 
     for(i=0;i<3;i++) {
-        size *= fft_plan[3].new_mesh[i];
-        end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
+        size *= fft.plan[3].new_mesh[i];
+        end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
     }
     g_force = (double *) realloc(g_force, size*sizeof(double));
 
-    for(n[0]=fft_plan[3].start[0]; n[0]<end[0]; n[0]++) {
-        for(n[1]=fft_plan[3].start[1]; n[1]<end[1]; n[1]++) {
-            for(n[2]=fft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-                ind = (n[2]-fft_plan[3].start[2])
-                    + fft_plan[3].new_mesh[2] * ((n[1]-fft_plan[3].start[1])
-                    + (fft_plan[3].new_mesh[1]*(n[0]-fft_plan[3].start[0])));
+    for(n[0]=fft.plan[3].start[0]; n[0]<end[0]; n[0]++) {
+        for(n[1]=fft.plan[3].start[1]; n[1]<end[1]; n[1]++) {
+            for(n[2]=fft.plan[3].start[2]; n[2]<end[2]; n[2]++) {
+                ind = (n[2]-fft.plan[3].start[2])
+                    + fft.plan[3].new_mesh[2] * ((n[1]-fft.plan[3].start[1])
+                    + (fft.plan[3].new_mesh[1]*(n[0]-fft.plan[3].start[0])));
 
                 if( (n[KX]%(p3m.params.mesh[RX]/2)==0) && (n[KY]%(p3m.params.mesh[RY]/2)==0) && (n[KZ]%(p3m.params.mesh[RZ]/2)==0) ) {
                     g_force[ind] = 0.0;
@@ -1220,9 +1220,9 @@ void p3m_calc_influence_function_energy()
     p3m_calc_meshift();
 
     for(i = 0; i < 3; i++) {
-      size *= fft_plan[3].new_mesh[i];
-      end[i] = fft_plan[3].start[i] + fft_plan[3].new_mesh[i];
-      start[i] = fft_plan[3].start[i];
+      size *= fft.plan[3].new_mesh[i];
+      end[i] = fft.plan[3].start[i] + fft.plan[3].new_mesh[i];
+      start[i] = fft.plan[3].start[i];
     }
 
     g_energy = (double *) realloc(g_energy, size*sizeof(double));
@@ -1234,8 +1234,8 @@ void p3m_calc_influence_function_energy()
         for(n[1]=start[1]; n[1]<end[1]; n[1]++) {
             for(n[2]=start[2]; n[2]<end[2]; n[2]++) {
                 ind = (n[2]-start[2])
-                    + fft_plan[3].new_mesh[2] * (n[1]-start[1])
-                    + fft_plan[3].new_mesh[2] * fft_plan[3].new_mesh[1]*(n[0]-start[0]);
+                    + fft.plan[3].new_mesh[2] * (n[1]-start[1])
+                    + fft.plan[3].new_mesh[2] * fft.plan[3].new_mesh[1]*(n[0]-start[0]);
                 if( (n[KX]%(p3m.params.mesh[RX]/2)==0) && (n[KY]%(p3m.params.mesh[RY]/2)==0) && (n[KZ]%(p3m.params.mesh[RZ]/2)==0) ) {
                     g_energy[ind] = 0.0;
                 }
@@ -2155,12 +2155,12 @@ void p3m_calc_kspace_stress (double* stress) {
         fft_perform_forw(p3m.rs_mesh);
         force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
-        for(jx=0; jx < fft_plan[3].new_mesh[0]; jx++) {
-            for(jy=0; jy < fft_plan[3].new_mesh[1]; jy++) {
-                for(jz=0; jz < fft_plan[3].new_mesh[2]; jz++) {
-                       kx = d_op[2][ jx + fft_plan[3].start[0] ];
-                       ky = d_op[0][ jy + fft_plan[3].start[1] ];
-                       kz = d_op[1][ jz + fft_plan[3].start[2] ];
+        for(jx=0; jx < fft.plan[3].new_mesh[0]; jx++) {
+            for(jy=0; jy < fft.plan[3].new_mesh[1]; jy++) {
+                for(jz=0; jz < fft.plan[3].new_mesh[2]; jz++) {
+                       kx = d_op[2][ jx + fft.plan[3].start[0] ];
+                       ky = d_op[0][ jy + fft.plan[3].start[1] ];
+                       kz = d_op[1][ jz + fft.plan[3].start[2] ];
                     sqk = SQR(kx/box_l[x]) + SQR(ky/box_l[y]) + SQR(kz/box_l[z]);
                     if (sqk == 0) {
                         node_k_space_energy = 0.0;

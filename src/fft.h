@@ -45,26 +45,13 @@
 
 #ifdef P3M
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
-/** Information about the three one dimensional FFTs and how the nodes
- *  have to communicate in between.
- *
- * NOTE: FFT numbering starts with 1 for technical reasons (because we
- *       have 4 node grids, the index 0 is used for the real space
- *       charge assignment grid).  */
-
-extern fft_forw_plan fft_plan[4];
-
-/*@}*/
+extern fft_data_struct fft;
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** Initialize some arrays connected to the 3D-FFT. */
+/** Initialize fft data structure. */
 void fft_pre_init();
 
 /** Initialize everything connected to the 3D-FFT.

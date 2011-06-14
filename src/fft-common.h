@@ -44,7 +44,7 @@ typedef struct {
   /** number of 1D FFTs. */ 
   int n_ffts;
   /** plan for fft. */
-  void *fft_plan;
+  void *fftw_plan;
   /** function for fft. */
   void (*fft_function)();
 
@@ -81,13 +81,41 @@ typedef struct {
   /** plan direction. (e.g. fftw makro)*/
   int dir;
   /** plan for fft. */
-  void *fft_plan;
+  void *fftw_plan;
   /** function for fft. */
   void (*fft_function)();
 
   /** packing function for send blocks. */
   void (*pack_function)(); 
 } fft_back_plan;
+
+typedef struct {
+  /** Information about the three one dimensional FFTs and how the nodes
+   *  have to communicate in between.
+   *
+   * NOTE: FFT numbering starts with 1 for technical reasons (because we
+   *       have 4 node grids, the index 0 is used for the real space
+   *       charge assignment grid).  */
+  fft_forw_plan plan[4];
+  /** Information for Back FFTs (see fft.plan). */
+  fft_back_plan back[4];
+
+  /** Whether FFT is initialized or not. */
+  int init_tag;
+
+  /** Maximal size of the communication buffers. */
+  int max_comm_size;
+
+  /** Maximal local mesh size. */
+  int max_mesh_size;
+
+  /** send buffer. */
+  double *send_buf;
+  /** receive buffer. */
+  double *recv_buf;
+  /** Buffer for receive data. */
+  double *data_buf;
+} fft_data_struct;
 
 /************************************************
  * DEFINES
@@ -102,6 +130,9 @@ typedef struct {
 #define REQ_FFT_BACK   302
 /* Tag for wisdom file I/O */
 #  define FFTW_FAILURE 0
+
+/** Initialize FFT data structure. */
+void fft_common_pre_init(fft_data_struct *fft);
 
 /** This ugly function does the bookkepping which nodes have to
  *  communicate to each other, when you change the node grid.

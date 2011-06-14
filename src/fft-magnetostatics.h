@@ -45,20 +45,35 @@
 
 #ifdef DP3M
 
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
+typedef struct {
+  /** Information about the three one dimensional FFTs and how the nodes
+   *  have to communicate in between.
+   *
+   * NOTE: FFT numbering starts with 1 for technical reasons (because we
+   *       have 4 node grids, the index 0 is used for the real space
+   *       charge assignment grid).  */
+  fft_forw_plan plan[4];
+  /** Information for Back FFTs (see fft.plan). */
+  fft_back_plan back[4];
 
-/** Information about the three one dimensional FFTs and how the nodes
- *  have to communicate in between.
- *
- * NOTE: FFT numbering starts with 1 for technical reasons (because we
- *       have 4 node grids, the index 0 is used for the real space
- *       charge assignment grid).  */
+  /** Whether DFFT is initialized or not. */
+  int init_tag;
 
-extern fft_forw_plan dfft_plan[4];
+  /** Maximal size of the communication buffers. */
+  int max_comm_size;
 
-/*@}*/
+  /** Maximal local mesh size. */
+  int max_mesh_size;
+
+  /** send buffer. */
+  double *send_buf;
+  /** receive buffer. */
+  double *recv_buf;
+  /** Buffer for receive data. */
+  double *data_buf;
+} dfft_data_struct;
+
+extern dfft_data_struct dfft;
 
 /** \name Exported Functions */
 /************************************************************/
