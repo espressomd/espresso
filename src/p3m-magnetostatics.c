@@ -63,60 +63,7 @@
 #define REQ_P3M_SPREAD_D 2021
 
 
-/********** definition of Variables *************/
 dp3m_data_struct dp3m;
-
-/** interpolation of the charge assignment function. */
-  double *Dint_caf[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-
-/** position shift for calc. of first assignment mesh point. */
-  double Dpos_shift;
-
-/** help variable for calculation of aliasing sums */  
-  double *Dmeshift = NULL;
-  
- /** Spatial differential operator in k-space. We use an i*k differentiation. */ 
-  double *Dd_op = NULL;
-
-  /** Force optimised influence function (k-space) */
-  double *Dg_force = NULL;
-  
-   /** Energy optimised influence function (k-space) */
-  double *Dg_energy = NULL;
-  
-   /** number of magnetic particles on the node. */
-  int Dca_num=0;
-
-  /** Charge fractions for mesh assignment. */
-  double *Dca_frac = NULL;
-  
-  /** index of first mesh point for charge assignment. */  
-  int *Dca_fmp = NULL;
-  
-  /** number of permutations in k_space */  
-  int Dks_pnum;
-
-  /** send/recv mesh sizes */
-  p3m_send_mesh  Dsm;
-
-  /** size of linear array for local CA/FFT mesh . */
-  int    Dca_mesh_size;
-  
-   /** k space mesh (local) for k space calculation and FFT.*/
-   double *Dks_mesh = NULL;
-
-  /** Field to store grid points to send. */
-  double *Dsend_grid = NULL; 
-  
-  /** Field to store grid points to recv */ 
-  double *Drecv_grid = NULL;
-  
-  /** Allocation size of Dsend_grid and Drecv_grid. */
-   int Dsend_recv_grid_size=0;
-   
-   /**Flag to know if we should calculate the constants for the energy 
-    (If you neither compute the energy, is a waste of time spendig circa 3 or 4 min computing such constants **/
-   int  Dflag_constants_energy_dipolar=0;
 
 
 /** \name Private Functions */
@@ -250,7 +197,6 @@ static double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL, 
 /************************************************************/
 /* functions related to the correction of the dipolar p3m-energy */
 
-double  Dipolar_energy_correction;  /* Stores the value of the energy correction due to MS effects */
 
 static double dp3m_sumi1(double alpha_L);
 static double dp3m_sumi2(double alpha_L);
@@ -322,7 +268,146 @@ static double dp3m_sumi2(double alpha_L){
    return suma;
 }
 
-/* ====== Subroutines to compute analyticaly <Uk_p3m> and parse the output .============*/
+void dp3m_pre_init(void) {
+  p3m_common_parameter_pre_init(&dp3m.params);
+  dp3m.params.epsilon = P3M_EPSILON_MAGNETIC;
+
+  /* dp3m.local_mesh is uninitialized */
+  /* dp3m.sm is uninitialized */
+  dp3m.rs_mesh = NULL;
+  dp3m.rs_mesh_dip[0] = NULL;
+  dp3m.rs_mesh_dip[1] = NULL;
+  dp3m.rs_mesh_dip[2] = NULL;
+  dp3m.ks_mesh = NULL;
+
+  dp3m.sum_dip_part = 0;
+  dp3m.sum_mu2 = 0.0;
+
+  for (int i = 0; i < 7; i++)
+    dp3m.int_caf[i] = NULL;
+  dp3m.pos_shift = 0.0;
+  dp3m.meshift = NULL;
+
+  dp3m.d_op = NULL;
+  dp3m.g_force = NULL;
+  dp3m.g_energy = NULL;
+
+  dp3m.ca_num = 0;
+  dp3m.ca_frac = NULL;
+  dp3m.ca_fmp = NULL;
+  dp3m.ks_pnum = 0;
+
+  dp3m.send_grid = NULL;
+  dp3m.recv_grid = NULL;
+  
+  dp3m.flag_constants_energy_dipolar = 0;
+  
+  dfft_pre_init();
+}
+
+void dp3m_set_bjerrum() {
+  dp3m.params.alpha    = 0.0;
+  dp3m.params.alpha_L  = 0.0;
+  dp3m.params.r_cut    = 0.0;
+  dp3m.params.r_cut_iL = 0.0;
+  dp3m.params.mesh[0]  = 0;
+  dp3m.params.mesh[1]  = 0;
+  dp3m.params.mesh[2]  = 0;
+  dp3m.params.cao      = 0;
+}
+
+
+void dp3m_init() {
+  int n;
+
+  if (coulomb.Dbjerrum == 0.0) {       
+       if(coulomb.Dbjerrum == 0.0) {
+           dp3m.params.r_cut    = 0.0;
+           dp3m.params.r_cut_iL = 0.0;
+          if(this_node==0) 
+             P3M_TRACE(fprintf(stderr,"0: dp3m_init: dipolar Bjerrum length is zero.\n");
+	   fprintf(stderr,"   Magnetostatics of dipoles switched off!\n"));
+      }
+  } else {  
+    P3M_TRACE(fprintf(stderr,"%d: dp3m_init: \n",this_node));
+
+    if (dp3m_sanity_checks()) return;
+
+    P3M_TRACE(fprintf(stderr,"%d: dp3m_init: starting\n",this_node));
+
+        P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,dp3m.params.mesh[0],dp3m.params.cao,dp3m.params.mesh_off[0],dp3m.params.mesh_off[1],dp3m.params.mesh_off[2]));
+        dp3m.params.cao3 = dp3m.params.cao*dp3m.params.cao*dp3m.params.cao;
+
+
+    /* initializes the (inverse) mesh constant dp3m.params.a (dp3m.params.ai) and the cutoff for charge assignment dp3m.params.cao_cut */
+    dp3m_init_a_ai_cao_cut();
+
+    /* initialize ca fields to size CA_INCREMENT: dp3m.ca_frac and dp3m.ca_fmp */
+    dp3m.ca_num = 0;
+    if(dp3m.ca_num < CA_INCREMENT) {
+      dp3m.ca_num = 0;
+      dp3m_realloc_ca_fields(CA_INCREMENT);
+    }
+ 
+    dp3m_calc_local_ca_mesh();
+
+       dp3m_calc_send_mesh();
+       P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
+    
+    /* DEBUG */
+    for(n=0;n<n_nodes;n++) {
+      /* MPI_Barrier(MPI_COMM_WORLD); */
+         if(n==this_node) P3M_TRACE(p3m_p3m_print_send_mesh(dp3m.sm));
+    }
+    
+    dp3m.send_grid = (double *) realloc(dp3m.send_grid, sizeof(double)*dp3m.sm.max);
+    dp3m.recv_grid = (double *) realloc(dp3m.recv_grid, sizeof(double)*dp3m.sm.max);
+    
+     if (dp3m.params.inter > 0) dp3m_interpolate_dipole_assignment_function();
+
+     dp3m.pos_shift = (double)((dp3m.params.cao-1)/2) - (dp3m.params.cao%2)/2.0;
+     P3M_TRACE(fprintf(stderr,"%d: dipolar pos_shift = %f\n",this_node,dp3m.pos_shift)); 
+ 
+    /* FFT */
+      P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh ADR=%p\n",this_node,dp3m.rs_mesh));
+ 
+    int ca_mesh_size = dfft_init(&dp3m.rs_mesh,dp3m.local_mesh.dim,dp3m.local_mesh.margin,&dp3m.ks_pnum);
+    dp3m.ks_mesh = (double *) realloc(dp3m.ks_mesh, ca_mesh_size*sizeof(double));
+
+    for (n=0;n<3;n++)   
+       dp3m.rs_mesh_dip[n] = (double *) realloc(dp3m.rs_mesh_dip[n], ca_mesh_size*sizeof(double));
+
+     P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[0] ADR=%p\n",this_node,dp3m.rs_mesh_dip[0]));
+     P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[1] ADR=%p\n",this_node,dp3m.rs_mesh_dip[1]));
+     P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[2] ADR=%p\n",this_node,dp3m.rs_mesh_dip[2]));
+ 
+ 
+    /* k-space part: */
+    
+    dp3m_calc_differential_operator();
+
+    dp3m_calc_influence_function_force();
+    dp3m_calc_influence_function_energy();
+
+    dp3m_count_magnetic_particles();
+
+     /* to ensure constants will be computed in case you want to calculate the energy */
+    dp3m.flag_constants_energy_dipolar=0;
+   
+    P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
+  }
+}
+
+void dp3m_free_dipoles() {
+  for (int i=0;i<3;i++) free(dp3m.rs_mesh_dip[i]);
+  free(dp3m.ca_frac);
+  free(dp3m.ca_fmp);
+  free(dp3m.send_grid);
+  free(dp3m.recv_grid);
+  free(dp3m.rs_mesh);
+  free(dp3m.ks_mesh); 
+}
+
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
 	int	i,ind,n[3];
 	double node_phi = 0.0, phi = 0.0;
@@ -332,15 +417,15 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
         int size=1;
 	
    for(i=0;i<3;i++) {
-    size *= dfft_plan[3].new_mesh[i];
-    end[i] = dfft_plan[3].start[i] + dfft_plan[3].new_mesh[i];
+    size *= dfft.plan[3].new_mesh[i];
+    end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
   
-  for(n[0]=dfft_plan[3].start[0]; n[0]<end[0]; n[0]++){
-    for(n[1]=dfft_plan[3].start[1]; n[1]<end[1]; n[1]++){
-      for(n[2]=dfft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-dfft_plan[3].start[2]) + dfft_plan[3].new_mesh[2] *
-	((n[1]-dfft_plan[3].start[1]) + (dfft_plan[3].new_mesh[1]*(n[0]-dfft_plan[3].start[0])));
+  for(n[0]=dfft.plan[3].start[0]; n[0]<end[0]; n[0]++){
+    for(n[1]=dfft.plan[3].start[1]; n[1]<end[1]; n[1]++){
+      for(n[2]=dfft.plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-dfft.plan[3].start[2]) + dfft.plan[3].new_mesh[2] *
+	((n[1]-dfft.plan[3].start[1]) + (dfft.plan[3].new_mesh[1]*(n[0]-dfft.plan[3].start[0])));
 
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
 	 node_phi += 0.0;
@@ -350,7 +435,7 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
 	  node_phi += 0.0;
 	else {
 		  U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
-		  node_phi += Dg_energy[ind] * U2*(SQR(Dd_op[n[0]])+SQR(Dd_op[n[1]])+SQR(Dd_op[n[2]]));
+		  node_phi += dp3m.g_energy[ind] * U2*(SQR(dp3m.d_op[n[0]])+SQR(dp3m.d_op[n[1]])+SQR(dp3m.d_op[n[2]]));
 	}
       }}}
   
@@ -375,13 +460,13 @@ double dp3m_perform_aliasing_sums_dipolar_self_energy(int n[3])
   f1 = 1.0/(double)dp3m.params.mesh[0];
 
   for(mx = -limit; mx <=limit; mx++) {
-    nmx = Dmeshift[n[0]] + dp3m.params.mesh[0]*mx;
+    nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0]*mx;
     sx  = pow(sinc(f1*nmx),2.0*dp3m.params.cao);
     for(my = -limit; my <= limit; my++) {
-      nmy = Dmeshift[n[1]] + dp3m.params.mesh[0]*my;
+      nmy = dp3m.meshift[n[1]] + dp3m.params.mesh[0]*my;
       sy  = sx*pow(sinc(f1*nmy),2.0*dp3m.params.cao);
       for(mz = -limit; mz <=limit; mz++) {
-	nmz = Dmeshift[n[2]] + dp3m.params.mesh[0]*mz;
+	nmz = dp3m.meshift[n[2]] + dp3m.params.mesh[0]*mz;
 	sz  = sy*pow(sinc(f1*nmz),2.0*dp3m.params.cao);
 	u_sum += sz;
       }
@@ -839,11 +924,11 @@ void dp3m_interpolate_dipole_assignment_function()
 
           for (i=0; i < dp3m.params.cao; i++) {
              /* allocate memory for interpolation array */
-             Dint_caf[i] = (double *) realloc(Dint_caf[i], sizeof(double)*(2*dp3m.params.inter+1));
+             dp3m.int_caf[i] = (double *) realloc(dp3m.int_caf[i], sizeof(double)*(2*dp3m.params.inter+1));
 
             /* loop over all interpolation points */
               for (j=-dp3m.params.inter; j<=dp3m.params.inter; j++)
-                    Dint_caf[i][j+dp3m.params.inter] = p3m_caf(i, j*dInterpol,dp3m.params.cao);
+                    dp3m.int_caf[i][j+dp3m.params.inter] = p3m_caf(i, j*dInterpol,dp3m.params.cao);
          }
 }
 
@@ -898,14 +983,14 @@ void dp3m_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt)
   double cur_ca_frac_val, *cur_ca_frac;
 
   // make sure we have enough space
-  if (cp_cnt >= Dca_num) dp3m_realloc_ca_fields(cp_cnt + 1);
-  // do it here, since p3m_realloc_ca_fields may change the address of Dca_frac
-  cur_ca_frac = Dca_frac + dp3m.params.cao3*cp_cnt;
+  if (cp_cnt >= dp3m.ca_num) dp3m_realloc_ca_fields(cp_cnt + 1);
+  // do it here, since p3m_realloc_ca_fields may change the address of dp3m.ca_frac
+  cur_ca_frac = dp3m.ca_frac + dp3m.params.cao3*cp_cnt;
 
   if (dp3m.params.inter == 0) {
     for(d=0;d<3;d++) {
       /* particle position in mesh coordinates */
-      pos    = ((real_pos[d]-dp3m.local_mesh.ld_pos[d])*dp3m.params.ai[d]) - Dpos_shift;
+      pos    = ((real_pos[d]-dp3m.local_mesh.ld_pos[d])*dp3m.params.ai[d]) - dp3m.pos_shift;
       /* nearest mesh point */
       nmp  = (int)pos;
       /* distance to nearest mesh point */
@@ -926,7 +1011,7 @@ void dp3m_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt)
       }
 #endif
     }
-    if (cp_cnt >= 0) Dca_fmp[cp_cnt] = q_ind;
+    if (cp_cnt >= 0) dp3m.ca_fmp[cp_cnt] = q_ind;
     
     for(i0=0; i0<dp3m.params.cao; i0++) {
       tmp0 = p3m_caf(i0, dist[0], dp3m.params.cao);
@@ -950,7 +1035,7 @@ void dp3m_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt)
   else {
     /* particle position in mesh coordinates */
     for(d=0;d<3;d++) {
-      pos    = ((real_pos[d]-dp3m.local_mesh.ld_pos[d])*dp3m.params.ai[d]) - Dpos_shift;
+      pos    = ((real_pos[d]-dp3m.local_mesh.ld_pos[d])*dp3m.params.ai[d]) - dp3m.pos_shift;
       nmp    = (int) pos;
       arg[d] = (int) ((pos - nmp)*dp3m.params.inter2);
       /* for the first dimension, q_ind is always zero, so this shifts correctly */
@@ -969,14 +1054,14 @@ void dp3m_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt)
       }
 #endif
     }
-    if (cp_cnt >= 0) Dca_fmp[cp_cnt] = q_ind;
+    if (cp_cnt >= 0) dp3m.ca_fmp[cp_cnt] = q_ind;
 
     for(i0=0; i0<dp3m.params.cao; i0++) {
-      tmp0 = Dint_caf[i0][arg[0]];
+      tmp0 = dp3m.int_caf[i0][arg[0]];
       for(i1=0; i1<dp3m.params.cao; i1++) {
-	tmp1 = tmp0 * Dint_caf[i1][arg[1]];
+	tmp1 = tmp0 * dp3m.int_caf[i1][arg[1]];
 	for(i2=0; i2<dp3m.params.cao; i2++) {
-	  cur_ca_frac_val = tmp1 * Dint_caf[i2][arg[2]];
+	  cur_ca_frac_val = tmp1 * dp3m.int_caf[i2][arg[2]];
 	  if (cp_cnt >= 0) *(cur_ca_frac++) = cur_ca_frac_val;
 	  if (mu != 0.0) {
 	    dp3m.rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
@@ -995,7 +1080,7 @@ void dp3m_assign_dipole(double real_pos[3],double mu, double dip[3],int cp_cnt)
 
 /** shrink wrap the dipoles grid */
 void dp3m_shrink_wrap_dipole_grid(int n_dipoles) {
-  if( n_dipoles < Dca_num ) dp3m_realloc_ca_fields(n_dipoles);
+  if( n_dipoles < dp3m.ca_num ) dp3m_realloc_ca_fields(n_dipoles);
 }
 
 
@@ -1023,28 +1108,28 @@ static void P3M_assign_torques(double prefac, int d_rs)
     np = cell->n;
     for(i=0; i<np; i++) { 
       if( (p[i].p.dipm) != 0.0 ) {
-	q_ind = Dca_fmp[cp_cnt];
+	q_ind = dp3m.ca_fmp[cp_cnt];
 	for(i0=0; i0<dp3m.params.cao; i0++) {
 	  for(i1=0; i1<dp3m.params.cao; i1++) {
 	    for(i2=0; i2<dp3m.params.cao; i2++) {
 /*
 The following line would fill the torque with the k-space electric field
 (without the self-field term) [notice the minus sign!]:		  
-		    p[i].f.torque[d_rs] -= prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];;
+		    p[i].f.torque[d_rs] -= prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];;
 Since the torque is the dipole moment cross-product with E, we have:	
 */
               switch (d_rs) {
 		case 0:	//E_x
-		  p[i].f.torque[1] -= p[i].r.dip[2]*prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];     
-		  p[i].f.torque[2] += p[i].r.dip[1]*prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind]; 
+		  p[i].f.torque[1] -= p[i].r.dip[2]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];     
+		  p[i].f.torque[2] += p[i].r.dip[1]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind]; 
 		  break;
 		case 1:	//E_y
-		  p[i].f.torque[0] += p[i].r.dip[2]*prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
-		  p[i].f.torque[2] -= p[i].r.dip[0]*prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+		  p[i].f.torque[0] += p[i].r.dip[2]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+		  p[i].f.torque[2] -= p[i].r.dip[0]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
 		  break;
 		case 2:	//E_z
-		  p[i].f.torque[0] -= p[i].r.dip[1]*prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
-		  p[i].f.torque[1] += p[i].r.dip[0]*prefac*Dca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+		  p[i].f.torque[0] -= p[i].r.dip[1]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+		  p[i].f.torque[1] += p[i].r.dip[0]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
 	      }
 	      q_ind++; 
 	      cf_cnt++;
@@ -1087,11 +1172,11 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs)
     np = cell->n;
     for(i=0; i<np; i++) { 
       if( (p[i].p.dipm) != 0.0 ) {
-	q_ind = Dca_fmp[cp_cnt];
+	q_ind = dp3m.ca_fmp[cp_cnt];
 	for(i0=0; i0<dp3m.params.cao; i0++) {
 	  for(i1=0; i1<dp3m.params.cao; i1++) {
 	    for(i2=0; i2<dp3m.params.cao; i2++) {
-	      p[i].f.f[d_rs] += prefac*Dca_frac[cf_cnt]*
+	      p[i].f.f[d_rs] += prefac*dp3m.ca_frac[cf_cnt]*
 	                          ( dp3m.rs_mesh_dip[0][q_ind]*p[i].r.dip[0]
 		                  +dp3m.rs_mesh_dip[1][q_ind]*p[i].r.dip[1]
 				  +dp3m.rs_mesh_dip[2][q_ind]*p[i].r.dip[2]);
@@ -1153,17 +1238,17 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     /* i*k differentiation for dipolar gradients: |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
     ind=0;
     i=0;
-    for(j[0]=0; j[0]<dfft_plan[3].new_mesh[0]; j[0]++) {
-      for(j[1]=0; j[1]<dfft_plan[3].new_mesh[1]; j[1]++) {
-	for(j[2]=0; j[2]<dfft_plan[3].new_mesh[2]; j[2]++) {
-	  node_k_space_energy_dip += Dg_energy[i] * (
-	  SQR(dp3m.rs_mesh_dip[0][ind]*Dd_op[j[2]+dfft_plan[3].start[2]]+
-	      dp3m.rs_mesh_dip[1][ind]*Dd_op[j[0]+dfft_plan[3].start[0]]+
-	      dp3m.rs_mesh_dip[2][ind]*Dd_op[j[1]+dfft_plan[3].start[1]]
+    for(j[0]=0; j[0]<dfft.plan[3].new_mesh[0]; j[0]++) {
+      for(j[1]=0; j[1]<dfft.plan[3].new_mesh[1]; j[1]++) {
+	for(j[2]=0; j[2]<dfft.plan[3].new_mesh[2]; j[2]++) {
+	  node_k_space_energy_dip += dp3m.g_energy[i] * (
+	  SQR(dp3m.rs_mesh_dip[0][ind]*dp3m.d_op[j[2]+dfft.plan[3].start[2]]+
+	      dp3m.rs_mesh_dip[1][ind]*dp3m.d_op[j[0]+dfft.plan[3].start[0]]+
+	      dp3m.rs_mesh_dip[2][ind]*dp3m.d_op[j[1]+dfft.plan[3].start[1]]
 	  ) +
-	  SQR(dp3m.rs_mesh_dip[0][ind+1]*Dd_op[j[2]+dfft_plan[3].start[2]]+
-	      dp3m.rs_mesh_dip[1][ind+1]*Dd_op[j[0]+dfft_plan[3].start[0]]+
-	      dp3m.rs_mesh_dip[2][ind+1]*Dd_op[j[1]+dfft_plan[3].start[1]]
+	  SQR(dp3m.rs_mesh_dip[0][ind+1]*dp3m.d_op[j[2]+dfft.plan[3].start[2]]+
+	      dp3m.rs_mesh_dip[1][ind+1]*dp3m.d_op[j[0]+dfft.plan[3].start[0]]+
+	      dp3m.rs_mesh_dip[2][ind+1]*dp3m.d_op[j[1]+dfft.plan[3].start[1]]
 	      ));
 	  ind += 2;
 	  i++;
@@ -1173,7 +1258,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     node_k_space_energy_dip *= dipole_prefac * PI / box_l[0];
     MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
    
-   if (Dflag_constants_energy_dipolar==0) {Dflag_constants_energy_dipolar=1;}
+   if (dp3m.flag_constants_energy_dipolar==0) 
+     dp3m.flag_constants_energy_dipolar = 1;
    
    dp3m_compute_constants_energy_dipolar(); 
    
@@ -1183,10 +1269,10 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     if(this_node==0) {
       double a;
       /* self energy correction */
-      P3M_TRACE(fprintf(stderr,"%d: *Dipolar_energy_correction=%20.15lf\n",this_node, Dipolar_energy_correction));
+      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",this_node, dp3m.energy_correction));
       a = k_space_energy_dip;
       k_space_energy_dip -= coulomb.Dprefactor*(dp3m.sum_mu2*2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
-      k_space_energy_dip += coulomb.Dprefactor*Dipolar_energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+      k_space_energy_dip += coulomb.Dprefactor*dp3m.energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
       
       P3M_TRACE(fprintf(stderr, "%d: Energy correction: %lf\n", this_node, k_space_energy_dip - a));
     }
@@ -1209,24 +1295,24 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     ind=0;
     i=0;
        
-    for(j[0]=0; j[0]<dfft_plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
-      for(j[1]=0; j[1]<dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
-	for(j[2]=0; j[2]<dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
+    for(j[0]=0; j[0]<dfft.plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
+      for(j[1]=0; j[1]<dfft.plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
+	for(j[2]=0; j[2]<dfft.plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  //tmp0 = Re(mu)*k,   tmp1 = Im(mu)*k
 	  
-	  tmp0 = dp3m.rs_mesh_dip[0][ind]*Dd_op[j[2]+dfft_plan[3].start[2]]+
-		 dp3m.rs_mesh_dip[1][ind]*Dd_op[j[0]+dfft_plan[3].start[0]]+
-		 dp3m.rs_mesh_dip[2][ind]*Dd_op[j[1]+dfft_plan[3].start[1]];
+	  tmp0 = dp3m.rs_mesh_dip[0][ind]*dp3m.d_op[j[2]+dfft.plan[3].start[2]]+
+		 dp3m.rs_mesh_dip[1][ind]*dp3m.d_op[j[0]+dfft.plan[3].start[0]]+
+		 dp3m.rs_mesh_dip[2][ind]*dp3m.d_op[j[1]+dfft.plan[3].start[1]];
 		 
-	  tmp1 = dp3m.rs_mesh_dip[0][ind+1]*Dd_op[j[2]+dfft_plan[3].start[2]]+
-		 dp3m.rs_mesh_dip[1][ind+1]*Dd_op[j[0]+dfft_plan[3].start[0]]+
-		 dp3m.rs_mesh_dip[2][ind+1]*Dd_op[j[1]+dfft_plan[3].start[1]];
+	  tmp1 = dp3m.rs_mesh_dip[0][ind+1]*dp3m.d_op[j[2]+dfft.plan[3].start[2]]+
+		 dp3m.rs_mesh_dip[1][ind+1]*dp3m.d_op[j[0]+dfft.plan[3].start[0]]+
+		 dp3m.rs_mesh_dip[2][ind+1]*dp3m.d_op[j[1]+dfft.plan[3].start[1]];
 		 
 	  /* the optimal influence function is the same for torques
 	     and energy */ 
 	     
- 	  Dks_mesh[ind]   = tmp0*Dg_energy[i]; 
-	  Dks_mesh[ind+1] = tmp1*Dg_energy[i];
+ 	  dp3m.ks_mesh[ind]   = tmp0*dp3m.g_energy[i]; 
+	  dp3m.ks_mesh[ind+1] = tmp1*dp3m.g_energy[i];
 	  ind += 2;
 	  i++;
 	}
@@ -1236,13 +1322,13 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
         
     /* Force component loop */
     for(d=0;d<3;d++) {
-      d_rs = (d+Dks_pnum)%3;
+      d_rs = (d+dp3m.ks_pnum)%3;
       ind=0;
-      for(j[0]=0; j[0]<dfft_plan[3].new_mesh[0]; j[0]++) {
-	for(j[1]=0; j[1]<dfft_plan[3].new_mesh[1]; j[1]++) {
-	  for(j[2]=0; j[2]<dfft_plan[3].new_mesh[2]; j[2]++) {
-	    dp3m.rs_mesh[ind] = Dd_op[ j[d]+dfft_plan[3].start[d] ]*Dks_mesh[ind]; ind++;
-	    dp3m.rs_mesh[ind] = Dd_op[ j[d]+dfft_plan[3].start[d] ]*Dks_mesh[ind]; ind++;
+      for(j[0]=0; j[0]<dfft.plan[3].new_mesh[0]; j[0]++) {
+	for(j[1]=0; j[1]<dfft.plan[3].new_mesh[1]; j[1]++) {
+	  for(j[2]=0; j[2]<dfft.plan[3].new_mesh[2]; j[2]++) {
+	    dp3m.rs_mesh[ind] = dp3m.d_op[ j[d]+dfft.plan[3].start[d] ]*dp3m.ks_mesh[ind]; ind++;
+	    dp3m.rs_mesh[ind] = dp3m.d_op[ j[d]+dfft.plan[3].start[d] ]*dp3m.ks_mesh[ind]; ind++;
 	  }
 	}
       }
@@ -1268,18 +1354,18 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     /* fill in ks_mesh array for force calculation */
     ind=0;
     i=0;
-    for(j[0]=0; j[0]<dfft_plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
-      for(j[1]=0; j[1]<dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
-	for(j[2]=0; j[2]<dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
+    for(j[0]=0; j[0]<dfft.plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
+      for(j[1]=0; j[1]<dfft.plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
+	for(j[2]=0; j[2]<dfft.plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
 	  //tmp0 = Im(mu)*k,   tmp1 = -Re(mu)*k
-	  tmp0 = dp3m.rs_mesh_dip[0][ind+1]*Dd_op[j[2]+dfft_plan[3].start[2]]+
-		 dp3m.rs_mesh_dip[1][ind+1]*Dd_op[j[0]+dfft_plan[3].start[0]]+
-		 dp3m.rs_mesh_dip[2][ind+1]*Dd_op[j[1]+dfft_plan[3].start[1]];
-	  tmp1 = dp3m.rs_mesh_dip[0][ind]*Dd_op[j[2]+dfft_plan[3].start[2]]+
-		 dp3m.rs_mesh_dip[1][ind]*Dd_op[j[0]+dfft_plan[3].start[0]]+
-		 dp3m.rs_mesh_dip[2][ind]*Dd_op[j[1]+dfft_plan[3].start[1]];
-	  Dks_mesh[ind]   = tmp0*Dg_force[i];
-	  Dks_mesh[ind+1] = -tmp1*Dg_force[i];
+	  tmp0 = dp3m.rs_mesh_dip[0][ind+1]*dp3m.d_op[j[2]+dfft.plan[3].start[2]]+
+		 dp3m.rs_mesh_dip[1][ind+1]*dp3m.d_op[j[0]+dfft.plan[3].start[0]]+
+		 dp3m.rs_mesh_dip[2][ind+1]*dp3m.d_op[j[1]+dfft.plan[3].start[1]];
+	  tmp1 = dp3m.rs_mesh_dip[0][ind]*dp3m.d_op[j[2]+dfft.plan[3].start[2]]+
+		 dp3m.rs_mesh_dip[1][ind]*dp3m.d_op[j[0]+dfft.plan[3].start[0]]+
+		 dp3m.rs_mesh_dip[2][ind]*dp3m.d_op[j[1]+dfft.plan[3].start[1]];
+	  dp3m.ks_mesh[ind]   = tmp0*dp3m.g_force[i];
+	  dp3m.ks_mesh[ind+1] = -tmp1*dp3m.g_force[i];
 	  ind += 2;
 	  i++;
 	}
@@ -1288,20 +1374,20 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
 
     /* Force component loop */
     for(d=0;d<3;d++) {       /* direction in k space: */
-    d_rs = (d+Dks_pnum)%3;
+    d_rs = (d+dp3m.ks_pnum)%3;
     ind=0;
-    for(j[0]=0; j[0]<dfft_plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
-      for(j[1]=0; j[1]<dfft_plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
-	for(j[2]=0; j[2]<dfft_plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
-	  tmp0 = Dd_op[ j[d]+dfft_plan[3].start[d] ]*Dks_mesh[ind];
-	  dp3m.rs_mesh_dip[0][ind] = Dd_op[ j[2]+dfft_plan[3].start[2] ]*tmp0;
-	  dp3m.rs_mesh_dip[1][ind] = Dd_op[ j[0]+dfft_plan[3].start[0] ]*tmp0;
-	  dp3m.rs_mesh_dip[2][ind] = Dd_op[ j[1]+dfft_plan[3].start[1] ]*tmp0;
+    for(j[0]=0; j[0]<dfft.plan[3].new_mesh[0]; j[0]++) {	     //j[0]=n_y
+      for(j[1]=0; j[1]<dfft.plan[3].new_mesh[1]; j[1]++) {    //j[1]=n_z
+	for(j[2]=0; j[2]<dfft.plan[3].new_mesh[2]; j[2]++) {  //j[2]=n_x
+	  tmp0 = dp3m.d_op[ j[d]+dfft.plan[3].start[d] ]*dp3m.ks_mesh[ind];
+	  dp3m.rs_mesh_dip[0][ind] = dp3m.d_op[ j[2]+dfft.plan[3].start[2] ]*tmp0;
+	  dp3m.rs_mesh_dip[1][ind] = dp3m.d_op[ j[0]+dfft.plan[3].start[0] ]*tmp0;
+	  dp3m.rs_mesh_dip[2][ind] = dp3m.d_op[ j[1]+dfft.plan[3].start[1] ]*tmp0;
 	  ind++;
-	  tmp0 = Dd_op[ j[d]+dfft_plan[3].start[d] ]*Dks_mesh[ind];
-	  dp3m.rs_mesh_dip[0][ind] = Dd_op[ j[2]+dfft_plan[3].start[2] ]*tmp0;
-	  dp3m.rs_mesh_dip[1][ind] = Dd_op[ j[0]+dfft_plan[3].start[0] ]*tmp0;
-	  dp3m.rs_mesh_dip[2][ind] = Dd_op[ j[1]+dfft_plan[3].start[1] ]*tmp0;
+	  tmp0 = dp3m.d_op[ j[d]+dfft.plan[3].start[d] ]*dp3m.ks_mesh[ind];
+	  dp3m.rs_mesh_dip[0][ind] = dp3m.d_op[ j[2]+dfft.plan[3].start[2] ]*tmp0;
+	  dp3m.rs_mesh_dip[1][ind] = dp3m.d_op[ j[0]+dfft.plan[3].start[0] ]*tmp0;
+	  dp3m.rs_mesh_dip[2][ind] = dp3m.d_op[ j[1]+dfft.plan[3].start[1] ]*tmp0;
 	  ind++;
 	}
       }
@@ -1456,32 +1542,32 @@ void dp3m_gather_fft_grid(double* themesh)
     if(s_dir%2==0) r_dir = s_dir+1;
     else           r_dir = s_dir-1;
     /* pack send block */ 
-    if(Dsm.s_size[s_dir]>0) 
-      fft_pack_block(themesh, Dsend_grid, Dsm.s_ld[s_dir], Dsm.s_dim[s_dir], dp3m.local_mesh.dim, 1);
+    if(dp3m.sm.s_size[s_dir]>0) 
+      fft_pack_block(themesh, dp3m.send_grid, dp3m.sm.s_ld[s_dir], dp3m.sm.s_dim[s_dir], dp3m.local_mesh.dim, 1);
       
     /* communication */
     if(node_neighbors[s_dir] != this_node) {
       for(evenodd=0; evenodd<2;evenodd++) {
 	if((node_pos[s_dir/2]+evenodd)%2==0) {
-	  if(Dsm.s_size[s_dir]>0) 
-	    MPI_Send(Dsend_grid, Dsm.s_size[s_dir], MPI_DOUBLE, 
+	  if(dp3m.sm.s_size[s_dir]>0) 
+	    MPI_Send(dp3m.send_grid, dp3m.sm.s_size[s_dir], MPI_DOUBLE, 
 		     node_neighbors[s_dir], REQ_P3M_GATHER_D, MPI_COMM_WORLD);
 	}
 	else {
-	  if(Dsm.r_size[r_dir]>0) 
-	    MPI_Recv(Drecv_grid, Dsm.r_size[r_dir], MPI_DOUBLE, 
+	  if(dp3m.sm.r_size[r_dir]>0) 
+	    MPI_Recv(dp3m.recv_grid, dp3m.sm.r_size[r_dir], MPI_DOUBLE, 
 		     node_neighbors[r_dir], REQ_P3M_GATHER_D, MPI_COMM_WORLD, &status); 	    
 	}
       }
     }
     else {
-      tmp_ptr = Drecv_grid;
-      Drecv_grid = Dsend_grid;
-      Dsend_grid = tmp_ptr;
+      tmp_ptr = dp3m.recv_grid;
+      dp3m.recv_grid = dp3m.send_grid;
+      dp3m.send_grid = tmp_ptr;
     }
     /* add recv block */
-    if(Dsm.r_size[r_dir]>0) {
-      p3m_add_block(Drecv_grid, themesh, Dsm.r_ld[r_dir], Dsm.r_dim[r_dir], dp3m.local_mesh.dim); 
+    if(dp3m.sm.r_size[r_dir]>0) {
+      p3m_add_block(dp3m.recv_grid, themesh, dp3m.sm.r_ld[r_dir], dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim); 
     }
   }
 }
@@ -1503,31 +1589,31 @@ void dp3m_spread_force_grid(double* themesh)
     if(s_dir%2==0) r_dir = s_dir+1;
     else           r_dir = s_dir-1;
     /* pack send block */ 
-    if(Dsm.s_size[s_dir]>0) 
-      fft_pack_block(themesh, Dsend_grid, Dsm.r_ld[r_dir], Dsm.r_dim[r_dir], dp3m.local_mesh.dim, 1);
+    if(dp3m.sm.s_size[s_dir]>0) 
+      fft_pack_block(themesh, dp3m.send_grid, dp3m.sm.r_ld[r_dir], dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim, 1);
     /* communication */
     if(node_neighbors[r_dir] != this_node) {
       for(evenodd=0; evenodd<2;evenodd++) {
 	if((node_pos[r_dir/2]+evenodd)%2==0) {
-	  if(Dsm.r_size[r_dir]>0) 
-	    MPI_Send(Dsend_grid, Dsm.r_size[r_dir], MPI_DOUBLE, 
+	  if(dp3m.sm.r_size[r_dir]>0) 
+	    MPI_Send(dp3m.send_grid, dp3m.sm.r_size[r_dir], MPI_DOUBLE, 
 		     node_neighbors[r_dir], REQ_P3M_SPREAD_D, MPI_COMM_WORLD);
    	}
 	else {
-	  if(Dsm.s_size[s_dir]>0) 
-	    MPI_Recv(Drecv_grid, Dsm.s_size[s_dir], MPI_DOUBLE, 
+	  if(dp3m.sm.s_size[s_dir]>0) 
+	    MPI_Recv(dp3m.recv_grid, dp3m.sm.s_size[s_dir], MPI_DOUBLE, 
 		     node_neighbors[s_dir], REQ_P3M_SPREAD_D, MPI_COMM_WORLD, &status); 	    
 	}
       }
     }
     else {
-      tmp_ptr = Drecv_grid;
-      Drecv_grid = Dsend_grid;
-      Dsend_grid = tmp_ptr;
+      tmp_ptr = dp3m.recv_grid;
+      dp3m.recv_grid = dp3m.send_grid;
+      dp3m.send_grid = tmp_ptr;
     }
     /* un pack recv block */
-    if(Dsm.s_size[s_dir]>0) {
-      fft_unpack_block(Drecv_grid, themesh, Dsm.s_ld[s_dir], Dsm.s_dim[s_dir], dp3m.local_mesh.dim, 1); 
+    if(dp3m.sm.s_size[s_dir]>0) {
+      fft_unpack_block(dp3m.recv_grid, themesh, dp3m.sm.s_ld[s_dir], dp3m.sm.s_dim[s_dir], dp3m.local_mesh.dim, 1); 
     }
   }
 }
@@ -1538,13 +1624,13 @@ void dp3m_spread_force_grid(double* themesh)
 void dp3m_realloc_ca_fields(int newsize)
 {
   newsize = ((newsize + CA_INCREMENT - 1)/CA_INCREMENT)*CA_INCREMENT;
-  if (newsize == Dca_num) return;
+  if (newsize == dp3m.ca_num) return;
   if (newsize < CA_INCREMENT) newsize = CA_INCREMENT;
 
-   P3M_TRACE(fprintf(stderr,"%d: p3m_realloc_ca_fields: dipolar,  old_size=%d -> new_size=%d\n",this_node,Dca_num,newsize));
-   Dca_num = newsize;
-   Dca_frac = (double *)realloc(Dca_frac, dp3m.params.cao3*Dca_num*sizeof(double));
-   Dca_fmp  = (int *)realloc(Dca_fmp, Dca_num*sizeof(int));
+   P3M_TRACE(fprintf(stderr,"%d: p3m_realloc_ca_fields: dipolar,  old_size=%d -> new_size=%d\n",this_node,dp3m.ca_num,newsize));
+   dp3m.ca_num = newsize;
+   dp3m.ca_frac = (double *)realloc(dp3m.ca_frac, dp3m.params.cao3*dp3m.ca_num*sizeof(double));
+   dp3m.ca_fmp  = (int *)realloc(dp3m.ca_fmp, dp3m.ca_num*sizeof(int));
   
 }
 
@@ -1557,8 +1643,8 @@ void dp3m_calc_meshift(void)
   int i;
   double dmesh;
      dmesh = (double)dp3m.params.mesh[0];
-     Dmeshift = (double *) realloc(Dmeshift, dp3m.params.mesh[0]*sizeof(double));
-     for (i=0; i<dp3m.params.mesh[0]; i++) Dmeshift[i] = i - dround(i/dmesh)*dmesh;   
+     dp3m.meshift = (double *) realloc(dp3m.meshift, dp3m.params.mesh[0]*sizeof(double));
+     for (i=0; i<dp3m.params.mesh[0]; i++) dp3m.meshift[i] = i - dround(i/dmesh)*dmesh;   
 }
 
 
@@ -1572,12 +1658,12 @@ void dp3m_calc_differential_operator()
   double dmesh;
 
   dmesh = (double)dp3m.params.mesh[0];
-  Dd_op = (double *) realloc(Dd_op, dp3m.params.mesh[0]*sizeof(double));
+  dp3m.d_op = (double *) realloc(dp3m.d_op, dp3m.params.mesh[0]*sizeof(double));
 
   for (i=0; i<dp3m.params.mesh[0]; i++) 
-    Dd_op[i] = (double)i - dround((double)i/dmesh)*dmesh;
+    dp3m.d_op[i] = (double)i - dround((double)i/dmesh)*dmesh;
 
-    Dd_op[dp3m.params.mesh[0]/2] = 0;
+    dp3m.d_op[dp3m.params.mesh[0]/2] = 0;
 }
 
 /*****************************************************************************/
@@ -1594,28 +1680,28 @@ void dp3m_calc_influence_function_force()
   dp3m_calc_meshift();
 
   for(i=0;i<3;i++) {
-    size *= dfft_plan[3].new_mesh[i];
-    end[i] = dfft_plan[3].start[i] + dfft_plan[3].new_mesh[i];
+    size *= dfft.plan[3].new_mesh[i];
+    end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
-  Dg_force = (double *) realloc(Dg_force, size*sizeof(double));
+  dp3m.g_force = (double *) realloc(dp3m.g_force, size*sizeof(double));
   fak1  = dp3m.params.mesh[0]*dp3m.params.mesh[0]*dp3m.params.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
-  for(n[0]=dfft_plan[3].start[0]; n[0]<end[0]; n[0]++)
-    for(n[1]=dfft_plan[3].start[1]; n[1]<end[1]; n[1]++)
-      for(n[2]=dfft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-dfft_plan[3].start[2]) + dfft_plan[3].new_mesh[2] * ((n[1]-dfft_plan[3].start[1]) + (dfft_plan[3].new_mesh[1]*(n[0]-dfft_plan[3].start[0])));
+  for(n[0]=dfft.plan[3].start[0]; n[0]<end[0]; n[0]++)
+    for(n[1]=dfft.plan[3].start[1]; n[1]<end[1]; n[1]++)
+      for(n[2]=dfft.plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-dfft.plan[3].start[2]) + dfft.plan[3].new_mesh[2] * ((n[1]-dfft.plan[3].start[1]) + (dfft.plan[3].new_mesh[1]*(n[0]-dfft.plan[3].start[0])));
 
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  Dg_force[ind] = 0.0;
+	  dp3m.g_force[ind] = 0.0;
 	else if( (n[0]%(dp3m.params.mesh[0]/2)==0) &&
 		 (n[1]%(dp3m.params.mesh[0]/2)==0) &&
 		 (n[2]%(dp3m.params.mesh[0]/2)==0) )
-	  Dg_force[ind] = 0.0;
+	  dp3m.g_force[ind] = 0.0;
 	else {
 	  denominator = dp3m_perform_aliasing_sums_force(n,nominator);
 	  fak2 =  nominator[0];
-	  fak2 /= pow(SQR(Dd_op[n[0]])+SQR(Dd_op[n[1]])+SQR(Dd_op[n[2]]),3)  * SQR(denominator) ;
-	  Dg_force[ind] = fak1*fak2;
+	  fak2 /= pow(SQR(dp3m.d_op[n[0]])+SQR(dp3m.d_op[n[1]])+SQR(dp3m.d_op[n[2]]),3)  * SQR(denominator) ;
+	  dp3m.g_force[ind] = fak1*fak2;
 	}
       }
 }
@@ -1638,20 +1724,20 @@ double dp3m_perform_aliasing_sums_force(int n[3], double nominator[1])
   f2 = SQR(PI/(dp3m.params.alpha_L));
 
   for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = Dmeshift[n[0]] + dp3m.params.mesh[0]*mx;
+    nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0]*mx;
     sx  = pow(sinc(f1*nmx),2.0*dp3m.params.cao);
     for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = Dmeshift[n[1]] + dp3m.params.mesh[0]*my;
+      nmy = dp3m.meshift[n[1]] + dp3m.params.mesh[0]*my;
       sy  = sx*pow(sinc(f1*nmy),2.0*dp3m.params.cao);
       for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-	nmz = Dmeshift[n[2]] + dp3m.params.mesh[0]*mz;
+	nmz = dp3m.meshift[n[2]] + dp3m.params.mesh[0]*mz;
 	sz  = sy*pow(sinc(f1*nmz),2.0*dp3m.params.cao);
 	
 	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
 	expo         =  f2*nm2;
 	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-	n_nm = Dd_op[n[0]]*nmx + Dd_op[n[1]]*nmy + Dd_op[n[2]]*nmz;
+	n_nm = dp3m.d_op[n[0]]*nmx + dp3m.d_op[n[1]]*nmy + dp3m.d_op[n[2]]*nmz;
 	n_nm3 = n_nm*n_nm*n_nm; 
 	
 	nominator[0] += f3*n_nm3;
@@ -1676,28 +1762,28 @@ void dp3m_calc_influence_function_energy()
   dp3m_calc_meshift();
 
   for(i=0;i<3;i++) {
-    size *= dfft_plan[3].new_mesh[i];
-    end[i] = dfft_plan[3].start[i] + dfft_plan[3].new_mesh[i];
+    size *= dfft.plan[3].new_mesh[i];
+    end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
-  Dg_energy = (double *) realloc(Dg_energy, size*sizeof(double));
+  dp3m.g_energy = (double *) realloc(dp3m.g_energy, size*sizeof(double));
   fak1  = dp3m.params.mesh[0]*dp3m.params.mesh[0]*dp3m.params.mesh[0]*2.0/(box_l[0]*box_l[0]);
 
-  for(n[0]=dfft_plan[3].start[0]; n[0]<end[0]; n[0]++)
-    for(n[1]=dfft_plan[3].start[1]; n[1]<end[1]; n[1]++)
-      for(n[2]=dfft_plan[3].start[2]; n[2]<end[2]; n[2]++) {
-	ind = (n[2]-dfft_plan[3].start[2]) + dfft_plan[3].new_mesh[2] * ((n[1]-dfft_plan[3].start[1]) + (dfft_plan[3].new_mesh[1]*(n[0]-dfft_plan[3].start[0])));
+  for(n[0]=dfft.plan[3].start[0]; n[0]<end[0]; n[0]++)
+    for(n[1]=dfft.plan[3].start[1]; n[1]<end[1]; n[1]++)
+      for(n[2]=dfft.plan[3].start[2]; n[2]<end[2]; n[2]++) {
+	ind = (n[2]-dfft.plan[3].start[2]) + dfft.plan[3].new_mesh[2] * ((n[1]-dfft.plan[3].start[1]) + (dfft.plan[3].new_mesh[1]*(n[0]-dfft.plan[3].start[0])));
 
 	if( (n[0]==0) && (n[1]==0) && (n[2]==0) )
-	  Dg_energy[ind] = 0.0;
+	  dp3m.g_energy[ind] = 0.0;
 	else if( (n[0]%(dp3m.params.mesh[0]/2)==0) &&
 		 (n[1]%(dp3m.params.mesh[0]/2)==0) &&
 		 (n[2]%(dp3m.params.mesh[0]/2)==0) )
-	  Dg_energy[ind] = 0.0;
+	  dp3m.g_energy[ind] = 0.0;
 	else {
 	  denominator = dp3m_perform_aliasing_sums_energy(n,nominator);
 	  fak2 =  nominator[0];
-	  fak2 /= pow(SQR(Dd_op[n[0]])+SQR(Dd_op[n[1]])+SQR(Dd_op[n[2]]),2)  * SQR(denominator) ;
-	  Dg_energy[ind] = fak1*fak2;
+	  fak2 /= pow(SQR(dp3m.d_op[n[0]])+SQR(dp3m.d_op[n[1]])+SQR(dp3m.d_op[n[2]]),2)  * SQR(denominator) ;
+	  dp3m.g_energy[ind] = fak1*fak2;
 	}
       }
 }
@@ -1719,20 +1805,20 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1])
   f2 = SQR(PI/(dp3m.params.alpha_L));
 
   for(mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
-    nmx = Dmeshift[n[0]] + dp3m.params.mesh[0]*mx;
+    nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0]*mx;
     sx  = pow(sinc(f1*nmx),2.0*dp3m.params.cao);
     for(my = -P3M_BRILLOUIN; my <= P3M_BRILLOUIN; my++) {
-      nmy = Dmeshift[n[1]] + dp3m.params.mesh[0]*my;
+      nmy = dp3m.meshift[n[1]] + dp3m.params.mesh[0]*my;
       sy  = sx*pow(sinc(f1*nmy),2.0*dp3m.params.cao);
       for(mz = -P3M_BRILLOUIN; mz <= P3M_BRILLOUIN; mz++) {
-	nmz = Dmeshift[n[2]] + dp3m.params.mesh[0]*mz;
+	nmz = dp3m.meshift[n[2]] + dp3m.params.mesh[0]*mz;
 	sz  = sy*pow(sinc(f1*nmz),2.0*dp3m.params.cao);
 	
 	nm2          =  SQR(nmx)+SQR(nmy)+SQR(nmz);
 	expo         =  f2*nm2;
 	f3           =  (expo<limit) ? sz*exp(-expo)/nm2 : 0.0;
 
-	n_nm = Dd_op[n[0]]*nmx + Dd_op[n[1]]*nmy + Dd_op[n[2]]*nmz;  /* JJCP 26-4-06 */
+	n_nm = dp3m.d_op[n[0]]*nmx + dp3m.d_op[n[1]]*nmy + dp3m.d_op[n[2]]*nmz;
 	n_nm2 = n_nm*n_nm; 
 	nominator[0] += f3*n_nm2;
 	denominator  += sz;
@@ -2441,19 +2527,19 @@ static int tclcommand_inter_magnetic_dp3m_print_adaptive_tune_parameters(Tcl_Int
   return (TCL_OK);
 }
 
-void p3m_print_dp3m_struct(dp3m_parameter_struct Dps) {
+void p3m_print_dp3m_struct(p3m_parameter_struct ps) {
   fprintf(stderr,"%d: dipolar p3m_struct: \n",this_node);
   fprintf(stderr,"   alpha_L=%f, r_cut_iL=%f \n",
-	  Dps.alpha_L,Dps.r_cut_iL);
+	  ps.alpha_L,ps.r_cut_iL);
   fprintf(stderr,"   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",
-	  Dps.mesh[0],Dps.mesh[1],Dps.mesh[2],
-	  Dps.mesh_off[0],Dps.mesh_off[1],Dps.mesh_off[2]);
+	  ps.mesh[0],ps.mesh[1],ps.mesh[2],
+	  ps.mesh_off[0],ps.mesh_off[1],ps.mesh_off[2]);
   fprintf(stderr,"   Dcao=%d, Dinter=%d, Depsilon=%f\n",
-	  Dps.cao,Dps.inter,Dps.epsilon);
+	  ps.cao,ps.inter,ps.epsilon);
   fprintf(stderr,"   Dcao_cut=(%f,%f,%f)\n",
-	  Dps.cao_cut[0],Dps.cao_cut[1],Dps.cao_cut[2]);
+	  ps.cao_cut[0],ps.cao_cut[1],ps.cao_cut[2]);
   fprintf(stderr,"   Da=(%f,%f,%f), Dai=(%f,%f,%f)\n",
-	  Dps.a[0],Dps.a[1],Dps.a[2],Dps.ai[0],Dps.ai[1],Dps.ai[2]);
+	  ps.a[0],ps.a[1],ps.a[2],ps.ai[0],ps.ai[1],ps.ai[2]);
 }
 
 /*****************************************************************************/
@@ -2817,24 +2903,24 @@ void dp3m_calc_send_mesh()
   for(i=0;i<3;i++) {
     for(j=0;j<3;j++) {
       /* left */
-      Dsm.s_ld[i*2][j] = 0 + done[j]*dp3m.local_mesh.margin[j*2];
-      if(j==i) Dsm.s_ur[i*2][j] = dp3m.local_mesh.margin[j*2]; 
-      else     Dsm.s_ur[i*2][j] = dp3m.local_mesh.dim[j]-done[j]*dp3m.local_mesh.margin[(j*2)+1];
+      dp3m.sm.s_ld[i*2][j] = 0 + done[j]*dp3m.local_mesh.margin[j*2];
+      if(j==i) dp3m.sm.s_ur[i*2][j] = dp3m.local_mesh.margin[j*2]; 
+      else     dp3m.sm.s_ur[i*2][j] = dp3m.local_mesh.dim[j]-done[j]*dp3m.local_mesh.margin[(j*2)+1];
       /* right */
-      if(j==i) Dsm.s_ld[(i*2)+1][j] = dp3m.local_mesh.in_ur[j];
-      else     Dsm.s_ld[(i*2)+1][j] = 0 + done[j]*dp3m.local_mesh.margin[j*2];
-      Dsm.s_ur[(i*2)+1][j] = dp3m.local_mesh.dim[j] - done[j]*dp3m.local_mesh.margin[(j*2)+1];
+      if(j==i) dp3m.sm.s_ld[(i*2)+1][j] = dp3m.local_mesh.in_ur[j];
+      else     dp3m.sm.s_ld[(i*2)+1][j] = 0 + done[j]*dp3m.local_mesh.margin[j*2];
+      dp3m.sm.s_ur[(i*2)+1][j] = dp3m.local_mesh.dim[j] - done[j]*dp3m.local_mesh.margin[(j*2)+1];
     }   
     done[i]=1;
   }
-  Dsm.max=0;
+  dp3m.sm.max=0;
   for(i=0;i<6;i++) {
-    Dsm.s_size[i] = 1;
+    dp3m.sm.s_size[i] = 1;
     for(j=0;j<3;j++) {
-      Dsm.s_dim[i][j] = Dsm.s_ur[i][j]-Dsm.s_ld[i][j];
-      Dsm.s_size[i] *= Dsm.s_dim[i][j];
+      dp3m.sm.s_dim[i][j] = dp3m.sm.s_ur[i][j]-dp3m.sm.s_ld[i][j];
+      dp3m.sm.s_size[i] *= dp3m.sm.s_dim[i][j];
     }
-    if(Dsm.s_size[i]>Dsm.max) Dsm.max=Dsm.s_size[i];
+    if(dp3m.sm.s_size[i]>dp3m.sm.max) dp3m.sm.max=dp3m.sm.s_size[i];
   }
   /* communication */
   for(i=0;i<6;i++) {
@@ -2859,25 +2945,25 @@ void dp3m_calc_send_mesh()
   for(i=0;i<3;i++) 
     for(j=0;j<3;j++) {
       if(j==i) {
-	Dsm.r_ld[ i*2   ][j] = Dsm.s_ld[ i*2   ][j] + dp3m.local_mesh.margin[2*j];
-	Dsm.r_ur[ i*2   ][j] = Dsm.s_ur[ i*2   ][j] + dp3m.local_mesh.r_margin[2*j];
-	Dsm.r_ld[(i*2)+1][j] = Dsm.s_ld[(i*2)+1][j] - dp3m.local_mesh.r_margin[(2*j)+1];
-	Dsm.r_ur[(i*2)+1][j] = Dsm.s_ur[(i*2)+1][j] - dp3m.local_mesh.margin[(2*j)+1];
+	dp3m.sm.r_ld[ i*2   ][j] = dp3m.sm.s_ld[ i*2   ][j] + dp3m.local_mesh.margin[2*j];
+	dp3m.sm.r_ur[ i*2   ][j] = dp3m.sm.s_ur[ i*2   ][j] + dp3m.local_mesh.r_margin[2*j];
+	dp3m.sm.r_ld[(i*2)+1][j] = dp3m.sm.s_ld[(i*2)+1][j] - dp3m.local_mesh.r_margin[(2*j)+1];
+	dp3m.sm.r_ur[(i*2)+1][j] = dp3m.sm.s_ur[(i*2)+1][j] - dp3m.local_mesh.margin[(2*j)+1];
       }
       else {
-	Dsm.r_ld[ i*2   ][j] = Dsm.s_ld[ i*2   ][j];
-	Dsm.r_ur[ i*2   ][j] = Dsm.s_ur[ i*2   ][j];
-	Dsm.r_ld[(i*2)+1][j] = Dsm.s_ld[(i*2)+1][j];
-	Dsm.r_ur[(i*2)+1][j] = Dsm.s_ur[(i*2)+1][j];
+	dp3m.sm.r_ld[ i*2   ][j] = dp3m.sm.s_ld[ i*2   ][j];
+	dp3m.sm.r_ur[ i*2   ][j] = dp3m.sm.s_ur[ i*2   ][j];
+	dp3m.sm.r_ld[(i*2)+1][j] = dp3m.sm.s_ld[(i*2)+1][j];
+	dp3m.sm.r_ur[(i*2)+1][j] = dp3m.sm.s_ur[(i*2)+1][j];
       }
     }
   for(i=0;i<6;i++) {
-    Dsm.r_size[i] = 1;
+    dp3m.sm.r_size[i] = 1;
     for(j=0;j<3;j++) {
-      Dsm.r_dim[i][j] = Dsm.r_ur[i][j]-Dsm.r_ld[i][j];
-      Dsm.r_size[i] *= Dsm.r_dim[i][j];
+      dp3m.sm.r_dim[i][j] = dp3m.sm.r_ur[i][j]-dp3m.sm.r_ld[i][j];
+      dp3m.sm.r_size[i] *= dp3m.sm.r_dim[i][j];
     }
-    if(Dsm.r_size[i]>Dsm.max) Dsm.max=Dsm.r_size[i];
+    if(dp3m.sm.r_size[i]>dp3m.sm.max) dp3m.sm.max=dp3m.sm.r_size[i];
   }
   
   
@@ -2894,7 +2980,8 @@ void dp3m_scaleby_box_l() {
   dp3m_init_a_ai_cao_cut();
   dp3m_calc_lm_ld_pos();
   dp3m_sanity_checks_boxl();
-  Dflag_constants_energy_dipolar=0; /* to ensure constants will be computed in case you want to calculate the energy */
+  /* to ensure constants will be computed in case you want to calculate the energy */
+  dp3m.flag_constants_energy_dipolar=0;
 }
 
 /*****************************************************************************/
@@ -2907,7 +2994,7 @@ void dp3m_scaleby_box_l() {
       
       P3M_TRACE(fprintf(stderr, "%d: dp3m_compute_constants_energy_dipolar().\n", this_node));
       
-       if(Dflag_constants_energy_dipolar==1) { 
+       if (dp3m.flag_constants_energy_dipolar == 1) { 
  
  /*             double sumi1_value,sumi2_value, Eself, Ukp3m, Uk, Ur_cut;
                 sumi1_value=dp3m_sumi1(dp3m.params.alpha_L);
@@ -2916,7 +3003,7 @@ void dp3m_scaleby_box_l() {
 	     Ukp3m=dp3m_average_dipolar_self_energy(box_l[0],dp3m.params.mesh[0]);
 	     Uk=4.*PI*dp3m.sum_mu2/6./pow(box_l[0],3)*sumi1_value;
 	     Ur_cut=-dp3m.sum_mu2*4.*pow(dp3m.params.alpha_L*box_l_i[0],3)*wupii/6.*sumi2_value;	
-	     Dipolar_energy_correction= Eself + Uk - Ukp3m + Ur_cut;
+	     dp3m.energy_correction= Eself + Uk - Ukp3m + Ur_cut;
 	     */
 	     
 	     Ukp3m=dp3m_average_dipolar_self_energy(box_l[0],dp3m.params.mesh[0]);
@@ -2926,164 +3013,19 @@ void dp3m_scaleby_box_l() {
              Eself=-(2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
              volume=box_l[0]*box_l[1]*box_l[2];
 
-       	     Dipolar_energy_correction= - dp3m.sum_mu2*(Ukp3m+Eself+2.*PI/(3.*volume));
+       	     dp3m.energy_correction= - dp3m.sum_mu2*(Ukp3m+Eself+2.*PI/(3.*volume));
 	     
 	     /*fprintf(stderr,"dp3m.sum_mu2=%lf\n",dp3m.sum_mu2);
 	     fprintf(stderr,"Ukp3m=%lf\n",Ukp3m);
 	     fprintf(stderr,"Eself=%lf\n",Eself);
 	     fprintf(stderr,"2.*PI/(3.*volume)=%lf\n",2.*PI/(3.*volume));*/
 	 
-	    Dflag_constants_energy_dipolar=2;
+	    dp3m.flag_constants_energy_dipolar = 2;
         }
   } 
 
 /*****************************************************************************/
 
-void dp3m_pre_init(void) {
-  dp3m.params.alpha = 0.0;
-  dp3m.params.alpha_L = 0.0;
-  dp3m.params.r_cut = 0.0;
-  dp3m.params.r_cut_iL = 0.0;
-  dp3m.params.mesh[0] = 0;
-  dp3m.params.mesh[1] = 0;
-  dp3m.params.mesh[2] = 0;
-  dp3m.params.cao = 0;
-  dp3m.params.cao3 = 0;
-  dp3m.params.mesh_off[0] = P3M_MESHOFF;
-  dp3m.params.mesh_off[1] = P3M_MESHOFF;
-  dp3m.params.mesh_off[2] = P3M_MESHOFF;
-  dp3m.params.inter = P3M_N_INTERPOL;
-  dp3m.params.inter2 = 0;
-  dp3m.params.accuracy = 0.0;
-  dp3m.params.epsilon = P3M_EPSILON_MAGNETIC;
-  dp3m.params.cao_cut[0] = 0.0;
-  dp3m.params.cao_cut[1] = 0.0;
-  dp3m.params.cao_cut[2] = 0.0;
-  dp3m.params.a[0] = 0.0;
-  dp3m.params.a[1] = 0.0;
-  dp3m.params.a[2] = 0.0;
-  dp3m.params.ai[0] = 0.0;
-  dp3m.params.ai[1] = 0.0;
-  dp3m.params.ai[2] = 0.0;
-  dp3m.params.additional_mesh[0] = 0;
-  dp3m.params.additional_mesh[1] = 0;
-  dp3m.params.additional_mesh[2] = 0;
-
-  /* p3m.local_mesh is uninitialized */
-  dp3m.rs_mesh = NULL;
-  dp3m.rs_mesh_dip[0] = NULL;
-  dp3m.rs_mesh_dip[1] = NULL;
-  dp3m.rs_mesh_dip[2] = NULL;
-  dp3m.sum_dip_part = 0;
-  dp3m.sum_mu2 = 0.0;
-
-  dfft_pre_init();
-}
-
-void dp3m_set_bjerrum() {
-  dp3m.params.alpha    = 0.0;
-  dp3m.params.alpha_L  = 0.0;
-  dp3m.params.r_cut    = 0.0;
-  dp3m.params.r_cut_iL = 0.0;
-  dp3m.params.mesh[0]  = 0;
-  dp3m.params.mesh[1]  = 0;
-  dp3m.params.mesh[2]  = 0;
-  dp3m.params.cao      = 0;
-}
-
-
-void dp3m_init() {
-  int n;
-
-  if (coulomb.Dbjerrum == 0.0) {       
-       if(coulomb.Dbjerrum == 0.0) {
-           dp3m.params.r_cut    = 0.0;
-           dp3m.params.r_cut_iL = 0.0;
-          if(this_node==0) 
-             P3M_TRACE(fprintf(stderr,"0: dp3m_init: dipolar Bjerrum length is zero.\n");
-	   fprintf(stderr,"   Magnetostatics of dipoles switched off!\n"));
-      }
-  } else {  
-    P3M_TRACE(fprintf(stderr,"%d: dp3m_init: \n",this_node));
-
-    if (dp3m_sanity_checks()) return;
-
-    P3M_TRACE(fprintf(stderr,"%d: dp3m_init: starting\n",this_node));
-
-        P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,dp3m.params.mesh[0],dp3m.params.cao,dp3m.params.mesh_off[0],dp3m.params.mesh_off[1],dp3m.params.mesh_off[2]));
-        dp3m.params.cao3 = dp3m.params.cao*dp3m.params.cao*dp3m.params.cao;
-
-
-    /* initializes the (inverse) mesh constant dp3m.params.a (dp3m.params.ai) and the cutoff for charge assignment dp3m.params.cao_cut */
-    dp3m_init_a_ai_cao_cut();
-
-    /* initialize ca fields to size CA_INCREMENT: Dca_frac and Dca_fmp */
-    Dca_num = 0;
-    if(Dca_num < CA_INCREMENT) {
-      Dca_num = 0;
-      dp3m_realloc_ca_fields(CA_INCREMENT);
-    }
- 
-    dp3m_calc_local_ca_mesh();
-
-       dp3m_calc_send_mesh();
-       P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
-    
-    /* DEBUG */
-    for(n=0;n<n_nodes;n++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
-         if(n==this_node) P3M_TRACE(p3m_p3m_print_send_mesh(Dsm));
-    }
-    
-    if(Dsm.max != Dsend_recv_grid_size) {
-      Dsend_recv_grid_size= Dsm.max;
-      Dsend_grid = (double *) realloc(Dsend_grid, sizeof(double)*Dsm.max);
-      Drecv_grid = (double *) realloc(Drecv_grid, sizeof(double)*Dsm.max);
-    }
-    
-     if (dp3m.params.inter > 0) dp3m_interpolate_dipole_assignment_function();
-
-     Dpos_shift = (double)((dp3m.params.cao-1)/2) - (dp3m.params.cao%2)/2.0;
-     P3M_TRACE(fprintf(stderr,"%d: dipolar pos_shift = %f\n",this_node,Dpos_shift)); 
- 
-    /* FFT */
-      P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh ADR=%p\n",this_node,dp3m.rs_mesh));
- 
-    Dca_mesh_size = dfft_init(&dp3m.rs_mesh,dp3m.local_mesh.dim,dp3m.local_mesh.margin,&Dks_pnum);
-    Dks_mesh = (double *) realloc(Dks_mesh, Dca_mesh_size*sizeof(double));
-
-    for (n=0;n<3;n++)   
-       dp3m.rs_mesh_dip[n] = (double *) realloc(dp3m.rs_mesh_dip[n], Dca_mesh_size*sizeof(double));
-
-     P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[0] ADR=%p\n",this_node,dp3m.rs_mesh_dip[0]));
-     P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[1] ADR=%p\n",this_node,dp3m.rs_mesh_dip[1]));
-     P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh_dip[2] ADR=%p\n",this_node,dp3m.rs_mesh_dip[2]));
- 
- 
-    /* k-space part: */
-    
-    dp3m_calc_differential_operator();
-
-    dp3m_calc_influence_function_force();
-    dp3m_calc_influence_function_energy();
-
-    dp3m_count_magnetic_particles();
-    
-    Dflag_constants_energy_dipolar=0; /* to ensure constants will be computed in case you want to calculate the energy */
-   
-    P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
-  }
-}
-
-void dp3m_free_dipoles() {
-  for (int i=0;i<3;i++) free(dp3m.rs_mesh_dip[i]);
-  free(Dca_frac);
-  free(Dca_fmp);
-  free(Dsend_grid);
-  free(Drecv_grid);
-  free(dp3m.rs_mesh);
-  free(Dks_mesh); 
-}
 
 /*****************************************************************************/
 
