@@ -141,6 +141,12 @@ LB_Boundary *generate_lbboundary()
   n_lb_boundaries++;
   lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  lb_boundaries[n_lb_boundaries-1].velocity[0]=
+  lb_boundaries[n_lb_boundaries-1].velocity[1]=
+  lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  lb_boundaries[n_lb_boundaries-1].force[0]=
+  lb_boundaries[n_lb_boundaries-1].force[1]=
+  lb_boundaries[n_lb_boundaries-1].force[2]=0;
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
@@ -182,6 +188,22 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	return (TCL_ERROR);
       }
       argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "velocity", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "lbboundary wall velocity <vx> <vy> <vz> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+      	  Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	        Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+	        return (TCL_ERROR);
+      else {
+        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+      }
+      argc -= 4; argv += 4;
     }
     else
       break;
@@ -550,6 +572,7 @@ void lb_init_boundaries() {
   int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
+  int the_boundary;
 	
   map_node_array(this_node, node_domain_position);
 	
@@ -568,7 +591,7 @@ void lb_init_boundaries() {
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
 	      
-	      dist = 0.;
+	      dist = 1e99;
 
         for (n=0;n<n_lb_boundaries;n++) {
           switch (lb_boundaries[n].type) {
@@ -589,13 +612,18 @@ void lb_init_boundaries() {
               ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
           }
           
-          if (abs(dist) > abs(dist_tmp) || n == 0) {
+//          if (abs(dist) > abs(dist_tmp) || n == 0) {
+//          }
+          if (dist_tmp<dist) {
             dist = dist_tmp;
+            the_boundary = n;
           }
         }       
         
   	    if (dist <= 0 && n_lb_boundaries > 0) {
-   	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;   
+   	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;   
+        } else {
+            lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary=0;
         }
       }
     }

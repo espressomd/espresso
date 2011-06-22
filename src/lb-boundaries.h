@@ -71,6 +71,8 @@ typedef struct {
     Constraint_cylinder cyl;
     Constraint_pore pore;
   } c;
+  double force[3];
+  double velocity[3];
 } LB_Boundary;
 
 extern int n_lb_boundaries;
@@ -99,10 +101,12 @@ MDINLINE void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL
-  int k,i;
+  int k,i,l;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
   int next[19];
+  double population_shift;
+  double rho, j[3], pi[6];
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
   next[2]  = - 1;                       // (-1, 0, 0)
@@ -128,8 +132,15 @@ MDINLINE void lb_bounce_back() {
   for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
 
     if (lbfields[k].boundary) {
+      lb_calc_local_fields(k, &rho, j, pi);
+      lb_boundaries[lbfields[k].boundary-1].force[0]+=2*j[0];
+      lb_boundaries[lbfields[k].boundary-1].force[1]+=2*j[1];
+      lb_boundaries[lbfields[k].boundary-1].force[2]+=2*j[2];
       for (i=0; i<19; i++) {
-        lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+        population_shift=0;
+        for (l=0; l<3; l++)
+          population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l];
+        lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
       }
     }
   }

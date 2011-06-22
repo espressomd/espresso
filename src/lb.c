@@ -3024,6 +3024,79 @@ MDINLINE int lb_check_negative_n(index_t index) {
 }
 #endif /* ADDITIONAL_CHECKS */
 
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
+  index_t node_index[8], index;
+  double delta[6];
+  double local_rho, local_j[3], interpolated_u[3];
+  double modes[19];
+  int x,y,z;
+  LB_FluidNode *local_node;
+
+  if (n_nodes != 1)
+    return 1;
+  
+  /* determine elementary lattice cell surrounding the particle 
+     and the relative position of the particle in this cell */ 
+  map_position_to_lattice(&lblattice,p,node_index,delta);
+
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+        	
+        index = node_index[(z*2+y)*2+x];
+        
+        local_node = &lbfields[index];
+        if (lbfields[index].boundary) {
+          local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+          local_j[0] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[2] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+        } else {
+          lb_calc_modes(index, modes);
+          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_j[0] = modes[1];
+          local_j[1] = modes[2];
+          local_j[2] = modes[3];
+        }
+//        printf ("%f %f %f\n", modes[1], modes[2], modes[3]);
+        
+        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
+        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+
+      }
+    }
+  }
+  v[0] = interpolated_u[0]*lbpar.agrid/lbpar.tau;
+  v[1] = interpolated_u[1]*lbpar.agrid/lbpar.tau;
+  v[2] = interpolated_u[2]*lbpar.agrid/lbpar.tau;
+  return 0;
+  
+}
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
+  double p[3], v[3];
+  char buffer[TCL_DOUBLE_SPACE];
+  if (argc!=3) {
+    printf("usage: print_interpolated_velocity $x $y $z");
+    return TCL_ERROR;
+  }
+  for (int i = 0; i < 3; i++) {
+    if (!ARG_IS_D(i, p[i]))
+      printf("usage: print_interpolated_velocity $x $y $z");
+  }
+  v[0]=1.;
+  lb_lbfluid_get_interpolated_velocity(p, v);
+  for (int i = 0; i < 3; i++) {
+    Tcl_PrintDouble(interp, v[i], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+  return TCL_OK;
+}
+
 #endif
 
 /*@}*/
