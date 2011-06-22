@@ -396,7 +396,7 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
 
-#ifdef LB_BOUNDARIES
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 /** Issue REQ_LB_BOUNDARY: set up walls for lb fluid */
 void mpi_bcast_lbboundary(int del_num);
 #endif

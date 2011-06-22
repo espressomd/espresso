@@ -2808,30 +2808,20 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
   char buffer[2*TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE+256];
   IntList p1,p2;
   double r_min=0, r_max=-1.0;
-/* added */
   double x_min=0, x_max=-1.0;
-/*Up to here*/  
-  int r_bins=-1, n_conf=1, i;
+  int r_bins=100, n_conf=1, i;
   double *rdf;
 
   init_intlist(&p1); init_intlist(&p2);
 
-  if (argc < 2) {
+  if (argc < 2 || (!ARG0_IS_INTLIST(p1)) || (!ARG1_IS_INTLIST(p2))) {
     Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol> [<type_list> <type_list>]", (char *)NULL);
-    Tcl_AppendResult(interp, "usage: analyze <rdf-adress> [<type_list> <type_list>] [x_min] [x_max]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  if (!ARG0_IS_INTLIST(p1)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol>} [<type_list> <type_list>]", (char *)NULL);
-    Tcl_AppendResult(interp, "usage: analyze <rdf-adress> [<type_list> <type_list>] [x_min] [x_max]", (char *)NULL);
-    return (TCL_ERROR);
-  }
-  if (!ARG1_IS_INTLIST(p2)) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol>} [<type_list> <type_list>]", (char *)NULL);
-    Tcl_AppendResult(interp, "usage: analyze <rdf-adress> [<type_list> <type_list>] [x_min] [x_max]", (char *)NULL);
+    if (average != 3) { 
+      Tcl_AppendResult(interp, "usage: analyze {rdf|<rdf>|<rdf-intermol>} <type_list> <type_list> [<r_min> [<r_max> [<n_bins> [<n_configs>]]]]", (char *)NULL);
+    }
+    else {
+      Tcl_AppendResult(interp, "usage: analyze <rdf-adress> <type_list> <type_list> [<x_min> [<x_max> [<r_min> [<r_max> [<n_bins>] [<n_configs>]]]]]", (char *)NULL);
+    }
     return (TCL_ERROR);
   }
   argc-=2; argv+=2;
@@ -2845,27 +2835,22 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
   if( argc>0 ) { if (!ARG0_IS_D(r_max)) return (TCL_ERROR); argc--; argv++; }
   if( argc>0 ) { if (!ARG0_IS_I(r_bins)) return (TCL_ERROR); argc--; argv++; }
 
-  if(average)
-    {
-      if (n_configs == 0) {
-	Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
-	Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rdf' to only look at current RDF!", (char *)NULL);
-	return TCL_ERROR;
-      }
-      if( argc>0 ) {
-	if (!ARG0_IS_I(n_conf)) return (TCL_ERROR); argc--; argv++;
-      }
-      else
-        n_conf  = n_configs;
+  if(average != 0) {
+    if (n_configs == 0) {
+      Tcl_AppendResult(interp, "no configurations found! ", (char *)NULL);
+      Tcl_AppendResult(interp, "Use 'analyze append' to save some, or 'analyze rdf' to only look at current RDF!", (char *)NULL);
+      return TCL_ERROR;
     }
+    if( argc>0 ) {
+      if (!ARG0_IS_I(n_conf)) return (TCL_ERROR); argc--; argv++;
+    }
+    else
+      n_conf  = n_configs;
+  }
 
   /* if not given use default */
   if(r_max  == -1.0)  r_max = min_box_l/2.0;
-  if(r_bins == -1  )  r_bins = n_total_particles / 20;
-/* added */
   if(x_max  == -1.0)  x_max = min_box_l/2.0;
-  if(r_bins == -1  )  r_bins = n_total_particles / 20;
-/*Up to here*/
 
   /* give back what you do */
   if(average==0)
@@ -2874,10 +2859,8 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
     Tcl_AppendResult(interp, "{ analyze <rdf> { ", (char *)NULL);
   else if(average==2)
     Tcl_AppendResult(interp, "{ analyze <rdf-intermol> { ", (char *)NULL);
-/* added */
   else if(average==3)
     Tcl_AppendResult(interp, "{ analyze <rdf-adress> { ", (char *)NULL);
-/*Up to here*/
   else
     {
       Tcl_AppendResult(interp, "WRONG PARAMETER PASSED ", (char *)NULL);
@@ -2894,11 +2877,11 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   sprintf(buffer,"} %f %f %d",r_min,r_max,r_bins);
-/* added */
+
   if(average==3) {
-  sprintf(buffer,"} %f %f %f %f %d",x_min,x_max,r_min,r_max,r_bins);
+    sprintf(buffer,"} %f %f %f %f %d",x_min,x_max,r_min,r_max,r_bins);
   }
-/*Up to here*/
+
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   if(average) {
     sprintf(buffer," %d",n_conf);
@@ -2910,18 +2893,21 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
 
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
 
-  if(average==0)
+  switch (average) {
+  case 0:
     calc_rdf(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf);
-  else if(average==1)
+    break;
+  case 1:
     calc_rdf_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
-  else if(average==2)
+    break;
+  case 2:
     calc_rdf_intermol_av(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, rdf, n_conf);
-/* added */
-  else if(average==3)
+    break;
+  case 3:
     calc_rdf_adress(p1.e, p1.max, p2.e, p2.max, x_min, x_max, r_min, r_max, r_bins, rdf, n_conf);
-/*Up to here*/
-
-  else ;
+    break;
+  default: ;
+  }
 
   /* append result */
   {

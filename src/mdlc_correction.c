@@ -519,11 +519,11 @@ double get_DLC_energy_dipolar(int kcut){
            mz=slab_dip_count_mu(&mtot, &mx, &my);
 #ifdef DP3M
 	   if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-	     if(dp3m.epsilon == P3M_EPSILON_METALLIC) {	
+	     if(dp3m.params.epsilon == P3M_EPSILON_METALLIC) {	
 	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
 	     }
 	     else{   
-	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*dp3m.epsilon+1.0)); 
+	       dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*dp3m.params.epsilon+1.0)); 
 	     }
 	   }
 	   else
@@ -552,7 +552,7 @@ double get_DLC_energy_dipolar(int kcut){
    
 #if defined(ROTATION) && defined(DP3M)
 	       //in the Next lines: the second term (correc*...)is the SDC correction for the torques
-                if(dp3m.epsilon == P3M_EPSILON_METALLIC) {	
+                if(dp3m.params.epsilon == P3M_EPSILON_METALLIC) {	
 
                    dx=0.0;
 		   dy=0.0;
@@ -565,10 +565,10 @@ double get_DLC_energy_dipolar(int kcut){
 
 		}else{
 		
-                   correps= correc/(2.0*dp3m.epsilon+1.0);
+                   correps= correc/(2.0*dp3m.params.epsilon+1.0);
                    dx=correps*mx;
 		   dy=correps*my;
-		   dz=correc*(-1.0+1./(2.0*dp3m.epsilon+1.0))*mz;    
+		   dz=correc*(-1.0+1./(2.0*dp3m.params.epsilon+1.0))*mz;    
 		
 	           p[i].f.torque[0] +=coulomb.Dprefactor*(dip_DLC_t_x[ip]+p[i].r.dip[1]*dz  - p[i].r.dip[2]*dy ) ; 
  	           p[i].f.torque[1] +=coulomb.Dprefactor*(dip_DLC_t_y[ip]+p[i].r.dip[2]*dx  - p[i].r.dip[0]*dz ) ;
@@ -629,18 +629,18 @@ double get_DLC_energy_dipolar(int kcut){
      if(this_node == 0) {
 #ifdef DP3M      
      if(coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-       if(dp3m.epsilon == P3M_EPSILON_METALLIC) {
+       if(dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
 	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
        }
        else{   
-	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*dp3m.epsilon+1.0)); 
+	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz-mtot*mtot/(2.0*dp3m.params.epsilon+1.0)); 
        }
      }
      else
 #endif
        {
 	 dip_DLC_energy+=coulomb.Dprefactor*2.*M_PI/volume*(mz*mz);
-	 fprintf(stderr,"You are not using the P3M method, therefore dp3m.epsilon unknown, I assume metallic borders \n");   
+	 fprintf(stderr,"You are not using the P3M method, therefore dp3m.params.epsilon unknown, I assume metallic borders \n");   
        }  
      
      return dip_DLC_energy;

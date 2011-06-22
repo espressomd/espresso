@@ -24,6 +24,37 @@
 
 #if defined(P3M) || defined(DP3M)
 
+void p3m_common_parameter_pre_init(p3m_parameter_struct *params) {
+  params->alpha = 0.0;
+  params->alpha_L = 0.0;
+  params->r_cut = 0.0;
+  params->r_cut_iL = 0.0;
+  params->mesh[0] = 0;
+  params->mesh[1] = 0;
+  params->mesh[2] = 0;
+  params->cao = 0;
+  params->cao3 = 0;
+  params->mesh_off[0] = P3M_MESHOFF;
+  params->mesh_off[1] = P3M_MESHOFF;
+  params->mesh_off[2] = P3M_MESHOFF;
+  params->inter = P3M_N_INTERPOL;
+  params->inter2 = 0;
+  params->accuracy = 0.0;
+  params->epsilon = P3M_EPSILON;
+  params->cao_cut[0] = 0.0;
+  params->cao_cut[1] = 0.0;
+  params->cao_cut[2] = 0.0;
+  params->a[0] = 0.0;
+  params->a[1] = 0.0;
+  params->a[2] = 0.0;
+  params->ai[0] = 0.0;
+  params->ai[1] = 0.0;
+  params->ai[2] = 0.0;
+  params->additional_mesh[0] = 0;
+  params->additional_mesh[1] = 0;
+  params->additional_mesh[2] = 0;
+}
+
 /** Debug function printing p3m structures */
 void p3m_p3m_print_local_mesh(p3m_local_mesh l) 
 {

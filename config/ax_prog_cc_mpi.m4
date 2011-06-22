@@ -1,21 +1,53 @@
 dnl -*- mode: autoconf -*-
 # ===========================================================================
-#       http://www.gnu.org/software/autoconf-archive/ax_mpi_only.html
+#       http://www.gnu.org/software/autoconf-archive/ax_prog_cc_mpi.html
 # ===========================================================================
 #
 # SYNOPSIS
 #
-#   AX_MPI_ONLY([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND[, MPI-WANTED-TEST]]])
+#   AX_PROG_CC_MPI([MPI-WANTED-TEST[, ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]]])
 #
 # DESCRIPTION
 #
-#   This macro tries to find out how to compile programs that use MPI
+#   This macro tries to find out how to compile C programs that use MPI
 #   (Message Passing Interface), a standard API for parallel process
-#   communication (see http://www-unix.mcs.anl.gov/mpi/)
+#   communication (see http://www-unix.mcs.anl.gov/mpi/).
+#   The macro has to be used instead of the standard macro AC_PROG_CC
+#   and will replace the standard variable CC with the found compiler.
+#
+#   MPI-WANTED-TEST is used to test whether MPI is actually wanted by
+#   the user. If the test fails, the macro will not try to find MPI
+#   and call AC_MPI_CC instead. If the test is omitted, the macro will
+#   try to found MPI and fail if it is not found.
+#
+#   When MPI is found, ACTION-IF-FOUND will be executed, otherwise
+#   ACTION-IF-NOT-FOUND is executed. If ACTION-IF-FOUND is not set,
+#   the macro will define HAVE_MPI.
+#
+# EXAMPLE
+#
+#  # If --with-mpi=auto is used, try to find MPI, but use standard C
+#  compiler if it is not found.
+#  # If --with-mpi=yes is used, try to find MPI and fail if it isn't
+#  # found.
+#  # If --with-mpi=no is used, use a standard C compiler instead.
+#  AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
+#      [compile with MPI (parallelization) support. If none is found,
+#      MPI is not used. Default: auto])
+#  ],,[with_mpi=auto])
+#
+#  AX_PROG_CC_MPI([test x"$with_mpi" != xno],[use_mpi=yes],[
+#    use_mpi=no
+#    if test x"$with_mpi" = xyes; then
+#      AC_MSG_FAILURE([MPI compiler requested, but couldn't use MPI.])
+#    else
+#      AC_MSG_WARN([No MPI compiler found, won't use MPI.])
+#    fi
+#  ])
 #
 # LICENSE
 #
-#   Copyright (c) 2010 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+#   Copyright (c) 2010,2011 Olaf Lenz <olenz@icp.uni-stuttgart.de>
 #
 #   This program is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License as published by the
@@ -45,21 +77,21 @@ dnl -*- mode: autoconf -*-
 
 #serial 1
 
-AC_DEFUN([AX_MPI_ONLY], [
+AC_DEFUN([AX_PROG_CC_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 
 # Check for compiler
 # Needs to be split off into an extra macro to ensure right expansion
 # order.
-AC_REQUIRE([_AX_MPI_ONLY],[_AX_MPI_ONLY([$1])])
+AC_REQUIRE([_AX_PROG_CC_MPI],[_AX_PROG_CC_MPI([$1])])
 
-AS_IF([test x"$_ax_mpi_only_mpi_wanted" = xno], 
-  [ ax_mpi_only_mpi_found=no ],
+AS_IF([test x"$_ax_prog_mpicc_mpi_wanted" = xno], 
+  [ ax_prog_mpicc_mpi_found=no ],
   [
-    # test whether MPI_Init is available in one oft he libraries
+    # test whether MPI_Init is available in a library
     AC_SEARCH_LIBS(MPI_Init, [mpi mpich],
-      [ ax_mpi_only_mpi_found=yes ],
-      [ ax_mpi_only_mpi_found=no ])
+      [ ax_prog_mpicc_mpi_found=yes ],
+      [ ax_prog_mpicc_mpi_found=no ])
 
     # Check for header
     AS_IF([test x"$ax_only_mpi_found" = xyes], [
@@ -67,13 +99,13 @@ AS_IF([test x"$_ax_mpi_only_mpi_wanted" = xno],
       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <mpi.h>])],
         [ AC_MSG_RESULT(yes)], 
         [ AC_MSG_RESULT(no)
-	  ax_mpi_only_mpi_found=no
+	  ax_prog_mpicc_mpi_found=no
       ])
     ])
 ])
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-AS_IF([test x"$ax_mpi_only_mpi_found" = xyes], [
+AS_IF([test x"$ax_prog_mpicc_mpi_found" = xyes], [
         ifelse([$2],,[AC_DEFINE(HAVE_MPI,1,[Define if you have the MPI library.])],[$2])
         :
 ],[
@@ -81,23 +113,23 @@ AS_IF([test x"$ax_mpi_only_mpi_found" = xyes], [
         :
 ])
 
-])dnl AX_MPI_ONLY
+])dnl AX_PROG_CC_MPI
 
-dnl _AX_MPI_ONLY is an internal macro required by AX_MPI_ONLY.
-dnl To ensure the right expansion order, the main function AX_MPI_ONLY
+dnl _AX_PROG_CC_MPI is an internal macro required by AX_PROG_CC_MPI.
+dnl To ensure the right expansion order, the main function AX_PROG_CC_MPI
 dnl has to be split into two parts.
-AC_DEFUN([_AX_MPI_ONLY], [
+AC_DEFUN([_AX_PROG_CC_MPI], [
   AC_ARG_VAR(MPICC,[MPI C compiler command])
-  ifelse([$1],,[_ax_mpi_only_mpi_wanted=yes],[
+  ifelse([$1],,[_ax_prog_mpicc_mpi_wanted=yes],[
     AC_MSG_CHECKING([whether to compile using MPI])
     if $1; then
-      _ax_mpi_only_mpi_wanted=yes
+      _ax_prog_mpicc_mpi_wanted=yes
     else
-      _ax_mpi_only_mpi_wanted=no
+      _ax_prog_mpicc_mpi_wanted=no
     fi
-    AC_MSG_RESULT($_ax_mpi_only_mpi_wanted)
+    AC_MSG_RESULT($_ax_prog_mpicc_mpi_wanted)
   ])
-  if test x"$_ax_mpi_only_mpi_wanted" = xyes; then
+  if test x"$_ax_prog_mpicc_mpi_wanted" = xyes; then
     if test -z "$CC" && test -n "$MPICC"; then
       CC="$MPICC"
     else
@@ -105,5 +137,4 @@ AC_DEFUN([_AX_MPI_ONLY], [
     fi
   fi
   AC_PROG_CC
-
-])dnl _AX_MPI_ONLY
+])dnl _AX_PROG_CC_MPI
