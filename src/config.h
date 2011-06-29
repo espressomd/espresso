@@ -143,6 +143,7 @@
 /* MAGNETOSTATICS implies the use of DIPOLES */
 #ifdef MAGNETOSTATICS
 #define DIPOLES
+#define ROTATION
 #endif
 
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */

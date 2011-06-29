@@ -42,6 +42,7 @@
 #include "lj.h"
 #include "lb.h"
 #include "lb-boundaries.h"
+#include "lb_boundaries_gpu.c"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -1688,7 +1689,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
   case COULOMB_P3M:
-    MPI_Bcast(&p3m, sizeof(p3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&p3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
 #endif
   case COULOMB_DH:
@@ -1726,7 +1727,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     // fall through
   case DIPOLAR_P3M:
-    MPI_Bcast(&dp3m, sizeof(dp3m_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0, MPI_COMM_WORLD);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA :
@@ -1845,9 +1846,10 @@ void mpi_bcast_constraint_slave(int node, int parm)
 /*************** REQ_BCAST_LBBOUNDARY ************/
 void mpi_bcast_lbboundary(int del_num)
 {
-#ifdef LB_BOUNDARIES
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   mpi_call(mpi_bcast_lbboundary_slave, 0, del_num);
 
+#ifdef LB_BOUNDARIES
   if (del_num == -1) {
     /* bcast new boundaries */
     MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -1857,11 +1859,17 @@ void mpi_bcast_lbboundary(int del_num)
     n_lb_boundaries = 0;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
+#if defined(LB_BOUNDARIES_GPU)
+  else if (del_num == -3) {
+  //nothing, GPU code just requires to call on_boundary_change()
+  }
+#endif
   else {
     memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
+#endif
 
   on_lbboundary_change();
 #endif
@@ -1869,7 +1877,9 @@ void mpi_bcast_lbboundary(int del_num)
 
 void mpi_bcast_lbboundary_slave(int node, int parm)
 {   
-#ifdef LB_BOUNDARIES
+#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
+
+#if defined(LB_BOUNDARIES)
   if(parm == -1) {
     n_lb_boundaries++;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
@@ -1880,11 +1890,17 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
     n_lb_boundaries = 0;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
+#if defined(LB_BOUNDARIES_GPU)
+  else if (parm == -3) {
+  //nothing, GPU code just requires to call on_boundary_change()
+  }
+#endif
   else {
     memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
+#endif
 
   on_lbboundary_change();
 #endif

@@ -118,6 +118,48 @@ typedef struct {
   int max;
 } p3m_send_mesh;
 
+/** Structure to hold P3M parameters and some dependend variables. */
+typedef struct {
+  /** Ewald splitting parameter (0<alpha<1), rescaled to alpha_L = alpha * box_l. */
+  double alpha_L;
+  /** Cutoff radius for real space electrostatics (>0), rescaled to r_cut_iL = r_cut * box_l_i. */
+  double r_cut_iL;
+  /** number of mesh points per coordinate direction (>0). */
+  int    mesh[3];
+  /** offset of the first mesh point (lower left 
+      corner) from the coordinate origin ([0,1[). */
+  double mesh_off[3];
+  /** charge assignment order ([0,7]). */
+  int    cao;
+  /** number of interpolation points for charge assignment function */
+  int    inter;
+  /** Accuracy of the actual parameter set. */
+  double accuracy;
+
+  /** epsilon of the "surrounding dielectric". */
+  double epsilon;
+  /** Cutoff for charge assignment. */
+  double cao_cut[3];
+  /** mesh constant. */
+  double a[3];
+  /** inverse mesh constant. */
+  double ai[3];
+  /** unscaled \ref alpha_L for use with fast inline functions only */
+  double alpha;
+  /** unscaled \ref r_cut_iL for use with fast inline functions only */
+  double r_cut;
+  /** full size of the interpolated assignment function */
+  int inter2;
+  /** number of points unto which a single charge is interpolated, i.e. p3m.cao^3 */
+  int cao3;
+  /** additional points around the charge assignment mesh, for method like dielectric ELC
+      creating virtual charges. */
+  double additional_mesh[3];
+} p3m_parameter_struct;
+
+/** initialize the parameter struct */
+void p3m_common_parameter_pre_init(p3m_parameter_struct *params);
+
 /** print local mesh content. 
     \param l local mesh structure.
 */

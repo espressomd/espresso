@@ -45,8 +45,8 @@
 #include "thermostat.h"
 #include "rotation.h"
 #include "p3m.h"
+#include "p3m-magnetostatics.h"
 #include "ewald.h"
-#include "fft.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -114,8 +114,11 @@ int on_program_start(Tcl_Interp *interp)
   tf_tables_init();
   /* #endif */
 #endif
-#if defined(P3M) || defined(DP3M)
-  fft_pre_init();
+#ifdef P3M
+  p3m_pre_init();
+#endif
+#ifdef DP3M
+  dp3m_pre_init();
 #endif
 
 #ifdef LB_GPU
@@ -360,7 +363,7 @@ void on_coulomb_change()
     ELC_init();
     // fall through
   case COULOMB_P3M:
-    p3m_init_charges();
+    p3m_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -396,7 +399,7 @@ void on_coulomb_change()
     case DIPOLAR_MDLC_P3M:
        // fall through
   case DIPOLAR_P3M:
-    dp3m_init_dipoles();
+    dp3m_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -428,13 +431,6 @@ void on_constraint_change()
 #ifdef LB_BOUNDARIES
   if(lattice_switch & LATTICE_LB) {
     lb_init_boundaries();
-  }
-#endif
-#ifdef LB_BOUNDARIES_GPU
-  if(this_node == 0){
-    if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries_gpu();
-    }
   }
 #endif
 
@@ -699,7 +695,7 @@ void on_parameter_change(int field)
 #ifdef LB_GPU
 if(this_node == 0){
   if (lattice_switch & LATTICE_LB_GPU) {
-    if (field == FIELD_TEMPERATURE) lb_init_gpu();
+    if (field == FIELD_TEMPERATURE) lb_reinit_parameters_gpu();
   }
 }
 #endif
@@ -716,6 +712,21 @@ void on_lb_params_change(int field) {
   }
 
   lb_reinit_parameters();
+
+}
+#endif
+
+#ifdef LB_GPU
+void on_lb_params_change_gpu(int field) {
+
+  if (field == LBPAR_AGRID) {
+    lb_init_gpu();
+  }
+  if (field == LBPAR_DENSITY) {
+    lb_reinit_fluid_gpu();
+  }
+
+  lb_reinit_parameters_gpu();
 
 }
 #endif
@@ -837,7 +848,7 @@ static void init_tcl(Tcl_Interp *interp)
 #endif
 #ifdef LB_GPU
   /* in lbgpu_cfile.c */
-  REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
+  REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
 
   REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif

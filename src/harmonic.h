@@ -89,13 +89,24 @@ MDINLINE int calc_harmonic_pair_force(Particle *p1, Particle *p2, Bonded_ia_para
   double fac;
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
+  double dr;
 
   if ((iaparams->p.harmonic.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic.r_cut)) 
     return 1;
 
-  fac = -iaparams->p.harmonic.k*(dist - iaparams->p.harmonic.r);
-  fac /= dist;
+  dr = dist - iaparams->p.harmonic.r;
+  fac = -iaparams->p.harmonic.k * dr;
+  if (fabs(dr) > ROUND_ERROR_PREC) {
+     if(dist>ROUND_ERROR_PREC) {  /* Regular case */
+        fac /= dist;
+     } else { /* dx[] == 0: the force is undefined. Let's use a random direction */
+        for(i=0;i<3;i++) dx[i] = d_random()-0.5;
+        fac /= sqrt(sqrlen(dx));
+     }
+  } else { 
+     fac=0;
+  }
   
   for(i=0;i<3;i++)
     force[i] = fac*dx[i];

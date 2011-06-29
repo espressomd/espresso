@@ -5,13 +5,9 @@
 ESPResSo 3.0.1
 ==============
 
-* Fixed a bug in P3M tuning.
+* Fixed bugs #33375,#33376,#32005
 
-* Fixed a bug causing a segfault in FFTW on 32bit machines.
-
-* Fixed compilation with current CUDA version.
-
-* Reenabled output for P3M tuning.
+* Fixed a few bugs that were never reported via the bug tracker.
 
 ESPResSo 3.0.0
 ===============

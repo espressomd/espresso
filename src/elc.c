@@ -1318,7 +1318,7 @@ void ELC_init()
     elc_params.space_layer = (1./3.)*elc_params.gap_size;
     // but make sure we leave enough space to not have to bother with overlapping
     // realspace P3M
-    maxsl = elc_params.gap_size - p3m.r_cut;
+    maxsl = elc_params.gap_size - p3m.params.r_cut;
     // and make sure the space layer is not bigger than half the actual simulation box,
     // to avoid overlaps
     if (maxsl > .5*elc_params.h) maxsl = .5*elc_params.h;
@@ -1345,8 +1345,8 @@ void ELC_init()
     }
   }
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
-    p3m.additional_mesh[0] = p3m.additional_mesh[1] = 0;
-    p3m.additional_mesh[2] = elc_params.space_layer; 
+    p3m.params.additional_mesh[0] = p3m.params.additional_mesh[1] = 0;
+    p3m.params.additional_mesh[2] = elc_params.space_layer; 
   }
 }
 
@@ -1406,7 +1406,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   switch (coulomb.method) {
   case COULOMB_ELC_P3M:
   case COULOMB_P3M:
-    p3m.epsilon = P3M_EPSILON_METALLIC;
+    p3m.params.epsilon = P3M_EPSILON_METALLIC;
     coulomb.method = COULOMB_ELC_P3M;
     break;
   default:
@@ -1476,7 +1476,7 @@ void ELC_p3m_charge_assign_both()
   /* charged particle counter, charge fraction counter */
   int cp_cnt=0;
   /* prepare local FFT mesh */
-  for(i=0; i<p3m_lm.size; i++) p3m_rs_mesh[i] = 0.0;
+  for(i=0; i<p3m.local_mesh.size; i++) p3m.rs_mesh[i] = 0.0;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1512,7 +1512,7 @@ void ELC_p3m_charge_assign_image()
   double pos[3];
   int i,c,np;
   /* prepare local FFT mesh */
-  for(i=0; i<p3m_lm.size; i++) p3m_rs_mesh[i] = 0.0;
+  for(i=0; i<p3m.local_mesh.size; i++) p3m.rs_mesh[i] = 0.0;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -1717,9 +1717,9 @@ void  ELC_P3M_modify_p3m_sums_both()
   }
   
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  p3m_sum_qpart    += (int)(tot_sums[0]+0.1);
-  p3m_sum_q2       += tot_sums[1];
-  p3m_square_sum_q += SQR(tot_sums[2]);
+  p3m.sum_qpart    += (int)(tot_sums[0]+0.1);
+  p3m.sum_q2       += tot_sums[1];
+  p3m.square_sum_q += SQR(tot_sums[2]);
 }
 
 void  ELC_P3M_modify_p3m_sums_image()
@@ -1758,9 +1758,9 @@ void  ELC_P3M_modify_p3m_sums_image()
   }
   
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  p3m_sum_qpart    = (int)(tot_sums[0]+0.1);
-  p3m_sum_q2       = tot_sums[1];
-  p3m_square_sum_q = SQR(tot_sums[2]);
+  p3m.sum_qpart    = (int)(tot_sums[0]+0.1);
+  p3m.sum_q2       = tot_sums[1];
+  p3m.square_sum_q = SQR(tot_sums[2]);
 }
 
 // this function is required in force.c for energy evaluation
@@ -1800,9 +1800,9 @@ void  ELC_P3M_restore_p3m_sums()
   }
   
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  p3m_sum_qpart    -= (int)(tot_sums[0]+0.1);
-  p3m_sum_q2       -= tot_sums[1];
-  p3m_square_sum_q -= SQR(tot_sums[2]);
+  p3m.sum_qpart    -= (int)(tot_sums[0]+0.1);
+  p3m.sum_q2       -= tot_sums[1];
+  p3m.square_sum_q -= SQR(tot_sums[2]);
 }
 
 #endif
