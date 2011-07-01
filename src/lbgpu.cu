@@ -20,7 +20,7 @@
 //#ifdef __cplusplus
 //extern "C" {
 //#endif
-#include "cutil.h"
+//#include "cutil.h"
 //#ifdef __cplusplus
 //}
 //#endif
@@ -1315,7 +1315,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();	
   }	
-  datei1=fopen("atomic_mit2.dat","a");
+  //datei1=fopen("atomic_mit2.dat","a");
 }
 
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
@@ -1404,8 +1404,6 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
     dim3 dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
     KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
-
-    KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
   }
 
   cudaThreadSynchronize();
@@ -1456,11 +1454,11 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 */
 void lb_particle_GPU(LB_particle_gpu *host_data){
   
-  unsigned int hTimer;	
+  //++unsigned int hTimer;	
   /** get espresso md particle values*/
   cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
-  cutCreateTimer(&hTimer);
-  cutStartTimer(hTimer);
+  //cutCreateTimer(&hTimer);
+  //cutStartTimer(hTimer);
   /** call of the particle kernel */
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
@@ -1469,10 +1467,10 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
   KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
-  cutStopTimer(hTimer);
-  value += cutGetTimerValue(hTimer);
-  count++;
-  fprintf(datei1,"%i \t %f \n",lbpar_gpu.number_of_particles, (value/count));
+  //cutStopTimer(hTimer);
+  //value += cutGetTimerValue(hTimer);
+  //count++;
+  //fprintf(datei1,"%i \t %f \n",lbpar_gpu.number_of_particles, (value/count));
   //fprintf("GPU time: %f msecs.\n", cutGetTimerValue(hTimer));
 }
 /** setup and call kernel to copy particle forces to host */

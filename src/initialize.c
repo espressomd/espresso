@@ -721,6 +721,7 @@ void on_lb_params_change_gpu(int field) {
 
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
+    lb_init_boundaries_gpu();
   }
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid_gpu();
