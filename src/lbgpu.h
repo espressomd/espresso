@@ -28,6 +28,7 @@
 
 #include <tcl.h>
 #include "utils.h"
+
 //#include "lattice.h"
 
 #ifdef LB_GPU

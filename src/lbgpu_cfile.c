@@ -177,6 +177,7 @@ void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_total_particles;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
+  //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
   /**-----------------------------------------------------*/
   /** allocating of the needed memory for several structs */
   /**-----------------------------------------------------*/

@@ -17,11 +17,17 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
-
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
+#include "cutil.h"
+//#ifdef __cplusplus
+//}
+//#endif
 extern "C" {
 #include "lbgpu.h"
-}
 
+}
 #ifdef LB_GPU
 #ifndef GAUSSRANDOM
 #define GAUSSRANDOM
@@ -49,35 +55,6 @@ static int *boundindex;
 static int *gpu_check = NULL;
 static int *h_gpu_check = NULL;
 
-/** values for the kernel call */
-static int threads_per_block;
-static int blocks_per_grid_x;
-static int blocks_per_grid_y;
-dim3 dim_grid(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-/** values for the particle kernel */
-static int threads_per_block_particles;
-static int blocks_per_grid_particles_x;
-static int blocks_per_grid_particles_y;
-dim3 dim_grid_particles(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-/** values for the boundary init kernel */
-static int threads_per_block_bound;
-static int blocks_per_grid_bound_x;
-static int blocks_per_grid_bound_y;
-dim3 dim_grid_bound(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
-
-
-static int threads_per_block_exf;
-static int blocks_per_grid_exf_x;
-static int blocks_per_grid_exf_y;
-dim3 dim_grid_exf(blocks_per_grid_exf_x, blocks_per_grid_exf_y, 1);
-
-static int threads_per_block_print;
-static int blocks_per_grid_print_x;
-static int blocks_per_grid_print_y;
-dim3 dim_grid_print(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
-
-
 static unsigned int intflag = 1;
 static LB_nodes_gpu *current_nodes = NULL;
 /**defining size values for allocating global memory */
@@ -91,12 +68,14 @@ static size_t size_of_extern_nodeforces;
 /**parameters residing in constant memory */
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
-
+static FILE *datei1;
 /**cudasteams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
 cudaError_t err;
 cudaError_t _err;
+float value = 0;
+int count = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /**device funktions called by kernel funktions */
@@ -823,6 +802,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
 */
 __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node_index, LB_node_force_gpu node_f){
 
+#if 1
   atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[0]));
   atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[1]));
   atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[2]));
@@ -854,7 +834,40 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
   atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0]));
   atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1]));
   atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
+#endif
+#if 0
+  node_f.force[0*para.number_of_nodes + node_index[0]] += (delta[0]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[0]] += (delta[0]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[0]] += (delta[0]*delta_j[2]);
 
+  node_f.force[0*para.number_of_nodes + node_index[1]] += (delta[1]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[1]] += (delta[1]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[1]] += (delta[1]*delta_j[2]);
+
+  node_f.force[0*para.number_of_nodes + node_index[2]] += (delta[2]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[2]] += (delta[2]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[2]] += (delta[2]*delta_j[2]);
+
+  node_f.force[0*para.number_of_nodes + node_index[3]] += (delta[3]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[3]] += (delta[3]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[3]] += (delta[3]*delta_j[2]);
+
+  node_f.force[0*para.number_of_nodes + node_index[4]] += (delta[4]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[4]] += (delta[4]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[4]] += (delta[4]*delta_j[2]);
+
+  node_f.force[0*para.number_of_nodes + node_index[5]] += (delta[5]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[5]] += (delta[5]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[5]] += (delta[5]*delta_j[2]);
+
+  node_f.force[0*para.number_of_nodes + node_index[6]] += (delta[6]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[6]] += (delta[6]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[6]] += (delta[6]*delta_j[2]);
+
+  node_f.force[0*para.number_of_nodes + node_index[7]] += (delta[7]*delta_j[0]);
+  node_f.force[1*para.number_of_nodes + node_index[7]] += (delta[7]*delta_j[1]);
+  node_f.force[2*para.number_of_nodes + node_index[7]] += (delta[7]*delta_j[2]);
+#endif
 }
 
 /**kernel to calculate local populations from hydrodynamic fields given by the tcl values.
@@ -1272,18 +1285,17 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
-  threads_per_block = 64;
-  blocks_per_grid_y = 4;
-  blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
   cudaStreamCreate(&stream[0]);
   /** values for the particle kernel */
-  threads_per_block_particles = 64;
-  blocks_per_grid_particles_y = 4;
-  blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-
-  dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+  int threads_per_block_particles = 64;
+  int blocks_per_grid_particles_y = 4;
+  int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
+  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
@@ -1303,12 +1315,19 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();	
   }	
+  datei1=fopen("atomic_mit2.dat","a");
 }
 
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
 
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
@@ -1345,11 +1364,10 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
 
   /** values for the particle kernel */
-  threads_per_block_particles = 64;
-  blocks_per_grid_particles_y = 4;
-  blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-
-  dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+  int threads_per_block_particles = 64;
+  int blocks_per_grid_particles_y = 4;
+  int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
+  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
@@ -1363,6 +1381,12 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
   size_of_boundindex = number_of_boundnodes*sizeof(int);
   cuda_safe_mem(cudaMalloc((void**)&boundindex, size_of_boundindex));
   cudaMemcpy(boundindex, host_boundindex, size_of_boundindex, cudaMemcpyHostToDevice);
+  
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
@@ -1374,11 +1398,10 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
     fprintf(stderr, "WARNING: boundary cmd executed but no boundary node found!\n");
   }
   else{
-    threads_per_block_bound = 64;
-    blocks_per_grid_bound_y = 4;
-    blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_bound_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
-
-    dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
+    int threads_per_block_bound = 64;
+    int blocks_per_grid_bound_y = 4;
+    int blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_bound_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
+    dim3 dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
     KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
 
@@ -1397,6 +1420,12 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
 }
@@ -1413,11 +1442,10 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 
   if(para.external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
-  threads_per_block_exf = 64;
-  blocks_per_grid_exf_y = 4;
-  blocks_per_grid_exf_x = (n_extern_nodeforces + threads_per_block_exf * blocks_per_grid_exf_y - 1) /(threads_per_block_exf * blocks_per_grid_exf_y);
-
-  dim_grid_exf = make_uint3(blocks_per_grid_exf_x, blocks_per_grid_exf_y, 1);
+  int threads_per_block_exf = 64;
+  int blocks_per_grid_exf_y = 4;
+  int blocks_per_grid_exf_x = (n_extern_nodeforces + threads_per_block_exf * blocks_per_grid_exf_y - 1) /(threads_per_block_exf * blocks_per_grid_exf_y);
+  dim3 dim_grid_exf = make_uint3(blocks_per_grid_exf_x, blocks_per_grid_exf_y, 1);
 	
   KERNELCALL(init_extern_nodeforces, dim_grid_exf, threads_per_block_exf, (n_extern_nodeforces, extern_nodeforces, node_f));
   cudaFree(extern_nodeforces);
@@ -1427,19 +1455,37 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
  * @param **host_data		Pointer to the host particle positions and velocities
 */
 void lb_particle_GPU(LB_particle_gpu *host_data){
-  	
+  
+  unsigned int hTimer;	
   /** get espresso md particle values*/
   cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
-
+  cutCreateTimer(&hTimer);
+  cutStartTimer(hTimer);
   /** call of the particle kernel */
+  /** values for the particle kernel */
+  int threads_per_block_particles = 64;
+  int blocks_per_grid_particles_y = 4;
+  int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
+  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+
   KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
-  	
+  cutStopTimer(hTimer);
+  value += cutGetTimerValue(hTimer);
+  count++;
+  fprintf(datei1,"%i \t %f \n",lbpar_gpu.number_of_particles, (value/count));
+  //fprintf("GPU time: %f msecs.\n", cutGetTimerValue(hTimer));
 }
 /** setup and call kernel to copy particle forces to host */
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
 
   /** Copy result from device memory to host memory*/
   cudaMemcpy(host_forces, particle_force, size_of_forces, cudaMemcpyDeviceToHost);
+
+    /** values for the particle kernel */
+  int threads_per_block_particles = 64;
+  int blocks_per_grid_particles_y = 4;
+  int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
+  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
   /** reset part forces with zero*/
   KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force));
@@ -1450,6 +1496,12 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
 /** setup and call kernel for getting macroscopic fluid values of all nodes*/
 void lb_get_values_GPU(LB_values_gpu *host_values){
 
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
   KERNELCALL(values, dim_grid, threads_per_block, (*current_nodes, device_values));
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
 
@@ -1459,11 +1511,10 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
       
   LB_values_gpu *device_print_values;
   cuda_safe_mem(cudaMalloc((void**)&device_print_values, sizeof(LB_values_gpu)));	
-  threads_per_block_print = 1;
-  blocks_per_grid_print_y = 1;
-  blocks_per_grid_print_x = 1;
-
-  dim_grid_print = make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
+  int threads_per_block_print = 1;
+  int blocks_per_grid_print_y = 1;
+  int blocks_per_grid_print_x = 1;
+  dim3 dim_grid_print = make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
 
   KERNELCALL(lb_print_node, dim_grid_print, threads_per_block_print, (single_nodeindex, device_print_values, *current_nodes));
 
@@ -1473,10 +1524,17 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
 }
 /** setup and call kernel to calculate the total momentum of the hole fluid*/
 void calc_fluid_momentum_GPU(double* mom){
+
   float* tot_momentum;
   float cpu_momentum[3] = { 0.f, 0.f, 0.f};
   cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
   cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, tot_momentum, node_f));
   
@@ -1494,6 +1552,12 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
   cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
   cudaMemcpy(gpu_jsquared, &cpu_jsquared, sizeof(float), cudaMemcpyHostToDevice);
 
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
   KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, gpu_jsquared));
 
   cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
@@ -1508,6 +1572,12 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 }
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
+
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /**call of fluid step*/
   if (intflag == 1){
