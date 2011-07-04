@@ -607,7 +607,7 @@ void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-#ifdef KEEP_KSPACE
+#ifdef KEEP_KPART
 void tclcommand_part_print_f_k(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
@@ -975,7 +975,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_position(&part, buffer, interp);
     else if (ARG0_IS_S("force"))
       tclcommand_part_print_f(&part, buffer, interp);
-#ifdef KEEP_KSPACE
+#ifdef KEEP_KPART
     else if (ARG0_IS_S("force_k"))
       tclcommand_part_print_f_k(&part, buffer, interp);
 #endif
@@ -1019,7 +1019,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_omega(&part, buffer, interp);
     else if (ARG0_IS_S("torque"))
       tclcommand_part_print_torque(&part, buffer, interp);
-#ifdef KEEP_KSPACE
+#ifdef KEEP_KPART
     else if (ARG0_IS_S("torque"))
       tclcommand_part_print_torque_k(&part, buffer, interp);
 #endif  
