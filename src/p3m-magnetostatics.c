@@ -363,17 +363,20 @@ void dp3m_init() {
     dp3m.send_grid = (double *) realloc(dp3m.send_grid, sizeof(double)*dp3m.sm.max);
     dp3m.recv_grid = (double *) realloc(dp3m.recv_grid, sizeof(double)*dp3m.sm.max);
     
-     if (dp3m.params.inter > 0) dp3m_interpolate_dipole_assignment_function();
+    if (dp3m.params.inter > 0) dp3m_interpolate_dipole_assignment_function();
 
-     dp3m.pos_shift = (double)((dp3m.params.cao-1)/2) - (dp3m.params.cao%2)/2.0;
-     P3M_TRACE(fprintf(stderr,"%d: dipolar pos_shift = %f\n",this_node,dp3m.pos_shift)); 
+    dp3m.pos_shift = (double)((dp3m.params.cao-1)/2) - (dp3m.params.cao%2)/2.0;
+    P3M_TRACE(fprintf(stderr,"%d: dipolar pos_shift = %f\n",this_node,dp3m.pos_shift)); 
  
     /* FFT */
-      P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh ADR=%p\n",this_node,dp3m.rs_mesh));
+    P3M_TRACE(fprintf(stderr,"%d: dp3m.rs_mesh ADR=%p\n",this_node,dp3m.rs_mesh));
  
-    int ca_mesh_size = dfft_init(&dp3m.rs_mesh,dp3m.local_mesh.dim,dp3m.local_mesh.margin,&dp3m.ks_pnum);
+    int ca_mesh_size = dfft_init(&dp3m.rs_mesh,
+				 dp3m.local_mesh.dim,dp3m.local_mesh.margin,
+				 dp3m.params.mesh, dp3m.params.mesh_off,
+				 &dp3m.ks_pnum);
     dp3m.ks_mesh = (double *) realloc(dp3m.ks_mesh, ca_mesh_size*sizeof(double));
-
+    
     for (n=0;n<3;n++)   
        dp3m.rs_mesh_dip[n] = (double *) realloc(dp3m.rs_mesh_dip[n], ca_mesh_size*sizeof(double));
 

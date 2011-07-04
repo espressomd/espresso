@@ -41,7 +41,6 @@ void *fftw_malloc(size_t n);
 #endif
 #include "fft-common.h"
 #include "fft-magnetostatics.h"
-#include "p3m-magnetostatics.h"
 
 /************************************************
  * variables
@@ -70,7 +69,10 @@ void dfft_pre_init()
   fft_common_pre_init(&dfft);
 }
 
-int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_pnum)
+int dfft_init(double **data, 
+	      int *local_mesh_dim, int *local_mesh_margin, 
+	      int* global_mesh_dim, double *global_mesh_off,
+	      int *ks_pnum)
 {
   int i,j;
   /* helpers */
@@ -123,7 +125,7 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
 
   /* === communication groups === */
   /* copy local mesh off real space charge assignment grid */
-  for(i=0;i<3;i++) dfft.plan[0].new_mesh[i] = Dca_mesh_dim[i];
+  for(i=0;i<3;i++) dfft.plan[0].new_mesh[i] = local_mesh_dim[i];
   for(i=1; i<4;i++) {
     dfft.plan[i].g_size=fft_find_comm_groups(n_grid[i-1], n_grid[i], n_id[i-1], n_id[i], 
 					dfft.plan[i].group, n_pos[i], my_pos[i]);
@@ -145,8 +147,8 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
     dfft.plan[i].recv_block = (int *)realloc(dfft.plan[i].recv_block, 6*dfft.plan[i].g_size*sizeof(int));
     dfft.plan[i].recv_size  = (int *)realloc(dfft.plan[i].recv_size, 1*dfft.plan[i].g_size*sizeof(int));
 
-    dfft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], dp3m.params.mesh,
-					   dp3m.params.mesh_off, dfft.plan[i].new_mesh, 
+    dfft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], global_mesh_dim,
+					   global_mesh_off, dfft.plan[i].new_mesh, 
 					   dfft.plan[i].start);  
     permute_ifield(dfft.plan[i].new_mesh,3,-(dfft.plan[i].n_permute));
     permute_ifield(dfft.plan[i].start,3,-(dfft.plan[i].n_permute));
@@ -159,7 +161,7 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
       node = dfft.plan[i].group[j];
       dfft.plan[i].send_size[j] 
 	= fft_calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
-			  dp3m.params.mesh, dp3m.params.mesh_off, &(dfft.plan[i].send_block[6*j]));
+			      global_mesh_dim, global_mesh_off, &(dfft.plan[i].send_block[6*j]));
       permute_ifield(&(dfft.plan[i].send_block[6*j]),3,-(dfft.plan[i-1].n_permute));
       permute_ifield(&(dfft.plan[i].send_block[6*j+3]),3,-(dfft.plan[i-1].n_permute));
       if(dfft.plan[i].send_size[j] > dfft.max_comm_size) 
@@ -169,12 +171,12 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
 	 node */
       if(i==1) {
 	for(k=0;k<3;k++) 
-	  dfft.plan[1].send_block[6*j+k  ] += Dca_mesh_margin[2*k];
+	  dfft.plan[1].send_block[6*j+k  ] += local_mesh_margin[2*k];
       }
       /* recv block: this_node from comm-group-node i (identity: node) */
       dfft.plan[i].recv_size[j] 
 	= fft_calc_send_block(my_pos[i], n_grid[i], &(n_pos[i-1][3*node]), n_grid[i-1],
-			  dp3m.params.mesh,dp3m.params.mesh_off,&(dfft.plan[i].recv_block[6*j]));
+			      global_mesh_dim, global_mesh_off,&(dfft.plan[i].recv_block[6*j]));
       permute_ifield(&(dfft.plan[i].recv_block[6*j]),3,-(dfft.plan[i].n_permute));
       permute_ifield(&(dfft.plan[i].recv_block[6*j+3]),3,-(dfft.plan[i].n_permute));
       if(dfft.plan[i].recv_size[j] > dfft.max_comm_size) 
@@ -200,7 +202,7 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
 
   /* Factor 2 for complex fields */
   dfft.max_comm_size *= 2;
-  dfft.max_mesh_size = (Dca_mesh_dim[0]*Dca_mesh_dim[1]*Dca_mesh_dim[2]);
+  dfft.max_mesh_size = (local_mesh_dim[0]*local_mesh_dim[1]*local_mesh_dim[2]);
   for(i=1;i<4;i++) 
     if(2*dfft.plan[i].new_size > dfft.max_mesh_size) dfft.max_mesh_size = 2*dfft.plan[i].new_size;
 
@@ -227,14 +229,14 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
   /* Factor 2 for complex numbers */
   dfft.send_buf = (double *)realloc(dfft.send_buf, dfft.max_comm_size*sizeof(double));
   dfft.recv_buf = (double *)realloc(dfft.recv_buf, dfft.max_comm_size*sizeof(double));
-  (*Ddata)  = (double *)realloc((*Ddata), dfft.max_mesh_size*sizeof(double));
+  (*data)  = (double *)realloc((*data), dfft.max_mesh_size*sizeof(double));
   dfft.data_buf = (double *)realloc(dfft.data_buf, dfft.max_mesh_size*sizeof(double));
-  if(!(*Ddata) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
+  if(!(*data) || !dfft.data_buf || !dfft.recv_buf || !dfft.send_buf) {
     fprintf(stderr,"%d: Could not allocate FFT data arays\n",this_node);
     errexit();
   }
 
-  fftw_complex *c_data     = (fftw_complex *) (*Ddata);
+  fftw_complex *c_data     = (fftw_complex *) (*data);
   fftw_complex *c_data_buf = (fftw_complex *) dfft.data_buf;
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
@@ -305,18 +307,18 @@ int dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
 }
 
 
-void dfft_perform_forw(double *Ddata)
+void dfft_perform_forw(double *data)
 {
   int i;
   /* int m,n,o; */
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_forw: dir 1:\n",this_node));
 
-  fftw_complex *c_data     = (fftw_complex *) Ddata;
+  fftw_complex *c_data     = (fftw_complex *) data;
   fftw_complex *c_data_buf = (fftw_complex *) dfft.data_buf;
 
   /* communication to current dir row format (in is data) */
-  dfft_forw_grid_comm(dfft.plan[1], Ddata, dfft.data_buf);
+  dfft_forw_grid_comm(dfft.plan[1], data, dfft.data_buf);
 
 
   /*
@@ -335,21 +337,21 @@ void dfft_perform_forw(double *Ddata)
 
   /* complexify the real data array (in is data_buf) */
   for(i=0;i<dfft.plan[1].new_size;i++) {
-    Ddata[2*i]     = dfft.data_buf[i];     /* real value */
-    Ddata[(2*i)+1] = 0;       /* complex value */
+    data[2*i]     = dfft.data_buf[i];     /* real value */
+    data[(2*i)+1] = 0;       /* complex value */
   }
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(dfft.plan[1].fftw_plan,c_data,c_data);
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_forw: dir 2:\n",this_node));
   /* communication to current dir row format (in is data) */
-  dfft_forw_grid_comm(dfft.plan[2], Ddata, dfft.data_buf);
+  dfft_forw_grid_comm(dfft.plan[2], data, dfft.data_buf);
   /* perform FFT (in/out is data_buf)*/
   fftw_execute_dft(dfft.plan[2].fftw_plan,c_data_buf,c_data_buf);
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_forw: dir 3:\n",this_node));
   /* communication to current dir row format (in is data_buf) */
-  dfft_forw_grid_comm(dfft.plan[3], dfft.data_buf, Ddata);
+  dfft_forw_grid_comm(dfft.plan[3], dfft.data_buf, data);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(dfft.plan[3].fftw_plan,c_data,c_data);
   //fft_print_global_fft_mesh(dfft.plan[3],data,1,0);
@@ -358,11 +360,11 @@ void dfft_perform_forw(double *Ddata)
 }
 
 
-void dfft_perform_back(double *Ddata)
+void dfft_perform_back(double *data)
 {
   int i;
 
-  fftw_complex *c_data     = (fftw_complex *) Ddata;
+  fftw_complex *c_data     = (fftw_complex *) data;
   fftw_complex *c_data_buf = (fftw_complex *) dfft.data_buf;
   
   /* ===== third direction  ===== */
@@ -372,14 +374,14 @@ void dfft_perform_back(double *Ddata)
   /* perform FFT (in is data) */
   fftw_execute_dft(dfft.back[3].fftw_plan,c_data,c_data);
   /* communicate (in is data)*/
-  dfft_back_grid_comm(dfft.plan[3],dfft.back[3],Ddata,dfft.data_buf);
+  dfft_back_grid_comm(dfft.plan[3],dfft.back[3],data,dfft.data_buf);
  
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_back: dir 2:\n",this_node));
   /* perform FFT (in is data_buf) */
   fftw_execute_dft(dfft.back[2].fftw_plan,c_data_buf,c_data_buf);
   /* communicate (in is data_buf) */
-  dfft_back_grid_comm(dfft.plan[2],dfft.back[2],dfft.data_buf,Ddata);
+  dfft_back_grid_comm(dfft.plan[2],dfft.back[2],dfft.data_buf,data);
 
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
@@ -387,15 +389,15 @@ void dfft_perform_back(double *Ddata)
   fftw_execute_dft(dfft.back[1].fftw_plan,c_data,c_data);
   /* throw away the (hopefully) empty complex component (in is data)*/
   for(i=0;i<dfft.plan[1].new_size;i++) {
-    dfft.data_buf[i] = Ddata[2*i]; /* real value */
+    dfft.data_buf[i] = data[2*i]; /* real value */
     //Vincent:
-    if (Ddata[2*i+1]>1e-5) {
-      printf("dipoar fft - Complex value is not zero (i=%d,data=%g)!!!\n",i,Ddata[2*i+1]);
+    if (data[2*i+1]>1e-5) {
+      printf("dipoar fft - Complex value is not zero (i=%d,data=%g)!!!\n",i,data[2*i+1]);
       if (i>100) exit(-1);
     }
   }
   /* communicate (in is data_buf) */
-  dfft_back_grid_comm(dfft.plan[1],dfft.back[1],dfft.data_buf,Ddata);
+  dfft_back_grid_comm(dfft.plan[1],dfft.back[1],dfft.data_buf,data);
 
 
   /* REMARK: Result has to be in data. */

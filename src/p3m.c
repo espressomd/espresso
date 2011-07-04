@@ -330,7 +330,10 @@ void   p3m_init() {
     /* FFT */
     P3M_TRACE(fprintf(stderr,"%d: p3m.rs_mesh ADR=%p\n",this_node,p3m.rs_mesh));
  
-    int ca_mesh_size = fft_init(&p3m.rs_mesh,p3m.local_mesh.dim,p3m.local_mesh.margin,&p3m.ks_pnum);
+    int ca_mesh_size = fft_init(&p3m.rs_mesh,
+				p3m.local_mesh.dim,p3m.local_mesh.margin,
+				p3m.params.mesh, p3m.params.mesh_off,
+				&p3m.ks_pnum);
     p3m.ks_mesh = (double *) realloc(p3m.ks_mesh, ca_mesh_size*sizeof(double));
     
 
