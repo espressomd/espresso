@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file p3m-magnetostatics.c  P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-dipolar.c  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  NB: In general the magnetic dipole-dipole functions bear the same
      name than the charge-charge but, adding in front of the name a D
@@ -29,7 +29,7 @@
  PS: By default the magnetic epsilon is metallic = 0.  
 */
 
-#include "p3m-magnetostatics.h"
+#include "p3m-dipolar.h"
 
 #include <mpi.h>
 #include <stdio.h>
@@ -43,7 +43,7 @@
 #include "domain_decomposition.h"
 #include "particle_data.h"
 #include "communication.h"
-#include "fft-magnetostatics.h"
+#include "fft-dipolar.h"
 #include "thermostat.h"
 #include "cells.h"
 #include "tuning.h"

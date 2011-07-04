@@ -25,7 +25,7 @@
 */
 
 
-#include "fft-magnetostatics.h"
+#include "fft-dipolar.h"
 
 #ifdef DP3M
 
@@ -40,7 +40,6 @@ void *fftw_malloc(size_t n);
 #include "pressure.h"
 #endif
 #include "fft-common.h"
-#include "fft-magnetostatics.h"
 
 /************************************************
  * variables
