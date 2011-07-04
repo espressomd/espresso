@@ -66,4 +66,8 @@ void multiply_quaternions(double a[4], double b[4], double result[4]);
 int convert_quatu_to_quat(double d[3], double quat[4]);
 
 void convert_omega_body_to_space(Particle *p, double *omega);
+
+/** define rotation matrix A for a given particle */
+void define_rotation_matrix(Particle *p, double A[9]);
+
 #endif
