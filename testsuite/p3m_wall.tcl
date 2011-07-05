@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
 
-# check the charge-charge P3M  algorithm
+# check the charge-charge P3M algorithm
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
@@ -44,6 +44,7 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
   set F($i) [part $i pr f]
 }
 
+# inter coulomb n_interpol 0
 invalidate_system
 integrate 0
 
