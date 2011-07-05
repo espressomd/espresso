@@ -310,10 +310,7 @@ void   p3m_init() {
 
     /* initialize ca fields to size CA_INCREMENT: p3m.ca_frac and p3m.ca_fmp */
     p3m.ca_num = 0;
-    if(p3m.ca_num < CA_INCREMENT) {
-      p3m.ca_num = 0;
-      p3m_realloc_ca_fields(CA_INCREMENT);
-    }
+    p3m_realloc_ca_fields(CA_INCREMENT);
  
     p3m_calc_local_ca_mesh();
 
@@ -333,7 +330,10 @@ void   p3m_init() {
     /* FFT */
     P3M_TRACE(fprintf(stderr,"%d: p3m.rs_mesh ADR=%p\n",this_node,p3m.rs_mesh));
  
-    int ca_mesh_size = fft_init(&p3m.rs_mesh,p3m.local_mesh.dim,p3m.local_mesh.margin,&p3m.ks_pnum);
+    int ca_mesh_size = fft_init(&p3m.rs_mesh,
+				p3m.local_mesh.dim,p3m.local_mesh.margin,
+				p3m.params.mesh, p3m.params.mesh_off,
+				&p3m.ks_pnum);
     p3m.ks_mesh = (double *) realloc(p3m.ks_mesh, ca_mesh_size*sizeof(double));
     
 
@@ -2088,19 +2088,6 @@ int p3m_sanity_checks()
     ERROR_SPRINTF(errtxt, "{042 P3M at present requires the domain decomposition cell system} ");
     ret = 1;
   }
-  /*  
-  if( (box_l[0] != box_l[1]) || (box_l[1] != box_l[2]) ) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt,"{043 P3M requires a cubic box} ");
-    ret = 1;
-  }
-
-  if( (p3m.params.mesh[0] != p3m.params.mesh[1]) || (p3m.params.mesh[1] != p3m.params.mesh[2]) ) {
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{044 P3M requires a cubic mesh} ");
-    ret = 1;
-  }
-  */
 
   if (p3m_sanity_checks_boxl()) ret = 1;
 
