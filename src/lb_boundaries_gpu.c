@@ -445,7 +445,7 @@ void lb_init_boundaries_gpu() {
   lb_init_boundaries_GPU(number_of_boundnodes, host_boundindex);
 
   LB_TRACE (fprintf(stderr,"lb_init_boundaries \n"));
-  fprintf(stderr,"boundnumbers %i %i \n", n_lb_boundaries_gpu, number_of_boundnodes);
+  LB_TRACE (fprintf(stderr,"boundnumbers %i %i \n", n_lb_boundaries_gpu, number_of_boundnodes));
 
   free(host_boundindex);
 }
