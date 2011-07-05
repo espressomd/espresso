@@ -126,8 +126,8 @@ typedef struct {
   double r_cut_iL;
   /** number of mesh points per coordinate direction (>0). */
   int    mesh[3];
-  /** offset of the first mesh point (lower left 
-      corner) from the coordinate origin ([0,1[). */
+  /** offset of the first mesh point (lower left corner) from the
+      coordinate origin ([0,1[). */
   double mesh_off[3];
   /** charge assignment order ([0,7]). */
   int    cao;
