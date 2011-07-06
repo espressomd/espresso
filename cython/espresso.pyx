@@ -22,6 +22,7 @@ cdef extern from "tcl.h":
 cdef extern from *:
   void mpi_init(int* argc, char*** argv)
   int this_node
+  void mpi_stop()
 
 cdef mpi_init_helper():
   cdef int i
@@ -32,11 +33,13 @@ cdef mpi_init_helper():
 
 cdef extern from "../src/initialize.h":
   void on_program_start(Tcl_Interp*)
+  void mpi_loop()
 
 
 ## Now comes the real deal
 cdef class espresso_instance:
   cdef Tcl_Interp* interp
+  cdef public int this_node
   def __init__(self):
     global instance_counter
     if instance_counter >= 1:
@@ -44,6 +47,7 @@ cdef class espresso_instance:
     else:
       instance_counter+=1
       mpi_init_helper()
+      self.this_node=this_node
       if this_node==0:
         self.interp = Tcl_CreateInterp() 
         self.Tcl_Eval('global argv; set argv ""')
@@ -51,6 +55,7 @@ cdef class espresso_instance:
         on_program_start(self.interp)
       else:
         on_program_start(NULL)
+        mpi_loop()
 
   def __del__(self):
     raise Exception("Espresso can not be deleted")
@@ -60,6 +65,10 @@ cdef class espresso_instance:
     if result:
       raise Exception("Tcl reports an error", self.interp.result)
     return self.interp.result
+
+  def die(self):
+    mpi_stop()
+
 
 
 ## Here we create something to handle particles
