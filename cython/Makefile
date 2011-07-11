@@ -3,15 +3,23 @@
 PYXFILES=$(wildcard espresso/*.pyx)
 PYXSOS=$(patsubst %.pyx,%.so, ${PYXFILES})
 
-all: libespresso_main.so cython
+all: libespresso_main.so cython info
 
 test: 
 	@echo ${PYXFILES}
 	@echo ${PYXSOS}
 
-.PHONY: 
+.PHONY: cython info
 cython:
 	cd espresso ; python setup.py build_ext --inplace ; cd ..
+
+info:
+	@echo "Please make sure that ${PWD} is in the LD_LIBRARY_PATH"
+	@echo "and ${PWD}/espresso is in the PYTHONPATH variable"
+	@echo "--------------------------------------------------"
+	@echo "export LD_LIBRARY_PATH=${_dummy}LD_LIBRARY_PATH:${PWD}"
+	@echo "export PYTHONPATH=${_dummy}LD_LIBRARY_PATH:${PWD}/espresso"
+#  @echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PWD}\;export PYTHONPATH=\$PYTHONPATH:${PWD}/espresso"
 
 
 libespresso_main.so: espresso_bin/src/libEspresso.a errexit.o 
