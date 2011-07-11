@@ -64,6 +64,9 @@
 /** granularity of the time measurement */
 #define P3M_TIME_GRAN 2
 
+/** whether the P3M charge assignment fraction is stored or not */
+#define P3M_STORE_CA_FRAC
+
 /************************************************
  * data types
  ************************************************/
