@@ -1,5 +1,16 @@
 
 
+cimport numpy as np
+import numpy as np
+import particle_data
+cimport particle_data 
+import global_variables
+#cimport myconfig
+#import utils
+
+#public enum:
+#  ERROR=-1
+
 
 #### This is the main Espresso Cython interface.
 
@@ -31,13 +42,13 @@ cdef mpi_init_helper():
   c=NULL
   mpi_init(&i, &c)
 
-cdef extern from "../src/initialize.h":
+cdef extern from "../../src/initialize.h":
   void on_program_start(Tcl_Interp*)
   void mpi_loop()
 
 
 ## Now comes the real deal
-cdef class espresso_instance:
+cdef class EspressoHandle:
   cdef Tcl_Interp* interp
   cdef public int this_node
   def __init__(self):
@@ -56,6 +67,7 @@ cdef class espresso_instance:
       else:
         on_program_start(NULL)
         mpi_loop()
+        self.die()
 
   def __del__(self):
     raise Exception("Espresso can not be deleted")
@@ -69,23 +81,22 @@ cdef class espresso_instance:
   def die(self):
     mpi_stop()
 
+_espressoHandle=EspressoHandle()
 
+if this_node==0:
+  glob=global_variables.GlobalsHandle()
+else:
+  exit()
 
-## Here we create something to handle particles
-cdef extern from "../src/particle_data.h":
-#  int place_particle(int part, double p[3])
-  pass
-  
+      
 
-cdef class ParticleHandle:
-  cdef readonly int id
-  cdef bint valid
-#  property position:
-#    def __set__(double x[3]):
-#      place_particle(id, x)
 #
 #      
 #  def __init__(self, id):
 #    self.id=id
 #   
+
+
+
+
 
