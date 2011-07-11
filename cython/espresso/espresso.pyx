@@ -70,6 +70,7 @@ cdef class EspressoHandle:
         self.die()
 
   def __del__(self):
+    self.die()
     raise Exception("Espresso can not be deleted")
 
   def Tcl_Eval(self, string):
@@ -82,6 +83,7 @@ cdef class EspressoHandle:
     mpi_stop()
 
 _espressoHandle=EspressoHandle()
+glob=global_variables.GlobalsHandle()
 
 if this_node==0:
   glob=global_variables.GlobalsHandle()

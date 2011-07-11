@@ -36,7 +36,7 @@ cdef extern from "../src/particle_data.h":
 
 
 cdef class ParticleHandle:
-  cdef public readonly int id
+  cdef public int id
   cdef bint valid
   cdef Particle particleData
   cdef int update_particle_data(self)
