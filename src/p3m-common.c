@@ -146,7 +146,7 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao)
 
 /** Computes the  assignment function of for the \a i'th degree
     at value \a x. */
-double p3m_caf(int i, double x,int cao_value) {
+double p3m_caf(int i, double x, int cao_value) {
   switch (cao_value) {
   case 1 : return 1.0;
   case 2 : {
