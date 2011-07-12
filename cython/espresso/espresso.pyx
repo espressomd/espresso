@@ -84,6 +84,7 @@ cdef class EspressoHandle:
 
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
+part=particle_data.particleList()
 
 if this_node==0:
   glob=global_variables.GlobalsHandle()

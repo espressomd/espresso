@@ -31,3 +31,14 @@ cdef class ParticleHandle:
       return np.array([self.particleData.r.p[0], self.particleData.r.p[1], self.particleData.r.p[2]])
  
 
+
+cdef class particleList:
+  def __getitem__(self, key):
+    return ParticleHandle(key)
+
+
+
+  
+
+
+
