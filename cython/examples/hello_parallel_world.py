@@ -12,6 +12,7 @@ es.glob.box_l=[10., 10., 10.]
 for i in range(N):
   es.part[i].pos=numpy.random.random(3)*es.glob.box_l
 
+es.inter[0,0].lennardJones = {"eps":1,"sigma":1,"shift":0.25}
 
 es._espressoHandle.Tcl_Eval("integrate 100")
 for i in range(N):
