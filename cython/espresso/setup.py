@@ -16,6 +16,7 @@ ext_params['library_dirs'] = [ "..", "/usr/lib64" ]
 ext_modules=[
     Extension("espresso", ["espresso.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
     Extension("particle_data", ["particle_data.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
+    Extension("interaction_data", ["interaction_data.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
     Extension("global_variables", ["global_variables.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
 ]
 

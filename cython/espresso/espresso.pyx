@@ -4,6 +4,8 @@ cimport numpy as np
 import numpy as np
 import particle_data
 cimport particle_data 
+import interaction_data
+cimport interaction_data
 import global_variables
 #cimport myconfig
 #import utils
@@ -85,6 +87,8 @@ cdef class EspressoHandle:
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
+
+inter=interaction_data.InteractionList()
 
 if this_node==0:
   glob=global_variables.GlobalsHandle()
