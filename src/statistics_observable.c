@@ -35,13 +35,17 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
 }
 
 int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
-
-  if (obs->fun == (&observable_lb_velocity_profile)) {
+  if (0) {
+#ifdef LB
+  } else if (obs->fun == (&observable_lb_velocity_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
+#endif
   } else if (obs->fun == (&observable_density_profile)) {
     return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
+#ifdef LB
   } else if (obs->fun == (&observable_lb_radial_velocity_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
+#endif
   } else if (obs->fun == (&observable_radial_density_profile)) {
     return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
   } else if (obs->fun == (&observable_radial_flux_density_profile)) {
@@ -242,6 +246,9 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
 
 int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
   int temp;
+#ifndef LB
+  return TCL_ERROR;
+#else
   profile_data* pdata;
   obs->fun = &observable_lb_velocity_profile;
   if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
@@ -250,6 +257,7 @@ int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char
   obs->n=3*pdata->xbins*pdata->ybins*pdata->zbins;
   *change=1+temp;
   return TCL_OK;
+#endif
 }
 
 
@@ -303,6 +311,10 @@ int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, cha
 
 int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
   int temp;
+#ifndef LB
+  return TCL_ERROR;
+#else
+
   radial_profile_data* rpdata;
   obs->fun = &observable_lb_radial_velocity_profile;
   if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
@@ -312,6 +324,7 @@ int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int arg
   obs->n=3*rpdata->rbins*rpdata->phibins*rpdata->zbins;
   *change=1+temp;
   return TCL_OK;
+#endif
 }
 
 int tclcommand_observable_particle_currents(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
@@ -775,6 +788,7 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   return 0;
 }
 
+#ifdef LB
 int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
@@ -851,7 +865,10 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
   
   return 0;
 }
+#endif
 
+
+#ifdef LB
 int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
@@ -938,6 +955,7 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
   
   return 0;
 }
+#endif
 void transform_to_cylinder_coordinates(double x, double y, double z_, double* r, double* phi, double* z) {
   *z =  z_;
   *r =  sqrt(x*x+y*y);
