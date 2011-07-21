@@ -57,12 +57,17 @@ void  dfft_pre_init();
 /** Initialize everything connected to the 3D-FFT related to the dipole-dipole.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
- * \param data           Pointer Pounter to data array.
- * \param ca_mesh_dim    Pointer to CA mesh dimensions.
- * \param ca_mesh_margin Pointer to CA mesh margins.
- * \param ks_pnum        Pointer to number of permutations in k-space.
+ * \param data               Pointer Pointer to data array.
+ * \param local_mesh_dim     Pointer to CA mesh dimensions.
+ * \param local_mesh_margin  Pointer to CA mesh margins.
+ * \param global_mesh_dim    Pointer to global CA mesh dimensions.
+ * \param global_mesh_off    Pointer to global CA mesh offset.
+ * \param ks_pnum            Pointer to number of permutations in k-space.
  */
-int dfft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum);
+int dfft_init(double **data, 
+	      int *ca_mesh_dim, int *ca_mesh_margin, 
+	      int* global_mesh_dim, double *global_mesh_off,
+	      int *ks_pnum);
 
 /** perform the forward 3D FFT for meshes related to the magnetic dipole-dipole interaction.
     The assigned charges are in \a data. The result is also stored in \a data.

@@ -1502,7 +1502,9 @@ void ELC_p3m_charge_assign_both()
       }
     }
   }
+#ifdef P3M_STORE_CA_FRAC
   p3m_shrink_wrap_charge_grid(cp_cnt);
+#endif
 }
 
 void ELC_p3m_charge_assign_image() 

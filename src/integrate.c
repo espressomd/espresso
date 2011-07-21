@@ -575,7 +575,7 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 
     /* Propagate time: t = t+dt */
-    if(this_node==0) sim_time += time_step;
+    sim_time += time_step;
   }
 
   /* after simulating the forces are necessarily set. Necessary since

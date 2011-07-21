@@ -39,7 +39,6 @@ void *fftw_malloc(size_t n);
 #include "pressure.h"
 #endif
 #include "fft-common.h"
-#include "p3m.h"
 
 /************************************************
  * variables
@@ -51,7 +50,8 @@ fft_data_struct fft;
  * \param in   input mesh.
  * \param out  output mesh.
 */
-void forw_grid_comm(fft_forw_plan plan, double *in, double *out);
+static void 
+fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given fft_forw_plan/fft_bakc_plan. 
  * \param plan_f communication plan (see \ref fft_forw_plan).
@@ -59,13 +59,16 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out);
  * \param in     input mesh.
  * \param out    output mesh.
 */
-void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out);
+static void 
+fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in, double *out);
 
 void fft_pre_init() {
   fft_common_pre_init(&fft);
 }
 
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
+int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, 
+	     int* global_mesh_dim, double *global_mesh_off,
+	     int *ks_pnum)
 {
   int i,j;
   /* helpers */
@@ -140,8 +143,8 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     fft.plan[i].recv_block = (int *)realloc(fft.plan[i].recv_block, 6*fft.plan[i].g_size*sizeof(int));
     fft.plan[i].recv_size  = (int *)realloc(fft.plan[i].recv_size, 1*fft.plan[i].g_size*sizeof(int));
 
-    fft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], p3m.params.mesh,
-					   p3m.params.mesh_off, fft.plan[i].new_mesh, 
+    fft.plan[i].new_size = fft_calc_local_mesh(my_pos[i], n_grid[i], global_mesh_dim,
+					   global_mesh_off, fft.plan[i].new_mesh, 
 					   fft.plan[i].start);  
     permute_ifield(fft.plan[i].new_mesh,3,-(fft.plan[i].n_permute));
     permute_ifield(fft.plan[i].start,3,-(fft.plan[i].n_permute));
@@ -154,7 +157,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       node = fft.plan[i].group[j];
       fft.plan[i].send_size[j] 
 	= fft_calc_send_block(my_pos[i-1], n_grid[i-1], &(n_pos[i][3*node]), n_grid[i],
-			  p3m.params.mesh, p3m.params.mesh_off, &(fft.plan[i].send_block[6*j]));
+			      global_mesh_dim, global_mesh_off, &(fft.plan[i].send_block[6*j]));
       permute_ifield(&(fft.plan[i].send_block[6*j]),3,-(fft.plan[i-1].n_permute));
       permute_ifield(&(fft.plan[i].send_block[6*j+3]),3,-(fft.plan[i-1].n_permute));
       if(fft.plan[i].send_size[j] > fft.max_comm_size) 
@@ -169,7 +172,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
       /* recv block: this_node from comm-group-node i (identity: node) */
       fft.plan[i].recv_size[j] 
 	= fft_calc_send_block(my_pos[i], n_grid[i], &(n_pos[i-1][3*node]), n_grid[i-1],
-			  p3m.params.mesh,p3m.params.mesh_off,&(fft.plan[i].recv_block[6*j]));
+			      global_mesh_dim, global_mesh_off, &(fft.plan[i].recv_block[6*j]));
       permute_ifield(&(fft.plan[i].recv_block[6*j]),3,-(fft.plan[i].n_permute));
       permute_ifield(&(fft.plan[i].recv_block[6*j+3]),3,-(fft.plan[i].n_permute));
       if(fft.plan[i].recv_size[j] > fft.max_comm_size) 
@@ -312,7 +315,7 @@ void fft_perform_forw(double *data)
   fftw_complex *c_data_buf = (fftw_complex *) fft.data_buf;
 
   /* communication to current dir row format (in is data) */
-  forw_grid_comm(fft.plan[1], data, fft.data_buf);
+  fft_forw_grid_comm(fft.plan[1], data, fft.data_buf);
 
 
   /*
@@ -339,13 +342,13 @@ void fft_perform_forw(double *data)
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 2:\n",this_node));
   /* communication to current dir row format (in is data) */
-  forw_grid_comm(fft.plan[2], data, fft.data_buf);
+  fft_forw_grid_comm(fft.plan[2], data, fft.data_buf);
   /* perform FFT (in/out is fft.data_buf)*/
   fftw_execute_dft(fft.plan[2].fftw_plan,c_data_buf,c_data_buf);
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_forw: dir 3:\n",this_node));
   /* communication to current dir row format (in is fft.data_buf) */
-  forw_grid_comm(fft.plan[3], fft.data_buf, data);
+  fft_forw_grid_comm(fft.plan[3], fft.data_buf, data);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[3].fftw_plan,c_data,c_data);
   //fft_print_global_fft_mesh(fft.plan[3],data,1,0);
@@ -367,14 +370,14 @@ void fft_perform_back(double *data)
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[3].fftw_plan,c_data,c_data);
   /* communicate (in is data)*/
-  back_grid_comm(fft.plan[3],fft.back[3],data,fft.data_buf);
+  fft_back_grid_comm(fft.plan[3],fft.back[3],data,fft.data_buf);
  
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 2:\n",this_node));
   /* perform FFT (in is fft.data_buf) */
   fftw_execute_dft(fft.back[2].fftw_plan,c_data_buf,c_data_buf);
   /* communicate (in is fft.data_buf) */
-  back_grid_comm(fft.plan[2],fft.back[2],fft.data_buf,data);
+  fft_back_grid_comm(fft.plan[2],fft.back[2],fft.data_buf,data);
 
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
@@ -390,13 +393,13 @@ void fft_perform_back(double *data)
       } 
   }
   /* communicate (in is fft.data_buf) */
-  back_grid_comm(fft.plan[1],fft.back[1],fft.data_buf,data);
+  fft_back_grid_comm(fft.plan[1],fft.back[1],fft.data_buf,data);
 
 
   /* REMARK: Result has to be in data. */
 }
 
-void forw_grid_comm(fft_forw_plan plan, double *in, double *out)
+void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out)
 {
   int i;
   MPI_Status status;
@@ -428,7 +431,7 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out)
   }
 }
 
-void back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in, double *out)
+void fft_back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in, double *out)
 {
   int i;
   MPI_Status status;

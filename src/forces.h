@@ -40,7 +40,7 @@
 
 /* include the force files */
 #include "p3m.h"
-#include "p3m-magnetostatics.h"
+#include "p3m-dipolar.h"
 #include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
