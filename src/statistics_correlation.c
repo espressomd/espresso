@@ -422,6 +422,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 
   } else if ( no == n_correlations ) {  
   
+    Tcl_AppendResult(interp, "Setting up a new correlation", (char *)NULL);
     // Else we must parse the other arguments and see if we can construct a fully
     // working correlation class instance from that.
     correlation_type=CORR_TYPE_GENERIC; // this is the default
@@ -429,7 +430,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
-             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist", (char *)NULL);
+             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
              return TCL_ERROR;
           }
           A=observables[temp];
@@ -442,7 +443,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       } else if ( ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
-             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist", (char *)NULL);
+             Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
              return TCL_ERROR;
           }
           B=observables[temp];
@@ -756,6 +757,11 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"square_distance")) {
     *corr_fun = &square_distance;
+    *dim_corr = 1;
+    *change=1;
+    return TCL_OK;
+  } else if (ARG_IS_S_EXACT(0,"square_distance_conditional_1d_int")) {
+    *corr_fun = &square_distance_cond_1d_int;
     *dim_corr = 1;
     *change=1;
     return TCL_OK;
@@ -1353,6 +1359,49 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   }
   return 0;
 }
+
+int square_distance_cond_1d_int ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+  /* assume that each of the dim_A entries has the following sub-units:
+     int condition; 
+     double position;
+
+     correlate only values within the same block and if condition > 0
+     last entry in A gives the maximum value of correlation
+     */
+  const double tiny=0.00001; // to void roundoff errors in double->int conversion
+  char fname[]="square_distance_conditional_1d";
+  unsigned int i;
+  double tmp=0.0;
+  int dist, distmax;
+  if ( dim_A%2 != 1) {
+    printf("Error in %s: dim_A\%2 = %d, dim_A = %d\n",fname, dim_A%2, (int)dim_A);
+    return 5;
+  }
+  if ( dim_B%2 != 1) {
+    printf("Error in %s: dim_B\%2 = %d, dim_B= %d\n",fname, dim_B%2, (int)dim_B);
+    return 5;
+  }
+  if (dim_A != dim_B ) {
+    printf("Error in %s: The vector sizes do not match\n",fname);
+    return 5;
+  }
+  distmax=(int)nearbyint(A[dim_A-1]);
+  for ( i = 0; i < dim_A-2; i+=2 ) { 
+    // if both conditions are the same
+    if ( fabs(A[i] - B[i]) < tiny ) {
+      // integer division using doubles :-(
+      dist=(int)nearbyint( A[i+1] - B[i+1] );
+      if (dist > 0.5*distmax) 
+	dist-=distmax;
+      tmp += dist*dist;
+    }
+    //if (dist>distmax-5) 
+//	printf("data to correlate: A: %lf, %lf, B: %lf, %lf, result: %lf", A[i], A[i+1], B[i], B[i+1], tmp);
+  }
+  C[0]=tmp;
+  return 0;
+}
+
 
 void autoupdate_correlations() {
   int i;

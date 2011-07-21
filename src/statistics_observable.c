@@ -411,41 +411,107 @@ int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** 
 }
 
 int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  IntList *ids, *ids1;
+  IntList *ids1, *ids2;
   int temp;
   double cutoff;
   obs->fun = &observable_interacts_with;
-  ids=(IntList*)malloc(sizeof(IntList));
   ids1=(IntList*)malloc(sizeof(IntList));
+  ids2=(IntList*)malloc(sizeof(IntList));
   iw_params* iw_params_p=(iw_params*) malloc(sizeof(iw_params));
-  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids) == TCL_OK ) {
-    free(ids);
+  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids1) == TCL_OK ) {
     free(ids1);
+    free(ids2);
     free(iw_params_p);
     return TCL_ERROR;
   }
   iw_params_p=(iw_params*)malloc(sizeof(iw_params));
-  iw_params_p->ids1=ids;
+  iw_params_p->ids1=ids1;
   *change=1+temp;
-  if (! parse_id_list(interp, argc-3, argv+3, &temp, &ids1) == TCL_OK ) {
-    free(ids);
+  if (! parse_id_list(interp, argc-3, argv+3, &temp, &ids2) == TCL_OK ) {
     free(ids1);
+    free(ids2);
     free(iw_params_p);
     return TCL_ERROR;
   }
   *change+=temp;
-  iw_params_p->ids2=ids1;
-  if ( argc < 7 || !ARG_IS_D(6,cutoff)) {
-    Tcl_AppendResult(interp, "Usage: analyze correlation ... interacts_with id_list1 id_list2 cutoff", (char *)NULL);
-    free(ids);
+  iw_params_p->ids2=ids2;
+  if ( argc < 5 || !ARG_IS_D(5,cutoff)) {
+    Tcl_AppendResult(interp, "aUsage: analyze correlation ... interacts_with id_list1 id_list2 cutoff", (char *)NULL);
     free(ids1);
+    free(ids2);
     free(iw_params_p);
   return TCL_ERROR;
-  }
+  } 
   *change+=1;
   iw_params_p->cutoff=cutoff;
   obs->args=(void*)iw_params_p;
-  obs->n=ids->n; // number of ids from the 1st argument
+  obs->n=ids1->n; // number of ids from the 1st argument
+  return TCL_OK;
+}
+
+
+int tclcommand_observable_nearest_neighbour_conditional(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  IntList *ids1, *ids2, *partners, *conditions;
+  char usage_msg[]="Usage: analyze correlation ... nearest_neighbour_conditional id_list1 id_list2 cutoff chain_length";
+  int temp, i;
+  double cutoff;
+  int chain_length;
+  obs->fun = &observable_nearest_neighbour_conditional;
+  nn_cond_params* nn_cond_params_p=(nn_cond_params*) malloc(sizeof(nn_cond_params));
+  ids1=(IntList*)malloc(sizeof(IntList));
+  ids2=(IntList*)malloc(sizeof(IntList));
+  if (! parse_id_list(interp, argc-1, argv+1, &temp, &ids1) == TCL_OK ) {
+    free(ids1);
+    free(ids2);
+    free(nn_cond_params_p);
+    return TCL_ERROR;
+  }
+  nn_cond_params_p=(nn_cond_params*)malloc(sizeof(nn_cond_params));
+  nn_cond_params_p->ids1=ids1;
+  *change=1+temp;
+  if (! parse_id_list(interp, argc-3, argv+3, &temp, &ids2) == TCL_OK ) {
+    free(ids1);
+    free(ids2);
+    free(nn_cond_params_p);
+    return TCL_ERROR;
+  }
+  *change+=temp;
+  nn_cond_params_p->ids2=ids2;
+  if ( argc < 6 || !ARG_IS_D(5,cutoff)) {
+    Tcl_AppendResult(interp, usage_msg, (char *)NULL);
+    free(ids1);
+    free(ids2);
+    free(nn_cond_params_p);
+  return TCL_ERROR;
+  }
+  *change+=1;
+  nn_cond_params_p->cutoff=cutoff;
+  if ( argc < 7 || !ARG_IS_I(6,chain_length)) {
+    Tcl_AppendResult(interp, usage_msg, (char *)NULL);
+    free(ids1);
+    free(ids2);
+    free(nn_cond_params_p); 
+    return TCL_ERROR;
+  }
+  *change+=1; 
+  // allocate space for condition arguments
+  nn_cond_params_p->conditions=(IntList*)malloc(sizeof(IntList));
+  init_intlist(nn_cond_params_p->conditions); 
+  alloc_intlist(nn_cond_params_p->conditions,ids1->n); 
+  
+  nn_cond_params_p->prev_partners=(IntList*)malloc(sizeof(IntList));
+  init_intlist(nn_cond_params_p->prev_partners); 
+  alloc_intlist(nn_cond_params_p->prev_partners,ids1->n);
+  for (i=0; i< ids1->n; i++) {
+    nn_cond_params_p->prev_partners->e[i]=-1;
+    nn_cond_params_p->conditions->e[i]=0;
+  }
+  nn_cond_params_p->prev_partners->n=i;
+  nn_cond_params_p->prev_partners->n=i;
+  
+  nn_cond_params_p->chain_length=chain_length;
+  obs->args=(void*)nn_cond_params_p;
+  obs->n=1+2*(ids1->n); // number of ids from the 1st argument
   return TCL_OK;
 }
 
@@ -553,6 +619,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment);
     REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor);
     REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with);
+    REGISTER_OBSERVABLE(nearest_neighbour_conditional, tclcommand_observable_nearest_neighbour_conditional);
   //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing);
   //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile);
     REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile);
@@ -1190,6 +1257,65 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
 	// interaction found for i, go for next
       }
     }
+  }
+  return 0;
+}
+
+
+int observable_nearest_neighbour_conditional (void* params_p, double* A, unsigned int n_A) {
+  nn_cond_params *params=(nn_cond_params*)params_p;
+  /* assume that each of the dim_A entries maps to the following sub-entries:
+     A[i] -> int condition
+     A[i] -> int position;
+     */
+  IntList* ids1;
+  IntList* ids2;
+  int i,j;
+  double dist2;
+  double mindist2;
+  double cutoff2=params->cutoff*params->cutoff;
+  int partner=-1;
+  double pos1[3], pos2[3], dist[3];
+  ids1=params->ids1;
+  ids2=params->ids2;
+  sortPartCfg();
+  A[n_A-1]=params->chain_length; 
+  if (n_A < 2*(ids1->n)+1) {
+    // this should never happen
+    printf("Error: n_A should be %d but is %d\n",2*(ids1->n)+1,n_A); fflush(stdout);
+    return 1;
+  }
+  for ( i = 0; i<ids1->n; i++ ) {
+    // just a safety check
+    if (ids1->e[i] >= n_total_particles)
+      return 1;
+    pos1[0]=partCfg[ids1->e[i]].r.p[0];
+    pos1[1]=partCfg[ids1->e[i]].r.p[1];
+    pos1[2]=partCfg[ids1->e[i]].r.p[2];
+    mindist2=cutoff2; partner=-1;
+    for ( j = 0; j<ids2->n; j++ ) {
+      if (ids2->e[j] >= n_total_particles)
+        return 1;
+      pos2[0]=partCfg[ids2->e[j]].r.p[0];
+      pos2[1]=partCfg[ids2->e[j]].r.p[1];
+      pos2[2]=partCfg[ids2->e[j]].r.p[2];
+      get_mi_vector(dist,pos1,pos2);
+      dist2= dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2];
+      if ( mindist2 > dist2 ) { 
+	mindist2=dist2; 
+	partner=ids2->e[j];
+      }
+    }
+    // check for a detachment event 
+    if ( partner == -1 && params->prev_partners->e[i] != -1) {
+      params->conditions->e[i] += 1;
+    }
+    if ( partner > -1 && params->prev_partners->e[i] == -1) {
+      params->conditions->e[i] += 1;
+    }
+    A[2*i]=params->conditions->e[i];
+    A[2*i+1]=partner;
+    params->prev_partners->e[i]=partner;
   }
   return 0;
 }

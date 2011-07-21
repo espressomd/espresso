@@ -65,6 +65,24 @@ typedef struct {
   IntList *ids2;
 } iw_params;
 
+/** For each particle from ids1 get the nearest interaction partner out of 
+  those among ids2; 
+  If no partner is found within cutoff, set it to -1. 
+  Increment the condition when changing from some interaction (before) 
+  to some interaction (now).
+  Input parameters are passed via struct nn_cond_params
+*/
+int observable_nearest_neighbour_conditional(void* params, double* A, unsigned int n_A);
+typedef struct {
+  double cutoff;
+  // maximum difference between ids whic makes physical sense
+  int chain_length; 
+  IntList *ids1;
+  IntList *ids2;
+  IntList *prev_partners;
+  IntList *conditions;
+} nn_cond_params;
+
 
 /** Do nothing */
 int observable_obs_nothing (void* params, double* A, unsigned int n_A);
