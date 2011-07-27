@@ -107,7 +107,17 @@ MDINLINE int calc_fene_pair_force(Particle *p1, Particle *p2, Bonded_ia_paramete
   if(dr >= iaparams->p.fene.drmax)
     return 1;
 
-  fac = -iaparams->p.fene.k * dr / (len * (1.0 - dr*dr*iaparams->p.fene.drmax2i));
+  fac = -iaparams->p.fene.k * dr / ((1.0 - dr*dr*iaparams->p.fene.drmax2i));
+  if (fabs(dr) > ROUND_ERROR_PREC) {
+     if(len > ROUND_ERROR_PREC) {  /* Regular case */
+	fac /= len ; 
+     } else { /* dx[] == 0: the force is undefined. Let's use a random direction */
+        for(i=0;i<3;i++) dx[i] = d_random()-0.5;
+        fac /= sqrt(sqrlen(dx));
+     }
+  } else { 
+    fac = 0.0;
+  }
   
   FENE_TRACE(if(fac > 50) fprintf(stderr,"WARNING: FENE force factor between Pair (%d,%d) large: %f at distance %f\n", p1->p.identity,p2->p.identity,fac,sqrt(len2)) );
   

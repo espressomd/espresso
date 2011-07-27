@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -130,11 +131,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     nsq_calculate_virials();
   }
   /* rescale kinetic energy (=ideal contribution) */
-#ifdef ROTATION
-  virials.data.e[0] /= (6.0*volume*time_step*time_step);
-#else
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
-#endif
 
   calc_long_range_virials();
 
@@ -173,18 +170,18 @@ void calc_long_range_virials()
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
     break;
   case COULOMB_P3M: {
     int k;
-    P3M_charge_assign();
-    virials.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+    p3m_charge_assign();
+    virials.coulomb[1] = p3m_calc_kspace_forces(0,1);
     
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = virials.coulomb[1]/3.;
-    P3M_calc_kspace_stress(p_tensor.coulomb);
+    p3m_calc_kspace_stress(p_tensor.coulomb);
     break;
   }
 #endif
@@ -211,14 +208,14 @@ void calc_long_range_virials()
     break;
 
    
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
     break;
   case DIPOLAR_P3M: {
     int k;
-    P3M_dipole_assign();
-    virials.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    dp3m_dipole_assign();
+    virials.dipolar[1] = dp3m_calc_kspace_forces(0,1);
      
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = virials.dipolar[1]/3.;
@@ -827,7 +824,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 #ifdef ELECTROSTATICS
     if (coulomb.method != COULOMB_NONE) {
       switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
       case COULOMB_P3M:
 	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
 	break;
@@ -860,7 +857,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 #ifdef MAGNETOSTATICS
     if (coulomb.Dmethod != DIPOLAR_NONE) {
       switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
       case DIPOLAR_P3M:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
 	break;

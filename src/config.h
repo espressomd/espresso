@@ -129,20 +129,21 @@
 #define ROTATION
 #endif
 
+#ifdef FFTW
 /* activate P3M only with FFTW */
-#if defined(ELECTROSTATICS) && defined(FFTW)
-#define ELP3M
+#ifdef ELECTROSTATICS
+#define P3M
 #endif
-
 /* activate dipolar P3M only with FFTW */
-#if defined(MAGNETOSTATICS) && defined(FFTW)
-#define ELP3M
+#ifdef MAGNETOSTATICS
+#define DP3M
 #endif
-
+#endif
 
 /* MAGNETOSTATICS implies the use of DIPOLES */
 #ifdef MAGNETOSTATICS
 #define DIPOLES
+#define ROTATION
 #endif
 
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */

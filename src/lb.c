@@ -1260,9 +1260,9 @@ void lb_reinit_forces() {
 
 #ifdef EXTERNAL_FORCES
     // unit conversion: force density
-      lbfields[index].force[0] = lbpar.ext_force[0]*lbpar.agrid*lbpar.agrid*tau*tau;
-      lbfields[index].force[1] = lbpar.ext_force[1]*lbpar.agrid*lbpar.agrid*tau*tau;
-      lbfields[index].force[2] = lbpar.ext_force[2]*lbpar.agrid*lbpar.agrid*tau*tau;
+      lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*tau*tau;
+      lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*tau*tau;
+      lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*tau*tau;
 #else
       lbfields[index].force[0] = 0.0;
       lbfields[index].force[1] = 0.0;
@@ -1305,6 +1305,9 @@ void lb_reinit_fluid() {
       lbfields[index].recalc_fields = 1;
 
     }
+#ifdef LB_BOUNDARIES
+      lb_init_boundaries();
+#endif
 
     resend_halo = 0;
 
@@ -1790,9 +1793,9 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
   /* reset force */
 #ifdef EXTERNAL_FORCES
   // unit conversion: force density
-  lbfields[index].force[0] = lbpar.ext_force[0]*lbpar.agrid*lbpar.agrid*tau*tau;
-  lbfields[index].force[1] = lbpar.ext_force[1]*lbpar.agrid*lbpar.agrid*tau*tau;
-  lbfields[index].force[2] = lbpar.ext_force[2]*lbpar.agrid*lbpar.agrid*tau*tau;
+  lbfields[index].force[0] = lbpar.ext_force[0]*pow(lbpar.agrid,4)*tau*tau;
+  lbfields[index].force[1] = lbpar.ext_force[1]*pow(lbpar.agrid,4)*tau*tau;
+  lbfields[index].force[2] = lbpar.ext_force[2]*pow(lbpar.agrid,4)*tau*tau;
 #else
   lbfields[index].force[0] = 0.0;
   lbfields[index].force[1] = 0.0;

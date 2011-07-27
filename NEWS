@@ -2,11 +2,15 @@
 = ESPRESSO NEWS =
 =================
 
-NOTEWORTHY CHANGES SINCE v3.0.0
-===============================
+ESPResSo 3.0.1
+==============
 
-NOTEWORTHY CHANGES SINCE v2.2.0b
-================================
+* Fixed bugs #33375,#33376,#32005
+
+* Fixed a few bugs that were never reported via the bug tracker.
+
+ESPResSo 3.0.0
+===============
 
 User-visible changes
 --------------------

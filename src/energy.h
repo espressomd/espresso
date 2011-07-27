@@ -31,7 +31,7 @@
 
 /* include the energy files */
 #include "p3m.h"
-#include "p3m-magnetostatics.h"
+#include "p3m-dipolar.h"
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
@@ -195,12 +195,12 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   if (coulomb.method != COULOMB_NONE) {
     /* real space coulomb */
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
     case COULOMB_ELC_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       if (elc_params.dielectric_contrast_on)
       ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
     break;
@@ -235,11 +235,11 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     ret=0;
     switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case DIPOLAR_MDLC_P3M:  
       //fall trough
     case DIPOLAR_P3M:
-      ret = p3m_dipolar_pair_energy(p1,p2,d,dist2,dist); 
+      ret = dp3m_pair_energy(p1,p2,d,dist2,dist); 
       break;
 #endif 
     }

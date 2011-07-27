@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT([ESPResSo],[3.0.0],[espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[3.0.1],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([src/main.c])
@@ -50,7 +50,7 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
      fake implementation for only one processor is used. Default: auto])
 ],,[with_mpi=auto])
 
-AX_MPI_ONLY([test x"$with_mpi" != xno],,[
+AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
     AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
   else
@@ -102,8 +102,8 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 #### COMPILER CHARACTERISTICS ####
 ##################################
 
-#never overwrite users CFLAGS
-if test ${CFLAGS+set} != set; then
+# never overwrite users CFLAGS
+if test "${CFLAGS+set}" != set; then
   # test for -O5
   AC_MSG_CHECKING([whether the compiler accepts -O5])
   saved_CFLAGS=$CFLAGS

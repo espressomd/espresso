@@ -46,12 +46,14 @@ libEspresso_a_SOURCES = \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
+	fft-common.c fft-common.h \
+	fft.c fft.h \
+	fft-dipolar.c fft-dipolar.h \
 	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
-	p3m-magnetostatics.c p3m-magnetostatics.h \
+	p3m-dipolar.c p3m-dipolar.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
-	fft.c fft.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
 	blockfile_tcl.c blockfile_tcl.h \
@@ -182,7 +184,7 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
 
 CUDA_SOURCES= \
 	cuda_init.cu \

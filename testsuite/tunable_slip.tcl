@@ -36,7 +36,6 @@ require_feature "TUNABLE_SLIP"
 require_feature "DPD"
 require_feature "CONSTRAINTS"
 require_feature "EXTERNAL_FORCES"
-require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
