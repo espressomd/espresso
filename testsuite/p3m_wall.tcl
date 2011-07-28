@@ -44,29 +44,45 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
   set F($i) [part $i pr f]
 }
 
+# write vtf file
+# set vtffile [open "p3m_wall.vtf" "w"]
+# writevsf $vtffile
+# for { set i 0 } { $i < 299 } { incr i } {
+#     if { $i % 2 == 0 } {
+# 	puts $vtffile "atom $i name S radius 0.1"
+#     } else {
+# 	puts $vtffile "atom $i name O radius 0.1"
+#     }
+# }
+# writevcf $vtffile
+# close $vtffile
+
+# To retune, use
+#puts [inter coulomb 1.0 p3m tune accuracy 1.e-3]
+
+# If you want to use specific P3M params, use
+#inter coulomb 1.0 p3m 2.000000 32 6 1.322773
+#puts [inter coulomb]
+
 # inter coulomb n_interpol 0
 invalidate_system
 integrate 0
 
-    set rmsf 0
-    set mult 0
-    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	set resF [part $i pr f]
-	set tgtF $F($i)
-	set dx [expr abs(([lindex $resF 0] - [lindex $tgtF 0]))]
-	set dy [expr abs(([lindex $resF 1] - [lindex $tgtF 1]))]
-	set dz [expr abs(([lindex $resF 2] - [lindex $tgtF 2]))]
+set rmsf 0
+for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+    set resF [part $i pr f]
+    set tgtF $F($i)
+    set dx [expr ([lindex $resF 0] - [lindex $tgtF 0])]
+    set dy [expr ([lindex $resF 1] - [lindex $tgtF 1])]
+    set dz [expr ([lindex $resF 2] - [lindex $tgtF 2])]
+    
+    set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
+}
 
-        set mult [expr $mult + abs([lindex $tgtF 0] / [lindex $resF 0])]
-
-	set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
-    }
-
-    set mult [expr $mult/300.0]
-    set rmsf [expr $rmsf / 300.0]
-    puts "p3m-charges: rms force deviation $rmsf (mult $mult)"
-    if { $rmsf > $epsilon } {
-	error "p3m-charges: force error too large"
-   }
+set rmsf [expr sqrt($rmsf / [setmd n_part])]
+puts [format "p3m-charges: rms force deviation %e" $rmsf]
+if { $rmsf > $epsilon } {
+    error "p3m-charges: force error too large"
+}
 
 puts [analyze energy]
