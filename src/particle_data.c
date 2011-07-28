@@ -610,12 +610,11 @@ void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 #ifdef KEEP_KPART
 void tclcommand_part_print_f_k(Particle *part, char *buffer, Tcl_Interp *interp)
 {
-  /* unscale forces ! */
-  Tcl_PrintDouble(interp, part->l.f_k[0]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->l.f_k[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->l.f_k[1]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->l.f_k[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->l.f_k[2]/(0.5*time_step*time_step), buffer);
+  Tcl_PrintDouble(interp, part->l.f_k[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }  
 #endif

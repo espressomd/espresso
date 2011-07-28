@@ -71,7 +71,9 @@ integrate 0
 
 set rmsf 0
 for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-    set resF [part $i pr f]
+    set resF [part $i print f]
+    puts [part $i print id force]
+    puts [part $i print id force_k]
     set tgtF $F($i)
     set dx [expr ([lindex $resF 0] - [lindex $tgtF 0])]
     set dy [expr ([lindex $resF 1] - [lindex $tgtF 1])]
