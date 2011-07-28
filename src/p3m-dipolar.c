@@ -1125,14 +1125,26 @@ Since the torque is the dipole moment cross-product with E, we have:
 		case 0:	//E_x
 		  p[i].f.torque[1] -= p[i].r.dip[2]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];     
 		  p[i].f.torque[2] += p[i].r.dip[1]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind]; 
+                  #ifdef KEEP_KPART
+		  p[i].l.torque_k[1] -= p[i].r.dip[2]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];     
+		  p[i].l.torque_k[2] += p[i].r.dip[1]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind]; 
+                  #endif
 		  break;
 		case 1:	//E_y
 		  p[i].f.torque[0] += p[i].r.dip[2]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
 		  p[i].f.torque[2] -= p[i].r.dip[0]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+                  #ifdef KEEP_KPART
+          	  p[i].l.torque_k[0] += p[i].r.dip[2]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+		  p[i].l.torque_k[2] -= p[i].r.dip[0]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+                  #endif
 		  break;
 		case 2:	//E_z
 		  p[i].f.torque[0] -= p[i].r.dip[1]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
 		  p[i].f.torque[1] += p[i].r.dip[0]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+                  #ifdef KEEP_KPART
+                  p[i].l.torque_k[0] -= p[i].r.dip[1]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];  
+		  p[i].l.torque_k[1] += p[i].r.dip[0]*prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind]; 
+                  #endif
 	      }
 	      q_ind++; 
 	      cf_cnt++;
@@ -1183,6 +1195,12 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs)
 	                          ( dp3m.rs_mesh_dip[0][q_ind]*p[i].r.dip[0]
 		                  +dp3m.rs_mesh_dip[1][q_ind]*p[i].r.dip[1]
 				  +dp3m.rs_mesh_dip[2][q_ind]*p[i].r.dip[2]);
+              #ifdef KEEP_KPART
+	      p[i].l.f_k[d_rs] += prefac*dp3m.ca_frac[cf_cnt]*
+	                          ( dp3m.rs_mesh_dip[0][q_ind]*p[i].r.dip[0]
+		                  +dp3m.rs_mesh_dip[1][q_ind]*p[i].r.dip[1]
+				  +dp3m.rs_mesh_dip[2][q_ind]*p[i].r.dip[2]);
+              #endif              
 	      q_ind++;
 	      cf_cnt++;
 	    }

@@ -483,6 +483,27 @@ void tclcommand_part_print_torque(Particle *part, char *buffer, Tcl_Interp *inte
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
+#ifdef KEEP_KPART
+void tclcommand_part_print_torque_k(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  double torque[3];
+//in Espresso torques are in body-fixed frames. We should convert they to the space-fixed coordinates.
+  double A[9];
+  define_rotation_matrix(part, A);
+
+  torque[0] = A[0 + 3*0]*part->l.torque_k[0] + A[1 + 3*0]*part->l.torque_k[1] + A[2 + 3*0]*part->l.torque_k[2];
+  torque[1] = A[0 + 3*1]*part->l.torque_k[0] + A[1 + 3*1]*part->l.torque_k[1] + A[2 + 3*1]*part->l.torque_k[2];
+  torque[2] = A[0 + 3*2]*part->l.torque_k[0] + A[1 + 3*2]*part->l.torque_k[1] + A[2 + 3*2]*part->l.torque_k[2];
+
+  Tcl_PrintDouble(interp, torque[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, torque[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, torque[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 /* tclcommand_part_print_torque_body_frame: function to have the possiblility of
    printing also the torques in the body_frame to make compatible the
    manual recovery of saved configurations with the use of the instruction  
@@ -585,6 +606,19 @@ void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
   Tcl_PrintDouble(interp, part->f.f[2]/(0.5*time_step*time_step), buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
+
+#ifdef KEEP_KPART
+void tclcommand_part_print_f_k(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  /* unscale forces ! */
+  Tcl_PrintDouble(interp, part->l.f_k[0]/(0.5*time_step*time_step), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part->l.f_k[1]/(0.5*time_step*time_step), buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, part->l.f_k[2]/(0.5*time_step*time_step), buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}  
+#endif
 
 void tclcommand_part_print_position(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -941,6 +975,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_position(&part, buffer, interp);
     else if (ARG0_IS_S("force"))
       tclcommand_part_print_f(&part, buffer, interp);
+#ifdef KEEP_KPART
+    else if (ARG0_IS_S("force_k"))
+      tclcommand_part_print_f_k(&part, buffer, interp);
+#endif
     else if (ARG0_IS_S("folded_position"))
       tclcommand_part_print_folded_position(&part, buffer, interp);
     else if (ARG0_IS_S("type")) {
@@ -981,6 +1019,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_omega(&part, buffer, interp);
     else if (ARG0_IS_S("torque"))
       tclcommand_part_print_torque(&part, buffer, interp);
+#ifdef KEEP_KPART
+    else if (ARG0_IS_S("torque"))
+      tclcommand_part_print_torque_k(&part, buffer, interp);
+#endif  
     else if (ARG0_IS_S("tbf"))
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif

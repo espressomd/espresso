@@ -918,6 +918,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
 	  for(i1=0; i1<p3m.params.cao; i1++) {
 	    for(i2=0; i2<p3m.params.cao; i2++) {
 	      p[i].f.f[d_rs] -= force_prefac*p3m.ca_frac[cf_cnt]*p3m.rs_mesh[q_ind]; 
+#ifdef KEEP_KPART
+	      p[i].l.f_k[d_rs] -= force_prefac*p3m.ca_frac[cf_cnt]*p3m.rs_mesh[q_ind];
+#endif KEEP_KPART
 	      q_ind++;
 	      cf_cnt++;
 	    }
