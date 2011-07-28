@@ -1,6 +1,4 @@
-
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2011 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
