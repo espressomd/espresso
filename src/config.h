@@ -135,15 +135,9 @@
 #define P3M
 #endif
 /* activate dipolar P3M only with FFTW */
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 #define DP3M
 #endif
-#endif
-
-/* MAGNETOSTATICS implies the use of DIPOLES */
-#ifdef MAGNETOSTATICS
-#define DIPOLES
-#define ROTATION
 #endif
 
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
@@ -179,6 +173,11 @@
 #ifndef MOL_CUT
 #define MOL_CUT
 #endif
+#endif
+
+/* Dipoles imply rotation */
+#ifdef DIPOLES
+#define ROTATION
 #endif
 
 //mol_cut needs virtual sites

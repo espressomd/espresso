@@ -877,7 +877,7 @@ int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int arg
 
 int tclprint_to_result_dp3m(Tcl_Interp *interp)
 {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_PrintDouble(interp, dp3m.params.r_cut, buffer);

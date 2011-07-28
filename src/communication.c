@@ -1531,7 +1531,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
   });
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   COMM_TRACE(for(i = 0; i < tot_size; i++) {
     printf("%d: %d -> %d %d  (%f, %f, %f) (%f, %f, %f)\n", this_node, i, result[i].p.identity, result[i].p.type,
 	   result[i].r.p[0], result[i].r.p[1], result[i].r.p[2], result[i].r.dip[0],
@@ -1669,7 +1669,7 @@ void mpi_set_time_step_slave(int node, int i)
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params()
 {
-#if  defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if  defined(ELECTROSTATICS) || defined(DIPOLES)
   mpi_call(mpi_bcast_coulomb_params_slave, 1, 0);
   mpi_bcast_coulomb_params_slave(-1, 0);
 #endif
@@ -1677,7 +1677,7 @@ void mpi_bcast_coulomb_params()
 
 void mpi_bcast_coulomb_params_slave(int node, int parm)
 {   
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, MPI_COMM_WORLD);
 
 #ifdef ELECTROSTATICS
@@ -1718,7 +1718,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     break;
@@ -2571,7 +2571,7 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
 }
 
 void mpi_bcast_max_mu_slave(int node, int dummy) {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   
   get_mu_max();
  
@@ -2579,7 +2579,7 @@ void mpi_bcast_max_mu_slave(int node, int dummy) {
 }
 
 void mpi_bcast_max_mu() {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   mpi_call(mpi_bcast_max_mu_slave, -1, 0);
   
   get_mu_max();

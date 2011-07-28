@@ -34,7 +34,7 @@
 #include "magnetic_non_p3m_methods.h"
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)

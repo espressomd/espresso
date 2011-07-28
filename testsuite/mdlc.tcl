@@ -17,7 +17,7 @@
 
 source "tests_common.tcl"
 
-require_feature "MAGNETOSTATICS" 
+require_feature "DIPOLES" 
 require_feature "FFTW"
 require_feature "ROTATION"
 require_feature "CONSTRAINTS"
