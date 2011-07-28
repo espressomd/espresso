@@ -29,7 +29,7 @@ puts "---------------------------------------------------------------"
 puts "- Testcase p3m_wall.tcl running on [format %02d [setmd n_nodes]] nodes:"
 puts "---------------------------------------------------------------"
 
-set epsilon 1e-3
+set accuracy 1e-3
 thermostat off
 setmd time_step 0.01
 setmd skin 0.05
@@ -62,7 +62,8 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 
 # If you want to use specific P3M params, use
 #inter coulomb 1.0 p3m 2.000000 32 6 1.322773
-#puts [inter coulomb]
+
+puts [inter coulomb]
 
 # inter coulomb n_interpol 0
 invalidate_system
@@ -80,9 +81,9 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 }
 
 set rmsf [expr sqrt($rmsf / [setmd n_part])]
-puts [format "p3m-charges: rms force deviation %e" $rmsf]
-if { $rmsf > $epsilon } {
-    error "p3m-charges: force error too large"
+puts [format "rms_force_error=%e" $rmsf]
+if { $rmsf > $accuracy } {
+    error [format "p3m-charges: rms_force_error=%e larger than accuracy=%e" $rmsf $accuracy]
 }
 
 puts [analyze energy]
