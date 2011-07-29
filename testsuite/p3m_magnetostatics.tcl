@@ -29,10 +29,10 @@
 #=======================================================================================================
 source "tests_common.tcl"
 
-require_feature "DIPOLES" 
 require_feature "FFTW"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"
+require_feature "DIPOLES"
 
 #require_max_nodes_per_side 1
 

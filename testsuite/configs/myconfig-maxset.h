@@ -1,9 +1,9 @@
 /* maximal set of features usable at the same time */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
+#define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
-#define MAGNETOSTATICS
 #define MDLC
 #define EXTERNAL_FORCES
 #define CONSTRAINTS

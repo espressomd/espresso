@@ -18,6 +18,8 @@
 source "tests_common.tcl"
 
 require_feature "DIPOLES"
+require_feature "ROTATION"
+require_feature "CONSTRAINTS"
 
 # Test for the correctness of energy of a dipole in a magnetic field and torque on 
 # a dipole in a magnetic field
