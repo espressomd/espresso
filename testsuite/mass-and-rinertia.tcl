@@ -67,7 +67,7 @@ for {set i 0} {$i <$loops} {incr i} {
  }
 }
 
-set tolerance 0.01
+set tolerance 0.1
 set Evx [expr 0.5 * $mass *$vx2/$n/$loops]
 set Evy [expr 0.5 * $mass *$vy2/$n/$loops]
 set Evz [expr 0.5 * $mass *$vz2/$n/$loops]
