@@ -231,6 +231,10 @@
 #define ROTATION
 #endif
 
+#ifdef ROTATIONAL_INERTIA
+#define ROTATION
+#endif
+
 /*@}*/
 
 /* Mathematical constants, from gcc's math.h */
