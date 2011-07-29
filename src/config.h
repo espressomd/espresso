@@ -135,7 +135,7 @@
 #define P3M
 #endif
 /* activate dipolar P3M only with FFTW */
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 #define DP3M
 #endif
 #endif
@@ -178,6 +178,11 @@
 #ifndef MOL_CUT
 #define MOL_CUT
 #endif
+#endif
+
+/* Dipoles imply rotation */
+#ifdef DIPOLES
+#define ROTATION
 #endif
 
 //mol_cut needs virtual sites
@@ -228,6 +233,10 @@
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
+#define ROTATION
+#endif
+
+#ifdef ROTATIONAL_INERTIA
 #define ROTATION
 #endif
 

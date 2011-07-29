@@ -38,7 +38,7 @@
 #ifndef _DLC_DIPOLAR_H
 #define _DLC_DIPOLAR_H
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 
 /** parameters for the MDLC method */
 typedef struct {
