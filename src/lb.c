@@ -2187,7 +2187,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+/*  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
@@ -2220,8 +2220,9 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 
       }
     }
+    */
 //  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-/*
+
   double lbboundary_mindist, distvec[3];
   double pos_shifted[3];
   lbboundary_mindist_position(p->r.p, &lbboundary_mindist, distvec);
@@ -2238,7 +2239,6 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
     interpolated_u[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2];
   } else {
     interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-    */
   }
 
 
