@@ -564,7 +564,46 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_ERROR);
 #endif /* LB_BOUNDARIES */
 }
+
+
 #ifdef LB_BOUNDARIES
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3]) {
+  double vec[3];
+  double dist=1e100;
+  *mindist = 1e100;
+  int n;
+
+  Particle* p1=0;
+  for(n=0;n<n_lb_boundaries;n++) {
+    switch(lb_boundaries[n].type) {
+      case CONSTRAINT_WAL: 
+	        calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
+        break;
+      case CONSTRAINT_SPH:
+	        calculate_sphere_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist, vec); 
+        break;
+      case CONSTRAINT_CYL: 
+	        calculate_cylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist, vec); 
+        break;
+      case CONSTRAINT_PORE: 
+	      calculate_pore_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist, vec); 
+        break;
+    }
+    if (dist<*mindist) {
+      *mindist=dist;
+      distvec[0] = vec[0];
+      distvec[1] = vec[1];
+      distvec[2] = vec[2];
+    } else { 
+      distvec[0]=0;
+      distvec[1]=0;
+      distvec[2]=0;
+    }
+
+  }
+}
+
+
 
 
 /** Initialize boundary conditions for all constraints in the system. */

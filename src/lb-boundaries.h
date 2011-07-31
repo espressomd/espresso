@@ -88,7 +88,9 @@ void lb_init_boundaries();
 #endif // LB_BOUNDARIES
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
+
 #ifdef LB_BOUNDARIES
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3]); 
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
