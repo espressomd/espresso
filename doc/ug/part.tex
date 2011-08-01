@@ -89,7 +89,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
   particle.
-\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational velocity of this particle in global frame.
+\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational velocity of this particle in the particle's co-rotating frame.
 \item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force of this particle, in global frame.
   When printing the values using {\em part id_particle print}, there is an alternative named
   \opt{tbf} which gives you the values of the torque in the body frame.  Be aware: the values obtained when printing using \opt{torque}
@@ -97,7 +97,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   introduce torques using \opt{torque} option, espresso will assume they are given in the body-frame. Thus \opt{tbf} is useful
   to know which should be the numerical values you should reintroduce in order to have exactly the same conformation.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
-    elements of this particles rotational inertia.
+    elements of this particles rotational inertia tensor. These correspond with the inertial moments along the coordinate axes in the particle's co-rotating coordinate system. When the particle's quaternions are set to 1 0 0 0, the co-rotating and the fixed (lab) frame are co-aligned.
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For

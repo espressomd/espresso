@@ -136,7 +136,7 @@ void calc_long_range_energies()
   }
 #endif  /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_P3M:
@@ -161,7 +161,7 @@ void calc_long_range_energies()
     break;
   
   } 
-#endif /* ifdef MAGNETOSTATICS */
+#endif /* ifdef DIPOLES */
 
 }
 
@@ -188,7 +188,7 @@ void init_energies(Observable_stat *stat)
 #endif
 
   n_dipolar    = 0;
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:  n_dipolar = 1; break;
@@ -258,7 +258,7 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       }
     }
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   if(
 #ifdef ELECTROSTATICS
       coulomb.method != COULOMB_NONE
@@ -266,7 +266,7 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       0
 #endif
       ||
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
       coulomb.Dmethod != DIPOLAR_NONE
 #else
       0
@@ -280,13 +280,13 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       value += total_energy.dipolar[i];
     Tcl_PrintDouble(interp, value, buffer);
     
-#if defined(ELECTROSTATICS) && defined(MAGNETOSTATICS) 
+#if defined(ELECTROSTATICS) && defined(DIPOLES) 
 
     Tcl_AppendResult(interp, "{ coulomb+magdipoles ", buffer, (char *)NULL);  
 
 #else
 
-#ifndef MAGNETOSTATICS
+#ifndef DIPOLES
     Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
 #endif
     
@@ -389,12 +389,12 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
 #endif
     }    
     else if( ARG0_IS_S("magnetic")) {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
       value = 0;
       for (i = 0; i < total_energy.n_dipolar; i++)
 	value += total_energy.dipolar[i];
 #else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
     
