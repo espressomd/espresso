@@ -689,7 +689,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   node_index[5] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-#if 1
+#if 0
 	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
   if(n_a.boundary[node_index[0]] == 1){
     delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
@@ -732,7 +732,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
     delta[6] = temp_delta_half[0] * temp_delta[4] * temp_delta[5];
   }
 #endif
-#if 1
+#if 0
   if(n_a.boundary[node_index[0]] == 1)delta[0] = 0.f;
 
   if(n_a.boundary[node_index[1]] == 1)delta[1] = 0.f;
@@ -1309,7 +1309,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
   cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
-
+fprintf(stderr, "initialization  \n");
   cudaThreadSynchronize();
   if(!h_gpu_check[0]){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
