@@ -808,6 +808,8 @@ void mpi_send_dip(int pnode, int part, double dip[3])
 #ifdef ROTATION
     convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#else
+    p->p.dipm = sqrt(p->r.dip[0]*p->r.dip[0] + p->r.dip[1]*p->r.dip[1] + p->r.dip[2]*p->r.dip[2]);
 #endif
   }
   else {
@@ -828,6 +830,8 @@ void mpi_send_dip_slave(int pnode, int part)
 #ifdef ROTATION
     convert_dip_to_quat(p->r.dip, p->r.quat, &p->p.dipm);
     convert_quat_to_quatu(p->r.quat, p->r.quatu);
+#else
+    p->p.dipm = sqrt(p->r.dip[0]*p->r.dip[0] + p->r.dip[1]*p->r.dip[1] + p->r.dip[2]*p->r.dip[2]);
 #endif
   }
 
