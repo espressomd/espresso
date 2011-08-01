@@ -81,7 +81,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 {
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
-#if defined(ELECTROSTATICS)  || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS)  || defined(DIPOLES)
   double ret=0;
 #endif
   calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
@@ -163,7 +163,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     switch (coulomb.Dmethod) {
@@ -190,7 +190,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     }
     virials.dipolar[0] += ret;
   }  
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 }
 
 MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {

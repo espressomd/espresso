@@ -312,7 +312,7 @@ void on_observable_calc()
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
     switch (coulomb.Dmethod) {
@@ -388,7 +388,7 @@ void on_coulomb_change()
   recalc_forces = 1;
 #endif  /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(temperature > 0.0)
     coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
   else
@@ -408,7 +408,7 @@ void on_coulomb_change()
   }
 
   recalc_forces = 1;
-#endif  /* ifdef MAGNETOSTATICS */
+#endif  /* ifdef DIPOLES */
 
 }
 
@@ -490,7 +490,7 @@ void on_resort_particles()
 #endif /* ifdef ELECTROSTATICS */
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -499,7 +499,7 @@ void on_resort_particles()
 #endif
  default: break;
   }
-#endif /* ifdef MAGNETOSTATICS*/
+#endif /* ifdef DIPOLES*/
 
 }
 
@@ -523,7 +523,7 @@ void on_NpT_boxl_change(double scal1) {
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch(coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_P3M:
@@ -543,7 +543,7 @@ void on_NpT_boxl_change(double scal1) {
 void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   int cc = 0;
 #endif
 
@@ -622,7 +622,7 @@ void on_parameter_change(int field)
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
    #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
@@ -640,9 +640,9 @@ void on_parameter_change(int field)
 #endif
   default: break;
   }
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   if (cc)
     on_coulomb_change();
 #endif

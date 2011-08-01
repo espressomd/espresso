@@ -338,7 +338,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
 #ifdef DP3M
@@ -356,7 +356,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   }
 #endif /*ifdef DP3M */
   }  
-#endif /* ifdef MAGNETOSTATICS */
+#endif /* ifdef DIPOLES */
 
   /***********************************************/
   /* add total nonbonded forces to particle      */
