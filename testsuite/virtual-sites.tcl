@@ -24,9 +24,10 @@
 #############################################################
 source "tests_common.tcl"
 
-#require_feature "ELECTROSTATICS"
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "EXTERNAL_FORCES"
+require_feature "VIRTUAL_SITES_NO_VELOCITY" off
+require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 
 setmd box_l 10 10 10
 cellsystem domain_decomposition

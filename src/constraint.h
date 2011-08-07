@@ -680,7 +680,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
       add_plate_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
       
-#ifdef MAGNETOSTATICS 
+#ifdef DIPOLES
     case CONSTRAINT_EXT_MAGN_FIELD:
       add_ext_magn_field_force(p1, &constraints[n].c.emfield);
       break;
