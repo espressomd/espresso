@@ -512,6 +512,8 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef LB_BOUNDARIES
   int status, c_num;
+  double force[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
 
 
   if (argc < 2) return tclcommand_lbboundary_print_all(interp);
@@ -531,6 +533,23 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
   else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
     status = tclcommand_lbboundary_pore(generate_lbboundary(),interp, argc - 2, argv + 2);
     mpi_bcast_lbboundary(-1);
+  }
+  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
+    if (argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
+	    Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
+	    return (TCL_ERROR);
+    }
+    if(c_num < 0 || c_num >= n_lb_boundaries) {
+	    Tcl_AppendResult(interp, "Error in lbboundary force: The selected boundary does not exist",(char *) NULL);
+	    return (TCL_ERROR);
+    } else {
+      status = lbboundary_get_force(c_num, force);
+      for (int i = 0; i < 3; i++) {
+        Tcl_PrintDouble(interp, force[i], buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      }
+      return TCL_OK;
+    }
   }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
     if(argc < 3) {
@@ -565,6 +584,44 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 #endif /* LB_BOUNDARIES */
 }
 #ifdef LB_BOUNDARIES
+
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
+  double vec[3];
+  double dist=1e100;
+  *mindist = 1e100;
+  int n;
+
+  Particle* p1=0;
+  for(n=0;n<n_lb_boundaries;n++) {
+    switch(lb_boundaries[n].type) {
+      case CONSTRAINT_WAL: 
+	        calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
+        break;
+      case CONSTRAINT_SPH:
+	        calculate_sphere_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist, vec); 
+        break;
+      case CONSTRAINT_CYL: 
+	        calculate_cylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist, vec); 
+        break;
+      case CONSTRAINT_PORE: 
+	      calculate_pore_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist, vec); 
+        break;
+    }
+    if (dist<*mindist) {
+      *no=n;
+      *mindist=dist;
+      distvec[0] = vec[0];
+      distvec[1] = vec[1];
+      distvec[2] = vec[2];
+    } 
+//    else { 
+//      distvec[0]=0;
+//      distvec[1]=0;
+//      distvec[2]=0;
+//    }
+
+  }
+}
 
 
 /** Initialize boundary conditions for all constraints in the system. */
@@ -628,6 +685,14 @@ void lb_init_boundaries() {
       }
     }
   }
+}
+
+int lbboundary_get_force(int no, double* f) {
+//  printf("force %f %f %f", lb_boundaries[no].force[0],  lb_boundaries[no].force[1],  lb_boundaries[no].force[2]);
+  f[0]=lb_boundaries[no].force[0]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  f[1]=lb_boundaries[no].force[1]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  f[2]=lb_boundaries[no].force[2]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  return 0;
 }
 
 #endif /* LB_BOUNDARIES */

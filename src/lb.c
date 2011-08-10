@@ -1471,6 +1471,7 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
   
 /*@}*/
 
+
 /** Calculation of hydrodynamic modes */
 MDINLINE void lb_calc_modes(index_t index, double *mode) {
 
@@ -1976,6 +1977,15 @@ MDINLINE void lb_collide_stream() {
     //}
 
     /* loop over all lattice cells (halo excluded) */
+#ifdef LB_BOUNDARIES
+    for (int i =0; i < n_lb_boundaries; i++) {
+      lb_boundaries[i].force[0]=0.;
+      lb_boundaries[i].force[1]=0.;
+      lb_boundaries[i].force[2]=0.;
+    }
+#endif
+
+
     index = lblattice.halo_offset;
     for (z=1; z<=lblattice.grid[2]; z++) {
       for (y=1; y<=lblattice.grid[1]; y++) {
@@ -2176,40 +2186,8 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-        	
-        index = node_index[(z*2+y)*2+x];
-        
-        local_node = &lbfields[index];
-        
-//        if (local_node->recalc_fields) {
-        lb_calc_modes(index, modes);
-          //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
-//          local_node->recalc_fields = 0;
-        local_node->has_force = 1;
-//        }
-//        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
-        // unit conversion: mass density
-        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
-        
-        #ifdef ADDITIONAL_CHECKS
-        	old_rho[(z*2+y)*2+x] = *local_rho;
-        #endif
-        
-        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
-        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
-        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
- //       printf("int_u: %f %f %f\n", interpolated_u[0], interpolated_u[1], interpolated_u[2] );    
+  lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
 
-      }
-    }
-  }
   
 //  printf("u: %f %f %f\n", interpolated_u[0],interpolated_u[1],interpolated_u[2] );
   
@@ -3034,10 +3012,34 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
 
   if (n_nodes != 1)
     return 1;
+
+  double lbboundary_mindist, distvec[3];
+  double pos[3];
+  int boundary_no;
+  int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
+
+  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
+  if (lbboundary_mindist>lbpar.agrid/2) {
+    boundary_flag=0;
+    pos[0]=p[0];
+    pos[1]=p[1];
+    pos[2]=p[2];
+  } else if (lbboundary_mindist > 0 ) {
+    boundary_flag=1;
+    pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
+  } else {
+    boundary_flag=2;
+    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
+    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
+    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    return 0; // we can return without interpolating
+  }
   
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
-  map_position_to_lattice(&lblattice,p,node_index,delta);
+  map_position_to_lattice(&lblattice,pos,node_index,delta);
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
@@ -3071,15 +3073,24 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
       }
     }
   }
-  v[0] = interpolated_u[0]*lbpar.agrid/lbpar.tau;
-  v[1] = interpolated_u[1]*lbpar.agrid/lbpar.tau;
-  v[2] = interpolated_u[2]*lbpar.agrid/lbpar.tau;
+  if (boundary_flag==1) {
+    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
+    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
+    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
+  } else {
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
+  }
+  v[0] *= lbpar.agrid/lbpar.tau;
+  v[1] *= lbpar.agrid/lbpar.tau;
+  v[2] *= lbpar.agrid/lbpar.tau;
   return 0;
   
 }
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
   double p[3], v[3];
-  char buffer[TCL_DOUBLE_SPACE];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
   if (argc!=3) {
     printf("usage: print_interpolated_velocity $x $y $z");
     return TCL_ERROR;
@@ -3088,7 +3099,6 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
     if (!ARG_IS_D(i, p[i]))
       printf("usage: print_interpolated_velocity $x $y $z");
   }
-  v[0]=1.;
   lb_lbfluid_get_interpolated_velocity(p, v);
   for (int i = 0; i < 3; i++) {
     Tcl_PrintDouble(interp, v[i], buffer);

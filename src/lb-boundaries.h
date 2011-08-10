@@ -89,6 +89,9 @@ void lb_init_boundaries();
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
 #ifdef LB_BOUNDARIES
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
+
+int lbboundary_get_force(int no, double* f); 
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
@@ -107,6 +110,7 @@ MDINLINE void lb_bounce_back() {
   int next[19];
   double population_shift;
   double rho, j[3], pi[6];
+  double modes[19];
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
   next[2]  = - 1;                       // (-1, 0, 0)
@@ -132,15 +136,24 @@ MDINLINE void lb_bounce_back() {
   for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
 
     if (lbfields[k].boundary) {
-      lb_calc_local_fields(k, &rho, j, pi);
+      lb_calc_modes(k, modes);
+      j[0] = modes[1];
+      j[1] = modes[2];
+      j[2] = modes[3];
       lb_boundaries[lbfields[k].boundary-1].force[0]+=2*j[0];
       lb_boundaries[lbfields[k].boundary-1].force[1]+=2*j[1];
       lb_boundaries[lbfields[k].boundary-1].force[2]+=2*j[2];
+//      if ((lbfields[k].boundary==1))
+//        printf("force contribution %f %f %f\n", modes[1], modes[2], modes[3]);
+
       for (i=0; i<19; i++) {
         population_shift=0;
         for (l=0; l<3; l++)
-          population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l];
-        lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
+          population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq*lbmodel.w[i];
+        if ( !lbfields[k-next[i]].boundary ) 
+          lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
+        else 
+          lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
       }
     }
   }
