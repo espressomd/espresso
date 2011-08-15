@@ -1018,6 +1018,11 @@ and $q_2$, the interaction is given by
 \end{equation}
 where $l_B = e_o^2 / (4 \pi \epsilon k_B T)$ denotes the Bjerrum
 length, which measures the strength of the electrostatic interaction.
+As a special case, when the internal variable \var{temperature} 
+is set to zero, the value of bjerrum length you enter 
+is treated as $l_B k_B T$ rather than $l_B$. This occurs when the
+thermostat is switched off and \es performs an NVE integration
+(see also Section~\ref{sec:thermostat}).
 
 Computing electrostatic interactions is computationally very
 expensive.  \es{} features some state-of-the-art algorithms to deal
