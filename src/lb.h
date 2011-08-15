@@ -587,6 +587,80 @@ int lb_lbnode_set_pop(int* ind, double* pop);
 
 
 static void lb_check_halo_regions();
+
+/** Calculation of hydrodynamic modes */
+MDINLINE void lb_calc_modes(index_t index, double *mode) {
+
+#ifdef D3Q19
+  double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p, n7m, n8p, n8m, n9p, n9m;
+
+  n0  = lbfluid[0][0][index];
+  n1p = lbfluid[0][1][index] + lbfluid[0][2][index];
+  n1m = lbfluid[0][1][index] - lbfluid[0][2][index];
+  n2p = lbfluid[0][3][index] + lbfluid[0][4][index];
+  n2m = lbfluid[0][3][index] - lbfluid[0][4][index];
+  n3p = lbfluid[0][5][index] + lbfluid[0][6][index];
+  n3m = lbfluid[0][5][index] - lbfluid[0][6][index];
+  n4p = lbfluid[0][7][index] + lbfluid[0][8][index];
+  n4m = lbfluid[0][7][index] - lbfluid[0][8][index];
+  n5p = lbfluid[0][9][index] + lbfluid[0][10][index];
+  n5m = lbfluid[0][9][index] - lbfluid[0][10][index];
+  n6p = lbfluid[0][11][index] + lbfluid[0][12][index];
+  n6m = lbfluid[0][11][index] - lbfluid[0][12][index];
+  n7p = lbfluid[0][13][index] + lbfluid[0][14][index];
+  n7m = lbfluid[0][13][index] - lbfluid[0][14][index];
+  n8p = lbfluid[0][15][index] + lbfluid[0][16][index];
+  n8m = lbfluid[0][15][index] - lbfluid[0][16][index];
+  n9p = lbfluid[0][17][index] + lbfluid[0][18][index];
+  n9m = lbfluid[0][17][index] - lbfluid[0][18][index];
+//  printf("n: ");
+//  for (int i=0; i<19; i++)
+//    printf("%f ", lbfluid[1][i][index]);
+//  printf("\n");
+  
+  /* mass mode */
+  mode[0] = n0 + n1p + n2p + n3p + n4p + n5p + n6p + n7p + n8p + n9p;
+  
+  /* momentum modes */
+  mode[1] = n1m + n4m + n5m + n6m + n7m;
+  mode[2] = n2m + n4m - n5m + n8m + n9m;
+  mode[3] = n3m + n6m - n7m + n8m - n9m;
+
+  /* stress modes */
+  mode[4] = -n0 + n4p + n5p + n6p + n7p + n8p + n9p;
+  mode[5] = n1p - n2p + n6p + n7p - n8p - n9p;
+  mode[6] = n1p + n2p - n6p - n7p - n8p - n9p - 2.*(n3p - n4p - n5p);
+  mode[7] = n4p - n5p;
+  mode[8] = n6p - n7p;
+  mode[9] = n8p - n9p;
+
+#ifndef OLD_FLUCT
+  /* kinetic modes */
+  mode[10] = -2.*n1m + n4m + n5m + n6m + n7m;
+  mode[11] = -2.*n2m + n4m - n5m + n8m + n9m;
+  mode[12] = -2.*n3m + n6m - n7m + n8m - n9m;
+  mode[13] = n4m + n5m - n6m - n7m;
+  mode[14] = n4m - n5m - n8m - n9m;
+  mode[15] = n6m - n7m - n8m + n9m;
+  mode[16] = n0 + n4p + n5p + n6p + n7p + n8p + n9p 
+             - 2.*(n1p + n2p + n3p);
+  mode[17] = - n1p + n2p + n6p + n7p - n8p - n9p;
+  mode[18] = - n1p - n2p -n6p - n7p - n8p - n9p
+             + 2.*(n3p + n4p + n5p);
+#endif
+
+#else
+  int i, j;
+  for (i=0; i<n_veloc; i++) {
+    mode[i] = 0.0;
+    for (j=0; j<n_veloc; j++) {
+      mode[i] += lbmodel.e[i][j]*lbfluid[0][i][index];
+    }
+  }
+#endif
+
+}
+
 #endif /* LB */
 
 #endif /* LB_H */
