@@ -221,6 +221,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef VIRTUAL_SITES_RELATIVE
   Tcl_AppendResult(interp, "{ VIRTUAL_SITES_RELATIVE } ", (char *) NULL);
 #endif
+#ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+  Tcl_AppendResult(interp, "{ THERMOSTAT_IGNORE_NON_VIRTUAL } ", (char *) NULL);
+#endif
 #ifdef METADYNAMICS
   Tcl_AppendResult(interp, "{ METADYNAMICS } ", (char *) NULL);
 #endif

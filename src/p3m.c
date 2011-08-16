@@ -1435,9 +1435,11 @@ double p3m_perform_aliasing_sums_energy(int n[3])
 
 #define P3M_TUNE_MAX_CUTS 50
 
-/** get the minimal error for this combination of parameters. In fact, the real space error is tuned such that it
-    contributes half of the total error, and then the Fourier space error is calculated. Returns the error and the
-    optimal alpha, or 0 if this combination does not work at all */
+/** get the minimal error for this combination of parameters. In fact,
+    the real space error is tuned such that it contributes half of the
+    total error, and then the Fourier space error is
+    calculated. Returns the error and the optimal alpha, or 0 if this
+    combination does not work at all */
 static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err)
 {
    double rs_err, ks_err;

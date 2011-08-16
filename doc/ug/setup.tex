@@ -134,6 +134,7 @@ set:
 \end{globvar}
 
 \section{\texttt{thermostat}: Setting up the thermostat}
+\label{sec:thermostat}
 \newescommand{thermostat}
 
 The \keyword{thermostat} command is used to change settings of the
@@ -148,6 +149,23 @@ thermostat).
 You may combine different thermostats at your own risk by turning them
 on one by one. Note that there is only one temperature for all
 thermostats.
+
+\begin{essyntax}
+  \variant{1} thermostat
+  \variant{2} thermostat off
+  \variant{3} thermostat \var{parameters}
+\end{essyntax}
+
+Variant \variant{1} returns the thermostat parameters. A TCL list is given containing all
+the parameters needed to set the specific thermostat. (exactly the
+same as the input command line, without the preceding
+\texttt{thermostat}).
+
+Variant \variant{2} turns off all thermostats and sets all thermostat 
+variables to zero. Setting temperature to zero also affects the way in which 
+electrostatics are handled (see also Section~\ref{sec:inter-electrostatics}).
+
+Variant \variant{3} sets up one of the thermostats described below.
 
 \subsection{Langevin thermostat}
 \begin{essyntax}
@@ -325,23 +343,6 @@ will only do isotropic changes of the box.
 Be aware that this feature is neither properly examined for all
 systems nor is it maintained regularly. If you use it and notice
 strange behaviour, please contribute to solving the problem.
-
-\subsection{Turning off all thermostats}
-\begin{essyntax}
-  thermostat off
-\end{essyntax}
-
-Turns off all thermostats and sets all thermostat variables to zero.
-
-\subsection{Getting the parameters}
-\begin{essyntax}
-  thermostat
-\end{essyntax}
-
-Returns the thermostat parameters. A TCL list is given containing all
-the parameters needed to set the specific thermostat. (exactly the
-same as the input command line, without the preceding
-\texttt{thermostat}).
 
 \section{\texttt{nemd}: Setting up non-equilibrium MD}
 \newescommand{nemd}
