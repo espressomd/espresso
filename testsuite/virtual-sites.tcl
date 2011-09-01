@@ -28,11 +28,13 @@ require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "EXTERNAL_FORCES"
 require_feature "VIRTUAL_SITES_NO_VELOCITY" off
 require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
+require_feature "ELECTROSTATICS"
+require_feature "LENNARD_JONES"
 
 setmd box_l 10 10 10
-cellsystem domain_decomposition
+cellsystem domain_decomposition 
 setmd time_step 0.01 
-setmd skin 0.3
+setmd skin 1
 thermostat off
 
 part 0 pos 5 5 5 omega 1 2 3
@@ -120,28 +122,30 @@ part delete
 
 setmd time_step 0.005
 cellsystem domain_decomposition 
-setmd skin 2
-setmd box_l 10 10 10
-setmd min_num_cells 32
+
+setmd skin 1
+setmd box_l 20 20 20 
+setmd min_num_cells 27
 setmd max_num_cells 100000
 setmd periodic 1 1 1
 thermostat langevin 1 1 
 
-#inter coulomb 1 dh 0 2.5
-#inter 1 1 lennard-jones 10 0.8 10
+inter coulomb 1 dh 0.45 0.45
+inter 1 1 lennard-jones 10 0.41 0.42
 
 part 0 pos 2 2 2 v -1 0 0 type 0
 part 1 pos 1.8 2 2 virtual 1 vs_auto_relate_to 0 q 1 type 1
-part 2 pos 2.2 2 2 virtual 1 vs_auto_relate_to 0 q -1 type 1
+part 2 pos 2.2 2 2 virtual 1 vs_auto_relate_to 0 q 1 type 1
 
 set error 0
 puts "Checking "
 for {set i 0} {$i<10000} {incr i } {
- integrate 20
-# if { ([analyze energy coulomb] >-1E-6) || ([analyze energy nonbonded 1 1 ] < 1E-6) } {
-#  puts "Error: Lost interaction between particles"
-#  set error 1
-# }
+ integrate 1 
+ if { ([analyze energy coulomb] <1.5) || ([analyze energy nonbonded 1 1 ] < 12) } {
+  puts "$i [analyze energy coulomb] [analyze energy nonbonded 1 1]"
+  puts "Error: Lost interaction between particles"
+  set error 1
+ }
  set v [part 0 print v]
  set v1 [part 1 print v]
  set v2 [part 2 print v]
@@ -150,21 +154,19 @@ for {set i 0} {$i<10000} {incr i } {
   puts "[vecadd $v1 $v2] $v"
   set error 1
  }
-#  set r [vecsub [part 1 print pos] [part 0 print pos]]
-#  set omega [part 0 print omega]
-#  set v [veccross_product3d $omega $r]
-#  if {[veclen [vecsub $v [part 1 print v]]] >0.0001 } {
-#   puts "Error: Particle 1 velocity incorrect."
-#   set error 1
-#  }
-#  
-#  set r [vecsub [part 2 print pos] [part 0 print pos]]
-#  set omega [part 0 print omega]
-#  set v [veccross_product3d $omega $r]
-#  if {[veclen [vecsub $v [part 2 print v]]] >0.0001 } {
-#   set error 1
-#   puts "Error: Particle 2 velocity incorrect. Is [part 2 print v], should be $v."
-#  } 
+  set r [vecsub [part 1 print pos] [part 0 print pos]]
+  set omega [part 0 print omega]
+  
+  if {abs([veclen $r]-0.2)  >1E-5} {
+   error_exit "Distance between particle 0 and 1 incorrect."
+  }
+  
+  set r [vecsub [part 2 print pos] [part 0 print pos]]
+  set omega [part 0 print omega]
+  
+  if {abs([veclen $r]-0.2)  >1E-5} {
+   error_exit "Distance between particle 0 and 2 incorrect."
+  }
 }
  puts "OK: Handling of periodic boundaries"
  puts "OK: Velocities of outer particles add up to velocity of center of mass"
