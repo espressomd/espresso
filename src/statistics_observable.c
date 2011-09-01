@@ -746,7 +746,6 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
   A[0]=v_com[0]/ids->n;
   A[1]=v_com[1]/ids->n;
   A[2]=v_com[2]/ids->n;
-  printf("v_com %f %f %f\n", A[0], A[1], A[2]);
   return 0;
 }
 
