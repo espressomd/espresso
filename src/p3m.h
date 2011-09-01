@@ -91,13 +91,15 @@ typedef struct {
   /** Energy optimised influence function (k-space) */
   double *g_energy;
 
+#ifdef P3M_STORE_CA_FRAC
   /** number of charged particles on the node. */
   int ca_num;
-
   /** Charge fractions for mesh assignment. */
   double *ca_frac;
   /** index of first mesh point for charge assignment. */
   int *ca_fmp;
+#endif
+
   /** number of permutations in k_space */
   int ks_pnum;
 

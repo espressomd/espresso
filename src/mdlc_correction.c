@@ -38,11 +38,11 @@
  #include "domain_decomposition.h"
  #include "particle_data.h"
  #include "communication.h"
- #include "p3m-magnetostatics.h"
+ #include "p3m-dipolar.h"
  #include "cells.h"
  #include "mdlc_correction.h"
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
    
 DLC_struct dlc_params = { 1e100, 0, 0, 0, 0};
 

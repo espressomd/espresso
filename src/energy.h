@@ -31,7 +31,7 @@
 
 /* include the energy files */
 #include "p3m.h"
-#include "p3m-magnetostatics.h"
+#include "p3m-dipolar.h"
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
@@ -184,7 +184,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
 {
   IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   double ret = 0;
 #endif
 
@@ -231,7 +231,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     ret=0;
     switch (coulomb.Dmethod) {

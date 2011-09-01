@@ -64,6 +64,9 @@
 /** granularity of the time measurement */
 #define P3M_TIME_GRAN 2
 
+/** whether the P3M charge assignment fraction is stored or not */
+#define P3M_STORE_CA_FRAC
+
 /************************************************
  * data types
  ************************************************/
@@ -126,8 +129,8 @@ typedef struct {
   double r_cut_iL;
   /** number of mesh points per coordinate direction (>0). */
   int    mesh[3];
-  /** offset of the first mesh point (lower left 
-      corner) from the coordinate origin ([0,1[). */
+  /** offset of the first mesh point (lower left corner) from the
+      coordinate origin ([0,1[). */
   double mesh_off[3];
   /** charge assignment order ([0,7]). */
   int    cao;

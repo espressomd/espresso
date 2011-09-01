@@ -165,7 +165,8 @@ typedef struct {
   double v[3];
 
 #ifdef ROTATION
-  /** angular velocity */
+  /** angular velocity  
+      ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
 #endif
 } ParticleMomentum;

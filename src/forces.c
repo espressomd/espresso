@@ -170,7 +170,7 @@ void calc_long_range_forces()
   }
 #endif  /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS  
+#ifdef DIPOLES  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
 #ifdef DP3M
@@ -200,7 +200,7 @@ void calc_long_range_forces()
       break;
 
   }
-#endif  /*ifdef MAGNETOSTATICS */
+#endif  /*ifdef DIPOLES */
 }
 
 /************************************************************/
