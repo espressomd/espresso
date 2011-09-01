@@ -260,18 +260,14 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
   if(
-#ifdef ELECTROSTATICS
-      coulomb.method != COULOMB_NONE
-#else
-      0
+#if defined(ELECTROSTATICS) && defined(DIPOLES) 
+     coulomb.method != COULOMB_NONE || coulomb.Dmethod != DIPOLAR_NONE
+#elif defined(ELECTROSTATICS)
+     coulomb.method != COULOMB_NONE
+#elif defined(DIPOLES)     
+     coulomb.Dmethod != DIPOLAR_NONE
 #endif
-      ||
-#ifdef DIPOLES
-      coulomb.Dmethod != DIPOLAR_NONE
-#else
-      0
-#endif 
-      ) {
+     ) {
     /* total Coulomb energy */
     value = 0;
     for (i = 0; i < total_energy.n_coulomb; i++)
@@ -281,34 +277,31 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, value, buffer);
     
 #if defined(ELECTROSTATICS) && defined(DIPOLES) 
-
     Tcl_AppendResult(interp, "{ coulomb+magdipoles ", buffer, (char *)NULL);  
-
-#else
-
-#ifndef DIPOLES
+#elif defined(ELECTROSTATICS)
     Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
-#endif
-    
-#ifndef ELECTROSTATICS
+#elif defined(DIPOLES)
     Tcl_AppendResult(interp, "{ magdipoles ", buffer, (char *)NULL);  
 #endif
 
-#endif
-
     /* if it is split up, then print the split up parts */
+#ifdef ELECTROSTATICS
     if (total_energy.n_coulomb > 1) {
       for (i = 0; i < total_energy.n_coulomb; i++) {
 	Tcl_PrintDouble(interp, total_energy.coulomb[i], buffer);
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
-     } 
+    }
+#endif
+
+#ifdef DIPOLES
     if (total_energy.n_dipolar > 1) {
       for (i = 0; i < total_energy.n_dipolar; i++) {
  	Tcl_PrintDouble(interp, total_energy.dipolar[i], buffer);
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }
+#endif
     Tcl_AppendResult(interp, " }", (char *)NULL);
   }
 #endif
@@ -385,7 +378,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_coulomb; i++)
 	value += total_energy.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.h)\n", (char *)NULL);
 #endif
     }    
     else if( ARG0_IS_S("magnetic")) {
@@ -394,7 +387,7 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_dipolar; i++)
 	value += total_energy.dipolar[i];
 #else
-      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.h)\n", (char *)NULL);
 #endif
     }
     

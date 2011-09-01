@@ -89,7 +89,7 @@ void update_mol_pos_particle(Particle *p)
    #ifdef PARTIAL_PERIODIC
     else p->r.p[i] =new_pos[i];
    #endif
-   fold_coordinate(p->r.p,p->l.i,i);
+//   fold_coordinate(p->r.p,p->l.i,i);
 
  }
 }
