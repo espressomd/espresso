@@ -182,6 +182,11 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 */
 MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 {
+// mjw
+#ifdef ROTATIONAL_INERTIA
+  extern double langevin_gamma_rotation; 
+  extern double langevin_pref2_rotation;
+#endif
   extern double langevin_pref2;
 
   int j;
@@ -204,10 +209,16 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
    }
  #endif
 #endif	  
+//mjw
+#ifdef ROTATIONAL_INERTIA
+  double massf = PMASS(*p);
+  double massf2 = sqrt(massf);
+#endif 
       for ( j = 0 ; j < 3 ; j++) 
       {
         #ifdef ROTATIONAL_INERTIA
-	 p->f.torque[j] = -langevin_gamma*p->m.omega[j] *p->p.rinertia[j] + langevin_pref2*sqrt(p->p.rinertia[j]) * (d_random()-0.5);
+/* mjw	 p->f.torque[j] = -langevin_gamma*p->m.omega[j] *p->p.rinertia[j] + langevin_pref2*sqrt(p->p.rinertia[j]) * (d_random()-0.5); */
+	 p->f.torque[j] = (-langevin_gamma_rotation*p->m.omega[j]*massf + langevin_pref2_rotation*(d_random()-0.5)*massf2);
       	#else
 	 p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
 	#endif

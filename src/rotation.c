@@ -113,6 +113,8 @@ int convert_quatu_to_quat(double d[3], double quat[4])
 {
   double d_xy, dm;
   double theta2, phi2;
+  double costhe2,sinthe2,cosphi2,sinphi2;
+
 
   // Calculate magnitude of the given vector
   dm = sqrt(d[0]*d[0] + d[1]*d[1] + d[2]*d[2]);
@@ -142,11 +144,19 @@ int convert_quatu_to_quat(double d[3], double quat[4])
       else phi2 = 0.5*acos(d[0]/d_xy) - PI*0.25;
     }
 
-    // Calculate the quaternion from the angles
-    quat[0] =  cos(theta2) * cos(phi2);
-    quat[1] = -sin(theta2) * cos(phi2);
-    quat[2] = -sin(theta2) * sin(phi2);
-    quat[3] =  cos(theta2) * sin(phi2);
+    // Calculate the quaternion from the angles; mjw below is slightly faster unless compiler does this
+     costhe2 = cos(theta2);
+     sinthe2 = sin(theta2);
+     cosphi2 = cos(phi2);
+     sinphi2 = sin(phi2);
+     quat[0] =  costhe2 * cosphi2;
+     quat[1] = -sinthe2 * cosphi2;
+     quat[2] = -sinthe2 * sinphi2;
+     quat[3] =  costhe2 * sinphi2;
+/*   quat[0] =  cos(theta2) * cos(phi2);
+     quat[1] = -sin(theta2) * cos(phi2);
+     quat[2] = -sin(theta2) * sin(phi2);
+     quat[3] =  cos(theta2) * sin(phi2); */
   }
   return 0;
 }
@@ -197,7 +207,18 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
 
   /* calculate the second derivative of the quaternion */
   
+
+// substituted by mjw
 #ifdef ROTATIONAL_INERTIA
+	I[0]=p->p.rinertia[0];
+	I[1]=p->p.rinertia[1];
+	I[2]=p->p.rinertia[2];
+#endif
+  Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0];
+  Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1];
+  Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2];
+
+/*  
   Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0]/p->p.rinertia[0];
   Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1]/p->p.rinertia[1];
   Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2]/p->p.rinertia[2];
@@ -205,7 +226,7 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
   Wd[0] =  (p->f.torque[0] + p->m.omega[1]*p->m.omega[2]*(I[1]-I[2]))/I[0];
   Wd[1] =  (p->f.torque[1] + p->m.omega[2]*p->m.omega[0]*(I[2]-I[0]))/I[1];
   Wd[2] =  (p->f.torque[2] + p->m.omega[0]*p->m.omega[1]*(I[0]-I[1]))/I[2];
-#endif
+#endif */
 
   S1 = Qd[0]*Qd[0] + Qd[1]*Qd[1] + Qd[2]*Qd[2] + Qd[3]*Qd[3];
 
@@ -327,6 +348,7 @@ void convert_torques_propagate_omega()
     
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     
+/*
 #ifdef ROTATIONAL_INERTIA
 	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
 	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
@@ -335,12 +357,23 @@ void convert_torques_propagate_omega()
 	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/I[0];
 	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/I[1];
 	  p[i].m.omega[2]+= dt2*p[i].f.torque[2]/I[2];
+#endif */
+// substituted by mjw
+#ifdef ROTATIONAL_INERTIA
+	I[0]=p->p.rinertia[0];
+	I[1]=p->p.rinertia[1];
+	I[2]=p->p.rinertia[2];
 #endif
-	  /* if the tensor of inertia is isotrpic, the following refinement is not needed.
+	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/I[0];
+	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/I[1];
+	  p[i].m.omega[2]+= dt2*p[i].f.torque[2]/I[2];
+
+	  /* if the tensor of inertia is isotropic, the following refinement is not needed.
 	     Otherwise repeat this loop 2-3 times depending on the required accuracy */
-	  for(times=0;times<=5;times++) { 
+	  for(times=0;times<=4;times++) { 
 	    double Wd[3];
 
+/*
 #ifdef ROTATIONAL_INERTIA
 	    Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0]/p[i].p.rinertia[0];
 	    Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]/p[i].p.rinertia[1]; 
@@ -349,7 +382,11 @@ void convert_torques_propagate_omega()
 	    Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
 	    Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
 	    Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
-#endif
+#endif */
+// substituted by mjw
+	    Wd[0] = (p[i].m.omega[1]*p[i].m.omega[2]*(I[1]-I[2]))/I[0];
+	    Wd[1] = (p[i].m.omega[2]*p[i].m.omega[0]*(I[2]-I[0]))/I[1]; 
+	    Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
  
 	    p[i].m.omega[0]+= dt2*Wd[0];
 	    p[i].m.omega[1]+= dt2*Wd[1];
