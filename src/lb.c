@@ -196,6 +196,9 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   else if (ARG0_IS_S("init")) {
     lbfluid_tcl_print_usage(interp);
     return TCL_ERROR;
+  } 
+  else if (ARG0_IS_S("print_interpolated_velocity")) {
+    return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
   }
   else while (argc > 0) {
       if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
