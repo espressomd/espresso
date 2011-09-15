@@ -1473,7 +1473,7 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
 
 
 /** Calculation of hydrodynamic modes */
-MDINLINE void lb_calc_modes(index_t index, double *mode) {
+void lb_calc_modes(index_t index, double *mode) {
 
 #ifdef D3Q19
   double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p, n7m, n8p, n8m, n9p, n9m;
