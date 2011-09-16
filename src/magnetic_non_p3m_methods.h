@@ -30,7 +30,7 @@
  *
  */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag);
@@ -69,5 +69,5 @@ int magnetic_dipolar_direct_sum_sanity_checks();
 double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag);
 
 
-#endif /*of ifdef MAGNETOSTATICS  */
+#endif /*of ifdef DIPOLES  */
 #endif /* of ifndef  MAG_NON_P3M_H */
