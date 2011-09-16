@@ -1131,7 +1131,7 @@ static void lb_realloc_fluid() {
 
   lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
 #ifdef LB_BOUNDARIES
-  lb_init_boundaries();
+//  lb_init_boundaries();
 #endif
 
 }
@@ -1276,6 +1276,13 @@ void lb_reinit_forces() {
 #endif
 
   }
+#ifdef LB_BOUNDARIES
+  for (int i =0; i<n_lb_boundaries; i++) {
+    lb_boundaries[i].force[0]=0.;
+    lb_boundaries[i].force[1]=0.;
+    lb_boundaries[i].force[2]=0.;
+  }
+#endif
 
 }
 
@@ -1313,7 +1320,7 @@ void lb_reinit_fluid() {
 
     }
 #ifdef LB_BOUNDARIES
-      lb_init_boundaries();
+//    lb_init_boundaries();
 #endif
 
     resend_halo = 0;
@@ -1975,13 +1982,17 @@ MDINLINE void lb_collide_stream() {
       index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
+//#ifdef LB_BOUNDARIES
+//    /* boundary conditions for links */
+//    lb_bounce_back();
+//#endif
+    
+    /* exchange halo regions */
+    halo_push_communication();
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
     lb_bounce_back();
 #endif
-    
-    /* exchange halo regions */
-    halo_push_communication();
 
    /* swap the pointers for old and new population fields */
     double **tmp;

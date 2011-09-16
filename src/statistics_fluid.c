@@ -30,6 +30,7 @@
 #include "parser.h"
 #include "communication.h"
 #include "lb.h"
+#include "lb-boundaries.h"
 #include "statistics_fluid.h"
 #include "lbgpu.h"
 
@@ -115,6 +116,16 @@ void lb_calc_fluid_temp(double *result) {
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 }
 
+void lb_collect_boundary_forces(double *result) {
+  double* boundary_forces=malloc(3*n_lb_boundaries*sizeof(double));
+
+  for (int i = 0; i < n_lb_boundaries; i++) 
+    for (int j = 0; j < 3; j++)
+      boundary_forces[3*i+j]=lb_boundaries[i].force[j];
+
+  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  free(boundary_forces);
+}
 #define REQ_DENSPROF 702
 
 /** Calculate a density profile of the fluid. */

@@ -576,6 +576,7 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
+//  lb_init_boundaries();
   return mpi_gather_runtime_errors(interp, status);
 
 #else /* !defined(LB_BOUNDARIES) */
@@ -644,9 +645,9 @@ void lb_init_boundaries() {
     lbfields[n].boundary = 0;
   }
   
-  for (z=1; z<=lblattice.grid[2]; z++) {
-    for (y=1; y<=lblattice.grid[1]; y++) {
-	    for (x=1; x<=lblattice.grid[0]; x++) {	    
+  for (z=0; z<lblattice.grid[2]+2; z++) {
+    for (y=0; y<lblattice.grid[1]+2; y++) {
+	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
 	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
@@ -681,6 +682,7 @@ void lb_init_boundaries() {
         }       
         
   	    if (dist <= 0 && n_lb_boundaries > 0) {
+          printf("%d at %f %f %f is boundary %d w dist %f\n", get_linear_index(x,y,z,lblattice.halo_grid), pos[0], pos[1], pos[2], the_boundary, dist);
    	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;   
         } else {
             lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary=0;
@@ -691,10 +693,12 @@ void lb_init_boundaries() {
 }
 
 int lbboundary_get_force(int no, double* f) {
-//  printf("force %f %f %f", lb_boundaries[no].force[0],  lb_boundaries[no].force[1],  lb_boundaries[no].force[2]);
-  f[0]=lb_boundaries[no].force[0]/lbpar.tau/lbpar.tau*lbpar.agrid;
-  f[1]=lb_boundaries[no].force[1]/lbpar.tau/lbpar.tau*lbpar.agrid;
-  f[2]=lb_boundaries[no].force[2]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  double* forces=malloc(3*n_lb_boundaries*sizeof(double));
+  mpi_gather_stats(8, forces, NULL, NULL, NULL);
+  f[0]=forces[3*no+0]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  f[1]=forces[3*no+1]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  f[2]=forces[3*no+2]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  free(forces);
   return 0;
 }
 
