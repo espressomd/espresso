@@ -160,7 +160,7 @@ MDINLINE void lb_bounce_back() {
               if ( !lbfields[k-next[i]].boundary ) {
 
                 for (l=0; l<3; l++) {
-                  lb_boundaries[lbfields[k].boundary-1].force[l]-=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
+                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
                 }
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
 //                printf("indexcheck: %d %d\n", get_linear_index((int)round(x-lbmodel.c[i][0]), (int)round( y-lbmodel.c[i][1]), (int)round(z-lbmodel.c[i][2]), lblattice.halo_grid), k-next[i]);
