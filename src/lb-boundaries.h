@@ -108,6 +108,7 @@ MDINLINE void lb_bounce_back() {
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
   int next[19];
+  int x,y,z;
   double population_shift;
   double rho, j[3], pi[6];
   double modes[19];
@@ -133,31 +134,44 @@ MDINLINE void lb_bounce_back() {
   int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
 
   /* bottom-up sweep */
-  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
+//  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
+  for (z=0; z<lblattice.grid[2]+2; z++) {
+    for (y=0; y<lblattice.grid[1]+2; y++) {
+	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
+         k= get_linear_index(x,y,z,lblattice.halo_grid);
+    
+        if (lbfields[k].boundary) {
+          lb_calc_modes(k, modes);
+          lb_boundaries[lbfields[k].boundary-1].force[2]+=2*j[2];
+    //      if ((lbfields[k].boundary==1))
+//            printf("bound %d index %d force contribution %f %f %f now total %f %f %f\n", lbfields[k].boundary-1, k, modes[1], modes[2], modes[3], lb_boundaries[lbfields[k].boundary-1].force[0], lb_boundaries[lbfields[k].boundary-1].force[1], lb_boundaries[lbfields[k].boundary-1].force[2]);
+    
+          for (i=0; i<19; i++) {
+            population_shift=0;
+            for (l=0; l<3; l++) {
+              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq*lbmodel.w[i];
+            }
+ //           printf("bound %d index %d now total %f %f %f\n", lbfields[k].boundary-1, k,  lb_boundaries[lbfields[k].boundary-1].force[0], lb_boundaries[lbfields[k].boundary-1].force[1], lb_boundaries[lbfields[k].boundary-1].force[2]);
+            if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
+                 y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
+                 z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
+              if ( !lbfields[k-next[i]].boundary ) {
 
-    if (lbfields[k].boundary) {
-      lb_calc_modes(k, modes);
-      j[0] = modes[1];
-      j[1] = modes[2];
-      j[2] = modes[3];
-      lb_boundaries[lbfields[k].boundary-1].force[0]+=2*j[0];
-      lb_boundaries[lbfields[k].boundary-1].force[1]+=2*j[1];
-      lb_boundaries[lbfields[k].boundary-1].force[2]+=2*j[2];
-//      if ((lbfields[k].boundary==1))
-//        printf("force contribution %f %f %f\n", modes[1], modes[2], modes[3]);
-
-      for (i=0; i<19; i++) {
-        population_shift=0;
-        for (l=0; l<3; l++)
-          population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq*lbmodel.w[i];
-        if ( !lbfields[k-next[i]].boundary ) 
-          lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
-        else 
-          lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+                for (l=0; l<3; l++) {
+                  lb_boundaries[lbfields[k].boundary-1].force[l]-=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
+                }
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
+//                printf("indexcheck: %d %d\n", get_linear_index((int)round(x-lbmodel.c[i][0]), (int)round( y-lbmodel.c[i][1]), (int)round(z-lbmodel.c[i][2]), lblattice.halo_grid), k-next[i]);
+//                printf("bb nr at %d %d %d to %f %f %f no %d c %f %f %f shift %f\n", x, y, z, x-lbmodel.c[i][0], y-lbmodel.c[i][1], z-lbmodel.c[i][2], i, lbmodel.c[i][0], lbmodel.c[i][1], lbmodel.c[i][2], population_shift);
+              }
+              else 
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+            }
+          }
+        }
       }
     }
   }
-  
 #else
 #error Bounce back boundary conditions are only implemented for PUSH scheme!
 #endif

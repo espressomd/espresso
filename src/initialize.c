@@ -429,9 +429,9 @@ void on_constraint_change()
   invalidate_obs();
 
 #ifdef LB_BOUNDARIES
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
-  }
+//  if(lattice_switch & LATTICE_LB) {
+//    lb_init_boundaries();
+//  }
 #endif
 
   recalc_forces = 1;
