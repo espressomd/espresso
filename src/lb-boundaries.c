@@ -679,7 +679,6 @@ void lb_init_boundaries() {
         }       
         
   	    if (dist <= 0 && n_lb_boundaries > 0) {
-          printf("%d at %f %f %f is boundary %d w dist %f\n", get_linear_index(x,y,z,lblattice.halo_grid), pos[0], pos[1], pos[2], the_boundary, dist);
    	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;   
         } else {
             lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary=0;
