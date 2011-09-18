@@ -358,7 +358,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 
   lattice_switch = (lattice_switch | LATTICE_LB) ;
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
-//
+
   /* thermo_switch is retained for backwards compatibility */
   thermo_switch = (thermo_switch | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
@@ -1130,9 +1130,6 @@ static void lb_realloc_fluid() {
   }
 
   lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
-#ifdef LB_BOUNDARIES
-//  lb_init_boundaries();
-#endif
 
 }
 
@@ -1194,7 +1191,6 @@ void lb_reinit_parameters() {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
     gamma_shear = 1. - 2./(6.*lbpar.viscosity*tau/(agrid*agrid)+1.);
-    //gamma_shear = 0.0;    
   }
 
   if (lbpar.bulk_viscosity > 0.0) {
@@ -1203,11 +1199,8 @@ void lb_reinit_parameters() {
     gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity*tau/(agrid*agrid)+1.);
   }
   
-  //gamma_odd = gamma_even = gamma_bulk = gamma_shear;
   gamma_odd = lbpar.gamma_odd;
   gamma_even = lbpar.gamma_even;
-////
-  //fprintf(stderr,"%f %f %f %f\n",gamma_shear,gamma_bulk,gamma_even,gamma_odd);
 
   double mu = 0.0;
 
@@ -1239,7 +1232,6 @@ void lb_reinit_parameters() {
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
     lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
 
-
   } else {
     /* no fluctuations at zero temperature */
     fluct = 0;
@@ -1249,10 +1241,6 @@ void lb_reinit_parameters() {
   }
 
   LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity));
-
-  //LB_TRACE(fprintf(stderr,"%d: phi[4]=%f phi[5]=%f phi[6]=%f phi[7]=%f phi[8]=%f phi[9]=%f\n",this_node,lb_phi[4],lb_phi[5],lb_phi[6],lb_phi[7],lb_phi[8],lb_phi[9]));
-
-  //LB_TRACE(fprintf(stderr,"%d: lb_coupl_pref=%f (temp=%f, friction=%f, time_step=%f)\n",this_node,lb_coupl_pref,temperature,lbpar.friction,time_step));
 
 }
 
@@ -1301,40 +1289,19 @@ void lb_reinit_fluid() {
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
-// TODO #ifdef LB_BOUNDARIES
-//       double **tmp;
-//       if (lbfields[index].boundary==0) {
-//       	lb_calc_n_equilibrium(index,rho,v,pi);
-//       } else {
-// 	       tmp = lbfluid[0];
-// 	       lb_set_boundary_node(index,rho,v,pi);
-// 	       lbfluid[0] = lbfluid[1];
-//          lb_set_boundary_node(index,rho,v,pi);
-// 	       lbfluid[0] = tmp;
-//       }
-// #else
       lb_calc_n_equilibrium(index,rho,v,pi);
-// #endif
 
       lbfields[index].recalc_fields = 1;
 
     }
-#ifdef LB_BOUNDARIES
-//    lb_init_boundaries();
-#endif
 
     resend_halo = 0;
-
 }
 
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init() {
-
-  //lb_init_mode_transformation();
-  //lb_lattice_sum();
-  //exit(-1);
 
   if (lb_sanity_checks()) return;
 
@@ -1352,11 +1319,6 @@ void lb_init() {
   /* initialize derived parameters */
   lb_reinit_parameters();
 
-#ifdef LB_BOUNDARIES
-  /* setup boundaries of constraints */
-//  lb_init_constraints();
-#endif
-
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
 
@@ -1366,7 +1328,7 @@ void lb_init() {
 }
 
 /** Release the fluid. */
-MDINLINE void lb_release_fluid() {
+void lb_release_fluid() {
   free(lbfluid[0][0]);
   free(lbfluid[0]);
   free(lbfields);
@@ -1650,9 +1612,6 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random());
     mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random());
     mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random());
-//    if (index == lblattice.halo_offset) {
-//      fprintf(stderr,"fluct: %f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
-//    }
     
 #ifndef OLD_FLUCT
     /* ghost modes */
@@ -1677,9 +1636,6 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     mode[7] += (fluct[3] = rootrho*lb_phi[7]*(d_random()-0.5));
     mode[8] += (fluct[4] = rootrho*lb_phi[8]*(d_random()-0.5));
     mode[9] += (fluct[5] = rootrho*lb_phi[9]*(d_random()-0.5));
-//    if (index == lblattice.halo_offset) {
-//      fprintf(stderr,"fluct%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
-//    }
     
 #ifndef OLD_FLUCT
     /* ghost modes */
@@ -1706,8 +1662,6 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
   
   f = lbfields[index].force;
 
-  //fprintf(stderr,"%ld f=(%f,%f,%f)\n",index,f[0],f[1],f[2]);
-
   rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
 
   /* hydrodynamic momentum density is redefined when external forces present */
@@ -1732,6 +1686,7 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
 //  mode[5] += 2.*C[0] - C[2] - C[5];
 //  mode[6] += C[2] - C[5];
 //ulf vorschlag: mode[6] += C[2] + C[5] - 2.*C[0];
+
   mode[5] += C[0] - C[2];
   mode[6] += C[0] + C[2] - 2.*C[5];
   mode[7] += C[1];
@@ -1918,11 +1873,6 @@ MDINLINE void lb_collide_stream() {
     int x, y, z;
     double modes[19];
 
-    //index = get_linear_index(1,1,1,lblattice.halo_grid);
-    //for (i=0; i<n_veloc; i++) {
-    //  fprintf(stderr,"[%d] %e\n",i,lbfluid[1][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
-    //}
-
     /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
     for (int i =0; i < n_lb_boundaries; i++) {
@@ -1931,7 +1881,6 @@ MDINLINE void lb_collide_stream() {
       lb_boundaries[i].force[2]=0.;
     }
 #endif
-
 
     index = lblattice.halo_offset;
     for (z=1; z<=lblattice.grid[2]; z++) {
@@ -1966,7 +1915,7 @@ MDINLINE void lb_collide_stream() {
 #ifdef LB_BOUNDARIES
 	  else {
 
-/*      Here collision in the boundary walls 
+/*      Here collision in the boundary nodes
  *      can be included, if this is necessary */
 //	    lb_boundary_collisions(index, modes);
 
@@ -1982,11 +1931,6 @@ MDINLINE void lb_collide_stream() {
       index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
-//#ifdef LB_BOUNDARIES
-//    /* boundary conditions for links */
-//    lb_bounce_back();
-//#endif
-    
     /* exchange halo regions */
     halo_push_communication();
 #ifdef LB_BOUNDARIES
@@ -2121,64 +2065,18 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
-  //fprintf(stderr,"particle number %d\n",p->p.identity);
-
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
   map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
   
-//  printf("position: %f %f %f delta: %f %f %f \n", p->r.p[0], p->r.p[1], p->r.p[2], delta[0],delta[1],delta[2]);
-
-  //fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]);
-
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-/*  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-        	
-        index = node_index[(z*2+y)*2+x];
-        
-        local_node = &lbfields[index];
-        
-//        if (local_node->recalc_fields) {
-        lb_calc_modes(index, modes);
-          //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
-//          local_node->recalc_fields = 0;
-        local_node->has_force = 1;
-//        }
-//        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
-        // unit conversion: mass density
-        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
-        
-        #ifdef ADDITIONAL_CHECKS
-//        	old_rho[(z*2+y)*2+x] = *local_rho;
-        #endif
-        
-        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
-        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
-        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
- //       printf("int_u: %f %f %f\n", interpolated_u[0], interpolated_u[1], interpolated_u[2] );    
-
-      }
-    }
-    */
 //  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-
-
-
   lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
 
-  
-//  printf("u: %f %f %f\n", interpolated_u[0],interpolated_u[1],interpolated_u[2] );
-  
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
 
   /* calculate viscous force
@@ -2188,8 +2086,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
   force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
   force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
-#endif
-#ifndef LB_ELECTROHYDRODYNAMICS
+#else // if not LB_ELECTROHYDRODYNAMICS
   force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]);
   force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]);
   force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]);
@@ -2226,27 +2123,140 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 	local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
 	local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
 
-//	lb_apply_forces(node_index[(z*2+y)*2+x], modes[(z*2+y)*2+x]);
-
       }
     }
   }
 
-
-#ifdef ADDITIONAL_CHECKS
-  int i;
-//  for (i=0;i<8;i++) {
-//    lb_calc_local_rho(node_index[i],local_rho);
-//    if (fabs(*local_rho-old_rho[i]) > ROUND_ERROR_PREC) {
-//      char *errtxt = runtime_error(128);
-//      ERROR_SPRINTF(errtxt,"{108 Mass loss/gain %le in lb_viscous_momentum_exchange for particle %d} ",*local_rho-old_rho[i],p->p.identity);
-//    }
-//  }
-#endif
-
-#if 0
 }
+
+/** The fluid velocity at a real space position is calculated
+ * by the interpolation method. This is useful not only for particle
+ * LB interactions but also for printing velocities in a way that is independent
+ * of the lattice constant */
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
+  index_t node_index[8], index;
+  double delta[6];
+  double local_rho, local_j[3], interpolated_u[3];
+  double modes[19];
+  int x,y,z;
+  LB_FluidNode *local_node;
+
+  if (n_nodes != 1)
+    return 1;
+
+  double lbboundary_mindist, distvec[3];
+  double pos[3];
+
+#ifdef LB_BOUNDARIES
+  int boundary_no;
+  int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
+
+  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
+  if (lbboundary_mindist>lbpar.agrid/2) {
+    boundary_flag=0;
+    pos[0]=p[0];
+    pos[1]=p[1];
+    pos[2]=p[2];
+  } else if (lbboundary_mindist > 0 ) {
+    boundary_flag=1;
+    pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
+  } else {
+    boundary_flag=2;
+    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
+    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
+    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    return 0; // we can return without interpolating
+  }
+#else
+  pos[0]=p[0];
+  pos[1]=p[1];
+  pos[2]=p[2];
 #endif
+  
+  /* determine elementary lattice cell surrounding the particle 
+     and the relative position of the particle in this cell */ 
+  map_position_to_lattice(&lblattice,pos,node_index,delta);
+
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+        	
+        index = node_index[(z*2+y)*2+x];
+        
+        local_node = &lbfields[index];
+
+#ifdef LB_BOUNDARIES
+        if (lbfields[index].boundary) {
+          local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+          local_j[0] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[2] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+        } else {
+          lb_calc_modes(index, modes);
+          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_j[0] = modes[1];
+          local_j[1] = modes[2];
+          local_j[2] = modes[3];
+        }
+#else 
+        lb_calc_modes(index, modes);
+        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+        local_j[0] = modes[1];
+        local_j[1] = modes[2];
+        local_j[2] = modes[3];
+#endif
+        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
+        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+
+      }
+    }
+  }
+#ifdef LB_BOUNDARIES
+  if (boundary_flag==1) {
+    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
+    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
+    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
+  } else {
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
+  }
+#else 
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
+#endif
+  v[0] *= lbpar.agrid/lbpar.tau;
+  v[1] *= lbpar.agrid/lbpar.tau;
+  v[2] *= lbpar.agrid/lbpar.tau;
+  return 0;
+  
+}
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
+  double p[3], v[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  if (argc!=3) {
+    printf("usage: print_interpolated_velocity $x $y $z");
+    return TCL_ERROR;
+  }
+  for (int i = 0; i < 3; i++) {
+    if (!ARG_IS_D(i, p[i]))
+      printf("usage: print_interpolated_velocity $x $y $z");
+  }
+  lb_lbfluid_get_interpolated_velocity(p, v);
+  for (int i = 0; i < 3; i++) {
+    Tcl_PrintDouble(interp, v[i], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+  return TCL_OK;
 }
 
 /** Calculate particle lattice interactions.
@@ -2348,7 +2358,6 @@ void calc_particle_lattice_ia() {
 	p[i].f.f[0] += force[0];
 	p[i].f.f[1] += force[1];
 	p[i].f.f[2] += force[2];
-  //printf("force on particle: , %f %f %f\n", force[0], force[1], force[2]);
 
 	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   
@@ -2997,112 +3006,6 @@ MDINLINE int lb_check_negative_n(index_t index) {
 }
 #endif /* ADDITIONAL_CHECKS */
 
-int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
-  index_t node_index[8], index;
-  double delta[6];
-  double local_rho, local_j[3], interpolated_u[3];
-  double modes[19];
-  int x,y,z;
-  LB_FluidNode *local_node;
-
-  if (n_nodes != 1)
-    return 1;
-
-  double lbboundary_mindist, distvec[3];
-  double pos[3];
-  int boundary_no;
-  int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
-
-  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
-  if (lbboundary_mindist>lbpar.agrid/2) {
-    boundary_flag=0;
-    pos[0]=p[0];
-    pos[1]=p[1];
-    pos[2]=p[2];
-  } else if (lbboundary_mindist > 0 ) {
-    boundary_flag=1;
-    pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
-    pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
-    pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
-  } else {
-    boundary_flag=2;
-    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
-    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
-    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
-    return 0; // we can return without interpolating
-  }
-  
-  /* determine elementary lattice cell surrounding the particle 
-     and the relative position of the particle in this cell */ 
-  map_position_to_lattice(&lblattice,pos,node_index,delta);
-
-  /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-        	
-        index = node_index[(z*2+y)*2+x];
-        
-        local_node = &lbfields[index];
-        if (lbfields[index].boundary) {
-          local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-          local_j[0] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[2] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-        } else {
-          lb_calc_modes(index, modes);
-          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
-          local_j[0] = modes[1];
-          local_j[1] = modes[2];
-          local_j[2] = modes[3];
-        }
-//        printf ("%f %f %f\n", modes[1], modes[2], modes[3]);
-        if (!local_node->boundary) {
-          interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
-          interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
-          interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
-        }
-
-      }
-    }
-  }
-  if (boundary_flag==1) {
-    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
-    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
-    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
-  } else {
-    v[0] = interpolated_u[0];
-    v[1] = interpolated_u[1];
-    v[2] = interpolated_u[2];
-  }
-  v[0] *= lbpar.agrid/lbpar.tau;
-  v[1] *= lbpar.agrid/lbpar.tau;
-  v[2] *= lbpar.agrid/lbpar.tau;
-  return 0;
-  
-}
-int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
-  double p[3], v[3];
-  char buffer[3*TCL_DOUBLE_SPACE+3];
-  if (argc!=3) {
-    printf("usage: print_interpolated_velocity $x $y $z");
-    return TCL_ERROR;
-  }
-  for (int i = 0; i < 3; i++) {
-    if (!ARG_IS_D(i, p[i]))
-      printf("usage: print_interpolated_velocity $x $y $z");
-  }
-  lb_lbfluid_get_interpolated_velocity(p, v);
-  for (int i = 0; i < 3; i++) {
-    Tcl_PrintDouble(interp, v[i], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  return TCL_OK;
-}
 
 #endif
 

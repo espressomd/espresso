@@ -586,8 +586,6 @@ int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
 
 
-static void lb_check_halo_regions();
-
 /** Calculation of hydrodynamic modes */
 MDINLINE void lb_calc_modes(index_t index, double *mode) {
 
