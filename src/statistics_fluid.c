@@ -117,6 +117,7 @@ void lb_calc_fluid_temp(double *result) {
 }
 
 void lb_collect_boundary_forces(double *result) {
+#ifdef LB_BOUNDARIES
   double* boundary_forces=malloc(3*n_lb_boundaries*sizeof(double));
 
   for (int i = 0; i < n_lb_boundaries; i++) 
@@ -125,6 +126,7 @@ void lb_collect_boundary_forces(double *result) {
 
   MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   free(boundary_forces);
+#endif
 }
 #define REQ_DENSPROF 702
 
