@@ -110,7 +110,6 @@ MDINLINE void lb_bounce_back() {
   int next[19];
   int x,y,z;
   double population_shift;
-  double rho, j[3], pi[6];
   double modes[19];
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
@@ -142,16 +141,12 @@ MDINLINE void lb_bounce_back() {
     
         if (lbfields[k].boundary) {
           lb_calc_modes(k, modes);
-          lb_boundaries[lbfields[k].boundary-1].force[2]+=2*j[2];
-    //      if ((lbfields[k].boundary==1))
-//            printf("bound %d index %d force contribution %f %f %f now total %f %f %f\n", lbfields[k].boundary-1, k, modes[1], modes[2], modes[3], lb_boundaries[lbfields[k].boundary-1].force[0], lb_boundaries[lbfields[k].boundary-1].force[1], lb_boundaries[lbfields[k].boundary-1].force[2]);
     
           for (i=0; i<19; i++) {
             population_shift=0;
             for (l=0; l<3; l++) {
               population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq*lbmodel.w[i];
             }
- //           printf("bound %d index %d now total %f %f %f\n", lbfields[k].boundary-1, k,  lb_boundaries[lbfields[k].boundary-1].force[0], lb_boundaries[lbfields[k].boundary-1].force[1], lb_boundaries[lbfields[k].boundary-1].force[2]);
             if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
                  y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
                  z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
@@ -161,8 +156,6 @@ MDINLINE void lb_bounce_back() {
                   lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
                 }
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
-//                printf("indexcheck: %d %d\n", get_linear_index((int)round(x-lbmodel.c[i][0]), (int)round( y-lbmodel.c[i][1]), (int)round(z-lbmodel.c[i][2]), lblattice.halo_grid), k-next[i]);
-//                printf("bb nr at %d %d %d to %f %f %f no %d c %f %f %f shift %f\n", x, y, z, x-lbmodel.c[i][0], y-lbmodel.c[i][1], z-lbmodel.c[i][2], i, lbmodel.c[i][0], lbmodel.c[i][1], lbmodel.c[i][2], population_shift);
               }
               else 
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
