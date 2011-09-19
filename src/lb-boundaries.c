@@ -630,7 +630,7 @@ void lb_init_boundaries() {
   int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
-  int the_boundary;
+  int the_boundary=-1;
 	
   map_node_array(this_node, node_domain_position);
 	
