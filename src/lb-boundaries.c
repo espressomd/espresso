@@ -561,9 +561,9 @@ void lb_init_boundaries() {
     lbfields[n].boundary = 0;
   }
   
-  for (z=1; z<=lblattice.grid[2]; z++) {
-    for (y=1; y<=lblattice.grid[1]; y++) {
-	    for (x=1; x<=lblattice.grid[0]; x++) {	    
+  for (z=0; z<=lblattice.grid[2]+1; z++) {
+    for (y=0; y<=lblattice.grid[1]+1; y++) {
+	    for (x=0; x<=lblattice.grid[0]+1; x++) {	    
 	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;

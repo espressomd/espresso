@@ -2025,13 +2025,13 @@ MDINLINE void lb_collide_stream() {
       index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
+    /* exchange halo regions */
+    halo_push_communication();
+
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
     lb_bounce_back();
 #endif
-    
-    /* exchange halo regions */
-    halo_push_communication();
 
    /* swap the pointers for old and new population fields */
     double **tmp;

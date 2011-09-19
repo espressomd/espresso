@@ -103,6 +103,7 @@ MDINLINE void lb_bounce_back() {
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
   int next[19];
+  int x,y,z;
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
   next[2]  = - 1;                       // (-1, 0, 0)
@@ -124,12 +125,23 @@ MDINLINE void lb_bounce_back() {
   next[18] = - (yperiod-zperiod);       // ( 0,-1, 1) +
   int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
 
-  /* bottom-up sweep */
-  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
-
-    if (lbfields[k].boundary) {
-      for (i=0; i<19; i++) {
-        lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+  for (z=0; z<lblattice.grid[2]+2; z++) {
+    for (y=0; y<lblattice.grid[1]+2; y++) {
+	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
+         k= get_linear_index(x,y,z,lblattice.halo_grid);
+    
+        if (lbfields[k].boundary) {
+    
+          for (i=0; i<19; i++) {
+            if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
+                 y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
+                 z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
+              if ( !lbfields[k-next[i]].boundary ) {
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+              }
+            }
+          }
+        }
       }
     }
   }
