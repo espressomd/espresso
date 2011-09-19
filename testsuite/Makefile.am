@@ -37,6 +37,7 @@ tests = \
 	kinetic.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_stokes_sphere.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
