@@ -2201,9 +2201,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   int x,y,z;
   LB_FluidNode *local_node;
 
-  if (n_nodes != 1)
-    return 1;
-
   double lbboundary_mindist, distvec[3];
   double pos[3];
 
