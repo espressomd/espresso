@@ -37,6 +37,7 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A);
  * TODO: Folded or unfolded?
  */ 
 int observable_particle_positions(void* typelist, double* A, unsigned int n_A);
+int observable_com_position(void* idlist, double* A, unsigned int n_A);
 
 #ifdef ELECTROSTATICS
 int observable_particle_currents(void* typelist, double* A, unsigned int n_A);
