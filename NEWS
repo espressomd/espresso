@@ -2,6 +2,12 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.1
+
+* Lattice-Boltzmann:
+  * nonzero velocity boundary conditions are available
+  * forces on boundaries can be calculated
+
 ESPResSo 3.0.1
 ==============
 
