@@ -641,6 +641,8 @@ void lb_init_boundaries() {
   for (n=0;n<lblattice.halo_grid_volume;n++) {
     lbfields[n].boundary = 0;
   }
+  if (lblattice.halo_grid_volume==0)
+    return;
   
   for (z=0; z<lblattice.grid[2]+2; z++) {
     for (y=0; y<lblattice.grid[1]+2; y++) {

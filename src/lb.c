@@ -1289,10 +1289,16 @@ void lb_reinit_fluid() {
       lb_calc_n_equilibrium(index,rho,v,pi);
 
       lbfields[index].recalc_fields = 1;
+#ifdef LB_BOUNDARIES
+      lbfields[index].boundary = 0;
+#endif
 
     }
 
     resend_halo = 0;
+#ifdef LB_BOUNDARIES
+    lb_init_boundaries();
+#endif
 }
 
 /** Performs a full initialization of
