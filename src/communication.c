@@ -134,7 +134,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
   CB(mpi_recv_fluid_border_flag_slave) \
-  CB(mpi_send_scattering_length_slave)
+  CB(mpi_send_scattering_length_slave) 
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1352,6 +1352,12 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, vo
     mpi_call(mpi_gather_stats_slave, -1, 7);
     lb_calc_fluid_temp(result);
     break;
+#ifdef LB_BOUNDARIES
+  case 8:
+    mpi_call(mpi_gather_stats_slave, -1, 8);
+    lb_collect_boundary_forces(result);
+    break;
+#endif
 #endif
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n", this_node, job);
@@ -1387,6 +1393,11 @@ void mpi_gather_stats_slave(int ana_num, int job)
   case 7:
     lb_calc_fluid_temp(NULL);
     break;
+#ifdef LB_BOUNDARIES
+  case 8:
+    lb_collect_boundary_forces(NULL);
+    break;
+#endif
 #endif
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: illegal request %d for mpi_gather_stats_slave\n", this_node, job);
