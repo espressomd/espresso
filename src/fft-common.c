@@ -26,8 +26,9 @@
 #include "fft-common.h"
 #include <string.h>
 #include <fftw3.h>
-#include "utils.h"
 #include <mpi.h>
+
+#include "utils.h"
 #include "communication.h"
 
 #if defined(P3M) || defined(DP3M)

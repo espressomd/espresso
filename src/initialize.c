@@ -45,7 +45,7 @@
 #include "thermostat.h"
 #include "rotation.h"
 #include "p3m.h"
-#include "p3m-magnetostatics.h"
+#include "p3m-dipolar.h"
 #include "ewald.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
@@ -314,7 +314,7 @@ void on_observable_calc()
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
     switch (coulomb.Dmethod) {
@@ -390,7 +390,7 @@ void on_coulomb_change()
   recalc_forces = 1;
 #endif  /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(temperature > 0.0)
     coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
   else
@@ -410,7 +410,7 @@ void on_coulomb_change()
   }
 
   recalc_forces = 1;
-#endif  /* ifdef MAGNETOSTATICS */
+#endif  /* ifdef DIPOLES */
 
 }
 
@@ -429,12 +429,6 @@ void on_constraint_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
-
-#ifdef LB_BOUNDARIES
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
-  }
-#endif
 
   recalc_forces = 1;
 }
@@ -492,7 +486,7 @@ void on_resort_particles()
 #endif /* ifdef ELECTROSTATICS */
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -501,7 +495,7 @@ void on_resort_particles()
 #endif
  default: break;
   }
-#endif /* ifdef MAGNETOSTATICS*/
+#endif /* ifdef DIPOLES*/
 
 }
 
@@ -525,7 +519,7 @@ void on_NpT_boxl_change(double scal1) {
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch(coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_P3M:
@@ -545,7 +539,7 @@ void on_NpT_boxl_change(double scal1) {
 void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   int cc = 0;
 #endif
 
@@ -624,7 +618,7 @@ void on_parameter_change(int field)
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
    #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
@@ -642,9 +636,9 @@ void on_parameter_change(int field)
 #endif
   default: break;
   }
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   if (cc)
     on_coulomb_change();
 #endif

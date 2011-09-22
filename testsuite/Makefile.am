@@ -37,13 +37,16 @@ tests = \
 	kinetic.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_stokes_sphere.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
 	madelung.tcl \
 	maggs.tcl \
+	magnetic-field.tcl \
 	mass.tcl \
+	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	mmm1d.tcl \
 	npt.tcl \
@@ -59,6 +62,7 @@ tests = \
 	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
+# please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
 

@@ -212,6 +212,18 @@ int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv
   return TCL_OK;
 }
 
+int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  IntList* ids;
+  int temp;
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
+    return TCL_ERROR;
+  obs->fun=&observable_com_position;
+  obs->args=ids;
+  obs->n=3;
+  *change=1+temp;
+  return TCL_OK;
+}
+
 int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList* ids;
   int temp;
@@ -607,6 +619,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 
     REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities);
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity);
+    REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position);
     REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions);
     REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents);
     REGISTER_OBSERVABLE(currents, tclcommand_observable_currents);
@@ -813,7 +826,26 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
   A[0]=v_com[0]/ids->n;
   A[1]=v_com[1]/ids->n;
   A[2]=v_com[2]/ids->n;
-  printf("v_com %f %f %f\n", A[0], A[1], A[2]);
+  return 0;
+}
+
+int observable_com_position(void* idlist, double* A, unsigned int n_A) {
+/* TODO: this does not work with MASS ... */
+  unsigned int i;
+  double p_com[3] = { 0. , 0., 0. } ;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+    p_com[0] += partCfg[ids->e[i]].r.p[0];
+    p_com[1] += partCfg[ids->e[i]].r.p[1];
+    p_com[2] += partCfg[ids->e[i]].r.p[2];
+  }
+  A[0]=p_com[0]/ids->n;
+  A[1]=p_com[1]/ids->n;
+  A[2]=p_com[2]/ids->n;
   return 0;
 }
 

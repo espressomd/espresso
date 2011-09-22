@@ -73,12 +73,12 @@ TF_parameters *tf_params = NULL;
 /* #endif */
 #endif
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
 Coulomb_parameters coulomb = { 
 #ifdef ELECTROSTATICS
   0.0, 0.0, COULOMB_NONE,
 #endif
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   0.0, 0.0, DIPOLAR_NONE,
 #endif
 };
@@ -129,7 +129,7 @@ DoubleList thermodynamic_f_energies;
 ///
 int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp);
 #endif
 
@@ -1140,7 +1140,7 @@ int check_obs_calc_initialized()
   }
 #endif /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M: if (mdlc_sanity_checks()) state = 0; // fall through
@@ -1149,7 +1149,7 @@ int check_obs_calc_initialized()
   case DIPOLAR_MDLC_DS: if (mdlc_sanity_checks()) state = 0; // fall through
   case DIPOLAR_DS: if (magnetic_dipolar_direct_sum_sanity_checks()) state = 0; break;
   }
-#endif /* ifdef  MAGNETOSTATICS */
+#endif /* ifdef  DIPOLES */
 
   return state;
 }
@@ -1296,7 +1296,7 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 #endif /*ifdef ELECTROSTATICS */
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 
 
 int dipolar_set_Dbjerrum(double bjerrum)
@@ -1409,7 +1409,7 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
 }
 
 
-#endif   /* ifdef  MAGNETOSTATICS */
+#endif   /* ifdef  DIPOLES */
 
 
 
@@ -1690,7 +1690,7 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 int tclprint_to_result_DipolarIA(Tcl_Interp *interp) 
 {
   char buffer[TCL_DOUBLE_SPACE + 2*TCL_INTEGER_SPACE];
@@ -1765,7 +1765,7 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(coulomb.Dmethod != DIPOLAR_NONE) {
     if (start) 
       start = 0;
@@ -2202,10 +2202,10 @@ int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
   }
   
   if(ARG0_IS_S("magnetic")) {
-   #ifdef MAGNETOSTATICS
+   #ifdef DIPOLES
       return tclcommand_inter_parse_magnetic(interp, argc-1, argv+1);
     #else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)", (char *) NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)", (char *) NULL);
     #endif
   }
   

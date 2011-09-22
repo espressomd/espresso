@@ -261,7 +261,7 @@ int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **
   }
 #endif
 
-#ifdef MAGNETOSTATICS     
+#ifdef DIPOLES     
   if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0 ){
     fprintf(stderr,"WARNING: If magnetostatics is being used you must use the -cubic_box option!\n");
     fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
@@ -584,7 +584,7 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 
     /* Propagate time: t = t+dt */
-    if(this_node==0) sim_time += time_step;
+    sim_time += time_step;
   }
 
   /* after simulating the forces are necessarily set. Necessary since

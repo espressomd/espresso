@@ -48,10 +48,10 @@ libEspresso_a_SOURCES = \
 	iccp3m.c iccp3m.h \
 	fft-common.c fft-common.h \
 	fft.c fft.h \
-	fft-magnetostatics.c fft-magnetostatics.h \
+	fft-dipolar.c fft-dipolar.h \
 	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
-	p3m-magnetostatics.c p3m-magnetostatics.h \
+	p3m-dipolar.c p3m-dipolar.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
 	random.c random.h \

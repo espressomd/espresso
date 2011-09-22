@@ -40,7 +40,7 @@
 
 /* include the force files */
 #include "p3m.h"
-#include "p3m-magnetostatics.h"
+#include "p3m-dipolar.h"
 #include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
@@ -106,6 +106,10 @@ void force_calc();
 /** Set forces of all ghosts to zero
 */
 void init_forces_ghosts();
+
+/** Check if forces are NAN 
+*/
+void check_forces();
 
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
@@ -338,7 +342,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
 #ifdef DP3M
@@ -356,7 +360,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   }
 #endif /*ifdef DP3M */
   }  
-#endif /* ifdef MAGNETOSTATICS */
+#endif /* ifdef DIPOLES */
 
   /***********************************************/
   /* add total nonbonded forces to particle      */
