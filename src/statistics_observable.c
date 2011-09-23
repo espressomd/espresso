@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "integrate.h"
 #include "lb.h"
+#include "pressure.h"
 
 observable** observables = 0;
 int n_observables = 0; 
@@ -233,6 +234,24 @@ int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char*
   obs->args=(void*)ids;
   obs->n=3*ids->n;
   *change=1+temp;
+  return TCL_OK;
+}
+
+
+int tclcommand_observable_stress_tensor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  obs->fun = &observable_stress_tensor;
+  obs->args=(void*)NULL;
+  obs->n=9;
+  *change=1;
+  return TCL_OK;
+}
+
+
+int tclcommand_observable_stress_tensor_acf_obs(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  obs->fun = &observable_stress_tensor_acf_obs;
+  obs->args=(void*)NULL;
+  obs->n=6;
+  *change=1;
   return TCL_OK;
 }
 
@@ -621,6 +640,8 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity);
     REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position);
     REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions);
+    REGISTER_OBSERVABLE(stress_tensor, tclcommand_observable_stress_tensor);
+    REGISTER_OBSERVABLE(stress_tensor_acf_obs, tclcommand_observable_stress_tensor_acf_obs);
     REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents);
     REGISTER_OBSERVABLE(currents, tclcommand_observable_currents);
     REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment);
@@ -1207,6 +1228,28 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
       A[3*i + 1] = partCfg[ids->e[i]].r.p[1];
       A[3*i + 2] = partCfg[ids->e[i]].r.p[2];
   }
+  return 0;
+}
+
+int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
+  unsigned int i;
+  sortPartCfg();
+  observable_compute_stress_tensor(1,A,n_A);
+  return 0;
+}
+
+
+int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A) {
+  unsigned int i;
+  double stress_tensor[9];
+  sortPartCfg();
+  observable_compute_stress_tensor(1,&stress_tensor,9);
+  A[0]=stress_tensor[1];
+  A[1]=stress_tensor[5];
+  A[2]=stress_tensor[6];
+  A[3]=stress_tensor[0]-stress_tensor[4];
+  A[4]=stress_tensor[0]-stress_tensor[8];
+  A[5]=stress_tensor[4]-stress_tensor[8];
   return 0;
 }
 

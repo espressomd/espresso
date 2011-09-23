@@ -551,6 +551,10 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
 int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
 
+/** function to calculate stress tensor for the observables */
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
+
+
 /*@}*/
 
 #endif
