@@ -228,7 +228,7 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  cha
 //void print_sf_params(sf_params *params);
 // parsing generic correlation call
 int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, observable** obs);
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B);
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
 
   
 
@@ -289,7 +289,7 @@ int double_correlation_write_to_file( double_correlation* self, char* filename);
 int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp);
 
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
-int file_data_source_readline(void* xargs, double* A, int dim_A); 
+int file_data_source_readline(void* xargs, double* A, unsigned int dim_A); 
 
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A);
 

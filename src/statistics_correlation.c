@@ -72,7 +72,6 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
 
 int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
 int double_correlation_finalize( double_correlation* self );
-int sf_print_usage(Tcl_Interp* interp); 
 
 int correlation_update(unsigned int no) {
   if (n_correlations > no)
@@ -293,22 +292,15 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
 
 
 int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv) {
-  char buffer[TCL_INTEGER_SPACE];
   if(argc==0) {
       return double_correlation_print_correlation(&correlations[no], interp);
   } 
-  if (ARG0_IS_S("spherically_averaged_sf")) {
-  	  if(correlations[no].correlation_type==CORR_TYPE_SF) {
-  	    if(argc!=2) { 
-          Tcl_AppendResult(interp, "usage: analyze <correlation_id> print spherically_averaged_sf\n", (char *)NULL);
-  	      return TCL_ERROR;
-  	    }
-  	  } else {
-  	    sprintf(buffer,"%d ",correlations[no].correlation_type);
-        Tcl_AppendResult(interp, "canot print spherically averaged sf for correlation type ", buffer, (char *)NULL);
-  	    return TCL_ERROR;
-  	  }
-            return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
+  if(argc!=1) { 
+    Tcl_AppendResult(interp, "usage: analyze <correlation_id> print [what]\n", (char *)NULL); 
+    return TCL_ERROR; 
+  }
+  if (ARG0_IS_S("spherically_averaged_sf")) { 
+    return double_correlation_print_spherically_averaged_sf(&correlations[no], interp);
   } else if (ARG0_IS_S("average1")) {
     return correlation_print_average1(&correlations[no], interp, argc-1, argv+1);
   } else if (ARG0_IS_S("variance1")) {
@@ -336,7 +328,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   double delta_t = 1;
   double tau_max = 0;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
-  int dim_corr;
+  unsigned int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
   int temp;
@@ -344,7 +336,6 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   char buffer[TCL_INTEGER_SPACE+2];
   int correlation_type; // correlation type of correlation which is currently being created
   int autocorrelation=1; // by default, we are doing autocorrelation
-//  int n_bins; // number of bins for spherically averaged sf
 
   // Check if ID is negative
   if ( no < 0 ) {
@@ -361,7 +352,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
         if(argc==1) {
           return double_correlation_finalize(&correlations[no]);
         } else {
-          Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize", buffer, (char *)NULL);
+          Tcl_AppendResult(interp, "Usage: analyze <correlation_id> finalize\n", buffer, (char *)NULL);
     	    return TCL_ERROR;
         }
 //      } else if (ARG0_IS_S("update") && correlations[no].A_fun==&tcl_input ) {
@@ -572,6 +563,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       dim_A, dim_B, dim_corr, A, B, 
       corr_operation, compressA, compressB, correlation_type, autocorrelation);
   if ( error == 0 ) {
+  printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
     n_correlations++;
     return TCL_OK;
   } else {
@@ -736,10 +728,7 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
       return n_ids;
 }
 
-
-
-
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), int* dim_corr, int dim_A, int dim_B) {
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B) {
   if (ARG_IS_S_EXACT(0,"componentwise_product")) {
     *corr_fun = &componentwise_product;
     *dim_corr = dim_A;
@@ -776,6 +765,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
   }
 }
 
+
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   observable* A, observable* B, void* corr_operation, 
@@ -789,6 +779,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   // check if dt is a multiple of the md timestep
   if ( abs(dt/time_step - round(dt/time_step)>1e-6 ) ) 
     return 16;
+  self->autoupdate=0;
   self->update_frequency = (int) floor(dt/time_step);
   self->tau_lin=tau_lin;
   self->hierarchy_depth = hierarchy_depth;
@@ -1145,8 +1136,7 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
   return 0;
 }
 
-// TODO print it out
-// Look at how static SF is printed
+
 int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp) {
 
   int j,k;
@@ -1154,31 +1144,30 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
   double dt=self->dt;
   observable_sf_params* params=(observable_sf_params*)self->A_obs->args;
   char buffer[TCL_DOUBLE_SPACE];
-//  char ibuffer[ 3*(TCL_INTEGER_SPACE+1) + 1 ];
   int *q_vals;
   double *q_density;
   double *av_sf_Re;
   double *av_sf_Im;
   
+  if(self->correlation_type!=CORR_TYPE_SF) { 
+    Tcl_AppendResult(interp, "Cannot print spherically averaged sf for correlation type ", (char *)NULL); 
+    sprintf(buffer,"%d ",self->correlation_type); 
+    Tcl_AppendResult(interp, buffer, "\n", (char *)NULL); 
+    return TCL_ERROR; 
+  }
+
   q_vals=params->q_vals;
   q_density=params->q_density;
   dim_sf=params->dim_sf;
   order2=params->order*params->order;
-  if(dim_sf!=self->dim_corr) printf("problem: dim_sf=%d != dim_corr=%d\n",dim_sf,self->dim_corr); 
-  else printf("OK: dim_sf=%d != dim_corr=%d\n",dim_sf,self->dim_corr); fflush(stdout);
-  fflush(stdout);
-  
   
   av_sf_Re=(double*)malloc(order2*sizeof(double));
   av_sf_Im=(double*)malloc(order2*sizeof(double));
 
   // compute spherically averaged sf
-
   for (j=0; j<self->n_result; j++) {
- //   Tcl_AppendResult(interp, " { \n", (char *)NULL);
     // compute the spherically averaged sf for current dt
     for(k=0;k<order2;k++) av_sf_Re[k]=av_sf_Im[k]=0.0;
-    if(j==0) printf("q_vals (n^2, i, j, k:\n");
     for(k=0;k<dim_sf;k++) {
       qi=q_vals[3*k  ];
       qj=q_vals[3*k+1];
@@ -1186,19 +1175,14 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
       qn= qi*qi + qj*qj + qk*qk;
       av_sf_Re[qn-1]+=self->result[j][2*k  ];
       av_sf_Im[qn-1]+=self->result[j][2*k+1];
-      if(j==0) printf("%d: %d, %d, %d, %d\n",k, qn, qi, qj, qk);
     }
-    if(j==0) printf("q_density:\n");
     for(k=0;k<order2;k++) { 
       if(q_density[k]>0.0) {
         av_sf_Re[k]/=q_density[k];
         av_sf_Im[k]/=q_density[k];
       }
-      if(j==0) printf("%d %lf\n",k, q_density[k]);
       // note: if q_density[k]==0, we did not add anything to av_sf_Xx[k], so it is 0.0
     }
-    if(j==0) printf("\n\n");
-    fflush(stdout);
     // now print what we obtained
     for(k=0;k<order2;k++) { 
       Tcl_AppendResult(interp, " { ", (char *)NULL);
@@ -1222,7 +1206,6 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
       }
       Tcl_AppendResult(interp, " } \n", (char *)NULL);
     }
-//    Tcl_AppendResult(interp, " } \n", (char *)NULL);
   }
   return 0;
 }
