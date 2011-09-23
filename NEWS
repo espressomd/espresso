@@ -3,10 +3,19 @@
 =================
 
 ESPResSo 3.1
+============
 
 * Lattice-Boltzmann:
   * nonzero velocity boundary conditions are available
   * forces on boundaries can be calculated
+
+ESPResSo 3.0.2
+==============
+
+* Fixed compilation with ICC (#34238).
+
+* Fixed a few bugs that were never reported via the bug tracker,
+  mainly in the documentation.
 
 ESPResSo 3.0.1
 ==============

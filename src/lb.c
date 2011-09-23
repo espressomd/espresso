@@ -2003,6 +2003,7 @@ MDINLINE void lb_collide_stream() {
 
     /* exchange halo regions */
     halo_push_communication();
+
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
     lb_bounce_back();
