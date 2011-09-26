@@ -491,7 +491,7 @@ AC_CONFIG_FILES([
 	doc/dg/Makefile
 	doc/ug/Makefile
 	doc/tutorials/Makefile
-	doc/tutorials/tut2/Makefile 
+	doc/tutorials/02-charged_system/Makefile 
 	doc/latexit.sh
 	myconfig-sample.h
 	])
