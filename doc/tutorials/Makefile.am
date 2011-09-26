@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 EXTRA_DIST=common/common.tex
-SUBDIRS=02-charged_system
+SUBDIRS=01-lennard_jones 02-charged_system
 
 .PHONY: FORCE doc tutorial $(SUBDIRS)
 doc: tutorial
