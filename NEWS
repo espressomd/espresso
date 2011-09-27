@@ -5,8 +5,15 @@
 ESPResSo 3.1
 ============
 
+* Added basic tutorial on Lennard-Jones liquid, made second tutorial
+  (simple charged systems) better available (all in doc/tutorials)
+
+* Added ESPResSo logos to the repo (doc/logo).
+
 * Lattice-Boltzmann:
+
   * nonzero velocity boundary conditions are available
+
   * forces on boundaries can be calculated
 
 ESPResSo 3.0.2
