@@ -50,5 +50,6 @@ endif
 CLEANFILES = $(BASENAME).pdf
 MOSTLYCLEANFILES = \
 	*.aux *.aux.bak\
-	$(BASENAME).idx $(BASENAME).idx.bak $(BASENAME).ilg $(BASENAME).ind\
-	$(BASENAME).log $(BASENAME).out $(BASENAME).toc
+	$(BASENAME).idx $(BASENAME).idx.bak $(BASENAME).ilg $(BASENAME).ind \
+	$(BASENAME).log $(BASENAME).out $(BASENAME).toc \
+	$(BASENAME).blg $(BASENAME).bbl

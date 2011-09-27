@@ -15,4 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-EXTRA_DIST = logo_on_white.png logo_on_transparent.png powered_by.png
+EXTRA_DIST = whitebg.png transparentbg.png powered_by.png
