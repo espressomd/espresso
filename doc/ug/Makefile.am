@@ -38,7 +38,6 @@ ug_TEXFILES = \
         mbtools.tex
 
 ug_FIGURES = \
-	figures/logo.png \
 	figures/nacl-rdf.pdf \
 	figures/dihedral-angle.pdf \
 	figures/salt.png \

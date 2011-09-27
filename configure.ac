@@ -488,6 +488,7 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
+	doc/logo/Makefile
 	doc/dg/Makefile
 	doc/ug/Makefile
 	doc/tutorials/Makefile

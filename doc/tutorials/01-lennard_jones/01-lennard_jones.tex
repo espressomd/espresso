@@ -68,13 +68,13 @@
 % charged colloid, LB, ferrofluid)
 % 
 \documentclass[
-a4paper,                        % paper size
-11pt,                           % font size
+paper=a4,                       % paper size
+fontsize=11pt,                  % font size
 twoside,                        % two sided
 footsepline,                    % add a line to separate the footer
 headsepline,                    % add a line to separate the header
-headexclude,                    % header does not belong to the text
-footexclude,                    % footer does not belong to the text
+headinclude=false,              % header does not belong to the text
+footinclude=false,              % footer does not belong to the text
 pagesize,                       % set the pagesize in a DVI document
 ]{scrartcl}
 
@@ -101,7 +101,9 @@ pagesize,                       % set the pagesize in a DVI document
 \newtheorem{task}{Task}
 
 \begin{document}
+
 \esptitlehead
+
 \title{Tutorial 1: Lennard-Jones Liquid}
 \subtitle{\es Basics}
 \author{H.-J. Limbach \and M. S\"uzen \and K. Grass \and M. Sega \and

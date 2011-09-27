@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2011 Olaf Lenz
 #
 # This file is part of ESPResSo.
 #
@@ -15,15 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = logo dg ug tutorials
-
-.PHONY: FORCE doc dg ug tutorial
-doc: ug dg tutorial
-dg: FORCE
-	cd dg; $(MAKE) --print-directory $@
-ug: latexit.sh FORCE
-	cd ug; $(MAKE) --print-directory $@
-tutorial: latexit.sh FORCE
-	cd tutorials; $(MAKE) --print-directory $@
-FORCE:
-
+EXTRA_DIST = logo_on_white.png logo_on_transparent.png powered_by.png

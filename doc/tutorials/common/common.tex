@@ -32,6 +32,11 @@
 \usepackage{ifthen}             % provide ifthen
 \usepackage{xspace}
 \usepackage{units}
+\usepackage[numbers]{natbib}
+
+% For building the distribution docs, disable todo boxes.
+%\usepackage[disable]{todonotes}
+\usepackage{todonotes}
 
 \newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
@@ -61,16 +66,16 @@
 }
 \makeatother
 
-\newcommand{\todo}[1]{
-  \marginpar{%
-    \setlength{\fboxrule}{1pt}
-    \fcolorbox{red}{yellow}{%
-      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
-        \bf\raggedright\scriptsize #1%
-      }%
-    }%
-  }%
-}
+% \newcommand{\todo}[1]{
+%   \marginpar{%
+%     \setlength{\fboxrule}{1pt}
+%     \fcolorbox{red}{yellow}{%
+%       \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
+%         \bf\raggedright\scriptsize #1%
+%       }%
+%     }%
+%   }%
+% }
 
 \makeatletter
 \renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
@@ -82,7 +87,7 @@
 \newcommand{\esptitlehead}{
   \titlehead{
     \begin{center}
-      \includegraphics[width=5cm]{logo/logo_on_transparent}
+      \includegraphics[width=5cm]{logo/transparentbg}
     \end{center}
   }
 }

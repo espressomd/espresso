@@ -21,7 +21,7 @@ SUBDIRS=01-lennard_jones 02-charged_system
 doc: tutorial
 tutorial: FORCE
 	for dir in $(SUBDIRS); do \
-		cd $$dir; $(MAKE) --print-directory $@; \
+		cd $$dir; $(MAKE) --print-directory $@; cd ..;\
 	done
 FORCE:
 

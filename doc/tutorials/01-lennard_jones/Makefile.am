@@ -40,7 +40,7 @@ doc: tutorial
 tutorial: $(BASENAME).pdf
 $(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(srcdir)/../common $(BASENAME)
+	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."
