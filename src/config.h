@@ -140,6 +140,11 @@
 #endif
 #endif
 
+/* MAGNETOSTATICS implies DIPOLES */
+#ifdef MAGNETOSTATICS
+#define DIPOLES
+#endif
+
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
 #ifdef LB_ELECTROHYDRODYNAMICS
 #define LB
@@ -173,11 +178,6 @@
 #ifndef MOL_CUT
 #define MOL_CUT
 #endif
-#endif
-
-/* Dipoles imply rotation */
-#ifdef DIPOLES
-#define ROTATION
 #endif
 
 //mol_cut needs virtual sites
