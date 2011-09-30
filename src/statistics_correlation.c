@@ -41,7 +41,7 @@ const char init_errors[][64] = {
   "no proper function for correlation operation given",           //11
   "no proper function for compression of first observable given", //12
   "no proper function for compression of second observable given",//13
-  "tau_lin must be divisible by 2" // 14
+  "tau_lin must be divisible by 2", // 14
   "dt is smaller than the MD timestep",//15
   "dt is not a multiple of the MD timestep"//16
 };
@@ -235,6 +235,7 @@ int correlation_get_correlation_time(double_correlation* self, double* correlati
 *  identified by their ids.
 */
 int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char** argv) {
+  int i;
   int no;
   char buffer[TCL_INTEGER_SPACE];
   argc-=1;
@@ -246,7 +247,19 @@ int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char**
     Tcl_AppendResult(interp, buffer, (char *)NULL);
     return TCL_OK;
   }
-  if (ARG0_IS_I(no)) {
+  if (ARG0_IS_S("new")) {
+    for (i=0;i<n_correlations;i++) 
+      if ( correlations+i == 0 ) break; 
+    argc-=1;
+    argv+=1;
+    return tclcommand_correlation_parse_corr(interp, i, argc, argv);
+  } else if (ARG0_IS_I(no)) {
+    if ( correlations+no == 0 ) {
+      sprintf(buffer,"%d \n",no);
+      Tcl_AppendResult(interp, "Correlation with id ", buffer, (char *)NULL);
+      Tcl_AppendResult(interp, "is not defined", (char *)NULL);
+      return TCL_ERROR;
+    }
     argc-=1;
     argv+=1;
     return tclcommand_correlation_parse_corr(interp, no, argc, argv);
@@ -323,9 +336,9 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   observable *B=0;
   int dim_A;
   int dim_B;
-  int tau_lin = 16; // default values
+  int tau_lin = -1; 
   int hierarchy_depth=0; 
-  double delta_t = 1;
+  double delta_t = 0.0;
   double tau_max = 0;
   int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
   unsigned int dim_corr;
@@ -333,7 +346,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   int error;
   int temp;
 //  tcl_input_data tcl_input_d;
-  char buffer[TCL_INTEGER_SPACE+2];
+  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE+2];
   int correlation_type; // correlation type of correlation which is currently being created
   int autocorrelation=1; // by default, we are doing autocorrelation
 
@@ -342,13 +355,31 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     Tcl_AppendResult(interp, "Correlation IDs must be positive", (char *)NULL);
     return TCL_ERROR;
   }
-  // If correlation already exists then, the next argument must be print or update, because we
-  // can not handle anything else yet.
-  if ( no < n_correlations ) {
-    if (argc > 0)
+  if ( no < n_correlations && correlations+no != 0 ) {
+    if (argc > 0) {
       if (ARG0_IS_S("print")) {
           return tclcommand_correlation_parse_print(interp, no, argc-1, argv+1); 
-      } else if (ARG0_IS_S("finalize")) {
+      } else if (ARG0_IS_S("write_to_file")) {
+        if (argc <2) {
+          Tcl_AppendResult(interp, "You must pass a filename as argument of write_to_file", (char *)NULL);
+          return TCL_ERROR;
+        }
+        error = double_correlation_write_to_file(&correlations[no], argv[1]);
+        if (error) {
+          Tcl_AppendResult(interp, "error in write to file", (char *)NULL);
+        } else {
+          return TCL_OK;
+        }
+      }
+      // Operations beyond this point cannot be performed for finalized correlations 
+      if ( correlations[no].finalized ) {
+	sprintf(buffer,"%d",no);
+       Tcl_AppendResult(interp, "Correlation ", buffer, (char *)NULL);
+        Tcl_AppendResult(interp, " has already been finalized. Cannot perform ", argv[0], (char *)NULL);
+        Tcl_AppendResult(interp, "\n", buffer, (char *)NULL);
+    	return TCL_ERROR;
+      }
+      if (ARG0_IS_S("finalize")) {
         if(argc==1) {
           return double_correlation_finalize(&correlations[no]);
         } else {
@@ -389,31 +420,20 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 //        } else {
 //          return TCL_OK;
 //        }
-      } else if (ARG0_IS_S("write_to_file")) {
-        if (argc <2) {
-          Tcl_AppendResult(interp, "You must pass a filename as argument of write_to_file", (char *)NULL);
-          return TCL_ERROR;
-        }
-        error = double_correlation_write_to_file(&correlations[no], argv[1]);
-        if (error) {
-          Tcl_AppendResult(interp, "error in write to file", (char *)NULL);
-        } else {
-          return TCL_OK;
-        }
       } else {
         Tcl_AppendResult(interp, "Usage for an already existing correlation:", (char *)NULL);
         Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
         return TCL_ERROR;
       }
-    else {
+    } else {
       Tcl_AppendResult(interp, "Usage for an already existing correlation:", (char *)NULL);
       Tcl_AppendResult(interp, "analyze correlation $ID [ print | update ]", (char *)NULL);
       return TCL_ERROR;
     }
 
-  } else if ( no == n_correlations ) {  
+  } else if ( no == n_correlations || correlations+no == 0) {  
   
-    Tcl_AppendResult(interp, "Setting up a new correlation", (char *)NULL);
+    //Tcl_AppendResult(interp, "Setting up a new correlation\n", (char *)NULL);
     // Else we must parse the other arguments and see if we can construct a fully
     // working correlation class instance from that.
     correlation_type=CORR_TYPE_GENERIC; // this is the default
@@ -440,6 +460,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           B=observables[temp];
           dim_B=observables[temp]->n;
           change+=2; argv+=2; argc-=2;
+	  autocorrelation=0;
         } else {
           tclcommand_correlation_print_usage(interp);
           return TCL_ERROR;
@@ -452,30 +473,44 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
         argc -= change;
         argv += change;
       } else if ( ARG0_IS_S("tau_lin") ) {
-        if ( argc < 2 || !ARG1_IS_I(tau_lin))
+	if (tau_lin > 0.0 ) {
+          Tcl_AppendResult(interp, "Error setting correlation: attempt to set tau_lin twice", (char *)NULL);
+	  return TCL_ERROR;
+	} else if ( argc < 2 || !ARG1_IS_I(tau_lin))
           Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL);
         else { 
+	  if ( tau_lin <=0 ) { 
+	    sprintf(buffer, "%d \n", tau_lin); 
+	    Tcl_AppendResult(interp, "Error setting correlation: tau_lin must be a positive integer, got ", buffer, (char *)NULL); 
+	    return TCL_ERROR; 
+	  }
           argc -= 2;
           argv += 2;
-        } // tau_lin is already set
+        }
+	// tau_lin is already set
       } else if ( ARG0_IS_S("tau_max") ) {
         if ( argc < 2 || !ARG1_IS_D(tau_max)) {
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_max $hierarchy_depth", (char *)NULL);
+          Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_max $tau_max\n", (char *)NULL);
 	  return TCL_ERROR;
 	} else { 
           argc -= 2;
           argv += 2;
         }
-      } else if ( ARG0_IS_S("hierarchy_depth") ) {
-        // FIXME This will be removed later
-	Tcl_AppendResult(interp, "*** CHANGE *** specify tau_max instead of hierarchy_depth *** ", (char *)NULL);
-	  return TCL_ERROR;
       } else if ( ARG0_IS_S("delta_t") || ARG0_IS_S("dt") ) {
-        if ( argc < 2 || !ARG1_IS_D(delta_t)) {
+        if ( delta_t > 0 ) {
+          Tcl_AppendResult(interp, "Error setting correlation: attempt to set delta_t twice", (char *)NULL);
+	  return TCL_ERROR;
+        } else if ( argc < 2 || !ARG1_IS_D(delta_t)) {
           Tcl_AppendResult(interp, "Usage: analyze correlation ... delta_t $delta_t ", (char *)NULL);
+	  return TCL_ERROR;
         } else { 
-        argc -= 2;
-        argv += 2;
+          if ( delta_t <= 0 ) {
+	    sprintf(buffer, "%d \n", delta_t); 
+            Tcl_AppendResult(interp, "Delta_t must be a multiple of time_step, got ", buffer, (char *)NULL);
+	    return TCL_ERROR;
+	  }
+	  argc -= 2; 
+	  argv += 2;
         } // delta_t is already set
       } else if ( ARG_IS_S_EXACT(0,"compress1") ) {
         if ( ARG_IS_S_EXACT(1,"linear") )  compressA=compress_linear; 
@@ -497,7 +532,6 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
          	  Tcl_AppendResult(interp, " is not implemented. ", (char *)NULL);
          	  return TCL_ERROR;
          	}
-	autocorrelation=0;
         argc -= 2;
         argv += 2; 
       } else if ( ARG0_IS_S("update") ) {
@@ -516,17 +550,22 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       }
     }
   } else {
-      sprintf(buffer,"%d ",no);
+      sprintf(buffer,"%d \n",no);
       Tcl_AppendResult(interp,"Correlation error: cannot set up correlation with id ",buffer,(char *)NULL);
       sprintf(buffer,"%d ",n_correlations);
       Tcl_AppendResult(interp," Next correlation must have id ",buffer,(char *)NULL);
       return TCL_ERROR;
   }
 
-  // Now we should find out, if this is enough to make a correlation.
-  if ( ! (delta_t > 0.0) ) { 
-    Tcl_AppendResult(interp, "delta_t must be > 0.0. Correlation cannot be performed.\n", (char *)NULL);
+  // Now we should find out, if this is enough to make a correlation and set the defaults
+  if (delta_t == 0 ) {
+    Tcl_AppendResult(interp, "You must specify delta_t\n", (char *)NULL);
     return TCL_ERROR; 
+  }
+  if (tau_lin < 0 ) {
+    // use the default
+    tau_lin=(int)ceil(tau_max/delta_t);
+    if (tau_lin%2) tau_lin+=1;
   }
   if (tau_max <= delta_t) { 
     Tcl_AppendResult(interp, "tau_max must be >= delta_t. Correlation cannot be performed.\n", (char *)NULL);
@@ -536,12 +575,13 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     hierarchy_depth=(int)ceil( 1 + log( (tau_max/delta_t)/(tau_lin-1) ) / log(2.0) );
   }
   if(compressA==NULL) {
-    Tcl_AppendResult(interp, "You have not chosen the compression function! Correlation cannot be performed.\n", (char *)NULL);
-    return TCL_ERROR; 
+    // use the default
+    compressA=&compress_discard2;
+    if( ! autocorrelation )
+      compressB=&compress_discard2;
   }
   if(autocorrelation) {
     dim_B=dim_A;
-//    B_fun=&obs_nothing;
     compressB=&compress_do_nothing;
   } else {
     printf("auto %d\n", autocorrelation);
@@ -563,8 +603,10 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       dim_A, dim_B, dim_corr, A, B, 
       corr_operation, compressA, compressB, correlation_type, autocorrelation);
   if ( error == 0 ) {
-  printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
-    n_correlations++;
+  //printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
+    if ( no == n_correlations ) n_correlations++;
+    sprintf(buffer,"%d",no);
+    Tcl_AppendResult(interp,buffer,(char *)NULL);
     return TCL_OK;
   } else {
     printf("Error number %d\n", error);
@@ -779,6 +821,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   // check if dt is a multiple of the md timestep
   if ( abs(dt/time_step - round(dt/time_step)>1e-6 ) ) 
     return 16;
+  self->finalized=0;
   self->autoupdate=0;
   self->update_frequency = (int) floor(dt/time_step);
   self->tau_lin=tau_lin;
@@ -1021,8 +1064,12 @@ int double_correlation_finalize( double_correlation* self ) {
   //int compress;
   int tau_lin=self->tau_lin;
   int hierarchy_depth=self->hierarchy_depth;
-  
+
   double* temp = malloc(self->dim_corr*sizeof(double));
+
+  // make a flag that the correlation is finalized
+  self->finalized=1;
+
   if (!temp)
     return 4;
   //printf ("tau_lin:%d, hierarchy_depth: %d\n",tau_lin,hierarchy_depth); 
@@ -1149,6 +1196,7 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
   double *av_sf_Re;
   double *av_sf_Im;
   
+  // TODO do the check differently
   if(self->correlation_type!=CORR_TYPE_SF) { 
     Tcl_AppendResult(interp, "Cannot print spherically averaged sf for correlation type ", (char *)NULL); 
     sprintf(buffer,"%d ",self->correlation_type); 
