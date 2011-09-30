@@ -108,5 +108,7 @@ check-local: runtest.sh
 	  @builddir@/runtest.sh $(tests); \
 	fi
 
+CLEANFILES=runtest.log
+
 DISTCLEANFILES=\
 	fftw3_1d_wisdom_*.file
