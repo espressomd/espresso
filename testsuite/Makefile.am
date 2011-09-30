@@ -112,3 +112,5 @@ CLEANFILES=runtest.log
 
 DISTCLEANFILES=\
 	fftw3_1d_wisdom_*.file
+
+CLEANFILES=*.out

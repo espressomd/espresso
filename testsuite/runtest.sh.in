@@ -124,16 +124,31 @@ for np in $processors; do
 	    echo "SUCCESS: $testcase" >> $TESTLOG
 	    succeeded="$succeeded $testcase"
 	    ;;
-	    (214) 
-	    # 214 corresponds to "exit -42" in Tcl
+	    (42)
+	    # 42 is the constant used to denote that a test is to be ignored
 	    echo "ignored"
 	    echo "IGNORED: $testcase" >> $TESTLOG
 	    ignored="$ignored $testcase"
 	    ;;
-	    (*) 
-	    echo "ERROR (code=$rc)"
+	    (66)
+	    echo "ERROR"
 	    echo "FAILED: $testcase" >> $TESTLOG
 	    failed="$failed $testcase"
+	    ;;
+	    (130)
+	    # SIGINT
+	    echo "INTERRUPT"
+	    echo "INTERRUPT: $testcase" >> $TESTCASE
+	    interrupted=yes
+	    break
+	    ;;
+	    (*) 
+	    echo "ERROR (code=$rc)"
+	    echo "UNKNOWN ERROR: $testcase (probably interrupted?)" >> $TESTLOG
+	    echo "Exit code: $rc" >> $TESTLOG
+	    interrupted=yes
+	    failed="$failed $testcase"
+	    break
 	    ;;
 	esac
     done
@@ -188,6 +203,10 @@ if test "x$failed" != "x"; then
     echo "** Not all test cases were successful!"
     echo "** Have a look at the file testsuite/runtest.log"
     echo "** for the output of the testcases."
+    if test "x$interrupted" != "x"; then
+	echo "**************************************************"
+	echo "** The testsuite was interrupted!"
+    fi
     echo "**************************************************"
     echo
 
