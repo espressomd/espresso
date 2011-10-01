@@ -2470,6 +2470,7 @@ void mpi_recv_fluid_border_flag(int node, int index, int *border) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
     lb_local_fields_get_border_flag(index, border);
+    printf("border=%d\n", *border);
   } else {
     int data;
     mpi_call(mpi_recv_fluid_border_flag_slave, node, index);
