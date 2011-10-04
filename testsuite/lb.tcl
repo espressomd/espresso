@@ -75,7 +75,7 @@ set skin          0.5
 
 set mom_prec      1.e-5
 set mass_prec     1.e-8
-set temp_prec     5.e-2
+set temp_prec     1.e-1
 
 # Other parameters
 #############################################################
