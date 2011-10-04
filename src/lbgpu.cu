@@ -49,8 +49,11 @@ static LB_node_force_gpu node_f;
 static LB_particle_seed_gpu *part = NULL;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
+#if LB_BOUNDARIES_GPU
 /** pointer for bound index array*/
 static int *boundindex;
+static size_t size_of_boundindex;
+#endif
 /** pointers for additional cuda check flag*/
 static int *gpu_check = NULL;
 static int *h_gpu_check = NULL;
@@ -62,7 +65,6 @@ static size_t size_of_values;
 static size_t size_of_forces;
 static size_t size_of_positions;
 static size_t size_of_seed;
-static size_t size_of_boundindex;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
@@ -1371,7 +1373,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
 
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
-
+#if LB_BOUNDARIES_GPU
 /**setup and call boundaries from the host
  * @param *host_boundindex		Pointer to the host bound index
  * @param number_of_boundnodes	number of boundnodes
@@ -1408,7 +1410,7 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
   cudaThreadSynchronize();
 }
-
+#endif
 /**setup and call extern single node force initialization from the host
  * @param n_extern_nodeforces			number of nodes on which the external force has to be applied
  * @param *host_extern_nodeforces		Pointer to the host extern node forces

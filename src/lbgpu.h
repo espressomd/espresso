@@ -260,7 +260,9 @@ void lb_get_values_GPU(LB_values_gpu *host_values);
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);
+#if LB_BOUNDARIES_GPU
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex);
+#endif
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 
 void lb_calc_particle_lattice_ia_gpu();
