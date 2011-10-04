@@ -1,3 +1,147 @@
+2011-10-04 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * src/virtual_sites_com.h: More warnings fixed.
+
+ * src/particle_data.c: Some more fix.
+
+ * src/communication.c: Alternative fix for warning.
+
+ * src/communication.c, src/mpifake/mpi.h, src/p3m-magnetostatics.c: Fixed
+ wsome warnings.
+
+2011-10-04 Stefan Kesselheim <stefan@kesselheim-online.de>
+
+ * src/particle_data.c: Bugfix 33489 ( setting dip and quat simultanously)
+ part dip and part quat can not be set in the same command also: part dip and
+ part dipm can not be set in the same command  Both cases could lead to
+ ambigous results.
+
+ * testsuite/lb.tcl: changed the necessary precision in the lb testcase
+
+ * testsuite/lb.tcl: enables the particle temperature check in lb testcase
+
+2011-09-27 Olaf Lenz <olaf@lenz.name>
+
+ * testsuite/comforce.tcl, testsuite/dh.tcl, testsuite/layered.tcl,
+ testsuite/nsquare.tcl: ADRESS without MPI.
+
+2011-09-27 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * src/dihedral.h, testsuite/configs/myconfig-adress.h,
+ testsuite/constraints.tcl, testsuite/el2d.tcl, testsuite/el2d_die.tcl,
+ testsuite/el2d_nonneutral.tcl, testsuite/fene.tcl, testsuite/harm.tcl,
+ testsuite/kinetic.tcl, testsuite/lj-cos.tcl, testsuite/lj-generic.tcl,
+ testsuite/lj.tcl, testsuite/maggs.tcl, testsuite/mmm1d.tcl,
+ testsuite/p3m.tcl, testsuite/tabulated.tcl: testsuite now also runs with
+ ADRESS.
+
+ * NEWS, src/virtual_sites_com.c, src/virtual_sites_com.h,
+ testsuite/configs/myconfig-restcompile2.h: Fixed features ADRESS and
+ VIRTUAL_SITES_COM that were broken since a while.
+
+2011-09-23 Peter Košovan <kosovan@icp.uni-stuttgart.de>
+
+ * scripts/vtf.tcl: Bugfix in VTF generation.
+
+2011-09-19 Stefan Kesselheim <kessel@icp.uni-stuttgart.de>
+
+ * src/lb-boundaries.c, src/lb-boundaries.h, src/lb.c: fixed bug in
+ lb-boundaries  lb boundaries at the boundary of the local box now behave
+ correctly.
+
+2011-09-07 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * NEWS: Updated NEWS.
+
+2011-09-06 Florian Fahrenberger <Florian.Fahrenberger@icp.uni-stuttgart.de>
+
+ * src/config.h: Corrected mathematical constants definitions for non-gcc
+ compilers
+
+2011-08-24 Peter Košovan <kosovan@icp.uni-stuttgart.de>
+
+ * doc/ug/mbtools.tex: Removed reference to Espresso_bin from the mbtools
+ section of the user guide
+
+2011-08-17 Peter Košovan <kosovan@icp.uni-stuttgart.de>
+
+ * doc/ug/aux.tex: Fixed documentation of LinRegression command in the User
+ Guide
+
+2011-08-15 Peter Košovan <kosovan@icp.uni-stuttgart.de>
+
+ * doc/ug/analysis.tex, doc/ug/inter.tex, doc/ug/setup.tex: Two fixes to user
+ guide: 1. what happens when temperature is set to zero; 2. analyze set chains
+ (see also bug bug #33980)
+
+2011-07-28 Olaf Lenz <olaf@lenz.name>
+
+ * src/communication.c: Completed patch
+
+ * src/communication.c: Allowed DIPOLES without ROTATION.
+
+2011-07-28 Olaf Lenz <olenz@icp.uni-stuttgart.de>
+
+ * testsuite/p3m_wall.tcl, testsuite/p3m_wall_system.data: Fixed accuracy of
+ p3m_wall test.
+
+ * testsuite/p3m_wall.tcl: Fixed p3m_wall.tcl: now it really computes the rms
+ error.  Conflicts:  testsuite/p3m_wall.tcl
+
+2011-06-16 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/communication.c: fix fixed :p
+
+ * src/communication.c: maybe final bugfix for lb boundaries
+
+2011-06-15 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/communication.c: bugfix for lg_gpu boundaries
+
+2011-06-10 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/communication.c, src/communication.h, src/initialize.c,
+ src/lb_boundaries_gpu.c, src/lbgpu.cu, src/lbgpu.h, src/lbgpu_cfile.c: bugfix
+ boundary conditions and lbfluid cmd
+
+2011-06-09 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/initialize.c: bugfix in initialize.c for lbgpu params change
+
+2011-06-08 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/lb.c, src/lb_boundaries_gpu.c, src/lbgpu.cu, src/lbgpu_cfile.c:
+ bugfixes, extern force strength ...
+
+2011-06-06 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/initialize.c, src/lbgpu.cu, src/lbgpu.h, src/lbgpu_cfile.c,
+ src/thermostat.c: parameterchange on the fly added
+
+2011-05-06 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * src/cuda_init.cu: cuda cmd show number of available cuda devices added
+
+2011-05-05 Dominic <dominic@icp.uni-stuttgart.de>
+
+ * configure.ac: configure.ac nvcc flag
+
+ * configure.ac, src/initialize.c, src/lbgpu.cu: small fix for lbnode cmd
+
+2011-06-02 Peter Košovan <kosovan@icp.uni-stuttgart.de>
+
+ * scripts/statistics.tcl: Fixed warnings about deprecated tcl functions in
+ scripts/statistics.tcl which were printing a misleading warning with a wrong
+ function name
+
+2011-05-31 Peter Košovan <kosovan@icp.uni-stuttgart.de>
+
+ * testsuite/analysis.tcl, testsuite/intpbc.tcl, testsuite/intppbc.tcl,
+ testsuite/layered.tcl, testsuite/nsquare.tcl: And finally fixed also
+ testcases which were relying on rotational contribution to ideal gas pressure
+
+ * src/pressure.c: One more line where rotational virials had to be discarded.
+
 2011-05-25 Olaf Lenz <olenz@icp.uni-stuttgart.de>
 
  * configure.ac: Bumped version number.
