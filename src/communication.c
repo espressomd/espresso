@@ -2455,6 +2455,8 @@ void mpi_recv_fluid_slave(int node, int index) {
 }
 
 /************** REQ_LB_GET_BORDER_FLAG **************/
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 void mpi_recv_fluid_border_flag(int node, int index, int *border) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
@@ -2462,11 +2464,12 @@ void mpi_recv_fluid_border_flag(int node, int index, int *border) {
   } else {
     int data;
     mpi_call(mpi_recv_fluid_border_flag_slave, node, index);
-        MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     *border = data;
   }
 #endif
 }
+#pragma GCC diagnostic pop
 
 void mpi_recv_fluid_border_flag_slave(int node, int index) {
 #ifdef LB_BOUNDARIES
