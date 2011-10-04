@@ -508,15 +508,14 @@ static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *ch
     return TCL_ERROR;
   }
   else if ((time_step >= 0.0) && (tau < time_step)) {
-    fprintf(stderr,"tau %f \n", lbpar_gpu.tau);
-    fprintf(stderr,"time_step %f \n", time_step);
+    LB_TRACE (fprintf(stderr,"tau %f \n", lbpar_gpu.tau));
+    LB_TRACE (fprintf(stderr,"time_step %f \n", time_step));
     Tcl_AppendResult(interp, "tau must be larger than MD time_step", (char *)NULL);
     return TCL_ERROR;
   }
 
   *change = 1;
   lbpar_gpu.tau = (float)tau;
-  fprintf(stderr,"tau %f \n", lbpar_gpu.tau);
 
   on_lb_params_change_gpu(0);
 
