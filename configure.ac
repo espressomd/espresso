@@ -488,10 +488,12 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
+	doc/logo/Makefile
 	doc/dg/Makefile
 	doc/ug/Makefile
 	doc/tutorials/Makefile
-	doc/tutorials/tut2/Makefile 
+	doc/tutorials/01-lennard_jones/Makefile 
+	doc/tutorials/02-charged_system/Makefile 
 	doc/latexit.sh
 	myconfig-sample.h
 	])

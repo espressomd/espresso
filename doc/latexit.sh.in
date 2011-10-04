@@ -5,6 +5,8 @@ TEXINPUTS=.:$SRCDIR:@abs_srcdir@:
 BIBINPUTS=.:$SRCDIR:
 export TEXINPUTS BIBINPUTS
 
+echo "TEXINPUTS=$TEXINPUTS"
+
 PDFLATEX="@PDFLATEX@ -halt-on-error -interaction=batchmode"
 
 echo "Running LaTeX stage 1..."

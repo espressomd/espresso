@@ -146,6 +146,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   argc--; argv++;
@@ -196,6 +197,9 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   else if (ARG0_IS_S("init")) {
     lbfluid_tcl_print_usage(interp);
     return TCL_ERROR;
+  } 
+  else if (ARG0_IS_S("print_interpolated_velocity")) {
+    return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
   }
   else while (argc > 0) {
       if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
@@ -354,7 +358,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 
   lattice_switch = (lattice_switch | LATTICE_LB) ;
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
-//
+
   /* thermo_switch is retained for backwards compatibility */
   thermo_switch = (thermo_switch | THERMO_LB);
   mpi_bcast_parameter(FIELD_THERMO_SWITCH);
@@ -378,9 +382,11 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int coord[3];
    int counter;
+   int integer_return = 0;
    double double_return[19];
 
    char double_buffer[TCL_DOUBLE_SPACE];
+   char integer_buffer[TCL_INTEGER_SPACE];
 
    for (counter = 0; counter < 19; counter++) 
      double_return[counter]=0;
@@ -440,6 +446,10 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
          argc--; argv++;
        }
        else if (ARG0_IS_S("boundary")) {
+         lb_lbnode_get_boundary(coord, &integer_return);
+         sprintf(integer_buffer, "%d", integer_return);
+				 Tcl_AppendResult(interp, integer_buffer, " ", (char *)NULL);
+	 	 		 argc--; argv++;
        } 
        else if (ARG0_IS_S("populations") || ARG0_IS_S("pop")) { 
          lb_lbnode_get_pop(coord, double_return);
@@ -693,6 +703,20 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi_neq) {
 //  *p_pi_neq[5] = pi[5]/rho*tau/time_step*lbpar.agrid;
 
   return -100;
+}
+
+int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
+  
+  index_t index;
+  int node, grid[3], ind_shifted[3];
+
+  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+  
+  mpi_recv_fluid_border_flag(node,index,p_boundary);
+  
+  return 0;
 }
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
@@ -1125,9 +1149,6 @@ static void lb_realloc_fluid() {
   }
 
   lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
-#ifdef LB_BOUNDARIES
-  lb_init_boundaries();
-#endif
 
 }
 
@@ -1189,7 +1210,6 @@ void lb_reinit_parameters() {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
     gamma_shear = 1. - 2./(6.*lbpar.viscosity*tau/(agrid*agrid)+1.);
-    //gamma_shear = 0.0;    
   }
 
   if (lbpar.bulk_viscosity > 0.0) {
@@ -1198,11 +1218,8 @@ void lb_reinit_parameters() {
     gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity*tau/(agrid*agrid)+1.);
   }
   
-  //gamma_odd = gamma_even = gamma_bulk = gamma_shear;
   gamma_odd = lbpar.gamma_odd;
   gamma_even = lbpar.gamma_even;
-////
-  //fprintf(stderr,"%f %f %f %f\n",gamma_shear,gamma_bulk,gamma_even,gamma_odd);
 
   double mu = 0.0;
 
@@ -1234,7 +1251,6 @@ void lb_reinit_parameters() {
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
     lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
 
-
   } else {
     /* no fluctuations at zero temperature */
     fluct = 0;
@@ -1244,10 +1260,6 @@ void lb_reinit_parameters() {
   }
 
   LB_TRACE(fprintf(stderr,"%d: gamma_shear=%f gamma_bulk=%f shear_fluct=%f bulk_fluct=%f mu=%f, bulkvisc=%f\n",this_node,gamma_shear,gamma_bulk,lb_phi[9],lb_phi[4],mu, lbpar.bulk_viscosity));
-
-  //LB_TRACE(fprintf(stderr,"%d: phi[4]=%f phi[5]=%f phi[6]=%f phi[7]=%f phi[8]=%f phi[9]=%f\n",this_node,lb_phi[4],lb_phi[5],lb_phi[6],lb_phi[7],lb_phi[8],lb_phi[9]));
-
-  //LB_TRACE(fprintf(stderr,"%d: lb_coupl_pref=%f (temp=%f, friction=%f, time_step=%f)\n",this_node,lb_coupl_pref,temperature,lbpar.friction,time_step));
 
 }
 
@@ -1271,6 +1283,13 @@ void lb_reinit_forces() {
 #endif
 
   }
+#ifdef LB_BOUNDARIES
+  for (int i =0; i<n_lb_boundaries; i++) {
+    lb_boundaries[i].force[0]=0.;
+    lb_boundaries[i].force[1]=0.;
+    lb_boundaries[i].force[2]=0.;
+  }
+#endif
 
 }
 
@@ -1287,40 +1306,25 @@ void lb_reinit_fluid() {
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
-// TODO #ifdef LB_BOUNDARIES
-//       double **tmp;
-//       if (lbfields[index].boundary==0) {
-//       	lb_calc_n_equilibrium(index,rho,v,pi);
-//       } else {
-// 	       tmp = lbfluid[0];
-// 	       lb_set_boundary_node(index,rho,v,pi);
-// 	       lbfluid[0] = lbfluid[1];
-//          lb_set_boundary_node(index,rho,v,pi);
-// 	       lbfluid[0] = tmp;
-//       }
-// #else
       lb_calc_n_equilibrium(index,rho,v,pi);
-// #endif
 
       lbfields[index].recalc_fields = 1;
-
-    }
 #ifdef LB_BOUNDARIES
-      lb_init_boundaries();
+      lbfields[index].boundary = 0;
 #endif
 
-    resend_halo = 0;
+    }
 
+    resend_halo = 0;
+#ifdef LB_BOUNDARIES
+    lb_init_boundaries();
+#endif
 }
 
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init() {
-
-  //lb_init_mode_transformation();
-  //lb_lattice_sum();
-  //exit(-1);
 
   if (lb_sanity_checks()) return;
 
@@ -1338,11 +1342,6 @@ void lb_init() {
   /* initialize derived parameters */
   lb_reinit_parameters();
 
-#ifdef LB_BOUNDARIES
-  /* setup boundaries of constraints */
-//  lb_init_constraints();
-#endif
-
   /* setup the initial particle velocity distribution */
   lb_reinit_fluid();
 
@@ -1352,7 +1351,7 @@ void lb_init() {
 }
 
 /** Release the fluid. */
-MDINLINE void lb_release_fluid() {
+void lb_release_fluid() {
   free(lbfluid[0][0]);
   free(lbfluid[0]);
   free(lbfields);
@@ -1471,8 +1470,9 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
   
 /*@}*/
 
+
 /** Calculation of hydrodynamic modes */
-MDINLINE void lb_calc_modes(index_t index, double *mode) {
+void lb_calc_modes(index_t index, double *mode) {
 
 #ifdef D3Q19
   double n0, n1p, n1m, n2p, n2m, n3p, n3m, n4p, n4m, n5p, n5m, n6p, n6m, n7p, n7m, n8p, n8m, n9p, n9m;
@@ -1702,9 +1702,6 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     mode[7] += (fluct[3] = rootrho_gauss*lb_phi[7]*gaussian_random());
     mode[8] += (fluct[4] = rootrho_gauss*lb_phi[8]*gaussian_random());
     mode[9] += (fluct[5] = rootrho_gauss*lb_phi[9]*gaussian_random());
-    //if (index == lblattice.halo_offset) {
-    //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
-    //}
     
 #ifndef OLD_FLUCT
     /* ghost modes */
@@ -1729,9 +1726,6 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     mode[7] += (fluct[3] = rootrho*lb_phi[7]*(d_random()-0.5));
     mode[8] += (fluct[4] = rootrho*lb_phi[8]*(d_random()-0.5));
     mode[9] += (fluct[5] = rootrho*lb_phi[9]*(d_random()-0.5));
-    //if (index == lblattice.halo_offset) {
-    //  fprintf(stderr,"%f %f %f %f %f %f\n",fluct[0],fluct[1],fluct[2],fluct[3],fluct[4],fluct[5]);
-    //}
     
 #ifndef OLD_FLUCT
     /* ghost modes */
@@ -1758,8 +1752,6 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
   
   f = lbfields[index].force;
 
-  //fprintf(stderr,"%ld f=(%f,%f,%f)\n",index,f[0],f[1],f[2]);
-
   rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
 
   /* hydrodynamic momentum density is redefined when external forces present */
@@ -1784,6 +1776,7 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
 //  mode[5] += 2.*C[0] - C[2] - C[5];
 //  mode[6] += C[2] - C[5];
 //ulf vorschlag: mode[6] += C[2] + C[5] - 2.*C[0];
+
   mode[5] += C[0] - C[2];
   mode[6] += C[0] + C[2] - 2.*C[5];
   mode[7] += C[1];
@@ -1970,12 +1963,15 @@ MDINLINE void lb_collide_stream() {
     int x, y, z;
     double modes[19];
 
-    //index = get_linear_index(1,1,1,lblattice.halo_grid);
-    //for (i=0; i<n_veloc; i++) {
-    //  fprintf(stderr,"[%d] %e\n",i,lbfluid[1][i][index]+lbmodel.coeff[i][0]*lbpar.rho);
-    //}
-
     /* loop over all lattice cells (halo excluded) */
+#ifdef LB_BOUNDARIES
+    for (int i =0; i < n_lb_boundaries; i++) {
+      lb_boundaries[i].force[0]=0.;
+      lb_boundaries[i].force[1]=0.;
+      lb_boundaries[i].force[2]=0.;
+    }
+#endif
+
     index = lblattice.halo_offset;
     for (z=1; z<=lblattice.grid[2]; z++) {
       for (y=1; y<=lblattice.grid[1]; y++) {
@@ -2009,7 +2005,7 @@ MDINLINE void lb_collide_stream() {
 #ifdef LB_BOUNDARIES
 	  else {
 
-/*      Here collision in the boundary walls 
+/*      Here collision in the boundary nodes
  *      can be included, if this is necessary */
 //	    lb_boundary_collisions(index, modes);
 
@@ -2025,13 +2021,13 @@ MDINLINE void lb_collide_stream() {
       index += 2*lblattice.halo_grid[0]; /* skip halo region */
     }
 
+    /* exchange halo regions */
+    halo_push_communication();
+
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
     lb_bounce_back();
 #endif
-    
-    /* exchange halo regions */
-    halo_push_communication();
 
    /* swap the pointers for old and new population fields */
     double **tmp;
@@ -2146,11 +2142,9 @@ void lattice_boltzmann_update() {
  */
 MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   int x,y,z;
-  index_t node_index[8], index;
+  index_t node_index[8];
   double delta[6];
-  double local_rho, local_j[3], *local_f, interpolated_u[3],delta_j[3];
-  double modes[19];
-  LB_FluidNode *local_node;
+  double *local_f, interpolated_u[3],delta_j[3];
 #ifdef ADDITIONAL_CHECKS
   double old_rho[8];
 #endif
@@ -2161,72 +2155,30 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
 
-  //fprintf(stderr,"particle number %d\n",p->p.identity);
-
   /* determine elementary lattice cell surrounding the particle 
      and the relative position of the particle in this cell */ 
   map_position_to_lattice(&lblattice,p->r.p,node_index,delta);
   
-//  printf("position: %f %f %f delta: %f %f %f \n", p->r.p[0], p->r.p[1], p->r.p[2], delta[0],delta[1],delta[2]);
-
-  //fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]);
-
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB delta=(%.3f,%.3f,%.3f,%.3f,%.3f,%.3f) pos=(%.3f,%.3f,%.3f)\n",this_node,delta[0],delta[1],delta[2],delta[3],delta[4],delta[5],p->r.p[0],p->r.p[1],p->r.p[2]));
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
-  for (z=0;z<2;z++) {
-    for (y=0;y<2;y++) {
-      for (x=0;x<2;x++) {
-        	
-        index = node_index[(z*2+y)*2+x];
-        
-        local_node = &lbfields[index];
-        
-//        if (local_node->recalc_fields) {
-        lb_calc_modes(index, modes);
-          //lb_calc_local_fields(node_index[(z*2+y)*2+x],local_node->rho,local_node->j,NULL);
-//          local_node->recalc_fields = 0;
-        local_node->has_force = 1;
-//        }
-//        printf("den: %f modes: %f %f %f %f\n", *local_node->rho, modes[0],modes[1],modes[2],modes[3],modes[4]);    
-        // unit conversion: mass density
-        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
-        local_j[0] = modes[1];
-        local_j[1] = modes[2];
-        local_j[2] = modes[3];
-        
-        #ifdef ADDITIONAL_CHECKS
-        	old_rho[(z*2+y)*2+x] = *local_rho;
-        #endif
-        
-        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
-        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
-        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
- //       printf("int_u: %f %f %f\n", interpolated_u[0], interpolated_u[1], interpolated_u[2] );    
+  lb_lbfluid_get_interpolated_velocity(p->r.p, interpolated_u);
 
-      }
-    }
-  }
-  
-//  printf("u: %f %f %f\n", interpolated_u[0],interpolated_u[1],interpolated_u[2] );
-  
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB u = (%.16e,%.3e,%.3e) v = (%.16e,%.3e,%.3e)\n",this_node,interpolated_u[0],interpolated_u[1],interpolated_u[2],p->m.v[0],p->m.v[1],p->m.v[2]));
 
   /* calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
-#endif
-#ifndef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
+#else
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]);
 #endif
 
 
@@ -2242,7 +2194,6 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
       
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-
   delta_j[0] = - force[0]*time_step*tau/agrid;
   delta_j[1] = - force[1]*time_step*tau/agrid;
   delta_j[2] = - force[2]*time_step*tau/agrid;
@@ -2257,27 +2208,134 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 	local_f[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[1];
 	local_f[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*delta_j[2];
 
-//	lb_apply_forces(node_index[(z*2+y)*2+x], modes[(z*2+y)*2+x]);
-
       }
     }
   }
 
+}
 
-#ifdef ADDITIONAL_CHECKS
-  int i;
-  for (i=0;i<8;i++) {
-    lb_calc_local_rho(node_index[i],local_rho);
-    if (fabs(*local_rho-old_rho[i]) > ROUND_ERROR_PREC) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt,"{108 Mass loss/gain %le in lb_viscous_momentum_exchange for particle %d} ",*local_rho-old_rho[i],p->p.identity);
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
+  index_t node_index[8], index;
+  double delta[6];
+  double local_rho, local_j[3], interpolated_u[3];
+  double modes[19];
+  int x,y,z;
+  LB_FluidNode *local_node;
+
+  double lbboundary_mindist, distvec[3];
+  double pos[3];
+
+#ifdef LB_BOUNDARIES
+  int boundary_no;
+  int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
+
+  lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
+  if (lbboundary_mindist>lbpar.agrid/2) {
+    boundary_flag=0;
+    pos[0]=p[0];
+    pos[1]=p[1];
+    pos[2]=p[2];
+  } else if (lbboundary_mindist > 0 ) {
+    boundary_flag=1;
+    pos[0]=p[0] - distvec[0]+ distvec[0]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[1]=p[1] - distvec[1]+ distvec[1]/lbboundary_mindist*lbpar.agrid/2.;
+    pos[2]=p[2] - distvec[2]+ distvec[2]/lbboundary_mindist*lbpar.agrid/2.;
+  } else {
+    boundary_flag=2;
+    v[0]= lb_boundaries[boundary_no].velocity[0]*lbpar.agrid/lbpar.tau;
+    v[1]= lb_boundaries[boundary_no].velocity[1]*lbpar.agrid/lbpar.tau;
+    v[2]= lb_boundaries[boundary_no].velocity[2]*lbpar.agrid/lbpar.tau;
+    return 0; // we can return without interpolating
+  }
+#else
+  pos[0]=p[0];
+  pos[1]=p[1];
+  pos[2]=p[2];
+#endif
+
+/* determine elementary lattice cell surrounding the particle 
+   and the relative position of the particle in this cell */ 
+  map_position_to_lattice(&lblattice,pos,node_index,delta);
+
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0 ;
+
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+        	
+        index = node_index[(z*2+y)*2+x];
+        
+        local_node = &lbfields[index];
+
+#ifdef LB_BOUNDARIES
+        if (lbfields[index].boundary) {
+          local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+          local_j[0] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[2] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+        } else {
+          lb_calc_modes(index, modes);
+          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_j[0] = modes[1];
+          local_j[1] = modes[2];
+          local_j[2] = modes[3];
+        }
+#else 
+        lb_calc_modes(index, modes);
+        local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+        local_j[0] = modes[1];
+        local_j[1] = modes[2];
+        local_j[2] = modes[3];
+#endif
+        interpolated_u[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[0]/(local_rho);
+        interpolated_u[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[1]/(local_rho);	  
+        interpolated_u[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_j[2]/(local_rho) ;
+
+      }
     }
   }
+#ifdef LB_BOUNDARIES
+  if (boundary_flag==1) {
+    v[0]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[0]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[0];
+    v[1]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[1]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[1];
+    v[2]=lbboundary_mindist/(lbpar.agrid/2.)*interpolated_u[2]+(1-lbboundary_mindist/(lbpar.agrid/2.))*lb_boundaries[boundary_no].velocity[2];
+  } else {
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
+  }
+#else 
+    v[0] = interpolated_u[0];
+    v[1] = interpolated_u[1];
+    v[2] = interpolated_u[2];
 #endif
-
-#if 0
+  v[0] *= lbpar.agrid/lbpar.tau;
+  v[1] *= lbpar.agrid/lbpar.tau;
+  v[2] *= lbpar.agrid/lbpar.tau;
+  return 0;
+  
 }
-#endif
+
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
+  double p[3], v[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
+  if (argc!=3) {
+    printf("usage: print_interpolated_velocity $x $y $z");
+    return TCL_ERROR;
+  }
+  for (int i = 0; i < 3; i++) {
+    if (!ARG_IS_D(i, p[i]))
+      printf("usage: print_interpolated_velocity $x $y $z");
+  }
+  lb_lbfluid_get_interpolated_velocity(p, v);
+  for (int i = 0; i < 3; i++) {
+    Tcl_PrintDouble(interp, v[i], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+  return TCL_OK;
 }
 
 /** Calculate particle lattice interactions.
@@ -2379,7 +2437,6 @@ void calc_particle_lattice_ia() {
 	p[i].f.f[0] += force[0];
 	p[i].f.f[1] += force[1];
 	p[i].f.f[2] += force[2];
-//  printf("force on particle: , %f %f %f\n", force[0], force[1], force[2]);
 
 	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   
@@ -3023,6 +3080,9 @@ MDINLINE int lb_check_negative_n(index_t index) {
   return localfails;
 }
 #endif /* ADDITIONAL_CHECKS */
+
+//=======
+//>>>>>>> d588698... test commit
 
 #endif
 

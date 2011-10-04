@@ -206,6 +206,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef LB
   Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
 #endif
+#ifdef LB_BOUNDARIES
+  Tcl_AppendResult(interp, "{ LB_BOUNDARIES } ", (char *) NULL);
+#endif
 #ifdef INTER_DPD
   Tcl_AppendResult(interp, "{ INTER_DPD } ", (char *) NULL);
 #endif
