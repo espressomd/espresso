@@ -70,14 +70,11 @@ static size_t size_of_extern_nodeforces;
 /**parameters residing in constant memory */
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
-static FILE *datei1;
 /**cudasteams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
 cudaError_t err;
 cudaError_t _err;
-float value = 0;
-int count = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /**device funktions called by kernel funktions */
@@ -691,66 +688,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   node_index[5] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-#if 0
-	/** calc of the interpolated verlocity at the position of the particle !!!still under investigation and development!!!*/
-  if(n_a.boundary[node_index[0]] == 1){
-    delta[1] = temp_delta_half[3] * temp_delta[1] * temp_delta[2];
-    delta[2] = temp_delta[0] * temp_delta_half[4] * temp_delta[2];
-    delta[4] = temp_delta[0] * temp_delta[1] * temp_delta_half[5];
-  }
-  if(n_a.boundary[node_index[1]] == 1){		
-    delta[0] = temp_delta_half[0] * temp_delta[1] * temp_delta[2];
-    delta[3] = temp_delta[3] * temp_delta_half[4] * temp_delta[2];
-    delta[5] = temp_delta[3] * temp_delta[1] * temp_delta_half[5];
-  }
-  if(n_a.boundary[node_index[2]] == 1){		
-    delta[0] = temp_delta_half[0] * temp_delta[1] * temp_delta[2];
-    delta[3] = temp_delta[3] * temp_delta_half[4] * temp_delta[2];
-    delta[6] = temp_delta[0] * temp_delta[4] * temp_delta_half[5];
-  }
-  if(n_a.boundary[node_index[3]] == 1){		
-    delta[1] = temp_delta[3] * temp_delta_half[1] * temp_delta[2];
-    delta[2] = temp_delta_half[0] * temp_delta[4] * temp_delta[2];
-    delta[7] = temp_delta[3] * temp_delta[4] * temp_delta_half[5];
-  }
-  if(n_a.boundary[node_index[4]] == 1){		
-    delta[0] = temp_delta[0] * temp_delta[1] * temp_delta_half[2];
-    delta[5] = temp_delta_half[3] * temp_delta[1] * temp_delta[5];
-    delta[6] = temp_delta[0] * temp_delta_half[4] * temp_delta[5];
-  }
-  if(n_a.boundary[node_index[5]] == 1){		
-    delta[1] = temp_delta[3] * temp_delta[1] * temp_delta_half[2];
-    delta[4] = temp_delta_half[0] * temp_delta[1] * temp_delta[5];
-    delta[7] = temp_delta[3] * temp_delta_half[4] * temp_delta[5];
-  }
-  if(n_a.boundary[node_index[6]] == 1){		
-    delta[2] = temp_delta[0] * temp_delta[4] * temp_delta_half[2];
-    delta[4] = temp_delta[0] * temp_delta_half[1] * temp_delta[5];
-    delta[7] = temp_delta_half[3] * temp_delta[4] * temp_delta[5];
-  }
-  if(n_a.boundary[node_index[7]] == 1){		
-    delta[3] = temp_delta[3] * temp_delta[4] * temp_delta_half[2];
-    delta[5] = temp_delta[3] * temp_delta_half[1] * temp_delta[5];
-    delta[6] = temp_delta_half[0] * temp_delta[4] * temp_delta[5];
-  }
-#endif
-#if 0
-  if(n_a.boundary[node_index[0]] == 1)delta[0] = 0.f;
 
-  if(n_a.boundary[node_index[1]] == 1)delta[1] = 0.f;
-
-  if(n_a.boundary[node_index[2]] == 1)delta[2] = 0.f;
-
-  if(n_a.boundary[node_index[3]] == 1)delta[3] = 0.f;
-
-  if(n_a.boundary[node_index[4]] == 1)delta[4] = 0.f;
-
-  if(n_a.boundary[node_index[5]] == 1)delta[5] = 0.f;
-
-  if(n_a.boundary[node_index[6]] == 1)delta[6] = 0.f;
-
-  if(n_a.boundary[node_index[7]] == 1)delta[7] = 0.f;
-#endif	
   #pragma unroll
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
@@ -836,39 +774,6 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
   atomicadd(&(node_f.force[0*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0]));
   atomicadd(&(node_f.force[1*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1]));
   atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
-#endif
-#if 0
-  node_f.force[0*para.number_of_nodes + node_index[0]] += (delta[0]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[0]] += (delta[0]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[0]] += (delta[0]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[1]] += (delta[1]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[1]] += (delta[1]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[1]] += (delta[1]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[2]] += (delta[2]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[2]] += (delta[2]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[2]] += (delta[2]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[3]] += (delta[3]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[3]] += (delta[3]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[3]] += (delta[3]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[4]] += (delta[4]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[4]] += (delta[4]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[4]] += (delta[4]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[5]] += (delta[5]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[5]] += (delta[5]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[5]] += (delta[5]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[6]] += (delta[6]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[6]] += (delta[6]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[6]] += (delta[6]*delta_j[2]);
-
-  node_f.force[0*para.number_of_nodes + node_index[7]] += (delta[7]*delta_j[0]);
-  node_f.force[1*para.number_of_nodes + node_index[7]] += (delta[7]*delta_j[1]);
-  node_f.force[2*para.number_of_nodes + node_index[7]] += (delta[7]*delta_j[2]);
 #endif
 }
 
@@ -1317,7 +1222,6 @@ fprintf(stderr, "initialization  \n");
     fprintf(stderr, "initialization of lb gpu code failed! \n");
     errexit();	
   }	
-  //datei1=fopen("atomic_mit2.dat","a");
 }
 
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
@@ -1456,11 +1360,8 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 */
 void lb_particle_GPU(LB_particle_gpu *host_data){
   
-  //++unsigned int hTimer;	
   /** get espresso md particle values*/
   cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
-  //cutCreateTimer(&hTimer);
-  //cutStartTimer(hTimer);
   /** call of the particle kernel */
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
@@ -1469,11 +1370,6 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
   KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
-  //cutStopTimer(hTimer);
-  //value += cutGetTimerValue(hTimer);
-  //count++;
-  //fprintf(datei1,"%i \t %f \n",lbpar_gpu.number_of_particles, (value/count));
-  //fprintf("GPU time: %f msecs.\n", cutGetTimerValue(hTimer));
 }
 /** setup and call kernel to copy particle forces to host */
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
