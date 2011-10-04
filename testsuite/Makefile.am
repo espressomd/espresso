@@ -37,6 +37,7 @@ tests = \
 	kinetic.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_stokes_sphere.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
@@ -106,6 +107,8 @@ check-local: runtest.sh
 	else \
 	  @builddir@/runtest.sh $(tests); \
 	fi
+
+CLEANFILES=runtest.log
 
 DISTCLEANFILES=\
 	fftw3_1d_wisdom_*.file
