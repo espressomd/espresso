@@ -49,7 +49,7 @@ static LB_node_force_gpu node_f;
 static LB_particle_seed_gpu *part = NULL;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
-#if LB_BOUNDARIES_GPU
+#ifdef LB_BOUNDARIES_GPU
 /** pointer for bound index array*/
 static int *boundindex;
 static size_t size_of_boundindex;
@@ -1277,7 +1277,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
 
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
-#if LB_BOUNDARIES_GPU
+#ifdef LB_BOUNDARIES_GPU
 /**setup and call boundaries from the host
  * @param *host_boundindex		Pointer to the host bound index
  * @param number_of_boundnodes	number of boundnodes

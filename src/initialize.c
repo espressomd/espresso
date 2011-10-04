@@ -721,7 +721,7 @@ void on_lb_params_change_gpu(int field) {
 
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
-#if LB_BOUNDARIES_GPU
+#ifdef LB_BOUNDARIES_GPU
     lb_init_boundaries_gpu();
 #endif
   }
