@@ -382,9 +382,11 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int coord[3];
    int counter;
+   int integer_return = 0;
    double double_return[19];
 
    char double_buffer[TCL_DOUBLE_SPACE];
+   char integer_buffer[TCL_INTEGER_SPACE];
 
    for (counter = 0; counter < 19; counter++) 
      double_return[counter]=0;
@@ -444,6 +446,10 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
          argc--; argv++;
        }
        else if (ARG0_IS_S("boundary")) {
+         lb_lbnode_get_boundary(coord, &integer_return);
+         sprintf(integer_buffer, "%d", integer_return);
+				 Tcl_AppendResult(interp, integer_buffer, " ", (char *)NULL);
+	 	 		 argc--; argv++;
        } 
        else if (ARG0_IS_S("populations") || ARG0_IS_S("pop")) { 
          lb_lbnode_get_pop(coord, double_return);
@@ -697,6 +703,20 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi_neq) {
 //  *p_pi_neq[5] = pi[5]/rho*tau/time_step*lbpar.agrid;
 
   return -100;
+}
+
+int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
+  
+  index_t index;
+  int node, grid[3], ind_shifted[3];
+
+  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+  
+  mpi_recv_fluid_border_flag(node,index,p_boundary);
+  
+  return 0;
 }
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
