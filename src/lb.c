@@ -2152,13 +2152,13 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
 #else
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]);
 #endif
 
 
