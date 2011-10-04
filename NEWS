@@ -7,7 +7,7 @@ ESPResSo 3.0.2
 
 * Fixed features ADRESS and VIRTUAL_SITES_COM that did not work for a while.
 
-* Fixed compilation with ICC (#34238).
+* Fixed bugs #33489, #34238.
 
 * Fixed a few bugs that were never reported via the bug tracker,
   mainly in the documentation.
