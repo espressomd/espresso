@@ -586,6 +586,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho);
 int lb_lbnode_get_u(int* ind, double* u);
 int lb_lbnode_get_pi(int* ind, double* pi);
 int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
+int lb_lbnode_get_boundary(int* ind, int* p_boundary);
 int lb_lbnode_get_pop(int* ind, double* pop);
 
 int lb_lbnode_set_rho(int* ind, double rho);
