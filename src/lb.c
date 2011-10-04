@@ -201,7 +201,8 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   else if (ARG0_IS_S("print_interpolated_velocity")) {
     return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
   }
-  else while (argc > 0) {
+  else
+  	while (argc > 0) {
       if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
 	        Tcl_AppendResult(interp, "dens requires 1 argument", (char *)NULL);
@@ -226,7 +227,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 	        Tcl_AppendResult(interp, "agrid must be positive", (char *)NULL);
           return TCL_ERROR;
         } else if (0) {
-          // agrid not is compatible with box_l;
+          // agrid is not compatible with box_l;
           // Not necessary because this is caught on the mpi level!
         } else {
           if ( lb_lbfluid_set_agrid(floatarg) == 0 ) {
@@ -345,6 +346,41 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 	          Tcl_AppendResult(interp, "Unknown Error setting gamma_even", (char *)NULL);
             return TCL_ERROR;
           }
+        }
+      }
+      else if (ARG0_IS_S("print")) {
+        if ( argc < 3 || (ARG1_IS_S("vtk") && argc < 4) ) {
+	        Tcl_AppendResult(interp, "lbfluid print requires at least 2 arguments. Usage: lbfluid print [vtk] velocity|boundary filename", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          argc--; argv++;
+          if (ARG0_IS_S("vtk")) {
+          	if (ARG1_IS_S("boundary")) {
+				      if ( lb_lbfluid_cpu_print_vtk_boundary() != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    } else if (ARG1_IS_S("velocity")) {
+				      if ( lb_lbfluid_cpu_print_vtk_velocity() != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    }
+				    argc-=3; argv+=3;
+		      } else {
+		      	if (ARG0_IS_S("boundary")) {
+			   	  	if ( lb_lbfluid_cpu_print_boundary() != 0 ) {
+				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
+			      	  return TCL_ERROR;
+			      	}
+			    	} else if (ARG1_IS_S("velocity")) {
+			      	if ( lb_lbfluid_cpu_print_velocity() != 0 ) {
+				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
+			      	  return TCL_ERROR;
+			      	}
+			      }
+			      argc-=2; argv+=2;
+		      }
         }
       }
       else {
