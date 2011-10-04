@@ -1091,14 +1091,32 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
     calc_values(n_a, mode, d_p_v, single_nodeindex, singlenode);
   }	
 }
+/**calculate mass of the hole fluid kernel
+ * @param node_f			node force struct (Input)
+ * @param *sum				Pointer to result storage value (Output)
+ * @param n_a				Pointer to local node residing in array a (Input)
+*/
+__global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
+  float mode[1];
 
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if(index<para.number_of_nodes){
+    calc_mode(mode, n_a, index);
+    float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
+    //if(n_a.boundary[index]){
+      //mode[0] = 0.f;
+    //}
+    atomicadd(&(sum[0]), Rho);
+  }
+}
 /**calculate momentum of the hole fluid kernel
  * @param node_f			node force struct (Input)
  * @param *sum				Pointer to result storage value (Output)
  * @param n_a				Pointer to local node residing in array a (Input)
 */
 __global__ void momentum(LB_nodes_gpu n_a, float *sum, LB_node_force_gpu node_f) {
-  float mode[19];
+  float mode[4];
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1118,7 +1136,7 @@ __global__ void momentum(LB_nodes_gpu n_a, float *sum, LB_node_force_gpu node_f)
  * @param n_a				Pointer to local node residing in array a (Input)
 */
 __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
-  float mode[19];
+  float mode[4];
   float jsquared = 0.f;
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1419,6 +1437,27 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
 
 }
 /** setup and call kernel to calculate the total momentum of the hole fluid*/
+void calc_fluid_mass_GPU(double* mass){
+
+  float* tot_mass;
+  float cpu_mass =  0.f ;
+  cuda_safe_mem(cudaMalloc((void**)&tot_mass, sizeof(float)));
+  cudaMemcpy(tot_mass, &cpu_mass, sizeof(float), cudaMemcpyHostToDevice);
+
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL(calc_mass, dim_grid, threads_per_block,(*current_nodes, tot_mass));
+
+  cudaMemcpy(&cpu_mass, tot_mass, sizeof(float), cudaMemcpyDeviceToHost);
+  
+  cudaFree(tot_mass);
+  mass[0] = (double)(cpu_mass);
+}
+/** setup and call kernel to calculate the total momentum of the hole fluid*/
 void calc_fluid_momentum_GPU(double* mom){
 
   float* tot_momentum;
@@ -1437,9 +1476,9 @@ void calc_fluid_momentum_GPU(double* mom){
   cudaMemcpy(cpu_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
   
   cudaFree(tot_momentum);
-  mom[0]=(double)(cpu_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
-  mom[1]=(double)(cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
-  mom[2]=(double)(cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[0] = (double)(cpu_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[1] = (double)(cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  mom[2] = (double)(cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
 }
 /** setup and call kernel to calculate the temperature of the hole fluid*/
 void calc_fluid_temperature_GPU(double* cpu_temp){
