@@ -377,7 +377,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 			      	  return TCL_ERROR;
 			      	}
 			    	}
-			    	else if (ARG1_IS_S("velocity")) {
+			    	else if (ARG0_IS_S("velocity")) {
 			      	if ( lb_lbfluid_cpu_print_velocity(argv[1]) != 0 ) {
 				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
 			      	  return TCL_ERROR;
@@ -676,22 +676,90 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
 }
 
 int lb_lbfluid_cpu_print_vtk_boundary(char* filename) {
-	printf("lb_lbfluid_cpu_print_vtk_boundary: gridsize=(%d, %d, %d)\n", lblattice.grid[0], lblattice.grid[1], lblattice.grid[2]);
+	int pos[3];
+	int boundary;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", lblattice.grid[0], lblattice.grid[1], lblattice.grid[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, lblattice.grid[0]*lblattice.grid[1]*lblattice.grid[2]);
+	
+	for(pos[2] = 0; pos[2] < lblattice.grid[2]; pos[2]++) //lblattice.grid only holds dimensions of local nodes grid!
+		for(pos[1] = 0; pos[1] < lblattice.grid[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < lblattice.grid[0]; pos[0]++)
+			{
+				lb_lbnode_get_boundary(pos, &boundary);
+				fprintf(fp, "%d ", boundary);
+			}
+				
+	fclose(fp);				
 	return 0;
 }
 
 int lb_lbfluid_cpu_print_vtk_velocity(char* filename) {
-	printf("called lb_lbfluid_cpu_print_vtk_velocity(%s)\n", filename);
+	int pos[3];
+	double u[3];
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+		
+	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", lblattice.grid[0], lblattice.grid[1], lblattice.grid[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, lblattice.grid[0]*lblattice.grid[1]*lblattice.grid[2]);
+	
+	for(pos[2] = 0; pos[2] < lblattice.grid[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < lblattice.grid[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < lblattice.grid[0]; pos[0]++)
+			{
+				lb_lbnode_get_u(pos, u);
+				fprintf(fp, "%f %f %f ", u[0], u[1], u[2]);
+			}
+				
+	fclose(fp);				
 	return 0;
 }
 
 int lb_lbfluid_cpu_print_boundary(char* filename) {
-	printf("called lb_lbfluid_cpu_print_boundary(%s)\n", filename);
+	int pos[3];
+	int boundary;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	for(pos[2] = 0; pos[2] < lblattice.grid[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < lblattice.grid[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < lblattice.grid[0]; pos[0]++)
+			{
+				lb_lbnode_get_boundary(pos, &boundary);
+				fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
+			}
+				
+	fclose(fp);				
 	return 0;
 }
 
 int lb_lbfluid_cpu_print_velocity(char* filename) {
-	printf("called lb_lbfluid_cpu_print_velocity(%s)\n", filename);
+	int pos[3];
+	double u[3];
+
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	for(pos[2] = 0; pos[2] < lblattice.grid[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < lblattice.grid[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < lblattice.grid[0]; pos[0]++)
+			{
+				lb_lbnode_get_u(pos, u);
+				fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
+			}
+				
+	fclose(fp);				
 	return 0;
 }
 
