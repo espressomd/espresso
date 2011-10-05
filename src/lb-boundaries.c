@@ -626,14 +626,12 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 }
 
 
-
-
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
   int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
-  int the_boundary;
+  int the_boundary=-1;
 	
   map_node_array(this_node, node_domain_position);
 	
@@ -644,9 +642,11 @@ void lb_init_boundaries() {
   for (n=0;n<lblattice.halo_grid_volume;n++) {
     lbfields[n].boundary = 0;
   }
+  if (lblattice.halo_grid_volume==0)
+    return;
   
   for (z=0; z<lblattice.grid[2]+2; z++) {
-    for (y=0; y<lblattice.grid[1]+2; y++) {
+   for (y=0; y<lblattice.grid[1]+2; y++) {
 	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
 	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
@@ -673,9 +673,8 @@ void lb_init_boundaries() {
               ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
           }
           
-//          if (abs(dist) > abs(dist_tmp) || n == 0) {
-//          }
-          if (dist_tmp<dist) {
+        if (abs(dist) > abs(dist_tmp) || n == 0) {
+//          if (dist_tmp<dist) { //Why would you want to do this? If you try to create a wall of finite thickness ...|xxx|..., it makes every node a wall node! (Georg Rempfer, 01.01.2011)
             dist = dist_tmp;
             the_boundary = n;
           }

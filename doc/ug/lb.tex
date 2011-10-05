@@ -95,6 +95,14 @@ set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
 \var{bulk\_viscosity}=0, , \var{gamma\_odd}=0, \var{gamma\_even}=0,
 \var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
 
+\begin{essyntax}
+  lbfluid print_interpolated_velocity \var{x} \var{y} \var{z}
+\end{essyntax}
+This variant returns the velocity at point in countinous space. 
+This can make it easier to calculate flow profiles independent of
+the lattice constant.
+
+
 \section{LB as a thermostat}
 \begin{essyntax}
   thermostat lb \var{T} 
@@ -155,11 +163,12 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 
 \section{Setting up boundary conditions}
 \begin{essyntax}
-  lbboundary \var{shape} \var{shape\_args} 
+  lbboundary \var{shape} \var{shape\_args} \opt{velocity \var{vx} \var{vy} \var{vz}}
   \begin{features}
   \required{LB_BOUNDARIES}
   \end{features}
 \end{essyntax}
+
 If nothing else is specified periodic boundary conditions are assumed 
 for the LB fluid. The \lit{lbboundary} command allows to set up
 other (internal or external) boundaries.
@@ -179,13 +188,10 @@ normal LB fluid, and the other half space is filled with boundary
 nodes.
 
 Intersecting boundaries are in principle possible but must be treated
-with care. In the current, only partly satisfactory, implementation for
-every LB node the closest boundary is determined and in case of a
-negative distance to that boundary (meaning being inside the wall)
-lets \es decide that it is a wall node, and a positive one, that it is
-not.  This allows example multiple parallel channels, but is is not
-always clear that a rectangularly shaped channel can be
-constructed. Suggestions on how to solve this issue are very welcome.
+with care. 
+In the current, only partly satisfactory, all nodes that are within at least
+one boundary are treated as boundary nodes. Improving this is nontrivial, 
+and suggestions are very welcome.
 
 Currently, only the so called ``link-bounce-back'' algorithm for wall
 nodes is available. This creates a boundary that is located
@@ -194,6 +200,22 @@ example this corresponds indeed to a boundary at $x=1.5$. Note that
 the location of the boundary is unfortunately not independent of the
 viscosity. This can \eg be seen when using the sample script
 \lit{poisseuille.tcl} with a high viscosity.
+
+The bounce back boundary conditions allow to set velocity at a boundary to a nonzero
+value. This allows to create shear flow and boundaries moving relative to 
+each other. This could be a fixed sphere in a channel moving at a finite speed -- 
+corresponding to the galilei-transform of a moving sphere in a fixed channel.
+The velocity boundary conditions are implemented according to \cite{succi01a}
+eq.~12.58. Using this implementation as a blueprint for the boundary treatment 
+an implementation of the Ladd-Coupling should be relatively straightforward.
+
+\begin{essyntax}
+  lbboundary force \opt{ \var{n_{boundary}}}
+  \begin{features}
+  \required{LB_BOUNDARIES}
+  \end{features}
+\end{essyntax}
+This variant prints out the force on boundary number \lit{n_boundary}.
 
 \section{Choosing between the GPU and CPU implementations}
 \begin{essyntax}

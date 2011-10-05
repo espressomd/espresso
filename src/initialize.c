@@ -860,23 +860,23 @@ static void init_tcl(Tcl_Interp *interp)
   if (!scriptdir)
     scriptdir = get_default_scriptsdir();
   
-  fprintf(stderr,"%d: Script directory: %s\n", this_node, scriptdir);
+  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
 
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
     fprintf(stderr,
 	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
 	    scriptdir);
-    exit(-1);
+    exit(1);
   }
   if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
     fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
 	    Tcl_GetStringResult(interp));
-    exit(-1);
+    exit(1);
   }
   if (chdir(cwd) != 0) {
     fprintf(stderr,
 	    "\n\ncould not change back to execution dir %s ????\n\n\n",
 	    cwd);
-    exit(-1);
+    exit(1);
   }
 }

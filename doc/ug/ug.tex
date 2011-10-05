@@ -18,23 +18,23 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 \documentclass[
-a4paper,                        % paper size
-11pt,                           % font size
+paper=a4,                       % paper size
+fontsize=11pt,                  % font size
 twoside,                        % two sided
 footsepline,                    % add a line to separate the footer
 headsepline,                    % add a line to separate the header
-headexclude,                    % header does not belong to the text
-footexclude,                    % footer does not belong to the text
+headinclude=false,              % header does not belong to the text
+footinclude=false,              % footer does not belong to the text
 pagesize,                       % set the pagesize in a DVI document
-bibtotocnumbered,               % add the bibliography to the TOC
-idxtotoc                        % add the index to the TOC
-%openright,                      % start a new chapter on the right page
+bibliography=totocnumbered,     % add the bibliography to the TOC
+index=totoc,                    % add the index to the TOC
+%openright,                     % start a new chapter on the right page
 %,DIV12
 %,draft
 ]{scrreprt}
 
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage{hyperref}                      % automatically creates links when
+\usepackage{hyperref}           % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
@@ -57,7 +57,7 @@ idxtotoc                        % add the index to the TOC
 \usepackage{todonotes}
 
 % Make '_' a normal character
-\usepackage{underscore}
+\usepackage[strings]{underscore}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -257,7 +257,7 @@ idxtotoc                        % add the index to the TOC
 \begin{document}
 \titlehead{
   \begin{center}
-    \includegraphics[width=5cm]{figures/logo.png}
+    \includegraphics[width=5cm]{logo/transparentbg}
   \end{center}
 }
 %\subject{}

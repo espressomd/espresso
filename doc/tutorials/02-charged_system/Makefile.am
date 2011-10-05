@@ -14,38 +14,40 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-tut2_TEXFILES=\
-	tut2.tex
+BASENAME=02-charged_system
 
-tut2_FIGURES = \
+tutorial_TEXFILES=$(BASENAME).tex
+
+tutorial_FIGURES = \
 	figures/neutral-rho.pdf \
 	figures/nonneutral-rho.pdf \
 	figures/nacl-rdf.pdf \
 	figures/salt.png
 
-tut2_FILES = \
-	$(tut2_TEXFILES) \
-	$(tut2_FIGURES)
+tutorial_FILES = \
+	$(tutorial_TEXFILES) \
+	$(tutorial_FIGURES)
 
 EXTRA_DIST = \
-	$(tut2_FILES) \
-	tut2.pdf
+	$(tutorial_FILES) \
+	$(BASENAME).pdf
 
-.PHONY: doc tut2
+.PHONY: doc $(BASENAME).pdf
 
-doc: tut2
-tut2: tut2.pdf
-tut2.pdf: $(tut2_FILES) ../common/common.tex 
+doc: tutorial
+tutorial: $(BASENAME).pdf
+$(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
 if HAVE_LATEX
-	sh ../../latexit.sh $(srcdir):$(srcdir)/../common tut2
+	sh ../../latexit.sh $(srcdir):$(srcdir)/../common $(BASENAME)
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the tutorial without pdflatex, makeindex and bibtex."
 	@echo "Install these and rerun configure."
 endif
 
-CLEANFILES = tut2.pdf
+CLEANFILES = $(BASENAME).pdf
 MOSTLYCLEANFILES = \
 	*.aux *.aux.bak\
-	tut2.idx tut2.idx.bak tut2.ilg tut2.ind\
-	tut2.log tut2.out tut2.toc
+	$(BASENAME).idx $(BASENAME).idx.bak $(BASENAME).ilg $(BASENAME).ind \
+	$(BASENAME).log $(BASENAME).out $(BASENAME).toc \
+	$(BASENAME).blg $(BASENAME).bbl
