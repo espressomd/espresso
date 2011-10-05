@@ -203,26 +203,64 @@ int tclcommand_observable_particle_velocities(Tcl_Interp* interp, int argc, char
 
 int tclcommand_observable_com_velocity(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList* ids;
-  int temp;
+  int temp, blocksize;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->fun=&observable_com_velocity;
-  obs->args=ids;
-  obs->n=3;
-  *change=1+temp;
-  return TCL_OK;
+  argc-=temp+1;
+  argv+=temp+1;
+  for ( int i = 0; i < argc; i++) {
+    printf("%s\n", argv[i]);
+  }
+  if (argc>0 && ARG0_IS_S("blocked")) {
+    if (argc >= 2 && ARG1_IS_I(blocksize) && (ids->n % blocksize ==0 )) {
+      obs->fun=&observable_blocked_com_velocity;
+      obs->args=ids;
+      obs->n=3*ids->n/blocksize;
+      *change=3+temp;
+      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
+      return TCL_OK;
+    } else {
+      Tcl_AppendResult(interp, "com_velocity blocked expected integer argument that fits the number of particles\n", (char *)NULL );
+      return TCL_ERROR;
+    }
+  } else /* if nonblocked com is to be taken */ {
+    obs->fun=&observable_com_velocity;
+    obs->args=ids;
+    obs->n=3;
+    *change=1+temp;
+    return TCL_OK;
+  }
 }
 
 int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList* ids;
-  int temp;
+  int temp, blocksize;
   if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
     return TCL_ERROR;
-  obs->fun=&observable_com_position;
-  obs->args=ids;
-  obs->n=3;
-  *change=1+temp;
-  return TCL_OK;
+  argc-=temp+1;
+  argv+=temp+1;
+  for ( int i = 0; i < argc; i++) {
+    printf("%s\n", argv[i]);
+  }
+  if (argc>0 && ARG0_IS_S("blocked")) {
+    if (argc >= 2 && ARG1_IS_I(blocksize) && (ids->n % blocksize ==0 )) {
+      obs->fun=&observable_blocked_com_position;
+      obs->args=ids;
+      obs->n=3*ids->n/blocksize;
+      *change=3+temp;
+      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
+      return TCL_OK;
+    } else {
+      Tcl_AppendResult(interp, "com_velocity blocked expected integer argument that fits the number of particles\n", (char *)NULL );
+      return TCL_ERROR;
+    }
+  } else /* if nonblocked com is to be taken */ {
+    obs->fun=&observable_com_position;
+    obs->args=ids;
+    obs->n=3;
+    *change=1+temp;
+    return TCL_OK;
+  }
 }
 
 int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
@@ -847,6 +885,62 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
   A[0]=v_com[0]/ids->n;
   A[1]=v_com[1]/ids->n;
   A[2]=v_com[2]/ids->n;
+  return 0;
+}
+
+int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
+/* TODO: this does not work with MASS ... */
+  unsigned int i;
+  unsigned int block;
+  unsigned int n_blocks;
+  unsigned int blocksize;
+  unsigned int id;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  n_blocks=n_A/3; 
+  blocksize=ids->n/n_blocks;
+  for ( block = 0; block < n_blocks; block++ ) {
+    for ( i = 0; i < blocksize; i++ ) {
+      id = ids->e[block*blocksize+i];
+      if (ids->e[i] >= n_total_particles)
+        return 1;
+      A[3*block+0] +=  partCfg[id].m.v[0]/time_step;
+      A[3*block+1] +=  partCfg[id].m.v[1]/time_step;
+      A[3*block+2] +=  partCfg[id].m.v[2]/time_step;
+    }
+    A[3*block+0] /=  blocksize;
+    A[3*block+1] /=  blocksize;
+    A[3*block+2] /=  blocksize;
+  }
+  return 0;
+}
+
+int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
+/* TODO: this does not work with MASS ... */
+  unsigned int i;
+  unsigned int block;
+  unsigned int n_blocks;
+  unsigned int blocksize;
+  unsigned int id;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  n_blocks=n_A/3; 
+  blocksize=ids->n/n_blocks;
+  for ( block = 0; block < n_blocks; block++ ) {
+    for ( i = 0; i < blocksize; i++ ) {
+      id = ids->e[block*blocksize+i];
+      if (ids->e[i] >= n_total_particles)
+        return 1;
+      A[3*block+0] +=  partCfg[id].r.p[0];
+      A[3*block+1] +=  partCfg[id].r.p[1];
+      A[3*block+2] +=  partCfg[id].r.p[2];
+    }
+    A[3*block+0] /=  blocksize;
+    A[3*block+1] /=  blocksize;
+    A[3*block+2] /=  blocksize;
+  }
   return 0;
 }
 

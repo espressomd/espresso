@@ -33,6 +33,7 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
 
 int observable_particle_velocities(void* idlist, double* A, unsigned int n_A);
 int observable_com_velocity(void* idlist, double* A, unsigned int n_A); 
+int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A); 
 /** Obtain the particle positions.
  * TODO: Folded or unfolded?
  */ 
@@ -40,6 +41,7 @@ int observable_particle_positions(void* typelist, double* A, unsigned int n_A);
 int observable_stress_tensor(void* typelist, double* A, unsigned int n_A);
 int observable_stress_tensor_acf_obs(void* typelist, double* A, unsigned int n_A);
 int observable_com_position(void* idlist, double* A, unsigned int n_A);
+int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A);
 
 #ifdef ELECTROSTATICS
 int observable_particle_currents(void* typelist, double* A, unsigned int n_A);
