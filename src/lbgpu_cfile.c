@@ -911,11 +911,10 @@ int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
     }
     while (argc > 0) {
       if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
-
-      lb_print_node_GPU(single_nodeindex, host_print_values);
-      Tcl_PrintDouble(interp, (double)host_print_values[0].rho, double_buffer);
-      Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
-      argc--; argv++;
+		    lb_print_node_GPU(single_nodeindex, host_print_values);
+		    Tcl_PrintDouble(interp, (double)host_print_values[0].rho, double_buffer);
+		    Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
+		    argc--; argv++;
       }
       else if (ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity")) { 
         lb_print_node_GPU(single_nodeindex, host_print_values);
@@ -1023,6 +1022,8 @@ int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
       err = lbfluid_parse_gamma_odd(interp, argc-1, argv+1, &change);
     else if (ARG0_IS_S("gamma_even"))
       err = lbfluid_parse_gamma_even(interp, argc-1, argv+1, &change);
+    else if (ARG0_IS_S("print"))
+      err = lbfluid_parse_print(interp, argc-1, argv+1, &change);
     else {
       Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
       err = TCL_ERROR ;
@@ -1048,7 +1049,7 @@ int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 }
 
 #ifdef LB_GPU
-/** printing the hole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
+/** printing the whole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
 int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   int err = TCL_OK;
