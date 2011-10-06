@@ -404,6 +404,12 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 //          return TCL_OK;
 //        }
       } else if (ARG0_IS_S("update")) {
+	if (correlations[no].autoupdate == 1) {
+	  sprintf(buffer, "%d. ", no);
+          Tcl_AppendResult(interp, "Cannot update correlation ", buffer, (char *)NULL);
+          Tcl_AppendResult(interp, "It is already in the autoupdate mode.\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
         error = double_correlation_get_data(&correlations[no]);
         if (error) {
           Tcl_AppendResult(interp, double_correlation_get_data_errors[error], (char *)NULL);

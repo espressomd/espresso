@@ -1105,9 +1105,11 @@ some history to be stored in buffers.
 The following lines describe a generic call to work with 
 observables. Different observables may require different further parameters.
 \begin{essyntax}
-  \variant{2} correlation \var{id} autoupdate start
+  \variant{0} correlation 
+  \variant{1} correlation n_corr
+  \variant{2} correlation \var{id} \{ update | autoupdate \{ start | stop\}  \}
   \variant{3} correlation \var{id} finalize
-  \variant{4} correlation \var{id} print \opt{formatted}
+  \variant{4} correlation \var{id} print \opt{ average1 | variance1 | correlation_time | avarage_errorbars | spherically_averaged_sf }
   \variant{5} correlation \var{id} write_to_file \var{filname}
   \variant{6} correlation new obs1 \var{id1} \opt{obs2 \var{id2}} corr_operation \var{operation} dt \var{delta\_t} tau_max \var{tau\_max} \opt{tau_lin \var{tau\_lin}} \opt{compress1 \var{name} \opt{compress2 \var{name}} }
 \end{essyntax}
@@ -1115,9 +1117,27 @@ observables. Different observables may require different further parameters.
 Variants\variant{1} to \variant{5} operate only on exisitng correlations.
 Variant\variant{6} creates an new correlation.
   
+\variant{0} 
+Currently prints short help on using the correlations. In future it should
+Return the parameters of all correlations which are currently defined.
+\todo{fix}
+
+\variant{1} 
+Returns the number of currently defined correlations.
+
 \variant{2} 
-Starts automatically updating the correlation estimates as often as 
-required by the specified \var{dt}.
+Updates the correlation estimates. Using this is deprecated, unless you are
+updating your correlations using data from the script level.
+
+\variant{2} 
+With \lit{autoupdate start} it automatically updating the correlation estimates as often as required by the specified \var{dt}.
+With \lit{update} it updates the correlation estimates based on the instantaneous
+state of the system.
+A correlation cen be either in autoupdate or manual update regime but not in both.
+In the manual update mode it is the user's responsibility to provide samples
+in the proper time interval. The correlator has no way to check for it.
+It is technically possible to stop autoupdating and start updating manually but
+we are not aware of any case where it would make physical sense.
 
 \variant{3} 
 Correlates all data from history which are left in the buffers. Once this 
