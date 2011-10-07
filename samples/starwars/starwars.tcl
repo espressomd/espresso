@@ -1,14 +1,12 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Demo of a polyelectrolyte star                           #
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#  Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -35,7 +33,7 @@ require_feature "ELECTROSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "PARTIAL_PERIODIC"
 
-source ../scripts/bundle.tcl
+source ../../scripts/bundle.tcl
 
 global name level
 set name ""
@@ -546,10 +544,6 @@ proc create_obs_window {obs xlabel ylabel xrange yrange max_points width height 
     .$obs.c create text [expr \$lmarg_$obs + \$xpix_$obs +15]      \
 	[expr \$tmarg_$obs + \$ypix_$obs]                          \
 	-text "$xlabel"
-    # Esresso logo
-    set tasse [image create photo -file "cup_icon.gif"]
-    .$obs.c create image [expr 23] \
-	[expr \$tmarg_$obs + \$ypix_$obs + \$tmarg_$obs -12] -image $tasse
 }
 
 proc obs_window_to_ps {obs} {
