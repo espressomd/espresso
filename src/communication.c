@@ -134,6 +134,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
   CB(mpi_recv_fluid_border_flag_slave) \
+  CB(mpi_send_fluid_border_flag_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2466,25 +2467,45 @@ void mpi_recv_fluid_slave(int node, int index) {
 }
 
 /************** REQ_LB_GET_BORDER_FLAG **************/
-void mpi_recv_fluid_border_flag(int node, int index, int *border) {
+void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
-    lb_local_fields_get_border_flag(index, border);
+    lb_local_fields_get_boundary_flag(index, boundary);
   } else {
     int data = 0;
-    mpi_call(mpi_recv_fluid_border_flag_slave, node, index);
+    mpi_call(mpi_recv_fluid_boundary_flag_slave, node, index);
     MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    *border = data;
+    *boundary = data;
   }
 #endif
 }
 
-void mpi_recv_fluid_border_flag_slave(int node, int index) {
+void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
     int data;
-    lb_local_fields_get_border_flag(index, &data);
+    lb_local_fields_get_boundary_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, MPI_COMM_WORLD);
+  }
+#endif
+}
+
+/************** REQ_LB_SET_BORDER_FLAG **************/
+void mpi_set_fluid_boundary_flag(int node, int index, int boundary) {
+#ifdef LB_BOUNDARIES
+  if (node==this_node) {
+    lb_local_fields_set_boundary_flag(index, boundary);
+  } else {
+    int data = 0;
+    mpi_call(mpi_set_fluid_boundary_flag_slave, node, index, boundary);
+  }
+#endif
+}
+
+void mpi_set_fluid_boundary_flag_slave(int node, int index, int boundary) {
+#ifdef LB_BOUNDARIES
+  if (node==this_node) {
+    lb_local_fields_set_boundary_flag(index, boundary);
   }
 #endif
 }
