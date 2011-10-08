@@ -133,8 +133,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_max_mu_slave) \
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
-  CB(mpi_recv_fluid_border_flag_slave) \
-  CB(mpi_send_fluid_border_flag_slave) \
+  CB(mpi_recv_fluid_boundary_flag_slave) \
+  CB(mpi_send_fluid_boundary_flag_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2466,7 +2466,7 @@ void mpi_recv_fluid_slave(int node, int index) {
 #endif
 }
 
-/************** REQ_LB_GET_BORDER_FLAG **************/
+/************** REQ_LB_GET_BOUNDARY_FLAG **************/
 void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
@@ -2490,22 +2490,21 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 #endif
 }
 
-/************** REQ_LB_SET_BORDER_FLAG **************/
-void mpi_set_fluid_boundary_flag(int node, int index, int boundary) {
+/************** REQ_LB_SET_BOUNDARY_FLAG **************/
+void mpi_send_fluid_boundary_flag(int node, int index) { //Would like a third parameter boundary (boundary no.) here but the general scheme doesn't allow for it. -> Ask Olaf!
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
-    lb_local_fields_set_boundary_flag(index, boundary);
+    lb_local_fields_set_boundary_flag(index);
   } else {
-    int data = 0;
-    mpi_call(mpi_set_fluid_boundary_flag_slave, node, index, boundary);
+    mpi_call(mpi_send_fluid_boundary_flag_slave, node, index);
   }
 #endif
 }
 
-void mpi_set_fluid_boundary_flag_slave(int node, int index, int boundary) {
+void mpi_send_fluid_boundary_flag_slave(int node, int index) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
-    lb_local_fields_set_boundary_flag(index, boundary);
+    lb_local_fields_set_boundary_flag(index);
   }
 #endif
 }

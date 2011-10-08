@@ -539,11 +539,9 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   *boundary = lbfields[index].boundary;
 }
-#endif
 
-#ifdef LB_BOUNDARIES
-MDINLINE void lb_local_fields_set_boundary_flag(index_t index, int boundary) {
-  lbfields[index].boundary = *boundary;
+MDINLINE void lb_local_fields_set_boundary_flag(index_t index) {
+  lbfields[index].boundary = 1;
 }
 #endif
 
@@ -605,7 +603,7 @@ int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
-int lb_lbnode_set_boundary(int* ind, int boundary);
+int lb_lbnode_set_boundary(int* ind);
 
 void lb_check_halo_regions();
 

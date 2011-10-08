@@ -19,22 +19,25 @@ if {$gpu == 0} {
 }
 
 thermostat lb $temp
-lbboundary sphere center [expr $box_l/2] [expr $box_l/2] [expr $box_l/2] radius $sphere_r direction outside
 
-lbnode 0 0 0 set boundary 1
-
-exit
+for {set x 0} {$x < $box_l} {incr x} {
+	for {set y 0} {$y < $box_l} {incr y} {
+		for {set z 0} {$z < $box_l} {incr z} {
+			if {$z >= 0.45*$box_l && $z < 0.55*$box_l && !($y >= 0.35*$box_l && $y < 0.65*$box_l && $x >= 0.35*$box_l && $x < 0.65*$box_l)} {
+				lbnode $x $y $z set boundary 1
+			}
+		}
+	}
+}
 
 if {$gpu == 0} {
 	lbfluid print vtk boundary boundary.vtk ;#remove vtk for gnuplot format
-	lbfluid print boundary boundary.dat
-	puts "Wrote boundary files"
+	puts "Wrote boundary file"
 }
 
 for {set i 0} {1} {incr i $step} {
 	if {$gpu == 0} {
 		lbfluid print vtk velocity velocity_$i.vtk ;#remove vtk for gnuplot format
-		lbfluid print velocity velocity_$i.dat
 	} else {
 		lbprint velocity vtk velocity_$i.vtk
 	}
