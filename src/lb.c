@@ -542,24 +542,6 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
            return TCL_ERROR;
          }
        }
-       else if (ARG0_IS_S("boundary")) {
-	 	 		 /*argc--; argv++; //Part that allows for setting a specific boundary no.
-         if (!ARG0_IS_I(integer_buffer[0])) {
-           Tcl_AppendResult(interp, "recieved not an integer but \"", argv[0], "\" requested", (char *)NULL);
-           return TCL_ERROR;
-         }
-         if (lb_lbnode_set_boundary(coord, integer_buffer[0]) != 0) {
-					 Tcl_AppendResult(interp, "General Error on lbnode set boundary.", (char *)NULL);
-           return TCL_ERROR;
-				 }
-	 	 		 argc--; argv++;*/
-	 	 		 
-         if (lb_lbnode_set_boundary(coord) != 0) {
-					 Tcl_AppendResult(interp, "General Error on lbnode set boundary.", (char *)NULL);
-           return TCL_ERROR;
-				 }
-	 	 		 argc--; argv++;
-       }
    } else {
      Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode", (char *)NULL);
      return  TCL_ERROR;
@@ -942,20 +924,6 @@ int lb_lbnode_set_u(int* ind, double* u){
   j[2] = rho*u[2]*tau*agrid;
   mpi_send_fluid(node,index,rho,j,pi) ;
 
-  return 0;
-}
-
-int lb_lbnode_set_boundary(int* ind) {
-  
-  index_t index;
-  int node, grid[3], ind_shifted[3];
-
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
-  
-  mpi_send_fluid_boundary_flag(node, index);
-  
   return 0;
 }
 

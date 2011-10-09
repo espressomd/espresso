@@ -134,7 +134,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
   CB(mpi_recv_fluid_boundary_flag_slave) \
-  CB(mpi_send_fluid_boundary_flag_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2486,25 +2485,6 @@ void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
     int data;
     lb_local_fields_get_boundary_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, MPI_COMM_WORLD);
-  }
-#endif
-}
-
-/************** REQ_LB_SET_BOUNDARY_FLAG **************/
-void mpi_send_fluid_boundary_flag(int node, int index) { //Would like a third parameter boundary (boundary no.) here but the general scheme doesn't allow for it. -> Ask Olaf!
-#ifdef LB_BOUNDARIES
-  if (node==this_node) {
-    lb_local_fields_set_boundary_flag(index);
-  } else {
-    mpi_call(mpi_send_fluid_boundary_flag_slave, node, index);
-  }
-#endif
-}
-
-void mpi_send_fluid_boundary_flag_slave(int node, int index) {
-#ifdef LB_BOUNDARIES
-  if (node==this_node) {
-    lb_local_fields_set_boundary_flag(index);
   }
 #endif
 }

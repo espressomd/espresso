@@ -212,6 +212,11 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
   }
 }
 
+MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
+{
+	//TODO
+}
+
 MDINLINE double max(double x1, double x2) {
   return x1>x2?x1:x2;
 }
