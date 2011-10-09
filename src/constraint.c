@@ -87,7 +87,36 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_RHOMBOID:
-    //TODO
+    Tcl_PrintDouble(interp, con->c.rhomboid.pos[0], buffer);
+    Tcl_AppendResult(interp, "rhomboid center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.pos[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.pos[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.a[0], buffer);
+    Tcl_AppendResult(interp, " a ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.a[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.a[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.b[0], buffer);
+    Tcl_AppendResult(interp, " b ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.b[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.b[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.c[0], buffer);
+    Tcl_AppendResult(interp, " c ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.c[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.c[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.rhomboid.direction, buffer);
+    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.p.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.rhomboid.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
     break;
   case CONSTRAINT_ROD:
     Tcl_PrintDouble(interp, con->c.rod.pos[0], buffer);
@@ -505,33 +534,39 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
 static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *interp,
 			int argc, char **argv)
 {
+	//TODO
   double axis_len;
   int i;
 
-  con->type = CONSTRAINT_RHOMBOYD;
+  con->type = CONSTRAINT_RHOMBOID;
+  printf("lege constraint rhomboid an\n"); //TODO
   /* invalid entries to start of */
-  con->c.cyl.pos[0] = 
-    con->c.cyl.pos[1] = 
-    con->c.cyl.pos[2] = 0;
-  con->c.cyl.axis[0] = 
-    con->c.cyl.axis[1] = 
-    con->c.cyl.axis[2] = 0;
-  con->c.cyl.rad = 0;
-  con->c.cyl.length = 0;
-  con->c.cyl.direction = 0;
-  con->c.cyl.penetrable = 0;
+  con->c.rhomboid.pos[0] = 
+  con->c.rhomboid.pos[1] = 
+  con->c.rhomboid.pos[2] = 0;
+  con->c.rhomboid.a[0] = 
+  con->c.rhomboid.a[1] = 
+  con->c.rhomboid.a[2] = 0;
+  con->c.rhomboid.b[0] = 
+  con->c.rhomboid.b[1] = 
+  con->c.rhomboid.b[2] = 0;
+  con->c.rhomboid.c[0] = 
+  con->c.rhomboid.c[1] = 
+  con->c.rhomboid.c[2] = 0;
+  con->c.rhomboid.direction = 0;
+  con->c.rhomboid.penetrable = 0;
   con->part_rep.p.type = -1;
-  con->c.cyl.reflecting = 0;
+  con->c.rhomboid.reflecting = 0;
   while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+    if(!strncmp(argv[0], "corner", strlen(argv[0]))) {
       if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint cylinder center <x> <y> <z> expected", (char *) NULL);
-	return (TCL_ERROR);
+				Tcl_AppendResult(interp, "constraint cylinder center <x> <y> <z> expected", (char *) NULL);
+				return (TCL_ERROR);
       }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.pos[2])) == TCL_ERROR)
-	return (TCL_ERROR);
+      if (Tcl_GetDouble(interp, argv[1], &(con->c.rhomboid.pos[0])) == TCL_ERROR ||
+	 			 	Tcl_GetDouble(interp, argv[2], &(con->c.rhomboid.pos[1])) == TCL_ERROR ||
+	  			Tcl_GetDouble(interp, argv[3], &(con->c.rhomboid.pos[2])) == TCL_ERROR)
+				return (TCL_ERROR);
       argc -= 4; argv += 4;
     }
     else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
@@ -619,13 +654,13 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
     return (TCL_ERROR);    
   }
 
-  /*normalize the axis vector */
+  /*normalize the axis vector
   axis_len = sqrt (axis_len);
   for (i=0;i<3;i++) {
     con->c.cyl.axis[i] /= axis_len;
   }
 
-  make_particle_type_exist(con->part_rep.p.type);
+  make_particle_type_exist(con->part_rep.p.type); */
       
   return (TCL_OK);
 }
