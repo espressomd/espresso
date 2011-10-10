@@ -587,7 +587,7 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 #ifdef LB_BOUNDARIES
 
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
-  double vec[3];
+  double vec[3] = {1e100, 1e100, 1e100};
   double dist=1e100;
   *mindist = 1e100;
   int n;
