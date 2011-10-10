@@ -45,6 +45,8 @@ MDINLINE double sign(double x) {
   else
     return -1;
 }
+
+
 MDINLINE void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
   int i;
