@@ -21,7 +21,7 @@ if test $EC -ne 0; then
     exit $EC
 fi
 
-if test -e $TEXFILE.ind; then
+if test -e $TEXFILE.idx; then
     echo "Running makeindex..."
     @MAKEINDEX@ $TEXFILE || exit $?
 fi
