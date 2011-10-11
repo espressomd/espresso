@@ -27,7 +27,7 @@ ug_TEXFILES = \
 	analysis.tex \
 	io.tex \
 	lb.tex \
-	maggs.tex \
+	memd.tex \
 	aux.tex \
 	internal.tex \
 	contributing.tex \
