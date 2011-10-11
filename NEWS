@@ -5,6 +5,9 @@
 ESPResSo 3.1
 ============
 
+* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
+  coulomb memd).
+
 * Added basic tutorial on Lennard-Jones liquid, made second tutorial
   (simple charged systems) better available (all in doc/tutorials)
 
