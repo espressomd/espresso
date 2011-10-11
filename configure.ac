@@ -346,7 +346,7 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
