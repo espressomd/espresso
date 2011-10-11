@@ -23,15 +23,9 @@ if test $EC -ne 0; then
     exit $EC
 fi
 
-if test -e $TEXFILE.idx; then
-    echo "Running makeindex..."
-    @MAKEINDEX@ $TEXFILE || exit $?
-fi
-
 echo "Running bibtex..."
 # Don't fail on bibtex error: it fails if no .bib-file is there!
 @BIBTEX@ $TEXFILE
-
 
 echo "Running LaTeX stage 2..."
 $PDFLATEX $TEXFILE 
@@ -44,6 +38,11 @@ if test $EC -ne 0; then
     echo "--------------------------------------------"
     test -f $TEXFILE.pdf && rm $TEXFILE.pdf
     exit $EC
+fi
+
+if test -e $TEXFILE.idx; then
+    echo "Running makeindex..."
+    @MAKEINDEX@ $TEXFILE || exit $?
 fi
 
 echo "Running LaTeX stage 3..."
