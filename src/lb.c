@@ -197,11 +197,9 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   else if (ARG0_IS_S("init")) {
     lbfluid_tcl_print_usage(interp);
     return TCL_ERROR;
-  } 
-  else if (ARG0_IS_S("print_interpolated_velocity")) {
-    return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
   }
-  else while (argc > 0) {
+  else
+  	while (argc > 0) {
       if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
 	        Tcl_AppendResult(interp, "dens requires 1 argument", (char *)NULL);
@@ -226,7 +224,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 	        Tcl_AppendResult(interp, "agrid must be positive", (char *)NULL);
           return TCL_ERROR;
         } else if (0) {
-          // agrid not is compatible with box_l;
+          // agrid is not compatible with box_l;
           // Not necessary because this is caught on the mpi level!
         } else {
           if ( lb_lbfluid_set_agrid(floatarg) == 0 ) {
@@ -347,6 +345,54 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
           }
         }
       }
+      else if (ARG0_IS_S("print")) {
+        if ( argc < 3 || (ARG1_IS_S("vtk") && argc < 4) ) {
+	        Tcl_AppendResult(interp, "lbfluid print requires at least 2 arguments. Usage: lbfluid print [vtk] velocity|boundary filename", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else {
+          argc--; argv++;
+          if (ARG0_IS_S("vtk")) {
+          	if (ARG1_IS_S("boundary")) {
+				      if ( lb_lbfluid_cpu_print_vtk_boundary(argv[2]) != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    }
+				    else if (ARG1_IS_S("velocity")) {
+				      if ( lb_lbfluid_cpu_print_vtk_velocity(argv[2]) != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    }
+				    else {
+				    	return TCL_ERROR;
+				    }
+				    argc-=3; argv+=3;
+		      }
+		      else {
+		      	if (ARG0_IS_S("boundary")) {
+			   	  	if ( lb_lbfluid_cpu_print_boundary(argv[1]) != 0 ) {
+				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
+			      	  return TCL_ERROR;
+			      	}
+			    	}
+			    	else if (ARG0_IS_S("velocity")) {
+			      	if ( lb_lbfluid_cpu_print_velocity(argv[1]) != 0 ) {
+				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
+			      	  return TCL_ERROR;
+			      	}
+			      }
+				    else {
+				    	return TCL_ERROR;
+				    }
+			      argc-=2; argv+=2;
+		      }
+        }
+      }
+			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
+				return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
+			}
       else {
     	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
     	  return TCL_ERROR ;
@@ -627,6 +673,114 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
   *p_fy = lbpar.ext_force[1];
   *p_fz = lbpar.ext_force[2];
   return 0;
+}
+
+int lb_lbfluid_cpu_print_vtk_boundary(char* filename) {
+	int pos[3];
+	int boundary;
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_boundary(pos, &boundary);
+				fprintf(fp, "%d ", boundary);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
+int lb_lbfluid_cpu_print_vtk_velocity(char* filename) {
+	int pos[3];
+	double u[3];
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+		
+	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_u(pos, u);
+				fprintf(fp, "%f %f %f ", u[0], u[1], u[2]);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
+int lb_lbfluid_cpu_print_boundary(char* filename) {
+	int pos[3];
+	int boundary;
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_boundary(pos, &boundary);
+				fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
+int lb_lbfluid_cpu_print_velocity(char* filename) {
+	int pos[3];
+	double u[3];
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_u(pos, u);
+				fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
+			}
+				
+	fclose(fp);				
+	return 0;
 }
 
 int lb_lbnode_get_rho(int* ind, double* p_rho){
