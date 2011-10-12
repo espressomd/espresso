@@ -632,13 +632,15 @@ int tclcommand_observable_nearest_neighbour_conditional(Tcl_Interp* interp, int 
 
 
 
-#define REGISTER_OBSERVABLE(name,parser) \
+#define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
-    observables[n_observables]=malloc(sizeof(observable)); \
+    observables[id]=malloc(sizeof(observable)); \
     if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) ==TCL_OK) { \
       n_observables++; \
       argc-=1+temp; \
       argv+=1+temp; \
+      sprintf(buffer,"%d",no); \
+      Tcl_AppendResult(interp,buffer,(char *)NULL);\
       return TCL_OK; \
     } else { \
       free(observables[n_observables]);\
@@ -653,11 +655,11 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 //  file_data_source* fds;
   char buffer[TCL_INTEGER_SPACE];
   int n;
+  int id;
   int temp;
   int no;
   
 
-  observables=(observable**) realloc(observables, (n_observables+1)*sizeof(observable*)); 
   if (argc<2) {
     Tcl_AppendResult(interp, "Usage!!!\n", (char *)NULL);
     return TCL_ERROR;
@@ -670,37 +672,45 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   }
 
   
-  if (argc > 1 && ARG1_IS_I(no)) {
-  }
-  if (argc > 2 && ARG1_IS_I(no) && no == n_observables) {
+//  if (argc > 1 && ARG1_IS_I(no)) {
+// }
+  if (argc > 2 && ARG1_IS_S("new") ) {
 
-    REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities);
-    REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity);
-    REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position);
-    REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions);
-    REGISTER_OBSERVABLE(stress_tensor, tclcommand_observable_stress_tensor);
-    REGISTER_OBSERVABLE(stress_tensor_acf_obs, tclcommand_observable_stress_tensor_acf_obs);
-    REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents);
-    REGISTER_OBSERVABLE(currents, tclcommand_observable_currents);
-    REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment);
-    REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor);
-    REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with);
-    REGISTER_OBSERVABLE(nearest_neighbour_conditional, tclcommand_observable_nearest_neighbour_conditional);
-  //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing);
-  //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile);
-    REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile);
-    REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile);
-    REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile);
-    REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile);
-    REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile);
-    REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile);
+    // find the next free observable id
+    for (id=0;id<n_observables;id++) 
+      if ( observables+id == 0 ) break; 
+    if (id==n_observables) 
+      observables=(observable**) realloc(observables, (n_observables+1)*sizeof(observable*)); 
+
+    REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities,id);
+    REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity,id);
+    REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position,id);
+    REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions,id);
+    REGISTER_OBSERVABLE(stress_tensor, tclcommand_observable_stress_tensor,id);
+    REGISTER_OBSERVABLE(stress_tensor_acf_obs, tclcommand_observable_stress_tensor_acf_obs,id);
+    REGISTER_OBSERVABLE(particle_currents, tclcommand_observable_particle_currents,id);
+    REGISTER_OBSERVABLE(currents, tclcommand_observable_currents,id);
+    REGISTER_OBSERVABLE(dipole_moment, tclcommand_observable_dipole_moment,id);
+    REGISTER_OBSERVABLE(structure_factor, tclcommand_observable_structure_factor,id);
+    REGISTER_OBSERVABLE(interacts_with, tclcommand_observable_interacts_with,id);
+    REGISTER_OBSERVABLE(nearest_neighbour_conditional, tclcommand_observable_nearest_neighbour_conditional,id);
+  //  REGISTER_OBSERVABLE(obs_nothing, tclcommand_observable_obs_nothing,id);
+  //  REGISTER_OBSERVABLE(flux_profile, tclcommand_observable_flux_profile,id);
+    REGISTER_OBSERVABLE(density_profile, tclcommand_observable_density_profile,id);
+    REGISTER_OBSERVABLE(lb_velocity_profile, tclcommand_observable_lb_velocity_profile,id);
+    REGISTER_OBSERVABLE(radial_density_profile, tclcommand_observable_radial_density_profile,id);
+    REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile,id);
+    REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
+    REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
   }
   
   if (ARG1_IS_I(n)) {
-    if (n>=n_observables) {
-      Tcl_AppendResult(interp, "Observable %d does not yet exist.", n ,"\n", (char *)NULL);
+    if (n>=n_observables || observables+n == NULL ) {
+      sprintf(buffer,"%d \n",n);
+      Tcl_AppendResult(interp, "Observable with id ", buffer, (char *)NULL);
+      Tcl_AppendResult(interp, "is not defined\n", (char *)NULL);
       return TCL_ERROR;
     }
     if (argc > 2 && ARG_IS_S(2,"print")) {
