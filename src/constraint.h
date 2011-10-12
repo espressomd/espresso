@@ -217,10 +217,21 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
 MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
 {
 	//TODO
-	*dist = 1;
-	vec[0] = 1;
-	vec[0] = 0;
-	vec[0] = 0;
+	vec[0] = 20.-ppos[0];
+	vec[1] = 20.-ppos[1];
+	vec[2] = 20.-ppos[2];
+	
+	*dist = sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+	
+	vec[0] = vec[0] - vec[0] / *dist * 10;
+	vec[1] = vec[1] - vec[1] / *dist * 10;
+	vec[2] = vec[2] - vec[2] / *dist * 10;
+	
+	vec[0] *= -1.;
+	vec[1] *= -1.;
+	vec[2] *= -1.;
+	
+	*dist -= 10;
 }
 
 MDINLINE double max(double x1, double x2) {
@@ -640,6 +651,32 @@ MDINLINE void add_constraints_forces(Particle *p1)
         }
       }
       break;
+    
+    case CONSTRAINT_RHOMBOID: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+    if(constraints[n].c.rhomboid.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.rhomboid.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 rhomboid constraint %d violated by particle %d} ", n, p1->p.identity);
+    }
+        }
+      }
+      break;
 	
     case CONSTRAINT_MAZE: 
       if(checkIfInteraction(ia_params)) {
@@ -797,6 +834,27 @@ MDINLINE double add_constraints_energy(Particle *p1)
 
 	}
 	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+	
+    case CONSTRAINT_RHOMBOID: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist , vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+
+	}
+	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
 	  if ( dist < 0 ) {
 	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
 						     ia_params, vec, -1.0*dist, dist*dist);
