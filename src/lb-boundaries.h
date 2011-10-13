@@ -53,6 +53,8 @@
 #define LB_BOUNDARY_CYL 3
 /** a pore geometry */
 #define LB_BOUNDARY_POR 4
+/** rhomboid shaped constraint applied */
+#define LB_BOUNDARY_RHOMBOID 5
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -70,6 +72,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_rhomboid rhomboid;
     Constraint_pore pore;
   } c;
   double force[3];

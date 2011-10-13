@@ -646,7 +646,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
       argc -= 2; argv += 2;
     }
     else {
-			Tcl_AppendResult(interp, "Error: Unknown parameter ", argv[0], " in lbboundary rhomboid", (char *) NULL);
+			Tcl_AppendResult(interp, "Error: Unknown parameter ", argv[0], " in constraint rhomboid", (char *) NULL);
 			return TCL_ERROR;
     }
   }

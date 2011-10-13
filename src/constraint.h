@@ -216,8 +216,8 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
 
 MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
 {
-	//TODO
-	vec[0] = 20.-ppos[0];
+	//dummy sphere of radius 10 at 20, 20, 20
+	/*vec[0] = 20.-ppos[0];
 	vec[1] = 20.-ppos[1];
 	vec[2] = 20.-ppos[2];
 	
@@ -231,7 +231,10 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 	vec[1] *= -1.;
 	vec[2] *= -1.;
 	
-	*dist -= 10;
+	*dist -= 10;*/
+	
+	//vec ist vektor von nächstem punkt auf boundary zum teilchen
+	
 }
 
 MDINLINE double max(double x1, double x2) {
@@ -848,7 +851,7 @@ MDINLINE double add_constraints_energy(Particle *p1)
 	
     case CONSTRAINT_RHOMBOID: 
       if(checkIfInteraction(ia_params)) {
-	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist , vec); 
+	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist , vec); 
 	if ( dist > 0 ) {
 	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
 						     ia_params, vec, dist, dist*dist);
