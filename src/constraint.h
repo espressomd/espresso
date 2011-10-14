@@ -215,26 +215,188 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
 }
 
 MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
-{
-	//dummy sphere of radius 10 at 20, 20, 20
-	/*vec[0] = 20.-ppos[0];
-	vec[1] = 20.-ppos[1];
-	vec[2] = 20.-ppos[2];
-	
-	*dist = sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
-	
-	vec[0] = vec[0] - vec[0] / *dist * 10;
-	vec[1] = vec[1] - vec[1] / *dist * 10;
-	vec[2] = vec[2] - vec[2] / *dist * 10;
-	
-	vec[0] *= -1.;
-	vec[1] *= -1.;
-	vec[2] *= -1.;
-	
-	*dist -= 10;*/
-	
+{	
 	//vec ist vektor von nächstem punkt auf boundary zum teilchen
 	
+	double axb[3], bxc[3], axc[3];
+	double A, B, C;
+	double a_dot_bxc, b_dot_axc, c_dot_axb;
+	
+	//calculate a couple of vectors and scalars that are going to be used frequently
+	
+	axb[0] = c->a[1]*c->b[2] - c->a[2]*c->b[1];
+	axb[1] = c->a[2]*c->b[0] - c->a[0]*c->b[2];
+	axb[2] = c->a[0]*c->b[1] - c->a[1]*c->b[0];
+	
+	bxc[0] = c->b[1]*c->c[2] - c->b[2]*c->c[1];
+	bxc[1] = c->b[2]*c->c[0] - c->b[0]*c->c[2];
+	bxc[2] = c->b[0]*c->c[1] - c->b[1]*c->c[0];
+	
+	axc[0] = c->a[1]*c->c[2] - c->a[2]*c->c[1];
+	axc[1] = c->a[2]*c->c[0] - c->a[0]*c->c[2];
+	axc[2] = c->a[0]*c->c[1] - c->a[1]*c->c[0];
+	
+	a_dot_bxc = c->a[0]*bxc[0] + c->a[1]*bxc[1] + c->a[2]*bxc[2];
+	b_dot_axc = c->b[0]*axc[0] + c->b[1]*axc[1] + c->b[2]*axc[2];
+	c_dot_axb = c->c[0]*axb[0] + c->c[1]*axb[1] + c->c[2]*axb[2];
+	
+	//represent the distance from pos to ppos as a linear combination of the edge vectors.
+	
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+	
+	//the coefficients tell whether ppos lies within the cone defined by pos and the adjacent edges
+	
+	if(A <= 0 && B <= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0];
+		vec[1] = ppos[1]-c->pos[1];
+		vec[2] = ppos[2]-c->pos[2];
+		*dist = c->direction;
+	}
+	else
+	{
+		//check for cone at pos+a
+	
+		A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+		A /= a_dot_bxc;	
+		B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+		B /= b_dot_axc;	
+		C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+		C /= c_dot_axb;
+	
+		if(A >= 0 && B <= 0 && C <= 0)
+		{
+			vec[0] = ppos[0]-c->pos[0]-c->a[0];
+			vec[1] = ppos[1]-c->pos[1]-c->a[1];
+			vec[2] = ppos[2]-c->pos[2]-c->a[2];
+			*dist = c->direction;
+		}
+		else
+		{
+			//check for cone at pos+b
+	
+			A = (ppos[0]-c->pos[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2])*bxc[2];
+			A /= a_dot_bxc;	
+			B = (ppos[0]-c->pos[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2])*axc[2];
+			B /= b_dot_axc;	
+			C = (ppos[0]-c->pos[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2])*axb[2];
+			C /= c_dot_axb;
+	
+			if(A <= 0 && B >= 0 && C <= 0)
+			{
+				vec[0] = ppos[0]-c->pos[0]-c->b[0];
+				vec[1] = ppos[1]-c->pos[1]-c->b[1];
+				vec[2] = ppos[2]-c->pos[2]-c->b[2];
+				*dist = c->direction;
+			}
+			else
+			{
+				//check for cone at pos+c
+	
+				A = (ppos[0]-c->pos[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->c[2])*bxc[2];
+				A /= a_dot_bxc;	
+				B = (ppos[0]-c->pos[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->c[2])*axc[2];
+				B /= b_dot_axc;	
+				C = (ppos[0]-c->pos[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->c[2])*axb[2];
+				C /= c_dot_axb;
+	
+				if(A <= 0 && B <= 0 && C >= 0)
+				{
+					vec[0] = ppos[0]-c->pos[0]-c->c[0];
+					vec[1] = ppos[1]-c->pos[1]-c->c[1];
+					vec[2] = ppos[2]-c->pos[2]-c->c[2];
+					*dist = c->direction;
+				}
+				else
+				{
+					//check for cone at pos+a+b
+	
+					A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+					A /= a_dot_bxc;	
+					B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+					B /= b_dot_axc;	
+					C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+					C /= c_dot_axb;
+	
+					if(A >= 0 && B >= 0 && C <= 0)
+					{
+						vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0];
+						vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1];
+						vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2];
+						*dist = c->direction;
+					}
+					else
+					{
+						//check for cone at pos+a+c
+	
+						A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+						A /= a_dot_bxc;	
+						B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+						B /= b_dot_axc;	
+						C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+						C /= c_dot_axb;
+	
+						if(A >= 0 && B <= 0 && C >= 0)
+						{
+							vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0];
+							vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1];
+							vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2];
+							*dist = c->direction;
+						}
+						else
+						{
+							//check for cone at pos+a+c
+	
+							A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+							A /= a_dot_bxc;	
+							B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+							B /= b_dot_axc;	
+							C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+							C /= c_dot_axb;
+	
+							if(A <= 0 && B >= 0 && C >= 0)
+							{
+								vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0];
+								vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1];
+								vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2];
+								*dist = c->direction;
+							}
+							else
+							{
+								//check for cone at pos+a+b+c
+	
+								A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+								A /= a_dot_bxc;	
+								B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+								B /= b_dot_axc;	
+								C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+								C /= c_dot_axb;
+	
+								if(A >= 0 && B >= 0 && C >= 0)
+								{
+									vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0];
+									vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1];
+									vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2];
+									*dist = c->direction;
+								}
+								else
+								{
+									*dist = -c->direction;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	*dist *= sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 }
 
 MDINLINE double max(double x1, double x2) {
