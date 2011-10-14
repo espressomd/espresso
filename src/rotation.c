@@ -309,9 +309,9 @@ void convert_torques_propagate_omega()
 
       
       if ( thermo_switch & THERMO_LANGEVIN ) {
-      #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+#if defined (VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
        if (!ifParticleIsVirtual(&p[i]))
-       #endif
+#endif
        {
 	friction_thermo_langevin_rotation(&p[i]);
 

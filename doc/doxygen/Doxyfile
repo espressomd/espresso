@@ -607,7 +607,7 @@ WARN_LOGFILE           =
 
 INPUT                  = $(SRCDIR)/src \
                          $(SRCDIR)/doc/doxygen/pages \
-                         background_errors.doc
+                         background_errors.dox
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -628,7 +628,7 @@ INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.h \
                          *.c \
 			 *.cu \
-                         *.doc
+                         *.dox
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.

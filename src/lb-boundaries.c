@@ -141,6 +141,12 @@ LB_Boundary *generate_lbboundary()
   n_lb_boundaries++;
   lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  lb_boundaries[n_lb_boundaries-1].velocity[0]=
+  lb_boundaries[n_lb_boundaries-1].velocity[1]=
+  lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  lb_boundaries[n_lb_boundaries-1].force[0]=
+  lb_boundaries[n_lb_boundaries-1].force[1]=
+  lb_boundaries[n_lb_boundaries-1].force[2]=0;
   
   return &lb_boundaries[n_lb_boundaries-1];
 }
@@ -182,6 +188,22 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	return (TCL_ERROR);
       }
       argc -= 2; argv += 2;
+    }
+    else if(!strncmp(argv[0], "velocity", strlen(argv[0]))) {
+      if(argc < 4) {
+	Tcl_AppendResult(interp, "lbboundary wall velocity <vx> <vy> <vz> expected", (char *) NULL);
+	return (TCL_ERROR);
+      }
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->velocity[0])) == TCL_ERROR ||
+      	  Tcl_GetDouble(interp, argv[2], &(lbb->velocity[1])) == TCL_ERROR ||
+	        Tcl_GetDouble(interp, argv[3], &(lbb->velocity[2])) == TCL_ERROR)
+	        return (TCL_ERROR);
+      else {
+        lbb->velocity[0]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[1]*=lbpar.tau/lbpar.agrid;
+        lbb->velocity[2]*=lbpar.tau/lbpar.agrid;
+      }
+      argc -= 4; argv += 4;
     }
     else
       break;
@@ -490,6 +512,8 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef LB_BOUNDARIES
   int status, c_num;
+  double force[3];
+  char buffer[3*TCL_DOUBLE_SPACE+3];
 
 
   if (argc < 2) return tclcommand_lbboundary_print_all(interp);
@@ -509,6 +533,23 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
   else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
     status = tclcommand_lbboundary_pore(generate_lbboundary(),interp, argc - 2, argv + 2);
     mpi_bcast_lbboundary(-1);
+  }
+  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
+    if (argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
+	    Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
+	    return (TCL_ERROR);
+    }
+    if(c_num < 0 || c_num >= n_lb_boundaries) {
+	    Tcl_AppendResult(interp, "Error in lbboundary force: The selected boundary does not exist",(char *) NULL);
+	    return (TCL_ERROR);
+    } else {
+      status = lbboundary_get_force(c_num, force);
+      for (int i = 0; i < 3; i++) {
+        Tcl_PrintDouble(interp, force[i], buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+      }
+      return TCL_OK;
+    }
   }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
     if(argc < 3) {
@@ -535,6 +576,7 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
     return (TCL_ERROR);
   }
 
+//  lb_init_boundaries();
   return mpi_gather_runtime_errors(interp, status);
 
 #else /* !defined(LB_BOUNDARIES) */
@@ -544,12 +586,51 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
 }
 #ifdef LB_BOUNDARIES
 
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
+  double vec[3];
+  double dist=1e100;
+  *mindist = 1e100;
+  int n;
+
+  Particle* p1=0;
+  for(n=0;n<n_lb_boundaries;n++) {
+    switch(lb_boundaries[n].type) {
+      case CONSTRAINT_WAL: 
+	        calculate_wall_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist, vec); 
+        break;
+      case CONSTRAINT_SPH:
+	        calculate_sphere_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist, vec); 
+        break;
+      case CONSTRAINT_CYL: 
+	        calculate_cylinder_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist, vec); 
+        break;
+      case CONSTRAINT_PORE: 
+	      calculate_pore_dist(p1, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist, vec); 
+        break;
+    }
+    if (dist<*mindist) {
+      *no=n;
+      *mindist=dist;
+      distvec[0] = vec[0];
+      distvec[1] = vec[1];
+      distvec[2] = vec[2];
+    } 
+//    else { 
+//      distvec[0]=0;
+//      distvec[1]=0;
+//      distvec[2]=0;
+//    }
+
+  }
+}
+
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
   int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
+  int the_boundary=-1;
 	
   map_node_array(this_node, node_domain_position);
 	
@@ -560,15 +641,17 @@ void lb_init_boundaries() {
   for (n=0;n<lblattice.halo_grid_volume;n++) {
     lbfields[n].boundary = 0;
   }
+  if (lblattice.halo_grid_volume==0)
+    return;
   
-  for (z=1; z<=lblattice.grid[2]; z++) {
-    for (y=1; y<=lblattice.grid[1]; y++) {
-	    for (x=1; x<=lblattice.grid[0]; x++) {	    
+  for (z=0; z<lblattice.grid[2]+2; z++) {
+   for (y=0; y<lblattice.grid[1]+2; y++) {
+	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
 	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
 	      pos[2] = (offset[2]+(z-1))*lblattice.agrid;
 	      
-	      dist = 0.;
+	      dist = 1e99;
 
         for (n=0;n<n_lb_boundaries;n++) {
           switch (lb_boundaries[n].type) {
@@ -589,17 +672,31 @@ void lb_init_boundaries() {
               ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
           }
           
-          if (abs(dist) > abs(dist_tmp) || n == 0) {
+//        if (abs(dist) > abs(dist_tmp) || n == 0) {
+          if (dist_tmp<dist) { //If you try to create a wall of finite thickness ...|xxx|..., it makes every node a wall node! We still leave it like that, since it allows for corners without problems. We will add a box type to allow for walls of finite thickness. (Georg Rempfer, Stefan Kesselheim, 05.10.2011)
             dist = dist_tmp;
+            the_boundary = n;
           }
         }       
         
   	    if (dist <= 0 && n_lb_boundaries > 0) {
-   	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = 1;   
+   	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;   
+        } else {
+            lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary=0;
         }
       }
     }
   }
+}
+
+int lbboundary_get_force(int no, double* f) {
+  double* forces=malloc(3*n_lb_boundaries*sizeof(double));
+  mpi_gather_stats(8, forces, NULL, NULL, NULL);
+  f[0]=forces[3*no+0]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  f[1]=forces[3*no+1]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  f[2]=forces[3*no+2]/lbpar.tau/lbpar.tau*lbpar.agrid;
+  free(forces);
+  return 0;
 }
 
 #endif /* LB_BOUNDARIES */

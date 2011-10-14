@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -21,8 +22,8 @@
     Pressure calculation. Really similar to \ref energy.h "energy.h".
 */
 
-#ifndef PRESSURE_H
-#define PRESSURE_H
+#ifndef _PRESSURE_H
+#define _PRESSURE_H
 
 #include "utils.h"
 #include "integrate.h"
@@ -80,7 +81,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 {
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
-#if defined(ELECTROSTATICS)  || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS)  || defined(DIPOLES)
   double ret=0;
 #endif
   calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
@@ -113,9 +114,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
 #endif
     case COULOMB_DH:
@@ -162,24 +163,24 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case  DIPOLAR_P3M:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles P3M .... pressure.h \n");
 	ret=0;
         break; 
 #endif
     case  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles DAWAANR .... pressure.h \n");
 	ret=0;
         break; 
     case  DIPOLAR_DS:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles MAGNETIC DIRECT SUM .... pressure.h \n");
 	ret=0;
         break; 
@@ -189,7 +190,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     }
     virials.dipolar[0] += ret;
   }  
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 }
 
 MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {
@@ -519,10 +520,6 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
     virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
   else
     virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
-
-#ifdef ROTATION
-  virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
-#endif
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)

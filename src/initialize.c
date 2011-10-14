@@ -45,8 +45,8 @@
 #include "thermostat.h"
 #include "rotation.h"
 #include "p3m.h"
+#include "p3m-dipolar.h"
 #include "ewald.h"
-#include "fft.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -114,8 +114,11 @@ int on_program_start(Tcl_Interp *interp)
   tf_tables_init();
   /* #endif */
 #endif
-#ifdef ELP3M
-  fft_pre_init();
+#ifdef P3M
+  p3m_pre_init();
+#endif
+#ifdef DP3M
+  dp3m_pre_init();
 #endif
 
 #ifdef LB_GPU
@@ -188,9 +191,9 @@ void on_integration_start()
 
     switch(coulomb.method) {
       case COULOMB_NONE:  break;
-#ifdef ELP3M
+#ifdef P3M
       case COULOMB_P3M:   break;
-#endif /*ELP3M*/
+#endif /*P3M*/
       case COULOMB_EWALD: break;
       default: {
         char *errtext = runtime_error(128);
@@ -291,10 +294,10 @@ void on_observable_calc()
   if(reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_ELC_P3M:
     case COULOMB_P3M:
-      P3M_count_charged_particles();
+      p3m_count_charged_particles();
       break;
 #endif
     case COULOMB_EWALD:
@@ -309,14 +312,14 @@ void on_observable_calc()
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
     switch (coulomb.Dmethod) {
-    #ifdef ELP3M
+#ifdef DP3M
     case DIPOLAR_MDLC_P3M:
     case DIPOLAR_P3M:
-      P3M_count_magnetic_particles();
+      dp3m_count_magnetic_particles();
       break;
 #endif
     default: break;
@@ -355,12 +358,12 @@ void on_coulomb_change()
   else
     coulomb.prefactor = coulomb.bjerrum;
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
   case COULOMB_P3M:
-    P3M_init_charges();
+    p3m_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -385,18 +388,18 @@ void on_coulomb_change()
   recalc_forces = 1;
 #endif  /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(temperature > 0.0)
     coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
   else
     coulomb.Dprefactor = coulomb.Dbjerrum;
   
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case DIPOLAR_MDLC_P3M:
        // fall through
   case DIPOLAR_P3M:
-    P3M_init_dipoles();
+    dp3m_init();
     integrate_vv_recalc_maxrange();
     on_parameter_change(FIELD_MAXRANGE);
     break;
@@ -405,7 +408,7 @@ void on_coulomb_change()
   }
 
   recalc_forces = 1;
-#endif  /* ifdef MAGNETOSTATICS */
+#endif  /* ifdef DIPOLES */
 
 }
 
@@ -424,19 +427,6 @@ void on_constraint_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
-
-#ifdef LB_BOUNDARIES
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
-  }
-#endif
-#ifdef LB_BOUNDARIES_GPU
-  if(this_node == 0){
-    if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries_gpu();
-    }
-  }
-#endif
 
   recalc_forces = 1;
 }
@@ -478,7 +468,7 @@ void on_resort_particles()
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_on_resort_particles();
     break;
@@ -494,16 +484,16 @@ void on_resort_particles()
 #endif /* ifdef ELECTROSTATICS */
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     /* dlc_on_resort_particles();   NOT NECESSARY DUE TO HOW WE COMPUTE THINGS*/
     break;
 #endif
  default: break;
   }
-#endif /* ifdef MAGNETOSTATICS*/
+#endif /* ifdef DIPOLES*/
 
 }
 
@@ -513,9 +503,9 @@ void on_NpT_boxl_change(double scal1) {
   
 #ifdef ELECTROSTATICS
   switch(coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_P3M:
-    P3M_scaleby_box_l_charges();
+    p3m_scaleby_box_l();
     integrate_vv_recalc_maxrange();
     break;
 #endif
@@ -527,11 +517,11 @@ void on_NpT_boxl_change(double scal1) {
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch(coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_P3M:
-    P3M_scaleby_box_l_dipoles();
+    dp3m_scaleby_box_l();
     integrate_vv_recalc_maxrange();
     break;
 #endif
@@ -547,7 +537,7 @@ void on_NpT_boxl_change(double scal1) {
 void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   int cc = 0;
 #endif
 
@@ -578,7 +568,7 @@ void on_parameter_change(int field)
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
       cc = 1;
@@ -587,7 +577,7 @@ void on_parameter_change(int field)
     if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
       cc = 1;
     else if (field == FIELD_BOXL) {
-      P3M_scaleby_box_l_charges();
+      p3m_scaleby_box_l();
       integrate_vv_recalc_maxrange(); 
     }
     break;
@@ -626,9 +616,9 @@ void on_parameter_change(int field)
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
-   #ifdef ELP3M
+   #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
      if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
        cc = 1;
@@ -637,16 +627,16 @@ void on_parameter_change(int field)
       if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
         cc = 1;
       else if (field == FIELD_BOXL) {
-        P3M_scaleby_box_l_dipoles();
+        dp3m_scaleby_box_l();
         integrate_vv_recalc_maxrange(); 
       }
       break;
 #endif
   default: break;
   }
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   if (cc)
     on_coulomb_change();
 #endif
@@ -699,7 +689,7 @@ void on_parameter_change(int field)
 #ifdef LB_GPU
 if(this_node == 0){
   if (lattice_switch & LATTICE_LB_GPU) {
-    if (field == FIELD_TEMPERATURE) lb_init_gpu();
+    if (field == FIELD_TEMPERATURE) lb_reinit_parameters_gpu();
   }
 }
 #endif
@@ -716,6 +706,21 @@ void on_lb_params_change(int field) {
   }
 
   lb_reinit_parameters();
+
+}
+#endif
+
+#ifdef LB_GPU
+void on_lb_params_change_gpu(int field) {
+
+  if (field == LBPAR_AGRID) {
+    lb_init_gpu();
+  }
+  if (field == LBPAR_DENSITY) {
+    lb_reinit_fluid_gpu();
+  }
+
+  lb_reinit_parameters_gpu();
 
 }
 #endif
@@ -819,7 +824,7 @@ static void init_tcl(Tcl_Interp *interp)
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
 #ifdef ELECTROSTATICS
-#ifdef ELP3M
+#ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
 #endif 
 #endif 
@@ -837,7 +842,7 @@ static void init_tcl(Tcl_Interp *interp)
 #endif
 #ifdef LB_GPU
   /* in lbgpu_cfile.c */
-  REGISTER_COMMAND("lbnode_exf", tclcommand_lbnode_extforce_gpu);
+  REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
 
   REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
@@ -850,23 +855,23 @@ static void init_tcl(Tcl_Interp *interp)
   if (!scriptdir)
     scriptdir = get_default_scriptsdir();
   
-  fprintf(stderr,"%d: Script directory: %s\n", this_node, scriptdir);
+  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
 
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
     fprintf(stderr,
 	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
 	    scriptdir);
-    exit(-1);
+    exit(1);
   }
   if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
     fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
 	    Tcl_GetStringResult(interp));
-    exit(-1);
+    exit(1);
   }
   if (chdir(cwd) != 0) {
     fprintf(stderr,
 	    "\n\ncould not change back to execution dir %s ????\n\n\n",
 	    cwd);
-    exit(-1);
+    exit(1);
   }
 }

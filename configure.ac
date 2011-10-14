@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT([ESPResSo],[3.0.0],[espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[3.0.2],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([src/main.c])
@@ -50,7 +50,7 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
      fake implementation for only one processor is used. Default: auto])
 ],,[with_mpi=auto])
 
-AX_MPI_ONLY([test x"$with_mpi" != xno],,[
+AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
     AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
   else
@@ -346,7 +346,7 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -488,11 +488,13 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
+	doc/logo/Makefile
 	doc/ug/Makefile
-	doc/doxygen/Makefile
 	doc/dg/Makefile
+	doc/doxygen/Makefile
 	doc/tutorials/Makefile
-	doc/tutorials/tut2/Makefile 
+	doc/tutorials/01-lennard_jones/Makefile 
+	doc/tutorials/02-charged_system/Makefile 
 	doc/latexit.sh
 	myconfig-sample.h
 	])

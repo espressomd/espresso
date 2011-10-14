@@ -79,7 +79,7 @@ set slow     0
 
 # rewrite analysis_system.data analysis_system.data2; exit 0
 
-if { [catch {
+test_catch {
     puts -nonewline "Reading the checkpoint... "; flush stdout
     checkpoint_read analysis_system.data; puts " Done."
 
@@ -108,10 +108,6 @@ if { [catch {
     integrate 0
 
     foreach obs $observables get_obs $get_observables {
-	if { [string first "analyze pressure" $get_obs]==0 } { if { [regexp "ROTATION" [code_info]]} { 
-	    puts -nonewline "ROTATION compiled in => adjusting stored pressure $obs (f=3) by current ideal one ([analyze pressure ideal]) "
-	    set obs [expr $obs - [analyze pressure ideal]]; puts "to $obs (f=6)"
-	} }
 	set rel_error [expr abs(([eval $get_obs] - $obs)/$obs)]
 	puts "relative deviations upon evaluating '$get_obs': $rel_error  ([eval $get_obs] / $obs)"
 	if { $rel_error > $epsilon } {
@@ -285,7 +281,4 @@ if { [catch {
 	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
 	error "force error too large"
     }
-} res ] } {
-    error_exit $res
 }
-

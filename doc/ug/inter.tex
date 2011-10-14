@@ -1018,6 +1018,11 @@ and $q_2$, the interaction is given by
 \end{equation}
 where $l_B = e_o^2 / (4 \pi \epsilon k_B T)$ denotes the Bjerrum
 length, which measures the strength of the electrostatic interaction.
+As a special case, when the internal variable \var{temperature} 
+is set to zero, the value of bjerrum length you enter 
+is treated as $l_B k_B T$ rather than $l_B$. This occurs when the
+thermostat is switched off and \es performs an NVE integration
+(see also Section~\ref{sec:thermostat}).
 
 Computing electrostatic interactions is computationally very
 expensive.  \es{} features some state-of-the-art algorithms to deal
@@ -1106,7 +1111,7 @@ algorithm, systems are problematic where most charges are placed in
 one plane, one small region, or on a regular grid.
 
 The function employs the analytical expression of the error estimate
-for the P3M method \cite[8.23]{hockney88} and its real space error
+for the P3M method \cite{hockney88} and its real space error
 \cite{kolafa92} to obtain sets of parameters that yield the desired
 accuracy, then it measures how long it takes to compute the coulomb
 interaction using these parameter sets and chooses the set with the
@@ -1254,13 +1259,16 @@ of the setmd variable \keyword{timings}, which controls the number of
 test force calculations. For details on the MMM family of algorithms,
 refer to appendix \vref{chap:mmm}.
 
-\subsection{Maggs' method}
+\subsection{Maxwell Equation Molecular Dynamics (MEMD)}
 \index{Maggs method|mainindex}
+\index{Maxwell Equation Molecular Dynamics|mainindex}
+\index{MEMD|mainindex}
 \index{interactions!Maggs method|mainindex}
+\index{interactions!MEMD|mainindex}
 
 \begin{essyntax}
   inter coulomb \var{l_B}
-  maggs \var{f\_mass} \var{mesh}
+  memd \var{f\_mass} \var{mesh}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1308,7 +1316,6 @@ leads to the following rule of thumb for the parameter choices:
     timestep. For the second parameter, this means $\text{f\_mass} \gg
     dt^2/a^2$.
 \end{itemize}
-
 
 The main error of the MEMD algorithm stems from the lattice
 interpolation and is proportional to the lattice size in three
@@ -1515,8 +1522,9 @@ system is periodic (as defined by \texttt{setmd periodic}), it applies
 the minimum image convention, i.e. the interaction is effectively cut
 off at half a box length.
 
-This method should only be used if it is not possible to use P3M or
-DLC and has a low accuracy.
+In periodic systems, this method should only be used if it is not possible to use dipolar P3M or
+DLC, because those methods have a far better accuracy and are much faster.
+In a non-periodic system, the DAWAANR-method gives the exact result.
 
 \subsection{Magnetic Dipolar Direct Sum (MDDS)}
 \index{MDDS method|mainindex}
@@ -1536,7 +1544,7 @@ pairs. If the system is periodic in one or more directions, the
 interactions with further \var{value\_n\_cut} replicas of the system
 in all periodic directions is explicitly computed.
 
-As it is very slow, this method is not intendeed to do simulations,
+As it is very slow, this method is not intended to do simulations,
 but rather to check the results you get from more efficient methods
 like P3M.
   

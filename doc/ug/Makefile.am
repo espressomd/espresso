@@ -27,7 +27,7 @@ ug_TEXFILES = \
 	analysis.tex \
 	io.tex \
 	lb.tex \
-	maggs.tex \
+	memd.tex \
 	aux.tex \
 	internal.tex \
 	contributing.tex \
@@ -38,11 +38,16 @@ ug_TEXFILES = \
         mbtools.tex
 
 ug_FIGURES = \
-	figures/logo.png \
 	figures/nacl-rdf.pdf \
 	figures/dihedral-angle.pdf \
 	figures/salt.png \
-	figures/hbond.pdf
+	figures/hbond.pdf \
+	figures/diamond.png \
+	figures/elc-errordist.pdf \
+	figures/fullerene.png \
+	figures/maggs-charge-assignment.pdf \
+	figures/maggs-initial-scheme.pdf \
+	figures/maggs-rotation.pdf
 
 ug_FILES = \
 	$(ug_TEXFILES) \

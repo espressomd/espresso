@@ -18,7 +18,7 @@
 import string, re, os
 
 # Execute git log with the desired command line options.
-fin = os.popen('git log --summary --stat --no-merges --date=short End_of_CVS..', 'r')
+fin = os.popen('git log --summary --stat --no-merges --date=short 3.0.1..', 'r')
 
 # Set up the loop variables in order to locate the blocks we want
 authorFound = False

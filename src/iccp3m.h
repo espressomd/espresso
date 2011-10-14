@@ -50,8 +50,8 @@
     particle data organisation schemes this is performed differently.
     */
 
-#ifndef ICCP3M_H 
-#define ICCP3M_H
+#ifndef _ICCP3M_H 
+#define _ICCP3M_H
 
 #include <tcl.h>
 #include <time.h>
@@ -204,52 +204,49 @@ MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   /* real space coulomb */
   switch (coulomb.method) {
 
-    /*  if ELCP3M */
-    #ifdef ELC_P3M
-    case COULOMB_ELC_P3M: {
-      add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
-      if (elc_params.dielectric_contrast_on) {
-                  errtxt = runtime_error(128);
-                  ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
-      }
-      break;
-
+#ifdef P3M
+  case COULOMB_ELC_P3M: {
+    p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    if (elc_params.dielectric_contrast_on) {
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
     }
-    #endif /* ELCP3M */
-
-    /*  if P3M */
-    #ifdef ELP3M
-      case COULOMB_P3M: {
-  
-      #ifdef NPT /* ICCP3M does not work in NPT ensemble */
-          if(integ_switch == INTEG_METHOD_NPT_ISO){
-              errtxt = runtime_error(128);
-              ERROR_SPRINTF(errtxt, "{ICCP3M cannot be used with pressure coupling} ");
-          }
-      #endif
-  
-      #ifdef DIPOLES /* ICCP3M still does not work with dipoles, so abort if compiled in */
-            errtxt = runtime_error(128);
-            ERROR_SPRINTF(errtxt, "{ICCP3M and dipoles not implemented yet} ");
-      
-      #else        /* If it is just electrostatic P3M */
-          add_p3m_coulomb_pair_force(p2->p.q* p1->p.q,d,dist2,dist,force);
-      #endif  /* DIPOLES */
-
     break;
-    }
-    #endif /* P3M */
-
-    case COULOMB_MMM1D:
-      add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-      break;
-    case COULOMB_MMM2D:
-      add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
-      break;
-    case COULOMB_NONE:
-      break;
+    
   }
+    
+  case COULOMB_P3M: {
+    
+#ifdef NPT /* ICCP3M does not work in NPT ensemble */
+    if(integ_switch == INTEG_METHOD_NPT_ISO){
+      errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "{ICCP3M cannot be used with pressure coupling} ");
+    }
+#endif
+    
+#ifdef DIPOLES /* ICCP3M still does not work with dipoles, so abort if compiled in */
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{ICCP3M and dipoles not implemented yet} ");
+    
+#else        /* If it is just electrostatic P3M */
+    p3m_add_pair_force(p2->p.q* p1->p.q,d,dist2,dist,force);
+#endif  /* DIPOLES */
+    
+    break;
+    
+  }
+#endif /* P3M */
 
+  case COULOMB_MMM1D:
+    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    break;
+  case COULOMB_MMM2D:
+    add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
+    break;
+  case COULOMB_NONE:
+    break;
+  }
+  
 
   /***********************************************/
   /* add total nonbonded forces to particle      */

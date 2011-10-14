@@ -91,32 +91,32 @@ void calc_long_range_energies()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_P3M:
-    P3M_charge_assign(); 
-    energy.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+    p3m_charge_assign(); 
+    energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
     break;
   case COULOMB_ELC_P3M:
     // assign the original charges first
     // they may not have been assigned yet
-    P3M_charge_assign(); 
+    p3m_charge_assign(); 
     if(!elc_params.dielectric_contrast_on)
-      energy.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+      energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
     else {
-      energy.coulomb[1] = 0.5*P3M_calc_kspace_forces_for_charges(0,1); 
+      energy.coulomb[1] = 0.5*p3m_calc_kspace_forces(0,1); 
       energy.coulomb[1]+= 0.5*ELC_P3M_dielectric_layers_energy_self(); 
 
       //  assign both original and image charges now
-      ELC_P3M_charge_assign_both();
+      ELC_p3m_charge_assign_both();
       ELC_P3M_modify_p3m_sums_both();
 
-      energy.coulomb[1] += 0.5*P3M_calc_kspace_forces_for_charges(0,1); 
+      energy.coulomb[1] += 0.5*p3m_calc_kspace_forces(0,1); 
 
       //assign only the image charges now
-      ELC_P3M_charge_assign_image();
+      ELC_p3m_charge_assign_image();
       ELC_P3M_modify_p3m_sums_image();
 
-      energy.coulomb[1]-= 0.5*P3M_calc_kspace_forces_for_charges(0,1); 
+      energy.coulomb[1]-= 0.5*p3m_calc_kspace_forces(0,1); 
     }
     energy.coulomb[2] = ELC_energy();
     break;
@@ -136,16 +136,16 @@ void calc_long_range_energies()
   }
 #endif  /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_P3M:
-    P3M_dipole_assign(); 
-    energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    dp3m_dipole_assign(); 
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0,1);
     break;
   case DIPOLAR_MDLC_P3M:
-    P3M_dipole_assign(); 
-    energy.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    dp3m_dipole_assign(); 
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0,1);
     energy.dipolar[2] =add_mdlc_energy_corrections();
     break;
 #endif
@@ -161,7 +161,7 @@ void calc_long_range_energies()
     break;
   
   } 
-#endif /* ifdef MAGNETOSTATICS */
+#endif /* ifdef DIPOLES */
 
 }
 
@@ -178,7 +178,7 @@ void init_energies(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:  n_coulomb = 0; break;
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M: n_coulomb = 3; break;
   case COULOMB_P3M:   n_coulomb = 2; break;
 #endif
@@ -188,11 +188,11 @@ void init_energies(Observable_stat *stat)
 #endif
 
   n_dipolar    = 0;
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
 
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:  n_dipolar = 1; break;
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M: n_dipolar=3; break;
   case DIPOLAR_P3M:   n_dipolar = 2; break;
 #endif
@@ -258,20 +258,16 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       }
     }
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   if(
-#ifdef ELECTROSTATICS
-      coulomb.method != COULOMB_NONE
-#else
-      0
+#if defined(ELECTROSTATICS) && defined(DIPOLES) 
+     coulomb.method != COULOMB_NONE || coulomb.Dmethod != DIPOLAR_NONE
+#elif defined(ELECTROSTATICS)
+     coulomb.method != COULOMB_NONE
+#elif defined(DIPOLES)     
+     coulomb.Dmethod != DIPOLAR_NONE
 #endif
-      ||
-#ifdef MAGNETOSTATICS
-      coulomb.Dmethod != DIPOLAR_NONE
-#else
-      0
-#endif 
-      ) {
+     ) {
     /* total Coulomb energy */
     value = 0;
     for (i = 0; i < total_energy.n_coulomb; i++)
@@ -280,35 +276,32 @@ static void tclcommand_analyze_print_all(Tcl_Interp *interp)
       value += total_energy.dipolar[i];
     Tcl_PrintDouble(interp, value, buffer);
     
-#if defined(ELECTROSTATICS) && defined(MAGNETOSTATICS) 
-
+#if defined(ELECTROSTATICS) && defined(DIPOLES) 
     Tcl_AppendResult(interp, "{ coulomb+magdipoles ", buffer, (char *)NULL);  
-
-#else
-
-#ifndef MAGNETOSTATICS
+#elif defined(ELECTROSTATICS)
     Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
-#endif
-    
-#ifndef ELECTROSTATICS
+#elif defined(DIPOLES)
     Tcl_AppendResult(interp, "{ magdipoles ", buffer, (char *)NULL);  
 #endif
 
-#endif
-
     /* if it is split up, then print the split up parts */
+#ifdef ELECTROSTATICS
     if (total_energy.n_coulomb > 1) {
       for (i = 0; i < total_energy.n_coulomb; i++) {
 	Tcl_PrintDouble(interp, total_energy.coulomb[i], buffer);
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
-     } 
+    }
+#endif
+
+#ifdef DIPOLES
     if (total_energy.n_dipolar > 1) {
       for (i = 0; i < total_energy.n_dipolar; i++) {
  	Tcl_PrintDouble(interp, total_energy.dipolar[i], buffer);
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }
+#endif
     Tcl_AppendResult(interp, " }", (char *)NULL);
   }
 #endif
@@ -385,16 +378,16 @@ int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char
       for (i = 0; i < total_energy.n_coulomb; i++)
 	value += total_energy.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see myconfig.h)\n", (char *)NULL);
 #endif
     }    
     else if( ARG0_IS_S("magnetic")) {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
       value = 0;
       for (i = 0; i < total_energy.n_dipolar; i++)
 	value += total_energy.dipolar[i];
 #else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see myconfig.h)\n", (char *)NULL);
 #endif
     }
     

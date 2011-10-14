@@ -18,12 +18,12 @@
 EXTRA_DIST = \
 	background_errors.sh background_errors.awk \
 	Doxyfile \
-        pages/build.doc \
-        pages/doxygen.doc \
-        pages/header.doc \
-        pages/new_files.doc \
-        pages/progguide.doc \
-        pages/ug.doc \
+        pages/main.dox \
+        pages/build.dox \
+        pages/doxygen.dox \
+        pages/new_files.dox \
+        pages/progguide.dox \
+        pages/ug.dox \
         figs/bond_angle.fig \
         figs/bond_angle.gif \
         figs/datastorage.gif \
@@ -66,6 +66,6 @@ else
 
 endif
 
-MOSTLYCLEANFILES = background_errors.doc background_errors.sorted background_errors.unsorted
+MOSTLYCLEANFILES = background_errors.doxygen background_errors.sorted background_errors.unsorted
 clean-local:
 	-rm -rf html

@@ -18,9 +18,6 @@
 dg_TEXFILES = \
 	dg.tex
 
-dg_FIGURES = \
-	figures/logo.png
-
 dg_FILES = \
 	$(dg_TEXFILES) \
 	$(dg_FIGURES)

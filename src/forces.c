@@ -115,6 +115,7 @@ void force_calc()
 #ifdef COMFIXED
   calc_comfixed();
 #endif
+  check_forces();
 
 }
 
@@ -125,17 +126,17 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
       ELC_P3M_modify_p3m_sums_both();
-      ELC_P3M_charge_assign_both();
+      ELC_p3m_charge_assign_both();
       ELC_P3M_self_forces();
     }
     else
-      P3M_charge_assign();
+      p3m_charge_assign();
 
-    P3M_calc_kspace_forces_for_charges(1,0);
+    p3m_calc_kspace_forces(1,0);
 
     if (elc_params.dielectric_contrast_on)
       ELC_P3M_restore_p3m_sums();
@@ -144,13 +145,13 @@ void calc_long_range_forces()
 
     break;
   case COULOMB_P3M:
-    P3M_charge_assign();
+    p3m_charge_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_charges(1,1);
+      nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
     else
 #endif
-      P3M_calc_kspace_forces_for_charges(1,0);
+      p3m_calc_kspace_forces(1,0);
     break;
 #endif
   case COULOMB_EWALD:
@@ -170,22 +171,22 @@ void calc_long_range_forces()
   }
 #endif  /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS  
+#ifdef DIPOLES  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
      add_mdlc_force_corrections();
     //fall through 
   case DIPOLAR_P3M:
-    P3M_dipole_assign();
+    dp3m_dipole_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_dipoles(1,1);
+      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1,1);
       fprintf(stderr,"dipolar_P3M at this moment is added to p_vir[0]\n");    
     } else
 #endif
-      P3M_calc_kspace_forces_for_dipoles(1,0);
+      dp3m_calc_kspace_forces(1,0);
 
       break;
 #endif
@@ -200,7 +201,7 @@ void calc_long_range_forces()
       break;
 
   }
-#endif  /*ifdef MAGNETOSTATICS */
+#endif  /*ifdef DIPOLES */
 }
 
 /************************************************************/
@@ -389,6 +390,51 @@ void init_forces()
 #ifdef CONSTRAINTS
   init_constraint_forces();
 #endif
+}
+
+MDINLINE void check_particle_force(Particle *part)
+{
+  
+  int i;
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.f[i]) {
+      char **errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
+
+#ifdef ROTATION
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.torque[i]) {
+      char **errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
+#endif
+}
+
+void check_forces()
+{
+  Cell *cell;
+  Particle *p;
+  int np, c, i;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
+    }
+  }
+  
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++)
+      check_particle_force(&p[i]);
+  }
 }
 
 void init_forces_ghosts()

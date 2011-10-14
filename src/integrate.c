@@ -260,7 +260,7 @@ int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **
   }
 #endif
 
-#ifdef MAGNETOSTATICS     
+#ifdef DIPOLES     
   if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0 ){
     fprintf(stderr,"WARNING: If magnetostatics is being used you must use the -cubic_box option!\n");
     fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
@@ -553,6 +553,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     correct_vel_shake();
 #endif
 
+#ifdef ROTATION
+    convert_torques_propagate_omega();
+#endif
+
 //VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -566,16 +570,13 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     }
 #endif
 
-#ifdef ROTATION
-    convert_torques_propagate_omega();
-#endif
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
     /* Propagate time: t = t+dt */
-    if(this_node==0) sim_time += time_step;
+    sim_time += time_step;
   }
 
   /* after simulating the forces are necessarily set. Necessary since
