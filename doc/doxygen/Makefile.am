@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@ EXTRA_DIST = \
 	background_errors.sh background_errors.awk \
 	Doxyfile \
         pages/main.dox \
-        pages/build.dox \
         pages/doxygen.dox \
         pages/new_files.dox \
         pages/progguide.dox \

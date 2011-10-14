@@ -52,7 +52,8 @@ ug_FIGURES = \
 ug_FILES = \
 	$(ug_TEXFILES) \
 	$(ug_FIGURES) \
-	bibliography.bib
+	bibliography.bib \
+	todonotes.sty
 
 EXTRA_DIST = \
 	$(ug_FILES) \

@@ -20,7 +20,8 @@ dg_TEXFILES = \
 
 dg_FILES = \
 	$(dg_TEXFILES) \
-	$(dg_FIGURES)
+	$(dg_FIGURES) \
+	todonotes.sty
 
 # bibliography.bib
 

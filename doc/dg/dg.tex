@@ -95,8 +95,10 @@ idxtotoc                        % add the index to the TOC
 
 \begin{itemize}
 \item Autotools build system
-\item \es homepage at \url{http://espressomd.org}
-\item Code hosting at GNU Savannah \footnote{\url{http://nongnu.org}}
+\item \es homepage \url{http://espressomd.org}
+\item Code hosting at GNU Savannah 
+  \url{https://savannah.nongnu.org/projects/espressomd/}
+\item Jenkins build server \url{http://espressomd.org/jenkins}
 \end{itemize}
 
 \section{Getting into contact}
@@ -157,6 +159,7 @@ systems.
   \item \texttt{ug}
   \item \texttt{dg}
   \item \texttt{doxygen}
+  \item \texttt{tutorials}
   \item \texttt{distcheck}
   \item \texttt{clean}, \texttt{distclean}
   \end{itemize}
@@ -165,6 +168,67 @@ systems.
 \section{The build system}
 \label{sec:build_system}
 
+The build system of ESPResSo makes use of the GNU autotools suite
+consisting of
+automake\footnote{\url{http://www.gnu.org/software/automake/}} and
+autoconf\footnote{\url{http://www.gnu.org/software/autoconf/autoconf.html}}.
+If you want to use the development source code of ESPResSo, you first
+need to install both of these tools.
+
+The central source files of the build system are the following:
+\begin{itemize}
+\item \texttt{configure.ac}
+\item \texttt{config/*.m4}
+\item \texttt{Makefile.am}
+\item the different \texttt{Makefile.am} in the subdirectories
+\end{itemize}
+
+To change the behaviour of the build system, you have to modify any
+these files.
+
+\subsection{Running \texttt{bootstrap.sh}}
+
+The script \texttt{bootstrap.sh} in the top level source directory can
+be used to run \texttt{automake}, \texttt{autoconf} and the associated
+tools to generate the \texttt{configure} script and the
+\texttt{Makefile.in} used during compilation.  Once
+\texttt{bootstrap.sh}, the \es development code can be build and used
+like the release code.
+
+\subsection{Creating a distribution package}
+
+As described in the User's Guide, to create a \texttt{.tar.gz}
+distribution file that contains all required files, you can simply run
+\texttt{make dist}. This will bundle all files and put them into an
+archive with the name
+\texttt{espresso-\textit{version}\texttt{.tar.gz}}.
+
+Even better, you can also run \texttt{make distcheck}. This will not
+only create the distribution file, but it will also thoroughly check
+the created distribution, \ie it will try to 
+\begin{itemize}
+\item unpack the distro into a new directory
+\item configure and build it (\texttt{configure})
+\item run the testsuite (\texttt{make check})
+\item install it into a new directory (\texttt{make install})
+\item uninstall it (\texttt{make uninstall})
+\end{itemize}
+Whenever something goes wrong in these checks, it will give an error
+message that describes the problem. When everything goes fine, you can
+be relatively sure that you have a useful \es distribution
+package.
+
+In some cases, it might be necessary to pass some options to the run
+of \texttt{configure} done by \texttt{make distcheck}>. To do that,
+you can set the environment variable
+\texttt{DISTCHECK\_CONFIGURE\_FLAGS} to the required options.
+
+\paragraph{Example}
+\begin{verbatim}
+DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
+  make distcheck
+\end{verbatim}
+
 \section{The testsuite}
 \label{sec:testsuite}
 
@@ -172,6 +236,8 @@ systems.
 \item How to write tests?
 \item How they are called (\texttt{runtest.sh})
 \end{itemize}
+
+
 
 \printindex
 
