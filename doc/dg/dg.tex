@@ -229,6 +229,17 @@ DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
   make distcheck
 \end{verbatim}
 
+\subsection{Adding new files}
+
+To add new files to \es (like C source files or header files)
+you need to do the following:
+\begin{itemize}
+\item Add the files to the \texttt{Makefile.am} in the same directory
+\item Run \texttt{bootstrap.sh} in the source directory
+\item Check the distribution by using \verb!make distcheck!
+\item Add the files to the Git repository
+\end{itemize}
+
 \section{The Testsuite}
 \label{sec:testsuite}
 
