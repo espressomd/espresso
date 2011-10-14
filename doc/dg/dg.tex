@@ -165,7 +165,7 @@ systems.
   \end{itemize}
 \end{itemize}
 
-\section{The build system}
+\section{The Build System}
 \label{sec:build_system}
 
 The build system of ESPResSo makes use of the GNU autotools suite
@@ -219,9 +219,9 @@ be relatively sure that you have a useful \es distribution
 package.
 
 In some cases, it might be necessary to pass some options to the run
-of \texttt{configure} done by \texttt{make distcheck}>. To do that,
-you can set the environment variable
-\texttt{DISTCHECK\_CONFIGURE\_FLAGS} to the required options.
+of \texttt{configure} done by \texttt{make distcheck}>. To these ends,
+the environment variable \texttt{DISTCHECK\_CONFIGURE\_FLAGS} can be
+set to the required options.
 
 \paragraph{Example}
 \begin{verbatim}
@@ -229,7 +229,7 @@ DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
   make distcheck
 \end{verbatim}
 
-\section{The testsuite}
+\section{The Testsuite}
 \label{sec:testsuite}
 
 \begin{itemize}
@@ -237,7 +237,44 @@ DISTCHECK_CONFIGURE_FLAGS="--without-mpi CPPFLAGS=\"-I /usr/include/tcl8.4\"" \
 \item How they are called (\texttt{runtest.sh})
 \end{itemize}
 
+\section{Doxygen Code Documentation}
+\label{sec:doxygen}
 
+The documentation of each function should contain a short description,
+if necessary a more detailed description and a description for the
+return value and parameters.
+
+Look at the documentation of existing files and functions to get a
+feeling how it should be!
+
+Doxygen is able to understand simple \LaTeX\ and HTML commands as well
+as some special command in order to give the documentation a nice
+structure and to make it more readable. In the following list you find
+a short description of the most common commands we need:
+
+\begin{itemize}
+\item \verb!\anchor! \textit{name} \textit{description}\\
+  Create an anchor to which you can refer using the \verb!\ref!
+  command.
+\item \verb!\ref! \textit{name} \texttt{["}\textit{text}\texttt{"]}\\
+  Insert a link to another object in the documentation (\eg an
+  anchor).
+\item \verb!<a href="http://www.your_url.html">title</a>!\\
+  Link to an external HTML source.
+\item \verb!\file! \textit{name} \textit{description}\\
+  Special anchor for a file.
+\item \verb!\image html! \textit{image}\\
+  Include a picture. The picture file should reside in the subdir
+  \verb!doc/doxygen/figs!. Do not use the HTML \verb!<img>!-tag to
+  include pictures, as doxygen will not copy the pictures into the
+  documentation.
+\item \verb!<ul> <li>List entry 1</li> <li>List entry 2</li></ul>!\\
+  Creates a list in the documentation.
+\item \verb!\param! \textit{name} \textit{description}\\
+  Document the parameter of a function.
+\item \verb!\return! \textit{decription}\\
+  Document the return value of a function.
+\end{itemize}
 
 \printindex
 

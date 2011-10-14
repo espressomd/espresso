@@ -19,7 +19,6 @@ EXTRA_DIST = \
 	background_errors.sh background_errors.awk \
 	Doxyfile \
         pages/main.dox \
-        pages/doxygen.dox \
         pages/new_files.dox \
         pages/progguide.dox \
         pages/ug.dox \
