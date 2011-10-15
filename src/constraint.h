@@ -221,6 +221,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 	double axb[3], bxc[3], axc[3];
 	double A, B, C;
 	double a_dot_bxc, b_dot_axc, c_dot_axb;
+	double tmp;
 	
 	//calculate a couple of vectors and scalars that are going to be used frequently
 	
@@ -386,7 +387,260 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 								}
 								else
 								{
-									*dist = -c->direction;
+									//check for prism at edge pos, a
+									
+									B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+									B /= b_dot_axc;
+									C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+									C /= c_dot_axb;
+									
+									if(B <= 0 && C <= 0)
+									{
+										tmp = (ppos[0]-c->pos[0])*c->a[0] + (ppos[1]-c->pos[1])*c->a[1] + (ppos[2]-c->pos[2])*c->a[2];
+										tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+										
+										vec[0] = ppos[0]-c->pos[0] - c->a[0]*tmp;
+										vec[1] = ppos[1]-c->pos[1] - c->a[1]*tmp;
+										vec[2] = ppos[2]-c->pos[2] - c->a[2]*tmp;
+										
+										*dist = c->direction;
+									}
+									else
+									{
+										//check for prism at edge pos, b
+									
+										A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+										A /= a_dot_bxc;
+										C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+										C /= c_dot_axb;
+									
+										if(A <= 0 && C <= 0)
+										{
+											tmp = (ppos[0]-c->pos[0])*c->b[0] + (ppos[1]-c->pos[1])*c->b[1] + (ppos[2]-c->pos[2])*c->b[2];
+											tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+										
+											vec[0] = ppos[0]-c->pos[0] - c->b[0]*tmp;
+											vec[1] = ppos[1]-c->pos[1] - c->b[1]*tmp;
+											vec[2] = ppos[2]-c->pos[2] - c->b[2]*tmp;
+										
+											*dist = c->direction;
+										}
+										else
+										{
+											//check for prism at edge pos, c
+									
+											A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+											A /= a_dot_bxc;
+											B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+											B /= b_dot_axc;
+									
+											if(A <= 0 && B <= 0)
+											{
+												tmp = (ppos[0]-c->pos[0])*c->c[0] + (ppos[1]-c->pos[1])*c->c[1] + (ppos[2]-c->pos[2])*c->c[2];
+												tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+										
+												vec[0] = ppos[0]-c->pos[0] - c->c[0]*tmp;
+												vec[1] = ppos[1]-c->pos[1] - c->c[1]*tmp;
+												vec[2] = ppos[2]-c->pos[2] - c->c[2]*tmp;
+										
+												*dist = c->direction;
+											}
+											else
+											{
+												//check for prism at edge pos+a, b
+								
+												A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+												A /= a_dot_bxc;
+												C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+												C /= c_dot_axb;
+								
+												if(A >= 0 && C <= 0)
+												{
+													tmp = (ppos[0]-c->pos[0]-c->a[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2])*c->b[2];
+													tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+									
+													vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->b[0]*tmp;
+													vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->b[1]*tmp;
+													vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->b[2]*tmp;
+									
+													*dist = c->direction;
+												}
+												else
+												{
+													//check for prism at edge pos+a, c
+								
+													A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+													A /= a_dot_bxc;
+													B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+													B /= b_dot_axc;
+								
+													if(A >= 0 && B <= 0)
+													{
+														tmp = (ppos[0]-c->pos[0]-c->a[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2])*c->c[2];
+														tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+									
+														vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->c[0]*tmp;
+														vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->c[1]*tmp;
+														vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->c[2]*tmp;
+									
+														*dist = c->direction;
+													}
+													else
+													{
+														//check for prism at edge pos+b+c, c
+								
+														A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+														A /= a_dot_bxc;
+														B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+														B /= b_dot_axc;
+								
+														if(A <= 0 && B >= 0)
+														{
+															tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->c[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->c[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->c[2];
+															tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+									
+															vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->c[0]*tmp;
+															vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->c[1]*tmp;
+															vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->c[2]*tmp;
+									
+															*dist = c->direction;
+														}
+														else
+														{
+															//check for prism at edge pos+b+c, b
+								
+															A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+															A /= a_dot_bxc;
+															C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+															C /= c_dot_axb;
+								
+															if(A <= 0 && C >= 0)
+															{
+																tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->b[2];
+																tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+									
+																vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->b[0]*tmp;
+																vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->b[1]*tmp;
+																vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->b[2]*tmp;
+									
+																*dist = c->direction;
+															}
+															else
+															{
+																//check for prism at edge pos+b+c, a
+								
+																B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+																B /= b_dot_axc;
+																C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+																C /= c_dot_axb;
+																															
+																if(B >= 0 && C >= 0)
+																{
+																	tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->a[2];
+																	tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+									
+																	vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->a[0]*tmp;
+																	vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->a[1]*tmp;
+																	vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->a[2]*tmp;
+									
+																	*dist = c->direction;
+																}
+																else
+																{
+																	//check for prism at edge pos+a+b, a
+
+																	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+																	B /= b_dot_axc;
+																	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+																	C /= c_dot_axb;
+								
+																	if(B >= 0 && C <= 0)
+																	{
+																		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->a[2];
+																		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+									
+																		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
+																		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
+																		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
+									
+																		*dist = c->direction;
+																	}
+																	else
+																	{
+																		//check for prism at edge pos+a+b, c
+
+																		A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+																		A /= a_dot_bxc;
+																		B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+																		B /= b_dot_axc;
+								
+																		if(A >= 0 && B >= 0)
+																		{
+																			tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->c[2];
+																			tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+									
+																			vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->c[0]*tmp;
+																			vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->c[1]*tmp;
+																			vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->c[2]*tmp;
+									
+																			*dist = c->direction;
+																		}
+																		else
+																		{
+																			//check for prism at edge pos+a+c, a
+
+																			B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+																			B /= b_dot_axc;
+																			C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+																			C /= c_dot_axb;
+								
+																			if(B <= 0 && C >= 0)
+																			{
+																				tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->a[2];
+																				tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+									
+																				vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
+																				vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
+																				vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
+									
+																				*dist = c->direction;
+																			}
+																			else
+																			{
+																				//check for prism at edge pos+a+c, b
+
+																				A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+																				A /= a_dot_bxc;
+																				C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+																				C /= c_dot_axb;
+								
+																				if(A >= 0 && C >= 0)
+																				{
+																					tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->b[2];
+																					tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+									
+																					vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->b[0]*tmp;
+																					vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->b[1]*tmp;
+																					vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->b[2]*tmp;
+									
+																					*dist = c->direction;
+																				}
+																				else
+																				{
+																					//TODO: calculate distance to faces and take smallest in absolute
+																					*dist = -c->direction;
+																				}
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
 								}
 							}
 						}
