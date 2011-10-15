@@ -221,7 +221,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 	double axb[3], bxc[3], axc[3];
 	double A, B, C;
 	double a_dot_bxc, b_dot_axc, c_dot_axb;
-	double tmp;
+	double tmp, d;
 	
 	//calculate a couple of vectors and scalars that are going to be used frequently
 	
@@ -257,7 +257,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 		vec[0] = ppos[0]-c->pos[0];
 		vec[1] = ppos[1]-c->pos[1];
 		vec[2] = ppos[2]-c->pos[2];
-		*dist = c->direction;
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 	}
 	else
 	{
@@ -275,7 +276,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 			vec[0] = ppos[0]-c->pos[0]-c->a[0];
 			vec[1] = ppos[1]-c->pos[1]-c->a[1];
 			vec[2] = ppos[2]-c->pos[2]-c->a[2];
-			*dist = c->direction;
+			
+			*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 		}
 		else
 		{
@@ -293,7 +295,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 				vec[0] = ppos[0]-c->pos[0]-c->b[0];
 				vec[1] = ppos[1]-c->pos[1]-c->b[1];
 				vec[2] = ppos[2]-c->pos[2]-c->b[2];
-				*dist = c->direction;
+				
+				*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 			}
 			else
 			{
@@ -311,7 +314,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 					vec[0] = ppos[0]-c->pos[0]-c->c[0];
 					vec[1] = ppos[1]-c->pos[1]-c->c[1];
 					vec[2] = ppos[2]-c->pos[2]-c->c[2];
-					*dist = c->direction;
+					
+					*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 				}
 				else
 				{
@@ -329,7 +333,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 						vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0];
 						vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1];
 						vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2];
-						*dist = c->direction;
+						
+						*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 					}
 					else
 					{
@@ -347,7 +352,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 							vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0];
 							vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1];
 							vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2];
-							*dist = c->direction;
+							
+							*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 						}
 						else
 						{
@@ -365,7 +371,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 								vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0];
 								vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1];
 								vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2];
-								*dist = c->direction;
+								
+								*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 							}
 							else
 							{
@@ -383,7 +390,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 									vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0];
 									vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1];
 									vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2];
-									*dist = c->direction;
+									
+									*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 								}
 								else
 								{
@@ -403,7 +411,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 										vec[1] = ppos[1]-c->pos[1] - c->a[1]*tmp;
 										vec[2] = ppos[2]-c->pos[2] - c->a[2]*tmp;
 										
-										*dist = c->direction;
+										*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 									}
 									else
 									{
@@ -423,7 +431,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 											vec[1] = ppos[1]-c->pos[1] - c->b[1]*tmp;
 											vec[2] = ppos[2]-c->pos[2] - c->b[2]*tmp;
 										
-											*dist = c->direction;
+											*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 										}
 										else
 										{
@@ -443,7 +451,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 												vec[1] = ppos[1]-c->pos[1] - c->c[1]*tmp;
 												vec[2] = ppos[2]-c->pos[2] - c->c[2]*tmp;
 										
-												*dist = c->direction;
+												*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 											}
 											else
 											{
@@ -463,7 +471,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 													vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->b[1]*tmp;
 													vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->b[2]*tmp;
 									
-													*dist = c->direction;
+													*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 												}
 												else
 												{
@@ -483,7 +491,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 														vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->c[1]*tmp;
 														vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->c[2]*tmp;
 									
-														*dist = c->direction;
+														*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 													}
 													else
 													{
@@ -503,7 +511,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 															vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->c[1]*tmp;
 															vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->c[2]*tmp;
 									
-															*dist = c->direction;
+															*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 														}
 														else
 														{
@@ -523,7 +531,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->b[1]*tmp;
 																vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->b[2]*tmp;
 									
-																*dist = c->direction;
+																*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 															}
 															else
 															{
@@ -543,7 +551,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																	vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->a[1]*tmp;
 																	vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->a[2]*tmp;
 									
-																	*dist = c->direction;
+																	*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																}
 																else
 																{
@@ -563,7 +571,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
 																		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
 									
-																		*dist = c->direction;
+																		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																	}
 																	else
 																	{
@@ -583,7 +591,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																			vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->c[1]*tmp;
 																			vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->c[2]*tmp;
 									
-																			*dist = c->direction;
+																			*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																		}
 																		else
 																		{
@@ -602,8 +610,8 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																				vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
 																				vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
 																				vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
-									
-																				*dist = c->direction;
+	
+																				*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																			}
 																			else
 																			{
@@ -623,12 +631,98 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																					vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->b[1]*tmp;
 																					vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->b[2]*tmp;
 									
-																					*dist = c->direction;
+																					*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																				}
 																				else
 																				{
-																					//TODO: calculate distance to faces and take smallest in absolute
-																					*dist = -c->direction;
+																					//TODO face distance is fucked up
+																					
+																					//calculate distance to face with normal axb
+																					
+																					tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+																					*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+																					*dist /= tmp;
+																					
+																					vec[0] = *dist * axb[0]/tmp;
+																					vec[1] = *dist * axb[0]/tmp;
+																					vec[2] = *dist * axb[0]/tmp;
+																					
+																					//calculate distance to face with normal -axc
+																					
+																					tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+																					d = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+																					d /= -tmp;
+																					
+																					if(abs(d) < abs(*dist))
+																					{
+																						*dist = d;
+																						
+																						vec[0] = -d * axc[0]/tmp;
+																						vec[1] = -d * axc[0]/tmp;
+																						vec[2] = -d * axc[0]/tmp;
+																					}
+																					
+																					//calculate distance to face with normal bxc
+																					
+																					tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+																					d = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+																					d /= tmp;
+																					
+																					if(abs(d) < abs(*dist))
+																					{
+																						*dist = d;
+																						
+																						vec[0] = d * bxc[0]/tmp;
+																						vec[1] = d * bxc[0]/tmp;
+																						vec[2] = d * bxc[0]/tmp;
+																					}
+																					
+																					//calculate distance to face with normal -axb
+																					
+																					tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+																					d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[1]-c->b[1]-c->c[1])*axb[2];
+																					d /= -tmp;
+																					
+																					if(abs(d) < abs(*dist))
+																					{
+																						*dist = d;
+																						
+																						vec[0] = -d * axb[0]/tmp;
+																						vec[1] = -d * axb[0]/tmp;
+																						vec[2] = -d * axb[0]/tmp;
+																					}
+																					
+																					//calculate distance to face with normal axc
+																					
+																					tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+																					d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[1]-c->b[1]-c->c[1])*axc[2];
+																					d /= tmp;
+																					
+																					if(abs(d) < abs(*dist))
+																					{
+																						*dist = d;
+																						
+																						vec[0] = d * axc[0]/tmp;
+																						vec[1] = d * axc[0]/tmp;
+																						vec[2] = d * axc[0]/tmp;
+																					}
+																					
+																					//calculate distance to face with normal -bxc
+																					
+																					tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+																					d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[1]-c->b[1]-c->c[1])*bxc[2];
+																					d /= -tmp;
+																					
+																					if(abs(d) < abs(*dist))
+																					{
+																						*dist = d;
+																						
+																						vec[0] = -d * bxc[0]/tmp;
+																						vec[1] = -d * bxc[0]/tmp;
+																						vec[2] = -d * bxc[0]/tmp;
+																					}
+																					
+																					*dist *= c->direction;
 																				}
 																			}
 																		}
@@ -649,8 +743,6 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 			}
 		}
 	}
-	
-	*dist *= sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 }
 
 MDINLINE double max(double x1, double x2) {
@@ -745,7 +837,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
     return;
   }
 
-  /* check if the particle sould feel the smoothed ends or the middle of the pore */
+  /* check if the particle should feel the smoothed ends or the middle of the pore */
   /* calculate aufpunkt in z direction first.   */
 
   /* the distance of the particle from the pore cylinder/cone calculated by projection on the
