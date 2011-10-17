@@ -222,6 +222,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 	double A, B, C;
 	double a_dot_bxc, b_dot_axc, c_dot_axb;
 	double tmp;
+	double d;
 	
 	//calculate a couple of vectors and scalars that are going to be used frequently
 	
@@ -690,13 +691,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																							{
 																								//calculate distance to face with normal axb
 																								
-																								*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2]; //something is fishy around here. Rhomboid is too big in c-direction when not aligned along the axes.
-																								
-																								printf("x=(%f, %f, %f)\n", ppos[0], ppos[1], ppos[2]);
-																								printf("p+a+b+c=(%f, %f, %f)\n", c->pos[0]+c->a[0]+c->b[0]+c->c[0], c->pos[1]+c->a[1]+c->b[1]+c->c[1], c->pos[2]+c->a[2]+c->b[2]+c->c[2]);
-																								printf("x-(p+a+b+c)=(%f, %f, %f)\n", ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0], ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1], ppos[2]-c->pos[2]-c->a[1]-c->b[1]-c->c[1]);
-																								printf("axb=(%f, %f, %f)\n", axb[0], axb[1], axb[2]);
-																								printf("|d|=%f\n\n", *dist);
+																								*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
 																								
 																								if(*dist >= 0)
 																								{
@@ -708,13 +703,9 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																									vec[2] = *dist * axb[2]/tmp;
 																								
 																									*dist *= c->direction;
-																									
-																									//*dist = -1.; //TODO
 																								}
 																								else
-																								{
-																									*dist = -c->direction;
-																									
+																								{																									
 																									//calculate distance to face with normal -axc
 																					
 																									*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
@@ -750,9 +741,111 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																										}
 																										else
 																										{
-																											//inside
+																											//ppos lies within rhomboid. Find nearest wall for interaction.
+																											 
+																											//check for face with normal -axb
 																											
-																											*dist = -c->direction;
+																											*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+																											*dist *= -1.;
+																											tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+																											*dist /= tmp;
+																											
+																											vec[0] = -*dist * axb[0]/tmp;
+																											vec[1] = -*dist * axb[1]/tmp;
+																											vec[2] = -*dist * axb[2]/tmp;
+																											
+																											*dist *= c->direction;
+																						
+																											//calculate distance to face with normal axc
+
+																											d = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+																											tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+																											d /= tmp;
+																											/*	
+																											printf("x=(%f, %f, %f)\n", ppos[0], ppos[1], ppos[2]);
+																											printf("p=(%f, %f, %f)\n", c->pos[0], c->pos[1], c->pos[2]);
+																											printf("x-p=(%f, %f, %f)\n", ppos[0]-c->pos[0], ppos[1]-c->pos[1], ppos[2]-c->pos[2]);
+																											printf("axc=(%f, %f, %f)\n", axc[0], axc[1], axc[2]);
+																											printf("|d|=%f\n", d);
+																											printf("|dist|=%f\n", d);
+																											*/
+																											if(abs(d) < abs(*dist))
+																											{
+																												vec[0] = d * axc[0]/tmp;
+																												vec[1] = d * axc[1]/tmp;
+																												vec[2] = d * axc[2]/tmp;
+																											
+																												*dist = c->direction * d;
+																												/*
+																												printf("d=(%f, %f, %f)\n", vec[0], vec[1], vec[2]);
+																												printf("|dist|=%f\n\n", *dist);*/ //TODO
+																											}
+																							
+																											//calculate distance to face with normal -bxc
+																											
+																											//TODO fishy from here on
+																					
+																											d = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+																											d *= -1.;
+																											tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+																											d /= tmp;
+																								
+																											if(abs(d) < abs(*dist))
+																											{							
+																												vec[0] = -d * bxc[0]/tmp;
+																												vec[1] = -d * bxc[1]/tmp;
+																												vec[2] = -d * bxc[2]/tmp;
+																								
+																												*dist = c->direction * d;
+																											}
+																											
+																											//calculate distance to face with normal axb
+																								
+																											d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+																											tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+																											d /= tmp;
+																											
+																											if(abs(d) < abs(*dist))
+																											{																					
+																												vec[0] = d * axb[0]/tmp;
+																												vec[1] = d * axb[1]/tmp;
+																												vec[2] = d * axb[2]/tmp;
+																								
+																												*dist = c->direction * d;
+																											}
+																											
+																											//calculate distance to face with normal -axc
+																					
+																											d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+																											d *= -1.;
+																											tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+																											d /= tmp;
+																									
+																											if(abs(d) < abs(*dist))
+																											{																						
+																												vec[0] = -d * axc[0]/tmp;
+																												vec[1] = -d * axc[1]/tmp;
+																												vec[2] = -d * axc[2]/tmp;
+																										
+																												*dist = c->direction * d;
+																											}
+																																												
+																											//calculate distance to face with normal bxc
+																					
+																											d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+																											tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+																											d /= tmp;
+																										
+																											if(abs(d) < abs(*dist))
+																											{																						
+																												vec[0] = d * bxc[0]/tmp;
+																												vec[1] = d * bxc[1]/tmp;
+																												vec[2] = d * bxc[2]/tmp;
+																											
+																												*dist = c->direction * d;
+																											}
+																											
+																											//*/
 																										}
 																									}
 																								}
