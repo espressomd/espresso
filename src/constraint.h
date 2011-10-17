@@ -761,14 +761,7 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																											d = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
 																											tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
 																											d /= tmp;
-																											/*	
-																											printf("x=(%f, %f, %f)\n", ppos[0], ppos[1], ppos[2]);
-																											printf("p=(%f, %f, %f)\n", c->pos[0], c->pos[1], c->pos[2]);
-																											printf("x-p=(%f, %f, %f)\n", ppos[0]-c->pos[0], ppos[1]-c->pos[1], ppos[2]-c->pos[2]);
-																											printf("axc=(%f, %f, %f)\n", axc[0], axc[1], axc[2]);
-																											printf("|d|=%f\n", d);
-																											printf("|dist|=%f\n", d);
-																											*/
+																											
 																											if(abs(d) < abs(*dist))
 																											{
 																												vec[0] = d * axc[0]/tmp;
@@ -776,14 +769,9 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																												vec[2] = d * axc[2]/tmp;
 																											
 																												*dist = c->direction * d;
-																												/*
-																												printf("d=(%f, %f, %f)\n", vec[0], vec[1], vec[2]);
-																												printf("|dist|=%f\n\n", *dist);*/ //TODO
 																											}
 																							
 																											//calculate distance to face with normal -bxc
-																											
-																											//TODO fishy from here on
 																					
 																											d = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
 																											d *= -1.;
