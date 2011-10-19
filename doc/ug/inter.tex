@@ -1111,7 +1111,7 @@ algorithm, systems are problematic where most charges are placed in
 one plane, one small region, or on a regular grid.
 
 The function employs the analytical expression of the error estimate
-for the P3M method \cite[8.23]{hockney88} and its real space error
+for the P3M method \cite{hockney88} and its real space error
 \cite{kolafa92} to obtain sets of parameters that yield the desired
 accuracy, then it measures how long it takes to compute the coulomb
 interaction using these parameter sets and chooses the set with the
@@ -1259,13 +1259,16 @@ of the setmd variable \keyword{timings}, which controls the number of
 test force calculations. For details on the MMM family of algorithms,
 refer to appendix \vref{chap:mmm}.
 
-\subsection{Maggs' method}
+\subsection{Maxwell Equation Molecular Dynamics (MEMD)}
 \index{Maggs method|mainindex}
+\index{Maxwell Equation Molecular Dynamics|mainindex}
+\index{MEMD|mainindex}
 \index{interactions!Maggs method|mainindex}
+\index{interactions!MEMD|mainindex}
 
 \begin{essyntax}
   inter coulomb \var{l_B}
-  maggs \var{f\_mass} \var{mesh}
+  memd \var{f\_mass} \var{mesh}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1313,7 +1316,6 @@ leads to the following rule of thumb for the parameter choices:
     timestep. For the second parameter, this means $\text{f\_mass} \gg
     dt^2/a^2$.
 \end{itemize}
-
 
 The main error of the MEMD algorithm stems from the lattice
 interpolation and is proportional to the lattice size in three

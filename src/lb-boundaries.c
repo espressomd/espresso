@@ -645,7 +645,7 @@ void lb_init_boundaries() {
     return;
   
   for (z=0; z<lblattice.grid[2]+2; z++) {
-    for (y=0; y<lblattice.grid[1]+2; y++) {
+   for (y=0; y<lblattice.grid[1]+2; y++) {
 	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
 	      pos[0] = (offset[0]+(x-1))*lblattice.agrid;
 	      pos[1] = (offset[1]+(y-1))*lblattice.agrid;
@@ -672,9 +672,8 @@ void lb_init_boundaries() {
               ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
           }
           
-//          if (abs(dist) > abs(dist_tmp) || n == 0) {
-//          }
-          if (dist_tmp<dist) {
+//        if (abs(dist) > abs(dist_tmp) || n == 0) {
+          if (dist_tmp<dist) { //If you try to create a wall of finite thickness ...|xxx|..., it makes every node a wall node! We still leave it like that, since it allows for corners without problems. We will add a box type to allow for walls of finite thickness. (Georg Rempfer, Stefan Kesselheim, 05.10.2011)
             dist = dist_tmp;
             the_boundary = n;
           }

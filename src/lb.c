@@ -197,11 +197,9 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
   else if (ARG0_IS_S("init")) {
     lbfluid_tcl_print_usage(interp);
     return TCL_ERROR;
-  } 
-  else if (ARG0_IS_S("print_interpolated_velocity")) {
-    return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
   }
-  else while (argc > 0) {
+  else
+  	while (argc > 0) {
       if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
 	        Tcl_AppendResult(interp, "dens requires 1 argument", (char *)NULL);
@@ -226,7 +224,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 	        Tcl_AppendResult(interp, "agrid must be positive", (char *)NULL);
           return TCL_ERROR;
         } else if (0) {
-          // agrid not is compatible with box_l;
+          // agrid is not compatible with box_l;
           // Not necessary because this is caught on the mpi level!
         } else {
           if ( lb_lbfluid_set_agrid(floatarg) == 0 ) {
@@ -347,6 +345,54 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
           }
         }
       }
+      else if (ARG0_IS_S("print")) {
+        if ( argc < 3 || (ARG1_IS_S("vtk") && argc < 4) ) {
+	        Tcl_AppendResult(interp, "lbfluid print requires at least 2 arguments. Usage: lbfluid print [vtk] velocity|boundary filename", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else {
+          argc--; argv++;
+          if (ARG0_IS_S("vtk")) {
+          	if (ARG1_IS_S("boundary")) {
+				      if ( lb_lbfluid_cpu_print_vtk_boundary(argv[2]) != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    }
+				    else if (ARG1_IS_S("velocity")) {
+				      if ( lb_lbfluid_cpu_print_vtk_velocity(argv[2]) != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    }
+				    else {
+				    	return TCL_ERROR;
+				    }
+				    argc-=3; argv+=3;
+		      }
+		      else {
+		      	if (ARG0_IS_S("boundary")) {
+			   	  	if ( lb_lbfluid_cpu_print_boundary(argv[1]) != 0 ) {
+				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
+			      	  return TCL_ERROR;
+			      	}
+			    	}
+			    	else if (ARG0_IS_S("velocity")) {
+			      	if ( lb_lbfluid_cpu_print_velocity(argv[1]) != 0 ) {
+				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
+			      	  return TCL_ERROR;
+			      	}
+			      }
+				    else {
+				    	return TCL_ERROR;
+				    }
+			      argc-=2; argv+=2;
+		      }
+        }
+      }
+			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
+				return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
+			}
       else {
     	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
     	  return TCL_ERROR ;
@@ -382,9 +428,11 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB
    int coord[3];
    int counter;
+   int integer_return = 0;
    double double_return[19];
 
    char double_buffer[TCL_DOUBLE_SPACE];
+   char integer_buffer[TCL_INTEGER_SPACE];
 
    for (counter = 0; counter < 19; counter++) 
      double_return[counter]=0;
@@ -444,6 +492,10 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
          argc--; argv++;
        }
        else if (ARG0_IS_S("boundary")) {
+         lb_lbnode_get_boundary(coord, &integer_return);
+         sprintf(integer_buffer, "%d", integer_return);
+				 Tcl_AppendResult(interp, integer_buffer, " ", (char *)NULL);
+	 	 		 argc--; argv++;
        } 
        else if (ARG0_IS_S("populations") || ARG0_IS_S("pop")) { 
          lb_lbnode_get_pop(coord, double_return);
@@ -623,6 +675,114 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
   return 0;
 }
 
+int lb_lbfluid_cpu_print_vtk_boundary(char* filename) {
+	int pos[3];
+	int boundary;
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_boundary(pos, &boundary);
+				fprintf(fp, "%d ", boundary);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
+int lb_lbfluid_cpu_print_vtk_velocity(char* filename) {
+	int pos[3];
+	double u[3];
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+		
+	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_u(pos, u);
+				fprintf(fp, "%f %f %f ", u[0], u[1], u[2]);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
+int lb_lbfluid_cpu_print_boundary(char* filename) {
+	int pos[3];
+	int boundary;
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+	
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_boundary(pos, &boundary);
+				fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
+int lb_lbfluid_cpu_print_velocity(char* filename) {
+	int pos[3];
+	double u[3];
+	int gridsize[3];
+	
+	gridsize[0] = box_l[0] / lblattice.agrid;
+	gridsize[1] = box_l[1] / lblattice.agrid;
+	gridsize[2] = box_l[2] / lblattice.agrid;
+
+	FILE* fp = fopen(filename, "w");
+	
+	if(fp == NULL)
+		return 1;
+	
+	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			{
+				lb_lbnode_get_u(pos, u);
+				fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
+			}
+				
+	fclose(fp);				
+	return 0;
+}
+
 int lb_lbnode_get_rho(int* ind, double* p_rho){
 
   index_t index;
@@ -697,6 +857,20 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi_neq) {
 //  *p_pi_neq[5] = pi[5]/rho*tau/time_step*lbpar.agrid;
 
   return -100;
+}
+
+int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
+  
+  index_t index;
+  int node, grid[3], ind_shifted[3];
+
+  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+  
+  mpi_recv_fluid_border_flag(node,index,p_boundary);
+  
+  return 0;
 }
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
@@ -2003,6 +2177,7 @@ MDINLINE void lb_collide_stream() {
 
     /* exchange halo regions */
     halo_push_communication();
+
 #ifdef LB_BOUNDARIES
     /* boundary conditions for links */
     lb_bounce_back();
@@ -2151,13 +2326,13 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau - p->p.mu_E[0]);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau - p->p.mu_E[1]);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau - p->p.mu_E[2]);
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
 #else
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]*agrid/tau);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]*agrid/tau);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]*agrid/tau);
+  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]);
+  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]);
+  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]);
 #endif
 
 

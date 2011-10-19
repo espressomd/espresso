@@ -40,20 +40,22 @@ Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
 Espresso_install_SOURCES = src/scriptsdir.c src/main.c
 Espresso_install_LDADD = src/libEspresso.a
 
+ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
+ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
 # rename Espresso after installation
 install-exec-hook:
 	$(am__mv) \
-		$(DESTDIR)$(bindir)/Espresso.install \
-		$(DESTDIR)$(bindir)/Espresso
+		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
+		$(DESTDIR)$(bindir)/$(ESPRESSO)
 
 uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/Espresso
+	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
 
 
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc ug dg tutorials
-doc ug dg tutorials: FORCE
+.PHONY: FORCE doc doxygen ug dg tutorials
+doc doxygen ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:

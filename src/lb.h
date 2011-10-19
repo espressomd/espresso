@@ -582,10 +582,16 @@ int lb_lbfluid_get_gamma_even(double* p_gamma_even);
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz);
 int lb_lbfluid_get_friction(double* p_friction);
 
+int lb_lbfluid_cpu_print_vtk_boundary(char* filename);
+int lb_lbfluid_cpu_print_vtk_velocity(char* filename);
+int lb_lbfluid_cpu_print_boundary(char* filename);
+int lb_lbfluid_cpu_print_velocity(char* filename);
+
 int lb_lbnode_get_rho(int* ind, double* p_rho);
 int lb_lbnode_get_u(int* ind, double* u);
 int lb_lbnode_get_pi(int* ind, double* pi);
 int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
+int lb_lbnode_get_boundary(int* ind, int* p_boundary);
 int lb_lbnode_get_pop(int* ind, double* pop);
 
 int lb_lbnode_set_rho(int* ind, double rho);
