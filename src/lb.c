@@ -496,7 +496,7 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
          sprintf(integer_buffer, "%d", integer_return);
 				 Tcl_AppendResult(interp, integer_buffer, " ", (char *)NULL);
 	 	 		 argc--; argv++;
-       } 
+       }
        else if (ARG0_IS_S("populations") || ARG0_IS_S("pop")) { 
          lb_lbnode_get_pop(coord, double_return);
          for (counter = 0; counter < 19; counter++) {
@@ -868,7 +868,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
   node = map_lattice_to_node(&lblattice,ind_shifted,grid);
   index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
-  mpi_recv_fluid_border_flag(node,index,p_boundary);
+  mpi_recv_fluid_boundary_flag(node,index,p_boundary);
   
   return 0;
 }
