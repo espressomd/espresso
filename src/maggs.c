@@ -2018,68 +2018,44 @@ void maggs_interpolate_part_charge_from_grad(double *rel, double *grad, double *
 /** new self force correction with lattice Green's function.
     @param p Particle pointer
 */
-void maggs_calc_greens_self_force(Particle *p)
+void maggs_calc_interpolated_self_force(Particle *p)
 {
-  int i, j, k, ip=0;
-  double self, temp;
-  static int help_index[SPACE_DIM];
+  int ix,iy,iz,k,index,globalindex;
+  int xmax=2, ymax=2, zmax=2;
+  double self_force[SPACE_DIM];
+  double position[SPACE_DIM];
+  double relative_position[SPACE_DIM];
+  int left_down_position[SPACE_DIM];
 
-  int dir1, dir2, d, grad_ind;
-  int l, m, index, temp_ind;
-  double grad[24];
-  double grad2[24];
-  double rho[8];
+  double local_rho[8];
+  double local_permittivity[12];
   double *force = p->f.f;
-  double pos[3], first[3], rel[3];
 
-  help_index[0] = 12;
-  help_index[1] = 6;
-  help_index[2] = 3; 
-
-  FOR3D(d) {
-    pos[d]        = (p[i].r.p[d] - lparams.left_down_position[d])* maggs.inva;
-    first[d]      = (int) pos[d];
-    rel[d]        = pos[d] - first[d];
+  /* calculate position in cell, normalized to lattice size: */
+  FOR3D(k) {
+    position[k]           = (p->r.p[k] - lparams.left_down_position[k]) * maggs.inva;
+    left_down_position[k] = floor(position[k]);
+    relative_position[k]  = position[k] - left_down_position[k];
+    self_force[k] = 0.0;
   }
 
-  maggs_calc_charge_gradients(&rel, p->p.q, &grad[ip]);
-  maggs_interpolate_part_charge_from_grad(rel, grad, rho);
-  index = 0;
-  grad_ind = 0;
-  //  printf("rho[0]: %f\n", rho[4]);
-  FOR3D(d) {
-    maggs_calc_directions(d, &dir1, &dir2);
-    for(l=0;l<2;l++){  /* jumps from dir2- to dir2+ */
-      for(m=0;m<2;m++){ /* jumps from dir1- to dir1+ */          
+  /* Copy permittivity values to the mini-lattice: */
 
-	temp_ind = index + d;
-	grad2[temp_ind] = grad[grad_ind];
-	grad2[temp_ind + help_index[d]] = -grad[grad_ind];
-
-	grad_ind++;
-	index+=help_index[dir1];
-	help_index[dir1]=-help_index[dir1];
+  for (iz=0;iz<zmax;iz++) {
+    for (iy=0;iy<ymax;iy++) {
+      for (ix=0;ix<xmax;ix++) {
+	index = (iz + zmax*(iy + ymax*ix));
+	globalindex = maggs_get_linear_index((left_down_position[0]+ix),
+					     (left_down_position[1]+iy),
+					     (left_down_position[2]+iz), lparams.dim);
+	local_permittivity[index] = lattice[globalindex].permittivity[0];
       }
-      index+=help_index[dir2];
-      help_index[dir2]=-help_index[dir2];
-
     }
   }
+
 
   FOR3D(k) {
-    self = 0.;
-    for(i=0;i<8;i++) {
-
-      temp = rho[i]*grad2[i*SPACE_DIM + k];
-      self += maggs.alpha[i][i] * temp;
-
-      for(j=i+1;j<8;j++) {
-	temp = rho[i]*grad2[j*SPACE_DIM + k] + rho[j]*grad2[i*SPACE_DIM + k];
-	self += maggs.alpha[i][j] * temp;
-	//	printf("alpha: %f\n", maggs.alpha[i][j]);
-      }
-    }
-    force[k] += 2. * self;
+    force[k] += self_force[k];
   }
 }
 
@@ -2254,7 +2230,7 @@ void maggs_calc_forces()
 	maggs_calc_part_link_forces(&p[i], index, &grad[ip]);
 	maggs_calc_self_influence(&p[i]);
 	//      	printf("before: %f\n", p->f.f[0]);
-	//	maggs_calc_greens_self_force(&p[i]);
+	//	maggs_calc_interpolated_self_force(&p[i]);
 	//	printf("after: %f\n", p->f.f[0]);
 	ip+=12;
       }
