@@ -18,8 +18,6 @@
 EXTRA_DIST = \
 	background_errors.sh background_errors.awk \
 	Doxyfile \
-        pages/main.dox \
-        pages/progguide.dox \
         figs/bond_angle.fig \
         figs/bond_angle.gif \
         figs/datastorage.gif \
