@@ -116,36 +116,7 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     sprintf(buffer, "%d", con->c.rhomboid.penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    
-    //TODO delete output for debugging
-    
-    printf("writing files abstand.vtk and abstand_vec.vtk for debugging purposes!\n");
-    
-    double abstand_vec[3], abstand, pos[3];
-	
-		FILE* fp_vec = fopen("abstand_vec.vtk", "w");
-		FILE* fp = fopen("abstand.vtk", "w");
-	
-		if(fp == NULL)
-			return 1;
-	
-		fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", (int) box_l[0], (int) box_l[1], (int) box_l[2], (int) (box_l[0]*box_l[1]*box_l[2]));
-	
-		fprintf(fp_vec, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", (int) box_l[0], (int) box_l[1], (int) box_l[2], (int) (box_l[0]*box_l[1]*box_l[2]));
-    
-    for(pos[2] = 0; pos[2] < box_l[2]; pos[2]++)
-    	for(pos[1] = 0; pos[1] < box_l[1]; pos[1]++)
-    		for(pos[0] = 0; pos[0] < box_l[0]; pos[0]++)
-    		{
-    			calculate_rhomboid_dist((Particle*) NULL, pos, (Particle*) NULL, &(con->c.rhomboid), &abstand, abstand_vec);
-    			fprintf(fp_vec, "%f %f %f ", abstand_vec[0], abstand_vec[1], abstand_vec[2]);
-    			fprintf(fp, "%f ", abstand);
-    		}
-    		
-    fclose(fp_vec);
-    fclose(fp);
-    
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);    
     break;
   case CONSTRAINT_ROD:
     Tcl_PrintDouble(interp, con->c.rod.pos[0], buffer);
