@@ -88,7 +88,6 @@ idxtotoc                        % add the index to the TOC
 \maketitle
 
 \tableofcontents
-\listoftodos
 
 \section{Development environment}
 \label{sec:env}
@@ -287,6 +286,240 @@ a short description of the most common commands we need:
   Document the return value of a function.
 \end{itemize}
 
-\printindex
+\section{User's Guide}
+
+The User's Guide is written in \LaTeX. The source files reside in the
+subdirectory \texttt{doc/ug/} of the \es sources. The master file is
+\texttt{ug.tex}, each chapter is contained in its own source file.
+
+\subsection{General issues}
+
+\begin{itemize}
+\item Other than usual, in the UG's \texttt{.tex}-files, the
+  underscore character ``\_'' is a normal character in most cases, \ie
+  it can be used unquoted. Unfortunately, however, this makes it
+  impossible to use ``\_'' in \LaTeX-labels (don't ask me why!).
+\item Headings should start with a capital letter and continue with
+  lower-case letters (``First steps'' and \emph{not} ``First Steps'').
+\item Use the ``-ing'' form in headings, \ie ``Setting up particles''
+  instead of ``Particle setup'' or the like.
+\item To see which parts of the User's guide need to be fixed or which
+  documentation is missing, there is a \verb!\todo!-command where one
+  can put notes about what remains to be done. In the release version,
+  the boxes are diabled so that they do not disturb the users. They
+  can be turned on by commenting out the appropriate line in
+  \texttt{ug.tex}:
+\begin{verbatim}
+%% For building the distribution docs, disable todo boxes.
+%\usepackage[disable]{todonotes}
+\usepackage{todonotes}
+\end{verbatim}
+
+\end{itemize}
+
+\subsection{Building the User's Guide}
+\begin{itemize}
+\item To build the User's Guide, you need to have a \LaTeX-installation
+  that includes BibTeX, PDFLaTeX and makeindex. All installations that
+  I know of provide these tools.
+\item There are two methods to build the User's Guide:
+  \begin{itemize}
+  \item Use \texttt{make ug} from the build directory to build
+    it. This will automatically generate the \es quick reference
+    and call latex, bibtex and makeindex as required.
+  \item Use \texttt{perl latexmk} from the source directory. This will
+    basically do the same, however, it will \emph{not} automatically
+    update the quick reference. The advantage of this method is, that
+    you can use all of \texttt{latexmk}'s nice features, such as
+    \texttt{-pvc}. You can always rebuild the quick reference manually
+    by calling 
+    \begin{verbatim}
+awk -f assemble_quickref.awk > quickref.inp
+    \end{verbatim}
+  \end{itemize}
+\end{itemize}
+
+\subsection{Adding new files}
+
+To add new \LaTeX-files to the User's Guide, you need to modify
+\begin{itemize}
+\item \texttt{ug.tex}: add an appropriate include command near the end
+  of the file
+\item \texttt{Makefile.am}: add the file to the variable
+  \texttt{ug\_TEXFILES}. 
+\end{itemize}
+
+\subsection{Additional environments and commands}
+
+To maintain a consistent layout, a number of environments and
+commands have been defined that should be used where applicable. 
+\begin{itemize}
+\item For the description of \es's Tcl-commands, read \ref{tcl_docs}.
+\item The name of \es should be set via the command \verb!\es!.
+\item The strings ``\ie'', ``\eg'' and ``\etal'' should be set via
+  \verb!\ie!, \verb!\eg! and \verb!\etal!.
+\item For short pieces of code that can be displayed inline, use
+  \verb!\codebox{!\textit{text}\verb!}! or \verb|\verb!|\textit{text}\verb|!|
+\item For longer code pieces or the syntax decription of non-Tcl
+  commands, the environment \texttt{code} exists:
+\begin{verbatim}
+\begin{code}
+  ...
+\end{code}
+\end{verbatim}
+  Note that this is \emph{not} a verbatim environment, \ie it will
+  evaluate \LaTeX-commands that are used inside. Therefore, the
+  characters \verb!\!, \verb!{! and \verb!}! need to be quoted with
+  backslashes inside the environment!  Also, the underscore character
+  ``\_'' needs to be quoted like \verb!\_!. On the other hand, it is
+  possible to use other layout commands (like \verb!\textit!) inside.
+\item For pieces of Tcl-code that make extensive use of \verb!{! and
+    \verb!}!, a verbatim environment \verb!tclcode! exists: 
+\begin{verbatim}
+\begin{tclcode}
+ ...
+\end{tclcode}
+\end{verbatim}
+\end{itemize}
+
+\subsection{Documentation of Tcl commands}
+\label{tcl_docs}
+
+\subsubsection{Formal syntax definition}
+
+All \es-commands have to be documented in the User's Guide.
+
+The command
+\verb!\newescommand[!\textit{label}\verb!]{!\textit{command}\verb!}!
+should be used at the beginning of a command description to generate a
+label \verb!es:!\textit{command} and create appropriate index
+entries. The optional argument \textit{label} is only required, when
+\textit{command} contains an underscore character ``\_''. In that
+case, a label \verb!es:!\textit{label} is generated that should not
+contain an underscore character.
+
+For the \emph{formal syntax definition}, you have to use the
+environments \texttt{essyntax} or \texttt{essyntax*}.  Both will
+generate the headings \emph{Syntax} and
+\emph{Description}. \texttt{essyntax} will furthermore copy the syntax
+definition to the quick reference guide.  For an example, look at the
+documentation of the \texttt{part} command in the file
+\texttt{part.tex}. Inside the \texttt{essyntax} environment, you have
+to use the following commands for typesetting the definition:
+\begin{itemize}
+\item \verb!\variant{!\textit{number}\verb!}! to typeset the label of a
+  command variant
+\item \verb!\var{!\textit{name}\verb!}! to typeset a variable
+  argument. Note, that the argument is typeset in math mode.  This
+  means, that you can use ``\_'' to denote a subscript.
+\item \verb!\keyword{!\textit{text}\verb!}! or
+  \verb!\lit{!\textit{text}\verb!}! to typeset keywords or literals.
+\item \verb!\opt{!\textit{text}\verb!}! to typeset optional
+  arguments. Note that usually, the text inside the \texttt{opt}
+  command will not be wrapped. If the optional argument is pretty long
+  and needs to be wrapped, use \verb!\optlong!.
+\item \verb!\optlong{!\textit{text}\verb!}! to typeset long optional
+  argument blocks.
+\item \verb!\alt{!\textit{alt1} \verb!\asep! \textit{alt2}
+    \verb!\asep! \textit{alt3} \dots \verb!}! to typeset alternatives.
+\item \verb!\feature{!\textit{feature}\verb!}! to typeset when a
+  \textit{feature} is referred to.
+\item \verb!\require{!\textit{number}\verb!}{!\textit{text}\verb!}! to
+  typeset \textit{text} to show that it requires certain features of
+  \es. \textit{number} denotes the marking that is shown next to
+  \textit{text}. When this command is used, you also have to use the
+  \texttt{features}-environment (see below) at the end of the
+  \texttt{essyntax} environment, where all of the \textit{number}s
+  used are explained.
+\item The environment \texttt{features} to typeset which features are
+  required by the Tcl-command. Inside the environment, each feature
+  should be declared via the command
+  \verb!\required[!\textit{number}\verb!]{!\textit{feature}\verb!}!,
+  where the optional argument \textit{number} is the number used above
+  and \textit{feature} is the feature in capital letters.
+\end{itemize}
+
+The formal syntax definition should be as simple and as readable as
+possible, as it will be what a user references to. Avoid very long
+definitions and constructs like nested alternatives and options.  In
+those cases, prefer to split the syntax definition into several
+variants instead of writing it in a single, complicated definition.
+
+\paragraph{Example}
+\begin{verbatim}
+\begin{essyntax}
+[clip]
+\variant{5} constraint pore 
+  center \var{c_x} \var{c_y} \var{c_z} 
+  axis \var{n_x} \var{n_y} \var{n_z} 
+  radius \var{rad}
+  length \var{length} 
+  type \var{id} 
+
+\require{1}{%
+  \variant{6} constraint rod center \var{c_x} \var{c_y} 
+  lambda \var{lambda}
+} 
+  
+\require{1}{%
+  \variant{7} constraint plate height \var{h}
+  sigma \var{sigma} 
+}
+  
+\require{2,3}{%
+  \variant{8} constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
+}
+
+  \begin{features}
+  \required{CONSTRAINTS}
+  \required[1]{ELECTROSTATICS}
+  \required[2]{ROTATION}
+  \required[3]{DIPOLES}
+  \end{features}
+\end{essyntax}
+\end{verbatim}
+
+\subsubsection{Description}
+
+In the description, you should use all of the above typesetting
+commands when you refer to them in the text.  In particular, every
+variable argument introduced via the \verb!\var!-command in the
+definition has to be explained in detail:
+\begin{itemize}
+\item state explicitly the \emph{type} of the argument (integer,
+  float, string, Tcl-list)
+\item explain the meaning of the argument
+\end{itemize}
+
+If the command has a number of different options, \ie independent,
+optional arguments, they can be described in the \emph{arguments}
+environment:
+\begin{verbatim}
+\begin{arguments}
+  \item[<arg1>] <description of arg1>
+  \item[<arg2>] <description of arg2>
+  ...
+\end{arguments}
+\end{verbatim}
+
+The environment will generate the subheading \emph{Arguments} and
+nicely format the descriptions.
+
+\paragraph{Example}
+\begin{verbatim}
+\begin{arguments}
+  \item[\opt{\alt{short \asep verbose}}] Specify, whether the output is
+    in a human-readable, but somewhat longer format (\keyword{verbose}),
+    or in a more compact form (\keyword{short}). The default is
+    \keyword{verbose}.
+  
+  \item[\opt{\alt{folded \asep absolute}}] Specify whether the particle
+    positions are written in absolute coordinates (\keyword{absolute})
+    or folded into the central image of a periodic system
+    (\keyword{folded}). The default is \keyword{absolute}.
+  
+  ...
+\end{arguments}
+\end{verbatim}
 
 \end{document}

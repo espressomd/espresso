@@ -20,7 +20,6 @@ EXTRA_DIST = \
 	Doxyfile \
         pages/main.dox \
         pages/progguide.dox \
-        pages/ug.dox \
         figs/bond_angle.fig \
         figs/bond_angle.gif \
         figs/datastorage.gif \
