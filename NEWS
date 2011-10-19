@@ -24,7 +24,8 @@ Changes visible for developers
 
 * Added ESPResSo logos to the repo (doc/logo).
 
-* A new LaTeX-Developer's Guide (DG) was started.
+* A new LaTeX-Developer's Guide (DG) was started, and all "Related
+  pages" from the doxygen docs have been moved there.
 
 ESPResSo 3.0.2
 ==============
