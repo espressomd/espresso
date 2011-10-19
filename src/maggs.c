@@ -1119,7 +1119,7 @@ void maggs_update_charge_gradients(double *grad)
 
 /** Calculate the self energy coefficients for the system, if
     corrected with Lattice Green's function. */
-void calc_self_energy_coeffs()
+void maggs_calc_self_energy_coeffs()
 {
   double factor, prefac;
   int px = 0;
@@ -1975,15 +1975,15 @@ void maggs_add_transverse_field(double dt)
 
 
 /** interpolation function, solely for new self force correction. */
-void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
+void maggs_interpolate_part_charge_from_grad(double *rel, double *grad, double *rho)
 {
   int i, k, l, m, index;
   int grad_ind;
 
   int help_index[3];
-  double help_x;
+  double help[3];
 
-  help_x = 1. - rel_x;     /* relative pos. w.r.t. first */  
+  FOR3D(i) help[i] = 1. - rel[i];     /* relative pos. w.r.t. first */  
 
   help_index[0] = 4;
   help_index[1] = 2; 
@@ -1997,9 +1997,9 @@ void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
     for(l=0;l<2;l++){  /* jumps from y- to y+ */
       for(m=0;m<2;m++){ /* jumps from z- to z+ */
 	// without q!!!
-	if(k==0) rho[index] += - help_x * grad[grad_ind];
+	if(k==0) rho[index] += - help[0] * grad[grad_ind];
 	else {
-	  rho[index] += - rel_x * grad[grad_ind%4];
+	  rho[index] += - rel[0] * grad[grad_ind%4];
 	}
 
 	grad_ind ++;
@@ -2012,12 +2012,13 @@ void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
     index+=help_index[0];
     help_index[0]=-help_index[0];
   }
+  //  for(i=0;i<8;i++) printf("rho: %f\n", rho[i]);
 }
 
 /** new self force correction with lattice Green's function.
     @param p Particle pointer
 */
-void calc_part_self_force(Particle *p)
+void maggs_calc_greens_self_force(Particle *p)
 {
   int i, j, k, ip=0;
   double self, temp;
@@ -2029,16 +2030,23 @@ void calc_part_self_force(Particle *p)
   double grad2[24];
   double rho[8];
   double *force = p->f.f;
-  double rel = 0.;
+  double pos[3], first[3], rel[3];
 
   help_index[0] = 12;
   help_index[1] = 6;
   help_index[2] = 3; 
 
+  FOR3D(d) {
+    pos[d]        = (p[i].r.p[d] - lparams.left_down_position[d])* maggs.inva;
+    first[d]      = (int) pos[d];
+    rel[d]        = pos[d] - first[d];
+  }
+
   maggs_calc_charge_gradients(&rel, p->p.q, &grad[ip]);
-  interpolate_part_charge_from_grad(rel, grad, rho);
+  maggs_interpolate_part_charge_from_grad(rel, grad, rho);
   index = 0;
   grad_ind = 0;
+  //  printf("rho[0]: %f\n", rho[4]);
   FOR3D(d) {
     maggs_calc_directions(d, &dir1, &dir2);
     for(l=0;l<2;l++){  /* jumps from dir2- to dir2+ */
@@ -2059,7 +2067,7 @@ void calc_part_self_force(Particle *p)
   }
 
   FOR3D(k) {
-    self = 0.; 
+    self = 0.;
     for(i=0;i<8;i++) {
 
       temp = rho[i]*grad2[i*SPACE_DIM + k];
@@ -2068,9 +2076,10 @@ void calc_part_self_force(Particle *p)
       for(j=i+1;j<8;j++) {
 	temp = rho[i]*grad2[j*SPACE_DIM + k] + rho[j]*grad2[i*SPACE_DIM + k];
 	self += maggs.alpha[i][j] * temp;
+	//	printf("alpha: %f\n", maggs.alpha[i][j]);
       }
     }
-    force[k] += 2. * self; 
+    force[k] += 2. * self;
   }
 }
 
@@ -2244,7 +2253,9 @@ void maggs_calc_forces()
 	index = maggs_get_linear_index(first[0],first[1],first[2],lparams.dim);
 	maggs_calc_part_link_forces(&p[i], index, &grad[ip]);
 	maggs_calc_self_influence(&p[i]);
-
+	//      	printf("before: %f\n", p->f.f[0]);
+	//	maggs_calc_greens_self_force(&p[i]);
+	//	printf("after: %f\n", p->f.f[0]);
 	ip+=12;
       }
     }
@@ -2361,6 +2372,7 @@ void maggs_init()
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
     //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
+    maggs_calc_self_energy_coeffs();
 }
 
 /** Frees the dynamically allocated memory
