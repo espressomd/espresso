@@ -216,8 +216,6 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
 
 MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
 {	
-	//vec ist vektor von nächstem punkt auf boundary zum teilchen
-	
 	double axb[3], bxc[3], axc[3];
 	double A, B, C;
 	double a_dot_bxc, b_dot_axc, c_dot_axb;
@@ -608,9 +606,9 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																				tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->a[2];
 																				tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
 									
-																				vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
-																				vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
-																				vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
+																				vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->a[0]*tmp;
+																				vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->a[1]*tmp;
+																				vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->a[2]*tmp;
 	
 																				*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																			}
@@ -628,9 +626,9 @@ MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_
 																					tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->b[2];
 																					tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
 									
-																					vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->b[0]*tmp;
-																					vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->b[1]*tmp;
-																					vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->b[2]*tmp;
+																					vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->b[0]*tmp;
+																					vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->b[1]*tmp;
+																					vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->b[2]*tmp;
 									
 																					*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 																				}
