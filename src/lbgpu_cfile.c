@@ -33,8 +33,7 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "global.h"
-#include "lb_boundaries_gpu.h"
-
+#include "lb-boundaries.h"
 #ifdef LB_GPU
 
 /** Action number for \ref mpi_get_particles. */

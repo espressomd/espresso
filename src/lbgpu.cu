@@ -1366,7 +1366,7 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
-  if (n_lb_boundaries_gpu == 0) {
+  if (n_lb_boundaries == 0) {
     cudaThreadSynchronize();
     return;
   }
@@ -1514,9 +1514,9 @@ void lb_integrate_GPU(){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
-    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
+    if (n_lb_boundaries > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
 			
-    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
+    if (n_lb_boundaries > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
 #endif
     intflag = 0;
   }
@@ -1524,9 +1524,9 @@ void lb_integrate_GPU(){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_values, node_f));
     current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU		
-    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
+    if (n_lb_boundaries > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
 			
-    if (n_lb_boundaries_gpu > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
+    if (n_lb_boundaries > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
 #endif
     intflag = 1;
   }             

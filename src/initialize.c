@@ -72,7 +72,7 @@
 #ifdef CUDA
 #include "cuda_init.h"
 #include "lbgpu.h"
-#include "lb_boundaries_gpu.h"
+//#include "lb_boundaries_gpu.h"
 #endif
 
 // import function from scriptsdir.c
@@ -444,7 +444,7 @@ void on_lbboundary_change()
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries_gpu();
+      lb_init_boundaries();
     }
   }
 #endif

@@ -26,11 +26,12 @@
 #include "utils.h"
 #include "constraint.h"
 #include "lb-boundaries.h"
-#include "lb_boundaries_gpu.h"
+//#include "lb_boundaries_gpu.h"
 #include "lb.h"
+#include "lbgpu.h"
 #include "interaction_data.h"
 
-#ifdef LB_BOUNDARIES
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
 int n_lb_boundaries       = 0;
 LB_Boundary *lb_boundaries = NULL;
@@ -629,20 +630,20 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp,
 
 
 #endif /* LB_BOUNDARIES */
-int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbboundary_gpu(Tcl_Interp *interp, int argc, char **argv);
+//int tclcommand_lbboundary(Tcl_Interp *interp, int argc, char **argv);
+//int tclcommand_lbboundary_gpu(Tcl_Interp *interp, int argc, char **argv);
 
-int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+//int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
-  if (lattice_switch & LATTICE_LB_GPU)
-      return tclcommand_lbboundary_gpu(interp, argc, argv);
-  else
-      return tclcommand_lbboundary_cpu(interp, argc, argv);
-}
+  //if (lattice_switch & LATTICE_LB_GPU)
+    //  return tclcommand_lbboundary_gpu(interp, argc, argv);
+  //else
+      //return tclcommand_lbboundary(interp, argc, argv);
+//}
 
-int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
+int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
-#ifdef LB_BOUNDARIES
+#if defined (LB_BOUNDARIES) || defined (LB_BOUDARIES_GPU)
   int status, c_num;
   double force[3];
   char buffer[3*TCL_DOUBLE_SPACE+3];
@@ -652,23 +653,34 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
   
   if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
     status = tclcommand_lbboundary_wall(generate_lbboundary(),interp, argc - 2, argv + 2);
-    mpi_bcast_lbboundary(-1);
+   if (lattice_switch & LATTICE_LB_GPU){
+      mpi_bcast_lbboundary(-3);
+   }else  mpi_bcast_lbboundary(-1);
   }
   else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
     status = tclcommand_lbboundary_sphere(generate_lbboundary(),interp, argc - 2, argv + 2);
-    mpi_bcast_lbboundary(-1);
+   if (lattice_switch & LATTICE_LB_GPU){
+      mpi_bcast_lbboundary(-3);
+   }else  mpi_bcast_lbboundary(-1);
   }
   else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
     status = tclcommand_lbboundary_cylinder(generate_lbboundary(),interp, argc - 2, argv + 2);
-    mpi_bcast_lbboundary(-1);
+   if (lattice_switch & LATTICE_LB_GPU){
+      mpi_bcast_lbboundary(-3);
+   }else  mpi_bcast_lbboundary(-1);
   }
   else if(!strncmp(argv[1], "rhomboid", strlen(argv[1]))) {
     status = tclcommand_lbboundary_rhomboid(generate_lbboundary(),interp, argc - 2, argv + 2);
-    mpi_bcast_lbboundary(-1);
+   if (lattice_switch & LATTICE_LB_GPU){
+      mpi_bcast_lbboundary(-3);
+   }else  mpi_bcast_lbboundary(-1);
+
   }
   else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
     status = tclcommand_lbboundary_pore(generate_lbboundary(),interp, argc - 2, argv + 2);
-    mpi_bcast_lbboundary(-1);
+   if (lattice_switch & LATTICE_LB_GPU){
+      mpi_bcast_lbboundary(-3);
+   }else  mpi_bcast_lbboundary(-1);
   }
   else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
     if (argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
@@ -720,7 +732,7 @@ int tclcommand_lbboundary_cpu(Tcl_Interp *interp, int argc, char **argv)
   return (TCL_ERROR);
 #endif /* LB_BOUNDARIES */
 }
-#ifdef LB_BOUNDARIES
+#if defined (LB_BOUNDARIES) || defined (LB_BOUDARIES_GPU)
 
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
   double vec[3];
@@ -770,7 +782,71 @@ void lb_init_boundaries() {
   char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
   int the_boundary=-1;
-	
+
+ if (lattice_switch & LATTICE_LB_GPU){
+
+  int number_of_boundnodes = 0;
+  int *host_boundindex = (int*)malloc(sizeof(int));
+  size_t size_of_index;
+  
+  for(z=0; z<lbpar_gpu.dim_z; z++) {
+    for(y=0; y<lbpar_gpu.dim_y; y++) {
+      for (x=0; x<lbpar_gpu.dim_x; x++) {	    
+	 pos[0] = x*lbpar_gpu.agrid;
+	 pos[1] = y*lbpar_gpu.agrid;
+	 pos[2] = z*lbpar_gpu.agrid;
+	     
+	 dist = 0.;
+
+        for (n=0;n<n_lb_boundaries;n++) {
+          switch (lb_boundaries[n].type) {
+            case LB_BOUNDARY_WAL:
+              calculate_wall_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.wal, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_SPH:
+              calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.sph, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_CYL:
+              calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.cyl, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_RHOMBOID:
+              calculate_rhomboid_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.rhomboid, &dist_tmp, dist_vec);
+              break;
+            case LB_BOUNDARY_POR:
+              calculate_pore_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries[n].c.pore, &dist_tmp, dist_vec);
+              break;
+            default:
+              errtxt = runtime_error(128);
+              ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
+          }
+          
+          if (dist > dist_tmp || n == 0) {
+            dist = dist_tmp;
+          }
+        }       
+        
+  	if (dist <= 0 && n_lb_boundaries > 0) {
+   	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
+          host_boundindex = realloc(host_boundindex, size_of_index);
+          host_boundindex[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;  
+          number_of_boundnodes++;  
+
+        }
+      }
+    }
+  }
+
+  /**call of cuda fkt*/
+  lb_init_boundaries_GPU(number_of_boundnodes, host_boundindex);
+
+  //fprintf(stderr,"lb_init_boundaries \n");
+  //fprintf(stderr,"boundnumbers %i \n", number_of_boundnodes);
+
+  free(host_boundindex);
+ }
+    
+ else{
+    
   map_node_array(this_node, node_domain_position);
 	
   offset[0] = node_domain_position[0]*lblattice.grid[0];
@@ -829,6 +905,7 @@ void lb_init_boundaries() {
       }
     }
   }
+ }
 }
 
 int lbboundary_get_force(int no, double* f) {

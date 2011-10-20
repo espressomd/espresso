@@ -226,6 +226,7 @@ extern int n_lb_boundaries_gpu;
 #ifdef __cplusplus
 extern "C" {
 #endif
+extern int n_lb_boundaries;
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
