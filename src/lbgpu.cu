@@ -83,7 +83,7 @@ cudaError_t err;
 cudaError_t _err;
 /*-------------------------------------------------------*/
 /*********************************************************/
-/**device funktions called by kernel funktions */
+/** \name device funktions called by kernel funktions */
 /*********************************************************/
 /*-------------------------------------------------------*/
 
@@ -782,7 +782,9 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
   atomicadd(&(node_f.force[2*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
 #endif
 }
-
+/*********************************************************/
+/** \name System setup and Kernel funktions */
+/*********************************************************/
 /**kernel to calculate local populations from hydrodynamic fields given by the tcl values.
  * The mapping is given in terms of the equilibrium distribution.
  *
@@ -1098,7 +1100,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
   }	
 }
 /**calculate mass of the hole fluid kernel
-  * @param *sum				Pointer to result storage value (Output)
+ * @param *sum				Pointer to result storage value (Output)
  * @param n_a				Pointer to local node residing in array a (Input)
 */
 __global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
@@ -1157,7 +1159,10 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
   }
 }
 
-/**erroroutput for memory allocation and memory copy
+/**erroroutput for memory allocation and memory copy 
+ * @param err cuda error code
+ * @param *file .cu file were the error took place
+ * @param line line of the file were the error took place
 */
 void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     if( cudaSuccess != err) {                                             
@@ -1175,6 +1180,9 @@ if (_err!=cudaSuccess){ \
   fprintf(stderr, "error calling %s with #thpb %d in %s:%u\n", #_f, _b, __FILE__, __LINE__); \
   exit(EXIT_FAILURE); \
 }
+/*********************************************************/
+/** \name Host functions to setup and call kernels */
+/*********************************************************/
 /**********************************************************************/
 /* Host funktions to setup and call kernels*/
 /**********************************************************************/
@@ -1246,7 +1254,9 @@ fprintf(stderr, "initialization  \n");
     errexit();	
   }	
 }
-
+/** reinitialization for the lb gpu fluid called from host
+ * @param *lbpar_gpu	Pointer to parameters to setup the lb field
+*/
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
 
   /**write parameters in const memory*/
@@ -1392,7 +1402,9 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
 
   KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
 }
-/** setup and call kernel to copy particle forces to host */
+/** setup and call kernel to copy particle forces to host
+ * @param *host_forces contains the particle force computed on the GPU
+*/
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
 
   /** Copy result from device memory to host memory*/
@@ -1410,7 +1422,9 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
   cudaThreadSynchronize();
 }
 
-/** setup and call kernel for getting macroscopic fluid values of all nodes*/
+/** setup and call kernel for getting macroscopic fluid values of all nodes
+ * @param *host_values struct to save the gpu values
+*/
 void lb_get_values_GPU(LB_values_gpu *host_values){
 
   /** values for the kernel call */
@@ -1439,7 +1453,9 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
   cudaFree(device_print_values);
 
 }
-/** setup and call kernel to calculate the total momentum of the hole fluid*/
+/** setup and call kernel to calculate the total momentum of the hole fluid
+ * @param *mass value of the mass calcutated on the GPU
+*/
 void calc_fluid_mass_GPU(double* mass){
 
   float* tot_mass;
@@ -1460,7 +1476,9 @@ void calc_fluid_mass_GPU(double* mass){
   cudaFree(tot_mass);
   mass[0] = (double)(cpu_mass);
 }
-/** setup and call kernel to calculate the total momentum of the hole fluid*/
+/** setup and call kernel to calculate the total momentum of the hole fluid
+ * @param *mom value of the momentum calcutated on the GPU
+*/
 void calc_fluid_momentum_GPU(double* mom){
 
   float* tot_momentum;
@@ -1483,7 +1501,9 @@ void calc_fluid_momentum_GPU(double* mom){
   mom[1] = (double)(cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
   mom[2] = (double)(cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
 }
-/** setup and call kernel to calculate the temperature of the hole fluid*/
+/** setup and call kernel to calculate the temperature of the hole fluid
+ * @param *cpu_temp value of the temperatur calcutated on the GPU
+*/
 void calc_fluid_temperature_GPU(double* cpu_temp){
   float cpu_jsquared = 0.f;
   float* gpu_jsquared;
@@ -1502,7 +1522,9 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
 
   cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
-/** reinit of params */
+/** reinit of params 
+ * @param *lbpar_gpu struct containing the paramters of the fluid
+*/
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 
   /**write parameters in const memory*/
