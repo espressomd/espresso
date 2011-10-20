@@ -17,7 +17,7 @@
 /** \file lbgpu.h
  * Header file for lbgpu.c
  *
- * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
+ * Header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
  */
 
 
@@ -57,8 +57,7 @@
 /*@}*/
 
 
-/**-------------------------------------------------------------------------*/
-/** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
+/** Data structure holding the parameters for the Lattice Boltzmann system on the GPU. */
 typedef struct {
 
   /** number density (LJ units) */
@@ -106,20 +105,20 @@ typedef struct {
   unsigned int number_of_particles;
   /** Flag indicating whether fluctuations are present. */
   int fluct;
-  /**to calc and print out phys values */
+  /** Flag to calc and print out phys values */
   int calc_val;
-
+  /** Flag to inidacte if external forces are present */
   int external_force;
-
+  /** Externel forces */
   float ext_force[3];
-
+  /** seed given via TCL */
   unsigned int your_seed;
-
+  /** Flag for reinit of the fluid */
   unsigned int reinit;
 
 } LB_parameters_gpu;
 
-/** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
+/** Data structure holding the velocitydensities for the Lattice Boltzmann system on the GPU. */
 typedef struct {
 
   /** velocitydensity of the node */
@@ -131,7 +130,7 @@ typedef struct {
 
 } LB_nodes_gpu;
 
-/** Data structure holding the phys. values for the Lattice Boltzmann system. */
+/** Data structure holding the physical values for the Lattice Boltzmann system on the GPU. */
 typedef struct {
 
   /** velocitydensity of the node */
@@ -146,21 +145,21 @@ typedef struct {
 
 } LB_values_gpu;
 
-/** Data structure for the randomnr and the seed. */
+/** Data structure for the randomnr and the seed on the GPU. */
 typedef struct {
-
+  /** array containing two random numbers*/
   float randomnr[2];
-
+  /** seed/state of the random number generator */
   unsigned int seed;
 
 } LB_randomnr_gpu;
-
+/** Data structure for the particle force on the GPU. */
 typedef struct {
   /** force on the particle given to md part */
   float f[3];
 
 } LB_particle_force_gpu;
-
+/** Data structure for the particle properties on the GPU*/
 typedef struct {
   /** particle position given from md part*/
   float p[3];
@@ -172,21 +171,21 @@ typedef struct {
   unsigned int fixed;
 
 } LB_particle_gpu;
-
+/** Data structure for the node force ont he GPU*/
 typedef struct {
 
   float *force;
 
 } LB_node_force_gpu;
-
+/** Data structure for the external node force on the GPU*/
 typedef struct {
-
+  /** array containing external node force */
   float force[3];
-
+  
   unsigned int index;
 
 } LB_extern_nodeforce_gpu;
-
+/** Data structure for the seed/state of the randomnumber generators on the GPU*/
 typedef struct {
 
   unsigned int seed;

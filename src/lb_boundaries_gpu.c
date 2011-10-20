@@ -14,10 +14,10 @@
  * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
  */
 
-/** \file lb-boundaries.c
+/** \file lb_boundaries_gpu.c
  *
  * Boundary conditions for Lattice Boltzmann fluid dynamics.
- * Header file for \ref lb-boundaries.h.
+ * Header file for \ref lb_boundaries_gpu.h.
  *
  */
 #include "utils.h"

@@ -1,17 +1,23 @@
-/* $Id$
+/* $Id: lbgpu.cu $
  *
  * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
  * It is therefore subject to the ESPResSo license agreement which you
  * accepted upon receiving the distribution and by which you are
  * legally bound while utilizing this file in any form or way.
  * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * You should have received a copy of that license along with this
  * program; if not, refer to http://www.espresso.mpg.de/license.html
  * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group, 
- * PO Box 3148, 55021 Mainz, Germany. 
+ * Max-Planck-Institute for Polymer Research, Theory Group,
+ * PO Box 3148, 55021 Mainz, Germany.
  * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
+ */
+
+/** \file lbgpu.cu
+ *
+ * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
+ * Header file for \ref lbgpu.h.
  */
 
 #include <stdio.h>
@@ -1092,8 +1098,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
   }	
 }
 /**calculate mass of the hole fluid kernel
- * @param node_f			node force struct (Input)
- * @param *sum				Pointer to result storage value (Output)
+  * @param *sum				Pointer to result storage value (Output)
  * @param n_a				Pointer to local node residing in array a (Input)
 */
 __global__ void calc_mass(LB_nodes_gpu n_a, float *sum) {
@@ -1334,8 +1339,6 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
 }
 #endif
 /**setup and call extern single node force initialization from the host
- * @param n_extern_nodeforces			number of nodes on which the external force has to be applied
- * @param *host_extern_nodeforces		Pointer to the host extern node forces
  * @param *lbpar_gpu				Pointer to host parameter struct
 */
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu){
