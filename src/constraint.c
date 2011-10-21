@@ -534,22 +534,33 @@ static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *int
 static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *interp,
 			int argc, char **argv)
 {
+  double triple_product;
+  double tmp[3];
+  
   con->type = CONSTRAINT_RHOMBOID;
+  
   con->c.rhomboid.pos[0] = 
   con->c.rhomboid.pos[1] = 
   con->c.rhomboid.pos[2] = 0;
+  
   con->c.rhomboid.a[0] = 
   con->c.rhomboid.a[1] = 
   con->c.rhomboid.a[2] = 0;
+  
   con->c.rhomboid.b[0] = 
   con->c.rhomboid.b[1] = 
   con->c.rhomboid.b[2] = 0;
+  
   con->c.rhomboid.c[0] = 
   con->c.rhomboid.c[1] = 
   con->c.rhomboid.c[2] = 0;
+  
   con->c.rhomboid.direction = 0;
+  
   con->c.rhomboid.penetrable = 0;
+  
   con->part_rep.p.type = -1;
+  
   con->c.rhomboid.reflecting = 0;
   
   while (argc > 0) {
@@ -558,6 +569,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid a <ax> <ay> <az> expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if(Tcl_GetDouble(interp, argv[1], &(con->c.rhomboid.a[0])) == TCL_ERROR ||
 	 			 Tcl_GetDouble(interp, argv[2], &(con->c.rhomboid.a[1])) == TCL_ERROR ||
 	  		 Tcl_GetDouble(interp, argv[3], &(con->c.rhomboid.a[2])) == TCL_ERROR)
@@ -570,6 +582,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid b <bx> <by> <bz> expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if(Tcl_GetDouble(interp, argv[1], &(con->c.rhomboid.b[0])) == TCL_ERROR ||
 	 			 Tcl_GetDouble(interp, argv[2], &(con->c.rhomboid.b[1])) == TCL_ERROR ||
 	  		 Tcl_GetDouble(interp, argv[3], &(con->c.rhomboid.b[2])) == TCL_ERROR)
@@ -582,6 +595,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid c <cx> <cy> <cz> expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if(Tcl_GetDouble(interp, argv[1], &(con->c.rhomboid.c[0])) == TCL_ERROR ||
 	 			 Tcl_GetDouble(interp, argv[2], &(con->c.rhomboid.c[1])) == TCL_ERROR ||
 	  		 Tcl_GetDouble(interp, argv[3], &(con->c.rhomboid.c[2])) == TCL_ERROR)
@@ -594,6 +608,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid corner <x> <y> <z> expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if(Tcl_GetDouble(interp, argv[1], &(con->c.rhomboid.pos[0])) == TCL_ERROR ||
 				 Tcl_GetDouble(interp, argv[2], &(con->c.rhomboid.pos[1])) == TCL_ERROR ||
 	  		 Tcl_GetDouble(interp, argv[3], &(con->c.rhomboid.pos[2])) == TCL_ERROR)
@@ -606,6 +621,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid direction {inside|outside} expected", (char *) NULL);
 				return (TCL_ERROR);
       }
+      
       if(!strncmp(argv[1], "inside", strlen(argv[1])))
 				con->c.rhomboid.direction = -1;
       else if(!strncmp(argv[1], "outside", strlen(argv[1])))
@@ -620,6 +636,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid type <t> expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if(Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
 				return TCL_ERROR;
 				
@@ -630,6 +647,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid penetrable {0|1} expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if (Tcl_GetInt(interp, argv[1], &(con->c.rhomboid.penetrable)) == TCL_ERROR)
 				return TCL_ERROR;
 				
@@ -640,6 +658,7 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
 				Tcl_AppendResult(interp, "constraint rhomboid reflecting {0|1} expected", (char *) NULL);
 				return TCL_ERROR;
       }
+      
       if (Tcl_GetInt(interp, argv[1], &(con->c.rhomboid.reflecting)) == TCL_ERROR)
 				return TCL_ERROR;
 				
@@ -658,6 +677,26 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
     Tcl_AppendResult(interp, "usage: constraint rhomboid corner <x> <y> <z> a <ax> <ay> <az> b <bx> <by> <bz> c <cx> <cy> <cz> direction {inside|outside} type <t> [penetrable <0|1>] [reflecting <1|2>]",
 		     (char *) NULL);
     return TCL_ERROR;    
+  }
+                     
+  //If the trihedron a, b, c is left handed, then inside and outside will be exchanged since all normals will be reversed. This compensates  for that, so that the user doesn't have to take care of the handedness.
+  triple_product = con->c.rhomboid.a[0]*( con->c.rhomboid.b[1]*con->c.rhomboid.c[2] - con->c.rhomboid.b[2]*con->c.rhomboid.c[1] ) +
+                   con->c.rhomboid.a[1]*( con->c.rhomboid.b[2]*con->c.rhomboid.c[0] - con->c.rhomboid.b[0]*con->c.rhomboid.c[2] ) + 
+                   con->c.rhomboid.a[2]*( con->c.rhomboid.b[0]*con->c.rhomboid.c[1] - con->c.rhomboid.b[1]*con->c.rhomboid.c[0] );
+                
+  if(triple_product < 0.)
+  {    
+    tmp[0] = con->c.rhomboid.a[0];
+    tmp[1] = con->c.rhomboid.a[1];
+    tmp[2] = con->c.rhomboid.a[2];
+    
+    con->c.rhomboid.a[0] = con->c.rhomboid.b[0];
+    con->c.rhomboid.a[1] = con->c.rhomboid.b[1];
+    con->c.rhomboid.a[2] = con->c.rhomboid.b[2];
+    
+    con->c.rhomboid.b[0] = tmp[0];
+    con->c.rhomboid.b[1] = tmp[1];
+    con->c.rhomboid.b[2] = tmp[2];
   }
 
   return TCL_OK;
