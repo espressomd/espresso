@@ -308,7 +308,7 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
   if(argc==0) {
       return double_correlation_print_correlation(&correlations[no], interp);
   } 
-  if(argc!=1) { 
+  if(argc<1) { 
     Tcl_AppendResult(interp, "usage: analyze <correlation_id> print [what]\n", (char *)NULL); 
     return TCL_ERROR; 
   }
