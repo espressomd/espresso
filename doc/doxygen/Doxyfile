@@ -606,7 +606,7 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = $(SRCDIR)/src \
-                         $(SRCDIR)/doc/doxygen/pages \
+                         $(SRCDIR)/doc/doxygen \
                          background_errors.dox
 
 # This tag can be used to specify the character encoding of the source files
