@@ -260,11 +260,22 @@ void lb_propagate();
  */
 void calc_particle_lattice_ia();
 
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. */
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
+
+
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index The local lattice site (Input).
  * @param rho local fluid density
  */
+
+/** Calculation of hydrodynamic modes */
+void lb_calc_modes(index_t index, double *mode);
+
+
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -571,10 +582,16 @@ int lb_lbfluid_get_gamma_even(double* p_gamma_even);
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz);
 int lb_lbfluid_get_friction(double* p_friction);
 
+int lb_lbfluid_cpu_print_vtk_boundary(char* filename);
+int lb_lbfluid_cpu_print_vtk_velocity(char* filename);
+int lb_lbfluid_cpu_print_boundary(char* filename);
+int lb_lbfluid_cpu_print_velocity(char* filename);
+
 int lb_lbnode_get_rho(int* ind, double* p_rho);
 int lb_lbnode_get_u(int* ind, double* u);
 int lb_lbnode_get_pi(int* ind, double* pi);
 int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
+int lb_lbnode_get_boundary(int* ind, int* p_boundary);
 int lb_lbnode_get_pop(int* ind, double* pop);
 
 int lb_lbnode_set_rho(int* ind, double rho);
@@ -582,6 +599,8 @@ int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
+
+void lb_check_halo_regions();
 
 #endif /* LB */
 

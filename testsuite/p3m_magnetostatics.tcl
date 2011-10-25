@@ -29,7 +29,7 @@
 #=======================================================================================================
 source "tests_common.tcl"
 
-require_feature "MAGNETOSTATICS" 
+require_feature "MAGNETOSTATICS"
 require_feature "FFTW"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"

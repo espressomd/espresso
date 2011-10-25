@@ -312,7 +312,7 @@ void on_observable_calc()
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
     switch (coulomb.Dmethod) {
@@ -388,7 +388,7 @@ void on_coulomb_change()
   recalc_forces = 1;
 #endif  /* ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(temperature > 0.0)
     coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
   else
@@ -408,7 +408,7 @@ void on_coulomb_change()
   }
 
   recalc_forces = 1;
-#endif  /* ifdef MAGNETOSTATICS */
+#endif  /* ifdef DIPOLES */
 
 }
 
@@ -427,12 +427,6 @@ void on_constraint_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
-
-#ifdef LB_BOUNDARIES
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
-  }
-#endif
 
   recalc_forces = 1;
 }
@@ -490,7 +484,7 @@ void on_resort_particles()
 #endif /* ifdef ELECTROSTATICS */
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -499,7 +493,7 @@ void on_resort_particles()
 #endif
  default: break;
   }
-#endif /* ifdef MAGNETOSTATICS*/
+#endif /* ifdef DIPOLES*/
 
 }
 
@@ -523,7 +517,7 @@ void on_NpT_boxl_change(double scal1) {
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch(coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_P3M:
@@ -543,7 +537,7 @@ void on_NpT_boxl_change(double scal1) {
 void on_parameter_change(int field)
 {
   /* to prevent two on_coulomb_change */
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   int cc = 0;
 #endif
 
@@ -622,7 +616,7 @@ void on_parameter_change(int field)
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
    #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
@@ -640,9 +634,9 @@ void on_parameter_change(int field)
 #endif
   default: break;
   }
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 
-#if defined(ELECTROSTATICS) || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   if (cc)
     on_coulomb_change();
 #endif
@@ -861,23 +855,23 @@ static void init_tcl(Tcl_Interp *interp)
   if (!scriptdir)
     scriptdir = get_default_scriptsdir();
   
-  fprintf(stderr,"%d: Script directory: %s\n", this_node, scriptdir);
+  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
 
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
     fprintf(stderr,
 	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
 	    scriptdir);
-    exit(-1);
+    exit(1);
   }
   if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
     fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
 	    Tcl_GetStringResult(interp));
-    exit(-1);
+    exit(1);
   }
   if (chdir(cwd) != 0) {
     fprintf(stderr,
 	    "\n\ncould not change back to execution dir %s ????\n\n\n",
 	    cwd);
-    exit(-1);
+    exit(1);
   }
 }

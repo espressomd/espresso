@@ -1,11 +1,3 @@
-#############################################################
-#                                                           #
-# vtf.tcl                                                   #
-# =======                                                   #
-#                                                           #
-# Functions that allow writing VTF files.                   #
-#                                                           #
-#############################################################
 #
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz
 #  
@@ -24,6 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
+#############################################################
+#                                                           #
+# vtf.tcl                                                   #
+# =======                                                   #
+#                                                           #
+# Functions that allow writing VTF files.                   #
+#                                                           #
+#############################################################
 
 # Write the structure information of the current system to the given file
 # OPTIONS:
@@ -70,7 +70,7 @@ proc writevsf { file args } {
 	set list [flatten_indexed_list [expr $type_max + 1] "default" $i_list]
 	for { set type 0 } { $type < [llength $list] } { incr type } {
 	    if { [lindex $list $type] eq "default" } then {
-		if { $type <= [llength $name_list] } then {
+		if { $type < [llength $name_list] } then {
 		    lset list $type "name [lindex $name_list $type] type $type"
 		} else {
 		    lset list $type "name X type $type"
@@ -149,6 +149,7 @@ proc writevsf { file args } {
     set to 0
     set prev_type "na"
 
+    # Output the type
     for { set pid 0 } { $pid <= $max_pid } { incr pid } {
 	if { [part $pid] != "na" } then {
 	    # look for the type
@@ -168,6 +169,15 @@ proc writevsf { file args } {
 	}
     }
     puts $file [get_atom_record $from $to $prev_type]
+
+    if { [has_feature "ELECTROSTATICS"] } {
+    # Output the charge
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+	    if { [part $pid] != "na" } then {
+		puts $file "atom [vtfpid $pid] q [part $pid print q]"
+	    }
+	}
+    }
 
     # Print bond data
     for { set from 0 } { $from <= $max_pid } { incr from } {

@@ -1,5 +1,6 @@
 # Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -18,11 +19,12 @@
 
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "LENNARD_JONES"
 
 if { [setmd n_nodes] >= 5 } {
     puts "Testcase layered.tcl does not run on more than 5 nodes -- too many cells"
-    exit -42
+    ignore_exit
 }
 if { [setmd n_nodes] > 1} {
     # MOL_CUT increases the short ranged radius so much that this test's box is too small
@@ -65,7 +67,7 @@ proc write_data {file} {
     close $f
 }
 
-if { [catch {
+test_catch {
 
     ############## integ-specific part
     setmd box_l     99 99 99
@@ -148,6 +150,4 @@ if { [catch {
     if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
 	error "verlet reuse frequency differs."
     }
-} res ] } {
-    error_exit $res
-}
+} 

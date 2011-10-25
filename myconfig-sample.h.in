@@ -47,11 +47,11 @@
 /**********************************************************************/
 
 #define PARTIAL_PERIODIC
+#define MAGNETOSTATICS
 #define ELECTROSTATICS
 #define ROTATION
-#define ROTATIONAL_INTERIA
+#define ROTATIONAL_INERTIA
 #define DIPOLES
-#define MAGNETOSTATICS
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS

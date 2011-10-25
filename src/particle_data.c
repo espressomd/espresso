@@ -1925,6 +1925,12 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num)
 {
   int change = 0, err = TCL_OK;
+#ifdef DIPOLES
+  int dipm_set = 0;
+#endif
+#if defined(ROTATION) || defined(DIPOLES)
+  int quat_set = 0, dip_set = 0;
+#endif
 
 #ifdef ADDITIONAL_CHECKS
   if (!particle_node)
@@ -1966,8 +1972,14 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef ROTATION
 
-    else if (ARG0_IS_S("quat"))
+    else if (ARG0_IS_S("quat")) {
+      if (dip_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and orientation can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
       err = tclcommand_part_parse_quat(interp, argc-1, argv+1, part_num, &change);
+      quat_set = 1;
+    }
 
     else if (ARG0_IS_S("omega"))
       err = tclcommand_part_parse_omega(interp, argc-1, argv+1, part_num, &change);
@@ -1984,11 +1996,27 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef DIPOLES
 
-    else if (ARG0_IS_S("dip"))
+    else if (ARG0_IS_S("dip")) {
+      if (quat_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and orientation can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
+      if (dipm_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and scalar dipole moment can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
       err = tclcommand_part_parse_dip(interp, argc-1, argv+1, part_num, &change);
+      dip_set = 1;
+    }
 
-    else if (ARG0_IS_S("dipm"))
+    else if (ARG0_IS_S("dipm")) {
+      if (dip_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and scalar dipole moment can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
       err = tclcommand_part_parse_dipm(interp, argc-1, argv+1, part_num, &change);
+      dipm_set = 1;
+    }
 
 #endif
 
