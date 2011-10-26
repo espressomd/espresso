@@ -42,6 +42,7 @@
 #include "lb-d3q19.h"
 #include "lb-boundaries.h"
 #include "lb.h"
+#include "lbgpu.h"
 
 #ifdef LB
 
@@ -143,9 +144,9 @@ void lbnode_tcl_print_usage(Tcl_Interp *interp) {
 /** TCL Interface: The \ref lbfluid command. */
 #endif
 int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
+//int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
+//int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -171,12 +172,13 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
     lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
     argc--; argv++;
   }
-
+#if 0
   if (lattice_switch & LATTICE_LB_GPU)
     return tclcommand_lbfluid_gpu(interp, argc, argv);
   else{
+#endif
     return tclcommand_lbfluid_cpu(interp, argc, argv);
-  }
+  //}
 }
 
 int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
@@ -360,7 +362,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 				      }
 				    }
 				    else if (ARG1_IS_S("velocity")) {
-				      if ( lb_lbfluid_cpu_print_vtk_velocity(argv[2]) != 0 ) {
+				      if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) {
 					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
 				        return TCL_ERROR;
 				      }
@@ -378,7 +380,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 			      	}
 			    	}
 			    	else if (ARG0_IS_S("velocity")) {
-			      	if ( lb_lbfluid_cpu_print_velocity(argv[1]) != 0 ) {
+			      	if ( lb_lbfluid_print_velocity(argv[1]) != 0 ) {
 				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
 			      	  return TCL_ERROR;
 			      	}
@@ -402,7 +404,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
         return TCL_ERROR;
   }
 
-  lattice_switch = (lattice_switch | LATTICE_LB) ;
+  //lattice_switch = (lattice_switch | LATTICE_LB) ;
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
 
   /* thermo_switch is retained for backwards compatibility */
@@ -418,9 +420,6 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 }
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
-  if (lattice_switch & LATTICE_LB_GPU)
-    return tclcommand_lbnode_gpu(interp, argc, argv);
-  else
     return tclcommand_lbnode_cpu(interp, argc, argv);
 }
 /** Parser for the \ref tclcommand_lbnode command. */
@@ -562,8 +561,13 @@ int lb_lbfluid_set_density(double p_dens) {
   if ( p_dens <= 0 ) {
     return -1;
   }
-  lbpar.rho = p_dens;
-  mpi_bcast_lb_params(LBPAR_DENSITY);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.rho = (float)p_dens;
+    on_lb_params_change_gpu(LBPAR_DENSITY);
+  } else {
+    lbpar.rho = p_dens;
+    mpi_bcast_lb_params(LBPAR_DENSITY);
+    }
   return 0;
 }
 
@@ -571,8 +575,31 @@ int lb_lbfluid_set_agrid(double p_agrid){
   if ( p_agrid <= 0) {
     return -1;
   }
-  lbpar.agrid = agrid = p_agrid;
-  mpi_bcast_lb_params(LBPAR_AGRID);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.agrid = (float)p_agrid;
+
+    lbpar_gpu.dim_x = (unsigned int)floor(box_l[0]/p_agrid);
+    lbpar_gpu.dim_y = (unsigned int)floor(box_l[1]/p_agrid);
+    lbpar_gpu.dim_z = (unsigned int)floor(box_l[2]/p_agrid);
+    unsigned int tmp[3];
+    tmp[0] = lbpar_gpu.dim_x;
+    tmp[1] = lbpar_gpu.dim_y;
+    tmp[2] = lbpar_gpu.dim_z;
+    /* sanity checks */
+    int dir;
+    for (dir=0;dir<3;dir++) {
+    /* check if box_l is compatible with lattice spacing */
+      if (fabs(box_l[dir]-tmp[dir]*p_agrid) > ROUND_ERROR_PREC) {
+        char *errtxt = runtime_error(128);
+        ERROR_SPRINTF(errtxt, "{097 Lattice spacing p_agrid=%f is incompatible with box_l[%i]=%f} ",p_agrid,dir,box_l[dir]);
+      }
+    }
+    lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
+    on_lb_params_change_gpu(LBPAR_AGRID);
+  } else {
+    lbpar.agrid = agrid = p_agrid;
+    mpi_bcast_lb_params(LBPAR_AGRID);
+    }
   return 0;
 }
 
@@ -580,8 +607,13 @@ int lb_lbfluid_set_visc(double p_visc){
   if ( p_visc <= 0 ) {
     return -1;
   }
-  lbpar.viscosity = p_visc;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.viscosity = (float)p_visc;
+    on_lb_params_change_gpu(LBPAR_VISCOSITY);;
+  } else {
+    lbpar.viscosity = p_visc;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
@@ -589,8 +621,13 @@ int lb_lbfluid_set_tau(double p_tau){
   if ( p_tau <= 0 ) {
     return -1;
   }
-  lbpar.tau = p_tau;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.tau = (float)p_tau;
+    on_lb_params_change_gpu(0);
+  } else {
+    lbpar.tau = p_tau;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
@@ -598,8 +635,13 @@ int lb_lbfluid_set_bulk_visc(double p_bulk_visc){
   if ( p_bulk_visc <= 0 ) {
     return -1;
   }
-  lbpar.bulk_viscosity = p_bulk_visc;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.bulk_viscosity = (float)p_bulk_visc;
+    on_lb_params_change_gpu(LBPAR_BULKVISC);
+  } else {
+    lbpar.bulk_viscosity = p_bulk_visc;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
@@ -607,8 +649,13 @@ int lb_lbfluid_set_gamma_odd(double p_gamma_odd){
   if ( fabs(p_gamma_odd) > 1 ) {
     return -1;
   }
-  lbpar.gamma_odd = gamma_odd = p_gamma_odd;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.gamma_odd = (float)p_gamma_odd;
+    on_lb_params_change_gpu(0);
+  } else {
+    lbpar.gamma_odd = gamma_odd = p_gamma_odd;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
@@ -616,16 +663,30 @@ int lb_lbfluid_set_gamma_even(double p_gamma_even){
   if ( fabs(p_gamma_even) > 1 ) {
     return -1;
   }
-  lbpar.gamma_even = gamma_even = p_gamma_even;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.gamma_even = (float)p_gamma_even;
+    on_lb_params_change_gpu(0);
+  } else {
+    lbpar.gamma_even = gamma_even = p_gamma_even;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
-  lbpar.ext_force[0] = p_fx;
-  lbpar.ext_force[1] = p_fy;
-  lbpar.ext_force[2] = p_fz;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    /* external force density is stored in MD units */
+    lbpar_gpu.ext_force[0] = (float)p_fx;
+    lbpar_gpu.ext_force[1] = (float)p_fy;
+    lbpar_gpu.ext_force[2] = (float)p_fz;
+    lbpar_gpu.external_force = 1;
+    lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
+  } else {  
+    lbpar.ext_force[0] = p_fx;
+    lbpar.ext_force[1] = p_fy;
+    lbpar.ext_force[2] = p_fz;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
@@ -633,8 +694,13 @@ int lb_lbfluid_set_friction(double p_friction){
   if ( p_friction <= 0 ) {
     return -1;
   }
-  lbpar.friction = p_friction;
-  mpi_bcast_lb_params(0);
+  if (lattice_switch & LATTICE_LB_GPU) {
+    lbpar_gpu.friction = (float)p_friction;
+    on_lb_params_change_gpu(LBPAR_FRICTION);
+  } else {
+    lbpar.friction = p_friction;
+    mpi_bcast_lb_params(0);
+    }
   return 0;
 }
 
@@ -703,44 +769,59 @@ int lb_lbfluid_cpu_print_vtk_boundary(char* filename) {
 	return 0;
 }
 
-int lb_lbfluid_cpu_print_vtk_velocity(char* filename) {
-	int pos[3];
-	double u[3];
-	int gridsize[3];
+int lb_lbfluid_print_vtk_velocity(char* filename) {
+	 if (lattice_switch & LATTICE_LB_GPU) {
+     FILE* fp = fopen(filename, "w");
+
+	   if(fp == NULL)
+		   return 1;
+
+		  fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.number_of_nodes);
+    int j;	
+    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+      /** print of the calculated phys values */
+      fprintf(fp, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+    }
+    fclose(fp);
+  } else {
+    int pos[3];
+    double u[3];
+	   int gridsize[3];
 	
-	gridsize[0] = box_l[0] / lblattice.agrid;
-	gridsize[1] = box_l[1] / lblattice.agrid;
-	gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lblattice.agrid;
+	   gridsize[1] = box_l[1] / lblattice.agrid;
+	   gridsize[2] = box_l[2] / lblattice.agrid;
 	
-	FILE* fp = fopen(filename, "w");
+	   FILE* fp = fopen(filename, "w");
 	
-	if(fp == NULL)
-		return 1;
+	   if(fp == NULL)
+		   return 1;
 		
-	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	    fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
-	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
-			{
-				lb_lbnode_get_u(pos, u);
-				fprintf(fp, "%f %f %f ", u[0], u[1], u[2]);
-			}
+	    for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		    for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			    for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			    {
+				    lb_lbnode_get_u(pos, u);
+				    fprintf(fp, "%f %f %f ", u[0], u[1], u[2]);
+			    }
 				
-	fclose(fp);				
+	      fclose(fp);
+  }				
 	return 0;
 }
 
 int lb_lbfluid_cpu_print_boundary(char* filename) {
-	int pos[3];
-	int boundary;
-	int gridsize[3];
+	 int pos[3];
+	 int boundary;
+	 int gridsize[3];
 	
-	gridsize[0] = box_l[0] / lblattice.agrid;
-	gridsize[1] = box_l[1] / lblattice.agrid;
-	gridsize[2] = box_l[2] / lblattice.agrid;
+	 gridsize[0] = box_l[0] / lblattice.agrid;
+	 gridsize[1] = box_l[1] / lblattice.agrid;
+	 gridsize[2] = box_l[2] / lblattice.agrid;
 	
-	FILE* fp = fopen(filename, "w");
+	 FILE* fp = fopen(filename, "w");
 	
 	if(fp == NULL)
 		return 1;
@@ -757,86 +838,135 @@ int lb_lbfluid_cpu_print_boundary(char* filename) {
 	return 0;
 }
 
-int lb_lbfluid_cpu_print_velocity(char* filename) {
-	int pos[3];
-	double u[3];
-	int gridsize[3];
-	
-	gridsize[0] = box_l[0] / lblattice.agrid;
-	gridsize[1] = box_l[1] / lblattice.agrid;
-	gridsize[2] = box_l[2] / lblattice.agrid;
+int lb_lbfluid_print_velocity(char* filename) {
+  if (lattice_switch & LATTICE_LB_GPU) {
+    FILE* fp = fopen(filename, "w");
 
-	FILE* fp = fopen(filename, "w");
+	   if(fp == NULL)
+		   return 1;
+
+    int j;	
+    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+      /** print of the calculated phys values */
+      fprintf(fp, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+    }
+    fclose(fp);
+  } else {
+	   int pos[3];
+	   double u[3];
+	   int gridsize[3];
 	
-	if(fp == NULL)
-		return 1;
+	   gridsize[0] = box_l[0] / lblattice.agrid;
+	   gridsize[1] = box_l[1] / lblattice.agrid;
+	   gridsize[2] = box_l[2] / lblattice.agrid;
+
+	   FILE* fp = fopen(filename, "w");
 	
-	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
-			{
-				lb_lbnode_get_u(pos, u);
-				fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
-			}
+	   if(fp == NULL)
+		  return 1;
+	
+	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+	   	for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+		   	for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+		   	{
+		   		lb_lbnode_get_u(pos, u);
+		   		fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
+		   	}
 				
-	fclose(fp);				
+	   fclose(fp);
+    }				
 	return 0;
 }
 
 int lb_lbnode_get_rho(int* ind, double* p_rho){
+  if (lattice_switch & LATTICE_LB_GPU) {
+    LB_values_gpu *host_print_values;
+    host_print_values = malloc(sizeof(LB_values_gpu));	
+    double rho;
+    int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
+    lb_print_node_GPU(single_nodeindex, host_print_values);
+    rho = (double)host_print_values[0].rho;
+    *p_rho = rho;
+  } else {
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+    double rho; double j[3]; double pi[6];
 
-  index_t index;
-  int node, grid[3], ind_shifted[3];
-  double rho; double j[3]; double pi[6];
-
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
-  mpi_recv_fluid(node,index,&rho,j,pi);
-  // unit conversion
-  rho *= 1/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-  *p_rho = rho;
+    mpi_recv_fluid(node,index,&rho,j,pi);
+    // unit conversion
+    rho *= 1/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+    *p_rho = rho;
+    }
   return 0;
 }
 
 int lb_lbnode_get_u(int* ind, double* p_u) {
-  
-  index_t index;
-  int node, grid[3], ind_shifted[3];
-  double rho; double j[3]; double pi[6];
+  if (lattice_switch & LATTICE_LB_GPU) {
+    LB_values_gpu *host_print_values;
+    host_print_values = malloc(sizeof(LB_values_gpu));	
+    
+    int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
+    lb_print_node_GPU(single_nodeindex, host_print_values);
+    p_u[0] = (double)host_print_values[0].v[0];
+    p_u[1] = (double)host_print_values[0].v[1];
+    p_u[2] = (double)host_print_values[0].v[2];
+  } else {  
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+    double rho; double j[3]; double pi[6];
 
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
-  mpi_recv_fluid(node,index,&rho,j,pi);
-  // unit conversion
-  p_u[0] = j[0]/rho/tau/lbpar.agrid;
-  p_u[1] = j[1]/rho/tau/lbpar.agrid;
-  p_u[2] = j[2]/rho/tau/lbpar.agrid;
+    mpi_recv_fluid(node,index,&rho,j,pi);
+    // unit conversion
+    p_u[0] = j[0]/rho/tau/lbpar.agrid;
+    p_u[1] = j[1]/rho/tau/lbpar.agrid;
+    p_u[2] = j[2]/rho/tau/lbpar.agrid;
+    }
   return 0;
 }
 
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
-  
-  index_t index;
-  int node, grid[3], ind_shifted[3];
-  double rho; double j[3]; double pi[6];
+  if (lattice_switch & LATTICE_LB_GPU) {
+#if 0
+    LB_values_gpu *host_print_values;
+    host_print_values = malloc(sizeof(LB_values_gpu));	
+    double pi[6];
+    int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
+    lb_print_node_GPU(single_nodeindex, host_print_values);
 
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
-  
-  mpi_recv_fluid(node,index,&rho,j,pi);
-  // unit conversion // TODO: Check Unit Conversion!
-  p_pi[0] = pi[0]*tau*lbpar.agrid*lbpar.agrid;
-  p_pi[1] = pi[1]*tau*lbpar.agrid*lbpar.agrid;
-  p_pi[2] = pi[2]*tau*lbpar.agrid*lbpar.agrid;
-  p_pi[3] = pi[3]*tau*lbpar.agrid*lbpar.agrid;
-  p_pi[4] = pi[4]*tau*lbpar.agrid*lbpar.agrid;
-  p_pi[5] = pi[5]*tau*lbpar.agrid*lbpar.agrid;
+    p_pi[0] = (double)host_print_values[0].pi[0];
+    p_pi[1] = (double)host_print_values[0].pi[1];
+    p_pi[2] = (double)host_print_values[0].pi[2];
+    p_pi[3] = (double)host_print_values[0].pi[3];
+    p_pi[4] = (double)host_print_values[0].pi[4];
+    p_pi[5] = (double)host_print_values[0].pi[5];
+#endif
+  printf("single node stresstensorvalues not available due to memory consumption!\n But can be made available hardcoded in lb.c and lbgpu.h!\n");
+  } else {   
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+    double rho; double j[3]; double pi[6];
 
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+  
+    mpi_recv_fluid(node,index,&rho,j,pi);
+    // unit conversion // TODO: Check Unit Conversion!
+    p_pi[0] = pi[0]*tau*lbpar.agrid*lbpar.agrid;
+    p_pi[1] = pi[1]*tau*lbpar.agrid*lbpar.agrid;
+    p_pi[2] = pi[2]*tau*lbpar.agrid*lbpar.agrid;
+    p_pi[3] = pi[3]*tau*lbpar.agrid*lbpar.agrid;
+    p_pi[4] = pi[4]*tau*lbpar.agrid*lbpar.agrid;
+    p_pi[5] = pi[5]*tau*lbpar.agrid*lbpar.agrid;
+    }
   return 0;
 }
 
@@ -860,70 +990,82 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi_neq) {
 }
 
 int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
-  
-  index_t index;
-  int node, grid[3], ind_shifted[3];
+  if (lattice_switch & LATTICE_LB_GPU) {
+    printf("Not implemented in the LB GPU code!\n");
 
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+  } else {  
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
   
-  mpi_recv_fluid_boundary_flag(node,index,p_boundary);
-  
+    mpi_recv_fluid_boundary_flag(node,index,p_boundary);
+    }
   return 0;
 }
 
 int lb_lbnode_get_pop(int* ind, double* p_pop) {
+  if (lattice_switch & LATTICE_LB_GPU) {
+    printf("Not implemented in the LB GPU code!\n");
 
-  index_t index;
-  int node, grid[3], ind_shifted[3];
+  } else {
+    index_t index;
+    int node, grid[3], ind_shifted[3];
 
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
-  mpi_recv_fluid_populations(node, index, p_pop);
-
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+    mpi_recv_fluid_populations(node, index, p_pop);
+    }
   return 0;
 }
 
 int lb_lbnode_set_rho(int* ind, double p_rho){
+  if (lattice_switch & LATTICE_LB_GPU) {
+    printf("Not implemented in the LB GPU code!\n");
 
-  index_t index;
-  int node, grid[3], ind_shifted[3];
-  double rho; double j[3]; double pi[6];
+  } else {
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+    double rho; double j[3]; double pi[6];
 
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
 
-  mpi_recv_fluid(node,index,&rho,j,pi);
-  rho  = p_rho*agrid*agrid*agrid;
-  mpi_send_fluid(node,index,rho,j,pi) ;
+    mpi_recv_fluid(node,index,&rho,j,pi);
+    rho  = p_rho*agrid*agrid*agrid;
+    mpi_send_fluid(node,index,rho,j,pi) ;
 
 //  lb_calc_average_rho();
 //  lb_reinit_parameters();
-
+    }
   return 0;
 }
 
 int lb_lbnode_set_u(int* ind, double* u){
+  if (lattice_switch & LATTICE_LB_GPU) {
+    printf("Not implemented in the LB GPU code!\n");
 
-  index_t index;
-  int node, grid[3], ind_shifted[3];
-  double rho; double j[3]; double pi[6];
+  } else {
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+    double rho; double j[3]; double pi[6];
 
-  ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
-  node = map_lattice_to_node(&lblattice,ind_shifted,grid);
-  index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
 
-  /* transform to lattice units */
+    /* transform to lattice units */
 
-  mpi_recv_fluid(node,index,&rho,j,pi);
-  j[0] = rho*u[0]*tau*agrid;
-  j[1] = rho*u[1]*tau*agrid;
-  j[2] = rho*u[2]*tau*agrid;
-  mpi_send_fluid(node,index,rho,j,pi) ;
-
+    mpi_recv_fluid(node,index,&rho,j,pi);
+    j[0] = rho*u[0]*tau*agrid;
+    j[1] = rho*u[1]*tau*agrid;
+    j[2] = rho*u[2]*tau*agrid;
+    mpi_send_fluid(node,index,rho,j,pi) ;
+    }
   return 0;
 }
 

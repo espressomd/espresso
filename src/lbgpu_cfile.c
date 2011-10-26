@@ -489,7 +489,7 @@ static void mpi_send_forces_slave_lb(){
 /** \name TCL stuff */
 /***********************************************************************/
 
-
+#if 0
 static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *change) {
   double tau;
 
@@ -767,6 +767,7 @@ static int lbprint_parse_velocity(Tcl_Interp *interp, int argc, char *argv[], in
   fclose(datei);
   return TCL_OK;
 }
+
 static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
   if (argc < 1) {
@@ -790,6 +791,7 @@ static int lbprint_parse_density(Tcl_Interp *interp, int argc, char *argv[], int
 
   return TCL_OK;
 }
+#endif
 #if 0
 static int lbprint_parse_stresstensor(Tcl_Interp *interp, int argc, char *argv[], int *change) {
 
@@ -875,6 +877,7 @@ static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind)
 #endif /* LB_GPU */
 /** Parser for the lbnode TCL command. 
 */
+#if 0
 int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
 
@@ -960,6 +963,7 @@ int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv) {
   return TCL_ERROR;
 #endif /* LB_GPU */
 }
+#endif
 #ifdef LB_GPU
 /** Parser for the \ref tclcommand_lbnode_extforce_gpu command. Can be used in future to set more values like rho,u e.g.
 */
@@ -998,6 +1002,7 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
 
 /** Parser for the \ref lbfluid command gpu.
 */
+#if 0
 int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
 #ifdef LB_GPU
   int err = TCL_OK;
@@ -1022,6 +1027,8 @@ int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
       err = lbfluid_parse_gamma_odd(interp, argc-1, argv+1, &change);
     else if (ARG0_IS_S("gamma_even"))
       err = lbfluid_parse_gamma_even(interp, argc-1, argv+1, &change);
+    else if (ARG0_IS_S("print"))
+      err = lbfluid_print(interp, argc-1, argv+1, &change);
     else {
       Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
       err = TCL_ERROR ;
@@ -1045,9 +1052,10 @@ int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
   return TCL_ERROR;
 #endif
 }
-
+#endif
 #ifdef LB_GPU
 /** printing the hole fluid field to file with order x+y*dim_x+z*dim_x*dim_y  */
+#if 0
 int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
   int err = TCL_OK;
@@ -1088,4 +1096,5 @@ int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char *
   }
   return err;    
 }
+#endif
 #endif/* LB_GPU */

@@ -844,7 +844,7 @@ static void init_tcl(Tcl_Interp *interp)
   /* in lbgpu_cfile.c */
   REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
 
-  REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
+  //REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);

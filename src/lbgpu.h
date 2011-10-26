@@ -197,12 +197,13 @@ extern "C" {
 #endif
 
 extern LB_parameters_gpu lbpar_gpu;
+extern LB_values_gpu *host_values;
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum_gpu;
 
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
-extern int n_lb_boundaries_gpu;
+extern int n_lb_boundaries;
 
 #ifdef __cplusplus
 }
@@ -226,7 +227,7 @@ extern int n_lb_boundaries_gpu;
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int n_lb_boundaries;
+
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
