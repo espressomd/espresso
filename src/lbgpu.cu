@@ -1067,6 +1067,19 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
   }
 }
 
+/** get boundary flags
+ * @param n_a		Pointer to local node residing in array a (Input)
+ * @param *d_v		Pointer to local device values (Input)
+*/
+__global__ void lb_get_boundaries(LB_nodes_gpu n_a, unsigned int *device_bound_array){
+
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if(index<para.number_of_nodes){
+   device_bound_array[index] = n_a.boundary[index];
+  }
+}
+
 /**set extern force on single nodes kernel
  * @param n_extern_nodeforces		number of nodes (Input)
  * @param *extern_nodeforces		Pointer to extern node force array (Input)
@@ -1449,6 +1462,28 @@ void lb_get_values_GPU(LB_values_gpu *host_values){
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
 
 }
+
+/** setup and call kernel to calculate the temperature of the hole fluid
+ * @param *host_flag value of the boundary flag
+*/
+void lb_get_boundary_flags_GPU(unsigned int* host_bound_array){
+   
+  unsigned int* device_bound_array;
+  cuda_safe_mem(cudaMalloc((void**)&device_bound_array, lbpar_gpu.number_of_nodes*sizeof(unsigned int)));	
+  /** values for the kernel call */
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+
+  KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block, (*current_nodes, device_bound_array));
+
+  cudaMemcpy(host_bound_array, device_bound_array, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+
+  cudaFree(device_bound_array);
+
+}
+
 /** setup and call kernel for getting macroscopic fluid values of a single node*/
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){ 
       
@@ -1465,7 +1500,9 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
   cudaFree(device_print_values);
 
 }
-
+/** setup and call kernel to calculate the total momentum of the hole fluid
+ * @param *mass value of the mass calcutated on the GPU
+*/
 void calc_fluid_mass_GPU(double* mass){
 
   float* tot_mass;
@@ -1547,8 +1584,9 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
   dim3 dim_grid_flag = make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
 
   KERNELCALL(lb_get_boundary_flag, dim_grid_flag, threads_per_block_flag, (single_nodeindex, device_flag, *current_nodes));
-fprintf(stderr, "bin da!\n");
+
   cudaMemcpy(host_flag, device_flag, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+
   cudaFree(device_flag);
 
 }

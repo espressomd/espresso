@@ -123,7 +123,7 @@ int on_program_start(Tcl_Interp *interp)
 
 #ifdef LB_GPU
   if(this_node == 0){
-    lb_pre_init_gpu();
+    //lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
@@ -716,7 +716,7 @@ void on_lb_params_change_gpu(int field) {
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
 #ifdef LB_BOUNDARIES_GPU
-    lb_init_boundaries_gpu();
+    lb_init_boundaries();
 #endif
   }
   if (field == LBPAR_DENSITY) {

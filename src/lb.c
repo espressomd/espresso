@@ -356,7 +356,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
           argc--; argv++;
           if (ARG0_IS_S("vtk")) {
           	if (ARG1_IS_S("boundary")) {
-				      if ( lb_lbfluid_cpu_print_vtk_boundary(argv[2]) != 0 ) {
+				      if ( lb_lbfluid_print_vtk_boundary(argv[2]) != 0 ) {
 					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
 				        return TCL_ERROR;
 				      }
@@ -374,7 +374,7 @@ int tclcommand_lbfluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
 		      }
 		      else {
 		      	if (ARG0_IS_S("boundary")) {
-			   	  	if ( lb_lbfluid_cpu_print_boundary(argv[1]) != 0 ) {
+			   	  	if ( lb_lbfluid_print_boundary(argv[1]) != 0 ) {
 				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
 			      	  return TCL_ERROR;
 			      	}
@@ -773,31 +773,49 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
   return 0;
 }
 
-int lb_lbfluid_cpu_print_vtk_boundary(char* filename) {
-	int pos[3];
-	int boundary;
-	int gridsize[3];
+int lb_lbfluid_print_vtk_boundary(char* filename) {
+	  FILE* fp = fopen(filename, "w");
 	
-	gridsize[0] = box_l[0] / lblattice.agrid;
-	gridsize[1] = box_l[1] / lblattice.agrid;
-	gridsize[2] = box_l[2] / lblattice.agrid;
+	  if(fp == NULL)
+	  	return 1;
+
+  if (lattice_switch & LATTICE_LB_GPU) {	
+    unsigned int* bound_array; 
+    bound_array = malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
+    lb_get_boundary_flags_GPU(bound_array);
+
+    int xyz[3];
+    int j;	
+    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+      /** print of the calculated phys values */
+      fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.number_of_nodes);
+      int j;	
+      for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+        /** print of the calculated phys values */
+        fprintf(fp, " %u \n", bound_array[j]);
+      }     
+    }
+    free(bound_array);
+  
+  } else {	
+    int pos[3];
+    int boundary;
+	   int gridsize[3];
 	
-	FILE* fp = fopen(filename, "w");
+	   gridsize[0] = box_l[0] / lblattice.agrid;
+   	gridsize[1] = box_l[1] / lblattice.agrid;
+	   gridsize[2] = box_l[2] / lblattice.agrid;
 	
-	if(fp == NULL)
-		return 1;
+	   fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
-	fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
-	
-	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
-			{
-				lb_lbnode_get_boundary(pos, &boundary);
-				fprintf(fp, "%d ", boundary);
-			}
-				
-	fclose(fp);				
+	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			   for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+				    lb_lbnode_get_boundary(pos, &boundary);
+				    fprintf(fp, "%d ", boundary);
+			   }
+				}
+	  fclose(fp);				
 	return 0;
 }
 
@@ -807,7 +825,9 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 
 	   if(fp == NULL)
 		   return 1;
-
+    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
+    host_values = (LB_values_gpu*)malloc(size_of_values);
+    lb_get_values_GPU(host_values);
 		  fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.number_of_nodes);
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
@@ -844,45 +864,80 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 	return 0;
 }
 
-int lb_lbfluid_cpu_print_boundary(char* filename) {
-	 int pos[3];
-	 int boundary;
-	 int gridsize[3];
+int lb_lbfluid_print_boundary(char* filename) {
+	  FILE* fp = fopen(filename, "w");
 	
-	 gridsize[0] = box_l[0] / lblattice.agrid;
-	 gridsize[1] = box_l[1] / lblattice.agrid;
-	 gridsize[2] = box_l[2] / lblattice.agrid;
+	  if(fp == NULL)
+	  	return 1;
+
+  if (lattice_switch & LATTICE_LB_GPU) {	
+    unsigned int* bound_array; 
+    bound_array = malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
+    lb_get_boundary_flags_GPU(bound_array);
+
+    int xyz[3];
+    int j;	
+    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+      xyz[0] = j%lbpar_gpu.dim_x;
+      int k = j/lbpar_gpu.dim_x;
+      xyz[1] = k%lbpar_gpu.dim_y;
+      k /= lbpar_gpu.dim_y;
+      xyz[2] = k; 
+      /** print of the calculated phys values */
+      fprintf(fp, "%i \t %i \t%i \t %u \n", xyz[0], xyz[1], xyz[2], bound_array[j]);
+    }
+    free(bound_array);
+  
+  } else {
+    int pos[3];
+	   int boundary;
+	   int gridsize[3];
 	
-	 FILE* fp = fopen(filename, "w");
+	   gridsize[0] = box_l[0] / lblattice.agrid;
+	   gridsize[1] = box_l[1] / lblattice.agrid;
+	   gridsize[2] = box_l[2] / lblattice.agrid;
 	
-	if(fp == NULL)
-		return 1;
+	   FILE* fp = fopen(filename, "w");
 	
-	for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-		for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-			for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
-			{
-				lb_lbnode_get_boundary(pos, &boundary);
-				fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
-			}
+	  if(fp == NULL)
+	  	return 1;
+	
+	  for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+		  for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+			  for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
+			  {
+				  lb_lbnode_get_boundary(pos, &boundary);
+				  fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
+			  }
+			 }
+	
+	  fclose(fp);
 				
-	fclose(fp);				
 	return 0;
 }
 
 int lb_lbfluid_print_velocity(char* filename) {
-  if (lattice_switch & LATTICE_LB_GPU) {
     FILE* fp = fopen(filename, "w");
 
 	   if(fp == NULL)
 		   return 1;
 
+  if (lattice_switch & LATTICE_LB_GPU) {
+    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
+    host_values = (LB_values_gpu*)malloc(size_of_values);
+    lb_get_values_GPU(host_values);
+    int xyz[3];
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
-      /** print of the calculated phys values */
-      fprintf(fp, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+      xyz[0] = j%lbpar_gpu.dim_x;
+      int k = j/lbpar_gpu.dim_x;
+      xyz[1] = k%lbpar_gpu.dim_y;
+      k /= lbpar_gpu.dim_y;
+      xyz[2] = k;     
+            /** print of the calculated phys values */
+      fprintf(fp, "%i \t %i \t%i \t %f \t %f \t %f \n", xyz[0], xyz[1], xyz[2], host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
     }
-    fclose(fp);
+    free(host_values);
   } else {
 	   int pos[3];
 	   double u[3];
@@ -892,10 +947,6 @@ int lb_lbfluid_print_velocity(char* filename) {
 	   gridsize[1] = box_l[1] / lblattice.agrid;
 	   gridsize[2] = box_l[2] / lblattice.agrid;
 
-	   FILE* fp = fopen(filename, "w");
-	
-	   if(fp == NULL)
-		  return 1;
 	
 	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 	   	for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
@@ -905,8 +956,8 @@ int lb_lbfluid_print_velocity(char* filename) {
 		   		fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
 		   	}
 				
-	   fclose(fp);
-    }				
+    }		
+ fclose(fp);		
 	return 0;
 }
 
@@ -1025,8 +1076,8 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
   if (lattice_switch & LATTICE_LB_GPU) {
     unsigned int host_flag;
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-    lb_get_boundary_flag_GPU(single_nodeindex, host_flag);
-
+    lb_get_boundary_flag_GPU(single_nodeindex, &host_flag);
+    p_boundary[0] = host_flag;
   } else {  
     index_t index;
     int node, grid[3], ind_shifted[3];

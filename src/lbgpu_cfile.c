@@ -138,6 +138,7 @@ void lb_send_forces_gpu(){
 }
 /** allocation of the needed memory for phys. values and particle data residing in the cpu memory
 */
+#if 0
 void lb_pre_init_gpu() {
 	 
   lbpar_gpu.number_of_particles = 0;
@@ -154,9 +155,10 @@ void lb_pre_init_gpu() {
 
   LB_TRACE (fprintf(stderr,"lb_pre_init_gpu \n"));
 }
-
+#endif
 /** (re-)allocation of the memory needed for the phys. values and if needed memory for the nodes located in the cpu memory
 */ 
+#if 0
 static void lb_realloc_fluid_gpu() {
 	 
   LB_TRACE (printf("#nodes \t %u \n", lbpar_gpu.number_of_nodes));
@@ -164,13 +166,11 @@ static void lb_realloc_fluid_gpu() {
   /**-----------------------------------------------------*/
   /** reallocating of the needed memory for several structs */
   /**-----------------------------------------------------*/
-
-  /**Struct holding calc phys values rho, j, phi of every node*/
-  size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
-  host_values = realloc(host_values, size_of_values);
+  lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu)
 
   LB_TRACE (fprintf(stderr,"lb_realloc_fluid_gpu \n"));
 }
+#endif
 /** (re-) allocation of the memory need for the particles (cpu part)*/
 void lb_realloc_particles_gpu(){
 
@@ -269,8 +269,6 @@ void lb_init_gpu() {
 
   lb_realloc_particles_gpu();
 	
-  lb_realloc_fluid_gpu();
-
   lb_init_GPU(&lbpar_gpu);
 
   LB_TRACE (fprintf(stderr,"lb_init_gpu \n"));
