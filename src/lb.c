@@ -705,39 +705,69 @@ int lb_lbfluid_set_friction(double p_friction){
 }
 
 int lb_lbfluid_get_density(double* p_dens){
-  *p_dens = lbpar.rho;
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_dens = lbpar_gpu.rho;  
+  } else {
+    *p_dens = lbpar.rho;
+    }
   return 0;
 }
 
 int lb_lbfluid_get_agrid(double* p_agrid){
-  *p_agrid = lbpar.agrid;
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_agrid = lbpar_gpu.agrid;
+  } else {
+    *p_agrid = lbpar.agrid;
+    }
   return 0;
 }
 
 int lb_lbfluid_get_visc(double* p_visc){
-  *p_visc = lbpar.viscosity;
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_visc = lbpar_gpu.viscosity;
+  } else {
+    *p_visc = lbpar.viscosity;
+  }
   return 0;
 }
 
 int lb_lbfluid_get_bulk_visc(double* p_bulk_visc){ 
-  *p_bulk_visc = lbpar.bulk_viscosity;
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_bulk_visc = lbpar_gpu.bulk_viscosity;
+  } else {
+    *p_bulk_visc = lbpar.bulk_viscosity;
+  }
   return 0;
 }
 
 int lb_lbfluid_get_gamma_odd(double* p_gamma_odd){
-  *p_gamma_odd = lbpar.gamma_odd;
-  return 0;
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_gamma_odd = lbpar_gpu.gamma_odd;
+  } else {
+    *p_gamma_odd = lbpar.gamma_odd;
+  }  
+return 0;
 }
 
 int lb_lbfluid_get_gamma_even(double* p_gamma_even){
-  *p_gamma_even = lbpar.gamma_even;
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_gamma_even = lbpar_gpu.gamma_even;
+  } else {
+    *p_gamma_even = lbpar.gamma_even;
+  }
   return 0;
 }
 
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
-  *p_fx = lbpar.ext_force[0];
-  *p_fy = lbpar.ext_force[1];
-  *p_fz = lbpar.ext_force[2];
+  if (lattice_switch & LATTICE_LB_GPU) {
+    *p_fx = lbpar_gpu.ext_force[0];
+    *p_fy = lbpar_gpu.ext_force[1];
+    *p_fz = lbpar_gpu.ext_force[2];
+  } else {
+    *p_fx = lbpar.ext_force[0];
+    *p_fy = lbpar.ext_force[1];
+    *p_fz = lbpar.ext_force[2];
+  }
   return 0;
 }
 
@@ -948,7 +978,7 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
     p_pi[4] = (double)host_print_values[0].pi[4];
     p_pi[5] = (double)host_print_values[0].pi[5];
 #endif
-  printf("single node stresstensorvalues not available due to memory consumption!\n But can be made available hardcoded in lb.c and lbgpu.h!\n");
+  printf("single node stress tensor values not available due to memory consumption!\n But can be made available hardcoded in lb.c and lbgpu.h!\n");
   } else {   
     index_t index;
     int node, grid[3], ind_shifted[3];
@@ -991,7 +1021,9 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi_neq) {
 
 int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
   if (lattice_switch & LATTICE_LB_GPU) {
-    printf("Not implemented in the LB GPU code!\n");
+    unsigned int host_flag;
+    int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
+    lb_get_boundary_flag(single_nodeindex, host_flag);
 
   } else {  
     index_t index;
