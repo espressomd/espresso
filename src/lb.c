@@ -438,10 +438,12 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
 
 
    --argc; ++argv;
-  
+   if (lattice_switch & LATTICE_LB_GPU) {
+   } else {
    if (lbfluid[0][0]==0) {
      Tcl_AppendResult(interp, "lbnode: lbfluid not correctly initialized", (char *)NULL);
      return TCL_ERROR;
+   }
    }
 
    if (argc < 3) {

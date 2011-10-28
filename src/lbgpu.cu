@@ -1542,12 +1542,12 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
   unsigned int* device_flag;
   cuda_safe_mem(cudaMalloc((void**)&device_flag, sizeof(unsigned int)));	
   int threads_per_block_flag = 1;
-  int blocks_per_grid_print_y = 1;
-  int blocks_per_grid_print_x = 1;
-  dim3 dim_grid_flag = make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
+  int blocks_per_grid_flag_y = 1;
+  int blocks_per_grid_flag_x = 1;
+  dim3 dim_grid_flag = make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
 
   KERNELCALL(lb_get_boundary_flag, dim_grid_flag, threads_per_block_flag, (single_nodeindex, device_flag, *current_nodes));
-
+fprintf(stderr, "bin da!\n");
   cudaMemcpy(host_flag, device_flag, sizeof(unsigned int), cudaMemcpyDeviceToHost);
   cudaFree(device_flag);
 
