@@ -267,8 +267,10 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 void lb_calc_particle_lattice_ia_gpu();
 void lb_send_forces_gpu();
 
-void calc_fluid_momentum_GPU(double* mom);
-void calc_fluid_temperature_GPU(double* cpu_temp);
+void lb_calc_fluid_momentum_GPU(double* mom);
+void lb_calc_fluid_temperature_GPU(double* cpu_temp);
+void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
+
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);

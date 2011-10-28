@@ -1023,7 +1023,7 @@ int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
   if (lattice_switch & LATTICE_LB_GPU) {
     unsigned int host_flag;
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-    lb_get_boundary_flag(single_nodeindex, host_flag);
+    lb_get_boundary_flag_GPU(single_nodeindex, host_flag);
 
   } else {  
     index_t index;

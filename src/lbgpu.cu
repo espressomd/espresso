@@ -1158,7 +1158,19 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
     atomicadd(cpu_jsquared, jsquared);
   }
 }
+/**print single node boundary flag
+ * @param single_nodeindex		index of the node (Input)
+ * @param *device_flag			Pointer to result storage array (Input)
+ * @param n_a				Pointer to local node residing in array a (Input)
+*/
+__global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_flag, LB_nodes_gpu n_a){
+	
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
+  if(index == 0){
+    device_flag[0] = n_a.boundary[single_nodeindex];
+  }	
+}
 /**erroroutput for memory allocation and memory copy 
  * @param err cuda error code
  * @param *file .cu file were the error took place
@@ -1479,7 +1491,7 @@ void calc_fluid_mass_GPU(double* mass){
 /** setup and call kernel to calculate the total momentum of the hole fluid
  * @param *mom value of the momentum calcutated on the GPU
 */
-void calc_fluid_momentum_GPU(double* mom){
+void lb_calc_fluid_momentum_GPU(double* mom){
 
   float* tot_momentum;
   float cpu_momentum[3] = { 0.f, 0.f, 0.f};
@@ -1504,7 +1516,7 @@ void calc_fluid_momentum_GPU(double* mom){
 /** setup and call kernel to calculate the temperature of the hole fluid
  * @param *cpu_temp value of the temperatur calcutated on the GPU
 */
-void calc_fluid_temperature_GPU(double* cpu_temp){
+void lb_calc_fluid_temperature_GPU(double* cpu_temp){
   float cpu_jsquared = 0.f;
   float* gpu_jsquared;
   cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
@@ -1521,6 +1533,24 @@ void calc_fluid_temperature_GPU(double* cpu_temp){
   cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
 
   cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
+}
+/** setup and call kernel to calculate the temperature of the hole fluid
+ * @param *host_flag value of the boundary flag
+*/
+void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
+   
+  unsigned int* device_flag;
+  cuda_safe_mem(cudaMalloc((void**)&device_flag, sizeof(unsigned int)));	
+  int threads_per_block_flag = 1;
+  int blocks_per_grid_print_y = 1;
+  int blocks_per_grid_print_x = 1;
+  dim3 dim_grid_flag = make_uint3(blocks_per_grid_print_x, blocks_per_grid_print_y, 1);
+
+  KERNELCALL(lb_get_boundary_flag, dim_grid_flag, threads_per_block_flag, (single_nodeindex, device_flag, *current_nodes));
+
+  cudaMemcpy(host_flag, device_flag, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaFree(device_flag);
+
 }
 /** reinit of params 
  * @param *lbpar_gpu struct containing the paramters of the fluid

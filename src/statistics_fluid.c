@@ -498,7 +498,7 @@ static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int a
   char buffer[TCL_DOUBLE_SPACE];
   double mom[3];
 
-  calc_fluid_momentum_GPU(mom);
+  lb_calc_fluid_momentum_GPU(mom);
   
   Tcl_PrintDouble(interp, mom[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -514,7 +514,7 @@ static int tclcommand_analyze_fluid_parse_temperature_gpu(Tcl_Interp* interp, in
   char buffer[TCL_DOUBLE_SPACE];
   double cpu_temp[1];
 
-  calc_fluid_temperature_GPU(cpu_temp);
+  lb_calc_fluid_temperature_GPU(cpu_temp);
   
   Tcl_PrintDouble(interp, cpu_temp[0], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
