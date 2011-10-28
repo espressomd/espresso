@@ -27,7 +27,7 @@ ug_TEXFILES = \
 	analysis.tex \
 	io.tex \
 	lb.tex \
-	maggs.tex \
+	memd.tex \
 	aux.tex \
 	internal.tex \
 	contributing.tex \
@@ -52,7 +52,8 @@ ug_FIGURES = \
 ug_FILES = \
 	$(ug_TEXFILES) \
 	$(ug_FIGURES) \
-	bibliography.bib
+	bibliography.bib \
+	todonotes.sty
 
 EXTRA_DIST = \
 	$(ug_FILES) \

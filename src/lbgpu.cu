@@ -1465,9 +1465,7 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
   cudaFree(device_print_values);
 
 }
-/** setup and call kernel to calculate the total momentum of the hole fluid
- * @param *mass value of the mass calcutated on the GPU
-*/
+
 void calc_fluid_mass_GPU(double* mass){
 
   float* tot_mass;
@@ -1488,10 +1486,12 @@ void calc_fluid_mass_GPU(double* mass){
   cudaFree(tot_mass);
   mass[0] = (double)(cpu_mass);
 }
+
 /** setup and call kernel to calculate the total momentum of the hole fluid
  * @param *mom value of the momentum calcutated on the GPU
 */
 void lb_calc_fluid_momentum_GPU(double* mom){
+
 
   float* tot_momentum;
   float cpu_momentum[3] = { 0.f, 0.f, 0.f};

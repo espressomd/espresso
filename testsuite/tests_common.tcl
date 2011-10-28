@@ -39,8 +39,7 @@ proc ok_exit {} {
 }
 
 proc test_catch {script} {
-    if { [catch [uplevel 1 $script] res opt] } then {
-	puts stderr [dict get $opt -errorinfo]
+    if { [catch [uplevel 1 $script] res] } then {
 	exit $TEST_FAIL
     }
 }

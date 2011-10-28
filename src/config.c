@@ -61,6 +61,12 @@
 #error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
 #endif
 
+#ifdef LB_GPU
+#ifndef CUDA
+#error To use LB_GPU, you have to activate CUDA (use the configure option --with-cuda)
+#endif
+#endif
+
 int tclcallback_version(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION, (char *) NULL);

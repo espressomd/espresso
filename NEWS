@@ -5,16 +5,27 @@
 ESPResSo 3.1
 ============
 
+User-visible changes
+--------------------
+* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
+  coulomb memd).
+
 * Added basic tutorial on Lennard-Jones liquid, made second tutorial
   (simple charged systems) better available (all in doc/tutorials)
-
-* Added ESPResSo logos to the repo (doc/logo).
 
 * Lattice-Boltzmann:
 
   * nonzero velocity boundary conditions are available
 
   * forces on boundaries can be calculated
+
+Changes visible for developers
+------------------------------
+
+* Added ESPResSo logos to the repo (doc/logo).
+
+* A new LaTeX-Developer's Guide (DG) was started, and all "Related
+  pages" from the doxygen docs have been moved there.
 
 ESPResSo 3.0.2
 ==============

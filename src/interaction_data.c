@@ -1279,6 +1279,8 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 
   REGISTER_COULOMB("maggs", tclcommand_inter_coulomb_parse_maggs);
 
+  REGISTER_COULOMB("memd", tclcommand_inter_coulomb_parse_maggs);
+
   /* fallback */
   coulomb.method  = COULOMB_NONE;
   coulomb.bjerrum = 0.0;
