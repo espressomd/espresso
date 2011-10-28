@@ -399,14 +399,16 @@ void lb_init_boundaries_gpu() {
   size_t size_of_index;
   dist_tmp = 0.;
 
+  if (lbpar_gpu.agrid <= 0) return;
+
   for(z=0; z<lbpar_gpu.dim_z; z++) {
     for(y=0; y<lbpar_gpu.dim_y; y++) {
       for (x=0; x<lbpar_gpu.dim_x; x++) {	    
-	pos[0] = x*lbpar_gpu.agrid;
-	pos[1] = y*lbpar_gpu.agrid;
-	pos[2] = z*lbpar_gpu.agrid;
+	       pos[0] = x*lbpar_gpu.agrid;
+	       pos[1] = y*lbpar_gpu.agrid;
+	       pos[2] = z*lbpar_gpu.agrid;
 	     
-	dist = 0.;
+	       dist = 0.;
 
         for (n=0;n<n_lb_boundaries_gpu;n++) {
           switch (lb_boundaries_gpu[n].type) {
@@ -415,7 +417,6 @@ void lb_init_boundaries_gpu() {
               break;
             case LB_BOUNDARY_SPH:
               calculate_sphere_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries_gpu[n].c.sph, &dist_tmp, dist_vec);
-
               break;
             case LB_BOUNDARY_CYL:
               calculate_cylinder_dist((Particle*) NULL, pos, (Particle*) NULL, &lb_boundaries_gpu[n].c.cyl, &dist_tmp, dist_vec);
@@ -444,7 +445,7 @@ void lb_init_boundaries_gpu() {
   lb_init_boundaries_GPU(number_of_boundnodes, host_boundindex);
 
   LB_TRACE (fprintf(stderr,"lb_init_boundaries \n"));
-  LB_TRACE (fprintf(stderr,"boundnumbers %i \n", number_of_boundnodes));
+  LB_TRACE (fprintf(stderr,"boundnumbers %i %i \n", n_lb_boundaries_gpu, number_of_boundnodes));
 
   free(host_boundindex);
 }
