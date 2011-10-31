@@ -792,10 +792,9 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
  * Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
  *
  * @param n_a		 Pointer to the lattice site (Input).
- * @param node_f    Pointer to the node force (Input).
  * @param *gpu_check additional check if gpu kernel are executed(Input).
 */
-__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, int *gpu_check) {
+__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, int *gpu_check) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -871,6 +870,96 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_node_force_gpu node_f, i
 
     /**set different seed for randomgen on every node */
     n_a.seed[index] = para.your_seed + index;
+  }
+}
+/**kernel to calculate local populations from hydrodynamic fields from given flow field velocities.
+ * The mapping is given in terms of the equilibrium distribution.
+ *
+ * Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
+ * Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
+ *
+ * @param n_a		 Pointer to the lattice site (Input).
+ * @param *gpu_check additional check if gpu kernel are executed(Input).
+*/
+__global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *velocity) {
+
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+
+  if(index == 0){
+
+    /** default values for fields in lattice units */
+    float mode[19];
+    calc_mode(mode, n_a, single_nodeindex);
+    float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
+
+    float v[3];
+    v[0] = velocity[0];
+    v[1] = velocity[1];
+    v[2] = velocity[2];
+
+    float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
+
+    float rhoc_sq = Rho*c_sound_sq;
+    float avg_rho = para.rho*para.agrid*para.agrid*para.agrid;
+    float local_rho, local_j[3], *local_pi, trace;
+
+    local_rho  = Rho;
+
+    local_j[0] = Rho * v[0];
+    local_j[1] = Rho * v[1];
+    local_j[2] = Rho * v[2];
+
+    local_pi = pi;
+
+    /** reduce the pressure tensor to the part needed here */
+    local_pi[0] -= rhoc_sq;
+    local_pi[2] -= rhoc_sq;
+    local_pi[5] -= rhoc_sq;
+
+    trace = local_pi[0] + local_pi[2] + local_pi[5];
+
+    float rho_times_coeff;
+    float tmp1,tmp2;
+
+    /** update the q=0 sublattice */
+    n_a.vd[0*para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
+
+    /** update the q=1 sublattice */
+    rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
+
+    n_a.vd[1*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[2*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[3*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[4*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[5*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[6*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+
+    /** update the q=2 sublattice */
+    rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
+
+    tmp1 = local_pi[0] + local_pi[2];
+    tmp2 = 2.0f*local_pi[1];
+    n_a.vd[7*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[8*para.number_of_nodes + index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[9*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[10*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+
+    tmp1 = local_pi[0] + local_pi[5];
+    tmp2 = 2.0f*local_pi[3];
+
+    n_a.vd[11*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[12*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[13*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[14*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+
+    tmp1 = local_pi[2] + local_pi[5];
+    tmp2 = 2.0f*local_pi[4];
+
+    n_a.vd[15*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[16*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[17*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[18*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+
   }
 }
 /** kernel for the initalisation of the particle force array
@@ -1263,7 +1352,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));	
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));	
   /** init part forces with zero*/
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
@@ -1294,7 +1383,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, node_f, gpu_check));
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
 }
 
 /**setup and call particle reallocation from the host
@@ -1478,7 +1567,7 @@ void lb_get_boundary_flags_GPU(unsigned int* host_bound_array){
 
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block, (*current_nodes, device_bound_array));
 
-  cudaMemcpy(host_bound_array, device_bound_array, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_bound_array, device_bound_array, lbpar_gpu.number_of_nodes*sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
   cudaFree(device_bound_array);
 
@@ -1588,6 +1677,24 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
   cudaMemcpy(host_flag, device_flag, sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
   cudaFree(device_flag);
+
+}
+/** setup and call kernel to calculate the temperature of the hole fluid
+ * @param *host_flag value of the boundary flag
+*/
+void lb_set_node_veloctiy_GPU(int single_nodeindex, float* host_velocity){
+   
+  float* device_velocity;
+  cuda_safe_mem(cudaMalloc((void**)&device_velocity, 3*sizeof(float)));	
+  cudaMemcpy(device_velocity, host_velocity, 3*sizeof(float), cudaMemcpyHostToDevice);
+  int threads_per_block_flag = 1;
+  int blocks_per_grid_flag_y = 1;
+  int blocks_per_grid_flag_x = 1;
+  dim3 dim_grid_flag = make_uint3(blocks_per_grid_flag_x, blocks_per_grid_flag_y, 1);
+
+  KERNELCALL(set_u_equilibrium, dim_grid_flag, threads_per_block_flag, (*current_nodes, single_nodeindex, device_velocity));
+
+  cudaFree(device_velocity);
 
 }
 /** reinit of params 

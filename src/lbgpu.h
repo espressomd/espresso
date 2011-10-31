@@ -276,6 +276,8 @@ void calc_fluid_temperature_GPU(double* cpu_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
 void lb_get_boundary_flags_GPU(unsigned int* host_bound_array);
 
+void lb_set_node_veloctiy_GPU(int single_nodeindex, float* host_velocity);
+
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);

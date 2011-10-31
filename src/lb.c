@@ -543,6 +543,10 @@ int tclcommand_lbnode_cpu(Tcl_Interp *interp, int argc, char **argv) {
            return TCL_ERROR;
          }
        }
+       else {
+     Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode x y z set", (char *)NULL);
+     return  TCL_ERROR;
+   }
    } else {
      Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode", (char *)NULL);
      return  TCL_ERROR;
@@ -780,21 +784,17 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 	  	return 1;
 
   if (lattice_switch & LATTICE_LB_GPU) {	
-    unsigned int* bound_array; 
+    unsigned int* bound_array;
     bound_array = malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
     lb_get_boundary_flags_GPU(bound_array);
-
-    int xyz[3];
+  
     int j;	
-    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
-      /** print of the calculated phys values */
-      fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.number_of_nodes);
-      int j;	
-      for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+         /** print of the calculated phys values */
+      fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+        for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
         /** print of the calculated phys values */
         fprintf(fp, " %u \n", bound_array[j]);
       }     
-    }
     free(bound_array);
   
   } else {	
@@ -828,7 +828,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
     host_values = (LB_values_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
-		  fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING 1 1 1\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.number_of_nodes);
+		  fprintf(fp, "# vtk DataFile Version 2.0\ntest\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       /** print of the calculated phys values */
@@ -1132,7 +1132,13 @@ int lb_lbnode_set_rho(int* ind, double p_rho){
 
 int lb_lbnode_set_u(int* ind, double* u){
   if (lattice_switch & LATTICE_LB_GPU) {
-    printf("Not implemented in the LB GPU code!\n");
+
+    float host_velocity[3];
+    host_velocity[0] = (float)u[0];
+    host_velocity[1] = (float)u[1];
+    host_velocity[2] = (float)u[2];
+    int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
+    lb_set_node_veloctiy_GPU(single_nodeindex, host_velocity);
 
   } else {
     index_t index;
