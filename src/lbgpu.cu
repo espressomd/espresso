@@ -1616,13 +1616,13 @@ void calc_fluid_mass_GPU(double* mass){
 /** setup and call kernel to calculate the total momentum of the hole fluid
  * @param *mom value of the momentum calcutated on the GPU
 */
-void lb_calc_fluid_momentum_GPU(double* mom){
+void lb_calc_fluid_momentum_GPU(double* host_mom){
 
 
   float* tot_momentum;
-  float cpu_momentum[3] = { 0.f, 0.f, 0.f};
+  float host_momentum[3] = { 0.f, 0.f, 0.f};
   cuda_safe_mem(cudaMalloc((void**)&tot_momentum, 3*sizeof(float)));
-  cudaMemcpy(tot_momentum, cpu_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
+  cudaMemcpy(tot_momentum, host_momentum, 3*sizeof(float), cudaMemcpyHostToDevice);
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -1632,21 +1632,21 @@ void lb_calc_fluid_momentum_GPU(double* mom){
 
   KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, tot_momentum, node_f));
   
-  cudaMemcpy(cpu_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
   
   cudaFree(tot_momentum);
-  mom[0] = (double)(cpu_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
-  mom[1] = (double)(cpu_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
-  mom[2] = (double)(cpu_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  host_mom[0] = (double)(host_momentum[0]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  host_mom[1] = (double)(host_momentum[1]* lbpar_gpu.agrid/lbpar_gpu.tau);
+  host_mom[2] = (double)(host_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
 }
 /** setup and call kernel to calculate the temperature of the hole fluid
  * @param *cpu_temp value of the temperatur calcutated on the GPU
 */
-void lb_calc_fluid_temperature_GPU(double* cpu_temp){
-  float cpu_jsquared = 0.f;
-  float* gpu_jsquared;
-  cuda_safe_mem(cudaMalloc((void**)&gpu_jsquared, sizeof(float)));
-  cudaMemcpy(gpu_jsquared, &cpu_jsquared, sizeof(float), cudaMemcpyHostToDevice);
+void lb_calc_fluid_temperature_GPU(double* host_temp){
+  float host_jsquared = 0.f;
+  float* device_jsquared;
+  cuda_safe_mem(cudaMalloc((void**)&device_jsquared, sizeof(float)));
+  cudaMemcpy(device_jsquared, &host_jsquared, sizeof(float), cudaMemcpyHostToDevice);
 
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -1654,11 +1654,11 @@ void lb_calc_fluid_temperature_GPU(double* cpu_temp){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, gpu_jsquared));
+  KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared));
 
-  cudaMemcpy(&cpu_jsquared, gpu_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
 
-  cpu_temp[0] = (double)(cpu_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
+  host_temp[0] = (double)(host_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
 /** setup and call kernel to calculate the temperature of the hole fluid
  * @param *host_flag value of the boundary flag

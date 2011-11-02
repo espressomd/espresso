@@ -426,7 +426,7 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
   if ( lbfields[index].boundary ) {
     *rho = avg_rho;
     j[0] = 0.; j[1] = 0.;  j[2] = 0.;
-    pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;
+    if (pi) {pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;}
     return;
   }
 #endif
@@ -560,7 +560,9 @@ MDINLINE void lb_get_populations(index_t index, double* pop) {
     pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho;
   }
 }
+#endif
 
+#if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
 int lb_lbfluid_set_density(double p_dens);
 int lb_lbfluid_set_agrid(double p_agrid);
@@ -599,7 +601,8 @@ int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
-
+#endif
+#ifdef LB
 void lb_check_halo_regions();
 
 #endif /* LB */

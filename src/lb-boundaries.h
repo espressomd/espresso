@@ -43,7 +43,8 @@
 #include "config.h"
 #include "lb.h"
 
-#ifdef LB_BOUNDARIES
+
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
 /** wall constraint applied */
 #define LB_BOUNDARY_WAL 1
@@ -89,7 +90,7 @@ extern LB_Boundary *lb_boundaries;
  *  and marks them with a corresponding flag. 
  */
 void lb_init_boundaries();
-#endif // LB_BOUNDARIES
+#endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
 #ifdef LB_BOUNDARIES

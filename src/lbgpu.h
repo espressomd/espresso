@@ -55,8 +55,8 @@
 #define LBPAR_BOUNDARY  7 /**< boundary parameters */
 #endif
 /*@}*/
-
-
+#endif /* LB_GPU */
+#if defined (LB) || defined (LB_GPU)
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
@@ -118,19 +118,6 @@ typedef struct {
   unsigned int reinit;
 
 } LB_parameters_gpu;
-
-/** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
-typedef struct {
-
-  /** velocitydensity of the node */
-  float *vd;
-  /** seed for the random gen */
-  unsigned int *seed;
-  /** flag indicating whether this site belongs to a boundary */
-  unsigned int *boundary;
-
-} LB_nodes_gpu;
-
 /** Data structure holding the phys. values for the Lattice Boltzmann system. */
 typedef struct {
 
@@ -145,6 +132,19 @@ typedef struct {
   //float pi[6];
 
 } LB_values_gpu;
+
+/** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
+typedef struct {
+
+  /** velocitydensity of the node */
+  float *vd;
+  /** seed for the random gen */
+  unsigned int *seed;
+  /** flag indicating whether this site belongs to a boundary */
+  unsigned int *boundary;
+
+} LB_nodes_gpu;
+
 
 /** Data structure for the randomnr and the seed. */
 typedef struct {
@@ -193,38 +193,37 @@ typedef struct {
 
 } LB_particle_seed_gpu;
 
+void on_lb_params_change_gpu(int field);
+
+/************************************************************/
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
+
+/** 
+ */
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+/** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_values_gpu *host_values;
-
-/** Switch indicating momentum exchange between particles and fluid */
 extern int transfer_momentum_gpu;
-
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
 
 #ifdef __cplusplus
 }
 #endif
-/** Eigenvalue of collision operator corresponding to shear viscosity. */
-//extern double lblambda;
-
-/** Eigenvalue of collision operator corresponding to bulk viscosity. */
-//extern double lblambda_bulk;
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** Updates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external forces are present, they are applied prior to the collisions.
- * If boundaries are present, it also applies the boundary conditions.
+/** 
  */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -270,9 +269,8 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 void lb_calc_particle_lattice_ia_gpu();
 void lb_send_forces_gpu();
 
-void lb_calc_fluid_momentum_GPU(double* mom);
-void lb_calc_fluid_temperature_GPU(double* cpu_temp);
-void calc_fluid_temperature_GPU(double* cpu_temp);
+void lb_calc_fluid_momentum_GPU(double* host_mom);
+void lb_calc_fluid_temperature_GPU(double* host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
 void lb_get_boundary_flags_GPU(unsigned int* host_bound_array);
 
@@ -284,16 +282,14 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 #ifdef __cplusplus
 }
 #endif
-void on_lb_params_change_gpu(int field);
-/** Parser for the TCL command lbnode. */
-int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
+#endif /* LB || LB_GPU */
 
-/** Parser for the TCL command \ref lbfluid. */
-int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
+#ifdef LB_GPU
+//void on_lb_params_change_gpu(int field);
+/** Parser for the TCL command lbnode. */
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 #endif /* LB_GPU */
 #endif /* LB_GPU_H */
 

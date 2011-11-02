@@ -42,7 +42,7 @@
 #include "lj.h"
 #include "lb.h"
 #include "lb-boundaries.h"
-//#include "lb_boundaries_gpu.c"
+#include "lbgpu.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
