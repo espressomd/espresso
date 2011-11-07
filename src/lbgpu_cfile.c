@@ -177,6 +177,7 @@ void lb_realloc_particles_gpu(){
 
   lbpar_gpu.number_of_particles = n_total_particles;
   LB_TRACE (printf("#particles realloc\t %u \n", lbpar_gpu.number_of_particles));
+  //fprintf(stderr, "%u \t \n", lbpar_gpu.number_of_particles);
   /**-----------------------------------------------------*/
   /** allocating of the needed memory for several structs */
   /**-----------------------------------------------------*/
@@ -507,15 +508,14 @@ static int lbfluid_parse_tau(Tcl_Interp *interp, int argc, char *argv[], int *ch
     return TCL_ERROR;
   }
   else if ((time_step >= 0.0) && (tau < time_step)) {
-    fprintf(stderr,"tau %f \n", lbpar_gpu.tau);
-    fprintf(stderr,"time_step %f \n", time_step);
+    LB_TRACE (fprintf(stderr,"tau %f \n", lbpar_gpu.tau));
+    LB_TRACE (fprintf(stderr,"time_step %f \n", time_step));
     Tcl_AppendResult(interp, "tau must be larger than MD time_step", (char *)NULL);
     return TCL_ERROR;
   }
 
   *change = 1;
   lbpar_gpu.tau = (float)tau;
-  fprintf(stderr,"tau %f \n", lbpar_gpu.tau);
 
   on_lb_params_change_gpu(0);
 
