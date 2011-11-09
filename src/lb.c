@@ -151,27 +151,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
 #if defined (LB) || defined (LB_GPU)
   argc--; argv++;
-
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "too few arguments to \"lbfluid\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  else if (ARG0_IS_S("off")) {
-    Tcl_AppendResult(interp, "off not implemented", (char *)NULL);
-    return TCL_ERROR;
-  }
-  else if (ARG0_IS_S("init")) {
-    Tcl_AppendResult(interp, "init not implemented", (char *)NULL);
-    return TCL_ERROR;
-  }
-  else if (ARG0_IS_S("gpu") || ARG0_IS_S("GPU")) {
-    lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
-    argc--; argv++;
-  }
-  else if (ARG0_IS_S("cpu") || ARG0_IS_S("CPU")) {
-    lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
-    argc--; argv++;
-  }
+  lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
 
   int err = TCL_OK;
   double floatarg;
@@ -191,7 +171,25 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   }
   else
   	while (argc > 0) {
-      if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
+      if (ARG0_IS_S("gpu") || ARG0_IS_S("GPU")) {
+#ifdef LB_GPU
+        lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
+        argc--; argv++;
+#else
+        Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
+        return TCL_ERROR;
+#endif
+      }
+      else if (ARG0_IS_S("cpu") || ARG0_IS_S("CPU")) {
+#ifdef LB
+        lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
+        argc--; argv++;
+#else
+        Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+        return TCL_ERROR;
+#endif
+      }
+      else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
 	        Tcl_AppendResult(interp, "dens requires 1 argument", (char *)NULL);
           return TCL_ERROR;
@@ -381,11 +379,11 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		      }
         }
       }
-			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
 #ifdef LB
+			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
 				return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
-#endif
 			}
+#endif
       else {
     	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of lbfluid", (char *)NULL);
     	  return TCL_ERROR ;

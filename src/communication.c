@@ -1873,6 +1873,11 @@ void mpi_bcast_lbboundary(int del_num)
     n_lb_boundaries = 0;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
+#if defined(LB_BOUNDARIES_GPU)
+  else if (del_num == -3) {
+  //nothing, GPU code just requires to call on_boundary_change()
+  }
+#endif
   else {
     memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;

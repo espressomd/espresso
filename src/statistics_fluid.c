@@ -488,7 +488,7 @@ int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv
 
     return err;
 #else /* !defined LB */
-  Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
+  Tcl_AppendResult(interp, "LB is not compiled in!?", NULL);
   return TCL_ERROR;
 #endif
 }
@@ -557,9 +557,9 @@ int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv
 
 int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
 
-  if (lattice_switch & LATTICE_LB_GPU)
+  if (lattice_switch & LATTICE_LB_GPU){
       return tclcommand_analyze_parse_fluid_gpu(interp, argc, argv);
-  else
+  } else 
       return tclcommand_analyze_parse_fluid_cpu(interp, argc, argv);
 
 }

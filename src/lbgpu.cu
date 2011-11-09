@@ -1361,7 +1361,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
   cuda_safe_mem(cudaMemcpy(h_gpu_check, gpu_check, sizeof(int), cudaMemcpyDeviceToHost));
-fprintf(stderr, "initialization  \n");
+//fprintf(stderr, "initialization of lb gpu code %i\n", lbpar_gpu->number_of_nodes);
   cudaThreadSynchronize();
   if(!h_gpu_check[0]){
     fprintf(stderr, "initialization of lb gpu code failed! \n");
