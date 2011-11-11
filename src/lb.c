@@ -151,7 +151,13 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
 #if defined (LB) || defined (LB_GPU)
   argc--; argv++;
-  lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
+
+/**if we have LB the LB cpu is set by default */
+#ifdef LB
+  if(!(lattice_switch & LATTICE_LB_GPU)) lattice_switch = lattice_switch | LATTICE_LB;
+#else
+  lattice_switch = lattice_switch | LATTICE_LB_GPU;
+#endif
 
   int err = TCL_OK;
   double floatarg;
