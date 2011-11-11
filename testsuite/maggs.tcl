@@ -122,9 +122,9 @@ if { [catch {
     }
     inter ljforcecap 0
 
-    # maggs requires domain decompostion with no verlet lists
+    # memd requires domain decompostion with no verlet lists
     cellsystem domain_decomposition -no_verlet_list
-    inter coulomb $bjerrum maggs $f_mass $mesh
+    inter coulomb $bjerrum memd $f_mass $mesh
 
     set act_min_dist [analyze mindist]
 

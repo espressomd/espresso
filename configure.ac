@@ -19,7 +19,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT([ESPResSo],[3.0.1],[espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[3.0.2],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 AC_CONFIG_SRCDIR([src/main.c])
@@ -346,7 +346,7 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -489,8 +489,9 @@ AC_CONFIG_FILES([
 	testsuite/configs/Makefile
 	doc/Makefile
 	doc/logo/Makefile
-	doc/dg/Makefile
 	doc/ug/Makefile
+	doc/dg/Makefile
+	doc/doxygen/Makefile
 	doc/tutorials/Makefile
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 

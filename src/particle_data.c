@@ -1925,7 +1925,12 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num)
 {
   int change = 0, err = TCL_OK;
-  int quat_set = 0, dip_set = 0, dipm_set = 0;
+#ifdef DIPOLES
+  int dipm_set = 0;
+#endif
+#if defined(ROTATION) || defined(DIPOLES)
+  int quat_set = 0, dip_set = 0;
+#endif
 
 #ifdef ADDITIONAL_CHECKS
   if (!particle_node)
