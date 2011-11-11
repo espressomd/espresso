@@ -42,7 +42,7 @@
 #include "lj.h"
 #include "lb.h"
 #include "lb-boundaries.h"
-#include "lb_boundaries_gpu.c"
+#include "lbgpu.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -133,7 +133,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_max_mu_slave) \
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
-  CB(mpi_recv_fluid_border_flag_slave) \
+  CB(mpi_recv_fluid_boundary_flag_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -1863,8 +1863,7 @@ void mpi_bcast_lbboundary(int del_num)
 {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   mpi_call(mpi_bcast_lbboundary_slave, 0, del_num);
-
-#ifdef LB_BOUNDARIES
+  
   if (del_num == -1) {
     /* bcast new boundaries */
     MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -1884,7 +1883,6 @@ void mpi_bcast_lbboundary(int del_num)
     n_lb_boundaries--;
     lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
-#endif
 
   on_lbboundary_change();
 #endif
@@ -2465,25 +2463,25 @@ void mpi_recv_fluid_slave(int node, int index) {
 #endif
 }
 
-/************** REQ_LB_GET_BORDER_FLAG **************/
-void mpi_recv_fluid_border_flag(int node, int index, int *border) {
+/************** REQ_LB_GET_BOUNDARY_FLAG **************/
+void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
-    lb_local_fields_get_border_flag(index, border);
+    lb_local_fields_get_boundary_flag(index, boundary);
   } else {
     int data = 0;
-    mpi_call(mpi_recv_fluid_border_flag_slave, node, index);
+    mpi_call(mpi_recv_fluid_boundary_flag_slave, node, index);
     MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    *border = data;
+    *boundary = data;
   }
 #endif
 }
 
-void mpi_recv_fluid_border_flag_slave(int node, int index) {
+void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
 #ifdef LB_BOUNDARIES
   if (node==this_node) {
     int data;
-    lb_local_fields_get_border_flag(index, &data);
+    lb_local_fields_get_boundary_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, MPI_COMM_WORLD);
   }
 #endif

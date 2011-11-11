@@ -43,7 +43,8 @@
 #include "config.h"
 #include "lb.h"
 
-#ifdef LB_BOUNDARIES
+
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
 /** wall constraint applied */
 #define LB_BOUNDARY_WAL 1
@@ -53,6 +54,8 @@
 #define LB_BOUNDARY_CYL 3
 /** a pore geometry */
 #define LB_BOUNDARY_POR 4
+/** rhomboid shaped constraint applied */
+#define LB_BOUNDARY_RHOMBOID 5
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -70,6 +73,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_rhomboid rhomboid;
     Constraint_pore pore;
   } c;
   double force[3];
@@ -86,11 +90,12 @@ extern LB_Boundary *lb_boundaries;
  *  and marks them with a corresponding flag. 
  */
 void lb_init_boundaries();
-#endif // LB_BOUNDARIES
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
+
+#endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
 #ifdef LB_BOUNDARIES
-void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
 
 int lbboundary_get_force(int no, double* f); 
 
@@ -138,7 +143,7 @@ MDINLINE void lb_bounce_back() {
   for (z=0; z<lblattice.grid[2]+2; z++) {
     for (y=0; y<lblattice.grid[1]+2; y++) {
 	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
-         k= get_linear_index(x,y,z,lblattice.halo_grid);
+        k= get_linear_index(x,y,z,lblattice.halo_grid);
     
         if (lbfields[k].boundary) {
           lb_calc_modes(k, modes);

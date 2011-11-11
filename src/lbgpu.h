@@ -17,7 +17,7 @@
 /** \file lbgpu.h
  * Header file for lbgpu.c
  *
- * Header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
+ * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
  */
 
 
@@ -55,9 +55,10 @@
 #define LBPAR_BOUNDARY  7 /**< boundary parameters */
 #endif
 /*@}*/
-
-
-/** Data structure holding the parameters for the Lattice Boltzmann system on the GPU. */
+#endif /* LB_GPU */
+#if defined (LB) || defined (LB_GPU)
+/**-------------------------------------------------------------------------*/
+/** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
 
   /** number density (LJ units) */
@@ -105,32 +106,19 @@ typedef struct {
   unsigned int number_of_particles;
   /** Flag indicating whether fluctuations are present. */
   int fluct;
-  /** Flag to calc and print out phys values */
+  /**to calc and print out phys values */
   int calc_val;
-  /** Flag to inidacte if external forces are present */
+
   int external_force;
-  /** Externel forces */
+
   float ext_force[3];
-  /** seed given via TCL */
+
   unsigned int your_seed;
-  /** Flag for reinit of the fluid */
+
   unsigned int reinit;
 
 } LB_parameters_gpu;
-
-/** Data structure holding the velocitydensities for the Lattice Boltzmann system on the GPU. */
-typedef struct {
-
-  /** velocitydensity of the node */
-  float *vd;
-  /** seed for the random gen */
-  unsigned int *seed;
-  /** flag indicating whether this site belongs to a boundary */
-  unsigned int *boundary;
-
-} LB_nodes_gpu;
-
-/** Data structure holding the physical values for the Lattice Boltzmann system on the GPU. */
+/** Data structure holding the phys. values for the Lattice Boltzmann system. */
 typedef struct {
 
   /** velocitydensity of the node */
@@ -145,21 +133,34 @@ typedef struct {
 
 } LB_values_gpu;
 
-/** Data structure for the randomnr and the seed on the GPU. */
+/** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
 typedef struct {
-  /** array containing two random numbers*/
+
+  /** velocitydensity of the node */
+  float *vd;
+  /** seed for the random gen */
+  unsigned int *seed;
+  /** flag indicating whether this site belongs to a boundary */
+  unsigned int *boundary;
+
+} LB_nodes_gpu;
+
+
+/** Data structure for the randomnr and the seed. */
+typedef struct {
+
   float randomnr[2];
-  /** seed/state of the random number generator */
+
   unsigned int seed;
 
 } LB_randomnr_gpu;
-/** Data structure for the particle force on the GPU. */
+
 typedef struct {
   /** force on the particle given to md part */
   float f[3];
 
 } LB_particle_force_gpu;
-/** Data structure for the particle properties on the GPU*/
+
 typedef struct {
   /** particle position given from md part*/
   float p[3];
@@ -171,61 +172,62 @@ typedef struct {
   unsigned int fixed;
 
 } LB_particle_gpu;
-/** Data structure for the node force ont he GPU*/
+
 typedef struct {
 
   float *force;
 
 } LB_node_force_gpu;
-/** Data structure for the external node force on the GPU*/
+
 typedef struct {
-  /** array containing external node force */
+
   float force[3];
-  
+
   unsigned int index;
 
 } LB_extern_nodeforce_gpu;
-/** Data structure for the seed/state of the randomnumber generators on the GPU*/
+
 typedef struct {
 
   unsigned int seed;
 
 } LB_particle_seed_gpu;
 
+void on_lb_params_change_gpu(int field);
+
+/************************************************************/
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
+
+/** 
+ */
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern LB_parameters_gpu lbpar_gpu;
-
 /** Switch indicating momentum exchange between particles and fluid */
+extern LB_parameters_gpu lbpar_gpu;
+extern LB_values_gpu *host_values;
 extern int transfer_momentum_gpu;
-
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
-extern int n_lb_boundaries_gpu;
+extern int n_lb_boundaries;
 
 #ifdef __cplusplus
 }
 #endif
-/** Eigenvalue of collision operator corresponding to shear viscosity. */
-//extern double lblambda;
-
-/** Eigenvalue of collision operator corresponding to bulk viscosity. */
-//extern double lblambda_bulk;
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** Updates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external forces are present, they are applied prior to the collisions.
- * If boundaries are present, it also applies the boundary conditions.
+/** 
  */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
@@ -266,25 +268,28 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 
 void lb_calc_particle_lattice_ia_gpu();
 void lb_send_forces_gpu();
-void calc_fluid_mass_GPU(double* mass);
-void calc_fluid_momentum_GPU(double* mom);
-void calc_fluid_temperature_GPU(double* cpu_temp);
+
+void lb_calc_fluid_momentum_GPU(double* host_mom);
+void lb_calc_fluid_temperature_GPU(double* host_temp);
+void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
+void lb_get_boundary_flags_GPU(unsigned int* host_bound_array);
+
+void lb_set_node_veloctiy_GPU(int single_nodeindex, float* host_velocity);
+
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 #ifdef __cplusplus
 }
 #endif
-void on_lb_params_change_gpu(int field);
-/** Parser for the TCL command lbnode. */
-int tclcommand_lbnode_gpu(Tcl_Interp *interp, int argc, char **argv);
+#endif /* LB || LB_GPU */
 
-/** Parser for the TCL command \ref lbfluid. */
-int tclcommand_lbfluid_gpu(Tcl_Interp *interp, int argc, char **argv);
+#ifdef LB_GPU
+//void on_lb_params_change_gpu(int field);
+/** Parser for the TCL command lbnode. */
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-int tclcommand_lbprint_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 #endif /* LB_GPU */
 #endif /* LB_GPU_H */
 
