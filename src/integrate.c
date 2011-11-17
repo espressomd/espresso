@@ -570,6 +570,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     }
 #endif
 
+#ifdef COLLISION_DETECTION
+ handle_collisions();
+#endif
+
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;

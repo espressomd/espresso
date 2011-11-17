@@ -237,6 +237,11 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque2[3] = { 0., 0., 0. };
   int j;
   
+
+#ifdef COLLISION_DETECTION
+ detect_collisoin(p1,p2);
+#endif 
+
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;
