@@ -93,7 +93,6 @@ libEspresso_a_SOURCES = \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
-	lb_boundaries_gpu.c lb_boundaries_gpu.h \
 	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
