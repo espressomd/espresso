@@ -3712,6 +3712,8 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
  *                                 main parser for analyze
  ****************************************************************************************/
 
+#include "mystatistics.c"
+
 int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   int err = TCL_OK;
@@ -3736,6 +3738,12 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
   /* for the elses below */
   if (0);
+
+  REGISTER_ANALYSIS("wallstuff", parse_wallstuff);
+  REGISTER_ANALYSIS("dipol", parse_dipol);
+  REGISTER_ANALYSIS("current", parse_current);
+  REGISTER_ANALYSIS("sqr", parse_sqr);
+
   REGISTER_ANALYZE_OPTION("set", tclcommand_analyze_parse_set);
 #if defined(LB) || defined(LB_GPU)
   REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
