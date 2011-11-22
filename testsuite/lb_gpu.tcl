@@ -149,6 +149,7 @@ set var_temp  0.0
 for { set i 1 } { $i <= $int_times } { incr i } {
 
     puts -nonewline "Loop $i of $int_times starting at time [format %f [setmd time]]\n"; flush stdout
+
     integrate $int_steps
 
     # check fluid mass conservation
