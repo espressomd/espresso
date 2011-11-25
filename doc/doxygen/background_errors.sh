@@ -22,7 +22,7 @@
 AWK_SCRIPT=$SRCDIR/background_errors.awk
 UNSORTED=background_errors.unsorted
 SORTED=background_errors.sorted
-DOC=background_errors.doc
+DOC=background_errors.dox
 
 $AWK -f $AWK_SCRIPT "$@" > $UNSORTED
 sort $UNSORTED > $SORTED

@@ -74,7 +74,7 @@
 #ifdef CUDA
 #include "cuda_init.h"
 #include "lbgpu.h"
-#include "lb_boundaries_gpu.h"
+//#include "lb_boundaries_gpu.h"
 #endif
 
 // import function from scriptsdir.c
@@ -125,7 +125,7 @@ int on_program_start(Tcl_Interp *interp)
 
 #ifdef LB_GPU
   if(this_node == 0){
-    lb_pre_init_gpu();
+    //lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
@@ -446,7 +446,7 @@ void on_lbboundary_change()
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries_gpu();
+      lb_init_boundaries();
     }
   }
 #endif
@@ -712,18 +712,21 @@ void on_lb_params_change(int field) {
 }
 #endif
 
-#ifdef LB_GPU
+#if defined (LB) || defined (LB_GPU)
 void on_lb_params_change_gpu(int field) {
-
+#ifdef LB_GPU
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
+#ifdef LB_BOUNDARIES_GPU
+    lb_init_boundaries();
+#endif
   }
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid_gpu();
   }
 
   lb_reinit_parameters_gpu();
-
+#endif
 }
 #endif
 
@@ -849,7 +852,7 @@ static void init_tcl(Tcl_Interp *interp)
   /* in lbgpu_cfile.c */
   REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
 
-  REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
+  //REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);

@@ -55,8 +55,8 @@ int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc,
 int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv);
 // Sanity checks the positions of virtual sites
 int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv);
-// Analze dipole moment on melecular basis
-int tclcommand_analyze_parse_and_print_dipole_mol(Tcl_Interp *interp,int argc, char **argv);
+// Analyze dipole moment on molecular basis
+int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv);
 #endif
 
 #endif

@@ -1470,7 +1470,7 @@ double calc_surface_term(int force_flag, int energy_flag)
          a[2]+=mz[i];
       }   
   
-     MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
      
      if (energy_flag) {
       
