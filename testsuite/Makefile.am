@@ -32,6 +32,7 @@ tests = \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \
+	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \

@@ -192,7 +192,6 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
          }      
        }
        else {
-         printf("allocating zeroes for external field \n");
          iccp3m_cfg.extx = (double*)calloc((last_ind_id +1), sizeof(double));
          iccp3m_cfg.exty = (double*)calloc((last_ind_id +1), sizeof(double));
          iccp3m_cfg.extz = (double*)calloc((last_ind_id +1), sizeof(double));
