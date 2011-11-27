@@ -2546,12 +2546,8 @@ void mpi_iccp3m_init_slave(int node, int dummy)
     iccp3m_initialized=1;
  }
 
-  printf("(%d) recieving the ICC configuration\n", this_node);
-  
   bcast_iccp3m_cfg();
   
-  printf("(%d) recieved ICC configuration\n", this_node);
-
   check_runtime_errors();
 #endif
 }
