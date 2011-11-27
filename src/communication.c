@@ -2493,9 +2493,7 @@ int mpi_iccp3m_iteration(int dummy)
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
-  printf("(%d) performing ICC iteration \n", this_node );
   iccp3m_iteration();
-  printf("(%d) performed ICC iteration \n", this_node );
 
   COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node, dummy));
 
@@ -2509,9 +2507,7 @@ int mpi_iccp3m_iteration(int dummy)
 void mpi_iccp3m_iteration_slave(int dummy, int dummy2)
 {
 #ifdef ELECTROSTATICS
-  printf("(%d) performing ICC iteration \n", this_node );
   iccp3m_iteration();
-  printf("(%d) performed ICC iteration \n", this_node );
   COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
@@ -2529,9 +2525,7 @@ int mpi_iccp3m_init(int n_induced_charges)
   
   mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
    
-  printf("(%d) broadcasting the ICC configuration\n", this_node);
   bcast_iccp3m_cfg();
-  printf("(%d) broadcasted ICC configuration\n", this_node);
 
   COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node, n_induced_charges));
 

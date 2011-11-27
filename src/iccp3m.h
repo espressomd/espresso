@@ -72,7 +72,6 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "topology.h"
-#include "forces.h"
 #include "ghosts.h"
 
 #if defined(ELECTROSTATICS)
@@ -94,9 +93,10 @@ typedef struct {
   int citeration ;                      /* current number of iterations*/
   int set_flag;                         /* flag that indicates if ICCP3M has been initialized properly */    
 } iccp3m_struct;
-
 extern iccp3m_struct iccp3m_cfg;        /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
+#include "forces.h"
+
 int bcast_iccp3m_cfg(void);
 /** Implementation of the tcl-command <br>
     iccp3m  { \<last_ind_id\> \<e1\> \<num_iteration\> \<convergence\> \<relaxation\> \<area\> \<normal_components\> \<e_in/e_out\>  [\<ext_field\>] | iterate } 

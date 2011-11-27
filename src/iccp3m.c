@@ -100,8 +100,8 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
   char buffer[TCL_DOUBLE_SPACE];
   double e1,convergence,relax;
 
-  Tcl_AppendResult(interp, "The ICCP3M algorithm is still experimental. Function can not be guaranteed, therefore it is still disabled.\n", (char *)NULL);
-  return (TCL_ERROR);
+//  Tcl_AppendResult(interp, "The ICCP3M algorithm is still experimental. Function can not be guaranteed, therefore it is still disabled.\n", (char *)NULL);
+//  return (TCL_ERROR);
 
   if(iccp3m_initialized==0){
       iccp3m_init();
@@ -199,7 +199,7 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
        }
       
        mpi_iccp3m_init(0);
-       Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
+//       Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
        Tcl_AppendResult(interp, buffer, (char *) NULL);
        return TCL_OK;
    } /* else (argc==10) */
@@ -250,7 +250,6 @@ int bcast_iccp3m_cfg(void){
   MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  printf("node %d: no iterations: %d\n", this_node, iccp3m_cfg.num_iteration);
   return 0 ;
     
 }
@@ -343,8 +342,8 @@ int iccp3m_iteration() {
          return iccp3m_cfg.citeration++;
 
   } /* iteration */
+  //on_particle_change();
 
-  on_particle_change();
   return iccp3m_cfg.citeration++;
 }
 
@@ -415,9 +414,7 @@ void layered_calculate_ia_iccp3m()
         if (do_nonbonded(p1, &pl[j])) {
 #endif
           /* avoid source-source computation */
-         if(!(p1->p.identity > iccp3m_cfg.last_ind_id && pl[j].p.identity >iccp3m_cfg.last_ind_id)) {
            add_non_bonded_pair_force_iccp3m(p1, &pl[j], d, sqrt(dist2), dist2);
-          }
 #ifdef EXCLUSIONS  
          }
 #endif
@@ -431,9 +428,7 @@ void layered_calculate_ia_iccp3m()
         if (do_nonbonded(p1, &pl[j])) {
 #endif
              /* avoid source-source computation */
-         if(!(p1->p.identity > iccp3m_cfg.last_ind_id && pb[j].p.identity >iccp3m_cfg.last_ind_id)) {
            add_non_bonded_pair_force_iccp3m(p1, &pb[j], d, sqrt(dist2), dist2);
-          }
 #ifdef EXCLUSIONS
          }
 #endif
@@ -500,13 +495,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 
 	    add_pair_iccp3m(pl, &p1[i], &p2[j]);
 	    /* calc non bonded interactions */ 
-           if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) {
 	       add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                } 
-/*           else {
-             printf("Ever here \n");
-             }*/
-             /* avoid source-source computation */ 
 	  }
 	 }
 	}
@@ -543,8 +532,7 @@ void calculate_verlet_ia_iccp3m()
 	      p1 = pairs[i];                    /* pointer to particle 1 */
 	      p2 = pairs[i+1];                  /* pointer to particle 2 */
 	      dist2 = distance2vec(p1->r.p, p2->r.p, vec21); 
-          if(!(p1->p.identity > iccp3m_cfg.last_ind_id && p2->p.identity >iccp3m_cfg.last_ind_id))  /* avoid source-source computation */
-	          add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
+	      add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
   }
@@ -582,9 +570,7 @@ void calc_link_cell_iccp3m()
 	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 	      if(dist2 <= max_range_non_bonded2) {
 		/* calc non bonded interactions */
-                if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) 
 		add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                 /* avoid source-source computation */
 	      }
 	    }
 	}
@@ -612,9 +598,7 @@ void nsq_calculate_ia_iccp3m()
       get_mi_vector(d, pt1->r.p, pt2->r.p);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-          /* avoid source-source computation */
-         if(!(pt1->p.identity > iccp3m_cfg.last_ind_id && pt2->p.identity >iccp3m_cfg.last_ind_id))
-	 add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
+	    add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
     }
 
     /* calculate with my ghosts */
@@ -623,13 +607,11 @@ void nsq_calculate_ia_iccp3m()
       partg = me_do_ghosts_icc.cell[c]->part;
 
       for (p2 = 0; p2 < npg; p2++) {
-	pt2 = &partg[p2];
-	get_mi_vector(d, pt1->r.p, pt2->r.p);
-	dist2 = sqrlen(d);
-	dist = sqrt(dist2);
-           /* avoid source-source computation */
-        if(!(pt1->p.identity > iccp3m_cfg.last_ind_id && pt2->p.identity >iccp3m_cfg.last_ind_id))
-	add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
+	      pt2 = &partg[p2];
+	      get_mi_vector(d, pt1->r.p, pt2->r.p);
+	      dist2 = sqrlen(d);
+	      dist = sqrt(dist2);
+	      add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
       }
     }
   }
