@@ -7,6 +7,9 @@ ESPResSo 3.1
 
 User-visible changes
 --------------------
+
+* Added new constraint and LB boundary condition "rhomboid".
+
 * Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
   coulomb memd).
 
