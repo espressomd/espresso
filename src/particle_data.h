@@ -511,6 +511,15 @@ int set_particle_dip(int part, double dip[3]);
 int set_particle_dipm(int part, double dipm);
 #endif
 
+#ifdef VIRTUAL_SITES
+/** Call only on the master node: set particle dipole moment (absolut value).
+    @param part the particle.
+    @param isVirtual its new dipole moment.
+    @return TCL_OK if particle existed
+*/
+int set_particle_virtual(int part,int isVirtual);
+#endif
+
 #ifdef TEMPERATURE_PER_PARTICLE
 /** Call only on the master node: set particle temperature.
     @param part the particle.
