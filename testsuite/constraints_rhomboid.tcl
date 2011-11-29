@@ -131,7 +131,9 @@ if { [ catch {
     }
   }
   
-  puts "deviation: [format %1.3E $sum]"
+  if {$sum > 1.e-8} {
+    error "Combined particle trajectory deviation of [format %1.3E $sum] exceeds limit of 1.000E-08 after reflection on rhomboid."
+  }
 
 } res ] } {
    error_exit $res
