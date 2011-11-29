@@ -2618,9 +2618,11 @@ void mpi_set_particle_temperature(int pnode, int part, double _T)
 
   on_particle_change();
 }
+#endif
 
 void mpi_set_particle_temperature_slave(int pnode, int part)
 {
+#ifdef TEMPERATURE_PER_PARTICLE
   double s_buf = 0.;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
@@ -2631,9 +2633,10 @@ void mpi_set_particle_temperature_slave(int pnode, int part)
   }
 
   on_particle_change();
-}
 #endif
+}
 
+#ifdef TEMPERATURE_PER_PARTICLE
 void mpi_set_particle_gamma(int pnode, int part, double gamma)
 {
   mpi_call(mpi_set_particle_gamma_slave, pnode, part);
@@ -2649,9 +2652,11 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma)
 
   on_particle_change();
 }
+#endif
 
 void mpi_set_particle_gamma_slave(int pnode, int part)
 {
+#ifdef TEMPERATURE_PER_PARTICLE
   double s_buf = 0.;
   if (pnode == this_node) {
     Particle *p = local_particles[part];
@@ -2662,6 +2667,7 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
   }
 
   on_particle_change();
+#endif
 }
 
 /*********************** MAIN LOOP for slaves ****************/

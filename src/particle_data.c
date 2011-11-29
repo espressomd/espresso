@@ -94,7 +94,7 @@ void auto_exclusion(int distance);
  * particle initialization functions
  ************************************************/
 
-void init_particle(Particle *part) 
+void init_particle(Particle *part)
 {
   /* ParticleProperties */
   part->p.identity = -1;
@@ -205,6 +205,11 @@ void init_particle(Particle *part)
 
 #ifdef ADRESS
   part->p.adress_weight = 1.0;
+#endif
+
+#ifdef TEMPERATURE_PER_PARTICLE
+  part->T = -1.0;
+  part->gamma = -1.0;
 #endif
 }
 
@@ -1701,7 +1706,7 @@ int tclcommand_part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef TEMPERATURE_PER_PARTICLE
-int part_parse_T(Tcl_Interp *interp, int argc, char **argv,
+int part_parse_temp(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
   double T;
@@ -1709,7 +1714,7 @@ int part_parse_T(Tcl_Interp *interp, int argc, char **argv,
   *change = 1;
 
   if (argc < 1) {
-    Tcl_AppendResult(interp, "T_scaling requires 1 argument", (char *) NULL);
+    Tcl_AppendResult(interp, "temp requires 1 argument", (char *) NULL);
     return TCL_ERROR;
   }
   /* set temperature */
@@ -2106,9 +2111,9 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef TEMPERATURE_PER_PARTICLE
     else if (ARG0_IS_S("temp"))
-      err = part_parse_T(interp, argc-1, argv+1, part_num, &change);
-	  else if (ARG0_IS_S("gamma"))
-	    err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
+      err = part_parse_temp(interp, argc-1, argv+1, part_num, &change);
+	else if (ARG0_IS_S("gamma"))
+	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
 #endif
 
     else {
