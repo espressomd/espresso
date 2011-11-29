@@ -207,10 +207,8 @@ void init_particle(Particle *part)
   part->p.adress_weight = 1.0;
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
   part->T = -1.0;
   part->gamma = -1.0;
-#endif
 }
 
 void free_particle(Particle *part) {
@@ -1705,7 +1703,6 @@ int tclcommand_part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
 int part_parse_temp(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
@@ -1751,7 +1748,6 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 
   return TCL_OK;
 }
-#endif
 
 int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int * change)
@@ -2109,13 +2105,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
     else if (ARG0_IS_S("temp"))
       err = part_parse_temp(interp, argc-1, argv+1, part_num, &change);
-	else if (ARG0_IS_S("gamma"))
-	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
-#endif
-
+		else if (ARG0_IS_S("gamma"))
+	  	err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
 		       argv[0],"\"", (char *)NULL);
@@ -2518,7 +2511,6 @@ int set_particle_torque(int part, double torque[3])
 
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
 int set_particle_temperature(int part, double T)
 {
   int pnode;
@@ -2555,7 +2547,6 @@ int set_particle_gamma(int part, double gamma)
   mpi_set_particle_gamma(pnode, part, gamma);
   return TCL_OK;
 }
-#endif
 
 #ifdef EXTERNAL_FORCES
 int set_particle_ext(int part, int flag, double force[3])

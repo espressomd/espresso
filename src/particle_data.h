@@ -230,11 +230,8 @@ typedef struct {
   IntList el;
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
   double T;
   double gamma;
-#endif
-
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -520,7 +517,6 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part,int isVirtual);
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
 /** Call only on the master node: set particle temperature.
     @param part the particle.
     @param T its new temperature.
@@ -534,7 +530,6 @@ int set_particle_temperature(int part, double T);
     @return TCL_OK if particle existed
 */
 int set_particle_gamma(int part, double gamma);
-#endif
 
 #ifdef EXTERNAL_FORCES
 /** Call only on the master node: set particle external forced.

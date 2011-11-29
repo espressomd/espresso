@@ -128,9 +128,7 @@ int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 MDINLINE void friction_thermo_langevin(Particle *p)
 {
   extern double langevin_pref1, langevin_pref2;
-#ifdef TEMPERATURE_PER_PARTICLE
   double langevin_pref1_temp, langevin_pref2_temp;
-#endif
   
   int j;
 #ifdef MASS
@@ -166,7 +164,6 @@ MDINLINE void friction_thermo_langevin(Particle *p)
     if (1==1)
 #endif
     {
-#ifdef TEMPERATURE_PER_PARTICLE
       if(p->gamma >= 0. && p->T >= 0.) {
         langevin_pref1_temp = -p->gamma/time_step;
         langevin_pref2_temp = sqrt(24.0*p->T*p->gamma/time_step);
@@ -174,9 +171,6 @@ MDINLINE void friction_thermo_langevin(Particle *p)
       }
       else
         p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
-#else
-      p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
-#endif
     }
 #ifdef EXTERNAL_FORCES
     else p->f.f[j] = 0;
