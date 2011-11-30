@@ -536,6 +536,40 @@ which can be determined using \texttt{cuda list}, or for example the
 \texttt{deviceQuery} example code in the CUDA SDK. Variant \variant{3}
 finally gives the id of the currently active GPU.
 
+
+\section{Creating bonds when particles collide}
+
+With the help of the feature COLLISIoN\_DETECTION, bonds between particles can be created automatically during the simulation, every time t/o particles collide.
+This is useful for simulations of chemical reactions and irreversible adhesion processes.
+
+Two methods of binding are available:
+In the ``bind centers`` method, a bonded interaction is added be+ween the colliding particles. This leads to the distance between the particles being fixed, the particles can, however still slide around each other. 
+The second method, called ``bind at point of collision``, aims to prevent this sliding at the the contact. This is achieved by creating two virtual sites at the point of collision. They are rigidly connectd to the collideng particles, respectively. A bond is then created between the virtual sites. Due to the rigid connection between each of the particles in the collision and its respective virtual site, a sliding at the contact point is no longer possible. See the documentation on rigid bodies for details.
+In addition to the bond between the virtual sites, th bond between the colliding particles is also created. You can either use a real boded interaction to prevent wobbling aroudd the point of contact or you can use a virtual bond to prevent additional force contributions.
+
+The following limitations currently apply for the collision detection:
+\begin{itemize}
+\item The method is currently limited to simulations with a single cpu
+\item No distinction is currently made between different particle types
+\item The ``bind at point of collision`` approach requires the VIrTUAL\_SITES\_RELATIVE feature
+\item The ``bind at point of collision`` approach cannot handle collisions between virtual sites
+\item The particle type of the virtual sites created in ``bind at point of collision`` approach is always 1.
+
+\end{itemize}
+
+
+\begin{essyntax}
+\variant{1} collision\_detection off
+\variant{2} collision\_detection bind\_centers \var{d} \var{bodd1}
+\variant{3} collision\_detection bind\_at\_point\_of\_collision} \var{d} \var{bodd1} \var{bodd2}
+\end{essyntax}
+
+Here, \var{d} is the distance at which the bond is created, \var{bond1} denotes the type of the bodd created between the collideng partecles, and \var{bond2} determines the type of the bond created between the virtual sites (if applicable).
+
+
+
+
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"
