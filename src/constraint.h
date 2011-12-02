@@ -882,7 +882,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
      c->smoothing_radius = 1.;
 
       
-     slope = (c->rad_right - c->rad_left)/2./c->length;
+     slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
      average_radius = 0.5*(c->rad_left + c->rad_right);
 
   /* compute the position relative to the center of the pore */
@@ -931,7 +931,8 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_left - c1_z ) );
   c2_r = c->rad_left + slope * ( z_right + c->length ) +
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
-  slope=(c2_r-c1_r)/(c2_z-c1_z);
+  c1_r = c->rad_left+c->smoothing_radius;
+  c2_r = c->rad_right+c->smoothing_radius;
  
   /* Check if we are in the region of the left wall */
   if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
@@ -961,6 +962,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
 
   p1_r = c1_r+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_r;
   p1_z = c1_z+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_z;
+  printf("%f %f\n", p1_r, p1_z);
 
   dist_vector_r = p1_r-r;
   dist_vector_z = p1_z-z;
@@ -1326,7 +1328,6 @@ MDINLINE void add_constraints_forces(Particle *p1)
 
     case CONSTRAINT_PORE: 
       if(checkIfInteraction(ia_params)) {
-	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
 	if ( dist >= 0 ) {
 	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
 				     ia_params,vec,dist,dist*dist, force,

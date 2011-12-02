@@ -1113,6 +1113,8 @@ int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **
       mindist = dist<mindist ? dist : mindist;
 
     }
+    printf("%f %f %f %f %f %f \n", pos[0], pos[1], pos[2], vec[0], vec[1], vec[2]);
+
     Tcl_PrintDouble(interp, mindist, buffer);
     Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
     return TCL_OK;

@@ -586,66 +586,66 @@ proc dielectric_pore { args } {
   for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
-      set center_x [ lindex $args $argno ] 
+      set center_x [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
-      set center_y [ lindex $args $argno ] 
+      set center_y [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
-      set center_z [ lindex $args $argno ] 
+      set center_z [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "axis" } {
       incr argno
-      set axis_x [ lindex $args $argno ] 
+      set axis_x [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
-      set axis_y [ lindex $args $argno ] 
+      set axis_y [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
-      set axis_z [ lindex $args $argno ] 
+      set axis_z [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "radius" } {
       incr argno
-      set r1 [ lindex $args $argno ] 
+      set r1 [ expr 1.0*[ lindex $args $argno ] ]
       set r2 $r1
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "radii" } {
       incr argno
-      set r1 [ lindex $args $argno ] 
+      set r1 [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
-      set r2 [ lindex $args $argno ] 
+      set r2 [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "length" } {
       incr argno
-      set length [ lindex $args $argno ] 
+      set length [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "res" } {
       incr argno
-      set res [ lindex $args $argno ] 
+      set res [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "eps" } {
       incr argno
-      set eps [ lindex $args $argno ] 
+      set eps [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "type" } {
       incr argno
-      set type [ lindex $args $argno ] 
+      set type [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
     if { [ lindex $args $argno ] == "smoothing_radius" } {
       incr argno
-      set smoothing_radius [ lindex $args $argno ] 
+      set smoothing_radius [ expr 1.0*[ lindex $args $argno ] ]
       incr argno
       continue
     }
@@ -666,7 +666,6 @@ proc dielectric_pore { args } {
   set circle_center_x $start_x
   set circle_center_y $start_y
   set circle_center_z $start_z
-  puts "radii $r1 $r2"
 # now construct two normal vector that are perpendicular to each other and to the orientation vector:
   if [ expr !abs($axis_x - 1.) < 0.01 ] {
     set e_1_x 0
@@ -721,40 +720,29 @@ proc dielectric_pore { args } {
 
   set z [ expr - $length ]
   while { $z < $length } {
-    puts "z is $z"
     if { $z < $z_left } {
-      puts "doing something!"
-      puts "$z $c1_z [ expr  ($z-$c1_z)*($z-$c1_z) - $smoothing_radius*$smoothing_radius ] "
       set radius [ expr $c1_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ) ] 
-      set delta_b [ expr 2*$pi*$res/$smoothing_radius ]
-      puts "delta_b $delta_b"
+      set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c1_z)/$smoothing_radius ]
-      puts "sinb $sinb"
-      puts "asinb [ expr asin($sinb) ]"
       set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
-      puts "sinbnew $sinbnew"
-      puts "asinbnew [ expr asin($sinbnew) ]"
-      exit
       set incr_z [ expr $c1_z + $smoothing_radius * $sinbnew - $z ]
-      puts "incr_z $incr_z"
+      set slope_norm [ expr tan(asin($sinb)) ]
     } elseif  { $z > $z_right } {
-      puts "doing something!"
       set radius [ expr $c2_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ) ] 
-      set delta_b [ expr 2*$pi*$res/$smoothing_radius ]
-      puts "delta_b $delta_b"
+      set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c2_z)/$smoothing_radius ]
-      puts "sinb $sinb"
       set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
       set incr_z [ expr $c2_z + $smoothing_radius * $sinbnew - $z ]
-      set z 1000
-      continue
-#    set z [ expr $z + $incr_z ]
-#      continue
+      set slope_norm [ expr tan(asin($sinb)) ]
+      if { $incr_z <= 0 } { 
+        set z 1000
+        continue
+      }
     } else {
       set radius [ expr ($z-$c1_z)*$slope + $c1_r -$smoothing_radius/$cosa]  
       set incr_z [expr $res / sqrt(1+$slope*$slope) ]
+      set slope_norm $slope
     }
-    puts "$radius is $radius"
     set n_circle [ expr round( 2*$pi*$radius/$res) ]
     set n_circle 1
     set incr_phi [ expr 2*$pi / $n_circle ]
@@ -764,15 +752,14 @@ proc dielectric_pore { args } {
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
       part [ expr $n_induced_charges ] pos $px $py $pz type $type
-      set nx [ expr -1./sqrt(1+$slope*$slope)*(cos($phi)*$e_1_x + sin($phi)*$e_2_x)+$slope/sqrt(1+$slope*$slope)*$axis_x ]
-      set ny [ expr -1./sqrt(1+$slope*$slope)*(cos($phi)*$e_1_y + sin($phi)*$e_2_y)+$slope/sqrt(1+$slope*$slope)*$axis_y ]
-      set nz [ expr -1./sqrt(1+$slope*$slope)*(cos($phi)*$e_1_z + sin($phi)*$e_2_z)+$slope/sqrt(1+$slope*$slope)*$axis_z ]
+      set nx [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_x + sin($phi)*$e_2_x)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_x ]
+      set ny [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_y + sin($phi)*$e_2_y)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_y ]
+      set nz [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_z + sin($phi)*$e_2_z)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_z ]
       lappend icc_normals [ list $nx $ny $nz ]
       incr particle_counter
       incr n_induced_charges
       set phi $phi+$incr_phi
     }
-    puts "We increment by $incr_z"
     set incr_length_x [ expr $axis_x * $incr_z]
     set incr_length_y [ expr $axis_y * $incr_z]
     set incr_length_z [ expr $axis_z * $incr_z]
