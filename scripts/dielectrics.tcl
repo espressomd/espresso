@@ -726,13 +726,28 @@ proc dielectric_pore { args } {
       puts "doing something!"
       puts "$z $c1_z [ expr  ($z-$c1_z)*($z-$c1_z) - $smoothing_radius*$smoothing_radius ] "
       set radius [ expr $c1_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ) ] 
-      set incr_z 0.01
-#    set z [ expr $z + $incr_z ]
-#      continue
+      set delta_b [ expr 2*$pi*$res/$smoothing_radius ]
+      puts "delta_b $delta_b"
+      set sinb [ expr ($z - $c1_z)/$smoothing_radius ]
+      puts "sinb $sinb"
+      puts "asinb [ expr asin($sinb) ]"
+      set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
+      puts "sinbnew $sinbnew"
+      puts "asinbnew [ expr asin($sinbnew) ]"
+      exit
+      set incr_z [ expr $c1_z + $smoothing_radius * $sinbnew - $z ]
+      puts "incr_z $incr_z"
     } elseif  { $z > $z_right } {
       puts "doing something!"
       set radius [ expr $c2_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ) ] 
-      set incr_z 0.01
+      set delta_b [ expr 2*$pi*$res/$smoothing_radius ]
+      puts "delta_b $delta_b"
+      set sinb [ expr ($z - $c2_z)/$smoothing_radius ]
+      puts "sinb $sinb"
+      set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
+      set incr_z [ expr $c2_z + $smoothing_radius * $sinbnew - $z ]
+      set z 1000
+      continue
 #    set z [ expr $z + $incr_z ]
 #      continue
     } else {

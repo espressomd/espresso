@@ -26,7 +26,7 @@ setmd box_l 10 10 10
 #dielectric_wall dist 1. normal 1 0 0 res 1
 #dielectric_wall dist 1. normal 0 1 0 res 1
 #dielectric_wall dist 1. normal 0 0 1 res 1
-dielectric_pore  center 0 0 0 axis 1 0 0 radii 2. 4. length 4 res .01 smoothing_radius 1
+dielectric_pore  center 0 0 0 axis 1 0 0 radii 2. 4. length 4 res .1 smoothing_radius 1
 
 set ofile [ open "diel.dat" "w" ]
 for { set i 0 } { $i < $n_induced_charges } { incr i } {
