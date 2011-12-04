@@ -26,6 +26,7 @@ tests = \
 	constraints.tcl \
 	constraints_reflecting.tcl \
 	dh.tcl \
+	dielectric_test.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \

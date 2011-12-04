@@ -879,9 +879,6 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
      double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r, temp;
 
      
-     c->smoothing_radius = 1.;
-
-      
      slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
      average_radius = 0.5*(c->rad_left + c->rad_right);
 
@@ -962,7 +959,6 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
 
   p1_r = c1_r+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_r;
   p1_z = c1_z+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_z;
-  printf("%f %f\n", p1_r, p1_z);
 
   dist_vector_r = p1_r-r;
   dist_vector_z = p1_z-z;
