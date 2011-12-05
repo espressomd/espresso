@@ -207,7 +207,7 @@ void init_particle(Particle *part)
   part->p.adress_weight = 1.0;
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
   part->T = -1.0;
   part->gamma = -1.0;
 #endif
@@ -1705,7 +1705,7 @@ int tclcommand_part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
 int part_parse_temp(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
@@ -2109,7 +2109,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
     else if (ARG0_IS_S("temp"))
       err = part_parse_temp(interp, argc-1, argv+1, part_num, &change);
 	else if (ARG0_IS_S("gamma"))
@@ -2518,7 +2518,7 @@ int set_particle_torque(int part, double torque[3])
 
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
 int set_particle_temperature(int part, double T)
 {
   int pnode;

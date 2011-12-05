@@ -384,7 +384,7 @@ void mpi_bcast_coulomb_params();
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
 void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */
 void mpi_set_particle_temperature(int pnode, int part, double _T);
 

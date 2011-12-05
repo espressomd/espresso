@@ -230,7 +230,7 @@ typedef struct {
   IntList el;
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
 #endif
@@ -520,7 +520,7 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part,int isVirtual);
 #endif
 
-#ifdef TEMPERATURE_PER_PARTICLE
+#ifdef LANGEVIN_PER_PARTICLE
 /** Call only on the master node: set particle temperature.
     @param part the particle.
     @param T its new temperature.
