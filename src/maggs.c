@@ -528,7 +528,7 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
 	
 	
   if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb maggs <f_mass> <mesh>", (char *) NULL);
+    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
     return TCL_ERROR;
   }
 	
@@ -541,7 +541,7 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
   }
 	
   if(argc > 2) {
-    Tcl_AppendResult(interp, "Too many parameters: inter coulomb maggs <f_mass> <mesh>", (char *) NULL);
+    Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
     return TCL_ERROR;
   }
 	
