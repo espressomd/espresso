@@ -113,6 +113,17 @@ and velocity. The additional option \lit{vtk} enables export in the vtk format
 which is readable by visualization software such as paraview or mayavi. 
 Otherwise gnuplot readable data will be exported.
 
+\begin{essyntax}
+  lbfluid save_ascii_checkpoint \var{filename}
+  lbfluid save_binary_checkpoint \var{filename}
+  lbfluid load_ascii_checkpoint \var{filename}
+  lbfluid load_binary_checkpoint \var{filename}
+\end{essyntax}
+The first two save commands save all of the LB fluid nodes' populations to \var{filename} in ascii or binary format respectively.
+The two load commands load the populations from \var{filename}.  This is  useful for restarting a simulation either on the same
+machine or a different machine.  Some care should be taken when using the binary format as the format of doubles can depend
+on both the computer being used as well as the compiler.  This is currently  only implemented for the cpu version of LB.
+
 \section{LB as a thermostat}
 \begin{essyntax}
   thermostat \require{1 or 2}{lb} \var{T}
