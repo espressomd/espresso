@@ -50,7 +50,7 @@
 int transfer_momentum = 0;
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0},0.,0. };
+LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0},0.,0., 0 };
 
 
 /** The DnQm model to be used. */
@@ -76,9 +76,6 @@ LB_FluidNode *lbfields = NULL;
 
 /** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = { 0, NULL };
-
-/** Flag indicating whether the halo region is up to date */
-static int resend_halo = 0;
 
 /** \name Derived parameters */
 /*@{*/
@@ -385,6 +382,38 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		      }
         }
       }
+      else if (ARG0_IS_S("save_ascii_checkpoint")) { 
+        if (argc < 2) {
+          Tcl_AppendResult(interp, "usage: lbfluid save_ascii_checkpoint <filename>", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          return lb_lbfluid_save_checkpoint(argv[1], 0);
+        }
+      }  
+      else if (ARG0_IS_S("save_binary_checkpoint")) { 
+        if (argc < 2) {
+          Tcl_AppendResult(interp, "usage: lbfluid save_binary_checkpoint <filename>", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          return lb_lbfluid_save_checkpoint(argv[1], 1);
+        }
+      }  
+      else if (ARG0_IS_S("load_ascii_checkpoint")) { 
+        if (argc < 2) {
+          Tcl_AppendResult(interp, "usage: lbfluid load_ascii_checkpoint <filename>", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          return lb_lbfluid_load_checkpoint(argv[1], 0);
+        }
+      }  
+      else if (ARG0_IS_S("load_binary_checkpoint")) { 
+        if (argc < 2) {
+          Tcl_AppendResult(interp, "usage: lbfluid load_binary_checkpoint <filename>", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          return lb_lbfluid_load_checkpoint(argv[1], 1);
+        }
+      }  
 #ifdef LB
 			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
 				return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
@@ -533,6 +562,20 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
          }
          if (lb_lbnode_set_u(coord, double_return) != 0) {
            Tcl_AppendResult(interp, "General Error on lbnode set u.", (char *)NULL);
+           return TCL_ERROR;
+         }
+       }
+       else if (ARG0_IS_S("pop") || ARG0_IS_S("populations") ) {
+         argc--; argv++;
+         for (counter = 0; counter < 19; counter++) {
+           if (!ARG0_IS_D(double_return[counter])) {
+             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             return TCL_ERROR;
+           }
+           argc--; argv++;
+         }
+         if (lb_lbnode_set_pop(coord, double_return) != 0) {
+           Tcl_AppendResult(interp, "General Error on lbnode set pop.", (char *)NULL);
            return TCL_ERROR;
          }
        }
@@ -1022,6 +1065,84 @@ int lb_lbfluid_print_velocity(char* filename) {
  fclose(fp);		
 	return 0;
 }
+int lb_lbfluid_save_checkpoint(char* filename, int binary) {
+  printf("saving checkpoint\n");
+  FILE* cpfile;
+  cpfile=fopen(filename, "w");
+  if (!cpfile) {
+    return TCL_ERROR;
+  }
+  double pop[19];
+  int ind[3];
+   
+  int gridsize[3];
+
+  gridsize[0] = box_l[0] / lblattice.agrid;
+  gridsize[1] = box_l[1] / lblattice.agrid;
+  gridsize[2] = box_l[2] / lblattice.agrid;
+
+  for (int i=0; i < gridsize[0]; i++) {
+    for (int j=0; j < gridsize[1]; j++) {
+      for (int k=0; k < gridsize[2]; k++) {
+        ind[0]=i;
+        ind[1]=j;
+        ind[2]=k;
+        lb_lbnode_get_pop(ind, pop);
+        if (!binary) {
+          for (int n=0; n<19; n++) {
+            fprintf(cpfile, "%.16e ", pop[n]); 
+          }
+          fprintf(cpfile, "\n"); 
+        }
+        else {
+          fwrite(pop, sizeof(double), 19, cpfile);
+        }
+      } 
+    }
+  }
+  fclose(cpfile);
+  return TCL_OK;
+}
+int lb_lbfluid_load_checkpoint(char* filename, int binary) {
+  FILE* cpfile;
+  cpfile=fopen(filename, "r");
+  if (!cpfile) {
+    return TCL_ERROR;
+  }
+  double pop[19];
+  int ind[3];
+   
+  int gridsize[3];
+  lbpar.resend_halo=1;
+  mpi_bcast_lb_params(0);
+  gridsize[0] = box_l[0] / lblattice.agrid;
+  gridsize[1] = box_l[1] / lblattice.agrid;
+  gridsize[2] = box_l[2] / lblattice.agrid;
+  char* line;
+  for (int i=0; i < gridsize[0]; i++) {
+    for (int j=0; j < gridsize[1]; j++) {
+      for (int k=0; k < gridsize[2]; k++) {
+        ind[0]=i;
+        ind[1]=j;
+        ind[2]=k;
+        if (!binary) {
+//          for (int n=0; n<19; n++) {
+            fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]); 
+//          }
+        }
+        else {
+          fread(pop, sizeof(double), 19, cpfile);
+        }
+        lb_lbnode_set_pop(ind, pop);
+      } 
+    }
+  }
+  fclose(cpfile);
+//  lbpar.resend_halo=1;
+//  mpi_bcast_lb_params(0);
+  return TCL_OK;
+}
+
 
 int lb_lbnode_get_rho(int* ind, double* p_rho){
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -1254,8 +1375,23 @@ int lb_lbnode_set_pi_neq(int* ind, double* pi_neq) {
   return -100;
 }
 
-int lb_lbnode_set_pop(int* ind, double* pop) {
-  return -100;
+int lb_lbnode_set_pop(int* ind, double* p_pop) {
+  if (lattice_switch & LATTICE_LB_GPU) {
+
+    printf("Not implemented in the LB GPU code!\n");
+
+  } else {
+#ifdef LB
+    index_t index;
+    int node, grid[3], ind_shifted[3];
+
+    ind_shifted[0] = ind[0]; ind_shifted[1] = ind[1]; ind_shifted[2] = ind[2];
+    node = map_lattice_to_node(&lblattice,ind_shifted,grid);
+    index = get_linear_index(ind_shifted[0],ind_shifted[1],ind_shifted[2],lblattice.halo_grid);
+    mpi_send_fluid_populations(node, index, p_pop);
+#endif
+    }
+  return 0;
 }
 #endif
 
@@ -1788,7 +1924,7 @@ void lb_reinit_fluid() {
 
     }
 
-    resend_halo = 0;
+    lbpar.resend_halo = 0;
 #ifdef LB_BOUNDARIES
     lb_init_boundaries();
 #endif
@@ -2512,7 +2648,7 @@ MDINLINE void lb_collide_stream() {
     lbfluid[1] = tmp;
 
     /* halo region is invalid after update */
-    resend_halo = 1;
+    lbpar.resend_halo = 1;
 }
 
 /** Streaming and collisions (pull scheme) */
@@ -2568,7 +2704,7 @@ MDINLINE void lb_stream_collide() {
     lbfluid[1] = tmp;
 
     /* halo region is invalid after update */
-    resend_halo = 1;
+    lbpar.resend_halo = 1;
       
 }
 
@@ -2856,7 +2992,7 @@ void calc_particle_lattice_ia() {
 
   if (transfer_momentum) {
 
-    if (resend_halo) { /* first MD step after last LB update */
+    if (lbpar.resend_halo) { /* first MD step after last LB update */
       
       /* exchange halo regions (for fluid-particle coupling) */
       halo_communication(&update_halo_comm, **lbfluid);
@@ -2865,7 +3001,7 @@ void calc_particle_lattice_ia() {
 #endif
       
       /* halo is valid now */
-      resend_halo = 0;
+      lbpar.resend_halo = 0;
 
       /* all fields have to be recalculated */
       for (i=0; i<lblattice.halo_grid_volume; ++i) {
