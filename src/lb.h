@@ -158,6 +158,8 @@ typedef struct {
   double rho_lb_units;
   double gamma_odd;
   double gamma_even;
+
+  int resend_halo;
           
 } LB_Parameters;
 
@@ -186,6 +188,8 @@ extern double lblambda;
 
 /** Eigenvalue of collision operator corresponding to bulk viscosity. */
 extern double lblambda_bulk;
+
+extern int resend_halo;
 
 /************************************************************/
 /** \name Exported Functions */
@@ -560,6 +564,13 @@ MDINLINE void lb_get_populations(index_t index, double* pop) {
     pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho;
   }
 }
+
+MDINLINE void lb_set_populations(index_t index, double* pop) {
+  int i=0;
+  for (i=0; i<19; i++) {
+    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho;
+  }
+}
 #endif
 
 #if defined (LB) || defined (LB_GPU)
@@ -588,6 +599,9 @@ int lb_lbfluid_print_vtk_boundary(char* filename);
 int lb_lbfluid_print_vtk_velocity(char* filename);
 int lb_lbfluid_print_boundary(char* filename);
 int lb_lbfluid_print_velocity(char* filename);
+
+int lb_lbfluid_save_checkpoint(char* filename, int binary); 
+int lb_lbfluid_load_checkpoint(char* filename, int binary);
 
 int lb_lbnode_get_rho(int* ind, double* p_rho);
 int lb_lbnode_get_u(int* ind, double* u);
