@@ -94,7 +94,7 @@ void auto_exclusion(int distance);
  * particle initialization functions
  ************************************************/
 
-void init_particle(Particle *part) 
+void init_particle(Particle *part)
 {
   /* ParticleProperties */
   part->p.identity = -1;
@@ -205,6 +205,11 @@ void init_particle(Particle *part)
 
 #ifdef ADRESS
   part->p.adress_weight = 1.0;
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  part->T = -1.0;
+  part->gamma = -1.0;
 #endif
 }
 
@@ -1700,6 +1705,54 @@ int tclcommand_part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 
 #endif
 
+#ifdef LANGEVIN_PER_PARTICLE
+int part_parse_temp(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double T;
+
+  *change = 1;
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "temp requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set temperature */
+  if (! ARG_IS_D(0, T))
+    return TCL_ERROR;
+
+  if (set_particle_temperature(part_num, T) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double gamma;
+
+  *change = 1;
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "gamma requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set temperature scaling factor */
+  if (! ARG_IS_D(0, gamma))
+    return TCL_ERROR;
+
+  if (set_particle_gamma(part_num, gamma) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#endif
+
 int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int * change)
 {
@@ -2054,6 +2107,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #ifdef EXCLUSIONS
     else if (ARG0_IS_S("exclude"))
       err = tclcommand_part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+    else if (ARG0_IS_S("temp"))
+      err = part_parse_temp(interp, argc-1, argv+1, part_num, &change);
+	else if (ARG0_IS_S("gamma"))
+	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
 #endif
 
     else {
@@ -2456,6 +2516,45 @@ int set_particle_torque(int part, double torque[3])
   return TCL_OK;
 }
 
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+int set_particle_temperature(int part, double T)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+    
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+    
+  mpi_set_particle_temperature(pnode, part, T);
+  return TCL_OK;
+}
+
+int set_particle_gamma(int part, double gamma)
+{
+  int pnode;
+  
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+    
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+    
+  mpi_set_particle_gamma(pnode, part, gamma);
+  return TCL_OK;
+}
 #endif
 
 #ifdef EXTERNAL_FORCES

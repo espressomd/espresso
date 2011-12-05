@@ -34,6 +34,8 @@
   \opt{v \var{vx} \var{vy} \var{vz}}
   \opt{f \var{fx} \var{fy} \var{fz}}
   \opt{bond \var{bondid} \var{pid2} \dots}
+  \opt{temp \var{T}}
+  \opt{gamma \var{g}}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
@@ -85,6 +87,8 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   be an existing particle.  The \var{bondid} is used for
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
+\item[\opt{temp \var{T}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the temperature \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles of different temperatures. Caution: this has no influence on any other thermostat then the Langevin thermostat.
+\item[\opt{gamma \var{g}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the frictional coefficient \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles with different diffusion constants. Caution: this has no influence on any other thermostat then the Langevin thermostat.
 \item[\opt{q \var{charge}}] Sets the charge of this particle to $q$.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
