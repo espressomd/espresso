@@ -134,6 +134,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
   CB(mpi_recv_fluid_boundary_flag_slave) \
+  CB(mpi_set_particle_temperature_slave) \
+  CB(mpi_set_particle_gamma_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2518,7 +2520,6 @@ void mpi_iccp3m_iteration_slave(int dummy, int dummy2)
 #endif
 }
 
-
 /********************* REQ_ICCP3M_INIT********/
 int mpi_iccp3m_init(int n_induced_charges)
 {
@@ -2598,6 +2599,67 @@ void mpi_bcast_max_mu() {
   get_mu_max();
   
 #endif
+}
+
+/******************** REQ_SEND_PARTICLE_T ********************/
+void mpi_set_particle_temperature(int pnode, int part, double _T)
+{
+  mpi_call(mpi_set_particle_temperature_slave, pnode, part); //TODO: really?
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    /* here the setting actually happens, if the particle belongs to the local node */
+    p->T = _T;
+  }
+  else {
+    MPI_Send(&_T, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+}
+
+void mpi_set_particle_temperature_slave(int pnode, int part)
+{
+  double s_buf = 0.;
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    /* here the setting happens for nonlocal nodes */
+    p->T = s_buf;
+  }
+
+  on_particle_change();
+}
+
+void mpi_set_particle_gamma(int pnode, int part, double gamma)
+{
+  mpi_call(mpi_set_particle_gamma_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    /* here the setting actually happens, if the particle belongs to the local node */
+    p->gamma = gamma;
+  }
+  else {
+    MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+}
+
+void mpi_set_particle_gamma_slave(int pnode, int part)
+{
+  double s_buf = 0.;
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    /* here the setting happens for nonlocal nodes */
+    p->gamma = s_buf;
+  }
+
+  on_particle_change();
 }
 
 /*********************** MAIN LOOP for slaves ****************/
