@@ -62,6 +62,7 @@
 #define BOND_CONSTRAINT
 #define MODES
 #define BOND_VIRTUAL
+#define LANGEVIN_PER_PARTICLE
 
 /* To use address, also activate VIRTUAL_SITES and VIRTUAL_SITES_COM */
 #define ADRESS

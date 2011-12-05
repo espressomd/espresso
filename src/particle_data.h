@@ -229,6 +229,12 @@ typedef struct {
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
 #endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  double T;
+  double gamma;
+#endif
+
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -512,6 +518,22 @@ int set_particle_dipm(int part, double dipm);
     @return TCL_OK if particle existed
 */
 int set_particle_virtual(int part,int isVirtual);
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+/** Call only on the master node: set particle temperature.
+    @param part the particle.
+    @param T its new temperature.
+    @return TCL_OK if particle existed
+*/
+int set_particle_temperature(int part, double T);
+
+/** Call only on the master node: set particle frictional coefficient.
+    @param part the particle.
+    @param gamma its new frictional coefficient.
+    @return TCL_OK if particle existed
+*/
+int set_particle_gamma(int part, double gamma);
 #endif
 
 #ifdef EXTERNAL_FORCES
