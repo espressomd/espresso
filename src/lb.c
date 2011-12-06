@@ -295,6 +295,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
         }
       }
       else if (ARG0_IS_S("ext_force")) {
+      #ifdef EXTERNAL_FORCES
         if ( argc < 4 || !ARG_IS_D(1, vectarg[0]) || !ARG_IS_D(2, vectarg[1]) ||  !ARG_IS_D(3, vectarg[2]) ) {
 	        Tcl_AppendResult(interp, "friction requires 1 argument", (char *)NULL);
           return TCL_ERROR;
@@ -304,6 +305,10 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 	        Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
           return TCL_ERROR;
         }
+      #else
+        Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
+         return TCL_ERROR;
+      #endif
       }
       else if (ARG0_IS_S("gamma_odd")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
