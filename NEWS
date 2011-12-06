@@ -2,6 +2,11 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.0.3
+==============
+
+* Fixed "make install".
+
 ESPResSo 3.0.2
 ==============
 
