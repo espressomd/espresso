@@ -496,7 +496,16 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef VIRTUAL_SITES
    update_mol_vel_pos();
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
    if (check_runtime_errors()) break;
+#ifdef VIRTUAL_SITES_RELATIVE && LB 
+   // This is on a workaround stage: 
+   // When using virtual sites relative and LB at the same time, it is necessary 
+   // to reassemble the cell lists after all position updates, also of virtual
+   // particles. 
+    cells_update_ghosts();
+#endif
+
 #ifdef ADRESS
    //adress_update_weights();
    if (check_runtime_errors()) break;
