@@ -1071,7 +1071,7 @@ int lb_lbfluid_print_velocity(char* filename) {
 	return 0;
 }
 int lb_lbfluid_save_checkpoint(char* filename, int binary) {
-  printf("saving checkpoint\n");
+#ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "w");
   if (!cpfile) {
@@ -1107,8 +1107,14 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   }
   fclose(cpfile);
   return TCL_OK;
+#endif
+#ifdef LB_GPU
+  print("Not implemented");
+  return TCL_ERROR;
+#endif
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
+#ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
   if (!cpfile) {
@@ -1146,6 +1152,11 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
   return TCL_OK;
+#endif
+#ifdef LB_GPU
+  print("Not implemented");
+  return TCL_ERROR;
+#endif
 }
 
 
