@@ -1108,10 +1108,11 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   fclose(cpfile);
   return TCL_OK;
 #endif
-#ifdef LB_GPU
-  print("Not implemented");
+  if(!(lattice_switch & LATTICE_LB_GPU)) {
+    printf("Not implemented");
+    return TCL_ERROR;
+  }
   return TCL_ERROR;
-#endif
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #ifdef LB
@@ -1153,10 +1154,11 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 //  mpi_bcast_lb_params(0);
   return TCL_OK;
 #endif
-#ifdef LB_GPU
-  print("Not implemented");
+  if(!(lattice_switch & LATTICE_LB_GPU)) {
+    printf("Not implemented");
+    return TCL_ERROR;
+  }
   return TCL_ERROR;
-#endif
 }
 
 
