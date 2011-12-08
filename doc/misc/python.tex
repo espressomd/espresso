@@ -1,0 +1,262 @@
+% Copyright (C) 2011 The ESPResSo project
+%  
+% This file is part of ESPResSo.
+%   
+% ESPResSo is free software: you can redistribute it and/or modify it
+% under the terms of the GNU General Public License as published by the
+% Free Software Foundation, either version 3 of the License, or (at your
+% option) any later version.
+%  
+% ESPResSo is distributed in the hope that it will be useful, but
+% WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+% General Public License for more details.
+%  
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+\documentclass[
+a4paper,                        % paper size
+11pt,                           % font size
+]{scrartcl}
+
+\usepackage{hyperref}           % automatically creates links when
+                                % using pdflatex, defines \url
+\usepackage[numbers]{natbib}
+\usepackage{xspace}
+
+\newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\etal}{\textit{et al.}\xspace}
+
+\newenvironment{designrule}{\begin{quote}\itshape}{\end{quote}}
+
+\begin{document}
+\title{\es Python Interface Design}
+\author{Olaf Lenz}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\clearpage
+\section{Design Criteria}
+
+\subsection{Zen of Python}
+
+\begin{verse}
+Beautiful is better than ugly.\\
+Explicit is better than implicit.\\
+Simple is better than complex.\\
+Complex is better than complicated.\\
+Flat is better than nested.\\
+Sparse is better than dense.\\
+Readability counts.\\
+Special cases aren't special enough to break the rules.\\
+Although practicality beats purity.\\
+Errors should never pass silently.\\
+Unless explicitly silenced.\\
+In the face of ambiguity, refuse the temptation to guess.\\
+There should be one-- and preferably only one --obvious way to do it.\\
+Although that way may not be obvious at first unless you're Dutch.\\
+Now is better than never.\\
+Although never is often better than \emph{right} now.\\
+If the implementation is hard to explain, it's a bad idea.\\
+If the implementation is easy to explain, it may be a good idea.\\
+Namespaces are one honking great idea -- let's do more of those!
+\end{verse}
+
+This is the ``Zen of Python''\footnote{PEP 20:
+  \url{http://www.python.org/dev/peps/pep-0020/}} a set of rules
+embraced by the Python community.  We should heed them, so that
+experienced Python users feel at home.
+
+\subsection{Principle of Least Surprise}
+
+\begin{designrule}
+  Design the interface such that it works as the user expects, not as
+  it would feel natural from the inner logic of the program.
+\end{designrule}
+
+
+This is the \emph{Principle of Least Surprise} or \emph{Principle of
+  Least Astonishment} (POLA)
+\footnote{\url{http://en.wikipedia.org/wiki/Principle_of_least_astonishment}}.
+
+\subsection{Maximal Freedom in the Interface}
+
+\begin{designrule}
+  Allow for maximal possible freedom in the interface.
+\end{designrule}
+
+\begin{itemize}
+\item Use \emph{runtime restrictions} rather than \emph{interface
+    restrictions}.
+\item You never know when a restriction might be lifted. Doing so is
+  much easier when using runtime restrictions.
+\item Don't restrict or because the inner logic of the program
+  doesn't allow for more yet.
+\item Do not force specific types where it is not necessary.
+\end{itemize}
+
+\paragraph{Example 1}
+
+\begin{itemize}
+\item Design 1
+\begin{verbatim}
+system.setElectrostatics(method="p3m", bjerrum=1.0)
+\end{verbatim}
+
+\item Design 2
+\begin{verbatim}
+p3m = P3M(bjerrum=1.0)
+system.addInteraction(p3m)
+\end{verbatim}
+
+\item Design 1 does not allow to use several instances of P3M, while
+  Design 2 does. If this should be restricted, Design 2 could throw an
+  exception if the users tries to add more than one P3M.
+\end{itemize}
+
+\paragraph{Example 2}
+There is no reason to allow only numerical particle ids in the
+future. Instead, a particle could be identified by anything else, \eg
+a string. In this case, the Python interface might provide a bridge
+between the inner program logic and the user.
+
+\subsection{Algorithms are not Physics}
+
+\begin{designrule}
+  Algorithms are not physics.
+\end{designrule}
+
+Algorithms can be used to model physics, but the same algorithm might
+be able to model another aspect of physics. For example, P3M can be
+used to model electrostatics as well as gravity.
+
+This has a few implications:
+
+\begin{itemize}
+\item Don't restrict what a user can do just because you think ``it
+  would be unphysical''.
+
+  A user should have the freedom to employ algorithms wherever
+  possible, even if you think it might be unphysical. You might simply
+  not know what new method the user has thought of.
+
+\item Choose class names and method names after algorithms, not intended
+  physics.
+
+  For example, a class that implements the P3M algorithm should be
+  called \texttt{P3M}, not \texttt{Electrostatics}. On the one hand,
+  P3M can also be used to simulate gravity, on the other hand, there
+  might be other algorithms that implement electrostatics.
+\end{itemize}
+
+\subsection{Have the Future in Mind}
+
+\begin{designrule}
+  Don't model what is, model what should be.
+\end{designrule}
+
+We should try to create an interface that allows for future
+development rather than an interface that models exactly what is
+currently possible with \es.
+
+For example, don't make variables global because the are currently
+global in \es (\eg don't make the time step global).
+
+\paragraph{Example}
+\begin{verbatim}
+>>> # unnecessarily global
+>>> espresso.time_step = 0.01
+>>> # should be a parameter of the integrator
+>>> integrator = espresso.integrator.VelocityVerlet(time_step=0.01)
+\end{verbatim}
+
+\subsection{Specifity}
+
+\begin{designrule}
+  Design and name the classes and methods as generic as possible but
+  as specific as necessary.
+\end{designrule}
+
+\begin{itemize}
+\item Call the velocity verlet integrator \texttt{VelocityVerlet}, not
+  \texttt{Integrator}. After all, there might be a different
+  integrator at some time in the future.
+\end{itemize}
+
+\subsection{Keyword Arguments}
+
+\begin{designrule}
+  Prefer keyword arguments over positional arguments!
+\end{designrule}
+
+\clearpage
+\section{Open Questions}
+
+\subsection{Namespaces}
+
+Should we employ namespaces, and to what extent?
+
+\subsubsection{One Big Flat Namespace}
+
+Put everything into module \texttt{espresso}.
+
+\paragraph{Example}
+\begin{verbatim}
+>>> integrator = espresso.VelocityVerletIntegrator()
+\end{verbatim}
+
+\paragraph{Pros}
+\begin{itemize}
+\item "Flat is better than nested" (Zen of Python)
+\item Everything needs to be defined in \texttt{espresso.py}
+\end{itemize}
+
+\paragraph{Cons}
+\begin{itemize}
+\item Hard to extend for other users
+\end{itemize}
+
+\subsubsection{Nested Namespaces}
+
+Use nested namespaces, name the namespace after the usage of the
+algorithms. Modules by other users can be put into namespace
+\texttt{extensions}.
+
+\paragraph{Example}
+\begin{verbatim}
+>>> integrator = espresso.integrator.VelocityVerlet()
+>>> newinteraction = espresso.extensions.specialinteraction.SpecialInteraction()
+\end{verbatim}
+
+\paragraph{Pros}
+\begin{itemize}
+\item Logical
+\item Models physical intuition
+\item Good to extend
+\end{itemize}
+
+\clearpage
+\section{Interface}
+
+\subsection{Particles}
+
+\begin{itemize}
+\item A user should not keep references to all particles to allow for
+  huge parallel systems, \ie it should not be necessary for a user to
+  keep a list or dictionary of al particles!
+\item Particles should be easily addressable (\eg via a numerical id)
+\item Is it necessary to restrict the ids to numerical ids?
+\item Should it be \emph{possible} to keep particle references as
+  Python objects?
+\end{itemize}
+
+\subsection{Interactions}
+
+
+
+\end{document}

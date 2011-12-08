@@ -133,7 +133,10 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_bcast_max_mu_slave) \
   CB(mpi_send_vs_relative_slave) \
   CB(mpi_recv_fluid_populations_slave) \
+  CB(mpi_send_fluid_populations_slave) \
   CB(mpi_recv_fluid_boundary_flag_slave) \
+  CB(mpi_set_particle_temperature_slave) \
+  CB(mpi_set_particle_gamma_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2423,7 +2426,7 @@ void mpi_send_fluid_slave(int node, int index) {
 #ifdef LB
   if (node==this_node) {
     double data[10];
-        MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     lb_calc_n_equilibrium(index, data[0], &data[1], &data[4]);
   }
 #endif
@@ -2518,7 +2521,6 @@ void mpi_iccp3m_iteration_slave(int dummy, int dummy2)
 #endif
 }
 
-
 /********************* REQ_ICCP3M_INIT********/
 int mpi_iccp3m_init(int n_induced_charges)
 {
@@ -2570,6 +2572,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
     mpi_call(mpi_recv_fluid_populations_slave, node, index);
     MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
+  lbpar.resend_halo=1;
 #endif
 }
 
@@ -2578,7 +2581,29 @@ void mpi_recv_fluid_populations_slave(int node, int index) {
   if (node==this_node) {
     double data[19];
     lb_get_populations(index, data);
-    MPI_Send(data, 10, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD);
+    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD);
+  }
+  lbpar.resend_halo=1;
+#endif
+}
+
+void mpi_send_fluid_populations(int node, int index, double *pop) {
+#ifdef LB
+  if (node==this_node) {
+    lb_set_populations(index, pop);
+  } else {
+    mpi_call(mpi_send_fluid_populations_slave, node, index);
+    MPI_Send(pop, 19, MPI_DOUBLE, node, SOME_TAG, MPI_COMM_WORLD);
+  }
+#endif
+}
+
+void mpi_send_fluid_populations_slave(int node, int index) {
+#ifdef LB
+  if (node==this_node) {
+    double data[19];
+    MPI_Recv(data, 19, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    lb_set_populations(index, data);
   }
 #endif
 }
@@ -2597,6 +2622,75 @@ void mpi_bcast_max_mu() {
   
   get_mu_max();
   
+#endif
+}
+
+#ifdef LANGEVIN_PER_PARTICLE
+/******************** REQ_SEND_PARTICLE_T ********************/
+void mpi_set_particle_temperature(int pnode, int part, double _T)
+{
+  mpi_call(mpi_set_particle_temperature_slave, pnode, part); //TODO: really?
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    /* here the setting actually happens, if the particle belongs to the local node */
+    p->T = _T;
+  }
+  else {
+    MPI_Send(&_T, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+}
+#endif
+
+void mpi_set_particle_temperature_slave(int pnode, int part)
+{
+#ifdef LANGEVIN_PER_PARTICLE
+  double s_buf = 0.;
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    /* here the setting happens for nonlocal nodes */
+    p->T = s_buf;
+  }
+
+  on_particle_change();
+#endif
+}
+
+#ifdef LANGEVIN_PER_PARTICLE
+void mpi_set_particle_gamma(int pnode, int part, double gamma)
+{
+  mpi_call(mpi_set_particle_gamma_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    /* here the setting actually happens, if the particle belongs to the local node */
+    p->gamma = gamma;
+  }
+  else {
+    MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+}
+#endif
+
+void mpi_set_particle_gamma_slave(int pnode, int part)
+{
+#ifdef LANGEVIN_PER_PARTICLE
+  double s_buf = 0.;
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, MPI_COMM_WORLD, &status);
+    /* here the setting happens for nonlocal nodes */
+    p->gamma = s_buf;
+  }
+
+  on_particle_change();
 #endif
 }
 
