@@ -19,6 +19,14 @@ double point_of_collision[3];
 } collision_struct;
 
 
+// Collision detection mod
+// 0=off
+// 1=bind centers
+// 2=bind at point of collision
+// Never write to this variable. Use collision_detection_set_params()
+extern int collision_detection_mode;
+
+
 
 
 
@@ -34,5 +42,6 @@ void prepare_collision_queue();
 void handle_collisions();
 
 
+int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char **argv); 
 //#endif
 #endif

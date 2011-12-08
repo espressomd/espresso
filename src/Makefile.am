@@ -124,7 +124,8 @@ libEspresso_a_SOURCES = \
 	overlap.h \
 	ljangle.h \
 	adresso.c adresso.h \
-        tunable_slip.h
+        tunable_slip.h\
+	collision.c collision.h
 
 # All objects are compiled into the library
 noinst_LIBRARIES = libEspresso.a

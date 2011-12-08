@@ -408,6 +408,9 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 #endif
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
+#endif
 
    
    force_calc();
@@ -435,6 +438,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     /*apply trap forces to trapped molecules*/
 #ifdef MOLFORCES         
     calc_and_apply_mol_constraints();
+#endif
+
+#ifdef COLLISION_DETECTION
+    handle_collisions();
 #endif
 
     rescale_forces();
@@ -510,6 +517,11 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 1;
+#endif
+
+
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
     force_calc();

@@ -553,18 +553,17 @@ The following limitations currently apply for the collision detection:
 \item No distinction is currently made between different particle types
 \item The ``bind at point of collision`` approach requires the VIrTUAL\_SITES\_RELATIVE feature
 \item The ``bind at point of collision`` approach cannot handle collisions between virtual sites
-\item The particle type of the virtual sites created in ``bind at point of collision`` approach is always 1.
-
 \end{itemize}
 
 
 \begin{essyntax}
+\variant{1} collision\_detection
 \variant{1} collision\_detection off
 \variant{2} collision\_detection bind\_centers \var{d} \var{bodd1}
-\variant{3} collision\_detection bind\_at\_point\_of\_collision} \var{d} \var{bodd1} \var{bodd2}
+\variant{3} collision\_detection bind\_at\_point\_of\_collision \var{d} \var{bodd1} \var{bodd2} \var{type}
 \end{essyntax}
 
-Here, \var{d} is the distance at which the bond is created, \var{bond1} denotes the type of the bodd created between the collideng partecles, and \var{bond2} determines the type of the bond created between the virtual sites (if applicable).
+Here, \var{d} is the distance at which the bond is created, \var{bond1} denotes the type of the bodd created between the collideng partecles, and \var{bond2} determines the type of the bond created between the virtual sites (if applicable). \var{Type} denotes the particle type of the virtual sites created at the point of collision (if applicable). Be sure not to define a Lennard-Jones interaction for this particle type, as two particles will be generated in the same place.
 
 
 
