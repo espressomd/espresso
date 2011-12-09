@@ -78,20 +78,21 @@
 
 /* iccp3m data structures*/
 typedef struct {
-  int last_ind_id;                      /* Last induced id (can not be smaller then 2) */
+  int n_ic;                             /* Last induced id (can not be smaller then 2) */
   int num_iteration;                    /* Number of max iterations                    */
   double eout;                          /* Dielectric constant of the bulk             */
   double *areas;                        /* Array of area of the grid elements          */
   double *ein;                          /* Array of dielectric constants at each surface element */
+  double *sigma;                        /* Surface Charge density */
   double convergence;                   /* Convergence criterion                       */
   double *nvectorx,*nvectory,*nvectorz; /* Surface normal vectors                      */
-  double *extx,*exty,*extz;             /* External field                              */
-  int selection;                        /* by default it is not selected, WHO KNOWS WHAT THAT MEANS?*/
+  double extx,exty,extz;             /* External field                              */
   double relax;                         /* relaxation parameter for iterative                       */
-  int update;                           /* iccp3m update interval, currently not used */
-  double *fx,*fy,*fz;                   /* forces iccp3m will use*/ 
   int citeration ;                      /* current number of iterations*/
   int set_flag;                         /* flag that indicates if ICCP3M has been initialized properly */    
+  double *fx;
+  double *fy;
+  double *fz;
 } iccp3m_struct;
 extern iccp3m_struct iccp3m_cfg;        /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
@@ -159,8 +160,8 @@ int iccp3m_iteration();
 void iccp3m_init(void);
 
 
-/** The short range part of the electrostatic interation between two particles.  
- *  The appropriate function from the underlying electrostatic method is called. */
+/** Variant of add_non_bonded_pair_force where only coulomb 
+ *  contributions are calculated   */
 MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2, 
 					double d[3], double dist, double dist2)
 {

@@ -40,9 +40,7 @@ set epsilons [ list ]
 for { set i 0 } { $i < 10 } { incr i } {
   for { set j 0 } { $j < 10 } { incr j } {
     part $counter pos $i $j 0 fix 1 1 1 q 1.
-    lappend normals 0
-    lappend normals 0
-    lappend normals 1.
+    lappend normals { 0 0 1. }
     lappend areas 1 
     lappend epsilons .5 
     incr counter 
@@ -51,20 +49,17 @@ for { set i 0 } { $i < 10 } { incr i } {
 for { set i 0 } { $i < 10 } { incr i } {
   for { set j 0 } { $j < 10 } { incr j } {
     part $counter pos $i $j 5 fix 1 1 1 q 1.
-    lappend normals 0
-    lappend normals 0
-    lappend normals -1.
+    lappend normals { 0 0 -1. }
     lappend areas 1 
     lappend epsilons .1 
     incr counter 
   }
 }
 part 200 pos 5 5 1 q 1
-#part 201 pos 6 5 1 q 1
 
 puts "[ inter coulomb 1. p3m tunev2 accuracy 1e-3 mesh 32 cao 4 ]"
 
-iccp3m 199 1 60 1e-2 0.7 $areas $normals $epsilons
+iccp3m 200 eps_out 1 max_iterations 60 convergence 1e-2 relax 0.7 areas $areas normals $normals epsilons $epsilons
 integrate 0
 
 integrate 100

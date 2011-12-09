@@ -52,7 +52,7 @@
 
 #ifdef ELECTROSTATICS
 
-enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_EXTFIELD } ;
+enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_EXTFIELD, ICCP3M_SIGMA } ;
 iccp3m_struct iccp3m_cfg;
 
 int iccp3m_initialized = 0;
@@ -85,31 +85,31 @@ void iccp3m_init(void){
    iccp3m_cfg.nvectorx = NULL;
    iccp3m_cfg.nvectory = NULL;
    iccp3m_cfg.nvectorz = NULL;
-   iccp3m_cfg.extx = NULL;
-   iccp3m_cfg.exty = NULL;
-   iccp3m_cfg.extz = NULL;
-   iccp3m_cfg.fx = NULL;
-   iccp3m_cfg.fy = NULL;
-   iccp3m_cfg.fz = NULL;
+   iccp3m_cfg.extx = 0;
+   iccp3m_cfg.exty = 0;
+   iccp3m_cfg.extz = 0;
 }
 
 /** Parses the ICCP3M command.
  */
 int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int last_ind_id,num_iteration,normal_args,area_args;
+  int num_iteration,normal_args,area_args;
   char buffer[TCL_DOUBLE_SPACE];
   double e1,convergence,relax;
-
-//  Tcl_AppendResult(interp, "The ICCP3M algorithm is still experimental. Function can not be guaranteed, therefore it is still disabled.\n", (char *)NULL);
-//  return (TCL_ERROR);
 
   if(iccp3m_initialized==0){
       iccp3m_init();
       iccp3m_initialized=1;
   }
 
-  if(argc != 9 && argc != 2 && argc != 10) { 
-         Tcl_AppendResult(interp, "Wrong # of args! Usage: iccp3m { iterate | <last_ind_id> <e1> <num_iteration> <convergence> <relaxation> <area> <normal_components> <e_in/e_out>  [<ext_field>] }", (char *)NULL); 
+    iccp3m_cfg.num_iteration=30;
+  iccp3m_cfg.convergence=1e-2;
+  iccp3m_cfg.relax=0.7;
+  iccp3m_cfg.eout=1;
+
+
+  if(argc < 2 ) { 
+         Tcl_AppendResult(interp, "Usage of ICCP3M: RTFM", (char *)NULL); 
          return (TCL_ERROR); 
    }
    if (argc == 2 ){
@@ -126,82 +126,102 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
       }
    }
    else {
-      if(!ARG_IS_I(1, last_ind_id)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Last induced id must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
-          } else if(last_ind_id < 2) { 
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Last induced id can not be smaller then 2 (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
-       }
-       if(!ARG_IS_D(2, e1)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Dielectric constant e1(inner) must be double(got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
-       }
-       if(!ARG_IS_I(3, num_iteration)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Number of maximum iterations must be integer (got: ", argv[4],")!", (char *)NULL); return (TCL_ERROR);
-       }
-       if(!ARG_IS_D(4, convergence)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Convergence criterion must be double (got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
-          } else if( (convergence < 1e-10) || (convergence > 1e-1) ) { 
-            Tcl_ResetResult(interp);
-            Tcl_AppendResult(interp, "Convergence criterion can not be smaller then 1e-10 and greater then 1e-2(got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
+     if(ARG_IS_I(1, iccp3m_cfg.n_ic)) {
+       argc-=2;
+       argv+=2;
+     } else {
+       Tcl_AppendResult(interp, "ICCP3M: First argument has to be the number of induced charges", (char *)NULL); 
+       return (TCL_ERROR);
+     }
+     while (argc > 0) {
+       if (ARG0_IS_S("convergence")) {
+         if (argc>1 && ARG1_IS_D(iccp3m_cfg.convergence)) {
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: convergence <convergence>", (char *)NULL); 
+           return (TCL_ERROR);
          }
-          if(!ARG_IS_D(5, relax)) {
-             Tcl_ResetResult(interp);
-             Tcl_AppendResult(interp, "Relaxation parameter must be double (got: ", argv[6],")!", (char *)NULL); return (TCL_ERROR);
+       } else if (ARG0_IS_S("relaxation")) {
+         if (argc>1 && ARG1_IS_D(iccp3m_cfg.relax)) {
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: convergence <convergence>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("eps_out")) {
+         if (argc>1 && ARG1_IS_D(iccp3m_cfg.eout)) {
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: eps_out <eps_out>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("max_iterations")) {
+         if (argc>1 && ARG1_IS_I(iccp3m_cfg.num_iteration)) {
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: max_iterations <max_iterations>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("normals")) {
+         if (argc>1) {
+           if (tclcommand_iccp3m_parse_normals(interp, iccp3m_cfg.n_ic, argv[1]) != TCL_OK) {
+             return TCL_ERROR;
+           }
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: normals <List of normal vectors>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("areas")) {
+         if (argc>1) {
+           if (tclcommand_iccp3m_parse_double_list(interp, iccp3m_cfg.n_ic, argv[1], ICCP3M_AREA)!=TCL_OK) {
+             return TCL_ERROR;
+           }
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: areas <list of areas>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("sigmas")) {
+         if (argc>1) {
+           if (tclcommand_iccp3m_parse_double_list(interp, iccp3m_cfg.n_ic, argv[1], ICCP3M_SIGMA)!=TCL_OK) {
+             return TCL_ERROR;
+           }
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: sigmas <list of sigmas>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("epsilons")) {
+         if (argc>1) {
+           if (tclcommand_iccp3m_parse_double_list(interp, iccp3m_cfg.n_ic, argv[1], ICCP3M_EPSILON) != TCL_OK) {
+             return TCL_ERROR;
+           }
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: epsilons <list of epsilons>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else {
+         Tcl_AppendResult(interp, "Unknown Argument to ICCP3M ", argv[0], (char *)NULL); 
+         return (TCL_ERROR);
        }
-   
-       iccp3m_cfg.last_ind_id = last_ind_id;      /* Assign needed options */
-       iccp3m_cfg.num_iteration = num_iteration; /* maximum number of iterations to go */
-       iccp3m_cfg.eout = e1;
-       iccp3m_cfg.convergence = convergence;
-       iccp3m_cfg.relax = relax;
-       iccp3m_cfg.update = 0;
-       iccp3m_cfg.set_flag = 1;
-       
-       normal_args = (iccp3m_cfg.last_ind_id+1)*3;
-       /* Now get Normal Vectors components consecutively */
-       
-       if( tclcommand_iccp3m_parse_params(interp,normal_args,argv[7],ICCP3M_NORMAL) == 1) { 
-              Tcl_ResetResult(interp);
-              Tcl_AppendResult(interp, "ICCP3M: Error in following normal vectors\n", argv[7],"\nICCP3M: Error in previous normal vectors\n", (char *)NULL); 
-              return (TCL_ERROR);
-       }      
-
-       area_args=(iccp3m_cfg.last_ind_id+1);
-       /* Now get area of the boundary elements */
-       
-       if ( tclcommand_iccp3m_parse_params(interp,area_args,argv[6],ICCP3M_AREA) == 1 ){
-             Tcl_ResetResult(interp);
-             Tcl_AppendResult(interp, "ICCP3M: Error in following areas\n", argv[6],"\nICCP3M: Error in previous areas\n", (char *)NULL); return (TCL_ERROR);
-       }
-       /* Now get the ration ein/eout for each element. 
-          It's the user's duty to make sure that only disconnected 
-          regions have different ratios */
-      if ( tclcommand_iccp3m_parse_params(interp,area_args,argv[8],ICCP3M_EPSILON) == 1 ) {
-             Tcl_ResetResult(interp);
-             Tcl_AppendResult(interp, "ICCP3M: Error in following dielectric constants\n", argv[8],"\nICCP3M:  Error in previous dielectric constants\n", (char *)NULL); return (TCL_ERROR);
-       } 
-
-       if( argc == 10 ) {
-         if( tclcommand_iccp3m_parse_params(interp,normal_args,argv[9],ICCP3M_EXTFIELD) == 1) { 
-              Tcl_ResetResult(interp);
-              Tcl_AppendResult(interp, "ICCP3M: Error in following external field vectors\n", argv[9],"\nICCP3M: Error in previous external field vectors\n", (char *)NULL); return (TCL_ERROR);
-         }      
-       }
-       else {
-         iccp3m_cfg.extx = (double*)calloc((last_ind_id +1), sizeof(double));
-         iccp3m_cfg.exty = (double*)calloc((last_ind_id +1), sizeof(double));
-         iccp3m_cfg.extz = (double*)calloc((last_ind_id +1), sizeof(double));
-       }
+     }
+   }
+   iccp3m_initialized=1;
+   iccp3m_cfg.set_flag = 1;
       
-       mpi_iccp3m_init(0);
-//       Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
-       Tcl_AppendResult(interp, buffer, (char *) NULL);
-       return TCL_OK;
-   } /* else (argc==10) */
+      
+   mpi_iccp3m_init(0);
+
    return TCL_OK;
 }
 
@@ -210,20 +230,17 @@ int bcast_iccp3m_cfg(void){
   int i;
 
 
-  MPI_Bcast((int*)&iccp3m_cfg.last_ind_id, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+  MPI_Bcast((int*)&iccp3m_cfg.n_ic, 1, MPI_INT, 0, MPI_COMM_WORLD); 
 
   /* allocates Memory on slave nodes 
    * Master node allocates the memory when parsing tcl arguments
    * */
   if (this_node != 0) {
-    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.extx       = (double*) realloc (iccp3m_cfg.extx      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.exty       = (double*) realloc (iccp3m_cfg.exty      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.extz       = (double*) realloc (iccp3m_cfg.extz      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
   }
 
 
@@ -231,23 +248,22 @@ int bcast_iccp3m_cfg(void){
   MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((int*)&iccp3m_cfg.update, 1, MPI_INT, 0, MPI_COMM_WORLD);
   
   /* broadcast the vectors element by element. This is slow
    * but safe and only performed at the beginning of each simulation*/
-  for ( i = 0; i < iccp3m_cfg.last_ind_id +1; i++) {
+  for ( i = 0; i < iccp3m_cfg.n_ic; i++) {
     MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.extx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.exty[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.extz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
+  MPI_Bcast((double*)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast((double*)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast((double*)&iccp3m_cfg.extz, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   return 0 ;
     
@@ -280,7 +296,7 @@ int iccp3m_iteration() {
             np   = cell->n;
             for(i=0 ; i < np; i++) {
                 id = part[i].p.identity ;
-                if( id <= iccp3m_cfg.last_ind_id) {
+                if( id < iccp3m_cfg.n_ic ) {
            /* the dielectric-related prefactor: */                     
                       del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
            /* calculate the electric field at the certain position */
@@ -289,9 +305,9 @@ int iccp3m_iteration() {
                       ez=part[i].f.f[2]/part[i].p.q;
 
           /* let's add the contribution coming from the external field */
-                      ex += iccp3m_cfg.extx[id]; 
-                      ey += iccp3m_cfg.exty[id]; 
-                      ez += iccp3m_cfg.extz[id];
+                      ex += iccp3m_cfg.extx; 
+                      ey += iccp3m_cfg.exty; 
+                      ez += iccp3m_cfg.extz;
                       
                       if (ex == 0 && ey == 0 && ez == 0) {
                         	errtxt = runtime_error(128);
@@ -764,7 +780,69 @@ int imod(int x,int y) {
   return z;
 }
 
-static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag) {
+int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
+  double temp;
+  char *arg, *token;
+  int scan_succes;
+  arg=strdup(string);
+  iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
+  iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
+  iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
+  const char opening_bracket[] = "{";
+  const char closing_bracket[] = "}";
+  const char space[] = " ";
+  
+
+  // Searching for first opening bracket
+  for (int i = 0; i<n_ic; i++) {
+    if (i==0) {
+      token=strtok(arg, space);
+      token++;
+    } else {
+      token=strtok(NULL, space);
+    }
+    if (token==0) {
+      return TCL_ERROR;
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+    }
+    // convert to float
+    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectorx[i]));
+    if (!scan_succes) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    } 
+    token=strtok(NULL, space);
+    if (token==0) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    }
+    // convert to float
+    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectory[i]));
+    if (!scan_succes) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    } 
+    token=strtok(NULL, closing_bracket);
+    if (token==0) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    }
+    // convert to float
+    scan_succes = sscanf(token,"%lf",&(iccp3m_cfg.nvectorz[i]));
+    if (!scan_succes) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    } 
+
+    token=strtok(NULL, opening_bracket);
+
+  }
+  free(arg);
+  return TCL_OK;
+}
+  
+
+int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *string, int flag) {
   /* This function parses a vector give as C-String */
   /* It currently is not too elegant. But works. */
   int size,i,k=0;
@@ -774,7 +852,7 @@ static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, ch
   char *token,*cp;
   float temp;
 
-  size= normal_args;
+  size= n_ic;
   numbers = malloc((size)*sizeof(double));
 
   cp = strdup(string);                /* Make writable copy.  */
@@ -787,44 +865,32 @@ static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, ch
     
   for(i=1;i<size;i++) {
     token = strtok (NULL, delimiters);
-    if(token == NULL)
-      return 1;
+    if(token == NULL) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    }
     scan_succes = sscanf(token,"%lf",&(numbers[i]));
-    if (scan_succes < 1 ) 
-      return 1;
+    if (scan_succes < 1 ) {
+      Tcl_AppendResult(interp, "Unexpected argument ", token, (char *)NULL); 
+      return TCL_ERROR;
+    }
   }
 
   switch(flag) {
     case ICCP3M_AREA: 
-      iccp3m_cfg.areas = (double*) realloc(iccp3m_cfg.areas, (size+1)*sizeof(double)); 
+      iccp3m_cfg.areas = (double*) realloc(iccp3m_cfg.areas, (size)*sizeof(double)); 
       for( i = 0 ; i < size ; i++ )  
         iccp3m_cfg.areas[i]=numbers[i];
       break;
     case ICCP3M_EPSILON:
-      iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size+1)*sizeof(double));
+      iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size)*sizeof(double));
       for( i = 0 ; i < size; i++)  
         iccp3m_cfg.ein[i]=numbers[i];
-    break;
-    case ICCP3M_NORMAL:
-      iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      for(i=0;i<size;i++) {
-        if( i%3 == 0 ) { iccp3m_cfg.nvectorx[k] = numbers[i]; } 
-        if( i%3 == 1 ) { iccp3m_cfg.nvectory[k] = numbers[i]; }
-        if( i%3 == 2 ) { iccp3m_cfg.nvectorz[k] = numbers[i];  k++; } 
-       }
-    break;
+    case ICCP3M_SIGMA:
+      iccp3m_cfg.sigma = (double*) realloc(iccp3m_cfg.ein,(size)*sizeof(double));
+      for( i = 0 ; i < size; i++)  
+        iccp3m_cfg.ein[i]=numbers[i];
 
-    case ICCP3M_EXTFIELD:
-      iccp3m_cfg.extx = (double*) realloc(iccp3m_cfg.extx,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.exty = (double*) realloc(iccp3m_cfg.exty,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.extz = (double*) realloc(iccp3m_cfg.extz,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      for(i=0;i<size;i++) {
-        if( i%3 == 0 ) { iccp3m_cfg.extx[k] = numbers[i]; } 
-        if( i%3 == 1 ) { iccp3m_cfg.exty[k] = numbers[i]; }
-        if( i%3 == 2 ) { iccp3m_cfg.extz[k] = numbers[i];  k++; } 
-      }
     break;
   }
 

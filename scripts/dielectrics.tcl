@@ -102,8 +102,8 @@ proc dielectric_wall { args } {
       set l1 $i*$l_incr
       set l2 $j*$l_incr
       set posx [ expr $nx * $dist + $l1*$e_1_x + $l2*$e_2_x ]
-      set posy [ expr $nx * $dist + $l1*$e_1_y + $l2*$e_2_y ]
-      set posz [ expr $nx * $dist + $l1*$e_1_z + $l2*$e_2_z ]
+      set posy [ expr $ny * $dist + $l1*$e_1_y + $l2*$e_2_y ]
+      set posz [ expr $nz * $dist + $l1*$e_1_z + $l2*$e_2_z ]
       if { $posx >= 0 && $posx < $box_l_x &&  $posy >= 0 && $posy < $box_l_y &&  $posz >= 0 && $posz < $box_l_z } {
         part $n_induced_charges pos $posx $posy $posz q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1 type $type
         incr n_induced_charges
