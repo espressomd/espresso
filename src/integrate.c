@@ -440,12 +440,12 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     calc_and_apply_mol_constraints();
 #endif
 
-#ifdef COLLISION_DETECTION
-    handle_collisions();
-#endif
 
     rescale_forces();
     recalc_forces = 0;
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
 
   }
 
@@ -482,7 +482,9 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    cells_update_ghosts();
+    /* was: ghost_communicator(&cell_structure.update_ghost_pos_comm);
+       which is not enough */
     correct_pos_shake();
 #endif
 
@@ -593,7 +595,7 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 
 #ifdef COLLISION_DETECTION
- handle_collisions();
+    handle_collisions();
 #endif
 
 #ifdef NPT
@@ -815,8 +817,6 @@ void propagate_press_box_pos_and_rescale_npt()
     int i, j, np, c;
     double scal[3]={0.,0.,0.}, L_new=0.0;
 
-    rebuild_verletlist = 0;
-
     /* finalize derivation of p_inst */
     finalize_p_inst_npt();
 
@@ -967,8 +967,6 @@ void propagate_pos()
     Particle *p;
     int c, i, j, np;
 
-    rebuild_verletlist = 0;
-
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
       p  = cell->part;
@@ -1005,8 +1003,6 @@ void propagate_vel_pos()
   int c, i, j, np;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
-
-  rebuild_verletlist = 0;
 
 #ifdef ADDITIONAL_CHECKS
   db_max_force = db_max_vel = 0;
