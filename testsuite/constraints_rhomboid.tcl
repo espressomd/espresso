@@ -31,6 +31,7 @@ source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
 require_feature "CONSTRAINTS"
+require_feature "ADRESS" off
 
 puts "---------------------------------------------------------"
 puts "- Testcase constraint_rhomboid.tcl running on [format %02d [setmd n_nodes]] nodes  -"
@@ -44,7 +45,7 @@ if { [ catch {
   setmd time_step 0.05
   setmd skin 0.1
   thermostat off
-
+  
 # Simulation box
 #############################################################
   setmd box_l 15 15 15
