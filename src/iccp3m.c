@@ -323,8 +323,14 @@ int iccp3m_iteration() {
                       qold=part[i].p.q;
           /* determine if it is higher than the previously highest charge density */            
                       if(hold>fabs(hmax))hmax=fabs(hold); 
+                      double f1 =  (iccp3m_cfg.relax)*(+del_eps*fdot/l_b);
+                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
 
-                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*del_eps*fdot/l_b;
+                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
+                      if (id==0) {
+                        printf("sigma is %f\n", iccp3m_cfg.sigma[id]);
+                        printf("(%3d) hold %f hnew %f fdot %f f1 %f f2 %f sum %f\n", iccp3m_cfg.citeration, hold, hnew,fdot, f1,  f2 , f1+f2 );
+                      }
                       difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
                                                                               an estimator which can be negative
                                                                               here */
@@ -886,10 +892,13 @@ int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *stri
       iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size)*sizeof(double));
       for( i = 0 ; i < size; i++)  
         iccp3m_cfg.ein[i]=numbers[i];
+      break;
     case ICCP3M_SIGMA:
-      iccp3m_cfg.sigma = (double*) realloc(iccp3m_cfg.ein,(size)*sizeof(double));
-      for( i = 0 ; i < size; i++)  
-        iccp3m_cfg.ein[i]=numbers[i];
+      iccp3m_cfg.sigma = (double*) realloc(iccp3m_cfg.sigma,(size)*sizeof(double));
+      for( i = 0 ; i < size; i++)  {
+        printf("sigma %f\n", numbers[i]);
+        iccp3m_cfg.sigma[i]=numbers[i];
+      }
 
     break;
   }

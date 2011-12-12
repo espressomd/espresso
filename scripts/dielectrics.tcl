@@ -15,7 +15,7 @@ proc dielectric_wall { args } {
   set res 0
   set sigma 0
   set type 0 
-  set eps 0
+  set eps 0.
   for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
     if { [ lindex $args $argno ] == "dist" } {
       incr argno
