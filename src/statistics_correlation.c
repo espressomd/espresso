@@ -1273,12 +1273,12 @@ int double_correlation_write_to_file( double_correlation* self, char* filename) 
     return 1;
   }
   for (j=0; j<self->n_result; j++) {
-    fprintf(file, "%f %d ", self->tau[j]*dt, self->n_sweeps[j]);
+    fprintf(file, "%.6g %d ", self->tau[j]*dt, self->n_sweeps[j]);
     for (k=0; k< self->dim_corr; k++) {
       if (self->n_sweeps[j] == 0 )
-        fprintf(file, "%f ", 0.);
+        fprintf(file, "%.6g ", 0.);
       else 
-        fprintf(file, "%f ", self->result[j][k]/ (double) self->n_sweeps[j]);
+        fprintf(file, "%.6g ", self->result[j][k]/ (double) self->n_sweeps[j]);
     }
     fprintf(file, "\n");
   }
