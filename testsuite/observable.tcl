@@ -1,5 +1,6 @@
 
 proc veccompare { a b } {
+#  puts "$a $b"
   if { [ llength $a ]  != [ llength $b ] } {
     return 0
   }
@@ -26,11 +27,11 @@ setmd skin 0.5
 setmd time_step 0.01
 thermostat off
 
-part 0 pos 1 0 0 v 2 0 0 type 0 q 1
+part 0 pos 1 0 0 v 2 0 0 type 0 q 1 mass 1
 part 1 pos 2 0 0 v 4 0 0 type 0 q -1
 part 2 pos 1 1 0 v 2 2 0 type 1
 part 3 pos 2 1 0 v 4 2 0 type 1
-part 4 pos 3 0 0 v 6 0 0 type 0 
+part 4 pos 3 0 0 v 6 0 0 type 0 mass 2
 
 
 ############### Observable particle_position ##########################
@@ -91,7 +92,7 @@ if { ![ veccompare [ observable $com_pos1 print ] { 1.5 0 0 } ] }  {
   error "com_pos1 is not working"
 }
 set com_pos2 [ observable new com_position type 0 ]
-if { ![ veccompare [ observable $com_pos2 print ] { 2 0 0 } ] }  {
+if { ![ veccompare [ observable $com_pos2 print ] { 2.25 0 0 } ] }  {
   error "com_pos2 is not working"
 }
 
@@ -102,7 +103,7 @@ if { ![ veccompare [ observable $com_vel1 print ] { 3 0 0 } ] }  {
   error "com_vel1 is not working"
 }
 set com_vel2 [ observable new com_velocity type 0 ]
-if { ![ veccompare [ observable $com_vel2 print ] { 4 0 0 } ] }  {
+if { ![ veccompare [ observable $com_vel2 print ] { 4.5 0 0 } ] }  {
   error "com_vel2 is not working"
 }
 
@@ -131,3 +132,4 @@ if { ![ veccompare [ observable $stress_tensor print ] [ lreplace [ lindex [ ana
   error "stress_tensor is not working"
 }
 
+############# Observable   

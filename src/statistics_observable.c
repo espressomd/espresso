@@ -879,98 +879,104 @@ int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
 #endif
 
 int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
-/* TODO: this does not work with MASS ... */
   unsigned int i;
   double v_com[3] = { 0. , 0., 0. } ;
+  double total_mass = 0;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
-    v_com[0] += partCfg[ids->e[i]].m.v[0]/time_step;
-    v_com[1] += partCfg[ids->e[i]].m.v[1]/time_step;
-    v_com[2] += partCfg[ids->e[i]].m.v[2]/time_step;
+    v_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[0]/time_step;
+    v_com[1] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[1]/time_step;
+    v_com[2] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[2]/time_step;
+    total_mass += PMASS(partCfg[ids->e[i]]);
   }
-  A[0]=v_com[0]/ids->n;
-  A[1]=v_com[1]/ids->n;
-  A[2]=v_com[2]/ids->n;
+  A[0]=v_com[0]/total_mass;
+  A[1]=v_com[1]/total_mass;
+  A[2]=v_com[2]/total_mass;
   return 0;
 }
 
 int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
-/* TODO: this does not work with MASS ... */
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
   unsigned int blocksize;
   unsigned int id;
+  double total_mass = 0;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
   n_blocks=n_A/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
+    total_mass = 0;
     for ( i = 0; i < blocksize; i++ ) {
       id = ids->e[block*blocksize+i];
       if (ids->e[i] >= n_total_particles)
         return 1;
-      A[3*block+0] +=  partCfg[id].m.v[0]/time_step;
-      A[3*block+1] +=  partCfg[id].m.v[1]/time_step;
-      A[3*block+2] +=  partCfg[id].m.v[2]/time_step;
+      A[3*block+0] +=  PMASS(partCfg[id])*partCfg[id].m.v[0]/time_step;
+      A[3*block+1] +=  PMASS(partCfg[id])*partCfg[id].m.v[1]/time_step;
+      A[3*block+2] +=  PMASS(partCfg[id])*partCfg[id].m.v[2]/time_step;
+      total_mass += PMASS(partCfg[ids->e[i]]);
     }
-    A[3*block+0] /=  blocksize;
-    A[3*block+1] /=  blocksize;
-    A[3*block+2] /=  blocksize;
+    A[3*block+0] /=  total_mass;
+    A[3*block+1] /=  total_mass;
+    A[3*block+2] /=  total_mass;
   }
   return 0;
 }
 
 int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
-/* TODO: this does not work with MASS ... */
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
   unsigned int blocksize;
   unsigned int id;
+  double total_mass = 0;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
   n_blocks=n_A/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
+    total_mass = 0;
     for ( i = 0; i < blocksize; i++ ) {
       id = ids->e[block*blocksize+i];
       if (ids->e[i] >= n_total_particles)
         return 1;
-      A[3*block+0] +=  partCfg[id].r.p[0];
-      A[3*block+1] +=  partCfg[id].r.p[1];
-      A[3*block+2] +=  partCfg[id].r.p[2];
+      A[3*block+0] +=  PMASS(partCfg[id])*partCfg[id].r.p[0];
+      A[3*block+1] +=  PMASS(partCfg[id])*partCfg[id].r.p[1];
+      A[3*block+2] +=  PMASS(partCfg[id])*partCfg[id].r.p[2];
+      total_mass += PMASS(partCfg[ids->e[i]]);
     }
-    A[3*block+0] /=  blocksize;
-    A[3*block+1] /=  blocksize;
-    A[3*block+2] /=  blocksize;
+    A[3*block+0] /=  total_mass;
+    A[3*block+1] /=  total_mass;
+    A[3*block+2] /=  total_mass;
   }
   return 0;
 }
 
 int observable_com_position(void* idlist, double* A, unsigned int n_A) {
-/* TODO: this does not work with MASS ... */
   unsigned int i;
   double p_com[3] = { 0. , 0., 0. } ;
+  double total_mass = 0;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
-    p_com[0] += partCfg[ids->e[i]].r.p[0];
-    p_com[1] += partCfg[ids->e[i]].r.p[1];
-    p_com[2] += partCfg[ids->e[i]].r.p[2];
+    p_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[0];
+    p_com[1] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[1];
+    p_com[2] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[2];
+    total_mass += PMASS(partCfg[ids->e[i]]);
   }
-  A[0]=p_com[0]/ids->n;
-  A[1]=p_com[1]/ids->n;
-  A[2]=p_com[2]/ids->n;
+  A[0]=p_com[0]/total_mass;
+  A[1]=p_com[1]/total_mass;
+  A[2]=p_com[2]/total_mass;
   return 0;
 }
 
