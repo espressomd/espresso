@@ -639,7 +639,7 @@ int tclcommand_observable_nearest_neighbour_conditional(Tcl_Interp* interp, int 
       n_observables++; \
       argc-=1+temp; \
       argv+=1+temp; \
-      sprintf(buffer,"%d",no); \
+      sprintf(buffer,"%d",id); \
       Tcl_AppendResult(interp,buffer,(char *)NULL);\
       return TCL_OK; \
     } else { \
@@ -738,7 +738,7 @@ int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntLis
   }
 
 
-  if (ARG0_IS_S("id")) {
+  if (ARG0_IS_S("ids")) {
     if (!parse_int_list(interp, argv[1],input)) {
       Tcl_AppendResult(interp, "Error parsing id list\n", (char *)NULL);
       return TCL_ERROR;
