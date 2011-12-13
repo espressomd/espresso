@@ -473,12 +473,12 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
-/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary flag from a processor.
  * @param node     processor to send to
  * @param index    index of the lattice site
- * @param boundary local border flag
+ * @param boundary local boundary flag
  */
-void mpi_recv_fluid_border_flag(int node, int index, int *boundary);
+void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
