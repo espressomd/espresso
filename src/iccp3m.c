@@ -323,11 +323,13 @@ int iccp3m_iteration() {
                       qold=part[i].p.q;
           /* determine if it is higher than the previously highest charge density */            
                       if(hold>fabs(hmax))hmax=fabs(hold); 
-                      double f1 =  (iccp3m_cfg.relax)*(+del_eps*fdot/l_b);
-                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
+                      double f1 =  (+del_eps*fdot/l_b);
+//                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
+                      double f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
 
                       hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
                       if (id==0) {
+                        printf("q %f area %f\n", part[i].p.q,iccp3m_cfg.areas[id]);
                         printf("sigma is %f\n", iccp3m_cfg.sigma[id]);
                         printf("(%3d) hold %f hnew %f fdot %f f1 %f f2 %f sum %f\n", iccp3m_cfg.citeration, hold, hnew,fdot, f1,  f2 , f1+f2 );
                       }
