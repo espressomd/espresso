@@ -338,8 +338,7 @@ int lb_boundary_cylinder(LB_boundary_gpu *lbb, Tcl_Interp *interp,
 }
 
 #endif /* LB_BOUNDARIES_GPU */
-int tclcommand_lbboundary_gpu(Tcl_Interp *interp,
-	       int argc, char **argv)
+int tclcommand_lbboundary_gpu(Tcl_Interp *interp, int argc, char **argv)
 {
 #ifdef LB_BOUNDARIES_GPU
   int status = TCL_ERROR;

@@ -32,6 +32,7 @@ AC_CANONICAL_TARGET
 # Initialise automake
 AM_INIT_AUTOMAKE([1.10 gnu])
 AM_MAINTAINER_MODE
+AC_PROG_LIBTOOL
 
 cat <<EOF
 ****************************************************************
@@ -164,7 +165,6 @@ EOF
 
 AC_PROG_AWK
 AC_PROG_EGREP
-AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
