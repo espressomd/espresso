@@ -398,7 +398,7 @@ MDINLINE void check_particle_force(Particle *part)
   int i;
   for (i=0; i< 3; i++) {
     if isnan(part->f.f[i]) {
-      char **errtext = runtime_error(128);
+      char *errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
     }
   }
@@ -406,7 +406,7 @@ MDINLINE void check_particle_force(Particle *part)
 #ifdef ROTATION
   for (i=0; i< 3; i++) {
     if isnan(part->f.torque[i]) {
-      char **errtext = runtime_error(128);
+      char *errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
     }
   }
