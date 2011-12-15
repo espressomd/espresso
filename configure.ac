@@ -33,6 +33,7 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.10 gnu])
 AM_MAINTAINER_MODE
 AC_PROG_LIBTOOL
+AM_PATH_PYTHON
 
 cat <<EOF
 ****************************************************************
@@ -483,6 +484,7 @@ AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
+	cython/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile

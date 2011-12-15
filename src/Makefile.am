@@ -137,7 +137,7 @@ libespressobf_a_SOURCES = blockfile.c blockfile.h
 libespressobf_a_CPPFLAGS = -DBLOCKFILE_STDIO
 
 lib_LIBRARIES = libespressobf.a 
-lib_LTLIBRARIES = libespresso_main.la
+pyexec_LTLIBRARIES = libespresso_main.la
 
 libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c

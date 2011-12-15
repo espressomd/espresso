@@ -1,3 +1,6 @@
+import ctypes
+import sys
+sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 
 import espresso as es
 import numpy
