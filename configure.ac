@@ -21,7 +21,6 @@ dnl Fetch the version and timestamp from RELEASE_NOTES
 # Initialise autoconf
 AC_INIT([ESPResSo],[3.0.1],[espressomd-users@nongnu.org])
 
-AC_PREREQ([2.68])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)

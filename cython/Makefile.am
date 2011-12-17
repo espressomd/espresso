@@ -21,11 +21,19 @@
 
 all: pythonlib
 
+install: pythonlib_install
+
 .PHONY: pythonlib
 
 pythonlib:
 	cd $(abs_srcdir) && \
-		$(PYTHON) setup.py build_ext --build-lib=$(abs_top_builddir) --build-temp=$(abs_builddir)  -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs
+		$(PYTHON) setup.py build --build-base=$(abs_builddir) build_ext --build-lib=$(abs_top_builddir) --build-temp=$(abs_builddir)  -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs
+
+pythonlib_install: 
+	cd $(abs_srcdir) && \
+		$(PYTHON) setup.py  build --build-base=$(abs_builddir) build_ext --build-lib=$(abs_top_builddir) --build-temp=$(abs_builddir)  -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs install --install-lib=$(prefix)/lib/ 
+
+
 
 #pyexec_LTLIBRARIES = libespresso.la libinteraction_data.la libglobal_variables.la libparticle_data.la
 #
