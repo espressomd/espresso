@@ -21,7 +21,7 @@ noinst_HEADERS = \
 	myconfig-default.h
 
 # List the sources of the Espresso binary here
-libEspresso_a_SOURCES = \
+libEspresso_core_la_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
 	global.c global.h \
@@ -125,10 +125,9 @@ libEspresso_a_SOURCES = \
 	overlap.h \
 	ljangle.h \
 	adresso.c adresso.h \
-        tunable_slip.h
+        tunable_slip.h \
+				myconfig-final.h
 
-# All objects are compiled into the library
-noinst_LIBRARIES = libEspresso.a
 
 #################################################################
 # Build the blockfile library
@@ -137,11 +136,14 @@ libespressobf_a_SOURCES = blockfile.c blockfile.h
 libespressobf_a_CPPFLAGS = -DBLOCKFILE_STDIO
 
 lib_LIBRARIES = libespressobf.a 
-pyexec_LTLIBRARIES = libespresso_main.la
+lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
+# pyexecdir_LTLIBRARIES = libespresso_main.la
+# All objects are compiled into the library
+# noinst_LTLIBRARIES = libEspresso.la
 
 libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
-libespresso_main_la_LIBADD = $(libEspresso_a_OBJECTS)
+libespresso_main_la_LIBADD = libEspresso_core.la
 
 #################################################################
 # Handling of myconfig.h
@@ -170,7 +172,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_a_OBJECTS): myconfig-final.h
+$(libEspresso_core_la_OBJECTS): myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 
@@ -178,7 +180,7 @@ CLEANFILES = myconfig-final.h
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.c
+libEspresso_core_la_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 AM_CPPFLAGS = -I$(srcdir)/mpifake
 endif
@@ -196,5 +198,5 @@ CUDA_SOURCES= \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-libEspresso_a_SOURCES += $(CUDA_SOURCES)
+libEspresso_core_la_SOURCES += $(CUDA_SOURCES)
 endif
