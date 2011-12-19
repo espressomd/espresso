@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2011 Stefan Kesselheim, Olaf Lenz
 #
 # This file is part of ESPResSo.
 #

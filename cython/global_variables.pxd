@@ -1,15 +1,13 @@
-
-
-cdef extern from "../../src/communication.h":
+cdef extern from "communication.h":
   void mpi_set_time_step(double time_step)
   void mpi_bcast_parameter(int p)
 
-cdef extern from "../../src/integrate.h":
+cdef extern from "integrate.h":
   double time_step
 
-cdef extern from "../../src/verlet.h":
+cdef extern from "verlet.h":
   double skin
 
-cdef extern from "../../src/grid.h":
+cdef extern from "grid.h":
   double box_l[3]
 
