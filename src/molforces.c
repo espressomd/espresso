@@ -246,7 +246,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
 
   /* Everyone tells me how many trapped molecules are on their node */
   for (i=1; i <n_nodes; i++) {
-    MPI_Recv(&(n_local_mols[i]),1,MPI_INT,i,99,MPI_COMM_WORLD,&status);
+    MPI_Recv(&(n_local_mols[i]),1,MPI_INT,i,99,comm_cart,&status);
   }
 
   for (i=1; i <n_nodes; i++) {
@@ -257,7 +257,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
   for (i=1; i <n_nodes; i++) {
-    MPI_Recv(&(local_mols[count]),n_local_mols[i],MPI_INT,i,99,MPI_COMM_WORLD,&status);
+    MPI_Recv(&(local_mols[count]),n_local_mols[i],MPI_INT,i,99,comm_cart,&status);
     count += n_local_mols[i];
   }
 
@@ -289,10 +289,10 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
     for (j = 0; j < n_local_mols[i]; j++) {
       mol = local_mols[count];
       count += 1;
-      MPI_Recv(&mass,1,MPI_DOUBLE,i,99,MPI_COMM_WORLD,&status);
-      MPI_Recv(com,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD,&status);
-      MPI_Recv(v,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD,&status);
-      MPI_Recv(f,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD,&status);
+      MPI_Recv(&mass,1,MPI_DOUBLE,i,99,comm_cart,&status);
+      MPI_Recv(com,3,MPI_DOUBLE,i,99,comm_cart,&status);
+      MPI_Recv(v,3,MPI_DOUBLE,i,99,comm_cart,&status);
+      MPI_Recv(f,3,MPI_DOUBLE,i,99,comm_cart,&status);
       topology[mol].mass = topology[mol].mass + mass;
       for (k = 0; k< 3; k++) {
 	topology[mol].com[k] += com[k]*mass;
@@ -319,11 +319,11 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
     for (j = 0; j < n_local_mols[i]; j++) {
       mol = local_mols[count];
       count += 1;
-      MPI_Send(&(topology[mol].mass),1,MPI_DOUBLE,i,99,MPI_COMM_WORLD);
-      MPI_Send(topology[mol].com,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD);
-      MPI_Send(topology[mol].v,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD);
-      MPI_Send(topology[mol].f,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD);
-      MPI_Send(topology[mol].trap_force,3,MPI_DOUBLE,i,99,MPI_COMM_WORLD);
+      MPI_Send(&(topology[mol].mass),1,MPI_DOUBLE,i,99,comm_cart);
+      MPI_Send(topology[mol].com,3,MPI_DOUBLE,i,99,comm_cart);
+      MPI_Send(topology[mol].v,3,MPI_DOUBLE,i,99,comm_cart);
+      MPI_Send(topology[mol].f,3,MPI_DOUBLE,i,99,comm_cart);
+      MPI_Send(topology[mol].trap_force,3,MPI_DOUBLE,i,99,comm_cart);
     }
   }
 
@@ -340,28 +340,28 @@ void mpi_comm_mol_info_slave(IntList *local_trapped_mols) {
   MPI_Status status;
 
   /* Tells master how many trapped molecules are on this node */
-  MPI_Send(&(local_trapped_mols->n),1,MPI_INT,0,99,MPI_COMM_WORLD);
+  MPI_Send(&(local_trapped_mols->n),1,MPI_INT,0,99,comm_cart);
 
   /* Tells master which trapped molecules are on this node */
-  MPI_Send(local_trapped_mols->e,local_trapped_mols->n,MPI_INT,0,99,MPI_COMM_WORLD);
+  MPI_Send(local_trapped_mols->e,local_trapped_mols->n,MPI_INT,0,99,comm_cart);
 
   for (i = 0; i < local_trapped_mols->n ; i++) {
     mol = local_trapped_mols->e[i];
     /* Send all the masses and coms of the local molecules to the master node */
-    MPI_Send(&(topology[mol].mass),1,MPI_DOUBLE,0,99,MPI_COMM_WORLD);
-    MPI_Send(topology[mol].com,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD);
-    MPI_Send(topology[mol].v,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD);
-    MPI_Send(topology[mol].f,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD);
+    MPI_Send(&(topology[mol].mass),1,MPI_DOUBLE,0,99,comm_cart);
+    MPI_Send(topology[mol].com,3,MPI_DOUBLE,0,99,comm_cart);
+    MPI_Send(topology[mol].v,3,MPI_DOUBLE,0,99,comm_cart);
+    MPI_Send(topology[mol].f,3,MPI_DOUBLE,0,99,comm_cart);
   }
 
   for (i = 0; i < local_trapped_mols->n ; i++) {
     /* Receive all the masses and coms of the local molecules to the master node including info from other nodes*/
     mol = local_trapped_mols->e[i];
-    MPI_Recv(&(topology[mol].mass),1,MPI_DOUBLE,0,99,MPI_COMM_WORLD,&status);
-    MPI_Recv(topology[mol].com,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD,&status);
-    MPI_Recv(topology[mol].v,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD,&status);
-    MPI_Recv(topology[mol].f,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD,&status);
-    MPI_Recv(topology[mol].trap_force,3,MPI_DOUBLE,0,99,MPI_COMM_WORLD,&status);
+    MPI_Recv(&(topology[mol].mass),1,MPI_DOUBLE,0,99,comm_cart,&status);
+    MPI_Recv(topology[mol].com,3,MPI_DOUBLE,0,99,comm_cart,&status);
+    MPI_Recv(topology[mol].v,3,MPI_DOUBLE,0,99,comm_cart,&status);
+    MPI_Recv(topology[mol].f,3,MPI_DOUBLE,0,99,comm_cart,&status);
+    MPI_Recv(topology[mol].trap_force,3,MPI_DOUBLE,0,99,comm_cart,&status);
   }
 
 }

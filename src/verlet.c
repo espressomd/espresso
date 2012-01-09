@@ -375,7 +375,7 @@ void announce_rebuild_vlist()
 {
   int sum;
 
-  MPI_Allreduce(&rebuild_verletlist, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&rebuild_verletlist, &sum, 1, MPI_INT, MPI_SUM, comm_cart);
   rebuild_verletlist = (sum > 0) ? 1 : 0;
   
   INTEG_TRACE(fprintf(stderr,"%d: announce_rebuild_vlist: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));

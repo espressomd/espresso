@@ -385,7 +385,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
     }
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
+      /* MPI_Barrier(comm_cart); */
       if(j==this_node) FFT_TRACE(print_fft_plan(fft_plan[i]));
     }
   }
@@ -722,7 +722,7 @@ int Dfft_init(double **Ddata, int *Dca_mesh_dim, int *Dca_mesh_margin, int *ks_p
     }
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
+      /* MPI_Barrier(comm_cart); */
       if(j==this_node) FFT_TRACE(print_fft_plan(Dfft_plan[i]));
     }
   }
@@ -1192,15 +1192,15 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out)
 
     if(plan.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);
+	       plan.group[i], REQ_FFT_FORW, comm_cart);
       MPI_Recv(recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
     }
     else if(plan.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
       MPI_Send(send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);      
+	       plan.group[i], REQ_FFT_FORW, comm_cart);      
     }
     else {                              /* Self communication... */   
       tmp_ptr  = send_buf;
@@ -1229,15 +1229,15 @@ void back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in, dou
 
     if(plan_f.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);
       MPI_Recv(recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
     }
     else if(plan_f.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
       MPI_Send(send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);      
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);      
     }
     else {                                /* Self communication... */   
       tmp_ptr  = send_buf;
@@ -1264,15 +1264,15 @@ void Dforw_grid_comm(fft_forw_plan plan, double *in, double *out)
 
     if(plan.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(Dsend_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);
+	       plan.group[i], REQ_FFT_FORW, comm_cart);
       MPI_Recv(Drecv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
     }
     else if(plan.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(Drecv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
       MPI_Send(Dsend_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);      
+	       plan.group[i], REQ_FFT_FORW, comm_cart);      
     }
     else {                              /* Self communication... */   
       tmp_ptr  = Dsend_buf;
@@ -1301,15 +1301,15 @@ void Dback_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in, do
 
     if(plan_f.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(Dsend_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);
       MPI_Recv(Drecv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
     }
     else if(plan_f.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(Drecv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
       MPI_Send(Dsend_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);      
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);      
     }
     else {                                /* Self communication... */   
       tmp_ptr  = Dsend_buf;
@@ -1367,15 +1367,15 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
   }
 
   mesh = plan.new_mesh[2];
-  MPI_Barrier(MPI_COMM_WORLD);  
+  MPI_Barrier(comm_cart);  
   if(this_node==0) fprintf(stderr,"All: Print Global Mesh: (%d of %d elements)\n",
 			   num+1,element);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm_cart);
   for(i0=0;i0<n_nodes;i0++) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(comm_cart);
     if(i0==this_node) fprintf(stderr,"%d: range (%d,%d,%d)-(%d,%d,%d)\n",this_node,st[0],st[1],st[2],en[0],en[1],en[2]);
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm_cart);
   while(divide==0) {
     if(b*mesh > 7) {
       block1=b;
@@ -1392,7 +1392,7 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
 	  if(i0>=st[0] && i0<en[0] && i1>=st[1] && 
 	     i1<en[1] && i2>=st[2] && i2<en[2]) my=1;
 	  else my=0;
-	  MPI_Barrier(MPI_COMM_WORLD);
+	  MPI_Barrier(comm_cart);
 	  if(my==1) {
 	   
 	    tmp=data[num+(element*((i2-st[2])+si[2]*((i1-st[1])+si[1]*(i0-st[0]))))];
@@ -1404,7 +1404,7 @@ void print_global_fft_mesh(fft_forw_plan plan, double *data, int element, int nu
 	      fprintf(stderr," %1.2e",0.0);
 	    }
 	  }
-	  MPI_Barrier(MPI_COMM_WORLD);
+	  MPI_Barrier(comm_cart);
 	}
 	if(my==1) fprintf(stderr," | ");
       }

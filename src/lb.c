@@ -807,7 +807,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -851,7 +851,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -903,7 +903,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -949,7 +949,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1001,7 +1001,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1045,7 +1045,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -2442,7 +2442,7 @@ void lb_calc_average_rho() {
     index += 2*lblattice.halo_grid[0];
   }
 
-  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   /* calculate average density in MD units */
   // TODO!!!
@@ -2491,7 +2491,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2511,7 +2511,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(1,y,z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2539,7 +2539,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2562,7 +2562,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,1,z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2590,7 +2590,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2615,7 +2615,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,y,1,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));

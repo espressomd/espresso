@@ -280,7 +280,7 @@ void predict_momentum_particles(double *result)
   momentum[1] /= time_step;
   momentum[2] /= time_step;
 
-  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 /** Calculate total momentum of the system (particles & LB fluid)

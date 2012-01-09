@@ -66,7 +66,7 @@ double get_mu_max(void) {
      if(max_value_dipole <  part[i].p.dipm ) {  max_value_dipole=part[i].p.dipm;}
     }
   }
-  MPI_Allreduce(MPI_IN_PLACE, &max_value_dipole, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &max_value_dipole, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
   return max_value_dipole;
 }
 /* ******************************************************************* */
@@ -117,7 +117,7 @@ MDINLINE double g2_DLC_dip(double g,double x) {
      }
    }
    
-   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
    M= sqrt(tot_sums[0]*tot_sums[0]+tot_sums[1]*tot_sums[1]+tot_sums[2]*tot_sums[2]);
    Mz=tot_sums[2]; 
@@ -228,7 +228,7 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 	    }      
 	  }      
 
-	  MPI_Allreduce(MPI_IN_PLACE, S, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	  MPI_Allreduce(MPI_IN_PLACE, S, 4, MPI_DOUBLE, MPI_SUM, comm_cart);
 
 	    //We compute the contribution to the energy ............
 	     
@@ -430,7 +430,7 @@ double get_DLC_energy_dipolar(int kcut){
 	  ip++;
         } 										      
       }											      
-     MPI_Reduce(S, global_S, 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+     MPI_Reduce(S, global_S, 4, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
       
 	    //We compute the contribution to the energy ............
 	     s1=(global_S[0]*global_S[2]+global_S[1]*global_S[3]);
