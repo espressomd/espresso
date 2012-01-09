@@ -17,31 +17,36 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IMD_H__
-#define IMD_H__
-/** \file imd.h 
-    The interface with VMD. This code just provides a wrapper for the IMD interface functions, which allow to send
-    particle positions to VMD. Additionally, VMD can send back a single integer value, called transfer_rate, which
-    is accessible both from c and from Tcl. The IMD force feedback is not implemented.
+#ifndef RANDOM_TCL_H_
+#define RANDOM_TCL_H_
+
+/** \file random.h 
+
+    A random generator
 */
 
-typedef enum {
-    IMD_DISCONNECT,
-    IMD_ENERGIES, 
-    IMD_FCOORDS,   
-    IMD_GO,
-    IMD_HANDSHAKE, 
-    IMD_KILL,      
-    IMD_MDCOMM,    
-    IMD_PAUSE,
-    IMD_TRATE,
-    IMD_IOERROR
-} IMDType;
+/*----------------------------------------------------------*/
 
+/**  Implementation of the tcl command \ref tclcommand_t_random. Access to the
+     parallel random number generator.
+*/
+int tclcommand_t_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-IMDType imd_recv_header(void *, int32_t *);
-int   imd_send_fcoords(void *, int32_t, const float *);
-int   imd_handshake(void *);
+/*----------------------------------------------------------*/
+/*----------------------------------------------------------*/
+/*----------------------------------------------------------*/
 
+/**  Implementation of the tcl command \ref tclcommand_bit_random. 
+     Access to the parallel bit random number generator.
+*/
+int tclcommand_bit_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/*----------------------------------------------------------*/
 
 #endif
+
+
+
+
+
+

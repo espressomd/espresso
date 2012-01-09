@@ -75,53 +75,6 @@ class InteractionList:
     return NonBondedInteractionHandle(0,0)
 
 
-
-
-
-
-
-class InteractionList:
-  def __getItem__(key):
-    return NonBondedInteractionHandle(0,0)
-
-
-
-
-
-
-
-
-class InteractionList:
-  def __getItem__(key):
-    return NonBondedInteractionHandle(0,0)
-
-
-
-
-
-
-
-class InteractionList:
-  def __getItem__(key):
-    return NonBondedInteractionHandle(0,0)
-
-
-
-
-
-
-
-class InteractionList:
-  def __getItem__(key):
-    return NonBondedInteractionHandle(0,0)
-
-
-
-
-
-
-
-
 class InteractionList:
   def __getitem__(self,key):
     return NonBondedInteractionHandle(key[0],key[1])
