@@ -355,7 +355,7 @@ double maggs_calc_curl(int mue, int nue, double* field, int* Neighbor, int index
 	
   result = field[index+mue] + field[3*Neighbor[OPP_DIR(mue)]+nue] -
     field[3*Neighbor[OPP_DIR(nue)]+mue] - field[index+nue];
-	
+
   return result;
 }
 
@@ -2029,6 +2029,7 @@ void maggs_calc_interpolated_self_force(Particle *p)
 
   double local_rho[8];
   double local_permittivity[12];
+  double local_D_field[12];
   double *force = p->f.f;
 
   /* calculate position in cell, normalized to lattice size: */
@@ -2037,6 +2038,7 @@ void maggs_calc_interpolated_self_force(Particle *p)
     left_down_position[k] = floor(position[k]);
     relative_position[k]  = position[k] - left_down_position[k];
     self_force[k] = 0.0;
+    local_D_field[k] = 0.0;
   }
 
   /* Copy permittivity values to the mini-lattice: */
@@ -2049,10 +2051,15 @@ void maggs_calc_interpolated_self_force(Particle *p)
 					     (left_down_position[1]+iy),
 					     (left_down_position[2]+iz), lparams.dim);
 	local_permittivity[index] = lattice[globalindex].permittivity[0];
+	local_rho[index] = 0.0;
       }
     }
   }
 
+
+  FOR3D(k) {
+    self_force[k] = 0.0;
+  }
 
   FOR3D(k) {
     force[k] += self_force[k];
