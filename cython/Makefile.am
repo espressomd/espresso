@@ -21,19 +21,24 @@
 
 all: pythonlib
 
-install: pythonlib_install
-
 .PHONY: pythonlib
+
+PYTHON_SETUP=CC='$(CC) $(CPPFLAGS)' $(PYTHON) setup.py
 
 pythonlib:
 	cd $(abs_srcdir) && \
-		$(PYTHON) setup.py build --build-base=$(abs_builddir) build_ext -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs
+	  $(PYTHON_SETUP) build --build-base=$(abs_builddir) build_ext -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs
 
-pythonlib_install: 
+install-exec-local: 
 	cd $(abs_srcdir) && \
-		$(PYTHON) setup.py  build --build-base=$(abs_builddir) build_ext   -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs install --install-lib=$(prefix)/lib/ 
+	  $(PYTHON_SETUP) \
+	    build --build-base=$(abs_builddir) \
+	    build_ext -I$(abs_top_srcdir)/src:$(abs_top_builddir)/src -L$(abs_top_builddir)/src/.libs \
+	    install --install-lib=$(prefix)/lib/ 
 
-
+clean-local:
+	cd $(abs_srcdir) && \
+	  $(PYTHON_SETUP) clean
 
 #pyexec_LTLIBRARIES = libespresso.la libinteraction_data.la libglobal_variables.la libparticle_data.la
 #

@@ -127,7 +127,7 @@ libEspresso_core_la_SOURCES = \
 	ljangle.h \
 	adresso.c adresso.h \
         tunable_slip.h \
-				myconfig-final.h
+	myconfig-final.h
 
 
 #################################################################
