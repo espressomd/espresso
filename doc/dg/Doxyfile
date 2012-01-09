@@ -511,7 +511,7 @@ SHOW_USED_FILES        = YES
 # then setting the SHOW_DIRECTORIES tag to YES will show the directory hierarchy
 # in the documentation. The default is NO.
 
-SHOW_DIRECTORIES       = NO
+SHOW_DIRECTORIES       = YES
 
 # Set the SHOW_FILES tag to NO to disable the generation of the Files page.
 # This will remove the Files entry from the Quick Index and from the
@@ -634,7 +634,7 @@ FILE_PATTERNS          = *.h \
 # should be searched for input files as well. Possible values are YES and NO.
 # If left blank NO is used.
 
-RECURSIVE              = NO
+RECURSIVE              = YES
 
 # The EXCLUDE tag can be used to specify files and/or directories that should
 # excluded from the INPUT source files. This way you can easily exclude a
@@ -682,7 +682,7 @@ EXAMPLE_PATTERNS       =
 # commands irrespective of the value of the RECURSIVE tag.
 # Possible values are YES and NO. If left blank NO is used.
 
-EXAMPLE_RECURSIVE      = NO
+EXAMPLE_RECURSIVE      = YES
 
 # The IMAGE_PATH tag can be used to specify one or more files or
 # directories that contain image that are included in the documentation (see
