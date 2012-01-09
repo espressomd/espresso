@@ -25,11 +25,13 @@ libEspresso_core_la_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
 	global.c global.h \
+	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
 	binary_file.c binary_file.h \
 	interaction_data.c interaction_data.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
+	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
 	integrate.c integrate.h \
 	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
 	cells.c cells.h \
@@ -39,6 +41,7 @@ libEspresso_core_la_SOURCES = \
 	debug.c debug.h \
 	particle_data.c	particle_data.h \
 	thermostat.c thermostat.h \
+	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
 	dpd.c dpd.h \
 	statistics.c statistics.h \
 	statistics_chain.c statistics_chain.h \
@@ -126,8 +129,9 @@ libEspresso_core_la_SOURCES = \
 	overlap.h \
 	ljangle.h \
 	adresso.c adresso.h \
-        tunable_slip.h \
-				myconfig-final.h
+	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
+	tunable_slip.h \
+	myconfig-final.h
 
 
 #################################################################

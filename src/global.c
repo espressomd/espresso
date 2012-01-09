@@ -25,11 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
-#include "global.h"
+#include "tcl_interface/global_tcl.h"
 /* from these modules we modify variables: */
 #include "communication.h"
 #include "cells.h"
 #include "grid.h"
+#include "tcl_interface/grid_tcl.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "integrate.h"
@@ -232,29 +233,3 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
   return (TCL_ERROR);
 }
 
-int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv)
-{
-  if (argc < 2) {
-    tclcallback_version(interp);
-    Tcl_AppendResult(interp, "\n", (char *) NULL);
-    tclcallback_compilation(interp);
-    Tcl_AppendResult(interp, "\n", (char *) NULL);
-    tclcallback_debug(interp);
-  }
-  else {
-    if(!strncmp(argv[1], "version" , strlen(argv[1]))) {
-      tclcallback_version(interp);
-    }
-    else if(!strncmp(argv[1], "compilation" , strlen(argv[1]))) {
-      tclcallback_compilation(interp);
-    }
-    else if(!strncmp(argv[1], "debug" , strlen(argv[1]))) {
-      tclcallback_debug(interp);
-    }
-    else {
-      Tcl_AppendResult(interp, "info ",argv[1]," not known!", (char *) NULL);
-    }
-  }
-  return (TCL_OK);
-}

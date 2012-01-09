@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "initialize.h"
 #include "global.h"
+#include "tcl_interface/global_tcl.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "binary_file.h"
@@ -42,7 +43,9 @@
 #include "blockfile_tcl.h"
 #include "cells.h"
 #include "grid.h"
+#include "tcl_interface/grid_tcl.h"
 #include "thermostat.h"
+#include "tcl_interface/thermostat_tcl.h"
 #include "rotation.h"
 #include "p3m.h"
 #include "p3m-dipolar.h"
@@ -67,6 +70,7 @@
 #include "lb-boundaries.h"
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
+#include "tcl_interface/adresso_tcl.h"
 #include "metadynamics.h"
 #include "tcl_interface/integrate_tcl.h"
 
