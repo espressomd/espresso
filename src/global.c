@@ -45,6 +45,7 @@
 #include "rattle.h"
 #include "lattice.h"
 #include "adresso.h"
+#include "tcl_interface/integrate_tcl.h"
 
 /**********************************************
  * description of variables
