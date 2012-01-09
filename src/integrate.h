@@ -75,12 +75,6 @@ extern double verlet_reuse;
 /************************************************************/
 /*@{*/
 
-/** tcl procedure for integrator steering. For documentation,
-    see \ref tclcommand_integrate
-*/
-int tclcommand_integrate(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv);
-
 /** Calculate maximal interaction range. 
     Uses \ref calc_maximal_cutoff.
     \ref max_range  = \ref max_cut + \ref #skin;
@@ -102,23 +96,6 @@ void rescale_velocities(double scale);
 /** Callback for setmd skin.
     \return TCL status.
 */
-int tclcallback_skin(Tcl_Interp *interp, void *_data);
-
-/** Callback for integration time_step (0.0 <= time_step).
-    \return TCL status.
-*/
-int tclcallback_time_step(Tcl_Interp *interp, void *_data);
-
-/** Callback for current time in the integration.
-    If no value is set the integration starts at time = 0.0.
-    \return TCL status.
-*/
-int tclcallback_time(Tcl_Interp *interp, void *_data);
-
-/** Implements the tcl-command 'invalidate_system' which forces a system re-init. 
-    For more information, see \ref tclcommand_invalidate_system. */
-int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
 /** local routine of \ref tclcommand_invalidate_system */
 void local_invalidate_system();
 

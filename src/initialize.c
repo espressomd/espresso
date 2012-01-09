@@ -68,6 +68,7 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
+#include "tcl_interface/integrate_tcl.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

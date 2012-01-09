@@ -31,6 +31,7 @@ libEspresso_core_la_SOURCES = \
 	verlet.c verlet.h \
 	grid.c grid.h \
 	integrate.c integrate.h \
+	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
 	cells.c cells.h \
 	ghosts.c ghosts.h \
 	forces.c forces.h \
