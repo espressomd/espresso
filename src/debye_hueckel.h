@@ -24,6 +24,7 @@
  *  for a particle pair.
  *  \ref forces.c
 */
+#include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
 
