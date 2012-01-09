@@ -170,6 +170,11 @@ void analyze_append();
     @param count  how many particles in 'config' */
 void analyze_configs(double *config, int count);
 
+/** Docs missing!
+\todo Docs missing
+*/
+void analyze_activate(int ind);
+
 /** removes configs[0], pushes all entries forward, appends current 'partCfg' to last spot */
 void analyze_push();
 
@@ -266,6 +271,10 @@ void calc_rdf_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 void calc_rdf_intermol_av(int *p1_types, int n_p1, int *p2_types, int n_p2,
 	      double r_min, double r_max, int r_bins, double *rdf, int n_conf);
 
+
+void calc_rdf_adress(int *p1_types, int n_p1, int *p2_types, int n_p2,
+			   double x_min, double x_max, double r_min, double r_max, int r_bins, double *rdf, int n_conf);
+
 /** Calculates the van Hove auto correlation function and as a side product the mean sqaure displacement (msd).
 
     Calculates the van Hove auto correlation function (acf)  G(r,t) which is the probability that a particle has moved
@@ -333,6 +342,11 @@ MDINLINE double min_distance(double pos1[3], double pos2[3]) {
  */
 void centermass(int type, double *com);
 
+/** Docs missing
+\todo Docs missing
+*/
+void centermass_vel(int type, double *com);
+
 /** calculate the angular momentum of a special type of the current configuration
  *  \param type  type of the particle
  *  \param com   angular momentum vector
@@ -356,6 +370,11 @@ void calculate_verlet_neighbors();
  * \param result Momentum of particles.
  */
 void predict_momentum_particles(double *result);
+
+/** Docs missing
+\todo Docs missing
+*/
+void momentum_calc(double *momentum);
 
 MDINLINE double *obsstat_bonded(Observable_stat *stat, int j)
 {
@@ -398,6 +417,11 @@ MDINLINE double *obsstat_nonbonded_inter(Observable_stat_non_bonded *stat, int p
 }
 
 void invalidate_obs();
+
+/** Docs missing
+\todo Docs missing
+*/
+void mark_neighbours(int type,int pa_nr,double dist,int *list);
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
 			       int n_coulomb, int n_dipolar, int chunk_size);
