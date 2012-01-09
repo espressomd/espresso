@@ -39,6 +39,7 @@
 #include "imd.h"
 #include "tcl_interface/imd_tcl.h"
 #include "random.h"
+#include "tcl_interface/random_tcl.h"
 #include "communication.h"
 #include "blockfile_tcl.h"
 #include "cells.h"

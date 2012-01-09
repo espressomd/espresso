@@ -33,6 +33,7 @@ libEspresso_core_la_SOURCES = \
 	integrate.c integrate.h \
 	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
 	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
+	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
 	cells.c cells.h \
 	ghosts.c ghosts.h \
 	forces.c forces.h \

@@ -20,20 +20,7 @@
 /** \file imd.c
     Implementation of \ref imd.h "imd.h".
  */
-#include <limits.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include "utils.h"
-#include "vmdsock.h"
-#include "imd.h"
-#include "communication.h"
-#include "particle_data.h"
-#include "parser.h"
-#include "statistics_chain.h"
-#include "statistics_molecule.h"
+#include "tcl.h"
 
 int transfer_rate = 0;
 
