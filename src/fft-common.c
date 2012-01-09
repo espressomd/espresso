@@ -24,6 +24,9 @@
  *
 */
 #include "fft-common.h"
+
+#if defined(P3M) || defined(DP3M)
+
 #include <string.h>
 #include <fftw3.h>
 #include <mpi.h>
@@ -31,7 +34,6 @@
 #include "utils.h"
 #include "communication.h"
 
-#if defined(P3M) || defined(DP3M)
 
 void fft_common_pre_init(fft_data_struct *fft)
 {

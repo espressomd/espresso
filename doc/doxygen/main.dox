@@ -1,0 +1,73 @@
+/*
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+
+*/
+/** \mainpage ESPResSo Code documentation
+
+This is the code documentation of ESPResSo. It is primarily intended
+for people that want to extend or just understand the C-code of
+ESPResSo.
+
+If you just have obtained a release of ESPResSo, and you are looking
+for documentation on how to use ESPResSo, you might first want to have
+a look at the User's Guide, which is to be found in \c doc/ug/ug.pdf
+in the ESPResSo release.
+
+If you want to start developing code for ESPResSo, you might first
+want to have a look at the Developer's Guide (DG). You can find the
+most recent version of the DG at the <a
+href="http://espressomd.org/jenkins/job/ESPResSo/doclinks/2/">ESPResSo
+homepage</a>. The DG explains
+
+- how to obtain the development code
+- what tools are required to develop the code
+- how to get your modifications into the main code repository
+- how the documentation is updated
+
+\section entry Entry points to the C-code
+
+The script is interpreted on one node, the master node, whereas the
+other nodes wait for the master node to issue specific actions,
+i. e. a client-server model is utilized. More details can be found in
+\ref communication.h "communication.h". During the actual integration,
+however, the communication is done synchronously.  For more details
+see \ref integrate.c "integrate.c".
+
+\section Copyright and License of the Code Documentation
+Copyright (C) 2010,2011 The ESPResSo project
+Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+  Max-Planck-Institute for Polymer Research, Theory Group
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+
+*/

@@ -307,7 +307,7 @@ int tclcommand_polymer (ClientData data, Tcl_Interp *interp, int argc, char **ar
       constr=1;
       tmp_try=0;
       for(j=0;j<n_constraints;j++){
-	if(constraints[j].type==CONSTRAINT_MAZE || constraints[j].type==CONSTRAINT_PORE || constraints[j].type==CONSTRAINT_PLATE)
+	if(constraints[j].type==CONSTRAINT_MAZE || constraints[j].type==CONSTRAINT_PORE || constraints[j].type==CONSTRAINT_PLATE || constraints[j].type==CONSTRAINT_RHOMBOID)
 	  tmp_try++;
       }
       if (tmp_try>0) {
@@ -387,6 +387,7 @@ int constraint_collision(double *p1, double *p2){
     case CONSTRAINT_MAZE:
     case CONSTRAINT_PORE:
     case CONSTRAINT_PLATE:
+    case CONSTRAINT_RHOMBOID:
       break;
     }
   }

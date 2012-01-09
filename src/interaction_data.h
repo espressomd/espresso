@@ -116,7 +116,7 @@
 /*@}*/
 
 
-#ifdef  MAGNETOSTATICS
+#ifdef  DIPOLES
   /** \name Type codes for the type of dipolar interaction
     Enumeration of implemented methods for the magnetostatic
     interaction.
@@ -170,6 +170,8 @@
 //end ER
 /** Constraint for tunable-lsip boundary conditions */
 #define CONSTRAINT_PLANE 9
+/** Constraint for tunable-lsip boundary conditions */
+#define CONSTRAINT_RHOMBOID 10
 /*@}*/
 
 /* Data Types */
@@ -468,7 +470,7 @@ typedef struct {
   int method;
  #endif
 
- #ifdef MAGNETOSTATICS
+ #ifdef DIPOLES
   double Dbjerrum;
   double Dprefactor;
   int    Dmethod;
@@ -648,6 +650,21 @@ typedef struct {
   int reflecting;
 } Constraint_cylinder;
 
+/** Parameters for a RHOMBOID constraint. */
+typedef struct {
+  /** corner of the rhomboid */
+  double pos[3];
+  /** edges adjacent to the corner */
+  double a[3];
+  double b[3];
+  double c[3];
+  /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
+  int reflecting;
+} Constraint_rhomboid;
+
 /** Parameters for a PORE constraint. */
 typedef struct {
   /** center of the cylinder. */
@@ -718,6 +735,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_rhomboid rhomboid;
     Constraint_rod rod;
     Constraint_plate plate;
     Constraint_maze maze;

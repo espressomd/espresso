@@ -1,5 +1,6 @@
 # Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -18,14 +19,15 @@
 
 source "tests_common.tcl"
 
+require_feature "ELECTROSTATICS"
+require_feature "LENNARD_JONES"
+require_feature "ADRESS" off
 
 if { [catch {
 
     puts "----------------------------------------"
     puts "- Testcase maggs.tcl running on [format %02d [setmd n_nodes]] nodes: -"
     puts "----------------------------------------"
-    require_feature "ELECTROSTATICS"
-    require_feature "LENNARD_JONES"
 
     set use_warmup "yes"
 
@@ -120,9 +122,9 @@ if { [catch {
     }
     inter ljforcecap 0
 
-    # maggs requires domain decompostion with no verlet lists
+    # memd requires domain decompostion with no verlet lists
     cellsystem domain_decomposition -no_verlet_list
-    inter coulomb $bjerrum maggs $f_mass $mesh
+    inter coulomb $bjerrum memd $f_mass $mesh
 
     set act_min_dist [analyze mindist]
 

@@ -194,7 +194,7 @@ void calc_long_range_virials()
   }
 #endif /*ifdef ELECTROSTATICS */  
   
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
   switch (coulomb.Dmethod) {
      case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
@@ -226,7 +226,7 @@ void calc_long_range_virials()
   }
 #endif
  } 
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 }
 
 /* Initialize the virials used in the calculation of the scalar pressure */
@@ -247,7 +247,7 @@ void init_virials(Observable_stat *stat)
   default: n_coulomb  = 1;
   }
 #endif
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:  n_dipolar = 0; break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:  n_dipolar = 0; break;
@@ -293,7 +293,7 @@ void init_p_tensor(Observable_stat *stat)
   }
 #endif
   
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE: n_dipolar = 0; break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:  n_dipolar = 0; break;
@@ -854,7 +854,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
     }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
     if (coulomb.Dmethod != DIPOLAR_NONE) {
       switch (coulomb.Dmethod) {
 #ifdef DP3M
@@ -873,7 +873,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
       }
     }
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 
 
   } /*if p1-> ... */
@@ -1101,7 +1101,7 @@ static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
       }
     } 
   
-#if  defined(ELECTROSTATICS) || defined (MAGNETOSTATICS)
+#if  defined(ELECTROSTATICS) || defined (DIPOLES)
   if( 
 #ifdef ELECTROSTATICS
       coulomb.method != COULOMB_NONE
@@ -1109,7 +1109,7 @@ static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
       0
 #endif
       ||
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
       coulomb.Dmethod != DIPOLAR_NONE
 #else
       0
@@ -1122,13 +1122,13 @@ static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
     for (i = 0; i < total_pressure.n_dipolar; i++)
       value += total_pressure.dipolar[i];
     Tcl_PrintDouble(interp, value, buffer);
-#if  defined(ELECTROSTATICS) && defined (MAGNETOSTATICS)
+#if  defined(ELECTROSTATICS) && defined (DIPOLES)
     Tcl_AppendResult(interp, "{ coulomb+magdipoles ", buffer, (char *)NULL);
 #else
 #if defined(ELECTROSTATICS)
     Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
 #endif	
-#if defined(MAGNETOSTATICS)
+#if defined(DIPOLES)
     Tcl_AppendResult(interp, "{ magdipoles ", buffer, (char *)NULL);
 #endif		
 #endif
@@ -1281,12 +1281,12 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
 #endif
     }
     else if( ARG0_IS_S("dipolar")) {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
       value = 0;
       for (i = total_pressure.n_coulomb-1; i < total_pressure.n_coulomb; i++)  /*when DLC will be installed this has to be changed */
         value += total_pressure.coulomb[i];
 #else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
     else if (ARG0_IS_S("total")) {
@@ -1438,7 +1438,7 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
   }
 #endif
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   if(coulomb.Dmethod != DIPOLAR_NONE) {
     fprintf(stderr,"tensor magnetostatics, something should go here, file pressure.c ... \n");
   }  
@@ -1581,11 +1581,11 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
 #endif
     }
     else if( ARG0_IS_S("dipolar")) {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
       /* for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];*/
       fprintf(stderr," stress tensor, magnetostatics, something should go here, file pressure.c ");
 #else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
+      Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
     else if (ARG0_IS_S("total")) {

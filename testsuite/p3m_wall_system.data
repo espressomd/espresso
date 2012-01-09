@@ -1,6 +1,6 @@
 {variable  {box_l 10.0 10.0 10.0} }
 {interactions 
-	{coulomb 1.0 p3m 1.001 64 7 2.5 }
+	{coulomb 1.0 p3m 1.001 64 7 2.70746 }
 	{coulomb epsilon  metallic n_interpol 32768 mesh_off 0.5 0.5 0.5}
 }
 {particles {id pos q f} 
