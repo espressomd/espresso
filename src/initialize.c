@@ -69,6 +69,8 @@
 #include "adresso.h"
 #include "metadynamics.h"
 #include "tcl_interface/integrate_tcl.h"
+#include "tcl_interface/cells_tcl.h"
+#include "tcl_interface/statistics_tcl.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

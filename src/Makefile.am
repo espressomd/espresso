@@ -33,6 +33,7 @@ libEspresso_core_la_SOURCES = \
 	integrate.c integrate.h \
 	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
 	cells.c cells.h \
+	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
 	forces.c forces.h \
 	rotation.c rotation.h \
@@ -41,6 +42,7 @@ libEspresso_core_la_SOURCES = \
 	thermostat.c thermostat.h \
 	dpd.c dpd.h \
 	statistics.c statistics.h \
+	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
 	statistics_chain.c statistics_chain.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
