@@ -34,7 +34,6 @@
 #include <mpi.h>
 #include "utils.h"
 #include "particle_data.h"
-#include "tcl_interface/particle_data_tcl.h"
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
@@ -71,12 +70,31 @@ int partCfgSorted = 0;
 /** bondlist for partCfg, if bonds are needed */
 IntList partCfg_bl = { NULL, 0, 0 };
 
+/************************************************
+ * local functions
+ ************************************************/
+
+/** Remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
+
+/** Remove exclusion from particle if possible */
+void try_delete_exclusion(Particle *part, int part2);
+
+/** Insert an exclusion if not already set */
+void try_add_exclusion(Particle *part, int part2);
+
+/** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
+    This uses the bond topology obtained directly from the particles, since only this contains
+    the full topology, in contrast to \ref topology::topology. To easily setup the bonds, all data
+    should be on a single node, therefore the \ref partCfg array is used. With large amounts
+    of particles, you should avoid this function and setup exclusions manually. */
+void auto_exclusion(int distance);
 
 /************************************************
  * particle initialization functions
  ************************************************/
 
-void init_particle(Particle *part) 
+void init_particle(Particle *part)
 {
   /* ParticleProperties */
   part->p.identity = -1;
@@ -187,6 +205,11 @@ void init_particle(Particle *part)
 
 #ifdef ADRESS
   part->p.adress_weight = 1.0;
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  part->T = -1.0;
+  part->gamma = -1.0;
 #endif
 }
 
@@ -423,7 +446,6 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i)
   return dst;
 }
 
- 
 int get_particle_data(int part, Particle *data)
 {
   int pnode;
@@ -737,6 +759,45 @@ int set_particle_torque(int part, double torque[3])
   return TCL_OK;
 }
 
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+int set_particle_temperature(int part, double T)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+    
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+    
+  mpi_set_particle_temperature(pnode, part, T);
+  return TCL_OK;
+}
+
+int set_particle_gamma(int part, double gamma)
+{
+  int pnode;
+  
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return TCL_ERROR;
+    
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return TCL_ERROR;
+    
+  mpi_set_particle_gamma(pnode, part, gamma);
+  return TCL_OK;
+}
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -1257,6 +1318,19 @@ void remove_all_exclusions()
 {
   mpi_send_exclusion(-1, -1, 1);
 }
+
+void add_partner(IntList *il, int i, int j, int distance)
+{
+    int k;
+    if (j == i) return;
+    for (k = 0; k < il->n; k += 2)
+        if (il->e[k] == j)
+            return;
+    realloc_intlist(il, il->n + 2);
+    il->e[il->n++] = j;
+    il->e[il->n++] = distance;
+}
+
 
 void auto_exclusion(int distance)
 {

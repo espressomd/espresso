@@ -79,7 +79,7 @@ set slow     0
 
 # rewrite analysis_system.data analysis_system.data2; exit 0
 
-if { [catch {
+test_catch {
     puts -nonewline "Reading the checkpoint... "; flush stdout
     checkpoint_read analysis_system.data; puts " Done."
 
@@ -281,7 +281,4 @@ if { [catch {
 	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
 	error "force error too large"
     }
-} res ] } {
-    error_exit $res
 }
-

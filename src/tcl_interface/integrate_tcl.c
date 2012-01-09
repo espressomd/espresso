@@ -58,10 +58,6 @@
 #include "adresso.h"
 #include "lbgpu.h"
 
-/*@}*/
-
-/************************************************************/
-
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);
   return TCL_OK;
@@ -193,7 +189,7 @@ int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **
   }
 #endif
 
-#ifdef MAGNETOSTATICS     
+#ifdef DIPOLES     
   if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0 ){
     fprintf(stderr,"WARNING: If magnetostatics is being used you must use the -cubic_box option!\n");
     fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
@@ -255,12 +251,8 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
 }
 
 /************************************************************/
-
-
 /* Callback functions */
-/************************************************************/
-
-
+ 
 int tclcallback_skin(Tcl_Interp *interp, void *_data)
 {
   double data = *(double *)_data;
@@ -307,5 +299,3 @@ int tclcallback_time(Tcl_Interp *interp, void *_data)
   mpi_bcast_parameter(FIELD_SIMTIME);
   return (TCL_OK);
 }
-
-

@@ -128,7 +128,10 @@ int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 MDINLINE void friction_thermo_langevin(Particle *p)
 {
   extern double langevin_pref1, langevin_pref2;
-
+#ifdef LANGEVIN_PER_PARTICLE
+  double langevin_pref1_temp, langevin_pref2_temp;
+#endif
+  
   int j;
 #ifdef MASS
   double massf = sqrt(PMASS(*p));
@@ -162,8 +165,29 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 //    if (!(p->l.ext_flag & COORD_FIXED(j)))
     if (1==1)
 #endif
-      {
+    {
+#ifdef LANGEVIN_PER_PARTICLE  
+      if(p->gamma >= 0.) {
+        langevin_pref1_temp = -p->gamma/time_step;
+        
+        if(p->T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->T*p->gamma/time_step);
+        else
+          langevin_pref2_temp = sqrt(24.0*temperature*p->gamma/time_step);
+        
+        p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+      }
+      else {
+        if(p->T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->T*langevin_gamma/time_step);
+        else          
+          langevin_pref2_temp = langevin_pref2;
+        
+        p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
+      }
+#else
       p->f.f[j] = langevin_pref1*p->m.v[j]*PMASS(*p) + langevin_pref2*(d_random()-0.5)*massf;
+#endif
     }
 #ifdef EXTERNAL_FORCES
     else p->f.f[j] = 0;
@@ -206,7 +230,11 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 #endif	  
       for ( j = 0 ; j < 3 ; j++) 
       {
-	p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
+        #ifdef ROTATIONAL_INERTIA
+	 p->f.torque[j] = -langevin_gamma*p->m.omega[j] *p->p.rinertia[j] + langevin_pref2*sqrt(p->p.rinertia[j]) * (d_random()-0.5);
+      	#else
+	 p->f.torque[j] = -langevin_gamma*p->m.omega[j] + langevin_pref2*(d_random()-0.5);
+	#endif
       }
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
       THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));

@@ -877,7 +877,7 @@ int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int arg
 
 int tclprint_to_result_dp3m(Tcl_Interp *interp)
 {
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_PrintDouble(interp, dp3m.params.r_cut, buffer);
@@ -1470,7 +1470,7 @@ double calc_surface_term(int force_flag, int energy_flag)
          a[2]+=mz[i];
       }   
   
-     MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(MPI_IN_PLACE, a, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
      
      if (energy_flag) {
       
