@@ -37,6 +37,7 @@
 #include "pressure.h"
 #include "polymer.h"
 #include "imd.h"
+#include "tcl_interface/imd_tcl.h"
 #include "random.h"
 #include "communication.h"
 #include "blockfile_tcl.h"
