@@ -43,7 +43,6 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "initialize.h"
-#include "tcl_interface/statistics_tcl.h"
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis in \ref tclcommand_analyze) */

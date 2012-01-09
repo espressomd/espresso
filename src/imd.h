@@ -43,5 +43,7 @@ IMDType imd_recv_header(void *, int32_t *);
 int   imd_send_fcoords(void *, int32_t, const float *);
 int   imd_handshake(void *);
 
+extern int transfer_rate;
+
 
 #endif
