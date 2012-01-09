@@ -56,7 +56,7 @@
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "forces.h"
-#include "uwerr.h"
+#include "tcl_interface/uwerr_tcl.h"
 #include "nsquare.h"
 #include "nemd.h"
 #include "domain_decomposition.h"
