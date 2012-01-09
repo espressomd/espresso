@@ -68,6 +68,7 @@ libEspresso_core_la_SOURCES = \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
+	tcl_interface/uwerr_tcl.c tcl_interface_uwerr.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
 	nsquare.c nsquare.h \
