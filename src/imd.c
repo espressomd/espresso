@@ -36,22 +36,9 @@
 #include "statistics_molecule.h"
 #include "tcl_interface/imd_tcl.h"
 
-int transfer_rate = 0;
 
 #include <inttypes.h>
 
-typedef enum {
-  IMD_DISCONNECT,
-  IMD_ENERGIES, 
-  IMD_FCOORDS,   
-  IMD_GO,
-  IMD_HANDSHAKE, 
-  IMD_KILL,      
-  IMD_MDCOMM,    
-  IMD_PAUSE,
-  IMD_TRATE,
-  IMD_IOERROR
-} IMDType;
 
 typedef struct {
   int32_t tstep;
@@ -70,18 +57,15 @@ typedef struct {
 int   imd_disconnect(void *);
 int   imd_pause(void *);
 int   imd_kill(void *);
-int   imd_handshake(void *);
 int   imd_trate(void *, int32_t);
 
 /* Send data */
 int   imd_send_mdcomm(void *, int32_t, const int32_t *, const float *);
 int   imd_send_energies(void *, const IMDEnergies *);
-int   imd_send_fcoords(void *, int32_t, const float *);
 
 /* Receive header and data */
 int imd_recv_handshake(void *);
 
-IMDType imd_recv_header(void *, int32_t *);
 int imd_recv_mdcomm(void *, int32_t, int32_t *, float *);
 int imd_recv_energies(void *, IMDEnergies *);
 int imd_recv_fcoords(void *, int32_t, float *);
@@ -94,9 +78,6 @@ typedef struct {
 
 #define HEADERSIZE 8
 #define IMDVERSION 2
-
-static void *initsock = 0;
-static void *sock = 0;
 
 static void swap4(char *data, int ndata) {
   int i;

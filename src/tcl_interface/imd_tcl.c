@@ -20,24 +20,25 @@
 /** \file imd.c
     Implementation of \ref imd.h "imd.h".
  */
-#include "tcl.h"
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <tcl.h>
+#include "vmdsock.h"
+#include "../imd.h"
+#include "particle_data.h"
+#include "parser.h"
+#include "statistics_molecule.h"
+
 
 int transfer_rate = 0;
+static void *initsock = 0;
+static void *sock = 0;
 
 #include <inttypes.h>
 
-typedef enum {
-  IMD_DISCONNECT,
-  IMD_ENERGIES, 
-  IMD_FCOORDS,   
-  IMD_GO,
-  IMD_HANDSHAKE, 
-  IMD_KILL,      
-  IMD_MDCOMM,    
-  IMD_PAUSE,
-  IMD_TRATE,
-  IMD_IOERROR
-} IMDType;
 
 
 /***************************** Espresso stuff ************************/
