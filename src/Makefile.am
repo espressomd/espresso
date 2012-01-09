@@ -122,7 +122,7 @@ libEspresso_a_SOURCES = \
 	subt_lj.h \
 	tab.h \
 	overlap.h \
-	ljangle.h \
+	ljangle.c ljangle.h \
 	adresso.c adresso.h \
         tunable_slip.h\
 	collision.c collision.h

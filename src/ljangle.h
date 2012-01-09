@@ -40,8 +40,9 @@
 
 #ifdef LJ_ANGLE
 #include <math.h>
+#include "interaction_data.h"
 
-MDINLINE int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
+int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
@@ -82,7 +83,7 @@ MDINLINE int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
     for each of the interactions.
 */
-MDINLINE int ljangleforcecap_set_params(double ljangleforcecap)
+int ljangleforcecap_set_params(double ljangleforcecap)
 {
   if (ljangle_force_cap != -1.0)
     mpi_ljangle_cap_forces(ljangle_force_cap);
@@ -90,7 +91,7 @@ MDINLINE int ljangleforcecap_set_params(double ljangleforcecap)
   return TCL_OK;
 }
 
-MDINLINE int ljangle_set_params(int part_type_a, int part_type_b,
+int ljangle_set_params(int part_type_a, int part_type_b,
 				double eps, double sig, double cut,
 				int b1p, int b1n, int b2p, int b2n,
 				double cap_radius, double z0, double dz, 
@@ -142,7 +143,7 @@ MDINLINE int ljangle_set_params(int part_type_a, int part_type_b,
 }
 
 /// parser for the forcecap
-MDINLINE int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv)
+int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   char buffer[TCL_DOUBLE_SPACE];
   if (argc == 0) {
@@ -174,7 +175,7 @@ MDINLINE int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int arg
 
 
 
-MDINLINE int tclcommand_inter_parse_ljangle(Tcl_Interp * interp,
+int tclcommand_inter_parse_ljangle(Tcl_Interp * interp,
 			    int part_type_a, int part_type_b,
 			    int argc, char ** argv)
 {
@@ -575,7 +576,7 @@ MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
 
 /** calculate ljangle_capradius from ljangle_force_cap */
 /* This routine does not take the optional 2nd environment into account. */
-MDINLINE void calc_ljangle_cap_radii(double force_cap)
+void calc_ljangle_cap_radii(double force_cap)
 {
   int i,j,cnt=0;
   IA_parameters *params;
