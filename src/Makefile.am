@@ -112,7 +112,7 @@ libEspresso_a_SOURCES = \
 	imd.h \
 	ljcos2.h \
 	ljcos.h \
-	lj.h \
+	lj.c lj.h \
 	ljgen.c ljgen.h \
 	steppot.h \
 	bmhtf-nacl.h \
