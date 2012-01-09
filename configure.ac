@@ -20,6 +20,7 @@ dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
 AC_INIT([ESPResSo],[3.0.1],[espressomd-users@nongnu.org])
+AC_PREREQ([2.59])
 
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR(config)
@@ -31,8 +32,6 @@ AC_CANONICAL_TARGET
 # Initialise automake
 AM_INIT_AUTOMAKE([1.10 gnu])
 AM_MAINTAINER_MODE
-LT_INIT
-AM_PATH_PYTHON
 
 cat <<EOF
 ****************************************************************
@@ -102,7 +101,6 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-
 # never overwrite users CFLAGS
 if test "${CFLAGS+set}" != set; then
   # test for -O5
@@ -163,6 +161,8 @@ cat <<EOF
 ****************************************************************
 EOF
 
+LT_INIT
+AM_PATH_PYTHON
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL

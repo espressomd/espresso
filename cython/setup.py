@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 
 from distutils.core import setup
@@ -11,7 +10,7 @@ import numpy as np
 ext_params = {}
 ext_params['include_dirs'] = [np.get_include()]
 ext_params['extra_compile_args'] = ["-fPIC"]
-ext_params['extra_link_args'] = ["-Wl", "-Wl"]  # TODO: ad-neeeded ignored
+#ext_params['extra_link_args'] = ["-Wl", "-Wl"]  # TODO: ad-neeeded ignored
 #ext_params['library_dirs'] = [ "..", "/usr/lib64" ]
 
 ext_modules=[
