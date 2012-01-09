@@ -111,7 +111,7 @@ libEspresso_a_SOURCES = \
 	hertzian.h \
 	imd.h \
 	ljcos2.h \
-	ljcos.h \
+	ljcos.c ljcos.h \
 	lj.c lj.h \
 	ljgen.c ljgen.h \
 	steppot.h \
