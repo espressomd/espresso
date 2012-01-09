@@ -1,6 +1,6 @@
 
-cdef extern from *:
-  IFDEF(arg) #ifdef
+#cdef extern from *:
+#  IFDEF(arg) #ifdef
 
 cdef extern from "config.h":
   pass
