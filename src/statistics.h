@@ -102,10 +102,6 @@ extern int n_part_conf;
 /************************************************************/
 /*@{*/
 
-/** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
-    both online and offline.
-*/
-int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** EXPERIMENTAL: Implements the Tcl command \ref acf_cmd for online calculation of autocorrelation functions. */
 int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
@@ -351,13 +347,6 @@ void angularmomentum(int type, double *com);
  */
 void centermass_conf(int k, int type_1, double *com);
 
-/** return the approx diffusion constant of a special type of particle
- *  \param interp  TCL interpreter handle
- *  \param type_m  type of the particle, -1 for all
- *  \param n_time_steps number of timestep between saved configurations
- *  \param n_conf  number of saved contributions taken into account
- */
-double tclcommand_analyze_print_MSD(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf);
 
 void momentofinertiamatrix(int type, double *MofImatrix);
 void calc_gyration_tensor(int type, double **gt);
