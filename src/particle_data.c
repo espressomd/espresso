@@ -3147,14 +3147,4 @@ void auto_exclusion(int distance)
   free(partners);
 }
 
-int do_nonbonded(Particle *p1, Particle *p2)
-{
-  int i, i2;
-  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
-     symmetric, so this is sufficient. */
-  i2  = p2->p.identity;
-  for (i = 0; i < p1->el.n; i++)
-    if (i2 == p1->el.e[i]) return 0;
-  return 1;
-}
 #endif

@@ -664,6 +664,7 @@ void rescale_forces()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
       p[i].f.f[0] *= scale/PMASS(p[i]);
       p[i].f.f[1] *= scale/PMASS(p[i]);
       p[i].f.f[2] *= scale/PMASS(p[i]);
@@ -694,6 +695,7 @@ void rescale_forces_propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/PMASS(p[i]);
       p[i].f.f[1] *= scale/PMASS(p[i]);
