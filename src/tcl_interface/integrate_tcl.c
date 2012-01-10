@@ -25,38 +25,7 @@
  *  see \ref integrate.h "integrate.h".
 */
 
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include "utils.h"
-#include "integrate.h"
-#include "interaction_data.h"
-#include "particle_data.h"
-#include "communication.h"
-#include "grid.h"
-#include "cells.h"
-#include "verlet.h"
-#include "rotation.h"
-#include "ghosts.h"
 #include "pressure.h"
-#include "p3m.h"
-#include "maggs.h"
-#include "thermostat.h"
-#include "initialize.h"
-#include "forces.h"
-#include "nsquare.h"
-#include "domain_decomposition.h"
-#include "layered.h"
-#include "nemd.h"
-#include "rattle.h"
-#include "errorhandling.h"
-#include "lattice.h"
-#include "lb.h"
-#include "virtual_sites.h"
-#include "adresso.h"
-#include "lbgpu.h"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);
