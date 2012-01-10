@@ -25,20 +25,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
-#include "tcl_interface/global_tcl.h"
+#include "global.h"
+#include "global_tcl.h"
 /* from these modules we modify variables: */
 #include "communication.h"
 #include "cells.h"
 #include "grid.h"
-#include "tcl_interface/grid_tcl.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "integrate.h"
+#include "integrate_tcl.h"
 #include "thermostat.h"
 #include "forces.h"
 #include "verlet.h"
 #include "p3m.h"
 #include "imd.h"
+#include "imd_tcl.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
 #include "layered.h"
@@ -46,7 +48,8 @@
 #include "rattle.h"
 #include "lattice.h"
 #include "adresso.h"
-#include "tcl_interface/integrate_tcl.h"
+#include "integrate_tcl.h"
+#include "grid_tcl.h"
 
 /**********************************************
  * description of variables
@@ -233,3 +236,29 @@ int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
   return (TCL_ERROR);
 }
 
+int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
+	 int argc, char **argv)
+{
+  if (argc < 2) {
+    tclcallback_version(interp);
+    Tcl_AppendResult(interp, "\n", (char *) NULL);
+    tclcallback_compilation(interp);
+    Tcl_AppendResult(interp, "\n", (char *) NULL);
+    tclcallback_debug(interp);
+  }
+  else {
+    if(!strncmp(argv[1], "version" , strlen(argv[1]))) {
+      tclcallback_version(interp);
+    }
+    else if(!strncmp(argv[1], "compilation" , strlen(argv[1]))) {
+      tclcallback_compilation(interp);
+    }
+    else if(!strncmp(argv[1], "debug" , strlen(argv[1]))) {
+      tclcallback_debug(interp);
+    }
+    else {
+      Tcl_AppendResult(interp, "info ",argv[1]," not known!", (char *) NULL);
+    }
+  }
+  return (TCL_OK);
+}
