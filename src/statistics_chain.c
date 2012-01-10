@@ -26,7 +26,6 @@
 #include "topology.h"
 #include "communication.h"
 #include "cells.h"
-#include "tcl_interface/statistics_chain_tcl.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref tclcommand_analyze) */
 /*@{*/

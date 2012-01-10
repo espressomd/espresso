@@ -20,6 +20,7 @@
 */
 #ifndef GLOBAL_H
 #define GLOBAL_H
+#include <tcl.h>
 /** \file global.h
     This file contains the code for access to globally defined
     variables using the script command setmd. \ref add_vars "Here"
