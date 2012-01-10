@@ -1,4 +1,33 @@
+# build system
+Makefile.in
+Makefile
+configure
+config.log
+config.status
+src/acconfig.h.in
+src/acconfig.h
 aclocal.m4
 autom4te.cache
-Makefile.in
+.deps/
+myconfig.h
 
+# created by configure
+src/myconfig-final.h
+src/stamp-h1
+doc/latexit.sh
+myconfig-sample.h
+testsuite/runtest.sh
+tools/es_mpiexec
+
+# object files and executable
+*.o
+src/libEspresso.a
+src/libespressobf.a
+Espresso
+Espresso.install
+
+# doxygen
+doc/dg/html/
+doc/dg/background_errors.doc
+doc/dg/background_errors.sorted
+doc/dg/background_errors.unsorted

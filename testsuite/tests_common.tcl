@@ -1,5 +1,6 @@
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#  Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -16,39 +17,57 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
-# 
+set TEST_FAIL 66
+set TEST_IGNORE 42
+set TEST_OK 0
 
-proc error_exit {error} {
-    global errf
-    set f [open $errf "w"]
-    puts $f "Error occured: $error"
-    close $f
-    exit -666
+proc error_exit {{error 0}} {
+    global TEST_FAIL
+    if { $error != 0 } { puts $error }
+    exit $TEST_FAIL
+}
+
+proc ignore_exit {{error 0}} {
+    global TEST_IGNORE
+    if { $error != 0 } { puts $error }
+    exit $TEST_IGNORE
+}
+
+proc ok_exit {} {
+    global TEST_OK
+    exit $TEST_OK
+}
+
+proc test_catch {script} {
+    if { [catch [uplevel 1 $script] res] } then {
+	exit $TEST_FAIL
+    }
+}
+
+proc has_feature {feature {off ""}} {
+    if {($off == ""    && ! [regexp "{ $feature }" [code_info]]) ||
+	($off == "off" &&   [regexp "{ $feature }" [code_info]])} {
+	return 0
+    } else {
+	return 1
+    }
 }
 
 proc require_feature {feature {off ""}} {
-    global errf
-    if {($off == ""    && ! [regexp $feature [code_info]]) ||
-	($off == "off" &&   [regexp $feature [code_info]])} {
-	if {$off == ""} {
-	    puts stderr "wanted feature not compiled in: $feature"
-	} {
-	    puts stderr "unwanted feature compiled in: $feature"
+    if {($off == ""    && ! [regexp "{ $feature }" [code_info]]) ||
+	($off == "off" &&   [regexp "{ $feature }" [code_info]])} {
+	if {$off == ""} then {
+	    ignore_exit "Feature $feature is not activated."
+	} else {
+	    ignore_exit "Unwanted feature $feature is activated."
 	}
-	exec rm -f $errf
-	exit -42
     }
 }
 
 proc require_max_nodes_per_side {n} {
-    global errf
     foreach s [setmd node_grid] {
 	if {$s > $n} {
-	    puts stderr "cannot run on [setmd n_nodes] processors,"
-	    puts stderr "since max number of nodes per side is $n,"
-	    puts stderr "but node grid is [setmd node_grid]"
-	    exec rm -f $errf
-	    exit -42
+	    ignore_exit "Testcase cannot run on [setmd n_nodes] processors, \n\tsince max number of nodes per side is $n,\n\tbut node grid is [setmd node_grid]"
 	}
     }
 }

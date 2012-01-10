@@ -1,5 +1,6 @@
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -16,17 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
-# 
-set errf [lindex $argv 1]
-
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "LENNARD_JONES"
 
 if { [setmd n_nodes] >= 5 } {
     puts "Testcase layered.tcl does not run on more than 5 nodes -- too many cells"
-    exec rm -f $errf
-    exit -42
+    ignore_exit
 }
 if { [setmd n_nodes] > 1} {
     # MOL_CUT increases the short ranged radius so much that this test's box is too small
@@ -54,13 +52,7 @@ proc write_data {file} {
     global energy pressure verlet_reuse op
     set f [open "|gzip > $file" "w"]
     set energy [analyze energy total]
-    if { [regexp "ROTATION" [code_info]]} { 
-	set pressrot [analyze pressure total]
-	set pressure [expr $pressrot - [analyze pressure ideal]]
-    } else {
-	set pressure [analyze pressure total]
-	set pressrot [expr $pressure - 0.5*[analyze pressure ideal]]
-    }
+    set pressure [analyze pressure total];
     set verlet_reuse [setmd verlet_reuse]
     blockfile $f write tclvariable {energy pressure verlet_reuse}
     blockfile $f write variable box_l
@@ -75,7 +67,7 @@ proc write_data {file} {
     close $f
 }
 
-if { [catch {
+test_catch {
 
     ############## integ-specific part
     setmd box_l     99 99 99
@@ -114,7 +106,6 @@ if { [catch {
 	error "relative energy error too large"
     }
 
-    if { [regexp "ROTATION" [code_info]]} { set pressure $pressrot }
     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
     puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
     if { $rel_prs_error > $epsilon } {
@@ -159,6 +150,4 @@ if { [catch {
     if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
 	error "verlet reuse frequency differs."
     }
-} res ] } {
-    error_exit $res
-}
+} 

@@ -21,24 +21,20 @@
 \index{analysis}
 \newescommand{analyze}
 
-\todo{Intro: \lit{analyze} can measure observables, but also define
-  topologies and store configurations}
+\es provides some tools for online (during the simulation run) and
+offline (on stored data) analysis of your simulation. The
+\keyword{analyze} command can hereby has into two main uses:
+Calculation of observables (\keyword{analyze \var{observable}}) and
+definition and analysis of topologies in the system (\keyword{analyze
+  \var{topology command}}).
+
+In addition, \es offers the command \keyword{uwerr} (see section
+\ref{sec:uwerr} for computing statistical errors in time series.
+
 \section{Measuring observables}
 
 The \keyword{analyze}-command provides online-calculation of local and
 global observables.
-
-\todo{Missing: 
-  \keyword{radial_density_map}, 
-  \keyword{modes2d},
-  \keyword{get_lipid_orients},
-  \keyword{get_folded_positions},
-  \keyword{bilayer_set},
-  \keyword{bilayer_density_profile},
-  \keyword{lipid_orient_order},
-  \keyword{cell_gpb},
-  \keyword{Vkappa}
-}
 
 \subsection{Minimal distances between particles}
 \label{analyze:mindist}
@@ -88,8 +84,8 @@ types specified in \var{part\_type\_list\_a} around particles with
 types specified in \var{part\_type\_list\_b} with distances between
 \var{rmin} and \var{rmax}, binned into \var{rbins} bins. The
 bins are either equidistant (if $\var{log\_flag} = 0$) or
-logarithmically equidistant (if $\var{log_flag} \geq 1$). If an
-integrated distribution is required, use $\var{int_flag}=1$. The
+logarithmically equidistant (if $\var{log\_flag} \geq 1$). If an
+integrated distribution is required, use $\var{int\_flag}=1$. The
 distance is defined as the \emph{minimal} distance between a particle
 of one group to any of the other group.
 
@@ -104,6 +100,99 @@ The output corresponds to the blockfile format (see section
   \vdots 
 \}
 \end{code}
+
+\subsection{Radial density map}
+\label{analyze:radialdensitymap}
+
+\begin{essyntax}
+  analyze radial_density_map \var{xbins} \var{ybins} \var{xrange} \var{yrange}
+  \opt{\var{axisofrotation} \var{centerofrotation} \var{beadtypelist}
+  \opt{\var{thetabins}}}
+\end{essyntax}
+
+Returns the radial density of particles around a given
+axis. Parameters are:
+
+\todo{Someone who knows or wrote this command should check this.}
+
+\begin{itemize}
+\item \var{xbins} histogram bins in x direction.
+\item \var{ybins} histogram bins in y direction.
+\item \var{xrange} range for analysis in x direction.
+\item \var{yrange} range for analysis in y direction.
+\item \var{axisofrotation} rotate around given axis. (x, y, or z)
+\item \var{centerofrotation} rotate around given point.
+\item \var{beadtypelist} only analyze beads of given types.
+\item \var{thetabins} histogram bins in angle theta.
+\end{itemize}
+
+\subsection{Modes}
+\label{analyze:modes2d}
+
+\begin{essyntax}
+  analyze modes2d
+\end{essyntax}
+
+Analyzes the modes of a configuration. Requires that a grid is set and
+that the system contains more than two particles. Output are four
+numbers in the order:
+
+\begin{displaymath}
+ht_{RE}\qquad ht_{IM}\qquad \theta_{RE}\qquad \theta_{IM}
+\end{displaymath}
+
+\subsection{Lipid orientation}
+\label{analyze:lipids}
+
+\begin{essyntax}
+  \variant{1} analyze get_lipid_orients
+  \variant{2} analyze lipid_orient_order
+\end{essyntax}
+
+\todo{Document the usage!}
+
+\subsection{Bilayers}
+\label{analyze:bilayers}
+
+\begin{essyntax}
+  \variant{1} analyze bilayer_set
+  \variant{2} analyze bilayer_density_profile
+\end{essyntax}
+
+\todo{Document the usage!}
+
+\subsection{GPB}
+\label{analyze:cellgpb}
+
+\begin{essyntax}
+  analyze cell_gpb \var{Manning parameter} \var{outer cell radius}
+  \var{inner cell radius} \opt{\var{accuracy}
+    \opt{\var{number of interactions}}}
+\end{essyntax}
+
+\todo{Document the usage and what it is!}
+
+\subsection{Get folded positions}
+\label{analyze:folded}
+
+\begin{essyntax}
+  analyze get_folded_positions \opt{-molecule} \opt{shift \var{x} \var{y} \var{z}}
+\end{essyntax}
+
+Outputs the folded positions of particles. Without any parameters, the
+positions of all particles are given, folded to the box length. The
+optional parameter \keyword{-molecule} ensures that molecules
+(particle groups) are kept intact. The optional shift parameters can
+be used to shift the not separated molecules if needed.
+
+\subsection{Vkappa}
+\label{analyze:Vkappa}
+
+\begin{essyntax}
+  analyze Vkappa \opt{\alt{ reset \asep read \asep set \var{V_{\kappa, 1}} \var{V_{\kappa, 2}} \var{avk} } }
+\end{essyntax}
+
+\todo{Document the usage and what it is!}
 
 \subsection{Radial distribution function}
 \label{analyze:rdf}
@@ -144,7 +233,7 @@ The output corresponds to the blockfile format (see section
 Returns the spherically averaged structure factor $S(q)$ for particles
 of a given type \var{type}. The $S(q)$ is calculated for all possible
 wave vectors, $\frac{2\pi}{L} <= q <= \frac{2\pi}{L}\var{order}$. Do
-not chose parameter \var{order} too large, becase the number of
+not chose parameter \var{order} too large, because the number of
 calculations grows as $\var{order}^3$. 
 
 
@@ -171,12 +260,12 @@ configurations stored with \codebox{analyze append} (see section
 \vref{sec:stored-configs}) are stored at equidistant time intervals.
 $G(r,t)$ is calculated for each multiple of this time intervals. For
 each time t the distribution of particle displacements is calculated
-acoording to the specification given by \var{rmin}, \var{rmax} and
+according to the specification given by \var{rmin}, \var{rmax} and
 \var{rbins}. Optional argument \var{tmax} defines the maximum value
 of $t$ for which $G(r,t)$ is calculated. If it is omitted or set to
 zero, maximum possible value is used.
 If the particles perform a random walk (\ie a normal
-diffusion process) $G(r,t)/r^2$ is a gaussian distribution for all
+diffusion process) $G(r,t)/r^2$ is a Gaussian distribution for all
 times.  Deviations of this behavior hint on another diffusion process
 or on the fact that your system has not reached the diffusive regime.
 In this case it is also very questionable to calculate a diffusion
@@ -206,7 +295,7 @@ yields $1$.
 \end{essyntax}
 Returns the center of mass of particles of the given type.
 
-\subsection{Moment of intertia matrix}
+\subsection{Moment of inertia matrix}
 \label{analyze:momentofinteratiamatrix}
 \label{analyze:find-principal-axis}
 \analyzeindex{moment of inertia matrix}
@@ -230,8 +319,8 @@ eigenvectors of the matrix.
 \end{essyntax}
 Analyze the gyration tensor of particles of a given type \var{typeid},
 or of all particles in the system if no type is given.
-Returns a tcl-list containing the squared radius of gyration,
- three shape discriptors (asphericity, acylindricity,
+Returns a Tcl-list containing the squared radius of gyration,
+ three shape descriptors (asphericity, acylindricity,
  and relative shape anisotropy), eigenvalues of the gyration tensor and their
 corresponding eigenvectors. The eigenvalues are sorted in descending order.
 
@@ -259,7 +348,7 @@ particles.
 \analyzeindex{pearl-necklace structures}
 
 \begin{essyntax}
- analyze necklace \var{pearl\_treshold} \var{back\_dist} \var{space\_dist}
+ analyze necklace \var{pearl\_threshold} \var{back\_dist} \var{space\_dist}
 \var{first} \var{length} 
 \end{essyntax}
 Algorithm for identifying pearl necklace structures for
@@ -297,7 +386,7 @@ LJ_cut+LJ_offset to any particle as defined by the LJ interaction
 parameters between the probe particle type and other particle types.\
 How to use this function:\ Define interactions between all (or the
 ones you are interested in) particle types in your system and a
-fictious particle type.  Practically one uses the van der Waals radius
+fictitious particle type.  Practically one uses the van der Waals radius
 of the particles plus the size of the probe you want to use as the
 Lennard Jones cutoff. The mesh spacing is the box length divided by
 the \var{mesh_size}.
@@ -311,7 +400,7 @@ the \var{mesh_size}.
 \} 
 \end{code}
 
-A hole is defined as a continous cluster of mesh elements that belong
+A hole is defined as a continuous cluster of mesh elements that belong
 to the unoccupied volume. Since the function is quite rudimentary it
 gives back the whole information suitable for further processing on
 the script level. \var{sizes} and \var{surfaces} are given in number
@@ -369,13 +458,15 @@ Variant \variant{2} will return the total pressure only.  Variants
 \variant{3}, \variant{4} and \variant{5} return the corresponding
 contributions to the total pressure.
 
+\warning{Pressure works only with certain interactions and
+features. Read in detail before use!}
+
 \todo{Document arguments nb_inter, nb_intra, tot_nb_inter and
   tot_nb_intra}
 
-\todo{Description of how electrostatic contribution to Pressure is calculated}
-
 The pressure is calculated (if there are no electrostatic interactions) by 
 \begin{equation}
+\label{eq:ptens}
   p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
 \end{equation}
 where $f$ is the number of degrees of freedom of each particle, $V$
@@ -392,10 +483,19 @@ when the ROTATION option is turned off and
  when the ROTATION option is compiled in.  $I_{i}$ is the moment of inertia of the particle and
  $w_{i}$ is the angular velocity.
 
-Care should be taken when using constraints of any kind, since these are not accounted for
-in the pressure calculations. . Concerning bonded interactions
-only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-For all electrostatic interactions only the real space part is included.
+Note that Equation~\ref{eq:ptens} can only be applied to pair potentials and central forces.
+Description of how contributions from other interactions are calculated is beyond the scope
+of this manual. Three body potentials are implemented following the procedure in 
+Ref.~\cite{thompson09a}.
+A different formula is used to calculate contribution from electrostatic interactions 
+in P3M. For electrostatic interactions, the $k$-space contribution is not 
+well tested, so use with caution!
+\todo{Description of how electrostatic contribution to Pressure is calculated}
+Anything outside that is currently not implemented.
+Four-body dihedral potentials are not included.
+In case of rigid body rotation, virial contribution from torques is not included.
+Constraints of any kind are not currently accounted for in the pressure calculations. 
+The pressure is no longer correct, e.g., when particles are confined to a plane.
 
 The command is implemented in parallel.
 
@@ -437,6 +537,10 @@ Computes the stress tensor of the system.  The various options are equivalent to
 \keyword{analyze pressure} in \vref{analyze:pressure}. It is called a stress tensor but the sign
 convention follows that of a pressure tensor.
 
+\warning{Stress tensor works only with certain interactions and features. 
+Same restrictions as in the case of Pressure are applicable 
+(see scetion~\ref{analyze:pressure}).}
+
 The stress tensor is calculated by 
 \begin{equation}
   p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
@@ -448,13 +552,6 @@ means that when the ROTATION option is compiled in the instantaneous pressure ca
 \keyword{analyze pressure} will be different from the pressure implied by
 the stress tensor.  However, the time averages should be in agreement.
 
-If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
-stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
-only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-For all electrostatic interactions only the real space part is included.
-
-Care should be taken when using constraints of any kind, since these are not accounted for
-in the stress tensor calculations.
 
 The command is implemented in parallel.
 
@@ -494,7 +591,7 @@ tensor is calculated using the Irving Kirkwood method.  That is, a given interac
 towards the stress tensor in a bin proportional to the fraction of the line connecting the two
 particles that is within the bin.
 
-If the P3M and MMM1D electostatic methods are used, these interactions are not included in the
+If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
 local stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
 only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
 For all electrostatic interactions only the real space part is included.
@@ -514,11 +611,19 @@ The command is implemented in parallel.
 \end{code}
 specifying the local pressure tensor in each bin.
 
-\section{Topologies}
+\section{Analyze groups of particles (molecules)}
 \analyzeindex{topologies}
 \label{analyze:set}
 
-\todo{Topologies intro}
+The following set of functions is designed to facilitate analysis 
+of molecules. Molecules are expected to be a group of particles
+comprising a contiguous range of particle IDs. Each molecule
+is a set of consecutively numbered particles and all molecules
+are supposed to consist of the same number of particles.
+Some functions in this group require that the particles constituting
+a molecule are connected into linear chains (particle $n$ is connected
+to $n+1$ and so on) while others are applicable to molecules
+of whatever topology.
 
 The \lit{analyze set} command defines the structure of the current
 system to be used with some of the analysis functions.
@@ -526,17 +631,26 @@ system to be used with some of the analysis functions.
 \begin{essyntax}
   \variant{1} analyze set chains \opt{\var{chain\_start} \var{n\_chains}
     \var{chain\_length}}
-  \variant{2} analyze set chains
+  \variant{2} analyze set topo\_part\_sync
+  \variant{3} analyze set
+  %\variant{4} analyze set trapmol \var{mol\_id} \var{xpos} \var{ypos} \var{zpos} \var{isrelative} \var{spring\_constant} \var{drag\_constant} coords \var{trapped\_coord\_x} \var{trapped\_coord\_y} \var{trapped\_coord\_z} noforce\_coords \var{noforce\_coord\_x} \var{noforce\_coord\_y} \var{noforce\_coord\_z}
 \end{essyntax}
-
-\todo{Update documentation for set_topology}
 
 Variant \variant{1} defines a set of \var{n\_chains} chains of equal
 length \var{chain\_length} which start with the particle with particle
 number \var{chain\_start} and are consecutively numbered (\ie the last
 particle in that topology has number $\var{chain\_start} +
-\var{n\_chains}*\var{chain\_length}$). Variant \variant{2} will return
-the chains currently stored.
+\var{n\_chains}*\var{chain\_length} - 1$). 
+
+Variant \variant{2} synchronizes topology and particle data, assigning \var{mol\_id} values to particles.
+
+Variant \variant{3} will return the chains currently stored.
+
+%\todo{Why is setting up a trap implemented via analyze command?}
+%Variant \variant{3} sets a trap on a molecule, i.e.\ an external potential acting on it.
+%\var{mol\_id} define the molecule ID on which the trap is set, \var{xpos} \var{ypos} \var{zpos} define coordinates of the centre of the trap. \var{isrelative} is an integer specifying if the trap is relative or absolute. (Requires features: MOLFORCES and EXTERNAL\_FORCES).
+%\todo{Trapmol documentation still incomplete.}
+
 
 \subsection{Chains}
 \analyzeindex{chains}
@@ -569,9 +683,18 @@ stored configurations (see section \vref{sec:stored-configs}).
   analyze \alt{rg \asep <rg>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-\todo{Reference?}
-Returns the radius of gyration averaged over all chains.  If
-\lit{<rg>} is used, the radius of gyration is averaged over all stored
+Returns the radius of gyration averaged over all chains. It is a radius
+of a sphere, which would have the same moment of inertia as the molecule, 
+defined as
+\begin{equation}
+\label{eq:Rg}
+R_{\mathrm G}^2 = \frac{1}{N} \sum\limits_{i=1}^{N} \left(\vec r_i - \vec r_{\mathrm{cm}}\right)^2\,,
+\end{equation}
+where $\vec r_i$ are position vectors of individual particles constituting a molecule
+and $\vec r_{\mathrm{cm}}$ is the position vector of its centre of mass. The sum runs
+over all $N$ particles comprising the molecule. For more information see
+any polymer science book, e.g.~\cite{rubinstein03a}.
+If \lit{<rg>} is used, the radius of gyration is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 
 \minisec{Output format}
@@ -585,10 +708,16 @@ configurations (see section \vref{sec:stored-configs}).
   analyze \alt{rh \asep <rh>} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-\todo{Reference?}
-Returns the hydrodynamic radius averaged over all chains.  If
-\lit{<rh>} is used, the hydodynamic radius is averaged over all stored
+Returns the hydrodynamic radius averaged over all chains.  
+If \lit{<rh>} is used, the hydrodynamic radius is averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
+The following formula is used for the computation:
+\begin{equation}
+\label{eq:Rh}
+\frac{1}{R_{\mathrm H}} = \frac{2}{N^2} \sum\limits_{i=1}^{N} \sum\limits_{j=i}^{N} \frac{1}{|\vec r_i - \vec r_j|}\,,
+\end{equation}
+The above-mentioned formula is only valid under certain assumptions.
+For more information, see Chapter 4 and equation 4.102 in~\cite{doi86a}.
 \minisec{Output format}
 \begin{code}
 \{ \var{rh} \var{error\_of\_rh} \}
@@ -600,8 +729,9 @@ configurations (see section \vref{sec:stored-configs}).
  analyze \alt{internal_dist \asep <internal_dist>} 
  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
-Returns the averaged internal distances within the chains.  If
-\lit{<internal_dist>} is used, the values are averaged over all stored
+Returns the averaged internal distances within the chains (over
+all pairs of particles).  
+If \lit{<internal_dist>} is used, the values are averaged over all stored
 configurations (see section \vref{sec:stored-configs}).
 \minisec{Output format}
 \begin{code}
@@ -610,8 +740,9 @@ configurations (see section \vref{sec:stored-configs}).
 The index corresponds to the number of beads between the two monomers
 considered (0 = next neighbours, 1 = one monomer in between, \dots).
 
-\subsubsection{Bond distances}
-\analyzeindex{bond distances}
+\subsubsection{Internal distances II (specific monomer)}
+\analyzeindex{bond distances internal first monomer}
+
 \begin{essyntax}
   analyze \alt{bond_dist \asep <bond_dist>} \opt{index \var{index}} 
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
@@ -635,13 +766,15 @@ configurations (see section \vref{sec:stored-configs}).
   \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 
-Analyses the bond lengths of the chains in the system.  Returns its average, the
+Analyzes the bond lengths of the chains in the system.  Returns its average, the
 standard deviation, the maximum and the minimum.  If you want to look
 only at specific chains, use the optional arguments, \ie $\var{chain\_start} =
 2*\var{MPC}$ and $\var{n\_chains} = 1$ to only include the third
 chain's monomers. If \lit{<bond_l>} is used, the value will be
 averaged over all stored configurations (see section
 \vref{sec:stored-configs}).
+This function assumes linear chain topology and does not check 
+if the bonds really exist!
 
 \minisec{Output format}
 \begin{code}
@@ -702,13 +835,12 @@ given by \var{rmin} and \var{rmax} and it is divided into
 \}
 \end{code}
 
-\subsubsection{g123}
+\subsubsection{Mean square displacement of chains}
 \label{analyze:<g1>}
 \label{analyze:<g2>}
 \label{analyze:<g3>}
 \label{analyze:g123}
 
-\todo{Title?}
 \begin{essyntax}
   \variant{1} analyze \alt{<g1>\asep<g2>\asep<g3>} 
   \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
@@ -817,54 +949,10 @@ Variant \variant{1} returns all stored configurations, while variant
 \}
 \end{code}
 
-\section{Statistical analysis and plotting}
+\section{Computing averages and errors (deprecated)}
 
-\todo{Make this an appendix?}
-
-
-\subsection{Plotting}
-
-\begin{essyntax}
-  plotObs \var{file} \{ \var{x1}:\var{y1} \var{x2}:\var{y2} \dots \}
-  \opt{titles \{ \var{title1} \var{title2} \dots \}}
-  \opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}} 
-  \opt{scale \var{gnuplot-scale}}
-  \opt{cmd \var{gnuplot-command}} 
-  \opt{out \var{filebase}}
-\end{essyntax}
-Uses \textsc{gnuplot} to create plots of the data in \var{file} and
-writes it to the file \var{filebase}\lit{.ps} (default:
-\var{file}\lit{.ps}). The data in \var{file} should be stored
-column-wise. $\var{x1}, \var{x2} \dots$ and $\var{y1}, \var{y2} \dots$
-denote the columns used for the data of the x- and y-axis,
-respectively.
-
-\begin{arguments}
-\item[\opt{titles \{ \var{title1} \var{title2} \dots \}}] can be used
-  to specify the titles of the different plots
-\item[\opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}}] will define the
-  labels of the axis. If \var{ylabel} is omitted, the filename
-  \var{file} is used as label for the y-axis.
-\item[\opt{scale \var{gnuplot-scale}}] will define the scaling of the
-  axis (\eg \lit{scale logscale xy}) (default: \lit{nologscale xy})
-\item[\opt{cmd \var{gnuplot-command}}] allows to pass any other
-  commands to gnuplot. For example, use
-  \codebox{plotObs \dots cmd "set key left"} to adjust the titles on
-  the left side.
-\item[\opt{out \var{filebase}}] can be used to change the output
-  file. By default, the plot will be written to \var{file}\lit{.ps}.
-\end{arguments}
-
-\subsection{Joining plots}
-\begin{essyntax}
-  plotJoin \{ \var{source1} \var{source2} \dots \} \var{final}
-\end{essyntax}
-Joins the plot files $\var{source1}, \var{source2}, \dots$ into a
-single file \var{final}, while placing any two files on one page.
-Note that the resulting files may be huge and therefore hard to print!
-
-
-\subsection{Computing averages and errors}
+\warning{The functions in this section are deprecated and will be removed in
+  a future version of \es.}
 
 \begin{essyntax}
   \variant{1} calcObAv \var{file} \var{index} \opt{\var{start}}
@@ -915,7 +1003,50 @@ variant \variant{3}, returning just these values as tiny tcl-list.
 \}
 \end{code}
 
+\subsection{Plotting observables (deprecated)}
+
+\begin{essyntax}
+  plotObs \var{file} \{ \var{x1}:\var{y1} \var{x2}:\var{y2} \dots \}
+  \opt{titles \{ \var{title1} \var{title2} \dots \}}
+  \opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}} 
+  \opt{scale \var{gnuplot-scale}}
+  \opt{cmd \var{gnuplot-command}}
+  \opt{out \var{filebase}}
+\end{essyntax}
+Uses \textsc{gnuplot} to create plots of the data in \var{file} and
+writes it to the file \var{filebase}\lit{.ps} (default:
+\var{file}\lit{.ps}). The data in \var{file} should be stored
+column-wise. $\var{x1}, \var{x2} \dots$ and $\var{y1}, \var{y2} \dots$
+denote the columns used for the data of the x- and y-axis,
+respectively.
+
+\begin{arguments}
+\item[\opt{titles \{ \var{title1} \var{title2} \dots \}}] can be used
+  to specify the titles of the different plots
+\item[\opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}}] will define the
+  labels of the axis. If \var{ylabel} is omitted, the filename
+  \var{file} is used as label for the y-axis.
+\item[\opt{scale \var{gnuplot-scale}}] will define the scaling of the
+  axis (\eg \lit{scale logscale xy}) (default: \lit{nologscale xy})
+\item[\opt{cmd \var{gnuplot-command}}] allows to pass any other
+  commands to gnuplot. For example, use
+  \codebox{plotObs \dots cmd "set key left"} to adjust the titles on
+  the left side.
+\item[\opt{out \var{filebase}}] can be used to change the output
+  file. By default, the plot will be written to \var{file}\lit{.ps}.
+\end{arguments}
+
+\subsection{Joining plots (deprecated)}
+\begin{essyntax}
+  plotJoin \{ \var{source1} \var{source2} \dots \} \var{final}
+\end{essyntax}
+Joins the plot files $\var{source1}, \var{source2}, \dots$ into a
+single file \var{final}, while placing any two files on one page.
+Note that the resulting files may be huge and therefore hard to print!
+
+
 \section{\lit{uwerr}: Computing statistical errors in time series}
+\label{sec:uwerr}
 \newescommand{uwerr}
 
 \begin{essyntax}
@@ -926,13 +1057,13 @@ variant \variant{3}, returning just these values as tiny tcl-list.
   \var{f} \opt{\var{s\_tau} \opt{\var{f\_args}}} \opt{plot}
 \end{essyntax}
 Calculates the mean value, the error and the error of the error for an
-arbitrary numerical time series accordings to \citet{wolff04a}.
+arbitrary numerical time series according to \citet{wolff04a}.
 
 \begin{arguments}
 \item[\var{data}] is a matrix filled with the primary estimates
   $a_\alpha^{i,r}$ from $R\/$ replica with $N_1,N_2,\ldots,N_R$
   measurements each.
-  \todo{How exactly does the Tcl-list look like?}
+
   \begin{displaymath}
     \var{data}=\left(
       \begin{array}

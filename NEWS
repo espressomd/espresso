@@ -2,11 +2,140 @@
 = ESPRESSO NEWS =
 =================
 
-NOTEWORTHY CHANGES SINCE v2.2.0b
-================================
+ESPResSo 3.1
+============
 
 User-visible changes
 --------------------
+
+* Added new constraint and LB boundary condition "rhomboid".
+
+* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
+  coulomb memd).
+
+* Added basic tutorial on Lennard-Jones liquid, made second tutorial
+  (simple charged systems) better available (all in doc/tutorials)
+
+* Lattice-Boltzmann:
+
+  * nonzero velocity boundary conditions are available
+
+  * forces on boundaries can be calculated
+
+Changes visible for developers
+------------------------------
+
+* Added ESPResSo logos to the repo (doc/logo).
+
+* A new LaTeX-Developer's Guide (DG) was started, and all "Related
+  pages" from the doxygen docs have been moved there.
+
+ESPResSo 3.0.2
+==============
+
+* Fixed features ADRESS and VIRTUAL_SITES_COM that did not work for a while.
+
+* Fixed bugs #33489, #34238.
+
+* Fixed a few bugs that were never reported via the bug tracker,
+  mainly in the documentation.
+
+ESPResSo 3.0.1
+==============
+
+* Fixed bugs #33375,#33376,#32005
+
+* Fixed a few bugs that were never reported via the bug tracker.
+
+ESPResSo 3.0.0
+===============
+
+User-visible changes
+--------------------
+
+* The Lattice-Boltzmann implementation in ESPResSo has been
+  significantly overhauled and it has been documented for the first
+  time.
+
+* A CUDA implementation for NVIDIA GPUs of the Lattice-Boltzmann
+  algorithm is included.
+
+* The Maggs algorithm (or Maxwell Equation Molecular Dynamics, MEMD)
+  for computing electrostatic interactions has been included and
+  documented. The algorithm is a fast and scalable alternative for P3M
+  or other such algorithms.
+
+* The P3M algorithm for electrostatic and dipolar (magnetostatic)
+  interactions has been extended.
+
+  * Electrostatic P3M allows for non-cubic boxes.
+
+  * The electrostatic P3M pressure tensor is computed correctly now.
+
+  * Dipolar P3M has been parallelized (electrostatics P3M was
+    parallelized already!)
+
+  * The MDLC method (magnetic dipolar layer correction) has been
+    parallelized.
+
+* The virtual sites feature has been significantly extended and
+  documented.  Virtual sites are particles that can interact with
+  other particles but whose positions are not integrated via the
+  normal integrator.  Instead, the positions are determined by the
+  positions of other, "real" particles.  Virtual sites can either be
+  set into the center of mass of a set of real particles (feature
+  VIRTUAL_SITES_COM), or it can be set to an arbitrary location
+  relative to another particle (VIRTUAL_SITES_RELATIVE).  This allows
+  to create rigid structures within ESPResSo.
+
+* The User's Guide has been significantly updated and extended.
+
+* Some constraints can now be made penetrable and reflecting.
+
+* "Espresso" is now the actual binary instead of a wrapper shell
+  script that automatically calls MPI. This means that it is necessary
+  to call "mpiexec" or "mpirun" youself to run ESPResSo in an MPI
+  environment.
+
+* The directory where the scripts are installed is now compiled into
+  the binary, i.e. it is not necessary anymore to set the environment
+  variable ESPRESSO_SCRIPTS. Still, it will heed the environment
+  variable if it is set.
+
+* The build system has been overhauled and simplified.
+
+  * Running "make check" will run the testsuite with a single number
+    of processors, which gives a significant speedup. "configure" will
+    try to determine the available number of CPUs/cores. If it can't,
+    it will use 1 by default.
+
+  * MPI recognition has changed. The build system first needs to find
+    out how to compile an MPI binary. If it doesn't find out
+    automatically, you can help it by setting the variable MPICC or
+    LDFLAGS correctly.  Furthermore, it needs to know how to run an MPI
+    binary.  If "mpiexec" is available, everything is fine.  If it is
+    not, you can provide a script "mympiexec.sh" that behaves like
+    mpiexec.
+
+  * So far, when you built in the source directory, all files ended up
+    in a subdirectory "obj.XXX", where XXX was some description of the
+    processor you used.  This non-standard behavior has been removed.
+    Instead, the files are generated directly in the source directory
+    when compiling there.
+    If you want to compile several binaries from a single source
+    directory, you can use build directories as described in the
+    User's Guide.
+
+* A number of functions have been deprecated, as they are not
+  maintained anymore. Plase do not use them in your code and replace
+  them with appropriate alternatives if you use them in your code!
+  The following functions are deprecated:
+  checkpoint_*, polyBlock*, calcOb*, calcObs*, plot*, polyConf*
+
+* FFTW2 is no longer supported.
+
+Organizational changes
+----------------------
 
 * The home page of ESPReSso has been relocated to
 
@@ -36,28 +165,49 @@ User-visible changes
   ChangeLog and NEWS. NEWS will contain a description of the most
   noteworthy changes since the last release.
 
-* Constraints have been made penetrable.
-
 Changes visible for developers
 ------------------------------
 
 * The source code repository has been moved from CVS to git, and it
-  has moved to GNU Savannah (see above).
+  has moved to GNU Savannah (see above) and github. The main
+  development code repository is
+
+    https://github.com/espressomd/espresso
+
+* We have an automated build server (Jenkins) at 
+
+    http://espressomd.org/jenkins/ 
+
+  that automatically builds and checks the ESPResSo package whenever
+  new code is pushed to the main development repository.  Every night,
+  a number of additional tests are performed
+
+* The .c/.h/.cu source files have been moved to the subdirectory
+  src/. The Espresso binary is still placed in the top-level build
+  directory. myconfig.h may be placed eitther in the src/ or top-level
+  dirs.
+
+* The automatically generated files configure and Makefile.in are not
+  part of the repository anymore.  A developer can generate them using
+  the command "bootstrap.sh", which requires the GNU autotools
+  (autoconf and automake).
 
 * All functions that represent the interface to Tcl should follow the
   same naming conventions. These are described here:
 
     git log 3d4d6f31655a8d96e47c8f80e10f27f6b764f8df
 
+* Adding a new MPI function to communication.c has been significantly
+  simplified. It is enough to add the function in the C file at a
+  single location.
+
 ========================================================================
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010 The ESPResSo project
+Copyright (C) 2010,2011 The ESPResSo project
 
-Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.3 or
-any later version published by the Free Software Foundation; with no
-Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
-Texts.  A copy of the license is included in the ``GNU Free
-Documentation License'' file as part of this distribution.
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without any warranty.

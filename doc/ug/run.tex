@@ -24,11 +24,30 @@
 
 \begin{essyntax}
   \variant{1} integrate \var{steps}
-  \variant{2} integrate set \var{method} \opt{\var{parameter}}\dots
+  \variant{2} integrate set \opt{nvt}
+  \variant{3} integrate set npt_isotropic \var{p_{ext}} \var{piston} \opt{\var{x\: y\: z}} \opt{-cubic_box}
 \end{essyntax}
 
-\todo{Docs missing!}
-\todo{Which integrators do exist?}
+\es uses the Velocity Verlet algorithm for the integration of the
+equations of motion. The command \texttt{integrate} with an integer
+\texttt{steps} as parameter integrates the system for \texttt{steps}
+time steps.
+
+Two methods for the integration can be set: For an NVT ensemble
+(thermostat) and for an NPT isotropic ensemble (barostat). The current
+method can be detected with the command \texttt{integrate set} without
+any parameters.
+
+The NVT integrator is set without parameters (the temperature can be
+set with the thermostat). For the NPT ensemble, the parameters that
+can be added are:
+
+\begin{itemize}
+\item \var{p_{ext}} The external pressure as float variable. This parameter is required.
+\item \var{piston} The mass of the applied piston as float variable. This parameter is required.
+\item \var{x\: y\: z} Three integers to set the box geometry for non-cubic boxes. This parameter is optional.
+\item \texttt{-cubic_box} If this optional parameter is added, a cubic box is assumed.
+\end{itemize}
 
 \section{\texttt{change_volume}: Changing the box volume}
 \newescommand[change-volume]{change_volume}
@@ -72,26 +91,28 @@ total velocity assigned. By default, all particles are affected.
 \begin{essyntax}
   invalidate_system
 \end{essyntax}
-\todo{Documentation not up to date!}
 
 Forces a system re-init which, among others, causes the integrator to
 also update the forces at its beginning (instead of re-using the
 values from the previous integration step).  This is particularly
 necessary to ensure continuity after setting a checkpoint:
 \texttt{integrate} - \texttt{set_checkpoint} - \texttt{integrate} has
-only one call to \todo{???}???, while \texttt{read_checkpoint} -
-\texttt{integrate} has two at the beginning of the 2nd integrate
-(because loading a new system from disk typically requires
-re-initializing the system), and since ??? also uses the thermostat
-which in turn draws random numbers, the two situations do not end up
-at the same segment of the random number sequence, all random events
-will therefore slightly differ.  To prevent this, simply include a
-call to invalidate_system upon setting the checkpoint (this is being
-done automatically if using tcl_checkpoint_set and
-tcl_checkpoint_read beginning with v1.1 of \es{}), because in that
-case both scenarios will call ??? twice at the beginning of the second
-integration phase thus having their random number sequences in total
-sync.
+only one call to the force calculation routine, while
+\texttt{read_checkpoint} - \texttt{integrate} has two at the beginning
+of the \texttt{integrate} command (because loading a new system from
+disk typically requires re-initializing the system), and since the
+forces routine also uses the thermostat which in turn draws random
+numbers, the two situations do not end up at the same segment of the
+random number sequence, all random events will therefore slightly
+differ.  To prevent this, simply include a call to
+\texttt{invalidate_system} upon setting the checkpoint, because in
+that case both scenarios will call the forces routine twice at the
+beginning of the second integration phase thus having their random
+number sequences in total sync.
+
+Without applying this command directly before or after writing a
+checkpoint, you will run into a different state of the random number
+generator when reading the checkpoint to start again later!
 
 \section{Parallel tempering}
 \newescommand[parallel-tempering]{parallel_tempering}
@@ -246,7 +267,8 @@ proc swap {id temp1 temp2} {
   set epot [expr [analyze energy total] - [analyze energy kinetic]]
   return "[expr $epot/$temp1] [expr $epot/$temp2]"
 }
-\end{verbatim} % make emacs happy: $
+\end{verbatim}
+% make emacs happy: $
 Note that only the potential energy is taken into account. The temperature enters only indirectly
 through the inverse temperature prefactor, see Eqn.~\eqref{eq:ptacceptance}.
 
@@ -263,7 +285,8 @@ instances, which are identical to the master script, except that they execute
 \begin{verbatim}
 parallel_tempering::main -connect $host -load 30 \
     -init init -swap swap -perform perform
-\end{verbatim} % make emacs happy: $
+\end{verbatim}
+% make emacs happy: $
 Here, {\tt host} is a variable containing the TCP/IP hostname of the computer running the master
 process. Note that the master process waits until enough processes have connected to start the
 simulation. In the example, there are 300 temperatures, and each process, including the master

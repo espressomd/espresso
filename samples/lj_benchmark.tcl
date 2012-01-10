@@ -1,14 +1,12 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Lennard Jones Liquid Benchmark                           #
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -51,9 +49,9 @@ set vmd_output "no"
 set density 0.8442
 
 # 1 000 Particles
-set box_l 33.5919238
+#set box_l 10.7437
 # 10 000  Particles
-#set box_l   10.7437
+set box_l 22.796
 # 100 000 Particles
 # set box_l   48.9998
 
@@ -68,8 +66,8 @@ set max_cells   14
 
 set lj1_eps     1.0
 set lj1_sig     1.0
-set lj1_cut     2.5
-#set lj1_cut     1.12246
+#set lj1_cut     2.5
+set lj1_cut     1.12246
 set lj1_shift   $lj1_eps
 
 # Integration parameters
@@ -85,7 +83,7 @@ set min_dist     0.87
 
 # integration
 set int_steps    1000
-set int_n_times  0
+set int_n_times  5
 
 # Other parameters
 #############################################################

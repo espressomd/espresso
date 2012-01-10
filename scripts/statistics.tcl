@@ -7,8 +7,9 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 #  
 # This file is part of ESPResSo.
 #  
@@ -26,9 +27,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
 
-
-
 proc average_checkpoint { origin what } {
+    warn_deprecated average_checkpoint 3.0.0
     # reads in a checkpoint, executing analysis-command 'what' after each file, averaging it in the end
     if { [file exists "$origin.chk"] } { set chk [open "$origin.chk" "r"] 
     } elseif { [file exists "$origin"] } { set chk [open "$origin" "r"] 
@@ -46,6 +46,7 @@ proc average_checkpoint { origin what } {
 
 
 proc calcObsAv { fileN ind { startJ 0 } } {
+    warn_deprecated calcObsAv 3.0.0
     # derives time-averages of the observables at the columns $ind in file $fileN,
     # returning '<amount of samples> { names (taken from header) } { averaged values } { errors }',
     # skip the first <startJ>-lines before starting to average
@@ -84,6 +85,7 @@ proc calcObsAv { fileN ind { startJ 0 } } {
 }
 
 proc findObsAv { val what } {
+    warn_deprecated findObsAv 3.0.0
     # extracts the values in the tcl-list $val from $what (the output-list from 'calcObsAv')
     # returning them as a tiny tcl-list
     lappend res [lindex $what 0]; set tmp1 [lindex $what 1]; set tmp2 [lindex $what 2]
@@ -97,6 +99,7 @@ proc findObsAv { val what } {
 }
 
 proc calcObAv { fileN ind { startJ 0 } } {
+    warn_deprecated calcObAv 3.0.0
     # does the same as 'calcObsAv', but for one observable only, hence returning only its averaged value
     if { [llength $ind]!=1 } { puts "\nWARNING: Parameter '$ind' is too long - use 'calcObsAv' to average multiple observables!"; exit }
     set what [calcObsAv $fileN $ind $startJ]
@@ -104,6 +107,7 @@ proc calcObAv { fileN ind { startJ 0 } } {
 }
 
 proc calcObErr { fileN ind { startJ 0 } } {
+    warn_deprecated calcObErr 3.0.0
     # same as 'calcObAv', but returns the error of that value
     if { [llength $ind]!=1 } { puts "\nWARNING: Parameter '$ind' is too long - use 'calcObsAv' to average multiple observables!"; exit }
     set what [calcObsAv $fileN $ind $startJ]
@@ -111,6 +115,7 @@ proc calcObErr { fileN ind { startJ 0 } } {
 }
 
 proc nameObsAv { fileN names { startJ 0 } } {
+    warn_deprecated nameObsAv 3.0.0
     # does the same as 'calcObsAv', but expects the observables' column-names rather than their column-positions
     set f [open $fileN "r"]; set ind1 ""; set ind2 ""
     gets $f tmp_line
@@ -128,6 +133,7 @@ proc nameObsAv { fileN names { startJ 0 } } {
 
 
 proc replObsAv { fileN what } {
+    warn_deprecated replObsAv 3.0.0
     # replaces the values for 're' and 'rg' in $fileN by their time-averages
     # using the output-list from 'calcObsAv', writing the result to '$fileN.av'
     set reD -1; set rgD -1; set reO -1; set rgO -1
@@ -169,8 +175,6 @@ proc replObsAv { fileN what } {
 }
 
 
-
-
 #
 # gnuplot
 # -------
@@ -181,6 +185,7 @@ proc replObsAv { fileN what } {
 #############################################################
 
 proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA} {p7 NA} {p8 NA} {p9 NA} {p10 NA} } {
+    warn_deprecated plotObs 3.0.0
     # Creates a gnuplot of the data in $destination at positions $what.
     # Syntax: 'plotObs <data> { x:y1 ... x:yn } [titles { "title.y1" ... "title.yn" }] [labels { "xlabel" "ylabel" }] [scale <gnuplot-scale>] [out <out>] [cmd <gnuplot-command>]'
     set param [list $p1 $p2 $p3 $p4 $p5 $p6 $p7 $p8 $p9 $p10]
@@ -227,6 +232,7 @@ proc plotObs { destinations what {p1 NA} {p2 NA} {p3 NA} {p4 NA} {p5 NA} {p6 NA}
 }
 
 proc plotJoin { sources final } {
+    warn_deprecated plotJoin 3.0.0
     eval exec  gs -dNOPAUSE -sDEVICE=pswrite -sOutputFile=$final.A.ps $sources -c quit
     catch { eval exec pstops "2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)" $final.A.ps $final.B.ps }
 }

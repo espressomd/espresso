@@ -385,20 +385,23 @@ occurences of \var{val} in \var{list}.
 \begin{code}
 LinRegression <l>
 \end{code}
-\var{l} is a list {{x1 y1} {x2 y2} ...} of points. LinRegression
-returns the least-square linear fit a*x+b and the standard errors da
-and db.
+where \var{l} is a listof pairs of points \verb!{ {$x1 $y1} {$x2 $y2} ...} !. 
+\verb!LinRegression! returns the least-square linear fit $ax+b$ and 
+the standard errors $\sigma_a$ and $\sigma_b$.
    \item
 \begin{code}
 LinRegressionWithSigma <l>
 \end{code}
-\var{l} is a list {{x1 y1 s1} {x2 y2 s2} ...} of points with standard
-deviations. LinRegression returns the least-square linear fit a*x+b
-plus the standard errors da and db, cov(a,b) and chi.
-  \end{itemize}
+where \var{l} is a list of lists of points in the form \verb!{{$x1 $y1 $s1} {$x2 $y2 $s2} ...}! 
+where \verb!s! is the standard deviation of \verb!y!. 
+\verb!LinRegressionWithSigma! returns the least-square linear fit 
+$ax+b$, the standard errors $\sigma_a$ and $\sigma_b$, 
+covariance $\mathrm{cov}(a,b)$ and $\chi$.
+\end{itemize}
 \end{itemize}
 
 \subsection{\texttt{t\_random}}
+\label{ssec:trandom}
 \begin{itemize}
  \item
    Without further arguments,
@@ -457,6 +460,7 @@ invalidate\_system command for details)!
 The C implementation is t\_random
 
 \subsection{\texttt{The bit\_random command}}
+\label{ssec:bitrandom}
 \begin{itemize}
  \item
   Without further arguments,

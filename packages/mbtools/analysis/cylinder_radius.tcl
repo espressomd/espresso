@@ -99,52 +99,58 @@ proc ::mbtools::analysis::cylinder_radius::analyze_cylinder_radius {  } {
     set num_mol 0
     # Assume cylinder is built along the z-direction
     # Calculate center of mass of the cylinder in the x-y plane.    
-    # Analysis does not discriminate stray beads.
     foreach mol $topology {
 	set headp [lindex $mol 1]
 	set tb [lindex $mol end]
 	
-	set hpos [foldpart [part $headp print pos] $box]
-	
-	lset com 0 [expr [lindex $com 0]+[lindex $hpos 0]]
-	lset com 1 [expr [lindex $com 1]+[lindex $hpos 1]]
-	incr num_mol
+	# NONfolded particle position is needed
+	set hpos [part $headp print pos]
+
+	# Check the neighborhood of this particle and see if it is a stray particle
+	set nb [analyze nbhood $headp 3]
+	if { [llength $nb] > 5 } {
+	    # Not stray particle
+	    lset com 0 [expr [lindex $com 0]+[lindex $hpos 0]]
+	    lset com 1 [expr [lindex $com 1]+[lindex $hpos 1]]
+	    incr num_mol
+	}
     }
     lset com 0 [expr [lindex $com 0]/(1.*$num_mol)]
     lset com 1 [expr [lindex $com 1]/(1.*$num_mol)]
 
+    if { $verbose } {
+	::mmsg::send [namespace current] "COM: [lindex $com 0] [lindex $com 1]"
+    }
     set num_outer 0
     # Now calculate two radii: inner and outer by looking at the orientation of a lipid
     foreach mol $topology {
 	set headp [lindex $mol 1]
 	set tb [lindex $mol end]
 
-	set hpos [foldpart [part $headp print pos] $box]
-	set tpos [foldpart [part $tb    print pos] $box]
+	set hpos [part $headp print pos]
+	# Only look at x,y coordinates
+	set hpos [lrange $hpos 0 end-1]
+	set tpos [part $tb    print pos]
+	# Only look at x,y coordinates
+	set tpos [lrange $tpos 0 end-1]
 
 	# Define vector CoM to head bead
-	set com_h_vec {0. 0.}
-	lset com_h_vec 0 [expr [lindex $hpos 0]-[lindex $com 0]]
-	lset com_h_vec 1 [expr [lindex $hpos 1]-[lindex $com 1]]
+	set com_h_vec [::mbtools::utils::min_vec $hpos $com]
 
 	# Define vector tail bead to head bead
-	set t_h_vec {0. 0.}
-	lset t_h_vec 0 [expr [lindex $hpos 0]-[lindex $tpos 0]]
-	lset t_h_vec 1 [expr [lindex $hpos 1]-[lindex $tpos 1]]
+
+	set t_h_vec [::mbtools::utils::min_vec $hpos $tpos]
 
 	# dot product between the two vectors
-	set com_h_dot_t_h [expr [lindex $com_h_vec 0]*[lindex $t_h_vec 0] + \
-			       [lindex $com_h_vec 1]*[lindex $t_h_vec 1]]
+	set com_h_dot_t_h [vecdot_product $com_h_vec $t_h_vec]
 	
 	if {$com_h_dot_t_h > 0} {
 	    incr num_outer
 	    # same orientation -- it's the outer leaflet
-	    set R_outer [expr $R_outer + sqrt(pow([lindex $hpos 0]-[lindex $com 0],2) + \
-						  pow([lindex $hpos 1]-[lindex $com 1],2))]
+	    set R_outer [expr $R_outer + [veclen $com_h_vec]]
 	} else {
 	    # antiparallel orientation -- it's the inner leaflet
-	    set R_inner [expr $R_inner + sqrt(pow([lindex $hpos 0]-[lindex $com 0],2) + \
-						  pow([lindex $hpos 1]-[lindex $com 1],2))]
+	    set R_inner [expr $R_inner + [veclen $com_h_vec]]
 	}
     }
 	

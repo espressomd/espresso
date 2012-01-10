@@ -1,4 +1,4 @@
-# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2010,2011 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 #  
 # This file is part of ESPResSo.
@@ -20,9 +20,9 @@
 #
 # To generate the test system, use gen_fene.tcl.
 #
-set errf [lindex $argv 1]
-
 source "tests_common.tcl"
+
+require_feature "ADRESS" off
 
 puts "------------------------------------------"
 puts "- Testcase fene.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -116,5 +116,4 @@ if { [catch {
     error_exit $res
 }
 
-exec rm -f $errf
 exit 0

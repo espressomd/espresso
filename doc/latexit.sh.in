@@ -1,0 +1,61 @@
+#!/bin/sh 
+SRCDIR=$1
+TEXFILE=$2
+TEXINPUTS=.:$SRCDIR:@abs_srcdir@:
+BIBINPUTS=.:$SRCDIR:
+export TEXINPUTS BIBINPUTS
+
+echo "TEXINPUTS=$TEXINPUTS"
+
+PDFLATEX="@PDFLATEX@ -halt-on-error -interaction=batchmode"
+
+echo "Running LaTeX stage 1..."
+
+$PDFLATEX $TEXFILE
+EC=$?
+if test $EC -ne 0; then
+    echo "ERROR: LaTeX stage 1 failed."
+    echo "These are the last 20 lines of $TEXFILE.log:"
+    echo "--------------------------------------------"
+    tail -n 20 $TEXFILE.log
+    echo "--------------------------------------------"
+    test -f $TEXFILE.pdf && rm $TEXFILE.pdf
+    exit $EC
+fi
+
+echo "Running bibtex..."
+# Don't fail on bibtex error: it fails if no .bib-file is there!
+@BIBTEX@ $TEXFILE
+
+echo "Running LaTeX stage 2..."
+$PDFLATEX $TEXFILE 
+EC=$?
+if test $EC -ne 0; then
+    echo "ERROR: LaTeX stage 2 failed."
+    echo "These are the last 20 lines of $TEXFILE.log:"
+    echo "--------------------------------------------"
+    tail -n 20 $TEXFILE.log
+    echo "--------------------------------------------"
+    test -f $TEXFILE.pdf && rm $TEXFILE.pdf
+    exit $EC
+fi
+
+if test -e $TEXFILE.idx; then
+    echo "Running makeindex..."
+    @MAKEINDEX@ $TEXFILE || exit $?
+fi
+
+echo "Running LaTeX stage 3..."
+$PDFLATEX $TEXFILE 
+EC=$?
+if test $EC -ne 0; then
+    echo "ERROR: LaTeX stage 3 failed."
+    echo "These are the last 20 lines of $TEXFILE.log:"
+    echo "--------------------------------------------"
+    tail -n 20 $TEXFILE.log
+    echo "--------------------------------------------"
+    test -f $TEXFILE.pdf && rm $TEXFILE.pdf
+    exit $EC
+fi
+
+echo "See LaTeX output in $TEXFILE.log."

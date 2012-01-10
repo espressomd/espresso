@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%  Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -23,31 +24,36 @@
 
 \index{configure}\index{make}
 
-If you have the requirements (see section \vref{sec:requirements})
-installed, in many cases, to compile \es{}, it is enough to execute
-the following sequence of two steps in the directory where you have
-unpacked the sources:
+If you have installed the requirements (see section
+\vref{sec:requirements}) in standard locations, to compile \es{}, it
+is usually enough to execute the following sequence of two steps in
+the directory where you have unpacked the sources:
 \begin{code}
-configure
+./configure
 make
 \end{code}
 
-\todo{Mention minimal configuration without myconfig.h}
-In some cases, \eg{} when \es{} needs to be compiled for several
-different platforms or when different versions with different sets of
-features are required, it might be useful to execute the commands not
-in the source directory itself, but to start \texttt{configure} from
-another directory (see section \vref{sec:builddir}). Furthermore, many
-features of \es{} can be selectively turned on or off in the local
-configuration header of \es{} (see section \vref{sec:myconfig}) before
-starting the compilation with \texttt{make}.
+This will compile \es in a freshly created object path named according
+to your CPU and operating system. As you have not yet specified a
+configuration, a standard version will be built with the most often
+used features. Usually you will want to build another version of \es
+with options better suited for your purpose.
+
+In some cases, \eg when \es needs to be compiled for several different
+platforms or when different versions with different sets of features
+are required, it might be useful to execute the commands not in the
+source directory itself, but to start \texttt{configure} from another
+directory (see section \vref{ssec:builddir}). Furthermore, many
+features of \es can be selectively turned on or off in the local
+configuration header (see section \vref{sec:myconfig}) before starting
+the compilation with \texttt{make}.
 
 The shell script \texttt{configure} prepares the source code for
 compilation. It will determine how to use and where to find the
 different libraries and tools required by the compilation process, and
 it will test what compiler flags are to be used.  The script will find
 out most of these things automatically.  If something is missing, it
-will complain and give hints how to solve the problem.  The
+will complain and give hints on how to solve the problem.  The
 configuration process can be controlled with the help of a number of
 options that are explained in section \vref{sec:configure}.
 
@@ -57,63 +63,66 @@ a number of other things:
 \begin{itemize}
 \item It can install and uninstall the program to some other
   directories. However, normally it is not necessary to actually
-  \textit{install} \es{} to run it.
-\item It can test the \es{} program for correctness.
+  \textit{install} \es to run it.
+\item It can test \es for correctness.
 \item It can build the documentation.
 \end{itemize}
 The details of the usage of \texttt{make} are described in section
 \vref{sec:make}.
 
-When these steps have successfully completed, \es{} can be started
+When these steps have successfully completed, \es can be started
 with the command (see section \vref{sec:run})
 \begin{code}
-Espresso
+Espresso \textit{file}
 \end{code}
 
 \section{Running \es}
 
-\footnote{\url{http://www.tcl.tk/man/tcl8.5/tutorial/tcltutorial.html}}
-
-\es{} is implemented as an extension to the Tcl script language. This means that you need to write a
-script for any task you want to perform with \es. To learn about the Tcl script language and
-especially the \es{} extensions, this chapter offers two tutorial scripts. The first will guide you
-step by step through creating your first simulation script, while the second script is a well
-documented example simulation script. Since the latter is slightly more complex and uses more
-advanced features of \es{}, we recommend to work through both scripts in the presented order.
+\es is implemented as an extension to the Tcl scripting language.
+This means that you need to write a script for any task you want to
+perform with \es. To learn about the Tcl script language and
+especially the \es extensions, this chapter offers two tutorial
+scripts. The first will guide you step-by-step through creating your
+first simulation script, while the second script is a well documented
+example simulation script. Since the latter is slightly more complex
+and uses more advanced features of \es, we recommend to work through
+both scripts in the presented order.  If you want to learn about the
+Tcl language in greater detail, there is an excellent tutorial
+\footnote{\url{http://www.tcl.tk/man/tcl8.5/tutorial/tcltutorial.html}}.
 
 \section{Creating the first simulation script}
 
-This section introduces some of the features of \es\ by
-constructing step by step a simulation script for a simple salt crystal.
-We cannot give a full Tcl tutorial here; however, most of the constructs
-should be self--explanatory. We also assume that the reader is familiar with the
-basic concepts of a MD simulation here. The code pieces can be copied step by
-step into a file, which then can be run using \verb|Espresso <file>| from the
-\es source directory.
+This section introduces some of the features of \es by constructing
+step by step a simulation script for a simple salt crystal.  We cannot
+give a full Tcl tutorial here; however, most of the constructs should
+be self--explanatory. We also assume that the reader is familiar with
+the basic concepts of a MD simulation here. The code pieces can be
+copied step by step into a file, which then can be run using
+\codebox{Espresso \textit{file}} from the \es source directory.
 
-Our script starts with setting up the initial configuration.  Most conveniently,
-one would like to specify the density and the number of particles of the system
-as parameters:
+Our script starts with setting up the initial configuration.  Most
+conveniently, one would like to specify the density and the number of
+particles of the system as parameters:
 \begin{tclcode}
 set n_part 200; set density 0.7
 set box_l [expr pow($n_part/$density,1./3.)]
 \end{tclcode}
-These variables do not change anything in the simulation engine, but are just
-standard Tcl variables; they are used to increase the readability and
-flexibility of the script. The box length is not a parameter of this simulation;
-it is calculated from the number of particles and the system density. This
-allows to change the parameters later easily, e.~g.\ to simulate a bigger
-system.
+These variables do not change anything in the simulation engine, but
+are just standard Tcl variables; they are used to increase the
+readability and flexibility of the script. The box length is not a
+parameter of this simulation; it is calculated from the number of
+particles and the system density. This allows to change the parameters
+later easily, \eg to simulate a bigger system.
 
-The parameters of the simulation engine are modified by the \verb|setmd|
-command. For example
+The parameters of the simulation engine are modified by the
+\verb|setmd| command. For example
 \begin{tclcode}
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
 \end{tclcode}
-defines a cubic simulation box of size \verb|box_l|, and periodic boundary
-conditions in all spatial dimensions. We now fill this simulation box with
-particles
+defines a cubic simulation box of size \verb|box_l|, and periodic
+boundary conditions in all spatial dimensions. We now fill this
+simulation box with particles
 \begin{tclcode}
 set q 1; set type 0
 for {set i 0} { $i < $n_part } {incr i} {
@@ -124,25 +133,28 @@ for {set i 0} { $i < $n_part } {incr i} {
   part $i pos $posx $posy $posz q $q type $type 
 }
 \end{tclcode}
-This loop adds \verb|n_part| particles at random positions, one by one.  In this
-construct, only two commands are not standard Tcl commands: the random
-number generator \verb|t_random| and the \verb|part| command, which is used to
-specify particle properties, here the position, the charge \verb|q| and the
-type. In \es\ the particle type is just an integer number which allows to group
-particles; it does not imply any physical parameters. Here we use it to tag the
-charges: positive charges have type 0, negative charges have type 1.
+This loop adds \verb|n_part| particles at random positions, one by
+one.  In this construct, only two commands are not standard Tcl
+commands: the random number generator \verb|t_random| and the
+\verb|part| command, which is used to specify particle properties,
+here the position, the charge \verb|q| and the type. In \es\ the
+particle type is just an integer number which allows to group
+particles; it does not imply any physical parameters. Here we use it
+to tag the charges: positive charges have type 0, negative charges
+have type 1.
 
-Now we define the ensemble that we will be simulating. This is done using the
-\verb|thermostat| command. We also set some integration scheme parameters:
+Now we define the ensemble that we will be simulating. This is done
+using the \verb|thermostat| command. We also set some integration
+scheme parameters:
 \begin{tclcode}
 setmd time_step 0.01; setmd skin 0.4
 set temp 1; set gamma 1
 thermostat langevin $temp $gamma
 \end{tclcode}
-This switches on the Langevin thermostat for the NVT ensemble, with temperature
-\verb|temp| and friction \verb|gamma|. The skin depth \verb|skin| is a parameter
-for the link--cell system which tunes its performance, but cannot be discussed
-here.
+This switches on the Langevin thermostat for the NVT ensemble, with
+temperature \verb|temp| and friction \verb|gamma|. The skin depth
+\verb|skin| is a parameter for the link--cell system which tunes its
+performance, but cannot be discussed here.
 
 Before we can really start the simulation, we have to specify the
 interactions between our particles.  We use a simple, purely repulsive
@@ -156,21 +168,23 @@ inter 1 0 lennard-jones $eps $sig $cut $shift 0
 inter 1 1 lennard-jones $eps $sig $cut $shift 0
 inter coulomb 10.0 p3m tunev2 accuracy 1e-3 mesh 32
 \end{tclcode}
-The first three \verb|inter| commands instruct \es\ to use the same purely
-repulsive Lennard--Jones potential for the interaction between all combinations
-of the two particle types 0 and 1; by using different parameters for different
-combinations, one could simulate differently sized particles.  The last line sets
-the Bjerrum length to the value 10, and then
-instructs \es\ to use P$^3$M for the Coulombic interaction and to try to find
-suitable parameters for an rms force error below $10^{-3}$, with a fixed mesh
-size of 32. The mesh is fixed here to speed up the tuning; for a real
-simulation, one will also tune this parameter.
+The first three \verb|inter| commands instruct \es\ to use the same
+purely repulsive Lennard--Jones potential for the interaction between
+all combinations of the two particle types 0 and 1; by using different
+parameters for different combinations, one could simulate differently
+sized particles.  The last line sets the Bjerrum length to the value
+10, and then instructs \es\ to use P$^3$M for the Coulombic
+interaction and to try to find suitable parameters for an rms force
+error below $10^{-3}$, with a fixed mesh size of 32. The mesh is fixed
+here to speed up the tuning; for a real simulation, one will also tune
+this parameter.
 
-If we want to calculate the temperature of our system from the kinetic energy,
-we need to know the number of the degrees of freedom of the particles.
-In \es\ these are usually 3 translational plus 3 rotational degrees of freedom
-(if ROTATION is compiled into the code). You can get this number
-in the following way \footnote{Note: there also exists a predefined tcl function {\it degrees_of_freedom} which does the same.}:
+If we want to calculate the temperature of our system from the kinetic
+energy, we need to know the number of the degrees of freedom of the
+particles.  In \es these are usually 3 translational plus 3 rotational
+degrees of freedom (if the feature ROTATION is activated). You can get
+this number in the following way \footnote{There also exists a Tcl
+  function \codebox{degrees_of_freedom} which does the same.}:
 
 \begin{tclcode}
    if { [regexp "ROTATION" [code_info]] } { 

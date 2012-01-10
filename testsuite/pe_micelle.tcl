@@ -1,8 +1,4 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
-# 
-# Copyright (C) 2010 The ESPResSo project
+# Copyright (C) 2010,2011 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
 #  
 # This file is part of ESPResSo.
@@ -19,10 +15,7 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
-
 # 
-puts "Program Information: \n[code_info]\n"
-
 
 #############################################################
 #  calculate square of a vector                             #

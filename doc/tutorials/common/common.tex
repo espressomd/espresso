@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+%  Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -31,6 +32,11 @@
 \usepackage{ifthen}             % provide ifthen
 \usepackage{xspace}
 \usepackage{units}
+\usepackage[numbers]{natbib}
+
+% For building the distribution docs, disable todo boxes.
+%\usepackage[disable]{todonotes}
+\usepackage{todonotes}
 
 \newcommand{\es}{\mbox{\textsf{ESPResSo}}\xspace}
 \newcommand{\ie}{\textit{i.e.}\xspace}
@@ -60,16 +66,16 @@
 }
 \makeatother
 
-\newcommand{\todo}[1]{
-  \marginpar{%
-    \setlength{\fboxrule}{1pt}
-    \fcolorbox{red}{yellow}{%
-      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
-        \bf\raggedright\scriptsize #1%
-      }%
-    }%
-  }%
-}
+% \newcommand{\todo}[1]{
+%   \marginpar{%
+%     \setlength{\fboxrule}{1pt}
+%     \fcolorbox{red}{yellow}{%
+%       \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
+%         \bf\raggedright\scriptsize #1%
+%       }%
+%     }%
+%   }%
+% }
 
 \makeatletter
 \renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
@@ -79,6 +85,9 @@
 \makeatother
 
 \newcommand{\esptitlehead}{
-  \titlehead{\begin{center}
-      \includegraphics[width=5cm]{figures/logo}
-    \end{center}}}
+  \titlehead{
+    \begin{center}
+      \includegraphics[width=5cm]{logo/transparentbg}
+    \end{center}
+  }
+}

@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -17,23 +18,23 @@
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
 \documentclass[
-a4paper,                        % paper size
-11pt,                           % font size
+paper=a4,                       % paper size
+fontsize=11pt,                  % font size
 twoside,                        % two sided
 footsepline,                    % add a line to separate the footer
 headsepline,                    % add a line to separate the header
-headexclude,                    % header does not belong to the text
-footexclude,                    % footer does not belong to the text
+headinclude=false,              % header does not belong to the text
+footinclude=false,              % footer does not belong to the text
 pagesize,                       % set the pagesize in a DVI document
-bibtotocnumbered,               % add the bibliography to the TOC
-idxtotoc                        % add the index to the TOC
-%openright,                      % start a new chapter on the right page
+bibliography=totocnumbered,     % add the bibliography to the TOC
+index=totoc,                    % add the index to the TOC
+%openright,                     % start a new chapter on the right page
 %,DIV12
 %,draft
 ]{scrreprt}
 
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage{hyperref}                      % automatically creates links when
+\usepackage{hyperref}           % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
@@ -51,8 +52,12 @@ idxtotoc                        % add the index to the TOC
 \usepackage{units}
 \usepackage[numbers]{natbib}
 
+% For building the distribution docs, disable todo boxes.
+%\usepackage[disable]{todonotes}
+\usepackage{todonotes}
+
 % Make '_' a normal character
-\usepackage{underscore}
+\usepackage[strings]{underscore}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,6 +68,15 @@ idxtotoc                        % add the index to the TOC
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\eg}{\textit{e.g.}\xspace}
 \newcommand{\etal}{\textit{et al.}\xspace}
+
+\newcommand{\warning}[1]{
+  \begin{center}%
+    \fcolorbox{black}{yellow}{%
+      \parbox{\linewidth-5em}{%
+        \textbf{Warning:} #1%
+      }}%
+  \end{center}%
+}
 
 \newcommand{\codebox}[1]%
 {\texttt{#1}}
@@ -81,8 +95,10 @@ idxtotoc                        % add the index to the TOC
   \unskip\setbox0=\lastbox%%%DPC%%%
   \egroup
   \par%
+  \vspace{0.5\baselineskip}%
   \noindent\hspace{1em}%
   \codebox{\box0}%
+  \vspace{0.5\baselineskip}%
   \par\noindent%
 }
 \makeatother
@@ -90,17 +106,6 @@ idxtotoc                        % add the index to the TOC
 % required so that we can set index numbers bold
 % \index{Some example|mainindex}
 \newcommand*{\mainindex}[1]{\textbf{\hyperpage{#1}}}
-
-\newcommand{\todo}[1]{
-  \marginpar{%
-    \setlength{\fboxrule}{1pt}
-    \fcolorbox[gray]{0}{0.9}{%
-      \parbox{\marginparwidth-2\fboxrule-2\fboxsep}{%
-        \bf\raggedright\scriptsize #1%
-      }%
-    }%
-  }%
-}
 
 \makeatletter
 \renewcommand{\minisec}[1]{\@afterindentfalse \vskip 1.5ex
@@ -252,16 +257,20 @@ idxtotoc                        % add the index to the TOC
 \begin{document}
 \titlehead{
   \begin{center}
-    \includegraphics[width=5cm]{figures/logo}
+    \includegraphics[width=5cm]{logo/transparentbg}
   \end{center}
 }
 %\subject{}
-\title{\es{} User's Guide}
+\title{\es User's Guide}
 %\author{}
 %\date{\today}
 \maketitle
 
+\listoftodos
+\cleardoublepage
+
 \pdfbookmark{Contents}{toc}
+\setcounter{tocdepth}{1}
 \tableofcontents
 
 \include{introduction}
@@ -276,6 +285,7 @@ idxtotoc                        % add the index to the TOC
 \include{analysis}
 \include{io}
 \include{aux}
+\include{lb}
 \include{mbtools}
 
 \include{internal}
@@ -285,13 +295,10 @@ idxtotoc                        % add the index to the TOC
 \include{quickref}
 \include{features}
 \include{examples}
-\include{deserno}
 
 %% Scientific appendices: description of algorithms
+\include{memd}
 \include{mmm}
-
-\chapter{Maggs algorithm}
-\label{chap:maggs}
 
 \bibliographystyle{plainnat}
 \bibliography{bibliography}
@@ -299,8 +306,6 @@ idxtotoc                        % add the index to the TOC
 \printindex
 
 \end{document}
-
-
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: t
