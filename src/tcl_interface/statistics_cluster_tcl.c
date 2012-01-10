@@ -27,6 +27,8 @@
 
 
 #include "statistics_cluster.h"
+#include "statistics_cluster_tcl.h"
+#include "parser.h"
 
 /** \name Routines */
 /************************************************************/

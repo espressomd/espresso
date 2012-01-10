@@ -32,7 +32,6 @@
 #include <tcl.h>
 //#include "interaction_data.h"
 //#include "particle_data.h"
-#include "parser.h"
 
 /** Parser for the necklace cluster algorithm
 

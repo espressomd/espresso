@@ -90,5 +90,10 @@ extern int    pearl_treshold;
 
 /*@}*/
 
+void cluster_free();
+void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type);
+int analyze_necklace(Particle *part, int np);
+int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes);
+void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **holes, int *surface);
 
 #endif

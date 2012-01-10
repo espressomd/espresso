@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
-#include "../statistics.h"
+#include "statistics.h"
 #include "statistics_chain.h"
 #include "statistics_chain_tcl.h"
 #include "statistics_molecule.h"
@@ -46,7 +46,8 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "initialize.h"
-#include "tcl_interface/statistics_chain_tcl.h"
+#include "statistics_chain_tcl.h"
+#include "topology_tcl.h"
 
 /** Variables for measuring the compressibility from volume fluctuations.
     Will be used by \ref parse_Vkappa exclusively. */
