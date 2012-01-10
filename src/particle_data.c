@@ -1319,6 +1319,8 @@ void remove_all_exclusions()
   mpi_send_exclusion(-1, -1, 1);
 }
 
+#endif
+
 void add_partner(IntList *il, int i, int j, int distance)
 {
     int k;
@@ -1331,6 +1333,7 @@ void add_partner(IntList *il, int i, int j, int distance)
     il->e[il->n++] = distance;
 }
 
+#ifdef EXCLUSIONS
 
 void auto_exclusion(int distance)
 {
