@@ -19,34 +19,17 @@
 */
 #ifndef CONSTRAINT_TCL_H
 #define CONSTRAINT_TCL_H
-#include "statistics.h"
-#include "energy.h"
-#include "forces.h"
-#include "grid.h"
-#include "errorhandling.h"
-#include "tunable_slip.h"
-#include <tcl.h>
 
-/** \file constraint_tcl.h
+/** \file constraint.h
+ *  Routines for handling of constraints.
+ *  Only active if the feature CONSTRAINTS is activated.
+ *  see also \ref interaction_data.h
  */
 
 #ifdef CONSTRAINTS
 
-int tclprint_to_result_Constraint(Tcl_Interp *interp, int i);
-int tclcommand_constraint_print(Tcl_Interp *interp);
-void tclprint_to_result_ConstraintForce(Tcl_Interp *interp, int con);
-int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_rod(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_plate(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_ext_magn_field(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 
-#endif
 
-#endif
+#endif /* CONSTRAINTS */
+
+#endif /* CONSTRAINT_TCL_H */

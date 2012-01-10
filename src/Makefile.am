@@ -69,7 +69,7 @@ libEspresso_core_la_SOURCES = \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h \
+	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
 	tcl_interface/polymer_tcl.c tcl_interface/polymer_tcl.h \
 	specfunc.c specfunc.h \
@@ -92,6 +92,7 @@ libEspresso_core_la_SOURCES = \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
+	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
 	maggs.c maggs.h \
 	mol_cut.h \
 	rattle.c rattle.h \
@@ -126,9 +127,9 @@ libEspresso_core_la_SOURCES = \
 	harmonic.h \
 	hertzian.h \
 	imd.h \
-	ljcos2.h \
-	ljcos.h \
-	lj.h \
+	ljcos2.c ljcos2.h \
+	ljcos.c ljcos.h \
+	lj.c lj.h \
 	ljgen.c ljgen.h \
 	steppot.h \
 	bmhtf-nacl.h \
@@ -138,7 +139,7 @@ libEspresso_core_la_SOURCES = \
 	subt_lj.h \
 	tab.h \
 	overlap.h \
-	ljangle.h \
+	ljangle.c ljangle.h \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
@@ -160,6 +161,7 @@ lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
 libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
 libespresso_main_la_LIBADD = libEspresso_core.la
+libEspresso_core_la_LIBADD = 
 
 #################################################################
 # Handling of myconfig.h
@@ -207,12 +209,19 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $< 
+
+#.cu.lo:
+#	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
 
 CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-libEspresso_core_la_SOURCES += $(CUDA_SOURCES)
+CUDA_OBJECTS= \
+	cuda_init.o \
+	lbgpu.o 
+
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
 endif

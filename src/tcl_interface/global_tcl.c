@@ -21,26 +21,8 @@
 /** \file global.c
     Implementation of \ref global.h "global.h".
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "utils.h"
-#include "global.h"
-#include "global_tcl.h"
-/* from these modules we modify variables: */
-#include "communication.h"
-#include "cells.h"
-#include "grid.h"
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "integrate.h"
-#include "integrate_tcl.h"
-#include "thermostat.h"
-#include "forces.h"
-#include "verlet.h"
-#include "p3m.h"
 #include "imd.h"
-#include "imd_tcl.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
 #include "layered.h"
