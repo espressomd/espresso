@@ -24,7 +24,6 @@
 #include "utils.h"
 #include "global.h"
 #include "random.h"
-#include "tcl_interface/random_tcl.h"
 #include "communication.h"
 
 /** \file random.c A random generator. 

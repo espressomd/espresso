@@ -583,12 +583,12 @@ static int tclcommand_analyze_parse_bilayer_density_profile(Tcl_Interp *interp, 
   double hrange;
   int usegrid;
   double sradius, cx,cy,cz;
+  cx = cy = cz = 0.0;
   DoubleList* density_profile = NULL;
   int errorValue;
   double scenter[3] = { cx, cy ,cz };
   /* Defaults */
   sradius = 0.0;
-  cx = cy = cz = 0.0;
 
   init_intlist(&beadtypes);
   usegrid = 1;

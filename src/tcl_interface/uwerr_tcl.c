@@ -22,6 +22,10 @@
 */
 
 #include "uwerr_tcl.h"
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include "uwerr.h"
 
 
 /** This is eps from matlab */

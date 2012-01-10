@@ -23,4 +23,10 @@
  *
  *  PLEASE INSERT DOCUMENTATION
 */
+double UWerr_dsum_double(double * v, double * w, int len);
+double UWerr_dsum_int(int * v, double * w, int len);
+double UWerr_sum(double * v, int len);
+double gammaq(double a, double x);
+
+
 #endif
