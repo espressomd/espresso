@@ -39,6 +39,9 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
 	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
 	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
+	tcl_interface/statistics_cluster_tcl.c tcl_interface/statistics_cluster_tcl.h \
+	tcl_interface/topology_tcl.c tcl_interface/topology_tcl.h \
+	tcl_interface/virtual_sites_com_tcl.c tcl_interface/virtual_sites_com_tcl.h \
 	cells.c cells.h \
 	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
@@ -55,6 +58,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/statistics_chain_tcl.c tcl_interface/statistics_chain_tcl.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
+	tcl_interface/pressure_tcl.c tcl_interface/pressure_tcl.h \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \

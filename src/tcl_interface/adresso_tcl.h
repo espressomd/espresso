@@ -32,11 +32,7 @@
     - C. Junghans and S. Poblete, Comp. Phys. Comm. 181, 1449, 2010.
 */
 
-#include <tcl.h>
 #include "particle_data.h"
-#include "virtual_sites.h"
-#include "interaction_data.h"
-#include "communication.h"
 
 
 
@@ -65,46 +61,6 @@ int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, doub
 int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 /* #endif */
 
-
-
-MDINLINE int adress_tab_parser(Tcl_Interp * interp,
-			int part_type_a, int part_type_b,
-			int argc, char ** argv)
-{
-  char *filename = NULL;
-
-  /* adress_tab interactions should supply a file name for a file containing
-     both force and energy profiles as well as number of points, max
-     values etc.
-  */
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "tabulated potentials require a filename: "
-		     "<filename>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy tabulated parameters */
-  filename = argv[1];
-
-  switch (adress_tab_set_params(part_type_a, part_type_b, filename)) {
-  case 1:
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  case 2:
-    Tcl_AppendResult(interp, "the length of the filename must be less than 256 characters,"
-		     "but is \"", filename, "\"", (char *)NULL);
-    return 0;
-  case 3:
-    Tcl_AppendResult(interp, "cannot open \"", filename, "\"", (char *)NULL);
-    return 0;
-  case 4:
-    Tcl_AppendResult(interp, "attempt to read file \"", filename,
-		     "\" failed, could not find start the start token <#>", (char *)NULL);
-    return 0;
-  }
-  return 2;
-}
 
 
 
