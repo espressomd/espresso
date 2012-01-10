@@ -84,7 +84,7 @@ void lb_init_boundaries() {
   int the_boundary=-1;
 
   if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_GPU
+#if defined (LB_GPU) && defined (LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
     int *host_boundindex = (int*)malloc(sizeof(int));
     size_t size_of_index;

@@ -290,7 +290,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-#endif /* LB_GPU */
+#endif /* LB || LB_GPU */
 #endif /* LB_GPU_H */
 
 /*@}*/
