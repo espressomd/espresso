@@ -91,6 +91,7 @@ libEspresso_core_la_SOURCES = \
 	mmm-common.c mmm-common.h \
 	mmm1d.c mmm1d.h \
 	mmm2d.c	mmm2d.h \
+	tcl_interface/mmm2d_tcl.c tcl_interface/mmm2d_tcl.h \
 	modes.c	modes.h \
 	topology.c topology.h \
 	nemd.c nemd.h \
