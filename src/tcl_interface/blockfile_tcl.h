@@ -17,19 +17,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef CONSTRAINT_TCL_H
-#define CONSTRAINT_TCL_H
+/** \file blockfile_tcl.h
+    Contains only the tcl interface for block coded files.
 
-/** \file constraint.h
- *  Routines for handling of constraints.
- *  Only active if the feature CONSTRAINTS is activated.
- *  see also \ref interaction_data.h
- */
+    It is the header file for \ref blockfile_tcl.c "blockfile_tcl.c" and provides the
+    tcl command blockfile.
+*/
+#ifndef BLOCKFILE_TCL_H
+#define BLOCKFILE_TCL_H
+#include "config.h"
+#include <tcl.h>
 
-#ifdef CONSTRAINTS
-
-
-
-#endif /* CONSTRAINTS */
-
-#endif /* CONSTRAINT_TCL_H */
+/** Implementation of the Tcl command blockfile. Allows to read and write
+    blockfile comfortably from Tcl. */
+int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+#endif

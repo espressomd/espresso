@@ -90,6 +90,7 @@ libEspresso_core_la_SOURCES = \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
+	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
 	maggs.c maggs.h \
 	mol_cut.h \
 	rattle.c rattle.h \
