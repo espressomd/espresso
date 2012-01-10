@@ -36,9 +36,11 @@
  *  \ref forces.c
  */
 
-#ifdef LJ_ANGLE
 #include <math.h>
 #include "ljangle.h"
+#include "interaction_data.h"
+#include "parser.h"
+
 
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 {
@@ -295,4 +297,3 @@ void calc_ljangle_cap_radii(double force_cap)
 
 
 
-#endif /* ifdef LJ_ANGLE */
