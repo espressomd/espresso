@@ -144,9 +144,6 @@ void calc_minimal_box_dimensions();
 /** calculate most square 2d grid. */
 void calc_2d_grid(int n, int grid[3]);
 
-/** Calculate most cubic 3d grid. */
-void calc_3d_grid(int n, int grid[3]);
-
 /** calculate 'best' mapping between a 2d and 3d grid.
  *  This we need for the communication from 3d domain decomposition 
  *  to 2d row decomposition. 

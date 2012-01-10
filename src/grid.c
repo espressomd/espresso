@@ -212,23 +212,6 @@ void calc_2d_grid(int n, int grid[3])
   }
 }
 
-void calc_3d_grid(int n, int grid[3])
-{
-  int i,j,k,max;
-  max = 3*n*n + 1;
-  /* generate grid in ascending order */
-  for(i=1;i<=n;i++) {
-    for(j=i;j<=n;j++) { 
-      for(k=j;k<=n;k++) {
-	if(i*j*k == n && ((i*i)+(j*j)+(k*k)) < max) {
-	  grid[0] = k; grid[1] = j;grid[2] = i;
-	  max =  ((i*i)+(j*j)+(k*k));
-	}
-      }
-    }
-  }
-}
-
 int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3])
 {
   int i,row_dir=-1;
