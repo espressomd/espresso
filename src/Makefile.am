@@ -40,6 +40,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
 	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
 	tcl_interface/statistics_cluster_tcl.c tcl_interface/statistics_cluster_tcl.h \
+	tcl_interface/topology_tcl.c tcl_interface/topology_tcl.h \
 	cells.c cells.h \
 	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \

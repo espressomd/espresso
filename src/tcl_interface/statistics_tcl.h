@@ -27,7 +27,7 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "utils.h"
-#include "topology.h"
+#include "topology_tcl.h"
 
 
 /** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
