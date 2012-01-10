@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "initialize.h"
 #include "global.h"
+#include "tcl_interface/global_tcl.h"
 #include "particle_data.h"
 #include "tcl_interface/particle_data_tcl.h"
 #include "interaction_data.h"
