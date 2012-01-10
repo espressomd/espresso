@@ -34,6 +34,7 @@
 #include "rotation.h"
 #include "virtual_sites.h"
 
+
 /* Add a link of size size consisting of (link[l], p) */
 void add_link(IntList *il, IntList *link, int l, int p, int size)
 {

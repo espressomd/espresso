@@ -25,6 +25,19 @@
 #include "lattice.h"
 #include "npt.h"
 
+#include <math.h>
+#include "utils.h"
+#include "particle_data.h"
+#include "parser.h"
+#include "random.h"
+#include "global.h"
+#include "integrate.h"
+#include "cells.h"
+#include "lb.h"
+#include "dpd.h"
+#include "lbgpu.h"
+#include "virtual_sites.h"
+
 
 int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 
 {

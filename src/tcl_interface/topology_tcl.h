@@ -17,25 +17,28 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef STATISTICS_TCL_H
-#define STATISTICS_TCL_H
-/** \file statistics.h
-    This file contains the code for statistics on the data.
-*/
+#ifndef TOPOLOGY_TCL_H
+#define TOPOLOGY_TCL_H
 
-
-/** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
-    both online and offline.
-*/
-int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-
-/** return the approx diffusion constant of a special type of particle FIXME: this is not a smart way to compute D (very error-prone)!
- *  \param interp  TCL interpreter handle
- *  \param type_m  type of the particle, -1 for all
- *  \param n_time_steps number of timestep between saved configurations
- *  \param n_conf  number of saved contributions taken into account
+/** \file topology.h
+ *
+ *  This file contains functions for handling the system topology.
  */
-double tclcommand_analyze_print_MSD(Tcl_Interp *interp,int type_m, int n_time_steps,int n_conf);
+
+#include <tcl.h>
+//#include "utils.h"
+
+
+
+/************************************************************/
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
+
+
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
+
+/*@}*/
+
 
 #endif

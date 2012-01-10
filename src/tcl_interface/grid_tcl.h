@@ -43,9 +43,6 @@
  *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
 */
 #include <tcl.h>
-#include <limits.h>
-#include "utils.h"
-#include "errorhandling.h"
 
 /** \name Exported Functions */
 /************************************************************/
