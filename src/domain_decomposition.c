@@ -917,7 +917,9 @@ int calc_processor_min_num_cells()
   /* the minimal number of cells can be lower if there are at least two nodes serving a direction,
      since this also ensures that the cell size is at most half the box length. However, if there is
      only one processor for a direction, there have to be at least two cells for this direction. */
-  for (i = 0; i < 3; i++) if (node_grid[i] == 1) min *= 2;
+  for (i = 0; i < 3; i++) 
+    if (node_grid[i] == 1) 
+      min *= 2;
   return min;
 }
 

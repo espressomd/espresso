@@ -62,12 +62,7 @@ double my_right[3]    = {1, 1, 1};
 
 void setup_node_grid()
 {
-  if (node_grid[0] < 0) {
-    /* auto setup, grid not set */
-    calc_3d_grid(n_nodes,node_grid);
-
-  }
-    mpi_bcast_parameter(FIELD_NODEGRID);
+  mpi_bcast_parameter(FIELD_NODEGRID);
 }
 
 int node_grid_is_set()
@@ -92,9 +87,8 @@ int map_position_node_array(double pos[3])
     else if (im[i] >= node_grid[i])
       im[i] = node_grid[i] - 1;
   }
-  MPI_Cart_rank(comm_cart, im, &rank);
-  //  return map_array_node(im);
-  return rank;
+
+  return map_array_node(im);
 }
 
 void map_node_array(int node, int pos[3])
