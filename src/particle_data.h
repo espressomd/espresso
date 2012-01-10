@@ -163,7 +163,8 @@ typedef struct {
   double v[3];
 
 #ifdef ROTATION
-  /** angular velocity */
+  /** angular velocity  
+      ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
   double omega[3];
 #endif
 } ParticleMomentum;
@@ -228,6 +229,12 @@ typedef struct {
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
 #endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  double T;
+  double gamma;
+#endif
+
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -509,6 +516,22 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part,int isVirtual);
 #endif
 
+#ifdef LANGEVIN_PER_PARTICLE
+/** Call only on the master node: set particle temperature.
+    @param part the particle.
+    @param T its new temperature.
+    @return TCL_OK if particle existed
+*/
+int set_particle_temperature(int part, double T);
+
+/** Call only on the master node: set particle frictional coefficient.
+    @param part the particle.
+    @param gamma its new frictional coefficient.
+    @return TCL_OK if particle existed
+*/
+int set_particle_gamma(int part, double gamma);
+#endif
+
 #ifdef EXTERNAL_FORCES
 /** Call only on the master node: set particle external forced.
     @param part  the particle.
@@ -673,18 +696,7 @@ void auto_exclusion(int distance);
 
 /* keep a unique list for particle i. Particle j is only added if it is not i
  and not already in the list. */
-MDINLINE void add_partner(IntList *il, int i, int j, int distance)
-{
-    int k;
-    if (j == i) return;
-    for (k = 0; k < il->n; k += 2)
-        if (il->e[k] == j)
-            return;
-    realloc_intlist(il, il->n + 2);
-    il->e[il->n++] = j;
-    il->e[il->n++] = distance;
-}
-
+void add_partner(IntList *il, int i, int j, int distance);
 
 /*TODO: this function is not used anywhere. To be removed? */
 /** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.

@@ -45,6 +45,8 @@ MDINLINE double sign(double x) {
   else
     return -1;
 }
+
+
 MDINLINE void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
   int i;
@@ -212,6 +214,650 @@ MDINLINE void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_
   }
 }
 
+MDINLINE void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
+{	
+	double axb[3], bxc[3], axc[3];
+	double A, B, C;
+	double a_dot_bxc, b_dot_axc, c_dot_axb;
+	double tmp;
+	double d;
+	
+	//calculate a couple of vectors and scalars that are going to be used frequently
+	
+	axb[0] = c->a[1]*c->b[2] - c->a[2]*c->b[1];
+	axb[1] = c->a[2]*c->b[0] - c->a[0]*c->b[2];
+	axb[2] = c->a[0]*c->b[1] - c->a[1]*c->b[0];
+	
+	bxc[0] = c->b[1]*c->c[2] - c->b[2]*c->c[1];
+	bxc[1] = c->b[2]*c->c[0] - c->b[0]*c->c[2];
+	bxc[2] = c->b[0]*c->c[1] - c->b[1]*c->c[0];
+	
+	axc[0] = c->a[1]*c->c[2] - c->a[2]*c->c[1];
+	axc[1] = c->a[2]*c->c[0] - c->a[0]*c->c[2];
+	axc[2] = c->a[0]*c->c[1] - c->a[1]*c->c[0];
+	
+	a_dot_bxc = c->a[0]*bxc[0] + c->a[1]*bxc[1] + c->a[2]*bxc[2];
+	b_dot_axc = c->b[0]*axc[0] + c->b[1]*axc[1] + c->b[2]*axc[2];
+	c_dot_axb = c->c[0]*axb[0] + c->c[1]*axb[1] + c->c[2]*axb[2];
+	
+	//represent the distance from pos to ppos as a linear combination of the edge vectors.
+	
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+	
+	//the coefficients tell whether ppos lies within the cone defined by pos and the adjacent edges
+	
+	if(A <= 0 && B <= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0];
+		vec[1] = ppos[1]-c->pos[1];
+		vec[2] = ppos[2]-c->pos[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+	  return;
+	}
+	
+	//check for cone at pos+a
+
+	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B <= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+	  return;
+	}
+	
+	//check for cone at pos+b
+
+	A = (ppos[0]-c->pos[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && B >= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->b[0];
+		vec[1] = ppos[1]-c->pos[1]-c->b[1];
+		vec[2] = ppos[2]-c->pos[2]-c->b[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+		return;
+	}
+	
+	//check for cone at pos+c
+
+	A = (ppos[0]-c->pos[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && B <= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+	
+	  return;
+	}
+	
+	//check for cone at pos+a+b
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B >= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for cone at pos+a+c
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B <= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for cone at pos+a+c
+
+	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && B >= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for cone at pos+a+b+c
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B >= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos, a
+	
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+	
+	if(B <= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0])*c->a[0] + (ppos[1]-c->pos[1])*c->a[1] + (ppos[2]-c->pos[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+		
+		vec[0] = ppos[0]-c->pos[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2] - c->a[2]*tmp;
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+    return;
+	}
+	
+	//check for prism at edge pos, b
+
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0])*c->b[0] + (ppos[1]-c->pos[1])*c->b[1] + (ppos[2]-c->pos[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+	
+		vec[0] = ppos[0]-c->pos[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2] - c->b[2]*tmp;
+	
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+	
+    return;
+	}
+	
+	//check for prism at edge pos, c
+
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A <= 0 && B <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0])*c->c[0] + (ppos[1]-c->pos[1])*c->c[1] + (ppos[2]-c->pos[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a, b
+
+	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->b[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a, c
+
+	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A >= 0 && B <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+b+c, c
+
+	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A <= 0 && B >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->c[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->c[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+b+c, b
+
+	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->b[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+b+c, a
+
+	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+																
+	if(B >= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->a[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+b, a
+
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(B >= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+b, c
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A >= 0 && B >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+c, a
+
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(B <= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->a[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+c, b
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->b[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for face with normal -axb
+	
+	*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	*dist *= -1.;
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+		*dist /= tmp;
+	
+		vec[0] = -*dist * axb[0]/tmp;
+		vec[1] = -*dist * axb[1]/tmp;
+		vec[2] = -*dist * axb[2]/tmp;
+	
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//calculate distance to face with normal axc
+
+	*dist = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+		*dist /= tmp;
+	
+		vec[0] = *dist * axc[0]/tmp;
+		vec[1] = *dist * axc[1]/tmp;
+		vec[2] = *dist * axc[2]/tmp;
+
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//calculate distance to face with normal -bxc
+
+	*dist = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	*dist *= -1.;
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+		*dist /= tmp;
+		
+		vec[0] = -*dist * bxc[0]/tmp;
+		vec[1] = -*dist * bxc[1]/tmp;
+		vec[2] = -*dist * bxc[2]/tmp;
+		
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//calculate distance to face with normal axb
+	
+	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+		*dist /= tmp;
+
+		vec[0] = *dist * axb[0]/tmp;
+		vec[1] = *dist * axb[1]/tmp;
+		vec[2] = *dist * axb[2]/tmp;
+	
+		*dist *= c->direction;
+
+    return;
+	}
+																					
+	//calculate distance to face with normal -axc
+
+	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	*dist *= -1.;
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+		*dist /= tmp;
+
+		vec[0] = -*dist * axc[0]/tmp;
+		vec[1] = -*dist * axc[1]/tmp;
+		vec[2] = -*dist * axc[2]/tmp;
+		
+		*dist *= c->direction;
+
+    return;
+	}
+																		
+	//calculate distance to face with normal bxc
+
+	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+		*dist /= tmp;
+
+		vec[0] = *dist * bxc[0]/tmp;
+		vec[1] = *dist * bxc[1]/tmp;
+		vec[2] = *dist * bxc[2]/tmp;
+		
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//ppos lies within rhomboid. Find nearest wall for interaction.
+	 
+	//check for face with normal -axb
+	
+	*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	*dist *= -1.;
+	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+	*dist /= tmp;
+	
+	vec[0] = -*dist * axb[0]/tmp;
+	vec[1] = -*dist * axb[1]/tmp;
+	vec[2] = -*dist * axb[2]/tmp;
+	
+	*dist *= c->direction;
+
+	//calculate distance to face with normal axc
+
+	d = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+	d /= tmp;
+	
+	if(abs(d) < abs(*dist))
+	{
+		vec[0] = d * axc[0]/tmp;
+		vec[1] = d * axc[1]/tmp;
+		vec[2] = d * axc[2]/tmp;
+	
+		*dist = c->direction * d;
+	}
+
+	//calculate distance to face with normal -bxc
+
+	d = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	d *= -1.;
+	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+	d /= tmp;
+
+	if(abs(d) < abs(*dist))
+	{							
+		vec[0] = -d * bxc[0]/tmp;
+		vec[1] = -d * bxc[1]/tmp;
+		vec[2] = -d * bxc[2]/tmp;
+
+		*dist = c->direction * d;
+	}
+	
+	//calculate distance to face with normal axb
+
+	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+	d /= tmp;
+	
+	if(abs(d) < abs(*dist))
+	{																					
+		vec[0] = d * axb[0]/tmp;
+		vec[1] = d * axb[1]/tmp;
+		vec[2] = d * axb[2]/tmp;
+
+		*dist = c->direction * d;
+	}
+	
+	//calculate distance to face with normal -axc
+
+	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	d *= -1.;
+	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+	d /= tmp;
+
+	if(abs(d) < abs(*dist))
+	{																						
+		vec[0] = -d * axc[0]/tmp;
+		vec[1] = -d * axc[1]/tmp;
+		vec[2] = -d * axc[2]/tmp;
+
+		*dist = c->direction * d;
+	}
+																		
+	//calculate distance to face with normal bxc
+
+	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+	d /= tmp;
+
+	if(abs(d) < abs(*dist))
+	{																						
+		vec[0] = d * bxc[0]/tmp;
+		vec[1] = d * bxc[1]/tmp;
+		vec[2] = d * bxc[2]/tmp;
+	
+		*dist = c->direction * d;
+	}
+}
+
 MDINLINE double max(double x1, double x2) {
   return x1>x2?x1:x2;
 }
@@ -304,7 +950,7 @@ MDINLINE void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, C
     return;
   }
 
-  /* check if the particle sould feel the smoothed ends or the middle of the pore */
+  /* check if the particle should feel the smoothed ends or the middle of the pore */
   /* calculate aufpunkt in z direction first.   */
 
   /* the distance of the particle from the pore cylinder/cone calculated by projection on the
@@ -629,6 +1275,32 @@ MDINLINE void add_constraints_forces(Particle *p1)
         }
       }
       break;
+    
+    case CONSTRAINT_RHOMBOID: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+    if(constraints[n].c.rhomboid.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.rhomboid.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 rhomboid constraint %d violated by particle %d} ", n, p1->p.identity);
+    }
+        }
+      }
+      break;
 	
     case CONSTRAINT_MAZE: 
       if(checkIfInteraction(ia_params)) {
@@ -680,7 +1352,7 @@ MDINLINE void add_constraints_forces(Particle *p1)
       add_plate_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
       break;
       
-#ifdef MAGNETOSTATICS 
+#ifdef DIPOLES
     case CONSTRAINT_EXT_MAGN_FIELD:
       add_ext_magn_field_force(p1, &constraints[n].c.emfield);
       break;
@@ -786,6 +1458,27 @@ MDINLINE double add_constraints_energy(Particle *p1)
 
 	}
 	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+	
+    case CONSTRAINT_RHOMBOID: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist , vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+
+	}
+	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
 	  if ( dist < 0 ) {
 	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
 						     ia_params, vec, -1.0*dist, dist*dist);

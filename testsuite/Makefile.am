@@ -25,6 +25,7 @@ tests = \
 	command_syntax.tcl \
 	constraints.tcl \
 	constraints_reflecting.tcl \
+	constraints_rhomboid.tcl \
 	dh.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
@@ -37,13 +38,16 @@ tests = \
 	kinetic.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_stokes_sphere.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
 	madelung.tcl \
 	maggs.tcl \
+	magnetic-field.tcl \
 	mass.tcl \
+	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	mmm1d.tcl \
 	npt.tcl \
@@ -59,6 +63,7 @@ tests = \
 	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
+# please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
 
@@ -103,6 +108,8 @@ check-local: runtest.sh
 	else \
 	  @builddir@/runtest.sh $(tests); \
 	fi
+
+CLEANFILES=runtest.log
 
 DISTCLEANFILES=\
 	fftw3_1d_wisdom_*.file

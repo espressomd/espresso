@@ -1069,8 +1069,10 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
                 for(j[1]=0; j[1]<fft.plan[3].new_mesh[1]; j[1]++) {
                     for(j[2]=0; j[2]<fft.plan[3].new_mesh[2]; j[2]++) {
                         /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-                        p3m.rs_mesh[ind] = -2.0*PI*(p3m.ks_mesh[ind+1] * d_operator[ j[d]+fft.plan[3].start[d] ])/box_l[d_rs]; ind++;
-                        p3m.rs_mesh[ind] =   2.0*PI*p3m.ks_mesh[ind-1] * d_operator[ j[d]+fft.plan[3].start[d] ]/box_l[d_rs];  ind++;
+                        p3m.rs_mesh[ind] = -2.0*PI*(p3m.ks_mesh[ind+1] * d_operator[ j[d]+fft.plan[3].start[d] ])/box_l[d_rs]; 
+			ind++;
+                        p3m.rs_mesh[ind] =   2.0*PI*p3m.ks_mesh[ind-1] * d_operator[ j[d]+fft.plan[3].start[d] ]/box_l[d_rs];  
+			ind++;
                     }
                 }
             }
@@ -1433,9 +1435,11 @@ double p3m_perform_aliasing_sums_energy(int n[3])
 
 #define P3M_TUNE_MAX_CUTS 50
 
-/** get the minimal error for this combination of parameters. In fact, the real space error is tuned such that it
-    contributes half of the total error, and then the Fourier space error is calculated. Returns the error and the
-    optimal alpha, or 0 if this combination does not work at all */
+/** get the minimal error for this combination of parameters. In fact,
+    the real space error is tuned such that it contributes half of the
+    total error, and then the Fourier space error is
+    calculated. Returns the error and the optimal alpha, or 0 if this
+    combination does not work at all */
 static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err)
 {
    double rs_err, ks_err;
@@ -1854,7 +1858,7 @@ int p3m_adaptive_tune(Tcl_Interp *interp) {
     }
   }
   
-  P3M_TRACE(fprintf(stderr,"%d: finshed tuning, best time: %lf\n", this_node,time_best));
+  P3M_TRACE(fprintf(stderr,"%d: finished tuning, best time: %lf\n", this_node,time_best));
   if(time_best == 1e20) {
     Tcl_AppendResult(interp, "** failed to tune P3M parameters to required accuracy", (char *) NULL);
     return (TCL_ERROR);

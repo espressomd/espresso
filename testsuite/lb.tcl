@@ -75,7 +75,7 @@ set skin          0.5
 
 set mom_prec      1.e-5
 set mass_prec     1.e-8
-set temp_prec     5.e-3
+set temp_prec     1.e-1
 
 # Other parameters
 #############################################################
@@ -94,6 +94,18 @@ setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
 cellsystem domain_decomposition -no_verlet_list
 
+# Particles
+#############################################################
+# load colloid from file
+read_data "lb_system.data"
+thermostat langevin 1. 1.
+integrate 1000
+stop_particles
+thermostat off
+#part 0 pos 10 10 10
+# here you can create the necessary snapshot
+#write_data "lb_system.data"
+
 # Fluid
 #############################################################
 lbfluid cpu dens $dens visc $viscosity agrid $agrid tau $tau
@@ -101,20 +113,12 @@ lbfluid friction $friction
 
 thermostat lb $temp
 
-# Particles
-#############################################################
-# load colloid from file
-read_data "lb_system.data"
-#part 0 pos 10 10 10
-# here you can create the necessary snapshot
-#write_data "lb_system.data"
-
 # give the colloid a kick
 for { set i 0 } { $i < [setmd n_part] } { incr i } { 
     set vx [lindex [part $i print v] 0]
     set vy [lindex [part $i print v] 1]
     set vz [lindex [part $i print v] 2]
-    part $i v [expr 1.0+$vx] $vy $vz
+    part $i v [expr .1+$vx] $vy $vz
 }
 
 # determine initial fluid mass and total momentum (fluid is at rest)
@@ -125,6 +129,9 @@ for { set i 0 } { $i < [setmd n_part] } { incr i } {
     lset tot_mom 1 [expr [lindex $tot_mom 1]+[lindex [part $i print v] 1]]
     lset tot_mom 2 [expr [lindex $tot_mom 2]+[lindex [part $i print v] 2]]
 }
+
+## warm up particle and fluid
+integrate 200
 
 set max_dmass 0.0
 set max_dmx   0.0
@@ -196,9 +203,9 @@ puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
 
 puts "\nAverage temperature $avg_temp (relative deviation $rel_temp_error)\n"
 puts "fluid temperature [analyze fluid temp]\n"
-#if { $rel_temp_error > $temp_prec } {
-#    error "relative temperature deviation too large"
-#}
+if { $rel_temp_error > $temp_prec } {
+    error "relative temperature deviation too large"
+}
 
 } res ] } {
     error_exit $res

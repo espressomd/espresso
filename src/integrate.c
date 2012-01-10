@@ -57,7 +57,6 @@
 #include "virtual_sites.h"
 #include "adresso.h"
 #include "lbgpu.h"
-#include "tcl_interface/integrate_tcl.h"
 
 /************************************************
  * DEFINES
@@ -130,8 +129,6 @@ void local_invalidate_system()
   resort_particles = 1;
   invalidate_obs();
 }
-
-
 
 /************************************************************/
 
@@ -308,7 +305,17 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef VIRTUAL_SITES
    update_mol_vel_pos();
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
    if (check_runtime_errors()) break;
+#if  defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
+   // This is on a workaround stage: 
+   // When using virtual sites relative and LB at the same time, it is necessary 
+   // to reassemble the cell lists after all position updates, also of virtual
+   // particles. 
+   if (cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
+     cells_update_ghosts();
+#endif
+
 #ifdef ADRESS
    //adress_update_weights();
    if (check_runtime_errors()) break;
@@ -365,6 +372,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     correct_vel_shake();
 #endif
 
+#ifdef ROTATION
+    convert_torques_propagate_omega();
+#endif
+
 //VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
    ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -378,16 +389,13 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     }
 #endif
 
-#ifdef ROTATION
-    convert_torques_propagate_omega();
-#endif
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
     /* Propagate time: t = t+dt */
-    if(this_node==0) sim_time += time_step;
+    sim_time += time_step;
   }
 
   /* after simulating the forces are necessarily set. Necessary since

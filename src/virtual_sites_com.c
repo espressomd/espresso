@@ -21,7 +21,13 @@
 
 #ifdef VIRTUAL_SITES_COM
 
-//forward declarations
+#include "parser.h"
+#include "virtual_sites.h"
+#include "cells.h"
+#include "topology.h"
+#include "forces.h"
+
+// forward declarations
 void calc_mol_vel(Particle *p_com,double v_com[3]);
 void calc_mol_pos(Particle *p_com,double r_com[3]);
 int calc_mol_pos_cfg(Particle *p_com,double r_com[3]);

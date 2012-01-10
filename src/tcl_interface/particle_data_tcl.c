@@ -18,22 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file particle_data.c
-    This file contains everything related to particle storage. If you want to add a new
-    property to the particles, it is probably a good idea to modify \ref Particle to give
-    scripts access to that property. You always have to modify two positions: first the
-    print section, where you should add your new data at the end, and second the read
-    section where you have to find a nice and short name for your property to appear in
-    the Tcl code. Then you just parse your part out of argc and argv.
-
-    The corresponding header file is particle_data.h.
-*/
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <mpi.h>
 #include "utils.h"
-#include "../particle_data.h"
+#include "particle_data.h"
 #include "global.h"
 #include "communication.h"
 #include "grid.h"
@@ -44,45 +34,16 @@
 #include "rotation.h"
 #include "virtual_sites.h"
 
-/************************************************
- * defines
- ************************************************/
-
-/** granularity of the particle buffers in particles */
-#define PART_INCREMENT 8
-
-/** my magic MPI code for send/recv_particles */
-#define REQ_SNDRCV_PART 0xaa
-
-/************************************************
- * variables
- ************************************************/
-
-/*
-int max_seen_particle = -1;
-int n_total_particles = 0;
-int max_particle_node = 0;
-int *particle_node = NULL;
-int max_local_particles = 0;
-Particle **local_particles = NULL;
-Particle *partCfg = NULL;
-int partCfgSorted = 0;
-*/
- 
-/** bondlist for partCfg, if bonds are needed */
-//IntList partCfg_bl = { NULL, 0, 0 };
-
 /* Add a link of size size consisting of (link[l], p) */
-MDINLINE void add_link(IntList *il, IntList *link, int l, int p, int size)
+void add_link(IntList *il, IntList *link, int l, int p, int size)
 {
-    int i;
-    realloc_intlist(il, il->n + size);
-    for ( i = 0; i < size-1; i++ ) {
-        il->e[il->n++] = link->e[l+i];
-    } 
-    il->e[il->n++] = p;
+  int i;
+  realloc_intlist(il, il->n + size);
+  for ( i = 0; i < size-1; i++ ) {
+    il->e[il->n++] = link->e[l+i];
+  } 
+  il->e[il->n++] = p;
 }
-
 
 #ifdef ROTATIONAL_INERTIA
 void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_Interp *interp)
@@ -279,6 +240,8 @@ void tclcommand_part_print_bonding_structure(Particle *part, char *buffer, Tcl_I
   Tcl_AppendResult(interp, "} ", (char *)NULL);
 }
 
+
+ 
 /** Return all bond partners of a particle including bonds that are not stored at the particle itself up to a certain distance in numbers of bonds. Return a tcl list to the interpreter c*/
 void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Interp *interp, int distance)
 {
@@ -669,6 +632,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
+
 int tclcommand_part_parse_delete(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num, int * change)
 {
@@ -897,6 +861,7 @@ int part_parse_vs_relative(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_OK;
 }
+
 
 // Set's up the particle, so that it's relative distance to a spicific other 
 // particle P, and the relative orientation between the director of particle P
@@ -1163,6 +1128,7 @@ int tclcommand_part_parse_quat(Tcl_Interp *interp, int argc, char **argv,
   return TCL_OK;
 }
 
+
 int tclcommand_part_parse_omega(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
@@ -1317,6 +1283,55 @@ int tclcommand_part_parse_unfix(Tcl_Interp *interp, int argc, char **argv,
 }
 
 #endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+int part_parse_temp(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double T;
+
+  *change = 1;
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "temp requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set temperature */
+  if (! ARG_IS_D(0, T))
+    return TCL_ERROR;
+
+  if (set_particle_temperature(part_num, T) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
+			 int part_num, int * change)
+{
+  double gamma;
+
+  *change = 1;
+
+  if (argc < 1) {
+    Tcl_AppendResult(interp, "gamma requires 1 argument", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set temperature scaling factor */
+  if (! ARG_IS_D(0, gamma))
+    return TCL_ERROR;
+
+  if (set_particle_gamma(part_num, gamma) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+#endif
+
 
 int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 		    int part_num, int * change)
@@ -1543,6 +1558,12 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 		   int part_num)
 {
   int change = 0, err = TCL_OK;
+#ifdef DIPOLES
+  int dipm_set = 0;
+#endif
+#if defined(ROTATION) || defined(DIPOLES)
+  int quat_set = 0, dip_set = 0;
+#endif
 
 #ifdef ADDITIONAL_CHECKS
   if (!particle_node)
@@ -1584,8 +1605,14 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef ROTATION
 
-    else if (ARG0_IS_S("quat"))
+    else if (ARG0_IS_S("quat")) {
+      if (dip_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and orientation can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
       err = tclcommand_part_parse_quat(interp, argc-1, argv+1, part_num, &change);
+      quat_set = 1;
+    }
 
     else if (ARG0_IS_S("omega"))
       err = tclcommand_part_parse_omega(interp, argc-1, argv+1, part_num, &change);
@@ -1602,11 +1629,27 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
 #ifdef DIPOLES
 
-    else if (ARG0_IS_S("dip"))
+    else if (ARG0_IS_S("dip")) {
+      if (quat_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and orientation can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
+      if (dipm_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and scalar dipole moment can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
       err = tclcommand_part_parse_dip(interp, argc-1, argv+1, part_num, &change);
+      dip_set = 1;
+    }
 
-    else if (ARG0_IS_S("dipm"))
+    else if (ARG0_IS_S("dipm")) {
+      if (dip_set) {
+	      Tcl_AppendResult(interp, "(vector) dipole and scalar dipole moment can not be set at the same time", (char *)NULL);	
+        return TCL_ERROR;
+      }
       err = tclcommand_part_parse_dipm(interp, argc-1, argv+1, part_num, &change);
+      dipm_set = 1;
+    }
 
 #endif
 
@@ -1646,6 +1689,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_exclusion(interp, argc-1, argv+1, part_num, &change);
 #endif
 
+#ifdef LANGEVIN_PER_PARTICLE
+    else if (ARG0_IS_S("temp"))
+      err = part_parse_temp(interp, argc-1, argv+1, part_num, &change);
+	else if (ARG0_IS_S("gamma"))
+	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
+#endif
+
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
 		       argv[0],"\"", (char *)NULL);
@@ -1665,6 +1715,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 
   return mpi_gather_runtime_errors(interp, err);
 }
+
 
 int tclcommand_part(ClientData data, Tcl_Interp *interp,
 	 int argc, char **argv)
@@ -1732,4 +1783,3 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
 
   return tclcommand_part_parse_cmd(interp, argc-2, argv+2, part_num);
 }
-

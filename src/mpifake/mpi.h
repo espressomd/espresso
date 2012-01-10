@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -89,7 +90,7 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 
 #define MPI_REQUEST_NULL NULL
 
-#define MPI_IN_PLACE 0x1
+#define MPI_IN_PLACE (void*)0x1
 
 extern struct mpifake_dtype mpifake_dtype_int;
 extern struct mpifake_dtype mpifake_dtype_double;
@@ -175,7 +176,7 @@ MDINLINE int MPI_Op_create(MPI_User_function func, int commute, MPI_Op *pop) { *
 MDINLINE int MPI_Reduce(void *sbuf, void* rbuf, int count, MPI_Datatype dtype, MPI_Op op, int root, MPI_Comm comm)
 { op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 MDINLINE int MPI_Allreduce(void *sbuf, void *rbuf, int count, MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
-{ if(sbuf == (void *)MPI_IN_PLACE)
+{ if(sbuf == MPI_IN_PLACE)
     return MPI_SUCCESS; 
   op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 MDINLINE int MPI_Error_string(int errcode, char *string, int *len) { *string = 0; *len = 0; return MPI_SUCCESS; }
