@@ -64,6 +64,7 @@
 #include "tcl_interface/uwerr_tcl.h"
 #include "nsquare.h"
 #include "nemd.h"
+#include "tcl_interface/nemd_tcl.h"
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "rattle.h"

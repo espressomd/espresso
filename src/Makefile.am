@@ -85,6 +85,7 @@ libEspresso_core_la_SOURCES = \
 	modes.c	modes.h \
 	topology.c topology.h \
 	nemd.c nemd.h \
+	tcl_interface/nemd_tcl.c tcl_interface/nemd_tcl.h \
 	statistics_cluster.c statistics_cluster.h \
 	elc.c elc.h \
 	mdlc_correction.c  mdlc_correction.h \
