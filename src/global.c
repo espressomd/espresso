@@ -67,7 +67,7 @@ const Datafield fields[] = {
   {&langevin_gamma,  TYPE_DOUBLE, 1, "gamma",         tclcallback_thermo_ro, 1 },     /* 5  from thermostat.c */
   {&integ_switch,       TYPE_INT, 1, "integ_switch",  tclcallback_ro,    1 },         /* 6  from integrate.c */
   {local_box_l,      TYPE_DOUBLE, 3, "local_box_l",   tclcallback_ro,    2 },         /* 7  from global.c */
-  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       tclcallback_ro,    5 },         /* 8  from interaction_data.c */
+  {&max_cut,         TYPE_DOUBLE, 1, "max_cut",       tclcallback_ro,    7 },         /* 8  from interaction_data.c */
   {&max_num_cells,      TYPE_INT, 1, "max_num_cells", tclcallback_max_num_cells, 5 }, /* 9 from cells.c */
   {&max_seen_particle,  TYPE_INT, 1, "max_part",      tclcallback_ro,    5 },         /* 10 from particle_data.c */
   {&max_range,       TYPE_DOUBLE, 1, "max_range",     tclcallback_ro,    5 },         /* 11 from integrate.c */
@@ -84,9 +84,9 @@ const Datafield fields[] = {
   {&nptiso.p_ext,    TYPE_DOUBLE, 1, "npt_p_ext",     tclcallback_ro,     7 },        /* 22 from pressure.c */
   {&nptiso.p_inst,   TYPE_DOUBLE, 1, "npt_p_inst",    tclcallback_ro,    10 },        /* 23 from pressure.c */
   {&nptiso.p_inst_av,TYPE_DOUBLE, 1, "npt_p_inst_av", tclcallback_ro,    10 },        /* 24 from pressure.c */
-  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    tclcallback_npt_p_diff, 7 },        /* 25 from pressure.c */
-  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    tclcallback_npt_piston, 6 },        /* 26 from pressure.c */
-  {&periodic,          TYPE_BOOL, 3, "periodicity",   tclcallback_periodicity,    1 },        /* 27 from grid.c */
+  {&nptiso.p_diff,   TYPE_DOUBLE, 1, "npt_p_diff",    tclcallback_npt_p_diff, 7 },    /* 25 from pressure.c */
+  {&nptiso.piston,   TYPE_DOUBLE, 1, "npt_piston",    tclcallback_npt_piston, 6 },    /* 26 from pressure.c */
+  {&periodic,          TYPE_BOOL, 3, "periodicity",   tclcallback_periodicity,    1 },/* 27 from grid.c */
   {&skin,            TYPE_DOUBLE, 1, "skin",          tclcallback_skin,   2 },        /* 28 from integrate.c */
   {&temperature,     TYPE_DOUBLE, 1, "temperature",   tclcallback_thermo_ro,   2 },   /* 29 from thermostat.c */
   {&thermo_switch,      TYPE_INT, 1, "thermo_switch", tclcallback_ro,     2 },        /* 30 from thermostat.c */
@@ -94,14 +94,15 @@ const Datafield fields[] = {
   {&time_step,       TYPE_DOUBLE, 1, "time_step",     tclcallback_time_step, 5 },     /* 32 from integrate.c */
   {&timing_samples,     TYPE_INT, 1, "timings",       tclcallback_timings, 4 },       /* 33 from tuning.c */
   {&transfer_rate,      TYPE_INT, 1, "transfer_rate", tclcallback_ro,     2 },        /* 34 from imd.c */
-  {&rebuild_verletlist,TYPE_BOOL, 1, "verlet_flag",   tclcallback_ro,     8 },        /* 35 from verlet.c */
+  {&max_cut_nonbonded,TYPE_DOUBLE, 1, "max_cut_nonbonded", tclcallback_ro, 9 },       /* 35 from interaction_data.c */
   {&verlet_reuse,    TYPE_DOUBLE, 1, "verlet_reuse",  tclcallback_ro,     8 },        /* 36 from integrate.c */
-  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", tclcallback_ro,    2 },          /* 37 from lattice.c */
-  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    tclcallback_ro,     6 },         /* 38 from thermostat.c */
-  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",    tclcallback_ro,     6 },         /* 39 from thermostat.c */
-  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",    tclcallback_ro,     6 },         /* 40 from thermostat.c */
-  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",    tclcallback_ro,     5 },         /* 41 from thermostat.c */
-  {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",tclcallback_ro,  1 },         /* 42  from adresso.c */
+  {&lattice_switch,     TYPE_INT, 1, "lattice_switch", tclcallback_ro,    2 },        /* 37 from lattice.c */
+  {&dpd_tgamma,      TYPE_DOUBLE, 1, "dpd_tgamma",    tclcallback_ro,     6 },        /* 38 from thermostat.c */
+  {&dpd_tr_cut,      TYPE_DOUBLE, 1, "dpd_tr_cut",    tclcallback_ro,     6 },        /* 39 from thermostat.c */
+  {&dpd_twf,            TYPE_INT, 1, "dpd_twf",    tclcallback_ro,     6 },           /* 40 from thermostat.c */
+  {&dpd_wf,             TYPE_INT, 1, "dpd_wf",    tclcallback_ro,     5 },            /* 41 from thermostat.c */
+  {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",tclcallback_ro,  1 },              /* 42  from adresso.c */
+  {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded", tclcallback_ro, 9 },           /* 43 from interaction_data.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

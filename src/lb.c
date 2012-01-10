@@ -1130,7 +1130,7 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   gridsize[0] = box_l[0] / lblattice.agrid;
   gridsize[1] = box_l[1] / lblattice.agrid;
   gridsize[2] = box_l[2] / lblattice.agrid;
-  char* line;
+
   for (int i=0; i < gridsize[0]; i++) {
     for (int j=0; j < gridsize[1]; j++) {
       for (int k=0; k < gridsize[2]; k++) {

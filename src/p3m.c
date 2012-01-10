@@ -898,13 +898,14 @@ static void P3M_assign_forces(double force_prefac, int d_rs)
   int cp_cnt=0;
 #ifdef P3M_STORE_CA_FRAC
   int cf_cnt=0;
-#endif
-  /* index, index jumps for rs_mesh array */
-  int q_ind = 0;
+#else
   /* distance to nearest mesh point */
   double dist[3];
   /* index for caf interpolation grid */
   int arg[3];
+#endif
+  /* index, index jumps for rs_mesh array */
+  int q_ind = 0;
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];

@@ -197,19 +197,13 @@ static double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL, 
 /************************************************************/
 /* functions related to the correction of the dipolar p3m-energy */
 
-
-static double dp3m_sumi1(double alpha_L);
-static double dp3m_sumi2(double alpha_L);
-
-
 static double dp3m_average_dipolar_self_energy(double box_l, int mesh);
 static double dp3m_perform_aliasing_sums_dipolar_self_energy(int n[3]);
-
-
 
 /************************************************************/
 /* functions related to the correction of the dipolar p3m-energy */
 
+/*
 
 // Do the sum over k<>0 where k={kx,ky,kz} with kx,ky,kz INTEGERS, of
 // exp(-PI**2*k**2/alpha**2/L**2)
@@ -241,9 +235,11 @@ static double dp3m_sumi1(double alpha_L){
    return suma;
 }
 
+*/
+
 /************************************************************/
 
-
+/* 
 // Do the sum over n<>0 where n={nx*L,ny*L,nz*L} with nx,ny,nz INTEGERS, of
 // exp(-alpha_iL**2*n**2)
 static double dp3m_sumi2(double alpha_L){
@@ -267,6 +263,8 @@ static double dp3m_sumi2(double alpha_L){
        
    return suma;
 }
+
+*/
 
 void dp3m_pre_init(void) {
   p3m_common_parameter_pre_init(&dp3m.params);

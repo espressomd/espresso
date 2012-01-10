@@ -49,17 +49,6 @@ extern double sim_time;
 extern double max_cut;
 /** Verlet list skin. */
 extern double skin;
-/** Maximal interaction range (max_cut + skin). */
-extern double max_range;
-/** Square of \ref max_range. It's initial value is -1.0 which is
-    used to determine wether max_range/max_range2 has been set
-    properly by \ref integrate_vv_recalc_maxrange or not. */
-extern double max_range2;
-/** Maximal non bonded interaction range (max_cut_non_bonded + skin). */
-extern double max_range_non_bonded;
-/** Square of \ref max_range_non_bonded. */
-extern double max_range_non_bonded2;
-
 
 /** If non-zero, the particle data will be resorted before the next integration. */
 extern int    resort_particles;
@@ -80,12 +69,6 @@ extern double verlet_reuse;
 */
 int tclcommand_integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
-
-/** Calculate maximal interaction range. 
-    Uses \ref calc_maximal_cutoff.
-    \ref max_range  = \ref max_cut + \ref #skin;
- */
-void integrate_vv_recalc_maxrange();
 
 /** Initialize the used thermodynamic Ensemble (NVT or NPT) */
 void integrate_ensemble_init();

@@ -69,12 +69,14 @@ void on_short_range_ia_change();
 /** called every time a constraint is changed. */
 void on_constraint_change();
 
+/** called whenever the cutoff has potentially changed. */
+void on_max_cut_change();
+
 /** called every time the cell structure is changed. */
 void on_cell_structure_change();
 
-/** called every time the NpT-integrator communicated the updated box-length.
-    @param scal1 isotropic scaling factor by which each \ref box_l[i] changed. */
-void on_NpT_boxl_change(double scal1);
+/** called every time the NpT-integrator communicated the updated box-length. */
+void on_NpT_boxl_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
     this does not happen automatically. The callback procedure of the changed
@@ -83,10 +85,13 @@ void on_NpT_boxl_change(double scal1);
 */
 void on_parameter_change(int parameter);
 
-/** call this if you want to change ghost flags, e.g. wether ghosts have velocities or not.
-    This is a opt-in process, i. e. all features are turned off and have to be reactivated
-    if necessary inside this procedure.
-*/
+/** called every time the number of particle types has changed (increased) */
+void on_n_particle_types_change();
+
+/** call this if you want to change ghost flags, e.g. wether ghosts
+    have velocities or not.  This is a opt-in process, i. e. all
+    features are turned off and have to be reactivated if necessary
+    inside this procedure.  */
 void on_ghost_flags_change();
 
 void on_lb_params_change(int field);

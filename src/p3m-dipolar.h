@@ -118,7 +118,9 @@ void dp3m_pre_init();
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
  */
-void  dp3m_init(void);
+void dp3m_init(void);
+
+void dp3m_set_bjerrum(void);
 
 /** Updates \ref dp3m_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();

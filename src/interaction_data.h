@@ -181,16 +181,30 @@
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
+
+  /** flag that tells whether there is any short-ranged interaction,
+   i.e. one that contributes to the "nonbonded" section of the
+   energy/pressure. Note that even if there is no short-ranged
+   interaction present, the \ref max_cut can be non-zero due to
+   e.g. electrostatics. */
+  int particlesInteract;
+
+  /** maximal cutoff for this pair of particle types. This contains
+      contributions from the short-ranged interactions, plus any
+      cutoffs from global interactions like electrostatics.
+  */
+  double max_cut;
+
 #ifdef LENNARD_JONES
-	/** \name Lennard-Jones with shift */
-	/*@{*/
-	double LJ_eps;
-	double LJ_sig;
-	double LJ_cut;
-	double LJ_shift;
-	double LJ_offset;
-	double LJ_capradius;
-	double LJ_min;
+  /** \name Lennard-Jones with shift */
+  /*@{*/
+  double LJ_eps;
+  double LJ_sig;
+  double LJ_cut;
+  double LJ_shift;
+  double LJ_offset;
+  double LJ_capradius;
+  double LJ_min;
   /*@}*/
 #endif
 
@@ -793,7 +807,9 @@ extern DoubleList thermodynamic_f_energies;
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions). */
-extern double max_cut_non_bonded;
+extern double max_cut_nonbonded;
+/** Maximal interaction cutoff (real space/short range bonded interactions). */
+extern double max_cut_bonded;
 
 /** For the warmup you can cap the singularity of the Lennard-Jones
     potential at r=0. look into the warmup documentation for more
@@ -916,7 +932,9 @@ void calc_maximal_cutoff();
 int check_obs_calc_initialized();
 
 /**  check if a non bonded interaction is defined */
-int checkIfInteraction(IA_parameters *data);
+MDINLINE int checkIfInteraction(IA_parameters *data) {
+  return data->particlesInteract;
+}
 
 /** check if the types of particles i and j have any non bonded
     interaction defined. */

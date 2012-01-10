@@ -151,11 +151,10 @@ extern int min_num_cells;
 /************************************************************/
 /*@{*/
 
-/** Re-derives the topology dimensions after the NpT-integrator
-    changed the box-length. Note that no changes occur to the
-    cell structure itself, use \ref dd_create_cell_grid for that.
-    @param scal1 isotropic scaling factor by which each \ref box_l[i] changed. */
-void dd_NpT_update_cell_grid(double scal1);
+/** Re-derive the topology dimensions after changing the box length.
+    This tries to do minimal changes to be fast, e.g. when used with
+    the NpT every time step. */
+void dd_change_boxl();
 
 /** Initialize the topology. The argument is a list of cell pointers,
     containing particles that have to be sorted into new cells. The
@@ -208,6 +207,9 @@ void calc_link_cell();
 
 /** Nonbonded and bonded energy calculation using link-cell method */
 void calculate_link_cell_energies();
+
+/** Nonbonded and bonded virials calculation using link-cell method */
+void calculate_link_cell_virials(int v_comp);
 
 /*@}*/
 

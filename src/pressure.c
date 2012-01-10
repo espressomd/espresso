@@ -124,8 +124,13 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     layered_calculate_virials();
     break;
   case CELL_STRUCTURE_DOMDEC:
-    if (rebuild_verletlist) build_verlet_lists();
-    calculate_verlet_virials(v_comp);
+    if(dd.use_vList) {
+      if (rebuild_verletlist)  
+	build_verlet_lists();
+      calculate_verlet_virials(v_comp);
+    }
+    else
+      calculate_link_cell_virials(v_comp);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_virials();
