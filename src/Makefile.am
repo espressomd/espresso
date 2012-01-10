@@ -61,6 +61,7 @@ libEspresso_core_la_SOURCES = \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
+	tcl_interface/iccp3m_tcl.c tcl_interface/iccp3m_tcl.h \
 	fft-common.c fft-common.h \
 	fft.c fft.h \
 	fft-dipolar.c fft-dipolar.h \
@@ -71,7 +72,7 @@ libEspresso_core_la_SOURCES = \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h \
+	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
@@ -93,6 +94,7 @@ libEspresso_core_la_SOURCES = \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
+	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
 	maggs.c maggs.h \
 	mol_cut.h \
 	rattle.c rattle.h \
@@ -161,6 +163,7 @@ lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
 libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
 libespresso_main_la_LIBADD = libEspresso_core.la
+libEspresso_core_la_LIBADD = 
 
 #################################################################
 # Handling of myconfig.h
@@ -208,12 +211,19 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $< 
+
+#.cu.lo:
+#	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
 
 CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-libEspresso_core_la_SOURCES += $(CUDA_SOURCES)
+CUDA_OBJECTS= \
+	cuda_init.o \
+	lbgpu.o 
+
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
 endif

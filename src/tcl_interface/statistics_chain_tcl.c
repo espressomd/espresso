@@ -21,14 +21,8 @@
     Implementation of \ref statistics_chain.h "statistics_chain.h".
 */
 #include "statistics.h"
-#include "utils.h"
 #include "parser.h"
-#include "topology.h"
-#include "communication.h"
-#include "cells.h"
-#include "../statistics.h"
-#include "../statistics_chain.h"
-#include "statistics_chain_tcl.h"
+#include "statistics_chain.h"
 
 
 /****************************************************************************************
