@@ -156,6 +156,7 @@ lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
 libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
 libespresso_main_la_LIBADD = libEspresso_core.la
+libEspresso_core_la_LIBADD = 
 
 #################################################################
 # Handling of myconfig.h
@@ -184,7 +185,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_core_la_OBJECTS): myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 
@@ -203,12 +204,19 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $< 
+
+#.cu.lo:
+#	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
 
 CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-libEspresso_core_la_SOURCES += $(CUDA_SOURCES)
+CUDA_OBJECTS= \
+	cuda_init.o \
+	lbgpu.o 
+
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
 endif
