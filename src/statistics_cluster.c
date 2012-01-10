@@ -28,6 +28,21 @@
 
 #include "statistics_cluster.h"
 
+/** NULL terminated linked list of elements of a cluster (indices in particle list) */
+ClusterElement *element;
+/** Double linked list of \ref statistics_cluster::Cluster */
+Cluster        *cluster;
+/** first cluster in list of \ref statistics_cluster::Cluster */
+Cluster        *first_cluster;
+/** last cluster in list of \ref statistics_cluster::Cluster */
+Cluster        *last_cluster;
+
+/** parameter of necklace cluster algorithm */
+int    backbone_distance;
+/** parameter of necklace cluster algorithm */
+double space_distance2;
+/** parameter of necklace cluster algorithm */
+int    pearl_treshold;
 
 /** \name Routines */
 /************************************************************/

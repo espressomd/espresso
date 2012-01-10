@@ -58,6 +58,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/statistics_chain_tcl.c tcl_interface/statistics_chain_tcl.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
+	tcl_interface/pressure_tcl.c tcl_interface/pressure_tcl.h \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \

@@ -48,27 +48,6 @@ nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0
 /* callbacks for setmd                                      */
 /************************************************************/
 
-int tclcallback_npt_piston(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  if (data < 0.0) { Tcl_AppendResult(interp, "the piston's mass must be positive.", (char *) NULL); return (TCL_ERROR); }
-  nptiso.piston = data;
-  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
-  return (TCL_OK);
-}
-
-int tclcallback_p_ext(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  nptiso.p_ext = data;
-  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
-  return (TCL_OK);
-}
-
-int tclcallback_npt_p_diff(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  nptiso.p_diff = data;
-  mpi_bcast_parameter(FIELD_NPTISO_PDIFF);
-  return (TCL_OK);
-}
 
 
 /************************************************************/
