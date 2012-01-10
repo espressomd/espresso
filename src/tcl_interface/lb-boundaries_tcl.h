@@ -43,15 +43,7 @@
 #include "config.h"
 
 
-#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
-
-
 // TCL Parser functions
 extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
-
-
-
-
-#endif /* LB_BOUNDARIES */
 
 #endif /* LB_BOUNDARIES_H */
