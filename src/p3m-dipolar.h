@@ -99,19 +99,11 @@ typedef struct {
 } dp3m_data_struct;
 
 /** dipolar P3M parameters. */
-extern dp3m_data_struct dp3m;
+dp3m_data_struct dp3m;
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-/** dipolar p3m parser */
-int tclcommand_inter_magnetic_parse_dp3m(Tcl_Interp * interp, int argc, char ** argv);
-
-/** dipolar p3m parser, optional parameters */
-int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
-
-/** print the p3m parameters to the interpreters result */
-int tclprint_to_result_dp3m(Tcl_Interp *interp);
 
 void dp3m_pre_init();
 
