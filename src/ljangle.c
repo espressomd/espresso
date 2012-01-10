@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -41,7 +42,7 @@
 #include "interaction_data.h"
 #include "parser.h"
 
-
+#ifdef LJ_ANGLE
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -295,5 +296,4 @@ void calc_ljangle_cap_radii(double force_cap)
   }
 }
 
-
-
+#endif
