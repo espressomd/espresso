@@ -18,10 +18,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include "virtual_sites_com.h"
+#include "tcl_interface/virtual_sites_com_tcl.h"
 
 #ifdef VIRTUAL_SITES_COM
 
-#include "parser.h"
+//#include "parser.h"
 #include "virtual_sites.h"
 #include "cells.h"
 #include "topology.h"
@@ -305,111 +306,13 @@ double get_mol_dist(Particle *p1,Particle *p2){
 
 /** \name Statistic Functions */
 /** \name Private Functions */
-double calc_pressure_mol(int type1,int type2);
-double calc_energy_kinetic_mol(int type);
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]);
 #ifdef ELECTROSTATICS
-void calc_total_dipolmoment_mol(int type,double total_dipole[4]);
-void calc_absolute_dipolmoment_mol(int type,double total_dipole[2]);
 void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 #endif
 
 Particle *get_mol_com_particle_from_molid_cfg(int mol_id);
 void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]);
-
-int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
-{
-   char buffer[TCL_DOUBLE_SPACE];
-   int type1, type2;
-   double psum;
-   #ifdef ELECTROSTATICS
-   #ifndef INTER_RF
-   Tcl_ResetResult(interp);
-   Tcl_AppendResult(interp, "parse_and_print_pressure_mol is only possible with INTER_RF ", (char *)NULL);
-   return (TCL_ERROR);
-   #endif
-   #endif
-   updatePartCfg(WITHOUT_BONDS);
-   if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_pressure_mol: could not sort particle config, particle ids not consecutive?} ");
-      return TCL_ERROR;
-   }
-   if (argc < 2) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze pressure_mol <type1> <type2>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-
-   if (!ARG0_IS_I(type1)) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze pressure_mol <type1> <type2>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   if (!ARG1_IS_I(type2)) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze pressure_mol <type1> <type2>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   argc-=2; argv+=2;
-
-   if (n_molecules==0) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "No molecules defined !", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   psum=calc_pressure_mol(type1,type2);
-   //sprintf(buffer,"%i",type1);
-   //Tcl_AppendResult(interp,"{ analyze pressure_mol ",buffer," ",(char *)NULL);   
-   //sprintf(buffer,"%i",type2);
-   //Tcl_AppendResult(interp,buffer," ",(char *)NULL);   
-   sprintf(buffer,"%e",psum);
-   Tcl_AppendResult(interp, buffer,(char *)NULL);
-   return TCL_OK;
-}
-
-int tclcommand_analyze_parse_and_print_energy_kinetic_mol(Tcl_Interp *interp,int argc, char **argv)
-{
-   char buffer[TCL_DOUBLE_SPACE];
-   int type;
-   double Ekin;
-   updatePartCfg(WITHOUT_BONDS);
-   if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_energy_kinetic_mol: could not sort particle config, particle ids not consecutive?} ");
-      return TCL_ERROR;
-   }
-   if (argc < 1) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-
-   if (!ARG0_IS_I(type)) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze energy_kinetic <type>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   argc-=1; argv+=1;
-
-   if (n_molecules==0) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "No molecules defined !", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   Ekin=calc_energy_kinetic_mol(type);
-   if (Ekin < 0.0) {
-     Tcl_ResetResult(interp);
-      sprintf(buffer,"%i",-(int)Ekin);
-      Tcl_AppendResult(interp,"Could not fetch com in calc_energy_kinetic_mol! From mol_id",buffer, (char *)NULL);
-      return (TCL_ERROR);
-   }
-   //sprintf(buffer,"%i",type);
-   //Tcl_AppendResult(interp,"{ analyze pressure_mol ",buffer," ",(char *)NULL);   
-   sprintf(buffer,"%e",Ekin);
-   Tcl_AppendResult(interp, buffer,(char *)NULL);
-   return TCL_OK;
-}
 
 double calc_pressure_mol(int type1,int type2){
   double force[3], com_dist[3],psum=0;
@@ -438,70 +341,6 @@ double calc_pressure_mol(int type1,int type2){
   }
   psum/=3.0;
   return psum;
-}
-
-int tclcommand_analyze_parse_and_print_dipmom_mol(Tcl_Interp *interp,int argc, char **argv)
-{
-#ifndef ELECTROSTATICS
-   Tcl_ResetResult(interp);
-   Tcl_AppendResult(interp, "calc_dipole_mol is not possible without ELECTROSTATICS", (char *)NULL);
-   return (TCL_ERROR);
-#else
-   int k,type;
-   char buffer[TCL_DOUBLE_SPACE];
-   double dipole[4];
-   updatePartCfg(WITHOUT_BONDS);
-   if (!sortPartCfg()) {
-      char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{059 parse_and_print_dipole: could not sort particle config, particle ids not consecutive?} ");
-      return TCL_ERROR;
-   }
-   if (n_molecules==0) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "No molecules defined !", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   if (argc < 2) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-
-   if (!ARG1_IS_I(type)) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "usage: analyze parse_and_print_dipole_mol <type>", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   if (ARG0_IS_S("total")){
-      calc_total_dipolmoment_mol(type,dipole);
-      sprintf(buffer,"%i ",type);
-      Tcl_AppendResult(interp,"{ dipolemoment_mol total ",buffer,(char *)NULL);
-      for (k=0;k<3;k++)
-      {
-            sprintf(buffer,"%e ",dipole[k]);
-            Tcl_AppendResult(interp, buffer,(char *)NULL);
-      }
-      sprintf(buffer,"%e",dipole[3]);
-      Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
-   }
-   else if (ARG0_IS_S("absolute")){
-      calc_absolute_dipolmoment_mol(type,dipole);
-      sprintf(buffer,"%i ",type);
-      Tcl_AppendResult(interp,"{ dipolemoment_mol absolute ",buffer,(char *)NULL);
-      sprintf(buffer,"%e ",dipole[0]);
-      Tcl_AppendResult(interp, buffer,(char *)NULL);
-      sprintf(buffer,"%e",dipole[1]);
-      Tcl_AppendResult(interp,buffer,"}",(char *)NULL);
-   }
-   else
-   {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "Feature not implemented", (char *)NULL);
-      return (TCL_ERROR);
-   }
-   argc-=2; argv+=2;
-   return TCL_OK;
-#endif
 }
 
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]){
@@ -668,46 +507,6 @@ void get_mol_dist_vector_from_molid_cfg(int mol_id1,int mol_id2,double dist[3]){
    }
    #endif
    get_mi_vector(dist,p1_com->r.p, p2_com->r.p);
-}
-
-int tclcommand_analyze_parse_and_print_check_mol(Tcl_Interp *interp,int argc, char **argv){
-   int j,count=0;
-   double dist;
-   char buffer[TCL_DOUBLE_SPACE];
-   Particle p;
-   updatePartCfg(WITHOUT_BONDS);
-   for(j=0; j<n_total_particles; j++){
-      if (!ifParticleIsVirtual(&partCfg[j])) continue;
-      get_particle_data(j,&p);
-      //dist=min_distance(partCfg[j].r.p,p.r.p);
-      unfold_position(p.r.p,p.l.i);
-      dist=distance(partCfg[j].r.p,p.r.p);
-      if (dist > 0.01){
-         if (count==0) Tcl_AppendResult(interp,"BEGIN Particle Missmatch: \n", (char *)NULL);
-         sprintf(buffer,"%i",j);
-         Tcl_AppendResult(interp,"Particle ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp,partCfg[j].r.p[0] , buffer);
-         Tcl_AppendResult(interp," partCfg x ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp,partCfg[j].r.p[1] , buffer);
-         Tcl_AppendResult(interp," y ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp,partCfg[j].r.p[2] , buffer);
-         Tcl_AppendResult(interp," z ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp,p.r.p[0] , buffer);
-         Tcl_AppendResult(interp," my_partCfg x ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp,p.r.p[1] , buffer);
-         Tcl_AppendResult(interp," y ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp,p.r.p[2] , buffer);
-         Tcl_AppendResult(interp," z ",buffer, (char *)NULL);
-         Tcl_PrintDouble(interp, dist, buffer);
-         Tcl_AppendResult(interp," dist ",buffer,"\n", (char *)NULL);
-         count++;
-      }
-   }
-   if (count!=0){
-      Tcl_AppendResult(interp,"END Particle Missmatch\n", (char *)NULL);
-      return(TCL_ERROR);
-   }
-   return(TCL_OK);
 }
 
 #endif

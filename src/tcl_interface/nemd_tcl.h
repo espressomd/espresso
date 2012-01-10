@@ -17,5 +17,34 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#ifndef NEMD_TCL_H
+#define NEMD_TCL_H
+/** \file nemd.h
 
-//only tclcommand were originally in this file
+    This file contains the implementation of the NEMD (Non Equilibrium
+    Molecular Dynamics) algorithm. It allows one to shear a system
+    with help of an unphysical momentum change in two slabs in the
+    system.
+ */
+
+#include "nemd.h"
+#include "particle_data.h"
+
+#define NEMD_METHOD_OFF       0
+#define NEMD_METHOD_EXCHANGE  1
+#define NEMD_METHOD_SHEARRATE 2
+
+
+/************************************************************/
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
+
+/** tcl procedure for nemd steering.
+    USAGE: nemd \<n_slabs\> \<n_exchange\>   
+    see also \ref tclcommand_nemd
+*/
+int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
+	 int argc, char **argv);
+
+#endif

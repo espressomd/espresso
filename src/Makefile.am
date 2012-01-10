@@ -27,7 +27,7 @@ libEspresso_core_la_SOURCES = \
 	global.h \
 	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
-	binary_file.c binary_file.h \
+	tcl_interface/binary_file_tcl.c tcl_interface/binary_file_tcl.h \
 	interaction_data.c interaction_data.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
@@ -39,6 +39,9 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
 	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
 	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
+	tcl_interface/statistics_cluster_tcl.c tcl_interface/statistics_cluster_tcl.h \
+	tcl_interface/topology_tcl.c tcl_interface/topology_tcl.h \
+	tcl_interface/virtual_sites_com_tcl.c tcl_interface/virtual_sites_com_tcl.h \
 	cells.c cells.h \
 	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
@@ -49,12 +52,14 @@ libEspresso_core_la_SOURCES = \
 	thermostat.c thermostat.h \
 	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
 	dpd.c dpd.h \
+	tcl_interface/dpd_tcl.c tcl_interface/dpd_tcl.h \
 	statistics.c statistics.h \
 	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
 	statistics_chain.c statistics_chain.h \
 	tcl_interface/statistics_chain_tcl.c tcl_interface/statistics_chain_tcl.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
+	tcl_interface/pressure_tcl.c tcl_interface/pressure_tcl.h \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
@@ -64,7 +69,9 @@ libEspresso_core_la_SOURCES = \
 	fft-dipolar.c fft-dipolar.h \
 	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
+	tcl_interface/p3m_tcl.c tcl_interface/p3m_tcl.h \
 	p3m-dipolar.c p3m-dipolar.h \
+	tcl_interface/p3m-dipolar_tcl.c tcl_interface/p3m-dipolar_tcl.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
 	random.c random.h \
@@ -78,6 +85,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
+	tcl_interface/domain_decomposition_tcl.c tcl_interface/domain_decomposition_tcl.h \
 	nsquare.c nsquare.h \
 	layered.c layered.h \
 	mmm-common.c mmm-common.h \
@@ -86,6 +94,7 @@ libEspresso_core_la_SOURCES = \
 	modes.c	modes.h \
 	topology.c topology.h \
 	nemd.c nemd.h \
+	tcl_interface/nemd_tcl.c tcl_interface/nemd_tcl.h \
 	statistics_cluster.c statistics_cluster.h \
 	elc.c elc.h \
 	mdlc_correction.c  mdlc_correction.h \

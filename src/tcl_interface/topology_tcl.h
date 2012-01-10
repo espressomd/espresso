@@ -17,5 +17,28 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#ifndef TOPOLOGY_TCL_H
+#define TOPOLOGY_TCL_H
 
-//only tclcommand were originally in this file
+/** \file topology.h
+ *
+ *  This file contains functions for handling the system topology.
+ */
+
+#include <tcl.h>
+//#include "utils.h"
+
+
+
+/************************************************************/
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
+
+
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
+
+/*@}*/
+
+
+#endif

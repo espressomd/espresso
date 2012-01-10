@@ -61,10 +61,7 @@
    </ul>
 */
 
-#include <tcl.h>
 #include "particle_data.h"
-#include "ghosts.h"
-#include "verlet.h"
 
 
 /************************************************************/

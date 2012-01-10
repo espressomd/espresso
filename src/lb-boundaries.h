@@ -95,6 +95,9 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 
 int lbboundary_get_force(int no, double* f); 
 
+void lb_init_boundaries();
+
+
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
  * are bounced back to the node they came from. This results

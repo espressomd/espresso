@@ -21,11 +21,12 @@
     Implementation of \ref uwerr_tcl.h "uwerr_tcl.h".
 */
 
-#include "uwerr_tcl.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "uwerr.h"
+
+#include <tcl.h>
 
 
 /** This is eps from matlab */

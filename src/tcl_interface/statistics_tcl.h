@@ -23,12 +23,6 @@
     This file contains the code for statistics on the data.
 */
 
-#include <tcl.h>
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "utils.h"
-#include "topology.h"
-
 
 /** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
     both online and offline.

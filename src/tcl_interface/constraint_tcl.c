@@ -22,7 +22,6 @@
 */
 #include "constraint.h"
 
-int reflection_happened;
 #ifdef CONSTRAINTS
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
 {

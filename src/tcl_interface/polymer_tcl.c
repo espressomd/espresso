@@ -29,20 +29,10 @@
 */
 
 
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <stddef.h>
-//#include <string.h>
-//#include <math.h>
-//#include "utils.h"
-//#include "polymer.h"
-//#include "grid.h"
-//#include "communication.h"
+#include "polymer.h"
+#include "communication.h"
 #include "interaction_data.h"
-//#include "random.h"
 #include "parser.h"
-//#include "integrate.h"
-//#include "constraint.h"
 
 /************************************************************* 
  * Functions                                                 *
