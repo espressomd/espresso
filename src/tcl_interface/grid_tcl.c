@@ -33,6 +33,9 @@
 #include "verlet.h"
 #include "cells.h"
 #include "interaction_data.h"
+#include <limits.h>
+#include "errorhandling.h"
+
 
 
 int tclcallback_node_grid(Tcl_Interp *interp, void *_data)

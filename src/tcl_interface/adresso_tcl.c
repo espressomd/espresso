@@ -28,6 +28,10 @@
 #include "parser.h"
 #include "cells.h"
 #include "adresso.h"
+#include <tcl.h>
+#include "virtual_sites.h"
+#include "interaction_data.h"
+
 
 /** \name Privat Functions */
 /************************************************************/

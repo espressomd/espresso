@@ -32,11 +32,7 @@
     - C. Junghans and S. Poblete, Comp. Phys. Comm. 181, 1449, 2010.
 */
 
-#include <tcl.h>
 #include "particle_data.h"
-#include "virtual_sites.h"
-#include "interaction_data.h"
-#include "communication.h"
 
 
 

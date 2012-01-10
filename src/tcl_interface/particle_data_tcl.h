@@ -22,9 +22,6 @@
 #define _PARTICLE_DATA_TCL_H
 
 #include <tcl.h>
-#include "utils.h"
-#include "grid.h"
-#include "global.h"
 
 /************************************************
  * defines

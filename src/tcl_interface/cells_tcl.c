@@ -23,8 +23,11 @@
  *
  *  For more information on cells, see cells.h
  *   */
+#include <tcl.h>
 #include "domain_decomposition.h"
 #include "layered.h"
+#include "ghosts.h"
+#include "verlet.h"
 
 
 /************************************************************
