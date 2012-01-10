@@ -23,12 +23,7 @@
  *  See also \ref domain_decomposition.h
  */
 
-#include "domain_decomposition_tcl.h"
-#include "errorhandling.h"
-#include "forces.h"
-#include "pressure.h"
-#include "energy.h"
-#include "constraint.h"
+#include "domain_decomposition.h"
 
 /** half the number of cell neighbors in 3 Dimensions. */
 #define CELLS_MAX_NEIGHBORS 14
