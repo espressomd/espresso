@@ -131,6 +131,8 @@ int dp3m_sanity_checks();
     Dcur_ca_frac. */
 void dp3m_dipole_assign(void);
 
+/** set bjerrum length for dipolar p3m */
+void dp3m_set_bjerrum(void);
 
 /** compute the k-space part of forces and energies for the magnetic dipole-dipole interaction  */
 double dp3m_calc_kspace_forces(int force_flag, int energy_flag);
