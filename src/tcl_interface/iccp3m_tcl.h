@@ -53,28 +53,6 @@
 #ifndef _ICCP3M_TCL_H
 #define _ICCP3M_TCL_H
 
-#include <tcl.h>
-#include <time.h>
-#include "p3m.h"
-#include "utils.h"
-#include "mmm1d.h"
-#include "mmm2d.h"
-#include "domain_decomposition.h"
-#include "cells.h"
-#include "integrate.h"
-#include "communication.h"
-#include "verlet.h"
-#include "layered.h"
-#include "global.h"
-#include "communication.h"
-#include "ghosts.h"
-#include "nsquare.h"
-#include "interaction_data.h"
-#include "particle_data.h"
-#include "topology.h"
-#include "forces.h"
-#include "ghosts.h"
-
 #if defined(ELECTROSTATICS)
 
 /** Implementation of the tcl-command <br>
