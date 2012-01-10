@@ -30,6 +30,7 @@
 #include "global.h"
 #include "tcl_interface/global_tcl.h"
 #include "particle_data.h"
+#include "tcl_interface/particle_data_tcl.h"
 #include "interaction_data.h"
 #include "binary_file.h"
 #include "integrate.h"
@@ -38,7 +39,9 @@
 #include "pressure.h"
 #include "polymer.h"
 #include "imd.h"
+#include "tcl_interface/imd_tcl.h"
 #include "random.h"
+#include "tcl_interface/random_tcl.h"
 #include "communication.h"
 #include "blockfile_tcl.h"
 #include "cells.h"
@@ -73,6 +76,8 @@
 #include "tcl_interface/adresso_tcl.h"
 #include "metadynamics.h"
 #include "tcl_interface/integrate_tcl.h"
+#include "tcl_interface/cells_tcl.h"
+#include "tcl_interface/statistics_tcl.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

@@ -1,4 +1,3 @@
-
 cimport global_variables
 import numpy as np
 
