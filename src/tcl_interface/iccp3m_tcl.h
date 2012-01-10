@@ -77,4 +77,4 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
 
 #endif /* ELECTROSTATICS */
 
-#endif /* ICCP3M_H */
+#endif /* ICCP3M_TCL_H */

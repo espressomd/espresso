@@ -71,6 +71,7 @@ libEspresso_core_la_SOURCES = \
 	blockfile.c blockfile.h \
 	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
+	tcl_interface/polymer_tcl.c tcl_interface/polymer_tcl.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
@@ -110,6 +111,7 @@ libEspresso_core_la_SOURCES = \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
+	tcl_interface/lb-boundaries_tcl.c tcl_interface/lb-boundaries_tcl.h \
 	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
