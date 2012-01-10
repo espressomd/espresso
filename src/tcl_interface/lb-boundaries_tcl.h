@@ -89,15 +89,15 @@ extern LB_Boundary *lb_boundaries;
  *  This function determines the lattice sited which belong to boundaries
  *  and marks them with a corresponding flag. 
  */
-void lb_init_boundaries(int n_lb_boundaries, LB_Boundary *lb_boundaries);
-void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no, int n_lb_boundaries, LB_Boundary *lb_boundaries); 
+void lb_init_boundaries();
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
 
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
 #ifdef LB_BOUNDARIES
 
-int lbboundary_get_force(int no, double* f, int n_lb_boundaries); 
+int lbboundary_get_force(int no, double* f); 
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
