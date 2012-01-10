@@ -58,6 +58,7 @@ libEspresso_core_la_SOURCES = \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
+	tcl_interface/iccp3m_tcl.c tcl_interface/iccp3m_tcl.h \
 	fft-common.c fft-common.h \
 	fft.c fft.h \
 	fft-dipolar.c fft-dipolar.h \

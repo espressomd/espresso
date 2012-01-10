@@ -23,36 +23,11 @@
     Detailed Information about the method is included in the corresponding header file \ref iccp3m.h.
 
  */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <math.h>
-#include <time.h>
 
 #include "iccp3m.h"
-#include "p3m.h"
-#include "elc.h"
-#include "mmm2d.h"
-#include "mmm1d.h"
-
-#include "communication.h"
-
-#include "utils.h"
-#include "tcl.h"
-#include "parser.h"
-#include "verlet.h"
-#include "cells.h"
-#include "particle_data.h"
-#include "domain_decomposition.h"
-#include "verlet.h"
-#include "forces.h"
-#include "config.h"
-#include "global.h"
-
-#include "tcl_interface/iccp3m_tcl.h"
 
 #ifdef ELECTROSTATICS
+enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_EXTFIELD } ;
 static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag);
 
 /** Parses the ICCP3M command.
