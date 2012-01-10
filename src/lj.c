@@ -18,13 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-
-#include "lj.h"
-#include "parser.h"
-
+#include "utils.h"
 
 #ifdef LENNARD_JONES
+#include "lj.h"
+#include "parser.h"
 #include "mol_cut.h"
+#include "communication.h"
 
 int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 {
