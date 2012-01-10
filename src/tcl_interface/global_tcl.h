@@ -17,33 +17,29 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IMD_H__
-#define IMD_H__
-/** \file imd.h 
-    The interface with VMD. This code just provides a wrapper for the IMD interface functions, which allow to send
-    particle positions to VMD. Additionally, VMD can send back a single integer value, called transfer_rate, which
-    is accessible both from c and from Tcl. The IMD force feedback is not implemented.
+#ifndef GLOBAL_TCL_H
+#define GLOBAL_TCL_H
+/** \file global.h
+    This file contains the code for access to globally defined
+    variables using the script command setmd. \ref add_vars "Here"
+    you can find details on how to add new variables in the interpreter's
+    space.
 */
 
-typedef enum {
-    IMD_DISCONNECT,
-    IMD_ENERGIES, 
-    IMD_FCOORDS,   
-    IMD_GO,
-    IMD_HANDSHAKE, 
-    IMD_KILL,      
-    IMD_MDCOMM,    
-    IMD_PAUSE,
-    IMD_TRATE,
-    IMD_IOERROR
-} IMDType;
+#include <tcl.h>
 
+/**********************************************
+ * misc procedures
+ **********************************************/
 
-IMDType imd_recv_header(void *, int32_t *);
-int   imd_send_fcoords(void *, int32_t, const float *);
-int   imd_handshake(void *);
+/// Implements the Tcl command setmd. It allows to modify simulation parameters
+int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
+	  int argc, char **argv);
 
-extern int transfer_rate;
-
+/** Implements the Tcl command code_info.  It provides information on the
+    Version, Compilation status and the debug status of the used
+    code. */
+int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
+	 int argc, char **argv);
 
 #endif

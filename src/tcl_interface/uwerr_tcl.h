@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -17,40 +17,18 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file statistics_fluid.h
+#ifndef _UWERR_TCL_H
+#define _UWERR_TCL_H
+/** \file uwerr_tcl.h
  *
- * Fluid related analysis functions.
- * Header file for \ref statistics_fluid.c.
- *
- */
+ *  PLEASE INSERT DOCUMENTATION
+*/
 
-#ifndef STATISTICS_FLUID_H
-#define STATISTICS_FLUID_H
 
-#include "utils.h"
+#include <tcl.h>
 
-#ifdef LB
+/** The C implementation of the tcl function uwerr \ref tclcommand_uwerr.
+*/
+int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
-/** Caclulate mass of the LB fluid.
- * \param result Fluid mass
- */
-void lb_calc_fluid_mass(double *result);
-
-/** Calculate momentum of the LB fluid.
- * \param result Fluid momentum
- */
-void lb_calc_fluid_momentum(double *result);
-
-/** Calculate temperature of the LB fluid.
- * \param result Fluid temperature
- */
-void lb_calc_fluid_temp(double *result);
-
-void lb_collect_boundary_forces(double *result);
-
-void lb_calc_densprof(double *result, int *params);
-void lb_calc_velprof(double *result, int *params);
-
-#endif /* LB */
-
-#endif /* STATISTICS_FLUID_H */
+#endif /* _UWERR_TCL_H */

@@ -24,17 +24,21 @@ noinst_HEADERS = \
 libEspresso_core_la_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
-	global.c global.h \
+	global.h \
+	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
 	binary_file.c binary_file.h \
 	interaction_data.c interaction_data.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
+	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
 	integrate.c integrate.h \
 	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
 	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
 	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
 	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
+	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
+	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
 	cells.c cells.h \
 	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
@@ -43,6 +47,7 @@ libEspresso_core_la_SOURCES = \
 	debug.c debug.h \
 	particle_data.c	particle_data.h \
 	thermostat.c thermostat.h \
+	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
 	dpd.c dpd.h \
 	statistics.c statistics.h \
 	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
@@ -53,6 +58,7 @@ libEspresso_core_la_SOURCES = \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
+	tcl_interface/iccp3m_tcl.c tcl_interface/iccp3m_tcl.h \
 	fft-common.c fft-common.h \
 	fft.c fft.h \
 	fft-dipolar.c fft-dipolar.h \
@@ -63,11 +69,12 @@ libEspresso_core_la_SOURCES = \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h \
+	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
+	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
 	nsquare.c nsquare.h \
@@ -84,6 +91,7 @@ libEspresso_core_la_SOURCES = \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
+	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
 	maggs.c maggs.h \
 	mol_cut.h \
 	rattle.c rattle.h \
@@ -94,6 +102,7 @@ libEspresso_core_la_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
+	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
@@ -131,7 +140,8 @@ libEspresso_core_la_SOURCES = \
 	overlap.h \
 	ljangle.c ljangle.h \
 	adresso.c adresso.h \
-        tunable_slip.h \
+	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
+	tunable_slip.h \
 	myconfig-final.h
 
 
@@ -150,6 +160,7 @@ lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
 libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
 libespresso_main_la_LIBADD = libEspresso_core.la
+libEspresso_core_la_LIBADD = 
 
 #################################################################
 # Handling of myconfig.h
@@ -178,7 +189,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_core_la_OBJECTS): myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 
@@ -197,12 +208,19 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $< 
+
+#.cu.lo:
+#	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
 
 CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-libEspresso_core_la_SOURCES += $(CUDA_SOURCES)
+CUDA_OBJECTS= \
+	cuda_init.o \
+	lbgpu.o 
+
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
 endif
