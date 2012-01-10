@@ -24,7 +24,7 @@ noinst_HEADERS = \
 libEspresso_core_la_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
-	global.c global.h \
+	global.h \
 	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
 	binary_file.c binary_file.h \
@@ -37,6 +37,8 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
 	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
 	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
+	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
+	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
 	cells.c cells.h \
 	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
@@ -66,11 +68,12 @@ libEspresso_core_la_SOURCES = \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h \
+	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
+	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
 	nsquare.c nsquare.h \
@@ -87,6 +90,7 @@ libEspresso_core_la_SOURCES = \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
+	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
 	maggs.c maggs.h \
 	mol_cut.h \
 	rattle.c rattle.h \
@@ -97,6 +101,7 @@ libEspresso_core_la_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
+	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
@@ -182,7 +187,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_core_la_OBJECTS): myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 

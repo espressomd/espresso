@@ -43,7 +43,6 @@
 #include "random.h"
 #include "tcl_interface/random_tcl.h"
 #include "communication.h"
-#include "blockfile_tcl.h"
 #include "cells.h"
 #include "grid.h"
 #include "tcl_interface/grid_tcl.h"
@@ -62,7 +61,7 @@
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "forces.h"
-#include "uwerr.h"
+#include "tcl_interface/uwerr_tcl.h"
 #include "nsquare.h"
 #include "nemd.h"
 #include "domain_decomposition.h"
@@ -78,6 +77,7 @@
 #include "tcl_interface/integrate_tcl.h"
 #include "tcl_interface/cells_tcl.h"
 #include "tcl_interface/statistics_tcl.h"
+#include "tcl_interface/blockfile_tcl.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

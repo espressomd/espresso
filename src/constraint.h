@@ -19,20 +19,19 @@
 */
 #ifndef CONSTRAINT_H
 #define CONSTRAINT_H
-#include "statistics.h"
-#include "energy.h"
-#include "forces.h"
-#include "grid.h"
-#include "errorhandling.h"
-#include "tunable_slip.h"
 
 /** \file constraint.h
  *  Routines for handling of constraints.
  *  Only active if the feature CONSTRAINTS is activated.
  *  see also \ref interaction_data.h
  */
+#include "energy.h"
+#include "forces.h"
 
 #ifdef CONSTRAINTS
+/** Exported functions
+ */
+Constraint *generate_constraint();
 
 // for the charged rod "constraint"
 #define C_GAMMA   0.57721566490153286060651209008

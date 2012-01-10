@@ -23,22 +23,7 @@
  *
  *  For more information on cells, see cells.h
  *   */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "utils.h"
-#include "cells.h"
-#include "grid.h"
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "integrate.h"
-#include "initialize.h"
-#include "communication.h"
-#include "verlet.h"
-#include "ghosts.h"
-#include "parser.h"
 #include "domain_decomposition.h"
-#include "nsquare.h"
 #include "layered.h"
 
 
