@@ -47,6 +47,7 @@ libEspresso_core_la_SOURCES = \
 	thermostat.c thermostat.h \
 	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
 	dpd.c dpd.h \
+	tcl_interface/dpd_tcl.c tcl_interface/dpd_tcl.h \
 	statistics.c statistics.h \
 	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
 	statistics_chain.c statistics_chain.h \
@@ -61,6 +62,7 @@ libEspresso_core_la_SOURCES = \
 	fft-dipolar.c fft-dipolar.h \
 	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
+	tcl_interface/p3m_tcl.c tcl_interface/p3m_tcl.h \
 	p3m-dipolar.c p3m-dipolar.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
@@ -73,6 +75,7 @@ libEspresso_core_la_SOURCES = \
 	uwerr.c	uwerr.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
+	tcl_interface/domain_decomposition_tcl.c tcl_interface/domain_decomposition_tcl.h \
 	nsquare.c nsquare.h \
 	layered.c layered.h \
 	mmm-common.c mmm-common.h \
@@ -135,12 +138,8 @@ libEspresso_core_la_SOURCES = \
 	overlap.h \
 	ljangle.h \
 	adresso.c adresso.h \
-<<<<<<< HEAD
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
-=======
-        tunable_slip.h \
->>>>>>> 335efe9192924ac23d9258f5dea75769d4d3427b
 	myconfig-final.h
 
 

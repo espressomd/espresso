@@ -190,14 +190,6 @@ void dd_exchange_and_sort_particles(int global_flag);
 /** implements \ref CellStructure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);
 
-/** Callback for setmd max_num_cells (maxnumcells >= 27). 
-    see also \ref max_num_cells */
-int tclcallback_max_num_cells(Tcl_Interp *interp, void *_data);
-
-/** Callback for setmd min_num_cells. 
-    see also \ref min_num_cells */
-int tclcallback_min_num_cells(Tcl_Interp *interp, void *_data);
-
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();
 

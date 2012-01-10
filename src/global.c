@@ -42,6 +42,7 @@
 #include "tcl_interface/imd_tcl.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
+#include "tcl_interface/domain_decomposition_tcl.h"
 #include "layered.h"
 #include "pressure.h"
 #include "rattle.h"
