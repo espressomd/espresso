@@ -80,6 +80,7 @@
 #include "tcl_interface/cells_tcl.h"
 #include "tcl_interface/statistics_tcl.h"
 #include "tcl_interface/iccp3m_tcl.h"
+#include "tcl_interface/polymer_tcl.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

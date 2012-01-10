@@ -71,6 +71,7 @@ libEspresso_core_la_SOURCES = \
 	blockfile.c blockfile.h \
 	blockfile_tcl.c blockfile_tcl.h \
 	polymer.c polymer.h \
+	tcl_interface/polymer_tcl.c tcl_interface/polymer_tcl.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
