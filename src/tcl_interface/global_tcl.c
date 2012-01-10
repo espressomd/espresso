@@ -32,6 +32,7 @@
 #include "adresso.h"
 #include "integrate_tcl.h"
 #include "grid_tcl.h"
+#include "tcl_interface/domain_decomposition_tcl.h"
 
 /**********************************************
  * description of variables

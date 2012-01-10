@@ -32,7 +32,7 @@
 #include "particle_data.h"
 #include "tcl_interface/particle_data_tcl.h"
 #include "interaction_data.h"
-#include "binary_file.h"
+#include "tcl_interface/binary_file_tcl.h"
 #include "integrate.h"
 #include "statistics.h"
 #include "energy.h"
@@ -64,6 +64,7 @@
 #include "tcl_interface/uwerr_tcl.h"
 #include "nsquare.h"
 #include "nemd.h"
+#include "tcl_interface/nemd_tcl.h"
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "rattle.h"
@@ -81,6 +82,7 @@
 #include "tcl_interface/iccp3m_tcl.h"
 #include "tcl_interface/polymer_tcl.h"
 #include "tcl_interface/lb-boundaries_tcl.h"
+#include "lb-boundaries.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

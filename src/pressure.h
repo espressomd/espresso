@@ -51,8 +51,7 @@ void init_virials(Observable_stat *stat);
 void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
 void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 void init_p_tensor(Observable_stat *stat);
-
-
+void master_pressure_calc(int v_comp);
 
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
