@@ -23,7 +23,7 @@
  *  See also \ref domain_decomposition.h
  */
 
-#include "domain_decomposition_tcl.h"
+#include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "forces.h"
 #include "pressure.h"
