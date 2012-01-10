@@ -182,7 +182,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_core_la_OBJECTS): myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 
