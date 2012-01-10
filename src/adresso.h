@@ -51,29 +51,13 @@ extern double adress_vars[7];
 /*@{*/
 /** Implements the Tcl command "adress". This allows for seetings for adress
 */
-int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 
 #ifdef ADRESS
 // This code requires the "center of mass" implementation of virtual sites
 #ifndef VIRTUAL_SITES_COM
  #error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
 #endif
-/* #ifdef THERMODYNAMIC_FORCE */
-int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
-int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 /* #endif */
-
-#ifdef INTERFACE_CORRECTION
-/* The list for storing the interpolation function of interface correction */
-//extern DoubleList ic_correction;
-/** For the setup of the correction function, s[x] of the interface correction */
-//int ic(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
-//int ic_parse(Tcl_Interp * interp, int argc, char ** argv);
-//int ic_read_params(char * filename);
-
-#endif
 
 /** Calc adress weight function of a vector
     @param x input vector
