@@ -930,3 +930,5 @@ int checkIfTF(TF_parameters *data);
 
 char *get_name_of_bonded_ia(int i);
 #endif
+
+int coulomb_set_bjerrum(double bjerrum);

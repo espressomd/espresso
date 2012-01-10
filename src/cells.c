@@ -164,64 +164,6 @@ static void topology_init(int cs, CellPList *local) {
  *            Exported Functions                            *
  ************************************************************/
 
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv)
-{
-  int err = 0;
-
-  if (argc <= 1) {
-    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG1_IS_S("domain_decomposition")) {
-    if (argc > 2) {
-      if (ARG_IS_S(2,"-verlet_list"))
-	dd.use_vList = 1;
-      else if(ARG_IS_S(2,"-no_verlet_list")) 
-	dd.use_vList = 0;
-      else{
-	Tcl_AppendResult(interp, "wrong flag to",argv[0],
-			 " : should be \" -verlet_list or -no_verlet_list \"",
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
-    }
-    /** by default use verlet list */
-    else dd.use_vList = 1;
-    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
-  }
-  else if (ARG1_IS_S("nsquare"))
-    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
-  else if (ARG1_IS_S("layered")) {
-    if (argc > 2) {
-      if (!ARG_IS_I(2, n_layers))
-	return TCL_ERROR;
-      if (n_layers <= 0) {
-	Tcl_AppendResult(interp, "layer height should be positive", (char *)NULL);
-	return TCL_ERROR;
-      }
-      determine_n_layers = 0;
-    }
-
-    /* check node grid. All we can do is 1x1xn. */
-    if (node_grid[0] != 1 || node_grid[1] != 1) {
-      node_grid[0] = node_grid[1] = 1;
-      node_grid[2] = n_nodes;
-      err = mpi_bcast_parameter(FIELD_NODEGRID);
-    }
-    else
-      err = 0;
-
-    if (!err)
-      mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
-  }
-  else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  return mpi_gather_runtime_errors(interp, TCL_OK);
-}
 
 /************************************************************/
 

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = src . scripts tools testsuite doc
+SUBDIRS = src . scripts tools testsuite doc cython
 
 ACLOCAL_AMFLAGS = -I config
 
@@ -33,12 +33,12 @@ EXTRA_DIST = bootstrap.sh samples packages $(extra)
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 Espresso_SOURCES = src/scriptsdir.c src/main.c
-Espresso_LDADD = src/libEspresso.a
+Espresso_LDADD = src/libEspresso_core.la
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
 Espresso_install_SOURCES = src/scriptsdir.c src/main.c
-Espresso_install_LDADD = src/libEspresso.a
+Espresso_install_LDADD = src/libEspresso_core.la
 
 ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
 ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)

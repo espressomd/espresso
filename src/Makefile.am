@@ -21,26 +21,38 @@ noinst_HEADERS = \
 	myconfig-default.h
 
 # List the sources of the Espresso binary here
-libEspresso_a_SOURCES = \
+libEspresso_core_la_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
-	global.c global.h \
+	global.h \
+	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
 	binary_file.c binary_file.h \
 	interaction_data.c interaction_data.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
+	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
 	integrate.c integrate.h \
+	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
+	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
+	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
+	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
+	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
+	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
 	cells.c cells.h \
+	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
 	forces.c forces.h \
 	rotation.c rotation.h \
 	debug.c debug.h \
 	particle_data.c	particle_data.h \
 	thermostat.c thermostat.h \
+	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
 	dpd.c dpd.h \
 	statistics.c statistics.h \
+	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
 	statistics_chain.c statistics_chain.h \
+	tcl_interface/statistics_chain_tcl.c tcl_interface/statistics_chain_tcl.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
 	vmdsock.c vmdsock.h \
@@ -61,6 +73,7 @@ libEspresso_a_SOURCES = \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
+	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
 	nsquare.c nsquare.h \
@@ -87,6 +100,7 @@ libEspresso_a_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
+	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
@@ -124,10 +138,10 @@ libEspresso_a_SOURCES = \
 	overlap.h \
 	ljangle.c ljangle.h \
 	adresso.c adresso.h \
-        tunable_slip.h
+	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
+	tunable_slip.h \
+	myconfig-final.h
 
-# All objects are compiled into the library
-noinst_LIBRARIES = libEspresso.a
 
 #################################################################
 # Build the blockfile library
@@ -135,7 +149,15 @@ noinst_LIBRARIES = libEspresso.a
 libespressobf_a_SOURCES = blockfile.c blockfile.h
 libespressobf_a_CPPFLAGS = -DBLOCKFILE_STDIO
 
-lib_LIBRARIES = libespressobf.a
+lib_LIBRARIES = libespressobf.a 
+lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
+# pyexecdir_LTLIBRARIES = libespresso_main.la
+# All objects are compiled into the library
+# noinst_LTLIBRARIES = libEspresso.la
+
+libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
+libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
+libespresso_main_la_LIBADD = libEspresso_core.la
 
 #################################################################
 # Handling of myconfig.h
@@ -164,7 +186,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_a_OBJECTS): myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 
@@ -172,7 +194,7 @@ CLEANFILES = myconfig-final.h
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.c
+libEspresso_core_la_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 AM_CPPFLAGS = -I$(srcdir)/mpifake
 endif
@@ -190,5 +212,5 @@ CUDA_SOURCES= \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-libEspresso_a_SOURCES += $(CUDA_SOURCES)
+libEspresso_core_la_SOURCES += $(CUDA_SOURCES)
 endif
