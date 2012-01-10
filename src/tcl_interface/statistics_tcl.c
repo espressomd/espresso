@@ -26,6 +26,7 @@
 #include <string.h>
 #include "utils.h"
 #include "../statistics.h"
+#include "statistics_fluid_tcl.h"
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
