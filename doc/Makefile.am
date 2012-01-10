@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = logo doxygen dg ug tutorials
+SUBDIRS = logo homepage doxygen dg ug tutorials
 
 .PHONY: FORCE doc ug dg tutorials doxygen
 doc: ug dg tutorials doxygen
