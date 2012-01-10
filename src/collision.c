@@ -33,10 +33,7 @@ int collision_detection_bond_vs=1;
 // (Requires VIRTUAL_SITES_RELATIVE)
 int collision_detection_mode=0;
 
-// Distance at which particles are bound
-double collision_distance;
-
-int seet_collision_detection_params(int mode, double d, int bond_centers, int, bond_vs)
+int seet_collision_detection_params(int mode, int bond_centers, int, bond_vs)
 {
 // If we don't have virtual sites relatie feature, mode 2 isn't allowed.
 #ifndef VIRTUAL_SITES_RELATIVE
@@ -53,7 +50,6 @@ if (mode!=0 && n_nodes !=1)
 collision_detection_mode=mode;
 collision_detection_bond_centers=bond_centers;
 collision_detection_bond_vs=bond_vs;
-collision_distance=d;
 }
 
 // Detect a collision between the given particles.
@@ -62,12 +58,12 @@ collision_distance=d;
 void detect_collision(Particle* p1, Particle* p2)
 {
   //printf("in collsiion_detction"); 
-  double dist_betw_part, vec21[3]; 
+  double dist_betw_part, vec21[3], collisioncriter=1.15;
   int part1, part2, the_bond_type_added_on_collision=0, size;
 
   // Obtain distance between particles
   dist_betw_part = distance2vec(p1->r.p, p2->r.p, vec21);
-  if (dist_betw_part > collision_distance)
+  if (dist_betw_part > collisioncriter)
     return;
 
   part1 = p1->p.identity;
@@ -237,14 +233,13 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
   
   if (mode==1)
   {
-   sprintf(s,"bind_centers %f %d",colission_distance,collision_detection_bond_centers);
+   sprintf(s,"bind_centers %d",collision_detection_bond_centers);
   }
   
   if (mode==2)
   {
-   sprintf(s,"bind_at_point_of_collision %f %d %d",collision_distance,collision_detection_bond_centers, collision_detection_bond_vs);
+   sprintf(s,"bind_at_point_of_collision %d %d",collision_detection_bond_centers, collision_detection_bond_vs);
   }
-  return TCL_OK;
  }
 
  // Otherwise, we set parametes
@@ -255,23 +250,17 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
 
  if (modestr=="off")
  {
-  collision_detection_set_params(0,0.,0,0);
+  collision_detection_set_params(mode,0,0);
  }
  else if (modestr=="bind_centers")
  {
-  double d;
-  if (!ARG_IS_D(2,d)
-  {
-   Tcl_AppendResult(interp, "Need a ditance as 1st arg.", (char*) NULL);
-   return TCL_ERROR;
-  }
   int bond1;
-  if (!ARG_IS_I(3,bond1)
+  if (!ARG_IS_I(2,bond1)
   {
-   Tcl_AppendResult(interp, "Need a bond type as 2nd argument.", (char*) NULL);
+   Tcl_AppendResult(interp, "Need a bond type as argument.", (char*) NULL);
    return TCL_ERROR;
   }
-  res=collision_detection_set_params(1,d,bond1,0);
+  res=collision_detection_set_params(mode,bond1,0);
   if (res==2)
   {
    Tcl_AppendResult(interp, "Collision detection only works on a single cpu.", (char*) NULL);
@@ -280,19 +269,13 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
  }
  if (modestr=="bind_at_point_of_collision")
  {
-  double d;
-  if (!ARG_IS_D(2,d)
-  {
-   Tcl_AppendResult(interp, "Need a ditance as 1st arg.", (char*) NULL);
-   return TCL_ERROR;
-  }
   int bond1,bond2;
-  if ((!ARG_IS_I(4,bond1) || (!ARG_IS_I(3,bond2)))
+  if ((!ARG_IS_I(2,bond1) || (!ARG_IS_I(3,bond2)))
   {
-   Tcl_AppendResult(interp, "Need two bond types as 2nd and 3rd argument.", (char*) NULL);
+   Tcl_AppendResult(interp, "Need two bond types as argument.", (char*) NULL);
    return TCL_ERROR;
   }
-  res=collision_detection_set_params(2,d,bond1,bond1);
+  res=collision_detection_set_params(mode,bond1,bond1);
   if (res==1)
   {
    Tcl_AppendResult(interp, "This mode requires the VIRTUAL_SITES_RELATIVE feature to be complied in.", (char*) NULL);
