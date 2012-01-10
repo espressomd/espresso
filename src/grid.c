@@ -77,7 +77,7 @@ int node_grid_is_set()
 
 int map_position_node_array(double pos[3])
 {
-  int i, im[3]={0,0,0};
+  int i, im[3]={0,0,0}, rank;
   double f_pos[3];
 
   for (i = 0; i < 3; i++)
@@ -92,7 +92,9 @@ int map_position_node_array(double pos[3])
     else if (im[i] >= node_grid[i])
       im[i] = node_grid[i] - 1;
   }
-  return map_array_node(im);
+  MPI_Cart_rank(comm_cart, im, &rank);
+  //  return map_array_node(im);
+  return rank;
 }
 
 void map_node_array(int node, int pos[3])
@@ -102,7 +104,10 @@ void map_node_array(int node, int pos[3])
 }
 
 int map_array_node(int pos[3]) {
-  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
+  int rank;
+  MPI_Cart_rank(comm_cart, pos, &rank);
+  return rank;
+  //  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
 }
 
 void calc_node_neighbors(int node)

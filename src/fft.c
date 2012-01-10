@@ -1115,8 +1115,8 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
 	  p2[1] = (gi[1]*s2[1]) + ((i/s2[0])%s2[1]);
 	  p2[2] = (gi[2]*s2[2]) + (i/(s2[0]*s2[1]));
 
-	  n = node_list1[ get_linear_index(p1[0],p1[1],p1[2],grid1) ];
-	  node_list2[ get_linear_index(p2[0],p2[1],p2[2],grid2) ] = n ;
+	  n = node_list1[ get_rank_from_index(p1[0],p1[1],p1[2]) ];
+	  node_list2[ get_rank_from_index(p2[0],p2[1],p2[2]) ] = n ;
 
 	  pos[3*n+0] = p2[0];  pos[3*n+1] = p2[1];  pos[3*n+2] = p2[2];	  
 	  if(my_group==1) group[i] = n;

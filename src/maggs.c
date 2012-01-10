@@ -1601,7 +1601,7 @@ void maggs_calc_init_e_field()
 	
   MPI_Allreduce(Eall,gEall,3,MPI_DOUBLE,MPI_SUM,comm_cart);
 	
-  FOR3D(k) gEall[k] /= (node_grid[0]*node_grid[1]*node_grid[2]*lparams.size[0]*lparams.size[1]*lparams.size[2]);
+  FOR3D(k) gEall[k] /= (n_nodes*lparams.size[0]*lparams.size[1]*lparams.size[2]);
 	
   FORALL_INNER_SITES(ix, iy, iz) {
     i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
