@@ -49,6 +49,7 @@
 #include <string.h>
 #include "../interaction_data.h"
 #include "../maggs.h"
+#include "../parser.h"
 
 #ifdef ELECTROSTATICS
 
