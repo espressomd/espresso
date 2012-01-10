@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef LJ_ANGLE_H
-#define LJ_ANGLE_H
+#ifndef _LJANGLE_H
+#define _LJANGLE_H
 
 /** \file ljangle.h
  *  Routines to calculate the lennard-jones 12-10 with angular dependance.
@@ -39,6 +40,7 @@
  */
 
 #ifdef LJ_ANGLE
+#include "interaction_data.h"
 #include <math.h>
 
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j);
@@ -69,6 +71,8 @@ int tclcommand_inter_parse_ljangle(Tcl_Interp * interp,
 MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				     double d[3], double dist)
 {
+  if(dist > ia_params->LJANGLE_cut) 
+   return;
   int j;
   double frac2=0.0, frac10=0.0, rad=0.0, radprime=0.0;
   double r31[3], r41[3], r52[3], r62[3], rij[3], rik[3], rkn[3];
@@ -84,7 +88,6 @@ MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *
     localkappa6=pow(1/ia_params->LJANGLE_kappa,6);
 
 
-  if (dist < ia_params->LJANGLE_cut) {
 	  
     /* Retrieve the bonded partners from parsing */
     if (ia_params->LJANGLE_bonded1type == p1->p.type) {
@@ -259,13 +262,15 @@ MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *
 			 this_node,p1->p.identity,p2->p.identity,dist,rad*d[0],rad*d[1],rad*d[2]));
       }
     }
-  }
 }
 
 /** calculate Lennard jones energy between particle p1 and p2. */
 MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				    double d[3], double dist)
 {
+  if(dist > ia_params->LJANGLE_cut) 
+   return 0.;
+
   int j;
   double frac2, frac10;
   double r31[3], r41[3], r52[3], r62[3], rij[3], rik[3], rkn[3];
@@ -280,8 +285,6 @@ MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
     localz0=ia_params->LJANGLE_z0, localdz2=ia_params->LJANGLE_dz/2.,
     localkappa6=pow(1/ia_params->LJANGLE_kappa,6);
 
-    
-  if(dist < ia_params->LJANGLE_cut) {
 	
     /* Retrieve the bonded partners from parsing */
     if (ia_params->LJANGLE_bonded1type == p1->p.type) {
@@ -377,7 +380,7 @@ MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
 	}
       }
     }
-  }
+  
   return 0.0;
 }
 

@@ -165,13 +165,13 @@ void tf_tables_init() {
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
 #ifdef LENNARD_JONES
-	params->LJ_eps =
-		params->LJ_sig =
-		params->LJ_cut =
-		params->LJ_shift =
-		params->LJ_offset =
-		params->LJ_capradius = 0;
-	params->LJ_min = 0;  
+  params->LJ_eps =
+    params->LJ_sig =
+    params->LJ_cut =
+    params->LJ_shift =
+    params->LJ_offset =
+    params->LJ_capradius = 0.0;
+  params->LJ_min = 0.0;  
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
@@ -184,7 +184,7 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_a1 =
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
-    params->LJGEN_b2 = 0;
+    params->LJGEN_b2 = 0.0;
 #endif
 
 #ifdef LJ_ANGLE
