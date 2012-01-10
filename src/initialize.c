@@ -32,7 +32,7 @@
 #include "particle_data.h"
 #include "tcl_interface/particle_data_tcl.h"
 #include "interaction_data.h"
-#include "binary_file.h"
+#include "tcl_interface/binary_file_tcl.h"
 #include "integrate.h"
 #include "statistics.h"
 #include "energy.h"

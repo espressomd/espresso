@@ -24,6 +24,7 @@
  */
 
 #include "domain_decomposition.h"
+#include "tcl_interface/domain_decomposition_tcl.h"
 #include "errorhandling.h"
 #include "forces.h"
 #include "pressure.h"
@@ -899,18 +900,6 @@ void  dd_exchange_and_sort_particles(int global_flag)
 
 /*************************************************/
 
-int tclcallback_max_num_cells(Tcl_Interp *interp, void *_data)
-{
-  int data = *(int *)_data;
-  if (data < min_num_cells) {
-    Tcl_AppendResult(interp, "max_num_cells cannot be smaller than min_num_cells", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  max_num_cells = data;
-  mpi_bcast_parameter(FIELD_MAXNUMCELLS);
-  return (TCL_OK);
-}
-
 int calc_processor_min_num_cells()
 {
   int i, min = 1;
@@ -919,26 +908,6 @@ int calc_processor_min_num_cells()
      only one processor for a direction, there have to be at least two cells for this direction. */
   for (i = 0; i < 3; i++) if (node_grid[i] == 1) min *= 2;
   return min;
-}
-
-int tclcallback_min_num_cells(Tcl_Interp *interp, void *_data)
-{
-  char buf[TCL_INTEGER_SPACE];
-  int data = *(int *)_data;
-  int min = calc_processor_min_num_cells();
-
-  if (data < min) {
-    sprintf(buf, "%d", min);
-    Tcl_AppendResult(interp, "min_num_cells must be at least ", buf, (char *) NULL);
-    return (TCL_ERROR);
-  }
-  if (data > max_num_cells) {
-    Tcl_AppendResult(interp, "min_num_cells cannot be larger than max_num_cells", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  min_num_cells = data;
-  mpi_bcast_parameter(FIELD_MINNUMCELLS);
-  return (TCL_OK);
 }
 
 void calc_link_cell()
