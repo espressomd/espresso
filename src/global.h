@@ -27,29 +27,6 @@
     space.
 */
 
-#include <tcl.h>
-
-/**********************************************
- * description of global variables
- * add any variable that should be handled
- * automatically in global.c. This includes
- * distribution to other nodes and
- * read/user-defined access from Tcl.
- **********************************************/
-
-/** Field is of type integer in \ref Datafield. */
-#define TYPE_INT    0
-/** Field is of type double in \ref Datafield. */
-#define TYPE_DOUBLE 1
-/** Field is of type bool, i.e. bit array, in \ref Datafield.
-    Note that the field is stored in whatever an integer is.
-    I guess you can at least assume 16 bits...
-*/
-#define TYPE_BOOL 2
-
-/** Maximal size of an array in \ref Datafield. */
-#define MAX_DIMENSION 64
-
 /** type int (SetCallback)(Tcl_Interp *interp, void *data)
     Type for the write callback procedure of \ref Datafield */
 typedef int (SetCallback)(Tcl_Interp *interp, void *data);
@@ -81,10 +58,34 @@ typedef struct {
     documentation of \ref Datafield befor you add new features. */
 extern const Datafield fields[];
 
+
+/**********************************************
+ * description of global variables
+ * add any variable that should be handled
+ * automatically in global.c. This includes
+ * distribution to other nodes and
+ * read/user-defined access from Tcl.
+ **********************************************/
+
+/** Field is of type integer in \ref Datafield. */
+#define TYPE_INT    0
+/** Field is of type double in \ref Datafield. */
+#define TYPE_DOUBLE 1
+/** Field is of type bool, i.e. bit array, in \ref Datafield.
+    Note that the field is stored in whatever an integer is.
+    I guess you can at least assume 16 bits...
+*/
+#define TYPE_BOOL 2
+
+/** Maximal size of an array in \ref Datafield. */
+#define MAX_DIMENSION 64
+
+
 /** \name Field Enumeration
     These numbers identify the variables given in
     \ref #fields for use with \ref mpi_bcast_parameter.
 */
+
 /*@{*/
 /** index of \ref box_l in \ref #fields */
 #define FIELD_BOXL                0  
@@ -173,13 +174,5 @@ extern const Datafield fields[];
 /** index of address variable in \ref #fields */
 #define FIELD_ADRESS           42
 /*@}*/
-
-/**********************************************
- * misc procedures
- **********************************************/
-
-/// Implements the Tcl command setmd. It allows to modify simulation parameters
-int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
 
 #endif

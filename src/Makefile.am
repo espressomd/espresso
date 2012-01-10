@@ -24,7 +24,7 @@ noinst_HEADERS = \
 libEspresso_core_la_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
-	global.c global.h \
+	global.h \
 	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
 	binary_file.c binary_file.h \
