@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef UWERR_TCL_H
-#define UWERR_TCL_H
+#ifndef _UWERR_TCL_H
+#define _UWERR_TCL_H
 /** \file uwerr_tcl.h
  *
  *  PLEASE INSERT DOCUMENTATION
@@ -30,4 +30,5 @@
 /** The C implementation of the tcl function uwerr \ref tclcommand_uwerr.
 */
 int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
-#endif
+
+#endif /* _UWERR_TCL_H */
