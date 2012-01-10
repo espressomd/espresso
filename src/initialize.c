@@ -68,7 +68,6 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
-#include "collision.h" 
 
 #ifdef CUDA
 #include "cuda_init.h"
@@ -852,9 +851,6 @@ static void init_tcl(Tcl_Interp *interp)
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);
-#endif
-#ifdef COLLISION_DETECTION
- REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
 
   /* evaluate the Tcl initialization script */

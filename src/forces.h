@@ -72,7 +72,6 @@
 #include "molforces.h"
 #include "morse.h"
 #include "elc.h"
-#include "collision.h" 
 /* end of force files */
 
 /** \name Exported Functions */
@@ -240,8 +239,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   
 
 #ifdef COLLISION_DETECTION
-if (collision_detection_mode>0)
- detect_collision(p1,p2);
+ detect_collisoin(p1,p2);
 #endif 
 
 #ifdef ADRESS
