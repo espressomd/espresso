@@ -119,6 +119,11 @@ extern int nemd_method;
 
 #ifdef NEMD 
 
+int nemd_free(void);
+
+void nemd_init(int n_slabs, int n_exchange, double shear_rate);
+
+
 /** Change momentum in top an middle slab. How this is done depends on
     nemd method. */
 void nemd_change_momentum();
