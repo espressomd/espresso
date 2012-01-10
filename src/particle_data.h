@@ -79,7 +79,7 @@ typedef struct {
   double rinertia[3];
 #endif
 
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
   // Determines, wether a particle's rotational degrees of freedom are
   // integrated
   int rotation;

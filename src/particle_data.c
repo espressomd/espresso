@@ -110,7 +110,7 @@ void init_particle(Particle *part)
   part->p.rinertia[1] = 1.0;
   part->p.rinertia[2] = 1.0;
 #endif
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
   part->p.rotation =0;
 #endif
 
@@ -560,7 +560,7 @@ void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *int
 }
 #endif
 
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
 void tclcommand_part_print_rotation(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   sprintf(buffer,"%i", part->p.rotation);
@@ -846,7 +846,7 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_torque(&part, buffer, interp);
 #endif
 
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
   Tcl_AppendResult(interp, " rotation ", (char *)NULL);
   tclcommand_part_print_rotation(&part, buffer, interp);
 #endif
@@ -1008,7 +1008,7 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("tbf"))
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
     else if (ARG0_IS_S("rotation"))
       tclcommand_part_print_rotation(&part, buffer, interp);
 #endif
@@ -1183,7 +1183,7 @@ int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char 
 }
 #endif
 
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
 int tclcommand_part_parse_rotation(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
@@ -2097,7 +2097,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
 #endif
 
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
     else if (ARG0_IS_S("rotation"))
       err = tclcommand_part_parse_rotation(interp, argc-1, argv+1, part_num, &change);
 #endif
@@ -2378,7 +2378,7 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
 #endif
 
 
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
 int set_particle_rotation(int part, int rot)
 {
   int pnode;

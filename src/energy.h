@@ -431,7 +431,7 @@ MDINLINE void add_kinetic_energy(Particle *p1)
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
 if (p1->p.rotation)
 #endif
 {

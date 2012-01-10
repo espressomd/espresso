@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -251,7 +252,7 @@ void propagate_omega_quat()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
 	  if (!p[i].p.rotation)
 	   continue;
 #endif
@@ -304,7 +305,7 @@ void convert_torques_propagate_omega()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
       if (!p[i].p.rotation)
        continue;
 #endif
@@ -385,7 +386,7 @@ void convert_initial_torques()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
       if (!p[i].p.rotation)
        continue;
 #endif

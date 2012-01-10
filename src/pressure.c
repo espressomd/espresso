@@ -139,6 +139,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
   virials.data.e[0] /= (6.0*volume*time_step*time_step);
 #else
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
+#endif
 
   calc_long_range_virials();
 
@@ -147,8 +148,9 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
     
  /* stress tensor part */
- /* ROTATION option does not effect stress tensor calculations since rotational
-    energy is not included in the ideal term (unlike for the pressure) */
+ /* The ROTATION option does not effect stress tensor calculations
+    since rotational energy is not included in the ideal term (unlike
+    for the pressure) */
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
   

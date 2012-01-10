@@ -34,7 +34,6 @@
 #include "domain_decomposition.h"
 #include "magnetic_non_p3m_methods.h"
 
-
 #ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
@@ -134,7 +133,18 @@ int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char 
   if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
     coulomb.Dmethod = DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA;
   } 
-    
+  
+#ifdef PARTIAL_PERIODIC
+  if(PERIODIC(0) == 0 ||
+     PERIODIC(1) == 0 ||
+     PERIODIC(2) == 0)
+    {
+      Tcl_AppendResult(interp, "Need periodicity (1,1,1) with  DAWAANR",
+		       (char *) NULL);
+      return TCL_ERROR;  
+    }
+#endif
+  
   if (n_nodes > 1) {
     Tcl_AppendResult(interp, "sorry: DAWAANR only works with 1 cpu", (char *) NULL);
     return TCL_ERROR;  
@@ -152,50 +162,11 @@ double dawaanr_calculations(int force_flag, int energy_flag)
   double u; 
   int i,j,c,cc;
   
-  return 0.0;
-}
-
-/************************************************************/
-
-            
-double dawaanr_calculations(int force_flag, int energy_flag) { 
-  Cell *cell;
-  Particle *part;
-  int i,c,np;
-  double *x=NULL,  *y=NULL, *z=NULL;
-  double *mx=NULL,  *my=NULL, *mz=NULL;
-  double *fx=NULL,  *fy=NULL, *fz=NULL;
-#ifdef ROTATION
-  double *tx=NULL,  *ty=NULL, *tz=NULL;
-#endif
-  int dip_particles,dip_particles2,j;
-  double u,r,pe1,pe2,pe3,r3,r5,r2,r7,rx,ry,rz,a,b,cc,d;
-#ifdef ROTATION
-  double bx,by,bz,ax,ay,az; 
-#endif
-  double  ffx,ffy,ffz;
- 
   if(n_nodes!=1) {fprintf(stderr,"error:  DAWAANR is just for one cpu .... \n"); exit(1);}
   if(!(force_flag) && !(energy_flag) ) {fprintf(stderr," I don't know why you call dawaanr_caclulations with all flags zero \n"); return 0;}
   
   // Variable to sum up the energy
   u=0;
-  for(i=0;i<dip_particles-1;i++) {
-    for(j=i+1;j<dip_particles;j++) {
-
-      rx=x[i]-x[j];
-      ry=y[i]-y[j];
-      rz=z[i]-z[j];
-#ifdef PARTIAL_PERIODIC
-      // Apply minimum image convention.
-      // Due to the layout of the data, we can't use get_mi_vecotr from grid.h
-      if (PERIODIC(0))
-       rx -= dround(rx*box_l_i[0])*box_l[0];
-      if (PERIODIC(1))
-       ry -= dround(ry*box_l_i[1])*box_l[1];
-      if (PERIODIC(2))
-       rz -= dround(rz*box_l_i[2])*box_l[2];
-#endif 
 
   // Iterate over all cells
   for (c = 0; c < local_cells.n; c++) {
@@ -235,6 +206,15 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   return u;
 }
 
+
+/************************************************************/
+
+/*=================== */
+/*=================== */
+/*=================== */
+/*=================== */
+/*=================== */
+/*=================== */
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS               
@@ -417,8 +397,10 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
 	   
     u=0;
      
+    fprintf(stderr,"Magnetic Direct sum takes long time. Done of %d: \n",dip_particles);
 
     for(i=0;i<dip_particles;i++){
+      fprintf(stderr,"%d\r",i);
       for(j=0;j<dip_particles;j++){
 	pe1=mx[i]*mx[j]+my[i]*my[j]+mz[i]*mz[j];
 	rx=x[i]-x[j];
@@ -495,6 +477,7 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
       }}   /* of  j and i  */ 
 
 
+    fprintf(stderr,"done \n");
   }/* end of the area of calculation */
     
     

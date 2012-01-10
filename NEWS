@@ -8,6 +8,12 @@ ESPResSo 3.1
 User-visible changes
 --------------------
 
+* Added new feature LANGEVIN_PER_PARTICLE that allows to set tha
+  Langevon parameters temperature and gamma per particle.
+
+* Added new feature ROTATION_PER_PARTICLE that allow to choose whether
+  a particle has rotational degrees of freedom or not. 
+
 * Added new constraint and LB boundary condition "rhomboid".
 
 * Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter

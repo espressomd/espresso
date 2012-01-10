@@ -955,7 +955,7 @@ void mpi_send_vs_relative_slave(int pnode, int part)
 
 void mpi_send_rotation(int pnode, int part, int rot)
 {
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
   mpi_issue(REQ_SET_ROTATION, pnode, part);
 
   if (pnode == this_node) {
@@ -972,7 +972,7 @@ void mpi_send_rotation(int pnode, int part, int rot)
 
 void mpi_send_rotation_slave(int pnode, int part)
 {
-#ifdef SWITCHABLE_ROTATION
+#ifdef ROTATION_PER_PARTICLE
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
