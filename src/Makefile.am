@@ -73,7 +73,7 @@ libEspresso_core_la_SOURCES = \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
-	tcl_interface/uwerr_tcl.c tcl_interface_uwerr.h \
+	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
 	nsquare.c nsquare.h \
@@ -100,6 +100,7 @@ libEspresso_core_la_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
+	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \

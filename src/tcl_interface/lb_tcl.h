@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,18 +18,21 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _UWERR_TCL_H
-#define _UWERR_TCL_H
-/** \file uwerr_tcl.h
+/** \file lb_tcl.h
+ * Header file for lb_tcl.c
  *
- *  PLEASE INSERT DOCUMENTATION
-*/
+ * This is the header file for the implementation of the TCL Interface of the Lattice Boltzmann code in lb_tcl.c
+ */
 
+#ifndef _LB_TCL_H
+#define _LB_TCL_H
 
 #include <tcl.h>
+//#include "utils.h"
+//#include "lattice.h"
 
-/** The C implementation of the tcl function uwerr \ref tclcommand_uwerr.
-*/
-int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 
-#endif /* _UWERR_TCL_H */
+
+#endif /* LB_TCL_H */
