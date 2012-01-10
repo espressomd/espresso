@@ -117,9 +117,9 @@ libEspresso_core_la_SOURCES = \
 	harmonic.h \
 	hertzian.h \
 	imd.h \
-	ljcos2.h \
-	ljcos.h \
-	lj.h \
+	ljcos2.c ljcos2.h \
+	ljcos.c ljcos.h \
+	lj.c lj.h \
 	ljgen.c ljgen.h \
 	steppot.h \
 	bmhtf-nacl.h \
@@ -129,7 +129,7 @@ libEspresso_core_la_SOURCES = \
 	subt_lj.h \
 	tab.h \
 	overlap.h \
-	ljangle.h \
+	ljangle.c ljangle.h \
 	adresso.c adresso.h \
         tunable_slip.h \
 	myconfig-final.h
