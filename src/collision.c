@@ -218,6 +218,8 @@ if (collision_detection_mode==2)
       local_change_bond(max_seen_particle, bondG, 0);
     }
 
+    // Is this needed
+    //on_particle_change();
   }
 
 }
