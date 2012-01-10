@@ -49,6 +49,14 @@ double get_mol_dist(Particle *p1,Particle *p2);
 //Distance between molecules in the partcfg data structure
 double get_mol_dist_partcfg(Particle *p1,Particle *p2);
 
+double calc_pressure_mol(int type1,int type2);
+double calc_energy_kinetic_mol(int type);
+
+#ifdef ELECTROSTATICS
+void calc_total_dipolmoment_mol(int type,double total_dipole[4]);
+void calc_absolute_dipolmoment_mol(int type,double total_dipole[2]);
+#endif
+
 #endif
 
 #endif

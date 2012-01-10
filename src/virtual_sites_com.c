@@ -306,12 +306,8 @@ double get_mol_dist(Particle *p1,Particle *p2){
 
 /** \name Statistic Functions */
 /** \name Private Functions */
-double calc_pressure_mol(int type1,int type2);
-double calc_energy_kinetic_mol(int type);
 void calc_force_between_mol(int mol_id1,int mol_id2,double force[3]);
 #ifdef ELECTROSTATICS
-void calc_total_dipolmoment_mol(int type,double total_dipole[4]);
-void calc_absolute_dipolmoment_mol(int type,double total_dipole[2]);
 void calc_dipole_of_molecule(int mol_id,double dipole[4]);
 #endif
 

@@ -23,10 +23,11 @@
     Implementation of adresso.h
 */
 
-#include "adresso.h"
+#include "adresso_tcl.h"
 #include "communication.h"
 #include "parser.h"
 #include "cells.h"
+#include "adresso.h"
 
 /** \name Privat Functions */
 /************************************************************/

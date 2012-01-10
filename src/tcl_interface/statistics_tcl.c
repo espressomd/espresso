@@ -45,6 +45,7 @@
 #include "verlet.h"
 #include "lb.h"
 #include "virtual_sites.h"
+#include "virtual_sites_com_tcl.h"
 #include "initialize.h"
 #include "statistics_chain_tcl.h"
 #include "topology_tcl.h"
