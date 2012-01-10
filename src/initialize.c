@@ -82,6 +82,7 @@
 #include "tcl_interface/iccp3m_tcl.h"
 #include "tcl_interface/polymer_tcl.h"
 #include "tcl_interface/lb-boundaries_tcl.h"
+#include "lb-boundaries.h"
 
 #ifdef CUDA
 #include "cuda_init.h"
