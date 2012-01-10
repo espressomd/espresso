@@ -110,7 +110,7 @@ libEspresso_a_SOURCES = \
 	harmonic.h \
 	hertzian.h \
 	imd.h \
-	ljcos2.h \
+	ljcos2.c ljcos2.h \
 	ljcos.c ljcos.h \
 	lj.c lj.h \
 	ljgen.c ljgen.h \
