@@ -1173,6 +1173,8 @@ MDINLINE void reflect_particle(Particle *p1, double *distance_vec, int reflectin
 
 MDINLINE void add_constraints_forces(Particle *p1)
 {
+  if (n_constraints==0)
+   return;
   int n, j;
   double dist, vec[3], force[3], torque1[3], torque2[3];
 
