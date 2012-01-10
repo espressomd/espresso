@@ -24,10 +24,9 @@
  * This is the header file for the Lattice Boltzmann implementation in lb.c
  */
 
-#ifndef LB_H
-#define LB_H
+#ifndef _LB_H
+#define _LB_H
 
-#include <tcl.h>
 #include "utils.h"
 #include "lattice.h"
 
@@ -621,6 +620,6 @@ void lb_check_halo_regions();
 
 #endif /* LB */
 
-#endif /* LB_H */
+#endif /* _LB_H */
 
 /*@}*/

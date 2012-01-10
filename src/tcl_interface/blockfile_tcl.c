@@ -20,14 +20,9 @@
 /** \file blockfile_tcl.c
     Implementation of \ref blockfile_tcl.h "blockfile_tcl.h".
 */
-#include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+
 #include "utils.h"
-#include "global.h"
 #include "blockfile.h"
-#include "blockfile_tcl.h"
 #include "communication.h"
 
 int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,

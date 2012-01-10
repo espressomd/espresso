@@ -21,29 +21,13 @@
     This is the place for analysis (so far...).
     Implementation of statistics.h
 */
-#include <tcl.h>
-#include <stdlib.h>
-#include <string.h>
-#include "utils.h"
-#include "../statistics.h"
-#include "statistics_chain.h"
+#include "statistics_fluid_tcl.h"
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
-#include "statistics_fluid.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
-#include "communication.h"
-#include "grid.h"
-#include "parser.h"
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "domain_decomposition.h"
-#include "verlet.h"
-#include "lb.h"
-#include "virtual_sites.h"
-#include "initialize.h"
-#include "tcl_interface/statistics_chain_tcl.h"
+#include "statistics_chain_tcl.h"
 
 /** Variables for measuring the compressibility from volume fluctuations.
     Will be used by \ref parse_Vkappa exclusively. */
