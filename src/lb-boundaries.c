@@ -29,11 +29,11 @@
 #include "lb.h"
 #include "lbgpu.h"
 #include "interaction_data.h"
-
+#include "tcl_interface/lb-boundaries_tcl.h"
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
-void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no, int n_lb_boundaries, LB_Boundary *lb_boundaries) {
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
   double vec[3] = {1e100, 1e100, 1e100};
   double dist=1e100;
   *mindist = 1e100;
@@ -76,7 +76,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 
 
 /** Initialize boundary conditions for all constraints in the system. */
-void lb_init_boundaries(int n_lb_boundaries, LB_Boundary *lb_boundaries) {
+void lb_init_boundaries() {
 
   int n, x, y, z, node_domain_position[3], offset[3];
   char *errtxt;
@@ -214,7 +214,7 @@ void lb_init_boundaries(int n_lb_boundaries, LB_Boundary *lb_boundaries) {
   }
 }
 
-int lbboundary_get_force(int no, double* f, int n_lb_boundaries) {
+int lbboundary_get_force(int no, double* f) {
 #ifdef LB_BOUNDARIES
   double* forces=malloc(3*n_lb_boundaries*sizeof(double));
   

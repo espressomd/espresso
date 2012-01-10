@@ -69,7 +69,6 @@
 #include "rattle.h"
 #include "bin.h"
 #include "lattice.h"
-#include "lb-boundaries.h"
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "tcl_interface/adresso_tcl.h"
@@ -78,6 +77,7 @@
 #include "tcl_interface/cells_tcl.h"
 #include "tcl_interface/statistics_tcl.h"
 #include "tcl_interface/blockfile_tcl.h"
+#include "tcl_interface/lb-boundaries_tcl.h"
 
 #ifdef CUDA
 #include "cuda_init.h"

@@ -19,16 +19,17 @@
 */
 /** \file lb-boundaries.c
  *
- * Boundary conditions for Lattice Boltzmann fluid dynamics.
+ * Boundary conditions parser file for Lattice Boltzmann fluid dynamics.
  * Header file for \ref lb-boundaries.h.
  *
  */
 #include "utils.h"
 #include "constraint.h"
-#include "lb-boundaries.h"
+#include "lb-boundaries_tcl.h"
 #include "lb.h"
 #include "lbgpu.h"
 #include "interaction_data.h"
+#include "../lb-boundaries.h"
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
@@ -802,7 +803,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
 	    return (TCL_ERROR);
     }
     else {
-      status = lbboundary_get_force(c_num, force, n_lb_boundaries);
+      status = lbboundary_get_force(c_num, force);
       
       for (int i = 0; i < 3; i++) {
         Tcl_PrintDouble(interp, force[i], buffer);

@@ -108,6 +108,7 @@ libEspresso_core_la_SOURCES = \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
+	tcl_interface/lb-boundaries_tcl.c tcl_interface/lb-boundaries_tcl.h \
 	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
