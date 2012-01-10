@@ -23,11 +23,10 @@
  *
  *  PLEASE INSERT DOCUMENTATION
 */
+double UWerr_dsum_double(double * v, double * w, int len);
+double UWerr_dsum_int(int * v, double * w, int len);
+double UWerr_sum(double * v, int len);
+double gammaq(double a, double x);
 
 
-#include <tcl.h>
-
-/** The C implementation of the tcl function uwerr \ref tclcommand_uwerr.
-*/
-int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 #endif

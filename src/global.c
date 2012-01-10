@@ -39,7 +39,6 @@
 #include "verlet.h"
 #include "p3m.h"
 #include "imd.h"
-#include "tcl_interface/imd_tcl.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
 #include "layered.h"

@@ -37,6 +37,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
 	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
 	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
+	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
 	cells.c cells.h \
 	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
@@ -71,6 +72,7 @@ libEspresso_core_la_SOURCES = \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
+	tcl_interface/uwerr_tcl.c tcl_interface_uwerr.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
 	nsquare.c nsquare.h \

@@ -40,7 +40,6 @@
 #include "domain_decomposition.h"
 #include "nsquare.h"
 #include "layered.h"
-#include "tcl_interface/cells_tcl.h"
 
 /* Variables */
 
