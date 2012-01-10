@@ -66,7 +66,7 @@ libEspresso_core_la_SOURCES = \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h \
+	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
