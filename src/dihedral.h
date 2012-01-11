@@ -30,7 +30,7 @@
 
 #include "interaction_data.h"
 #include "parser.h"
-
+#include "communication.h"
 
 /// set dihedral parameters
 MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double phase)

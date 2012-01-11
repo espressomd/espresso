@@ -25,7 +25,7 @@
 #include <string.h>
 #include <math.h>
 #include "uwerr.h"
-
+#include "config.h"
 #include <tcl.h>
 
 

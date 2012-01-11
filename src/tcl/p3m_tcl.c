@@ -40,33 +40,6 @@
 
 #ifdef P3M
 
-/************************************************
- * variables
- ************************************************/
-//
-//extern p3m_data_struct p3m;
-//
-///* MPI tags for the charge-charge p3m communications: */
-///** Tag for communication in P3M_init() -> send_calc_mesh(). */
-//#define REQ_P3M_INIT   200
-///** Tag for communication in p3m_gather_fft_grid(). */
-//#define REQ_P3M_GATHER 201
-///** Tag for communication in p3m_spread_force_grid(). */
-//#define REQ_P3M_SPREAD 202
-//
-///* Index helpers for direct and reciprocal space
-// * After the FFT the data is in order YZX, which
-// * means that Y is the slowest changing index.
-// * The defines are here to not get confused and
-// * be able to easily change the order.
-// */
-//#define RX 0
-//#define RY 1
-//#define RZ 2
-//#define KY 0
-//#define KZ 1
-//#define KX 2 
-
 /** \name Private Functions */
 /************************************************************/
 /*@{*/

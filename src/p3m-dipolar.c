@@ -62,9 +62,11 @@
 /** Tag for communication in p3m_spread_force_grid(). */
 #define REQ_P3M_SPREAD_D 2021
 
+/************************************************
+ * variables
+ ************************************************/
 
-extern dp3m_data_struct dp3m;
-
+dp3m_data_struct dp3m;
 
 /** \name Private Functions */
 /************************************************************/

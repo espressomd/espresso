@@ -110,10 +110,10 @@ typedef struct {
   double *send_grid; 
   /** Field to store grid points to recv */
   double *recv_grid;
-  } p3m_data_struct;
+} p3m_data_struct;
 
 /** P3M parameters. */
-p3m_data_struct p3m;
+extern p3m_data_struct p3m;
 
 /** \name Exported Functions */
 /************************************************************/

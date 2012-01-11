@@ -25,7 +25,13 @@
  *  see \ref integrate.h "integrate.h".
 */
 
-#include "pressure.h"
+#include "integrate.h"
+#include "npt.h"
+#include "interaction_data.h"
+#include "lb.h"
+#include "pressure_tcl.h"
+#include "communication.h"
+#include "parser.h"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);

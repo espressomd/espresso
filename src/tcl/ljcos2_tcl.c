@@ -31,7 +31,7 @@
 #ifdef LJCOS2
 #include <math.h>
 
-#include "ljcos.h"
+#include "ljcos2.h"
 #include "ljcos2_tcl.h"
 #include "parser.h"
 #include "communication.h"

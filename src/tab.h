@@ -32,6 +32,7 @@
 
 #include "dihedral.h"
 #include "interaction_data.h"
+#include "communication.h"
 
 /// set parameters for the force capping of tabulated potentials
 MDINLINE int tabforcecap_set_params(double tabforcecap)
