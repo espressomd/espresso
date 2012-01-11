@@ -163,7 +163,8 @@ libEspresso_core_la_SOURCES = \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
-	tcl_interface/cuda_init_tcl.h
+	tcl_interface/cuda_init_tcl.h \
+	tclinterface/initialize_interpreter.h tcl_interface/initialize_interpreter.c \
 	myconfig-final.h
 
 
