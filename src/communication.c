@@ -2325,8 +2325,11 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
   int *errcnt;
   int node, n_other_error_msg;
   
+  // Tell other processors to send their erros
   mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
 
+  
+  // If no proessor encountered an error, return
   if (!check_runtime_errors())
     return error_code;
 
@@ -2343,8 +2346,10 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
   /* allocate transfer buffer for maximal error message length */
   n_other_error_msg = n_error_msg;
   for (node = 1; node < n_nodes; node++)
+    // Has this node error messages
     if (errcnt[node] > n_other_error_msg)
       n_other_error_msg = errcnt[node];
+      //  Allocate memory for the error messages
   other_error_msg = malloc(n_other_error_msg);
 
   /* first handle node master errors. */
