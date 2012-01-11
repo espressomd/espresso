@@ -149,7 +149,7 @@ MDINLINE double SmSt_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_p
 				 double d[3], double dist,double dist2)
 {
   if(ia_params->SmSt_cut <=0.) 
-   return;
+   return 0;
   if(dist > ia_params->SmSt_cut) 
   return 0;
 
