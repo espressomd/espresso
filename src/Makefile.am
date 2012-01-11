@@ -148,6 +148,7 @@ libEspresso_core_la_SOURCES = \
 	steppot.h \
 	bmhtf-nacl.h \
 	morse.h \
+	tcl_interface/morse_tcl.c tcl_interface/morse_tcl.h \
 	polynom.h \
 	soft_sphere.h \
 	subt_lj.h \

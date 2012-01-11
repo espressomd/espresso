@@ -17,19 +17,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BIN_H
-#define BIN_H
+#ifndef MORSE_TCL_H
+#define MORSE_TCL_H
+
+/** \file morse_tcl.h
+ *  TCL interface for the Morse potential
+*/
 
 #include "utils.h"
+
+#ifdef MORSE
+
 #include <tcl.h>
 
-void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
-void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
-
-/** Exported functions
-*/
-void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
-
-void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j);
+int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_parse_morse(Tcl_Interp * interp,
+		       int part_type_a, int part_type_b,
+		       int argc, char ** argv);
 
 #endif
+#endif /* MORSE_TCL_H */
