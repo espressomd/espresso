@@ -55,6 +55,7 @@
 #include "comforce.h"
 #include "comfixed.h"
 #include "morse.h"
+#include "tcl_interface/morse_tcl.h"
 #include "dpd.h"
 #include "tunable_slip.h"
 #include "magnetic_non_p3m_methods.h"
