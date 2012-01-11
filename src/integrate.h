@@ -41,6 +41,10 @@ extern int n_verlet_updates;
 
 /** Time step for the integration. */
 extern double time_step;
+extern double time_step_half;
+extern double time_step_squared;
+extern double time_step_squared_half;
+
 /** Old time step needed for rescaling of forces. */
 extern double old_time_step;
 /** Actual simulation time (only on MASTER NODE). */

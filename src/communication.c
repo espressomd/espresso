@@ -1670,6 +1670,10 @@ void mpi_set_time_step(double time_s)
   mpi_call(mpi_set_time_step_slave, -1, 0);
 
   time_step = time_s;
+  time_step_squared=time_step * time_step;
+  time_step_squared_half = time_step_squared /2.;
+  time_step_half= time_step / 2.;
+
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
@@ -1682,6 +1686,9 @@ void mpi_set_time_step_slave(int node, int i)
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
+  time_step_squared=time_step * time_step;
+  time_step_squared_half = time_step_squared /2.;
+  time_step_half= time_step / 2.;
 }
 
 /*************** REQ_BCAST_COULOMB ************/

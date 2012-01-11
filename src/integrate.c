@@ -71,6 +71,10 @@ int    integ_switch     = INTEG_METHOD_NVT;
 int n_verlet_updates    = 0;
 
 double time_step        = -1.0;
+double time_step_half   = -1.0;
+double time_step_squared= -1.0;
+double time_step_squared_half = -1.0;
+
 double sim_time         = 0.0;
 double skin             = -1.0;
 double skin2;
@@ -244,9 +248,6 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
       propagate_vel();  propagate_pos(); }
     else
       propagate_vel_pos();
-#ifdef ROTATION
-    propagate_omega_quat();
-#endif
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
@@ -640,6 +641,9 @@ void propagate_vel()
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
 #endif
+#ifdef ROTATION
+     propagate_omega_quat_particle(&p[i]);
+#endif
       }
     }
   }
@@ -735,6 +739,9 @@ void propagate_vel_pos()
 
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
+#endif
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
 #endif
 
       /* Verlet criterion check */
