@@ -29,6 +29,7 @@ libEspresso_core_la_SOURCES = \
 	communication.c communication.h \
 	tcl_interface/binary_file_tcl.c tcl_interface/binary_file_tcl.h \
 	interaction_data.c interaction_data.h\
+	tcl_interface/interaction_data_tcl.c tcl_interface/interaction_data_tcl.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
 	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \

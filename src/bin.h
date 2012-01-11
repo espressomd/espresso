@@ -27,4 +27,10 @@
     to bin data into arbitrary bins
 */
 
+/** Exported functions
+*/
+void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+
+void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+
 #endif

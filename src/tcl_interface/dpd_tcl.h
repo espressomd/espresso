@@ -25,40 +25,10 @@
  *  \ref forces.c
 */
 
-#include "utils.h"
-#include "thermostat.h"
-#include "interaction_data.h"
-#include "virtual_sites.h"
-
-/** DPD Friction coefficient gamma. */
-extern double dpd_gamma;
-/** DPD thermostat cutoff */
-extern double dpd_r_cut;
-/** DPD thermostat weight function */
-extern int dpd_wf;
-
-/** DPD transversal Friction coefficient gamma. */
-extern double dpd_tgamma;
-/** trans DPD thermostat cutoff */
-extern double dpd_tr_cut;
-/** trans DPD thermostat weight function */
-extern int dpd_twf;
-
 #ifdef DPD
-extern double dpd_r_cut_inv;
-extern double dpd_pref1;
-extern double dpd_pref2;
-
-#ifdef TRANS_DPD 
-extern double dpd_tr_cut_inv;
-extern double dpd_pref3;
-extern double dpd_pref4;
-#endif
-
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
 void tclcommand_thermostat_parse_and_print_dpd(Tcl_Interp *interp);
 void tclcommand_thermostat_print_usage_dpd(Tcl_Interp *interp, int argc, char **argv);
-
 #endif
 
 #ifdef INTER_DPD
@@ -67,7 +37,6 @@ int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** 
 int tclcommand_inter_parse_inter_dpd(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv);
-
 #endif
 
 #endif

@@ -25,11 +25,12 @@
     "cell system", since neither the near nor far formula can be
     decomposed. However, this implementation is reasonably fast, so
     that one can use up to 200 charges easily in a simulation.  */
-#ifndef MMM1D_H
-#define MMM1D_H
+#ifndef MMM1D_TCL_H
+#define MMM1D_TCL_H
 
-#include "utils.h"
-#include "particle_data.h"
+#include <tcl.h>
+//#include "utils.h"
+//#include "particle_data.h"
 
 #ifdef ELECTROSTATICS
 
@@ -38,7 +39,6 @@ int tclprint_to_result_MMM1D(Tcl_Interp *interp);
 
 /// parse the mmm1d parameters
 int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
-
 
 #endif
 #endif

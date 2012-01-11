@@ -861,6 +861,14 @@ extern int ia_excl;
 /** Function for initializing force and energy tables */
 void force_and_energy_tables_init();
 
+#ifdef ELECTROSTATICS
+int coulomb_set_bjerrum(double bjerrum);
+#endif
+
+#ifdef DIPOLES
+int dipolar_set_Dbjerrum(double bjerrum);
+#endif
+
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
 /** Function for initializing adress force and energy tables */
@@ -871,18 +879,6 @@ void tf_tables_init();
 /* #endif */
 
 #endif
-
-/** Implementation of the tcl command "inter". This function
-    allows the interaction parameters to be modified.
- */
-int tclcommand_inter(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implementation of the Tcl function constraint. This function
-    allows to set and delete constraints.
- */
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
@@ -947,4 +943,8 @@ int checkIfTF(TF_parameters *data);
 #endif
 
 char *get_name_of_bonded_ia(int i);
+#endif
+
+#ifdef BOND_VIRTUAL
+int virtual_set_params(int bond_type);
 #endif

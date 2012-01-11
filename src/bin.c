@@ -17,9 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "bin.h"
 #include "tcl_interface/bin_tcl.h"
-#include "parser.h"
+#include "utils.h"
 
 void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins)
 {
