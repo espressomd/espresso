@@ -25,11 +25,25 @@
     is accessible both from c and from Tcl. The IMD force feedback is not implemented.
 */
 
-#include <tcl.h>
+typedef enum {
+    IMD_DISCONNECT,
+    IMD_ENERGIES, 
+    IMD_FCOORDS,   
+    IMD_GO,
+    IMD_HANDSHAKE, 
+    IMD_KILL,      
+    IMD_MDCOMM,    
+    IMD_PAUSE,
+    IMD_TRATE,
+    IMD_IOERROR
+} IMDType;
 
-int tclcommand_imd(ClientData data, Tcl_Interp *interp,
-	int argc, char **argv);
+
+IMDType imd_recv_header(void *, int32_t *);
+int   imd_send_fcoords(void *, int32_t, const float *);
+int   imd_handshake(void *);
 
 extern int transfer_rate;
+
 
 #endif

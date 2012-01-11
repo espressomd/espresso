@@ -183,10 +183,6 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** implementation of the Tcl command cellsystem */
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv);
-
 /** Initialize the cell structure on program start with the default
     cell structure of type domain decomposition. */
 void cells_pre_init();

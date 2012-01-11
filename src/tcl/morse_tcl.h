@@ -17,19 +17,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file blockfile_tcl.h
-    Contains only the tcl interface for block coded files.
+#ifndef MORSE_TCL_H
+#define MORSE_TCL_H
 
-    It is the header file for \ref blockfile_tcl.c "blockfile_tcl.c" and provides the
-    tcl command blockfile.
+/** \file morse_tcl.h
+ *  TCL interface for the Morse potential
 */
-#ifndef BLOCKFILE_TCL_H
-#define BLOCKFILE_TCL_H
-#include "config.h"
+
+#include "utils.h"
+
+#ifdef MORSE
+
 #include <tcl.h>
 
-/** Implementation of the Tcl command blockfile. Allows to read and write
-    blockfile comfortably from Tcl. */
-int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv);
+int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j);
+int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_parse_morse(Tcl_Interp * interp,
+		       int part_type_a, int part_type_b,
+		       int argc, char ** argv);
+
 #endif
+#endif /* MORSE_TCL_H */

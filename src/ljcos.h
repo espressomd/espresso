@@ -26,8 +26,9 @@
  *  \ref forces.c
 */
 
-#ifdef LJCOS
+#include "config.h"
 
+#ifdef LJCOS
 /* These headers are needed to define types used in this header, hence
  * they are included here.  */
 #include "particle_data.h"
@@ -36,12 +37,6 @@
 int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
 		      double offset);
-
-int tclprint_to_result_ljcosIA(Tcl_Interp *interp, int i, int j);
-
-int tclcommand_inter_parse_ljcos(Tcl_Interp * interp,
-			  int part_type_a, int part_type_b,
-			  int argc, char ** argv);
 
 MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])

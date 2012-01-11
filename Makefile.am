@@ -29,33 +29,30 @@ EXTRA_DIST = bootstrap.sh samples packages $(extra)
 # Two binaries are generated: Espresso for the build dir,
 # Espresso.install for the installation dir. 
 # The ".install" suffix is removed upon installation.
-
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 Espresso_SOURCES = src/scriptsdir.c src/main.c
-Espresso_LDADD = src/libEspresso.a
+Espresso_LDADD = src/libEspresso.a src/tcl_interface/libtcl_interface.a
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
 Espresso_install_SOURCES = src/scriptsdir.c src/main.c
-Espresso_install_LDADD = src/libEspresso.a
+Espresso_install_LDADD = src/libEspresso.a src/tcl_interface/libtcl_interface.a
 
-ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
-ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
 # rename Espresso after installation
 install-exec-hook:
 	$(am__mv) \
-		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
-		$(DESTDIR)$(bindir)/$(ESPRESSO)
+		$(DESTDIR)$(bindir)/Espresso.install \
+		$(DESTDIR)$(bindir)/Espresso
 
 uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
+	-rm -f $(DESTDIR)$(bindir)/Espresso
 
 
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc doxygen ug dg tutorials
-doc doxygen ug dg tutorials: FORCE
+.PHONY: FORCE doc ug dg tutorials
+doc ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
 FORCE:

@@ -92,15 +92,6 @@ extern MAGGS_struct maggs;
 */
 void maggs_init(); /** called from: initialize.c */
 
-/** parse TCL command. The number of parameters is checked and
-    maggs_set_parameters function is called.
-    @return 0 for success, -1 otherwise
-    @param interp  TCL Interpreter handle
-    @param argc    number of TCL arguments after "inter coulomb $bjerrum maggs"
-    @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
-*/
-int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
-
 /** set the main parameters for the algorithm.
     @param interp    TCL Interpreter handle
     @param bjerrum   Bjerrum length for the system

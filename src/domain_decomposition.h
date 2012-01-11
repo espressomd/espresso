@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef DOMAIN_DECOMP_H
-#define DOMAIN_DECOMP_H
+#ifndef _DOMAIN_DECOMPOSITION_H
+#define _DOMAIN_DECOMPOSITION_H
 
 /** \file domain_decomposition.h
  *
@@ -188,14 +189,6 @@ void dd_exchange_and_sort_particles(int global_flag);
 
 /** implements \ref CellStructure::position_to_cell. */
 Cell *dd_position_to_cell(double pos[3]);
-
-/** Callback for setmd max_num_cells (maxnumcells >= 27). 
-    see also \ref max_num_cells */
-int tclcallback_max_num_cells(Tcl_Interp *interp, void *_data);
-
-/** Callback for setmd min_num_cells. 
-    see also \ref min_num_cells */
-int tclcallback_min_num_cells(Tcl_Interp *interp, void *_data);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells();

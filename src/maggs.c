@@ -196,7 +196,6 @@ static t_dirs* neighbor;
 
 /****** setup everything: ******/
 // int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh); /* set the system parameters */
-// int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv) /* parse tcl command */
 // void maggs_setup_neighbors(); /* setup the site neighbors */
 // void maggs_setup_local_lattice(); /* set lattice parameters */
 // void maggs_calc_surface_patches(t_surf_patch* surface_patch); /* prepare for communication */
@@ -512,42 +511,6 @@ int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int 
   mpi_bcast_coulomb_params();
 	
   return TCL_OK;
-}
-
-/** parse TCL command.
-    number of parameters is checked and maggs_set_parameters function is called.
-    @return zero if successful
-    @param interp  TCL interpreter handle
-    @param argc    number of arguments given
-    @param argv    array of arguments given
-*/
-int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int mesh;
-  double f_mass;
-	
-	
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(! ARG_IS_D(0, f_mass))
-    return TCL_ERROR;
-	
-  if(! ARG_IS_I(1, mesh)) {
-    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(argc > 2) {
-    Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  coulomb.method = COULOMB_MAGGS;
-	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh);
 }
 
 

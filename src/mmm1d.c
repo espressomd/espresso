@@ -65,73 +65,6 @@ static double uz, L2, uz2, prefuz2, prefL3_i;
 
 MMM1D_struct mmm1d_params = { 0.05, 5, 1, 1e-5 };
 
-int tclprint_to_result_MMM1D(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-  Tcl_PrintDouble(interp, sqrt(mmm1d_params.far_switch_radius_2), buffer);
-  Tcl_AppendResult(interp, "mmm1d ", buffer, " ",(char *) NULL);
-  sprintf(buffer, "%d", mmm1d_params.bessel_cutoff);
-  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
-  Tcl_PrintDouble(interp, mmm1d_params.maxPWerror, buffer);
-  Tcl_AppendResult(interp, buffer,(char *) NULL);
-
-  return TCL_OK;
-}
-
-int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv)
-{
-  double switch_rad, maxPWerror;
-  int bessel_cutoff;
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm1d <switch radius> "
-		     "{<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG0_IS_S("tune")) {
-    /* autodetermine bessel cutoff AND switching radius */
-    if (! ARG_IS_D(1, maxPWerror))
-      return TCL_ERROR;
-    bessel_cutoff = -1;
-    switch_rad = -1;
-  }
-  else {
-    if (argc == 2) {
-      /* autodetermine bessel cutoff */
-      if ((! ARG_IS_D(0, switch_rad)) ||
-	  (! ARG_IS_D(1, maxPWerror))) 
-	return TCL_ERROR;
-      bessel_cutoff = -1;
-    }
-    else if (argc == 3) {
-      /* fully manual */
-      if((! ARG_IS_D(0, switch_rad)) ||
-	 (! ARG_IS_I(1, bessel_cutoff)) ||
-	 (! ARG_IS_D(2, maxPWerror))) 
-	return TCL_ERROR;
-
-      if (bessel_cutoff <=0) {
-	Tcl_AppendResult(interp, "bessel cutoff too small", (char *)NULL);
-	return TCL_ERROR;
-      }
-    }
-    else {
-      Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm1d <switch radius> "
-		       "{<bessel cutoff>} <maximal error for near formula> | tune  <maximal pairwise error>", (char *) NULL);
-      return TCL_ERROR;
-    }
-    
-    if (switch_rad <= 0 || switch_rad > box_l[2]) {
-      Tcl_AppendResult(interp, "switching radius is not between 0 and box_l[2]", (char *)NULL);
-      return TCL_ERROR;
-    }
-  }
-
-  MMM1D_set_params(switch_rad, bessel_cutoff, maxPWerror);
-  return tclcommand_inter_coulomb_print_mmm1d_parameteres(interp);
-}
 
 static void MMM1D_setup_constants()
 {
@@ -178,73 +111,6 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
   mpi_bcast_coulomb_params();
 
   return 0;
-}
-/* TODO: separate tcl / nontcl code */
-int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp)
-{
-  char buffer[32 + 2*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  double int_time, min_time=1e200, min_rad = -1;
-  double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
-  double switch_radius;
-
-  if (mmm1d_params.bessel_cutoff < 0 && mmm1d_params.far_switch_radius_2 < 0) {
-    /* determine besselcutoff and optimal switching radius */
-    for (switch_radius = RAD_STEPPING*maxrad;
-	 switch_radius < maxrad;
-	 switch_radius += RAD_STEPPING*maxrad) {
-      mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_radius, mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-      /* no reasonable cutoff possible */
-      if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT)
-	continue;
-      mmm1d_params.far_switch_radius_2 = SQR(switch_radius);
-
-      coulomb.method = COULOMB_MMM1D;
-      
-      /* initialize mmm1d temporary structures */
-      mpi_bcast_coulomb_params();
-
-      /* perform force calculation test */
-      int_time = time_force_calc(TEST_INTEGRATIONS);
-
-      /* exit on errors */
-      if (int_time < 0)
-	return mpi_gather_runtime_errors(interp, TCL_ERROR);
-
-      sprintf(buffer, "r= %f c= %d t= %f ms\n",
-	      switch_radius, mmm1d_params.bessel_cutoff, int_time);
-      Tcl_AppendResult(interp, buffer, (char*)NULL);
-
-      if (int_time < min_time) {
-	min_time = int_time;
-	min_rad = switch_radius;
-      }
-      /* stop if all hope is vain... */
-      else if (int_time > 2*min_time)
-	break;
-    }
-    switch_radius    = min_rad;
-    mmm1d_params.far_switch_radius_2 = SQR(switch_radius);
-    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_radius, mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-    mmm1d_params.bessel_calculated = 1;
-  }
-  else if (mmm1d_params.bessel_cutoff < 0) {
-    /* determine besselcutoff to achieve at least the given pairwise error */
-    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2),
-							 mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
-    if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT) {
-      Tcl_AppendResult(interp, "could not find reasonable bessel cutoff", (char *)NULL);
-      return TCL_ERROR;
-    }
-    mmm1d_params.bessel_calculated = 1;
-  }
-  else
-    mmm1d_params.bessel_calculated = 0;
-
-  coulomb.method = COULOMB_MMM1D;
-
-  mpi_bcast_coulomb_params();
-
-  return TCL_OK;
 }
 
 void MMM1D_recalcTables()
@@ -467,6 +333,77 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
   }
 
   return chpref*E;
+}
+
+
+/* TODO: separate tcl / nontcl code */
+/** \todo This is not really a Tcl command
+*/
+int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp)
+{
+  char buffer[32 + 2*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  double int_time, min_time=1e200, min_rad = -1;
+  double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
+  double switch_radius;
+
+  if (mmm1d_params.bessel_cutoff < 0 && mmm1d_params.far_switch_radius_2 < 0) {
+    /* determine besselcutoff and optimal switching radius */
+    for (switch_radius = RAD_STEPPING*maxrad;
+	 switch_radius < maxrad;
+	 switch_radius += RAD_STEPPING*maxrad) {
+      mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_radius, mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
+      /* no reasonable cutoff possible */
+      if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT)
+	continue;
+      mmm1d_params.far_switch_radius_2 = SQR(switch_radius);
+
+      coulomb.method = COULOMB_MMM1D;
+      
+      /* initialize mmm1d temporary structures */
+      mpi_bcast_coulomb_params();
+
+      /* perform force calculation test */
+      int_time = time_force_calc(TEST_INTEGRATIONS);
+
+      /* exit on errors */
+      if (int_time < 0)
+	return mpi_gather_runtime_errors(interp, TCL_ERROR);
+
+      sprintf(buffer, "r= %f c= %d t= %f ms\n",
+	      switch_radius, mmm1d_params.bessel_cutoff, int_time);
+      Tcl_AppendResult(interp, buffer, (char*)NULL);
+
+      if (int_time < min_time) {
+	min_time = int_time;
+	min_rad = switch_radius;
+      }
+      /* stop if all hope is vain... */
+      else if (int_time > 2*min_time)
+	break;
+    }
+    switch_radius    = min_rad;
+    mmm1d_params.far_switch_radius_2 = SQR(switch_radius);
+    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(switch_radius, mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
+    mmm1d_params.bessel_calculated = 1;
+  }
+  else if (mmm1d_params.bessel_cutoff < 0) {
+    /* determine besselcutoff to achieve at least the given pairwise error */
+    mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2),
+							 mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
+    if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT) {
+      Tcl_AppendResult(interp, "could not find reasonable bessel cutoff", (char *)NULL);
+      return TCL_ERROR;
+    }
+    mmm1d_params.bessel_calculated = 1;
+  }
+  else
+    mmm1d_params.bessel_calculated = 0;
+
+  coulomb.method = COULOMB_MMM1D;
+
+  mpi_bcast_coulomb_params();
+
+  return TCL_OK;
 }
 
 #endif

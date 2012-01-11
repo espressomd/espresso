@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -39,6 +39,8 @@
  *  \ref forces.c
  */
 
+#include "utils.h"
+
 #ifdef LJ_ANGLE
 #include <math.h>
 
@@ -46,8 +48,6 @@
  * they are included here.  */
 #include "particle_data.h"
 #include "interaction_data.h"
-
-int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j);
 
 /** set the force cap for the directional LJ interaction.
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
@@ -60,14 +60,6 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 				int b1p, int b1n, int b2p, int b2n,
 				double cap_radius, double z0, double dz, 
 				double kappa, double epsprime);
-
-/// parser for the forcecap
-int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv);
-
-
-int tclcommand_inter_parse_ljangle(Tcl_Interp * interp,
-			    int part_type_a, int part_type_b,
-			    int argc, char ** argv);
 
 
 /** Calculate lj-angle force between particle p1 and p2 

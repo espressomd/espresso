@@ -113,21 +113,18 @@ typedef struct {
   } p3m_data_struct;
 
 /** P3M parameters. */
-extern p3m_data_struct p3m;
+p3m_data_struct p3m;
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/// parse the basic p3m parameters
-int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
-
-/// parse the optimization parameters of p3m and the tuner
-int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
-
 void p3m_pre_init(void);
 
 void p3m_set_bjerrum(void);
+
+int p3m_adaptive_tune(Tcl_Interp *interp);
+
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for charge-charge interactions.
@@ -192,7 +189,6 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 
     The function is based on routines of the program HE_Q.c written by M. Deserno.
  */
-int tclcommand_inter_coulomb_p3m_print_tune_parameters(Tcl_Interp *interp);
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
@@ -239,6 +235,19 @@ MDINLINE double p3m_add_pair_force(double chgfac, double *d,double dist2,double 
   return 0.0;
 }
 
+void p3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy, int n_interpol);
+
+int p3m_set_params(double r_cut, int mesh, int cao,
+		   double alpha, double accuracy);
+
+int p3m_set_mesh_offset(double x, double y, double z);
+
+int p3m_set_eps(double eps);
+
+int p3m_set_ninterpol(int n);
+
+
 /** Calculate real space contribution of coulomb pair energy. */
 MDINLINE double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
@@ -256,9 +265,6 @@ MDINLINE double p3m_pair_energy(double chgfac, double *d,double dist2,double dis
   }
   return 0.0;
 }
-
-/// print the p3m parameters to the interpreters result
-int tclprint_to_result_p3m(Tcl_Interp *interp);
 
 /** Clean up P3M memory allocations. */
 void p3m_free();
