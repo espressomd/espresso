@@ -31,6 +31,7 @@ libEspresso_a_SOURCES = \
 	communication.c communication.h \
 	binary_file.c binary_file.h \
 	interaction_data.c interaction_data.h\
+	tcl_interface/interaction_data_tcl.c tcl_interface/interaction_data_tcl.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
 	integrate.c integrate.h \
@@ -56,6 +57,7 @@ libEspresso_a_SOURCES = \
 	p3m.c p3m.h \
 	p3m-dipolar.c p3m-dipolar.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
+	tcl_interface/magnetic_non_p3m_methods_tcl.c tcl_interface/magnetic_non_p3m_methods_tcl.h \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
@@ -69,6 +71,7 @@ libEspresso_a_SOURCES = \
 	layered.c layered.h \
 	mmm-common.c mmm-common.h \
 	mmm1d.c mmm1d.h \
+	tcl_interface/mmm1d_tcl.c tcl_interface/mmm1d_tcl.h \
 	mmm2d.c	mmm2d.h \
 	modes.c	modes.h \
 	topology.c topology.h \
@@ -91,6 +94,7 @@ libEspresso_a_SOURCES = \
 	lb.c lb.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
+	tcl_interface/bin_tcl.c tcl_interface/bin_tcl.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \

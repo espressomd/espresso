@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -22,6 +23,20 @@
  *  For more information about MMM1D, see \ref mmm1d.h "mmm1d.h".
  */
 
+#include <mpi.h>
+#include <tcl.h>
+#include "utils.h"
+#include "mmm1d.h"
+#include "polynom.h"
+#include "specfunc.h"
+#include "communication.h"
+#include "cells.h"
+#include "grid.h"
+#include "tuning.h"
+#include "interaction_data.h"
+#include "mmm-common.h"
+#include "parser.h"
+#include "errorhandling.h"
 
 #ifdef ELECTROSTATICS
 

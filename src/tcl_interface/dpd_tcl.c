@@ -20,37 +20,14 @@
 /** \file dpd.c
     Implementation of \ref dpd.h "dpd.h"
  */
-#include "tcl_interface/dpd_tcl.h"
+//#include "dpd_tcl.h"
+#include "dpd.h"
 
-/* DPD THERMOSTAT */
-/* DPD longitudinal friction coefficient gamma. */
-extern double dpd_gamma ;
-/* DPD thermostat cutoff */
-extern double dpd_r_cut ;
-/* DPD weightfunction */
-extern int dpd_wf ;
+#include "utils.h"
+#include "thermostat.h"
+#include "interaction_data.h"
+#include "virtual_sites.h"
 
-/* DPD transversal friction coefficient gamma. */
-extern double dpd_tgamma ;
-/* DPD thermostat trans cutoff */
-extern double dpd_tr_cut ;
-/* trans DPD weightfunction */
-extern int dpd_twf ;
-
-#ifdef DPD
-/* inverse off DPD thermostat cutoff */
-extern double dpd_r_cut_inv ;
-extern double dpd_pref1;
-extern double dpd_pref2;
-extern static double dpd_pref2_buffer;
-
-#ifdef TRANS_DPD 
-/* inverse off trans DPD thermostat cutoff */
-extern double dpd_tr_cut_inv ;
-extern double dpd_pref3;
-extern double dpd_pref4;
-extern static double dpd_pref4_buffer;
-#endif
 
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
@@ -243,10 +220,8 @@ void tclcommand_thermostat_print_usage_dpd(Tcl_Interp *interp, int argc, char **
   Tcl_AppendResult(interp, " ' or\n ", (char *)NULL);
 }
 
-#endif
 
 #ifdef INTER_DPD
-
 int tclprint_to_result_inter_dpdIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];

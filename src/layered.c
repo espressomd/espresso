@@ -663,7 +663,7 @@ void layered_calculate_energies()
   rebuild_verletlist = 0;
 }
 
-void layered_calculate_virials()
+void layered_calculate_virials(int v_comp)
 {
   int c, i, j;
   Cell  *celll, *cellb;
@@ -686,7 +686,7 @@ void layered_calculate_virials()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_kinetic_virials(p1,0);
+      add_kinetic_virials(p1,v_comp);
 
       add_bonded_virials(p1);
 #ifdef BOND_ANGLE

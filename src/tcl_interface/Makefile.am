@@ -30,6 +30,7 @@ libtcl_interface_a_SOURCES = \
   cells_tcl.h\
   constraint_tcl.c\
   constraint_tcl.h\
+  cuda_init_tcl.h\
   domain_decomposition_tcl.c\
   domain_decomposition_tcl.h\
   dpd_tcl.c\

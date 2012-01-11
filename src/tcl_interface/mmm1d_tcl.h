@@ -17,19 +17,28 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BIN_H
-#define BIN_H
+/** \file mmm1d.h MMM1D algorithm for long range coulomb interactions.
+    Implementation of the MMM1D method for the calculation of the
+    electrostatic interaction in one dimensionally periodic
+    systems. For details on the method see MMM in general. The MMM1D
+    method works only with the nsquared \ref tclcommand_cellsystem
+    "cell system", since neither the near nor far formula can be
+    decomposed. However, this implementation is reasonably fast, so
+    that one can use up to 200 charges easily in a simulation.  */
+#ifndef MMM1D_TCL_H
+#define MMM1D_TCL_H
 
-#include "utils.h"
 #include <tcl.h>
+//#include "utils.h"
+//#include "particle_data.h"
 
-void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
-void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+#ifdef ELECTROSTATICS
 
-/** Exported functions
-*/
-void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+/// print the mmm1d parameters to the interpreters result
+int tclprint_to_result_MMM1D(Tcl_Interp *interp);
 
-void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+/// parse the mmm1d parameters
+int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
 
+#endif
 #endif
