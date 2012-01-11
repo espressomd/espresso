@@ -39,6 +39,7 @@
 #include "maggs.h"
 #include "elc.h"
 #include "lj.h"
+#include "lj_tcl.h"
 #include "ljgen.h"
 #include "ljangle.h"
 #include "steppot.h"

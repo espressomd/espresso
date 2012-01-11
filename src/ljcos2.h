@@ -35,16 +35,10 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 
-int tclprint_to_result_ljcos2IA(Tcl_Interp *interp, int i, int j);
 
 int ljcos2_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double offset,
 				      double w);
-
-
-int tclcommand_inter_parse_ljcos2(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
 
 
 /** Calculate lj-cos2 force between particle p1 and p2 */
