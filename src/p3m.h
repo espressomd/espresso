@@ -123,6 +123,9 @@ void p3m_pre_init(void);
 
 void p3m_set_bjerrum(void);
 
+int p3m_adaptive_tune(Tcl_Interp *interp);
+
+
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for charge-charge interactions.
  */

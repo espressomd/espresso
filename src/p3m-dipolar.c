@@ -180,9 +180,6 @@ static double calc_surface_term(int force_flag, int energy_flag);
 
 double P3M_DIPOLAR_real_space_error(double box_size, double prefac, double r_cut_iL,
 			    int n_c_part, double sum_q2, double alpha_L);
-double dp3m_k_space_error(double box_size, double prefac, int mesh,
-			 int cao, int n_c_part, double sum_q2, double alpha_L); 
- 
 static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, 
 			    int mesh, double mesh_i, int cao, double alpha_L_i, 
 			    double *alias1, double *alias2)	;		 
