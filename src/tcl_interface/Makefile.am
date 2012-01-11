@@ -18,6 +18,9 @@
 
 # List headers that are not used by the program here
 
+# All objects are compiled into the library
+noinst_LIBRARIES = libtcl_interface.a
+
 # List the sources of the Espresso binary here
 libtcl_interface_a_SOURCES = \
   adresso_tcl.c\
@@ -45,13 +48,16 @@ libtcl_interface_a_SOURCES = \
   imd_tcl.h\
   integrate_tcl.c\
   integrate_tcl.h\
+  interaction_data_tcl.c\
+  interaction_data_tcl.h\
   lb-boundaries_tcl.c\
   lb-boundaries_tcl.h\
   lb_tcl.c\
   lb_tcl.h\
+  magnetic_non_p3m_methods_tcl.c\
+  magnetic_non_p3m_methods_tcl.h\
   maggs_tcl.c\
   maggs_tcl.h\
-  Makefile.am\
   mmm1d_tcl.c\
   nemd_tcl.c\
   nemd_tcl.h\
@@ -84,10 +90,7 @@ libtcl_interface_a_SOURCES = \
   virtual_sites_com_tcl.c\
   virtual_sites_com_tcl.h
 
-
-# All objects are compiled into the library
-noinst_LIBRARIES = libtcl_interface.a
-
+$(libtcl_interface_a_OBJECTS): ../myconfig-final.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 
