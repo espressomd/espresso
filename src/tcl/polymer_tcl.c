@@ -28,7 +28,6 @@
        Based upon 'polymer.tcl' by BAM (20.02.2003).
 */
 
-
 #include "polymer.h"
 #include "communication.h"
 #include "interaction_data.h"

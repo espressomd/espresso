@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
-  
-  This file is part of ESPResSo.
-  
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-  
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-  
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+Copyright (C) 2010 The ESPResSo project
+Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
 #ifndef METADYNAMICS_H
@@ -31,16 +31,16 @@
 #include "cells.h"
 
 /** \file metadynamics.h 
- *
- *  This file contains routines to perform metadynamics.  Right now, the
- *  reaction coordinate is defined between two particles. Note that these
- *  particles can be virtual sites, in order to handle molecules.
- *
- *  - set metadynamics options 
- *  - initialize bias forces and free energy profiles 
- *  - calculate reaction coordinate for each integration step 
- *  - apply bias force on particles
- */
+*
+*  This file contains routines to perform metadynamics.  Right now, the
+*  reaction coordinate is defined between two particles. Note that these
+*  particles can be virtual sites, in order to handle molecules.
+*
+*  - set metadynamics options 
+*  - initialize bias forces and free energy profiles 
+*  - calculate reaction coordinate for each integration step 
+*  - apply bias force on particles
+*/
 
 #ifdef METADYNAMICS
 
@@ -51,13 +51,13 @@
 /* distance between two particles */
 #define META_DIST     1
 /* relative height (z coord) of meta_pid1 with respect to meta_pid2 
- * Example: measure height of particle (pid1) with respect to interface (pid2).
- */
+* Example: measure height of particle (pid1) with respect to interface (pid2).
+*/
 #define META_REL_Z   2
 
 /**********************************
- * exported variables
- **********************************/
+* exported variables
+**********************************/
 
 /** Flag - turn metadynamics on */
 extern int    meta_switch;
@@ -97,30 +97,16 @@ extern double meta_val_xi;
 extern double *meta_apply_direction;
 
 /*********************************
- * functions
- *********************************/
-
-/** Implementation of the Tcl command \ref tclcommand_metadynamics. This function
- *  allows to change the parameters of metadynamics */
-int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-/** Print metadynamics options and parameters */
-int tclcommand_metadynamics_print_status(Tcl_Interp *interp);
-int tclcommand_metadynamics_print_usage(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_metadynamics_parse_off(Tcl_Interp *interp, int argc, char **argv);
-/** Reaction coordinates available */
-int tclcommand_metadynamics_parse_distance(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_metadynamics_parse_relative_z(Tcl_Interp *interp, int argc, char **argv);
-/** Input/Output stuff */
-int tclcommand_metadynamics_print_stat(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char **argv);
+* functions
+*********************************/
 
 /** Initialize metadynamics on start of integration 
- *  Create arrays if necessary. */
+*  Create arrays if necessary. */
 void meta_init();
 /** Metadynamics main function:
- * - Calculate reaction coordinate 
- * - Update profile and biased force 
- * - apply external force
+* - Calculate reaction coordinate 
+* - Update profile and biased force 
+* - apply external force
 */
 void meta_perform();
 

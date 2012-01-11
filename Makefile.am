@@ -32,12 +32,12 @@ EXTRA_DIST = bootstrap.sh samples packages $(extra)
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 Espresso_SOURCES = src/scriptsdir.c src/main.c
-Espresso_LDADD = src/libEspresso.a src/tcl_interface/libtcl_interface.a
+Espresso_LDADD = src/libEspresso.a 
 
 bin_PROGRAMS = Espresso.install
 Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
 Espresso_install_SOURCES = src/scriptsdir.c src/main.c
-Espresso_install_LDADD = src/libEspresso.a src/tcl_interface/libtcl_interface.a
+Espresso_install_LDADD = src/libEspresso.a
 
 # rename Espresso after installation
 install-exec-hook:

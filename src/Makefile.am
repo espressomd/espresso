@@ -90,7 +90,7 @@ libEspresso_a_SOURCES = \
 	mol_cut.h \
 	morse.h \
 	nemd.c nemd.h \
-        npt.h \
+  npt.h \
 	nsquare.c nsquare.h \
 	overlap.h \
 	p3m.c p3m.h \
@@ -118,6 +118,9 @@ libEspresso_a_SOURCES = \
 	tab.h \
 	thermostat.c thermostat.h \
 	topology.c topology.h \
+	overlap.h \
+	ljangle.c ljangle.h \
+	adresso.c adresso.h \
 	tunable_slip.h \
 	tuning.c tuning.h \
 	utils.c utils.h \
@@ -156,6 +159,7 @@ libEspresso_a_SOURCES += \
 	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
 	tcl/maggs_tcl.c tcl/maggs_tcl.h \
 	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
+	tcl/mmm2d_tcl.c tcl/mmm2d_tcl.h \
 	tcl/morse_tcl.c tcl/morse_tcl.h \
 	tcl/nemd_tcl.c tcl/nemd_tcl.h\
 	tcl/p3m-dipolar_tcl.c tcl/p3m-dipolar_tcl.h \
@@ -169,6 +173,7 @@ libEspresso_a_SOURCES += \
 	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
 	tcl/statistics_tcl.c tcl/statistics_tcl.h \
 	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
+	tcl/tab_tcl.c tcl/tab_tcl.h \
 	tcl/topology_tcl.c tcl/topology_tcl.h \
 	tcl/uwerr_tcl.c tcl/uwerr_tcl.h \
 	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
