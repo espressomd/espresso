@@ -23,9 +23,9 @@ puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: 
 puts "------------------------------------------------"
 
 # we expect to stay in this confidence interval (times stddeviation)
-# 2.5 gives a chance of about 1 % of failure
-set confidence 2.5
-set maxstep 100
+# 3 gives a chance of less than 1 % of failure
+set confidence 3
+set maxstep 200
 set intstep 100
 
 # for checkin unwanted energy contributions
