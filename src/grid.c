@@ -143,7 +143,8 @@ void grid_changed_box_l()
   int i;
 
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_box_l:\n",this_node));
-
+  GRID_TRACE(fprintf(stderr,"%d: node_pos %d %d %d\n", this_node, node_pos[0], node_pos[1], node_pos[2]));
+  GRID_TRACE(fprintf(stderr,"%d: node_grid %d %d %d\n", this_node, node_grid[0], node_grid[1], node_grid[2]));
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
     my_left[i]   = node_pos[i]    *local_box_l[i];

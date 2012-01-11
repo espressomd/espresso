@@ -1082,7 +1082,7 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
   int my_group=0;
 
   FFT_TRACE(fprintf(stderr,"%d: find_comm_groups:\n",this_node));
-  FFT_TRACE(fprintf(stderr,"%d: for grid1=(%d,%d,%d) and grids=(%d,%d,%d)\n",
+  FFT_TRACE(fprintf(stderr,"%d: for grid1=(%d,%d,%d) and grid2=(%d,%d,%d)\n",
 		    this_node,grid1[0],grid1[1],grid1[2],grid2[0],grid2[1],grid2[2]));
 
   /* calculate dimension of comm. group cells for both grids */ 
@@ -1098,6 +1098,7 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
 
     ds[i] = grid2[i] / s2[i]; 
     g_size *= s2[i];
+    FFT_TRACE(printf("%d: ds[%d] %d s2[%d] %d grid1[%d] %d grid2[%d] %d\n", this_node, i, ds[i], i, s2[i], i, grid1[i], i, grid2[i]));
   }
 
   /* calc node_list2 */
@@ -1115,8 +1116,8 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
 	  p2[1] = (gi[1]*s2[1]) + ((i/s2[0])%s2[1]);
 	  p2[2] = (gi[2]*s2[2]) + (i/(s2[0]*s2[1]));
 
-	  n = node_list1[ get_rank_from_index(p1[0],p1[1],p1[2]) ];
-	  node_list2[ get_rank_from_index(p2[0],p2[1],p2[2]) ] = n ;
+	  n = node_list1[ get_linear_index(p1[0],p1[1],p1[2],grid1) ];
+	  node_list2[  get_linear_index(p2[0],p2[1],p2[2],grid2) ] = n ;
 
 	  pos[3*n+0] = p2[0];  pos[3*n+1] = p2[1];  pos[3*n+2] = p2[2];	  
 	  if(my_group==1) group[i] = n;
@@ -1187,6 +1188,7 @@ void forw_grid_comm(fft_forw_plan plan, double *in, double *out)
   double *tmp_ptr;
 
   for(i=0;i<plan.g_size;i++) {   
+    FFT_TRACE(printf("%d: Communicating with %d.\n", this_node, plan.group[i]));
     plan.pack_function(in, send_buf, &(plan.send_block[6*i]), 
 		       &(plan.send_block[6*i+3]), plan.old_mesh, plan.element);
 
