@@ -31,7 +31,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu])
+AM_INIT_AUTOMAKE([1.10 gnu subdir-objects])
 AM_MAINTAINER_MODE
 
 cat <<EOF
@@ -483,7 +483,6 @@ AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
-	src/tcl_interface/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile

@@ -17,11 +17,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BIN_H
-#define BIN_H
+#ifndef _BIN_H
+#define _BIN_H
 
 #include "utils.h"
-#include <tcl.h>
 
 void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
 void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);

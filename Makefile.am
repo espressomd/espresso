@@ -29,7 +29,6 @@ EXTRA_DIST = bootstrap.sh samples packages $(extra)
 # Two binaries are generated: Espresso for the build dir,
 # Espresso.install for the installation dir. 
 # The ".install" suffix is removed upon installation.
-
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
 Espresso_SOURCES = src/scriptsdir.c src/main.c

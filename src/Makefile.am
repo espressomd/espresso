@@ -17,11 +17,11 @@
 #
 
 # List headers that are not used by the program here
-
-SUBDIRS = . tcl_interface
-
 noinst_HEADERS = \
 	myconfig-default.h
+
+# All objects are compiled into the library
+noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
 libEspresso_a_SOURCES = \
@@ -118,7 +118,7 @@ libEspresso_a_SOURCES = \
 	tab.h \
 	thermostat.c thermostat.h \
 	topology.c topology.h \
-        tunable_slip.h \
+	tunable_slip.h \
 	tuning.c tuning.h \
 	utils.c utils.h \
 	uwerr.c	uwerr.h \
@@ -128,8 +128,41 @@ libEspresso_a_SOURCES = \
 	virtual_sites_relative.c virtual_sites_relative.h \
 	vmdsock.c vmdsock.h
 
-# All objects are compiled into the library
-noinst_LIBRARIES = libEspresso.a
+libEspresso_a_SOURCES += \
+	tcl/adresso_tcl.c tcl/adresso_tcl.h \
+	tcl/binary_file_tcl.c tcl/binary_file_tcl.h \
+	tcl/blockfile_tcl.c tcl/blockfile_tcl.h \
+	tcl/cells_tcl.c tcl/cells_tcl.h \
+	tcl/constraint_tcl.c tcl/constraint_tcl.h \
+	tcl/cuda_init_tcl.h \
+	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
+	tcl/dpd_tcl.c tcl/dpd_tcl.h \
+	tcl/global_tcl.c tcl/global_tcl.h \
+	tcl/grid_tcl.c tcl/grid_tcl.h \
+	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \
+	tcl/imd_tcl.c tcl/imd_tcl.h \
+	tcl/integrate_tcl.c tcl/integrate_tcl.h \
+	tcl/interaction_data_tcl.c tcl/interaction_data_tcl.h \
+	tcl/lb-boundaries_tcl.c tcl/lb-boundaries_tcl.h \
+	tcl/lb_tcl.c tcl/lb_tcl.h \
+	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
+	tcl/maggs_tcl.c tcl/maggs_tcl.h \
+	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
+	tcl/nemd_tcl.c tcl/nemd_tcl.h\
+	tcl/p3m-dipolar_tcl.c tcl/p3m-dipolar_tcl.h \
+	tcl/p3m_tcl.c tcl/p3m_tcl.h \
+	tcl/particle_data_tcl.c tcl/particle_data_tcl.h \
+	tcl/polymer_tcl.c tcl/polymer_tcl.h \
+	tcl/pressure_tcl.c tcl/pressure_tcl.h \
+	tcl/random_tcl.c tcl/random_tcl.h \
+	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
+	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
+	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
+	tcl/statistics_tcl.c tcl/statistics_tcl.h \
+	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
+	tcl/topology_tcl.c tcl/topology_tcl.h \
+	tcl/uwerr_tcl.c tcl/uwerr_tcl.h \
+	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
 
 #################################################################
 # Build the blockfile library
@@ -166,7 +199,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_a_OBJECTS): myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 

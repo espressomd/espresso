@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ADRESSO_H
-#define ADRESSO_H
+#ifndef _ADRESSO_H
+#define _ADRESSO_H
 /** \file adresso.h
     This is the place for adaptive resolution scheme (adress)
     Implementation of adresso.h
@@ -32,13 +32,10 @@
     - C. Junghans and S. Poblete, Comp. Phys. Comm. 181, 1449, 2010.
 */
 
-#include <tcl.h>
 #include "particle_data.h"
 #include "virtual_sites.h"
 #include "interaction_data.h"
 #include "communication.h"
-
-
 
 /** \name Exported Variables */
 /************************************************************/
