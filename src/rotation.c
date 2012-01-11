@@ -246,7 +246,7 @@ void convert_torques_propagate_omega()
   Particle *p;
   Cell *cell;
   int c,i, np, times;
-  double time_step_half, tx, ty, tz;
+  double tx, ty, tz;
 
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
