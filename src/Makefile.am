@@ -142,9 +142,13 @@ libEspresso_core_la_SOURCES = \
 	hertzian.h \
 	imd.h \
 	ljcos2.c ljcos2.h \
+	tcl_interface/ljcos2_tcl.c tcl_interface/ljcos2_tcl.h \
 	ljcos.c ljcos.h \
+	tcl_interface/ljcos_tcl.c tcl_interface/ljcos_tcl.h \
 	lj.c lj.h \
+	tcl_interface/lj_tcl.c tcl_interface/lj_tcl.h \
 	ljgen.c ljgen.h \
+	tcl_interface/ljgen_tcl.c tcl_interface/ljgen_tcl.h \
 	steppot.h \
 	bmhtf-nacl.h \
 	morse.h \
@@ -155,6 +159,7 @@ libEspresso_core_la_SOURCES = \
 	tab.h \
 	overlap.h \
 	ljangle.c ljangle.h \
+	tcl_interface/ljangle_tcl.c tcl_interface/ljangle_tcl.h \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \

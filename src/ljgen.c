@@ -33,40 +33,11 @@
 #ifdef LENNARD_JONES_GENERIC
 
 #include "ljgen.h"
+#include "tcl_interface/ljgen_tcl.h"
 #include "communication.h"
 #include "parser.h"
 
-int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
-
-  Tcl_PrintDouble(interp, data->LJGEN_eps, buffer);
-  Tcl_AppendResult(interp, "lj-gen ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJGEN_sig, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJGEN_cut, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJGEN_shift, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJGEN_offset, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  snprintf (buffer, sizeof (buffer), "%d ", data->LJGEN_a1);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
-  snprintf (buffer, sizeof (buffer), "%d ", data->LJGEN_a2);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
-  Tcl_PrintDouble(interp, data->LJGEN_b1, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJGEN_b2, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->LJGEN_capradius, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
- 
-  return TCL_OK;
-}
-
-
-static int ljgen_set_params(int part_type_a, int part_type_b,
+int ljgen_set_params(int part_type_a, int part_type_b,
 			       double eps, double sig, double cut,
 			       double shift, double offset,
 			       int a1, int a2, double b1, double b2,
@@ -108,54 +79,6 @@ static int ljgen_set_params(int part_type_a, int part_type_b,
     mpi_lj_cap_forces(lj_force_cap);
 
   return TCL_OK;
-}
-
-int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv)
-{
-  /* parameters needed for LJGEN */
-  double eps, sig, cut, shift, offset, cap_radius, b1, b2;
-  int change, a1, a2;
-
-  /* get lennard-jones interaction type */
-  if (argc < 10) {
-    Tcl_AppendResult(interp, "lj-gen needs 9 parameters: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy lennard-jones parameters */
-  if ((! ARG_IS_D(1, eps))    ||
-      (! ARG_IS_D(2, sig))    ||
-      (! ARG_IS_D(3, cut))    ||
-      (! ARG_IS_D(4, shift))  ||
-      (! ARG_IS_D(5, offset)) ||
-      (! ARG_IS_I(6, a1))     ||
-      (! ARG_IS_I(7, a2))     ||
-      (! ARG_IS_D(8, b1))     ||
-      (! ARG_IS_D(9, b2))) {
-    Tcl_AppendResult(interp, "lj-gen needs 7 DOUBLE and 2 INT parameers: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  change = 10;
-	
-  cap_radius = -1.0;
-  /* check wether there is an additional double, cap radius, and parse in */
-  if (argc >= 11 && ARG_IS_D(10, cap_radius))
-    change++;
-  else
-    Tcl_ResetResult(interp);
-  if (ljgen_set_params(part_type_a, part_type_b,
-		       eps, sig, cut, shift, offset, a1, a2, b1, b2,
-		       cap_radius) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-  return change;
 }
 
 
