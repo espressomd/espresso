@@ -83,43 +83,32 @@ MDINLINE int buckingham_set_params(int part_type_a, int part_type_b,
 		         	   double discont, double shift, double cap_radius,
 			           double F1, double F2)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
+  if (!data) return TCL_ERROR;
 
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* BUCKINGHAM should be symmetrical */
-  data->BUCK_A      = data_sym->BUCK_A      = A;
-  data->BUCK_B      = data_sym->BUCK_B      = B;
-  data->BUCK_C      = data_sym->BUCK_C      = C;
-  data->BUCK_D      = data_sym->BUCK_D      = D;
-  data->BUCK_cut    = data_sym->BUCK_cut    = cut;
-  data->BUCK_discont    = data_sym->BUCK_discont    = discont;
-  data->BUCK_shift  = data_sym->BUCK_shift  = shift;
-
+  data->BUCK_A       = A;
+  data->BUCK_B       = B;
+  data->BUCK_C       = C;
+  data->BUCK_D       = D;
+  data->BUCK_cut     = cut;
+  data->BUCK_discont = discont;
+  data->BUCK_shift   = shift;
   if (cap_radius > 0.0) {
     data->BUCK_capradius = cap_radius;
-    data_sym->BUCK_capradius = cap_radius;
   }
+
   /* Replace the buckingham potential for interatomic dist. less
-    than or equal to discontinuity by a straight line (F1+F2*r) */
+     than or equal to discontinuity by a straight line (F1+F2*r) */
   F1 = buck_energy_r(A, B, C, D, shift, discont) +
     discont*buck_force_r(A, B, C, D, discont);
   F2 = -buck_force_r(A, B, C, D, discont);
 
-  data->BUCK_F1 = data_sym->BUCK_F1=F1;
-  data->BUCK_F2 = data_sym->BUCK_F2=F2;
+  data->BUCK_F1 = F1;
+  data->BUCK_F2 = F2;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (buck_force_cap != -1.0)
      mpi_buck_cap_forces(buck_force_cap);

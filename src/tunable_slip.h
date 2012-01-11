@@ -14,31 +14,21 @@ MDINLINE int tunable_slip_set_params(int part_type_a, int part_type_b,
 		      double temp, double gamma, double r_cut,
 		      double time, double vx, double vy, double vz)
 {
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
-  if (!data || !data_sym) {
-      return TCL_ERROR;
-  }
+  if (!data) return TCL_ERROR;
   
   /* TUNABLE SLIP should be symmetrical! */
-  data_sym->TUNABLE_SLIP_temp  = data->TUNABLE_SLIP_temp     = temp;
-  data_sym->TUNABLE_SLIP_gamma = data->TUNABLE_SLIP_gamma    = gamma;
-  data_sym->TUNABLE_SLIP_r_cut = data->TUNABLE_SLIP_r_cut    = r_cut;
-  data_sym->TUNABLE_SLIP_time  = data->TUNABLE_SLIP_time     = time;
-  data_sym->TUNABLE_SLIP_vx  = data->TUNABLE_SLIP_vx     = vx;
-  data_sym->TUNABLE_SLIP_vy  = data->TUNABLE_SLIP_vy     = vy;
-  data_sym->TUNABLE_SLIP_vz  = data->TUNABLE_SLIP_vz     = vz;
+  data->TUNABLE_SLIP_temp     = temp;
+  data->TUNABLE_SLIP_gamma    = gamma;
+  data->TUNABLE_SLIP_r_cut    = r_cut;
+  data->TUNABLE_SLIP_time     = time;
+  data->TUNABLE_SLIP_vx       = vx;
+  data->TUNABLE_SLIP_vy       = vy;
+  data->TUNABLE_SLIP_vz       = vz;
  
-
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
   
   return TCL_OK;
 }

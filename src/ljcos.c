@@ -30,35 +30,24 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
 		      double offset)
 {
-  IA_parameters *data, *data_sym;
-
   double facsq;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
+  if (!data) return TCL_ERROR;
 
-  /* LJCOS should be symmetrically */
-  data_sym->LJCOS_eps    = data->LJCOS_eps    = eps;
-  data_sym->LJCOS_sig    = data->LJCOS_sig    = sig;
-  data_sym->LJCOS_cut    = data->LJCOS_cut    = cut;
-  data_sym->LJCOS_offset = data->LJCOS_offset = offset;
+  data->LJCOS_eps    = eps;
+  data->LJCOS_sig    = sig;
+  data->LJCOS_cut    = cut;
+  data->LJCOS_offset = offset;
 
   /* Calculate dependent parameters */
   facsq = driwu2*SQR(sig);
-  data_sym->LJCOS_rmin = data->LJCOS_rmin = sqrt(driwu2)*sig;
-  data_sym->LJCOS_alfa = data->LJCOS_alfa = PI/(SQR(data->LJCOS_cut)-facsq);
-  data_sym->LJCOS_beta = data->LJCOS_beta = PI*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
+  data->LJCOS_rmin = sqrt(driwu2)*sig;
+  data->LJCOS_alfa = PI/(SQR(data->LJCOS_cut)-facsq);
+  data->LJCOS_beta = PI*(1.-(1./(SQR(data->LJCOS_cut)/facsq-1.)));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
   
   return TCL_OK;
 }

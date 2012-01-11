@@ -213,8 +213,8 @@ static void mpi_call(SlaveCallback cb, int node, int param) {
   request[1] = node;
   request[2] = param;
 
-  COMM_TRACE(fprintf(stderr, "0: issuing %s(%d), assigned to node %d\n",
-		     names[reqcode], param, node));
+  COMM_TRACE(fprintf(stderr, "0: issuing %s %d %d\n",
+		     names[reqcode], node, param));
 #ifdef ASYNC_BARRIER
   MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -1125,12 +1125,13 @@ void mpi_bcast_ia_params(int i, int j)
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
 
+    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+
 #ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
     if ( get_ia_param(i,j)->TAB_maxval > 0) {
       /* First let all nodes know the new size for force and energy tables */
       MPI_Bcast(&tablesize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD); // Don't do anything until all nodes have this information
 
       /* Communicate the data */
       MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
@@ -1140,7 +1141,6 @@ void mpi_bcast_ia_params(int i, int j)
 #ifdef INTERFACE_CORRECTION
     if(get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
       MPI_Bcast(&adress_tablesize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD); // Don't do anything until all nodes have this information
       
       /* Communicate the data */
       MPI_Bcast(adress_tab_forces.e, adress_tablesize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -1148,7 +1148,7 @@ void mpi_bcast_ia_params(int i, int j)
     }
     /* NO IC FOR TABULATED BONDED INTERACTIONS YET!! */
 #endif
-}
+  }
   else {
     /* bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1182,6 +1182,9 @@ void mpi_bcast_ia_params_slave(int i, int j)
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, MPI_COMM_WORLD);
+
+    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+
 #ifdef TABULATED
     {
       int tablesize=0;
@@ -1189,7 +1192,6 @@ void mpi_bcast_ia_params_slave(int i, int j)
       if ( get_ia_param(i,j)->TAB_maxval > 0) {
 	/* Determine the new size for force and energy tables */
 	MPI_Bcast(&tablesize,1,MPI_INT,0,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
 	/* Allocate sizes accordingly */
 	realloc_doublelist(&tabulated_forces, tablesize);
 	realloc_doublelist(&tabulated_energies, tablesize);
@@ -1204,7 +1206,6 @@ void mpi_bcast_ia_params_slave(int i, int j)
       int adress_tabsize=0;
       if ( get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
 	MPI_Bcast(&adress_tabsize,1,MPI_INT,0,MPI_COMM_WORLD);
-	MPI_Barrier(MPI_COMM_WORLD);
 	realloc_doublelist(&adress_tab_forces, adress_tabsize);
 	realloc_doublelist(&adress_tab_energies, adress_tabsize);
 	MPI_Bcast(adress_tab_forces.e,adress_tabsize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -2708,8 +2709,8 @@ void mpi_loop()
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     MPI_Bcast(request, 3, MPI_INT, 0, MPI_COMM_WORLD);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
-		       names[request[0]], request[1]));
+    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
+		       names[request[0]], request[1], request[2]));
     if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();

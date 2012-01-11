@@ -43,39 +43,24 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double shift, double offset,
 				      double cap_radius, double min)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* LJ should be symmetrically */
-  data->LJ_eps    = data_sym->LJ_eps    = eps;
-  data->LJ_sig    = data_sym->LJ_sig    = sig;
-  data->LJ_cut    = data_sym->LJ_cut    = cut;
-  data->LJ_shift  = data_sym->LJ_shift  = shift;
-  data->LJ_offset = data_sym->LJ_offset = offset;
- 
+  data->LJ_eps    = eps;
+  data->LJ_sig    = sig;
+  data->LJ_cut    = cut;
+  data->LJ_shift  = shift;
+  data->LJ_offset = offset;
   if (cap_radius > 0) {
     data->LJ_capradius = cap_radius;
-    data_sym->LJ_capradius = cap_radius;
   }
-
   if (min > 0) {
-	  data->LJ_min = min;
-	  data_sym->LJ_min = min;	  
+    data->LJ_min = min;
   }
   
-
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);

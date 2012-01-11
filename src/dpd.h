@@ -190,8 +190,6 @@ int inter_dpd_set_params(int part_type_a, int part_type_b,
 				      double gamma, double r_c, int wf,
 				      double tgamma, double tr_c,
 				      int twf);
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
 void inter_dpd_init();
 void inter_dpd_update_params(double pref2_scale);
 

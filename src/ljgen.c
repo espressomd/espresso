@@ -42,60 +42,31 @@ int ljgen_set_params(int part_type_a, int part_type_b,
 			       int a1, int a2, double b1, double b2,
 			       double cap_radius)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* LJGEN should be symmetrically */
-  data->LJGEN_eps    = data_sym->LJGEN_eps    = eps;
-  data->LJGEN_sig    = data_sym->LJGEN_sig    = sig;
-  data->LJGEN_cut    = data_sym->LJGEN_cut    = cut;
-  data->LJGEN_shift  = data_sym->LJGEN_shift  = shift;
-  data->LJGEN_offset = data_sym->LJGEN_offset = offset;
-  data->LJGEN_a1     = data_sym->LJGEN_a1 = a1;
-  data->LJGEN_a2     = data_sym->LJGEN_a2 = a2;
-  data->LJGEN_b1     = data_sym->LJGEN_b1 = b1;
-  data->LJGEN_b2     = data_sym->LJGEN_b2 = b2;
- 
+  data->LJGEN_eps    = eps;
+  data->LJGEN_sig    = sig;
+  data->LJGEN_cut    = cut;
+  data->LJGEN_shift  = shift;
+  data->LJGEN_offset = offset;
+  data->LJGEN_a1     = a1;
+  data->LJGEN_a2     = a2;
+  data->LJGEN_b1     = b1;
+  data->LJGEN_b2     = b2;
   if (cap_radius > 0) {
     data->LJGEN_capradius = cap_radius;
-    data_sym->LJGEN_capradius = cap_radius;
   }
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);
 
   return TCL_OK;
 }
-
-
-/** double**integer power function.
-    Not used anymore, libc-pow is faster and works also for n<0
-MDINLINE double powi (double x, int n)
-{
-  double y;
-  y = n % 2 ? x : 1;
-  while (n >>= 1)
-    {
-      x = x * x;
-      if (n % 2)
-	y = y * x;
-    }
-  return y;
-}
-*/
 
 /** calculate lj_capradius from lj_force_cap */
 void calc_ljgen_cap_radii(double force_cap)

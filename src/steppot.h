@@ -55,30 +55,19 @@ MDINLINE int smooth_step_set_params(int part_type_a, int part_type_b,
 				      double k0, double sig,
 				      double cut)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* SmSt should be symmetrically */
-  data->SmSt_eps    = data_sym->SmSt_eps    = eps;
-  data->SmSt_sig    = data_sym->SmSt_sig    = sig;
-  data->SmSt_cut    = data_sym->SmSt_cut    = cut;
-  data->SmSt_d      = data_sym->SmSt_d      = d;
-  data->SmSt_n      = data_sym->SmSt_n      = n;
-  data->SmSt_k0     = data_sym->SmSt_k0     = k0;
+  data->SmSt_eps    = eps;
+  data->SmSt_sig    = sig;
+  data->SmSt_cut    = cut;
+  data->SmSt_d      = d;
+  data->SmSt_n      = n;
+  data->SmSt_k0     = k0;
  
-  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   return TCL_OK;
 }

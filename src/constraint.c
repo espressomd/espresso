@@ -36,7 +36,6 @@ Constraint *generate_constraint()
   return &constraints[n_constraints-1];
 }
 
-
 #endif
 
 

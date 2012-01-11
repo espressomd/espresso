@@ -64,44 +64,33 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 				double cap_radius, double z0, double dz, 
 				double kappa, double epsprime)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* LJ_ANGLE should be symmetrically */
-  data->LJANGLE_eps         = data_sym->LJANGLE_eps         = eps;
-  data->LJANGLE_sig         = data_sym->LJANGLE_sig         = sig;
-  data->LJANGLE_cut         = data_sym->LJANGLE_cut         = cut;
-  data->LJANGLE_bonded1pos  = data_sym->LJANGLE_bonded1pos  = b1p;
-  data->LJANGLE_bonded1neg  = data_sym->LJANGLE_bonded1neg  = b1n;
-  data->LJANGLE_bonded2pos  = data_sym->LJANGLE_bonded2pos  = b2p;
-  data->LJANGLE_bonded2neg  = data_sym->LJANGLE_bonded2neg  = b2n;
+  data->LJANGLE_eps         = eps;
+  data->LJANGLE_sig         = sig;
+  data->LJANGLE_cut         = cut;
+  data->LJANGLE_bonded1pos  = b1p;
+  data->LJANGLE_bonded1neg  = b1n;
+  data->LJANGLE_bonded2pos  = b2p;
+  data->LJANGLE_bonded2neg  = b2n;
   
-  data->LJANGLE_bonded1type     =   data_sym->LJANGLE_bonded1type = part_type_a;
+  data->LJANGLE_bonded1type = part_type_a;
 
   if (cap_radius > 0) {
     data->LJANGLE_capradius = cap_radius;
-    data_sym->LJANGLE_capradius = cap_radius;
   }
 
   if (dz > 0.) {
-    data->LJANGLE_z0       = data_sym->LJANGLE_z0       = z0;
-    data->LJANGLE_dz       = data_sym->LJANGLE_dz       = dz;
-    data->LJANGLE_kappa    = data_sym->LJANGLE_kappa    = kappa;
-    data->LJANGLE_epsprime = data_sym->LJANGLE_epsprime = epsprime;
+    data->LJANGLE_z0       = z0;
+    data->LJANGLE_dz       = dz;
+    data->LJANGLE_kappa    = kappa;
+    data->LJANGLE_epsprime = epsprime;
   }
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (ljangle_force_cap != -1.0)
     mpi_ljangle_cap_forces(ljangle_force_cap);

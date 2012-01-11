@@ -371,6 +371,8 @@ void cells_on_max_cut_change(int shrink)
     /* if no interactions yet, we also don't need a skin */
     max_range = 0.0;
 
+  CELL_TRACE(fprintf(stderr,"%d: on_max_cut_change with ranges %f %f\n", this_node, max_range, old_max_range));
+
   /* no need to do something if
      1. the range didn't change numerically (<= necessary for the start case,
      when max_range and old_max_range == 0.0)
@@ -378,6 +380,8 @@ void cells_on_max_cut_change(int shrink)
   if ((fabs(max_range - old_max_range) <= ROUND_ERROR_PREC * max_range) ||
       (!shrink && (max_range < old_max_range)))
     return;
+
+  CELL_TRACE(fprintf(stderr,"%d: on_max_cut_change doing big things\n", this_node));
   
   cells_re_init(CELL_STRUCTURE_CURRENT);
 

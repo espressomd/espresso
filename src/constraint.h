@@ -27,6 +27,7 @@
  */
 #include "energy.h"
 #include "forces.h"
+#include "tunable_slip.h"
 
 #ifdef CONSTRAINTS
 /** Exported functions

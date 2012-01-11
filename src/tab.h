@@ -62,7 +62,7 @@ MDINLINE int tabforcecap_set_params(double tabforcecap)
 */
 MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data;
   FILE* fp;
   int npoints;
   double minval,minval2, maxval, maxval2;
@@ -70,13 +70,10 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   int token;
   double dummr;
   token = 0;
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
 
-  if (!data || !data_sym)
+  data = get_ia_param_safe(part_type_a, part_type_b);
+
+  if (!data)
     return 1;
 
   if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 )
@@ -105,8 +102,8 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
 
   if ( data->TAB_npoints == 0){
     // A new potential will be added so set the number of points, the startindex and newsize
-    data->TAB_npoints    = data_sym->TAB_npoints    = npoints;
-    data->TAB_startindex = data_sym->TAB_startindex = tabulated_forces.max;
+    data->TAB_npoints    = npoints;
+    data->TAB_startindex = tabulated_forces.max;
     newsize += npoints;
   } else {
     // We have existing data for this pair of monomer types check array sizing
@@ -117,18 +114,16 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   }
 
   /* Update parameters symmetrically */
-  data->TAB_maxval    = data_sym->TAB_maxval    = maxval;
-  data->TAB_minval    = data_sym->TAB_minval    = minval;
+  data->TAB_maxval    = maxval;
+  data->TAB_minval    = minval;
   strcpy(data->TAB_filename,filename);
-  strcpy(data_sym->TAB_filename,filename);
 
   /* Calculate dependent parameters */
   maxval2 = maxval*maxval;
   minval2 = minval*minval;
-  data->TAB_maxval2 = data_sym->TAB_maxval2 = maxval2;
-  data->TAB_minval2 = data_sym->TAB_minval2 = minval2;
-  data->TAB_stepsize = data_sym->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
-
+  data->TAB_maxval2  = maxval2;
+  data->TAB_minval2  = minval2;
+  data->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
 
   /* Allocate space for new data */
   realloc_doublelist(&tabulated_forces,newsize);
@@ -146,7 +141,6 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
 
   /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (tab_force_cap != -1.0) {
     mpi_tab_cap_forces(tab_force_cap);}

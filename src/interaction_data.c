@@ -130,6 +130,20 @@ DoubleList thermodynamic_f_energies;
 #endif
 
 /*****************************************
+ * function prototypes
+ *****************************************/
+
+/** calculates and returns the maximal global nonbonded cutoff that is required.
+    Currently, this are just the cutoffs from the electrostatics
+    method. This value is not available on Tcl-level,
+    therefore we just return it.
+*/
+static double get_global_maximal_nonbonded_cutoff();
+/** calculate the maximal cutoff of bonded interactions, required to
+    determine the cell size for communication. */
+static void calc_maximal_cutoff_bonded();
+
+/*****************************************
  * general lowlevel functions
  *****************************************/
 
@@ -156,13 +170,11 @@ void tf_tables_init() {
 /* #endif */
 #endif
 
-
-
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
  
   params->particlesInteract = 0;
-  params->max_cut = 0;
+  params->max_cut = get_global_maximal_nonbonded_cutoff();
 
 #ifdef LENNARD_JONES
   params->LJ_eps =
@@ -357,6 +369,16 @@ void initialize_ia_params(IA_parameters *params) {
 #endif
 }
 
+/** Copy interaction parameters. */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
+  memcpy(dst, src, sizeof(IA_parameters));
+}
+
+IA_parameters *get_ia_param_safe(int i, int j) {
+  make_particle_type_exist(imax(i, j));
+  return get_ia_param(i, j);
+}
+
 #ifdef ADRESS
 /* #ifdef THERMODYNAMIC_FORCE */
 void initialize_tf_params(TF_parameters *params){
@@ -369,222 +391,11 @@ void initialize_tf_params(TF_parameters *params){
   params->TF_TAB_stepsize = 0.0;
   strcpy(params->TF_TAB_filename, "");
 }
-/** endif */
-#endif
 
-
-/** Copy interaction parameters. */
-void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
-#ifdef LENNARD_JONES
-  dst->LJ_eps = src->LJ_eps;
-  dst->LJ_sig = src->LJ_sig;
-  dst->LJ_cut = src->LJ_cut;
-  dst->LJ_shift = src->LJ_shift;
-  dst->LJ_offset = src->LJ_offset;
-  dst->LJ_capradius = src->LJ_capradius;
-  dst->LJ_min = src->LJ_min;
-#endif
-
-#ifdef LENNARD_JONES_GENERIC
-  dst->LJGEN_eps = src->LJGEN_eps;
-  dst->LJGEN_sig = src->LJGEN_sig;
-  dst->LJGEN_cut = src->LJGEN_cut;
-  dst->LJGEN_shift = src->LJGEN_shift;
-  dst->LJGEN_offset = src->LJGEN_offset;
-  dst->LJGEN_capradius = src->LJGEN_capradius;
-  dst->LJGEN_a1 = src->LJGEN_a1;
-  dst->LJGEN_a2 = src->LJGEN_a2;
-  dst->LJGEN_b1 = src->LJGEN_b1;
-  dst->LJGEN_b2 = src->LJGEN_b2;
-#endif
-
-#ifdef LJ_ANGLE
-  dst->LJANGLE_eps = src->LJANGLE_eps;
-  dst->LJANGLE_sig = src->LJANGLE_sig;
-  dst->LJANGLE_cut = src->LJANGLE_cut;
-  dst->LJANGLE_bonded1type = src->LJANGLE_bonded1type;
-  dst->LJANGLE_bonded1pos = src->LJANGLE_bonded1pos;
-  dst->LJANGLE_bonded1neg = src->LJANGLE_bonded1neg;
-  dst->LJANGLE_bonded2pos = src->LJANGLE_bonded2pos;
-  dst->LJANGLE_bonded2neg = src->LJANGLE_bonded2neg;
-  dst->LJANGLE_capradius = src->LJANGLE_capradius;
-  dst->LJANGLE_z0 = src->LJANGLE_z0;
-  dst->LJANGLE_dz = src->LJANGLE_dz;
-  dst->LJANGLE_kappa = src->LJANGLE_kappa;
-  dst->LJANGLE_epsprime = src->LJANGLE_epsprime;
-#endif
-
-#ifdef SMOOTH_STEP
-  dst->SmSt_eps = src->SmSt_eps;
-  dst->SmSt_sig = src->SmSt_sig;
-  dst->SmSt_cut = src->SmSt_cut;
-  dst->SmSt_d = src->SmSt_d;
-  dst->SmSt_n = src->SmSt_n;
-  dst->SmSt_k0 = src->SmSt_k0;
-#endif
-
-#ifdef HERTZIAN
-  dst->Hertzian_eps = src->Hertzian_eps;
-  dst->Hertzian_sig = src->Hertzian_sig;
-#endif
-
-#ifdef BMHTF_NACL
-  dst->BMHTF_A = src->BMHTF_A;
-  dst->BMHTF_B = src->BMHTF_B;
-  dst->BMHTF_C = src->BMHTF_C;
-  dst->BMHTF_D = src->BMHTF_D;
-  dst->BMHTF_sig = src->BMHTF_sig;
-  dst->BMHTF_cut = src->BMHTF_cut;
-  dst->BMHTF_computed_shift = src->BMHTF_computed_shift;
-#endif
-
-#ifdef MORSE
-  dst->MORSE_eps = src->MORSE_eps;
-  dst->MORSE_alpha = src->MORSE_alpha;
-  dst->MORSE_rmin = src->MORSE_rmin;
-  dst->MORSE_cut = src->MORSE_cut;
-  dst->MORSE_rest = src->MORSE_rest;
-  dst->MORSE_capradius = src->MORSE_capradius;
-#endif
-
-#ifdef BUCKINGHAM
-  dst->BUCK_A = src->BUCK_A;
-  dst->BUCK_B = src->BUCK_B;
-  dst->BUCK_C = src->BUCK_C;
-  dst->BUCK_D = src->BUCK_D;
-  dst->BUCK_cut = src->BUCK_cut;
-  dst->BUCK_discont = src->BUCK_discont;
-  dst->BUCK_shift  = src->BUCK_shift;
-  dst->BUCK_capradius = src->BUCK_capradius;
-  dst->BUCK_F1 = src->BUCK_F1;
-  dst->BUCK_F2 = src->BUCK_F2;
-#endif
-
-#ifdef SOFT_SPHERE
-  dst->soft_a = src->soft_a;
-  dst->soft_n = src->soft_n;
-  dst->soft_cut = src->soft_cut;
-  dst->soft_offset = src->soft_offset;
-#endif
-
-#ifdef LJCOS
-  dst->LJCOS_eps = src->LJCOS_eps;
-  dst->LJCOS_sig = src->LJCOS_sig;
-  dst->LJCOS_cut = src->LJCOS_cut;
-  dst->LJCOS_offset = src->LJCOS_offset;
-  dst->LJCOS_alfa = src->LJCOS_alfa;
-  dst->LJCOS_beta = src->LJCOS_beta;
-  dst->LJCOS_rmin = src->LJCOS_rmin;
-#endif
-
-#ifdef LJCOS2
-  dst->LJCOS2_eps       = src->LJCOS2_eps;
-  dst->LJCOS2_sig       = src->LJCOS2_sig;
-  dst->LJCOS2_cut       = src->LJCOS2_cut;
-  dst->LJCOS2_offset    = src->LJCOS2_offset;
-  dst->LJCOS2_w         = src->LJCOS2_w;
-  dst->LJCOS2_rchange   = src->LJCOS2_rchange;
-  dst->LJCOS2_capradius = src->LJCOS2_capradius;
-#endif
-  
-#ifdef GAY_BERNE
-  dst->GB_eps = src->GB_eps;
-  dst->GB_sig = src->GB_sig;
-  dst->GB_cut = src->GB_cut;
-  dst->GB_k1 = src->GB_k1;
-  dst->GB_k2 = src->GB_k2;
-  dst->GB_mu = src->GB_mu;
-  dst->GB_nu = src->GB_nu;
-  dst->GB_chi1 = src->GB_chi1;
-  dst->GB_chi2 = src->GB_chi2; 
-#endif
-
-#ifdef TABULATED
-  dst->TAB_npoints = src->TAB_npoints;
-  dst->TAB_startindex = src->TAB_startindex;
-  dst->TAB_minval = src->TAB_minval;
-  dst->TAB_minval2 = src->TAB_minval2;
-  dst->TAB_maxval = src->TAB_maxval;
-  dst->TAB_maxval2 = src->TAB_maxval2;
-  dst->TAB_stepsize = src->TAB_stepsize;
-  strcpy(dst->TAB_filename,src->TAB_filename);
-#endif
-
-#ifdef COMFORCE
-  dst->COMFORCE_flag = src->COMFORCE_flag;
-  dst->COMFORCE_dir = src->COMFORCE_dir;
-  dst->COMFORCE_force = src->COMFORCE_force;
-  dst->COMFORCE_fratio = src->COMFORCE_fratio;
-#endif
-
-#ifdef COMFIXED
-  dst->COMFIXED_flag = src->COMFIXED_flag;
-#endif
-
-#ifdef INTER_DPD
-  dst->dpd_gamma  = src->dpd_gamma;
-  dst->dpd_r_cut  = src-> dpd_r_cut;
-  dst->dpd_wf     = src->dpd_wf;
-  dst->dpd_pref1  = src->dpd_pref1;
-  dst->dpd_pref2  = src->dpd_pref2;
-  dst->dpd_tgamma = src->dpd_tgamma;
-  dst->dpd_tr_cut = src-> dpd_tr_cut;
-  dst->dpd_twf    = src->dpd_twf;
-  dst->dpd_pref3  = src->dpd_pref3;
-  dst->dpd_pref4  = src->dpd_pref4;
-#endif
-
-#ifdef INTER_RF
-  dst->rf_on = src->rf_on;
-#endif
-
-#ifdef MOL_CUT
-  dst->mol_cut_type = src->mol_cut_type;
-  dst->mol_cut_cutoff = src->mol_cut_cutoff;
-#endif
-
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  //dst->ADRESS_IC_npoints = src->ADRESS_IC_npoints;
-  dst->ADRESS_TAB_npoints = src->ADRESS_TAB_npoints;
-  dst->ADRESS_TAB_startindex = src->ADRESS_TAB_startindex;
-  dst->ADRESS_TAB_minval = src->ADRESS_TAB_minval;
-  dst->ADRESS_TAB_minval2 = src->ADRESS_TAB_minval2;
-  dst->ADRESS_TAB_maxval = src->ADRESS_TAB_maxval;
-  dst->ADRESS_TAB_maxval2 = src->ADRESS_TAB_maxval2;
-  dst->ADRESS_TAB_stepsize = src->ADRESS_TAB_stepsize;
-  strcpy(dst->ADRESS_TAB_filename,src->ADRESS_TAB_filename);
-#endif
-#endif
-
-#ifdef TUNABLE_SLIP
-  dst->TUNABLE_SLIP_temp  = src->TUNABLE_SLIP_temp;
-  dst->TUNABLE_SLIP_gamma  = src->TUNABLE_SLIP_gamma;
-  dst->TUNABLE_SLIP_r_cut  = src->TUNABLE_SLIP_r_cut;
-  dst->TUNABLE_SLIP_time  = src->TUNABLE_SLIP_time;
-  dst->TUNABLE_SLIP_vx  = src->TUNABLE_SLIP_vx;
-  dst->TUNABLE_SLIP_vy  = src->TUNABLE_SLIP_vy;
-  dst->TUNABLE_SLIP_vz  = src->TUNABLE_SLIP_vz;
-#endif
-
-}
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
 void copy_tf_params(TF_parameters *dst, TF_parameters *src){
-  dst->TF_TAB_npoints = src->TF_TAB_npoints;
-  dst->TF_TAB_startindex = src->TF_TAB_startindex;
-  dst->TF_prefactor = src->TF_prefactor;
-  dst->TF_TAB_minval = src->TF_TAB_minval;
-  dst->TF_TAB_maxval = src->TF_TAB_maxval;
-  dst->TF_TAB_stepsize = src->TF_TAB_stepsize;
-  strcpy(dst->TF_TAB_filename,src->TF_TAB_filename);
+  memcpy(dst, src, sizeof(TF_parameters));
 }
-/* #endif */
-#endif
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
 int checkIfTF(TF_parameters *data){
   if (data->TF_TAB_maxval !=0)
     return 1;
@@ -592,151 +403,6 @@ int checkIfTF(TF_parameters *data){
 }
 /* #endif */
 #endif
-
-char *get_name_of_bonded_ia(int i) {
-  switch (i) {
-  case BONDED_IA_FENE:
-    return "FENE";
-  case BONDED_IA_ANGLE:
-    return "angle";
-  case BONDED_IA_ANGLEDIST:
-    return "angledist";
-  case BONDED_IA_DIHEDRAL:
-    return "dihedral";
-  case BONDED_IA_ENDANGLEDIST:
-    return "endangledist";
-  case BONDED_IA_HARMONIC:
-    return "HARMONIC";
-  case BONDED_IA_SUBT_LJ:
-    return "SUBT_LJ";
-  case BONDED_IA_TABULATED:
-    return "tabulated";
-  case BONDED_IA_OVERLAPPED:
-    return "overlapped";
-  case BONDED_IA_RIGID_BOND:
-    return "RIGID_BOND";
-  case BONDED_IA_VIRTUAL_BOND:
-    return "VIRTUAL_BOND";
-  default:
-    fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
-	    this_node, i);
-    errexit();
-  }
-  /* just to keep the compiler happy */
-  return "";
-}
-
-/** This function increases the LOCAL ia_params field for non-bonded interactions
-    to the given size. This function is not exported
-    since it does not do this on all nodes. Use
-    make_particle_type_exist for that.
-*/
-void realloc_ia_params(int nsize)
-{
-  int i, j;
-  IA_parameters *new_params;
-  if (nsize <= n_particle_types)
-    return;
-
-  new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
-  if (ia_params) {
-    /* if there is an old field, copy entries and delete */
-    for (i = 0; i < nsize; i++)
-      for (j = 0; j < nsize; j++) {
-	if ((i < n_particle_types) && (j < n_particle_types))
-	  copy_ia_params(&new_params[i*nsize + j],
-			 &ia_params[i*n_particle_types + j]);
-	else
-	  initialize_ia_params(&new_params[i*nsize + j]);
-      }
-    free(ia_params);
-  }
-  else {
-    /* new field, just init */
-    for (i = 0; i < nsize; i++)
-      for (j = 0; j < nsize; j++)
-	initialize_ia_params(&new_params[i*nsize + j]);
-  }
-
-  n_particle_types = nsize;
-  ia_params = new_params;
-}
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-void realloc_tf_params(int nsize)
-{
-  int i;
-  TF_parameters *new_params;
-
-  if (nsize <= n_particle_types)
-    return;
-
-  new_params = (TF_parameters *) malloc(nsize*sizeof(TF_parameters));
-  if (tf_params) {
-    /* if there is an old field, copy entries and delete */
-    for (i = 0; i < nsize; i++)
-      {
-	if (i < n_particle_types)
-	  copy_tf_params(&new_params[i],
-			 &tf_params[i]);
-	else
-	  initialize_tf_params(&new_params[i]);
-      }
-    free(tf_params);
-  }
-  else {
-    /* new field, just init */
-    for (i = 0; i < nsize; i++)
-      initialize_tf_params(&new_params[i]);
-  }
-  
-  tf_params = new_params;
-}
-/* #endif */
-#endif
-
-void make_particle_type_exist(int type)
-{
-  int ns = type + 1;
-  if (ns <= n_particle_types) {
-    on_n_particle_types_change();
-    return;
-  }
-  mpi_bcast_n_particle_types(ns);
-}
-
-void make_bond_type_exist(int type)
-{
-  int i, ns = type + 1;
-  
-  if(ns <= n_bonded_ia) {
-#ifdef TABULATED
-    if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
-	 bonded_ia_params[type].p.tab.npoints > 0 ) {
-      free(bonded_ia_params[type].p.tab.f);
-      free(bonded_ia_params[type].p.tab.e);
-    }
-#endif 
-#ifdef OVERLAPPED
-    if ( bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
-         bonded_ia_params[type].p.overlap.noverlaps > 0 ) {
-      free(bonded_ia_params[type].p.overlap.para_a);
-      free(bonded_ia_params[type].p.overlap.para_b);
-      free(bonded_ia_params[type].p.overlap.para_c);
-    }
-#endif
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
-						     ns*sizeof(Bonded_ia_parameters));
-  /* set bond types not used as undefined */
-  for (i = n_bonded_ia; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
- 
-  n_bonded_ia = ns;
-}
 
 static void calc_maximal_cutoff_bonded()
 {
@@ -817,12 +483,7 @@ static void calc_maximal_cutoff_bonded()
   }
 }
 
-/**
-   calculates and returns the maximal cutoff that any electrostatics
-   method requires. This value is not available on Tcl-level,
-   therefore we just return it.
-*/
-static double get_maximal_cutoff_electrostatics()
+static double get_global_maximal_nonbonded_cutoff()
 {
   double max_cut_es = 0.0;
 
@@ -883,7 +544,9 @@ static void calc_maximal_cutoff_nonbonded()
 {
   int i, j;
 
-  double max_cut_es = get_maximal_cutoff_electrostatics();
+  double max_cut_es = get_global_maximal_nonbonded_cutoff();
+
+  CELL_TRACE(fprintf(stderr, "%d: max_cut_es %f\n", this_node, max_cut_es));
 
   max_cut_nonbonded = max_cut_es;
   
@@ -1045,6 +708,9 @@ static void calc_maximal_cutoff_nonbonded()
 
       if (max_cut_current > max_cut_nonbonded)
 	max_cut_nonbonded = max_cut_current;
+
+      CELL_TRACE(fprintf(stderr, "%d: pair %d,%d max_cut total %f\n",
+			 this_node, i, j, data->max_cut));
     }
 }
 
@@ -1059,6 +725,149 @@ void calc_maximal_cutoff()
     max_cut = max_cut_nonbonded;
   else
     max_cut = max_cut_bonded;
+}
+
+char *get_name_of_bonded_ia(int i) {
+  switch (i) {
+  case BONDED_IA_FENE:
+    return "FENE";
+  case BONDED_IA_ANGLE:
+    return "angle";
+  case BONDED_IA_ANGLEDIST:
+    return "angledist";
+  case BONDED_IA_DIHEDRAL:
+    return "dihedral";
+  case BONDED_IA_ENDANGLEDIST:
+    return "endangledist";
+  case BONDED_IA_HARMONIC:
+    return "HARMONIC";
+  case BONDED_IA_SUBT_LJ:
+    return "SUBT_LJ";
+  case BONDED_IA_TABULATED:
+    return "tabulated";
+  case BONDED_IA_OVERLAPPED:
+    return "overlapped";
+  case BONDED_IA_RIGID_BOND:
+    return "RIGID_BOND";
+  case BONDED_IA_VIRTUAL_BOND:
+    return "VIRTUAL_BOND";
+  default:
+    fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
+	    this_node, i);
+    errexit();
+  }
+  /* just to keep the compiler happy */
+  return "";
+}
+
+/** This function increases the LOCAL ia_params field for non-bonded interactions
+    to the given size. This function is not exported
+    since it does not do this on all nodes. Use
+    make_particle_type_exist for that.
+*/
+void realloc_ia_params(int nsize)
+{
+  int i, j;
+  IA_parameters *new_params;
+  if (nsize <= n_particle_types)
+    return;
+
+  new_params = (IA_parameters *) malloc(nsize*nsize*sizeof(IA_parameters));
+  if (ia_params) {
+    /* if there is an old field, copy entries and delete */
+    for (i = 0; i < nsize; i++)
+      for (j = 0; j < nsize; j++) {
+	if ((i < n_particle_types) && (j < n_particle_types))
+	  copy_ia_params(&new_params[i*nsize + j],
+			 &ia_params[i*n_particle_types + j]);
+	else
+	  initialize_ia_params(&new_params[i*nsize + j]);
+      }
+    free(ia_params);
+  }
+  else {
+    /* new field, just init */
+    for (i = 0; i < nsize; i++)
+      for (j = 0; j < nsize; j++)
+	initialize_ia_params(&new_params[i*nsize + j]);
+  }
+
+  n_particle_types = nsize;
+  ia_params = new_params;
+}
+
+#ifdef ADRESS
+/* #ifdef THERMODYNAMIC_FORCE */
+void realloc_tf_params(int nsize)
+{
+  int i;
+  TF_parameters *new_params;
+
+  if (nsize <= n_particle_types)
+    return;
+
+  new_params = (TF_parameters *) malloc(nsize*sizeof(TF_parameters));
+  if (tf_params) {
+    /* if there is an old field, copy entries and delete */
+    for (i = 0; i < nsize; i++)
+      {
+	if (i < n_particle_types)
+	  copy_tf_params(&new_params[i],
+			 &tf_params[i]);
+	else
+	  initialize_tf_params(&new_params[i]);
+      }
+    free(tf_params);
+  }
+  else {
+    /* new field, just init */
+    for (i = 0; i < nsize; i++)
+      initialize_tf_params(&new_params[i]);
+  }
+  
+  tf_params = new_params;
+}
+/* #endif */
+#endif
+
+void make_particle_type_exist(int type)
+{
+  int ns = type + 1;
+  if (ns <= n_particle_types)
+    return;
+  mpi_bcast_n_particle_types(ns);
+}
+
+void make_bond_type_exist(int type)
+{
+  int i, ns = type + 1;
+  
+  if(ns <= n_bonded_ia) {
+#ifdef TABULATED
+    if ( bonded_ia_params[type].type == BONDED_IA_TABULATED && 
+	 bonded_ia_params[type].p.tab.npoints > 0 ) {
+      free(bonded_ia_params[type].p.tab.f);
+      free(bonded_ia_params[type].p.tab.e);
+    }
+#endif 
+#ifdef OVERLAPPED
+    if ( bonded_ia_params[type].type == BONDED_IA_OVERLAPPED &&
+         bonded_ia_params[type].p.overlap.noverlaps > 0 ) {
+      free(bonded_ia_params[type].p.overlap.para_a);
+      free(bonded_ia_params[type].p.overlap.para_b);
+      free(bonded_ia_params[type].p.overlap.para_c);
+    }
+#endif
+    return;
+  }
+  /* else allocate new memory */
+  bonded_ia_params = (Bonded_ia_parameters *)realloc(bonded_ia_params,
+						     ns*sizeof(Bonded_ia_parameters));
+  /* set bond types not used as undefined */
+  for (i = n_bonded_ia; i < ns; i++)
+    bonded_ia_params[i].type = BONDED_IA_NONE;
+ 
+  n_bonded_ia = ns;
 }
 
 int check_obs_calc_initialized()

@@ -54,37 +54,26 @@ MDINLINE int morse_set_params(int part_type_a, int part_type_b,
               double rmin, double cut, double cap_radius)
 {
   double add1, add2;
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* MORSE should be symmetrically */
-  data->MORSE_eps       = data_sym->MORSE_eps       = eps;
-  data->MORSE_alpha    = data_sym->MORSE_alpha    = alpha;
-  data->MORSE_rmin    = data_sym->MORSE_rmin    = rmin;
-  data->MORSE_cut    = data_sym->MORSE_cut    = cut;
+  data->MORSE_eps   = eps;
+  data->MORSE_alpha = alpha;
+  data->MORSE_rmin  = rmin;
+  data->MORSE_cut   = cut;
 
   /* calculate dependent parameter */
   add1 = exp(-2.0*data->MORSE_alpha*(data->MORSE_cut - data->MORSE_rmin));
   add2 = 2.0*exp(-data->MORSE_alpha*(data->MORSE_cut - data->MORSE_rmin));
-  data->MORSE_rest    = data_sym->MORSE_rest    = data->MORSE_eps * (add1 - add2); 
+  data->MORSE_rest = data->MORSE_eps * (add1 - add2); 
  
   if (cap_radius > 0) {
     data->MORSE_capradius = cap_radius;
-    data_sym->MORSE_capradius = cap_radius;
   }
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (morse_force_cap != -1.0)
     mpi_morse_cap_forces(morse_force_cap);

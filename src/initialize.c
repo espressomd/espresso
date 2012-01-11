@@ -337,11 +337,6 @@ void on_observable_calc()
 #endif /*ifdef ELECTROSTATICS */
 }
 
-void on_n_particle_types_change()
-{
-  cells_on_max_cut_change(1);
-}
-
 void on_particle_change()
 {
   // EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));

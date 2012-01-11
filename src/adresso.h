@@ -260,7 +260,7 @@ MDINLINE double correction_function(double x){
 
 MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filename)
 {
-    IA_parameters *data, *data_sym;
+    IA_parameters *data;
     FILE* fp;
     //int ic_points;
     int npoints;
@@ -270,13 +270,9 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
     double dummr;
     token = 0;
     
-    make_particle_type_exist(part_type_a);
-    make_particle_type_exist(part_type_b);
+    data = get_ia_param_safe(part_type_a, part_type_b);
     
-    data     = get_ia_param(part_type_a, part_type_b);
-    data_sym = get_ia_param(part_type_b, part_type_a);
-    
-    if (!data || !data_sym)
+    if (!data)
         return 1;
     
     if (strlen(filename) > MAXLENGTH_ADRESSTABFILE_NAME-1 )
@@ -310,8 +306,8 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
         // A new potential will be added so set the number of points, the startindex and newsize
         //considering that if ic_points = 0, we have two forces: ex and cg 
         //we keep the same for npoints
-        data->ADRESS_TAB_npoints    = data_sym->ADRESS_TAB_npoints    = npoints;
-        data->ADRESS_TAB_startindex = data_sym->ADRESS_TAB_startindex = adress_tab_forces.max;
+        data->ADRESS_TAB_npoints    = npoints;
+        data->ADRESS_TAB_startindex = adress_tab_forces.max;
         newsize += 2*npoints;
     } else {
         // We have existing data for this pair of monomer types check array sizing
@@ -321,19 +317,17 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
         }
     }
     
-    /* Update parameters symmetrically */
-    data->ADRESS_TAB_maxval    = data_sym->ADRESS_TAB_maxval    = maxval;
-    data->ADRESS_TAB_minval    = data_sym->ADRESS_TAB_minval    = minval;
+    /* Update parameters */
+    data->ADRESS_TAB_maxval    = maxval;
+    data->ADRESS_TAB_minval    = minval;
     strcpy(data->ADRESS_TAB_filename,filename);
-    strcpy(data_sym->ADRESS_TAB_filename,filename);
     
     /* Calculate dependent parameters */
     maxval2 = maxval*maxval;
     minval2 = minval*minval;
-    data->ADRESS_TAB_maxval2 = data_sym->ADRESS_TAB_maxval2 = maxval2;
-    data->ADRESS_TAB_minval2 = data_sym->ADRESS_TAB_minval2 = minval2;
-    data->ADRESS_TAB_stepsize = data_sym->ADRESS_TAB_stepsize = (maxval-minval)/(double)(data->ADRESS_TAB_npoints - 1);
-    
+    data->ADRESS_TAB_maxval2 = maxval2;
+    data->ADRESS_TAB_minval2 = minval2;
+    data->ADRESS_TAB_stepsize = (maxval-minval)/(double)(data->ADRESS_TAB_npoints - 1);
     
     /* Allocate space for new data */
     realloc_doublelist(&adress_tab_forces,newsize);
@@ -357,7 +351,6 @@ MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filen
     
     /* broadcast interaction parameters including force and energy tables*/
     mpi_bcast_ia_params(part_type_a, part_type_b);
-    mpi_bcast_ia_params(part_type_b, part_type_a);
     
     //no force cap for the moment!
     //if (tab_force_cap != -1.0) {

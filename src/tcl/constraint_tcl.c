@@ -688,6 +688,8 @@ static int tclcommand_constraint_parse_rhomboid(Constraint *con, Tcl_Interp *int
     con->c.rhomboid.b[2] = tmp[2];
   }
 
+  make_particle_type_exist(con->part_rep.p.type);
+
   return TCL_OK;
 }
 
@@ -1042,6 +1044,8 @@ static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *i
                      (char *) NULL);
     return (TCL_ERROR);    
   }
+
+  make_particle_type_exist(con->part_rep.p.type);
 
   return (TCL_OK);
 }
