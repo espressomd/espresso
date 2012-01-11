@@ -78,11 +78,10 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
 
-  int n, x, y, z, node_domain_position[3], offset[3];
+  int n, x, y, z;
   char *errtxt;
   double pos[3], dist, dist_tmp=0.0, dist_vec[3];
-  int the_boundary=-1;
-
+  
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_GPU) && defined (LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
@@ -145,7 +144,9 @@ void lb_init_boundaries() {
     free(host_boundindex);
 #endif
   } else {
-#if defined (LB) && defined (LB_BOUNDARIES)    
+#if defined (LB) && defined (LB_BOUNDARIES)   
+    int node_domain_position[3], offset[3];
+    int the_boundary=-1; 
     map_node_array(this_node, node_domain_position);
 
     offset[0] = node_domain_position[0]*lblattice.grid[0];
