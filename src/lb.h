@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -543,14 +543,6 @@ MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   *boundary = lbfields[index].boundary;
 }
 #endif
-
-#endif // LB
-/** Parser for the TCL command lbfluid. */
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-/** Parser for the lbnode command. */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-#ifdef LB
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.

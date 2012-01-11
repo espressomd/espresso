@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -21,6 +21,8 @@
     Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
 */
 #include "constraint.h"
+#include "communication.h"
+#include "parser.h"
 
 #ifdef CONSTRAINTS
 static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
@@ -207,7 +209,7 @@ int tclcommand_constraint_print(Tcl_Interp *interp)
   return (TCL_OK);
 }
 
-void tclprint_to_result_ConstraintForce(Tcl_Interp *interp, int con)
+static void tclprint_to_result_ConstraintForce(Tcl_Interp *interp, int con)
 {
   double f[3];
   char buffer[TCL_DOUBLE_SPACE];
@@ -1046,7 +1048,7 @@ static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *i
   return (TCL_OK);
 }
 
-int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
+static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
   double pos[3];
   double vec[3];
   double dist=1e100;

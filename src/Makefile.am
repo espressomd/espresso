@@ -120,7 +120,7 @@ libEspresso_a_SOURCES = \
 	overlap.h \
 	ljangle.c ljangle.h \
 	adresso.c adresso.h \
-	tunable_slip.h \
+	tunable_slip.c tunable_slip.h \
 	tuning.c tuning.h \
 	utils.c utils.h \
 	uwerr.c	uwerr.h \

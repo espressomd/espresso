@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -20,14 +21,14 @@
 #ifndef CONSTRAINT_TCL_H
 #define CONSTRAINT_TCL_H
 
-/** \file constraint.h
- *  Routines for handling of constraints.
- *  Only active if the feature CONSTRAINTS is activated.
- *  see also \ref interaction_data.h
- */
+#include <tcl.h>
+#include "utils.h"
 
 #ifdef CONSTRAINTS
 
+int tclcommand_constraint_print(Tcl_Interp *interp);
+int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
+			  int argc, char **argv);
 
 
 #endif /* CONSTRAINTS */
