@@ -30,20 +30,11 @@
  */
 #ifndef MMM2D_H
 #define MMM2D_H
-
+#include "utils.h"
 #ifdef ELECTROSTATICS
 
 /** error messages, see above */
-static char *mmm2d_errors[] = {
-   "ok",
-   "Layer height too large for MMM2D near formula, increase n_layers",
-   "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
-   "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
-   "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
-   "Far cutoff too large, decrease the error bound",
-   "Layer height too small for MMM2D far formula, decrease n_layers or skin",
-   "IC requires layered cellsystem with more than 3 layers",
-};
+extern char const *mmm2d_errors[];
 
 /** parameters for the MMM2D method for electrostatics. */
 typedef struct {

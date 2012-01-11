@@ -24,7 +24,7 @@
 
 //#include <math.h>
 //#include <mpi.h>
-//#include "utils.h"
+#include "utils.h"
 #include "communication.h"
 //#include "particle_data.h"
 //#include "interaction_data.h"
