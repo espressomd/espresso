@@ -19,9 +19,9 @@
 #ifndef CUDA_INIT_H
 #define CUDA_INIT_H
 
-/** Tcl-command to set the CUDA device to use or retrieve information
+/** external functions called by the Tcl-command to set the CUDA device to use or retrieve information
     available devices. */
-int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
-		    int argc, char **argv);
+int check_gpu(int dev);
+int list_gpus(Tcl_Interp *interp);
 
 #endif

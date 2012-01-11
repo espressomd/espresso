@@ -157,6 +157,7 @@ libEspresso_core_la_SOURCES = \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
+	tcl_interface/cuda_init_tcl.h
 	myconfig-final.h
 
 
@@ -228,14 +229,10 @@ SUFFIXES=.cu
 #.cu.lo:
 #	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
 
-CUDA_SOURCES= \
-	cuda_init.cu \
-	cuda_init.h \
-	lbgpu.cu lbgpu.h
-
 CUDA_OBJECTS= \
 	cuda_init.o \
-	lbgpu.o 
+	lbgpu.o \
+	tcl_interface/cuda_init_tcl.o 
 
-libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o tcl_interface/cuda_init_tcl.o 
 endif
