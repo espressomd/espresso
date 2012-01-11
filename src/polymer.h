@@ -29,7 +29,6 @@
     For more information on polymer, see \ref polymer.c "polymer.c"
 */
 
-#include <tcl.h>
 #include "particle_data.h"
 
 /************************************************************* 
@@ -145,10 +144,6 @@ int collectBonds(int mode, int part_id, int N_P, int MPC, int type_bond, int **b
     @param  max_try     = how often crosslinks should be removed if they are too close to other links (defaults to '30000')
     @return Returns how many ends are now successfully linked. */
 int crosslinkC(int N_P, int MPC, int part_id, double r_catch, int link_dist, int chain_dist, int type_FENE, int max_try);
-
-/** Implementation of the tcl-command <br>
-    diamond \<a\> \<bond_length\> \<MPC\> [counterions \<N_CI\>] [charges \<val_nodes\> \<val_cM\> \<val_CI\>] [distance \<cM_dist\>] [nonet] */
-int tclcommand_diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
 int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet);

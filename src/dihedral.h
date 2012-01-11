@@ -28,7 +28,8 @@
 
 #define ANGLE_NOT_DEFINED -100
 
-
+#include "interaction_data.h"
+#include "parser.h"
 
 
 /// set dihedral parameters
