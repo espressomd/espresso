@@ -2319,9 +2319,6 @@ void maggs_init()
     		
     maggs_setup_local_lattice();
 		
-    /* update max_cut */
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
     //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);

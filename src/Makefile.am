@@ -29,6 +29,7 @@ libEspresso_core_la_SOURCES = \
 	communication.c communication.h \
 	tcl_interface/binary_file_tcl.c tcl_interface/binary_file_tcl.h \
 	interaction_data.c interaction_data.h\
+	tcl_interface/interaction_data_tcl.c tcl_interface/interaction_data_tcl.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
 	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
@@ -73,6 +74,7 @@ libEspresso_core_la_SOURCES = \
 	p3m-dipolar.c p3m-dipolar.h \
 	tcl_interface/p3m-dipolar_tcl.c tcl_interface/p3m-dipolar_tcl.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
+	tcl_interface/magnetic_non_p3m_methods_tcl.c tcl_interface/magnetic_non_p3m_methods_tcl.h \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
@@ -90,6 +92,7 @@ libEspresso_core_la_SOURCES = \
 	layered.c layered.h \
 	mmm-common.c mmm-common.h \
 	mmm1d.c mmm1d.h \
+	tcl_interface/mmm1d_tcl.c tcl_interface/mmm1d_tcl.h \
 	mmm2d.c	mmm2d.h \
 	tcl_interface/mmm2d_tcl.c tcl_interface/mmm2d_tcl.h \
 	modes.c	modes.h \
@@ -116,6 +119,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
+	tcl_interface/bin_tcl.c tcl_interface/bin_tcl.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
@@ -145,6 +149,7 @@ libEspresso_core_la_SOURCES = \
 	steppot.h \
 	bmhtf-nacl.h \
 	morse.h \
+	tcl_interface/morse_tcl.c tcl_interface/morse_tcl.h \
 	polynom.h \
 	soft_sphere.h \
 	subt_lj.h \
@@ -154,6 +159,7 @@ libEspresso_core_la_SOURCES = \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
+	tcl_interface/cuda_init_tcl.h
 	myconfig-final.h
 
 
@@ -225,14 +231,10 @@ SUFFIXES=.cu
 #.cu.lo:
 #	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
 
-CUDA_SOURCES= \
-	cuda_init.cu \
-	cuda_init.h \
-	lbgpu.cu lbgpu.h
-
 CUDA_OBJECTS= \
 	cuda_init.o \
-	lbgpu.o 
+	lbgpu.o \
+	tcl_interface/cuda_init_tcl.o 
 
-libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o tcl_interface/cuda_init_tcl.o 
 endif

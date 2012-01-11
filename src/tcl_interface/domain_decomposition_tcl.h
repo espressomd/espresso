@@ -54,12 +54,7 @@
  *  see \ref cells.h 
 */
 
-#include "utils.h"
-#include "cells.h"
-#include "integrate.h"
-#include "communication.h"
-#include "verlet.h"
-#include "thermostat.h"
+#include <tcl.h>
 
 /** Callback for setmd max_num_cells (maxnumcells >= 27). 
     see also \ref max_num_cells */

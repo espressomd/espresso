@@ -75,10 +75,6 @@ double time_step        = -1.0;
 double sim_time         = 0.0;
 double skin             = -1.0;
 double skin2;
-double max_range        = -1.0;
-double max_range2       = -1.0;
-double max_range_non_bonded  = 0.0;
-double max_range_non_bonded2 = 0.0;
 
 int    resort_particles = 1;
 int    recalc_forces    = 1;
@@ -322,30 +318,6 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
 }
 
 /************************************************************/
-
-void integrate_vv_recalc_maxrange()
-{
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_recalc_maxrange:\n",this_node));
-
-  /* maximal interaction cutoff */
-  calc_maximal_cutoff();
-  if (max_cut <= 0.0) {
-    max_range  = -1.0;
-    max_range2 = -1.0;
-    return;
-  }
-  max_range            = max_cut;
-  max_range_non_bonded = max_cut_non_bonded;
-  /* at beginning be nice */
-  if (skin > 0.0) {
-    max_range            += skin;
-    max_range_non_bonded += skin;
-  }
-  max_range2            = SQR(max_range);
-  max_range_non_bonded2 = SQR(max_range_non_bonded);
-}
-
-/************************************************************/
 void integrate_ensemble_init()
 {
 #ifdef NPT
@@ -409,9 +381,7 @@ void integrate_vv(int n_steps)
 #endif
 #endif
 
-   
    force_calc();
-
    
    //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
@@ -439,7 +409,6 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     rescale_forces();
     recalc_forces = 0;
-
   }
 
   if (check_runtime_errors())
@@ -451,8 +420,6 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
 
-
-
 #ifdef BOND_CONSTRAINT
     save_old_pos();
 #endif
@@ -461,9 +428,9 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
        NOTE 1: Prefactors do not occur in formulas since we use 
-               rescaled forces and velocities. 
+       rescaled forces and velocities. 
        NOTE 2: Depending on the integration method Step 1 and Step 2 
-               cannot be combined for the translation. 
+       cannot be combined for the translation. 
     */
     if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
       propagate_vel();  propagate_pos(); }
@@ -492,11 +459,12 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     cells_update_ghosts();
 
-//VIRTUAL_SITES update pos and vel (for DPD)
+    //VIRTUAL_SITES update pos and vel (for DPD)
 #ifdef VIRTUAL_SITES
-   update_mol_vel_pos();
-   ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    update_mol_vel_pos();
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
 
+<<<<<<< HEAD
    if (check_runtime_errors()) break;
 #ifdef VIRTUAL_SITES_RELATIVE && LB 
    // This is on a workaround stage: 
@@ -504,11 +472,21 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
    // to reassemble the cell lists after all position updates, also of virtual
    // particles. 
     cells_update_ghosts();
+=======
+    if (check_runtime_errors()) break;
+#if  defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
+    // This is on a workaround stage: 
+    // When using virtual sites relative and LB at the same time, it is necessary 
+    // to reassemble the cell lists after all position updates, also of virtual
+    // particles. 
+    if (cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
+      cells_update_ghosts();
+>>>>>>> 9285221221f99f8e58b84995ca2b03fed2c469fe
 #endif
 
 #ifdef ADRESS
-   //adress_update_weights();
-   if (check_runtime_errors()) break;
+    //adress_update_weights();
+    if (check_runtime_errors()) break;
 #endif
 #endif
 
@@ -523,12 +501,12 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     force_calc();
 
-//VIRTUAL_SITES distribute forces
+    //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-   ghost_communicator(&cell_structure.collect_ghost_force_comm);
-   init_forces_ghosts();
-   distribute_mol_force();
-   if (check_runtime_errors()) break;
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    init_forces_ghosts();
+    distribute_mol_force();
+    if (check_runtime_errors()) break;
 #endif
 
     /* Communication step: ghost forces */
@@ -545,16 +523,17 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
-
+    recalc_forces = 0;
+    
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
-  if (check_runtime_errors()) break;
+    if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef LB_GPU
-  if(this_node == 0){
-	if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
-  }
+    if(this_node == 0){
+      if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
+    }
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -566,11 +545,11 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     convert_torques_propagate_omega();
 #endif
 
-//VIRTUAL_SITES update vel
+    //VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
-   ghost_communicator(&cell_structure.update_ghost_pos_comm);
-   update_mol_vel();
-   if (check_runtime_errors()) break;
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    update_mol_vel();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -587,10 +566,6 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     /* Propagate time: t = t+dt */
     sim_time += time_step;
   }
-
-  /* after simulating the forces are necessarily set. Necessary since
-     resort_particles sets recalc_forces to 1 */
-  recalc_forces = 0;
 
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
@@ -798,8 +773,6 @@ void propagate_press_box_pos_and_rescale_npt()
     int i, j, np, c;
     double scal[3]={0.,0.,0.}, L_new=0.0;
 
-    rebuild_verletlist = 0;
-
     /* finalize derivation of p_inst */
     finalize_p_inst_npt();
 
@@ -830,34 +803,33 @@ void propagate_press_box_pos_and_rescale_npt()
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
       for(i = 0; i < np; i++) {	
 #ifdef VIRTUAL_SITES
-       if (ifParticleIsVirtual(&p[i])) continue;
+	if (ifParticleIsVirtual(&p[i])) continue;
 #endif
-       for(j=0; j < 3; j++){
+	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+	  if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
 #endif	    
-	  if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
-	    p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
-	    p[i].l.p_old[j] *= scal[1];
-	    p[i].m.v[j]     *= scal[0];
-	  } else {
-	    p[i].r.p[j] += p[i].m.v[j];
-	  }
+	    if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
+	      p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+	      p[i].l.p_old[j] *= scal[1];
+	      p[i].m.v[j]     *= scal[0];
+	    } else {
+	      p[i].r.p[j] += p[i].m.v[j];
+	    }
 
 #ifdef EXTERNAL_FORCES
+	  }
+#endif
 	}
-#endif
-      }
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
 #ifdef ADDITIONAL_CHECKS
-      force_and_velocity_check(&p[i]); 
+	force_and_velocity_check(&p[i]); 
 #endif
-      /* Verlet criterion check */
-      //if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
-      rebuild_verletlist = 1; 
       }
     }
+
+    resort_particles = 1; 
 
     /* Apply new volume to the box-length, communicate it, and account for necessary adjustments to the cell geometry */
     if (this_node == 0) {
@@ -870,11 +842,7 @@ void propagate_press_box_pos_and_rescale_npt()
       }
     }
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    on_NpT_boxl_change(scal[1]);
-    //on_NpT_boxl_change(0.0);
-
-    /* communicate verlet criterion */
-    //announce_rebuild_vlist();
+    on_NpT_boxl_change();
   }
 #endif
 }
@@ -950,8 +918,6 @@ void propagate_pos()
     Particle *p;
     int c, i, j, np;
 
-    rebuild_verletlist = 0;
-
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
       p  = cell->part;
@@ -974,11 +940,11 @@ void propagate_pos()
 	    }
 	}
 	/* Verlet criterion check */
-	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
+	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
       }
     }
   }
-  announce_rebuild_vlist();
+  announce_resort_particles();
 }
 
 void propagate_vel_pos()
@@ -988,8 +954,6 @@ void propagate_vel_pos()
   int c, i, j, np;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
-
-  rebuild_verletlist = 0;
 
 #ifdef ADDITIONAL_CHECKS
   db_max_force = db_max_vel = 0;
@@ -1025,11 +989,11 @@ void propagate_vel_pos()
 #endif
 
       /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
     }
   }
 
-  if(dd.use_vList) announce_rebuild_vlist();
+  announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
@@ -1044,12 +1008,9 @@ void force_and_velocity_check(Particle *p)
   /* distance_check */
   for (i = 0; i < 3; i++)
     if(fabs(p->r.p[i] - p->l.p_old[i]) > local_box_l[i]) {
-      /* put any cellsystems here which do not rely on rebuild_verletlist */
-      if ((cell_structure.type != CELL_STRUCTURE_NSQUARE) && (dd.use_vList)) {
-	fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
-		this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
-		p->r.p[2] - p->l.p_old[2]);
-      }
+      fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
+	      this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
+	      p->r.p[2] - p->l.p_old[2]);
     }
 
   /* force check */
@@ -1062,9 +1023,9 @@ void force_and_velocity_check(Particle *p)
   /* velocity check */
   db_vel   = SQR(p->m.v[0])+SQR(p->m.v[1])+SQR(p->m.v[2]);
   if(db_vel > skin2)
-	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
-		this_node,p->p.identity,sqrt(db_vel),
-		p->m.v[0],p->m.v[1],p->m.v[2]);
+    fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
+	    this_node,p->p.identity,sqrt(db_vel),
+	    p->m.v[0],p->m.v[1],p->m.v[2]);
   if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p->p.identity; }
 #endif
 }

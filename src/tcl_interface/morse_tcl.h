@@ -17,27 +17,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef DPD_TCL_H
-#define DPD_TCL_H
-/** \file dpd.h
- *  Routines to use dpd as thermostat or pair force
- *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
- *  \ref forces.c
+#ifndef MORSE_TCL_H
+#define MORSE_TCL_H
+
+/** \file morse_tcl.h
+ *  TCL interface for the Morse potential
 */
 
-#ifdef DPD
-int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
-void tclcommand_thermostat_parse_and_print_dpd(Tcl_Interp *interp);
-void tclcommand_thermostat_print_usage_dpd(Tcl_Interp *interp, int argc, char **argv);
-#endif
+#include "utils.h"
 
-#ifdef INTER_DPD
-int tclprint_to_result_inter_dpdIA(Tcl_Interp *interp, int i, int j);
-int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** argv);
-int tclcommand_inter_parse_inter_dpd(Tcl_Interp * interp,
+#ifdef MORSE
+
+#include <tcl.h>
+
+int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j);
+int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv);
+int tclcommand_inter_parse_morse(Tcl_Interp * interp,
 		       int part_type_a, int part_type_b,
 		       int argc, char ** argv);
-#endif
 
 #endif
-
+#endif /* MORSE_TCL_H */

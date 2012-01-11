@@ -23,9 +23,6 @@ puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: 
 puts "------------------------------------------------"
 
 set epsilon 3e-2
-thermostat langevin 1.0 1.0
-setmd time_step 0.01
-setmd skin 0.5
 set n_part 100
 set maxstep 100
 set intstep [expr round(50*$maxstep/100)]
@@ -53,6 +50,10 @@ if { [catch {
 	set filename "thermostat.data"
     }
     read_data $filename
+
+    thermostat langevin 1.0 1.0
+    setmd time_step 0.01
+    setmd skin 0.5
 
     set eng0    [analyze energy kin]
     set temp0   [expr $eng0/$n_part/($deg_free/2.)]

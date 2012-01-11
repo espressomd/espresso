@@ -815,12 +815,11 @@ static int tclcommand_analyze_parse_aggregation(Tcl_Interp *interp, int argc, ch
     return TCL_ERROR;
   }
 
-  if ( max_range_non_bonded2 < dist_criteria2) {
-    Tcl_AppendResult(interp, "dist_criteria is larger than max_range_non_bonded.", (char *)NULL);
-    return TCL_ERROR;    
-    
+  if ( max_cut_nonbonded < dist_criteria) {
+    Tcl_AppendResult(interp, "dist_criteria is larger than max_cut_nonbonded.", (char *)NULL);
+    return TCL_ERROR;
   }
-
+          
   if (argc == 4) {
       if (!ARG_IS_I(3,min_contact)) {
 	  Tcl_ResetResult(interp);

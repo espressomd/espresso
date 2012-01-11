@@ -24,11 +24,12 @@ require_feature "ROTATIONAL_INERTIA"
 # mass and inertia tensor are active
 
 set kT 1.5
-#cellsystem nsquare -no_verlet_lists
 set halfkT 0.75
 thermostat langevin $kT 1
+
+# no need to rebuild Verlet lists, avoid it
+setmd skin 1.0
 setmd time_step 0.01
-setmd skin 0
 
 set n 500
 set mass 200
@@ -47,7 +48,7 @@ set oy2 0.
 set oz2 0.
 
 
-set loops 3 
+set loops 3
 puts "Thermalizing..."
 integrate 300
 puts "Measuring..."
