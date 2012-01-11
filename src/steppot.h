@@ -125,9 +125,14 @@ MDINLINE int tclcommand_inter_parse_SmSt(Tcl_Interp * interp,
 MDINLINE void add_SmSt_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				  double d[3], double dist,double dist2, double force[3])
 {
+
+  if(ia_params->SmSt_cut <=0.) 
+   return;
+  if(dist > ia_params->SmSt_cut) 
+   return;
+   
   int j;
   double frac, fracP, fac=0.0,er;
-  if(dist < ia_params->SmSt_cut) {
       frac = ia_params->SmSt_d/dist;
       fracP = pow(frac,ia_params->SmSt_n);
       er=exp(2.*ia_params->SmSt_k0*(dist-ia_params->SmSt_sig));
@@ -136,23 +141,25 @@ MDINLINE void add_SmSt_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_
       for(j=0;j<3;j++)
 	force[j] += fac * d[j];
     
-  }
+  
 }
 
 /** calculate smooth step potential energy between particle p1 and p2. */
 MDINLINE double SmSt_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				 double d[3], double dist,double dist2)
 {
+  if(ia_params->SmSt_cut <=0.) 
+   return 0;
+  if(dist > ia_params->SmSt_cut) 
+  return 0;
+
   double frac, fracP, er;
  
-  if(dist < ia_params->SmSt_cut) {
       frac = ia_params->SmSt_d/dist;
       fracP = pow(frac,ia_params->SmSt_n);
       er=exp(2.*ia_params->SmSt_k0*(dist-ia_params->SmSt_sig));
   
       return fracP+ia_params->SmSt_eps/(1.0+er);
-    }
-  return 0.0;
 }
 
 #endif /* ifdef SMOOTH_STEP */
