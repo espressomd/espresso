@@ -51,14 +51,23 @@ set maxf 0
 set maxe 0
 set maxk 0
 
-
 if { [catch {
     inter coulomb $bjerrum dh 0 $maxr
     part 0 pos 0.0 0.0 0.0 type 1 q $q1 fix
     part 1 pos $x2 0.0 0.0 type 1 q $q2 v $v2 0.0 0.0
 
     for {set i 0} {$i<$maxstep} {incr i} {
-	integrate 10
+	integrate 0
+	puts $i
+	puts [setmd time]
+	puts [part 0 pr pos v f]
+	puts [part 1 pr pos v f]
+	puts [analyze energy]
+
+	puts [setmd max_cut_nonbonded]
+	puts [setmd max_cut]
+
+	integrate 1
 
 	set pos [part 1 print pos]; set x [lindex $pos 0]; set y [lindex $pos 1]; set z [lindex $pos 2]
 	if { [expr abs($y)] > $epsilon || [expr abs($z)] > $epsilon } {

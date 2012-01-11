@@ -37,12 +37,15 @@
  *  \ref forces.c
  */
 
-#include <math.h>
-#include "ljangle.h"
-#include "interaction_data.h"
-#include "parser.h"
+#include "utils.h"
 
 #ifdef LJ_ANGLE
+#include "ljangle.h"
+#include <math.h>
+#include "interaction_data.h"
+#include "parser.h"
+#include "communication.h"
+
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 {
   char buffer[TCL_DOUBLE_SPACE];

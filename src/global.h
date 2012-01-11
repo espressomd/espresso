@@ -158,8 +158,8 @@ extern const Datafield fields[];
 #define FIELD_TIMINGSAMP          33
 /** index of \ref transfer_rate  in \ref #fields */
 #define FIELD_TRANSFERRATE        34
-/** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG          35
+/** index of \ref max_cut_nonbonded in \ref #fields */
+#define FIELD_MCUT_NONBONDED      35
 /** index of \ref verlet_reuse in  \ref #fields */
 #define FIELD_VERLETREUSE         36
 /** index of \ref lattice_switch in \ref #fields */
@@ -167,13 +167,15 @@ extern const Datafield fields[];
 /** index of \ref dpd_tgamma in \ref #fields */
 #define FIELD_DPD_TGAMMA          38
 /** index of \ref dpd_tr_cut in \ref #fields */
-#define FIELD_DPD_TRCUT          39
+#define FIELD_DPD_TRCUT           39
 /** index of \ref dpd_twf in \ref #fields */
-#define FIELD_DPD_TWF          40
+#define FIELD_DPD_TWF             40
 /** index of \ref dpd_wf in \ref #fields */
-#define FIELD_DPD_WF           41
+#define FIELD_DPD_WF              41
 /** index of address variable in \ref #fields */
-#define FIELD_ADRESS           42
+#define FIELD_ADRESS              42
+/** index of \ref max_cut_bonded in \ref #fields */
+#define FIELD_MCUT_BONDED         43
 /*@}*/
 
 #endif

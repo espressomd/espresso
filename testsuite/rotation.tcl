@@ -29,8 +29,6 @@ set epsilon 5e-4
 thermostat off
 
 setmd time_step 0.001
-setmd skin 0.5
-
 proc read_data {file} {
     set f [open $file "r"]
     while {![eof $f]} { blockfile $f read auto}
@@ -39,6 +37,8 @@ proc read_data {file} {
 
 if { [catch {
     read_data "gb_system.data"
+
+    setmd skin 0.5
 
     # to ensure force recalculation
     invalidate_system
