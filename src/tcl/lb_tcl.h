@@ -27,11 +27,17 @@
 #ifndef _LB_TCL_H
 #define _LB_TCL_H
 
+#include "utils.h"
 #include <tcl.h>
 //#include "utils.h"
 //#include "lattice.h"
 
+/** Parser for the TCL command lbfluid. */
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** Parser for the lbnode command. */
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 
 

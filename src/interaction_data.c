@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -994,38 +994,6 @@ int dipolar_set_Dbjerrum(double bjerrum)
 
 
 #endif   /* ifdef  DIPOLES */
-
-
-
-
-/********************************************************************************/
-/*                                       printing                               */
-/********************************************************************************/
-
-
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-/* TODO: This function is not used anywhere. To be removed?  */
-int tf_print(Tcl_Interp * interp, int part_type)
-{
-  TF_parameters *data;
-  Tcl_ResetResult(interp);
-    
-    make_particle_type_exist(part_type);
-    
-    data = get_tf_param(part_type);
-    
-    return tclprint_to_result_TF(interp, part_type);
-}
-/* #endif */
-#endif
-
-
-
-/********************************************************************************/
-/*                                       parsing                                */
-/********************************************************************************/
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type)

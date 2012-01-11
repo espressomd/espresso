@@ -120,7 +120,7 @@ libEspresso_a_SOURCES = \
 	overlap.h \
 	ljangle.c ljangle.h \
 	adresso.c adresso.h \
-	tunable_slip.h \
+	tunable_slip.c tunable_slip.h \
 	tuning.c tuning.h \
 	utils.c utils.h \
 	uwerr.c	uwerr.h \
@@ -157,6 +157,7 @@ libEspresso_a_SOURCES += \
 	tcl/ljgen_tcl.c tcl/ljgen_tcl.h \
 	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
 	tcl/maggs_tcl.c tcl/maggs_tcl.h \
+	tcl/metadynamics_tcl.c tcl/metadynamics_tcl.h \
 	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
 	tcl/mmm2d_tcl.c tcl/mmm2d_tcl.h \
 	tcl/morse_tcl.c tcl/morse_tcl.h \
