@@ -30,6 +30,7 @@
 #include "lb.h"
 #include "lbgpu.h"
 #include "interaction_data.h"
+#include "communication.h"
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 

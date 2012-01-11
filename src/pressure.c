@@ -100,7 +100,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
-    layered_calculate_virials();
+    layered_calculate_virials(v_comp);
     break;
   case CELL_STRUCTURE_DOMDEC:
     if(dd.use_vList) {
@@ -112,7 +112,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
       calculate_link_cell_virials(v_comp);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_virials();
+    nsq_calculate_virials(v_comp);
   }
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
