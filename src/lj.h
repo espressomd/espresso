@@ -35,8 +35,6 @@
 #include "interaction_data.h"
 #include "mol_cut.h"
 
-int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j);
-
 /** set the force cap for the LJ interaction.
     @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
     for each of the interactions.
@@ -47,14 +45,6 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double cut,
 				      double shift, double offset,
 				      double cap_radius, double min);
-
-/// parser for the forcecap
-int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv);
-
-int tclcommand_inter_parse_lj(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
-
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 MDINLINE void add_lj_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
