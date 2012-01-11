@@ -114,6 +114,7 @@ libEspresso_core_la_SOURCES = \
 	virtual_sites_com.c virtual_sites_com.h \
 	virtual_sites_relative.c virtual_sites_relative.h \
 	metadynamics.c metadynamics.h \
+	tcl_interface/metadynamics_tcl.c tcl_interface/metadynamics_tcl.h \
         npt.h \
 	lb.c lb.h \
 	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \

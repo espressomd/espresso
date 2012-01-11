@@ -35,6 +35,7 @@
 #include "reaction_field.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
+#include "mmm2d_tcl.h"
 #include "maggs.h"
 #include "elc.h"
 #include "lj.h"
