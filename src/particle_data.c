@@ -1296,6 +1296,18 @@ void recv_particles(ParticleList *particles, int node)
     realloc_intlist(&local_dyn, 0);
 }
 
+void add_partner(IntList *il, int i, int j, int distance)
+{
+    int k;
+    if (j == i) return;
+    for (k = 0; k < il->n; k += 2)
+        if (il->e[k] == j)
+            return;
+    realloc_intlist(il, il->n + 2);
+    il->e[il->n++] = j;
+    il->e[il->n++] = distance;
+}
+
 #ifdef EXCLUSIONS
 
 int change_exclusion(int part1, int part2, int delete)
@@ -1317,18 +1329,6 @@ int change_exclusion(int part1, int part2, int delete)
 void remove_all_exclusions()
 {
   mpi_send_exclusion(-1, -1, 1);
-}
-
-void add_partner(IntList *il, int i, int j, int distance)
-{
-    int k;
-    if (j == i) return;
-    for (k = 0; k < il->n; k += 2)
-        if (il->e[k] == j)
-            return;
-    realloc_intlist(il, il->n + 2);
-    il->e[il->n++] = j;
-    il->e[il->n++] = distance;
 }
 
 

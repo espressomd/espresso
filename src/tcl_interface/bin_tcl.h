@@ -20,7 +20,6 @@
 #ifndef BIN_TCL_H
 #define BIN_TCL_H
 
-#include "utils.h"
 #include <tcl.h>
 
 /** Implementation of the tcl command bin, which can be used

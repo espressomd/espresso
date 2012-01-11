@@ -17,8 +17,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#include "bin.h"
 #include "bin_tcl.h"
 #include "parser.h"
+#include "utils.h"
 
 int tclcommand_bin(ClientData cdata, Tcl_Interp *interp,
 	int argc, char **argv)

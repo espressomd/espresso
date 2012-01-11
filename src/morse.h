@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef MORSE_H
-#define MORSE_H
+#ifndef _MORSE_H
+#define _MORSE_H
 
 /** \file morse.h
  *  Routines to calculate the lennard jones energy and/or  force 
@@ -26,25 +26,14 @@
  *  \ref forces.c
 */
 
+#include "utils.h"
+
 #ifdef MORSE
-MDINLINE int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
 
-  Tcl_PrintDouble(interp, data->MORSE_eps, buffer);
-  Tcl_AppendResult(interp, "morse ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->MORSE_alpha, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->MORSE_rmin, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->MORSE_cut, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->MORSE_capradius, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+#include "tcl_interface/morse_tcl.h"
+#include "interaction_data.h"
+#include "communication.h"
 
-  return TCL_OK;
-}
 /** set the force cap for the Morse interaction.
     @param morseforcecap the maximal force, 0 to disable, -1 for individual cutoff
     for each of the interactions.
@@ -60,8 +49,8 @@ MDINLINE int morseforcecap_set_params(double morseforcecap)
 
 
 MDINLINE int morse_set_params(int part_type_a, int part_type_b,
-				      double eps, double alpha, 
-                                      double rmin, double cut, double cap_radius)
+				      double eps, double alpha,
+              double rmin, double cut, double cap_radius)
 {
   double add1, add2;
   IA_parameters *data, *data_sym;
@@ -101,84 +90,6 @@ MDINLINE int morse_set_params(int part_type_a, int part_type_b,
 
   return TCL_OK;
 }
-
-/// parser for the forcecap
-MDINLINE int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-  if (argc == 0) {
-    if (morse_force_cap == -1.0)
-      Tcl_AppendResult(interp, "morseforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, morse_force_cap, buffer);
-      Tcl_AppendResult(interp, "morseforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
-  }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter morseforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual"))
-      morse_force_cap = -1.0;
-  else if (! ARG0_IS_D(morse_force_cap) || morse_force_cap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(morseforcecap_set_params(morse_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR;
-}
-
-MDINLINE int tclcommand_inter_parse_morse(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv)
-{
-  /* parameters needed for MORSE */
-  double eps, alpha, rmin, cut, cap_radius;
-  int change;
-
-  /* get morse interaction type */
-  if (argc < 5) {
-    Tcl_AppendResult(interp, "morse needs 4 parameters: "
-		     "<morse_eps> <morse_alpha> <morse_rmin> <morse_cut>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy morse parameters */
-  if ((! ARG_IS_D(1, eps))   ||
-      (! ARG_IS_D(2, alpha))   ||
-      (! ARG_IS_D(3, rmin))   ||
-      (! ARG_IS_D(4, cut)   )) {
-    Tcl_AppendResult(interp, "morse needs 4 DOUBLE parameters: "
-		     "<morse_eps> <morse_alpha> <morse_rmin> <morse_cut>",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  change = 5;
-	
-  cap_radius = -1.0;
-  /* check wether there is an additional double, cap radius, and parse in */
-  if (argc >= 6 && ARG_IS_D(5, cap_radius))
-    change++;
-  else
-    Tcl_ResetResult(interp);
-  if (morse_set_params(part_type_a, part_type_b,
-			       eps, alpha, rmin, cut, cap_radius) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-  return change;
-}
-
 
 /** Calculate Morse force between particle p1 and p2 */
 MDINLINE void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -317,4 +228,4 @@ MDINLINE void calc_morse_cap_radii(double force_cap)
 }
 
 #endif /* ifdef MORSE */
-#endif
+#endif /* ifdef _MORSE_H */

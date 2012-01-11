@@ -29,6 +29,7 @@ libEspresso_core_la_SOURCES = \
 	communication.c communication.h \
 	tcl_interface/binary_file_tcl.c tcl_interface/binary_file_tcl.h \
 	interaction_data.c interaction_data.h\
+	tcl_interface/interaction_data_tcl.c tcl_interface/interaction_data_tcl.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
 	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
@@ -141,12 +142,17 @@ libEspresso_core_la_SOURCES = \
 	hertzian.h \
 	imd.h \
 	ljcos2.c ljcos2.h \
+	tcl_interface/ljcos2_tcl.c tcl_interface/ljcos2_tcl.h \
 	ljcos.c ljcos.h \
+	tcl_interface/ljcos_tcl.c tcl_interface/ljcos_tcl.h \
 	lj.c lj.h \
+	tcl_interface/lj_tcl.c tcl_interface/lj_tcl.h \
 	ljgen.c ljgen.h \
+	tcl_interface/ljgen_tcl.c tcl_interface/ljgen_tcl.h \
 	steppot.h \
 	bmhtf-nacl.h \
 	morse.h \
+	tcl_interface/morse_tcl.c tcl_interface/morse_tcl.h \
 	polynom.h \
 	soft_sphere.h \
 	subt_lj.h \
@@ -154,10 +160,12 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/tab_tcl.c tcl_interface/tab_tcl.h \
 	overlap.h \
 	ljangle.c ljangle.h \
+	tcl_interface/ljangle_tcl.c tcl_interface/ljangle_tcl.h \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
 	tcl_interface/cuda_init_tcl.h \
+	tclinterface/initialize_interpreter.h tcl_interface/initialize_interpreter.c \
 	myconfig-final.h
 
 
