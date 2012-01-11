@@ -69,6 +69,7 @@
 #include "errorhandling.h"
 #include "rattle.h"
 #include "bin.h"
+#include "tcl_interface/bin_tcl.h"
 #include "lattice.h"
 #include "iccp3m.h" /* -iccp3m- */
 #include "tcl_interface/iccp3m_tcl.h" 

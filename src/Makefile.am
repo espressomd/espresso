@@ -115,6 +115,7 @@ libEspresso_core_la_SOURCES = \
 	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
+	tcl_interface/bin_tcl.c tcl_interface/bin_tcl.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
