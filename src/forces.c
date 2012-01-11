@@ -264,12 +264,23 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->p.adress_weight=new_weight;
   }
 #endif
-  if ( thermo_switch & THERMO_LANGEVIN )
+  if ( thermo_switch & THERMO_LANGEVIN ){
     friction_thermo_langevin(part);
+    #ifdef KEEP_RANDOM
+    part->l.f_rand[0] = part->f.f[0];    
+    part->l.f_rand[1] = part->f.f[1];
+    part->l.f_rand[2] = part->f.f[2];
+    #endif
+  }
   else {
     part->f.f[0] = 0;
     part->f.f[1] = 0;
     part->f.f[2] = 0;
+    #ifdef KEEP_KPART
+    part->l.f_k[0] = 0;
+    part->l.f_k[1] = 0;
+    part->l.f_k[2] = 0;
+    #endif
   }
 
 #ifdef EXTERNAL_FORCES   
@@ -287,6 +298,11 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->f.torque[0] = 0;
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
+    #ifdef KEEP_KPART
+    part->l.torque_k[0] = 0;
+    part->l.torque_k[1] = 0;
+    part->l.torque_k[2] = 0;
+    #endif
     
     /* and rescale quaternion, so it is exactly of unit length */	
     scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +

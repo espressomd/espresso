@@ -137,7 +137,7 @@ typedef struct {
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
-  double p_old[3];
+  double p _old[3];
 #endif
 
 } ParticlePosition;
@@ -194,6 +194,20 @@ typedef struct {
   /** check whether a particle is a ghost or not */
   int ghost;
 #endif
+
+#ifdef KEEP_RANDOM
+  double f_rand[3];
+#endif
+
+#ifdef KEEP_KPART
+  // longrange part of the force
+  double f_k[3];
+#ifdef ROTATION
+  // longrange part of the torques
+  double torque_k[3];
+#endif
+#endif
+
 } ParticleLocal;
 
 #ifdef LB

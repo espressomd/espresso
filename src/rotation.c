@@ -63,8 +63,7 @@ static double I[3] = { 1, 1, 1};
 /************************************************************/
 /*@{*/
 
-/** define rotation matrix A for a given particle */
-static void define_rotation_matrix(Particle *p, double A[9]);
+
 
 /** define first and second time derivatives of a quaternion, as well
     as the angular acceleration. */
