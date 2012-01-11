@@ -26,5 +26,7 @@
 /** Implementation of the tcl command bin, which can be used
     to bin data into arbitrary bins
 */
+void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
+void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins);
 
 #endif
