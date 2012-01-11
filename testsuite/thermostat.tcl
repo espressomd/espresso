@@ -22,10 +22,16 @@ puts "------------------------------------------------"
 puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 
-set epsilon 3e-2
-set n_part 100
+# we expect to stay in this confidence interval (times stddeviation)
+# 2.5 gives a chance of about 1 % of failure
+set confidence 2.5
 set maxstep 100
-set intstep [expr round(50*$maxstep/100)]
+set intstep 100
+
+# for checkin unwanted energy contributions
+set epsilon 1e-5
+
+set tcl_precision 5
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -49,17 +55,44 @@ if { [catch {
 	set deg_free 3
 	set filename "thermostat.data"
     }
+
     read_data $filename
+
+    # generate some particles
+    #for {set i 0} {$i < 1} {incr i} {
+    # part $i pos 0 0 0
+    #}
+
+    set n_part [setmd n_part]
+
+    # make real random draw
+    set cmd "t_random seed"
+    for {set i 0} {$i < [setmd n_nodes]} { incr i } {
+	lappend cmd [expr [pid] + $i] }
+    eval $cmd
 
     thermostat langevin 1.0 1.0
     setmd time_step 0.01
     setmd skin 0.5
 
+    # make sure to give the thermostat a chance to heat up
+    integrate 1000
+
+    # checking kinetic energy
     set eng0    [analyze energy kin]
     set temp0   [expr $eng0/$n_part/($deg_free/2.)]
     set curtemp1 0
+    set curtemp2 0
 
-    for {set i 0} { $i < 100} { incr i } {
+    # checking Maxwell distribution
+    # 1, 2, and 4th moment of a single particles velocity
+    for {set c 0} {$c < 3} {incr c} {
+	set curvel1($c)  0
+	set curvel2($c)  0
+	set curvel4($c)  0
+    }
+
+    for {set i 0} { $i < $maxstep} { incr i } {
 	integrate $intstep
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
@@ -69,16 +102,41 @@ if { [catch {
 	    error "system has unwanted energy contributions"
 	}
 	set curtemp1 [expr $curtemp1 + $curtemp]
+	set curtemp2 [expr $curtemp2 + $curtemp*$curtemp]
+
+	for {set p 0} {$p < [setmd n_part]} {incr p} {
+	    set v [part $p pr v]
+	    for {set c 0} {$c < 3} {incr c} {
+		set vx [lindex $v $c]
+		set curvel1($c) [expr $curvel1($c) + $vx]
+		set curvel2($c) [expr $curvel2($c) + $vx**2]
+		set curvel4($c) [expr $curvel4($c) + $vx**4]
+	    }
+	}
     }
-    set curtemp1 [expr $curtemp1/$maxstep]
+    
+    for {set c 0} {$c < 3} {incr c} {
+	set vel1 [expr $curvel1($c)/$maxstep/$n_part]
+	set vel2 [expr $curvel2($c)/$maxstep/$n_part]
+	set vel4 [expr $curvel4($c)/$maxstep/$n_part]
+	puts "for the ${c}th coordinate, the 1,2 and 4th velocity moments are $vel1, $vel2 and $vel4"
+    }
+
+    set mean [expr $curtemp1/$maxstep]
+    set stddev [expr sqrt($curtemp2/$maxstep - $mean*$mean)]
+
     # here you can create a new snapshot
     # write_data $filename
 
-
-    set rel_temp_error [expr abs(( [setmd temp] - $curtemp1)/$curtemp1)]
+    set rel_temp_error [expr abs(([setmd temp] - $mean)/[setmd temp])]
     puts "thermostat temperature:          [setmd temp]"
-    puts "measured temperature:            $curtemp1"
-    puts "relative temperature deviations: $rel_temp_error"
+    puts "measured temperature:            $mean"
+    puts "fluctuations per DOF:            [expr $stddev*sqrt($n_part*$deg_free)]"
+    puts "relative temperature deviation:  $rel_temp_error"
+
+    set epsilon [expr $confidence*sqrt(2)/sqrt($n_part*$deg_free*$maxstep)]
+    puts "expected interval of deviation:  $epsilon"
+
     if { $rel_temp_error > $epsilon } {
 	error "relative temperature error too large"
     }
