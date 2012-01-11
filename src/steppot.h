@@ -125,6 +125,9 @@ MDINLINE int tclcommand_inter_parse_SmSt(Tcl_Interp * interp,
 MDINLINE void add_SmSt_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				  double d[3], double dist,double dist2, double force[3])
 {
+  if(ia_params->SmSt_cut <=0.) 
+   return;
+
   if(dist > ia_params->SmSt_cut) 
    return;
    
