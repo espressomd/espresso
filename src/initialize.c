@@ -85,7 +85,7 @@
 #include "lb-boundaries.h"
 
 #ifdef CUDA
-#include "cuda_init.h"
+#include "tcl_interface/cuda_init_tcl.h"
 #include "lbgpu.h"
 //#include "lb_boundaries_gpu.h"
 #endif
