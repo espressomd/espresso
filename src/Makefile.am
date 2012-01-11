@@ -73,6 +73,7 @@ libEspresso_core_la_SOURCES = \
 	p3m-dipolar.c p3m-dipolar.h \
 	tcl_interface/p3m-dipolar_tcl.c tcl_interface/p3m-dipolar_tcl.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
+	tcl_interface/magnetic_non_p3m_methods_tcl.c tcl_interface/magnetic_non_p3m_methods_tcl.h \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
