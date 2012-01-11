@@ -17,8 +17,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BIN_H
-#define BIN_H
+#ifndef BIN_TCL_H
+#define BIN_TCL_H
 
 #include "utils.h"
 #include <tcl.h>
@@ -26,5 +26,7 @@
 /** Implementation of the tcl command bin, which can be used
     to bin data into arbitrary bins
 */
+int tclcommand_bin(ClientData data, Tcl_Interp *interp,
+	int argc, char **argv);
 
 #endif
