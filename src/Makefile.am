@@ -70,7 +70,6 @@ libEspresso_a_SOURCES = \
 	layered.c layered.h \
 	lb.c lb.h \
 	lb-boundaries.c lb-boundaries.h \
-	lb_boundaries_gpu.h \
 	lb-d3q18.h lb-d3q19.h \
 	lbgpu_cfile.c \
 	lj.c lj.h \
@@ -215,8 +214,6 @@ myconfig-final.h: FORCE
 
 BUILT_SOURCES = myconfig-final.h
 
-CLEANFILES = myconfig-final.h
-
 #################################################################
 # Handling of the MPI fake implementation
 #################################################################
@@ -234,10 +231,11 @@ SUFFIXES=.cu
 .cu.o:
 	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
 
-CUDA_SOURCES= \
-	cuda_init.cu \
-	cuda_init.h \
+CUDA_SOURCES = \
+	cuda_init.cu cuda_init.h \
+	tcl/cuda_init_tcl.cu tcl/cuda_init_tcl.h \
 	lbgpu.cu lbgpu.h
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
+EXTRA_DIST = $(CUDA_SOURCES)
 endif
