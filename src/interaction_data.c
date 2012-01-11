@@ -45,6 +45,7 @@
 #include "hertzian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
+#include "tcl_interface/tab_tcl.h"
 #include "tab.h"
 #include "overlap.h"
 #include "ljcos.h"

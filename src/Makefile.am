@@ -151,12 +151,13 @@ libEspresso_core_la_SOURCES = \
 	soft_sphere.h \
 	subt_lj.h \
 	tab.h \
+	tcl_interface/tab_tcl.c tcl_interface/tab_tcl.h \
 	overlap.h \
 	ljangle.c ljangle.h \
 	adresso.c adresso.h \
 	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
 	tunable_slip.h \
-	tcl_interface/cuda_init_tcl.h
+	tcl_interface/cuda_init_tcl.h \
 	myconfig-final.h
 
 
