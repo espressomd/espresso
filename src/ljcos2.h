@@ -29,6 +29,10 @@
 
 #ifdef LJCOS2
 #include <math.h>
+
+/* These headers are needed to define types used in this header, hence
+ * they are included here.  */
+#include "particle_data.h"
 #include "interaction_data.h"
 
 int tclprint_to_result_ljcos2IA(Tcl_Interp *interp, int i, int j);

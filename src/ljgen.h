@@ -30,6 +30,8 @@
  *  \ref forces.c
 */
 
+#ifdef LENNARD_JONES_GENERIC
+
 /* These headers are needed to define types used in this header, hence
  * they are included here.  */
 #include "particle_data.h"
@@ -136,6 +138,8 @@ MDINLINE double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 
 /** calculate lj_capradius from lj_force_cap */
 void calc_ljgen_cap_radii(double force_cap);
+
+#endif
 
 /* LJGEN_H */
 #endif 

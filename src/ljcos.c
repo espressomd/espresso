@@ -18,11 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+
 #include "utils.h"
-#include "ljcos.h"
-#include "parser.h"
 
 #ifdef LJCOS
+#include "ljcos.h"
+#include "parser.h"
+#include "communication.h"
 
 int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,

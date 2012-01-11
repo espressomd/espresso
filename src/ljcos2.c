@@ -25,12 +25,14 @@
  *  \ref forces.c
 */
 
-#include <math.h>
 #include "utils.h"
-#include "ljcos2.h"
-#include "parser.h"
 
 #ifdef LJCOS2
+#include <math.h>
+
+#include "ljcos2.h"
+#include "parser.h"
+#include "communication.h"
 
 int tclprint_to_result_ljcos2IA(Tcl_Interp *interp, int i, int j)
 {
