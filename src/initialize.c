@@ -84,6 +84,7 @@
 #include "tcl_interface/iccp3m_tcl.h"
 #include "tcl_interface/polymer_tcl.h"
 #include "tcl_interface/lb-boundaries_tcl.h"
+#include "tcl_interface/metadynamics_tcl.h"
 #include "lb-boundaries.h"
 #include "tcl_interface/initialize_interpreter.h"
 

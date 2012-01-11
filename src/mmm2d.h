@@ -33,6 +33,18 @@
 
 #ifdef ELECTROSTATICS
 
+/** error messages, see above */
+static char *mmm2d_errors[] = {
+   "ok",
+   "Layer height too large for MMM2D near formula, increase n_layers",
+   "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
+   "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
+   "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
+   "Far cutoff too large, decrease the error bound",
+   "Layer height too small for MMM2D far formula, decrease n_layers or skin",
+   "IC requires layered cellsystem with more than 3 layers",
+};
+
 /** parameters for the MMM2D method for electrostatics. */
 typedef struct {
   /** maximal error of a pairwise interaction. Used at least by the
@@ -50,12 +62,6 @@ typedef struct {
   double delta_mid_top, delta_mid_bot, delta_mult;
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
-
-/// print the mmm2d parameters to the interpreters result
-int tclprint_to_result_MMM2D(Tcl_Interp *interp);
-
-/// parse the mmm2d parameters
-int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
 
 /** set parameters for MMM2D. This assumes that the particles do NOT leave the box.
     For the near formula (nsquared cell structure), precision might be lost, while
