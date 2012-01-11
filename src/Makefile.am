@@ -142,10 +142,17 @@ libEspresso_a_SOURCES += \
 	tcl/grid_tcl.c tcl/grid_tcl.h \
 	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \
 	tcl/imd_tcl.c tcl/imd_tcl.h \
+	tcl/initialize_interpreter.h tcl/initialize_interpreter.c \
 	tcl/integrate_tcl.c tcl/integrate_tcl.h \
 	tcl/interaction_data_tcl.c tcl/interaction_data_tcl.h \
 	tcl/lb-boundaries_tcl.c tcl/lb-boundaries_tcl.h \
 	tcl/lb_tcl.c tcl/lb_tcl.h \
+	tcl/lj_tcl.c tcl/lj_tcl.h \
+	tcl/ljangle_tcl.c tcl/ljangle_tcl.h \
+	tcl/ljcos2_tcl.c tcl/ljcos2_tcl.h \
+	tcl/ljcos_tcl.c tcl/ljcos_tcl.h \
+	tcl/lj_tcl.c tcl/lj_tcl.h \
+	tcl/ljgen_tcl.c tcl/ljgen_tcl.h \
 	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
 	tcl/maggs_tcl.c tcl/maggs_tcl.h \
 	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
