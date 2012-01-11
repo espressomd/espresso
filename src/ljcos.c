@@ -20,9 +20,9 @@
 */
 
 #include "utils.h"
+#include "ljcos.h"
 
 #ifdef LJCOS
-#include "ljcos.h"
 #include "parser.h"
 #include "communication.h"
 

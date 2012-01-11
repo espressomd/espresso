@@ -74,8 +74,8 @@ libEspresso_a_SOURCES = \
 	lb-d3q18.h lb-d3q19.h \
 	lbgpu_cfile.c \
 	lj.c lj.h \
-	ljangle.h \
-	ljcos.h \
+	ljangle.c ljangle.h \
+	ljcos.c ljcos.h \
 	ljcos2.c ljcos2.h \
 	ljgen.c ljgen.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
@@ -130,6 +130,7 @@ libEspresso_a_SOURCES = \
 
 libEspresso_a_SOURCES += \
 	tcl/adresso_tcl.c tcl/adresso_tcl.h \
+	tcl/bin_tcl.c tcl/bin_tcl.h \
 	tcl/binary_file_tcl.c tcl/binary_file_tcl.h \
 	tcl/blockfile_tcl.c tcl/blockfile_tcl.h \
 	tcl/cells_tcl.c tcl/cells_tcl.h \
@@ -148,6 +149,7 @@ libEspresso_a_SOURCES += \
 	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
 	tcl/maggs_tcl.c tcl/maggs_tcl.h \
 	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
+	tcl/morse_tcl.c tcl/morse_tcl.h \
 	tcl/nemd_tcl.c tcl/nemd_tcl.h\
 	tcl/p3m-dipolar_tcl.c tcl/p3m-dipolar_tcl.h \
 	tcl/p3m_tcl.c tcl/p3m_tcl.h \
