@@ -162,8 +162,7 @@ cat <<EOF
 ****************************************************************
 EOF
 
-LT_INIT
-AM_PATH_PYTHON
+AC_PROG_RANLIB
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -484,7 +483,7 @@ AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
-	cython/Makefile
+	src/tcl_interface/Makefile
 	tools/Makefile
 	scripts/Makefile 
 	testsuite/Makefile

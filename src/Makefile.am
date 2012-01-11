@@ -17,75 +17,54 @@
 #
 
 # List headers that are not used by the program here
+
+SUBDIRS = . tcl_interface
+
 noinst_HEADERS = \
 	myconfig-default.h
 
 # List the sources of the Espresso binary here
-libEspresso_core_la_SOURCES = \
+libEspresso_a_SOURCES = \
 	config.c config.h \
 	initialize.c initialize.h \
 	global.h \
-	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
 	communication.c communication.h \
-	tcl_interface/binary_file_tcl.c tcl_interface/binary_file_tcl.h \
+	binary_file.c binary_file.h \
 	interaction_data.c interaction_data.h\
 	verlet.c verlet.h \
 	grid.c grid.h \
-	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
 	integrate.c integrate.h \
-	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
-	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
-	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
-	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
-	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
-	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
-	tcl_interface/statistics_cluster_tcl.c tcl_interface/statistics_cluster_tcl.h \
-	tcl_interface/topology_tcl.c tcl_interface/topology_tcl.h \
-	tcl_interface/virtual_sites_com_tcl.c tcl_interface/virtual_sites_com_tcl.h \
 	cells.c cells.h \
-	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
 	ghosts.c ghosts.h \
 	forces.c forces.h \
 	rotation.c rotation.h \
 	debug.c debug.h \
 	particle_data.c	particle_data.h \
 	thermostat.c thermostat.h \
-	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
 	dpd.c dpd.h \
-	tcl_interface/dpd_tcl.c tcl_interface/dpd_tcl.h \
 	statistics.c statistics.h \
-	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
 	statistics_chain.c statistics_chain.h \
-	tcl_interface/statistics_chain_tcl.c tcl_interface/statistics_chain_tcl.h \
 	energy.c energy.h \
 	pressure.c pressure.h \
-	tcl_interface/pressure_tcl.c tcl_interface/pressure_tcl.h \
 	vmdsock.c vmdsock.h \
 	imd.c imd.h \
 	iccp3m.c iccp3m.h \
-	tcl_interface/iccp3m_tcl.c tcl_interface/iccp3m_tcl.h \
 	fft-common.c fft-common.h \
 	fft.c fft.h \
 	fft-dipolar.c fft-dipolar.h \
 	p3m-common.c p3m-common.h \
 	p3m.c p3m.h \
-	tcl_interface/p3m_tcl.c tcl_interface/p3m_tcl.h \
 	p3m-dipolar.c p3m-dipolar.h \
-	tcl_interface/p3m-dipolar_tcl.c tcl_interface/p3m-dipolar_tcl.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	ewald.c ewald.h \
 	random.c random.h \
 	blockfile.c blockfile.h \
-	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
 	polymer.c polymer.h \
-	tcl_interface/polymer_tcl.c tcl_interface/polymer_tcl.h \
 	specfunc.c specfunc.h \
 	tuning.c tuning.h \
 	uwerr.c	uwerr.h \
-	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
 	parser.c parser.h \
 	domain_decomposition.c domain_decomposition.h \
-	tcl_interface/domain_decomposition_tcl.c tcl_interface/domain_decomposition_tcl.h \
 	nsquare.c nsquare.h \
 	layered.c layered.h \
 	mmm-common.c mmm-common.h \
@@ -94,14 +73,12 @@ libEspresso_core_la_SOURCES = \
 	modes.c	modes.h \
 	topology.c topology.h \
 	nemd.c nemd.h \
-	tcl_interface/nemd_tcl.c tcl_interface/nemd_tcl.h \
 	statistics_cluster.c statistics_cluster.h \
 	elc.c elc.h \
 	mdlc_correction.c  mdlc_correction.h \
 	statistics_molecule.c statistics_molecule.h \
 	errorhandling.c	errorhandling.h \
 	constraint.c constraint.h \
-	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
 	maggs.c maggs.h \
 	mol_cut.h \
 	rattle.c rattle.h \
@@ -112,14 +89,13 @@ libEspresso_core_la_SOURCES = \
 	metadynamics.c metadynamics.h \
         npt.h \
 	lb.c lb.h \
-	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
 	lb-d3q18.h lb-d3q19.h \
 	bin.c bin.h \
 	lattice.c lattice.h \
 	halo.c halo.h \
 	statistics_fluid.c statistics_fluid.h \
 	lb-boundaries.c lb-boundaries.h \
-	tcl_interface/lb-boundaries_tcl.c tcl_interface/lb-boundaries_tcl.h \
+	lb_boundaries_gpu.h \
 	lbgpu_cfile.c \
 	utils.c utils.h \
 	angle.h \
@@ -138,7 +114,7 @@ libEspresso_core_la_SOURCES = \
 	hertzian.h \
 	imd.h \
 	ljcos2.c ljcos2.h \
-	ljcos.c ljcos.h \
+	ljcos.h \
 	lj.c lj.h \
 	ljgen.c ljgen.h \
 	steppot.h \
@@ -149,12 +125,12 @@ libEspresso_core_la_SOURCES = \
 	subt_lj.h \
 	tab.h \
 	overlap.h \
-	ljangle.c ljangle.h \
+	ljangle.h \
 	adresso.c adresso.h \
-	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
-	tunable_slip.h \
-	myconfig-final.h
+        tunable_slip.h
 
+# All objects are compiled into the library
+noinst_LIBRARIES = libEspresso.a
 
 #################################################################
 # Build the blockfile library
@@ -162,16 +138,7 @@ libEspresso_core_la_SOURCES = \
 libespressobf_a_SOURCES = blockfile.c blockfile.h
 libespressobf_a_CPPFLAGS = -DBLOCKFILE_STDIO
 
-lib_LIBRARIES = libespressobf.a 
-lib_LTLIBRARIES = libEspresso_core.la libespresso_main.la
-# pyexecdir_LTLIBRARIES = libespresso_main.la
-# All objects are compiled into the library
-# noinst_LTLIBRARIES = libEspresso.la
-
-libespresso_main_la_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-libespresso_main_la_SOURCES = scriptsdir.c errexit.c dummy.c
-libespresso_main_la_LIBADD = libEspresso_core.la
-libEspresso_core_la_LIBADD = 
+lib_LIBRARIES = libespressobf.a
 
 #################################################################
 # Handling of myconfig.h
@@ -200,7 +167,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-BUILT_SOURCES = myconfig-final.h
+$(libEspresso_a_OBJECTS): myconfig-final.h
 
 CLEANFILES = myconfig-final.h
 
@@ -208,7 +175,7 @@ CLEANFILES = myconfig-final.h
 # Handling of the MPI fake implementation
 #################################################################
 if MPI_FAKE
-libEspresso_core_la_SOURCES += mpifake/mpi.h mpifake/mpi.c
+libEspresso_a_SOURCES += mpifake/mpi.h mpifake/mpi.c
 # mpifake should come before any system includes
 AM_CPPFLAGS = -I$(srcdir)/mpifake
 endif
@@ -219,19 +186,12 @@ endif
 if CUDA
 SUFFIXES=.cu
 .cu.o:
-	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $< 
-
-#.cu.lo:
-#	$(LIBTOOL) --tag=CC --mode=compile $(NVCC) -c "-Xcompiler -fPIC $(NVCC_FLAGS)" -o $@ $^ 
+	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
 
 CUDA_SOURCES= \
 	cuda_init.cu \
 	cuda_init.h \
 	lbgpu.cu lbgpu.h
 
-CUDA_OBJECTS= \
-	cuda_init.o \
-	lbgpu.o 
-
-libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o 
+libEspresso_a_SOURCES += $(CUDA_SOURCES)
 endif
