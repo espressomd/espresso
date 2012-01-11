@@ -1,0 +1,9 @@
+# Collect the result from test-features
+
+for f in `cat featurelist`
+do
+ echo -n "$f	"
+ head -n1 $f.time
+done
+
+
