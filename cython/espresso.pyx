@@ -8,6 +8,7 @@ import global_variables
 from integrate import integrate
 import thermostat
 cimport thermostat
+from changeVolume import changeVolume
 
 import debye_hueckel
 #cimport myconfig
