@@ -492,16 +492,8 @@ int maggs_sanity_checks()
     @param f_mass    \f$1/c^2\f$ to set
     @param mesh      Mesh size in 1D of the system
 */
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh)
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh)
 {
-  if (f_mass <=0.) {
-    Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
-    return TCL_ERROR;
-  } 
-  if(mesh<0) {
-    Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
-    return TCL_ERROR;
-  }
 	
   maggs.mesh           = mesh; 
   maggs.bjerrum        = bjerrum;
