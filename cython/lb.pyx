@@ -4,6 +4,8 @@ cimport lb
 
 cdef extern from "../myconfig.h":
   pass
+cdef extern from "../src/lattice.h":
+  int lattice_switch
 #don t work within header lb.pxd
 cdef extern from "../src/lb.h":
   int lb_lbfluid_set_tau(double _tau)
@@ -15,14 +17,18 @@ cdef extern from "../src/lb.h":
   int lb_lbfluid_get_agrid(double* _p_agrid)
   int lb_lbfluid_set_friction(double _friction)
   int lb_lbfluid_get_friction(double* _p_friction)
-  void python_lb_init(char* _dev)
+  #void python_lb_init(char* _dev)
 
 cdef class LBparaHandle:
   
   def __init__(self, _dev):
     #pass
   #def __getitem__(self, _dev):
-    python_lb_init(_dev)
+   # python_lb_init(_dev)
+    cdef int _lattice_switch
+    cdef int _LATTICE_LB=1
+    cdef int _LATTICE_LB_GPU=2
+    #if(!(lattice_switch & LATTICE_LB_GPU)) lattice_switch = lattice_switch | LATTICE_LB;
 
   property tau:
     def __set__(self, double _tau):

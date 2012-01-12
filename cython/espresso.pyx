@@ -5,7 +5,7 @@ cimport particle_data
 import interaction_data
 cimport interaction_data
 import global_variables
-
+import lb
 import debye_hueckel
 #cimport myconfig
 #import utils
