@@ -27,7 +27,6 @@
 #include "thermostat.h"
 #include "lb_tcl.h"
 #include "lb.h"
-#include "lbgpu.h"
 
 #if defined (LB) || defined (LB_GPU)
 /* ********************* TCL Interface part *************************************/
@@ -64,7 +63,9 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 
   int err = TCL_OK;
   double floatarg;
+#ifdef EXTERNAL_FORCES
   double vectarg[3];
+#endif
 
   if (argc < 1) {
     lbfluid_tcl_print_usage(interp);
@@ -201,7 +202,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
         }
       }
       else if (ARG0_IS_S("ext_force")) {
-      #ifdef EXTERNAL_FORCES
+#ifdef EXTERNAL_FORCES
         if ( argc < 4 || !ARG_IS_D(1, vectarg[0]) || !ARG_IS_D(2, vectarg[1]) ||  !ARG_IS_D(3, vectarg[2]) ) {
 	        Tcl_AppendResult(interp, "friction requires 1 argument", (char *)NULL);
           return TCL_ERROR;

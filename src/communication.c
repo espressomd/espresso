@@ -42,7 +42,6 @@
 #include "lj.h"
 #include "lb.h"
 #include "lb-boundaries.h"
-#include "lbgpu.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"

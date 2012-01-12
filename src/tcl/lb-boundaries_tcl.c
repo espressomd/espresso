@@ -27,7 +27,6 @@
 #include "constraint.h"
 #include "lb-boundaries_tcl.h"
 #include "lb.h"
-#include "lbgpu.h"
 #include "interaction_data.h"
 #include "lb-boundaries.h"
 #include "communication.h"
@@ -737,23 +736,11 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
-//int tclcommand_lbboundary(Tcl_Interp *interp, int argc, char **argv);
-//int tclcommand_lbboundary_gpu(Tcl_Interp *interp, int argc, char **argv);
-
-//int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-
-  //if (lattice_switch & LATTICE_LB_GPU)
-    //  return tclcommand_lbboundary_gpu(interp, argc, argv);
-  //else
-      //return tclcommand_lbboundary(interp, argc, argv);
-//}
 
 int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
-  int status, c_num;
-  double force[3];
-  char buffer[3*TCL_DOUBLE_SPACE+3];
+  int status = TCL_ERROR, c_num;
 
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);
@@ -795,45 +782,52 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   }
   else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
     if(argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
-	    Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
-	    return (TCL_ERROR);
+      Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
+      return (TCL_ERROR);
     }
     
     if(c_num < 0 || c_num >= n_lb_boundaries) {
-	    Tcl_AppendResult(interp, "Error in lbboundary force: The selected boundary does not exist",(char *) NULL);
-	    return (TCL_ERROR);
+      Tcl_AppendResult(interp, "Error in lbboundary force: The selected boundary does not exist",(char *) NULL);
+      return (TCL_ERROR);
     }
-    else {
-      status = lbboundary_get_force(c_num, force);
-      
-      for (int i = 0; i < 3; i++) {
-        Tcl_PrintDouble(interp, force[i], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      }
-      
-      return TCL_OK;
+
+    if (lattice_switch & LATTICE_LB_GPU) {
+      Tcl_AppendResult(interp, "Error in lbboundary force: cannot read out forces from the GPU code" ,(char *) NULL);
+      return (TCL_ERROR);	
     }
+
+#ifdef LB
+    char buffer[3*TCL_DOUBLE_SPACE+3];
+    double force[3];
+
+    status = lbboundary_get_force(c_num, force);
+      
+    for (int i = 0; i < 3; i++) {
+      Tcl_PrintDouble(interp, force[i], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    }
+#endif
   }
   else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
     if(argc < 3) {
       /* delete all */
-    if (lattice_switch & LATTICE_LB_GPU) {
+      if (lattice_switch & LATTICE_LB_GPU) {
         Tcl_AppendResult(interp, "Cannot delete individual lb boundaries",(char *) NULL);
         status = TCL_ERROR;
-    } else 
+      } else 
         mpi_bcast_lbboundary(-2);
-        status = TCL_OK;
+      status = TCL_OK;
     }
     else {
       if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-        if(c_num < 0 || c_num >= n_lb_boundaries) {
-	        Tcl_AppendResult(interp, "Can not delete non existing lbboundary",(char *) NULL);
-	        return (TCL_ERROR);
+      if(c_num < 0 || c_num >= n_lb_boundaries) {
+	Tcl_AppendResult(interp, "Can not delete non existing lbboundary",(char *) NULL);
+	return (TCL_ERROR);
       }
       if (lattice_switch & LATTICE_LB_GPU) {
-          mpi_bcast_lbboundary(-3);
-       } else 
-          mpi_bcast_lbboundary(c_num);
+	mpi_bcast_lbboundary(-3);
+      } else 
+	mpi_bcast_lbboundary(c_num);
       status = TCL_OK;    
     }
   }

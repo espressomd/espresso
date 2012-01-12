@@ -36,7 +36,6 @@
 #include "lb.h"
 #include "dpd.h"
 #include "dpd_tcl.h"
-#include "lbgpu.h"
 #include "virtual_sites.h"
 
 

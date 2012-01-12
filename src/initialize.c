@@ -89,7 +89,6 @@
 
 #ifdef CUDA
 #include "tcl/cuda_init_tcl.h"
-#include "lbgpu.h"
 #endif
 
 // import function from scriptsdir.c

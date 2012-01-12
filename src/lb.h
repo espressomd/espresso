@@ -24,8 +24,8 @@
  * This is the header file for the Lattice Boltzmann implementation in lb.c
  */
 
-#ifndef _LB_H
-#define _LB_H
+#ifndef LB_H
+#define LB_H
 
 #include "utils.h"
 #include "lattice.h"
@@ -278,6 +278,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v);
 /** Calculation of hydrodynamic modes */
 void lb_calc_modes(index_t index, double *mode);
 
+void lb_check_halo_regions();
 
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
@@ -564,6 +565,8 @@ MDINLINE void lb_set_populations(index_t index, double* pop) {
 }
 #endif
 
+#include "lbgpu.h"
+
 #if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
 int lb_lbfluid_set_density(double p_dens);
@@ -607,10 +610,6 @@ int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
 #endif
-#ifdef LB
-void lb_check_halo_regions();
-
-#endif /* LB */
 
 #endif /* _LB_H */
 

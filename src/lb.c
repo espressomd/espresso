@@ -41,7 +41,6 @@
 #include "lb-d3q19.h"
 #include "lb-boundaries.h"
 #include "lb.h"
-#include "lbgpu.h"
 
 #ifdef LB
 
@@ -661,12 +660,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         ind[1]=j;
         ind[2]=k;
         if (!binary) {
-//          for (int n=0; n<19; n++) {
-            fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]); 
-//          }
+	  if (fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]) != 19) {
+	    return TCL_ERROR;
+	  } 
         }
         else {
-          fread(pop, sizeof(double), 19, cpfile);
+          if (fread(pop, sizeof(double), 19, cpfile) != 19)
+	    return TCL_ERROR;
         }
         lb_lbnode_set_pop(ind, pop);
       } 

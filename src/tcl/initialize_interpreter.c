@@ -17,6 +17,7 @@
 #include "interaction_data_tcl.h"
 #include "lb-boundaries_tcl.h"
 #include "lb_tcl.h"
+#include "lb.h"
 #include "lj_tcl.h"
 #include "maggs_tcl.h"
 #include "metadynamics_tcl.h"
@@ -35,8 +36,7 @@
 #include "topology_tcl.h"
 #include "uwerr_tcl.h"
 #include "virtual_sites_com_tcl.h"
-
-
+#include "cuda_init_tcl.h"
 
 #define REGISTER_COMMAND(name, routine)					\
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
@@ -116,8 +116,6 @@ void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef LB_GPU
   /* in lbgpu_cfile.c */
   REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
-
-  //REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
 #endif
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);

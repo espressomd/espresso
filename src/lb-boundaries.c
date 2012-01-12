@@ -28,7 +28,6 @@
 #include "constraint.h"
 #include "lb-boundaries.h"
 #include "lb.h"
-#include "lbgpu.h"
 #include "interaction_data.h"
 #include "communication.h"
 

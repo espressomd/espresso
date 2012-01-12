@@ -31,7 +31,6 @@
 #include "lb.h"
 #include "lb-boundaries.h"
 #include "statistics_fluid.h"
-#include "lbgpu.h"
 
 #ifdef LB
 

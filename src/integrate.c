@@ -56,7 +56,6 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
-#include "lbgpu.h"
 
 /************************************************
  * DEFINES

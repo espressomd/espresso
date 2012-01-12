@@ -20,16 +20,11 @@
  * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
  */
 
-
-
-
 #ifndef LB_GPU_H
 #define LB_GPU_H
 
 #include <tcl.h>
 #include "utils.h"
-
-//#include "lattice.h"
 
 #ifdef LB_GPU
 
@@ -55,8 +50,7 @@
 #define LBPAR_BOUNDARY  7 /**< boundary parameters */
 #endif
 /*@}*/
-#endif /* LB_GPU */
-#if defined (LB) || defined (LB_GPU)
+
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
@@ -118,6 +112,7 @@ typedef struct {
   unsigned int reinit;
 
 } LB_parameters_gpu;
+
 /** Data structure holding the phys. values for the Lattice Boltzmann system. */
 typedef struct {
 
