@@ -17,7 +17,8 @@ for i in range(N):
 
 es.inter[0,0].lennardJones = {"eps":1,"sigma":1,"shift":0.25}
 
-es._espressoHandle.Tcl_Eval("integrate 100")
+es.integrate(100)
+#es._espressoHandle.Tcl_Eval("integrate 100")
 for i in range(N):
   print es.part[i].pos
 

@@ -6,6 +6,8 @@ import interaction_data
 cimport interaction_data
 import global_variables
 import lb
+from integrate import integrate
+
 import debye_hueckel
 #cimport myconfig
 #import utils
@@ -87,7 +89,7 @@ cdef class EspressoHandle:
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
-
+lb=lb.LBparaHandle
 inter=interaction_data.InteractionList()
 
 if this_node==0:
