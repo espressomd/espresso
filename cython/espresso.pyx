@@ -6,6 +6,8 @@ import interaction_data
 cimport interaction_data
 import global_variables
 from integrate import integrate
+import thermostat
+cimport thermostat
 
 import debye_hueckel
 #cimport myconfig
