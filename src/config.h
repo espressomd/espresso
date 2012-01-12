@@ -41,6 +41,7 @@
 
 #define FFT_DEBUG
 #define GRID_DEBUG
+#define MPI_CORE
 
 /** CELLS: Default value for the maximal number of cells per node. */
 #define CELLS_MAX_NUM_CELLS 32768

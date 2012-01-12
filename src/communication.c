@@ -183,8 +183,6 @@ void mpi_init(int *argc, char ***argv)
   MPI_Errhandler mpi_errh;
 #endif
 
-  int pos[3];
-
   MPI_Init(argc, argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -196,9 +194,7 @@ void mpi_init(int *argc, char ***argv)
 
   MPI_Comm_rank(comm_cart, &this_node);
 
-  MPI_Cart_coords(comm_cart, this_node, 3, pos);
-
-  printf("%d: node_grid %d %d %d, pos %d %d %d\n", this_node, node_grid[0], node_grid[1], node_grid[2], pos[0], pos[1], pos[2]);
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
 #ifdef MPI_CORE
   MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);

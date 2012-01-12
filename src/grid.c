@@ -164,7 +164,16 @@ void grid_changed_box_l()
 
 void grid_changed_n_nodes()
 {
+  int per[3] = { 1, 1, 1 };
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_n_nodes:\n",this_node));
+
+  MPI_Comm_free(&comm_cart);
+  
+  MPI_Cart_create(MPI_COMM_WORLD, 3, node_grid, per, 0, &comm_cart);
+
+  MPI_Comm_rank(comm_cart, &this_node);
+
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
   calc_node_neighbors(this_node);
 
