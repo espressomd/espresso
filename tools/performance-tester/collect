@@ -2,8 +2,10 @@
 
 for f in `cat featurelist`
 do
+ test -s $f.time && (
  echo -n "$f	"
  head -n1 $f.time
+ )
 done
 
 

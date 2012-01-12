@@ -7,8 +7,13 @@ esdir=~/espresso-dev
 # Path to Espresso binary
 es=./Espresso
 
-# Script to test the performance on
-script=../lj_liquid.tcl
+# Scripts to be run to test the performance
+$ Long-running script for timing accurately
+scriptLong=../lj_liquid_long.tcl
+# Short-running script to get profiling information
+scriptShort=../lj_liquid_short.tcl
+
+
 
 # Iterate over the features
 for f in `cat featurelist`
@@ -22,15 +27,21 @@ mkdir build
 cd build
 cp ../myconfig.h .
 
-# Build
+# Build for profiling
 $esdir/configure CFLAGS='-O5 -pg' 
 make -j20
 
 # run
-/usr/bin/time -f %e -o ../$f.time  $es $script > ../$f.out 2> ../$f.err
-
+$es $scriptShort > ../$f.out 2> ../$f.err
 # Save the profile information
 gprof Espresso > ../$f.prof
+
+# Build for optimal performance without profiling
+make distclean
+$esdir/configure 
+make -j20
+/usr/bin/time -f %e -o ../$f.time  $es $scriptShort > ../$f.out 2> ../$f.err
+
 
 cd ..
 

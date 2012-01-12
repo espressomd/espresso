@@ -1,11 +1,17 @@
 This script measures the amount of time, by which Espresso is slowed down by activating a 
 feature at compile time.
 
+Espresso will be compiled twice for each feature to test, once in production mode to measure the time
+and once with profiling (-pg) enabled, to obtain profiling info. The results will be saved in FEATURE_NAME.*
+
+
 Usage:
 * Go into an empty directory
 * In this directory, make a myconfig-basic.h containing the switches which should always be present. Alternatively use the file from this directory
 * In this directory, make a file called featurelist, which contains one feature per line which should be tested. Do not put the #define into the file.. Alternatively, use the file from this directory.
-* In this directory, run 
+* Copy the lj_liquid_*.tcl from the script directory to the empty directory
+* Edit test-features to set the path to your Espresso source
+* Run 
   bash test-features
 * Afterwards, run 
   bash collect
