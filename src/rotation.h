@@ -59,6 +59,14 @@ MDINLINE void convert_quat_to_quatu(double quat[4], double quatu[3])
 		quat[2]*quat[2] + quat[3]*quat[3]); 
 }
 
+/** Multiply two quaternions */ 
+void multiply_quaternions(double a[4], double b[4], double result[4]);
+
+/** Convert director to quaternions */
+int convert_quatu_to_quat(double d[3], double quat[4]);
+
+void convert_omega_body_to_space(Particle *p, double *omega);
+
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
@@ -73,8 +81,6 @@ MDINLINE int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
   return 0;
 }
 
-
-
 /** convert quaternion director to the dipole moment */
 MDINLINE void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 {
@@ -86,12 +92,4 @@ MDINLINE void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
 
 #endif
 
-
-/** Multiply two quaternions */ 
-void multiply_quaternions(double a[4], double b[4], double result[4]);
-
-/** Convert director to quaternions */
-int convert_quatu_to_quat(double d[3], double quat[4]);
-
-void convert_omega_body_to_space(Particle *p, double *omega);
 #endif
