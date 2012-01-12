@@ -17,30 +17,6 @@ cdef class Thermostat:
     def turnOff(self):
         """Turns off all the thermostat and sets all the thermostat variables to zero"""
         
-        """/* set temperature to zero */
-  temperature = 0;
-  mpi_bcast_parameter(FIELD_TEMPERATURE);
-  /* langevin thermostat */
-  langevin_gamma = 0;
-  mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA);
-  /* dpd thermostat */
-#ifdef DPD
-  dpd_switch_off();
-#endif
-#ifdef INTER_DPD
-  inter_dpd_switch_off();
-#endif
-#ifdef NPT
-  /* npt isotropic thermostat */
-  nptiso_gamma0 = 0;
-  mpi_bcast_parameter(FIELD_NPTISO_G0);
-  nptiso_gammav = 0;
-  mpi_bcast_parameter(FIELD_NPTISO_GV);
-#endif
-  /* switch thermostat off */
-  thermo_switch = THERMO_OFF;
-  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
-  return (TCL_OK);"""
         global temperature
         temperature=0.
         mpi_bcast_parameter(FIELD_TEMPERATURE)
@@ -50,7 +26,7 @@ cdef class Thermostat:
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        
+        # here other thermostats stuff
         return True
     
     def setLangevin(self, _temperature="", _gamma=""):

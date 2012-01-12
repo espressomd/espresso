@@ -10,6 +10,8 @@ import thermostat
 cimport thermostat
 from changeVolume import changeVolume
 from invalidateSystem import invalidateSystem
+import cellsystem
+cimport cellsystem
 
 import debye_hueckel
 #cimport myconfig

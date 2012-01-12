@@ -23,7 +23,8 @@ ext_modules=[
     Extension("thermostat", ["thermostat.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("invalidateSystem", ["invalidateSystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-	 Extension("code_info", ["code_info.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("code_info", ["code_info.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("cellsystem", ["cellsystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
 ]
 
 setup(
