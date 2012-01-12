@@ -9,6 +9,7 @@ from integrate import integrate
 import thermostat
 cimport thermostat
 from changeVolume import changeVolume
+from invalidateSystem import invalidateSystem
 
 import debye_hueckel
 #cimport myconfig
