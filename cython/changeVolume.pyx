@@ -3,9 +3,7 @@ def changeVolume(dNew, dir="xyz"):
 	if dNew<0:
 		raise ValueError("No negative lengths")
 	if dir=="xyz":
-		print dNew
 		dNew=dNew**(1./3.)
-		print dNew
 		rescale_boxl(3, dNew)
 	elif dir=="x":
 		rescale_boxl(0, dNew)
