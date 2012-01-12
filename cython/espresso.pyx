@@ -5,10 +5,10 @@ cimport particle_data
 import interaction_data
 cimport interaction_data
 import global_variables
-import lb
 from integrate import integrate
 
 import debye_hueckel
+import lbfluid
 #cimport myconfig
 #import utils
 
@@ -89,12 +89,20 @@ cdef class EspressoHandle:
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
-lb=lb.LBparaHandle
+lb=lbfluid.LBparaHandle()
+lb=lbfluid.DeviceList()
+
+def TclEval(string):
+  if instance_counter == 0:
+    raise Exception("Espresso not initialized")
+  if instance_counter == 1:
+    _espressoHandle.Tcl_Eval(string)
 inter=interaction_data.InteractionList()
 
 if this_node==0:
   glob=global_variables.GlobalsHandle()
 else:
+  #why exit all other
   exit()
 
       
