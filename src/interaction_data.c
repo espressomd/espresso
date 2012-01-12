@@ -133,11 +133,10 @@ DoubleList thermodynamic_f_energies;
  * function prototypes
  *****************************************/
 
-/** calculates and returns the maximal global nonbonded cutoff that is required.
-    Currently, this are just the cutoffs from the electrostatics
-    method. This value is not available on Tcl-level,
-    therefore we just return it.
-*/
+/** calculates and returns the maximal global nonbonded cutoff that is
+    required.  Currently, this are just the cutoffs from the
+    electrostatics method and some dpd cutoffs.  This value is not
+    available on Tcl-level, therefore we just return it.  */
 static double get_global_maximal_nonbonded_cutoff();
 /** calculate the maximal cutoff of bonded interactions, required to
     determine the cell size for communication. */
@@ -537,6 +536,20 @@ static double get_global_maximal_nonbonded_cutoff()
   }       
 #endif /*ifdef DP3M */
 
+#ifdef DPD
+  if (dpd_r_cut != 0) {
+    if(max_cut_es < dpd_r_cut)
+      max_cut_es = dpd_r_cut;
+  }
+#endif
+
+#ifdef TRANS_DPD
+  if (dpd_tr_cut != 0) {
+    if(max_cut_es < dpd_tr_cut)
+      max_cut_es = dpd_tr_cut;
+  }
+#endif
+  
   return max_cut_es;
 }
 
@@ -563,17 +576,12 @@ static void calc_maximal_cutoff_nonbonded()
       }
 #endif
 
-#ifdef DPD
-      if (dpd_r_cut != 0) {
-	if(max_cut_current < dpd_r_cut)
-	  max_cut_current = dpd_r_cut;
-      }
-#endif
-
-#ifdef TRANS_DPD
-      if (dpd_tr_cut != 0) {
-	if(max_cut_current < dpd_tr_cut)
-	  max_cut_current = dpd_tr_cut;
+#ifdef INTER_DPD
+      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
+	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
+	  data->dpd_r_cut : data->dpd_tr_cut;
+	if(max_cut_current <  max_cut_tmp)
+	  max_cut_current = max_cut_tmp;
       }
 #endif
 
@@ -588,15 +596,6 @@ static void calc_maximal_cutoff_nonbonded()
       if (data->LJANGLE_cut != 0) {
 	if(max_cut_current < (data->LJANGLE_cut) )
 	  max_cut_current = (data->LJANGLE_cut);
-      }
-#endif
-
-#ifdef INTER_DPD
-      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
-	  data->dpd_r_cut : data->dpd_tr_cut;
-	if(max_cut_current <  max_cut_tmp)
-	  max_cut_current = max_cut_tmp;
       }
 #endif
 
