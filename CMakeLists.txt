@@ -170,7 +170,7 @@ list(REMOVE_ITEM ESPRESSO_SOURCES ${NOT_ESPRESSO_SOURCES})
 # compile executable
 set_source_files_properties(src/scriptsdir.c PROPERTIES 
   COMPILE_DEFINITIONS
-  ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_SOURCE_DIR}/scripts")
+  ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
 add_executable(Espresso 
   ${ESPRESSO_SOURCES} 
   ${ESPRESSO_TCL_SOURCES} 
@@ -180,8 +180,7 @@ target_link_libraries(Espresso ${LIBRARIES})
 add_dependencies(Espresso scripts)
 
 # handle myconfig
-add_dependencies(Espresso myconfig-header)
-
+add_dependencies(Espresso myconfig-header scripts)
 
 install(TARGETS Espresso RUNTIME DESTINATION bin)
 
