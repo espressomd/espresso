@@ -77,7 +77,10 @@ cdef class GlobalsHandle:
             mpi_bcast_parameter(FIELD_MAXNUMCELLS);
         def __get__(self):
             return max_num_cells;
-      
+    
+    property max_part:
+        def __get__(self):
+            return max_seen_particle;
   
     property skin:
         def __set__(self, double _skin):

@@ -29,6 +29,7 @@ cdef extern from "interaction_data.h":
     double dpd_gamma
     double dpd_r_cut
     extern double max_cut
+    extern int max_seen_particle
 
 cdef extern from "thermostat.h":
     double langevin_gamma
