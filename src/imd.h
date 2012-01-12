@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,19 +18,34 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IMD_H__
-#define IMD_H__
+#ifndef _IMD_H
+#define _IMD_H
 /** \file imd.h 
     The interface with VMD. This code just provides a wrapper for the IMD interface functions, which allow to send
     particle positions to VMD. Additionally, VMD can send back a single integer value, called transfer_rate, which
     is accessible both from c and from Tcl. The IMD force feedback is not implemented.
 */
 
-#include <tcl.h>
+#include <stdint.h>
 
-int tclcommand_imd(ClientData data, Tcl_Interp *interp,
-	int argc, char **argv);
+typedef enum {
+    IMD_DISCONNECT,
+    IMD_ENERGIES, 
+    IMD_FCOORDS,   
+    IMD_GO,
+    IMD_HANDSHAKE, 
+    IMD_KILL,      
+    IMD_MDCOMM,    
+    IMD_PAUSE,
+    IMD_TRATE,
+    IMD_IOERROR
+} IMDType;
+
+IMDType imd_recv_header(void *, int32_t *);
+int   imd_send_fcoords(void *, int32_t, const float *);
+int   imd_handshake(void *);
 
 extern int transfer_rate;
+
 
 #endif

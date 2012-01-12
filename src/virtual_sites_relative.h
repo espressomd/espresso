@@ -21,6 +21,7 @@
 #define _VIRTUAL_SITES_RELATIVE_H
 
 #include "config.h"
+#include "particle_data.h"
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
@@ -28,8 +29,8 @@
 // of virtual sites
 // Update the vel/pos of the given virtual particle as defined by the real 
 // particles in the same molecule
-void update_mol_pos_particle(Particle *);
-void update_mol_vel_particle(Particle *);
+void update_mol_pos_particle(Particle *p);
+void update_mol_vel_particle(Particle *p);
 
 // Distribute forces that have accumulated on virtual particles to the 
 // associated real particles

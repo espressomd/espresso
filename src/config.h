@@ -175,11 +175,6 @@
 #endif
 #endif
 
-/* Dipoles imply rotation */
-#ifdef DIPOLES
-#define ROTATION
-#endif
-
 //mol_cut needs virtual sites
 #ifdef MOL_CUT
 #ifndef VIRTUAL_SITES_COM
@@ -225,6 +220,10 @@
 
 #if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)
 #define VIRTUAL_SITES
+#endif
+
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Can only compile either VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE

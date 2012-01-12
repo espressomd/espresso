@@ -25,6 +25,7 @@ tests = \
 	command_syntax.tcl \
 	constraints.tcl \
 	constraints_reflecting.tcl \
+	constraints_rhomboid.tcl \
 	dh.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
@@ -107,6 +108,8 @@ check-local: runtest.sh
 	else \
 	  @builddir@/runtest.sh $(tests); \
 	fi
+
+CLEANFILES=runtest.log
 
 DISTCLEANFILES=\
 	fftw3_1d_wisdom_*.file

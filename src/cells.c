@@ -55,6 +55,10 @@ CellPList ghost_cells = { NULL, 0, 0 };
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
+double max_range = 0.0;
+
+int rebuild_verletlist = 0;
+
 /************************************************************/
 /** \name Privat Functions */
 /************************************************************/
@@ -164,64 +168,6 @@ static void topology_init(int cs, CellPList *local) {
  *            Exported Functions                            *
  ************************************************************/
 
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv)
-{
-  int err = 0;
-
-  if (argc <= 1) {
-    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG1_IS_S("domain_decomposition")) {
-    if (argc > 2) {
-      if (ARG_IS_S(2,"-verlet_list"))
-	dd.use_vList = 1;
-      else if(ARG_IS_S(2,"-no_verlet_list")) 
-	dd.use_vList = 0;
-      else{
-	Tcl_AppendResult(interp, "wrong flag to",argv[0],
-			 " : should be \" -verlet_list or -no_verlet_list \"",
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
-    }
-    /** by default use verlet list */
-    else dd.use_vList = 1;
-    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
-  }
-  else if (ARG1_IS_S("nsquare"))
-    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
-  else if (ARG1_IS_S("layered")) {
-    if (argc > 2) {
-      if (!ARG_IS_I(2, n_layers))
-	return TCL_ERROR;
-      if (n_layers <= 0) {
-	Tcl_AppendResult(interp, "layer height should be positive", (char *)NULL);
-	return TCL_ERROR;
-      }
-      determine_n_layers = 0;
-    }
-
-    /* check node grid. All we can do is 1x1xn. */
-    if (node_grid[0] != 1 || node_grid[1] != 1) {
-      node_grid[0] = node_grid[1] = 1;
-      node_grid[2] = n_nodes;
-      err = mpi_bcast_parameter(FIELD_NODEGRID);
-    }
-    else
-      err = 0;
-
-    if (!err)
-      mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
-  }
-  else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  return mpi_gather_runtime_errors(interp, TCL_OK);
-}
 
 /************************************************************/
 
@@ -324,6 +270,19 @@ void realloc_cells(int size)
 
 /*************************************************/
 
+void announce_resort_particles()
+{
+  int sum;
+  
+  MPI_Allreduce(&resort_particles, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  resort_particles = (sum > 0) ? 1 : 0;
+  
+  INTEG_TRACE(fprintf(stderr,"%d: announce_resort_particles: resort_particles=%d\n",
+		      this_node, resort_particles));
+}
+
+/*************************************************/
+
 int cells_get_n_particles()
 {
   int c, cnt = 0;
@@ -370,7 +329,7 @@ void cells_resort_particles(int global_flag)
     layered_exchange_and_sort_particles(global_flag);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles();
+    nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag);
@@ -385,47 +344,89 @@ void cells_resort_particles(int global_flag)
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
-  on_resort_particles();
-
+  resort_particles = 0;
   rebuild_verletlist = 1;
 
-  recalc_forces = 1;
+  on_resort_particles();
 
   CELL_TRACE(fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
 }
 
 /*************************************************/
 
+void cells_on_max_cut_change(int shrink)
+{
+  double old_max_range = max_range;
+
+  calc_maximal_cutoff();
+
+  if (max_cut > 0.0) {
+    if (skin >= 0.0)
+      max_range = max_cut + skin;
+    else
+      /* if the skin is not yet set, assume zero. */
+      max_range = max_cut;
+  }
+  else
+    /* if no interactions yet, we also don't need a skin */
+    max_range = 0.0;
+
+  CELL_TRACE(fprintf(stderr,"%d: on_max_cut_change with ranges %f %f\n", this_node, max_range, old_max_range));
+
+  /* no need to do something if
+     1. the range didn't change numerically (<= necessary for the start case,
+     when max_range and old_max_range == 0.0)
+     2. it shrank, and we shouldn't shrink (NpT) */
+  if ((fabs(max_range - old_max_range) <= ROUND_ERROR_PREC * max_range) ||
+      (!shrink && (max_range < old_max_range)))
+    return;
+
+  CELL_TRACE(fprintf(stderr,"%d: on_max_cut_change doing big things\n", this_node));
+  
+  cells_re_init(CELL_STRUCTURE_CURRENT);
+
+  for (int i = 0; i < 3; i++)
+    if (local_box_l[i] < max_range) {
+      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is still too small} ", i);
+    }
+}
+
+/*************************************************/
+
+void check_resort_particles()
+{
+  int i, c, np;
+  Cell *cell;
+  Particle *p;
+  double skin2 = SQR(skin/2.0);
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      /* Verlet criterion check */
+      if(distance2(p[i].r.p, p[i].l.p_old) > skin2) resort_particles = 1;
+    }
+  }
+  announce_resort_particles();
+}
+
+/*************************************************/
 void cells_update_ghosts()
 {
-  switch (cell_structure.type) {
-    /* methods using skin rsp. rebuild_verletlist */
-  case CELL_STRUCTURE_DOMDEC:
-    if(dd.use_vList) {
-      if (rebuild_verletlist == 1)
-	/* Communication step:  number of ghosts and ghost information */
-	cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-      else
-	/* Communication step: ghost information */
-	ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    else 
-      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-    break;
-    /* layered has a skin only in z in principle, but
-       probably we can live very well with the standard skin */
-  case CELL_STRUCTURE_LAYERED:
-    if (rebuild_verletlist == 1)
-      /* Communication step:  number of ghosts and ghost information */
-      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-    else
-      /* Communication step: ghost information */
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    /* the particles probably are still balanced... */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);    
+  /* if dd.use_vList is set, it so far means we want EXACT sorting of the particles.*/
+  if (dd.use_vList == 0)
+    resort_particles = 1;
+
+  if (resort_particles) {
+    /* Communication step:  number of ghosts and ghost information */
+    cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
   }
+  else
+    /* Communication step: ghost information */
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
 }
 
 /*************************************************/

@@ -41,9 +41,6 @@ void compute_pos_corr_vec(int *repeat_);
 /** Positional Corrections are added to the current particle positions. Invoked from \ref correct_pos_shake() */
 void app_pos_correction();
 
-/* Checks if verlet list rebuilt is required.*/
-void check_rebuild_verletlist();
-
 /** Transfers temporarily the current forces from f.f[3] of the \ref Particle
     structure to r.p_old[3] location and also intializes velocity correction
     vector. Invoked from \ref correct_vel_shake()*/
@@ -56,7 +53,6 @@ void compute_vel_corr_vec(int *repeat_);
 /** Velocity corrections are added to the current particle velocities. Invoked from
     \ref correct_vel_shake()*/
 void apply_vel_corr();
-
 
 /**Invoked from \ref correct_vel_shake(). Put back the forces from r.p_old to f.f*/
 void revert_force();
@@ -210,28 +206,6 @@ void app_pos_correction()
      } //for c loop
 }
 
-/* Check if verlet list is required to be re-built*/
-void check_rebuild_verletlist()
-{
-     int i, c, np;
-     Cell *cell;
-     Particle *p;
-     double skin2 = SQR(skin/2.0);
-     rebuild_verletlist=0;
-     for (c = 0; c < local_cells.n; c++)
-     {
-      cell = local_cells.cell[c];
-      p  = cell->part;
-      np = cell->n;
-      for(i = 0; i < np; i++) {
-        /* Verlet criterion check */
-	if(distance2(p[i].r.p, p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
-       } //for i loop
-     } //for c loop
-     announce_rebuild_vlist();
-}
-
-
 void correct_pos_shake()
 {
    int    repeat_,  cnt=0;
@@ -259,7 +233,7 @@ void correct_pos_shake()
      ERROR_SPRINTF(errtxt, "{053 RATTLE failed to converge after %d iterations} ", cnt);
    }
 
-   check_rebuild_verletlist();
+   check_resort_particles();
 }
 
 /**The forces are transfered temporarily from f.f member of particle structure to r.p_old,

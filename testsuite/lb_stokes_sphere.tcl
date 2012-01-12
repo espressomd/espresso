@@ -1,6 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-#   Max-Planck-Institute for Polymer Research, Theory Group
+# Copyright (C) 2011 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -33,7 +31,6 @@ puts "---------------------------------------------------------------"
 puts "- Testcase lb_stokes_sphere.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
-
 set w 16
 set l 16
 setmd box_l [ expr $w+2 ] $l $l
@@ -44,7 +41,7 @@ cellsystem domain_decomposition -no_verlet_list
 
 set kinematic_visc 10.
 set dens 1.
-lbfluid visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 ext_force 0.0000 0. 0.
+lbfluid visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 
 
 set v1 1.0
 lbboundary wall normal -1. 0. 0. dist [ expr -(+0.5+$w) ] velocity 0.00 $v1 0.
@@ -60,7 +57,7 @@ puts "The measured force is: $lbforce"
 puts "The stokes force is: $refforce"
 puts "deviation to stokes force is [ expr $deviation * 100 ] %"
 if { $deviation > 0.2 } {
-  error "The deviation from Stokes law larger than expected"
+  error_exit "The deviation from Stokes law larger than expected"
 }
 
 

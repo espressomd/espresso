@@ -28,44 +28,6 @@
 
 #include "statistics_cluster.h"
 
-/** \name Data structures */
-/************************************************************/
-/*@{*/
-
-/** Structure for cluster element */
-struct StructClusterElement{  
-  /** Element identity */
-  int id;
-  /** Pointer to next cluster element.*/
-  struct StructClusterElement *next;
-};
-
-/** Cluster Element */
-typedef struct StructClusterElement ClusterElement;
-
-/** Structure for Cluster */
-struct StructCluster {  
-  /** Cluster identity */
-  int id;
-  /** Cluster size */
-  int size;
-  /** Pointer to first cluster element.*/
-  ClusterElement *first;
-  /** Pointer to next cluster */
-  struct StructCluster *next;
-  /** Pointer to previous cluster */
-  struct StructCluster *prev;
-};
-
-/** Cluster */
-typedef struct StructCluster Cluster;
-
-/*@}*/
-
-/** \name Variables */
-/************************************************************/
-/*@{*/
-
 /** NULL terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;
 /** Double linked list of \ref statistics_cluster::Cluster */
@@ -81,8 +43,6 @@ int    backbone_distance;
 double space_distance2;
 /** parameter of necklace cluster algorithm */
 int    pearl_treshold;
-
-/*@}*/
 
 /** \name Routines */
 /************************************************************/
@@ -116,12 +76,12 @@ void cluster_free() {
 /* join two clusters (Join cluster2 to cluster1 and eliminate cluster2) */
 void clusters_join(Cluster *cluster1, Cluster *cluster2)
 {
-  ClusterElement *element;
+  ClusterElement *local_element;
 
   /* join cluster2 to cluster1 */
-  element = cluster1->first;
-  while(element->next != NULL) element = element->next;
-  element->next  = cluster2->first;
+  local_element = cluster1->first;
+  while(local_element->next != NULL) local_element = local_element->next;
+  local_element->next  = cluster2->first;
   cluster1->size += cluster2->size;
   /* remove cluster2 */
   cluster2->prev->next = cluster2->next;
@@ -155,22 +115,22 @@ int clusters_connected(Particle *part, Cluster cluster1, Cluster cluster2)
 int clusters_interpenetrate(Cluster cluster1, Cluster cluster2)
 {
   int min1,min2,max1,max2;
-  ClusterElement *element;
+  ClusterElement *local_element;
 
-  element = cluster1.first;
-  min1 = max1 = element->id;
-  while(element->next != NULL) {
-    element = element->next;
-    if(element->id < min1) min1 = element->id;
-    if(element->id > max1) max1 = element->id;
+  local_element = cluster1.first;
+  min1 = max1 = local_element->id;
+  while(local_element->next != NULL) {
+    local_element = local_element->next;
+    if(local_element->id < min1) min1 = local_element->id;
+    if(local_element->id > max1) max1 = local_element->id;
   }
 
-  element = cluster2.first;
-  min2 = max2 = element->id;
-  while(element->next != NULL) {
-    element = element->next;
-    if(element->id < min2) min2 = element->id;
-    if(element->id > max2) max2 = element->id;
+  local_element = cluster2.first;
+  min2 = max2 = local_element->id;
+  while(local_element->next != NULL) {
+    local_element = local_element->next;
+    if(local_element->id < min2) min2 = local_element->id;
+    if(local_element->id > max2) max2 = local_element->id;
   }
 
   /* test if one cluster is completelly on left side of the other ... */
@@ -282,94 +242,11 @@ int analyze_necklace(Particle *part, int np) {
   return n_pearls;
 }
 
-/* parser for necklace cluster analyzation:
-   analyze necklace <pearl_treshold> <back_dist> <space_dist> <first> <length> 
- */
-int tclcommand_analyze_parse_necklace(Tcl_Interp *interp, int argc, char **argv)
-{
-  double space_dist;
-  int first,length;
-  Particle *part;
-  Cluster *cluster;
-  char buffer[TCL_INTEGER_SPACE];
-  int n_pearls;
-
-  /* check # of parameters */
-  if (argc < 5) {
-    Tcl_AppendResult(interp, "analyze necklace needs 5 parameters:\n", (char *)NULL);
-    Tcl_AppendResult(interp, "<pearl_treshold> <back_dist> <space_dist> <first> <length>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* check parameter types */
-  if( (! ARG_IS_I(0, pearl_treshold)) ||
-      (! ARG_IS_I(1, backbone_distance))  ||
-      (! ARG_IS_D(2, space_dist))     ||
-      (! ARG_IS_I(3, first))          ||
-      (! ARG_IS_I(4, length)) ) {
-    Tcl_AppendResult(interp, "analyze necklace needs 5 parameters of type and meaning:\n", (char *)NULL);
-    Tcl_AppendResult(interp, "INT INT DOUBLE INT INT\n", (char *)NULL);
-    Tcl_AppendResult(interp, "<pearl_treshold> <back_dist> <space_dist> <first> <length>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* check parameter values */
-  if( pearl_treshold < 10 ) {
-    Tcl_AppendResult(interp, "analyze necklace: pearl_treshold should be >= 10", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if( backbone_distance < 2 ) {
-    Tcl_AppendResult(interp, "analyze necklace: backbone_dist should be >= 2", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if( space_dist <= 0.0 ) {
-    Tcl_AppendResult(interp, "analyze necklace: space_dist must be positive", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if( first < 0 ) {
-    Tcl_AppendResult(interp, "analyze necklace: identity of first particle can not be negative", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if( first+length > n_total_particles+1) {
-    Tcl_AppendResult(interp, "analyze necklace: identity of last particle out of partCfg array", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* preparation */
-  space_distance2 = SQR(space_dist);
-  sortPartCfg();
-  part = &partCfg[first];
-
-  /* perform necklace cluster algorithm */
-  n_pearls = analyze_necklace(part, length) ;
-
-  /* Append result to tcl interpreter */
-  sprintf(buffer,"%d",n_pearls);
-  Tcl_AppendResult(interp, buffer, " pearls { ", (char *)NULL);
-  if( n_pearls > 0 ) {
-    cluster = first_cluster;
-    sprintf(buffer,"%d",cluster->size);
-    Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-    cluster = cluster->next;
-    while(cluster->prev != last_cluster) { 
-      sprintf(buffer,"%d",cluster->size);
-      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-      cluster = cluster->next;
-    }
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-
-   /* free analyzation memory */
-  cluster_free();
-  
-  return (TCL_OK);
-}
-
 /* HOLE CLUSTER ALGORITHM */
 
 /** test if a mesh point belongs to free (return -1) or occupied (return -2) volume.
 Needs feature LENNARD_JONES compiled in. */
-int test_mesh_element(double pos[3], int probe_part_type) 
+int test_mesh_elements(double pos[3], int probe_part_type) 
 {
 #ifdef LENNARD_JONES
   int i;
@@ -405,7 +282,7 @@ void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type)
     pos[1] = (iy+0.5)*mesh_c[1];
     pos[2] = (iz+0.5)*mesh_c[2];
 
-    mesh.e[i] = test_mesh_element(pos, probe_part_type);
+    mesh.e[i] = test_mesh_elements(pos, probe_part_type);
 
     ix++; 
     if ( ix >= dim[0]) { ix = ix - dim[0]; iy++; }
@@ -527,124 +404,6 @@ void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **hol
     }
   }
 
-}
-
-/* parser for hole cluster analyzation:
-   analyze holes <prob_part_type_number> <mesh_size>.
-   Needs feature LENNARD_JONES compiled in. */
-int tclcommand_analyze_parse_holes(Tcl_Interp *interp, int argc, char **argv)
-{
-  int i,j;
-  int probe_part_type;
-  int mesh_size=1, meshdim[3];
-  double freevol=0.0;
-  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
-
-  IntList mesh;
-
-  int n_holes;
-  int **holes;
-  int max_size=0;
-  int *surface;
-
-#ifndef LENNARD_JONES
-   Tcl_AppendResult(interp, "analyze holes needs feature LENNARD_JONES compiled in.\n", (char *)NULL);
-    return TCL_ERROR;
-#endif
-
-  /* check # of parameters */
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "analyze holes needs 2 parameters:\n", (char *)NULL);
-    Tcl_AppendResult(interp, "<prob_part_type_number> <mesh_size>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* check parameter types */
-  if( (! ARG_IS_I(0, probe_part_type)) ||
-      (! ARG_IS_I(1, mesh_size))  ) {
-    Tcl_AppendResult(interp, "analyze holes needs 2 parameters of type and meaning:\n", (char *)NULL);
-    Tcl_AppendResult(interp, "INT INT\n", (char *)NULL);
-    Tcl_AppendResult(interp, "<prob_part_type_number> <mesh_size>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* check parameter values */
-  if( probe_part_type > n_particle_types || probe_part_type < 0 ) {
-    Tcl_AppendResult(interp, "analyze holes: probe particle type number does not exist", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if( mesh_size < 1  ) {
-    Tcl_AppendResult(interp, "analyze holes: mesh size must be positive (min=1)", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* preparation */
-  updatePartCfg(WITHOUT_BONDS);
-  meshdim[0]=mesh_size;
-  meshdim[1]=mesh_size;
-  meshdim[2]=mesh_size;
-  alloc_intlist(&mesh, (meshdim[0]*meshdim[1]*meshdim[2]));
-
-  /* perform free space identification*/
-  create_free_volume_grid(mesh, meshdim, probe_part_type);
-  /* perfrom hole cluster algorithm */
-  n_holes = cluster_free_volume_grid(mesh, meshdim, &holes);
-  /* surface to volume ratio */
-  surface = (int *) malloc(sizeof(int)*(n_holes+1));
-  cluster_free_volume_surface(mesh, meshdim, n_holes, holes, surface);
-  /* calculate accessible volume / max size*/
-  for ( i=0; i<=n_holes; i++ ) { 
-    freevol += holes[i][0];
-    if ( holes[i][0]> max_size ) max_size = holes[i][0];
-  }
-
-  /* Append result to tcl interpreter */
-  Tcl_AppendResult(interp, "{ n_holes mean_hole_size max_hole_size free_volume_fraction { sizes } { surfaces }  { element_lists } } ", (char *)NULL);
-
-  Tcl_AppendResult(interp, "{", (char *)NULL);
-
-  /* number of holes */
-  sprintf(buffer,"%d ",n_holes+1); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  /* mean hole size */
-  sprintf(buffer,"%f ",freevol/(n_holes+1.0)); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  /* max hole size */
-  sprintf(buffer,"%d ",max_size); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  /* free volume fraction */
-  sprintf(buffer,"%f ",freevol/(meshdim[0]*meshdim[1]*meshdim[2]));
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  /* hole sizes */
-  Tcl_AppendResult(interp, "{ ", (char *)NULL);
-  for ( i=0; i<=n_holes; i++ ) { 
-    sprintf(buffer,"%d ",holes[i][0]); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-  /* hole surfaces */
-  Tcl_AppendResult(interp, "{ ", (char *)NULL);
-  for ( i=0; i<=n_holes; i++ ) { 
-    sprintf(buffer,"%d ",surface[i]); Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-  /* hole elements */ 
-  Tcl_AppendResult(interp, "{ ", (char *)NULL);
-  for ( i=0; i<=n_holes; i++ ) { 
-    Tcl_AppendResult(interp, "{ ", (char *)NULL);
-    for ( j=1; j <= holes[i][0]; j++ ) {
-      sprintf(buffer,"%d",holes[i][j]);
-      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-    }
-    Tcl_AppendResult(interp, "} ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-  
-  Tcl_AppendResult(interp, "}", (char *)NULL);
-
-  /* free allocated memory */
-  realloc_intlist(&mesh, 0);
-  free(surface);
-  for ( i=0; i<=n_holes; i++ ) { free(holes[i]); }
-  free(holes);
-
-  return (TCL_OK);
 }
 
 /*@}*/

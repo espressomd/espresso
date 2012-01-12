@@ -25,6 +25,24 @@
     molecule information set with analyse set chains.
 */
 
+/** \name Exported Variables */
+/************************************************************/
+/** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref tclcommand_analyze) */
+/*@{*/
+extern float *partCoord_g;
+extern float *partCM_g;
+extern int n_part_g;
+extern int n_chains_g;
+/*@}*/
+
+/** data for a system consisting of chains. TBRS. */
+/*@{*/
+extern int chain_start;
+extern int chain_n_chains;
+extern int chain_length;
+/*@}*/
+
+
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
@@ -98,19 +116,22 @@ void calc_g123(double *g1, double *g2, double *g3);
     Chain information \ref chain_start etc. must be set!
     @param g1 contains <tt>g1[0],...,g1[n_configs-1]</tt>
 */
-void calc_g1_av(double **g1);
+void calc_g1_av(double **_g1, int window, double weights[3]);
+//void calc_g1_av(double **g1);
 
 /** calculate \<g2\> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @param g2 contains <tt>g2[0],...,g2[n_configs-1]</tt>
 */
-void calc_g2_av(double **g2);
+void calc_g2_av(double **_g2, int window, double weights[3]);
+//void calc_g2_av(double **g2);
 
 /** calculate \<g3\> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
     @param g3 contains <tt>g3[0],...,g3[n_configs-1]</tt>
 */
-void calc_g3_av(double **g3);
+void calc_g3_av(double **_g3, int window, double weights[3]);
+//void calc_g3_av(double **g3);
 
 /** set the start configuration for g123.
     chain information \ref chain_start etc. must be set!
@@ -160,33 +181,5 @@ void analyze_cwvac(int maxtau, int interval, double **_avac, double **_evac);
 /** sets the particle mol_id according to the chain_structure info*/
 void update_mol_ids_setchains();
 
-int tclcommand_analyze_parse_set_chains(Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, char **argv);
-
-///
-int tclcommand_analyze_parse_re(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_rg(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_rh(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_internal_dist(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_bond_l(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_bond_dist(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_g123(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_g_av(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
-///
-int tclcommand_analyze_parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
-///
-#ifdef ELECTROSTATICS
-int tclcommand_analyze_parse_cwvac(Tcl_Interp *interp, int argc, char **argv);
-#endif
-/*@}*/
 
 #endif

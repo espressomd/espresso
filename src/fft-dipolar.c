@@ -236,7 +236,6 @@ int dfft_init(double **data,
   }
 
   fftw_complex *c_data     = (fftw_complex *) (*data);
-  fftw_complex *c_data_buf = (fftw_complex *) dfft.data_buf;
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for(i=1;i<4;i++) {

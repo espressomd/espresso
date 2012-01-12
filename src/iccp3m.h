@@ -53,7 +53,6 @@
 #ifndef _ICCP3M_H 
 #define _ICCP3M_H
 
-#include <tcl.h>
 #include <time.h>
 #include "p3m.h"
 #include "utils.h"
@@ -98,25 +97,6 @@ typedef struct {
 extern iccp3m_struct iccp3m_cfg;        /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
 int bcast_iccp3m_cfg(void);
-/** Implementation of the tcl-command <br>
-    iccp3m  { \<last_ind_id\> \<e1\> \<num_iteration\> \<convergence\> \<relaxation\> \<area\> \<normal_components\> \<e_in/e_out\>  [\<ext_field\>] | iterate } 
-    ICC sets up and calculates induced charges on dielectric surfaces. At the beginning of every simulation run particles on the surface boundary 
-    have to be set up (before any real particle) together with the list of areas, normal vectors and dielectric constant associated with them. 
-    After that the iterate flag can be used during the simulation to update the value of the induced charges.
-    
-    Parameters: <br>
-                 \<last_ind_id\> ID of the last surface charge. Note that the IDs of the surface charges must range from 0 to \<last_ind_id\>
-                 \<e1\>          = Dielectric Constant of the Bulk accessible to free particles 
-                 \<num_iteration\> = Maximum number of ICCP3M iterations calculating the induced charges. 
-                 \<relaxation\> = Relaxaxion parameter \f$omega\f$ for the successive over-relaxation scheme. 
-                 \<area\>       = List of the areas of each surface element.
-                 \<normal_components\> = List of normal vectors of each surface element. 3n list entries. Do not have to be normalized.
-                 \<e_in/e_out\> = Ratio of dielectric co
-
-
-                 iterate         = Indicates that a previous surface discretization shall be used. T
-*/
-int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Calculation of the electrostatic forces between source charges (= real charges) and wall charges.
  *  For each electrostatic method the proper functions for short and long range parts are called.
