@@ -10,6 +10,9 @@ cdef class GlobalsHandle:
 
   property time_step:
     def __set__(self, double _time_step):
+      print "setting timestep", _time_step
+      if _time_step <= 0:
+        raise ValueError("Time Step must be positive")
       mpi_set_time_step(_time_step)
     def __get__(self):
       global time_step
