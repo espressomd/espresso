@@ -1,5 +1,5 @@
 #cimport global_variables
-#import numpy as np
+import numpy as np
 cimport lb
 
 #cdef extern from "../src/lattice.h":
@@ -109,6 +109,16 @@ cdef class LBparaHandle:
       if lb_lbfluid_get_gamma_even(&_p_gamma_even):
         raise Exception("lb_lbfluid_get_gamma_even error")
       return _p_gamma_even
+      
+  property ext_force:
+    def __set__(self, _ext_force):
+      if lb_lbfluid_set_ext_force(_ext_force[0], _ext_force[1], _ext_force[2]):
+        raise Exception("lb_lbfluid_set_ext_force error")
+    def __get__(self):
+      cdef double _p_ext_force[3]
+      if lb_lbfluid_get_ext_force(&_p_ext_force[0], &_p_ext_force[1], &_p_ext_force[2]):
+        raise Exception("lb_lbfluid_get_ext_force error")
+      return np.array([_p_ext_force[0], _p_ext_force[1], _p_ext_force[2]])
       
   property bulk_visc:
     def __set__(self, double _bulk_visc):

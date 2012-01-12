@@ -6,7 +6,7 @@ import espresso as es
 import numpy
 
 es._espressoHandle.Tcl_Eval("thermostat lb 1.")
-dev="gpu"
+dev="cpu"
 N=100
 es.glob.time_step=0.01
 es.glob.skin=1.
@@ -17,6 +17,8 @@ es.lb[dev].visc=1
 es.lb[dev].friction=1
 es.lb[dev].tau=0.1
 
+es.lb[dev].ext_force=[1., 2., 3.,]
+print es.lb[dev].ext_force
 print es.lb[dev].dens
 print es.lb[dev].visc
 print es.lb[dev].agrid
