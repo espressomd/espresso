@@ -567,9 +567,10 @@ MDINLINE int tf_set_params(int part_type, double prefactor, char * filename){
   }
   
   /* First read two important parameters we read in the data later*/
-  fscanf( fp , "%d ", &npoints);
-  fscanf( fp, "%lf ", &minval);
-  fscanf( fp, "%lf ", &maxval);
+  if (fscanf( fp , "%d ", &npoints) != 1 ||
+      fscanf( fp, "%lf ", &minval) != 1 ||
+      fscanf( fp, "%lf ", &maxval) != 1)
+    return 5;
   // Set the newsize to the same as old size : only changed if a new force table is being added.
   newsize = thermodynamic_forces.max;
   if ( data->TF_TAB_npoints == 0){
@@ -599,9 +600,10 @@ MDINLINE int tf_set_params(int part_type, double prefactor, char * filename){
   
   /* Read in the new force and energy table data */
   for (i = 0 ; i < npoints ; i++){
-    fscanf(fp, "%lf", &dummr);
-    fscanf(fp, "%lf", &(thermodynamic_forces.e[i+data->TF_TAB_startindex]));
-    fscanf(fp, "%lf", &(thermodynamic_f_energies.e[i+data->TF_TAB_startindex]));
+    if (fscanf(fp, "%lf", &dummr) != 1 ||
+	fscanf(fp, "%lf", &(thermodynamic_forces.e[i+data->TF_TAB_startindex])) != 1 ||
+	fscanf(fp, "%lf", &(thermodynamic_f_energies.e[i+data->TF_TAB_startindex])) != 1)
+      return 5;
     if(i==0 && dummr !=0) {
       fprintf(stderr, "First point of the thermodynamic force has to be zero.\n");
       errexit();

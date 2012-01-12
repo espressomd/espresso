@@ -21,6 +21,7 @@
 #include "tunable_slip.h"
 #include "parser.h"
 #include "random.h"
+#include "communication.h"
 
 #ifdef TUNABLE_SLIP
 

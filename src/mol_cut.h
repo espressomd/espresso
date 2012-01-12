@@ -25,6 +25,8 @@
 #include "virtual_sites.h"
 #include "particle_data.h"
 #include "interaction_data.h"
+#include "communication.h"
+#include "parser.h"
 #include <tcl.h>
 
 #ifdef MOL_CUT

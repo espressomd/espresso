@@ -260,24 +260,31 @@ Particle *get_mol_com_particle(Particle *calling_p){
    Particle *p;
 
    mol_id=calling_p->p.mol_id;
+
+   if (mol_id < 0) {
+     char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+     ERROR_SPRINTF(errtxt,"Partice does not have a mol id! pnr=%i\n",
+		   calling_p->p.identity);
+     return NULL;
+   }
    for (i=0;i<topology[mol_id].part.n;i++){
       p=local_particles[topology[mol_id].part.e[i]];
-      #ifdef VIRTUAL_SITES_DEBUG
+
       if (p==NULL){
          char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Particle does not exist in put_mol_force_on_parts! id=%i\n",topology[mol_id].part.e[i]);
          return NULL;
       }
-      #endif
+
       if (ifParticleIsVirtual(p)) {
           return p;
        }
    }
-#ifdef VIRTUAL_SITES_DEBUG
+
    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
    ERROR_SPRINTF(errtxt,"No com found in get_mol_com_particleParticle does not exist in put_mol_force_on_parts! pnr=%i\n",calling_p->p.identity);
    return NULL;
-#endif
+
    return calling_p;
 }
 
