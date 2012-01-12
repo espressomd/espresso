@@ -98,7 +98,7 @@ void maggs_init(); /** called from: initialize.c */
     @param f_mass    parameter to tune the speed of light (1/c^2)
     @param mesh      Mesh size in one dimension
  */
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh);
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh);
 
 /** Propagate the B-field in the system.
     Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.
