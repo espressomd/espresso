@@ -60,7 +60,7 @@
 /*@}*/
 
 #ifndef DOXYGEN_RUN
-#include <myconfig-final.h>
+#include <myconfig.h>
 #else
 #include <myconfig-sample.h>
 #endif

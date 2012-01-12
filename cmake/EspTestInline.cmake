@@ -39,14 +39,15 @@ MACRO(ESP_TEST_INLINE VARIABLE)
         ENDFOREACH(KEYWORD)
              
         IF(TEST_${VARIABLE})
-            SET(${VARIABLE} ${CHK_INLINE_KEYWORD})
+	    SET(${VARIABLE} ${CHK_INLINE_KEYWORD} CACHE STRING "inline keyword")
             MESSAGE(STATUS "Checking for inline keyword - using ${CHK_INLINE_KEYWORD}")
         ELSE(TEST_${VARIABLE})
 	    SET(${VARIABLE} " ")
             MESSAGE(FATAL_ERROR "Checking for inline keyword - none found")
         ENDIF(TEST_${VARIABLE})
 
-    ENDIF(NOT DEFINED TEST_${VARIABLE})        
+    ENDIF(NOT DEFINED TEST_${VARIABLE})
+    MARK_AS_ADVANCED(${VARIABLE})
 ENDMACRO(ESP_TEST_INLINE VARIABLE)
 
 
