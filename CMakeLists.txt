@@ -1,22 +1,21 @@
-# Copyright (C) 2009,2010,2011,2012 The ESPResSo project
-# Copyright (C) 2009,2010 
-#  Max-Planck-Institute for Polymer Research, Theory Group
-#
+# Copyright (C) 2009,2010 The ESPResSo project
+# Copyright (C) 2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+
 # This file is part of ESPResSo.
-#
+
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-#
+
 # ESPResSo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 cmake_minimum_required(VERSION 2.6)
 
 project(ESPResSo)
@@ -26,14 +25,14 @@ set(PROJECT_VERSION "3.0.2")
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING 
-      "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
+
 
 ########################################################################
 # User input options                                                   #
 ########################################################################
-option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" ON)
+option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" OFF)
 option(WITH_TK     "Build with tk support" OFF)
 set(MYCONFIG "myconfig.h" CACHE STRING "default name of the local config file")
 if (NOT DEFINED DATA)
@@ -41,9 +40,15 @@ if (NOT DEFINED DATA)
 endif(NOT DEFINED DATA)
 set(SCRIPTDIR ${DATA}/scripts)
 
-# TODO: not portable
 enable_language(C)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99") 
+foreach(TEST_C99_FLAGS -std=gnu99 -std=c99 -c99 -AC99 -xc99=all -qlanglvl=extc99)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TEST_C99_FLAGS}")
+  try_compile(FOUND_C99_FLAG ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY} ${CMAKE_MODULE_PATH}/TestC99.c)
+  if(FOUND_C99_FLAG)
+    break()
+  endif(FOUND_C99_FLAG)
+  message(FATAL_ERROR "Compiler does not seem to support C99 standard.")
+endforeach(TEST_C99_FLAGS)
 
 find_package(FFTW3)
 if (FFTW3_FOUND)
@@ -51,7 +56,7 @@ if (FFTW3_FOUND)
     list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
     set(FFTW 3)
 else(FFTW3_FOUND)
-    message(STATUS "FFTW3 not found, disabling it.")
+    message(STATUS "FFTW3 not found, diabling it.")
 endif(FFTW3_FOUND)
 
 find_package(TCL REQUIRED)
@@ -69,7 +74,7 @@ IF(CMAKE_GENERATOR MATCHES "Visual Studio")
 ENDIF(CMAKE_GENERATOR MATCHES "Visual Studio")
 
 ########################################################################
-# Process MPI settings
+#Process MPI settings
 ########################################################################
 if(WITH_MPI)
   find_package(MPI)
