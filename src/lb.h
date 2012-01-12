@@ -278,7 +278,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v);
 /** Calculation of hydrodynamic modes */
 void lb_calc_modes(index_t index, double *mode);
 
-
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -614,6 +613,7 @@ int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
+void cython_lb_init(int dev);
 #endif
 #ifdef LB
 void lb_check_halo_regions();

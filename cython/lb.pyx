@@ -17,18 +17,17 @@ cdef extern from "../src/lb.h":
   int lb_lbfluid_get_agrid(double* _p_agrid)
   int lb_lbfluid_set_friction(double _friction)
   int lb_lbfluid_get_friction(double* _p_friction)
-  #void python_lb_init(char* _dev)
+  void cython_lb_init(int switch)
 
 cdef class LBparaHandle:
-  
+  cdef int switch
   def __init__(self, _dev):
-    #pass
-  #def __getitem__(self, _dev):
-   # python_lb_init(_dev)
-    cdef int _lattice_switch
-    cdef int _LATTICE_LB=1
-    cdef int _LATTICE_LB_GPU=2
-    #if(!(lattice_switch & LATTICE_LB_GPU)) lattice_switch = lattice_switch | LATTICE_LB;
+    if _dev == "gpu" :
+      switch=1
+      cython_lb_init(switch)
+    else: 
+      switch=0
+      cython_lb_init(switch)
 
   property tau:
     def __set__(self, double _tau):
@@ -68,3 +67,5 @@ cdef class LBparaHandle:
 class DeviceList:
   def __getitem__(self, _dev):
     return LBparaHandle(_dev)
+    
+  

@@ -127,8 +127,39 @@ static int failcounter=0;
 
 /* *********************** C Interface part *************************************/
 /* ******************************************************************************/
+void cython_lb_init(int dev){
+#ifdef LB
+  if(!(lattice_switch & LATTICE_LB_GPU)) lattice_switch = lattice_switch | LATTICE_LB;
+#else
+  lattice_switch = lattice_switch | LATTICE_LB_GPU;
+#endif
+  if(dev){
+#ifdef LB_GPU
+    lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
+#else
+    fprintf(stderr, "LB_GPU not compiled in!\n");
+#endif 
+  }else{
+#ifdef LB
+    lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
+#else
+    fprintf(stderr, "LB not compiled in!\n");
+#endif
+}
+  
+#if defined (LB) || defined (LB_GPU)
+  mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
+
+  /* thermo_switch is retained for backwards compatibility */
+  thermo_switch = (thermo_switch | THERMO_LB);
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+#else /* !defined LB||LB_GPU */
+  fprintf(stderr, "LB or LB_GPU not compiled in!\n");
+#endif
+}
 
 int lb_lbfluid_set_density(double p_dens) {
+  //printf("bin da %f\n", p_dens);
   if ( p_dens <= 0 ) {
     return -1;
   }
@@ -139,7 +170,7 @@ int lb_lbfluid_set_density(double p_dens) {
 #endif
   } else {
 #ifdef LB
-    lbpar.rho = p_dens;
+    lbpar.rho = 2*p_dens;
     mpi_bcast_lb_params(LBPAR_DENSITY);
 #endif
     }

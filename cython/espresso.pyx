@@ -89,7 +89,7 @@ cdef class EspressoHandle:
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
-lb=lbfluid.LBparaHandle()
+#lb=lbfluid.LBparaHandle()
 lb=lbfluid.DeviceList()
 
 def TclEval(string):
