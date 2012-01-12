@@ -144,6 +144,9 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 				double d[3], double dist, double force[3], double torque1[3], double torque2[3])
 
 {
+  if (dist > ia_params->GB_cut)   
+    return;
+  
   double a,b,c, X, Xcut,
     Brack,BrackCut,
     Bra12,Bra12Cut,
@@ -158,7 +161,6 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
     FikX,FikY,FikZ,			/*  help for forces        */
     Gx,Gy,Gz;			/*  help for torques       */
 
-  if (dist < ia_params->GB_cut) {  
     u1x = p1->r.quatu[0]; u1y = p1->r.quatu[1]; u1z = p1->r.quatu[2];
     u2x = p2->r.quatu[0]; u2y = p2->r.quatu[1]; u2z = p2->r.quatu[2]; 
     
@@ -242,12 +244,14 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       force[1] += Koef1 * d[1];
       force[2] += Koef1 * d[2];
     }
-  }
 }
 
 MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 			       double d[3], double dist)
 {
+  if (dist > ia_params->GB_cut)   
+    return 0;
+  
   double a,b,c, X, Xcut,
     Brack,BrackCut,
     u1x, u1y, u1z,
@@ -256,7 +260,6 @@ MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
     Plus1, Minus1,
     Plus2, Minus2;
 	
-  if (dist < ia_params->GB_cut) {  
     
     u1x = p1->r.quatu[0]; u1y = p1->r.quatu[1]; u1z = p1->r.quatu[2];
     u2x = p2->r.quatu[0]; u2y = p2->r.quatu[1]; u2z = p2->r.quatu[2]; 
@@ -285,8 +288,6 @@ MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
     BrackCut = BrackCut*(BrackCut-1);
 
     return E*(Brack-BrackCut);
-  }
-  return 0.0;
 }
 
 #endif

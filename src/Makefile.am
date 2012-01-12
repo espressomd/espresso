@@ -17,158 +17,159 @@
 #
 
 # List headers that are not used by the program here
+
 noinst_HEADERS = \
 	myconfig-default.h
 
 # List the sources of the Espresso binary here
 libEspresso_core_la_SOURCES = \
-	config.c config.h \
-	initialize.c initialize.h \
-	global.h \
-	tcl_interface/global_tcl.c tcl_interface/global_tcl.h \
-	communication.c communication.h \
-	tcl_interface/binary_file_tcl.c tcl_interface/binary_file_tcl.h \
-	interaction_data.c interaction_data.h\
-	tcl_interface/interaction_data_tcl.c tcl_interface/interaction_data_tcl.h\
-	verlet.c verlet.h \
-	grid.c grid.h \
-	tcl_interface/grid_tcl.c tcl_interface/grid_tcl.h \
-	integrate.c integrate.h \
-	tcl_interface/integrate_tcl.c tcl_interface/integrate_tcl.h \
-	tcl_interface/imd_tcl.c tcl_interface/imd_tcl.h \
-	tcl_interface/random_tcl.c tcl_interface/random_tcl.h \
-	tcl_interface/particle_data_tcl.c tcl_interface/particle_data_tcl.h \
-	tcl_interface/maggs_tcl.c tcl_interface/maggs_tcl.h \
-	tcl_interface/statistics_fluid_tcl.c tcl_interface/statistics_fluid_tcl.h \
-	tcl_interface/statistics_cluster_tcl.c tcl_interface/statistics_cluster_tcl.h \
-	tcl_interface/topology_tcl.c tcl_interface/topology_tcl.h \
-	tcl_interface/virtual_sites_com_tcl.c tcl_interface/virtual_sites_com_tcl.h \
-	cells.c cells.h \
-	tcl_interface/cells_tcl.c tcl_interface/cells_tcl.h \
-	ghosts.c ghosts.h \
-	forces.c forces.h \
-	rotation.c rotation.h \
-	debug.c debug.h \
-	particle_data.c	particle_data.h \
-	thermostat.c thermostat.h \
-	tcl_interface/thermostat_tcl.c tcl_interface/thermostat_tcl.h \
-	dpd.c dpd.h \
-	tcl_interface/dpd_tcl.c tcl_interface/dpd_tcl.h \
-	statistics.c statistics.h \
-	tcl_interface/statistics_tcl.c tcl_interface/statistics_tcl.h \
-	statistics_chain.c statistics_chain.h \
-	tcl_interface/statistics_chain_tcl.c tcl_interface/statistics_chain_tcl.h \
-	energy.c energy.h \
-	pressure.c pressure.h \
-	tcl_interface/pressure_tcl.c tcl_interface/pressure_tcl.h \
-	vmdsock.c vmdsock.h \
-	imd.c imd.h \
-	iccp3m.c iccp3m.h \
-	tcl_interface/iccp3m_tcl.c tcl_interface/iccp3m_tcl.h \
-	fft-common.c fft-common.h \
-	fft.c fft.h \
-	fft-dipolar.c fft-dipolar.h \
-	p3m-common.c p3m-common.h \
-	p3m.c p3m.h \
-	tcl_interface/p3m_tcl.c tcl_interface/p3m_tcl.h \
-	p3m-dipolar.c p3m-dipolar.h \
-	tcl_interface/p3m-dipolar_tcl.c tcl_interface/p3m-dipolar_tcl.h \
-	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
-	tcl_interface/magnetic_non_p3m_methods_tcl.c tcl_interface/magnetic_non_p3m_methods_tcl.h \
-	ewald.c ewald.h \
-	random.c random.h \
+	adresso.c adresso.h \
+	angle.h \
+	angledist.h \
+	bin.c bin.h \
+	binary_file.c binary_file.h \
 	blockfile.c blockfile.h \
-	tcl_interface/blockfile_tcl.c tcl_interface/blockfile_tcl.h \
-	polymer.c polymer.h \
-	tcl_interface/polymer_tcl.c tcl_interface/polymer_tcl.h \
-	specfunc.c specfunc.h \
-	tuning.c tuning.h \
-	uwerr.c	uwerr.h \
-	tcl_interface/uwerr_tcl.c tcl_interface/uwerr_tcl.h \
-	parser.c parser.h \
-	domain_decomposition.c domain_decomposition.h \
-	tcl_interface/domain_decomposition_tcl.c tcl_interface/domain_decomposition_tcl.h \
-	nsquare.c nsquare.h \
-	layered.c layered.h \
-	mmm-common.c mmm-common.h \
-	mmm1d.c mmm1d.h \
-	tcl_interface/mmm1d_tcl.c tcl_interface/mmm1d_tcl.h \
-	mmm2d.c	mmm2d.h \
-	tcl_interface/mmm2d_tcl.c tcl_interface/mmm2d_tcl.h \
-	modes.c	modes.h \
-	topology.c topology.h \
-	nemd.c nemd.h \
-	tcl_interface/nemd_tcl.c tcl_interface/nemd_tcl.h \
-	statistics_cluster.c statistics_cluster.h \
-	elc.c elc.h \
-	mdlc_correction.c  mdlc_correction.h \
-	statistics_molecule.c statistics_molecule.h \
-	errorhandling.c	errorhandling.h \
+	bmhtf-nacl.h \
+	buckingham.h \
+	cells.c cells.h \
+	communication.c communication.h \
+	comfixed.h \
+	comforce.h \
+	config.c config.h \
 	constraint.c constraint.h \
-	tcl_interface/constraint_tcl.c tcl_interface/constraint_tcl.h \
+	debug.c debug.h \
+	debye_hueckel.h \
+	dihedral.h \
+	domain_decomposition.c domain_decomposition.h \
+	dpd.c dpd.h \
+	elc.c elc.h \
+	endangledist.h \
+	energy.c energy.h \
+	errorhandling.c	errorhandling.h \
+	ewald.c ewald.h \
+	fene.h \
+	fft.c fft.h \
+	fft-common.c fft-common.h \
+	fft-dipolar.c fft-dipolar.h \
+	forces.c forces.h \
+	gb.h \
+	ghosts.c ghosts.h \
+	global.h \
+	grid.c grid.h \
+	halo.c halo.h \
+	harmonic.h \
+	hertzian.h \
+	iccp3m.c iccp3m.h \
+	imd.c imd.h \
+	initialize.c initialize.h \
+	integrate.c integrate.h \
+	interaction_data.c interaction_data.h\
+	lattice.c lattice.h \
+	layered.c layered.h \
+	lb.c lb.h \
+	lb-boundaries.c lb-boundaries.h \
+	lb-d3q18.h lb-d3q19.h \
+	lbgpu_cfile.c \
+	lj.c lj.h \
+	ljangle.c ljangle.h \
+	ljcos.c ljcos.h \
+	ljcos2.c ljcos2.h \
+	ljgen.c ljgen.h \
+	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
+	mdlc_correction.c  mdlc_correction.h \
 	maggs.c maggs.h \
-	mol_cut.h \
-	rattle.c rattle.h \
+	metadynamics.c metadynamics.h \
+	mmm1d.c mmm1d.h \
+	mmm2d.c	mmm2d.h \
+	mmm-common.c mmm-common.h \
+	modes.c	modes.h \
 	molforces.c molforces.h \
+	mol_cut.h \
+	morse.h \
+	nemd.c nemd.h \
+  npt.h \
+	nsquare.c nsquare.h \
+	overlap.h \
+	p3m.c p3m.h \
+	p3m-common.c p3m-common.h \
+	p3m-dipolar.c p3m-dipolar.h \
+	parser.c parser.h \
+	particle_data.c	particle_data.h \
+	polymer.c polymer.h \
+	polynom.h \
+	pressure.c pressure.h \
+	pwdist.h \
+	random.c random.h \
+	rattle.c rattle.h \
+	reaction_field.h \
+	rotation.c rotation.h \
+	soft_sphere.h \
+	specfunc.c specfunc.h \
+	statistics.c statistics.h \
+	statistics_chain.c statistics_chain.h \
+	statistics_cluster.c statistics_cluster.h \
+	statistics_fluid.c statistics_fluid.h \
+	statistics_molecule.c statistics_molecule.h \
+	steppot.h \
+	subt_lj.h \
+	tab.h \
+	thermostat.c thermostat.h \
+	topology.c topology.h  \
+	tunable_slip.h \
+	tuning.c tuning.h \
+	utils.c utils.h \
+	uwerr.c	uwerr.h \
+	verlet.c verlet.h \
 	virtual_sites.c virtual_sites.h \
 	virtual_sites_com.c virtual_sites_com.h \
 	virtual_sites_relative.c virtual_sites_relative.h \
-	metadynamics.c metadynamics.h \
-	tcl_interface/metadynamics_tcl.c tcl_interface/metadynamics_tcl.h \
-        npt.h \
-	lb.c lb.h \
-	tcl_interface/lb_tcl.c tcl_interface/lb_tcl.h \
-	lb-d3q18.h lb-d3q19.h \
-	bin.c bin.h \
-	tcl_interface/bin_tcl.c tcl_interface/bin_tcl.h \
-	lattice.c lattice.h \
-	halo.c halo.h \
-	statistics_fluid.c statistics_fluid.h \
-	lb-boundaries.c lb-boundaries.h \
-	tcl_interface/lb-boundaries_tcl.c tcl_interface/lb-boundaries_tcl.h \
-	lbgpu_cfile.c \
-	utils.c utils.h \
-	angle.h \
-	pwdist.h \
-	angledist.h \
-	endangledist.h \
-	buckingham.h \
-	comfixed.h \
-	comforce.h \
-	debye_hueckel.h \
-	reaction_field.h \
-	dihedral.h \
-	fene.h \
-	gb.h \
-	harmonic.h \
-	hertzian.h \
-	imd.h \
-	ljcos2.c ljcos2.h \
-	tcl_interface/ljcos2_tcl.c tcl_interface/ljcos2_tcl.h \
-	ljcos.c ljcos.h \
-	tcl_interface/ljcos_tcl.c tcl_interface/ljcos_tcl.h \
-	lj.c lj.h \
-	tcl_interface/lj_tcl.c tcl_interface/lj_tcl.h \
-	ljgen.c ljgen.h \
-	tcl_interface/ljgen_tcl.c tcl_interface/ljgen_tcl.h \
-	steppot.h \
-	bmhtf-nacl.h \
-	morse.h \
-	tcl_interface/morse_tcl.c tcl_interface/morse_tcl.h \
-	polynom.h \
-	soft_sphere.h \
-	subt_lj.h \
-	tab.h \
-	tcl_interface/tab_tcl.c tcl_interface/tab_tcl.h \
-	overlap.h \
-	ljangle.c ljangle.h \
-	tcl_interface/ljangle_tcl.c tcl_interface/ljangle_tcl.h \
-	adresso.c adresso.h \
-	tcl_interface/adresso_tcl.c tcl_interface/adresso_tcl.h \
-	tunable_slip.h \
-	tcl_interface/cuda_init_tcl.h \
-	tclinterface/initialize_interpreter.h tcl_interface/initialize_interpreter.c \
-	myconfig-final.h
+	vmdsock.c vmdsock.h
+
+libEspresso_core_la_SOURCES+= \
+	tcl/adresso_tcl.c tcl/adresso_tcl.h \
+	tcl/bin_tcl.c tcl/bin_tcl.h \
+	tcl/binary_file_tcl.c tcl/binary_file_tcl.h \
+	tcl/blockfile_tcl.c tcl/blockfile_tcl.h \
+	tcl/cells_tcl.c tcl/cells_tcl.h \
+	tcl/constraint_tcl.c tcl/constraint_tcl.h \
+	tcl/cuda_init_tcl.h \
+	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
+	tcl/dpd_tcl.c tcl/dpd_tcl.h \
+	tcl/global_tcl.c tcl/global_tcl.h \
+	tcl/grid_tcl.c tcl/grid_tcl.h \
+	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \
+	tcl/imd_tcl.c tcl/imd_tcl.h \
+	tcl/initialize_interpreter.h tcl/initialize_interpreter.c \
+	tcl/integrate_tcl.c tcl/integrate_tcl.h \
+	tcl/interaction_data_tcl.c tcl/interaction_data_tcl.h \
+	tcl/lb-boundaries_tcl.c tcl/lb-boundaries_tcl.h \
+	tcl/lb_tcl.c tcl/lb_tcl.h \
+	tcl/lj_tcl.c tcl/lj_tcl.h \
+	tcl/ljangle_tcl.c tcl/ljangle_tcl.h \
+	tcl/ljcos2_tcl.c tcl/ljcos2_tcl.h \
+	tcl/ljcos_tcl.c tcl/ljcos_tcl.h \
+	tcl/ljgen_tcl.c tcl/ljgen_tcl.h \
+	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
+	tcl/maggs_tcl.c tcl/maggs_tcl.h \
+	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
+	tcl/mmm2d_tcl.c tcl/mmm2d_tcl.h \
+	tcl/morse_tcl.c tcl/morse_tcl.h \
+	tcl/nemd_tcl.c tcl/nemd_tcl.h\
+	tcl/p3m-dipolar_tcl.c tcl/p3m-dipolar_tcl.h \
+	tcl/p3m_tcl.c tcl/p3m_tcl.h \
+	tcl/particle_data_tcl.c tcl/particle_data_tcl.h \
+	tcl/polymer_tcl.c tcl/polymer_tcl.h \
+	tcl/pressure_tcl.c tcl/pressure_tcl.h \
+	tcl/random_tcl.c tcl/random_tcl.h \
+	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
+	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
+	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
+	tcl/statistics_tcl.c tcl/statistics_tcl.h \
+	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
+	tcl/tab_tcl.c tcl/tab_tcl.h \
+	tcl/topology_tcl.c tcl/topology_tcl.h \
+	tcl/uwerr_tcl.c tcl/uwerr_tcl.h \
+	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
 
 
 #################################################################

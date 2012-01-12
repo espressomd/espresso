@@ -18,7 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include "virtual_sites_com.h"
-#include "tcl_interface/virtual_sites_com_tcl.h"
 
 #ifdef VIRTUAL_SITES_COM
 

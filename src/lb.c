@@ -43,8 +43,6 @@
 #include "lb-boundaries.h"
 #include "lb.h"
 #include "lbgpu.h"
-#include "tcl_interface/lb_tcl.h"
-#include "tcl_interface/lb-boundaries_tcl.h"
 
 #ifdef LB
 

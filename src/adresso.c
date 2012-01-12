@@ -23,7 +23,7 @@
     Implementation of adresso.h
 */
 
-#include "tcl_interface/adresso_tcl.h"
+#include "adresso.h"
 #include "communication.h"
 #include "parser.h"
 #include "cells.h"

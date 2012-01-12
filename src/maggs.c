@@ -57,7 +57,6 @@
 #include "particle_data.h"
 #include "communication.h"
 #include "maggs.h"
-#include "tcl_interface/maggs_tcl.h"
 #include "thermostat.h"
 #include "cells.h"
 #include "domain_decomposition.h"

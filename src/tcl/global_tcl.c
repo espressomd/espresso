@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,12 +27,13 @@
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "pressure.h"
+#include "pressure_tcl.h"
 #include "rattle.h"
 #include "lattice.h"
 #include "adresso.h"
 #include "integrate_tcl.h"
 #include "grid_tcl.h"
-#include "tcl_interface/domain_decomposition_tcl.h"
+#include "domain_decomposition_tcl.h"
 
 /**********************************************
  * description of variables
