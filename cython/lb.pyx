@@ -33,7 +33,7 @@ cdef extern from "../src/lb.h":
 
 cdef class LBparaHandle:
   cdef int switch
-  cdef int checkpoint_binary
+  cdef int checkpoint_binary=0
   cdef char* checkpoint_filename
   
   def __init__(self, _dev):
