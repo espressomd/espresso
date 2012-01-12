@@ -254,14 +254,16 @@ the command line.
 \index{features} \index{myconfig.h} \index{configuration header} \es
 has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
-features, as this will negatively affect \es's performance.  Instead,
-compile in only the features that are actually required.  For the
+features, as this will slow down \es significantly.  Instead,
+compile in only the features that are actually required. 
+A strong gain in speed can be achieved, by disabling all non-bonded interactions except for a single one, e.g., LENNARD_JONES.
+For the
 developers, it is also possible to turn on or off a number of
 debugging messages.  The features and debug messages can be controlled
 via a configuration header file that contains C-preprocessor
 declarations. Appendix \vref{chap:features} lists and describes all
 available features.  When no configuration header is provided by the
-user, a default header will be used that turns on the default
+user, a default header, found in src/myconfig-default.h, will be used that turns on the default
 features.  The file \texttt{myconfig-sample.h} in the source directory
 contains a list of all possible features that can be copied into your
 own configuration file.
