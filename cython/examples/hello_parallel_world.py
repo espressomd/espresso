@@ -11,7 +11,8 @@ N=100
 es.glob.time_step=0.01
 es.glob.skin=1.
 es.glob.box_l=[10., 10., 10.]
-
+es.lb["cpu"].dens=1
+print es.lb["cpu"].dens
 for i in range(N):
   es.part[i].pos=numpy.random.random(3)*es.glob.box_l
 

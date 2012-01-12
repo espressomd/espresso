@@ -36,6 +36,7 @@
 #include "uwerr_tcl.h"
 #include "virtual_sites_com_tcl.h"
 #include "cuda_init_tcl.h"
+#include "tcl/cuda_init_tcl.h"
 
 
 #define REGISTER_COMMAND(name, routine)					\
