@@ -6,6 +6,7 @@ import interaction_data
 cimport interaction_data
 import global_variables
 from integrate import integrate
+from changeVolume import changeVolume
 
 import debye_hueckel
 import lbfluid

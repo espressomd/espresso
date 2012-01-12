@@ -99,7 +99,7 @@ typedef struct {
 } dp3m_data_struct;
 
 /** dipolar P3M parameters. */
-dp3m_data_struct dp3m;
+extern dp3m_data_struct dp3m;
 
 /** \name Exported Functions */
 /************************************************************/

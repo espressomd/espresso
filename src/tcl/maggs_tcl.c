@@ -85,8 +85,17 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
   }
 	
   coulomb.method = COULOMB_MAGGS;
-	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh);
+
+    if (f_mass <=0.) {
+        Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
+        return TCL_ERROR;
+    } 
+    if(mesh<0) {
+        Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+        return TCL_ERROR;
+    }
+
+  return maggs_set_parameters(coulomb.bjerrum, f_mass, mesh);
 }
 
 #endif // ELECTROSTATICS

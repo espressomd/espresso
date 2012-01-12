@@ -21,6 +21,7 @@ ext_modules=[
     Extension("debye_hueckel", ["debye_hueckel.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("lb", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("integrate", ["integrate.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
 ]
 
 setup(
