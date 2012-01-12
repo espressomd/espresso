@@ -27,6 +27,8 @@
  *  \ref forces.c
 */
 
+#include "utils.h"
+
 #ifdef LENNARD_JONES
 
 /* These headers are needed to define types used in this header, hence

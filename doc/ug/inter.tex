@@ -1439,7 +1439,7 @@ using the \texttt{part} command to set the dipole moment \texttt{dip},
   inter magnetic \var{l_B} p3m 
   \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1471,7 +1471,7 @@ Note that dipolar P3M does not work with non-cubic boxes.
   \opt{r_cut \var{r_\mathrm{cut}}} \opt{mesh \var{mesh}} \opt{cao
     \var{cao}} \opt{alpha \var{\alpha}}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1490,7 +1490,7 @@ in \cite{cerda08a}.
   inter magnetic mdlc \var{accuracy} \var{gap\_size}
   \opt{\var{far\_cutoff}}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1517,7 +1517,7 @@ As a reference for the DLC method, see \cite{brodka04a}.
 \begin{essyntax}
   inter magnetic \var{l_{B}} dawaanr
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1538,7 +1538,7 @@ In a non-periodic system, the DAWAANR-method gives the exact result.
 \begin{essyntax}
   inter magnetic \var{l_{B}} mdds n\_cut \var{value\_n\_cut}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
     \required{MAGNETIC_DIPOLAR_DIRECT_SUM}
   \end{features}
 \end{essyntax}

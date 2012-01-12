@@ -31,7 +31,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu])
+AM_INIT_AUTOMAKE([1.10 gnu subdir-objects])
 AM_MAINTAINER_MODE
 
 cat <<EOF
@@ -163,7 +163,6 @@ cat <<EOF
 EOF
 
 LT_INIT
-AM_PATH_PYTHON
 AC_PROG_AWK
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -480,13 +479,14 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
+AM_PATH_PYTHON
 AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
-	cython/Makefile
 	tools/Makefile
 	scripts/Makefile 
+	cython/Makefile 
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile

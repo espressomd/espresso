@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,23 +18,34 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "bin.h"
+#ifndef _LJCOS2_TCL_H
+#define _LJCOS2_TCL_H
+
+/** \file ljcos2.h
+ *  Routines to calculate the lennard-jones with cosine tail energy and/or  force 
+ *  for a particle pair.  Cosine tail is different from that in ljcos.h
+ *  Used for attractive tail/tail interactions in lipid bilayer calculations
+ *  \ref forces.c
+*/
+
 #include "utils.h"
 
-void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins)
-{
-  int i;
-  realloc_doublelist(dl, dl->n = bins + 1);
-  for (i = 0; i <= bins; i++)
-    dl->e[i] = min_bin + ((max_bin - min_bin)/bins)*i;
-}
+#ifdef LJCOS2
+#include <math.h>
 
-void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins)
-{
-  int i;
-  realloc_doublelist(dl, dl->n = bins + 1);
-  for (i = 0; i <= bins; i++)
-    dl->e[i] = min_bin*pow(max_bin/min_bin, ((double)i)/bins);
-}
+/* These headers are needed to define types used in this header, hence
+ * they are included here.  */
+#include "particle_data.h"
+#include "interaction_data.h"
+
+int tclprint_to_result_ljcos2IA(Tcl_Interp *interp, int i, int j);
 
 
+int tclcommand_inter_parse_ljcos2(Tcl_Interp * interp,
+		       int part_type_a, int part_type_b,
+		       int argc, char ** argv);
+
+
+
+#endif /* ifdef LJCOS2 */
+#endif

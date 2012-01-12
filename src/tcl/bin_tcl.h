@@ -18,33 +18,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _LJGEN_TCL_H
-#define _LJGEN_TCL_H
+#ifndef _BIN_TCL_H
+#define _BIN_TCL_H
 
-/** \file ljgen.h Routines to calculate the generalized lennard jones
- *  energy and/or force for a particle pair. "Generalized" here means
- *  that the LJ energy is of the form
- *
- *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
- *
- *  \ref forces.c
+#include <tcl.h>
+
+/** Implementation of the tcl command bin, which can be used
+    to bin data into arbitrary bins
 */
-
-#ifdef LENNARD_JONES_GENERIC
-
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
-
-int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j);
-
-int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
-
+int tclcommand_bin(ClientData data, Tcl_Interp *interp,
+	int argc, char **argv);
 
 #endif
-
-/* LJGEN_H */
-#endif 

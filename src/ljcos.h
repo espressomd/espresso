@@ -26,8 +26,9 @@
  *  \ref forces.c
 */
 
-#ifdef LJCOS
+#include "config.h"
 
+#ifdef LJCOS
 /* These headers are needed to define types used in this header, hence
  * they are included here.  */
 #include "particle_data.h"

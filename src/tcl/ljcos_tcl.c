@@ -23,7 +23,7 @@
 
 #ifdef LJCOS
 #include "ljcos.h"
-#include "tcl_interface/ljcos_tcl.h"
+#include "ljcos_tcl.h"
 #include "parser.h"
 #include "communication.h"
 

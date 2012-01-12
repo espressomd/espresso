@@ -47,7 +47,6 @@
 /**********************************************************************/
 
 #define PARTIAL_PERIODIC
-#define MAGNETOSTATICS
 #define ELECTROSTATICS
 #define ROTATION
 #define ROTATIONAL_INERTIA
