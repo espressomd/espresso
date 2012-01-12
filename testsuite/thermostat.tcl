@@ -25,7 +25,7 @@ puts "------------------------------------------------"
 # we expect to stay in this confidence interval (times stddeviation)
 # 3 gives a chance of less than 1 % of failure
 set confidence 3
-set maxstep 200
+set maxstep 500
 set intstep 100
 
 # for checkin unwanted energy contributions
@@ -128,17 +128,26 @@ if { [catch {
     # here you can create a new snapshot
     # write_data $filename
 
-    set rel_temp_error [expr abs(([setmd temp] - $mean)/[setmd temp])]
-    puts "thermostat temperature:          [setmd temp]"
-    puts "measured temperature:            $mean"
-    puts "fluctuations per DOF:            [expr $stddev*sqrt($n_part*$deg_free)]"
-    puts "relative temperature deviation:  $rel_temp_error"
+    set temp_error [expr abs([setmd temp] - $mean)]
+    set expected_sigma [expr sqrt(2.0/($n_part*$deg_free))]
 
-    set epsilon [expr $confidence*sqrt(2)/sqrt($n_part*$deg_free*$maxstep)]
-    puts "expected interval of deviation:  $epsilon"
+    puts "thermostat temperature:      [setmd temp]"
+    puts "measured temperature:        $mean"
+    puts "fluctuations per DOF:        [expr $stddev*sqrt($n_part*$deg_free)]"
+    puts "observed sigma:              $stddev"
+    puts "expected sigma:              $expected_sigma"
 
-    if { $rel_temp_error > $epsilon } {
-	error "relative temperature error too large"
+    set epsilon [expr $confidence*$expected_sigma/sqrt($maxstep)]
+    puts "expected maximal deviation:  $epsilon"
+    puts "temperature deviation:       $temp_error"
+
+    if { $temp_error > $epsilon } {
+	puts "The temperature was outside the expected interval."
+	puts "This does not mean the thermostat is not working -"
+	puts "there is a chance of around 1% that this happens"
+	puts "If you observe this more often, you should however"
+	puts "GET NERVOUS!"
+	error "temperature error too large"
     }
   
 } res ] } {
