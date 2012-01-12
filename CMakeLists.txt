@@ -22,74 +22,28 @@ cmake_minimum_required(VERSION 2.6)
 project(ESPResSo)
 set(PROJECT_VERSION "3.0.2")
 
+enable_language(C)
+
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+######################################################################
+# User input options                                                   
+######################################################################
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-
-########################################################################
-# User input options                                                   #
-########################################################################
-option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" OFF)
+option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" ON)
 option(WITH_TK     "Build with tk support" OFF)
-set(MYCONFIG "myconfig.h" CACHE STRING "default name of the local config file")
-if (NOT DEFINED DATA)
-  set(DATA "share/espresso")
-endif(NOT DEFINED DATA)
-set(SCRIPTDIR ${DATA}/scripts)
 
-enable_language(C)
-foreach(TEST_C99_FLAGS -std=gnu99 -std=c99 -c99 -AC99 -xc99=all -qlanglvl=extc99)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TEST_C99_FLAGS}")
-  try_compile(FOUND_C99_FLAG ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY} ${CMAKE_MODULE_PATH}/TestC99.c)
-  if(FOUND_C99_FLAG)
-    break()
-  endif(FOUND_C99_FLAG)
-  message(FATAL_ERROR "Compiler does not seem to support C99 standard.")
-endforeach(TEST_C99_FLAGS)
+# choose the name of the config file
+set(ESPRESSO_MYCONFIG_NAME "myconfig.h"
+  CACHE STRING "Default name of the local config file")
 
-find_package(FFTW3)
-if (FFTW3_FOUND)
-    include_directories(${FFTW3_INCLUDE_DIR})
-    list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
-    set(FFTW 3)
-else(FFTW3_FOUND)
-    message(STATUS "FFTW3 not found, diabling it.")
-endif(FFTW3_FOUND)
-
-find_package(TCL REQUIRED)
-include_directories(${TCL_INCLUDE_PATH})
-list(APPEND LIBRARIES ${TCL_LIBRARY})
-
-########################################################################
-# Fix stupid flags on MSVC
-########################################################################
-IF(CMAKE_GENERATOR MATCHES "Visual Studio")
-    STRING(REPLACE /MD /MT CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
-    SET(CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} CACHE STRING "" FORCE)
-    STRING(REPLACE /MD /MT CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-    SET(CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} CACHE STRING "" FORCE)   
-ENDIF(CMAKE_GENERATOR MATCHES "Visual Studio")
-
-########################################################################
-#Process MPI settings
-########################################################################
-if(WITH_MPI)
-  find_package(MPI)
-  if(MPI_FOUND)
-    list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
-    list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
-    include_directories(${MPI_INCLUDE_PATH})
-    list(APPEND LIBRARIES ${MPI_LIBRARIES})
-    set(MPI "external")
-  else(MPI_FOUND)
-    message(FATAL_ERROR "MPI support requested, but no MPI compiler found.")
-  endif(MPI_FOUND)
-endif(WITH_MPI)
-
+###################################################################### 
+# Compiler characteristics
+######################################################################
 include(TestC99)
 test_c99(C99_FLAG)
 if(C99_FLAG)
@@ -103,13 +57,55 @@ include(EspTestInline)
 esp_test_inline(MDINLINE)
 message(STATUS "Inline keyword: ${MDINLINE}")
 
-########################################################################
-# Basic system tests (standard libraries, headers, functions, types)   #
-########################################################################
-message(STATUS "Using config file: ${MYCONFIG}")
-if (NOT EXISTS ${CMAKE_BINARY_DIR}/${MYCONFIG})
-  message(FATAL_ERROR "Could not find ${MYCONFIG} in ${CMAKE_BINARY_DIR}")
-endif (NOT EXISTS ${CMAKE_BINARY_DIR}/${MYCONFIG})
+######################################################################
+# Fix stupid flags on MSVC
+######################################################################
+IF(CMAKE_GENERATOR MATCHES "Visual Studio")
+    STRING(REPLACE /MD /MT CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
+    SET(CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} CACHE STRING "" FORCE)
+    STRING(REPLACE /MD /MT CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
+    SET(CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} CACHE STRING "" FORCE)   
+ENDIF(CMAKE_GENERATOR MATCHES "Visual Studio")
+
+######################################################################
+# Libraries
+######################################################################
+#
+find_package(FFTW3)
+if (FFTW3_FOUND)
+    include_directories(${FFTW3_INCLUDE_DIR})
+    list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
+    set(FFTW 3)
+else(FFTW3_FOUND)
+    message(STATUS "FFTW3 not found, diabling it.")
+endif(FFTW3_FOUND)
+
+find_package(TCL REQUIRED)
+include_directories(${TCL_INCLUDE_PATH})
+list(APPEND LIBRARIES ${TCL_LIBRARY})
+
+#######################################################################
+# Process MPI settings
+#######################################################################
+if(WITH_MPI)
+  find_package(MPI)
+  if(MPI_FOUND)
+    list(APPEND CMAKE_C_FLAGS ${MPI_COMPILE_FLAGS})
+    list(APPEND CMAKE_EXE_LINKER_FLAGS ${MPI_LINK_FLAGS})
+    include_directories(${MPI_INCLUDE_PATH})
+    list(APPEND LIBRARIES ${MPI_LIBRARIES})
+    set(MPI_SOURCE)
+  else(MPI_FOUND)
+    message(FATAL_ERROR "MPI support requested, but no MPI compiler found.")
+  endif(MPI_FOUND)
+else(WITH_MPI)
+  include_directories(${CMAKE_SOURCE_DIR}/src/mpifake)  
+  set(MPI_SOURCE src/mpifake/mpi.c)
+endif(WITH_MPI)
+
+#######################################################################
+# Basic system tests (standard libraries, headers, functions, types)
+#######################################################################
 
 include(CheckIncludeFiles)
 check_include_files("arpa/inet.h;ctype.h;errno.h;fcntl.h;float.h;inttypes.h;limits.h;math.h;netdb.h;netinet/in.h;signal.h;stddef.h;stdio.h;stdlib.h;string.h;strings.h;sys/file.h;sys/resource.h;sys/socket.h;sys/time.h;sys/types.h;time.h;unistd.h" HAVE_HEADERS)
@@ -145,8 +141,64 @@ foreach(FUNC sqrt)
 endforeach(FUNC)
 list(APPEND LIBRARIES ${MATH_LIBRARIES})
 
-add_subdirectory(src)
+
+######################################################################
+# Specify install locations and which subdirectories to process
+######################################################################
+if (NOT DEFINED DATA)
+  set(DATA "share/espresso")
+endif(NOT DEFINED DATA)
+set(SCRIPTDIR ${DATA}/scripts)
+
 add_subdirectory(scripts)
+
+######################################################################
+# Compile binary
+######################################################################
+# generate acconfig.h
+configure_file(${CMAKE_SOURCE_DIR}/src/acconfig.h.in ${CMAKE_BINARY_DIR}/src/acconfig.h)
+
+# include dirs
+include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src)
+
+# collect source files
+file(GLOB ESPRESSO_SOURCES src/*.c)
+file(GLOB NOT_ESPRESSO_SOURCES src/*_test.c)
+file(GLOB ESPRESSO_TCL_SOURCES src/tcl/*.c)
+list(REMOVE_ITEM ESPRESSO_SOURCES ${NOT_ESPRESSO_SOURCES})
+
+# compile executable
+set_source_files_properties(src/scriptsdir.c PROPERTIES 
+  COMPILE_DEFINITIONS
+  ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_SOURCE_DIR}/scripts")
+add_executable(Espresso 
+  ${ESPRESSO_SOURCES} 
+  ${ESPRESSO_TCL_SOURCES} 
+  ${MPI_SOURCE}
+  )
+target_link_libraries(Espresso ${LIBRARIES})
+add_dependencies(Espresso scripts)
+
+# handle myconfig
+add_dependencies(Espresso myconfig-header)
+
+
+install(TARGETS Espresso RUNTIME DESTINATION bin)
 
 enable_testing()
 add_subdirectory(testsuite)
+
+######################################################################
+# Handling of myconfig
+###################################################################### 
+# Execute FindMyConfig.cmake whenever ESPResSo is built
+add_custom_target(myconfig-header
+  COMMAND ${CMAKE_COMMAND} 
+  -D SOURCE_DIR=${CMAKE_SOURCE_DIR}
+  -D BINARY_DIR=${CMAKE_BINARY_DIR}
+  -D MYCONFIG_NAME=${ESPRESSO_MYCONFIG_NAME}
+  -P ${CMAKE_SOURCE_DIR}/cmake/FindMyConfig.cmake
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+  COMMENT "Determining config file."
+  )
+
