@@ -132,10 +132,6 @@ list(APPEND LIBRARIES ${MATH_LIBRARIES})
 
 add_subdirectory(src)
 add_subdirectory(scripts)
-add_executable(Espresso src/scriptsdir.c)
-set_source_files_properties(src/scriptsdir.c PROPERTIES COMPILE_DEFINITIONS
-  ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_SOURCE_DIR}/scripts")
-target_link_libraries(Espresso libespresso)
+
 enable_testing()
 add_subdirectory(testsuite)
-

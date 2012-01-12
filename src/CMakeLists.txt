@@ -33,10 +33,11 @@ endif(WITH_MPI)
 ########################################################################
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/acconfig.h.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/acconfig.h)
-file(GLOB ESPRESSO_SOURCES *.c)
-file(GLOB ESPRESSO_SOURCES tcl/*.c)
-file(GLOB NOT_ESPRESSO_SOURCES blockfile_test.c scriptsdir.c)
+file(GLOB ESPRESSO_SOURCES *.c tcl/*.c)
+#file(GLOB ESPRESSO_SOURCES tcl/*.[ch])
+file(GLOB NOT_ESPRESSO_SOURCES blockfile_test.c scriptsdir.c main.c)
 list(REMOVE_ITEM ESPRESSO_SOURCES ${NOT_ESPRESSO_SOURCES})
+
 add_custom_command(OUTPUT scriptsdir-install.c 
   COMMAND ${CMAKE_COMMAND} -E copy_if_different 
   ${CMAKE_CURRENT_SOURCE_DIR}/scriptsdir.c ${CMAKE_CURRENT_BINARY_DIR}/scriptsdir-install.c
@@ -44,14 +45,25 @@ add_custom_command(OUTPUT scriptsdir-install.c
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES scriptsdir-install.c)
 include_directories(${CMAKE_BINARY_DIR}) #for myconfig.h
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}) #for all header
+
 set_source_files_properties(scriptsdir-install.c PROPERTIES COMPILE_DEFINITIONS
   ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_PREFIX_PATH}/${SCRIPTDIR}")
 
-add_library(libespresso STATIC ${ESPRESSO_SOURCES} ${CMAKE_BINARY_DIR}/${MYCONFIG} ${MPI_SOURCE})
-target_link_libraries(libespresso ${LIBRARIES})
-set_target_properties(libespresso PROPERTIES OUTPUT_NAME espresso)
+#add_library(libespresso STATIC ${ESPRESSO_SOURCES} ${CMAKE_BINARY_DIR}/${MYCONFIG} ${MPI_SOURCE})
+#target_link_libraries(libespresso ${LIBRARIES})
+#set_target_properties(libespresso PROPERTIES OUTPUT_NAME espresso)
 
-add_executable(Espresso-install scriptsdir-install.c)
-target_link_libraries(Espresso-install libespresso)
-install(TARGETS Espresso-install RUNTIME DESTINATION bin)
-set_target_properties(Espresso-install PROPERTIES OUTPUT_NAME Espresso)
+add_executable(Espresso scriptsdir.c main.c ${ESPRESSO_SOURCES} ${CMAKE_BINARY_DIR}/${MYCONFIG} ${MPI_SOURCE})
+target_link_libraries(Espresso ${LIBRARIES})
+
+set_source_files_properties(scriptsdir.c PROPERTIES COMPILE_DEFINITIONS
+  ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_SOURCE_DIR}/scripts")
+#target_link_libraries(Espresso libespresso)
+
+
+
+
+#add_executable(Espresso-install scriptsdir-install.c)
+#target_link_libraries(Espresso-install libespresso)
+#install(TARGETS Espresso-install RUNTIME DESTINATION bin)
+#set_target_properties(Espresso-install PROPERTIES OUTPUT_NAME Espresso)
