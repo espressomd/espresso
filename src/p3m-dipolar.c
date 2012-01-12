@@ -63,7 +63,7 @@
 #define REQ_P3M_SPREAD_D 2021
 
 
-extern dp3m_data_struct dp3m;
+dp3m_data_struct dp3m;
 
 
 /** \name Private Functions */
