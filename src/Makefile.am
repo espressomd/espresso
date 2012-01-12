@@ -243,7 +243,7 @@ SUFFIXES=.cu
 CUDA_OBJECTS= \
 	cuda_init.o \
 	lbgpu.o \
-	tcl_interface/cuda_init_tcl.o 
+	tcl/cuda_init_tcl.o 
 
-libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o tcl_interface/cuda_init_tcl.o 
+libEspresso_core_la_LIBADD += cuda_init.o lbgpu.o tcl/cuda_init_tcl.o 
 endif
