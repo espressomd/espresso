@@ -1257,11 +1257,12 @@ int lb_sanity_checks() {
       ERROR_SPRINTF(errtxt, "{103 LB requires domain-decomposition cellsystem} ");
       ret = -1;
     } 
-    else if (dd.use_vList) {
+    else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
       errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{104 LB requires no Verlet Lists} ");
+      ERROR_SPRINTF(errtxt, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
       ret = -1;
-    }    
+    }
+
 
     if (thermo_switch & ~THERMO_LB) {
       errtxt = runtime_error(128);

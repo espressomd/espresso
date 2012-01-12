@@ -234,6 +234,10 @@ void on_integration_start()
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
+    if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
+    }
   }
 #endif
 #ifdef LB_GPU
