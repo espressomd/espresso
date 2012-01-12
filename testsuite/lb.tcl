@@ -92,14 +92,14 @@ for {set i 0} {$i < [setmd n_nodes]} { incr i } {
 eval $cmd
 
 setmd time_step $time_step
+setmd skin $skin
+
+cellsystem domain_decomposition -no_verlet_list
 
 # Simulation box
 #############################################################
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
-setmd skin $skin
-
-cellsystem domain_decomposition -no_verlet_list
 
 # Particles
 #############################################################
@@ -176,14 +176,20 @@ for { set i 1 } { $i <= $int_times } { incr i } {
     if { $dmass > $max_dmass } { set max_dmass $dmass }
 
     # check total momentum conservation
-    set mom [analyze momentum]
+    set p_mom [analyze momentum particles]
+    set f_mom [analyze fluid momentum]
+ 
+    set momx [expr [lindex $p_mom 0]+[lindex $f_mom 0]]
+    set momy [expr [lindex $p_mom 1]+[lindex $f_mom 1]]
+    set momz [expr [lindex $p_mom 2]+[lindex $f_mom 2]]
+
     #puts "fluid: [analyze fluid momentum]"
     #puts "parts: [analyze momentum particles]"
-    set dmx [expr abs([lindex $mom 0]-[lindex $tot_mom 0])]
-    set dmy [expr abs([lindex $mom 1]-[lindex $tot_mom 1])]
-    set dmz [expr abs([lindex $mom 2]-[lindex $tot_mom 2])]
+    set dmx [expr abs( $momx-[lindex $tot_mom 0])]
+    set dmy [expr abs( $momy-[lindex $tot_mom 1])]
+    set dmz [expr abs( $momz-[lindex $tot_mom 2])]
     if { $dmx > $mom_prec || $dmy > $mom_prec || $dmz > $mom_prec } {
-	error "momentum deviation too large $mom $tot_mom $dmx $dmy $dmz"
+	error "momentum deviation too large $p_mom $f_mom $dmx $dmy $dmz"
     }
     if { $dmx > $max_dmx } { set max_dmx $dmx }
     if { $dmy > $max_dmy } { set max_dmy $dmy }
