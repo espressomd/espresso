@@ -7,6 +7,7 @@ cimport interaction_data
 import global_variables
 from integrate import integrate
 from changeVolume import changeVolume
+from invalidateSystem import invalidateSystem
 
 import debye_hueckel
 #cimport myconfig
