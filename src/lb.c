@@ -142,6 +142,8 @@ void cython_lb_init(int dev){
   }else{
 #ifdef LB
     lattice_switch = (lattice_switch & ~LATTICE_LB_GPU) | LATTICE_LB;
+    //temp use verlet list hardcoded switched for cpu code 
+    dd.use_vList = 0;
 #else
     fprintf(stderr, "LB not compiled in!\n");
 #endif
@@ -159,7 +161,6 @@ void cython_lb_init(int dev){
 }
 
 int lb_lbfluid_set_density(double p_dens) {
-  //printf("bin da %f\n", p_dens);
   if ( p_dens <= 0 ) {
     return -1;
   }
@@ -170,7 +171,7 @@ int lb_lbfluid_set_density(double p_dens) {
 #endif
   } else {
 #ifdef LB
-    lbpar.rho = 2*p_dens;
+    lbpar.rho = p_dens;
     mpi_bcast_lb_params(LBPAR_DENSITY);
 #endif
     }
@@ -482,7 +483,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 	return 0;
 }
 
-int lb_lbfluid_print_vtk_velocity(char* filename) {
+int lb_lbfluid_print_vtk_velocity(char* filename){
 
   FILE* fp = fopen(filename, "w");
 
@@ -528,7 +529,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 	return 0;
 }
 
-int lb_lbfluid_print_boundary(char* filename) {
+int lb_lbfluid_print_boundary(char* filename){
 	  FILE* fp = fopen(filename, "w");
 	
 	  if(fp == NULL)
@@ -579,7 +580,7 @@ int lb_lbfluid_print_boundary(char* filename) {
 	return 0;
 }
 
-int lb_lbfluid_print_velocity(char* filename) {
+int lb_lbfluid_print_velocity(char* filename){
     FILE* fp = fopen(filename, "w");
 
 	   if(fp == NULL)
