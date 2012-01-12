@@ -1,21 +1,22 @@
-# Copyright (C) 2009,2010 The ESPResSo project
-# Copyright (C) 2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
-
+# Copyright (C) 2009,2010,2011,2012 The ESPResSo project
+# Copyright (C) 2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
+#
 # This file is part of ESPResSo.
-
+#
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
+#
 # ESPResSo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
 cmake_minimum_required(VERSION 2.6)
 
 project(ESPResSo)
@@ -88,6 +89,15 @@ if(WITH_MPI)
     message(FATAL_ERROR "MPI support requested, but no MPI compiler found.")
   endif(MPI_FOUND)
 endif(WITH_MPI)
+
+include(TestC99)
+test_c99(C99_FLAG)
+if(C99_FLAG)
+  message(STATUS "Compiler option for C99: ${C99_FLAG}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C99_FLAG}")
+else(C99_FLAG)
+  message(FATAL_ERROR "Compiling ESPResSo requires a C99 compiler.")
+endif(C99_FLAG)
 
 include(EspTestInline)
 esp_test_inline(MDINLINE)
