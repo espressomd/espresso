@@ -15,15 +15,6 @@ cdef class GlobalsHandle:
       global time_step
       return time_step
 
-  property skin:
-    def __set__(self, double _skin):
-      global skin
-      skin=_skin
-      mpi_bcast_parameter(28)
-    def __get__(self): 
-      global skin
-      return skin
-
   property box_l:
     def __set__(self, _box_l):
       global box_l
@@ -32,6 +23,24 @@ cdef class GlobalsHandle:
       mpi_bcast_parameter(0)
     def __get__(self):
       return np.array([box_l[0], box_l[1], box_l[2]])
+
+  property cell_grid:
+    def __get__(self):
+      return \
+      np.array( [ \
+      dd.cell_grid[0], \
+      dd.cell_grid[1], \
+      dd.cell_grid[2]  \
+      ] )
+
+  property skin:
+    def __set__(self, double _skin):
+      global skin
+      skin=_skin
+      mpi_bcast_parameter(28)
+    def __get__(self): 
+      global skin
+      return skin
 
 
 
