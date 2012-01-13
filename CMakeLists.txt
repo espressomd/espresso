@@ -187,7 +187,6 @@ add_dependencies(Espresso myconfig-header scripts)
 
 install(TARGETS Espresso RUNTIME DESTINATION bin)
 
-enable_testing()
 add_subdirectory(testsuite)
 
 ######################################################################
