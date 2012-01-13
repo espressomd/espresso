@@ -74,4 +74,31 @@ int list_gpus(Tcl_Interp *interp)
   }
   return TCL_OK;
 }
+/**wrapper for cython interface call of cuda functions*/
+
+int setdevice(int dev){
+  
+  cudaError_t error;
+  error = cudaSetDevice(dev);
+  if (error == cudaSuccess) {
+    return 0;
+  }
+  else {
+    printf("cuda setdevice error: %s\n", cudaGetErrorString(error));
+    return 1;
+  }
+}
+
+int getdevice(int* dev){
+  
+  cudaError_t error;
+  error = cudaGetDevice(dev);
+  if (error == cudaSuccess) {
+    return 0;
+  }
+  else {
+    printf("cuda getdevice error: %s\n", cudaGetErrorString(error));
+    return 1;
+  }
+}
 

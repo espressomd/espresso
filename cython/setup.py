@@ -22,6 +22,7 @@ ext_modules=[
     Extension("lb", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("integrate", ["integrate.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("cuda_init", ["cuda_init.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
 ]
 
 setup(

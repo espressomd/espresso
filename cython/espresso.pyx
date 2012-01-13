@@ -10,6 +10,7 @@ from changeVolume import changeVolume
 
 import debye_hueckel
 import lbfluid
+import cuda_init
 #cimport myconfig
 #import utils
 
@@ -91,6 +92,7 @@ _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
 lb=lbfluid.DeviceList()
+cu=cuda_init.CudaInitHandle()
 
 def TclEval(string):
   if instance_counter == 0:

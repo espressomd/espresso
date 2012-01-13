@@ -23,5 +23,7 @@
     available devices. */
 int check_gpu(int dev);
 int list_gpus(Tcl_Interp *interp);
+int setdevice(int dev);
+int getdevice(int* dev);
 
 #endif
