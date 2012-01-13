@@ -20,13 +20,13 @@
 /** \file thermostat.c
     Implementation of \ref thermostat.h "thermostat.h"
  */
-#include "thermostat_tcl.h"
+#include <math.h>
+#include "utils.h"
+
 #include "communication.h"
 #include "lattice.h"
 #include "npt.h"
 
-#include <math.h>
-#include "utils.h"
 #include "particle_data.h"
 #include "parser.h"
 #include "random.h"
@@ -37,6 +37,14 @@
 #include "dpd.h"
 #include "dpd_tcl.h"
 #include "virtual_sites.h"
+#include "thermostat_tcl.h"
+
+
+int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data)
+{
+  Tcl_AppendResult(interp, "variable is readonly: use the thermostat command to set thermostat parameters.", (char *) NULL);
+  return (TCL_ERROR);
+}
 
 
 int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 

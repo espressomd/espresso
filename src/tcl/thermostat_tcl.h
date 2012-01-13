@@ -73,10 +73,6 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
 /** Callback marking setting the temperature as outdated */
 int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 
-/** overwrite the forces of a particle with
-    the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
-*/
-
 #if defined(LB) || defined(LB_GPU)
 int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
