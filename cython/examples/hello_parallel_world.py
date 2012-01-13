@@ -11,9 +11,8 @@ N=100
 es.glob.time_step=0.01
 es.glob.skin=1.
 es.glob.box_l=[10., 10., 10.]
+print es.cu.device_list
 es.cu.device=0
-print "cuda device:"
-print es.cu.device
 es.lb[dev].agrid=1
 es.lb[dev].dens=1
 es.lb[dev].visc=1
@@ -34,8 +33,8 @@ for i in range(N):
 es.inter[0,0].lennardJones = {"eps":1,"sigma":1,"shift":0.25}
 
 es._espressoHandle.Tcl_Eval("integrate 100")
-for i in range(N):
-  print es.part[i].pos
+#for i in range(N):
+#  print es.part[i].pos
 
 es._espressoHandle.die()
 

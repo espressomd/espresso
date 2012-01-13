@@ -102,3 +102,27 @@ int getdevice(int* dev){
   }
 }
 
+int getdevicelist(int* devl, char* devname){
+  
+  cudaError_t error;
+  int dev, deviceCount;
+  error = cudaGetDeviceCount(devl);
+  deviceCount=*devl;
+  for (dev = 0; dev < deviceCount; ++dev) {
+    if (check_gpu(dev)) {
+      cudaDeviceProp deviceProp;
+      cudaGetDeviceProperties(&deviceProp, dev);
+      //devname=deviceProp.name;
+      //devname[4 + 64];
+      sprintf(devname, " {%d %.64s}", dev, deviceProp.name);
+      //Tcl_AppendResult(interp, id, NULL);
+    }
+  }
+  if (error == cudaSuccess) {
+    return 0;
+  }
+  else {
+    printf("cuda getdevice error: %s\n", cudaGetErrorString(error));
+    return 1;
+  }
+}
