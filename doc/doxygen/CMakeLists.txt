@@ -1,8 +1,4 @@
-#!/bin/sh
-# Parse the background-error lines from the source files
-#
-# Copyright (C) 2011,2012 The ESPResSo project
-# Copyright (C) 2003,2004,2005,2006,2007,2008,2009,2010,2011 Axel Arnold
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,26 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SRCDIR=$1
-AWK=awk
-AWK_SCRIPT=$SRCDIR/background_errors.awk
-UNSORTED=background_errors.unsorted
-SORTED=background_errors.sorted
-DOC=background_errors.dox
-
-shift
-$AWK -f $AWK_SCRIPT "$@" > $UNSORTED
-sort $UNSORTED > $SORTED
-
-# OUTPUT
-cat <<EOF > $DOC
-/** \\page background_errors background_errors resolved
-<ul>
-EOF
-
-cat $SORTED >> $DOC
-
-cat <<EOF >> $DOC
-</ul>
-*/
-EOF
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+  add_custom_target(doxygen
+    COMMAND /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/background_errors.sh ${CMAKE_CURRENT_SOURCE_DIR} ${ESPRESSO_SOURCES}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    COMMENT "Running Doxygen."
+    )
+else(DOXYGEN_FOUND)
+  message(FATAL_ERROR "Doxygen is not available.")
+endif(DOXYGEN_FOUND)

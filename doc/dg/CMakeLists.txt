@@ -1,8 +1,4 @@
-#!/bin/sh
-# Parse the background-error lines from the source files
-#
-# Copyright (C) 2011,2012 The ESPResSo project
-# Copyright (C) 2003,2004,2005,2006,2007,2008,2009,2010,2011 Axel Arnold
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,26 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SRCDIR=$1
-AWK=awk
-AWK_SCRIPT=$SRCDIR/background_errors.awk
-UNSORTED=background_errors.unsorted
-SORTED=background_errors.sorted
-DOC=background_errors.dox
-
-shift
-$AWK -f $AWK_SCRIPT "$@" > $UNSORTED
-sort $UNSORTED > $SORTED
-
-# OUTPUT
-cat <<EOF > $DOC
-/** \\page background_errors background_errors resolved
-<ul>
-EOF
-
-cat $SORTED >> $DOC
-
-cat <<EOF >> $DOC
-</ul>
-*/
-EOF
+latexit(dg ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies(doc dg)
