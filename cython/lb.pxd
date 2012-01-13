@@ -1,15 +1,14 @@
-
-cdef extern from "../myconfig.h":
+cdef extern from "config.h":
   pass
 
-cdef extern from "../src/lb.h":
-  int lb_lbfluid_set_tau(double _tau)
-  int lb_lbfluid_set_density(double _dens)
-  int lb_lbfluid_get_density(double* _p_dens)
-  int lb_lbfluid_set_visc(double _visc)
-  int lb_lbfluid_get_visc(double* _p_visc)
-  int lb_lbfluid_set_agrid(double _agrid)
-  int lb_lbfluid_get_agrid(double* _p_agrid)
-  int lb_lbfluid_set_friction(double _friction)
-  int lb_lbfluid_get_friction(double* _p_friction)
-
+cdef extern from "lb.h":
+  int lb_lbfluid_set_tau(double p_tau)
+  int lb_lbfluid_set_density(double p_dens)
+  int lb_lbfluid_get_density(double* p_dens)
+  int lb_lbfluid_set_visc(double p_visc)
+  int lb_lbfluid_get_visc(double* p_visc)
+  int lb_lbfluid_set_agrid(double agrid)
+  int lb_lbfluid_get_agrid(double* p_agrid)
+  int lb_lbfluid_set_friction(double friction)
+  int lb_lbfluid_get_friction(double* p_friction)
+  void cython_lb_init(int switch)

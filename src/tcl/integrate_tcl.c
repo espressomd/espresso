@@ -26,6 +26,7 @@
 */
 
 #include "pressure.h"
+#include "pressure_tcl.h"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);

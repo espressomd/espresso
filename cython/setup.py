@@ -12,7 +12,6 @@ ext_params['include_dirs'] = [np.get_include()]
 ext_params['extra_compile_args'] = ["-fPIC"]
 ext_params["depends"] = ["myconfig.pxi"]
 #ext_params['extra_link_args'] = ["-Wl", "-Wl"]  # TODO: ad-neeeded ignored
-#ext_params['library_dirs'] = [ "..", "/usr/lib64" ]
 
 #include myconfig.pxi dependency!!
 
@@ -21,11 +20,13 @@ ext_modules=[
     Extension("particle_data", ["particle_data.pyx"], libraries=['espresso_main','tcl8.5', 'mpi' ], **ext_params),
     Extension("interaction_data", ["interaction_data.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("global_variables", ["global_variables.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
+    Extension("lbfluid", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
     Extension("debye_hueckel", ["debye_hueckel.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("integrate", ["integrate.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("cuda_init", ["cuda_init.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("invalidateSystem", ["invalidateSystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-	Extension("code_info", ["code_info.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("code_info", ["code_info.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
 ]
 
 setup(

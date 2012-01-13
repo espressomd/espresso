@@ -92,7 +92,7 @@ setmd skin $skin
 #############################################################
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
-cellsystem domain_decomposition -no_verlet_list
+#cellsystem domain_decomposition -no_verlet_list
 
 # Fluid
 #############################################################
