@@ -17,3 +17,4 @@
 #
 latexit(02-charged_system 
   ${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/../common)
+add_dependencies(tutorials 02-charged_system)
