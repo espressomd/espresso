@@ -1,3 +1,5 @@
+include "myconfig.pxi"
+
 cdef extern from "global.h":
     int FIELD_MAXNUMCELLS
     int FIELD_MINNUMCELLS
@@ -70,9 +72,20 @@ cdef extern from "dpd.h":
     extern int dpd_twf
 
 
-#FIXME this will only work with conditional compilation of address
-#cdef extern from "adresso.h":
-#    extern double adress_vars[7]
+IF LB:
+    cdef extern from "lb.h":
+        ctypedef struct LB_Parameters:
+            double tau
+        extern LB_Parameters lbpar
+
+IF LB_GPU:
+    cdef extern from "lbgpu.h":
+        ctypedef struct LB_parameters_gpu:
+            double tau
+        extern LB_parameters_gpu lbpar_gpu
+
+cdef extern from "adresso.h":
+    extern double adress_vars[7]
 
 
 cdef extern from "cells.h":

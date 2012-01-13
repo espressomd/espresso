@@ -484,6 +484,24 @@ if py_val != tcl_val:
   raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
 print (str(VarId)+" "+varname).ljust(20), "OK";
 
+varname="adress_vars";
+# get it
+py_val=es.glob.adress_vars;
+# check if it is accessible to the original Tcl interface
+tcl_val=es._espressoHandle.Tcl_Eval("setmd adress_vars").split();
+tcl_val=numpy.array([ \
+  float(tcl_val[0]), float(tcl_val[1]), 
+  float(tcl_val[2]), \
+  float(tcl_val[3]), \
+  float(tcl_val[4]), \
+  float(tcl_val[5]), \
+  float(tcl_val[6]) ]);
+VarId=VarId+1;
+for i in range(py_val.size):
+  if py_val[i] != tcl_val[i]:
+    raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
+print (str(VarId)+" "+varname).ljust(20), "OK";
+
 varname="max_cut_bonded";
 # get it
 py_val=es.glob.max_cut_bonded;
@@ -495,28 +513,8 @@ if py_val != tcl_val:
 print (str(VarId)+" "+varname).ljust(20), "OK";
 
 
-# FIXME with adress conditionally compiled in 
-#varname="adress_vars";
-## set the global variable 
-##es.glob.box_l=[10., 10., 10.]
-## get it
-#py_val=es.glob.adress_vars;
-## check if it is accessible to the original Tcl interface
-#tcl_val=es._espressoHandle.Tcl_Eval("setmd adress_vars").split();
-#tcl_val=numpy.array([ float(tcl_val[0]), float(tcl_val[1]), float(tcl_val[2]) ]);
-#VarId=VarId+1;
-#for i in range(py_val.size):
-#  if py_val[i] != tcl_val[i]:
-#    raise ValueError(varname + " FAILED\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
-#print (varname+'['+str(i)+']').ljust(20), "OK";
-#
-
-
-
-
-
-
-print("\n" + varname + ":\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
+# print the last varuable if desired
+# print("\n" + varname + ":\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
 
 
 print "\nTest the integration";

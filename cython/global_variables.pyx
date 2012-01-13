@@ -1,3 +1,5 @@
+include "myconfig.pxi"
+
 cimport global_variables
 import numpy as np
 
@@ -180,9 +182,6 @@ cdef class GlobalsHandle:
             for i in range(3):
                 if _periodic[i] != 1:
                     raise ValueError("Until we can handle conditional compilation, only periodicity [1,1,1] is supported in python interface")
-# FIXME replace the previous two lines by the following when we have dealt with the conditional compilation
-#                if _periodic[i] != 0 and _periodic[i] != 1:
-#                    raise ValueError("exach entry of periodicity has to be 0 or 1, got "+str(_periodic))
             for i in range(3):
                 periodicity[i]=_periodic[i];
             periodic=4*_periodic[2] + 2*_periodic[1] + _periodic[0]; 
@@ -231,9 +230,18 @@ cdef class GlobalsHandle:
 
     property time_step:
         def __set__(self, double _time_step):
-        #FIXME when conditional compilation works: comparison with LB_time_step
+            IF LB:
+                global lbpar
+            IF LB_GPU:
+                global lbpar_gpu
             if _time_step <= 0:
               raise ValueError("Time Step must be positive")
+            IF LB:
+                if lbpar.tau >= 0.0 and _time_step > lbpar.tau:
+                  raise ValueError("Time Step must be > LB_time_step ("+str(lbpar.tau)+")")
+            IF LB_GPU:
+                if lbpar_gpu.tau >= 0.0 and _time_step > lbpar_gpu.tau:
+                  raise ValueError("Time Step must be > LB_time_step ("+str(lbpar_gpu.tau)+")")
             mpi_set_time_step(_time_step)
         def __get__(self):
             global time_step
@@ -291,20 +299,19 @@ cdef class GlobalsHandle:
             global dpd_wf;
             return dpd_wf;
 
-#FIXME this will only work with conditional compilation of address
-#    property dpd_wf:
-#        def __get__(self):
-#            global adress_vars;
-#            return np.array( [ \
-#            adress_vars[0], \
-#            adress_vars[1], \
-#            adress_vars[2], \
-#            adress_vars[3], \
-#            adress_vars[4], \
-#            adress_vars[5], \
-#            adress_vars[6] \
-#            ])
-#  
+    property adress_vars:
+        def __get__(self):
+            global adress_vars;
+            return np.array( [ \
+            adress_vars[0], \
+            adress_vars[1], \
+            adress_vars[2], \
+            adress_vars[3], \
+            adress_vars[4], \
+            adress_vars[5], \
+            adress_vars[6] \
+            ])
+  
     property max_cut_bonded:
         def __get__(self):
             global max_cut_bonded;
