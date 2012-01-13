@@ -35,15 +35,16 @@ BLACKLIST=
 
 TESTLOG=runtest.log
 
-srcdir=@srcdir@
-ESPRESSO=@top_builddir@/Espresso
-ESMPIEXEC=@ESPRESSO_MPIEXEC@
+srcdir=@CMAKE_CURRENT_SOURCE_DIR@
+ESPRESSO=@CMAKE_BINARY_DIR@/Espresso
+ESMPIEXEC=@MPIEXEC@
+TESTSCRIPTDIR=@CMAKE_CURRENT_BINARY_DIR@
 
 # tests need to be run from the directory where this script is located
-cd ${0%runtest.sh}
+cd $TESTSCRIPTDIR
 
 # handle processors
-if test x@MPI_FAKE@ = "xyes" || test @CPU_COUNT@ = "1"; then 
+if test "x@MPI_FAKE@" = "xyes" || test "@CPU_COUNT@" = "1"; then 
   processors=1
 elif test "$1" = "-p"; then
   processors="$2"
@@ -88,7 +89,7 @@ for testcase in $testcases_old; do
 done
 
 # link all files from the src directory to the run directory, if they are not identical
-for file in `ls $srcdir/`; do
+for file in `ls $srcdir/*.tcl $srcdir/*.gz $srcdir/*.data $srcdir/*.tab`; do
     if test -f $srcdir/$file && ! test -f $file; then
 	echo @LN_S@ $srcdir/$file .
 	@LN_S@ $srcdir/$file .
@@ -107,9 +108,9 @@ for np in $processors; do
     succeeded=
     for testcase in $testcases; do
 	if test x@MPI_FAKE@ = "xyes"; then
-	  CMD="$ESPRESSO $srcdir/$testcase -quiet"
+	  CMD="$ESPRESSO $testcase -quiet"
 	else
-	  CMD="$ESMPIEXEC -n $np $ESPRESSO $srcdir/$testcase -quiet"
+	  CMD="$ESMPIEXEC -n $np $ESPRESSO $testcase -quiet"
 	fi
 	printf "%30s - " $testcase
 	echo "**************************************************" >> $TESTLOG
