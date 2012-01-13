@@ -50,7 +50,6 @@
 #include "initialize.h"
 #include "statistics_chain_tcl.h"
 #include "topology_tcl.h"
-#include "tcl/pressure_tcl.h"
 
 /** Variables for measuring the compressibility from volume fluctuations.
     Will be used by \ref parse_Vkappa exclusively. */
