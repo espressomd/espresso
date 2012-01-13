@@ -212,6 +212,8 @@ int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
     if (node_grid[0] != 1 || node_grid[1] != 1) {
       node_grid[0] = node_grid[1] = 1;
       node_grid[2] = n_nodes;
+      mpi_bcast_parameter(FIELD_NODEGRID);
+
       err = mpi_bcast_parameter(FIELD_NODEGRID);
     }
     else

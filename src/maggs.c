@@ -1353,10 +1353,10 @@ void maggs_calc_init_e_field()
   maggs_distribute_particle_charges();
 	
   dim = node_grid[1]*node_grid[0];
-  color = this_node/dim;
+  color = node_pos[2];
   rank  = this_node%dim;
   MPI_Comm_split(comm_cart, color, rank, &zplane);
-  color = rank/node_grid[0];
+  color = node_pos[1];
   rank  = rank%node_grid[0];
   MPI_Comm_split(zplane, color, rank, &yline);
 	
@@ -1387,7 +1387,7 @@ void maggs_calc_init_e_field()
 	localqz += lattice[index].charge / lattice[index].permittivity[2];
       }
     } 
-		
+
     MPI_Allreduce(&localqz, &qz, 1, MPI_DOUBLE, MPI_SUM, zplane);
     qz = qz/(maggs.mesh*maggs.mesh);
     qplane = qz*maggs.prefactor*invasq;
@@ -1414,7 +1414,7 @@ void maggs_calc_init_e_field()
 	  fflush(stderr);
 	}
     }
-		
+
     if(node_pos[1]!= 0) {
       MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[2], REQ_MAGGS_EQUIL, comm_cart, &status);
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
@@ -1429,7 +1429,7 @@ void maggs_calc_init_e_field()
 	index = maggs_get_linear_index(ix, iy, iz, lparams.dim);
 	localqy += lattice[index].charge / lattice[index].permittivity[1];
       }
-			
+
       MPI_Allreduce(&localqy, &qy, 1, MPI_DOUBLE, MPI_SUM, yline);
 			
       qy = qy/maggs.mesh;
@@ -1601,7 +1601,7 @@ void maggs_calc_init_e_field()
 	
   MPI_Allreduce(Eall,gEall,3,MPI_DOUBLE,MPI_SUM,comm_cart);
 	
-  FOR3D(k) gEall[k] /= (node_grid[0]*node_grid[1]*node_grid[2]*lparams.size[0]*lparams.size[1]*lparams.size[2]);
+  FOR3D(k) gEall[k] /= (n_nodes*lparams.size[0]*lparams.size[1]*lparams.size[2]);
 	
   FORALL_INNER_SITES(ix, iy, iz) {
     i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
@@ -2357,7 +2357,7 @@ void maggs_init()
 		
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
-    //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
+    //    if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
 }
 
 /** Frees the dynamically allocated memory

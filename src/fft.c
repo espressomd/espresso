@@ -99,9 +99,11 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     my_pos[0][i] = node_pos[i];
   }
   for(i=0;i<n_nodes;i++) {
-    n_id[0][i] = i;
+    int lin_ind;
     get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
-		 n_grid[0]);
+		 n_grid[0]); 
+    lin_ind = get_linear_index( n_pos[0][3*i+0],n_pos[0][3*i+1],n_pos[0][3*i+2], n_grid[0]);
+    n_id[0][lin_ind] = i;
   }
     
   /* FFT node grids (n_grid[1 - 3]) */
@@ -149,6 +151,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     permute_ifield(fft.plan[i].new_mesh,3,-(fft.plan[i].n_permute));
     permute_ifield(fft.plan[i].start,3,-(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0]*fft.plan[i].new_mesh[1];
+
+    FFT_TRACE( printf("%d: comm_group_size %d. comm_group( ",this_node ));
+    FFT_TRACE( for(j=0; j< fft_plan[i].g_size; j++) printf("%d "));
+    FFT_TRACE( printf(")\n"));
 
     /* === send/recv block specifications === */
     for(j=0; j<fft.plan[i].g_size; j++) {
@@ -467,6 +473,5 @@ void fft_back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in,
 		 &(plan_f.send_block[6*i+3]), plan_f.old_mesh, plan_f.element);
   }
 }
-
 
 #endif

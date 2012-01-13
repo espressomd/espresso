@@ -65,7 +65,7 @@
 
 int this_node = -1;
 int n_nodes = -1;
-
+MPI_Comm comm_cart;
 /**********************************************
  * slave callbacks.
  **********************************************/
@@ -188,8 +188,17 @@ void mpi_init(int *argc, char ***argv)
 #endif
 
   MPI_Init(argc, argv);
+
+  MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
+
+  int periodic[3]={1,1,1}, reorder = 1;
+  MPI_Dims_create(n_nodes, 3, node_grid);
+
+  MPI_Cart_create(MPI_COMM_WORLD, 3, node_grid, periodic, reorder, &comm_cart);
+
   MPI_Comm_rank(comm_cart, &this_node);
-  MPI_Comm_size(comm_cart, &n_nodes);
+
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
 #ifdef MPI_CORE
   MPI_Errhandler_create((MPI_Handler_function *)mpi_core, &mpi_errh);
@@ -2432,6 +2441,7 @@ void mpi_send_fluid_slave(int node, int index) {
   if (node==this_node) {
     double data[10];
     MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+
     lb_calc_n_equilibrium(index, data[0], &data[1], &data[4]);
   }
 #endif

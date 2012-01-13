@@ -2047,7 +2047,7 @@ void p3m_calc_local_ca_mesh() {
   int ind[3];
   /* total skin size */
   double full_skin[3];
-  
+
   for(i=0;i<3;i++)
     full_skin[i]= p3m.params.cao_cut[i]+skin+p3m.params.additional_mesh[i];
 

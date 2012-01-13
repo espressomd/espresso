@@ -44,7 +44,7 @@
  * variables
  **********************************************/
 
-int node_grid[3] = { -1, -1, -1};
+int node_grid[3] = { 0, 0, 0};
 int node_pos[3] = {-1,-1,-1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6]   = {0, 0, 0, 0, 0, 0};
@@ -62,12 +62,7 @@ double my_right[3]    = {1, 1, 1};
 
 void setup_node_grid()
 {
-  if (node_grid[0] < 0) {
-    /* auto setup, grid not set */
-    calc_3d_grid(n_nodes,node_grid);
-
-    mpi_bcast_parameter(FIELD_NODEGRID);
-  }
+  mpi_bcast_parameter(FIELD_NODEGRID);
 }
 
 int node_grid_is_set()
@@ -77,7 +72,7 @@ int node_grid_is_set()
 
 int map_position_node_array(double pos[3])
 {
-  int i, im[3]={0,0,0};
+  int i, im[3]={0,0,0}, rank;
   double f_pos[3];
 
   for (i = 0; i < 3; i++)
@@ -92,34 +87,33 @@ int map_position_node_array(double pos[3])
     else if (im[i] >= node_grid[i])
       im[i] = node_grid[i] - 1;
   }
+
   return map_array_node(im);
 }
 
 void map_node_array(int node, int pos[3])
 {
-  get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
+  //get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
+  MPI_Cart_coords(comm_cart, node, 3, pos);
 }
 
 int map_array_node(int pos[3]) {
-  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
+  int rank;
+  MPI_Cart_rank(comm_cart, pos, &rank);
+  return rank;
+  //  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
 }
 
 void calc_node_neighbors(int node)
 {
   int dir,j;
-  int n_pos[3];
   
   map_node_array(node,node_pos);
   for(dir=0;dir<3;dir++) {
-    for(j=0;j<3;j++) n_pos[j]=node_pos[j];
-    /* left neighbor in direction dir */
-    n_pos[dir] = node_pos[dir] - 1;
-    if(n_pos[dir]<0) n_pos[dir] += node_grid[dir];
-    node_neighbors[2*dir]     = map_array_node(n_pos);
-    /* right neighbor in direction dir */
-    n_pos[dir] = node_pos[dir] + 1;
-    if(n_pos[dir]>=node_grid[dir]) n_pos[dir] -= node_grid[dir];
-    node_neighbors[(2*dir)+1] = map_array_node(n_pos);
+    int buf;
+    MPI_Cart_shift(comm_cart, dir, -1, &buf, node_neighbors + 2*dir);
+    MPI_Cart_shift(comm_cart, dir, 1, &buf, node_neighbors + 2*dir + 1);
+
     /* left boundary ? */
     if (node_pos[dir] == 0) {
       boundary[2*dir] = 1;
@@ -135,6 +129,7 @@ void calc_node_neighbors(int node)
       boundary[2*dir+1] = 0;
     }
   }
+  GRID_TRACE(printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ", this_node, node_grid[0], node_grid[1], node_grid[2], node_pos[0], node_pos[1], node_pos[2]));
 }
 
 void grid_changed_box_l()
@@ -142,7 +137,8 @@ void grid_changed_box_l()
   int i;
 
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_box_l:\n",this_node));
-
+  GRID_TRACE(fprintf(stderr,"%d: node_pos %d %d %d\n", this_node, node_pos[0], node_pos[1], node_pos[2]));
+  GRID_TRACE(fprintf(stderr,"%d: node_grid %d %d %d\n", this_node, node_grid[0], node_grid[1], node_grid[2]));
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
     my_left[i]   = node_pos[i]    *local_box_l[i];
@@ -162,7 +158,16 @@ void grid_changed_box_l()
 
 void grid_changed_n_nodes()
 {
+  int per[3] = { 1, 1, 1 };
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_n_nodes:\n",this_node));
+
+  MPI_Comm_free(&comm_cart);
+  
+  MPI_Cart_create(MPI_COMM_WORLD, 3, node_grid, per, 0, &comm_cart);
+
+  MPI_Comm_rank(comm_cart, &this_node);
+
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
   calc_node_neighbors(this_node);
 
@@ -202,23 +207,6 @@ void calc_2d_grid(int n, int grid[3])
   while(i>=1) {
     if(n%i==0) { grid[0] = n/i; grid[1] = i; grid[2] = 1; return; }
     i--;
-  }
-}
-
-void calc_3d_grid(int n, int grid[3])
-{
-  int i,j,k,max;
-  max = 3*n*n + 1;
-  /* generate grid in ascending order */
-  for(i=1;i<=n;i++) {
-    for(j=i;j<=n;j++) { 
-      for(k=j;k<=n;k++) {
-	if(i*j*k == n && ((i*i)+(j*j)+(k*k)) < max) {
-	  grid[0] = k; grid[1] = j;grid[2] = i;
-	  max =  ((i*i)+(j*j)+(k*k));
-	}
-      }
-    }
   }
 }
 

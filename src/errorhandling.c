@@ -24,6 +24,7 @@
 #include <string.h>
 #include "utils.h"
 #include "errorhandling.h"
+#include "communication.h"
 
 /******************* exported variables **********************/
 /** buffer for error messages during the integration process. NULL if no errors occured. */
