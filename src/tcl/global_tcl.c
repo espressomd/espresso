@@ -34,6 +34,7 @@
 #include "integrate_tcl.h"
 #include "grid_tcl.h"
 #include "domain_decomposition_tcl.h"
+#include "thermostat_tcl.h"
 
 /**********************************************
  * description of variables
