@@ -19,7 +19,6 @@ ext_modules=[
     Extension("global_variables", ["global_variables.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("lbfluid", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
     Extension("debye_hueckel", ["debye_hueckel.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
-    Extension("lb", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("integrate", ["integrate.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("cuda_init", ["cuda_init.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
