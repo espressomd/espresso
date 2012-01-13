@@ -152,8 +152,8 @@ if (NOT DEFINED DATA)
   set(DATA "share/espresso")
 endif(NOT DEFINED DATA)
 set(SCRIPTDIR ${DATA}/scripts)
-
 add_subdirectory(scripts)
+add_subdirectory(doc)
 
 ######################################################################
 # Compile binary
