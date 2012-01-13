@@ -72,7 +72,7 @@ int node_grid_is_set()
 
 int map_position_node_array(double pos[3])
 {
-  int i, im[3]={0,0,0}, rank;
+  int i, im[3]={0,0,0};
   double f_pos[3];
 
   for (i = 0; i < 3; i++)
@@ -106,7 +106,7 @@ int map_array_node(int pos[3]) {
 
 void calc_node_neighbors(int node)
 {
-  int dir,j;
+  int dir;
   
   map_node_array(node,node_pos);
   for(dir=0;dir<3;dir++) {

@@ -38,10 +38,7 @@
 /** */
 /************************************************/
 /*@{*/
-#define LB
-#define DIPOLES
-#define ROTATION
-#define CONTRAINTS
+
 /** CELLS: Default value for the maximal number of cells per node. */
 #define CELLS_MAX_NUM_CELLS 32768
 

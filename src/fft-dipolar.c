@@ -102,9 +102,9 @@ int dfft_init(double **data,
     my_pos[0][i] = node_pos[i];
   }
   for(i=0;i<n_nodes;i++) {
-    n_id[0][i] = i;
     get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
 		 n_grid[0]);
+    n_id[0][get_linear_index( n_pos[0][3*i+0],n_pos[0][3*i+1],n_pos[0][3*i+2], n_grid[0])] = i;
   }
     
   /* FFT node grids (n_grid[1 - 3]) */
