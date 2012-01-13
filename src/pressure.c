@@ -161,11 +161,11 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     p_tensor_non_bonded.data_nb.e[i]  /= volume;
   
   /* gather data */
-  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   
-  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb, virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb, p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb, virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb, p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
 }
 
 /************************************************************/
@@ -1178,7 +1178,7 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
       if (total_pressure.init_status == 0)
 	master_pressure_calc(0);
       total_pressure.data.e[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
       for(i=0; i<3; i++)
 	if(nptiso.geometry & nptiso.nptgeom_dir[i])
 	  total_pressure.data.e[0] += p_vel[i];
@@ -1479,7 +1479,7 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
       if (total_pressure.init_status == 0)
 	master_pressure_calc(0);
       p_tensor.data.e[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
       for(i=0; i<3; i++)
 	if(nptiso.geometry & nptiso.nptgeom_dir[i])
 	  p_tensor.data.e[0] += p_vel[i];

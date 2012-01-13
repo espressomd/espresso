@@ -332,7 +332,7 @@ void announce_resort_particles()
 {
   int sum;
   
-  MPI_Allreduce(&resort_particles, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&resort_particles, &sum, 1, MPI_INT, MPI_SUM, comm_cart);
   resort_particles = (sum > 0) ? 1 : 0;
   
   INTEG_TRACE(fprintf(stderr,"%d: announce_resort_particles: resort_particles=%d\n",

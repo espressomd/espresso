@@ -46,6 +46,6 @@ char *runtime_error(int errlen)
 int check_runtime_errors()
 {
   int n_all_error_msg;
-  MPI_Allreduce(&n_error_msg, &n_all_error_msg, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&n_error_msg, &n_all_error_msg, 1, MPI_INT, MPI_SUM, comm_cart);
   return n_all_error_msg;
 }

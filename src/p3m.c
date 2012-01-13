@@ -1028,7 +1028,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag)
       }
         node_k_space_energy *= force_prefac;
 
-        MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
         if(this_node==0) {
             /* self energy correction */
             k_space_energy -= coulomb.prefactor*(p3m.sum_q2 * p3m.params.alpha * wupii);
@@ -1114,7 +1114,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag)
     }
   }
   
-  MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   if (energy_flag)
     en = 0.5*pref*(SQR(gbl_dm[0]) + SQR(gbl_dm[1]) + SQR(gbl_dm[2]));
@@ -1158,12 +1158,12 @@ void p3m_gather_fft_grid(double* themesh)
 	if((node_pos[s_dir/2]+evenodd)%2==0) {
 	  if(p3m.sm.s_size[s_dir]>0) 
 	    MPI_Send(p3m.send_grid, p3m.sm.s_size[s_dir], MPI_DOUBLE, 
-		     node_neighbors[s_dir], REQ_P3M_GATHER, MPI_COMM_WORLD);
+		     node_neighbors[s_dir], REQ_P3M_GATHER, comm_cart);
 	}
 	else {
 	  if(p3m.sm.r_size[r_dir]>0) 
 	    MPI_Recv(p3m.recv_grid, p3m.sm.r_size[r_dir], MPI_DOUBLE, 
-		     node_neighbors[r_dir], REQ_P3M_GATHER, MPI_COMM_WORLD, &status); 	    
+		     node_neighbors[r_dir], REQ_P3M_GATHER, comm_cart, &status); 	    
 	}
       }
     }
@@ -1200,12 +1200,12 @@ void p3m_spread_force_grid(double* themesh)
 	if((node_pos[r_dir/2]+evenodd)%2==0) {
 	  if(p3m.sm.r_size[r_dir]>0) 
 	    MPI_Send(p3m.send_grid, p3m.sm.r_size[r_dir], MPI_DOUBLE, 
-		     node_neighbors[r_dir], REQ_P3M_SPREAD, MPI_COMM_WORLD);
+		     node_neighbors[r_dir], REQ_P3M_SPREAD, comm_cart);
    	}
 	else {
 	  if(p3m.sm.s_size[s_dir]>0) 
 	    MPI_Recv(p3m.recv_grid, p3m.sm.s_size[s_dir], MPI_DOUBLE, 
-		     node_neighbors[s_dir], REQ_P3M_SPREAD, MPI_COMM_WORLD, &status); 	    
+		     node_neighbors[s_dir], REQ_P3M_SPREAD, comm_cart, &status); 	    
 	}
       }
     }
@@ -1964,7 +1964,7 @@ void p3m_count_charged_particles()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart    = (int)(tot_sums[0]+0.1);
   p3m.sum_q2       = tot_sums[1];
   p3m.square_sum_q = SQR(tot_sums[2]);
@@ -2219,10 +2219,10 @@ void p3m_calc_send_mesh()
       for(evenodd=0; evenodd<2;evenodd++) {
 	if((node_pos[i/2]+evenodd)%2==0)
 	  MPI_Send(&(p3m.local_mesh.margin[i]), 1, MPI_INT, 
-		   node_neighbors[i],REQ_P3M_INIT,MPI_COMM_WORLD);
+		   node_neighbors[i],REQ_P3M_INIT,comm_cart);
 	else
 	  MPI_Recv(&(p3m.local_mesh.r_margin[j]), 1, MPI_INT,
-		   node_neighbors[j],REQ_P3M_INIT,MPI_COMM_WORLD,&status);    
+		   node_neighbors[j],REQ_P3M_INIT,comm_cart,&status);    
       }
     }
     else {
@@ -2323,7 +2323,7 @@ void p3m_calc_kspace_stress (double* stress) {
                 }
             }
         }
-        MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
         for (i = 0; i < 9; i++) {
             stress[i] += k_space_stress[i] * force_prefac;
         }

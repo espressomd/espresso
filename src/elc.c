@@ -246,7 +246,7 @@ void distribute(int size)
 {
   double send_buf[8];
   copy_vec(send_buf, gblcblk, size);
-  MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
 #ifdef CHECKPOINTS
@@ -1718,7 +1718,7 @@ void  ELC_P3M_modify_p3m_sums_both()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart    += (int)(tot_sums[0]+0.1);
   p3m.sum_q2       += tot_sums[1];
   p3m.square_sum_q += SQR(tot_sums[2]);
@@ -1759,7 +1759,7 @@ void  ELC_P3M_modify_p3m_sums_image()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart    = (int)(tot_sums[0]+0.1);
   p3m.sum_q2       = tot_sums[1];
   p3m.square_sum_q = SQR(tot_sums[2]);
@@ -1801,7 +1801,7 @@ void  ELC_P3M_restore_p3m_sums()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart    -= (int)(tot_sums[0]+0.1);
   p3m.sum_q2       -= tot_sums[1];
   p3m.square_sum_q -= SQR(tot_sums[2]);

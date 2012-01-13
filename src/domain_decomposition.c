@@ -642,7 +642,7 @@ void dd_topology_init(CellPList *old)
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: Number of recieved cells=%d\n", this_node, old->n));
 
   /** broadcast the flag for using verlet list */
-  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, comm_cart);
  
   cell_structure.type             = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -856,12 +856,12 @@ void  dd_exchange_and_sort_particles(int global_flag)
     if(global_flag == CELL_GLOBAL_EXCHANGE) {
       if(this_node==0) {
 	int sum;
-	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, comm_cart);
 	if( sum < n_nodes ) finished=0; else finished=sum; 
       } else {
-	MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
       }
-      MPI_Bcast(&finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
     } else {
       if(finished == 0) {
 	char *errtext = runtime_error(128);
