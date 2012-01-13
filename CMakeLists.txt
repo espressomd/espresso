@@ -34,6 +34,9 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# On Mac OS X, first look for other packages, then frameworks
+set(CMAKE_FIND_FRAMEWORK LAST)
+
 option(WITH_MPI    "Build a parallel (message-passing) version of ESPResSo" ON)
 option(WITH_TK     "Build with tk support" OFF)
 
