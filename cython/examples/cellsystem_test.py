@@ -9,6 +9,10 @@ print dir(es)
 
 cs=es.cellsystem.Cellsystem()
 gh=es.global_variables.GlobalsHandle()
+
+# domain decomposition with verlet list: three equivalent commands
 cs.setDomainDecomposition()
-gh.skin=2.
-cs.setDomainDecomposition()
+cs.setDomainDecomposition(True)
+cs.setDomainDecomposition(useVerletList=True)
+
+
