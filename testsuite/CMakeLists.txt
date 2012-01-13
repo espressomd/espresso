@@ -68,4 +68,3 @@ add_custom_target(check
     COMMAND /bin/sh runtest.sh -p ${MPIEXEC_MAX_NUMPROCS} ${CMAKE_TESTS_TO_BE_RUN}
     COMMENT "Run some ESPResSo test cases on available processors."
 )
-add_dependencies(check testfiles)

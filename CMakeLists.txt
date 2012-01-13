@@ -177,8 +177,6 @@ add_dependencies(Espresso myconfig-header scripts)
 
 install(TARGETS Espresso RUNTIME DESTINATION bin)
 
-add_subdirectory(testsuite)
-
 ######################################################################
 # Handling of myconfig
 ###################################################################### 
@@ -202,3 +200,4 @@ endif(NOT DEFINED DATA)
 set(SCRIPTDIR ${DATA}/scripts)
 add_subdirectory(scripts)
 add_subdirectory(doc)
+add_subdirectory(testsuite)
