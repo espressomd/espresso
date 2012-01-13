@@ -110,9 +110,9 @@ FEATURES=[ \
 import re
 def feature_value(myconfig, f):
     without_c_comments=re.sub("/\*.*?\*/", " ", myconfig, flags=re.DOTALL)
-    without_cpp_comments=re.sub("//.*$", " ", without_c_comments)
+    without_cpp_comments=re.sub("//.*$", " ", without_c_comments, flags=re.DOTALL)
     found=re.search(".*(define) "+f,without_cpp_comments)
-    m=re.match(".*(#define)\s*("+f+")\s+(\w*)", myconfig, re.DOTALL)
+    m=re.match(".*(#define)\s*("+f+")\s+(\.*)", myconfig, re.DOTALL)
     if m:
         if m.group(3) != "":
             return m.group(3)

@@ -1,3 +1,4 @@
+include "myconfig.pxi"
 cimport numpy as np
 import numpy as np
 import particle_data
@@ -93,7 +94,8 @@ _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
 lb=lbfluid.DeviceList()
-cu=cuda_init.CudaInitHandle()
+IF LB_GPU == 1:
+    cu=cuda_init.CudaInitHandle()
 
 def TclEval(string):
   if instance_counter == 0:

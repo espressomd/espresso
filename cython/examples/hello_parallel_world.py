@@ -15,8 +15,8 @@ N=100
 es.glob.time_step=0.01
 es.glob.skin=1.
 es.glob.box_l=[10., 10., 10.]
-print es.cu.device_list
-es.cu.device=0
+#print es.cu.device_list
+#es.cu.device=0
 es.lb[dev].agrid=1
 es.lb[dev].dens=1
 es.lb[dev].visc=1
