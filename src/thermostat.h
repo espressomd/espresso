@@ -114,9 +114,6 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
 }
 #endif
 
-/** Callback marking setting the temperature as outdated */
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
-
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
 */
@@ -233,10 +230,6 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
       THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
-#endif
-
-#if defined(LB) || defined(LB_GPU)
-int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 
 #endif

@@ -55,12 +55,6 @@ double nptiso_pref4;
 #endif
 
 
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data)
-{
-  Tcl_AppendResult(interp, "variable is readonly: use the thermostat command to set thermostat parameters.", (char *) NULL);
-  return (TCL_ERROR);
-}
-
 void thermo_init_langevin() 
 {
   langevin_pref1 = -langevin_gamma/time_step;
