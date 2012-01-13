@@ -38,3 +38,6 @@ if (LATEX_COMPILER AND BIBTEX_COMPILER AND MAKEINDEX_COMPILER)
   add_subdirectory(dg)
   add_subdirectory(tutorials)
 endif(LATEX_COMPILER AND BIBTEX_COMPILER AND MAKEINDEX_COMPILER)
+
+add_subdirectory(doxygen)
+add_dependencies(doc doxygen)

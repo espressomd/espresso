@@ -146,16 +146,6 @@ list(APPEND LIBRARIES ${MATH_LIBRARIES})
 
 
 ######################################################################
-# Specify install locations and which subdirectories to process
-######################################################################
-if (NOT DEFINED DATA)
-  set(DATA "share/espresso")
-endif(NOT DEFINED DATA)
-set(SCRIPTDIR ${DATA}/scripts)
-add_subdirectory(scripts)
-add_subdirectory(doc)
-
-######################################################################
 # Compile binary
 ######################################################################
 # generate acconfig.h
@@ -169,6 +159,7 @@ file(GLOB ESPRESSO_SOURCES src/*.c)
 file(GLOB NOT_ESPRESSO_SOURCES src/*_test.c)
 file(GLOB ESPRESSO_TCL_SOURCES src/tcl/*.c)
 list(REMOVE_ITEM ESPRESSO_SOURCES ${NOT_ESPRESSO_SOURCES})
+list(APPEND ESPRESSO_SOURCES ${ESPRESSO_TCL_SOURCES})
 
 # compile executable
 set_source_files_properties(src/scriptsdir.c PROPERTIES 
@@ -176,7 +167,6 @@ set_source_files_properties(src/scriptsdir.c PROPERTIES
   ESPRESSO_SCRIPTS_DEFAULT="${CMAKE_BINARY_DIR}/scripts")
 add_executable(Espresso 
   ${ESPRESSO_SOURCES} 
-  ${ESPRESSO_TCL_SOURCES} 
   ${MPI_SOURCE}
   )
 target_link_libraries(Espresso ${LIBRARIES})
@@ -203,3 +193,12 @@ add_custom_target(myconfig-header
   COMMENT "Determining config file."
   )
 
+######################################################################
+# Specify install locations and which subdirectories to process
+######################################################################
+if (NOT DEFINED DATA)
+  set(DATA "share/espresso")
+endif(NOT DEFINED DATA)
+set(SCRIPTDIR ${DATA}/scripts)
+add_subdirectory(scripts)
+add_subdirectory(doc)
