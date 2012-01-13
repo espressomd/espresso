@@ -404,7 +404,7 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
   return 0;
 }
 
-int lb_lbfluid_print_vtk_boundary(char* filename) {
+int lb_lbfluid_print_vtk_boundary(char* filename) { //TODO: this must be fucked up
 	  FILE* fp = fopen(filename, "w");
 	
 	  if(fp == NULL)
@@ -2368,7 +2368,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 
 }
 
-int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v) { //TODO: this must be fucked up
   index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
@@ -2380,7 +2380,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   double pos[3];
 
 #ifdef LB_BOUNDARIES
-  int boundary_no;
+  int boundary_no; //TODO: this must be fucked up
   int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
 
   lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
@@ -2507,7 +2507,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
  * on average only one communication phase for the random numbers, which
  * probably makes this method preferable compared to the above one.
  */
-void calc_particle_lattice_ia() {
+void calc_particle_lattice_ia() { //TODO: this must be fucked up
   int i, c, np;
   Cell *cell ;
   Particle *p ;
@@ -2589,9 +2589,9 @@ void calc_particle_lattice_ia() {
       for (i=0;i<np;i++) {
 	/* for ghost particles we have to check if they lie
 	 * in the range of the local lattice nodes */
-	if (p[i].r.p[0] >= my_left[0]-lblattice.agrid && p[i].r.p[0] < my_right[0]
-	    && p[i].r.p[1] >= my_left[1]-lblattice.agrid && p[i].r.p[1] < my_right[1]
-	    && p[i].r.p[2] >= my_left[2]-lblattice.agrid && p[i].r.p[2] < my_right[2]) {
+ 	if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid //TODO: this must be fucked up Fixed?
+	    && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid
+	    && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid) {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
@@ -3071,7 +3071,7 @@ MDINLINE void lb_init_mode_transformation() {
   }
   
   fprintf(stderr,"e[%d][%d] = {\n",n_veloc,n_veloc);
-  for (i=0;i<n_veloc;i++) {
+  for (i=0;i<n_veloc;i++) { //TODO: this must be fucked up
     fprintf(stderr,"{ % .3f",e[i][0]);
     for (j=1;j<n_veloc;j++) {
       fprintf(stderr,", % .3f",e[i][j]);
