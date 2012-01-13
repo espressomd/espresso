@@ -31,8 +31,8 @@ puts "---------------------------------------------------------------"
 puts "- Testcase lb_stokes_sphere.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
-set w 32
-set l 32
+set w 16
+set l 16
 setmd box_l [ expr $w+2 ] $l $l
 setmd time_step 0.01
 thermostat lb 0.
@@ -46,9 +46,9 @@ lbfluid visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 t
 set v1 1.0
 lbboundary wall normal -1. 0. 0. dist [ expr -(+0.5+$w) ] velocity 0.00 $v1 0.
 lbboundary wall normal 1. 0. 0. dist 0.5 velocity 0. $v1 0.
-set radius 5.
-lbboundary sphere center 16 16 16 radius $radius direction +1
-integrate 10000
+set radius 2.5
+lbboundary sphere center 8 8 8 radius $radius direction +1
+integrate 1000
 puts "[ lindex [ lbboundary force 0 ] 1 ] [ lindex [ lbboundary force 1 ] 1 ]"
 set lbforce [ lindex [ lbboundary force 2 ] 1 ]
 set twoRoverH [expr 2*$radius/$w]
