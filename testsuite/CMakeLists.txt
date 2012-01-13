@@ -47,14 +47,8 @@ set(CMAKE_TESTS_TO_BE_RUN
 )
 
 # copy all test files to bin dir
-add_custom_target(testfiles COMMENT "Copying Tcl test scripts to builddir")
 file(GLOB TESTING_FILES *.gz *.chk *.data *.tab *.tcl)
-foreach(FILENAME ${TESTING_FILES})
-    add_custom_command(TARGET testfiles 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${FILENAME} ${CMAKE_CURRENT_BINARY_DIR}
-    )
-    install(FILES ${FILENAME} DESTINATION testsuite)
-endforeach(FILENAME)
+file(COPY ${TESTING_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 # create runtest.sh file in bin dir
 configure_file(
@@ -64,7 +58,8 @@ configure_file(
 
 #add tests
 add_custom_target(check
-    DEPENDS testfiles Espresso
     COMMAND /bin/sh runtest.sh -p ${MPIEXEC_MAX_NUMPROCS} ${CMAKE_TESTS_TO_BE_RUN}
     COMMENT "Run some ESPResSo test cases on available processors."
 )
+
+add_dependencies(check Espresso)
