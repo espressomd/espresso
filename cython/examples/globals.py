@@ -5,10 +5,13 @@ sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 import espresso as es
 import numpy
 
+# this should be replaced by a python call in future:
 es._espressoHandle.Tcl_Eval("thermostat langevin 1. 1.")
 
 N=10
 VarId=0;
+
+print "\nTest global variables: set them (if not RO) and compare the Tcl and python output:\n"
 
 es.glob.skin=1.
 varname="skin";
@@ -516,17 +519,7 @@ print (str(VarId)+" "+varname).ljust(20), "OK";
 # print the last varuable if desired
 # print("\n" + varname + ":\n" + "Tcl".ljust(10) + str(tcl_val) + "\n" +  "python".ljust(10) + str(py_val) + "\n");
 
-
-print "\nTest the integration";
-
-for i in range(N):
-  es.part[i].pos=numpy.random.random(3)*es.glob.box_l
-
-es.inter[0,0].lennardJones = {"eps":1,"sigma":1,"shift":0.25}
-
-es._espressoHandle.Tcl_Eval("integrate 100")
-for i in range(N):
-  print es.part[i].pos
+print "Everything OK"
 
 es._espressoHandle.die()
 
