@@ -1,15 +1,12 @@
 
-cdef extern from *:
-    void IFDEF_ELECTROSTATICS "#ifdef ELECTROSTATICS //" () 
-    void ENDIF "#endif //" () 
-    void ELS "#else //" () 
+include "myconfig.pxi"
 
-def electrostatics():
-    IFDEF_ELECTROSTATICS()
-    return True
-    ELS()
-    return False
-    ENDIF()
 
+def electrostatics_defined():
+    IF ELECTROSTATICS == 1:
+        return True
+    ELSE:
+        return FALSE
+    
 
 

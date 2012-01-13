@@ -10,8 +10,11 @@ import numpy as np
 ext_params = {}
 ext_params['include_dirs'] = [np.get_include()]
 ext_params['extra_compile_args'] = ["-fPIC"]
+ext_params["depends"] = ["myconfig.pxi"]
 #ext_params['extra_link_args'] = ["-Wl", "-Wl"]  # TODO: ad-neeeded ignored
 #ext_params['library_dirs'] = [ "..", "/usr/lib64" ]
+
+#include myconfig.pxi dependency!!
 
 ext_modules=[
     Extension("espresso", ["espresso.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),

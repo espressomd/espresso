@@ -23,6 +23,14 @@ all: pythonlib
 
 .PHONY: pythonlib
 
+BUILT_SOURCES = $(abs_srcdir)/myconfig.pxi 
+
+$(abs_srcdir)/myconfig.pxi: myconfig.pxi
+	cp myconfig.pxi $(abs_srcdir)/myconfig.pxi
+
+myconfig.pxi: $(abs_top_builddir)/src/myconfig-final.h
+	$(PYTHON) $(abs_top_srcdir)/cython/make_myconfig.py $(abs_top_builddir)/src/myconfig-final.h
+
 PYTHON_SETUP=CC='$(CC) $(CPPFLAGS)' $(PYTHON) setup.py
 
 pythonlib:

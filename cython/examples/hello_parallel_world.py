@@ -4,6 +4,10 @@ sys.setdlopenflags((sys.getdlopenflags() | ctypes.RTLD_GLOBAL ))
 
 import espresso as es
 import numpy
+import code_info
+
+print code_info.electrostatics_defined()
+exit()
 
 es._espressoHandle.Tcl_Eval("thermostat langevin 1. 1.")
 
