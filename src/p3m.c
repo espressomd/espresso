@@ -1934,8 +1934,6 @@ void calc_local_ca_mesh() {
   int ind[3];
   /* total skin size */
   double full_skin[3];
-  printf("%d: calc_local_ca_mesh()\n", this_node);
-  printf("%d: my_left %g %g %g. my_right %g %g %g\n", this_node, my_left[0], my_left[1], my_left[2], my_right[0], my_right[1], my_right[2]);
 
   for(i=0;i<3;i++)
     full_skin[i]= p3m.cao_cut[i]+skin+p3m.additional_mesh[i];

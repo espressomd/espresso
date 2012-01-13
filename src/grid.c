@@ -129,13 +129,7 @@ void calc_node_neighbors(int node)
       boundary[2*dir+1] = 0;
     }
   }
-  printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ", this_node, node_grid[0], node_grid[1], node_grid[2], node_pos[0], node_pos[1], node_pos[2]);
-  {
-    int i;
-    for(i=0;i<6;i++)
-      printf("%d ", node_neighbors[i]);
-    printf("\n");
-  }
+  GRID_TRACE(printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ", this_node, node_grid[0], node_grid[1], node_grid[2], node_pos[0], node_pos[1], node_pos[2]));
 }
 
 void grid_changed_box_l()

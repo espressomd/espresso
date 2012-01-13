@@ -291,16 +291,13 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin, int *ks_pnum)
   for(i=0;i<3;i++) {
     n_grid[0][i] = node_grid[i];
     my_pos[0][i] = node_pos[i];
-    printf("%d:n_grid[0][%d] %d my_pos[0][%d] %d node_grid[%d] %d,\n", this_node, i, n_grid[0][i], i, my_pos[0][i], i, node_grid[i]);
   }
   for(i=0;i<n_nodes;i++) {
     int lin_ind;
     get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
 		 n_grid[0]); 
-    printf("%d: position of node %d is ( %d %d %d )\n", this_node, i,(n_pos[0][3*i+0]),(n_pos[0][3*i+1]),(n_pos[0][3*i+2]));
     lin_ind = get_linear_index( n_pos[0][3*i+0],n_pos[0][3*i+1],n_pos[0][3*i+2], n_grid[0]);
     n_id[0][lin_ind] = i;
-    printf("%d: n_id[0][%d] %d, lin_ind %d, get_lin_ind(1,0,0,n_grid[0]) %d\n", this_node, i, n_id[0][i], lin_ind, get_linear_index(1,0,0,n_grid[0]));
   }
     
   /* FFT node grids (n_grid[1 - 3]) */
@@ -1125,22 +1122,12 @@ int find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_list
 	  p2[1] = (gi[1]*s2[1]) + ((i/s2[0])%s2[1]);
 	  p2[2] = (gi[2]*s2[2]) + (i/(s2[0]*s2[1]));
 
-	  printf("%d: ( %d %d %d ) => ( %d %d %d )\n", this_node, p1[0], p1[1],p1[2],p2[0],p2[1],p2[2]);
-
 	  n = node_list1[ get_linear_index(p1[0],p1[1],p1[2],grid1) ];
 	  node_list2[ get_linear_index(p2[0],p2[1],p2[2],grid2) ] = n ;
-
-	  printf("%d: gi (%d %d %d), rank %d\n", this_node, gi[2], gi[1], gi[0], n);
-	  {
-	    int p;
-	    for(p = 0;p < n_nodes; p++)
-	      printf("%d:node_list1[%d] %d node_list2[%d] %d\n", this_node, p, node_list1[p], p, node_list2[p]);
-	  }
 
 	  pos[3*n+0] = p2[0];  pos[3*n+1] = p2[1];  pos[3*n+2] = p2[2];	  
 	  if(my_group==1) group[i] = n;
 	  if(n==this_node && my_group==0) { 
-	    printf("%d: %d is me, my_pos(%d %d %d)\n", this_node, n, my_pos[0], my_pos[1], my_pos[2]);
 	    my_group = 1; 
 	    c_pos = i;
 	    my_pos[0] = p2[0]; my_pos[1] = p2[1]; my_pos[2] = p2[2];
