@@ -34,9 +34,9 @@ development code via the version control system software
 \textsf{git}\footnote{\url{http://git.org}} from \es's project page at
 the Savannah GNU server
 \footnote{\url{https://savannah.nongnu.org/projects/espressomd/}}.
-This code is not as well tested and documented as the release code; it
-is recommended to use this code only if you have already gained some
-experience in using \es.
+This code might be not as well tested and documented as the release
+code; it is recommended to use this code only if you have already
+gained some experience in using \es.
 
 Unlike most other software, no binary distributions of \es are
 available, and the software is usually not installed globally for all
@@ -56,9 +56,8 @@ compile software easily on a wide range of platforms.
 \label{sec:configure}
 \index{configure}
 
-\todo[inline]{Description of basic options: \keyword{--prefix},
-  \keyword{--exec-prefix}, \keyword{CPPFLAGS}, \keyword{CFLAGS},
-  \keyword{LDFLAGS}}
+\todo[inline]{Description of basic options: \keyword{CPPFLAGS},
+  \keyword{CFLAGS}, \keyword{LDFLAGS}}
 
 The first step of building \es is to run the shell script
 \codebox{configure} which is to be found in the top level source
@@ -121,11 +120,6 @@ configure --help
 \end{code}
 
 \begin{description}
-\item[\texttt{--enable-debug}] This option will enable compiler flags
-  required for debugging the \es binary and is disabled by default.
-\item[\texttt{--enable-profiling}] This option will enable compiler
-  flags required for profiling the \es binary and is disabled by
-  default.
 \item[\texttt{--with-myconfig=MYCONFIG\_HEADER}] This option sets the
   name of the local configuration header (see \vref{sec:myconfig}). It
   defaults to ``\texttt{myconfig.h}''.
@@ -142,14 +136,14 @@ configure --help
 \item[\texttt{--with-tcl=TCL}] By default, \texttt{configure} will
   automatically determine which version of Tcl is used.  If the wrong
   version is chosen automatically, you can specify the name of the
-  library with this option, \eg{} \texttt{tcl8.4}.
+  library with this option, \eg \texttt{tcl8.4}.
 \item[\texttt{--with-tk=TK} / \texttt{--without-tk}] By default, the
   GUI toolkit Tk is not used by \es. This option can be used to
   activate Tk and to specify which Tk version to use, \eg{}
   \texttt{tk8.4}. If you only specify \texttt{--with-tk} and do not
   give a version number, \texttt{configure} will try to automatically
   deduce the right version.
-\item[\texttt{--with-fftw=VERSION} / \texttt{--without-fftw}] This can
+\item[\texttt{--with-fftw} / \texttt{--without-fftw}] This can
   be used to specify whether the FFTW library is to be used, and which
   version.  By default, version 3 will be used if it is found,
   otherwise version 2 is used.  Note that quite a number of central
@@ -241,7 +235,7 @@ available processors speeds up the compilation process significantly.
 
 When \es is found in your path, it can be run via
 \begin{code}
-Espresso [\var{tcl\_script} [\var{N\_processors} [\var{args}]]]
+Espresso [\var{tcl\_script} [\var{args}]]
 \end{code}
 
 \index{interactive mode} When \es{} is called without any arguments,
@@ -260,14 +254,16 @@ the command line.
 \index{features} \index{myconfig.h} \index{configuration header} \es
 has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
-features, as this will negatively affect \es's performance.  Instead,
-compile in only the features that are actually required.  For the
+features, as this will slow down \es significantly.  Instead,
+compile in only the features that are actually required. 
+A strong gain in speed can be achieved, by disabling all non-bonded interactions except for a single one, e.g., LENNARD_JONES.
+For the
 developers, it is also possible to turn on or off a number of
 debugging messages.  The features and debug messages can be controlled
 via a configuration header file that contains C-preprocessor
 declarations. Appendix \vref{chap:features} lists and describes all
 available features.  When no configuration header is provided by the
-user, a default header will be used that turns on the default
+user, a default header, found in src/myconfig-default.h, will be used that turns on the default
 features.  The file \texttt{myconfig-sample.h} in the source directory
 contains a list of all possible features that can be copied into your
 own configuration file.

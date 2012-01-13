@@ -70,16 +70,6 @@ typedef struct {
   int max;
 } PairList;
 
-
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
-/** If non-zero, the verlet list has to be rebuilt. */
-extern int rebuild_verletlist;
-
-/*@}*/
-
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
@@ -112,19 +102,6 @@ void calculate_verlet_energies();
 		  naturally it doesn't make sense to use it without NpT. */
 void calculate_verlet_virials(int v_comp);
 
-/** spread the verlet criterion across the nodes. */
-void announce_rebuild_vlist();
-
-/** Callback for integrator flag tcl:verletflag c:rebuild_verletlist (= 0 or 1).
-    <ul>
-    <li> 1 means the integrator rebuilds the verlet list befor the
-    first integration step.
-    <li> 0 means the integrator reuses the verlet list that it remembers 
-    from the last integration step.
-    </ul>
-    \return TCL status.
-*/
-int tclcallback_rebuild_vlist(Tcl_Interp *interp, void *_data);
 /*@}*/
 
 

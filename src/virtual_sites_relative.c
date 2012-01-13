@@ -16,6 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#include "config.h"
 #ifdef VIRTUAL_SITES_RELATIVE
 
 #include "virtual_sites_relative.h"
@@ -89,7 +90,7 @@ void update_mol_pos_particle(Particle *p)
    #ifdef PARTIAL_PERIODIC
     else p->r.p[i] =new_pos[i];
    #endif
-   fold_coordinate(p->r.p,p->l.i,i);
+//   fold_coordinate(p->r.p,p->l.i,i);
 
  }
 }

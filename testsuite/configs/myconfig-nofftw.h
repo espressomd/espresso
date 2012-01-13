@@ -3,7 +3,7 @@
 #define ELECTROSTATICS
 #define ROTATION
 #define ROTATIONAL_INTERIA
-#define MAGNETOSTATICS
+#define DIPOLES
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS

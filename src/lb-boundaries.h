@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -42,7 +43,8 @@
 #include "config.h"
 #include "lb.h"
 
-#ifdef LB_BOUNDARIES
+
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
 /** wall constraint applied */
 #define LB_BOUNDARY_WAL 1
@@ -52,12 +54,11 @@
 #define LB_BOUNDARY_CYL 3
 /** a pore geometry */
 #define LB_BOUNDARY_POR 4
+/** rhomboid shaped constraint applied */
+#define LB_BOUNDARY_RHOMBOID 5
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
-
-/** Parser for the \ref lbfluid command. */
-int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** Structure to specify a boundary. */
 typedef struct {
@@ -69,8 +70,11 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_rhomboid rhomboid;
     Constraint_pore pore;
   } c;
+  double force[3];
+  double velocity[3];
 } LB_Boundary;
 
 extern int n_lb_boundaries;
@@ -83,10 +87,16 @@ extern LB_Boundary *lb_boundaries;
  *  and marks them with a corresponding flag. 
  */
 void lb_init_boundaries();
-#endif // LB_BOUNDARIES
-int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
+void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
+
+#endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
+
 #ifdef LB_BOUNDARIES
+
+int lbboundary_get_force(int no, double* f); 
+
+void lb_init_boundaries();
+
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
@@ -99,10 +109,13 @@ MDINLINE void lb_bounce_back() {
 
 #ifdef D3Q19
 #ifndef PULL
-  int k,i;
+  int k,i,l;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0]*lblattice.halo_grid[1];
   int next[19];
+  int x,y,z;
+  double population_shift;
+  double modes[19];
   next[0]  =   0;                       // ( 0, 0, 0) =
   next[1]  =   1;                       // ( 1, 0, 0) +
   next[2]  = - 1;                       // (-1, 0, 0)
@@ -125,15 +138,37 @@ MDINLINE void lb_bounce_back() {
   int reverse[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17 };
 
   /* bottom-up sweep */
-  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
-
-    if (lbfields[k].boundary) {
-      for (i=0; i<19; i++) {
-        lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+//  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++) {
+  for (z=0; z<lblattice.grid[2]+2; z++) {
+    for (y=0; y<lblattice.grid[1]+2; y++) {
+	    for (x=0; x<lblattice.grid[0]+2; x++) {	    
+        k= get_linear_index(x,y,z,lblattice.halo_grid);
+    
+        if (lbfields[k].boundary) {
+          lb_calc_modes(k, modes);
+    
+          for (i=0; i<19; i++) {
+            population_shift=0;
+            for (l=0; l<3; l++) {
+              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq*lbmodel.w[i];
+            }
+            if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
+                 y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
+                 z-lbmodel.c[i][2] > 0 && z -lbmodel.c[i][2] < lblattice.grid[2]+1) { 
+              if ( !lbfields[k-next[i]].boundary ) {
+                for (l=0; l<3; l++) {
+                  lb_boundaries[lbfields[k].boundary-1].force[l]+=(2*lbfluid[1][i][k]+population_shift)*lbmodel.c[i][l];
+                }
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
+              }
+              else 
+                lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
+            }
+          }
+        }
       }
     }
   }
-  
 #else
 #error Bounce back boundary conditions are only implemented for PUSH scheme!
 #endif

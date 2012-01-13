@@ -166,16 +166,22 @@ extern CellPList ghost_cells;
 /** Type of cell structure in use ( \ref Cell Structure ). */
 extern CellStructure cell_structure;
 
+/** Maximal interaction range - also the minimum cell size. Any
+    cellsystem makes sure that the particle pair loop visits all pairs
+    of particles that are closer than this. */
+extern double max_range;
+
+/** If non-zero, cell systems should reset the position for checking
+    the Verlet criterion. Moreover, the Verlet list has to be
+    rebuilt. */
+extern int rebuild_verletlist;
+
 /*@}*/
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** implementation of the Tcl command cellsystem */
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv);
 
 /** Initialize the cell structure on program start with the default
     cell structure of type domain decomposition. */
@@ -211,8 +217,20 @@ MDINLINE void realloc_cellplist(CellPList *cpl, int size)
     arbitrarly, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
 
-/** update ghost information. If \ref rebuild_verletlist == 1, for some cell structures also a
-    resorting of the particles takes place. */
+/** this function is called whenever the (short-range)
+ cutoffs have potentially changed. It updates the cutoffs,
+ the maximal interaction range, and if necessary, reinitializes
+ the cells structure, e.g. if the cells have to become bigger.
+
+ @param shrink if this is 1, then the cells can also shrink if
+ the new cutoff is smaller. This should only happen outside
+ the integration loop, since it is potentially slow - it
+ however won't harm.
+*/
+void cells_on_max_cut_change(int shrink);
+
+/** update ghost information. If \ref resort_particles == 1,
+    also a resorting of the particles takes place. */
 void cells_update_ghosts();
 
 /** Calculate and return the total number of particles on this
@@ -224,6 +242,12 @@ void print_local_particle_positions();
 
 /** Debug function to print ghost positions. */
 void print_ghost_positions();
+
+/** spread the particle resorting criterion across the nodes. */
+void announce_resort_particles();
+
+/* Checks if a particle resorting is required.*/
+void check_resort_particles();
 /*@}*/
 
 #endif

@@ -163,11 +163,6 @@ MDINLINE double gaussian_random(void) {
 
 }
 
-/**  Implementation of the tcl command \ref tclcommand_t_random. Access to the
-     parallel random number generator.
-*/
-int tclcommand_t_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/
@@ -185,10 +180,6 @@ void   init_bit_random_stat(BitRandomStatus my_stat);
 int    print_bit_random_seed(void);
 BitRandomStatus print_bit_random_stat(void);
 
-/**  Implementation of the tcl command \ref tclcommand_bit_random. 
-     Access to the parallel bit random number generator.
-*/
-int tclcommand_bit_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /*----------------------------------------------------------*/
 

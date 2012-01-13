@@ -107,6 +107,10 @@ void force_calc();
 */
 void init_forces_ghosts();
 
+/** Check if forces are NAN 
+*/
+void check_forces();
+
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
 {
@@ -637,6 +641,27 @@ MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
 #ifdef ROTATION
   for (i = 0; i < 3; i++)
     F_to->torque[i] += F_add->torque[i];
+#endif
+}
+
+MDINLINE void check_particle_force(Particle *part)
+{
+  
+  int i;
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.f[i]) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
+
+#ifdef ROTATION
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.torque[i]) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
 #endif
 }
 

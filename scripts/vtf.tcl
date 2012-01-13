@@ -70,7 +70,7 @@ proc writevsf { file args } {
 	set list [flatten_indexed_list [expr $type_max + 1] "default" $i_list]
 	for { set type 0 } { $type < [llength $list] } { incr type } {
 	    if { [lindex $list $type] eq "default" } then {
-		if { $type <= [llength $name_list] } then {
+		if { $type < [llength $name_list] } then {
 		    lset list $type "name [lindex $name_list $type] type $type"
 		} else {
 		    lset list $type "name X type $type"

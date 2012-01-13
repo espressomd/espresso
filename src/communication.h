@@ -384,6 +384,14 @@ void mpi_bcast_coulomb_params();
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
 void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 
+#ifdef LANGEVIN_PER_PARTICLE
+/** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */
+void mpi_set_particle_temperature(int pnode, int part, double _T);
+
+/** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional coefficient. */
+void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#endif
+
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
 
@@ -464,12 +472,12 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
-/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary flag from a processor.
  * @param node     processor to send to
  * @param index    index of the lattice site
- * @param boundary local border flag
+ * @param boundary local boundary flag
  */
-void mpi_recv_fluid_border_flag(int node, int index, int *boundary);
+void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
@@ -481,12 +489,19 @@ int mpi_iccp3m_iteration(int dummy);
 */
 int mpi_iccp3m_init(int dummy);
 
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to
  * @param index index of the lattice site
  * @param pop   local fluid population
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
+
+/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param pop   local fluid population
+ */
+void mpi_send_fluid_populations(int node, int index, double *pop);
 
 /** Part of MDLC
  */
