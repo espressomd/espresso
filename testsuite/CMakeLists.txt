@@ -47,7 +47,7 @@ set(CMAKE_TESTS_TO_BE_RUN
 )
 
 # copy all test files to bin dir
-add_custom_target(testfiles COMMENT "Copying Tcl test scripts to builddir")
+add_custom_target(testfiles ALL COMMENT "Copying Tcl test scripts to builddir")
 file(GLOB TESTING_FILES *.gz *.chk *.data *.tab *.tcl)
 foreach(FILENAME ${TESTING_FILES})
     add_custom_command(TARGET testfiles 
