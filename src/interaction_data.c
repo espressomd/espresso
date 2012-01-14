@@ -97,6 +97,9 @@ Bonded_ia_parameters *bonded_ia_params = NULL;
 double max_cut;
 double max_cut_nonbonded;
 double max_cut_bonded;
+/** maximal cutoff of type-independent short range ia, mainly
+    electrostatics and DPD*/
+double max_cut_global;
 
 double lj_force_cap = 0.0;
 double ljangle_force_cap = 0.0;
@@ -135,12 +138,11 @@ DoubleList thermodynamic_f_energies;
 
 /** calculates and returns the maximal global nonbonded cutoff that is
     required.  Currently, this are just the cutoffs from the
-    electrostatics method and some dpd cutoffs.  This value is not
-    available on Tcl-level, therefore we just return it.  */
-static double get_global_maximal_nonbonded_cutoff();
+    electrostatics method and some dpd cutoffs. */
+static void recalc_global_maximal_nonbonded_cutoff();
 /** calculate the maximal cutoff of bonded interactions, required to
     determine the cell size for communication. */
-static void calc_maximal_cutoff_bonded();
+static void recalc_maximal_cutoff_bonded();
 
 /*****************************************
  * general lowlevel functions
@@ -173,7 +175,7 @@ void tf_tables_init() {
 void initialize_ia_params(IA_parameters *params) {
  
   params->particlesInteract = 0;
-  params->max_cut = get_global_maximal_nonbonded_cutoff();
+  params->max_cut = max_cut_global;
 
 #ifdef LENNARD_JONES
   params->LJ_eps =
@@ -403,7 +405,7 @@ int checkIfTF(TF_parameters *data){
 /* #endif */
 #endif
 
-static void calc_maximal_cutoff_bonded()
+static void recalc_maximal_cutoff_bonded()
 {
   int i;
   double max_cut_tmp;
@@ -482,86 +484,84 @@ static void calc_maximal_cutoff_bonded()
   }
 }
 
-static double get_global_maximal_nonbonded_cutoff()
+static void recalc_global_maximal_nonbonded_cutoff()
 {
-  double max_cut_es = 0.0;
-
 #ifdef ELECTROSTATICS
-  /* real space electrostatic */
+  /* Cutoff for the real space electrostatics.
+     Note that the box length may have changed,
+     but the method not yet reinitialized.
+   */
   switch (coulomb.method) {
 #ifdef P3M 
   case COULOMB_ELC_P3M:
-    if (max_cut_es < elc_params.space_layer)
-      max_cut_es = elc_params.space_layer;
+    if (max_cut_global < elc_params.space_layer)
+      max_cut_global = elc_params.space_layer;
     // fall through
-  case COULOMB_P3M:
-    if (max_cut_es < p3m.params.r_cut)
-      max_cut_es = p3m.params.r_cut;
+  case COULOMB_P3M: {
+    /* do not use precalculated r_cut here, might not be set yet */
+    double r_cut = p3m.params.r_cut_iL* box_l[0];
+    if (max_cut_global < r_cut)
+      max_cut_global = r_cut;
     break;
+  }
 #endif
-  case COULOMB_EWALD:
-    if (max_cut_es < ewald.r_cut)
-      max_cut_es = ewald.r_cut;
+  case COULOMB_EWALD: {
+    /* do not use precalculated r_cut here, might not be set yet */
+    double r_cut  = ewald.r_cut_iL* box_l[0];
+    if (max_cut_global < r_cut)
+      max_cut_global = r_cut;
     break;
+  }
   case COULOMB_DH:
-    if (max_cut_es < dh_params.r_cut)
-      max_cut_es = dh_params.r_cut;
+    if (max_cut_global < dh_params.r_cut)
+      max_cut_global = dh_params.r_cut;
     break;
   case COULOMB_RF:
   case COULOMB_INTER_RF:
-    if (max_cut_es < rf_params.r_cut)
-      max_cut_es = rf_params.r_cut;
-    break;
-  case COULOMB_MMM1D:
-    /* needs n-squared calculation anyways */
-    if (max_cut_es < 0)
-      max_cut_es = 0;
-    break;
-  case COULOMB_MMM2D:
-    /* needs n-squared rsp. layered calculation, and
-       it is pretty complicated to find the minimal
-       required cell height. */
-    if (max_cut_es < 0)
-      max_cut_es = 0;
+    if (max_cut_global < rf_params.r_cut)
+      max_cut_global = rf_params.r_cut;
     break;
   }
 #endif /*ifdef ELECTROSTATICS */
   
 #ifdef DP3M
   switch (coulomb.Dmethod) {
-  case DIPOLAR_P3M:
-    if (max_cut_es < dp3m.params.r_cut)
-      max_cut_es = dp3m.params.r_cut;
+  case DIPOLAR_P3M: {
+    /* do not use precalculated r_cut here, might not be set yet */
+    double r_cut = dp3m.params.r_cut_iL* box_l[0];
+    if (max_cut_global < r_cut)
+      max_cut_global = r_cut;
     break;
+  }
   }       
 #endif /*ifdef DP3M */
 
 #ifdef DPD
   if (dpd_r_cut != 0) {
-    if(max_cut_es < dpd_r_cut)
-      max_cut_es = dpd_r_cut;
-  }
-#endif
-
-#ifdef TRANS_DPD
-  if (dpd_tr_cut != 0) {
-    if(max_cut_es < dpd_tr_cut)
-      max_cut_es = dpd_tr_cut;
+    if(max_cut_global < dpd_r_cut)
+      max_cut_global = dpd_r_cut;
   }
 #endif
   
-  return max_cut_es;
+#ifdef TRANS_DPD
+  if (dpd_tr_cut != 0) {
+    if(max_cut_global < dpd_tr_cut)
+      max_cut_global = dpd_tr_cut;
+  }
+#endif
 }
 
-static void calc_maximal_cutoff_nonbonded()
+static void recalc_maximal_cutoff_nonbonded()
 {
   int i, j;
 
-  double max_cut_es = get_global_maximal_nonbonded_cutoff();
+  CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded\n", this_node));
 
-  CELL_TRACE(fprintf(stderr, "%d: max_cut_es %f\n", this_node, max_cut_es));
+  recalc_global_maximal_nonbonded_cutoff();
 
-  max_cut_nonbonded = max_cut_es;
+  CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded: max_cut_global = %f\n", this_node, max_cut_global));
+
+  max_cut_nonbonded = max_cut_global;
   
   for (i = 0; i < n_particle_types; i++)
     for (j = i; j < n_particle_types; j++) {
@@ -695,8 +695,8 @@ static void calc_maximal_cutoff_nonbonded()
 	data->particlesInteract = (max_cut_current > 0.0);
       
       /* take into account any electrostatics */
-      if (max_cut_es > max_cut_current)
-	max_cut_current = max_cut_es;
+      if (max_cut_global > max_cut_current)
+	max_cut_current = max_cut_global;
 
 #if defined(MOL_CUT) && !defined(ONE_PROC_ADRESS)
       max_cut_current += 2.0* max_cut_bonded;
@@ -713,10 +713,10 @@ static void calc_maximal_cutoff_nonbonded()
     }
 }
 
-void calc_maximal_cutoff()
+void recalc_maximal_cutoff()
 {
-  calc_maximal_cutoff_bonded();
-  calc_maximal_cutoff_nonbonded();
+  recalc_maximal_cutoff_bonded();
+  recalc_maximal_cutoff_nonbonded();
 
   /* make max_cut the maximal cutoff of both bonded and non-bonded
      interactions */
@@ -958,9 +958,7 @@ int coulomb_set_bjerrum(double bjerrum)
    ========================================================= */
 #endif /*ifdef ELECTROSTATICS */
 
-
 #ifdef DIPOLES
-
 
 int dipolar_set_Dbjerrum(double bjerrum)
 {
@@ -989,10 +987,24 @@ int dipolar_set_Dbjerrum(double bjerrum)
   return TCL_OK;
 }
 
-
-
-
 #endif   /* ifdef  DIPOLES */
+
+void recalc_coulomb_prefactor()
+{
+#ifdef ELECTROSTATICS
+  if(temperature > 0.0)
+    coulomb.prefactor = coulomb.bjerrum * temperature; 
+  else
+    coulomb.prefactor = coulomb.bjerrum;
+#endif
+
+#ifdef DIPOLES
+  if(temperature > 0.0)
+    coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
+  else
+    coulomb.Dprefactor = coulomb.Dbjerrum;
+#endif
+}
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type)
@@ -1011,7 +1023,4 @@ int virtual_set_params(int bond_type)
   return TCL_OK;
 }
 
-
 #endif
-
-

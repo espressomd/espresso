@@ -152,10 +152,14 @@ extern int min_num_cells;
 /************************************************************/
 /*@{*/
 
-/** Re-derive the topology dimensions after changing the box length.
-    This tries to do minimal changes to be fast, e.g. when used with
-    the NpT every time step. */
-void dd_change_boxl();
+/** adjust the domain decomposition to a change in the geometry.
+    Tries to speed up things if possible.
+
+    @param flags a combination of \ref CELL_FLAGS_FAST and \ref
+    CELL_FLAGS_GRIDCHANGED, see documentation of \ref
+    cells_on_geometry_change.
+*/
+void dd_on_geometry_change(int flags);
 
 /** Initialize the topology. The argument is a list of cell pointers,
     containing particles that have to be sorted into new cells. The

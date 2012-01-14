@@ -1769,7 +1769,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif  
   
   on_coulomb_change();
-  on_short_range_ia_change();
 #endif
 }
 
@@ -2183,13 +2182,12 @@ void mpi_rescale_particles_slave(int pnode, int dir) {
 void mpi_bcast_cell_structure(int cs)
 {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  mpi_bcast_cell_structure_slave(-1, cs);
+  cells_re_init(cs);
 }
 
 void mpi_bcast_cell_structure_slave(int pnode, int cs)
 {
   cells_re_init(cs);
-  on_cell_structure_change();
 }
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/

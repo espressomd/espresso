@@ -592,7 +592,11 @@ void propagate_press_box_pos_and_rescale_npt()
       }
     }
     MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    on_NpT_boxl_change();
+
+    /* fast box length update */
+    grid_changed_box_l();
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(CELL_FLAG_FAST);
   }
 #endif
 }

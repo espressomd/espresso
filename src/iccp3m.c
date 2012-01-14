@@ -598,17 +598,13 @@ void calc_long_range_forces_iccp3m()
     break;
 
     case COULOMB_P3M:
-         p3m_charge_assign();
-
-#ifdef NPT
-        if(integ_switch == INTEG_METHOD_NPT_ISO) exit(0);
-#endif
-        p3m_calc_kspace_forces(1,0);
+       p3m_charge_assign();
+       p3m_calc_kspace_forces(1,0);
     break;
 #endif
     case COULOMB_MMM2D:
-        MMM2D_add_far_force();
-        MMM2D_dielectric_layers_force_contribution();
+       MMM2D_add_far_force();
+       MMM2D_dielectric_layers_force_contribution();
   }
 
 #endif
