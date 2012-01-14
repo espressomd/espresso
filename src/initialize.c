@@ -669,8 +669,8 @@ void on_parameter_change(int field)
     /* LB needs ghost velocities */
     on_ghost_flags_change();
     break;
-  }
 #endif
+  }
 }
 
 #ifdef LB
