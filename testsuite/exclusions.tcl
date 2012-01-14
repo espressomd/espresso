@@ -25,7 +25,7 @@
 source "tests_common.tcl"
 
 require_feature "EXCLUSIONS"
-
+require_feature "ADRESS" off
 
 setmd skin 0.1
 setmd time_step 0.01
@@ -38,10 +38,10 @@ set E [analyze energy nonbonded 0 0]
 set f0 [part 0 print f]
 set f1 [part 1 print f]
 if { [veclen $f0 ] <1 } {
- error_exit "Force not there while exclusion off
+ error_exit "Force not there while exclusion off."
 }
 if { [veclen $f1 ] <1 } {
- error_exit "Force not there while exclusion off
+ error_exit "Force not there while exclusion off."
 }
 if { $E <0.1 } {
  error_exit "Energy not there while exclusion off."

@@ -59,7 +59,7 @@ proc cr_t {arg1} {
 ############################## SYSTEM PARAMETERS
 
 setmd time_step 0.001
-setmd skin 0.05
+setmd skin 0.5
 set eps_mom 1e-6
 set eps_en 0.2
 set step 1000
