@@ -23,9 +23,11 @@ puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: 
 puts "------------------------------------------------"
 
 # we expect to stay in this confidence interval (times stddeviation)
-# 3 gives a chance of less than 1 % of failure
-set confidence 3
-set maxstep 500
+# 10 is a really small chance, but since we measure quite a lot,
+# that is still quite a small interval, and the test probably only
+# fails if there is really something wrong
+set confidence 10
+set maxstep 100
 set intstep 100
 
 # for checkin unwanted energy contributions
@@ -45,6 +47,7 @@ proc write_data {file} {
     blockfile $f write particles {id pos v omega} 
     close $f
 }
+
 if { [catch {
     if { [regexp "ROTATION" [code_info]] } {
 	puts "rotation found, 6 degrees of freedom"
@@ -59,17 +62,18 @@ if { [catch {
     read_data $filename
 
     # generate some particles
-    #for {set i 0} {$i < 1} {incr i} {
-    # part $i pos 0 0 0
-    #}
-
-    set n_part [setmd n_part]
+    set box_l 10
+    setmd box_l $box_l $box_l $box_l
+    for {set i 0} {$i < 100} {incr i} {
+    	part $i pos [expr rand()*$box_l] [expr rand()*$box_l] [expr rand()*$box_l]
+    }
 
     # make real random draw
     set cmd "t_random seed"
     for {set i 0} {$i < [setmd n_nodes]} { incr i } {
 	lappend cmd [expr [pid] + $i] }
     eval $cmd
+
 
     thermostat langevin 1.0 1.0
     setmd time_step 0.01
@@ -80,7 +84,7 @@ if { [catch {
 
     # checking kinetic energy
     set eng0    [analyze energy kin]
-    set temp0   [expr $eng0/$n_part/($deg_free/2.)]
+    set temp0   [expr $eng0/[setmd n_part]/($deg_free/2.)]
     set curtemp1 0
     set curtemp2 0
 
@@ -94,9 +98,10 @@ if { [catch {
 
     for {set i 0} { $i < $maxstep} { incr i } {
 	integrate $intstep
+	    
 	set toteng [analyze energy total]
 	set cureng [analyze energy kin] 
-	set curtemp [expr $cureng/$n_part/($deg_free/2.)] 
+	set curtemp [expr $cureng/[setmd n_part]/($deg_free/2.)] 
 
 	if { [expr abs($toteng - $cureng)] > $epsilon } {
 	    error "system has unwanted energy contributions"
@@ -114,42 +119,70 @@ if { [catch {
 	    }
 	}
     }
-    
-    for {set c 0} {$c < 3} {incr c} {
-	set vel1 [expr $curvel1($c)/$maxstep/$n_part]
-	set vel2 [expr $curvel2($c)/$maxstep/$n_part]
-	set vel4 [expr $curvel4($c)/$maxstep/$n_part]
-	puts "for the ${c}th coordinate, the 1,2 and 4th velocity moments are $vel1, $vel2 and $vel4"
-    }
-
-    set mean [expr $curtemp1/$maxstep]
-    set stddev [expr sqrt($curtemp2/$maxstep - $mean*$mean)]
 
     # here you can create a new snapshot
     # write_data $filename
 
-    set temp_error [expr abs([setmd temp] - $mean)]
-    set expected_sigma [expr sqrt(2.0/($n_part*$deg_free))]
+    puts "NOTE: this is a statistical test, which can fail,"
+    puts "even if everything works correctly. However, the"
+    puts "chance is really SMALL, so if you see an error"
+    puts "here, consider a bug in the thermostat.\n"
 
-    puts "thermostat temperature:      [setmd temp]"
-    puts "measured temperature:        $mean"
-    puts "fluctuations per DOF:        [expr $stddev*sqrt($n_part*$deg_free)]"
-    puts "observed sigma:              $stddev"
-    puts "expected sigma:              $expected_sigma"
+    puts "checking velocity distribution"
+    puts "output is coordinate: moments 1, 2 and 4"
+    puts "expected values are close to 0, 1 and 3"
+    puts "due to the memory of the Langevin thermostat,"
+    puts "actual values are slightly lower"
+    set accept1 [expr $confidence*20.*1/$maxstep/[setmd n_part]]
+    set accept2 [expr $confidence*20.*3/$maxstep/[setmd n_part]]
+    puts "maximally accepted 1st moment deviation [expr sqrt($accept1)]"
+    puts "maximally accepted 2nd moment deviation [expr sqrt($accept2)]"
 
-    set epsilon [expr $confidence*$expected_sigma/sqrt($maxstep)]
-    puts "expected maximal deviation:  $epsilon"
-    puts "temperature deviation:       $temp_error"
+    set err_in_mean 0
+    set err_in_var 0
+    for {set c 0} {$c < 3} {incr c} {
+	set vel1 [expr $curvel1($c)/$maxstep/[setmd n_part]]
+	set vel2 [expr $curvel2($c)/$maxstep/[setmd n_part]]
+	set vel4 [expr $curvel4($c)/$maxstep/[setmd n_part]]
+	puts "${c}:\t$vel1\t$vel2\t$vel4"
+	if {$vel1**2 > $accept1} {
+	    set err_in_mean [expr $vel1**2]
+	}
+	if {($vel2 - 1)**2 > $accept2} {
+	    set err_in_var [expr ($vel2 - 1)**2]
+	}
+    }
+    if {$err_in_mean} {
+	error "velocity mean extremely large ($err_in_mean vs. $accept1)"
+    }
+    if {$err_in_var} {
+	error "velocity variance extremely large ($err_in_var vs. $accept2)"
+    }
+    set samples [expr [setmd n_part]*[degrees_of_freedom]*$maxstep]
 
-    if { $temp_error > $epsilon } {
-	puts "The temperature was outside the expected interval."
-	puts "This does not mean the thermostat is not working -"
-	puts "there is a chance of around 1% that this happens"
-	puts "If you observe this more often, you should however"
-	puts "GET NERVOUS!"
-	error "temperature error too large"
+    set mean    [expr $curtemp1/$maxstep]
+    set var     [expr $curtemp2/$maxstep - $mean*$mean]
+    set var_dof [expr $var*[setmd n_part]*$deg_free]
+
+    set epsilon [expr $confidence*2.0/$samples]
+    set eps_var [expr 3*$epsilon*[setmd n_part]]
+
+    puts "expected temperature:         [setmd temp]"
+    puts "measured temperature:         $mean"
+    puts "expected deviations are below [expr sqrt($epsilon)]"
+    puts "expected variance per DOF:    2"
+    puts "variance per DOF:             $var_dof"
+    puts "expected deviations are below [expr sqrt($eps_var)]"
+
+    if {($mean - [setmd temp])**2 > $epsilon} {
+	error "temperature deviates unusually strongly from [setmd temp]"
     }
   
+    # factor 3 from 4th moment
+    if {($var_dof - 2.0)**2 > $eps_var} {
+	error "temperature variance extremely large"
+    }
+    
 } res ] } {
     error_exit $res
 }
