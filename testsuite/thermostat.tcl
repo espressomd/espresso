@@ -23,10 +23,10 @@ puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: 
 puts "------------------------------------------------"
 
 # we expect to stay in this confidence interval (times stddeviation)
-# 10 is a really small chance, but since we measure quite a lot,
+# 20 is a really small chance, but since we measure quite a lot,
 # that is still quite a small interval, and the test probably only
 # fails if there is really something wrong
-set confidence 10
+set confidence 20
 set maxstep 100
 set intstep 100
 
@@ -133,8 +133,8 @@ if { [catch {
     puts "expected values are close to 0, 1 and 3"
     puts "due to the memory of the Langevin thermostat,"
     puts "actual values are slightly lower"
-    set accept1 [expr $confidence*20.*1/$maxstep/[setmd n_part]]
-    set accept2 [expr $confidence*20.*3/$maxstep/[setmd n_part]]
+    set accept1 [expr $confidence*2.*1/$maxstep/[setmd n_part]]
+    set accept2 [expr $confidence*2.*30/$maxstep/[setmd n_part]]
     puts "maximally accepted 1st moment deviation [expr sqrt($accept1)]"
     puts "maximally accepted 2nd moment deviation [expr sqrt($accept2)]"
 
@@ -165,7 +165,7 @@ if { [catch {
     set var_dof [expr $var*[setmd n_part]*$deg_free]
 
     set epsilon [expr $confidence*2.0/$samples]
-    set eps_var [expr 3*$epsilon*[setmd n_part]]
+    set eps_var [expr 30*$epsilon*[setmd n_part]]
 
     puts "expected temperature:         [setmd temp]"
     puts "measured temperature:         $mean"
