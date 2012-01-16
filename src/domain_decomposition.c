@@ -30,6 +30,7 @@
 #include "pressure.h"
 #include "energy.h"
 #include "constraint.h"
+#include "initialize.h"
 
 /************************************************/
 /** \name Defines */
@@ -390,6 +391,57 @@ void dd_assign_prefetches(GhostCommunicator *comm)
   }
 }
 
+/** update the 'shift' member of those GhostCommunicators, which use
+    that value to speed up the folding process of its ghost members
+    (see \ref dd_prepare_comm for the original), i.e. all which have
+    GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
+    dd_prepare_comm. */
+void dd_update_communicators_w_boxl()
+{
+  int cnt=0;
+  /* direction loop: x, y, z */
+  for(int dir=0; dir<3; dir++) {
+    /* lr loop: left right */
+    for(int lr=0; lr<2; lr++) {
+      if(node_grid[dir] == 1) {
+#ifdef PARTIAL_PERIODIC
+	if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	  {
+	    /* prepare folding of ghost positions */
+	    if(boundary[2*dir+lr] != 0) {
+	      cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+	      cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+	    }
+	    cnt++;
+	  }
+      }
+      else {
+	/* i: send/recv loop */
+	for(int i=0; i<2; i++) {  
+#ifdef PARTIAL_PERIODIC
+	  if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	    if((node_pos[dir]+i)%2==0) {
+	      /* prepare folding of ghost positions */
+	      if(boundary[2*dir+lr] != 0) {
+		cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+		cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+	      }
+	      cnt++;
+	    }
+#ifdef PARTIAL_PERIODIC
+	  if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
+#endif
+	    if((node_pos[dir]+(1-i))%2==0) {
+	      cnt++;
+	    }
+	}
+      }
+    }
+  }
+}
+
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the verlet
@@ -555,82 +607,64 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 /* Public Functions */
 /************************************************************/
 
-void dd_change_boxl() {
-  int i, dir,lr,cnt, lc[3],hc[3],done[3]={0,0,0};
+void dd_on_geometry_change(int flags) {
+  /* check that the CPU domains are still sufficiently large. */
+  for (int i = 0; i < 3; i++)
+    if (local_box_l[i] < max_range) {
+      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is too small} ", i);
+    }
 
-  /* otherwise, only re-set the geometrical dimensions which have
-     changed (in addition to those in \ref grid_changed_box_l),
-     following the lead of \ref cells_re_init */
-  for(i=0;i<3;i++) {
+  /* A full resorting is necessary if the grid has changed. We simply
+     don't have anything fast for this case. Probably also not
+     necessary. */
+  if (!(flags & CELL_FLAG_GRIDCHANGED)) {
+    CELL_TRACE(fprintf(stderr,"%d: dd_on_geometry_change full redo\n",
+		       this_node));
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+    return;
+  }
+
+  /* otherwise, re-set our geometrical dimensions which have changed
+     (in addition to the general ones that \ref grid_changed_box_l
+     takes care of) */
+  for(int i=0; i<3; i++) {
     dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
   double min_cell_size = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
   max_skin = min_cell_size - max_cut;
 
+  CELL_TRACE(fprintf(stderr, "%d: dd_on_geometry_change: max_range = %f, min_cell_size = %f, max_skin = %f\n", this_node, max_range, min_cell_size, max_skin));
+  
   if (max_range > min_cell_size) {
-    /* if new box length leads to too small cells, redo cell structure */
+    /* if new box length leads to too small cells, redo cell structure
+       using smaller number of cells. */
     cells_re_init(CELL_STRUCTURE_DOMDEC);
     return;
   }
-  
-  /* don't forget to update the 'shift' member of those
-     GhostCommunicators, which use that value to speed up the folding
-     process of its ghost members (see \ref dd_prepare_comm for the
-     original), i.e. all which have GHOSTTRANS_POSSHFTD or'd into
-     'data_parts' upon execution of \ref dd_prepare_comm. */
-  cnt=0;
-  /* direction loop: x, y, z */
-  for(dir=0; dir<3; dir++) {
-    lc[(dir+1)%3] = 1-done[(dir+1)%3]; 
-    lc[(dir+2)%3] = 1-done[(dir+2)%3];
-    hc[(dir+1)%3] = dd.cell_grid[(dir+1)%3]+done[(dir+1)%3];
-    hc[(dir+2)%3] = dd.cell_grid[(dir+2)%3]+done[(dir+2)%3];
-    /* lr loop: left right */
-    for(lr=0; lr<2; lr++) {
-      if(node_grid[dir] == 1) {
-#ifdef PARTIAL_PERIODIC
-	if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
-#endif
-	  {
-	    /* prepare folding of ghost positions */
-	    if(boundary[2*dir+lr] != 0) {
-	      // dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
-	      // dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
-	      // comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-	      cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-	      cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-	    }
-	    cnt++;
-	  }
-      }
-      else {
-	/* i: send/recv loop */
-	for(i=0; i<2; i++) {  
-#ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
-#endif
-	    if((node_pos[dir]+i)%2==0) {
-	      /* prepare folding of ghost positions */
-	      if(boundary[2*dir+lr] != 0) {
-		cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-		cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-	      }
-	      lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-	      cnt++;
-	    }
-#ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
-#endif
-	    if((node_pos[dir]+(1-i))%2==0) {
-	      lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-	      cnt++;
-	    }
-	}
-      }
-      done[dir]=1;
+
+  /* If we are not in a hurry, check if we can maybe optimize the cell
+     system by using smaller cells. */
+  if (!(flags & CELL_FLAG_FAST)) {
+    int i;
+    for(i=0; i<3; i++) {
+      int poss_size = (int)floor(local_box_l[i]/max_range);
+      if (poss_size > dd.cell_grid[i])
+	break;
+    }
+    if (i < 3) {
+      /* new range/box length allow smaller cells, redo cell structure,
+	 possibly using smaller number of cells. */
+      cells_re_init(CELL_STRUCTURE_DOMDEC);
+      return;
     }
   }
+
+  dd_update_communicators_w_boxl();
+
+  /* tell other algorithms that the box length might have changed. */
+  on_boxl_change();
 }
 
 /************************************************************/

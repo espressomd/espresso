@@ -53,7 +53,7 @@ CellPList local_cells = { NULL, 0, 0 };
 CellPList ghost_cells = { NULL, 0, 0 };
 
 /** Type of cell structure in use */
-CellStructure cell_structure;
+CellStructure cell_structure = { CELL_STRUCTURE_NONEYET };
 
 double max_range = 0.0;
 
@@ -122,6 +122,8 @@ static void check_cells_consistency()
     cell system. */
 static void topology_release(int cs) {
   switch (cs) {
+  case CELL_STRUCTURE_NONEYET:
+    break;
   case CELL_STRUCTURE_CURRENT:
     topology_release(cell_structure.type);
     break;
@@ -135,7 +137,7 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way (%d)\n", cs);
     errexit();
   }
 }
@@ -144,6 +146,8 @@ static void topology_release(int cs) {
     cell system. */
 static void topology_init(int cs, CellPList *local) {
   switch (cs) {
+  case CELL_STRUCTURE_NONEYET:
+    break;
   case CELL_STRUCTURE_CURRENT:
     topology_init(cell_structure.type, local);
     break;
@@ -157,7 +161,7 @@ static void topology_init(int cs, CellPList *local) {
     layered_topology_init(local);
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way (%d)\n", cs);
     errexit();
   }
 }
@@ -167,22 +171,6 @@ static void topology_init(int cs, CellPList *local) {
 /************************************************************
  *            Exported Functions                            *
  ************************************************************/
-
-
-/************************************************************/
-
-void cells_pre_init()
-{
-  CellPList tmp_local;
-  CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
-  /* her local_cells has to be a NULL pointer */
-  if(local_cells.cell != NULL) {
-    fprintf(stderr,"INTERNAL ERROR: wrong usage of cells_pre_init!\n");
-    errexit();
-  }
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
-  dd_topology_init(&tmp_local);
-}
 
 /************************************************************/
 
@@ -245,6 +233,8 @@ void cells_re_init(int new_cs)
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();
 #endif
+
+  on_cell_structure_change();
 }
 
 /************************************************************/
@@ -354,12 +344,8 @@ void cells_resort_particles(int global_flag)
 
 /*************************************************/
 
-void cells_on_max_cut_change(int shrink)
+void cells_on_geometry_change(int flags)
 {
-  double old_max_range = max_range;
-
-  calc_maximal_cutoff();
-
   if (max_cut > 0.0) {
     if (skin >= 0.0)
       max_range = max_cut + skin;
@@ -371,25 +357,22 @@ void cells_on_max_cut_change(int shrink)
     /* if no interactions yet, we also don't need a skin */
     max_range = 0.0;
 
-  CELL_TRACE(fprintf(stderr,"%d: on_max_cut_change with ranges %f %f\n", this_node, max_range, old_max_range));
+  CELL_TRACE(fprintf(stderr,"%d: on_geometry_change with max range %f\n", this_node, max_range));
 
-  /* no need to do something if
-     1. the range didn't change numerically (<= necessary for the start case,
-     when max_range and old_max_range == 0.0)
-     2. it shrank, and we shouldn't shrink (NpT) */
-  if ((fabs(max_range - old_max_range) <= ROUND_ERROR_PREC * max_range) ||
-      (!shrink && (max_range < old_max_range)))
-    return;
-
-  CELL_TRACE(fprintf(stderr,"%d: on_max_cut_change doing big things\n", this_node));
-  
-  cells_re_init(CELL_STRUCTURE_CURRENT);
-
-  for (int i = 0; i < 3; i++)
-    if (local_box_l[i] < max_range) {
-      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is still too small} ", i);
-    }
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    dd_on_geometry_change(flags);
+    break;
+  case CELL_STRUCTURE_LAYERED:
+    /* there is no fast version, always redo everything. */
+    cells_re_init(CELL_STRUCTURE_LAYERED);
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    /* this cell system doesn't need to react, just tell
+       the others */
+    on_boxl_change();
+    break;
+  }
 }
 
 /*************************************************/

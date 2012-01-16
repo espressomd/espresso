@@ -1119,7 +1119,6 @@ double calc_surface_term(int force_flag, int energy_flag)
   double pref =coulomb.Dprefactor*4*M_PI*box_l_i[0]*box_l_i[1]*box_l_i[2]/(2*dp3m.params.epsilon + 1);
   double suma,a[3];
   double en;
-  double  *sumix=NULL,*sumiy=NULL,*sumiz=NULL;
   double  *mx=NULL,*my=NULL,*mz=NULL;
 
      for (c = 0; c < local_cells.n; c++)
@@ -1170,12 +1169,11 @@ double calc_surface_term(int force_flag, int energy_flag)
      } 
      #ifdef ROTATION	             
      if (force_flag) {
- 
           //fprintf(stderr," number of particles= %d ",n_total_particles);   
 
-          sumix = (double *) malloc(sizeof(double)*n_local_part);
-          sumiy = (double *) malloc(sizeof(double)*n_local_part);
-          sumiz = (double *) malloc(sizeof(double)*n_local_part);
+          double *sumix = (double *) malloc(sizeof(double)*n_local_part);
+          double *sumiy = (double *) malloc(sizeof(double)*n_local_part);
+          double *sumiz = (double *) malloc(sizeof(double)*n_local_part);
 	  
           for (i = 0; i < n_local_part; i++){
 	    sumix[i]=my[i]*a[2]-mz[i]*a[1];

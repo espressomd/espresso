@@ -75,7 +75,7 @@ set skin          0.5
 
 set mom_prec      1.e-2
 set mass_prec     1.e-8
-set temp_confidence 4
+set temp_confidence 10
 
 # Other parameters
 #############################################################
@@ -210,12 +210,13 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 #############################################################
 set tcl_precision 6
 
+puts "NOTE: this is a statistical test, which can fail,"
+puts "even if everything works correctly. However, the"
+puts "chance is really SMALL, so if you see an error"
+puts "here, consider a bug in the thermostat.\n"
+
 set avg_temp [expr $avg_temp/$int_times]
-set var_temp [expr $var_temp/$int_times - $avg_temp*$avg_temp]
 set avg_fluid_temp [expr $avg_fluid_temp/$int_times]
-set var_fluid_temp [expr $var_fluid_temp/$int_times - $avg_fluid_temp*$avg_fluid_temp]
-set temp_error [expr abs($avg_temp - [setmd temp])]
-set fluid_temp_error [expr abs($fluid_temp - [setmd temp])]
 
 set temp_dev [expr sqrt(2.0/([setmd n_part]*[degrees_of_freedom]))]
 set temp_prec [expr $temp_confidence*$temp_dev/sqrt($int_times)]
@@ -224,19 +225,15 @@ puts "\n"
 puts "maximal mass deviation $max_dmass"
 puts "maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz\n"
 
-puts "average temperature         $avg_temp (deviation $temp_error)"
-puts "deviation of temperature    [expr sqrt($var_temp)]"
-puts "expected deviation          $temp_dev"
+puts "average temperature         $avg_temp"
 puts "fluid temperature           $avg_fluid_temp"
-puts "variance of the temperature $var_fluid_temp"
+puts "maximally accepted deviations are $temp_prec"
 
-if { $temp_error > $temp_prec || $fluid_temp_error > $temp_prec} {
-    puts "The temperature was outside the expected interval."
-    puts "This does not mean the thermostat is not working -"
-    puts "there is a chance of around 1% that this happens"
-    puts "If you observe this more often, you should however"
-    puts "GET NERVOUS!"
-    error "relative temperature deviation too large"
+if {[expr abs($avg_temp - [setmd temp])] > $temp_prec} {
+    error "relative particle temperature deviation too large"
+}
+if { [expr abs($fluid_temp - [setmd temp])] > $temp_prec} {
+    error "relative fluid temperature deviation too large"
 }
 
 } res ] } {

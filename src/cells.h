@@ -69,6 +69,9 @@
 /** \name Cell Structure */
 /** Flag telling which cell structure is used at the moment. */
 /*@{*/
+/** Flag indicating that there is no cell system yet. Only at the
+    VERY beginning of the code startup. */
+#define CELL_STRUCTURE_NONEYET -1
 /** Flag indicating that the current cell structure will be used furthor on */
 #define CELL_STRUCTURE_CURRENT 0
 /** cell structure domain decomposition */
@@ -88,6 +91,14 @@
 #define CELL_GLOBAL_EXCHANGE 1
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
+
+/** \name Flags for cells_on_geometry_change */
+/*@{*/
+
+/** Flag for cells_on_geometry_change: the processor grid has changed. */
+#define CELL_FLAG_GRIDCHANGED 1
+/** Flag for cells_on_geometry_change: skip shrinking of cells. */
+#define CELL_FLAG_FAST 2
 
 /*@}*/
 
@@ -183,10 +194,6 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** Initialize the cell structure on program start with the default
-    cell structure of type domain decomposition. */
-void cells_pre_init();
-
 /** Reinitialize the cell structures.
     @param new_cs gives the new topology to use afterwards. May be set to
     \ref CELL_STRUCTURE_CURRENT for not changing it.
@@ -217,17 +224,26 @@ MDINLINE void realloc_cellplist(CellPList *cpl, int size)
     arbitrarly, otherwise the change should have been smaller then skin.  */
 void cells_resort_particles(int global_flag);
 
-/** this function is called whenever the (short-range)
- cutoffs have potentially changed. It updates the cutoffs,
- the maximal interaction range, and if necessary, reinitializes
- the cells structure, e.g. if the cells have to become bigger.
+/** this function is called whenever the cell system has to be
+    reinitialized, e.g. if cutoffs have changed, or the skin, grid,
+    .... It calculates the maximal interaction range, and
+    as said reinitializes the cells structure if something significant
+    has changed.
 
- @param shrink if this is 1, then the cells can also shrink if
- the new cutoff is smaller. This should only happen outside
- the integration loop, since it is potentially slow - it
- however won't harm.
+    If bit CELL_FLAG_FAST is set, the routine should try to save time.
+    Currently this means that if the maximal range decreased, it does
+    not reorganize the particles. This is used in the NpT algorithm to
+    avoid frequent reorganizaion of particles.
+
+    If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
+    has changed, i. e. the grid or periodicity. In this case a full
+    reorganization is due.
+
+    @param flag a combination of CELL_FLAG_GRIDCHANGED and
+    CELL_FLAG_FAST, see above.
+
 */
-void cells_on_max_cut_change(int shrink);
+void cells_on_geometry_change(int flags);
 
 /** update ghost information. If \ref resort_particles == 1,
     also a resorting of the particles takes place. */

@@ -175,6 +175,8 @@ void grid_changed_n_nodes()
   fprintf(stderr,"%d: boundary=(%d,%d,%d,%d,%d,%d)\n",this_node,
 	  boundary[0],boundary[1],boundary[2],boundary[3],boundary[4],boundary[5]);
 #endif
+
+  grid_changed_box_l();
 }
 
 void calc_minimal_box_dimensions()
@@ -183,16 +185,8 @@ void calc_minimal_box_dimensions()
   min_box_l = 2*MAX_INTERACTION_RANGE;
   min_local_box_l = MAX_INTERACTION_RANGE;
   for(i=0;i<3;i++) {
-    /* #ifdef PARTIAL_PERIODIC  
-       if(periodic[i]) {
-       min_box_l       = dmin(min_box_l, box_l[i]);
-       min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
-       }
-       #else
-    */
     min_box_l       = dmin(min_box_l, box_l[i]);
     min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
-    /* #endif */
   }
 }
 

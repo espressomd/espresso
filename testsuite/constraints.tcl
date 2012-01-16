@@ -168,14 +168,6 @@ if { [catch {
 	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
 	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
 
-	#
-	if {$dx > $epsilon || $dy > $epsilon || $dz > $epsilon} {
-	    puts "part $i"
-	    puts "in  $resF"
-	    puts "out $tgtF"
-	}
-	#
-
 	if { $dx > $maxdx} {
 	    set maxdx $dx
 	    set maxpx $i

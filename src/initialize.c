@@ -118,7 +118,9 @@ int on_program_start(Tcl_Interp *interp)
   /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
-  cells_pre_init();
+  /* initially go for domain decomposition */
+  dd_topology_init(&local_cells);
+
   ghost_init();
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
@@ -191,27 +193,36 @@ void on_integration_start()
       char *errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
     }
-    if(cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt requires domain decomposition cellsystem} ");
-    }
   
 #ifdef ELECTROSTATICS
 
     switch(coulomb.method) {
-      case COULOMB_NONE:  break;
+    case COULOMB_NONE:  break;
 #ifdef P3M
-      case COULOMB_P3M:   break;
+    case COULOMB_P3M:   break;
 #endif /*P3M*/
-      case COULOMB_EWALD: break;
-      default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
-      }
+    case COULOMB_EWALD: break;
+    default: {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
+    }
     }
 #endif /*ELECTROSTATICS*/
+
+#ifdef DIPOLES
+
+    switch (coulomb.Dmethod) {
+    case DIPOLAR_NONE: break;
+#ifdef DP3M
+    case DIPOLAR_P3M: break;
+#endif
+    default: {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+    }
+    }
+#endif  /* ifdef DIPOLES */
   }
-  
 #endif /*NPT*/
 
   if (!check_obs_calc_initialized()) return;
@@ -296,6 +307,7 @@ if(this_node == 0){
 
 void on_observable_calc()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_observable_calc\n", this_node));
   /* Prepare particle structure: Communication step: number of ghosts and ghost information */
 
   if(resort_particles)
@@ -342,7 +354,7 @@ void on_observable_calc()
 
 void on_particle_change()
 {
-  // EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
+  EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
   resort_particles = 1;
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
@@ -357,25 +369,16 @@ void on_particle_change()
   freePartCfg();
 }
 
-void on_max_cut_change()
-{
-  cells_on_max_cut_change(1);
-}
-
 void on_coulomb_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
-#ifdef ELECTROSTATICS
-  if(temperature > 0.0)
-    coulomb.prefactor = coulomb.bjerrum * temperature; 
-  else
-    coulomb.prefactor = coulomb.bjerrum;
+  recalc_coulomb_prefactor();
 
+#ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_DH:
-    on_max_cut_change();
     break;    
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -383,12 +386,10 @@ void on_coulomb_change()
     // fall through
   case COULOMB_P3M:
     p3m_init();
-    on_max_cut_change();
     break;
 #endif
   case COULOMB_EWALD:
     EWALD_init();
-    on_max_cut_change();
     break;
   case COULOMB_MMM1D:
     MMM1D_init();
@@ -398,34 +399,30 @@ void on_coulomb_change()
     break;
   case COULOMB_MAGGS: 
     maggs_init();
-    on_max_cut_change();
     /* Maggs electrostatics needs ghost velocities */
     on_ghost_flags_change();
-    break;
-
     break;
   default: break;
   }
 #endif  /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  if(temperature > 0.0)
-    coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
-  else
-    coulomb.Dprefactor = coulomb.Dbjerrum;
-  
   switch (coulomb.Dmethod) {
 #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-       // fall through
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M:
     dp3m_init();
-    on_max_cut_change();
     break;
 #endif
   default: break;
   }
 #endif  /* ifdef DIPOLES */
+
+  /* all Coulomb methods have a short range part, aka near field
+     correction. Even in case of switching off, we should call this,
+     since the required cutoff might have reduced. */
+  on_short_range_ia_change();
 
   recalc_forces = 1;
 }
@@ -434,7 +431,10 @@ void on_short_range_ia_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_short_range_ia_changes\n", this_node));
   invalidate_obs();
-  on_max_cut_change();
+
+  recalc_maximal_cutoff();
+  cells_on_geometry_change(0);
+
   recalc_forces = 1;
 }
 
@@ -466,17 +466,6 @@ void on_lbboundary_change()
   recalc_forces = 1;
 }
 
-void on_cell_structure_change()
-{
-  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
-  on_coulomb_change();
-  /* 
-#ifdef LB
-  if (!lb_sanity_checks()) return;
-#endif
-  */
-}
-
 void on_resort_particles()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
@@ -502,202 +491,191 @@ void on_resort_particles()
   recalc_forces = 1;
 }
 
-#ifdef NPT
-void on_NpT_boxl_change(double scal1) {
-  grid_changed_box_l();
-  
+void on_boxl_change() {
+  EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
+
+  /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
   switch(coulomb.method) {
-  case COULOMB_NONE:
-    break;
 #ifdef P3M
+  case COULOMB_ELC_P3M:
+    ELC_init();
+    break;
   case COULOMB_P3M:
     p3m_scaleby_box_l();
-    cells_on_max_cut_change(0);
     break;
 #endif
   case COULOMB_EWALD:
     EWALD_scaleby_box_l();
-    cells_on_max_cut_change(0);
     break;
-  default: {
-    char *errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"NpT does not work with your electrostatics method, please use P3M.");
-  }
+  case COULOMB_MMM1D:
+    MMM1D_init();
+    break;
+  case COULOMB_MMM2D:
+    MMM2D_init();
+    break;
+  case COULOMB_MAGGS: 
+    maggs_init();
+    break;
   }
 #endif
 
 #ifdef DIPOLES
   switch(coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    break;
 #ifdef DP3M
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
-    cells_on_max_cut_change(0);
     break;
 #endif
-  default: {
-    char *errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
-  }
   }
 #endif
 
-  if (cell_structure.type == CELL_STRUCTURE_DOMDEC)
-    dd_change_boxl();
+#ifdef LB
+  if(lattice_switch & LATTICE_LB) {
+    lb_init();
+  }
+#endif
 }
-#endif
 
-void on_parameter_change(int field)
+void on_cell_structure_change()
 {
-  /* to prevent two on_coulomb_change calls. If this value is set to 1,
-     we really need to reinitialize the whole electrostatics. */
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-  int cc = 0;
-#endif
+  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
 
-  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
-
-  if (field == FIELD_SKIN) {
-    cells_on_max_cut_change(1);
-  }
-
-  if (field == FIELD_NODEGRID)
-    grid_changed_n_nodes();
-  if (field == FIELD_BOXL || field == FIELD_NODEGRID)
-    grid_changed_box_l();
-  if (field == FIELD_TIMESTEP || field == FIELD_TEMPERATURE || field == FIELD_LANGEVIN_GAMMA || field == FIELD_DPD_TGAMMA
-      || field == FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPTISO_PISTON )
-    reinit_thermo = 1;
-
-#ifdef NPT
-  if ((field == FIELD_INTEG_SWITCH) && (integ_switch != INTEG_METHOD_NPT_ISO))
-    nptiso.invalidate_p_vel = 1;  
-#endif
-
+  /* Now give methods a chance to react to the change in cell
+     structure.  Most ES methods need to reinitialize, as they depend
+     on skin, node grid and so on. Only for a change in box length we
+     have separate, faster methods, as this might happend frequently
+     in a NpT simulation. */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
+  case COULOMB_DH:
+    break;    
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
-      cc = 1;
+    ELC_init();
     // fall through
   case COULOMB_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
-      cc = 1;
-    else if (field == FIELD_BOXL) {
-      p3m_scaleby_box_l();
-      on_max_cut_change(); 
-    }
+    p3m_init();
     break;
 #endif
   case COULOMB_EWALD:
-    if (field == FIELD_TEMPERATURE || field == FIELD_SKIN)
-      cc = 1;
-    else if (field == FIELD_BOXL) {
-      EWALD_scaleby_box_l();
-      on_max_cut_change(); 
-    }
-    break;
-  case COULOMB_DH:
-    if (field == FIELD_TEMPERATURE)
-      cc = 1;
-    break;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    if (field == FIELD_TEMPERATURE)
-      cc = 1;
+    EWALD_init();
     break;
   case COULOMB_MMM1D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
-      cc = 1;
+    MMM1D_init();
     break;
   case COULOMB_MMM2D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
-      cc = 1;
+    MMM2D_init();
+    break;
+  case COULOMB_MAGGS: 
+    maggs_init();
+    /* Maggs electrostatics needs ghost velocities */
+    on_ghost_flags_change();
     break;
   default: break;
   }
-#endif /*ifdef ELECTROSTATICS */
+#endif  /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
-   #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
-       cc = 1;
-      // fall through
-    case DIPOLAR_P3M:
-      if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
-        cc = 1;
-      else if (field == FIELD_BOXL) {
-        dp3m_scaleby_box_l();
-        on_max_cut_change(); 
-      }
-      break;
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
+  case DIPOLAR_P3M:
+    dp3m_init();
+    break;
 #endif
   default: break;
   }
-#endif /*ifdef DIPOLES */
-  
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-  if (cc)
-    on_coulomb_change();
-#endif
-
-  /* DPD needs ghost velocities, other thermostats not */
-  if (field == FIELD_THERMO_SWITCH) {
-    on_ghost_flags_change();
-  }
-
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    if (field == FIELD_NODEGRID) {
-      if (node_grid[0] != 1 || node_grid[1] != 1) {
-	char *errtext = runtime_error(128);
-	ERROR_SPRINTF(errtext, "{091 layered cellsystem requires 1 1 n node grid} ");
-      }
-    }
-    if (field == FIELD_BOXL || field == FIELD_THERMO_SWITCH)
-      cells_re_init(CELL_STRUCTURE_LAYERED);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if (field == FIELD_BOXL || field == FIELD_NODEGRID ||
-	field == FIELD_MINNUMCELLS || field == FIELD_MAXNUMCELLS ||
-	field == FIELD_THERMO_SWITCH)
-      cells_re_init(CELL_STRUCTURE_DOMDEC);
-    break;
-  }
+#endif  /* ifdef DIPOLES */
 
 #ifdef LB
-  /* LB needs ghost velocities */
-  if (field == FIELD_LATTICE_SWITCH) {
-    on_ghost_flags_change();
-  }
-
-  if (lattice_switch & LATTICE_LB) {
-    if (field == FIELD_TEMPERATURE) {
-      lb_reinit_parameters();
-    }
-
-    if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID) {
-      lb_init();
-    }
+  if(lattice_switch & LATTICE_LB) {
+    lb_init();
   }
 #endif
-
-#ifdef LB_GPU
-if(this_node == 0){
-  if (lattice_switch & LATTICE_LB_GPU) {
-    if (field == FIELD_TEMPERATURE) lb_reinit_parameters_gpu();
-  }
 }
+
+void on_temperature_change()
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_temperature_change\n", this_node));
+
+#ifdef ELECTROSTATICS
+
 #endif
+#ifdef LB
+  if (lattice_switch & LATTICE_LB) {
+    lb_reinit_parameters();
+  }
+#endif
+#ifdef LB_GPU
+  if(this_node == 0) {
+    if (lattice_switch & LATTICE_LB_GPU) {
+      lb_reinit_parameters_gpu();
+    }
+  }
+#endif
+}
+
+void on_parameter_change(int field)
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
+
+  switch (field) {
+  case FIELD_BOXL:
+    grid_changed_box_l();
+    /* Electrostatics cutoffs mostly depend on the system size,
+       therefore recalculate them. */
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    break;
+  case FIELD_SKIN:
+    cells_on_geometry_change(0);
+  case FIELD_PERIODIC:
+    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
+    break;
+  case FIELD_NODEGRID:
+    grid_changed_n_nodes();
+    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
+    break;
+  case FIELD_MINNUMCELLS:
+  case FIELD_MAXNUMCELLS:
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+  case FIELD_TEMPERATURE:
+    on_temperature_change();
+    reinit_thermo = 1;
+    break;
+  case FIELD_TIMESTEP:
+  case FIELD_LANGEVIN_GAMMA:
+  case FIELD_DPD_TGAMMA:
+  case FIELD_DPD_GAMMA:
+  case FIELD_NPTISO_G0:
+  case FIELD_NPTISO_GV:
+  case FIELD_NPTISO_PISTON:
+    reinit_thermo = 1;
+    break;
+#ifdef NPT
+  case FIELD_INTEG_SWITCH:
+    if (integ_switch != INTEG_METHOD_NPT_ISO)
+      nptiso.invalidate_p_vel = 1;
+    break;
+#endif
+  case FIELD_THERMO_SWITCH:
+    /* DPD needs ghost velocities, other thermostats not */
+    on_ghost_flags_change();
+    break;
+#ifdef LB
+  case FIELD_LATTICE_SWITCH:
+    /* LB needs ghost velocities */
+    on_ghost_flags_change();
+    break;
+#endif
+  }
 }
 
 #ifdef LB
 void on_lb_params_change(int field) {
+  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change\n", this_node));
 
   if (field == LBPAR_AGRID) {
     lb_init();
@@ -713,6 +691,8 @@ void on_lb_params_change(int field) {
 
 #if defined (LB) || defined (LB_GPU)
 void on_lb_params_change_gpu(int field) {
+  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change_gpu\n", this_node));
+
 #ifdef LB_GPU
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
@@ -731,6 +711,7 @@ void on_lb_params_change_gpu(int field) {
 
 void on_ghost_flags_change()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern int ghosts_have_v;
 
