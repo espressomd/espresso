@@ -221,10 +221,10 @@ void correct_pos_shake()
      /**Ghost Positions Update*/
      ghost_communicator(&cell_structure.update_ghost_pos_comm);
      if(this_node==0)
-         MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+         MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
      else
-         MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-     MPI_Bcast(&repeat, 1, MPI_INT, 0, MPI_COMM_WORLD);
+         MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+     MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
 
        cnt++;
    }// while(repeat) loop
@@ -405,11 +405,11 @@ void correct_vel_shake()
      apply_vel_corr();
      ghost_communicator(&cell_structure.update_ghost_pos_comm);
      if(this_node == 0)
-       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
      else
-       MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+       MPI_Reduce(&repeat_, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
 
-     MPI_Bcast(&repeat, 1, MPI_INT, 0, MPI_COMM_WORLD);
+     MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
      cnt++;
    }
 
