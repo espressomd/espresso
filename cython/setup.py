@@ -23,10 +23,12 @@ ext_modules=[
     Extension("lbfluid", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
     Extension("debye_hueckel", ["debye_hueckel.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("integrate", ["integrate.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("thermostat", ["thermostat.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("cuda_init", ["cuda_init.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
     Extension("invalidateSystem", ["invalidateSystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
     Extension("code_info", ["code_info.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("cellsystem", ["cellsystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
 ]
 
 setup(

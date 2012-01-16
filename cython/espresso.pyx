@@ -7,8 +7,12 @@ import interaction_data
 cimport interaction_data
 import global_variables
 from integrate import integrate
+import thermostat
+cimport thermostat
 from changeVolume import changeVolume
 from invalidateSystem import invalidateSystem
+import cellsystem
+cimport cellsystem
 
 import debye_hueckel
 import lbfluid
