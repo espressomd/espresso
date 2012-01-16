@@ -147,7 +147,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
     for(c = 0; c < n; c++) {
       comm->comm[c].part_lists = malloc(sizeof(ParticleList *));
       comm->comm[c].n_part_lists = 1;
-      comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+      comm->comm[c].mpi_comm = comm_cart;
     }
 
     c = 0;
@@ -265,7 +265,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
       for(c = 0; c < n; c++) {
 	comm->comm[c].part_lists = malloc(2*sizeof(ParticleList *));
 	comm->comm[c].n_part_lists = 2;
-	comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+	comm->comm[c].mpi_comm = comm_cart;
 	comm->comm[c].node = this_node;
       }
 
@@ -340,7 +340,7 @@ void layered_topology_init(CellPList *old)
     else
       n_layers = 1;
   }
-  MPI_Bcast(&n_layers, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
   top = this_node + 1;
   if (top == n_nodes && (layered_flags & LAYERED_PERIODIC))
@@ -529,7 +529,7 @@ void layered_exchange_and_sort_particles(int global_flag)
     CELL_TRACE(if (flag) fprintf(stderr, "%d: requesting another exchange round\n", this_node));
 
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
-      MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, comm_cart);
       if (!redo)
 	break;
       CELL_TRACE(fprintf(stderr, "%d: another exchange round\n", this_node));

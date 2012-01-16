@@ -81,7 +81,7 @@ void energy_calc(double *result)
   calc_long_range_energies();
   
   /* gather data */
-  MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 /************************************************************/

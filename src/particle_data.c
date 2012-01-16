@@ -1194,9 +1194,9 @@ void send_particles(ParticleList *particles, int node)
 
   PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node, particles->n, node));
 
-  MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+  MPI_Send(&particles->n, 1, MPI_INT, node, REQ_SNDRCV_PART, comm_cart);
   MPI_Send(particles->part, particles->n*sizeof(Particle),
-	   MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+	   MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart);
 
   init_intlist(&local_dyn);
   for (pc = 0; pc < particles->n; pc++) {
@@ -1217,7 +1217,7 @@ void send_particles(ParticleList *particles, int node)
   PART_TRACE(fprintf(stderr, "%d: send_particles sending %d bond ints\n", this_node, local_dyn.n));
   if (local_dyn.n > 0) {
     MPI_Send(local_dyn.e, local_dyn.n*sizeof(int),
-	     MPI_BYTE, node, REQ_SNDRCV_PART, MPI_COMM_WORLD);
+	     MPI_BYTE, node, REQ_SNDRCV_PART, comm_cart);
     realloc_intlist(&local_dyn, 0);
   }
 
@@ -1238,13 +1238,13 @@ void recv_particles(ParticleList *particles, int node)
   PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
 
   MPI_Recv(&transfer, 1, MPI_INT, node,
-	   REQ_SNDRCV_PART, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	   REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
 
   PART_TRACE(fprintf(stderr, "%d: recv_particles get %d\n", this_node, transfer));
 
   realloc_particlelist(particles, particles->n + transfer);
   MPI_Recv(&particles->part[particles->n], transfer*sizeof(Particle), MPI_BYTE, node,
-	   REQ_SNDRCV_PART, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	   REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
   particles->n += transfer;
 
   init_intlist(&local_dyn);
@@ -1270,7 +1270,7 @@ void recv_particles(ParticleList *particles, int node)
   if (local_dyn.n > 0) {
     alloc_intlist(&local_dyn, local_dyn.n);
     MPI_Recv(local_dyn.e, local_dyn.n*sizeof(int), MPI_BYTE, node,
-	     REQ_SNDRCV_PART, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	     REQ_SNDRCV_PART, comm_cart, MPI_STATUS_IGNORE);
   }
   read = 0;
   for (pc = particles->n - transfer; pc < particles->n; pc++) {

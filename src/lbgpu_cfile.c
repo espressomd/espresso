@@ -263,7 +263,7 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
   n_part = cells_get_n_particles();
 
   /* first collect number of particles on each node */
-  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
   /* just check if the number of particles is correct */
   if(this_node > 0){
@@ -305,7 +305,7 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
         }
         else {
           MPI_Recv(&host_data[g], sizes[pnode]*sizeof(LB_particle_gpu), MPI_BYTE, pnode, REQ_GETPARTS,
-          MPI_COMM_WORLD, &status);
+          comm_cart, &status);
           g += sizes[pnode];
         }
       }
@@ -362,7 +362,7 @@ static void mpi_get_particles_slave_lb(){
       g+=npart;
     }
     /* and send it back to the master node */
-    MPI_Send(host_data_sl, n_part*sizeof(LB_particle_gpu), MPI_BYTE, 0, REQ_GETPARTS, MPI_COMM_WORLD);
+    MPI_Send(host_data_sl, n_part*sizeof(LB_particle_gpu), MPI_BYTE, 0, REQ_GETPARTS, comm_cart);
     free(host_data_sl);
   }  
 }
@@ -378,7 +378,7 @@ static void mpi_send_forces_lb(LB_particle_force_gpu *host_forces){
   sizes = malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
-  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
 
   /* call slave functions to provide the slave datas */
   if(this_node > 0) {
@@ -404,7 +404,7 @@ static void mpi_send_forces_lb(LB_particle_force_gpu *host_forces){
         }
         else {
         /* and send it back to the slave node */
-        MPI_Send(&host_forces[g], sizes[pnode]*sizeof(LB_particle_force_gpu), MPI_BYTE, pnode, REQ_GETPARTS, MPI_COMM_WORLD);			
+        MPI_Send(&host_forces[g], sizes[pnode]*sizeof(LB_particle_force_gpu), MPI_BYTE, pnode, REQ_GETPARTS, comm_cart);			
         g += sizes[pnode];
         }
       }
@@ -434,7 +434,7 @@ static void mpi_send_forces_slave_lb(){
     /* then get the particle information */
     host_forces_sl = malloc(n_part*sizeof(LB_particle_force_gpu));
     MPI_Recv(host_forces_sl, n_part*sizeof(LB_particle_force_gpu), MPI_BYTE, 0, REQ_GETPARTS,
-    MPI_COMM_WORLD, &status);
+    comm_cart, &status);
     for (c = 0; c < local_cells.n; c++) {
       int npart;	
       cell = local_cells.cell[c];
