@@ -597,7 +597,6 @@ void propagate_press_box_pos_and_rescale_npt()
     grid_changed_box_l();
     recalc_maximal_cutoff();
     cells_on_geometry_change(CELL_FLAG_FAST);
->>>>>>> bd1822170429dfc1346f47e71772b64d50254161
   }
 #endif
 }
