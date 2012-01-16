@@ -222,6 +222,10 @@
 #define VIRTUAL_SITES
 #endif
 
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Can only compile either VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
+#endif
+
 #ifdef VIRTUAL_SITES_RELATIVE
 #define ROTATION
 #endif

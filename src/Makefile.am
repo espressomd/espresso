@@ -20,114 +20,163 @@
 noinst_HEADERS = \
 	myconfig-default.h
 
+# All objects are compiled into the library
+noinst_LIBRARIES = libEspresso.a
+
 # List the sources of the Espresso binary here
 libEspresso_a_SOURCES = \
-	config.c config.h \
-	initialize.c initialize.h \
-	global.c global.h \
-	communication.c communication.h \
-	binary_file.c binary_file.h \
-	interaction_data.c interaction_data.h\
-	verlet.c verlet.h \
-	grid.c grid.h \
-	integrate.c integrate.h \
-	cells.c cells.h \
-	ghosts.c ghosts.h \
-	forces.c forces.h \
-	rotation.c rotation.h \
-	debug.c debug.h \
-	particle_data.c	particle_data.h \
-	thermostat.c thermostat.h \
-	dpd.c dpd.h \
-	statistics.c statistics.h \
-	statistics_chain.c statistics_chain.h \
-	energy.c energy.h \
-	pressure.c pressure.h \
-	vmdsock.c vmdsock.h \
-	imd.c imd.h \
-	iccp3m.c iccp3m.h \
-	fft-common.c fft-common.h \
-	fft.c fft.h \
-	fft-dipolar.c fft-dipolar.h \
-	p3m-common.c p3m-common.h \
-	p3m.c p3m.h \
-	p3m-dipolar.c p3m-dipolar.h \
-	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
-	ewald.c ewald.h \
-	random.c random.h \
-	blockfile.c blockfile.h \
-	blockfile_tcl.c blockfile_tcl.h \
-	polymer.c polymer.h \
-	specfunc.c specfunc.h \
-	tuning.c tuning.h \
-	uwerr.c	uwerr.h \
-	parser.c parser.h \
-	domain_decomposition.c domain_decomposition.h \
-	nsquare.c nsquare.h \
-	layered.c layered.h \
-	mmm-common.c mmm-common.h \
-	mmm1d.c mmm1d.h \
-	mmm2d.c	mmm2d.h \
-	modes.c	modes.h \
-	topology.c topology.h \
-	nemd.c nemd.h \
-	statistics_cluster.c statistics_cluster.h \
-	elc.c elc.h \
-	mdlc_correction.c  mdlc_correction.h \
-	statistics_molecule.c statistics_molecule.h \
-	errorhandling.c	errorhandling.h \
-	constraint.c constraint.h \
-	maggs.c maggs.h \
-	mol_cut.h \
-	rattle.c rattle.h \
-	molforces.c molforces.h \
-	virtual_sites.c virtual_sites.h \
-	virtual_sites_com.c virtual_sites_com.h \
-	virtual_sites_relative.c virtual_sites_relative.h \
-	metadynamics.c metadynamics.h \
-        npt.h \
-	lb.c lb.h \
-	lb-d3q18.h lb-d3q19.h \
-	bin.c bin.h \
-	lattice.c lattice.h \
-	halo.c halo.h \
-	statistics_fluid.c statistics_fluid.h \
-	lb-boundaries.c lb-boundaries.h \
-	lbgpu_cfile.c \
-	utils.c utils.h \
+	adresso.c adresso.h \
 	angle.h \
-	pwdist.h \
 	angledist.h \
-	endangledist.h \
+	bin.c bin.h \
+	binary_file.c binary_file.h \
+	blockfile.c blockfile.h \
+	bmhtf-nacl.h \
 	buckingham.h \
+	cells.c cells.h \
+	communication.c communication.h \
 	comfixed.h \
 	comforce.h \
+	config.c config.h \
+	constraint.c constraint.h \
+	debug.c debug.h \
 	debye_hueckel.h \
-	reaction_field.h \
 	dihedral.h \
+	domain_decomposition.c domain_decomposition.h \
+	dpd.c dpd.h \
+	elc.c elc.h \
+	endangledist.h \
+	energy.c energy.h \
+	errorhandling.c	errorhandling.h \
+	ewald.c ewald.h \
 	fene.h \
+	fft.c fft.h \
+	fft-common.c fft-common.h \
+	fft-dipolar.c fft-dipolar.h \
+	forces.c forces.h \
 	gb.h \
+	ghosts.c ghosts.h \
+	global.h \
+	grid.c grid.h \
+	halo.c halo.h \
 	harmonic.h \
 	hertzian.h \
-	imd.h \
-	ljcos2.c ljcos2.h \
-	ljcos.c ljcos.h \
+	iccp3m.c iccp3m.h \
+	imd.c imd.h \
+	initialize.c initialize.h \
+	integrate.c integrate.h \
+	interaction_data.c interaction_data.h\
+	lattice.c lattice.h \
+	layered.c layered.h \
+	lb.c lb.h \
+	lb-boundaries.c lb-boundaries.h \
+	lb-d3q18.h lb-d3q19.h \
+	lbgpu_cfile.c \
 	lj.c lj.h \
+	ljangle.c ljangle.h \
+	ljcos.c ljcos.h \
+	ljcos2.c ljcos2.h \
 	ljgen.c ljgen.h \
-	steppot.h \
-	bmhtf-nacl.h \
+	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
+	mdlc_correction.c  mdlc_correction.h \
+	maggs.c maggs.h \
+	metadynamics.c metadynamics.h \
+	mmm1d.c mmm1d.h \
+	mmm2d.c	mmm2d.h \
+	mmm-common.c mmm-common.h \
+	modes.c	modes.h \
+	molforces.c molforces.h \
+	mol_cut.h \
 	morse.h \
+	nemd.c nemd.h \
+  npt.h \
+	nsquare.c nsquare.h \
+	overlap.h \
+	p3m.c p3m.h \
+	p3m-common.c p3m-common.h \
+	p3m-dipolar.c p3m-dipolar.h \
+	parser.c parser.h \
+	particle_data.c	particle_data.h \
+	polymer.c polymer.h \
 	polynom.h \
+	pressure.c pressure.h \
+	pwdist.h \
+	random.c random.h \
+	rattle.c rattle.h \
+	reaction_field.h \
+	rotation.c rotation.h \
 	soft_sphere.h \
+	specfunc.c specfunc.h \
+	statistics.c statistics.h \
+	statistics_chain.c statistics_chain.h \
+	statistics_cluster.c statistics_cluster.h \
+	statistics_fluid.c statistics_fluid.h \
+	statistics_molecule.c statistics_molecule.h \
+	steppot.h \
 	subt_lj.h \
 	tab.h \
+	thermostat.c thermostat.h \
+	topology.c topology.h \
 	overlap.h \
 	ljangle.c ljangle.h \
 	adresso.c adresso.h \
-        tunable_slip.h
+	tunable_slip.c tunable_slip.h \
+	tuning.c tuning.h \
+	utils.c utils.h \
+	uwerr.c	uwerr.h \
+	verlet.c verlet.h \
+	virtual_sites.c virtual_sites.h \
+	virtual_sites_com.c virtual_sites_com.h \
+	virtual_sites_relative.c virtual_sites_relative.h \
+	vmdsock.c vmdsock.h
 
-# All objects are compiled into the library
-noinst_LIBRARIES = libEspresso.a
+libEspresso_a_SOURCES += \
+	tcl/adresso_tcl.c tcl/adresso_tcl.h \
+	tcl/bin_tcl.c tcl/bin_tcl.h \
+	tcl/binary_file_tcl.c tcl/binary_file_tcl.h \
+	tcl/blockfile_tcl.c tcl/blockfile_tcl.h \
+	tcl/cells_tcl.c tcl/cells_tcl.h \
+	tcl/constraint_tcl.c tcl/constraint_tcl.h \
+	tcl/cuda_init_tcl.h \
+	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
+	tcl/dpd_tcl.c tcl/dpd_tcl.h \
+	tcl/global_tcl.c tcl/global_tcl.h \
+	tcl/grid_tcl.c tcl/grid_tcl.h \
+	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \
+	tcl/imd_tcl.c tcl/imd_tcl.h \
+	tcl/initialize_interpreter.h tcl/initialize_interpreter.c \
+	tcl/integrate_tcl.c tcl/integrate_tcl.h \
+	tcl/interaction_data_tcl.c tcl/interaction_data_tcl.h \
+	tcl/lb-boundaries_tcl.c tcl/lb-boundaries_tcl.h \
+	tcl/lb_tcl.c tcl/lb_tcl.h \
+	tcl/lj_tcl.c tcl/lj_tcl.h \
+	tcl/ljangle_tcl.c tcl/ljangle_tcl.h \
+	tcl/ljcos2_tcl.c tcl/ljcos2_tcl.h \
+	tcl/ljcos_tcl.c tcl/ljcos_tcl.h \
+	tcl/lj_tcl.c tcl/lj_tcl.h \
+	tcl/ljgen_tcl.c tcl/ljgen_tcl.h \
+	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
+	tcl/maggs_tcl.c tcl/maggs_tcl.h \
+	tcl/metadynamics_tcl.c tcl/metadynamics_tcl.h \
+	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
+	tcl/mmm2d_tcl.c tcl/mmm2d_tcl.h \
+	tcl/morse_tcl.c tcl/morse_tcl.h \
+	tcl/nemd_tcl.c tcl/nemd_tcl.h\
+	tcl/p3m-dipolar_tcl.c tcl/p3m-dipolar_tcl.h \
+	tcl/p3m_tcl.c tcl/p3m_tcl.h \
+	tcl/particle_data_tcl.c tcl/particle_data_tcl.h \
+	tcl/polymer_tcl.c tcl/polymer_tcl.h \
+	tcl/pressure_tcl.c tcl/pressure_tcl.h \
+	tcl/random_tcl.c tcl/random_tcl.h \
+	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
+	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
+	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
+	tcl/statistics_tcl.c tcl/statistics_tcl.h \
+	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
+	tcl/tab_tcl.c tcl/tab_tcl.h \
+	tcl/topology_tcl.c tcl/topology_tcl.h \
+	tcl/uwerr_tcl.c tcl/uwerr_tcl.h \
+	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
 
 #################################################################
 # Build the blockfile library
@@ -164,9 +213,7 @@ myconfig-final.h: FORCE
 	  exit 1; \
 	fi
 
-$(libEspresso_a_OBJECTS): myconfig-final.h
-
-CLEANFILES = myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -185,10 +232,11 @@ SUFFIXES=.cu
 .cu.o:
 	$(NVCC) -c $(NVCCFLAGS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(INCLUDES) $(DEFS) -o $@ $<
 
-CUDA_SOURCES= \
-	cuda_init.cu \
-	cuda_init.h \
+CUDA_SOURCES = \
+	cuda_init.cu cuda_init.h \
+	tcl/cuda_init_tcl.cu tcl/cuda_init_tcl.h \
 	lbgpu.cu lbgpu.h
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
+EXTRA_DIST = $(CUDA_SOURCES)
 endif

@@ -53,7 +53,7 @@ CellPList local_cells = { NULL, 0, 0 };
 CellPList ghost_cells = { NULL, 0, 0 };
 
 /** Type of cell structure in use */
-CellStructure cell_structure;
+CellStructure cell_structure = { CELL_STRUCTURE_NONEYET };
 
 double max_range = 0.0;
 
@@ -122,6 +122,8 @@ static void check_cells_consistency()
     cell system. */
 static void topology_release(int cs) {
   switch (cs) {
+  case CELL_STRUCTURE_NONEYET:
+    break;
   case CELL_STRUCTURE_CURRENT:
     topology_release(cell_structure.type);
     break;
@@ -135,7 +137,7 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way (%d)\n", cs);
     errexit();
   }
 }
@@ -144,6 +146,8 @@ static void topology_release(int cs) {
     cell system. */
 static void topology_init(int cs, CellPList *local) {
   switch (cs) {
+  case CELL_STRUCTURE_NONEYET:
+    break;
   case CELL_STRUCTURE_CURRENT:
     topology_init(cell_structure.type, local);
     break;
@@ -157,7 +161,7 @@ static void topology_init(int cs, CellPList *local) {
     layered_topology_init(local);
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way (%d)\n", cs);
     errexit();
   }
 }
@@ -167,82 +171,6 @@ static void topology_init(int cs, CellPList *local) {
 /************************************************************
  *            Exported Functions                            *
  ************************************************************/
-
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv)
-{
-  int err = 0;
-
-  if (argc <= 1) {
-    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG1_IS_S("domain_decomposition")) {
-    if (argc > 2) {
-      if (ARG_IS_S(2,"-verlet_list"))
-	dd.use_vList = 1;
-      else if(ARG_IS_S(2,"-no_verlet_list")) 
-	dd.use_vList = 0;
-      else{
-	Tcl_AppendResult(interp, "wrong flag to",argv[0],
-			 " : should be \" -verlet_list or -no_verlet_list \"",
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
-    }
-    /** by default use verlet list */
-    else dd.use_vList = 1;
-    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
-  }
-  else if (ARG1_IS_S("nsquare"))
-    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
-  else if (ARG1_IS_S("layered")) {
-    if (argc > 2) {
-      if (!ARG_IS_I(2, n_layers))
-	return TCL_ERROR;
-      if (n_layers <= 0) {
-	Tcl_AppendResult(interp, "layer height should be positive", (char *)NULL);
-	return TCL_ERROR;
-      }
-      determine_n_layers = 0;
-    }
-
-    /* check node grid. All we can do is 1x1xn. */
-    if (node_grid[0] != 1 || node_grid[1] != 1) {
-      node_grid[0] = node_grid[1] = 1;
-      node_grid[2] = n_nodes;
-      mpi_bcast_parameter(FIELD_NODEGRID);
-
-      err = mpi_bcast_parameter(FIELD_NODEGRID);
-    }
-    else
-      err = 0;
-
-    if (!err)
-      mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
-  }
-  else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  return mpi_gather_runtime_errors(interp, TCL_OK);
-}
-
-/************************************************************/
-
-void cells_pre_init()
-{
-  CellPList tmp_local;
-  CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
-  /* her local_cells has to be a NULL pointer */
-  if(local_cells.cell != NULL) {
-    fprintf(stderr,"INTERNAL ERROR: wrong usage of cells_pre_init!\n");
-    errexit();
-  }
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
-  dd_topology_init(&tmp_local);
-}
 
 /************************************************************/
 
@@ -305,6 +233,8 @@ void cells_re_init(int new_cs)
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();
 #endif
+
+  on_cell_structure_change();
 }
 
 /************************************************************/
@@ -414,12 +344,8 @@ void cells_resort_particles(int global_flag)
 
 /*************************************************/
 
-void cells_on_max_cut_change(int shrink)
+void cells_on_geometry_change(int flags)
 {
-  double old_max_range = max_range;
-
-  calc_maximal_cutoff();
-
   if (max_cut > 0.0) {
     if (skin >= 0.0)
       max_range = max_cut + skin;
@@ -431,21 +357,22 @@ void cells_on_max_cut_change(int shrink)
     /* if no interactions yet, we also don't need a skin */
     max_range = 0.0;
 
-  /* no need to do something if
-     1. the range didn't change numerically (<= necessary for the start case,
-     when max_range and old_max_range == 0.0)
-     2. it shrank, and we shouldn't shrink (NpT) */
-  if ((fabs(max_range - old_max_range) <= ROUND_ERROR_PREC * max_range) ||
-      (!shrink && (max_range < old_max_range)))
-    return;
-  
-  cells_re_init(CELL_STRUCTURE_CURRENT);
+  CELL_TRACE(fprintf(stderr,"%d: on_geometry_change with max range %f\n", this_node, max_range));
 
-  for (int i = 0; i < 3; i++)
-    if (local_box_l[i] < max_range) {
-      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is still too small} ", i);
-    }
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    dd_on_geometry_change(flags);
+    break;
+  case CELL_STRUCTURE_LAYERED:
+    /* there is no fast version, always redo everything. */
+    cells_re_init(CELL_STRUCTURE_LAYERED);
+    break;
+  case CELL_STRUCTURE_NSQUARE:
+    /* this cell system doesn't need to react, just tell
+       the others */
+    on_boxl_change();
+    break;
+  }
 }
 
 /*************************************************/

@@ -42,7 +42,6 @@
 #include "lj.h"
 #include "lb.h"
 #include "lb-boundaries.h"
-#include "lbgpu.h"
 #include "morse.h"
 #include "buckingham.h"
 #include "tab.h"
@@ -222,8 +221,8 @@ static void mpi_call(SlaveCallback cb, int node, int param) {
   request[1] = node;
   request[2] = param;
 
-  COMM_TRACE(fprintf(stderr, "0: issuing %s(%d), assigned to node %d\n",
-		     names[reqcode], param, node));
+  COMM_TRACE(fprintf(stderr, "0: issuing %s %d %d\n",
+		     names[reqcode], node, param));
 #ifdef ASYNC_BARRIER
   MPI_Barrier(comm_cart);
 #endif
@@ -1134,12 +1133,13 @@ void mpi_bcast_ia_params(int i, int j)
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, comm_cart);
 
+    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+
 #ifdef TABULATED
     /* If there are tabulated forces broadcast those as well */
     if ( get_ia_param(i,j)->TAB_maxval > 0) {
       /* First let all nodes know the new size for force and energy tables */
       MPI_Bcast(&tablesize, 1, MPI_INT, 0, comm_cart);
-      MPI_Barrier(comm_cart); // Don't do anything until all nodes have this information
 
       /* Communicate the data */
       MPI_Bcast(tabulated_forces.e,tablesize, MPI_DOUBLE, 0 , comm_cart);
@@ -1149,7 +1149,6 @@ void mpi_bcast_ia_params(int i, int j)
 #ifdef INTERFACE_CORRECTION
     if(get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
       MPI_Bcast(&adress_tablesize, 1, MPI_INT, 0, comm_cart);
-      MPI_Barrier(comm_cart); // Don't do anything until all nodes have this information
       
       /* Communicate the data */
       MPI_Bcast(adress_tab_forces.e, adress_tablesize, MPI_DOUBLE, 0, comm_cart);
@@ -1157,7 +1156,7 @@ void mpi_bcast_ia_params(int i, int j)
     }
     /* NO IC FOR TABULATED BONDED INTERACTIONS YET!! */
 #endif
-}
+  }
   else {
     /* bonded interaction parameters */
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
@@ -1191,6 +1190,9 @@ void mpi_bcast_ia_params_slave(int i, int j)
     /* INCOMPATIBLE WHEN NODES USE DIFFERENT ARCHITECTURES */
     MPI_Bcast(get_ia_param(i, j), sizeof(IA_parameters), MPI_BYTE,
 	      0, comm_cart);
+
+    copy_ia_params(get_ia_param(j, i), get_ia_param(i, j));
+
 #ifdef TABULATED
     {
       int tablesize=0;
@@ -1198,7 +1200,6 @@ void mpi_bcast_ia_params_slave(int i, int j)
       if ( get_ia_param(i,j)->TAB_maxval > 0) {
 	/* Determine the new size for force and energy tables */
 	MPI_Bcast(&tablesize,1,MPI_INT,0,comm_cart);
-	MPI_Barrier(comm_cart);
 	/* Allocate sizes accordingly */
 	realloc_doublelist(&tabulated_forces, tablesize);
 	realloc_doublelist(&tabulated_energies, tablesize);
@@ -1213,7 +1214,6 @@ void mpi_bcast_ia_params_slave(int i, int j)
       int adress_tabsize=0;
       if ( get_ia_param(i,j)->ADRESS_TAB_maxval > 0) {
 	MPI_Bcast(&adress_tabsize,1,MPI_INT,0,comm_cart);
-	MPI_Barrier(comm_cart);
 	realloc_doublelist(&adress_tab_forces, adress_tabsize);
 	realloc_doublelist(&adress_tab_energies, adress_tabsize);
 	MPI_Bcast(adress_tab_forces.e,adress_tabsize, MPI_DOUBLE, 0, comm_cart);
@@ -1679,7 +1679,13 @@ void mpi_set_time_step(double time_s)
   mpi_call(mpi_set_time_step_slave, -1, 0);
 
   time_step = time_s;
+
+  time_step_squared=time_step * time_step;
+  time_step_squared_half = time_step_squared /2.;
+  time_step_half= time_step / 2.;
+
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
+
   rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
 }
@@ -1691,6 +1697,9 @@ void mpi_set_time_step_slave(int node, int i)
   MPI_Bcast(&time_step, 1, MPI_DOUBLE, 0, comm_cart);
   rescale_velocities(time_step / old_ts);
   on_parameter_change(FIELD_TIMESTEP);
+  time_step_squared=time_step * time_step;
+  time_step_squared_half = time_step_squared /2.;
+  time_step_half= time_step / 2.;
 }
 
 /*************** REQ_BCAST_COULOMB ************/
@@ -1771,7 +1780,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 #endif  
   
   on_coulomb_change();
-  on_short_range_ia_change();
 #endif
 }
 
@@ -2185,13 +2193,12 @@ void mpi_rescale_particles_slave(int pnode, int dir) {
 void mpi_bcast_cell_structure(int cs)
 {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  mpi_bcast_cell_structure_slave(-1, cs);
+  cells_re_init(cs);
 }
 
 void mpi_bcast_cell_structure_slave(int pnode, int cs)
 {
   cells_re_init(cs);
-  on_cell_structure_change();
 }
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/

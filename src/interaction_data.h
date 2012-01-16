@@ -861,6 +861,14 @@ extern int ia_excl;
 /** Function for initializing force and energy tables */
 void force_and_energy_tables_init();
 
+#ifdef ELECTROSTATICS
+int coulomb_set_bjerrum(double bjerrum);
+#endif
+
+#ifdef DIPOLES
+int dipolar_set_Dbjerrum(double bjerrum);
+#endif
+
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
 /** Function for initializing adress force and energy tables */
@@ -872,17 +880,8 @@ void tf_tables_init();
 
 #endif
 
-/** Implementation of the tcl command "inter". This function
-    allows the interaction parameters to be modified.
- */
-int tclcommand_inter(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implementation of the Tcl function constraint. This function
-    allows to set and delete constraints.
- */
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
+/** copy a set of interaction parameters. */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
@@ -890,6 +889,11 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
   extern int n_particle_types;
   return &ia_params[i*n_particle_types + j];
 }
+
+/** get interaction parameters between particle sorts i and j.
+    Slower than @ref get_ia_param, but can also be used on not
+    yet present particle types*/
+IA_parameters *get_ia_param_safe(int i, int j);
 
 #ifdef ADRESS 
 MDINLINE TF_parameters *get_tf_param(int i) {
@@ -926,7 +930,10 @@ void realloc_tf_params(int nsize);
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
     verlet.h). */
-void calc_maximal_cutoff();
+void recalc_maximal_cutoff();
+
+/** call when the temperature changes, for Bjerrum length adjusting. */
+void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
 int check_obs_calc_initialized();
@@ -947,4 +954,8 @@ int checkIfTF(TF_parameters *data);
 #endif
 
 char *get_name_of_bonded_ia(int i);
+#endif
+
+#ifdef BOND_VIRTUAL
+int virtual_set_params(int bond_type);
 #endif

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,19 +18,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file blockfile_tcl.h
-    Contains only the tcl interface for block coded files.
+#ifndef CONSTRAINT_TCL_H
+#define CONSTRAINT_TCL_H
 
-    It is the header file for \ref blockfile_tcl.c "blockfile_tcl.c" and provides the
-    tcl command blockfile.
-*/
-#ifndef BLOCKFILE_TCL_H
-#define BLOCKFILE_TCL_H
-#include "config.h"
 #include <tcl.h>
+#include "utils.h"
 
-/** Implementation of the Tcl command blockfile. Allows to read and write
-    blockfile comfortably from Tcl. */
-int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
-	      int argc, char **argv);
-#endif
+#ifdef CONSTRAINTS
+
+int tclcommand_constraint_print(Tcl_Interp *interp);
+int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
+			  int argc, char **argv);
+
+
+#endif /* CONSTRAINTS */
+
+#endif /* CONSTRAINT_TCL_H */

@@ -49,7 +49,6 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
-#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */

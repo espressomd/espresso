@@ -35,9 +35,6 @@ void *fftw_malloc(size_t n);
 #include <mpi.h>
 #include "communication.h"
 #include "grid.h"
-#ifdef NPT
-#include "pressure.h"
-#endif
 #include "fft-common.h"
 
 /************************************************

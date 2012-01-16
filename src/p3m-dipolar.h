@@ -104,16 +104,31 @@ extern dp3m_data_struct dp3m;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-/** dipolar p3m parser */
-int tclcommand_inter_magnetic_parse_dp3m(Tcl_Interp * interp, int argc, char ** argv);
-
-/** dipolar p3m parser, optional parameters */
-int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
-
-/** print the p3m parameters to the interpreters result */
-int tclprint_to_result_dp3m(Tcl_Interp *interp);
 
 void dp3m_pre_init();
+
+void dp3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy, int n_interpol);
+
+int dp3m_set_params(double r_cut, int mesh, int cao,
+		   double alpha, double accuracy);
+
+int dp3m_set_ninterpol(int n);
+
+int dp3m_set_mesh_offset(double x, double y, double z);
+
+int dp3m_set_eps(double eps);
+
+double P3M_DIPOLAR_real_space_error(double box_size, double prefac, double r_cut_iL,  int n_c_part, double sum_q2, double alpha_L);
+
+double dp3m_rtbisection( double box_size, double prefac, double r_cut_iL,  int n_c_part, double sum_q2,  double x1, double x2, double xacc, double tuned_accuracy);
+
+double dp3m_k_space_error(double box_size, double prefac, int mesh,
+			 int cao, int n_c_part, double sum_q2, double alpha_L); 
+ 
+double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L, double *_rs_err, double *_ks_err);
+
+double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
@@ -133,6 +148,8 @@ int dp3m_sanity_checks();
     Dcur_ca_frac. */
 void dp3m_dipole_assign(void);
 
+/** set bjerrum length for dipolar p3m */
+void dp3m_set_bjerrum(void);
 
 /** compute the k-space part of forces and energies for the magnetic dipole-dipole interaction  */
 double dp3m_calc_kspace_forces(int force_flag, int energy_flag);

@@ -30,6 +30,7 @@ tests = \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
+	exclusions.tcl \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \

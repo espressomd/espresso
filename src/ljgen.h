@@ -37,19 +37,18 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 
-int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j);
 
-int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
-
+int ljgen_set_params(int part_type_a, int part_type_b,
+			       double eps, double sig, double cut,
+			       double shift, double offset,
+			       int a1, int a2, double b1, double b2,
+			       double cap_radius);
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])
 {
   if (dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset) {
-    fprintf(stderr, "dist=%lf ljgen=%lf\n", dist, (ia_params->LJGEN_cut+ia_params->LJGEN_offset));
     int j;
     double r_off, frac, fac=0.0;
     r_off = dist - ia_params->LJGEN_offset;

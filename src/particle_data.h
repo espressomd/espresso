@@ -26,7 +26,7 @@
 
  */
 
-#include <tcl.h>
+//#include <tcl.h>
 #include "utils.h"
 #include "grid.h"
 #include "global.h"
@@ -291,10 +291,6 @@ extern int *partBondPartners;
  * Functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tclcommand_part. This command allows to
-    modify particle data. */
-int tclcommand_part(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
 
 /*       Functions acting on Particles          */
 /************************************************/
@@ -690,6 +686,26 @@ MDINLINE int do_nonbonded(Particle *p1, Particle *p2)
   return 1;
 }
 #endif
+
+/** Remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
+
+/** Remove exclusion from particle if possible */
+void try_delete_exclusion(Particle *part, int part2);
+
+/** Insert an exclusion if not already set */
+void try_add_exclusion(Particle *part, int part2);
+
+/** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
+ This uses the bond topology obtained directly from the particles, since only this contains
+ the full topology, in contrast to \ref topology::topology. To easily setup the bonds, all data
+ should be on a single node, therefore the \ref partCfg array is used. With large amounts
+ of particles, you should avoid this function and setup exclusions manually. */
+void auto_exclusion(int distance);
+
+/* keep a unique list for particle i. Particle j is only added if it is not i
+ and not already in the list. */
+void add_partner(IntList *il, int i, int j, int distance);
 
 /*TODO: this function is not used anywhere. To be removed? */
 /** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.

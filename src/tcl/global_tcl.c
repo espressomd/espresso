@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -21,30 +21,20 @@
 /** \file global.c
     Implementation of \ref global.h "global.h".
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "utils.h"
-#include "global.h"
-/* from these modules we modify variables: */
-#include "communication.h"
-#include "cells.h"
-#include "grid.h"
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "integrate.h"
-#include "thermostat.h"
-#include "forces.h"
-#include "verlet.h"
-#include "p3m.h"
 #include "imd.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "pressure.h"
+#include "pressure_tcl.h"
 #include "rattle.h"
 #include "lattice.h"
 #include "adresso.h"
+#include "integrate_tcl.h"
+#include "grid_tcl.h"
+#include "domain_decomposition_tcl.h"
+#include "thermostat_tcl.h"
 
 /**********************************************
  * description of variables

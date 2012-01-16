@@ -77,6 +77,6 @@ void nsq_calculate_ia();
 void nsq_calculate_energies();
 
 /** n^2 pressure calculation */
-void nsq_calculate_virials();
+void nsq_calculate_virials(int v_comp);
 
 #endif

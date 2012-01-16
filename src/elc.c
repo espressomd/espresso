@@ -1361,11 +1361,6 @@ void ELC_on_resort_particles()
   partblk   = realloc(partblk,  n_localpart*8*sizeof(double));
 }
 
-/* TODO: This function is not used anywhere :) To be removed?  */
-void ELC_on_coulomb_change()
-{
-}
-
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutralize,
 		   double top, double mid, double bot)
 {

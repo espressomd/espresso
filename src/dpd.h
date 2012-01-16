@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -56,10 +57,7 @@ extern double dpd_pref4;
 #endif
 
 void dpd_switch_off(void);
-int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);
-void tclcommand_thermostat_parse_and_print_dpd(Tcl_Interp *interp);
 void thermo_init_dpd();
-void tclcommand_thermostat_print_usage_dpd(Tcl_Interp *interp, int argc, char **argv);
 void dpd_heat_up();
 void dpd_cool_down();
 
@@ -189,15 +187,10 @@ MDINLINE void add_dpd_thermo_pair_force(Particle *p1, Particle *p2, double d[3],
 void inter_dpd_heat_up();
 void inter_dpd_cool_down();
 void inter_dpd_switch_off();
-int tclprint_to_result_inter_dpdIA(Tcl_Interp *interp, int i, int j);
 int inter_dpd_set_params(int part_type_a, int part_type_b,
-				      double gamma, double r_c, int wf,
-				      double tgamma, double tr_c,
-				      int twf);
-int tclcommand_thermostat_parse_inter_dpd(Tcl_Interp *interp, int argc, char ** argv);
-int tclcommand_inter_parse_inter_dpd(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
+			 double gamma, double r_c, int wf,
+			 double tgamma, double tr_c,
+			 int twf);
 void inter_dpd_init();
 void inter_dpd_update_params(double pref2_scale);
 
