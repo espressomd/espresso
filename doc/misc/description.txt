@@ -6,12 +6,12 @@ ESPResSo is a highly versatile software package for performing and
 analyzing scientific Molecular Dynamics many-particle simulations of
 "coarse-grained" bead-spring models as they are used in soft-matter
 research in physics, chemistry and molecular biology. It can be used
-to simulate systems as for example polymers, liquid crystals,
-colloids, ferrofluids and biological systems such as DNA and lipid
+to simulate systems such as polymers, liquid crystals, colloids,
+ferrofluids and biological systems, for example DNA and lipid
 membranes.
 
 In "coarse-grained" models, a whole group of atoms or molecules are
-treated as a single bead.  Although many details are coarse-grained
+treated as a single bead. Although many details are coarse-grained
 away in these models, they can often predict qualitative properties,
 such as for example the scaling behavior of a system, and can give
 insight into theoretical models.  Due to the drastic reduction of
@@ -29,12 +29,13 @@ Boltzmann) and electrostatic interactions (P3M, ELC, MMMxD). Rigid
 bodies can be modelled by virtual site interactions, and it can
 integrate rotationally non-invariant particles.
 
-ESPResSo is free, open-source software (GPL). It is parallelized and
-can be employed on desktop machines, convenience clusters as well as
-on supercomputers with hundreds of CPUs. The parallel code is
-controlled via the scripting language Tcl, which gives the software
-its great flexibility and allows for many unconventional simulation
-protocols, as are often required when studying coarse-grained models.
+ESPResSo is free, open-source software published under the GNU General
+Public License (GPL). It is parallelized and can be employed on
+desktop machines, convenience clusters as well as on supercomputers
+with hundreds of CPUs. The parallel code is controlled via the
+scripting language Tcl, which gives the software its great flexibility
+and allows for many unconventional simulation protocols, as are often
+required when studying coarse-grained models.
 
 ESPResSo is used in scientific working groups all over the world both
 as a production platform as well as a research platform for developing
@@ -78,16 +79,16 @@ Verfügung, mit deren Hilfe beispielsweise hydrodynamische
 elektrostatische (P3M, ELC, MMMxD) Wechselwirkungen berechnet werden
 können.  Steife Körper können mit Hilfe von Wechselwirkungen zwischen
 sogenannten "virtuellen" Teilchen modelliert werden, und
-Nicht-rotationsinvariante Teilchen können integriert werden.
+nicht-rotationsinvariante Teilchen können integriert werden.
 
-ESPResSo ist freie, quelloffene Software (GPL).  Es ist parallelisiert
-und kann sowohl auf Arbeitsplatzrechnern, auf kleinen Rechenclustern
-als auch auf großen Supercomputern mit hunderten von Prozessoren
-effizient eingesetzt werden.  Der parallele Simulationskern wird
-mittels der Skriptsprache Tcl angesteuert.  Dies gibt der Software
-seine große Flexibilität und ermöglicht viele ungewöhnliche
-Simulationsprotokolle, wie sie bei vergröberten Simulationen häufig
-benötigt werden.
+ESPResSo ist freie, quelloffene Software, die unter der GNU General
+Public License (GPL) veröffentlicht wird. Es ist parallelisiert und
+kann sowohl auf Arbeitsplatzrechnern, auf kleinen Rechenclustern als
+auch auf großen Supercomputern mit hunderten von Prozessoren effizient
+eingesetzt werden.  Der parallele Simulationskern wird mittels der
+Skriptsprache Tcl angesteuert.  Dies gibt der Software seine große
+Flexibilität und ermöglicht viele ungewöhnliche Simulationsprotokolle,
+wie sie bei vergröberten Simulationen häufig benötigt werden.
 
 ESPResSo wird von wissenschaftlichen Arbeitsgruppen überall auf der
 Welt eingesetzt, sowohl um Simulationsdaten zu produzieren, als auch
