@@ -417,7 +417,7 @@ void gather_image_contributions(int e_size)
   double recvbuf[8];
 
   /* collect the image charge contributions with at least a layer distance */
-  MPI_Allreduce(lclimge, recvbuf, 2*e_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(lclimge, recvbuf, 2*e_size, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer below our system,
@@ -450,11 +450,11 @@ void distribute(int e_size, double fac)
       if (node + 1 < n_nodes) {
 	addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size), blwentry(lclcblk, n_layers - 1, e_size), e_size);
 	copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
-	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, node + 1, 0, MPI_COMM_WORLD);
+	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     }
     else if (node + 1 == this_node) {
-      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, node, 0, MPI_COMM_WORLD, &status);
+      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, node, 0, comm_cart, &status);
       copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
       copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
     }
@@ -469,11 +469,11 @@ void distribute(int e_size, double fac)
       if (inv_node -  1 >= 0) {
 	addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size), abventry(lclcblk, 2, e_size), e_size);
 	copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
-	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, inv_node - 1, 0, MPI_COMM_WORLD);
+	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, inv_node - 1, 0, comm_cart);
       }
     }
     else if (inv_node - 1 == this_node) {
-      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, inv_node, 0, MPI_COMM_WORLD, &status);
+      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, inv_node, 0, comm_cart, &status);
       copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
       copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size, e_size);
     }

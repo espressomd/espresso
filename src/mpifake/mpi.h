@@ -26,8 +26,19 @@
 
 #ifndef MPI_H
 #define MPI_H
+
 #include <string.h>
-#include "utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+//#include "utils.h"
+
+void errexit();
+
+#ifndef MDINLINE
+ #define MDINLINE static inline
+#endif
+
 
 /********************************** REMARK **********************/
 /* This is the fake MPI header of Espresso, and has nothing to  */
@@ -118,6 +129,13 @@ MDINLINE int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
 MDINLINE int MPI_Finalize(void) { return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) { coords[0] = coords[1] = coords[2] = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, \
+			    int *rank_source, int *rank_dest){ *rank_source = *rank_dest = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_create(MPI_Comm comm_old, int ndims, int *dims, int *periods, int reorder, MPI_Comm *comm_cart)
+{ *comm_cart = NULL; return MPI_SUCCESS; }
+MDINLINE int MPI_Dims_create(int nnodes, int ndims, int *dims){ dims[0] = dims[1] = dims[2] = 1; return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_split(MPI_Comm comm, int colour, int key, MPI_Comm *newcomm) { return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_free(MPI_Comm *comm) { return MPI_SUCCESS; }
 MDINLINE int MPI_Type_commit(MPI_Datatype *dtype) { return MPI_SUCCESS; }
