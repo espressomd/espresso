@@ -1,7 +1,30 @@
 Description
 -----------
-(329 words)
 
+(167 words)
+ESPResSo is a highly versatile software package for performing and
+analyzing scientific Molecular Dynamics many-particle simulations of
+coarse-grained atomistic or bead-spring models as they are used in
+soft-matter research in physics, chemistry and molecular biology. It
+can be used to simulate systems such as polymers, liquid crystals,
+colloids, ferrofluids and biological systems, for example DNA and
+lipid membranes.
+
+ESPResSo is free, open-source software published under the GNU General
+Public License (GPL). It is parallelized and can be employed on
+desktop machines, convenience clusters as well as on supercomputers
+with hundreds of CPUs. The parallel code is controlled via the
+scripting language Tcl, which gives the software its great
+flexibility.
+
+ESPResSo is used in scientific working groups all over the world both
+as a production platform as well as a research platform for developing
+new algorithms and methods and designing new model for coarse-grained
+simulations.  It is mainly developed at the Institute for
+Computational Physics of the University of Stuttgart, but has
+contributors from all over the world.
+
+(329 words)
 ESPResSo is a highly versatile software package for performing and
 analyzing scientific Molecular Dynamics many-particle simulations of
 "coarse-grained" bead-spring models as they are used in soft-matter
