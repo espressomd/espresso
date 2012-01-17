@@ -122,6 +122,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef BOND_VIRTUAL
   Tcl_AppendResult(interp, "{ BOND_VIRTUAL } ", (char *) NULL);
 #endif
+#ifdef COLLISION_DETECTION 
+  Tcl_AppendResult(interp, "{ COLLISION_DETECTION } ", (char *) NULL);
+#endif
 #ifdef EXCLUSIONS
   Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
 #endif

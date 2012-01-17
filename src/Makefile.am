@@ -128,6 +128,7 @@ libEspresso_a_SOURCES = \
 	virtual_sites.c virtual_sites.h \
 	virtual_sites_com.c virtual_sites_com.h \
 	virtual_sites_relative.c virtual_sites_relative.h \
+        collision.c collision.h \
 	vmdsock.c vmdsock.h
 
 libEspresso_a_SOURCES += \
@@ -176,8 +177,8 @@ libEspresso_a_SOURCES += \
 	tcl/tab_tcl.c tcl/tab_tcl.h \
 	tcl/topology_tcl.c tcl/topology_tcl.h \
 	tcl/uwerr_tcl.c tcl/uwerr_tcl.h \
-	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
-
+	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h \
+        tcl/collision_tcl.c tcl/collision_tcl.h
 #################################################################
 # Build the blockfile library
 #################################################################

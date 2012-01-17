@@ -189,8 +189,11 @@ void integrate_vv(int n_steps)
     if (check_runtime_errors()) return;
 #ifdef ADRESS
     //    adress_update_weights();
-   if (check_runtime_errors()) return;
+    if (check_runtime_errors()) return;
 #endif
+#endif
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
    force_calc();
@@ -221,6 +224,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     rescale_forces();
     recalc_forces = 0;
+    
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
   }
 
   if (check_runtime_errors())
@@ -251,7 +258,8 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    cells_update_ghosts();
+
     correct_pos_shake();
 #endif
 
@@ -296,6 +304,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 1;
+#endif
+
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
     force_calc();
@@ -355,6 +367,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     if(coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5*time_step); 
     }
+#endif
+
+#ifdef COLLISION_DETECTION
+    handle_collisions();
 #endif
 
 #ifdef NPT

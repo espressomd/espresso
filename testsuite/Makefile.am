@@ -20,6 +20,8 @@ SUBDIRS = configs .
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
+	collision-detection-centers.tcl \
+	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
 	command_syntax.tcl \
