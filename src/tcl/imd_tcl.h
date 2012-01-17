@@ -23,6 +23,11 @@
 #include <tcl.h>
 #include "imd.h"
 
+/** a value that you can set from VMD and read in your script as
+    global variable
+*/
+extern int transfer_rate;
+
 int tclcommand_imd(ClientData data, Tcl_Interp *interp,
 	int argc, char **argv);
 

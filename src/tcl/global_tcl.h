@@ -19,18 +19,8 @@
 */
 #ifndef GLOBAL_TCL_H
 #define GLOBAL_TCL_H
-/** \file global.h
-    This file contains the code for access to globally defined
-    variables using the script command setmd. \ref add_vars "Here"
-    you can find details on how to add new variables in the interpreter's
-    space.
-*/
-
+#include "config.h"
 #include <tcl.h>
-
-/**********************************************
- * misc procedures
- **********************************************/
 
 /// Implements the Tcl command setmd. It allows to modify simulation parameters
 int tclcommand_setmd(ClientData data, Tcl_Interp *interp,

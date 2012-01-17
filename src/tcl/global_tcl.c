@@ -22,7 +22,6 @@
     Implementation of \ref global.h "global.h".
 */
 #include "utils.h"
-#include "imd.h"
 #include "tuning.h"
 #include "domain_decomposition.h"
 #include "layered.h"
@@ -35,6 +34,7 @@
 #include "grid_tcl.h"
 #include "domain_decomposition_tcl.h"
 #include "thermostat_tcl.h"
+#include "imd_tcl.h"
 
 /**********************************************
  * description of variables
@@ -93,6 +93,7 @@ const Datafield fields[] = {
   {&dpd_wf,             TYPE_INT, 1, "dpd_wf",    tclcallback_ro,     5 },            /* 41 from thermostat.c */
   {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",tclcallback_ro,  1 },              /* 42  from adresso.c */
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded", tclcallback_ro, 9 },           /* 43 from interaction_data.c */
+  {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", tclcallback_ro, 5 },        /* 44 from imd_tcl.c */
   { NULL, 0, 0, NULL, NULL, 0 }
 };
 

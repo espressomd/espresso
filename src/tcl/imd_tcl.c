@@ -33,12 +33,11 @@
 #include "statistics_molecule.h"
 
 
+int transfer_rate = 0;
 static void *initsock = 0;
 static void *sock = 0;
 
 #include <inttypes.h>
-
-
 
 /***************************** Espresso stuff ************************/
 
