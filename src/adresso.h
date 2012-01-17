@@ -36,6 +36,7 @@
 #include "virtual_sites.h"
 #include "interaction_data.h"
 #include "communication.h"
+#include "grid.h"
 
 /** \name Exported Variables */
 /************************************************************/

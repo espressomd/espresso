@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "metadynamics.h"
 #include "errorhandling.h"
+#include "grid.h"
 
 /** \file metadynamics.h 
 *
