@@ -36,9 +36,6 @@ void *fftw_malloc(size_t n);
 #include <mpi.h>
 #include "communication.h"
 #include "grid.h"
-#ifdef NPT
-#include "pressure.h"
-#endif
 #include "fft-common.h"
 
 /************************************************
@@ -102,9 +99,8 @@ int dfft_init(double **data,
     my_pos[0][i] = node_pos[i];
   }
   for(i=0;i<n_nodes;i++) {
-    n_id[0][i] = i;
-    get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
-		 n_grid[0]);
+    map_node_array(i,&(n_pos[0][3*i+0]));
+    n_id[0][get_linear_index( n_pos[0][3*i+0],n_pos[0][3*i+1],n_pos[0][3*i+2], n_grid[0])] = i;
   }
     
   /* FFT node grids (n_grid[1 - 3]) */
@@ -194,7 +190,7 @@ int dfft_init(double **data,
     }
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
+      /* MPI_Barrier(comm_cart); */
       if(j==this_node) FFT_TRACE(fft_print_fft_plan(dfft.plan[i]));
     }
   }
@@ -236,7 +232,6 @@ int dfft_init(double **data,
   }
 
   fftw_complex *c_data     = (fftw_complex *) (*data);
-  fftw_complex *c_data_buf = (fftw_complex *) dfft.data_buf;
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for(i=1;i<4;i++) {
@@ -414,15 +409,15 @@ void dfft_forw_grid_comm(fft_forw_plan plan, double *in, double *out)
 
     if(plan.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(dfft.send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);
+	       plan.group[i], REQ_FFT_FORW, comm_cart);
       MPI_Recv(dfft.recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
     }
     else if(plan.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(dfft.recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
       MPI_Send(dfft.send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);      
+	       plan.group[i], REQ_FFT_FORW, comm_cart);      
     }
     else {                              /* Self communication... */   
       tmp_ptr  = dfft.send_buf;
@@ -451,15 +446,15 @@ void dfft_back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in
 
     if(plan_f.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(dfft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);
       MPI_Recv(dfft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
     }
     else if(plan_f.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(dfft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
       MPI_Send(dfft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);      
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);      
     }
     else {                                /* Self communication... */   
       tmp_ptr  = dfft.send_buf;

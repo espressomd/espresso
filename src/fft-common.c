@@ -24,6 +24,9 @@
  *
 */
 #include "fft-common.h"
+
+#if defined(P3M) || defined(DP3M)
+
 #include <string.h>
 #include <fftw3.h>
 #include <mpi.h>
@@ -31,7 +34,6 @@
 #include "utils.h"
 #include "communication.h"
 
-#if defined(P3M) || defined(DP3M)
 
 void fft_common_pre_init(fft_data_struct *fft)
 {
@@ -343,15 +345,15 @@ void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element, in
   }
 
   mesh = plan.new_mesh[2];
-  MPI_Barrier(MPI_COMM_WORLD);  
+  MPI_Barrier(comm_cart);  
   if(this_node==0) fprintf(stderr,"All: Print Global Mesh: (%d of %d elements)\n",
 			   num+1,element);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm_cart);
   for(i0=0;i0<n_nodes;i0++) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(comm_cart);
     if(i0==this_node) fprintf(stderr,"%d: range (%d,%d,%d)-(%d,%d,%d)\n",this_node,st[0],st[1],st[2],en[0],en[1],en[2]);
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(comm_cart);
   while(divide==0) {
     if(b*mesh > 7) {
       block1=b;
@@ -368,7 +370,7 @@ void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element, in
 	  if(i0>=st[0] && i0<en[0] && i1>=st[1] && 
 	     i1<en[1] && i2>=st[2] && i2<en[2]) my=1;
 	  else my=0;
-	  MPI_Barrier(MPI_COMM_WORLD);
+	  MPI_Barrier(comm_cart);
 	  if(my==1) {
 	   
 	    tmp=data[num+(element*((i2-st[2])+si[2]*((i1-st[1])+si[1]*(i0-st[0]))))];
@@ -380,7 +382,7 @@ void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element, in
 	      fprintf(stderr," %1.2e",0.0);
 	    }
 	  }
-	  MPI_Barrier(MPI_COMM_WORLD);
+	  MPI_Barrier(comm_cart);
 	}
 	if(my==1) fprintf(stderr," | ");
       }

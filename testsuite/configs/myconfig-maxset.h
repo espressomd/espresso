@@ -14,6 +14,7 @@
 #define MOLFORCES
 #define MODES
 #define BOND_VIRTUAL
+#define COLLISION_DETECTION
 
 #define NEMD
 #define NPT 

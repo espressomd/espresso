@@ -34,6 +34,8 @@
   \opt{v \var{vx} \var{vy} \var{vz}}
   \opt{f \var{fx} \var{fy} \var{fz}}
   \opt{bond \var{bondid} \var{pid2} \dots}
+  \require{9}{\opt{temp \var{T}}}
+  \require{9}{\opt{gamma \var{g}}}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
@@ -58,6 +60,7 @@
     \required[6]{DIPOLES}
     \required[7]{VIRTUAL\_SITES\_COM}
     \required[8]{VIRTUAL\_SITES\_RELATIVE}
+    \required[9]{LANGEVIN\_PER\_PARTICLE}
   \end{features}
 \end{essyntax}
 
@@ -85,6 +88,8 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   be an existing particle.  The \var{bondid} is used for
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
+\item[\opt{temp \var{T}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the temperature \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles of different temperatures. Caution: this has no influence on any other thermostat then the Langevin thermostat.
+\item[\opt{gamma \var{g}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the frictional coefficient \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles with different diffusion constants. Caution: this has no influence on any other thermostat then the Langevin thermostat.
 \item[\opt{q \var{charge}}] Sets the charge of this particle to $q$.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
@@ -583,38 +588,46 @@ All these examples do the same - making exact copies of particles 1 through 4.
   type \var{id}  \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \variant{4}
+  constraint rhomboid corner \var{p_x} \var{p_y} \var{p_z} 
+  a \var{a_x} \var{a_y} \var{a_z} 
+  b \var{b_x} \var{b_y} \var{b_z} \\
+  c \var{c_x} \var{c_y} \var{c_z} 
+  direction \var{direction} 
+  type \var{id}  \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
+  
+  \variant{5}
   constraint maze nsphere \var{n} 
   dim \var{d} sphrad \var{r_s} cylrad \var{r_c}
   type \var{id} \opt{penetrable \var{flag}}
   
-  \variant{5}  
+  \variant{6}  
   constraint pore center \var{c_x} \var{c_y} \var{c_z} 
   axis \var{n_x} \var{n_y} \var{n_z} 
   radius \var{rad} length \var{length} 
   type \var{id} 
   
   \require{1}{%
-    \variant{6}
+    \variant{7}
     constraint rod center \var{c_x} \var{c_y} 
     lambda \var{lambda}
   } 
   
   \require{1}{%
-    \variant{7}
+    \variant{8}
     constraint plate height \var{h}
     sigma \var{sigma} 
   }
   
   \require{2,3}{%
-    \variant{8}
+    \variant{9}
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
   
-  \variant{9} 
+  \variant{10} 
   constraint plane cell \var{x} \var{y} \var{z} 
   type \var{id}
 
-  \variant{10}
+  \variant{11}
   constraint mindist_position \var{x} \var{y} \var{z} 
 
   \begin{features}
@@ -626,7 +639,7 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \end{essyntax}
 
 The \codebox{constraint} command offers a variety of surfaces that can be
-defined to interact with desired particles. Variants \variant{1} to \variant{5}
+defined to interact with desired particles. Variants \variant{1} to \variant{6}
 create interactions via a non-bonded interaction potential, where the distance
 between the two particles is replaced by the
 distance of the center of the particle to the surface. The constraints are
@@ -634,11 +647,11 @@ identified like a particle via its type for the non-bonded interaction.
 After a type is defined for each constraint one has
 to define
 the interaction of all different particle types with the constraint using
-the \codebox{inter} command. In variants \variant{1} to \variant{4}, constraints
+the \codebox{inter} command. In variants \variant{1} to \variant{5}, constraints
  are able to be penetrated if \var{flag} is set to 1. Otherwise, when the
  penetrable option is ignored or \var{flag} is set to 0, the constraint
  cannot be violated, i.e. no particle can go through the constraint surface.
- In variants \variant{1} to \variant{3} it is also possible to specify a flag 
+ In variants \variant{1} to \variant{4} it is also possible to specify a flag 
  indicating if the constraints should be reflecting. The flags can equal 1 or 2.
  The flag 1 corresponds to a reflection process where the normal component of the 
  velocity is reflected and the tangential component remains unchanged. If the
@@ -648,20 +661,20 @@ the \codebox{inter} command. In variants \variant{1} to \variant{4}, constraints
  a particular particle and the constraint! This will usually be a lennard-jones
  interaction with $\epsilon=0$, but finite interaction range.
 
-Variants \variant{6} and \variant{7} create interactions based on electrostatic
+Variants \variant{7} and \variant{8} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
 surface and applies to all charged particles.
 
-Variant \variant{8} does not define a surface but is based on magnetic
+Variant \variant{9} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
 with a dipol moment.
 
-Variant \variant{9} is essential for the use of tunable-slip boundary
+Variant \variant{10} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
 Flow.
 
-Variant \variant{10} calculates the smallest distance to all non-penetrable
-constraints, that can be repulsive (wall, cylinder, sphere, maze, pore).
+Variant \variant{11} calculates the smallest distance to all non-penetrable
+constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore).
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
 
@@ -688,7 +701,12 @@ vector along the cylinder axis, which is normalized in the program.
 The \var{direction} is defined the same way as for the spherical
 constraint. 
 
-The resulting surface in variant \variant{4} is \var{n}
+The resulting surface in variant \variant{4} is a rhomboid, defined by one 
+corner located at \var{p_x} \var{p_y} \var{p_z} and three adjacent edges, 
+a (\var{a_x} \var{a_y} \var{a_z}), b (\var{b_x} \var{b_y} \var{b_z}) and 
+c (\var{c_x} \var{c_y} \var{c_z}).
+
+The resulting surface in variant \variant{5} is \var{n}
 spheres of radius \var{r_s} along each dimension, connected by
 cylinders of radius \var{r_c}. The spheres have simple cubic
 symmetry. The spheres are distributed evenly by dividing the
@@ -696,7 +714,7 @@ symmetry. The spheres are distributed evenly by dividing the
 \var{d}: 0 for one dimensional, 1 for two dimensional and 2 for three
 dimensional maze.
 
-Variant \variant{5} sets up a cylindrical pore similar to variant
+Variant \variant{6} sets up a cylindrical pore similar to variant
 \variant{3} with a center \var{c_x} \var{c_y} \var{c_z} and radius
 \var{rad}. The \var{length} parameter is \textbf{half} of the cylinder
 length. The \var{axis} is a vector along the cylinder axis, which is
@@ -705,20 +723,20 @@ can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
 to obtain a pore with a conical shape and corresponding opening radii.
 The first radius is in the direction opposite to the axis vector.
 
-Variant \variant{6} specifies an electrostatic interaction between the
+Variant \variant{7} specifies an electrostatic interaction between the
 charged particles in the system to an infinitely long rod with a line
 charge of \var{lambda} which is alinge along the z-axis and centered
 at \var{c_x} and \var{c_y}.
 
-Variant \variant{7} specifies the electrostatic interactinos between
+Variant \variant{8} specifies the electrostatic interactinos between
 the charged particles in the system and an inifinitely large plate in
 the x-y-plane at height \var{h}. The plate carries a charge density of
 \var{sigma}.
   
-Variant \variant{8} specifies the dipolar coupling of particles with a
+Variant \variant{9} specifies the dipolar coupling of particles with a
 dipolar moment to an external field \var{f_x} \var{f_y} \var{f_z}.
 
-Variant \variant{9} creates an infinite plane at a fixed position. For
+Variant \variant{10} creates an infinite plane at a fixed position. For
 non-initializing a direction of the constraint values of the positions
 have to be negative. For the tunable-slip boundary interactions you
 have to set \emph{two} constraints.

@@ -22,34 +22,35 @@
 
 For an implicit treatment of a solvent, \es allows to couple the
 molecular dynamics simulation to a Lattice-Boltzmann fluid. The Lattice-
-Boltzmann-Method (LBM) is a fast, lattice based method that allows in its
-``pure'' form to calculate fluid flow in different boundary conditions
-also in complex geometries. Coupled to molecular dynamics, it allows
-to take hydrodynamic interactions into account
-computationally efficiently. The implementation of boundary conditions
-for the LBM is a difficult task, where still a lot of research is going 
-on. The focus of the \es implementation of the LBM is, of course, the
-coupling to MD and therefore available geometries and boundary
-conditions are somewhat limited compared to ``pure'' codes. 
+Boltzmann-Method (LBM) is a fast, lattice based method that, in its
+``pure'' form, allows to calculate fluid flow in different boundary conditions
+of arbitrarily complex geometries. Coupled to molecular dynamics, it allows for 
+the computationally efficient inclusion of hydrodynamic interactions into the 
+simulation. The implementation of boundary conditions for the LBM is a difficult
+ task, a lot of research is still being conducted on this topic. The focus of 
+the \es implementation of the LBM is, of course, the coupling to MD and 
+therefore available geometries and boundary conditions are somewhat limited 
+in comparison to ``pure'' codes. 
 
-
-Here we restrict the documentation on the interface. For a more detailed
+Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-\section{Setting up and LB fluid}
+\section{Setting up a LB fluid}
 \begin{essyntax}
   lbfluid
-  \opt{agrid  \var{agrid}}
-  \opt{dens  \var{density}}
-  \opt{visc  \var{viscosity}}
-  \opt{tau  \var{lb\_timestep}}
-  \opt{bulk_visc  \var{bulk\_viscosity}}
-  \opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}
-  \opt{friction   \var{gamma} } 
-  \opt{gamma_odd  \var{gamma\_odd}}
-  \opt{gamma_even  \var{gamma\_even}}
+  \require{2}{\opt{gpu}}
+  \require{1 or 2}{\opt{agrid  \var{agrid}}}
+  \require{1 or 2}{\opt{dens  \var{density}}}
+  \require{1 or 2}{\opt{visc  \var{viscosity}}}
+  \require{1 or 2}{\opt{tau  \var{lb\_timestep}}}
+  \require{1 or 2}{\opt{bulk_visc  \var{bulk\_viscosity}}}
+  \require{1 or 2}{\opt{ext_force  \var{f_x} \var{f_y} \var{f_z}}}
+  \require{1 or 2}{\opt{friction   \var{gamma} } }
+  \require{1 or 2}{\opt{gamma_odd  \var{gamma\_odd}}}
+  \require{1 or 2}{\opt{gamma_even  \var{gamma\_even}}}
   \begin{features}
-  \required{LB}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
   \end{features}
 \end{essyntax}
 The \lit{lbfluid} command initializes the fluid with a given
@@ -65,12 +66,19 @@ time step typically several MD steps are performed. This allows to
 speed up the simulations and is adjusted with the parameter \var{tau},
 the LB timestep.
 The parameters \var{dens} and \var{visc} set up the density and
-viscosity of the LB fluid in (usual) MD units.  Internally the LB
+(kinematic) viscosity of the LB fluid in (usual) MD units.  Internally the LB
 implementation works with a different set of units: all lengths are
 expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
 changing \var{agrid} and \var{tau}, might change the behaviour of the
 LB fluid, \eg at boundaries, due to characteristics of the LBM
-itself. Currently it is not possible to precisely give a parameter set
+itself. There is a slight difference between the GPU and CPU implementations
+in that the CPU places the LB nodes at 0.5, 1.5, 2.5... whereas in the GPU
+code they are located at 0, 1, 2...  The shift allows for the use of Verlet
+lists in the CPU implementation.  This will cause the results to differ
+on the length scale of the LB grid spacing.  This can be
+eliminated by shifting all positions by +0.5 in x,y and z in
+the CPU input script.
+Currently it is not possible to precisely give a parameter set
 where reliable results are expected, but we are currently performing a
 study on that. Therefore the LBM should \emph{not be used as a black
   box}, but only after a careful check of all parameters that were
@@ -92,14 +100,43 @@ directly in LB units.
 Before running a simulation at least the following parameters must be
 set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
 \lit{friction}. For the other parameters, the following are taken:
-\var{bulk\_viscosity}=0, , \var{gamma\_odd}=0, \var{gamma\_even}=0,
+\var{bulk\_viscosity}=0, \var{gamma\_odd}=0, \var{gamma\_even}=0,
 \var{ f_x} = \var{ f_y} = \var{ f_z} = 0.
+
+\begin{essyntax}
+  lbfluid print_interpolated_velocity \var{x} \var{y} \var{z}
+\end{essyntax}
+This variant returns the velocity at point in countinous space. 
+This can make it easier to calculate flow profiles independent of
+the lattice constant.
+
+\begin{essyntax}
+  lbfluid print \opt{vtk} \var{property} \var{filename}
+\end{essyntax}
+The print parameter is a feature to simplify visualization. It allows for the 
+export of the whole fluid field data into a file with name \var{filename} at 
+once. Currently supported values for the parameter \var{property} are boundary 
+and velocity. The additional option \lit{vtk} enables export in the vtk format 
+which is readable by visualization software such as paraview or mayavi. 
+Otherwise gnuplot readable data will be exported.
+
+\begin{essyntax}
+  lbfluid save_ascii_checkpoint \var{filename}
+  lbfluid save_binary_checkpoint \var{filename}
+  lbfluid load_ascii_checkpoint \var{filename}
+  lbfluid load_binary_checkpoint \var{filename}
+\end{essyntax}
+The first two save commands save all of the LB fluid nodes' populations to \var{filename} in ascii or binary format respectively.
+The two load commands load the populations from \var{filename}.  This is  useful for restarting a simulation either on the same
+machine or a different machine.  Some care should be taken when using the binary format as the format of doubles can depend
+on both the computer being used as well as the compiler.  This is currently  only implemented for the cpu version of LB.
 
 \section{LB as a thermostat}
 \begin{essyntax}
-  thermostat lb \var{T} 
+  thermostat \require{1 or 2}{lb} \var{T}
   \begin{features}
-  \required{LB}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
   \end{features}
 \end{essyntax}
 The LBM implementation in \es uses Duenweg's point coupling method
@@ -138,7 +175,8 @@ or modified. Print allows the following arguments: \\
   \lit{u} & the fluid velocity (three floats: $u_x$, $u_y$, $u_z$) \\
   \lit{pi} & the fluid velocity (six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
   \lit{pi_neq} & the nonequilbrium part of the pressure tensor, components as above. \\
-  \lit{pop} & the 19 population (check the order from the source code please).
+  \lit{pop} & the 19 population (check the order from the source code please). \\
+  \lit{boundary} & the flag indicating whether the node is a fluid node ($\lit{boundary}=0$) or a boundary node ($\lit{boundary}\ne 0$). Does not support \lit{set}. Refer to the \lit{lbboundary} command for this functionality.
 \end{tabular} \\
 Example:
 The line
@@ -155,20 +193,21 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 
 \section{Setting up boundary conditions}
 \begin{essyntax}
-  lbboundary \var{shape} \var{shape\_args} 
+  lbboundary \var{shape} \var{shape\_args} \opt{velocity \var{vx} \var{vy} \var{vz}}
   \begin{features}
   \required{LB_BOUNDARIES}
   \end{features}
 \end{essyntax}
+
 If nothing else is specified periodic boundary conditions are assumed 
 for the LB fluid. The \lit{lbboundary} command allows to set up
 other (internal or external) boundaries.
 
 The \lit{lbboundary} command syntax is very close to the
 \lit{constraint} syntax, as usually one wants the hydrodynamic
-boundary conditions to be shaped similar to the MD
-boundaries. Currently the above mentioned shapes are available and
-their syntax follows exactly the syntax of the constraint command. For
+boundary conditions to be shaped similarily to the MD
+boundaries. Currently the shapes mentioned above are available and
+their syntax exactly follows the syntax of the constraint command. For
 example
 \begin{tclcode}
   lbboundary wall dist 1.5 normal 1. 0. 0. 
@@ -179,13 +218,10 @@ normal LB fluid, and the other half space is filled with boundary
 nodes.
 
 Intersecting boundaries are in principle possible but must be treated
-with care. In the current, only partly satisfactory, implementation for
-every LB node the closest boundary is determined and in case of a
-negative distance to that boundary (meaning being inside the wall)
-lets \es decide that it is a wall node, and a positive one, that it is
-not.  This allows example multiple parallel channels, but is is not
-always clear that a rectangularly shaped channel can be
-constructed. Suggestions on how to solve this issue are very welcome.
+with care. 
+In the current, only partly satisfactory, all nodes that are within at least
+one boundary are treated as boundary nodes. Improving this is nontrivial, 
+and suggestions are very welcome.
 
 Currently, only the so called ``link-bounce-back'' algorithm for wall
 nodes is available. This creates a boundary that is located
@@ -194,6 +230,22 @@ example this corresponds indeed to a boundary at $x=1.5$. Note that
 the location of the boundary is unfortunately not independent of the
 viscosity. This can \eg be seen when using the sample script
 \lit{poisseuille.tcl} with a high viscosity.
+
+The bounce back boundary conditions allow to set velocity at a boundary to a nonzero
+value. This allows to create shear flow and boundaries moving relative to 
+each other. This could be a fixed sphere in a channel moving at a finite speed -- 
+corresponding to the galilei-transform of a moving sphere in a fixed channel.
+The velocity boundary conditions are implemented according to \cite{succi01a}
+eq.~12.58. Using this implementation as a blueprint for the boundary treatment 
+an implementation of the Ladd-Coupling should be relatively straightforward.
+
+\begin{essyntax}
+  lbboundary force \opt{ \var{n_{boundary}}}
+  \begin{features}
+  \required{LB_BOUNDARIES}
+  \end{features}
+\end{essyntax}
+This variant prints out the force on boundary number \lit{n_boundary}.
 
 \section{Choosing between the GPU and CPU implementations}
 \begin{essyntax}

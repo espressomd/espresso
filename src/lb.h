@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,7 +27,6 @@
 #ifndef LB_H
 #define LB_H
 
-#include <tcl.h>
 #include "utils.h"
 #include "lattice.h"
 
@@ -158,6 +157,8 @@ typedef struct {
   double rho_lb_units;
   double gamma_odd;
   double gamma_even;
+
+  int resend_halo;
           
 } LB_Parameters;
 
@@ -186,6 +187,8 @@ extern double lblambda;
 
 /** Eigenvalue of collision operator corresponding to bulk viscosity. */
 extern double lblambda_bulk;
+
+extern int resend_halo;
 
 /************************************************************/
 /** \name Exported Functions */
@@ -260,11 +263,23 @@ void lb_propagate();
  */
 void calc_particle_lattice_ia();
 
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. */
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
+
+
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index The local lattice site (Input).
  * @param rho local fluid density
  */
+
+/** Calculation of hydrodynamic modes */
+void lb_calc_modes(index_t index, double *mode);
+
+void lb_check_halo_regions();
+
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -415,7 +430,7 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
   if ( lbfields[index].boundary ) {
     *rho = avg_rho;
     j[0] = 0.; j[1] = 0.;  j[2] = 0.;
-    pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;
+    if (pi) {pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;}
     return;
   }
 #endif
@@ -525,18 +540,10 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 }
 
 #ifdef LB_BOUNDARIES
-MDINLINE void lb_local_fields_get_border_flag(index_t index, int *border) {
-  *border = lbfields[index].boundary;
+MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
+  *boundary = lbfields[index].boundary;
 }
 #endif
-
-#endif // LB
-/** Parser for the TCL command lbfluid. */
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-/** Parser for the lbnode command. */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-#ifdef LB
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
@@ -550,6 +557,17 @@ MDINLINE void lb_get_populations(index_t index, double* pop) {
   }
 }
 
+MDINLINE void lb_set_populations(index_t index, double* pop) {
+  int i=0;
+  for (i=0; i<19; i++) {
+    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho;
+  }
+}
+#endif
+
+#include "lbgpu.h"
+
+#if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
 int lb_lbfluid_set_density(double p_dens);
 int lb_lbfluid_set_agrid(double p_agrid);
@@ -571,10 +589,19 @@ int lb_lbfluid_get_gamma_even(double* p_gamma_even);
 int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz);
 int lb_lbfluid_get_friction(double* p_friction);
 
+int lb_lbfluid_print_vtk_boundary(char* filename);
+int lb_lbfluid_print_vtk_velocity(char* filename);
+int lb_lbfluid_print_boundary(char* filename);
+int lb_lbfluid_print_velocity(char* filename);
+
+int lb_lbfluid_save_checkpoint(char* filename, int binary); 
+int lb_lbfluid_load_checkpoint(char* filename, int binary);
+
 int lb_lbnode_get_rho(int* ind, double* p_rho);
 int lb_lbnode_get_u(int* ind, double* u);
 int lb_lbnode_get_pi(int* ind, double* pi);
 int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
+int lb_lbnode_get_boundary(int* ind, int* p_boundary);
 int lb_lbnode_get_pop(int* ind, double* pop);
 
 int lb_lbnode_set_rho(int* ind, double rho);
@@ -582,9 +609,8 @@ int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
+#endif
 
-#endif /* LB */
-
-#endif /* LB_H */
+#endif /* _LB_H */
 
 /*@}*/

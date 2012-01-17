@@ -53,7 +53,11 @@ CellPList local_cells = { NULL, 0, 0 };
 CellPList ghost_cells = { NULL, 0, 0 };
 
 /** Type of cell structure in use */
-CellStructure cell_structure;
+CellStructure cell_structure = { CELL_STRUCTURE_NONEYET };
+
+double max_range = 0.0;
+
+int rebuild_verletlist = 0;
 
 /************************************************************/
 /** \name Privat Functions */
@@ -118,6 +122,8 @@ static void check_cells_consistency()
     cell system. */
 static void topology_release(int cs) {
   switch (cs) {
+  case CELL_STRUCTURE_NONEYET:
+    break;
   case CELL_STRUCTURE_CURRENT:
     topology_release(cell_structure.type);
     break;
@@ -131,7 +137,7 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way (%d)\n", cs);
     errexit();
   }
 }
@@ -140,6 +146,8 @@ static void topology_release(int cs) {
     cell system. */
 static void topology_init(int cs, CellPList *local) {
   switch (cs) {
+  case CELL_STRUCTURE_NONEYET:
+    break;
   case CELL_STRUCTURE_CURRENT:
     topology_init(cell_structure.type, local);
     break;
@@ -153,7 +161,7 @@ static void topology_init(int cs, CellPList *local) {
     layered_topology_init(local);
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way\n");
+    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an unknown way (%d)\n", cs);
     errexit();
   }
 }
@@ -163,80 +171,6 @@ static void topology_init(int cs, CellPList *local) {
 /************************************************************
  *            Exported Functions                            *
  ************************************************************/
-
-int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
-	       int argc, char **argv)
-{
-  int err = 0;
-
-  if (argc <= 1) {
-    Tcl_AppendResult(interp, "usage: cellsystem <system> <params>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG1_IS_S("domain_decomposition")) {
-    if (argc > 2) {
-      if (ARG_IS_S(2,"-verlet_list"))
-	dd.use_vList = 1;
-      else if(ARG_IS_S(2,"-no_verlet_list")) 
-	dd.use_vList = 0;
-      else{
-	Tcl_AppendResult(interp, "wrong flag to",argv[0],
-			 " : should be \" -verlet_list or -no_verlet_list \"",
-			 (char *) NULL);
-	return (TCL_ERROR);
-      }
-    }
-    /** by default use verlet list */
-    else dd.use_vList = 1;
-    mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC);
-  }
-  else if (ARG1_IS_S("nsquare"))
-    mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE);
-  else if (ARG1_IS_S("layered")) {
-    if (argc > 2) {
-      if (!ARG_IS_I(2, n_layers))
-	return TCL_ERROR;
-      if (n_layers <= 0) {
-	Tcl_AppendResult(interp, "layer height should be positive", (char *)NULL);
-	return TCL_ERROR;
-      }
-      determine_n_layers = 0;
-    }
-
-    /* check node grid. All we can do is 1x1xn. */
-    if (node_grid[0] != 1 || node_grid[1] != 1) {
-      node_grid[0] = node_grid[1] = 1;
-      node_grid[2] = n_nodes;
-      err = mpi_bcast_parameter(FIELD_NODEGRID);
-    }
-    else
-      err = 0;
-
-    if (!err)
-      mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED);
-  }
-  else {
-    Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  return mpi_gather_runtime_errors(interp, TCL_OK);
-}
-
-/************************************************************/
-
-void cells_pre_init()
-{
-  CellPList tmp_local;
-  CELL_TRACE(fprintf(stderr, "%d: cells_pre_init\n",this_node));
-  /* her local_cells has to be a NULL pointer */
-  if(local_cells.cell != NULL) {
-    fprintf(stderr,"INTERNAL ERROR: wrong usage of cells_pre_init!\n");
-    errexit();
-  }
-  memcpy(&tmp_local,&local_cells,sizeof(CellPList));
-  dd_topology_init(&tmp_local);
-}
 
 /************************************************************/
 
@@ -299,6 +233,8 @@ void cells_re_init(int new_cs)
 #ifdef ADDITIONAL_CHECKS
   check_cells_consistency();
 #endif
+
+  on_cell_structure_change();
 }
 
 /************************************************************/
@@ -321,6 +257,19 @@ void realloc_cells(int size)
   }
   n_cells = size;
 }  
+
+/*************************************************/
+
+void announce_resort_particles()
+{
+  int sum;
+  
+  MPI_Allreduce(&resort_particles, &sum, 1, MPI_INT, MPI_SUM, comm_cart);
+  resort_particles = (sum > 0) ? 1 : 0;
+  
+  INTEG_TRACE(fprintf(stderr,"%d: announce_resort_particles: resort_particles=%d\n",
+		      this_node, resort_particles));
+}
 
 /*************************************************/
 
@@ -370,7 +319,7 @@ void cells_resort_particles(int global_flag)
     layered_exchange_and_sort_particles(global_flag);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles();
+    nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag);
@@ -385,47 +334,82 @@ void cells_resort_particles(int global_flag)
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
 
-  on_resort_particles();
-
+  resort_particles = 0;
   rebuild_verletlist = 1;
 
-  recalc_forces = 1;
+  on_resort_particles();
 
   CELL_TRACE(fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
 }
 
 /*************************************************/
 
-void cells_update_ghosts()
+void cells_on_geometry_change(int flags)
 {
-  switch (cell_structure.type) {
-    /* methods using skin rsp. rebuild_verletlist */
-  case CELL_STRUCTURE_DOMDEC:
-    if(dd.use_vList) {
-      if (rebuild_verletlist == 1)
-	/* Communication step:  number of ghosts and ghost information */
-	cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-      else
-	/* Communication step: ghost information */
-	ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    else 
-      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
-    break;
-    /* layered has a skin only in z in principle, but
-       probably we can live very well with the standard skin */
-  case CELL_STRUCTURE_LAYERED:
-    if (rebuild_verletlist == 1)
-      /* Communication step:  number of ghosts and ghost information */
-      cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+  if (max_cut > 0.0) {
+    if (skin >= 0.0)
+      max_range = max_cut + skin;
     else
-      /* Communication step: ghost information */
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      /* if the skin is not yet set, assume zero. */
+      max_range = max_cut;
+  }
+  else
+    /* if no interactions yet, we also don't need a skin */
+    max_range = 0.0;
+
+  CELL_TRACE(fprintf(stderr,"%d: on_geometry_change with max range %f\n", this_node, max_range));
+
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    dd_on_geometry_change(flags);
+    break;
+  case CELL_STRUCTURE_LAYERED:
+    /* there is no fast version, always redo everything. */
+    cells_re_init(CELL_STRUCTURE_LAYERED);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    /* the particles probably are still balanced... */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);    
+    /* this cell system doesn't need to react, just tell
+       the others */
+    on_boxl_change();
+    break;
   }
+}
+
+/*************************************************/
+
+void check_resort_particles()
+{
+  int i, c, np;
+  Cell *cell;
+  Particle *p;
+  double skin2 = SQR(skin/2.0);
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      /* Verlet criterion check */
+      if(distance2(p[i].r.p, p[i].l.p_old) > skin2) resort_particles = 1;
+    }
+  }
+  announce_resort_particles();
+}
+
+/*************************************************/
+void cells_update_ghosts()
+{
+  /* if dd.use_vList is set, it so far means we want EXACT sorting of the particles.*/
+  if (dd.use_vList == 0)
+    resort_particles = 1;
+
+  if (resort_particles) {
+    /* Communication step:  number of ghosts and ghost information */
+    cells_resort_particles(CELL_NEIGHBOR_EXCHANGE);
+  }
+  else
+    /* Communication step: ghost information */
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
 }
 
 /*************************************************/

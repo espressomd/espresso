@@ -49,7 +49,6 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
-#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -389,6 +388,33 @@ void init_forces()
 #ifdef CONSTRAINTS
   init_constraint_forces();
 #endif
+}
+
+
+// This function is no longer called from force_calc().
+// The check was moved to rescale_fores() to avoid an additional iteration over all particles
+void check_forces()
+{
+  Cell *cell;
+  Particle *p;
+  int np, c, i;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
+    }
+  }
+  
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++)
+      check_particle_force(&p[i]);
+  }
 }
 
 void init_forces_ghosts()

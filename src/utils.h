@@ -34,7 +34,6 @@
 #include "config.h"
 #include "debug.h"
 
-
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
 /*************************************************************/
@@ -745,7 +744,7 @@ MDINLINE void lu_solve_system(double **A, int n, int *perms, double *b) {
  */
 MDINLINE int get_linear_index(int a, int b, int c, int adim[3])
 {
-  return (a + adim[0]*(b + adim[1]*c));
+  return (a + adim[0]*(b + adim[1]*c));   
 }
 
 /** get the position a[] from the linear index in a 3D grid

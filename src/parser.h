@@ -24,9 +24,10 @@
     'inter' command.
  */
 
+#include "utils.h"
 #include <string.h>
 #include <tcl.h>
-#include "utils.h"
+
 /** parse an integer list
     @param interp for conversion of backslash stuff
     @param list the string containing the list

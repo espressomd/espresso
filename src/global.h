@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,35 +20,13 @@
 */
 #ifndef GLOBAL_H
 #define GLOBAL_H
+#include <tcl.h>
 /** \file global.h
     This file contains the code for access to globally defined
     variables using the script command setmd. \ref add_vars "Here"
     you can find details on how to add new variables in the interpreter's
     space.
 */
-
-#include <tcl.h>
-
-/**********************************************
- * description of global variables
- * add any variable that should be handled
- * automatically in global.c. This includes
- * distribution to other nodes and
- * read/user-defined access from Tcl.
- **********************************************/
-
-/** Field is of type integer in \ref Datafield. */
-#define TYPE_INT    0
-/** Field is of type double in \ref Datafield. */
-#define TYPE_DOUBLE 1
-/** Field is of type bool, i.e. bit array, in \ref Datafield.
-    Note that the field is stored in whatever an integer is.
-    I guess you can at least assume 16 bits...
-*/
-#define TYPE_BOOL 2
-
-/** Maximal size of an array in \ref Datafield. */
-#define MAX_DIMENSION 64
 
 /** type int (SetCallback)(Tcl_Interp *interp, void *data)
     Type for the write callback procedure of \ref Datafield */
@@ -80,10 +59,34 @@ typedef struct {
     documentation of \ref Datafield befor you add new features. */
 extern const Datafield fields[];
 
+
+/**********************************************
+ * description of global variables
+ * add any variable that should be handled
+ * automatically in global.c. This includes
+ * distribution to other nodes and
+ * read/user-defined access from Tcl.
+ **********************************************/
+
+/** Field is of type integer in \ref Datafield. */
+#define TYPE_INT    0
+/** Field is of type double in \ref Datafield. */
+#define TYPE_DOUBLE 1
+/** Field is of type bool, i.e. bit array, in \ref Datafield.
+    Note that the field is stored in whatever an integer is.
+    I guess you can at least assume 16 bits...
+*/
+#define TYPE_BOOL 2
+
+/** Maximal size of an array in \ref Datafield. */
+#define MAX_DIMENSION 64
+
+
 /** \name Field Enumeration
     These numbers identify the variables given in
     \ref #fields for use with \ref mpi_bcast_parameter.
 */
+
 /*@{*/
 /** index of \ref box_l in \ref #fields */
 #define FIELD_BOXL                0  
@@ -155,8 +158,8 @@ extern const Datafield fields[];
 #define FIELD_TIMINGSAMP          33
 /** index of \ref transfer_rate  in \ref #fields */
 #define FIELD_TRANSFERRATE        34
-/** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG          35
+/** index of \ref max_cut_nonbonded in \ref #fields */
+#define FIELD_MCUT_NONBONDED      35
 /** index of \ref verlet_reuse in  \ref #fields */
 #define FIELD_VERLETREUSE         36
 /** index of \ref lattice_switch in \ref #fields */
@@ -164,27 +167,17 @@ extern const Datafield fields[];
 /** index of \ref dpd_tgamma in \ref #fields */
 #define FIELD_DPD_TGAMMA          38
 /** index of \ref dpd_tr_cut in \ref #fields */
-#define FIELD_DPD_TRCUT          39
+#define FIELD_DPD_TRCUT           39
 /** index of \ref dpd_twf in \ref #fields */
-#define FIELD_DPD_TWF          40
+#define FIELD_DPD_TWF             40
 /** index of \ref dpd_wf in \ref #fields */
-#define FIELD_DPD_WF           41
+#define FIELD_DPD_WF              41
 /** index of address variable in \ref #fields */
-#define FIELD_ADRESS           42
+#define FIELD_ADRESS              42
+/** index of \ref max_cut_bonded in \ref #fields */
+#define FIELD_MCUT_BONDED         43
+/** index of \ref transfer_rate in \ref #fields */
+#define FIELD_TRANSFER_RATE       44
 /*@}*/
-
-/**********************************************
- * misc procedures
- **********************************************/
-
-/// Implements the Tcl command setmd. It allows to modify simulation parameters
-int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implements the Tcl command code_info.  It provides information on the
-    Version, Compilation status and the debug status of the used
-    code. */
-int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
 
 #endif

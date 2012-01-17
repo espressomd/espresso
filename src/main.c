@@ -35,6 +35,7 @@
 #include "initialize.h"
 #include "global.h"
 #include "communication.h"
+#include "errorhandling.h"
 
 void errexit()
 {

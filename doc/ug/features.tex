@@ -45,14 +45,11 @@ Features can be activated in the configuration header
 \item \newfeature{ELECTROSTATICS} This switches on the various
   electrostatics algorithms, such as P3M. See section
   \vref{sec:inter-electrostatics} for details on these algorithms.
-\item \newfeature{MAGNETOSTATICS} In analogy to ELECTROSTATICS, this
-  switches on the various magnetostatics algorithms, such as P3M.  See
-  section \vref{sec:inter-electrostatics} for details on these
-  algorithms.  Requires \texttt{DIPOLES} and \texttt{ROTATION}.
 \item \newfeature{DIPOLES} This activates the dipole-moment property of
-  particles; you probably also want to activate MAGNETOSTATICS to get any
-  interactions for the dipoles. Requires \texttt{ROTATION}.
-\item \newfeature{MAGNETIC\_DIPOLAR\_DIRECT\_SUM}
+  particles; 
+  In addition, the various magnetostatics algorithms, such as P3M are switched on.  See
+  section \vref{sec:inter-electrostatics} for details on these
+  algorithms.  
 \item \newfeature{ROTATION} Switch on rotational degrees of freedom
   for the particles, as well as the corresponding quaternion
   integrator.  See section \vref{ssec:particleproperties} for
@@ -78,8 +75,8 @@ Features can be activated in the configuration header
   masses into account correctly.
 \item \newfeature{EXCLUSIONS} Allows to exclude specific short ranged
   interactions within molecules.
-\item \newfeature{COMFORCE} \todo{Docs missing}
-\item \newfeature{COMFIXED} \todo{Docs missing}
+\item \newfeature{COMFORCE} Allows to pull apart groups of particles
+\item \newfeature{COMFIXED} Allows to fix the center of mass of all particles of a certain type.
 \item \newfeature{MOLFORCES} \todo{Docs missing}
 \item \newfeature{BOND\_CONSTRAINT} Turns on the RATTLE integrator which
   allows for fixed lengths bonds between particles. \todo{How to use it?}
@@ -103,6 +100,7 @@ Features can be activated in the configuration header
 \item \newfeature{ADRESS}
 \item \newfeature{METADYNAMICS}
 \item \newfeature{OVERLAPPED}
+\item \newfeature{COLLISION\_DETECTION} Allows particles to be bound oo collision. See section \ref{sec:collision}
 \item \newfeature{OLD\_RW\_VERSION} This switches back to the old,
   \emph{wrong} random walk code of the polymer. Only use this if you
   rely on the old behaviour and \emph{know what you are doing}.

@@ -19,6 +19,7 @@
 # 
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "COMFORCE"
 require_max_nodes_per_side 1
 

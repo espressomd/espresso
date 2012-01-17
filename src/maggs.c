@@ -196,7 +196,6 @@ static t_dirs* neighbor;
 
 /****** setup everything: ******/
 // int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh); /* set the system parameters */
-// int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv) /* parse tcl command */
 // void maggs_setup_neighbors(); /* setup the site neighbors */
 // void maggs_setup_local_lattice(); /* set lattice parameters */
 // void maggs_calc_surface_patches(t_surf_patch* surface_patch); /* prepare for communication */
@@ -289,7 +288,7 @@ int maggs_count_charged_particles()
       if( part[i].p.q != 0.0 ) node_sum += 1.0;
   }
 	
-  MPI_Reduce(&node_sum, &tot_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&node_sum, &tot_sum, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 	
   return tot_sum;
 }
@@ -512,42 +511,6 @@ int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int 
   mpi_bcast_coulomb_params();
 	
   return TCL_OK;
-}
-
-/** parse TCL command.
-    number of parameters is checked and maggs_set_parameters function is called.
-    @return zero if successful
-    @param interp  TCL interpreter handle
-    @param argc    number of arguments given
-    @param argv    array of arguments given
-*/
-int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int mesh;
-  double f_mass;
-	
-	
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb maggs <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(! ARG_IS_D(0, f_mass))
-    return TCL_ERROR;
-	
-  if(! ARG_IS_I(1, mesh)) {
-    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(argc > 2) {
-    Tcl_AppendResult(interp, "Too many parameters: inter coulomb maggs <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  coulomb.method = COULOMB_MAGGS;
-	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh);
 }
 
 
@@ -841,12 +804,12 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       case 0 :
       case 1 :
 	if(e_equil || dim == 1) {
-	  MPI_Irecv (&field[doffset],1,yzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,yzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,yzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,yzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	else {
-	  MPI_Irecv (&field[doffset+1],1,yzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset+1],1,yzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset+1],1,yzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset+1],1,yzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}	  
 					
 	MPI_Waitall(2,request,status);
@@ -854,24 +817,24 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       case 2 :
       case 3 :
 	if(e_equil || dim == 1) {
-	  MPI_Irecv (&field[doffset],1,xzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	else {
-	  MPI_Irecv (&field[doffset],1,xzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}	  
 	MPI_Waitall(2,request,status);
 	break;
       case 4 :
       case 5 : 
 	if(e_equil || dim == 1) {
-	  MPI_Irecv (&field[doffset],1,xyPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xyPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xyPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xyPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	else {
-	  MPI_Irecv (&field[doffset],1,xyPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xyPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xyPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xyPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	MPI_Waitall(2,request,status);
 	break;
@@ -1217,7 +1180,7 @@ double maggs_check_curl_E()
     curl *= maggs.inva;
     if(fabs(curl)>maxcurl) maxcurl = fabs(curl);
   }
-  MPI_Allreduce(&maxcurl,&gmaxcurl,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);  
+  MPI_Allreduce(&maxcurl,&gmaxcurl,1,MPI_DOUBLE,MPI_MAX,comm_cart);  
   return gmaxcurl;
 }
 
@@ -1353,10 +1316,10 @@ void maggs_calc_init_e_field()
   maggs_distribute_particle_charges();
 	
   dim = node_grid[1]*node_grid[0];
-  color = this_node/dim;
+  color = node_pos[2];
   rank  = this_node%dim;
-  MPI_Comm_split(MPI_COMM_WORLD, color, rank, &zplane);
-  color = rank/node_grid[0];
+  MPI_Comm_split(comm_cart, color, rank, &zplane);
+  color = node_pos[1];
   rank  = rank%node_grid[0];
   MPI_Comm_split(zplane, color, rank, &yline);
 	
@@ -1368,7 +1331,7 @@ void maggs_calc_init_e_field()
 	
   /* get process coordinates */
   if(node_pos[2]!= 0) {
-    MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[4], REQ_MAGGS_EQUIL, MPI_COMM_WORLD, &status);
+    MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[4], REQ_MAGGS_EQUIL, comm_cart, &status);
     for(iy=lparams.inner_left_down[1];iy<lparams.inner_up_right[1];iy++) {
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
 	index = maggs_get_linear_index(ix, iy, lparams.inner_left_down[2], lparams.dim);
@@ -1387,7 +1350,7 @@ void maggs_calc_init_e_field()
 	localqz += lattice[index].charge / lattice[index].permittivity[2];
       }
     } 
-		
+
     MPI_Allreduce(&localqz, &qz, 1, MPI_DOUBLE, MPI_SUM, zplane);
     qz = qz/(maggs.mesh*maggs.mesh);
     qplane = qz*maggs.prefactor*invasq;
@@ -1403,7 +1366,7 @@ void maggs_calc_init_e_field()
     if(iz>=lparams.inner_up_right[2]-1) {
       if (node_pos[2]<node_grid[2]-1) {
 	if(node_grid[2]>1) {
-	  MPI_Send(&Dfield[3*index+ZPLUS], 1, MPI_DOUBLE, node_neighbors[5], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
+	  MPI_Send(&Dfield[3*index+ZPLUS], 1, MPI_DOUBLE, node_neighbors[5], REQ_MAGGS_EQUIL, comm_cart); 
 	}
       }
       else 
@@ -1414,9 +1377,9 @@ void maggs_calc_init_e_field()
 	  fflush(stderr);
 	}
     }
-		
+
     if(node_pos[1]!= 0) {
-      MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[2], REQ_MAGGS_EQUIL, MPI_COMM_WORLD, &status);
+      MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[2], REQ_MAGGS_EQUIL, comm_cart, &status);
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
 	index = maggs_get_linear_index(ix, lparams.inner_left_down[1], iz, lparams.dim);
 	Dfield[3*neighbor[index][YMINUS]+YPLUS] = tmp_field;
@@ -1429,7 +1392,7 @@ void maggs_calc_init_e_field()
 	index = maggs_get_linear_index(ix, iy, iz, lparams.dim);
 	localqy += lattice[index].charge / lattice[index].permittivity[1];
       }
-			
+
       MPI_Allreduce(&localqy, &qy, 1, MPI_DOUBLE, MPI_SUM, yline);
 			
       qy = qy/maggs.mesh;
@@ -1445,7 +1408,7 @@ void maggs_calc_init_e_field()
       if(iy>=lparams.inner_up_right[1]-1) {
 	if(node_pos[1] < node_grid[1]-1) {
 	  if (node_grid[1]>1)
-	    MPI_Send(&Dfield[3*index+YPLUS], 1, MPI_DOUBLE, node_neighbors[3], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
+	    MPI_Send(&Dfield[3*index+YPLUS], 1, MPI_DOUBLE, node_neighbors[3], REQ_MAGGS_EQUIL, comm_cart); 
 	}
 	else
 	  if (fabs(Dfield[3*index+YPLUS]) > 100.*ROUND_ERROR_PREC)
@@ -1455,7 +1418,7 @@ void maggs_calc_init_e_field()
       }
 			
       if(node_pos[0]!= 0) {
-	MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[0], REQ_MAGGS_EQUIL, MPI_COMM_WORLD, &status);
+	MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[0], REQ_MAGGS_EQUIL, comm_cart, &status);
 	index = maggs_get_linear_index(lparams.inner_left_down[0], iy, iz, lparams.dim);
 	Dfield[3*neighbor[index][XMINUS]+XPLUS] = tmp_field;
       }
@@ -1470,7 +1433,7 @@ void maggs_calc_init_e_field()
       if(ix>=lparams.inner_up_right[0]-1) {
 	if(node_pos[0] < node_grid[0]-1) {
 	  if(node_grid[0]>1)
-	    MPI_Send(&Dfield[3*index+XPLUS], 1, MPI_DOUBLE, node_neighbors[1], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
+	    MPI_Send(&Dfield[3*index+XPLUS], 1, MPI_DOUBLE, node_neighbors[1], REQ_MAGGS_EQUIL, comm_cart); 
 	}
 	else
 	  if (fabs(Dfield[3*index+XPLUS]) > 100.*ROUND_ERROR_PREC)
@@ -1491,8 +1454,8 @@ void maggs_calc_init_e_field()
   }
 	
 	
-  /*  MPI_Barrier(MPI_COMM_WORLD); */
-  MPI_Allreduce(&avgEz,&gavgEz,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  /*  MPI_Barrier(comm_cart); */
+  MPI_Allreduce(&avgEz,&gavgEz,1,MPI_DOUBLE,MPI_SUM,comm_cart);
   gavgEz = gavgEz/(maggs.mesh*node_grid[0]*node_grid[1]);
 	
   FORALL_INNER_SITES(ix, iy,iz) {
@@ -1551,7 +1514,7 @@ void maggs_calc_init_e_field()
     FOR3D(k) sqrE += SQR(Dfield[3*i+k]);
   }
 
-  MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD); 
+  MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
   gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
 
   MAGGS_TRACE( if(!this_node) iteration = 0;);
@@ -1564,7 +1527,7 @@ void maggs_calc_init_e_field()
       i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
       FOR3D(k) sqrE += SQR(Dfield[3*i+k]);
     }
-    MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD); 
+    MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
     gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
     maxcurl = maggs_check_curl_E();
 		
@@ -1599,9 +1562,9 @@ void maggs_calc_init_e_field()
     }
   }
 	
-  MPI_Allreduce(Eall,gEall,3,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(Eall,gEall,3,MPI_DOUBLE,MPI_SUM,comm_cart);
 	
-  FOR3D(k) gEall[k] /= (node_grid[0]*node_grid[1]*node_grid[2]*lparams.size[0]*lparams.size[1]*lparams.size[2]);
+  FOR3D(k) gEall[k] /= (n_nodes*lparams.size[0]*lparams.size[1]*lparams.size[2]);
 	
   FORALL_INNER_SITES(ix, iy, iz) {
     i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
@@ -2279,7 +2242,7 @@ double maggs_electric_energy()
     }
   }
   localresult *= 0.5*maggs.a;
-  MPI_Allreduce(&localresult,&globalresult,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);  
+  MPI_Allreduce(&localresult,&globalresult,1,MPI_DOUBLE,MPI_SUM,comm_cart);  
   return globalresult;
 }
 
@@ -2355,12 +2318,9 @@ void maggs_init()
     		
     maggs_setup_local_lattice();
 		
-    /* update max_cut */
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
-    //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
+    //    if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
 }
 
 /** Frees the dynamically allocated memory

@@ -1,5 +1,6 @@
 # Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -19,6 +20,7 @@
 # 
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 require_feature "EXTERNAL_FORCES"
@@ -49,14 +51,13 @@ set maxf 0
 set maxe 0
 set maxk 0
 
-
 if { [catch {
     inter coulomb $bjerrum dh 0 $maxr
     part 0 pos 0.0 0.0 0.0 type 1 q $q1 fix
     part 1 pos $x2 0.0 0.0 type 1 q $q2 v $v2 0.0 0.0
 
     for {set i 0} {$i<$maxstep} {incr i} {
-	integrate 10
+	integrate 1
 
 	set pos [part 1 print pos]; set x [lindex $pos 0]; set y [lindex $pos 1]; set z [lindex $pos 2]
 	if { [expr abs($y)] > $epsilon || [expr abs($z)] > $epsilon } {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -28,21 +28,27 @@
 #include "utils.h"
 #include "initialize.h"
 #include "global.h"
+#include "tcl/global_tcl.h"
 #include "particle_data.h"
+#include "tcl/particle_data_tcl.h"
 #include "interaction_data.h"
-#include "binary_file.h"
+#include "tcl/interaction_data_tcl.h"
+#include "tcl/binary_file_tcl.h"
 #include "integrate.h"
 #include "statistics.h"
 #include "energy.h"
 #include "pressure.h"
 #include "polymer.h"
 #include "imd.h"
+#include "tcl/imd_tcl.h"
 #include "random.h"
+#include "tcl/random_tcl.h"
 #include "communication.h"
-#include "blockfile_tcl.h"
 #include "cells.h"
 #include "grid.h"
+#include "tcl/grid_tcl.h"
 #include "thermostat.h"
+#include "tcl/thermostat_tcl.h"
 #include "rotation.h"
 #include "p3m.h"
 #include "p3m-dipolar.h"
@@ -56,23 +62,33 @@
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "forces.h"
-#include "uwerr.h"
+#include "tcl/uwerr_tcl.h"
 #include "nsquare.h"
 #include "nemd.h"
+#include "tcl/nemd_tcl.h"
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "rattle.h"
 #include "bin.h"
+#include "tcl/bin_tcl.h"
 #include "lattice.h"
-#include "lb-boundaries.h"
 #include "iccp3m.h" /* -iccp3m- */
+#include "tcl/iccp3m_tcl.h" 
 #include "adresso.h"
+#include "tcl/adresso_tcl.h"
 #include "metadynamics.h"
+#include "tcl/integrate_tcl.h"
+#include "tcl/cells_tcl.h"
+#include "tcl/statistics_tcl.h"
+#include "tcl/blockfile_tcl.h"
+#include "tcl/iccp3m_tcl.h"
+#include "tcl/polymer_tcl.h"
+#include "tcl/lb-boundaries_tcl.h"
+#include "lb-boundaries.h"
+#include "tcl/initialize_interpreter.h"
 
 #ifdef CUDA
-#include "cuda_init.h"
-#include "lbgpu.h"
-#include "lb_boundaries_gpu.h"
+#include "tcl/cuda_init_tcl.h"
 #endif
 
 // import function from scriptsdir.c
@@ -102,7 +118,9 @@ int on_program_start(Tcl_Interp *interp)
   /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
-  cells_pre_init();
+  /* initially go for domain decomposition */
+  dd_topology_init(&local_cells);
+
   ghost_init();
   /* Initialise force and energy tables */
   force_and_energy_tables_init();
@@ -123,7 +141,7 @@ int on_program_start(Tcl_Interp *interp)
 
 #ifdef LB_GPU
   if(this_node == 0){
-    lb_pre_init_gpu();
+    //lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
@@ -147,7 +165,6 @@ int on_program_start(Tcl_Interp *interp)
 void on_integration_start()
 {
   char *errtext;
-  int i;
 
   EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
   INTEG_TRACE(fprintf(stderr,"%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
@@ -169,12 +186,6 @@ void on_integration_start()
     errtext = runtime_error(128);
     ERROR_SPRINTF(errtext,"{012 thermostat not initialized} ");
   }
-
-  for (i = 0; i < 3; i++)
-    if (local_box_l[i] < max_range) {
-      errtext = runtime_error(128 + TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is still too small} ", i);
-    }
   
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -182,27 +193,36 @@ void on_integration_start()
       char *errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{014 npt on, but piston mass not set} ");
     }
-    if(cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt requires domain decomposition cellsystem} ");
-    }
   
 #ifdef ELECTROSTATICS
 
     switch(coulomb.method) {
-      case COULOMB_NONE:  break;
+    case COULOMB_NONE:  break;
 #ifdef P3M
-      case COULOMB_P3M:   break;
+    case COULOMB_P3M:   break;
 #endif /*P3M*/
-      case COULOMB_EWALD: break;
-      default: {
-        char *errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
-      }
+    case COULOMB_EWALD: break;
+    default: {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
+    }
     }
 #endif /*ELECTROSTATICS*/
+
+#ifdef DIPOLES
+
+    switch (coulomb.Dmethod) {
+    case DIPOLAR_NONE: break;
+#ifdef DP3M
+    case DIPOLAR_P3M: break;
+#endif
+    default: {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+    }
+    }
+#endif  /* ifdef DIPOLES */
   }
-  
 #endif /*NPT*/
 
   if (!check_obs_calc_initialized()) return;
@@ -224,6 +244,10 @@ void on_integration_start()
     if (lbpar.viscosity <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+    }
+    if (dd.use_vList && skin>=lbpar.agrid/2.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
     }
   }
 #endif
@@ -283,12 +307,11 @@ if(this_node == 0){
 
 void on_observable_calc()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_observable_calc\n", this_node));
   /* Prepare particle structure: Communication step: number of ghosts and ghost information */
 
-  if(resort_particles) {
+  if(resort_particles)
     cells_resort_particles(CELL_GLOBAL_EXCHANGE);
-    resort_particles = 0;
-  }
 
 #ifdef ELECTROSTATICS  
   if(reinit_electrostatics) {
@@ -331,11 +354,10 @@ void on_observable_calc()
 
 void on_particle_change()
 {
-  // EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
+  EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
   resort_particles = 1;
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
-  rebuild_verletlist = 1;
 
 #ifdef LB_GPU
   lb_reinit_particles_gpu = 1;
@@ -352,26 +374,22 @@ void on_coulomb_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
+  recalc_coulomb_prefactor();
+
 #ifdef ELECTROSTATICS
-  if(temperature > 0.0)
-    coulomb.prefactor = coulomb.bjerrum * temperature; 
-  else
-    coulomb.prefactor = coulomb.bjerrum;
   switch (coulomb.method) {
+  case COULOMB_DH:
+    break;    
 #ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
   case COULOMB_P3M:
     p3m_init();
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
     break;
 #endif
   case COULOMB_EWALD:
     EWALD_init();
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
     break;
   case COULOMB_MMM1D:
     MMM1D_init();
@@ -380,36 +398,33 @@ void on_coulomb_change()
     MMM2D_init();
     break;
   case COULOMB_MAGGS: 
-    maggs_init(); 
+    maggs_init();
+    /* Maggs electrostatics needs ghost velocities */
+    on_ghost_flags_change();
     break;
   default: break;
   }
-
-  recalc_forces = 1;
 #endif  /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  if(temperature > 0.0)
-    coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
-  else
-    coulomb.Dprefactor = coulomb.Dbjerrum;
-  
   switch (coulomb.Dmethod) {
 #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-       // fall through
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M:
     dp3m_init();
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
     break;
 #endif
   default: break;
   }
-
-  recalc_forces = 1;
 #endif  /* ifdef DIPOLES */
 
+  /* all Coulomb methods have a short range part, aka near field
+     correction. Even in case of switching off, we should call this,
+     since the required cutoff might have reduced. */
+  on_short_range_ia_change();
+
+  recalc_forces = 1;
 }
 
 void on_short_range_ia_change()
@@ -417,8 +432,8 @@ void on_short_range_ia_change()
   EVENT_TRACE(fprintf(stderr, "%d: on_short_range_ia_changes\n", this_node));
   invalidate_obs();
 
-  integrate_vv_recalc_maxrange();
-  on_parameter_change(FIELD_MAXRANGE);
+  recalc_maximal_cutoff();
+  cells_on_geometry_change(0);
 
   recalc_forces = 1;
 }
@@ -427,13 +442,6 @@ void on_constraint_change()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
-
-#ifdef LB_BOUNDARIES
-  if(lattice_switch & LATTICE_LB) {
-    lb_init_boundaries();
-  }
-#endif
-
   recalc_forces = 1;
 }
 
@@ -450,23 +458,12 @@ void on_lbboundary_change()
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
-      lb_init_boundaries_gpu();
+      lb_init_boundaries();
     }
   }
 #endif
 
   recalc_forces = 1;
-}
-
-void on_cell_structure_change()
-{
-  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
-  on_coulomb_change();
-  /* 
-#ifdef LB
-  if (!lb_sanity_checks()) return;
-#endif
-  */
 }
 
 void on_resort_particles()
@@ -488,38 +485,38 @@ void on_resort_particles()
   default: break;
   }
 #endif /* ifdef ELECTROSTATICS */
+  
+  /* DIPOLAR interactions so far don't need this */
 
-
-#ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    /* dlc_on_resort_particles();   NOT NECESSARY DUE TO HOW WE COMPUTE THINGS*/
-    break;
-#endif
- default: break;
-  }
-#endif /* ifdef DIPOLES*/
-
+  recalc_forces = 1;
 }
 
-#ifdef NPT
-void on_NpT_boxl_change(double scal1) {
-  grid_changed_box_l();
-  
+void on_boxl_change() {
+  EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
+
+  /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
   switch(coulomb.method) {
 #ifdef P3M
+  case COULOMB_ELC_P3M:
+    ELC_init();
+    break;
   case COULOMB_P3M:
     p3m_scaleby_box_l();
-    integrate_vv_recalc_maxrange();
     break;
 #endif
   case COULOMB_EWALD:
     EWALD_scaleby_box_l();
-    integrate_vv_recalc_maxrange();
     break;
-  default: break;
+  case COULOMB_MMM1D:
+    MMM1D_init();
+    break;
+  case COULOMB_MMM2D:
+    MMM2D_init();
+    break;
+  case COULOMB_MAGGS: 
+    maggs_init();
+    break;
   }
 #endif
 
@@ -528,181 +525,157 @@ void on_NpT_boxl_change(double scal1) {
 #ifdef DP3M
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
-    integrate_vv_recalc_maxrange();
     break;
 #endif
-  default: break;
   }
 #endif
 
-  if(cell_structure.type==CELL_STRUCTURE_DOMDEC)
-    dd_NpT_update_cell_grid(scal1);
+#ifdef LB
+  if(lattice_switch & LATTICE_LB) {
+    lb_init();
+  }
+#endif
 }
-#endif
 
-void on_parameter_change(int field)
+void on_cell_structure_change()
 {
-  /* to prevent two on_coulomb_change */
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-  int cc = 0;
-#endif
+  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
 
-  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
-
-  if (field == FIELD_SKIN) {
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
-  }
-
-  if (field == FIELD_NODEGRID)
-    grid_changed_n_nodes();
-  if (field == FIELD_BOXL || field == FIELD_NODEGRID)
-    grid_changed_box_l();
-  if (field == FIELD_TIMESTEP || field == FIELD_TEMPERATURE || field == FIELD_LANGEVIN_GAMMA || field == FIELD_DPD_TGAMMA
-      || field == FIELD_DPD_GAMMA || field == FIELD_NPTISO_G0 || field == FIELD_NPTISO_GV || field == FIELD_NPTISO_PISTON )
-    reinit_thermo = 1;
-
-#ifdef NPT
-  if ((field == FIELD_INTEG_SWITCH) && (integ_switch != INTEG_METHOD_NPT_ISO))
-    nptiso.invalidate_p_vel = 1;  
-#endif
-
-#ifdef ADRESS
-//   if (field == FIELD_BOXL)
-//    adress_changed_box_l();
-#endif
-
+  /* Now give methods a chance to react to the change in cell
+     structure.  Most ES methods need to reinitialize, as they depend
+     on skin, node grid and so on. Only for a change in box length we
+     have separate, faster methods, as this might happend frequently
+     in a NpT simulation. */
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
+  case COULOMB_DH:
+    break;    
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
-      cc = 1;
+    ELC_init();
     // fall through
   case COULOMB_P3M:
-    if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
-      cc = 1;
-    else if (field == FIELD_BOXL) {
-      p3m_scaleby_box_l();
-      integrate_vv_recalc_maxrange(); 
-    }
+    p3m_init();
     break;
 #endif
   case COULOMB_EWALD:
-    if (field == FIELD_TEMPERATURE || field == FIELD_SKIN)
-      cc = 1;
-    else if (field == FIELD_BOXL) {
-      EWALD_scaleby_box_l();
-      integrate_vv_recalc_maxrange(); 
-    }
-    break;
-  case COULOMB_DH:
-    if (field == FIELD_TEMPERATURE)
-      cc = 1;
-    break;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    if (field == FIELD_TEMPERATURE)
-      cc = 1;
+    EWALD_init();
     break;
   case COULOMB_MMM1D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
-      cc = 1;
+    MMM1D_init();
     break;
   case COULOMB_MMM2D:
-    if (field == FIELD_TEMPERATURE || field == FIELD_BOXL || field == FIELD_NLAYERS)
-      cc = 1;
+    MMM2D_init();
     break;
-  case COULOMB_MAGGS:
+  case COULOMB_MAGGS: 
+    maggs_init();
     /* Maggs electrostatics needs ghost velocities */
     on_ghost_flags_change();
-    cells_re_init(CELL_STRUCTURE_CURRENT);    
     break;
   default: break;
   }
-#endif /*ifdef ELECTROSTATICS */
+#endif  /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   switch (coulomb.Dmethod) {
-   #ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-     if (field == FIELD_TEMPERATURE || field == FIELD_BOXL)
-       cc = 1;
-      // fall through
-    case DIPOLAR_P3M:
-      if (field == FIELD_TEMPERATURE || field == FIELD_NODEGRID || field == FIELD_SKIN)
-        cc = 1;
-      else if (field == FIELD_BOXL) {
-        dp3m_scaleby_box_l();
-        integrate_vv_recalc_maxrange(); 
-      }
-      break;
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
+  case DIPOLAR_P3M:
+    dp3m_init();
+    break;
 #endif
   default: break;
   }
-#endif /*ifdef DIPOLES */
-
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-  if (cc)
-    on_coulomb_change();
-#endif
-
-  /* DPD needs ghost velocities, other thermostats not */
-  if (field == FIELD_THERMO_SWITCH) {
-    on_ghost_flags_change();
-    cells_re_init(CELL_STRUCTURE_CURRENT);
-  }
-
-  if (field == FIELD_MAXRANGE)
-    rebuild_verletlist = 1;
-
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    if (field == FIELD_NODEGRID) {
-      if (node_grid[0] != 1 || node_grid[1] != 1) {
-	char *errtext = runtime_error(128);
-	ERROR_SPRINTF(errtext, "{091 layered cellsystem requires 1 1 n node grid} ");
-      }
-    }
-    if (field == FIELD_BOXL || field == FIELD_MAXRANGE || field == FIELD_THERMO_SWITCH)
-      cells_re_init(CELL_STRUCTURE_LAYERED);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if (field == FIELD_BOXL || field == FIELD_NODEGRID || field == FIELD_MAXRANGE ||
-	field == FIELD_MINNUMCELLS || field == FIELD_MAXNUMCELLS || field == FIELD_THERMO_SWITCH)
-      cells_re_init(CELL_STRUCTURE_DOMDEC);
-    break;
-  }
+#endif  /* ifdef DIPOLES */
 
 #ifdef LB
-  /* LB needs ghost velocities */
-  if (field == FIELD_LATTICE_SWITCH) {
-    on_ghost_flags_change();
-    cells_re_init(CELL_STRUCTURE_CURRENT);
-  }
-
-  if (lattice_switch & LATTICE_LB) {
-    if (field == FIELD_TEMPERATURE) {
-      lb_reinit_parameters();
-    }
-
-    if (field == FIELD_BOXL || field == FIELD_CELLGRID || field == FIELD_NNODES || field == FIELD_NODEGRID) {
-      lb_init();
-    }
+  if(lattice_switch & LATTICE_LB) {
+    lb_init();
   }
 #endif
-
-#ifdef LB_GPU
-if(this_node == 0){
-  if (lattice_switch & LATTICE_LB_GPU) {
-    if (field == FIELD_TEMPERATURE) lb_reinit_parameters_gpu();
-  }
 }
+
+void on_temperature_change()
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_temperature_change\n", this_node));
+
+#ifdef ELECTROSTATICS
+
 #endif
+#ifdef LB
+  if (lattice_switch & LATTICE_LB) {
+    lb_reinit_parameters();
+  }
+#endif
+#ifdef LB_GPU
+  if(this_node == 0) {
+    if (lattice_switch & LATTICE_LB_GPU) {
+      lb_reinit_parameters_gpu();
+    }
+  }
+#endif
+}
+
+void on_parameter_change(int field)
+{
+  EVENT_TRACE(fprintf(stderr, "%d: on_parameter_change %s\n", this_node, fields[field].name));
+
+  switch (field) {
+  case FIELD_BOXL:
+    grid_changed_box_l();
+    /* Electrostatics cutoffs mostly depend on the system size,
+       therefore recalculate them. */
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    break;
+  case FIELD_SKIN:
+    cells_on_geometry_change(0);
+  case FIELD_PERIODIC:
+    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
+    break;
+  case FIELD_NODEGRID:
+    grid_changed_n_nodes();
+    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
+    break;
+  case FIELD_MINNUMCELLS:
+  case FIELD_MAXNUMCELLS:
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+  case FIELD_TEMPERATURE:
+    on_temperature_change();
+    reinit_thermo = 1;
+    break;
+  case FIELD_TIMESTEP:
+  case FIELD_LANGEVIN_GAMMA:
+  case FIELD_DPD_TGAMMA:
+  case FIELD_DPD_GAMMA:
+  case FIELD_NPTISO_G0:
+  case FIELD_NPTISO_GV:
+  case FIELD_NPTISO_PISTON:
+    reinit_thermo = 1;
+    break;
+#ifdef NPT
+  case FIELD_INTEG_SWITCH:
+    if (integ_switch != INTEG_METHOD_NPT_ISO)
+      nptiso.invalidate_p_vel = 1;
+    break;
+#endif
+  case FIELD_THERMO_SWITCH:
+    /* DPD needs ghost velocities, other thermostats not */
+    on_ghost_flags_change();
+    break;
+#ifdef LB
+  case FIELD_LATTICE_SWITCH:
+    /* LB needs ghost velocities */
+    on_ghost_flags_change();
+    break;
+#endif
+  }
 }
 
 #ifdef LB
 void on_lb_params_change(int field) {
+  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change\n", this_node));
 
   if (field == LBPAR_AGRID) {
     lb_init();
@@ -716,25 +689,34 @@ void on_lb_params_change(int field) {
 }
 #endif
 
-#ifdef LB_GPU
+#if defined (LB) || defined (LB_GPU)
 void on_lb_params_change_gpu(int field) {
+  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change_gpu\n", this_node));
 
+#ifdef LB_GPU
   if (field == LBPAR_AGRID) {
     lb_init_gpu();
+#ifdef LB_BOUNDARIES_GPU
+    lb_init_boundaries();
+#endif
   }
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid_gpu();
   }
 
   lb_reinit_parameters_gpu();
-
+#endif
 }
 #endif
 
 void on_ghost_flags_change()
 {
+  EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern int ghosts_have_v;
+
+  int old_have_v = ghosts_have_v;
+
   ghosts_have_v = 0;
   
   /* DPD and LB need also ghost velocities */
@@ -761,10 +743,10 @@ void on_ghost_flags_change()
   //VIRUTAL_SITES need v to update v of virtual sites
   ghosts_have_v = 1;
 #endif
-}
 
-#define REGISTER_COMMAND(name, routine)					\
-  Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
+  if (old_have_v != ghosts_have_v)
+    cells_re_init(CELL_STRUCTURE_CURRENT);    
+}
 
 static void init_tcl(Tcl_Interp *interp)
 {
@@ -774,110 +756,31 @@ static void init_tcl(Tcl_Interp *interp)
   /*
     installation of tcl commands
   */
+  register_tcl_commands(interp);
 
-  /* in cells.c */
-  REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
-  /* in integrate.c */
-  REGISTER_COMMAND("invalidate_system", tclcommand_invalidate_system);
-  REGISTER_COMMAND("integrate", tclcommand_integrate);
-  /* in global.c */
-  REGISTER_COMMAND("setmd", tclcommand_setmd);
-  /* in grid.c */
-  REGISTER_COMMAND("change_volume", tclcommand_change_volume);
-  /* in global.c */
-  REGISTER_COMMAND("code_info", tclcommand_code_info);
-  /* in interaction_data.c */
-  REGISTER_COMMAND("inter",tclcommand_inter);
-  /* in particle_data.c */
-  REGISTER_COMMAND("part",tclcommand_part);
-  /* in file binaryfile.c */
-  REGISTER_COMMAND("writemd", tclcommand_writemd);
-  REGISTER_COMMAND("readmd", tclcommand_readmd);
-  /* in file statistics.c */
-  REGISTER_COMMAND("analyze", tclcommand_analyze);
-  /* in file polymer.c */
-  REGISTER_COMMAND("polymer", tclcommand_polymer);
-  REGISTER_COMMAND("counterions", tclcommand_counterions);
-  REGISTER_COMMAND("salt", tclcommand_salt);
-  REGISTER_COMMAND("velocities", tclcommand_velocities);
-  REGISTER_COMMAND("maxwell_velocities", tclcommand_maxwell_velocities);
-  REGISTER_COMMAND("crosslink", tclcommand_crosslink);
-  REGISTER_COMMAND("diamond", tclcommand_diamond);
-  REGISTER_COMMAND("icosaeder", tclcommand_icosaeder);
-  /* in file imd.c */
-  REGISTER_COMMAND("imd", tclcommand_imd);
-  /* in file random.c */
-  REGISTER_COMMAND("t_random", tclcommand_t_random);
-  REGISTER_COMMAND("bit_random", tclcommand_bit_random);
-  /* in file blockfile_tcl.c */
-  REGISTER_COMMAND("blockfile", tclcommand_blockfile);
-  /* in constraint.c */
-  REGISTER_COMMAND("constraint", tclcommand_constraint);
-  /* in uwerr.c */
-  REGISTER_COMMAND("uwerr", tclcommand_uwerr);
-  /* in nemd.c */
-  REGISTER_COMMAND("nemd", tclcommand_nemd);
-  /* in thermostat.c */
-  REGISTER_COMMAND("thermostat", tclcommand_thermostat);
-  /* in bin.c */
-  REGISTER_COMMAND("bin", tclcommand_bin);
-  /* in lb.c */
-
-  REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
-  REGISTER_COMMAND("lbnode", tclcommand_lbnode);
-  REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
-  /* in utils.h */
-  REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
-  /* in iccp3m.h */
-#ifdef ELECTROSTATICS
-#ifdef P3M
-  REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
-#endif 
-#endif 
-  /* in adresso.h */
-  REGISTER_COMMAND("adress", tclcommand_adress);
-#ifdef ADRESS
-  /* #ifdef THERMODYNAMIC_FORCE */
-  REGISTER_COMMAND("thermodynamic_force", tclcommand_thermodynamic_force);
-  /* #endif */
-  REGISTER_COMMAND("update_adress_weights", tclcommand_update_adress_weights);
-#endif
-#ifdef METADYNAMICS
-  /* in metadynamics.c */
-  REGISTER_COMMAND("metadynamics", tclcommand_metadynamics);
-#endif
-#ifdef LB_GPU
-  /* in lbgpu_cfile.c */
-  REGISTER_COMMAND("lbnode_extforce", tclcommand_lbnode_extforce_gpu);
-
-  REGISTER_COMMAND("lbprint", tclcommand_lbprint_gpu);
-#endif
-#ifdef CUDA
-  REGISTER_COMMAND("cuda", tclcommand_cuda);
-#endif
 
   /* evaluate the Tcl initialization script */
   scriptdir = getenv("ESPRESSO_SCRIPTS");
   if (!scriptdir)
     scriptdir = get_default_scriptsdir();
   
-  fprintf(stderr,"%d: Script directory: %s\n", this_node, scriptdir);
+  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
 
   if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
     fprintf(stderr,
 	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
 	    scriptdir);
-    exit(-1);
+    exit(1);
   }
   if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
     fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
 	    Tcl_GetStringResult(interp));
-    exit(-1);
+    exit(1);
   }
   if (chdir(cwd) != 0) {
     fprintf(stderr,
 	    "\n\ncould not change back to execution dir %s ????\n\n\n",
 	    cwd);
-    exit(-1);
+    exit(1);
   }
 }

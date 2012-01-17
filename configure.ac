@@ -19,9 +19,10 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Fetch the version and timestamp from RELEASE_NOTES
 
 # Initialise autoconf
-AC_INIT([ESPResSo],[3.0.1],[espressomd-users@nongnu.org])
+AC_INIT([ESPResSo],[3.0.2],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
+
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
@@ -30,7 +31,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu])
+AM_INIT_AUTOMAKE([1.10 gnu subdir-objects])
 AM_MAINTAINER_MODE
 
 cat <<EOF
@@ -101,7 +102,6 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-
 # never overwrite users CFLAGS
 if test "${CFLAGS+set}" != set; then
   # test for -O5
@@ -162,9 +162,9 @@ cat <<EOF
 ****************************************************************
 EOF
 
+AC_PROG_RANLIB
 AC_PROG_AWK
 AC_PROG_EGREP
-AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
@@ -346,7 +346,7 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -408,7 +408,7 @@ if test x$with_cuda != xno; then
    # if no other compute capability is defined by the user, we need at least 1.1
    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode  arch=compute_20,code=compute_20"
    esac
    # use nvcc
    save_CC=$CC
@@ -488,10 +488,13 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
-	doc/dg/Makefile
+	doc/logo/Makefile
 	doc/ug/Makefile
+	doc/dg/Makefile
+	doc/doxygen/Makefile
 	doc/tutorials/Makefile
-	doc/tutorials/tut2/Makefile 
+	doc/tutorials/01-lennard_jones/Makefile 
+	doc/tutorials/02-charged_system/Makefile 
 	doc/latexit.sh
 	myconfig-sample.h
 	])

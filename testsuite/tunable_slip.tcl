@@ -51,11 +51,8 @@ set box_y                $box_l
 
 set box_z                $box_l
 
-# reuse of Verlet lists  
-setmd verlet_reuse
-
-# skin depth
-setmd skin               0.4
+# skin depth, not used here
+setmd skin               0.0
 
 # box length
 setmd box_l              $box_l $box_l $box_l
@@ -65,12 +62,6 @@ set volume               [expr $box_x*$box_y*$box_z]
 
 # periodic boundary conditions
 setmd periodic           1 1 1
-
-# cell size
-setmd cell_size
-
-# cell grid
-setmd cell_grid  
 
 ################################################
 #         Solvent parameters                   #
@@ -112,9 +103,8 @@ set lj_off               0.0
 ################################################
 #            Thermostat                        #
 ################################################
-# temperature
-setmd temperature
 
+# temperature
 set temp                 1.0
 
 #Tunable Slip Boundaries
@@ -217,7 +207,12 @@ proc measure_kinetic_energy {} {
 
 ################### Integration #############################
 
+puts "cells = [setmd cell_grid]"
+puts "max_range = [setmd max_range]"
+puts "n_particles = [setmd n_part]"
+
 for {set step 0} {$step < $int_loops} {incr step} {
+    puts "step $step"
     integrate $int_steps
 }
 

@@ -56,7 +56,6 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
-#include "lbgpu.h"
 
 /************************************************
  * DEFINES
@@ -72,13 +71,13 @@ int    integ_switch     = INTEG_METHOD_NVT;
 int n_verlet_updates    = 0;
 
 double time_step        = -1.0;
+double time_step_half   = -1.0;
+double time_step_squared= -1.0;
+double time_step_squared_half = -1.0;
+
 double sim_time         = 0.0;
 double skin             = -1.0;
 double skin2;
-double max_range        = -1.0;
-double max_range2       = -1.0;
-double max_range_non_bonded  = 0.0;
-double max_range_non_bonded2 = 0.0;
 
 int    resort_particles = 1;
 int    recalc_forces    = 1;
@@ -123,226 +122,11 @@ void finalize_p_inst_npt();
 
 /************************************************************/
 
-int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  mpi_bcast_event(INVALIDATE_SYSTEM);
-  return TCL_OK;
-}
 
 void local_invalidate_system()
 {
   resort_particles = 1;
   invalidate_obs();
-}
-
-/**  Hand over integrate usage information to tcl interpreter. */
-int tclcommand_integrate_print_usage(Tcl_Interp *interp) 
-{
-  Tcl_AppendResult(interp, "Usage of tcl-command integrate:\n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate <INT n steps>' for integrating n steps \n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate set' for printing integrator status \n", (char *)NULL);
-  Tcl_AppendResult(interp, "'integrate set nvt' for enabling NVT integration or \n" , (char *)NULL);
-#ifdef NPT
-  Tcl_AppendResult(interp, "'integrate set npt_isotropic <DOUBLE p_ext> [<DOUBLE piston>] [<INT, INT, INT system_geometry>] [-cubic_box]' for enabling isotropic NPT integration \n" , (char *)NULL);
-#endif
-  return (TCL_ERROR);
-}
-
-/** Hand over integrate status information to tcl interpreter. */
-int tclcommand_integrate_print_status(Tcl_Interp *interp) 
-{
-  int i;
-  char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE];
-  switch (integ_switch) {
-  case INTEG_METHOD_NVT:
-    Tcl_AppendResult(interp, "{ set nvt }", (char *)NULL);
-    return (TCL_OK);
-  case INTEG_METHOD_NPT_ISO:
-    Tcl_PrintDouble(interp, nptiso.p_ext, buffer);
-    Tcl_AppendResult(interp, "{ set npt_isotropic ", buffer, (char *)NULL);
-    Tcl_PrintDouble(interp, nptiso.piston, buffer);
-    Tcl_AppendResult(interp, " ",buffer, (char *)NULL);
-    for ( i = 0 ; i < 3 ; i++){
-      if ( nptiso.geometry & nptiso.nptgeom_dir[i] ) {
-	sprintf(buffer, " %d", 1 );
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      } else {
-	sprintf(buffer, " %d", 0 );
-	Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-    }
-    if ( nptiso.cubic_box ) {
-      Tcl_AppendResult(interp, " -cubic_box", (char *)NULL);
-    }
-    Tcl_AppendResult(interp, " } ", (char *)NULL);
-
-    return (TCL_OK);
-  }
-  return (TCL_ERROR);
-}
-
-/** Parse integrate nvt command */
-int tclcommand_integrate_set_nvt(Tcl_Interp *interp, int argc, char **argv)
-{
-  integ_switch = INTEG_METHOD_NVT;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-  return (TCL_OK);
-}
-
-/** Parse integrate npt_isotropic command */
-int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **argv)
-{
-  int xdir, ydir, zdir;
-  xdir = ydir = zdir = nptiso.cubic_box = 0;
-
-  if (argc < 4) {
-    Tcl_AppendResult(interp, "wrong # args: \n", (char *)NULL);
-    return tclcommand_integrate_print_usage(interp);
-  }  
-  /* set parameters p_ext and piston */
-  if ( !ARG_IS_D(3, nptiso.p_ext) )  return tclcommand_integrate_print_usage(interp);
-  tclcallback_p_ext(interp, &nptiso.p_ext);
-  if ( argc > 4 ) { 
-    if(!ARG_IS_D(4, nptiso.piston) ) return tclcommand_integrate_print_usage(interp);
-    tclcallback_npt_piston(interp, &nptiso.piston); }
-  else if ( nptiso.piston <= 0.0 ) {
-    Tcl_AppendResult(interp, "You must set <piston> as well before you can use this integrator! \n", (char *)NULL);
-    return tclcommand_integrate_print_usage(interp);
-  }
-
-  if ( argc > 5 ) {
-    if (!ARG_IS_I(5,xdir) || !ARG_IS_I(6,ydir) || !ARG_IS_I(7,zdir) ) {
-      return tclcommand_integrate_print_usage(interp);}
-    else {
-      /* set the geometry to include rescaling specified directions only*/
-      nptiso.geometry = 0; nptiso.dimension = 0; nptiso.non_const_dim = -1;
-      if ( xdir ) { 
-	nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR ); 
-	nptiso.dimension += 1;
-	nptiso.non_const_dim = 0;
-      }
-      if ( ydir ) { 
-	nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
-	nptiso.dimension += 1;
-	nptiso.non_const_dim = 1;
-      }
-      if ( zdir ) { 
-	nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
-	nptiso.dimension += 1;
-	nptiso.non_const_dim = 2;
-      }
-    }
-  } else {
-    /* set the geometry to include rescaling in all directions; the default*/
-    nptiso.geometry = 0;
-    nptiso.geometry = ( nptiso.geometry | NPTGEOM_XDIR );
-    nptiso.geometry = ( nptiso.geometry | NPTGEOM_YDIR );
-    nptiso.geometry = ( nptiso.geometry | NPTGEOM_ZDIR );
-    nptiso.dimension = 3; nptiso.non_const_dim = 2;
-  }
-
-  if ( argc > 8 ) {
-    /* enable if the volume fluctuations should also apply to dimensions which are switched off by the above flags
-       and which do not contribute to the pressure (3D) / tension (2D, 1D) */
-    if (!ARG_IS_S(8,"-cubic_box")) {
-      return tclcommand_integrate_print_usage(interp);
-    } else {
-      nptiso.cubic_box = 1;
-    }
-  }
-
-  /* Sanity Checks */
-#ifdef ELECTROSTATICS      
-  if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.bjerrum > 0 ){
-    fprintf(stderr,"WARNING: If electrostatics is being used you must use the -cubic_box option!\n");
-    fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
-    fprintf(stderr,"Be aware though that all of the coulombic pressure is added to the x-direction only!\n");
-    nptiso.cubic_box = 1;
-  }
-#endif
-
-#ifdef DIPOLES     
-  if ( nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dbjerrum > 0 ){
-    fprintf(stderr,"WARNING: If magnetostatics is being used you must use the -cubic_box option!\n");
-    fprintf(stderr,"Automatically reverting to a cubic box for npt integration.\n");
-    fprintf(stderr,"Be aware though that all of the magnetostatic pressure is added to the x-direction only!\n");
-    nptiso.cubic_box = 1;
-  }
-#endif
-
-
-  if( nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
-    Tcl_AppendResult(interp, "You must enable at least one of the x y z components as fluctuating dimension(s) for box length motion!", (char *)NULL);
-    Tcl_AppendResult(interp, "Cannot proceed with npt_isotropic, reverting to nvt integration... \n", (char *)NULL);
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-    return (TCL_ERROR);
-  }
-
-  /* set integrator switch */
-  integ_switch = INTEG_METHOD_NPT_ISO;
-  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-
-  /* broadcast npt geometry information to all nodes */
-  mpi_bcast_nptiso_geom();
-  return (TCL_OK);
-}
-
-int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
-{
-  int  n_steps;
-  
-  INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
-
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "wrong # args: \n\"", (char *) NULL);
-    return tclcommand_integrate_print_usage(interp);  }
-  else if (argc < 2) {                    return tclcommand_integrate_print_status(interp); }
-
-  if (ARG1_IS_S("set")) {
-    if      (argc < 3)                    return tclcommand_integrate_print_status(interp);
-    if      (ARG_IS_S(2,"nvt"))           return tclcommand_integrate_set_nvt(interp, argc, argv);
-#ifdef NPT
-    else if (ARG_IS_S(2,"npt_isotropic")) return tclcommand_integrate_set_npt_isotropic(interp, argc, argv);
-#endif
-    else {
-      Tcl_AppendResult(interp, "unknown integrator method:\n", (char *)NULL);
-      return tclcommand_integrate_print_usage(interp);
-    }
-  } else if ( !ARG_IS_I(1,n_steps) ) return tclcommand_integrate_print_usage(interp);
-
-  /* go on with integrate <n_steps> */
-  if(n_steps < 0) {
-    Tcl_AppendResult(interp, "illegal number of steps (must be >0) \n", (char *) NULL);
-    return tclcommand_integrate_print_usage(interp);;
-  }
-  /* perform integration */
-  if (mpi_integrate(n_steps))
-    return mpi_gather_runtime_errors(interp, TCL_OK);
-  return TCL_OK;
-}
-
-/************************************************************/
-
-void integrate_vv_recalc_maxrange()
-{
-  INTEG_TRACE(fprintf(stderr,"%d: integrate_vv_recalc_maxrange:\n",this_node));
-
-  /* maximal interaction cutoff */
-  calc_maximal_cutoff();
-  if (max_cut <= 0.0) {
-    max_range  = -1.0;
-    max_range2 = -1.0;
-    return;
-  }
-  max_range            = max_cut;
-  max_range_non_bonded = max_cut_non_bonded;
-  /* at beginning be nice */
-  if (skin > 0.0) {
-    max_range            += skin;
-    max_range_non_bonded += skin;
-  }
-  max_range2            = SQR(max_range);
-  max_range_non_bonded2 = SQR(max_range_non_bonded);
 }
 
 /************************************************************/
@@ -405,13 +189,14 @@ void integrate_vv(int n_steps)
     if (check_runtime_errors()) return;
 #ifdef ADRESS
     //    adress_update_weights();
-   if (check_runtime_errors()) return;
+    if (check_runtime_errors()) return;
 #endif
+#endif
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
-   
    force_calc();
-
    
    //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
@@ -439,7 +224,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     rescale_forces();
     recalc_forces = 0;
-
+    
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
   }
 
   if (check_runtime_errors())
@@ -451,8 +239,6 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
   for(i=0;i<n_steps;i++) {
     INTEG_TRACE(fprintf(stderr,"%d: STEP %d\n",this_node,i));
 
-
-
 #ifdef BOND_CONSTRAINT
     save_old_pos();
 #endif
@@ -461,21 +247,19 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
        NOTE 1: Prefactors do not occur in formulas since we use 
-               rescaled forces and velocities. 
+       rescaled forces and velocities. 
        NOTE 2: Depending on the integration method Step 1 and Step 2 
-               cannot be combined for the translation. 
+       cannot be combined for the translation. 
     */
     if(integ_switch == INTEG_METHOD_NPT_ISO || nemd_method != NEMD_METHOD_OFF) {
       propagate_vel();  propagate_pos(); }
     else
       propagate_vel_pos();
-#ifdef ROTATION
-    propagate_omega_quat();
-#endif
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    cells_update_ghosts();
+
     correct_pos_shake();
 #endif
 
@@ -492,14 +276,24 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     cells_update_ghosts();
 
-//VIRTUAL_SITES update pos and vel (for DPD)
+    //VIRTUAL_SITES update pos and vel (for DPD)
 #ifdef VIRTUAL_SITES
-   update_mol_vel_pos();
-   ghost_communicator(&cell_structure.update_ghost_pos_comm);
-   if (check_runtime_errors()) break;
+    update_mol_vel_pos();
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
+    if (check_runtime_errors()) break;
+#if  defined(VIRTUAL_SITES_RELATIVE) && defined(LB) 
+    // This is on a workaround stage: 
+    // When using virtual sites relative and LB at the same time, it is necessary 
+    // to reassemble the cell lists after all position updates, also of virtual
+    // particles. 
+    if (cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) ) 
+      cells_update_ghosts();
+#endif
+
 #ifdef ADRESS
-   //adress_update_weights();
-   if (check_runtime_errors()) break;
+    //adress_update_weights();
+    if (check_runtime_errors()) break;
 #endif
 #endif
 
@@ -512,14 +306,18 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     transfer_momentum_gpu = 1;
 #endif
 
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
+#endif
+
     force_calc();
 
-//VIRTUAL_SITES distribute forces
+    //VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-   ghost_communicator(&cell_structure.collect_ghost_force_comm);
-   init_forces_ghosts();
-   distribute_mol_force();
-   if (check_runtime_errors()) break;
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    init_forces_ghosts();
+    distribute_mol_force();
+    if (check_runtime_errors()) break;
 #endif
 
     /* Communication step: ghost forces */
@@ -536,16 +334,17 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     rescale_forces_propagate_vel();
-
+    recalc_forces = 0;
+    
 #ifdef LB
-  if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
-  if (check_runtime_errors()) break;
+    if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef LB_GPU
-  if(this_node == 0){
-	if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
-  }
+    if(this_node == 0){
+      if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
+    }
 #endif
 
 #ifdef BOND_CONSTRAINT
@@ -553,11 +352,15 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     correct_vel_shake();
 #endif
 
-//VIRTUAL_SITES update vel
+#ifdef ROTATION
+    convert_torques_propagate_omega();
+#endif
+
+    //VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
-   ghost_communicator(&cell_structure.update_ghost_pos_comm);
-   update_mol_vel();
-   if (check_runtime_errors()) break;
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    update_mol_vel();
+    if (check_runtime_errors()) break;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -566,9 +369,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     }
 #endif
 
-#ifdef ROTATION
-    convert_torques_propagate_omega();
+#ifdef COLLISION_DETECTION
+    handle_collisions();
 #endif
+
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
@@ -578,10 +382,6 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     sim_time += time_step;
   }
 
-  /* after simulating the forces are necessarily set. Necessary since
-     resort_particles sets recalc_forces to 1 */
-  recalc_forces = 0;
-
   /* verlet list statistics */
   if(n_verlet_updates>0) verlet_reuse = n_steps/(double) n_verlet_updates;
   else verlet_reuse = 0;
@@ -589,11 +389,11 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.invalidate_p_vel = 0;
-    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
     if(this_node==0) nptiso.p_inst_av /= 1.0*n_steps;
-    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
 
@@ -619,57 +419,6 @@ void rescale_velocities(double scale)
   }
 }
 
-/* Callback functions */
-/************************************************************/
-
-
-int tclcallback_skin(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-  if (data < 0) {
-    Tcl_AppendResult(interp, "skin must be positive.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  skin = data;
-  mpi_bcast_parameter(FIELD_SKIN);
-  return (TCL_OK);
-}
-
-int tclcallback_time_step(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-#ifdef LB_GPU
-  float ts = (float)data;
-#endif
-  if (data < 0.0) {
-    Tcl_AppendResult(interp, "time step must be positive.", (char *) NULL);
-    return (TCL_ERROR);
-  }
-#ifdef LB
-  else if ((lbpar.tau >= 0.0) && (data > lbpar.tau)) {
-    Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
-    return (TCL_ERROR);
-  }
-#endif
-#ifdef LB_GPU	
-  else if ((lbpar_gpu.tau >= 0.0) && (ts > lbpar_gpu.tau)) { 
-    Tcl_AppendResult(interp, "MD time step must be smaller than LB time step.", (char *)NULL);
-    return (TCL_ERROR);
-  }
-#endif
-  mpi_set_time_step(data);
-
-  return (TCL_OK);
-}
-
-int tclcallback_time(Tcl_Interp *interp, void *_data)
-{
-  double data = *(double *)_data;
-  sim_time = data;
-  mpi_bcast_parameter(FIELD_SIMTIME);
-  return (TCL_OK);
-}
-
 
 /* Privat functions */
 /************************************************************/
@@ -689,6 +438,7 @@ void rescale_forces()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
       p[i].f.f[0] *= scale/PMASS(p[i]);
       p[i].f.f[1] *= scale/PMASS(p[i]);
       p[i].f.f[2] *= scale/PMASS(p[i]);
@@ -719,6 +469,7 @@ void rescale_forces_propagate_vel()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
       /* Rescale forces: f_rescaled = 0.5*dt*dt * f_calculated * (1/mass) */
       p[i].f.f[0] *= scale/PMASS(p[i]);
       p[i].f.f[1] *= scale/PMASS(p[i]);
@@ -770,7 +521,7 @@ void finalize_p_inst_npt()
       }
     }
 
-    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     if (this_node == 0) {
       nptiso.p_inst = p_tmp/(nptiso.dimension*nptiso.volume);
       nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
@@ -787,8 +538,6 @@ void propagate_press_box_pos_and_rescale_npt()
     Particle *p;
     int i, j, np, c;
     double scal[3]={0.,0.,0.}, L_new=0.0;
-
-    rebuild_verletlist = 0;
 
     /* finalize derivation of p_inst */
     finalize_p_inst_npt();
@@ -813,41 +562,40 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[1] = L_new/box_l[nptiso.non_const_dim];
       scal[0] = 1/scal[1];
     }
-    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, comm_cart);
 
     /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c]; p  = cell->part; np = cell->n;
       for(i = 0; i < np; i++) {	
 #ifdef VIRTUAL_SITES
-       if (ifParticleIsVirtual(&p[i])) continue;
+	if (ifParticleIsVirtual(&p[i])) continue;
 #endif
-       for(j=0; j < 3; j++){
+	for(j=0; j < 3; j++){
 #ifdef EXTERNAL_FORCES
-	if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
+	  if (!(p[i].l.ext_flag & COORD_FIXED(j))) {
 #endif	    
-	  if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
-	    p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
-	    p[i].l.p_old[j] *= scal[1];
-	    p[i].m.v[j]     *= scal[0];
-	  } else {
-	    p[i].r.p[j] += p[i].m.v[j];
-	  }
+	    if(nptiso.geometry & nptiso.nptgeom_dir[j]) {
+	      p[i].r.p[j]      = scal[1]*(p[i].r.p[j] + scal[2]*p[i].m.v[j]);
+	      p[i].l.p_old[j] *= scal[1];
+	      p[i].m.v[j]     *= scal[0];
+	    } else {
+	      p[i].r.p[j] += p[i].m.v[j];
+	    }
 
 #ifdef EXTERNAL_FORCES
+	  }
+#endif
 	}
-#endif
-      }
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
+	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2])); 
 #ifdef ADDITIONAL_CHECKS
-      force_and_velocity_check(&p[i]); 
+	force_and_velocity_check(&p[i]); 
 #endif
-      /* Verlet criterion check */
-      //if(distance2(p[i].r.p,p[i].l.p_old) > skin2 )
-      rebuild_verletlist = 1; 
       }
     }
+
+    resort_particles = 1; 
 
     /* Apply new volume to the box-length, communicate it, and account for necessary adjustments to the cell geometry */
     if (this_node == 0) {
@@ -859,12 +607,12 @@ void propagate_press_box_pos_and_rescale_npt()
 	}
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    on_NpT_boxl_change(scal[1]);
-    //on_NpT_boxl_change(0.0);
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
 
-    /* communicate verlet criterion */
-    //announce_rebuild_vlist();
+    /* fast box length update */
+    grid_changed_box_l();
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(CELL_FLAG_FAST);
   }
 #endif
 }
@@ -913,6 +661,9 @@ void propagate_vel()
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
 #endif
+#ifdef ROTATION
+     propagate_omega_quat_particle(&p[i]);
+#endif
       }
     }
   }
@@ -940,8 +691,6 @@ void propagate_pos()
     Particle *p;
     int c, i, j, np;
 
-    rebuild_verletlist = 0;
-
     for (c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c];
       p  = cell->part;
@@ -964,11 +713,11 @@ void propagate_pos()
 	    }
 	}
 	/* Verlet criterion check */
-	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
+	if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
       }
     }
   }
-  announce_rebuild_vlist();
+  announce_resort_particles();
 }
 
 void propagate_vel_pos()
@@ -978,8 +727,6 @@ void propagate_vel_pos()
   int c, i, j, np;
 
   INTEG_TRACE(fprintf(stderr,"%d: propagate_vel_pos:\n",this_node));
-
-  rebuild_verletlist = 0;
 
 #ifdef ADDITIONAL_CHECKS
   db_max_force = db_max_vel = 0;
@@ -1013,13 +760,16 @@ void propagate_vel_pos()
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
 #endif
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
+#endif
 
       /* Verlet criterion check */
-      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) rebuild_verletlist = 1;
+      if(distance2(p[i].r.p,p[i].l.p_old) > skin2 ) resort_particles = 1;
     }
   }
 
-  if(dd.use_vList) announce_rebuild_vlist();
+  announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
@@ -1034,12 +784,9 @@ void force_and_velocity_check(Particle *p)
   /* distance_check */
   for (i = 0; i < 3; i++)
     if(fabs(p->r.p[i] - p->l.p_old[i]) > local_box_l[i]) {
-      /* put any cellsystems here which do not rely on rebuild_verletlist */
-      if ((cell_structure.type != CELL_STRUCTURE_NSQUARE) && (dd.use_vList)) {
-	fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
-		this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
-		p->r.p[2] - p->l.p_old[2]);
-      }
+      fprintf(stderr, "%d: particle %d moved further than local box length by %lf %lf %lf\n",
+	      this_node, p->p.identity, p->r.p[0] - p->l.p_old[0], p->r.p[1] - p->l.p_old[1],
+	      p->r.p[2] - p->l.p_old[2]);
     }
 
   /* force check */
@@ -1052,9 +799,9 @@ void force_and_velocity_check(Particle *p)
   /* velocity check */
   db_vel   = SQR(p->m.v[0])+SQR(p->m.v[1])+SQR(p->m.v[2]);
   if(db_vel > skin2)
-	fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
-		this_node,p->p.identity,sqrt(db_vel),
-		p->m.v[0],p->m.v[1],p->m.v[2]);
+    fprintf(stderr,"%d: Part %d has velocity %f (%f,%f,%f)\n",
+	    this_node,p->p.identity,sqrt(db_vel),
+	    p->m.v[0],p->m.v[1],p->m.v[2]);
   if(db_vel > db_max_vel) { db_max_vel=db_vel; db_maxv_id=p->p.identity; }
 #endif
 }

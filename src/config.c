@@ -61,6 +61,12 @@
 #error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
 #endif
 
+#ifdef LB_GPU
+#ifndef CUDA
+#error To use LB_GPU, you have to activate CUDA (use the configure option --with-cuda)
+#endif
+#endif
+
 int tclcallback_version(Tcl_Interp *interp)
 {
   Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION, (char *) NULL);
@@ -115,6 +121,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #endif
 #ifdef BOND_VIRTUAL
   Tcl_AppendResult(interp, "{ BOND_VIRTUAL } ", (char *) NULL);
+#endif
+#ifdef COLLISION_DETECTION 
+  Tcl_AppendResult(interp, "{ COLLISION_DETECTION } ", (char *) NULL);
 #endif
 #ifdef EXCLUSIONS
   Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
@@ -205,6 +214,12 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #endif
 #ifdef LB
   Tcl_AppendResult(interp, "{ LB } ", (char *) NULL);
+#endif
+#ifdef LB_BOUNDARIES
+  Tcl_AppendResult(interp, "{ LB_BOUNDARIES } ", (char *) NULL);
+#endif
+#ifdef LB_BOUNDARIES_GPU
+  Tcl_AppendResult(interp, "{ LB_BOUNDARIES_GPU } ", (char *) NULL);
 #endif
 #ifdef INTER_DPD
   Tcl_AppendResult(interp, "{ INTER_DPD } ", (char *) NULL);

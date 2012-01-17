@@ -34,30 +34,21 @@
 MDINLINE int comforce_set_params(int part_type_a, int part_type_b,
 				 int flag, int dir, double force, double fratio)
 {
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
-  if (!data || !data_sym)
+  if (!data)
     return 1;
 
   if (n_nodes > 1)
     return 2;
 
-
-  /* COMFORCE should be symmetrically */
-  data_sym->COMFORCE_flag    = data->COMFORCE_flag    = flag;
-  data_sym->COMFORCE_dir    = data->COMFORCE_dir    = dir;
-  data_sym->COMFORCE_force    = data->COMFORCE_force    = force;
-  data_sym->COMFORCE_fratio    = data->COMFORCE_fratio    = fratio;
+  data->COMFORCE_flag   = flag;
+  data->COMFORCE_dir    = dir;
+  data->COMFORCE_force  = force;
+  data->COMFORCE_fratio = fratio;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   return 0;
 }

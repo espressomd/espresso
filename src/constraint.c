@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -20,176 +21,17 @@
 /** \file constraint.c
     Implementation of \ref constraint.h "constraint.h", here it's just the parsing stuff.
 */
+
 #include "constraint.h"
+#include "energy.h"
+#include "forces.h"
+#include "tunable_slip.h"
+
+// for the charged rod "constraint"
+#define C_GAMMA   0.57721566490153286060651209008
 
 int reflection_happened;
 #ifdef CONSTRAINTS
-static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
-{
-  Constraint *con = &constraints[i];
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  sprintf(buffer, "%d ", i);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  
-  switch (con->type) {
-  case CONSTRAINT_WAL:
-    Tcl_PrintDouble(interp, con->c.wal.n[0], buffer);
-    Tcl_AppendResult(interp, "wall normal ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.wal.n[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.wal.n[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.wal.d, buffer);
-    Tcl_AppendResult(interp, " dist ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->c.wal.penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_SPH:
-    Tcl_PrintDouble(interp, con->c.sph.pos[0], buffer);
-    Tcl_AppendResult(interp, "sphere center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.rad, buffer);
-    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.sph.direction, buffer);
-    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->c.sph.penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_CYL:
-    Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
-    Tcl_AppendResult(interp, "cylinder center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[0], buffer);
-    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.rad, buffer);
-    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.length, buffer);
-    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.direction, buffer);
-    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->c.cyl.penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_ROD:
-    Tcl_PrintDouble(interp, con->c.rod.pos[0], buffer);
-    Tcl_AppendResult(interp, "rod center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.rod.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.rod.lambda, buffer);
-    Tcl_AppendResult(interp, " lambda ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_PLATE:
-    Tcl_PrintDouble(interp, con->c.plate.pos, buffer);
-    Tcl_AppendResult(interp, "plate height ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.plate.sigma, buffer);
-    Tcl_AppendResult(interp, " sigma ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_MAZE:
-    Tcl_PrintDouble(interp, con->c.maze.nsphere, buffer);
-    Tcl_AppendResult(interp, "maze nsphere ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.maze.dim, buffer);
-    Tcl_AppendResult(interp, " dim ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.maze.sphrad, buffer);
-    Tcl_AppendResult(interp, " sphrad ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.maze.cylrad, buffer);
-    Tcl_AppendResult(interp, " cylrad ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->c.maze.penetrable);
-    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
-    break;
-  case CONSTRAINT_PORE:
-    Tcl_PrintDouble(interp, con->c.cyl.pos[0], buffer);
-    Tcl_AppendResult(interp, "pore center ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[0], buffer);
-    Tcl_AppendResult(interp, " axis ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.axis[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.rad, buffer);
-    Tcl_AppendResult(interp, " radius ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.cyl.length, buffer);
-    Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    break;
-//ER
-  case CONSTRAINT_EXT_MAGN_FIELD:
-    Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[0], buffer);
-    Tcl_AppendResult(interp, "ext_magn_field ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    break; 
-//end ER
-  case CONSTRAINT_PLANE:
-    Tcl_PrintDouble(interp, con->c.plane.pos[0], buffer);
-    Tcl_AppendResult(interp, "plane cell ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.plane.pos[1], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, con->c.plane.pos[2], buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    sprintf(buffer, "%d", con->part_rep.p.type);
-    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
-    break;
-
-  default:
-    sprintf(buffer, "%d", con->type);
-    Tcl_AppendResult(interp, "unknown constraint type ", buffer, ".", (char *) NULL);
-    return (TCL_OK);
-  }
-
-  return (TCL_OK);
-}
-
-int tclcommand_constraint_print(Tcl_Interp *interp)
-{
-  int i;
-  if(n_constraints>0) Tcl_AppendResult(interp, "{", (char *)NULL);
-  for (i = 0; i < n_constraints; i++) {
-    if(i>0) Tcl_AppendResult(interp, " {", (char *)NULL);
-    tclprint_to_result_Constraint(interp, i);
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-  return (TCL_OK);
-}
-
-void tclprint_to_result_ConstraintForce(Tcl_Interp *interp, int con)
-{
-  double f[3];
-  char buffer[TCL_DOUBLE_SPACE];
-
-  mpi_get_constraint_force(con, f);
-
-  Tcl_PrintDouble(interp, f[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, f[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, f[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-}
 
 Constraint *generate_constraint()
 {
@@ -201,812 +43,1528 @@ Constraint *generate_constraint()
   return &constraints[n_constraints-1];
 }
 
-static int tclcommand_constraint_parse_wall(Constraint *con, Tcl_Interp *interp,
-		    int argc, char **argv)
-{
-  int i;
-  double norm;
-  con->type = CONSTRAINT_WAL;
-  /* invalid entries to start of */
-  con->c.wal.n[0] = 
-    con->c.wal.n[1] = 
-    con->c.wal.n[2] = 0;
-  con->c.wal.d = 0;
-  con->c.wal.penetrable = 0;
-  con->part_rep.p.type = -1;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint wall normal <nx> <ny> <nz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.wal.n[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.wal.n[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.wal.n[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "dist", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint wall dist <d> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.wal.d)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint wall type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.wal.penetrable)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint wall reflecting {0|1} expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.wal.reflecting)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-  /* length of the normal vector */
-  norm = SQR(con->c.wal.n[0])+SQR(con->c.wal.n[1])+SQR(con->c.wal.n[2]);
-  if (norm < 1e-10 || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint wall normal <nx> <ny> <nz> dist <d> type <t> penetrable <0/1> reflecting <1/2>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-  /* normalize the normal vector */
-  for (i=0;i<3;i++) con->c.wal.n[i] /= sqrt(norm);
-
-  make_particle_type_exist(con->part_rep.p.type);
-
-  return (TCL_OK);
+static double sign(double x) {
+  if (x > 0)
+    return 1.;
+  else
+    return -1;
 }
 
-static int tclcommand_constraint_parse_sphere(Constraint *con, Tcl_Interp *interp,
-		      int argc, char **argv)
-{
-  con->type = CONSTRAINT_SPH;
-
-  /* invalid entries to start of */
-  con->c.sph.pos[0] = 
-    con->c.sph.pos[1] = 
-    con->c.sph.pos[2] = 0;
-  con->c.sph.rad = 0;
-  con->c.sph.direction = -1;
-  con->c.sph.penetrable = 0;
-  con->c.sph.reflecting = 0;
-  con->part_rep.p.type = -1;
-
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint sphere center <x> <y> <z> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.sph.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.sph.pos[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint sphere radius <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.rad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "-1/1 or inside/outside is expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
-	con->c.sph.direction = -1;
-      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
-	con->c.sph.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(con->c.sph.direction)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint sphere type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.sph.penetrable)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint sphere reflecting {0|1} expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.sph.reflecting)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-
-  if (con->c.sph.rad < 0. || con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint sphere center <x> <y> <z> radius <d> direction <direction> type <t> penetrable <0/1> reflecting <1/2>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-
-  make_particle_type_exist(con->part_rep.p.type);
-
-  return (TCL_OK);
+static double max(double x1, double x2) {
+  return x1>x2?x1:x2;
 }
 
-static int tclcommand_constraint_parse_cylinder(Constraint *con, Tcl_Interp *interp,
-			int argc, char **argv)
+void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_wall *c, double *dist, double *vec)
 {
-  double axis_len;
   int i;
 
-  con->type = CONSTRAINT_CYL;
-  /* invalid entries to start of */
-  con->c.cyl.pos[0] = 
-    con->c.cyl.pos[1] = 
-    con->c.cyl.pos[2] = 0;
-  con->c.cyl.axis[0] = 
-    con->c.cyl.axis[1] = 
-    con->c.cyl.axis[2] = 0;
-  con->c.cyl.rad = 0;
-  con->c.cyl.length = 0;
-  con->c.cyl.direction = 0;
-  con->c.cyl.penetrable = 0;
-  con->part_rep.p.type = -1;
-  con->c.cyl.reflecting = 0;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint cylinder center <x> <y> <z> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.pos[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.axis[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.cyl.axis[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.cyl.axis[2])) == TCL_ERROR)
-	return (TCL_ERROR);
+  *dist = -c->d;
+  for(i=0;i<3;i++) *dist += ppos[i]*c->n[i];
+  
+  for(i=0;i<3;i++) vec[i] = c->n[i] * *dist;
+  
+}
 
-      argc -= 4; argv += 4;    
-    }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder radius <rad> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.rad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder length <len> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.length)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder direction <dir> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
-	con->c.cyl.direction = -1;
-      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
-	con->c.cyl.direction = 1;
-      else if (Tcl_GetDouble(interp, argv[1], &(con->c.cyl.direction)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.cyl.penetrable)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint cylinder reflecting {0|1} expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.cyl.reflecting)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
+
+void calculate_sphere_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_sphere *c, double *dist, double *vec)
+{
+  int i;
+  double fac,  c_dist;
+
+  c_dist=0.0;
+  for(i=0;i<3;i++) {
+    vec[i] = c->pos[i] - ppos[i];
+    c_dist += SQR(vec[i]);
   }
-
-  axis_len=0.;
-  for (i=0;i<3;i++)
-    axis_len += SQR(con->c.cyl.axis[i]);
-
-  if (con->c.cyl.rad < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
-      con->c.cyl.direction == 0 || con->c.cyl.length <= 0) {
-    Tcl_AppendResult(interp, "usage: constraint cylinder center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length> direction <direction> type <t> penetrable <0/1> reflecting <1/2>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
+  c_dist = sqrt(c_dist);
+  
+  if ( c->direction == -1 ) {
+  /* apply force towards inside the sphere */
+    *dist = c->rad - c_dist;
+    fac = *dist / c_dist;
+    for(i=0;i<3;i++) vec[i] *= fac;
+  } else {
+   /* apply force towards outside the sphere */
+    *dist = c_dist - c->rad;
+    fac = *dist / c_dist;
+    for(i=0;i<3;i++) vec[i] *= -fac;
   }
+}
 
-  /*normalize the axis vector */
-  axis_len = sqrt (axis_len);
-  for (i=0;i<3;i++) {
-    con->c.cyl.axis[i] /= axis_len;
+
+void calculate_maze_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_maze *c, double *dist, double *vec)
+{
+  int i,min_axis,cursph[3],dim;
+  double diasph,fac,c_dist,sph_dist,cyl_dist,temp_dis;
+  double sph_vec[3],cyl_vec[3];
+
+  dim=(int) c->dim;
+  diasph = box_l[0]/c->nsphere;
+
+  /* First determine the distance to the sphere */
+  c_dist=0.0;
+  for(i=0;i<3;i++) {
+    cursph[i] = (int) (ppos[i]/diasph);
+    sph_vec[i] = (cursph[i]+0.5) * diasph  - (ppos[i]);
+    c_dist += SQR(sph_vec[i]);
   }
+  c_dist = sqrt(c_dist);
+  sph_dist = c->sphrad - c_dist;
+  fac = sph_dist / c_dist;
+  for(i=0;i<3;i++) cyl_vec[i] = sph_vec[i];
+  for(i=0;i<3;i++) sph_vec[i] *= fac;
+  
+  /* Now calculate the cylinder stuff */
+  /* have to check all 3 cylinders */
+  min_axis=2;
+  cyl_dist=sqrt(cyl_vec[0]*cyl_vec[0]+cyl_vec[1]*cyl_vec[1]);
+  
+  if(dim > 0 ){
+    temp_dis=sqrt(cyl_vec[0]*cyl_vec[0]+cyl_vec[2]*cyl_vec[2]);
+    if ( temp_dis < cyl_dist) {
+        min_axis=1;
+        cyl_dist=temp_dis;
+    }
 
-  make_particle_type_exist(con->part_rep.p.type);
+    if(dim > 1 ){
+        temp_dis=sqrt(cyl_vec[1]*cyl_vec[1]+cyl_vec[2]*cyl_vec[2]);
+        if ( temp_dis < cyl_dist) {
+            min_axis=0;
+            cyl_dist=temp_dis;
+        }
+    }
+  }
+  cyl_vec[min_axis]=0.;
+  
+  c_dist=cyl_dist;
+  cyl_dist = c->cylrad - c_dist;
+  fac = cyl_dist / c_dist;
+  for(i=0;i<3;i++) cyl_vec[i] *= fac;
+  
+  /* Now decide between cylinder and sphere */
+  if ( sph_dist > 0 ) {
+    if ( sph_dist>cyl_dist ) {
+        *dist = sph_dist;
+        for(i=0;i<3;i++) vec[i] = sph_vec[i];
+    } else {
+        *dist = cyl_dist;
+        for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
+    }
+  } else {
+    *dist = cyl_dist;
+    for(i=0;i<3;i++) vec[i] = cyl_vec[i];  
+  }
+}
+
+void calculate_cylinder_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_cylinder *c, double *dist, double *vec)
+{
+  int i;
+  double d_per,d_par,d_real,d_per_vec[3],d_par_vec[3],d_real_vec[3];
+
+  d_real = 0.0;
+  for(i=0;i<3;i++) {
+    d_real_vec[i] = ppos[i] - c->pos[i];
+    d_real += SQR(d_real_vec[i]);
+  }
+  d_real = sqrt(d_real);
+    
+  d_par=0.;
+  for(i=0;i<3;i++) {
+    d_par += (d_real_vec[i] * c->axis[i]);
+  }
+    
+  for(i=0;i<3;i++) {
+    d_par_vec[i] = d_par * c->axis[i] ;
+    d_per_vec[i] = ppos[i] - (c->pos[i] + d_par_vec[i]) ;
+  }
+		
+  d_per=sqrt(SQR(d_real)-SQR(d_par));
+  d_par = fabs(d_par) ;
+
+  if ( c->direction == -1 ) {
+    /*apply force towards inside cylinder */
+    d_per = c->rad - d_per ;
+    d_par = c->length - d_par;
+    if (d_per < d_par )  {
+      *dist = d_per ;   
+      for (i=0; i<3;i++) {
+	vec[i]= -d_per_vec[i] * d_per /  (c->rad - d_per) ;
+      }
+    } else {
+      *dist = d_par ;
+      for (i=0; i<3;i++) {
+	vec[i]= -d_par_vec[i] * d_par /  (c->length - d_par) ;
+      }
+    }
+  } else {
+    /*apply force towards outside cylinder */
+    d_per = d_per - c->rad ;
+    d_par = d_par - c->length ;
+    if (d_par < 0 )  {
+      *dist = d_per ;   
+      for (i=0; i<3;i++) {
+	vec[i]= d_per_vec[i] * d_per /  (d_per + c->rad) ;
+      }
+    } else if ( d_per < 0) {
+      *dist = d_par ;
+      for (i=0; i<3;i++) {
+	vec[i]= d_par_vec[i] * d_par /  (d_par + c->length) ;
+      }
+    } else {
+      *dist = sqrt( SQR(d_par) + SQR(d_per)) ;
+      for (i=0; i<3;i++) {
+	vec[i]=
+	  d_per_vec[i] * d_per /  (d_per + c->rad) +
+	  d_par_vec[i] * d_par /  (d_par + c->length) ;
+      }	
+    }
+  }
+}
+
+void calculate_rhomboid_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_rhomboid *c, double *dist, double *vec)
+{	
+	double axb[3], bxc[3], axc[3];
+	double A, B, C;
+	double a_dot_bxc, b_dot_axc, c_dot_axb;
+	double tmp;
+	double d;
+	
+	//calculate a couple of vectors and scalars that are going to be used frequently
+	
+	axb[0] = c->a[1]*c->b[2] - c->a[2]*c->b[1];
+	axb[1] = c->a[2]*c->b[0] - c->a[0]*c->b[2];
+	axb[2] = c->a[0]*c->b[1] - c->a[1]*c->b[0];
+	
+	bxc[0] = c->b[1]*c->c[2] - c->b[2]*c->c[1];
+	bxc[1] = c->b[2]*c->c[0] - c->b[0]*c->c[2];
+	bxc[2] = c->b[0]*c->c[1] - c->b[1]*c->c[0];
+	
+	axc[0] = c->a[1]*c->c[2] - c->a[2]*c->c[1];
+	axc[1] = c->a[2]*c->c[0] - c->a[0]*c->c[2];
+	axc[2] = c->a[0]*c->c[1] - c->a[1]*c->c[0];
+	
+	a_dot_bxc = c->a[0]*bxc[0] + c->a[1]*bxc[1] + c->a[2]*bxc[2];
+	b_dot_axc = c->b[0]*axc[0] + c->b[1]*axc[1] + c->b[2]*axc[2];
+	c_dot_axb = c->c[0]*axb[0] + c->c[1]*axb[1] + c->c[2]*axb[2];
+	
+	//represent the distance from pos to ppos as a linear combination of the edge vectors.
+	
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+	
+	//the coefficients tell whether ppos lies within the cone defined by pos and the adjacent edges
+	
+	if(A <= 0 && B <= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0];
+		vec[1] = ppos[1]-c->pos[1];
+		vec[2] = ppos[2]-c->pos[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+	  return;
+	}
+	
+	//check for cone at pos+a
+
+	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B <= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+	  return;
+	}
+	
+	//check for cone at pos+b
+
+	A = (ppos[0]-c->pos[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && B >= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->b[0];
+		vec[1] = ppos[1]-c->pos[1]-c->b[1];
+		vec[2] = ppos[2]-c->pos[2]-c->b[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+		return;
+	}
+	
+	//check for cone at pos+c
+
+	A = (ppos[0]-c->pos[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && B <= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+	
+	  return;
+	}
+	
+	//check for cone at pos+a+b
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B >= 0 && C <= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for cone at pos+a+c
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B <= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for cone at pos+a+c
+
+	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && B >= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for cone at pos+a+b+c
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;	
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;	
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && B >= 0 && C >= 0)
+	{
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0];
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1];
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2];
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos, a
+	
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+	
+	if(B <= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0])*c->a[0] + (ppos[1]-c->pos[1])*c->a[1] + (ppos[2]-c->pos[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+		
+		vec[0] = ppos[0]-c->pos[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2] - c->a[2]*tmp;
+		
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+		
+    return;
+	}
+	
+	//check for prism at edge pos, b
+
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0])*c->b[0] + (ppos[1]-c->pos[1])*c->b[1] + (ppos[2]-c->pos[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+	
+		vec[0] = ppos[0]-c->pos[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2] - c->b[2]*tmp;
+	
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+	
+    return;
+	}
+	
+	//check for prism at edge pos, c
+
+	A = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A <= 0 && B <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0])*c->c[0] + (ppos[1]-c->pos[1])*c->c[1] + (ppos[2]-c->pos[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a, b
+
+	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0]-c->a[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->b[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a, c
+
+	A = (ppos[0]-c->pos[0]-c->a[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0]-c->a[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A >= 0 && B <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+b+c, c
+
+	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A <= 0 && B >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->c[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->c[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+b+c, b
+
+	A = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A <= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->b[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+b+c, a
+
+	B = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+																
+	if(B >= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->b[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->b[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->b[2]-c->c[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->b[0]-c->c[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->b[1]-c->c[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->b[2]-c->c[2] - c->a[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+b, a
+
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(B >= 0 && C <= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->a[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+b, c
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*bxc[2];
+	A /= a_dot_bxc;
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*axc[2];
+	B /= b_dot_axc;
+
+	if(A >= 0 && B >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->b[0])*c->c[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1])*c->c[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2])*c->c[2];
+		tmp /= c->c[0]*c->c[0] + c->c[1]*c->c[1] + c->c[2]*c->c[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->b[0] - c->c[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->b[1] - c->c[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->b[2] - c->c[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+c, a
+
+	B = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axc[2];
+	B /= b_dot_axc;
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(B <= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->a[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->a[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->a[2];
+		tmp /= c->a[0]*c->a[0] + c->a[1]*c->a[1] + c->a[2]*c->a[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->a[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->a[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->a[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for prism at edge pos+a+c, b
+
+	A = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*bxc[2];
+	A /= a_dot_bxc;
+	C = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*axb[2];
+	C /= c_dot_axb;
+
+	if(A >= 0 && C >= 0)
+	{
+		tmp = (ppos[0]-c->pos[0]-c->a[0]-c->c[0])*c->b[0] + (ppos[1]-c->pos[1]-c->a[1]-c->c[1])*c->b[1] + (ppos[2]-c->pos[2]-c->a[2]-c->c[2])*c->b[2];
+		tmp /= c->b[0]*c->b[0] + c->b[1]*c->b[1] + c->b[2]*c->b[2];
+
+		vec[0] = ppos[0]-c->pos[0]-c->a[0]-c->c[0] - c->b[0]*tmp;
+		vec[1] = ppos[1]-c->pos[1]-c->a[1]-c->c[1] - c->b[1]*tmp;
+		vec[2] = ppos[2]-c->pos[2]-c->a[2]-c->c[2] - c->b[2]*tmp;
+
+		*dist = c->direction * sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+
+    return;
+	}
+	
+	//check for face with normal -axb
+	
+	*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	*dist *= -1.;
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+		*dist /= tmp;
+	
+		vec[0] = -*dist * axb[0]/tmp;
+		vec[1] = -*dist * axb[1]/tmp;
+		vec[2] = -*dist * axb[2]/tmp;
+	
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//calculate distance to face with normal axc
+
+	*dist = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+		*dist /= tmp;
+	
+		vec[0] = *dist * axc[0]/tmp;
+		vec[1] = *dist * axc[1]/tmp;
+		vec[2] = *dist * axc[2]/tmp;
+
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//calculate distance to face with normal -bxc
+
+	*dist = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	*dist *= -1.;
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+		*dist /= tmp;
+		
+		vec[0] = -*dist * bxc[0]/tmp;
+		vec[1] = -*dist * bxc[1]/tmp;
+		vec[2] = -*dist * bxc[2]/tmp;
+		
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//calculate distance to face with normal axb
+	
+	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+		*dist /= tmp;
+
+		vec[0] = *dist * axb[0]/tmp;
+		vec[1] = *dist * axb[1]/tmp;
+		vec[2] = *dist * axb[2]/tmp;
+	
+		*dist *= c->direction;
+
+    return;
+	}
+																					
+	//calculate distance to face with normal -axc
+
+	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	*dist *= -1.;
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+		*dist /= tmp;
+
+		vec[0] = -*dist * axc[0]/tmp;
+		vec[1] = -*dist * axc[1]/tmp;
+		vec[2] = -*dist * axc[2]/tmp;
+		
+		*dist *= c->direction;
+
+    return;
+	}
+																		
+	//calculate distance to face with normal bxc
+
+	*dist = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	
+	if(*dist >= 0)
+	{
+		tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+		*dist /= tmp;
+
+		vec[0] = *dist * bxc[0]/tmp;
+		vec[1] = *dist * bxc[1]/tmp;
+		vec[2] = *dist * bxc[2]/tmp;
+		
+		*dist *= c->direction;
+
+    return;
+	}
+	
+	//ppos lies within rhomboid. Find nearest wall for interaction.
+	 
+	//check for face with normal -axb
+	
+	*dist = (ppos[0]-c->pos[0])*axb[0] + (ppos[1]-c->pos[1])*axb[1] + (ppos[2]-c->pos[2])*axb[2];
+	*dist *= -1.;
+	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+	*dist /= tmp;
+	
+	vec[0] = -*dist * axb[0]/tmp;
+	vec[1] = -*dist * axb[1]/tmp;
+	vec[2] = -*dist * axb[2]/tmp;
+	
+	*dist *= c->direction;
+
+	//calculate distance to face with normal axc
+
+	d = (ppos[0]-c->pos[0])*axc[0] + (ppos[1]-c->pos[1])*axc[1] + (ppos[2]-c->pos[2])*axc[2];
+	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+	d /= tmp;
+	
+	if(abs(d) < abs(*dist))
+	{
+		vec[0] = d * axc[0]/tmp;
+		vec[1] = d * axc[1]/tmp;
+		vec[2] = d * axc[2]/tmp;
+	
+		*dist = c->direction * d;
+	}
+
+	//calculate distance to face with normal -bxc
+
+	d = (ppos[0]-c->pos[0])*bxc[0] + (ppos[1]-c->pos[1])*bxc[1] + (ppos[2]-c->pos[2])*bxc[2];
+	d *= -1.;
+	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+	d /= tmp;
+
+	if(abs(d) < abs(*dist))
+	{							
+		vec[0] = -d * bxc[0]/tmp;
+		vec[1] = -d * bxc[1]/tmp;
+		vec[2] = -d * bxc[2]/tmp;
+
+		*dist = c->direction * d;
+	}
+	
+	//calculate distance to face with normal axb
+
+	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axb[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axb[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axb[2];
+	tmp = sqrt( axb[0]*axb[0] + axb[1]*axb[1] + axb[2]*axb[2] );
+	d /= tmp;
+	
+	if(abs(d) < abs(*dist))
+	{																					
+		vec[0] = d * axb[0]/tmp;
+		vec[1] = d * axb[1]/tmp;
+		vec[2] = d * axb[2]/tmp;
+
+		*dist = c->direction * d;
+	}
+	
+	//calculate distance to face with normal -axc
+
+	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*axc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*axc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*axc[2];
+	d *= -1.;
+	tmp = sqrt( axc[0]*axc[0] + axc[1]*axc[1] + axc[2]*axc[2] );
+	d /= tmp;
+
+	if(abs(d) < abs(*dist))
+	{																						
+		vec[0] = -d * axc[0]/tmp;
+		vec[1] = -d * axc[1]/tmp;
+		vec[2] = -d * axc[2]/tmp;
+
+		*dist = c->direction * d;
+	}
+																		
+	//calculate distance to face with normal bxc
+
+	d = (ppos[0]-c->pos[0]-c->a[0]-c->b[0]-c->c[0])*bxc[0] + (ppos[1]-c->pos[1]-c->a[1]-c->b[1]-c->c[1])*bxc[1] + (ppos[2]-c->pos[2]-c->a[2]-c->b[2]-c->c[2])*bxc[2];
+	tmp = sqrt( bxc[0]*bxc[0] + bxc[1]*bxc[1] + bxc[2]*bxc[2] );
+	d /= tmp;
+
+	if(abs(d) < abs(*dist))
+	{																						
+		vec[0] = d * bxc[0]/tmp;
+		vec[1] = d * bxc[1]/tmp;
+		vec[2] = d * bxc[2]/tmp;
+	
+		*dist = c->direction * d;
+	}
+}
+
+void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_pore *c, double *dist, double *vec)
+{
+  int i;
+  double c_dist[3];           /* cartesian distance from pore center */
+  double z , r;             /* cylindrical coordinates, coordinate system parallel to
+                               pore, origin at pore centera */
+  double z_vec[3], r_vec[3]; /* cartesian vectors that correspond to these coordinates */
+  double e_z[3], e_r[3];    /* unit vectors in the cylindrical coordinate system */
+  /* helper variables, for performance reasons should the be move the the
+   * constraint struct*/
+     double slope, average_radius, z_left, z_right;
+  /* and another helper that is hopefully optmized out */
+     double norm;
+     double c1_r, c1_z, c2_r, c2_z;
+     double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r, temp;
+
+     
+     c->smoothing_radius = 1.;
+
       
-  return (TCL_OK);
-}
+     slope = (c->rad_right - c->rad_left)/2./c->length;
+     average_radius = 0.5*(c->rad_left + c->rad_right);
 
-static int tclcommand_constraint_parse_pore(Constraint *con, Tcl_Interp *interp,
-		    int argc, char **argv)
-{
-  double axis_len;
-  int i;
-
-  con->type = CONSTRAINT_PORE;
-  /* invalid entries to start of */
-  con->c.pore.pos[0] = 
-    con->c.pore.pos[1] = 
-    con->c.pore.pos[2] = 0;
-  con->c.pore.axis[0] = 
-    con->c.pore.axis[1] = 
-    con->c.pore.axis[2] = 0;
-  con->c.pore.rad_left = 0;
-  con->c.pore.rad_right = 0;
-  con->c.pore.length = 0;
-  con->c.pore.reflecting = 0;
-  con->part_rep.p.type = -1;
-  con->c.pore.smoothing_radius = 1.;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint pore center <x> <y> <z> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.pore.pos[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.pore.pos[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint pore axis <rx> <ry> <rz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.axis[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.pore.axis[1])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[3], &(con->c.pore.axis[2])) == TCL_ERROR)
-	return (TCL_ERROR);
-
-      argc -= 4; argv += 4;    
-    }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint pore radius <rad> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }  
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
-	return (TCL_ERROR);
-      con->c.pore.rad_right =  con->c.pore.rad_left; 
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }  
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.smoothing_radius)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "radii", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint pore radii <rad_left> <rad_right> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }  
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.rad_left)) == TCL_ERROR)
-	return (TCL_ERROR);
-      if (Tcl_GetDouble(interp, argv[2], &(con->c.pore.rad_right)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 3; argv += 3;
-    }
-    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint pore length <len/2> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.pore.length)) == TCL_ERROR)
-	return (TCL_ERROR);
-//      con->c.pore.length *= 2;
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint pore type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "reflecting", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint pore reflecting {0|1} expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.pore.reflecting)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-
-  axis_len=0.;
-  for (i=0;i<3;i++)
-    axis_len += SQR(con->c.pore.axis[i]);
-
-  if (con->c.pore.rad_left < 0. || con->c.pore.rad_right < 0. || con->part_rep.p.type < 0 || axis_len < 1e-30 ||
-      con->c.pore.length <= 0) {
-    Tcl_AppendResult(interp, "usage: constraint pore center <x> <y> <z> axis <rx> <ry> <rz> radius <rad> length <length/2> type <t>",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  /*normalize the axis vector */
-  axis_len = sqrt (axis_len);
-  for (i=0;i<3;i++) {
-    con->c.pore.axis[i] /= axis_len;
+  /* compute the position relative to the center of the pore */
+  for(i=0;i<3;i++) {
+    c_dist[i] = ppos[i] - c->pos[i]; 
+  } 
+  
+  /* compute the component parallel to the pore axis */
+  z =0.; 
+  for(i=0;i<3;i++) {
+    z += (c_dist[i] * c->axis[i]);
   }
   
-  make_particle_type_exist(con->part_rep.p.type);
+  /* decompose the position into parallel and perpendicular to the axis */
+  r = 0.;
+  for(i=0;i<3;i++) {
+    z_vec[i] = z * c->axis[i]; 
+    r_vec[i] = c_dist[i] - z_vec[i];
+    r += r_vec[i]*r_vec[i];
+  }
+  r = sqrt(r);
 
-  return (TCL_OK);
+
+  /* calculate norm and unit vectors for both */
+  norm = 0;
+  for(i=0;i<3;i++) 
+    norm += z_vec[i]*z_vec[i]; 
+  norm = sqrt(norm);
+  for(i=0;i<3;i++) 
+    e_z[i] = c->axis[i];
+  norm = 0;
+  for(i=0;i<3;i++) 
+    norm += r_vec[i]*r_vec[i]; 
+  norm = sqrt(norm);
+  for(i=0;i<3;i++) 
+    e_r[i] = r_vec[i]/norm;
+  
+  /* c?_r/z and are the centers of the circles that are used to smooth 
+   * the entrance of the pore in cylindrical coordinates*/
+  c1_z = - (c->length - c->smoothing_radius);
+  c2_z = + (c->length - c->smoothing_radius);
+  z_left = c1_z - sign(slope) * sqrt(slope*slope/(1+slope*slope))*c->smoothing_radius;
+  z_right = c2_z + sign(slope) * sqrt(slope*slope/(1+slope*slope))*c->smoothing_radius;
+
+  c1_r = c->rad_left + slope * ( z_left + c->length ) +
+      sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_left - c1_z ) );
+  c2_r = c->rad_left + slope * ( z_right + c->length ) +
+      sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
+  slope=(c2_r-c1_r)/(c2_z-c1_z);
+ 
+  /* Check if we are in the region of the left wall */
+  if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
+    dist_vector_z=-z - c->length;
+    dist_vector_r=0;
+    *dist = -z - c->length;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
+  /* Check if we are in the region of the right wall */
+  if (( (r >= c2_r) && (z <= c2_z) ) || ( ( z >= 0 ) && (r>=max(c1_r, c2_r)))) {
+    dist_vector_z=-z + c->length;
+    dist_vector_r=0;
+    *dist = +z - c->length;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
+
+  /* check if the particle should feel the smoothed ends or the middle of the pore */
+  /* calculate aufpunkt in z direction first.   */
+
+  /* the distance of the particle from the pore cylinder/cone calculated by projection on the
+   * cone normal. Should be > 0 if particle is inside the pore */
+
+  cone_vector_z=1/sqrt(1+slope*slope);
+  cone_vector_r=slope/sqrt(1+slope*slope);
+
+  p1_r = c1_r+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_r;
+  p1_z = c1_z+ ( (r-c1_r)*cone_vector_r + (z-c1_z)*cone_vector_z) * cone_vector_z;
+
+  dist_vector_r = p1_r-r;
+  dist_vector_z = p1_z-z;
+
+  if ( p1_z>=c1_z && p1_z<=c2_z ) {
+    if ( dist_vector_r <= 0  ) {
+      if (z<0) {
+        dist_vector_z=-z - c->length;
+        dist_vector_r=0;
+        *dist = -z - c->length;
+        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+        return;
+      } else {
+        dist_vector_z=-z + c->length;
+        dist_vector_r=0;
+        *dist = +z - c->length;
+        for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+        return;
+      }
+    }
+    temp=sqrt( dist_vector_r*dist_vector_r + dist_vector_z*dist_vector_z );
+    *dist=temp-c->smoothing_radius;
+    dist_vector_r-=dist_vector_r/temp*c->smoothing_radius;
+    dist_vector_z-=dist_vector_z/temp*c->smoothing_radius;
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
+
+
+  /* Check if we are in the range of the left smoothing circle */
+  if (p1_z <= c1_z ) {
+    /* distance from the smoothing center */
+    norm = sqrt( (z - c1_z)*(z - c1_z) + (r - c1_r)*(r - c1_r) );
+    *dist = norm - c->smoothing_radius;
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c1_r);
+    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c1_z);
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
+  /* Check if we are in the range of the right smoothing circle */
+  if (p1_z >= c2_z ) {
+    norm = sqrt( (z - c2_z)*(z - c2_z) + (r - c2_r)*(r - c2_r) );
+    *dist = norm - c->smoothing_radius;
+    dist_vector_r=(c->smoothing_radius/norm -1)*(r - c2_r);
+    dist_vector_z=(c->smoothing_radius/norm - 1)*(z - c2_z);
+    for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
+    return;
+  }
+  exit(printf("should never be reached, z %f, r%f\n",z, r));
 }
 
-static int tclcommand_constraint_parse_rod(Constraint *con, Tcl_Interp *interp,
-		   int argc, char **argv)
+void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_plane *c, double *dist, double *vec)
 {
-  con->type = CONSTRAINT_ROD;
-  con->part_rep.p.type = -1;
-  con->c.rod.pos[0] = con->c.rod.pos[1] = 0;
-  con->c.rod.lambda = 0;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
-      if(argc < 3) {
-	Tcl_AppendResult(interp, "constraint rod center <px> <py> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.pos[0])) == TCL_ERROR ||
-	  Tcl_GetDouble(interp, argv[2], &(con->c.rod.pos[1])) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 3; argv += 3;
+  int i;
+  double c_dist_sqr,c_dist;
+  
+  c_dist_sqr=0.0;
+  for(i=0;i<3;i++) {
+    if(c->pos[i] >= 0) {
+      vec[i] = c->pos[i] - ppos[i];
+      c_dist_sqr += SQR(vec[i]);
+    }else{
+      vec[i] = 0.0;
+      c_dist += SQR(vec[i]);
     }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "constraint rod radius <r> is deprecated, please use a cylinder for LJ component", (char *) NULL);
-      return (TCL_ERROR);
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      Tcl_AppendResult(interp, "constraint rod type <t> is deprecated, please use a cylinder for LJ component", (char *) NULL);
-      return (TCL_ERROR);
-    }
-    else if(!strncmp(argv[0], "lambda", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint rod lambda <l> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.rod.lambda)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
   }
-  return (TCL_OK);
+  c_dist = sqrt(c_dist_sqr);
+  *dist = c_dist;
+
+  
+  for(i=0;i<3;i++) {
+    vec[i] *= -1;
+  }
 }
 
-static int tclcommand_constraint_parse_plate(Constraint *con, Tcl_Interp *interp,
-		     int argc, char **argv)
+void add_rod_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
-  con->type = CONSTRAINT_PLATE;
-  con->part_rep.p.type = -1;
-  con->c.plate.pos = 0;
-  con->c.plate.sigma = 0;
-  while (argc > 0) {
-    if(!strncmp(argv[0], "height", strlen(argv[0]))) {
-      if(argc < 2) {
-	Tcl_AppendResult(interp, "constraint plate height <pz> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.plate.pos)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "sigma", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint rod sigma <s> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.plate.sigma)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
+#ifdef ELECTROSTATICS
+  int i;
+  double fac, vec[2], c_dist_2;
+
+  c_dist_2 = 0.0;
+  for(i=0;i<2;i++) {
+    vec[i] = ppos[i] - c->pos[i];
+    c_dist_2 += SQR(vec[i]);
   }
-  return (TCL_OK);
+
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0) {
+    fac = 2*coulomb.prefactor*c->lambda*p1->p.q/c_dist_2;
+    p1->f.f[0]  += fac*vec[0];
+    p1->f.f[1]  += fac*vec[1];
+    c_p->f.f[0] -= fac*vec[0];
+    c_p->f.f[1] -= fac*vec[1];
+  }
+#endif
 }
 
-
-static int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp,
-		      int argc, char **argv)
+double rod_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_rod *c)
 {
-  con->type = CONSTRAINT_MAZE;
+#ifdef ELECTROSTATICS
+  int i;
+  double vec[2], c_dist_2;
 
-  /* invalid entries to start of */
-  con->c.maze.nsphere = 0.;
-  con->c.maze.dim = -1.;
-  con->c.maze.sphrad = 0.;
-  con->c.maze.cylrad = -1.;
-  con->c.maze.penetrable = 0;
-  con->part_rep.p.type = -1;
-
-  while (argc > 0) {
-    if(!strncmp(argv[0], "nsphere", strlen(argv[0]))) {
-      if(argc < 4) {
-	Tcl_AppendResult(interp, "constraint maze nsphere <n> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.nsphere)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "dim", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze dim <d> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.dim)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "sphrad", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze sphrad <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.sphrad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "cylrad", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze cylrad <r> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.maze.cylrad)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint maze type <t> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else if(!strncmp(argv[0], "penetrable", strlen(argv[0]))) {
-      if (argc < 1) {
-	Tcl_AppendResult(interp, "constraint penetrable <0/1> expected", (char *) NULL);
-	return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->c.maze.penetrable)) == TCL_ERROR)
-	return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
+  c_dist_2 = 0.0;
+  for(i=0;i<2;i++) {
+    vec[i] = ppos[i] - c->pos[i];
+    c_dist_2 += SQR(vec[i]);
   }
 
-  if (con->c.maze.sphrad < 0. || con->c.maze.cylrad < 0. || con->part_rep.p.type < 0 || con->c.maze.dim < 0) {
-    Tcl_AppendResult(interp, "usage: constraint maze nsphere <n> dim <d> sphrad <r> cylrad <r> type <t> penetrable <0/1>",
-		     (char *) NULL);
-    return (TCL_ERROR);    
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->lambda != 0.0)
+    return coulomb.prefactor*p1->p.q*c->lambda*(-log(c_dist_2*SQR(box_l_i[2])) + 2*(M_LN2 - C_GAMMA));
+#endif
+  return 0;
+}
+
+void add_plate_force(Particle *p1, double ppos[3], Particle *c_p, Constraint_plate *c)
+{
+#ifdef ELECTROSTATICS
+  double f;
+
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0) {
+    f = 2*M_PI*coulomb.prefactor*c->sigma*p1->p.q;
+    if (ppos[2] < c->pos)
+      f = -f;
+    p1->f.f[2]  += f;
+    c_p->f.f[2] -= f;
   }
+#endif
+}
 
-  make_particle_type_exist(con->part_rep.p.type);
-
-  return (TCL_OK);
+double plate_energy(Particle *p1, double ppos[3], Particle *c_p, Constraint_plate *c)
+{
+#ifdef ELECTROSTATICS
+  if (coulomb.prefactor != 0.0 && p1->p.q != 0.0 && c->sigma != 0.0)
+    return -2*M_PI*coulomb.prefactor*c->sigma*p1->p.q*fabs(ppos[2] - c->pos);
+#endif
+  return 0;
 }
 
 //ER
-int tclcommand_constraint_parse_ext_magn_field(Constraint *con, Tcl_Interp *interp,
-		      int argc, char **argv)
+void add_ext_magn_field_force(Particle *p1, Constraint_ext_magn_field *c)
 {
-  int i;
-  con->type = CONSTRAINT_EXT_MAGN_FIELD;
-  con->part_rep.p.type=-1;
+#ifdef ROTATION
+#ifdef DIPOLES
+  p1->f.torque[0] += p1->r.dip[1]*c->ext_magn_field[2]-p1->r.dip[2]*c->ext_magn_field[1];
+  p1->f.torque[1] += p1->r.dip[2]*c->ext_magn_field[0]-p1->r.dip[0]*c->ext_magn_field[2];
+  p1->f.torque[2] += p1->r.dip[0]*c->ext_magn_field[1]-p1->r.dip[1]*c->ext_magn_field[0];
+#endif
+#endif
+}
 
-  for(i=0; i<3; i++)
-     con->c.emfield.ext_magn_field[i] = 0.;
-
-  if(argc < 3) {
-      Tcl_AppendResult(interp, "usage: constraint ext_magn_field <x> <y> <z>", (char *) NULL);
-      return (TCL_ERROR);
-  }
-  for(i=0; i<3; i++){
-     if (Tcl_GetDouble(interp, argv[i], &(con->c.emfield.ext_magn_field[i])) == TCL_ERROR)
-	return (TCL_ERROR);
-  }
-  argc -= 3; argv += 3;
-
-  return (TCL_OK);
+double ext_magn_field_energy(Particle *p1, Constraint_ext_magn_field *c)
+{
+#ifdef DIPOLES
+     return -1.0 * scalar(c->ext_magn_field,p1->r.dip);
+#endif
+  return 0;
 }
 //end ER
 
-static int tclcommand_constraint_parse_plane_cell(Constraint *con, Tcl_Interp *interp,
-                      int argc, char **argv)
-{
-  con->type = CONSTRAINT_PLANE;
-
-  /* invalid entries to start of */
-  con->c.plane.pos[0] = 
-    con->c.plane.pos[1] = 
-    con->c.plane.pos[2] = 0;
-  con->part_rep.p.type = -1;
-
-  while (argc > 0) {
-    if(!strncmp(argv[0], "cell", strlen(argv[0]))) {
-      if(argc < 4) {
-        Tcl_AppendResult(interp, "constraint plane cell <x> <y> <z> expected", (char *) NULL);
-        return (TCL_ERROR);
-      }
-      if (Tcl_GetDouble(interp, argv[1], &(con->c.plane.pos[0])) == TCL_ERROR ||
-          Tcl_GetDouble(interp, argv[2], &(con->c.plane.pos[1])) == TCL_ERROR ||
-          Tcl_GetDouble(interp, argv[3], &(con->c.plane.pos[2])) == TCL_ERROR)
-        return (TCL_ERROR);
-      argc -= 4; argv += 4;
-    }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
-      if (argc < 1) {
-        Tcl_AppendResult(interp, "constraint plane cell type <t> expected", (char *) NULL);
-        return (TCL_ERROR);
-      }
-      if (Tcl_GetInt(interp, argv[1], &(con->part_rep.p.type)) == TCL_ERROR)
-        return (TCL_ERROR);
-      argc -= 2; argv += 2;
-    }
-    else
-      break;
-  }
-
-  if (con->part_rep.p.type < 0) {
-    Tcl_AppendResult(interp, "usage: constraint plane cell <x> <y> <z> type <t>",
-                     (char *) NULL);
-    return (TCL_ERROR);    
-  }
-
-  return (TCL_OK);
-}
-
-int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, char **argv) {
-  double pos[3];
+void reflect_particle(Particle *p1, double *distance_vec, int reflecting) {
   double vec[3];
-  double dist=1e100;
-  double mindist = 1e100;
-  int n;
-  char buffer[TCL_DOUBLE_SPACE];
-  if (n_constraints==0) {
-    Tcl_AppendResult(interp, "Error in constraint mindist_position: no constraints defined\n", (char*) NULL);
-    return TCL_ERROR;
-  }
+  double norm; 
 
-  Particle* p1=0;
-  if (ARG_IS_D(0, pos[0]) && ARG_IS_D(1, pos[1]) && ARG_IS_D(2, pos[2])) {
-    for(n=0;n<n_constraints;n++) {
-      switch(constraints[n].type) {
-        case CONSTRAINT_WAL: 
-          if ( !constraints[n].c.wal.penetrable )
-	          calculate_wall_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_SPH:
-          if ( !constraints[n].c.sph.penetrable )
-	          calculate_sphere_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_CYL: 
-          if ( !constraints[n].c.cyl.penetrable )
-	          calculate_cylinder_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_MAZE: 
-          if ( !constraints[n].c.maze.penetrable )
-	          calculate_maze_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
-          else
-            dist=1e100;
-          break;
-        case CONSTRAINT_PORE: 
-	        calculate_pore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
-          break;
-        case CONSTRAINT_PLANE:
-	        calculate_plane_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
-          break;
-      }
-      mindist = dist<mindist ? dist : mindist;
+      double folded_pos[3];
+      int img[3];
 
-    }
-    Tcl_PrintDouble(interp, mindist, buffer);
-    Tcl_AppendResult(interp, " ", buffer, " ", (char *) NULL);
-    return TCL_OK;
-  } else {
-    Tcl_AppendResult(interp, "\nError in constraint mindist_position: could not read position\n", (char*) NULL);
-    return TCL_ERROR;
-  }
+      memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+      memcpy(img, p1->l.i, 3*sizeof(int));
+      fold_position(folded_pos, img);
+
+      memcpy(vec, distance_vec, 3*sizeof(double));
+/* For Debugging your can show the folded coordinates of the particle before
+ * and after the reflecting by uncommenting these lines  */
+ //     printf("position before reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); 
+
+
+       reflection_happened = 1;
+       norm=sqrt(vec[0]*vec[0]+vec[1]*vec[1]+vec[2]*vec[2]);
+       p1->r.p[0] = p1->r.p[0]-2*vec[0];
+       p1->r.p[1] = p1->r.p[1]-2*vec[1];
+       p1->r.p[2] = p1->r.p[2]-2*vec[2];
+
+   /*  This can show the folded position after reflection      
+       memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+       memcpy(img, p1->l.i, 3*sizeof(int));
+       fold_position(folded_pos, img);
+       printf("position after reflection %f %f %f\n",folded_pos[0], folded_pos[1], folded_pos[2]); */
+
+       /* vec seams to be the vector that points from the wall to the particle*/
+       /* now normalize it */ 
+       if ( reflecting==1 ) {
+         vec[0] /= norm;
+         vec[1] /= norm;
+         vec[2] /= norm;
+         /* calculating scalar product - reusing var norm */
+         norm = vec[0] *  p1->m.v[0] + vec[1] * p1->m.v[1] + vec[2] * p1->m.v[2];
+         /* now add twice the normal component to the velcity */
+          p1->m.v[0] = p1->m.v[0]-2*vec[0]*norm; /* norm is still the scalar product! */
+          p1->m.v[1] = p1->m.v[1]-2*vec[1]*norm;
+          p1->m.v[2] = p1->m.v[2]-2*vec[2]*norm;
+       } else if (reflecting == 2) {
+         /* if bounce back, invert velocity */
+          p1->m.v[0] =-p1->m.v[0]; /* norm is still the scalar product! */
+          p1->m.v[1] =-p1->m.v[1];
+          p1->m.v[2] =-p1->m.v[2];
+
+       }
+
 }
-#endif
 
-
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv)
+void add_constraints_forces(Particle *p1)
 {
-#ifdef CONSTRAINTS
-  int status, c_num;
+  if (n_constraints==0)
+   return;
+  int n, j;
+  double dist, vec[3], force[3], torque1[3], torque2[3];
 
-  if (argc < 2) return tclcommand_constraint_print(interp);
+  IA_parameters *ia_params;
+  char *errtxt;
+  double folded_pos[3];
+  int img[3];
 
-  if(!strncmp(argv[1], "mindist_position", strlen(argv[1]))) {
-    return tclcommand_constraint_mindist_position(interp, argc-2, argv+2);
-  }
-  else if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_wall(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_sphere(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_cylinder(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "rod", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_rod(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "plate", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_plate(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "maze", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_maze(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_pore(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  //ER
-  else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  else if(!strncmp(argv[1], "plane cell", strlen(argv[1]))) {
-    status = tclcommand_constraint_parse_plane_cell(generate_constraint(),interp, argc - 2, argv + 2);
-    mpi_bcast_constraint(-1);
-  }
-  //end ER
-  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
-    if(argc < 3) {
-      Tcl_AppendResult(interp, "which particles force?",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-    if(c_num < 0 || c_num >= n_constraints) {
-      Tcl_AppendResult(interp, "constraint does not exist",(char *) NULL);
-      return (TCL_ERROR);
-    }
-    tclprint_to_result_ConstraintForce(interp, c_num);
-    status  = TCL_OK;
-  }
-  else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
-    if(argc < 3) {
-      /* delete all */
-      mpi_bcast_constraint(-2);
-      status = TCL_OK;
-    }
-    else {
-      if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) return (TCL_ERROR);
-      if(c_num < 0 || c_num >= n_constraints) {
-	Tcl_AppendResult(interp, "Can not delete non existing constraint",(char *) NULL);
-	return (TCL_ERROR);
-      }
-      mpi_bcast_constraint(c_num);
-      status = TCL_OK;    
-    }
-  }
-  else if (argc == 2 && Tcl_GetInt(interp, argv[1], &c_num) == TCL_OK) {
-    tclprint_to_result_Constraint(interp, c_num);
-    status = TCL_OK;
-  }
-  else {
-  //ER "ext_magn_field" was put in the next line //end ER
-    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze pore ext_magn_field or constraint delete {c} to delete constraint(s)",(char *) NULL);
-    return (TCL_ERROR);
-  }
+  /* fold the coordinate[2] of the particle */
+  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+  memcpy(img, p1->l.i, 3*sizeof(int));
+  fold_position(folded_pos, img);
 
-  return mpi_gather_runtime_errors(interp, status);
-
-#else /* !defined(CONSTRAINTS) */
-  Tcl_AppendResult(interp, "Constraints not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
+  for(n=0;n<n_constraints;n++) {
+    ia_params=get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
+    dist=0.;
+    for (j = 0; j < 3; j++) {
+      force[j] = 0;
+#ifdef ROTATION
+      torque1[j] = torque2[j] = 0;
 #endif
+    }
+
+    switch(constraints[n].type) {
+    case CONSTRAINT_WAL: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+    if(constraints[n].c.wal.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
+    }
+	}
+      }
+      break;
+
+    case CONSTRAINT_SPH:
+      if(checkIfInteraction(ia_params)) {
+	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+    if(constraints[n].c.sph.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
+    }
+	}
+      }
+      break;
+    
+    case CONSTRAINT_CYL: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+    if(constraints[n].c.cyl.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.cyl.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+    }
+        }
+      }
+      break;
+    
+    case CONSTRAINT_RHOMBOID: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+    if(constraints[n].c.rhomboid.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.rhomboid.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 rhomboid constraint %d violated by particle %d} ", n, p1->p.identity);
+    }
+        }
+      }
+      break;
+	
+    case CONSTRAINT_MAZE: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+	if ( dist > 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else if ( dist <= 0 && constraints[n].c.maze.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,-1.0*dist,dist*dist, force,
+				     torque1, torque2);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{064 maze constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+
+    case CONSTRAINT_PORE: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
+	if ( dist >= 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else {
+    if(constraints[n].c.pore.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 pore constraint %d violated by particle %d} ", n, p1->p.identity);
+        }
+      }
+      }
+      break;
+	
+      /* electrostatic "constraints" */
+    case CONSTRAINT_ROD:
+      add_rod_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rod);
+      break;
+
+    case CONSTRAINT_PLATE:
+      add_plate_force(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
+      break;
+      
+#ifdef DIPOLES
+    case CONSTRAINT_EXT_MAGN_FIELD:
+      add_ext_magn_field_force(p1, &constraints[n].c.emfield);
+      break;
+#endif
+    
+    case CONSTRAINT_PLANE:
+     if(checkIfInteraction(ia_params)) {
+	calculate_plane_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plane, &dist, vec); 
+	if (dist > 0) {
+	    calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				       ia_params,vec,dist,dist*dist, force,
+				       torque1, torque2);
+#ifdef TUNABLE_SLIP
+	    add_tunable_slip_pair_force(p1, &constraints[n].part_rep,ia_params,vec,dist,force);
+#endif
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 plane constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+    }
+    for (j = 0; j < 3; j++) {
+      p1->f.f[j] += force[j];
+      constraints[n].part_rep.f.f[j] -= force[j];
+#ifdef ROTATION
+      p1->f.torque[j] += torque1[j];
+      constraints[n].part_rep.f.torque[j] += torque2[j];
+#endif
+    }
+  }
 }
+
+double add_constraints_energy(Particle *p1)
+{
+  int n, type;
+  double dist, vec[3];
+  double nonbonded_en, coulomb_en, magnetic_en;
+  IA_parameters *ia_params;
+  char *errtxt;
+  double folded_pos[3];
+  int img[3];
+
+  /* fold the coordinate[2] of the particle */
+  memcpy(folded_pos, p1->r.p, 3*sizeof(double));
+  memcpy(img, p1->l.i, 3*sizeof(int));
+  fold_position(folded_pos, img);
+  for(n=0;n<n_constraints;n++) { 
+    ia_params = get_ia_param(p1->p.type, (&constraints[n].part_rep)->p.type);
+    nonbonded_en = 0.;
+    coulomb_en   = 0.;
+    magnetic_en = 0.;
+
+    dist=0.;
+    switch(constraints[n].type) {
+    case CONSTRAINT_WAL: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_wall_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.wal, &dist, vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+	}
+	else if ( dist <= 0 && constraints[n].c.wal.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{065 wall constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+	
+    case CONSTRAINT_SPH: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_sphere_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.sph, &dist, vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+	}
+	else if ( dist <= 0 && constraints[n].c.sph.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{066 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+	
+    case CONSTRAINT_CYL: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_cylinder_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.cyl, &dist , vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+
+	}
+	else if ( dist <= 0 && constraints[n].c.cyl.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+	
+    case CONSTRAINT_RHOMBOID: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_rhomboid_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rhomboid, &dist , vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+
+	}
+	else if ( dist <= 0 && constraints[n].c.rhomboid.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+
+    case CONSTRAINT_MAZE: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_maze_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+	}
+	else if ( dist <= 0 && constraints[n].c.maze.penetrable == 1 ) {
+	  if ( dist < 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, -1.0*dist, dist*dist);
+	  }
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{068 maze constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+
+    case CONSTRAINT_PORE: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_pore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist , vec); 
+	if ( dist > 0 ) {
+	  nonbonded_en = calc_non_bonded_pair_energy(p1, &constraints[n].part_rep,
+						     ia_params, vec, dist, dist*dist);
+
+	}
+	else {
+	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{067 pore constraint %d violated by particle %d} ", n, p1->p.identity);
+	}
+      }
+      break;
+
+    case CONSTRAINT_ROD:
+      coulomb_en = rod_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.rod);
+      break;
+
+    case CONSTRAINT_PLATE:
+      coulomb_en = plate_energy(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.plate);
+      break;
+    case CONSTRAINT_EXT_MAGN_FIELD:
+      magnetic_en = ext_magn_field_energy(p1, &constraints[n].c.emfield);
+      break;
+    }
+
+    if (energy.n_coulomb > 0)
+      energy.coulomb[0] += coulomb_en;
+    
+    if (energy.n_dipolar > 0)
+      energy.dipolar[0] += magnetic_en;
+
+    type = (&constraints[n].part_rep)->p.type;
+    if (type >= 0)
+      *obsstat_nonbonded(&energy, p1->p.type, type) += nonbonded_en;
+  }
+  return 0.;
+}
+
+void init_constraint_forces()
+{
+  int n, i;
+  
+  for (n = 0; n < n_constraints; n++)
+    for (i = 0; i < 3; i++)
+      constraints[n].part_rep.f.f[i] = 0;
+}
+#endif
+
+
+

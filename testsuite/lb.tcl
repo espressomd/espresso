@@ -55,8 +55,8 @@ proc write_data {file} {
 
 # Integration parameters
 #############################################################
-set int_steps     10
-set int_times     10
+set int_steps     100
+set int_times     20
 
 set time_step     0.005
 set tau           0.02
@@ -75,7 +75,7 @@ set skin          0.5
 
 set mom_prec      1.e-5
 set mass_prec     1.e-8
-set temp_prec     5.e-3
+set temp_confidence 10
 
 # Other parameters
 #############################################################
@@ -85,14 +85,33 @@ if { [ catch {
 # System Setup                                              #
 #############################################################
 
+# make real random draw
+set cmd "t_random seed"
+for {set i 0} {$i < [setmd n_nodes]} { incr i } {
+    lappend cmd [expr [pid] + $i] }
+eval $cmd
+
 setmd time_step $time_step
 setmd skin $skin
+
+cellsystem domain_decomposition -no_verlet_list
 
 # Simulation box
 #############################################################
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
-cellsystem domain_decomposition -no_verlet_list
+
+# Particles
+#############################################################
+# load colloid from file
+read_data "lb_system.data"
+thermostat langevin 1. 1.
+integrate 1000
+stop_particles
+thermostat off
+#part 0 pos 10 10 10
+# here you can create the necessary snapshot
+#write_data "lb_system.data"
 
 # Fluid
 #############################################################
@@ -101,20 +120,12 @@ lbfluid friction $friction
 
 thermostat lb $temp
 
-# Particles
-#############################################################
-# load colloid from file
-read_data "lb_system.data"
-#part 0 pos 10 10 10
-# here you can create the necessary snapshot
-#write_data "lb_system.data"
-
 # give the colloid a kick
 for { set i 0 } { $i < [setmd n_part] } { incr i } { 
     set vx [lindex [part $i print v] 0]
     set vy [lindex [part $i print v] 1]
     set vz [lindex [part $i print v] 2]
-    part $i v [expr 1.0+$vx] $vy $vz
+    part $i v [expr .1+$vx] $vy $vz
 }
 
 # determine initial fluid mass and total momentum (fluid is at rest)
@@ -125,6 +136,9 @@ for { set i 0 } { $i < [setmd n_part] } { incr i } {
     lset tot_mom 1 [expr [lindex $tot_mom 1]+[lindex [part $i print v] 1]]
     lset tot_mom 2 [expr [lindex $tot_mom 2]+[lindex [part $i print v] 2]]
 }
+
+## warm up particle and fluid
+integrate 1000
 
 set max_dmass 0.0
 set max_dmx   0.0
@@ -143,6 +157,8 @@ set max_dmz   0.0
 
 set avg_temp  0.0
 set var_temp  0.0
+set avg_fluid_temp  0.0
+set var_fluid_temp  0.0
 
 #puts "fluid: [analyze fluid momentum]"
 #puts "parts: [analyze momentum particles]"
@@ -160,14 +176,20 @@ for { set i 1 } { $i <= $int_times } { incr i } {
     if { $dmass > $max_dmass } { set max_dmass $dmass }
 
     # check total momentum conservation
-    set mom [analyze momentum]
+    set p_mom [analyze momentum particles]
+    set f_mom [analyze fluid momentum]
+ 
+    set momx [expr [lindex $p_mom 0]+[lindex $f_mom 0]]
+    set momy [expr [lindex $p_mom 1]+[lindex $f_mom 1]]
+    set momz [expr [lindex $p_mom 2]+[lindex $f_mom 2]]
+
     #puts "fluid: [analyze fluid momentum]"
     #puts "parts: [analyze momentum particles]"
-    set dmx [expr abs([lindex $mom 0]-[lindex $tot_mom 0])]
-    set dmy [expr abs([lindex $mom 1]-[lindex $tot_mom 1])]
-    set dmz [expr abs([lindex $mom 2]-[lindex $tot_mom 2])]
+    set dmx [expr abs( $momx-[lindex $tot_mom 0])]
+    set dmy [expr abs( $momy-[lindex $tot_mom 1])]
+    set dmz [expr abs( $momz-[lindex $tot_mom 2])]
     if { $dmx > $mom_prec || $dmy > $mom_prec || $dmz > $mom_prec } {
-	error "momentum deviation too large $mom $tot_mom $dmx $dmy $dmz"
+	error "momentum deviation too large $p_mom $f_mom $dmx $dmy $dmz"
     }
     if { $dmx > $max_dmx } { set max_dmx $dmx }
     if { $dmy > $max_dmy } { set max_dmy $dmy }
@@ -180,25 +202,41 @@ for { set i 1 } { $i <= $int_times } { incr i } {
 
     # temperature of the fluid
     set fluid_temp [analyze fluid temp]
-    # puts "part [part 0 print pos v f]"
-}    
+
+    set avg_fluid_temp [expr $avg_fluid_temp+$fluid_temp]
+    set var_fluid_temp [expr $var_fluid_temp+$fluid_temp*$fluid_temp]
+}
 
 #############################################################
 # Analysis and Verification                                 #
 #############################################################
+set tcl_precision 6
+
+puts "NOTE: this is a statistical test, which can fail,"
+puts "even if everything works correctly. However, the"
+puts "chance is really SMALL, so if you see an error"
+puts "here, consider a bug in the thermostat.\n"
+
 set avg_temp [expr $avg_temp/$int_times]
-set var_temp [expr $var_temp/$int_times - $avg_temp*$avg_temp]
-set rel_temp_error [expr abs(($avg_temp-[setmd temp])/[setmd temp])]
+set avg_fluid_temp [expr $avg_fluid_temp/$int_times]
+
+set temp_dev [expr sqrt(2.0/([setmd n_part]*[degrees_of_freedom]))]
+set temp_prec [expr $temp_confidence*$temp_dev/sqrt($int_times)]
 
 puts "\n"
-puts "Maximal mass deviation $max_dmass"
-puts "Maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz"
+puts "maximal mass deviation $max_dmass"
+puts "maximal momentum deviation in x $max_dmx, in y $max_dmy, in z $max_dmz\n"
 
-puts "\nAverage temperature $avg_temp (relative deviation $rel_temp_error)\n"
-puts "fluid temperature [analyze fluid temp]\n"
-#if { $rel_temp_error > $temp_prec } {
-#    error "relative temperature deviation too large"
-#}
+puts "average temperature         $avg_temp"
+puts "fluid temperature           $avg_fluid_temp"
+puts "maximally accepted deviations are $temp_prec"
+
+if {[expr abs($avg_temp - [setmd temp])] > $temp_prec} {
+    error "relative particle temperature deviation too large"
+}
+if { [expr abs($fluid_temp - [setmd temp])] > $temp_prec} {
+    error "relative fluid temperature deviation too large"
+}
 
 } res ] } {
     error_exit $res

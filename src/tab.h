@@ -31,6 +31,8 @@
 #ifdef TABULATED
 
 #include "dihedral.h"
+#include "interaction_data.h"
+#include "communication.h"
 
 /// set parameters for the force capping of tabulated potentials
 MDINLINE int tabforcecap_set_params(double tabforcecap)
@@ -61,7 +63,7 @@ MDINLINE int tabforcecap_set_params(double tabforcecap)
 */
 MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data;
   FILE* fp;
   int npoints;
   double minval,minval2, maxval, maxval2;
@@ -69,13 +71,10 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   int token;
   double dummr;
   token = 0;
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
 
-  if (!data || !data_sym)
+  data = get_ia_param_safe(part_type_a, part_type_b);
+
+  if (!data)
     return 1;
 
   if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 )
@@ -104,8 +103,8 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
 
   if ( data->TAB_npoints == 0){
     // A new potential will be added so set the number of points, the startindex and newsize
-    data->TAB_npoints    = data_sym->TAB_npoints    = npoints;
-    data->TAB_startindex = data_sym->TAB_startindex = tabulated_forces.max;
+    data->TAB_npoints    = npoints;
+    data->TAB_startindex = tabulated_forces.max;
     newsize += npoints;
   } else {
     // We have existing data for this pair of monomer types check array sizing
@@ -116,18 +115,16 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
   }
 
   /* Update parameters symmetrically */
-  data->TAB_maxval    = data_sym->TAB_maxval    = maxval;
-  data->TAB_minval    = data_sym->TAB_minval    = minval;
+  data->TAB_maxval    = maxval;
+  data->TAB_minval    = minval;
   strcpy(data->TAB_filename,filename);
-  strcpy(data_sym->TAB_filename,filename);
 
   /* Calculate dependent parameters */
   maxval2 = maxval*maxval;
   minval2 = minval*minval;
-  data->TAB_maxval2 = data_sym->TAB_maxval2 = maxval2;
-  data->TAB_minval2 = data_sym->TAB_minval2 = minval2;
-  data->TAB_stepsize = data_sym->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
-
+  data->TAB_maxval2  = maxval2;
+  data->TAB_minval2  = minval2;
+  data->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
 
   /* Allocate space for new data */
   realloc_doublelist(&tabulated_forces,newsize);
@@ -145,7 +142,6 @@ MDINLINE int tabulated_set_params(int part_type_a, int part_type_b, char* filena
 
   /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (tab_force_cap != -1.0) {
     mpi_tab_cap_forces(tab_force_cap);}
@@ -257,156 +253,26 @@ MDINLINE int tabulated_bonded_set_params(int bond_type, int tab_type, char * fil
   return TCL_OK;
 }
 
-/// parse parameters for the tabulated bonded potential
-MDINLINE int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  int tab_type = TAB_UNKNOWN;
-
-  if (argc < 3 ) {
-    Tcl_AppendResult(interp, "tabulated needs two string parameter: "
-		     "<type> <filename>", (char *) NULL);
-    return (TCL_ERROR);
-  }  
-
-  if (ARG_IS_S(1,"bond"))     tab_type = TAB_BOND_LENGTH;
-  if (ARG_IS_S(1,"angle"))    tab_type = TAB_BOND_ANGLE;
-  if (ARG_IS_S(1,"dihedral")) tab_type = TAB_BOND_DIHEDRAL;
-  if (tab_type == TAB_UNKNOWN) {
-    Tcl_AppendResult(interp, "Unknown type of bonded tabulated interaction. Should be: "
-		     "\"bond\" or \"angle\" or \"dihedral\"", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  switch (tabulated_bonded_set_params(bond_type, tab_type, argv[2])) {
-  case 1:
-    Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
-    return TCL_ERROR;
-  case 3:
-    Tcl_AppendResult(interp, "cannot open \"", argv[2], "\"", (char *)NULL);
-    return TCL_ERROR;
-  case 4:
-    Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed. "
-		     "Could not find start the start token <#>", (char *)NULL);
-    return TCL_ERROR;
-  case 5:
-    Tcl_AppendResult(interp, "attempt to read file \"", argv[2], "\" failed. "
-		     "Could not understand some numbers", (char *)NULL);
-    return TCL_ERROR;
-  case 6:
-    if (tab_type == TAB_BOND_ANGLE) {
-      Tcl_AppendResult(interp, "bond angle potential has to be defined in the interval 0 to pi", (char *)NULL);
-    } else {
-      Tcl_AppendResult(interp, "dihedral potential has to be defined in the interval 0 to 2pi", (char *)NULL);
-    }
-    return TCL_ERROR;
-  default:
-    return TCL_OK;
-  }
-}
-
-/// parser for the force cap
-MDINLINE int tclcommand_inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-
-  if (argc == 0) {
-    if (tab_force_cap == -1.0)
-      Tcl_AppendResult(interp, "tabforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, tab_force_cap, buffer);
-      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
-  }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter tabforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual"))
-      tab_force_cap = -1.0;
-  else if (! ARG0_IS_D(tab_force_cap) || tab_force_cap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR;
-}
-
-MDINLINE int tclcommand_inter_parse_tab(Tcl_Interp * interp,
-			int part_type_a, int part_type_b,
-			int argc, char ** argv)
-{
-  char *filename = NULL;
-
-  /* tabulated interactions should supply a file name for a file containing
-     both force and energy profiles as well as number of points, max
-     values etc.
-  */
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "tabulated potentials require a filename: "
-		     "<filename>",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  /* copy tabulated parameters */
-  filename = argv[1];
-  
-  switch (tabulated_set_params(part_type_a, part_type_b, filename)) {
-  case 1:
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  case 2:
-    Tcl_AppendResult(interp, "the length of the filename must be less than 256 characters,"
-		     "but is \"", filename, "\"", (char *)NULL);
-    return 0;
-  case 3:
-    Tcl_AppendResult(interp, "cannot open \"", filename, "\"", (char *)NULL);
-    return 0;
-  case 4:
-    Tcl_AppendResult(interp, "attempt to read file \"", filename, "\" failed. "
-		     "Could not find start the start token <#>", (char *)NULL);
-    return 0;
-  case 5:
-    Tcl_AppendResult(interp, "attempt to read file \"", filename, "\" failed. "
-		     "Could not understand some numbers", (char *)NULL);
-    return TCL_ERROR;
-  case 6:
-    Tcl_AppendResult(interp, "number of data points does not match the existing table", (char *)NULL);
-    return 0;
- 
-  }
-  return 2;
-}
-
 /** Add a non-bonded pair force by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.h). */
+Needs feature TABULATED compiled in (see \ref config.h). */
 MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				       double d[3], double dist, double force[3])
+			       double d[3], double dist, double force[3])
 {
-  double phi, dindex, fac;
-  int tablepos, table_start,j;
-  double rescaled_force_cap = tab_force_cap/dist;
-  double maxval = ia_params->TAB_maxval;
-  double minval = ia_params->TAB_minval;
+if ( ia_params->TAB_maxval <=  0 ) 
+ return;
 
-  fac = 0.0;
+double phi, dindex, fac;
+int tablepos, table_start,j;
+double rescaled_force_cap = tab_force_cap/dist;
 
-  if ( maxval > 0 ) {
-    if ( dist < maxval){ 
-      table_start = ia_params->TAB_startindex;
-      dindex = (dist-minval)/ia_params->TAB_stepsize;
+fac = 0.0;
+
+if ( dist < ia_params->TAB_maxval){ 
+table_start = ia_params->TAB_startindex;
+      dindex = (dist-ia_params->TAB_minval)/ia_params->TAB_stepsize;
       tablepos = (int)(floor(dindex));  
 
-      if ( dist > minval ) {
+      if ( dist > ia_params->TAB_minval ) {
        phi = dindex - tablepos;	  
        fac = tabulated_forces.e[table_start + tablepos]*(1-phi) + tabulated_forces.e[table_start + tablepos+1]*phi;
       }
@@ -415,8 +281,8 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
 	if ( dist > 0 ) {
 	  tablepos = 0;
 	  phi = dindex - tablepos;	  
-	  fac = (tabulated_forces.e[table_start]*minval)*(1-phi) + 
-	    (tabulated_forces.e[table_start+1]*(minval+ia_params->TAB_stepsize))*phi;
+	  fac = (tabulated_forces.e[table_start]*ia_params->TAB_minval)*(1-phi) + 
+	    (tabulated_forces.e[table_start+1]*(ia_params->TAB_minval+ia_params->TAB_stepsize))*phi;
 	  fac = fac/dist;
 	}
 	else { /* Particles on top of each other .. leave fac as 0.0 */
@@ -429,7 +295,6 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
     }
     for(j=0;j<3;j++)
       force[j] += fac * d[j];
-  }
 }
 
 /** Add a non-bonded pair energy by linear interpolation from a table.

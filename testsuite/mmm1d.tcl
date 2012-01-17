@@ -20,6 +20,7 @@ source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
+require_feature "ADRESS" off
 
 puts "-------------------------------------------"
 puts "- Testcase mmm1d.tcl running on [format %02d [setmd n_nodes]] nodes: -"

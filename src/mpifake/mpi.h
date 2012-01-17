@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -25,8 +26,19 @@
 
 #ifndef MPI_H
 #define MPI_H
+
 #include <string.h>
-#include "utils.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+//#include "utils.h"
+
+void errexit();
+
+#ifndef MDINLINE
+ #define MDINLINE static inline
+#endif
+
 
 /********************************** REMARK **********************/
 /* This is the fake MPI header of Espresso, and has nothing to  */
@@ -89,7 +101,7 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 
 #define MPI_REQUEST_NULL NULL
 
-#define MPI_IN_PLACE 0x1
+#define MPI_IN_PLACE (void*)0x1
 
 extern struct mpifake_dtype mpifake_dtype_int;
 extern struct mpifake_dtype mpifake_dtype_double;
@@ -117,6 +129,13 @@ MDINLINE int MPI_Init(int *a, char ***b) { return MPI_SUCCESS; }
 MDINLINE int MPI_Finalize(void) { return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_size(MPI_Comm comm, int *psize) { *psize = 1; return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) { *rank = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) { coords[0] = coords[1] = coords[2] = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, \
+			    int *rank_source, int *rank_dest){ *rank_source = *rank_dest = 0; return MPI_SUCCESS; }
+MDINLINE int MPI_Cart_create(MPI_Comm comm_old, int ndims, int *dims, int *periods, int reorder, MPI_Comm *comm_cart)
+{ *comm_cart = NULL; return MPI_SUCCESS; }
+MDINLINE int MPI_Dims_create(int nnodes, int ndims, int *dims){ dims[0] = dims[1] = dims[2] = 1; return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_split(MPI_Comm comm, int colour, int key, MPI_Comm *newcomm) { return MPI_SUCCESS; }
 MDINLINE int MPI_Comm_free(MPI_Comm *comm) { return MPI_SUCCESS; }
 MDINLINE int MPI_Type_commit(MPI_Datatype *dtype) { return MPI_SUCCESS; }
@@ -175,7 +194,7 @@ MDINLINE int MPI_Op_create(MPI_User_function func, int commute, MPI_Op *pop) { *
 MDINLINE int MPI_Reduce(void *sbuf, void* rbuf, int count, MPI_Datatype dtype, MPI_Op op, int root, MPI_Comm comm)
 { op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 MDINLINE int MPI_Allreduce(void *sbuf, void *rbuf, int count, MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
-{ if(sbuf == (void *)MPI_IN_PLACE)
+{ if(sbuf == MPI_IN_PLACE)
     return MPI_SUCCESS; 
   op(sbuf, rbuf, &count, &dtype); return MPI_SUCCESS; }
 MDINLINE int MPI_Error_string(int errcode, char *string, int *len) { *string = 0; *len = 0; return MPI_SUCCESS; }
