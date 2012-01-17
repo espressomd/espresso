@@ -48,7 +48,8 @@
 #ifndef _MAGGS_TCL_H
 #define _MAGGS_TCL_H
 
-#include "../config.h"
+#include "config.h"
+#include <tcl.h>
 
 #ifdef ELECTROSTATICS
 

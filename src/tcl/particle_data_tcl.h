@@ -22,7 +22,6 @@
 #define _PARTICLE_DATA_TCL_H
 #include "config.h"
 #include <tcl.h>
-#include "particle_data.h"
 
 /************************************************
  * Functions

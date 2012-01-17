@@ -29,7 +29,6 @@ libEspresso_a_SOURCES = \
 	angle.h \
 	angledist.h \
 	bin.c bin.h \
-	binary_file.c binary_file.h \
 	blockfile.c blockfile.h \
 	bmhtf-nacl.h \
 	buckingham.h \

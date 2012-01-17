@@ -20,23 +20,18 @@
 */
 #ifndef TAB_TCL_H
 #define TAB_TCL_H
+#include "config.h"
+#include <tcl.h>
 
-/** \file tab.h
- *  Routines to calculate the  energy and/or  force 
- *  for a particle pair or bonds via interpolating from lookup tables.
- *  \ref forces.c
- *  Needs feature TABULATED compiled in (see \ref config.h).
-*/
-
+#ifdef TABULATED
 
 /// parse parameters for the tabulated bonded potential
 int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-
 
 /// parser for the force cap
 int tclcommand_inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv);
 int tclcommand_inter_parse_tab(Tcl_Interp * interp,
 		int part_type_a, int part_type_b,
 		int argc, char ** argv);
-
+#endif
 #endif

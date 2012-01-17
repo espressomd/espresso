@@ -19,22 +19,13 @@
 */
 #ifndef TOPOLOGY_TCL_H
 #define TOPOLOGY_TCL_H
-
-/** \file topology.h
- *
- *  This file contains functions for handling the system topology.
- */
-
+#include "config.h"
 #include <tcl.h>
-//#include "utils.h"
-
-
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
 
 int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
 

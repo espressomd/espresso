@@ -19,16 +19,8 @@
 */
 #ifndef STATISTICS_CHAIN_TCL_H
 #define STATISTICS_CHAIN_TCL_H
-/** \file statistics_chain.h 
-
-    This file contains the code for statistics on the data using the
-    molecule information set with analyse set chains.
-*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
+#include "config.h"
+#include <tcl.h>
 
 int tclcommand_analyze_parse_set_chains(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, char **argv);
@@ -53,10 +45,9 @@ int tclcommand_analyze_parse_g_av(Tcl_Interp *interp, int average, int argc, cha
 int tclcommand_analyze_parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
 int tclcommand_analyze_parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
-///
 #ifdef ELECTROSTATICS
+///
 int tclcommand_analyze_parse_cwvac(Tcl_Interp *interp, int argc, char **argv);
 #endif
-/*@}*/
 
 #endif

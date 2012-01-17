@@ -20,16 +20,9 @@
 */
 #ifndef _INTEGRATE_TCL_H
 #define _INTEGRATE_TCL_H
-/** \file integrate.h    Molecular dynamics integrator.
- *
- *  For more information see \ref integrate.c "integrate.c".
-*/   
+#include "config.h"
 #include <tcl.h>
-
-#define INTEG_METHOD_NPT_ISO   0
-#define INTEG_METHOD_NVT       1
-
-/*@}*/
+#include "integrate.h"
 
 /** \name Exported Functions */
 /************************************************************/

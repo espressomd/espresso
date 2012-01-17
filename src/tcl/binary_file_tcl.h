@@ -17,9 +17,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BINARYFILE_H
-#define BINARYFILE_H
-/** \file binary_file.h
+#ifndef BINARYFILE_TCL_H
+#define BINARYFILE_TCL_H
+/** \file binary_file_tcl.h
     This file defines a binary file format for the particle data.
 
 The functions in this file are no longer supported by the Espresso
@@ -48,6 +48,7 @@ team. Use them at your own risk!
     of a subsequent particle).
     </ol>
 */
+#include "config.h"
 #include <tcl.h>
 
 /** This string is to be put in the \ref MDHeader::magic field of \ref MDHeader

@@ -176,6 +176,8 @@ extern const Datafield fields[];
 #define FIELD_ADRESS              42
 /** index of \ref max_cut_bonded in \ref #fields */
 #define FIELD_MCUT_BONDED         43
+/** index of \ref transfer_rate in \ref #fields */
+#define FIELD_TRANSFER_RATE       44
 /*@}*/
 
 #endif

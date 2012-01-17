@@ -18,19 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb_tcl.h
- * Header file for lb_tcl.c
- *
- * This is the header file for the implementation of the TCL Interface of the Lattice Boltzmann code in lb_tcl.c
- */
-
 #ifndef _LB_TCL_H
 #define _LB_TCL_H
-
-#include "utils.h"
+#include "config.h"
 #include <tcl.h>
-//#include "utils.h"
-//#include "lattice.h"
 
 /** Parser for the TCL command lbfluid. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);

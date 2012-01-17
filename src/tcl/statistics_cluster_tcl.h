@@ -19,19 +19,8 @@
 */
 #ifndef STATISTICS_CLUSTER_TCL_H
 #define STATISTICS_CLUSTER_TCL_H
-/** \file statistics_cluster.h
- *
- *  1: This file contains the necklace cluster algorithm. It can be used
- *  to identify the substructures 'pearls' and 'strings' on a linear
- *  chain.
- *
- *  2: mesh based cluster algorithm to identify hole spaces 
- *  (see thesis chapter 3 of H. Schmitz for details) 
- */
-
+#include "config.h"
 #include <tcl.h>
-//#include "interaction_data.h"
-//#include "particle_data.h"
 
 /** Parser for the necklace cluster algorithm
 

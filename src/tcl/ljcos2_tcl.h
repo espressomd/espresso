@@ -21,31 +21,16 @@
 #ifndef _LJCOS2_TCL_H
 #define _LJCOS2_TCL_H
 
-/** \file ljcos2.h
- *  Routines to calculate the lennard-jones with cosine tail energy and/or  force 
- *  for a particle pair.  Cosine tail is different from that in ljcos.h
- *  Used for attractive tail/tail interactions in lipid bilayer calculations
- *  \ref forces.c
-*/
-
-#include "utils.h"
+#include "config.h"
+#include <tcl.h>
 
 #ifdef LJCOS2
-#include <math.h>
-
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
 
 int tclprint_to_result_ljcos2IA(Tcl_Interp *interp, int i, int j);
 
-
 int tclcommand_inter_parse_ljcos2(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
-
-
+				  int part_type_a, int part_type_b,
+				  int argc, char ** argv);
 
 #endif /* ifdef LJCOS2 */
 #endif

@@ -18,32 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb-boundaries.h
- *
- * Boundary conditions for Lattice Boltzmann fluid dynamics.
- * Header file for \ref lb-boundaries.c.
- *
- * In the current version only simple bounce back walls are implemented. Thus
- * after the streaming step, in all wall nodes all populations are bounced
- * back from where they came from. Ulf Schiller spent a lot of time
- * working on more powerful alternatives, they are to be found in the
- * lb_testing branch of espresso until the end of 2010. Now we stripped
- * down the code to a minimum, as most of it was not sufficiently understandable.
- *
- * Anyone who wants to revive these, please look into the git.
- *
- */
-
 #ifndef LB_BOUNDARIES_TCL_H
 #define LB_BOUNDARIES_TCL_H
-#include <tcl.h>
-#include "utils.h"
-#include "halo.h"
-#include "constraint.h"
 #include "config.h"
+#include <tcl.h>
 
-
-// TCL Parser functions
+/// TCL Parser functions
 extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB_BOUNDARIES_H */

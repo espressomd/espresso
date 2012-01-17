@@ -43,10 +43,11 @@
 #include "domain_decomposition.h"
 #include "particle_data.h"
 #include "communication.h"
-#include "fft-dipolar.h"
 #include "thermostat.h"
 #include "cells.h"
 #include "tuning.h"
+#include "p3m-dipolar.h"
+#include "fft-dipolar.h"
 
 #ifdef DP3M
 

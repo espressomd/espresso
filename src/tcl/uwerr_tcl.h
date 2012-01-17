@@ -19,16 +19,11 @@
 */
 #ifndef _UWERR_TCL_H
 #define _UWERR_TCL_H
-/** \file uwerr_tcl.h
- *
- *  PLEASE INSERT DOCUMENTATION
-*/
-
-
+#include "config.h"
 #include <tcl.h>
 
 /** The C implementation of the tcl function uwerr \ref tclcommand_uwerr.
-*/
+ */
 int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 
 #endif /* _UWERR_TCL_H */

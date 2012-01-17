@@ -20,18 +20,8 @@
 */
 #ifndef IA_DATA_TCL_H
 #define IA_DATA_TCL_H
-/** \file interaction_data.h
-    Various procedures concerning interactions between particles.
-
-    interaction_data.h contains the parser \ref tclcommand_inter for the
-    Tcl command "inter". Therefore the parsing of bonded and nonbonded
-    interaction definition commands both is done here. It also contains
-    procedures for low-level interactions setup and some helper functions.
-    Moreover it contains code for the treatments of constraints.
-*/
-
+#include "config.h"
 #include <tcl.h>
-
 
 /************************************************
  * exported functions

@@ -21,31 +21,10 @@
 #ifndef _LJANGLE_TCL_H
 #define _LJANGLE_TCL_H
 
-/** \file ljangle.h
- *  Routines to calculate the lennard-jones 12-10 with angular dependance.
- *  The potential is a product of a 12-10 LJ potential with two cos^2.
- *  The potential actually relies on 6 particles: the 2 primary beads
- *  and each bead needs two other particles to define an orientation.
- *  We calculate the interaction explicitly *without* the use of the ROTATION feature.
- *
- *  Optional: simulate two different environments in which the interaction
- *  strengths differ. For example: simulate hydrogen-bonds both in water and
- *  inside a bilayer. The two environments are distinguished by their
- *  z-position. Input: the midplane of the 2nd environment, its total
- *  thickness, the thickness of the interface, and the value of the
- *  interaction strength in this medium. The interaction strengh of the second
- *  environment must be *stronger* than of the first one.
- *
- *  \ref forces.c
- */
+#include "config.h"
+#include <tcl.h>
 
 #ifdef LJ_ANGLE
-#include <math.h>
-
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
 
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j);
 
@@ -65,6 +44,6 @@ int tclcommand_inter_parse_ljangle(Tcl_Interp * interp,
 
 
 #endif /* ifdef LJ_ANGLE */
-/* LJANGLE_H */
+
 #endif 
 

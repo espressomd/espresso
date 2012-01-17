@@ -20,30 +20,16 @@
 */
 #ifndef _LJGEN_TCL_H
 #define _LJGEN_TCL_H
-
-/** \file ljgen.h Routines to calculate the generalized lennard jones
- *  energy and/or force for a particle pair. "Generalized" here means
- *  that the LJ energy is of the form
- *
- *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
- *
- *  \ref forces.c
-*/
-
-#include "utils.h"
+#include "config.h"
+#include <tcl.h>
 
 #ifdef LENNARD_JONES_GENERIC
-
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
 
 int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j);
 
 int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
+				 int part_type_a, int part_type_b,
+				 int argc, char ** argv);
 
 
 #endif

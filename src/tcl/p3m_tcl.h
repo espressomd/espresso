@@ -21,12 +21,10 @@
 #ifndef _P3M_TCL_H 
 #define _P3M_TCL_H
 
-#ifdef P3M
-#include "p3m.h"
+#include "config.h"
+#include <tcl.h>
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
+#ifdef P3M
 
 /// parse the basic p3m parameters
 int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
