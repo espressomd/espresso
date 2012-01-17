@@ -239,7 +239,7 @@ void cells_resort_particles(int global_flag);
     has changed, i. e. the grid or periodicity. In this case a full
     reorganization is due.
 
-    @param flag a combination of CELL_FLAG_GRIDCHANGED and
+    @param flags a combination of CELL_FLAG_GRIDCHANGED and
     CELL_FLAG_FAST, see above.
 
 */

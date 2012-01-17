@@ -92,9 +92,9 @@ static void p3m_print(void) {
 static void p3m_calc_send_mesh();
 
 
-/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref
-    p3m_struct::ai) and the cutoff for charge assignment \ref
-    p3m_struct::cao_cut, which has to be done by \ref p3m_init_charges
+/** Initializes the (inverse) mesh constant \ref p3m_data_struct::a (\ref
+    p3m_data_struct::ai) and the cutoff for charge assignment \ref
+    p3m_data_struct::cao_cut, which has to be done by \ref p3m_init_charges
     once and by \ref p3m_scaleby_box_l whenever the \ref box_l
     changed.  */
 static void p3m_init_a_ai_cao_cut(void);
@@ -2041,7 +2041,7 @@ void p3m_calc_kspace_stress (double* stress) {
  ************************************************/
 
 void p3m_p3m_print_struct(p3m_parameter_struct ps) {
-  fprintf(stderr,"%d: p3m_struct: \n",this_node);
+  fprintf(stderr,"%d: p3m_data_struct: \n",this_node);
   fprintf(stderr,"   alpha_L=%f, r_cut_iL=%f \n",
 	  ps.alpha_L,ps.r_cut_iL);
   fprintf(stderr,"   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",

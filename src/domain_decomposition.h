@@ -155,8 +155,8 @@ extern int min_num_cells;
 /** adjust the domain decomposition to a change in the geometry.
     Tries to speed up things if possible.
 
-    @param flags a combination of \ref CELL_FLAGS_FAST and \ref
-    CELL_FLAGS_GRIDCHANGED, see documentation of \ref
+    @param flags a combination of \ref CELL_FLAG_FAST and \ref
+    CELL_FLAG_GRIDCHANGED, see documentation of \ref
     cells_on_geometry_change.
 */
 void dd_on_geometry_change(int flags);

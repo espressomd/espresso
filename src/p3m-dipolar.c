@@ -79,8 +79,8 @@ dp3m_data_struct dp3m;
 static void dp3m_calc_send_mesh();
 
 /** Initializes for magnetic dipoles the (inverse) mesh constant \ref
-    p3m_struct::a (\ref p3m_struct::ai) and the cutoff for charge
-    assignment \ref p3m_struct::cao_cut, which has to be done by \ref
+    p3m_data_struct::a (\ref p3m_struct::ai) and the cutoff for charge
+    assignment \ref p3m_data_struct::cao_cut, which has to be done by \ref
     dp3m_init once and by \ref dp3m_scaleby_box_l
     whenever the \ref box_l changed.  */
 static void dp3m_init_a_ai_cao_cut();
@@ -109,9 +109,9 @@ static void dp3m_spread_force_grid(double* mesh);
 static void dp3m_realloc_ca_fields(int newsize);
 
 
-/** Initializes the (inverse) mesh constant \ref p3m_struct::a (\ref
-    p3m_struct::ai) and the cutoff for charge assignment \ref
-    p3m_struct::cao_cut, which has to be done by \ref dp3m_init
+/** Initializes the (inverse) mesh constant \ref p3m_data_struct::a (\ref
+    p3m_data_struct::ai) and the cutoff for charge assignment \ref
+    p3m_data_struct::cao_cut, which has to be done by \ref dp3m_init
     once and by \ref dp3m_scaleby_box_l whenever the \ref box_l
     changed.  */
 static void dp3m_init_a_ai_cao_cut();
@@ -1541,12 +1541,12 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1])
     Parameter range if not given explicit values: For \ref dp3m_struct::r_cut_iL
     the function uses the values (\ref min_local_box_l -\ref #skin) /
     (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    dp3m_struct::r_cut_iL is the largest cutoff in the system!). For \ref
-    dp3m_struct::mesh the function uses the two values which matches best the
+    dp3m_data_struct::r_cut_iL is the largest cutoff in the system!). For \ref
+    dp3m_data_struct::mesh the function uses the two values which matches best the
     equation: number of mesh point = number of magnetic dipolar particles. For
-    \ref dp3m_struct::cao the function considers all possible values.
+    \ref dp3m_data_struct::cao the function considers all possible values.
 
-    For each setting \ref dp3m_struct::alpha_L is calculated assuming that the
+    For each setting \ref dp3m_data_struct::alpha_L is calculated assuming that the
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the
@@ -1647,7 +1647,7 @@ double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
  */
 
 void p3m_print_dp3m_struct(p3m_parameter_struct ps) {
-  fprintf(stderr,"%d: dipolar p3m_struct: \n",this_node);
+  fprintf(stderr,"%d: dipolar p3m_data_struct: \n",this_node);
   fprintf(stderr,"   alpha_L=%f, r_cut_iL=%f \n",
 	  ps.alpha_L,ps.r_cut_iL);
   fprintf(stderr,"   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",

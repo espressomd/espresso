@@ -137,7 +137,7 @@ void dp3m_init(void);
 
 void dp3m_set_bjerrum(void);
 
-/** Updates \ref dp3m_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
+/** Updates \ref dp3m_data_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();
 
 /// sanity checks

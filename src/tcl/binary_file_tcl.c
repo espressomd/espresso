@@ -17,7 +17,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file binary_file.c
+/** \file binary_file_tcl.c
     Implementation of \ref binary_file.h "binary_file_tcl.h".
 */
 #include <stdio.h>
@@ -29,10 +29,6 @@
 #include "communication.h"
 #include "grid.h"
 #include "interaction_data.h"
-
-/* cwz-build-comman: ssh chakotay "builtin cd /nhomes/janeway/axel/progs/Espresso; make" 
-   cwz-build-command: make
-*/
 
 int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
 	    int argc, char **argv)

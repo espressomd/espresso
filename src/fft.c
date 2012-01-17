@@ -52,7 +52,7 @@ fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given fft_forw_plan/fft_bakc_plan. 
  * \param plan_f communication plan (see \ref fft_forw_plan).
- * \param plan_b additional back plan (see \ref fft.back_plan).
+ * \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
 */
