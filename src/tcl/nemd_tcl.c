@@ -26,6 +26,7 @@
 #include "integrate.h"
 #include "communication.h"
 #include "parser.h"
+#include "grid.h"
 
 /************************************************************/
 

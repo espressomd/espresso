@@ -69,6 +69,7 @@ extern int this_node;
 extern int n_nodes;
 /*@}*/
 extern MPI_Comm comm_cart;
+
 /**************************************************
  * for every procedure requesting a MPI negotiation
  * a slave exists which processes this request on

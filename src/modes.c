@@ -26,6 +26,7 @@
 #include "modes.h"
 #include "communication.h"
 #include "errorhandling.h"
+#include "grid.h"
 
 #ifdef MODES
 

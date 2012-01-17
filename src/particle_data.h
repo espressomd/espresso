@@ -28,7 +28,6 @@
 
 //#include <tcl.h>
 #include "utils.h"
-#include "grid.h"
 #include "global.h"
 
 /************************************************
@@ -706,16 +705,5 @@ void auto_exclusion(int distance);
 /* keep a unique list for particle i. Particle j is only added if it is not i
  and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance);
-
-/*TODO: this function is not used anywhere. To be removed? */
-/** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
-    @param id particle identity.
- */
-MDINLINE void complain_on_particle(int id)
-{
-  char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-  ERROR_SPRINTF(errtxt,"{087 bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
-}
-
 
 #endif

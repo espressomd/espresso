@@ -48,6 +48,7 @@
  * they are included here.  */
 #include "particle_data.h"
 #include "interaction_data.h"
+#include "grid.h"
 
 /** set the force cap for the directional LJ interaction.
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff

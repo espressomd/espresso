@@ -31,12 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mpi.h>
 #include "config.h"
 #include "debug.h"
-//#include "communication.h"
-
-extern MPI_Comm comm_cart;
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -751,13 +747,6 @@ MDINLINE int get_linear_index(int a, int b, int c, int adim[3])
   return (a + adim[0]*(b + adim[1]*c));   
 }
 
-MDINLINE int get_rank_from_index(int a, int b, int c) {
-  int pos[3] = {a,b,c};
-  int rank;
-  MPI_Cart_rank(comm_cart, pos, &rank);
-  return rank;
-}
-
 /** get the position a[] from the linear index in a 3D grid
  *  of dimensions adim[].
  *
@@ -769,16 +758,11 @@ MDINLINE int get_rank_from_index(int a, int b, int c) {
  */
 MDINLINE void get_grid_pos(int i, int *a, int *b, int *c, int adim[3])
 {
-  int pos[3];
-  MPI_Cart_coords(comm_cart, i, 3, pos);
-  *a = pos[0];
-  *b = pos[1];
-  *c = pos[2];
-  /*  *a = i % adim[0];
+  *a = i % adim[0];
   i /= adim[0];
   *b = i % adim[1];
   i /= adim[1];
-  *c = i;*/
+  *c = i;
 }
 
 /** Malloc a 3d grid for doubles with dimension dim[3] . 

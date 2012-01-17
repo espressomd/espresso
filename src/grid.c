@@ -92,19 +92,6 @@ int map_position_node_array(double pos[3])
   return map_array_node(im);
 }
 
-void map_node_array(int node, int pos[3])
-{
-  //get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
-  MPI_Cart_coords(comm_cart, node, 3, pos);
-}
-
-int map_array_node(int pos[3]) {
-  int rank;
-  MPI_Cart_rank(comm_cart, pos, &rank);
-  return rank;
-  //  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
-}
-
 void calc_node_neighbors(int node)
 {
   int dir;

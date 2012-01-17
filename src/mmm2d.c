@@ -26,6 +26,7 @@
 #include <mpi.h>
 #include "utils.h"
 #include "communication.h"
+#include "grid.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "cells.h"

@@ -97,8 +97,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   }
   for(i=0;i<n_nodes;i++) {
     int lin_ind;
-    get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
-		 n_grid[0]); 
+    map_node_array(i, &(n_pos[0][3*i+0])); 
     lin_ind = get_linear_index( n_pos[0][3*i+0],n_pos[0][3*i+1],n_pos[0][3*i+2], n_grid[0]);
     n_id[0][lin_ind] = i;
   }

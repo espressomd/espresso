@@ -26,6 +26,7 @@
 #include "topology.h"
 #include "communication.h"
 #include "cells.h"
+#include "grid.h"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t) in \ref tclcommand_analyze) */
 /*@{*/

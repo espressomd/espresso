@@ -88,7 +88,7 @@ libEspresso_a_SOURCES = \
 	mol_cut.h \
 	morse.h \
 	nemd.c nemd.h \
-  npt.h \
+	npt.h \
 	nsquare.c nsquare.h \
 	overlap.h \
 	p3m.c p3m.h \
