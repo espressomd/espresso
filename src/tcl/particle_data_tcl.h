@@ -20,28 +20,9 @@
 */
 #ifndef _PARTICLE_DATA_TCL_H
 #define _PARTICLE_DATA_TCL_H
-
+#include "config.h"
 #include <tcl.h>
-
-/************************************************
- * defines
- ************************************************/
-
-/**  bonds_flag "bonds_flag" value for updating particle config without bonding information */
-#define WITHOUT_BONDS 0
-/**  bonds_flag "bonds_flag" value for updating particle config with bonding information */
-#define WITH_BONDS 1
-
-
-#ifdef EXTERNAL_FORCES
-/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external force. */
-#define PARTICLE_EXT_FORCE 1
-/** \ref ParticleLocal::ext_flag "ext_flag" value for fixed coordinate coord. */
-#define COORD_FIXED(coord) (2L << coord)
-/** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
-#define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-#endif
-
+#include "particle_data.h"
 
 /************************************************
  * Functions

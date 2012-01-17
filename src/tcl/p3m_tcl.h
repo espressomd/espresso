@@ -20,38 +20,9 @@
 */
 #ifndef _P3M_TCL_H 
 #define _P3M_TCL_H
-/** \file p3m.h P3M algorithm for long range coulomb interaction.
- *
- *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
- *  Ewald summation. Details of the used method can be found in
- *  Hockney/Eastwood and Deserno/Holm.
- *
- *  Further reading: 
- *  <ul>
- *  <li> P.P. Ewald,
- *       <i>Die Berechnung optischer und elektrostatischer Gitterpotentiale</i>,
- *       Ann. Phys. (64) 253-287, 1921
- *  <li> R. W. Hockney and J. W. Eastwood, 
- *       <i>Computer Simulation Using Particles</i>,
- *       IOP, London, 1988
- *  <li> M. Deserno and C. Holm,
- *       <i>How to mesh up {E}wald sums. I. + II.</i>,
- *       J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  <li> M. Deserno, C. Holm and H. J. Limbach,
- *       <i>How to mesh up {E}wald sums. </i>,
- *       in Molecular Dynamics on Parallel Computers,
- *       Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  <li> M. Deserno,
- *       <i>Counterion condensation for rigid linear polyelectrolytes</i>,
- *       PhdThesis, Universit{\"a}t Mainz, 2000
- *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
- *  </ul>
- */
-
-#include "p3m-common.h"
-#include "interaction_data.h"
 
 #ifdef P3M
+#include "p3m.h"
 
 /** \name Exported Functions */
 /************************************************************/
@@ -100,23 +71,6 @@ int tclcommand_inter_coulomb_p3m_print_tune_parameters(Tcl_Interp *interp);
 
 /// print the p3m parameters to the interpreters result
 int tclprint_to_result_p3m(Tcl_Interp *interp);
-
-/** assign the physical charges using the tabulated charge assignment function.
-    If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
-    cur_ca_frac. */
-// extern void p3m_charge_assign();
-
-/** assign a single charge into the current charge grid. cp_cnt gives the a running index,
-    which may be smaller than 0, in which case the charge is assumed to be virtual and is not
-    stored in the ca_frac arrays. */
-//extern void p3m_assign_charge(double q,
-//		       double real_pos[3],
-//		       int cp_cnt);
-//
-/** shrink wrap the charge grid */
-//extern void p3m_shrink_wrap_charge_grid(int n_charges);
-/** Clean up P3M memory allocations. */
-//extern void p3m_free();
 
 #endif /* of ifdef P3M */
 

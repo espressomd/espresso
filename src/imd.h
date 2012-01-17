@@ -47,5 +47,4 @@ int   imd_handshake(void *);
 
 extern int transfer_rate;
 
-
 #endif

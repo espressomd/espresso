@@ -38,6 +38,8 @@
 
 #include <inttypes.h>
 
+int transfer_rate = 0;
+
 typedef struct {
   int32_t tstep;
   float T;
