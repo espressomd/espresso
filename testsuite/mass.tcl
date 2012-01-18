@@ -20,6 +20,7 @@ source "tests_common.tcl"
 
 require_feature "MASS"
 require_feature "LENNARD_JONES"
+require_feature "ADRESS" off
 
 puts "-------------------------------------------"
 puts "- Testcase mass.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -58,7 +59,7 @@ proc cr_t {arg1} {
 ############################## SYSTEM PARAMETERS
 
 setmd time_step 0.001
-setmd skin 0.05
+setmd skin 0.5
 set eps_mom 1e-6
 set eps_en 0.2
 set step 1000

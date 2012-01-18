@@ -71,7 +71,14 @@ implementation works with a different set of units: all lengths are
 expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
 changing \var{agrid} and \var{tau}, might change the behaviour of the
 LB fluid, \eg at boundaries, due to characteristics of the LBM
-itself. Currently it is not possible to precisely give a parameter set
+itself. There is a slight difference between the GPU and CPU implementations
+in that the CPU places the LB nodes at 0.5, 1.5, 2.5... whereas in the GPU
+code they are located at 0, 1, 2...  The shift allows for the use of Verlet
+lists in the CPU implementation.  This will cause the results to differ
+on the length scale of the LB grid spacing.  This can be
+eliminated by shifting all positions by +0.5 in x,y and z in
+the CPU input script.
+Currently it is not possible to precisely give a parameter set
 where reliable results are expected, but we are currently performing a
 study on that. Therefore the LBM should \emph{not be used as a black
   box}, but only after a careful check of all parameters that were
@@ -112,6 +119,17 @@ once. Currently supported values for the parameter \var{property} are boundary
 and velocity. The additional option \lit{vtk} enables export in the vtk format 
 which is readable by visualization software such as paraview or mayavi. 
 Otherwise gnuplot readable data will be exported.
+
+\begin{essyntax}
+  lbfluid save_ascii_checkpoint \var{filename}
+  lbfluid save_binary_checkpoint \var{filename}
+  lbfluid load_ascii_checkpoint \var{filename}
+  lbfluid load_binary_checkpoint \var{filename}
+\end{essyntax}
+The first two save commands save all of the LB fluid nodes' populations to \var{filename} in ascii or binary format respectively.
+The two load commands load the populations from \var{filename}.  This is  useful for restarting a simulation either on the same
+machine or a different machine.  Some care should be taken when using the binary format as the format of doubles can depend
+on both the computer being used as well as the compiler.  This is currently  only implemented for the cpu version of LB.
 
 \section{LB as a thermostat}
 \begin{essyntax}

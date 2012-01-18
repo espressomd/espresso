@@ -60,9 +60,6 @@
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
 
-/** Parser for the \ref lbfluid command. */
-int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
 /** Structure to specify a boundary. */
 typedef struct {
   /** type of the boundary. */
@@ -93,11 +90,13 @@ void lb_init_boundaries();
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
 
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
-int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
+
 #ifdef LB_BOUNDARIES
 
 int lbboundary_get_force(int no, double* f); 
+
+void lb_init_boundaries();
+
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node

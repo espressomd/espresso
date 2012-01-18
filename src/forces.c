@@ -49,7 +49,6 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
-#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -115,7 +114,6 @@ void force_calc()
 #ifdef COMFIXED
   calc_comfixed();
 #endif
-  check_forces();
 
 }
 
@@ -392,27 +390,9 @@ void init_forces()
 #endif
 }
 
-MDINLINE void check_particle_force(Particle *part)
-{
-  
-  int i;
-  for (i=0; i< 3; i++) {
-    if isnan(part->f.f[i]) {
-      char **errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
-    }
-  }
 
-#ifdef ROTATION
-  for (i=0; i< 3; i++) {
-    if isnan(part->f.torque[i]) {
-      char **errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
-    }
-  }
-#endif
-}
-
+// This function is no longer called from force_calc().
+// The check was moved to rescale_fores() to avoid an additional iteration over all particles
 void check_forces()
 {
   Cell *cell;

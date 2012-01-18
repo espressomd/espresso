@@ -68,7 +68,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)
     comm->comm[n].part_lists[0] = &cells[n];
     comm->comm[n].n_part_lists = 1;
     comm->comm[n].node = n;
-    comm->comm[n].mpi_comm = MPI_COMM_WORLD;
+    comm->comm[n].mpi_comm = comm_cart;
   }
 }
 
@@ -151,9 +151,14 @@ void nsq_topology_init(CellPList *old)
   update_local_particles(local);
 }
 
-void nsq_balance_particles()
+void nsq_balance_particles(int global_flag)
 {
   int i, n, surplus, s_node, tmp, lack, l_node, transfer;
+
+  /* we don't have the concept of neighbors, and therefore don't need that.
+     However, if global particle changes happen, we might want to rebalance. */
+  if (global_flag != CELL_GLOBAL_EXCHANGE)
+    return;
 
   int pp = cells_get_n_particles();
   int *ppnode = malloc(n_nodes*sizeof(int));
@@ -163,7 +168,7 @@ void nsq_balance_particles()
 
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n", this_node, minshare, maxshare));
 
-  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, MPI_COMM_WORLD);
+  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, comm_cart);
   for (;;) {
     /* find node with most excessive particles */
     surplus = -1;
@@ -251,6 +256,9 @@ void nsq_calculate_ia()
     add_constraints_forces(pt1);
 #endif
 
+    if (rebuild_verletlist)
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
       pt2 = &partl[p2];
@@ -280,6 +288,7 @@ void nsq_calculate_ia()
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
 void nsq_calculate_energies()
@@ -300,6 +309,9 @@ void nsq_calculate_energies()
 #ifdef CONSTRAINTS
     add_constraints_energy(pt1);
 #endif
+
+    if (rebuild_verletlist)
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
@@ -330,9 +342,10 @@ void nsq_calculate_energies()
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
-void nsq_calculate_virials()
+void nsq_calculate_virials(int v_comp)
 {
   Particle *partl, *partg;
   Particle *pt1, *pt2;
@@ -345,11 +358,14 @@ void nsq_calculate_virials()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
-    add_kinetic_virials(pt1,0);
+    add_kinetic_virials(pt1,v_comp);
     add_bonded_virials(pt1);
 #ifdef BOND_ANGLE
     add_three_body_bonded_stress(pt1);
 #endif
+
+    if (rebuild_verletlist)
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
 
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
@@ -380,4 +396,5 @@ void nsq_calculate_virials()
       }
     }
   }
+  rebuild_verletlist = 0;
 }

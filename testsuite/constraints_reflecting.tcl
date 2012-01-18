@@ -57,12 +57,12 @@ if { [ catch {
 #############################################################
 
 setmd time_step $time_step
-setmd skin $skin
 
 # Simulation box
 #############################################################
 setmd box_l $box_l $box_l $box_l
 setmd periodic 1 1 1
+setmd skin $skin
 
 thermostat off
 

@@ -1,6 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-#   Max-Planck-Institute for Polymer Research, Theory Group
+# Copyright (C) 2011 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -33,7 +31,6 @@ puts "---------------------------------------------------------------"
 puts "- Testcase lb_stokes_sphere.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
-
 set w 16
 set l 16
 setmd box_l [ expr $w+2 ] $l $l
@@ -44,23 +41,27 @@ cellsystem domain_decomposition -no_verlet_list
 
 set kinematic_visc 10.
 set dens 1.
-lbfluid visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 ext_force 0.0000 0. 0.
+lbfluid visc [ expr $kinematic_visc / $dens ] dens $dens friction 1. agrid 1.0 tau .01 
 
 set v1 1.0
 lbboundary wall normal -1. 0. 0. dist [ expr -(+0.5+$w) ] velocity 0.00 $v1 0.
 lbboundary wall normal 1. 0. 0. dist 0.5 velocity 0. $v1 0.
-set radius 5.
+set radius 2.5
 lbboundary sphere center 8 8 8 radius $radius direction +1
 integrate 1000
 puts "[ lindex [ lbboundary force 0 ] 1 ] [ lindex [ lbboundary force 1 ] 1 ]"
 set lbforce [ lindex [ lbboundary force 2 ] 1 ]
+set twoRoverH [expr 2*$radius/$w]
 set refforce [ expr 6*3.1415*$kinematic_visc*$radius*$v1 ]
+
+#set refforce [ expr 6*3.1415*$kinematic_visc*$radius*$v1*(1-1.004*$twoRoverH+0.418*pow($twoRoverH,3)+0.210*pow($twoRoverH,4)-0.169*pow($twoRoverH,5)) ]
+# Note the force comes for diffusion between plates from Balducci et al., Macromolecules 2006, 39, 6273-6281
 set deviation [ expr abs( $lbforce -$refforce ) / $refforce ]
 puts "The measured force is: $lbforce"
 puts "The stokes force is: $refforce"
 puts "deviation to stokes force is [ expr $deviation * 100 ] %"
 if { $deviation > 0.2 } {
-  error "The deviation from Stokes law larger than expected"
+  error_exit "The deviation from Stokes law larger than expected"
 }
 
 

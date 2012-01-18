@@ -355,7 +355,7 @@ void EWALD_count_charged_particles()
     }
   }
   
-  MPI_Reduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
   ewald_sum_qpart    = (int)(tot_sums[0]+0.1);
   ewald_sum_q2       = tot_sums[1];
@@ -546,8 +546,8 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
         } 
       }
     }
-    MPI_Allreduce(sums,totsums,total_kvectors,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-    MPI_Allreduce(sumc,totsumc,total_kvectors,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(sums,totsums,total_kvectors,MPI_DOUBLE,MPI_SUM,comm_cart);
+    MPI_Allreduce(sumc,totsumc,total_kvectors,MPI_DOUBLE,MPI_SUM,comm_cart);
   }
 
 
@@ -566,7 +566,7 @@ double EWALD_calc_kspace_forces(int force_flag, int energy_flag)
     EWALD_TRACE(fprintf(stderr,"%d: EWALD: node_k_space_energy=%g\n",this_node,node_k_space_energy));
     node_k_space_energy *= coulomb.prefactor;
 
-    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
     EWALD_TRACE(fprintf(stderr,"%d: EWALD: 1 k_space_energy=%g\n",this_node,k_space_energy));
 

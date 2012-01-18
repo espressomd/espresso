@@ -47,7 +47,6 @@
 /**********************************************************************/
 
 #define PARTIAL_PERIODIC
-#define MAGNETOSTATICS
 #define ELECTROSTATICS
 #define ROTATION
 #define ROTATIONAL_INERTIA
@@ -63,6 +62,7 @@
 #define MODES
 #define BOND_VIRTUAL
 #define LANGEVIN_PER_PARTICLE
+#define COLLISION_DETECTION
 
 /* To use address, also activate VIRTUAL_SITES and VIRTUAL_SITES_COM */
 #define ADRESS

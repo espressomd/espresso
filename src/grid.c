@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -44,7 +45,7 @@
  * variables
  **********************************************/
 
-int node_grid[3] = { -1, -1, -1};
+int node_grid[3] = { 0, 0, 0};
 int node_pos[3] = {-1,-1,-1};
 int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
 int boundary[6]   = {0, 0, 0, 0, 0, 0};
@@ -62,12 +63,7 @@ double my_right[3]    = {1, 1, 1};
 
 void setup_node_grid()
 {
-  if (node_grid[0] < 0) {
-    /* auto setup, grid not set */
-    calc_3d_grid(n_nodes,node_grid);
-
-    mpi_bcast_parameter(FIELD_NODEGRID);
-  }
+  mpi_bcast_parameter(FIELD_NODEGRID);
 }
 
 int node_grid_is_set()
@@ -92,34 +88,20 @@ int map_position_node_array(double pos[3])
     else if (im[i] >= node_grid[i])
       im[i] = node_grid[i] - 1;
   }
+
   return map_array_node(im);
-}
-
-void map_node_array(int node, int pos[3])
-{
-  get_grid_pos(node, pos, pos + 1, pos + 2, node_grid);
-}
-
-int map_array_node(int pos[3]) {
-  return get_linear_index(pos[0], pos[1], pos[2], node_grid);
 }
 
 void calc_node_neighbors(int node)
 {
-  int dir,j;
-  int n_pos[3];
+  int dir;
   
   map_node_array(node,node_pos);
   for(dir=0;dir<3;dir++) {
-    for(j=0;j<3;j++) n_pos[j]=node_pos[j];
-    /* left neighbor in direction dir */
-    n_pos[dir] = node_pos[dir] - 1;
-    if(n_pos[dir]<0) n_pos[dir] += node_grid[dir];
-    node_neighbors[2*dir]     = map_array_node(n_pos);
-    /* right neighbor in direction dir */
-    n_pos[dir] = node_pos[dir] + 1;
-    if(n_pos[dir]>=node_grid[dir]) n_pos[dir] -= node_grid[dir];
-    node_neighbors[(2*dir)+1] = map_array_node(n_pos);
+    int buf;
+    MPI_Cart_shift(comm_cart, dir, -1, &buf, node_neighbors + 2*dir);
+    MPI_Cart_shift(comm_cart, dir, 1, &buf, node_neighbors + 2*dir + 1);
+
     /* left boundary ? */
     if (node_pos[dir] == 0) {
       boundary[2*dir] = 1;
@@ -135,6 +117,7 @@ void calc_node_neighbors(int node)
       boundary[2*dir+1] = 0;
     }
   }
+  GRID_TRACE(printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ", this_node, node_grid[0], node_grid[1], node_grid[2], node_pos[0], node_pos[1], node_pos[2]));
 }
 
 void grid_changed_box_l()
@@ -142,7 +125,8 @@ void grid_changed_box_l()
   int i;
 
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_box_l:\n",this_node));
-
+  GRID_TRACE(fprintf(stderr,"%d: node_pos %d %d %d\n", this_node, node_pos[0], node_pos[1], node_pos[2]));
+  GRID_TRACE(fprintf(stderr,"%d: node_grid %d %d %d\n", this_node, node_grid[0], node_grid[1], node_grid[2]));
   for(i = 0; i < 3; i++) {
     local_box_l[i] = box_l[i]/(double)node_grid[i]; 
     my_left[i]   = node_pos[i]    *local_box_l[i];
@@ -162,7 +146,16 @@ void grid_changed_box_l()
 
 void grid_changed_n_nodes()
 {
+  int per[3] = { 1, 1, 1 };
   GRID_TRACE(fprintf(stderr,"%d: grid_changed_n_nodes:\n",this_node));
+
+  MPI_Comm_free(&comm_cart);
+  
+  MPI_Cart_create(MPI_COMM_WORLD, 3, node_grid, per, 0, &comm_cart);
+
+  MPI_Comm_rank(comm_cart, &this_node);
+
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
 
   calc_node_neighbors(this_node);
 
@@ -174,6 +167,8 @@ void grid_changed_n_nodes()
   fprintf(stderr,"%d: boundary=(%d,%d,%d,%d,%d,%d)\n",this_node,
 	  boundary[0],boundary[1],boundary[2],boundary[3],boundary[4],boundary[5]);
 #endif
+
+  grid_changed_box_l();
 }
 
 void calc_minimal_box_dimensions()
@@ -182,16 +177,8 @@ void calc_minimal_box_dimensions()
   min_box_l = 2*MAX_INTERACTION_RANGE;
   min_local_box_l = MAX_INTERACTION_RANGE;
   for(i=0;i<3;i++) {
-    /* #ifdef PARTIAL_PERIODIC  
-       if(periodic[i]) {
-       min_box_l       = dmin(min_box_l, box_l[i]);
-       min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
-       }
-       #else
-    */
     min_box_l       = dmin(min_box_l, box_l[i]);
     min_local_box_l = dmin(min_local_box_l, local_box_l[i]);
-    /* #endif */
   }
 }
 
@@ -202,23 +189,6 @@ void calc_2d_grid(int n, int grid[3])
   while(i>=1) {
     if(n%i==0) { grid[0] = n/i; grid[1] = i; grid[2] = 1; return; }
     i--;
-  }
-}
-
-void calc_3d_grid(int n, int grid[3])
-{
-  int i,j,k,max;
-  max = 3*n*n + 1;
-  /* generate grid in ascending order */
-  for(i=1;i<=n;i++) {
-    for(j=i;j<=n;j++) { 
-      for(k=j;k<=n;k++) {
-	if(i*j*k == n && ((i*i)+(j*j)+(k*k)) < max) {
-	  grid[0] = k; grid[1] = j;grid[2] = i;
-	  max =  ((i*i)+(j*j)+(k*k));
-	}
-      }
-    }
   }
 }
 
@@ -244,107 +214,6 @@ int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3])
   }
   for(i=0;i<3;i++) mult[i]=g2d[i]/g3d[i];
   return row_dir;
-}
-
-int tclcallback_node_grid(Tcl_Interp *interp, void *_data)
-{
-  int *data = (int *)_data;
-  if ((data[0] < 0) || (data[1] < 0) || (data[2] < 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  if (data[0]*data[1]*data[2] != n_nodes) {
-    Tcl_AppendResult(interp, "node grid does not fit n_nodes",
-		     (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  /* outsourced to 
-     sort_int_array(data,3); */
-
-  node_grid[0] = data[0];
-  node_grid[1] = data[1];
-  node_grid[2] = data[2];
-
-  mpi_bcast_parameter(FIELD_NODEGRID);
-
-  return (TCL_OK);
-}
-
-#ifdef PARTIAL_PERIODIC
-int tclcallback_periodicity(Tcl_Interp *interp, void *_data)
-{
-  periodic = *(int *)_data;
-
-  mpi_bcast_parameter(FIELD_PERIODIC);
-
-  return (TCL_OK);
-}
-#else
-
-int tclcallback_periodicity(Tcl_Interp *interp, void *_data)
-{
-  int tmp_periodic;
-  tmp_periodic = *(int *)_data;
-  if ((tmp_periodic & 7) == 7)
-    return (TCL_OK);
-
-  Tcl_AppendResult(interp, "periodic cannot be set since PARTIAL_PERIODIC not configured.", (char *)NULL);  
-  return (TCL_ERROR);
-}
-
-#endif
-
-int tclcallback_box_l(Tcl_Interp *interp, void *_data)
-{
-  double *data = _data;
-
-  if ((data[0] <= 0) || (data[1] <= 0) || (data[2] <= 0)) {
-    Tcl_AppendResult(interp, "illegal value", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  box_l[0] = data[0];
-  box_l[1] = data[1];
-  box_l[2] = data[2];
-
-  mpi_bcast_parameter(FIELD_BOXL);
-
-  return (TCL_OK);
-}
-
-int tclcommand_change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  char *mode;
-  double d_new = box_l[0]; 
-  int dir = -1;
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "Wrong # of args! Usage: change_volume { <V_new> | <L_new> { x | y | z | xyz } }", (char *)NULL); return (TCL_ERROR);
-  }
-  if (Tcl_GetDouble(interp, argv[1], &d_new) == TCL_ERROR) return (TCL_ERROR);
-  if (argc == 3) { 
-    mode = argv[2];
-    if (!strncmp(mode, "x", strlen(mode))) dir = 0;
-    else if (!strncmp(mode, "y", strlen(mode))) dir = 1;
-    else if (!strncmp(mode, "z", strlen(mode))) dir = 2;
-    else if (!strncmp(mode, "xyz", strlen(mode))) dir = 3;
-  }
-  else if (argc > 3) {
-    Tcl_AppendResult(interp, "Wrong # of args! Usage: change_volume { <V_new> | <L_new> { x | y | z | xyz } }", (char *)NULL); return (TCL_ERROR);
-  }
-
-  if (dir < 0) {
-    d_new = pow(d_new,1./3.);
-    rescale_boxl(3,d_new);
-  }
-  else { 
-    rescale_boxl(dir,d_new); 
-  }
-  sprintf(buffer, "%f", box_l[0]*box_l[1]*box_l[2]);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, TCL_OK);
 }
 
 void rescale_boxl(int dir, double d_new) {

@@ -32,15 +32,9 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
   Particle *p;
   int i, j, np, c;
   Cell *cell;
-  IA_parameters *data, *data_sym;
-
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
-  if (!data || !data_sym)
+  if (!data)
     return 1;
 
   if (n_nodes > 1)
@@ -50,12 +44,10 @@ MDINLINE int comfixed_set_params(int part_type_a, int part_type_b, int flag)
     return 3;
   }
 
-  /* COMFIXED should be symmetrically */
-  data_sym->COMFIXED_flag    = data->COMFIXED_flag    = flag;
+  data->COMFIXED_flag    = flag;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];

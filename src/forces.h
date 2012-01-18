@@ -72,6 +72,7 @@
 #include "molforces.h"
 #include "morse.h"
 #include "elc.h"
+#include "collision.h" 
 /* end of force files */
 
 /** \name Exported Functions */
@@ -237,6 +238,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque2[3] = { 0., 0., 0. };
   int j;
   
+
+#ifdef COLLISION_DETECTION
+  if (collision_detection_mode > 0)
+     detect_collision(p1,p2);
+#endif 
+
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;
@@ -641,6 +648,27 @@ MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
 #ifdef ROTATION
   for (i = 0; i < 3; i++)
     F_to->torque[i] += F_add->torque[i];
+#endif
+}
+
+MDINLINE void check_particle_force(Particle *part)
+{
+  
+  int i;
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.f[i]) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
+
+#ifdef ROTATION
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.torque[i]) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
 #endif
 }
 

@@ -56,7 +56,7 @@
 #include "particle_data.h"
 #include "random.h"
 #include "topology.h"
-
+#include <mpi.h>
 /**************************************************
  * exported variables
  **************************************************/
@@ -68,6 +68,7 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 /*@}*/
+extern MPI_Comm comm_cart;
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -489,12 +490,19 @@ int mpi_iccp3m_iteration(int dummy);
 */
 int mpi_iccp3m_init(int dummy);
 
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to
  * @param index index of the lattice site
  * @param pop   local fluid population
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
+
+/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param pop   local fluid population
+ */
+void mpi_send_fluid_populations(int node, int index, double *pop);
 
 /** Part of MDLC
  */

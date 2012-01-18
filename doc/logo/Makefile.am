@@ -15,4 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-EXTRA_DIST = whitebg.png transparentbg.png powered_by.png homepage-header.xcf homepage-header.png
+EXTRA_DIST = whitebg.png transparentbg.png powered_by.png

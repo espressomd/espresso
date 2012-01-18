@@ -442,29 +442,29 @@ void ghost_communicator(GhostCommunicator *gc)
       switch (comm_type) {
       case GHOST_RECV:
 	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm receive from %d (%d bytes)\n", this_node, node, n_r_buffer));
-	MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND, MPI_COMM_WORLD, &status);
+	MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND, comm_cart, &status);
 	break;
       case GHOST_SEND:
 	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm send to %d (%d bytes)\n", this_node, node, n_s_buffer));
-	MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND, MPI_COMM_WORLD);
+	MPI_Send(s_buffer, n_s_buffer, MPI_BYTE, node, REQ_GHOST_SEND, comm_cart);
 	break;
       case GHOST_BCST:
 	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm bcast from %d (%d bytes)\n", this_node, node,
 			    (node == this_node) ? n_s_buffer : n_r_buffer));
 	if (node == this_node)
-	  MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, MPI_COMM_WORLD);
+	  MPI_Bcast(s_buffer, n_s_buffer, MPI_BYTE, node, comm_cart);
 	else
-	  MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, MPI_COMM_WORLD);
+	  MPI_Bcast(r_buffer, n_r_buffer, MPI_BYTE, node, comm_cart);
 	break;
       case GHOST_RDCE:
 	GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d (%d bytes)\n", this_node, node, n_s_buffer));
 	if (node == this_node)
-	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, MPI_COMM_WORLD);
+	  MPI_Reduce(s_buffer, r_buffer, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	else
-	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, MPI_COMM_WORLD);
+	  MPI_Reduce(s_buffer, NULL, n_s_buffer, MPI_BYTE, MPI_FORCES_SUM, node, comm_cart);
 	break;
       }
-      GHOST_TRACE(MPI_Barrier(MPI_COMM_WORLD));
+      GHOST_TRACE(MPI_Barrier(comm_cart));
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
 
       /* recv op; write back data directly, if no PSTSTORE delay is requested. */

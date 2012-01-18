@@ -22,7 +22,7 @@
 #ifndef _FFT_MAGNETOSTATICS_H
 #define _FFT_MAGNETOSTATICS_H
 
-/** \file fft-magnetostatics.h
+/** \file fft-dipolar.h
  *
  *  Routines, row decomposition, data structures and communication for the 3D-FFT. 
  *
@@ -58,8 +58,8 @@ void  dfft_pre_init();
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  * \param data               Pointer Pointer to data array.
- * \param local_mesh_dim     Pointer to CA mesh dimensions.
- * \param local_mesh_margin  Pointer to CA mesh margins.
+ * \param ca_mesh_dim        Pointer to CA mesh dimensions.
+ * \param ca_mesh_margin     Pointer to CA mesh margins.
  * \param global_mesh_dim    Pointer to global CA mesh dimensions.
  * \param global_mesh_off    Pointer to global CA mesh offset.
  * \param ks_pnum            Pointer to number of permutations in k-space.

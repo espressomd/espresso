@@ -181,16 +181,30 @@
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
+
+  /** flag that tells whether there is any short-ranged interaction,
+   i.e. one that contributes to the "nonbonded" section of the
+   energy/pressure. Note that even if there is no short-ranged
+   interaction present, the \ref max_cut can be non-zero due to
+   e.g. electrostatics. */
+  int particlesInteract;
+
+  /** maximal cutoff for this pair of particle types. This contains
+      contributions from the short-ranged interactions, plus any
+      cutoffs from global interactions like electrostatics.
+  */
+  double max_cut;
+
 #ifdef LENNARD_JONES
-	/** \name Lennard-Jones with shift */
-	/*@{*/
-	double LJ_eps;
-	double LJ_sig;
-	double LJ_cut;
-	double LJ_shift;
-	double LJ_offset;
-	double LJ_capradius;
-	double LJ_min;
+  /** \name Lennard-Jones with shift */
+  /*@{*/
+  double LJ_eps;
+  double LJ_sig;
+  double LJ_cut;
+  double LJ_shift;
+  double LJ_offset;
+  double LJ_capradius;
+  double LJ_min;
   /*@}*/
 #endif
 
@@ -793,7 +807,9 @@ extern DoubleList thermodynamic_f_energies;
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions). */
-extern double max_cut_non_bonded;
+extern double max_cut_nonbonded;
+/** Maximal interaction cutoff (real space/short range bonded interactions). */
+extern double max_cut_bonded;
 
 /** For the warmup you can cap the singularity of the Lennard-Jones
     potential at r=0. look into the warmup documentation for more
@@ -845,6 +861,14 @@ extern int ia_excl;
 /** Function for initializing force and energy tables */
 void force_and_energy_tables_init();
 
+#ifdef ELECTROSTATICS
+int coulomb_set_bjerrum(double bjerrum);
+#endif
+
+#ifdef DIPOLES
+int dipolar_set_Dbjerrum(double bjerrum);
+#endif
+
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
 /** Function for initializing adress force and energy tables */
@@ -856,17 +880,8 @@ void tf_tables_init();
 
 #endif
 
-/** Implementation of the tcl command "inter". This function
-    allows the interaction parameters to be modified.
- */
-int tclcommand_inter(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implementation of the Tcl function constraint. This function
-    allows to set and delete constraints.
- */
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
+/** copy a set of interaction parameters. */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
@@ -874,6 +889,11 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
   extern int n_particle_types;
   return &ia_params[i*n_particle_types + j];
 }
+
+/** get interaction parameters between particle sorts i and j.
+    Slower than @ref get_ia_param, but can also be used on not
+    yet present particle types*/
+IA_parameters *get_ia_param_safe(int i, int j);
 
 #ifdef ADRESS 
 MDINLINE TF_parameters *get_tf_param(int i) {
@@ -910,13 +930,18 @@ void realloc_tf_params(int nsize);
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
     verlet.h). */
-void calc_maximal_cutoff();
+void recalc_maximal_cutoff();
+
+/** call when the temperature changes, for Bjerrum length adjusting. */
+void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
 int check_obs_calc_initialized();
 
 /**  check if a non bonded interaction is defined */
-int checkIfInteraction(IA_parameters *data);
+MDINLINE int checkIfInteraction(IA_parameters *data) {
+  return data->particlesInteract;
+}
 
 /** check if the types of particles i and j have any non bonded
     interaction defined. */
@@ -929,4 +954,8 @@ int checkIfTF(TF_parameters *data);
 #endif
 
 char *get_name_of_bonded_ia(int i);
+#endif
+
+#ifdef BOND_VIRTUAL
+int virtual_set_params(int bond_type);
 #endif

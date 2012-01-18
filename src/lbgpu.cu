@@ -23,17 +23,11 @@
 #include <stdio.h>
 #include <cuda.h>
 #include <stdlib.h>
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-//#include "cutil.h"
-//#ifdef __cplusplus
-//}
-//#endif
+
 extern "C" {
 #include "lbgpu.h"
-
 }
+
 #ifdef LB_GPU
 #ifndef GAUSSRANDOM
 #define GAUSSRANDOM

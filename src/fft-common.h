@@ -170,7 +170,7 @@ int fft_find_comm_groups(int grid1[3], int grid2[3], int *node_list1, int *node_
  * \param  n_pos    Position of the node in n_grid.
  * \param  n_grid   node grid.
  * \param  mesh     global mesh dimensions.
- * \param  mesh_off global mesh offset (see \ref p3m_struct).
+ * \param  mesh_off global mesh offset (see \ref p3m_data_struct).
  * \param  loc_mesh local mesh dimension (output).
  * \param  start    first point of local mesh in global mesh (output).
 */
@@ -198,7 +198,7 @@ int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3], double mesh_of
  *  \param  pos2     Position of recv node in grid2.
  *  \param  grid2    node grid 2.
  *  \param  mesh     global mesh dimensions.
- *  \param  mesh_off global mesh offset (see \ref p3m_struct).
+ *  \param  mesh_off global mesh offset (see \ref p3m_data_struct).
  *  \param  block    send block specification.
 */
 int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3], 

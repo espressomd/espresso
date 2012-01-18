@@ -36,7 +36,6 @@
 #include "cells.h"
 #include "lb.h"
 #include "dpd.h"
-#include "lbgpu.h"
 #include "virtual_sites.h"
 
 /** \name Thermostat switches*/
@@ -78,10 +77,6 @@ extern double nptiso_gammav;
  * functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tclcommand_thermostat. This function
-    allows to change the used thermostat and to set its parameters.
- */
-int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** initialize constants of the thermostat on
     start of integration */
@@ -118,9 +113,6 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
   return 0.0;
 }
 #endif
-
-/** Callback marking setting the temperature as outdated */
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
@@ -162,8 +154,7 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 
   for ( j = 0 ; j < 3 ; j++) {
 #ifdef EXTERNAL_FORCES
-//    if (!(p->l.ext_flag & COORD_FIXED(j)))
-    if (1==1)
+    if (!(p->l.ext_flag & COORD_FIXED(j)))
 #endif
     {
 #ifdef LANGEVIN_PER_PARTICLE  
@@ -239,10 +230,6 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
       THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
-#endif
-
-#if defined(LB) || defined(LB_GPU)
-int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 
 #endif

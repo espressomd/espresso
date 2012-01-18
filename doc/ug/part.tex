@@ -34,8 +34,8 @@
   \opt{v \var{vx} \var{vy} \var{vz}}
   \opt{f \var{fx} \var{fy} \var{fz}}
   \opt{bond \var{bondid} \var{pid2} \dots}
-  \opt{temp \var{T}}
-  \opt{gamma \var{g}}
+  \require{9}{\opt{temp \var{T}}}
+  \require{9}{\opt{gamma \var{g}}}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
@@ -60,6 +60,7 @@
     \required[6]{DIPOLES}
     \required[7]{VIRTUAL\_SITES\_COM}
     \required[8]{VIRTUAL\_SITES\_RELATIVE}
+    \required[9]{LANGEVIN\_PER\_PARTICLE}
   \end{features}
 \end{essyntax}
 

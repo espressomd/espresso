@@ -377,7 +377,7 @@ void halo_communication(HaloCommunicator *hc, void *base) {
 
 	      MPI_Sendrecv(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD,
 			   r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD,
-			   MPI_COMM_WORLD, &status);
+			   comm_cart, &status);
 	      break ;
 
 	    case HALO_SEND:
@@ -388,7 +388,7 @@ void halo_communication(HaloCommunicator *hc, void *base) {
 	      
 	      HALO_TRACE(fprintf(stderr,"%d: halo_comm send to %d.\n",this_node,r_node));
 
-	      MPI_Isend(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, MPI_COMM_WORLD, &request);
+	      MPI_Isend(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, comm_cart, &request);
 	      halo_dtset(r_buffer,0,fieldtype);
 	      MPI_Wait(&request,&status);
 	      break;
@@ -400,7 +400,7 @@ void halo_communication(HaloCommunicator *hc, void *base) {
 
 	      HALO_TRACE(fprintf(stderr,"%d: halo_comm recv from %d.\n",this_node,s_node));
 
-	      MPI_Irecv(r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD, MPI_COMM_WORLD, &request);
+	      MPI_Irecv(r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD, comm_cart, &request);
 	      MPI_Wait(&request,&status);
 	      break;
 
