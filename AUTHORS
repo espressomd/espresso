@@ -1,23 +1,31 @@
+ESPResSo is maintained and developed mainly at the Institute for
+Computational Physics at Stuttgart University, Germany, in the group
+of Prof. Dr. Christian Holm (http://www.icp.uni-stuttgart.de).
+
+Until 2010, ESPResSo was maintained and developed mainly at the
+Max-Planck-Institute for Polymer Research in Mainz, Germany in the
+group of Prof. Dr. Kurt Kremer.
+
 The following people have contributed to ESPResSo:
 
 ESPResSo core team:
 -------------------
 Axel Arnold
-Bernward Mann
-Christian Holm
-Christoph Junghans
-Olaf Lenz
-Hans-Jörg Limbach
-Torsten Stühn
+Bernward Mann (deceased 2006)
+Olaf Lenz (maintainer)
+Hans-Jörg Limbach (inactive)
+Stefan Kesselheim
+Torsten Stühn (inactive)
 
 Further contributions came from:
 --------------------------------
 Adolfo Poma
 Arjit Maitra
+Christoph Junghans
 Christoph Schneider
 Dmitro Galperin
 Dmytro Antypov
-Florian Rühle
+Florian Fahrenberger (formerly: Rühle)
 Frank Mühlbach
 Gregoria Illya
 Igor Pasichny
@@ -25,7 +33,9 @@ Ira Cooke
 Joan Josep Cerdà
 Jon Halverson
 Kai Grass
+Kai Kratzer
 Karen Johnston
+Konrad Breitsprecher
 Marcello Sega
 Matej Praprotnik
 Mehmet Sayar
@@ -38,7 +48,6 @@ Rudolf Weeber
 Sandeep Tyagi
 Sathish K. Sukumaran
 Simon Poblete
-Stefan Kesselheim
 Timo Schürg
 Tristan Bereau
 Ulf Schiller
