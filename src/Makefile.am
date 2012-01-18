@@ -20,7 +20,6 @@
 noinst_HEADERS = \
 	myconfig-default.h
 
-# All objects are compiled into the library
 noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
@@ -178,6 +177,33 @@ libEspresso_a_SOURCES += \
 	tcl/uwerr_tcl.c tcl/uwerr_tcl.h \
 	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h \
         tcl/collision_tcl.c tcl/collision_tcl.h
+
+#################################################################
+# Compile the main program
+#################################################################
+# Two binaries are generated: Espresso for the build dir,
+# Espresso.install for the installation dir. 
+# The ".install" suffix is removed upon installation.
+noinst_PROGRAMS = Espresso
+Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
+Espresso_SOURCES = scriptsdir.c main.c 
+Espresso_LDADD = libEspresso.a
+
+bin_PROGRAMS = Espresso.install
+Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
+Espresso_install_SOURCES = scriptsdir.c main.c
+Espresso_install_LDADD = libEspresso.a
+
+# rename Espresso after installation
+install-exec-hook:
+	$(am__mv) \
+		$(DESTDIR)$(bindir)/Espresso.install \
+		$(DESTDIR)$(bindir)/Espresso
+
+uninstall-local:
+	-rm -f $(DESTDIR)$(bindir)/Espresso
+
+
 #################################################################
 # Build the blockfile library
 #################################################################
@@ -189,6 +215,11 @@ lib_LIBRARIES = libespressobf.a
 #################################################################
 # Handling of myconfig.h
 #################################################################
+libEspresso_a_SOURCES += myconfig-final.h
+config.h: myconfig-final.h
+BUILT_SOURCES = myconfig-final.h
+CLEANFILES = myconfig-final.h
+
 FORCE:
 myconfig-final.h: FORCE
 	config_files="\
@@ -212,8 +243,6 @@ myconfig-final.h: FORCE
 	  echo "ERROR: Couldn't find $(myconfig) anywhere"; \
 	  exit 1; \
 	fi
-
-BUILT_SOURCES = myconfig-final.h
 
 #################################################################
 # Handling of the MPI fake implementation
