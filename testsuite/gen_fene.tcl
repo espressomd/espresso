@@ -117,3 +117,4 @@ blockfile $f write particles {id pos f}
 blockfile $f write bonds all
 close $f
 
+exit 0

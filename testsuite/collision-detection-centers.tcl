@@ -79,3 +79,5 @@ set bond3 [part 2 print bond]
 if {!((($bond1=="{ {0 1} } ") && ($bond2=="{ } ")) || (($bond2=="{ {0 0} } ") && ($bond1=="{ } "))) } {
  error_exit "Bond between first 2 particles incorrect."
 }
+
+exit 0

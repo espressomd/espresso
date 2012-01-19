@@ -92,3 +92,5 @@ if { abs($dv) > $tolerance } {
 if { abs($do) > $tolerance } {
  error "Relative deviation in translational energy too large: $dv"
 }
+
+exit 0

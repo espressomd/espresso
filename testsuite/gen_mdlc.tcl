@@ -111,3 +111,4 @@ close $energy_data
 
 puts "\n\n\ndone" 
 
+exit 0

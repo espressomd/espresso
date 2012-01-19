@@ -112,3 +112,5 @@ if {!((($bond1=="{ {1 4} } ") && ($bond2=="{ } ")) || (($bond2=="{ {1 3} } ") &&
 if { (! ([part 3 print type]==1 && [part 4 print type]==1))} {
  error_exit "
 }
+
+exit 0

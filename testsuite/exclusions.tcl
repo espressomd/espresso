@@ -62,3 +62,5 @@ if { [veclen $f1 ] >0.001 } {
 if { $E >0.001 } {
  error_exit "Energy found for a pair with an exclusion."
 }
+
+exit 0

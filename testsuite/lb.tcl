@@ -71,7 +71,7 @@ set friction      2.0
 
 set temp          1.0
 
-set skin          0.5
+set skin          0.4
 
 set mom_prec      1.e-5
 set mass_prec     1.e-8
@@ -93,8 +93,6 @@ eval $cmd
 
 setmd time_step $time_step
 setmd skin $skin
-
-cellsystem domain_decomposition -no_verlet_list
 
 # Simulation box
 #############################################################
