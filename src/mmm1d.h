@@ -73,7 +73,7 @@ int MMM1D_sanity_checks();
 void MMM1D_init();
 
 ///
-void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2,
+void add_mmm1d_coulomb_pair_force(double chprf, double d[3], double dist2,
 				  double dist, double force[3]);
 
 ///

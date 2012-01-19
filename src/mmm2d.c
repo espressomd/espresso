@@ -1533,161 +1533,159 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
   }
 #endif
 
-  if (pref != 0.0) {
-    F[0] = F[1] = F[2] = 0;
+  F[0] = F[1] = F[2] = 0;
 
-    /* Bessel sum */
-    {
-      int p, l;
-      double k0, k1;
-      double k0Sum, k1ySum, k1Sum;
-      double freq;
-      double rho_l, ypl;
-      double c, s;
+  /* Bessel sum */
+  {
+    int p, l;
+    double k0, k1;
+    double k0Sum, k1ySum, k1Sum;
+    double freq;
+    double rho_l, ypl;
+    double c, s;
 
-      for (p = 1; p < besselCutoff.n; p++) {
-	k0Sum  = 0;
-	k1ySum = 0;
-	k1Sum  = 0;
+    for (p = 1; p < besselCutoff.n; p++) {
+      k0Sum  = 0;
+      k1ySum = 0;
+      k1Sum  = 0;
 
-	freq = C_2PI*ux*p;
+      freq = C_2PI*ux*p;
 
-	for (l = 1; l < besselCutoff.e[p-1]; l++) {
-	  ypl   = d[1] + l*box_l[1];
-	  rho_l = sqrt(ypl*ypl + z2);
+      for (l = 1; l < besselCutoff.e[p-1]; l++) {
+	ypl   = d[1] + l*box_l[1];
+	rho_l = sqrt(ypl*ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
-	  k0 = K0(freq*rho_l);
-	  k1 = K1(freq*rho_l);
+	k0 = K0(freq*rho_l);
+	k1 = K1(freq*rho_l);
 #else
-	  LPK01(freq*rho_l, &k0, &k1);
+	LPK01(freq*rho_l, &k0, &k1);
 #endif
-	  k1 /= rho_l;
-	  k0Sum  += k0;
-	  k1Sum  += k1;
-	  k1ySum += k1*ypl;
+	k1 /= rho_l;
+	k0Sum  += k0;
+	k1Sum  += k1;
+	k1ySum += k1*ypl;
 
-	  ypl   = d[1] - l*box_l[1];
-	  rho_l = sqrt(ypl*ypl + z2);
+	ypl   = d[1] - l*box_l[1];
+	rho_l = sqrt(ypl*ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
-	  k0 = K0(freq*rho_l);
-	  k1 = K1(freq*rho_l);
+	k0 = K0(freq*rho_l);
+	k1 = K1(freq*rho_l);
 #else
-	  LPK01(freq*rho_l, &k0, &k1);
+	LPK01(freq*rho_l, &k0, &k1);
 #endif
-	  k1 /= rho_l;
-	  k0Sum  += k0;
-	  k1Sum  += k1;
-	  k1ySum += k1*ypl;
-	}
-
-	/* the ux is multiplied in to bessel, complex and psi at once, not here */
-	c = 4*freq*cos(freq*d[0]);
-	s = 4*freq*sin(freq*d[0]);
-	F[0] +=      s*k0Sum;
-	F[1] +=      c*k1ySum;
-	F[2] += d[2]*c*k1Sum;
+	k1 /= rho_l;
+	k0Sum  += k0;
+	k1Sum  += k1;
+	k1ySum += k1*ypl;
       }
-      // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
+
+      /* the ux is multiplied in to bessel, complex and psi at once, not here */
+      c = 4*freq*cos(freq*d[0]);
+      s = 4*freq*sin(freq*d[0]);
+      F[0] +=      s*k0Sum;
+      F[1] +=      c*k1ySum;
+      F[2] += d[2]*c*k1Sum;
     }
-
-    /* complex sum */
-    {
-      double zeta_r, zeta_i;
-      double zet2_r, zet2_i;
-      double ztn_r,  ztn_i;
-      double tmp_r;
-      int end, n;
-
-      ztn_r = zeta_r = uy*d[2];
-      ztn_i = zeta_i = uy*d[1];
-      zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
-      zet2_i = 2*zeta_r*zeta_i;
-
-      end = (int)ceil(COMPLEX_FAC*uy2*rho2);
-      if (end > COMPLEX_STEP) {
-	end = COMPLEX_STEP;
-	fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
-      }
-      if (end < 0) {
-	char *errtxt = runtime_error(100);
-	ERROR_SPRINTF(errtxt, "{MMM2D: distance was negative, coordinates probably out of range } ");
-	end = 0;
-      }
-      end = complexCutoff[end];
-
-      for (n = 0; n < end; n++) {
-	F[1] -= bon.e[n]*ztn_i;
-	F[2] += bon.e[n]*ztn_r;
-
-	tmp_r = ztn_r*zet2_r - ztn_i*zet2_i;
-	ztn_i = ztn_r*zet2_i + ztn_i*zet2_r;
-	ztn_r = tmp_r;
-      }
-      // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
-    }
-
-    /* psi sum */
-    {
-      int n;
-      double uxx = ux*d[0];
-      double uxrho2 = ux2*rho2;
-      double uxrho_2n, uxrho_2nm2; /* rho^{2n-2} */
-      double mpe, mpo;
-
-      /* n = 0 inflicts only Fx and pot */
-      /* one ux is multiplied in to bessel, complex and psi at once, not here */
-      F[0] += ux*mod_psi_odd(0, uxx);
-
-      uxrho_2nm2 = 1.0;
-      for (n = 1;n < n_modPsi; n++) {
-	mpe    = mod_psi_even(n, uxx);
-	mpo    = mod_psi_odd(n, uxx);
-	uxrho_2n = uxrho_2nm2*uxrho2;
-
-	F[0] +=     ux *uxrho_2n  *mpo;
-	F[1] += 2*n*ux2*uxrho_2nm2*mpe*d[1];
-	F[2] += 2*n*ux2*uxrho_2nm2*mpe*d[2];
-
-	/* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
-	if (fabs(2*n*ux*uxrho_2n*mpe) < part_error)
-	  break;
-
-	uxrho_2nm2 = uxrho_2n;
-      }
-      // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
-    }
-
-
-    for (i = 0; i < 3; i++)
-      F[i] *= ux;
-
-    /* explicitly added potentials r_{-1,0} and r_{1,0} */
-    {
-      double cx    = d[0] + box_l[0];
-      double rinv2 = 1.0/(cx*cx + rho2), rinv = sqrt(rinv2);
-      double rinv3 = rinv*rinv2;
-      F[0] +=   cx*rinv3;
-      F[1] += d[1]*rinv3;
-      F[2] += d[2]*rinv3;
-
-      cx   = d[0] - box_l[0];
-      rinv2 = 1.0/(cx*cx + rho2); rinv = sqrt(rinv2);
-      rinv3 = rinv*rinv2;
-      F[0] +=   cx*rinv3;
-      F[1] += d[1]*rinv3;
-      F[2] += d[2]*rinv3;
-
-      rinv3 = 1/(dl2*dl);
-      F[0] += d[0]*rinv3;
-      F[1] += d[1]*rinv3;
-      F[2] += d[2]*rinv3;
-
-      // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
-    }
-
-    for (i = 0; i < 3; i++)
-      force[i] += pref*F[i];
+    // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
   }
+
+  /* complex sum */
+  {
+    double zeta_r, zeta_i;
+    double zet2_r, zet2_i;
+    double ztn_r,  ztn_i;
+    double tmp_r;
+    int end, n;
+
+    ztn_r = zeta_r = uy*d[2];
+    ztn_i = zeta_i = uy*d[1];
+    zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
+    zet2_i = 2*zeta_r*zeta_i;
+
+    end = (int)ceil(COMPLEX_FAC*uy2*rho2);
+    if (end > COMPLEX_STEP) {
+      end = COMPLEX_STEP;
+      fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
+    }
+    if (end < 0) {
+      char *errtxt = runtime_error(100);
+      ERROR_SPRINTF(errtxt, "{MMM2D: distance was negative, coordinates probably out of range } ");
+      end = 0;
+    }
+    end = complexCutoff[end];
+
+    for (n = 0; n < end; n++) {
+      F[1] -= bon.e[n]*ztn_i;
+      F[2] += bon.e[n]*ztn_r;
+
+      tmp_r = ztn_r*zet2_r - ztn_i*zet2_i;
+      ztn_i = ztn_r*zet2_i + ztn_i*zet2_r;
+      ztn_r = tmp_r;
+    }
+    // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
+  }
+
+  /* psi sum */
+  {
+    int n;
+    double uxx = ux*d[0];
+    double uxrho2 = ux2*rho2;
+    double uxrho_2n, uxrho_2nm2; /* rho^{2n-2} */
+    double mpe, mpo;
+
+    /* n = 0 inflicts only Fx and pot */
+    /* one ux is multiplied in to bessel, complex and psi at once, not here */
+    F[0] += ux*mod_psi_odd(0, uxx);
+
+    uxrho_2nm2 = 1.0;
+    for (n = 1;n < n_modPsi; n++) {
+      mpe    = mod_psi_even(n, uxx);
+      mpo    = mod_psi_odd(n, uxx);
+      uxrho_2n = uxrho_2nm2*uxrho2;
+
+      F[0] +=     ux *uxrho_2n  *mpo;
+      F[1] += 2*n*ux2*uxrho_2nm2*mpe*d[1];
+      F[2] += 2*n*ux2*uxrho_2nm2*mpe*d[2];
+
+      /* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
+      if (fabs(2*n*ux*uxrho_2n*mpe) < part_error)
+	break;
+
+      uxrho_2nm2 = uxrho_2n;
+    }
+    // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
+  }
+
+
+  for (i = 0; i < 3; i++)
+    F[i] *= ux;
+
+  /* explicitly added potentials r_{-1,0} and r_{1,0} */
+  {
+    double cx    = d[0] + box_l[0];
+    double rinv2 = 1.0/(cx*cx + rho2), rinv = sqrt(rinv2);
+    double rinv3 = rinv*rinv2;
+    F[0] +=   cx*rinv3;
+    F[1] += d[1]*rinv3;
+    F[2] += d[2]*rinv3;
+
+    cx   = d[0] - box_l[0];
+    rinv2 = 1.0/(cx*cx + rho2); rinv = sqrt(rinv2);
+    rinv3 = rinv*rinv2;
+    F[0] +=   cx*rinv3;
+    F[1] += d[1]*rinv3;
+    F[2] += d[2]*rinv3;
+
+    rinv3 = 1/(dl2*dl);
+    F[0] += d[0]*rinv3;
+    F[1] += d[1]*rinv3;
+    F[2] += d[2]*rinv3;
+
+    // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
+  }
+
+  for (i = 0; i < 3; i++)
+    force[i] += pref*F[i];
 }
 
 MDINLINE double calc_mmm2d_copy_pair_energy(double d[3])
