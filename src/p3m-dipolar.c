@@ -79,8 +79,8 @@ dp3m_data_struct dp3m;
 static void dp3m_calc_send_mesh();
 
 /** Initializes for magnetic dipoles the (inverse) mesh constant \ref
-    p3m_data_struct::a (\ref p3m_struct::ai) and the cutoff for charge
-    assignment \ref p3m_data_struct::cao_cut, which has to be done by \ref
+    p3m_parameter_struct::a (\ref p3m_parameter_struct::ai) and the cutoff for charge
+    assignment \ref p3m_parameter_struct::cao_cut, which has to be done by \ref
     dp3m_init once and by \ref dp3m_scaleby_box_l
     whenever the \ref box_l changed.  */
 static void dp3m_init_a_ai_cao_cut();
@@ -109,9 +109,9 @@ static void dp3m_spread_force_grid(double* mesh);
 static void dp3m_realloc_ca_fields(int newsize);
 
 
-/** Initializes the (inverse) mesh constant \ref p3m_data_struct::a (\ref
-    p3m_data_struct::ai) and the cutoff for charge assignment \ref
-    p3m_data_struct::cao_cut, which has to be done by \ref dp3m_init
+/** Initializes the (inverse) mesh constant \ref p3m_parameter_struct::a (\ref
+    p3m_parameter_struct::ai) and the cutoff for charge assignment \ref
+    p3m_parameter_struct::cao_cut, which has to be done by \ref dp3m_init
     once and by \ref dp3m_scaleby_box_l whenever the \ref box_l
     changed.  */
 static void dp3m_init_a_ai_cao_cut();
@@ -1538,15 +1538,15 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1])
     distributed particles in a cubic box.
     For the real space error the estimate of Kolafa/Perram is used. 
 
-    Parameter range if not given explicit values: For \ref dp3m_struct::r_cut_iL
+    Parameter range if not given explicit values: For \ref p3m_parameter_struct::r_cut_iL
     the function uses the values (\ref min_local_box_l -\ref #skin) /
     (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    dp3m_data_struct::r_cut_iL is the largest cutoff in the system!). For \ref
-    dp3m_data_struct::mesh the function uses the two values which matches best the
+    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For \ref
+    p3m_parameter_struct::mesh the function uses the two values which matches best the
     equation: number of mesh point = number of magnetic dipolar particles. For
-    \ref dp3m_data_struct::cao the function considers all possible values.
+    \ref p3m_parameter_struct::cao the function considers all possible values.
 
-    For each setting \ref dp3m_data_struct::alpha_L is calculated assuming that the
+    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming that the
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the
@@ -1626,28 +1626,8 @@ double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 
 /*****************************************************************************/
 
-
-/** a probably faster adaptive tuning method. Uses the same error estimates and parameters as
-    \ref tclcommand_inter_magnetic_dp3m_print_adaptive_tune_parameters, but a different strategy for finding the optimum. The algorithm
-    basically determines the mesh, cao and then the real space cutoff, in this nested order.
-
-    For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
-    and the algorithm tries whether increasing or decreasing it leads to a better solution. This
-    is efficient, since the optimal cao only changes little with the meshes in general.
-
-    The real space cutoff for a given mesh and cao is determined via a bisection on the error estimate,
-    which determines where the error estimate equals the required accuracy. Therefore the smallest 
-    possible, i.e. fastest real space cutoff is determined.
-
-    Both the search over mesh and cao stop to search in a specific direction once the computation time is
-    significantly higher than the currently known optimum.
-
-    Compared to \ref tclcommand_inter_magnetic_dp3m_print_tune_parameters, this function will test more parameters sets for efficiency, but
-    the error estimate is calculated less often. In general this should be faster and give better results.
- */
-
 void p3m_print_dp3m_struct(p3m_parameter_struct ps) {
-  fprintf(stderr,"%d: dipolar p3m_data_struct: \n",this_node);
+  fprintf(stderr,"%d: dipolar p3m_parameter_struct: \n",this_node);
   fprintf(stderr,"   alpha_L=%f, r_cut_iL=%f \n",
 	  ps.alpha_L,ps.r_cut_iL);
   fprintf(stderr,"   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",

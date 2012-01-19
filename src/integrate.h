@@ -68,12 +68,6 @@ extern double verlet_reuse;
 /************************************************************/
 /*@{*/
 
-/** Calculate maximal interaction range. 
-    Uses \ref calc_maximal_cutoff.
-    \ref max_range  = \ref max_cut + \ref #skin;
- */
-void integrate_vv_recalc_maxrange();
-
 /** Initialize the used thermodynamic Ensemble (NVT or NPT) */
 void integrate_ensemble_init();
 

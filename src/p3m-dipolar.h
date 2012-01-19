@@ -20,7 +20,7 @@
 */
 #ifndef _P3M_MAGNETOSTATICS_H
 #define _P3M_MAGNETOSTATICS_H
-/** \file p3m-magnetostatics.h P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-dipolar.h P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
@@ -137,7 +137,7 @@ void dp3m_init(void);
 
 void dp3m_set_bjerrum(void);
 
-/** Updates \ref dp3m_data_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
+/** Updates \ref p3m_parameter_struct::alpha and \ref p3m_parameter_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();
 
 /// sanity checks

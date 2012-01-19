@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file global.c
-    Implementation of \ref global.h "global.h".
+/** \file global_tcl.c
+    Implementation of \ref global_tcl.h "global_tcl.h".
 */
 #include "utils.h"
 #include "tuning.h"

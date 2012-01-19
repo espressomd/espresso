@@ -884,7 +884,7 @@ int lb_lbnode_set_u(int* ind, double* u){
     host_velocity[1] = (float)u[1];
     host_velocity[2] = (float)u[2];
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-    lb_set_node_veloctiy_GPU(single_nodeindex, host_velocity);
+    lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif
   } else {
 #ifdef LB
