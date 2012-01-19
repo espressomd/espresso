@@ -8,25 +8,34 @@ group of Prof. Dr. Kurt Kremer.
 
 The following people have contributed to ESPResSo:
 
-ESPResSo core team:
--------------------
+Core developers
+---------------
 Axel Arnold
-Bernward Mann (deceased 2006)
 Olaf Lenz (maintainer)
-Hans-Jörg Limbach (inactive)
 Stefan Kesselheim
+
+Bernward Mann (deceased 2006)
+Christoph Junghans (inactive)
+Hans-Jörg Limbach (inactive)
 Torsten Stühn (inactive)
 
-Further contributions came from:
---------------------------------
+Contributors
+------------
 Adolfo Poma
+Alexander Schlaich
 Arjit Maitra
-Christoph Junghans
+Ben Reynwar (formerly: Reynolds)
 Christoph Schneider
 Dmitro Galperin
 Dmytro Antypov
+Dominic Röhm
 Florian Fahrenberger (formerly: Rühle)
+Florian Weik
+Florian Häußermann
+Francesca Lugli
 Frank Mühlbach
+Georg Rempfer
+Gizem Inci
 Gregoria Illya
 Igor Pasichny
 Ira Cooke
@@ -43,12 +52,18 @@ Mehmet Süzen
 Mingyang Hu
 Muhammad Anwar
 Nils Binz
+Owen Hickey
+Pedro Sanchez
 Peter Kosovan
 Rudolf Weeber
 Sandeep Tyagi
 Sathish K. Sukumaran
+Sela Samin
+Shervin Raafatnia
 Simon Poblete
+Thomas Spura
 Timo Schürg
+Tobias Richter
 Tristan Bereau
 Ulf Schiller
 Vagelis Harmandaris
@@ -56,6 +71,7 @@ Vincent Ballenegger
 Vladimir Lobaskin
 Zunjing Wang
 
-Special thanks go to:
----------------------
-Henrik Skov Midtiby for providing a GPL version of todonotes.sty.
+Special thanks
+--------------
+Special thanks to Henrik Skov Midtiby for providing a GPL version of
+todonotes.sty.
