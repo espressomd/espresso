@@ -100,9 +100,9 @@ int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror)
 
   mmm1d_params.far_switch_radius_2 = (switch_rad > 0) ? SQR(switch_rad) : -1;
   mmm1d_params.bessel_cutoff = bessel_cutoff;
-  // if parameters come from here they are never calculated
-  // that is only the case if you call tclcommand_inter_coulomb_print_mmm1d_parameteres, which then changes
-  // this flag
+  /* if parameters come from here they are never calculated that is
+     only the case if you call mmm1d_tune, which then
+     changes this flag */
   mmm1d_params.bessel_calculated = 0;
 
   mmm1d_params.maxPWerror = maxPWerror;
@@ -332,11 +332,8 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
   return chpref*E;
 }
 
-
-/* TODO: separate tcl / nontcl code */
-/** \todo This is not really a Tcl command
-*/
-int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp)
+/// \todo separate out Tcl stuff
+int mmm1d_tune(Tcl_Interp *interp)
 {
   char buffer[32 + 2*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   double int_time, min_time=1e200, min_rad = -1;
