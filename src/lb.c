@@ -465,7 +465,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       /** print of the calculated phys values */
-      fprintf(fp, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+      fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
     }
     free(host_values);
 #endif
@@ -486,7 +486,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 			    for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
 			    {
 				    lb_lbnode_get_u(pos, u);
-				    fprintf(fp, "%f %f %f \n", u[0], u[1], u[2]);
+				    fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
 			    }
 #endif     
   }
@@ -959,8 +959,8 @@ MDINLINE void halo_push_communication() {
   rbuf = malloc(count*sizeof(double));
 
   /* send to right, recv from left i = 1, 7, 9, 11, 13 */
-  snode = node_neighbors[0];
-  rnode = node_neighbors[1];
+  snode = node_neighbors[1];
+  rnode = node_neighbors[0];
 
   buffer = sbuf;
   index = get_linear_index(lblattice.grid[0]+1,0,0,lblattice.halo_grid);
@@ -1003,8 +1003,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 2, 8, 10, 12, 14 */
-  snode = node_neighbors[1];
-  rnode = node_neighbors[0];
+  snode = node_neighbors[0];
+  rnode = node_neighbors[1];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1054,8 +1054,8 @@ MDINLINE void halo_push_communication() {
   rbuf = realloc(rbuf, count*sizeof(double));
 
   /* send to right, recv from left i = 3, 7, 10, 15, 17 */
-  snode = node_neighbors[2];
-  rnode = node_neighbors[3];
+  snode = node_neighbors[3];
+  rnode = node_neighbors[2];
 
   buffer = sbuf;
   index = get_linear_index(0,lblattice.grid[1]+1,0,lblattice.halo_grid);
@@ -1100,8 +1100,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 4, 8, 9, 16, 18 */
-  snode = node_neighbors[3];
-  rnode = node_neighbors[2];
+  snode = node_neighbors[2];
+  rnode = node_neighbors[3];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1153,8 +1153,8 @@ MDINLINE void halo_push_communication() {
   rbuf = realloc(rbuf, count*sizeof(double));
   
   /* send to right, recv from left i = 5, 11, 14, 15, 18 */
-  snode = node_neighbors[4];
-  rnode = node_neighbors[5];
+  snode = node_neighbors[5];
+  rnode = node_neighbors[4];
 
   buffer = sbuf;
   index = get_linear_index(0,0,lblattice.grid[2]+1,lblattice.halo_grid);
@@ -1197,8 +1197,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 6, 12, 13, 16, 17 */
-  snode = node_neighbors[5];
-  rnode = node_neighbors[4];
+  snode = node_neighbors[4];
+  rnode = node_neighbors[5];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
