@@ -148,6 +148,8 @@ int iccp3m_iteration() {
    char* errtxt;
    double globalmax;
 
+   iccp3m_sanity_check();
+
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
      	errtxt = runtime_error(128);
@@ -717,6 +719,40 @@ void iccp3m_store_forces() {
        iccp3m_cfg.fz[part[i].p.identity]=part[i].f.f[2];
      }
    }
+}
+
+int iccp3m_sanity_check()
+{
+  switch (coulomb.method) {
+    case COULOMB_ELC_P3M: {
+      if (elc_params.dielectric_contrast_on) {
+	char *errtxt = runtime_error(128);
+	ERROR_SPRINTF(errtxt, "ICCP3M conflicts with ELC dielectric constrast");
+	return 1;
+      }
+      break;
+    }
+    case COULOMB_DH: {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
+      return 1;
+    }
+    case COULOMB_RF: {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
+      return 1;
+    }
+  }
+  
+#ifdef NPT
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "ICCP3M does not work in the NPT ensemble");
+    return 1;
+  }
+#endif
+
+  return 0;
 }
 
 #endif
