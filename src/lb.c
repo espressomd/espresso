@@ -934,6 +934,10 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
 }
 #endif
 
+int lb_lbnode_set_extforce(int* ind, double* f) {
+  return -100;
+}
+
 #ifdef LB
 /********************** The Main LB Part *************************************/
 
