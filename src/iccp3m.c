@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -724,6 +724,7 @@ void iccp3m_store_forces() {
 int iccp3m_sanity_check()
 {
   switch (coulomb.method) {
+#ifdef P3M
     case COULOMB_ELC_P3M: {
       if (elc_params.dielectric_contrast_on) {
 	char *errtxt = runtime_error(128);
@@ -732,6 +733,7 @@ int iccp3m_sanity_check()
       }
       break;
     }
+#endif
     case COULOMB_DH: {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
