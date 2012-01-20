@@ -27,6 +27,7 @@
 #include "communication.h"
 #include "parser.h"
 #include "cells.h"
+#include "grid.h"
 
 /** \name Privat Functions */
 /************************************************************/

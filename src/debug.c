@@ -278,7 +278,7 @@ void check_particles()
   is_here = malloc((max_seen_particle + 1)*sizeof(int));
   memset(is_here, 0, (max_seen_particle + 1)*sizeof(int));
 
-  MPI_Bcast(particle_node, max_seen_particle + 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(particle_node, max_seen_particle + 1, MPI_INT, 0, comm_cart);
 
   /* checks: part_id, part_pos, local_particles id */
   for (c = 0; c < local_cells.n; c++) {

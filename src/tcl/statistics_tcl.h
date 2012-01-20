@@ -19,10 +19,8 @@
 */
 #ifndef STATISTICS_TCL_H
 #define STATISTICS_TCL_H
-/** \file statistics.h
-    This file contains the code for statistics on the data.
-*/
-
+#include "config.h"
+#include <tcl.h>
 
 /** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
     both online and offline.

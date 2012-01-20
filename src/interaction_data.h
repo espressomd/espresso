@@ -930,7 +930,10 @@ void realloc_tf_params(int nsize);
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
     verlet.h). */
-void calc_maximal_cutoff();
+void recalc_maximal_cutoff();
+
+/** call when the temperature changes, for Bjerrum length adjusting. */
+void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
 int check_obs_calc_initialized();

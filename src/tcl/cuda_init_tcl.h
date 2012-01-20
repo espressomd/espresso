@@ -18,6 +18,8 @@
 */
 #ifndef CUDA_INIT_TCL_H
 #define CUDA_INIT_TCL_H
+#include "config.h"
+#include <tcl.h>
 
 /** Tcl-command to set the CUDA device to use or retrieve information
     available devices. */

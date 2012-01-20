@@ -20,15 +20,8 @@
 */
 #ifndef MAG_NON_P3M_TCL_H
 #define MAG_NON_P3M_TCL_H
-/** \file magnetic_non_p3m_methods.h   Header of all 3d non P3M methods to deal with the magnetic dipoles
- *   
- *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
- *  Handling of a system of dipoles where no replicas exist
- *  assuming minimum image convention
- *
- *  MDDS => Magnetic dipoles direct sum, compute the interactions via direct sum, 
- *
- */
+#include "config.h"
+#include <tcl.h>
 
 #ifdef DIPOLES
 
@@ -42,7 +35,6 @@ int tclprint_to_result_DAWAANR(Tcl_Interp *interp);
          
 /* Parsing function for the dawaanr method*/
 int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv);
-
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS               

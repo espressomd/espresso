@@ -27,6 +27,7 @@
 
 
 #include "statistics_cluster.h"
+#include "grid.h"
 
 /** NULL terminated linked list of elements of a cluster (indices in particle list) */
 ClusterElement *element;

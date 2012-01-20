@@ -78,11 +78,19 @@ void on_constraint_change();
 /** called whenever the cutoff has potentially changed. */
 void on_max_cut_change();
 
-/** called every time the cell structure is changed. */
+/** called every time the box length has changed. This routine
+    is relatively fast, and changing the box length every time step
+    as for example necessary for NpT is more or less ok. */
+void on_boxl_change();
+
+/** called every time a major change to the cell structure has
+    happened, like the skin or grid have changed. This one is
+    potentially slow. */
 void on_cell_structure_change();
 
-/** called every time the NpT-integrator communicated the updated box-length. */
-void on_NpT_boxl_change();
+/** called every time the temperature changes. This one is
+    potentially slow. */
+void on_temperature_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
     this does not happen automatically. The callback procedure of the changed

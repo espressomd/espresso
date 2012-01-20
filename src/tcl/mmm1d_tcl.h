@@ -28,9 +28,8 @@
 #ifndef MMM1D_TCL_H
 #define MMM1D_TCL_H
 
+#include "config.h"
 #include <tcl.h>
-//#include "utils.h"
-//#include "particle_data.h"
 
 #ifdef ELECTROSTATICS
 

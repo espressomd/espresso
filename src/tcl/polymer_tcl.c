@@ -32,6 +32,7 @@
 #include "communication.h"
 #include "interaction_data.h"
 #include "parser.h"
+#include "grid.h"
 
 /************************************************************* 
  * Functions                                                 *

@@ -20,27 +20,17 @@
 */
 #ifndef _LJCOS_TCL_H
 #define _LJCOS_TCL_H
-/** \file ljcos.h
- *  Routines to calculate the lennard jones+cosine energy and/or force 
- *  for a particle pair.
- *  \ref forces.c
-*/
 
-#include "utils.h"
+#include "config.h"
+#include <tcl.h>
 
 #ifdef LJCOS
-
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
 
 int tclprint_to_result_ljcosIA(Tcl_Interp *interp, int i, int j);
 
 int tclcommand_inter_parse_ljcos(Tcl_Interp * interp,
-			  int part_type_a, int part_type_b,
-			  int argc, char ** argv);
-
+				 int part_type_a, int part_type_b,
+				 int argc, char ** argv);
 
 #endif
 #endif

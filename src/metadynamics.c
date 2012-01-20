@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "metadynamics.h"
+#include "errorhandling.h"
+#include "grid.h"
 
 /** \file metadynamics.h 
 *
@@ -102,7 +104,7 @@ void meta_perform()
 {
    if(meta_switch == META_OFF)  return;
    
-   double ppos1[3], ppos2[3], factor;
+   double ppos1[3] = {0,0,0}, ppos2[3] = {0,0,0}, factor;
    int img1[3], img2[3], c, i, np, flag1 = 0, flag2 = 0;
    Particle *p, *p1 = NULL, *p2 = NULL;
    Cell *cell;

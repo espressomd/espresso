@@ -56,7 +56,7 @@ void lb_calc_fluid_mass(double *result) {
     }
   }
 
-  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 /** Calculate momentum of the LB fluid.
@@ -85,7 +85,7 @@ void lb_calc_fluid_momentum(double *result) {
     momentum[1] *= lblattice.agrid/lbpar.tau;
     momentum[2] *= lblattice.agrid/lbpar.tau;
 
-    MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     
 }
 
@@ -111,7 +111,7 @@ void lb_calc_fluid_temp(double *result) {
 
   temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
 
-  MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 void lb_collect_boundary_forces(double *result) {
@@ -122,7 +122,7 @@ void lb_collect_boundary_forces(double *result) {
     for (int j = 0; j < 3; j++)
       boundary_forces[3*i+j]=lb_boundaries[i].force[j];
 
-  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(boundary_forces);
 #endif
 }
@@ -139,7 +139,7 @@ void lb_calc_densprof(double *result, int *params) {
 
   if (this_node !=0) params = malloc(3*sizeof(int));
 
-  MPI_Bcast(params, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(params, 3, MPI_INT, 0, comm_cart);
 
   int pdir = params[0];
   int x1   = params[1];
@@ -157,7 +157,7 @@ void lb_calc_densprof(double *result, int *params) {
     involved = 1;
   }
 
-  MPI_Comm_split(MPI_COMM_WORLD, involved, this_node, &slice_comm);
+  MPI_Comm_split(comm_cart, involved, this_node, &slice_comm);
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
@@ -195,11 +195,11 @@ void lb_calc_densprof(double *result, int *params) {
 
   if (newroot != 0) {
     if (this_node == newroot) {
-      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_DENSPROF, MPI_COMM_WORLD);
+      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_DENSPROF, comm_cart);
       free(result);
     }
     if (this_node == 0) {
-      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_DENSPROF, MPI_COMM_WORLD, &status);
+      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_DENSPROF, comm_cart, &status);
     }
   }
 
@@ -220,7 +220,7 @@ void lb_calc_velprof(double *result, int *params) {
 
   if (this_node != 0) params = malloc(4*sizeof(int));
 
-  MPI_Bcast(params, 4, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(params, 4, MPI_INT, 0, comm_cart);
 
   int vcomp = params[0];
   int pdir  = params[1];
@@ -243,7 +243,7 @@ void lb_calc_velprof(double *result, int *params) {
     involved = 1;
   }
 
-  MPI_Comm_split(MPI_COMM_WORLD, involved, this_node, &slice_comm);
+  MPI_Comm_split(comm_cart, involved, this_node, &slice_comm);
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
@@ -293,12 +293,12 @@ void lb_calc_velprof(double *result, int *params) {
 
   if (newroot != 0) {
     if (this_node == newroot) {
-      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_VELPROF, MPI_COMM_WORLD);
+      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_VELPROF, comm_cart);
       free(result);
     }
     if (this_node == 0) {
       //fprintf(stderr,"%d: I'm just here!\n",this_node);
-      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_VELPROF, MPI_COMM_WORLD, &status);
+      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_VELPROF, comm_cart, &status);
       //fprintf(stderr,"%d: And now I'm here!\n",this_node);
     }
   }

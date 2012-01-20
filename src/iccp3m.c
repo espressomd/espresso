@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -95,7 +95,7 @@ int bcast_iccp3m_cfg(void){
   int i;
 
 
-  MPI_Bcast((int*)&iccp3m_cfg.last_ind_id, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+  MPI_Bcast((int*)&iccp3m_cfg.last_ind_id, 1, MPI_INT, 0, comm_cart); 
 
   /* allocates Memory on slave nodes 
    * Master node allocates the memory when parsing tcl arguments
@@ -112,27 +112,27 @@ int bcast_iccp3m_cfg(void){
   }
 
 
-  MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, MPI_COMM_WORLD); 
-  MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((int*)&iccp3m_cfg.update, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
+  MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((int*)&iccp3m_cfg.update, 1, MPI_INT, 0, comm_cart);
   
   /* broadcast the vectors element by element. This is slow
    * but safe and only performed at the beginning of each simulation*/
   for ( i = 0; i < iccp3m_cfg.last_ind_id +1; i++) {
-    MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.extx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.exty[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.extz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.extx[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.exty[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.extz[i], 1, MPI_DOUBLE, 0, comm_cart);
   }
 
-  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, comm_cart);
 
   printf("node %d: no iterations: %d\n", this_node, iccp3m_cfg.num_iteration);
   return 0 ;
@@ -147,6 +147,8 @@ int iccp3m_iteration() {
    int i, j,id;
    char* errtxt;
    double globalmax;
+
+   iccp3m_sanity_check();
 
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
@@ -219,7 +221,7 @@ int iccp3m_iteration() {
            // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
        } /* local cells */
        iccp3m_cfg.citeration++;
-       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
 
        if (globalmax < iccp3m_cfg.convergence) 
          break; 
@@ -598,17 +600,13 @@ void calc_long_range_forces_iccp3m()
     break;
 
     case COULOMB_P3M:
-         p3m_charge_assign();
-
-#ifdef NPT
-        if(integ_switch == INTEG_METHOD_NPT_ISO) exit(0);
-#endif
-        p3m_calc_kspace_forces(1,0);
+       p3m_charge_assign();
+       p3m_calc_kspace_forces(1,0);
     break;
 #endif
     case COULOMB_MMM2D:
-        MMM2D_add_far_force();
-        MMM2D_dielectric_layers_force_contribution();
+       MMM2D_add_far_force();
+       MMM2D_dielectric_layers_force_contribution();
   }
 
 #endif
@@ -721,6 +719,42 @@ void iccp3m_store_forces() {
        iccp3m_cfg.fz[part[i].p.identity]=part[i].f.f[2];
      }
    }
+}
+
+int iccp3m_sanity_check()
+{
+  switch (coulomb.method) {
+#ifdef P3M
+    case COULOMB_ELC_P3M: {
+      if (elc_params.dielectric_contrast_on) {
+	char *errtxt = runtime_error(128);
+	ERROR_SPRINTF(errtxt, "ICCP3M conflicts with ELC dielectric constrast");
+	return 1;
+      }
+      break;
+    }
+#endif
+    case COULOMB_DH: {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
+      return 1;
+    }
+    case COULOMB_RF: {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
+      return 1;
+    }
+  }
+  
+#ifdef NPT
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "ICCP3M does not work in the NPT ensemble");
+    return 1;
+  }
+#endif
+
+  return 0;
 }
 
 #endif

@@ -18,42 +18,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-//
-
-/** \file iccp3m.h 
-
-    ICCP3M is a method that allows to take into account the influence
-    of arbitrarliy shaped dielectric interfaces.  The dielectric
-    properties of a dielectric medium in the bulk of the simulation
-    box are taken into account by reproducing the jump in the electric
-    field at the inface with charge surface segments. The charge
-    density of the surface segments have to be determined
-    self-consistently using an iterative scheme.  It can at presently
-    - despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D.
-    For details see:<br> S. Tyagi, M. Suzen, M. Sega, C. Holm,
-    M. Barbosa: A linear-scaling method for computing induced charges
-    on arbitrary dielectric boundaries in large system simulations
-    (Preprint)
-
-    To set up ICCP3M first the dielectric boundary has to be modelled
-    by espresso particles 0..n where n has to be passed as a parameter
-    to ICCP3M. This is still a bit inconvenient, as it forces the user
-    to reserve the first n particle ids to wall charges, but as the
-    other parts of espresso do not suffer from a limitation like this,
-    it can be tolerated.
-    
-    For the determination of the induced charges only the forces
-    acting on the induced charges has to be determined. As P3M an the
-    other coulomb solvers calculate all mutual forces, the force
-    calculation was modified to avoid the calculation of the short
-    range part of the source-source force calculation.  For different
-    particle data organisation schemes this is performed differently.
-    */
-
 #ifndef _ICCP3M_TCL_H
 #define _ICCP3M_TCL_H
 
 #if defined(ELECTROSTATICS)
+#include "config.h"
+#include <tcl.h>
 
 /** Implementation of the tcl-command <br>
     iccp3m  { \<last_ind_id\> \<e1\> \<num_iteration\> \<convergence\> \<relaxation\> \<area\> \<normal_components\> \<e_in/e_out\>  [\<ext_field\>] | iterate } 

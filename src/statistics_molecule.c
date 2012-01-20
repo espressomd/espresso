@@ -22,6 +22,8 @@
     see \ref statistics_molecule.h
 */
 #include "statistics_molecule.h"
+#include "errorhandling.h"
+#include "grid.h"
 
 /* new version for new topology structure */
 int analyze_fold_molecules(float *coord, double shift[3])

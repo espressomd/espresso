@@ -189,8 +189,11 @@ void integrate_vv(int n_steps)
     if (check_runtime_errors()) return;
 #ifdef ADRESS
     //    adress_update_weights();
-   if (check_runtime_errors()) return;
+    if (check_runtime_errors()) return;
 #endif
+#endif
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
    force_calc();
@@ -221,6 +224,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     rescale_forces();
     recalc_forces = 0;
+    
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
   }
 
   if (check_runtime_errors())
@@ -251,7 +258,8 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    cells_update_ghosts();
+
     correct_pos_shake();
 #endif
 
@@ -296,6 +304,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 1;
+#endif
+
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
     force_calc();
@@ -357,6 +369,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     }
 #endif
 
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
+
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
@@ -373,11 +389,11 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.invalidate_p_vel = 0;
-    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
     if(this_node==0) nptiso.p_inst_av /= 1.0*n_steps;
-    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
 
@@ -505,7 +521,7 @@ void finalize_p_inst_npt()
       }
     }
 
-    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     if (this_node == 0) {
       nptiso.p_inst = p_tmp/(nptiso.dimension*nptiso.volume);
       nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
@@ -546,7 +562,7 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[1] = L_new/box_l[nptiso.non_const_dim];
       scal[0] = 1/scal[1];
     }
-    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, comm_cart);
 
     /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
@@ -591,8 +607,12 @@ void propagate_press_box_pos_and_rescale_npt()
 	}
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    on_NpT_boxl_change();
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
+
+    /* fast box length update */
+    grid_changed_box_l();
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(CELL_FLAG_FAST);
   }
 #endif
 }

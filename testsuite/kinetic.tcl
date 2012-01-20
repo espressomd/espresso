@@ -57,16 +57,6 @@ if { [catch {
     part 1 pos $x2 0.0 0.0 type 1 q $q2 v $v2 0.0 0.0
 
     for {set i 0} {$i<$maxstep} {incr i} {
-	integrate 0
-	puts $i
-	puts [setmd time]
-	puts [part 0 pr pos v f]
-	puts [part 1 pr pos v f]
-	puts [analyze energy]
-
-	puts [setmd max_cut_nonbonded]
-	puts [setmd max_cut]
-
 	integrate 1
 
 	set pos [part 1 print pos]; set x [lindex $pos 0]; set y [lindex $pos 1]; set z [lindex $pos 2]

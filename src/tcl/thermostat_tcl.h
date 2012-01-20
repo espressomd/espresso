@@ -20,50 +20,9 @@
 */
 #ifndef _THERMOSTAT_TCL_H
 #define _THERMOSTAT_TCL_H
-/** \file thermostat.h 
-
-*/
-
+#include "config.h"
 #include <tcl.h>
-
-/** \name Thermostat switches*/
-/************************************************************/
-/*@{*/
-
-#define THERMO_OFF        0
-#define THERMO_LANGEVIN   1
-#define THERMO_DPD        2
-#define THERMO_NPT_ISO    4
-#define THERMO_LB         8
-#define THERMO_INTER_DPD  16
-
-/*@}*/
-
-/************************************************
- * exported variables
- ************************************************/
-
-/** Switch determining which thermostat to use. This is a or'd value
-    of the different possible thermostats (defines: \ref THERMO_OFF,
-    \ref THERMO_LANGEVIN, \ref THERMO_DPD \ref THERMO_NPT_ISO). If it
-    is zero all thermostats are switched off and the temperature is
-    set to zero.  */
-extern int thermo_switch;
-
-/** temperature. */
-extern double temperature;
-
-/** Langevin friction coefficient gamma. */
-extern double langevin_gamma;
-
-/** Friction coefficient for nptiso-thermostat's inline-function friction_therm0_nptiso */
-extern double nptiso_gamma0;
-/** Friction coefficient for nptiso-thermostat's inline-function friction_thermV_nptiso */
-extern double nptiso_gammav;
-
-/************************************************
- * functions
- ************************************************/
+#include "thermostat.h"
 
 /** Implementation of the tcl command \ref tclcommand_thermostat. This function
     allows to change the used thermostat and to set its parameters.

@@ -19,26 +19,9 @@
 */
 #ifndef NEMD_TCL_H
 #define NEMD_TCL_H
-/** \file nemd.h
-
-    This file contains the implementation of the NEMD (Non Equilibrium
-    Molecular Dynamics) algorithm. It allows one to shear a system
-    with help of an unphysical momentum change in two slabs in the
-    system.
- */
-
+#include "config.h"
+#include <tcl.h>
 #include "nemd.h"
-#include "particle_data.h"
-
-#define NEMD_METHOD_OFF       0
-#define NEMD_METHOD_EXCHANGE  1
-#define NEMD_METHOD_SHEARRATE 2
-
-
-/************************************************************/
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** tcl procedure for nemd steering.
     USAGE: nemd \<n_slabs\> \<n_exchange\>   

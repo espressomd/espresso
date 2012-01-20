@@ -19,11 +19,9 @@
 */
 #ifndef DPD_TCL_H
 #define DPD_TCL_H
-/** \file dpd.h
- *  Routines to use dpd as thermostat or pair force
- *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
- *  \ref forces.c
-*/
+
+#include "config.h"
+#include <tcl.h>
 
 #ifdef DPD
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);

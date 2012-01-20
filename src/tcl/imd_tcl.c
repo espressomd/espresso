@@ -27,9 +27,10 @@
 #include <errno.h>
 #include <tcl.h>
 #include "vmdsock.h"
-#include "../imd.h"
+#include "imd.h"
 #include "particle_data.h"
 #include "parser.h"
+#include "grid.h"
 #include "statistics_molecule.h"
 
 
@@ -38,8 +39,6 @@ static void *initsock = 0;
 static void *sock = 0;
 
 #include <inttypes.h>
-
-
 
 /***************************** Espresso stuff ************************/
 

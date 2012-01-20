@@ -73,17 +73,15 @@ int MMM1D_sanity_checks();
 void MMM1D_init();
 
 ///
-void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2,
+void add_mmm1d_coulomb_pair_force(double chprf, double d[3], double dist2,
 				  double dist, double force[3]);
 
 ///
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);
 
-/** tuning of the parameters which are not set by the user, e.g. the switching radius or the
-    bessel_cutoff. 
-    \todo This is not really a Tcl command
-*/
-int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp);
+/** tuning of the parameters which are not set by the user, e.g. the
+    switching radius or the bessel_cutoff.x */
+int mmm1d_tune(Tcl_Interp *interp);
 
 #endif
 #endif

@@ -20,11 +20,10 @@
 */
 #ifndef _VIRTUAL_SITES_COM_TCL_H
 #define _VIRTUAL_SITES_COM_TCL_H
-
 #include "config.h"
+#include <tcl.h>
 
 #ifdef VIRTUAL_SITES_COM
-//#include "particle_data.h"
 
 // Analyze the pressure on the molecule level
 int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);

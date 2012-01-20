@@ -21,12 +21,11 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 #include <tcl.h>
-/** \file global.h
-    This file contains the code for access to globally defined
-    variables using the script command setmd. \ref add_vars "Here"
-    you can find details on how to add new variables in the interpreter's
-    space.
-*/
+/** \file global.h This file contains the code for access to globally
+    defined variables using the script command setmd. Please refer to
+    the Developer's guide, section "Adding global variables", for
+    details on how to add new variables in the interpreter's
+    space.  */
 
 /** type int (SetCallback)(Tcl_Interp *interp, void *data)
     Type for the write callback procedure of \ref Datafield */
@@ -176,6 +175,8 @@ extern const Datafield fields[];
 #define FIELD_ADRESS              42
 /** index of \ref max_cut_bonded in \ref #fields */
 #define FIELD_MCUT_BONDED         43
+/** index of \ref transfer_rate in \ref #fields */
+#define FIELD_TRANSFER_RATE       44
 /*@}*/
 
 #endif

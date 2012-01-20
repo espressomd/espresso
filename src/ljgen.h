@@ -49,7 +49,6 @@ MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 				   double d[3], double dist, double force[3])
 {
   if (dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset) {
-    fprintf(stderr, "dist=%lf ljgen=%lf\n", dist, (ia_params->LJGEN_cut+ia_params->LJGEN_offset));
     int j;
     double r_off, frac, fac=0.0;
     r_off = dist - ia_params->LJGEN_offset;

@@ -389,3 +389,4 @@ void resize_verlet_list(PairList *pl)
     pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
 }
+

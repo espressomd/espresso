@@ -20,28 +20,7 @@
 */
 #ifndef _GRID_TCL_H
 #define _GRID_TCL_H
-/** \file grid.h   Domain decomposition for parallel computing.
- *
- *  The primary simulation box is divided into orthogonal rectangular
- *  subboxes which are assigned to the different nodes (or processes
- *  or threads if you want). This grid is described in \ref
- *  node_grid. Each node has a number \ref this_node and a position
- *  \ref node_pos in that grid. Each node has also 6 nearest neighbors
- *  \ref node_neighbors which are necessary for the communication
- *  between the nodes (see also \ref ghosts.c and \ref p3m.c for more
- *  details about the communication.
- *
- *  For the 6 directions \anchor directions we have the following convention:
- *
- *  \image html directions.gif "Convention for the order of the directions"
- *
- *  The Figure illustrates the direction convetion used for arrays
- *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
- *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
- *  
- *
- *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
-*/
+#include "config.h"
 #include <tcl.h>
 
 /** \name Exported Functions */
@@ -63,6 +42,6 @@ int tclcallback_box_l(Tcl_Interp *interp, void *_data);
 /** changes the volume by resizing the box and isotropically adjusting the particles coordinates as well */
 int tclcommand_change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-
 /*@}*/
+
 #endif

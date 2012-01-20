@@ -122,4 +122,4 @@ if { [catch {
    puts " P3M magnetostatics: test-1  oK"
 }
 
- 
+exit 0

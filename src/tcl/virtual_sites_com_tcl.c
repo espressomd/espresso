@@ -24,9 +24,9 @@
 
 #include "parser.h"
 #include "virtual_sites.h"
-//#include "cells.h"
 #include "topology.h"
-//#include "forces.h"
+#include "grid.h"
+#include "errorhandling.h"
 
 int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv)
 {

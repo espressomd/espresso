@@ -144,3 +144,4 @@ if { [catch {
     error_exit $res
 }
 
+exit 0

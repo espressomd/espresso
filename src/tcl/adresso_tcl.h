@@ -31,10 +31,9 @@
     For more detail about the implementation here see:
     - C. Junghans and S. Poblete, Comp. Phys. Comm. 181, 1449, 2010.
 */
-
+#include "config.h"
+#include <tcl.h>
 #include "particle_data.h"
-
-
 
 /** \name Exported Variables */
 /************************************************************/
@@ -60,9 +59,6 @@ int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int 
 int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
 int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 /* #endif */
-
-
-
 
 /* #endif */
 

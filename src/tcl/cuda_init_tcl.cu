@@ -17,12 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include <cuda.h>
-#include "utils.h"
-#include "parser.h"
 // CUDA code is always interpreted as C++, so we need the extern C interface
 
 extern "C" {
 
+#include "utils.h"
+#include "parser.h"
 #include "cuda_init.h"
 #include "cuda_init_tcl.h"
 

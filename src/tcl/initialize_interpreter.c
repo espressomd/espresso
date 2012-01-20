@@ -37,6 +37,7 @@
 #include "uwerr_tcl.h"
 #include "virtual_sites_com_tcl.h"
 #include "cuda_init_tcl.h"
+#include "collision_tcl.h"
 
 #define REGISTER_COMMAND(name, routine)					\
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
@@ -120,5 +121,8 @@ void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef CUDA
   REGISTER_COMMAND("cuda", tclcommand_cuda);
 #endif
-
+  /* from collision.c */
+#ifdef COLLISION_DETECTION
+  REGISTER_COMMAND("on_collision", tclcommand_on_collision);
+#endif
 }

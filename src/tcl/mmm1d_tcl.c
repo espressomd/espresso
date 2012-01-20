@@ -105,7 +105,7 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
   }
 
   MMM1D_set_params(switch_rad, bessel_cutoff, maxPWerror);
-  return tclcommand_inter_coulomb_print_mmm1d_parameteres(interp);
+  return mmm1d_tune(interp);
 }
 
 #endif
