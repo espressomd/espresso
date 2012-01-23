@@ -1,0 +1,27 @@
+LENNARD_JONES
+PARTIAL_PERIODIC
+ELECTROSTATICS
+VIRTUAL_SITES_COM	implies VIRTUAL_SITES
+VIRTUAL_SITES_COM	excludes VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES_RELATIVE	implies VIRTUAL_SITES
+VIRTUAL_SITES_RELATIVE 	excludes VIRTUAL_SITES_COM
+ADRESS			requires VIRTUAL_SITES
+ADDRESS			implies MOL_CUT
+DPD_MASS_RED		excludes DPD_MASS_LIN
+DPD_MASS_LIN		excludes DPD_MASS_RED
+
+# LB
+LB
+LB_GPU			implies LATTICE
+LB_BOUNDARIES		requires LB
+LB_BOUNDARIES_GPU	requires LB_GPU
+LB_ELECTROHYDRODYNAMICS	implies LB
+
+# internal switches
+LATTICE			internal
+VIRTUAL_SITES		internal
+
+# implies A and B
+# requires A or B
+# excludes A and B = requires not (A or B)
+# internal   	 Not a user option, not in sample file
