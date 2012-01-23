@@ -50,7 +50,6 @@ set(ESPRESSO_MYCONFIG_NAME "myconfig.h"
 include(TestC99)
 test_c99(C99_FLAG)
 if(C99_FLAG)
-  message(STATUS "Compiler option for C99: ${C99_FLAG}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C99_FLAG}")
 else(C99_FLAG)
   message(FATAL_ERROR "Compiling ESPResSo requires a C99 compiler.")
