@@ -57,7 +57,6 @@ endif(C99_FLAG)
 
 include(EspTestInline)
 esp_test_inline(MDINLINE)
-message(STATUS "Inline keyword: ${MDINLINE}")
 
 ######################################################################
 # Fix stupid flags on MSVC
