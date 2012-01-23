@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,17 +18,17 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLEDIST_H
-#define ANGLEDIST_H
+#ifndef _ANGLEDIST_H
+#define _ANGLEDIST_H
 /** \file angledist.h
  *  Routines to calculate the angle and distance dependent (from a constraint) energy or/and and force
  *  for a particle triple.
  *  \ref forces.c
 */
 
-#ifdef BOND_ANGLEDIST
-
 #include "utils.h"
+
+#ifdef BOND_ANGLEDIST
 
 /************************************************************/
 
@@ -114,7 +115,7 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
 {
   double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist1=0.0, dist2=0.0, phi0=0.0;
   //  double pwdist=0.0, pwdist0=0.0, pwdist1=0.0;
-  double normal, force[3], folded_pos[3], phimn=0.0, distmn=0.0, phimx=0.0, distmx=0.0, drange=0.0;
+  double normal, folded_pos[3], phimn=0.0, distmn=0.0, phimx=0.0, distmx=0.0, drange=0.0;
   double pwdist[n_constraints],pwdistmin=0.0;
   Constraint_wall wall;
   int j, k;
@@ -152,9 +153,6 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
     pwdist[k]=0.0;
   }
   for(k=0;k<n_constraints;k++) {
-    for (j=0; j<3; j++) {
-      force[j] = 0;
-    }
     switch(constraints[k].type) {
       case CONSTRAINT_WAL: 
 
@@ -206,7 +204,7 @@ MDINLINE double calc_angledist_param(Particle *p_mid, Particle *p_left, Particle
 MDINLINE int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p_right,
                                   Bonded_ia_parameters *iaparams, double force1[3], double force2[3])
 {
-  double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist2, fac=0.0, f1=0.0, f2=0.0, phi0=0.0;
+  double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist2, fac=0.0, f1=0.0, f2=0.0, phi0;
   int j;
 
   /* vector from p_left to p_mid */
@@ -222,8 +220,8 @@ MDINLINE int calc_angledist_force(Particle *p_mid, Particle *p_left, Particle *p
   /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   fac    = iaparams->p.angledist.bend;
-  /* NOTE The angledist is ONLY implemented for the HARMONIC case */
-  phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
+  /* NOTE: The angledist is ONLY implemented for the HARMONIC case */
+  phi0 = calc_angledist_param(p_mid, p_left, p_right, iaparams);
 
 #ifdef BOND_ANGLEDIST_HARMONIC
   {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,7 +27,6 @@
 #ifndef LB_H
 #define LB_H
 
-#include <tcl.h>
 #include "utils.h"
 #include "lattice.h"
 
@@ -270,16 +269,20 @@ void calc_particle_lattice_ia();
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
 
 
-/** Calculate the local fluid density.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param rho local fluid density
+/** Calculation of hydrodynamic modes.
+ *
+ *  @param index number of the node to calculate the modes for
+ *  @param mode output pointer to a double[19] 
  */
-
-/** Calculation of hydrodynamic modes */
 void lb_calc_modes(index_t index, double *mode);
 
+void lb_check_halo_regions();
 
+/** Calculate the local fluid density.
+ * The calculation is implemented explicitly for the special case of D3Q19.
+ * @param index the local lattice site (Input).
+ * @param rho   local fluid density
+ */
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -545,14 +548,6 @@ MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
 }
 #endif
 
-#endif // LB
-/** Parser for the TCL command lbfluid. */
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-/** Parser for the lbnode command. */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-#ifdef LB
-
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index The local lattice site (Input).
@@ -572,6 +567,8 @@ MDINLINE void lb_set_populations(index_t index, double* pop) {
   }
 }
 #endif
+
+#include "lbgpu.h"
 
 #if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
@@ -616,11 +613,7 @@ int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
 #endif
-#ifdef LB
-void lb_check_halo_regions();
 
-#endif /* LB */
-
-#endif /* LB_H */
+#endif /* _LB_H */
 
 /*@}*/

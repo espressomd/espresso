@@ -56,7 +56,7 @@
 #include "particle_data.h"
 #include "random.h"
 #include "topology.h"
-
+#include <mpi.h>
 /**************************************************
  * exported variables
  **************************************************/
@@ -68,6 +68,7 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 /*@}*/
+extern MPI_Comm comm_cart;
 
 /**************************************************
  * for every procedure requesting a MPI negotiation

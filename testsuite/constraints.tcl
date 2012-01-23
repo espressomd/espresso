@@ -149,7 +149,7 @@ if { [catch {
 	set de [expr abs([lindex [lindex $energy $i] 3]-[lindex [lindex $new_energy $i] 3]) ]
 	if { $de > $maxde } { set maxde $de }
 	if { $de > $epsilon } {
-	    puts "Energy Error for [lindex $new_energy $i]: deviation $maxde"
+	    puts "Energy Error for [lindex $new_energy $i] vs. [lindex $energy $i]: deviation $maxde"
 	    #	    error "energy error too large"
 	}
     }

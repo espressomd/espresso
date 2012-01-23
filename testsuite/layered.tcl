@@ -150,4 +150,6 @@ test_catch {
     if { [expr abs([setmd verlet_reuse] - $verlet_reuse)] > $epsilon } {
 	error "verlet reuse frequency differs."
     }
-} 
+}
+
+exit 0

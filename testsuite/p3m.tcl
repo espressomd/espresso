@@ -94,9 +94,9 @@ if { [catch {
 
     set rel_prs_error [expr abs(($curprs - $pressure)/$pressure)]
     puts "p3m-charges: relative pressure deviations: $rel_prs_error"
-#    if { $rel_prs_error > $epsilon } {
-#	error "p3m charges: relative pressure error too large"
-#    }
+    if { $rel_prs_error > $epsilon } {
+	error "p3m charges: relative pressure error too large"
+    }
 
 
     ############## end, here RMS force error for P3M
@@ -126,8 +126,8 @@ if { [catch {
    part deleteall
    inter coulomb 0.0
 
-        
 } res ] } {
     error_exit $res
 }
 
+exit 0

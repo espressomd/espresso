@@ -184,7 +184,7 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
      and the relative position of the particle in this cell */ 
   for (dir=0;dir<3;dir++) {
 
-    rel = (lpos = pos[dir] - my_left[dir])/lattice->agrid + 1.0; // +1 for halo offset
+    rel = (lpos = pos[dir] - my_left[dir])/lattice->agrid + 0.5; // +1 for halo offset
     ind[dir] = (int)floor(rel);
     
     /* surrounding elementary cell is not completely inside this box,

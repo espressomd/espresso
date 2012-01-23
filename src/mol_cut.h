@@ -25,6 +25,8 @@
 #include "virtual_sites.h"
 #include "particle_data.h"
 #include "interaction_data.h"
+#include "communication.h"
+#include "parser.h"
 #include <tcl.h>
 
 #ifdef MOL_CUT
@@ -73,24 +75,15 @@ MDINLINE int tclprint_to_result_molcutIA(Tcl_Interp *interp, int i, int j)
 
 MDINLINE int molcut_set_params(int part_type_a, int part_type_b,int mol_cut_type,double mol_cut_cutoff)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  data->mol_cut_type         = data_sym->mol_cut_type         = mol_cut_type;
-  data->mol_cut_cutoff         = data_sym->mol_cut_cutoff         = mol_cut_cutoff;
+  data->mol_cut_type   = mol_cut_type;
+  data->mol_cut_cutoff = mol_cut_cutoff;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   return TCL_OK;
 }

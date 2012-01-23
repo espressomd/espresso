@@ -45,25 +45,15 @@ MDINLINE int tclprint_to_result_HertzianIA(Tcl_Interp *interp, int i, int j)
 MDINLINE int hertzian_set_params(int part_type_a, int part_type_b,
 				 double eps, double sig)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* Hertzian should be symmetrically */
-  data->Hertzian_eps = data_sym->Hertzian_eps = eps;
-  data->Hertzian_sig = data_sym->Hertzian_sig = sig;
+  if (!data) return TCL_ERROR;
+  
+  data->Hertzian_eps = eps;
+  data->Hertzian_sig = sig;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   return TCL_OK;
 }

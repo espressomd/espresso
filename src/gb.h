@@ -33,35 +33,25 @@ MDINLINE int gay_berne_set_params(int part_type_a, int part_type_b,
 				  double k1, double k2,
 				  double mu, double nu)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* GB should be symmetrically */
-  data->GB_eps    = data_sym->GB_eps    = eps;
-  data->GB_sig    = data_sym->GB_sig    = sig;
-  data->GB_cut    = data_sym->GB_cut    = cut;
-  data->GB_k1     = data_sym->GB_k1     = k1;
-  data->GB_k2     = data_sym->GB_k2     = k2;
-  data->GB_mu     = data_sym->GB_mu     = mu;
-  data->GB_nu     = data_sym->GB_nu     = nu;
+  data->GB_eps    = eps;
+  data->GB_sig    = sig;
+  data->GB_cut    = cut;
+  data->GB_k1     = k1;
+  data->GB_k2     = k2;
+  data->GB_mu     = mu;
+  data->GB_nu     = nu;
  
   /* Calculate dependent parameters */
 
-  data->GB_chi1 = data_sym->GB_chi1 = ((data->GB_k1*data->GB_k1) - 1) / ((data->GB_k1*data->GB_k1) + 1);
-  data->GB_chi2 = data_sym->GB_chi2 = (pow(data->GB_k2,(1/data->GB_mu))-1)/(pow(data->GB_k2,(1/data->GB_mu))+1);
+  data->GB_chi1 = ((data->GB_k1*data->GB_k1) - 1) / ((data->GB_k1*data->GB_k1) + 1);
+  data->GB_chi2 = (pow(data->GB_k2,(1/data->GB_mu))-1)/(pow(data->GB_k2,(1/data->GB_mu))+1);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   return TCL_OK;
 }
@@ -144,6 +134,9 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
 				double d[3], double dist, double force[3], double torque1[3], double torque2[3])
 
 {
+  if (dist > ia_params->GB_cut)   
+    return;
+  
   double a,b,c, X, Xcut,
     Brack,BrackCut,
     Bra12,Bra12Cut,
@@ -158,7 +151,6 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
     FikX,FikY,FikZ,			/*  help for forces        */
     Gx,Gy,Gz;			/*  help for torques       */
 
-  if (dist < ia_params->GB_cut) {  
     u1x = p1->r.quatu[0]; u1y = p1->r.quatu[1]; u1z = p1->r.quatu[2];
     u2x = p2->r.quatu[0]; u2y = p2->r.quatu[1]; u2z = p2->r.quatu[2]; 
     
@@ -242,12 +234,14 @@ MDINLINE void add_gb_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_pa
       force[1] += Koef1 * d[1];
       force[2] += Koef1 * d[2];
     }
-  }
 }
 
 MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 			       double d[3], double dist)
 {
+  if (dist > ia_params->GB_cut)   
+    return 0;
+  
   double a,b,c, X, Xcut,
     Brack,BrackCut,
     u1x, u1y, u1z,
@@ -256,7 +250,6 @@ MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
     Plus1, Minus1,
     Plus2, Minus2;
 	
-  if (dist < ia_params->GB_cut) {  
     
     u1x = p1->r.quatu[0]; u1y = p1->r.quatu[1]; u1z = p1->r.quatu[2];
     u2x = p2->r.quatu[0]; u2y = p2->r.quatu[1]; u2z = p2->r.quatu[2]; 
@@ -285,8 +278,6 @@ MDINLINE double gb_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
     BrackCut = BrackCut*(BrackCut-1);
 
     return E*(Brack-BrackCut);
-  }
-  return 0.0;
 }
 
 #endif

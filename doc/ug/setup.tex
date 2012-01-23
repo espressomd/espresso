@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2010,2011,2012 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -156,10 +156,10 @@ thermostats.
   \variant{3} thermostat \var{parameters}
 \end{essyntax}
 
-Variant \variant{1} returns the thermostat parameters. A TCL list is given containing all
-the parameters needed to set the specific thermostat. (exactly the
-same as the input command line, without the preceding
-\texttt{thermostat}).
+Variant \variant{1} returns the thermostat parameters. A Tcl list is
+given containing all the parameters needed to set the specific
+thermostat. (exactly the same as the input command line, without the
+preceding \texttt{thermostat}).
 
 Variant \variant{2} turns off all thermostats and sets all thermostat 
 variables to zero. Setting temperature to zero also affects the way in which 
@@ -180,9 +180,10 @@ refer to \cite{berendsen84a, grest86a}.
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.
 
-Using the Langevin thermostat, it is posible to set a temperature and a friction
-coefficient for every particle individually. Consult the \texttt{part} commands reference
-(chapter \ref{chap:part}) for information on how to achieve this. 
+Using the Langevin thermostat, it is posible to set a temperature and
+a friction coefficient for every particle individually. Consult the
+\texttt{part} commands reference (chapter \ref{chap:part}) for
+information on how to achieve this.
 
 \subsection{Dissipative Particle Dynamics (DPD) } \label{sec:DPD}
 \index{DPD|mainindex}
@@ -286,7 +287,7 @@ Two restrictions apply for the dpd implementation of \es:
 This is an extension of the above standard DPD thermostat
 \cite{junghans2008}, which dampens the degrees of freedom
 perpendicular on the axis between two particles. To switch it on, the
-feature \texttt{TRANS_DPD} is required instead of the feature
+feature \feature{TRANS_DPD} is required instead of the feature
 \texttt{DPD}.
 
 The dissipative force is calculated by
@@ -319,15 +320,15 @@ the friction and other parameters have to be set via the command
 set the friction on a per-interaction basis.
 
 \subsubsection{Other DPD extensions}
-The features \texttt{DPD_MASS_RED} or \texttt{DPD_MASS_LIN} make the
+The features \feature{DPD_MASS_RED} or \feature{DPD_MASS_LIN} make the
 friction constant mass dependent:
 $$ \zeta \to \zeta M_{ij} $$ 
 and 
 $$ \zeta \to \zeta M_{ij} $$
-There are two cases implemented. \texttt{DPD_MASS_RED} uses the
+There are two implemented cases. \feature{DPD_MASS_RED} uses the
 reduced mass:
 $$ M_{ij}=2\frac{m_i m_j}{m_i+m_j} $$
-while \texttt{DPD_MASS_LIN} uses the real mass mass:
+while \feature{DPD_MASS_LIN} uses the real mass mass:
 $$ M_{ij}=\frac{m_i+m_j}{2} $$
 The prefactors are such that equal masses result in a factor 1.
 
@@ -539,6 +540,58 @@ names. Variant \variant{2} allows to choose the device by its id,
 which can be determined using \texttt{cuda list}, or for example the
 \texttt{deviceQuery} example code in the CUDA SDK. Variant \variant{3}
 finally gives the id of the currently active GPU.
+
+
+\section{Creating bonds when particles collide}
+
+With the help of the feature \feature{COLLISION_DETECTION}, bonds
+between particles can be created automatically during the simulation,
+every time two particles collide.  This is useful for simulations of
+chemical reactions and irreversible adhesion processes.
+
+Two methods of binding are available: In the ``bind centers'' method,
+a bonded interaction is added be+ween the colliding particles. This
+leads to the distance between the particles being fixed, the particles
+can, however still slide around each other.  The second method, called
+``bind at point of collision'', aims to prevent this sliding at the
+the contact. This is achieved by creating two virtual sites at the
+point of collision. They are rigidly connectd to the collideng
+particles, respectively. A bond is then created between the virtual
+sites. Due to the rigid connection between each of the particles in
+the collision and its respective virtual site, a sliding at the
+contact point is no longer possible. See the documentation on rigid
+bodies for details.  In addition to the bond between the virtual
+sites, th bond between the colliding particles is also created. You
+can either use a real boded interaction to prevent wobbling aroudd the
+point of contact or you can use a virtual bond to prevent additional
+force contributions.
+
+The following limitations currently apply for the collision detection:
+\begin{itemize}
+\item The method is currently limited to simulations with a single cpu
+\item No distinction is currently made between different particle types
+\item The ``bind at point of collision'' approach requires the
+  \feature{VIRTUAL_SITES_RELATIVE} feature
+\item The ``bind at point of collision'' approach cannot handle
+  collisions between virtual sites
+\end{itemize}
+
+
+\begin{essyntax}
+\variant{1} collision_detection
+\variant{1} collision_detection off
+\variant{2} collision_detection bind_centers \var{d} \var{bond1}
+\variant{3} collision_detection bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\end{essyntax}
+
+Here, \var{d} is the distance at which the bond is created,
+\var{bond1} denotes the type of the bond created between the collideng
+particles, and \var{bond2} determines the type of the bond created
+between the virtual sites (if applicable). \var{type} denotes the
+particle type of the virtual sites created at the point of collision
+(if applicable). Be sure not to define a Lennard-Jones interaction for
+this particle type, as two particles will be generated in the same
+place.
 
 %%% Local Variables: 
 %%% mode: latex

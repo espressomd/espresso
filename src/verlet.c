@@ -44,10 +44,6 @@
  * Variables 
  *****************************************/
 
-int rebuild_verletlist = 1;
-
-
-
 /** \name Privat Functions */
 /************************************************************/
 /*@{*/
@@ -102,16 +98,17 @@ void build_verlet_lists()
   Particle *p1, *p2;
   PairList *pl;
   double dist2;
-
 #ifdef VERLET_DEBUG 
+  double max_range_nonbonded2 = SQR(max_cut_nonbonded + skin);
+
   int estimate, sum=0;
   fprintf(stderr,"%d: build_verlet_list_and_force_calc:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_non_bonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_nonbonded2,1.5))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
-   
+  
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {
     VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
@@ -127,6 +124,11 @@ void build_verlet_lists()
       /* init pair list */
       pl  = &neighbor->vList;
       pl->n = 0;
+
+      /* no interaction set, Verlet list stays empty */
+      if (max_cut_nonbonded == 0.0)
+	continue;
+
       /* Loop cell particles */
       for(i=0; i < np1; i++) {
 	j_start = 0;
@@ -142,7 +144,8 @@ void build_verlet_lists()
 #endif
 	  {
 	    dist2 = distance2(p1[i].r.p, p2[j].r.p);
-	    if(dist2 <= max_range_non_bonded2) add_pair(pl, &p1[i], &p2[j]);
+	    if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin))
+	      add_pair(pl, &p1[i], &p2[j]);
 	  }
 	}
       }
@@ -152,9 +155,9 @@ void build_verlet_lists()
     }
   }
 
-  VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
-
   rebuild_verletlist = 0;
+
+  VERLET_TRACE(fprintf(stderr,"%d: total number of interaction pairs: %d (should be around %d)\n",this_node,sum,estimate));
 }
 
 void calculate_verlet_ia()
@@ -203,9 +206,11 @@ void build_verlet_lists_and_calc_verlet_ia()
  
 #ifdef VERLET_DEBUG 
   int estimate, sum=0;
+  double max_range_nonbonded2 = SQR(max_cut_nonbonded + skin);
+
   fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_non_bonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_nonbonded2,1.5))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
@@ -239,6 +244,11 @@ void build_verlet_lists_and_calc_verlet_ia()
 	  memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 	  j_start = i+1;
 	}
+	
+	/* no interaction set, no need for particle pairs */
+	if (max_cut_nonbonded == 0.0)
+	  continue;
+
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
 #ifdef EXCLUSIONS
@@ -248,7 +258,8 @@ void build_verlet_lists_and_calc_verlet_ia()
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
 	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
-	  if(dist2 <= max_range_non_bonded2) {
+
+	  if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
 	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
 
@@ -295,6 +306,10 @@ void calculate_verlet_energies()
 #endif
     }
 
+    /* no interaction set */
+    if (max_cut_nonbonded == 0.0)
+      continue;
+
     VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
@@ -340,6 +355,10 @@ void calculate_verlet_virials(int v_comp)
 
     }
 
+    /* no interaction set */
+    if (max_cut_nonbonded == 0.0)
+      continue;
+
     VERLET_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
@@ -371,25 +390,3 @@ void resize_verlet_list(PairList *pl)
   }
 }
 
-void announce_rebuild_vlist()
-{
-  int sum;
-
-  MPI_Allreduce(&rebuild_verletlist, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-  rebuild_verletlist = (sum > 0) ? 1 : 0;
-  
-  INTEG_TRACE(fprintf(stderr,"%d: announce_rebuild_vlist: rebuild_verletlist=%d\n",this_node,rebuild_verletlist));
-}
-
-
-/* Callback functions */
-/************************************************************/
-/* TODO: this function is not used anywhere, should it be deleted? */
-int tclcallback_rebuild_vlist(Tcl_Interp *interp, void *_data)
-{
-  int data = *(int *)_data;
-  /* declared as bool, no check necessary (and possible) */
-  rebuild_verletlist = data;
-  mpi_bcast_parameter(FIELD_VERLETFLAG);
-  return (TCL_OK);
-}

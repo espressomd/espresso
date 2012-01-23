@@ -40,12 +40,6 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag);
    =============================================================================
 */
 
-/*  Information about the status of the method */
-int tclprint_to_result_DAWAANR(Tcl_Interp *interp);
-         
-/* Parsing function for the dawaanr method*/
-int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv);
-
 /* Core of the method: here you compute all the magnetic forces, torques and the magnetic energy for the whole system*/
 double dawaanr_calculations(int force_flag, int energy_flag) ;
 
@@ -54,13 +48,6 @@ double dawaanr_calculations(int force_flag, int energy_flag) ;
                   DIRECT SUM FOR MAGNETIC SYSTEMS               
    =============================================================================
 */
-
-/*  Information about the status of the method */
-int tclprint_to_result_Magnetic_dipolar_direct_sum_(Tcl_Interp *interp);
-
-
-/* Parsing function for the magnetic dipolar direct sum method*/
-int tclcommand_inter_magnetic_parse_mdds(Tcl_Interp * interp, int argc, char ** argv);
 
 /* Sanity checks for the magnetic dipolar direct sum*/
 int magnetic_dipolar_direct_sum_sanity_checks();

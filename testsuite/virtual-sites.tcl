@@ -168,7 +168,7 @@ for {set i 0} {$i<10000} {incr i } {
    error_exit "Distance between particle 0 and 2 incorrect."
   }
 }
- puts "OK: Handling of periodic boundaries"
- puts "OK: Velocities of outer particles add up to velocity of center of mass"
+puts "OK: Handling of periodic boundaries"
+puts "OK: Velocities of outer particles add up to velocity of center of mass"
 
-return  0
+exit  0

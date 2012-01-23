@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -29,6 +30,7 @@
 #include "pressure.h"
 #include "energy.h"
 #include "constraint.h"
+#include "initialize.h"
 
 /************************************************/
 /** \name Defines */
@@ -103,7 +105,7 @@ void dd_create_cell_grid()
   min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
   cell_range[0]=cell_range[1]=cell_range[2] = max_range;
 
-  if(max_range2 < 0.0) {
+  if (max_range < ROUND_ERROR_PREC*box_l[0]) {
     /* this is the initialization case */
     n_local_cells = dd.cell_grid[0] = dd.cell_grid[1] = dd.cell_grid[2]=1;
   }
@@ -159,7 +161,7 @@ void dd_create_cell_grid()
     /* sanity check */
     if (n_local_cells < min_num_cells) {
       char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
-      ERROR_SPRINTF(error_msg, "{001 number of cells %d is smaller than minimum %d (interaction range too large or max_num_cells too small)} ",
+      ERROR_SPRINTF(error_msg, "{001 number of cells %d is smaller than minimum %d (interaction range too large or min_num_cells too large)} ",
 		    n_local_cells, min_num_cells);
     }
   }
@@ -178,11 +180,7 @@ void dd_create_cell_grid()
     dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
     dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
   }
-  cell_range[0] = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
-  if (max_cut >= 0.0)
-    max_skin = cell_range[0] - max_cut;
-  else
-    max_skin = 0.0;
+  max_skin = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]) - max_cut;
 
   /* allocate cell array and cell pointer arrays */
   realloc_cells(new_cells);
@@ -393,6 +391,57 @@ void dd_assign_prefetches(GhostCommunicator *comm)
   }
 }
 
+/** update the 'shift' member of those GhostCommunicators, which use
+    that value to speed up the folding process of its ghost members
+    (see \ref dd_prepare_comm for the original), i.e. all which have
+    GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
+    dd_prepare_comm. */
+void dd_update_communicators_w_boxl()
+{
+  int cnt=0;
+  /* direction loop: x, y, z */
+  for(int dir=0; dir<3; dir++) {
+    /* lr loop: left right */
+    for(int lr=0; lr<2; lr++) {
+      if(node_grid[dir] == 1) {
+#ifdef PARTIAL_PERIODIC
+	if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	  {
+	    /* prepare folding of ghost positions */
+	    if(boundary[2*dir+lr] != 0) {
+	      cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+	      cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
+	    }
+	    cnt++;
+	  }
+      }
+      else {
+	/* i: send/recv loop */
+	for(int i=0; i<2; i++) {  
+#ifdef PARTIAL_PERIODIC
+	  if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
+#endif
+	    if((node_pos[dir]+i)%2==0) {
+	      /* prepare folding of ghost positions */
+	      if(boundary[2*dir+lr] != 0) {
+		cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+		cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
+	      }
+	      cnt++;
+	    }
+#ifdef PARTIAL_PERIODIC
+	  if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
+#endif
+	    if((node_pos[dir]+(1-i))%2==0) {
+	      cnt++;
+	    }
+	}
+      }
+    }
+  }
+}
+
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the verlet
@@ -558,82 +607,65 @@ int dd_append_particles(ParticleList *pl, int fold_dir)
 /* Public Functions */
 /************************************************************/
 
-#ifdef NPT
-void dd_NpT_update_cell_grid(double scal1) {
-  int i, dir,lr,cnt, lc[3],hc[3],done[3]={0,0,0};
-  
-  if(max_range > scal1*dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2])) {
-    /* if new box length leads to too small cells, redo cell structure */
-    cells_re_init(CELL_STRUCTURE_DOMDEC);
-    cells_resort_particles(CELL_GLOBAL_EXCHANGE); }
-  else {
-    /* otherwise, only re-set the geometrical dimensions which have changed (in addition to those in \ref grid_changed_box_l),
-       following the lead of \ref cells_re_init */
-    for(i=0;i<3;i++) {
-      dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
-      dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
-    }
-    max_skin = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]) - max_cut;
-
-    /* don't forget to update the 'shift' member of those GhostCommunicators, which use that value
-       to speed up the folding process of its ghost members (see \ref dd_prepare_comm for the original),
-       i.e. all which have GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref dd_prepare_comm. */
-    cnt=0;
-    /* direction loop: x, y, z */
-    for(dir=0; dir<3; dir++) {
-      lc[(dir+1)%3] = 1-done[(dir+1)%3]; 
-      lc[(dir+2)%3] = 1-done[(dir+2)%3];
-      hc[(dir+1)%3] = dd.cell_grid[(dir+1)%3]+done[(dir+1)%3];
-      hc[(dir+2)%3] = dd.cell_grid[(dir+2)%3]+done[(dir+2)%3];
-      /* lr loop: left right */
-      for(lr=0; lr<2; lr++) {
-	if(node_grid[dir] == 1) {
-#ifdef PARTIAL_PERIODIC
-	  if( PERIODIC(dir ) || (boundary[2*dir+lr] == 0) ) 
-#endif
-	    {
-	      /* prepare folding of ghost positions */
-	      if(boundary[2*dir+lr] != 0) {
-		// dd_prepare_comm(&cell_structure.exchange_ghosts_comm,  exchange_data);
-		// dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
-		// comm->comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-		cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-		cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir]; 
-	      }
-	      cnt++;
-	    }
-	}
-	else {
-	  /* i: send/recv loop */
-	  for(i=0; i<2; i++) {  
-#ifdef PARTIAL_PERIODIC
-	    if( PERIODIC(dir) || (boundary[2*dir+lr] == 0) ) 
-#endif
-	      if((node_pos[dir]+i)%2==0) {
-		/* prepare folding of ghost positions */
-		if(boundary[2*dir+lr] != 0) {
-		  cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-		  cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] = boundary[2*dir+lr]*box_l[dir];
-		}
-		lc[(dir+0)%3] = hc[(dir+0)%3] = 1+lr*(dd.cell_grid[(dir+0)%3]-1);  
-		cnt++;
-	      }
-#ifdef PARTIAL_PERIODIC
-	    if( PERIODIC(dir) || (boundary[2*dir+(1-lr)] == 0) ) 
-#endif
-	      if((node_pos[dir]+(1-i))%2==0) {
-		lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);
-		cnt++;
-	      }
-	  }
-	}
-	done[dir]=1;
-      }
+void dd_on_geometry_change(int flags) {
+  /* check that the CPU domains are still sufficiently large. */
+  for (int i = 0; i < 3; i++)
+    if (local_box_l[i] < max_range) {
+      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
+      ERROR_SPRINTF(errtext,"{013 box_l in direction %d is too small} ", i);
     }
 
+  /* A full resorting is necessary if the grid has changed. We simply
+     don't have anything fast for this case. Probably also not
+     necessary. */
+  if (!(flags & CELL_FLAG_GRIDCHANGED)) {
+    CELL_TRACE(fprintf(stderr,"%d: dd_on_geometry_change full redo\n",
+		       this_node));
+    cells_re_init(CELL_STRUCTURE_CURRENT);
+    return;
   }
+
+  /* otherwise, re-set our geometrical dimensions which have changed
+     (in addition to the general ones that \ref grid_changed_box_l
+     takes care of) */
+  for(int i=0; i<3; i++) {
+    dd.cell_size[i]       = local_box_l[i]/(double)dd.cell_grid[i];
+    dd.inv_cell_size[i]   = 1.0 / dd.cell_size[i];
+  }
+  double min_cell_size = dmin(dmin(dd.cell_size[0],dd.cell_size[1]),dd.cell_size[2]);
+  max_skin = min_cell_size - max_cut;
+
+  CELL_TRACE(fprintf(stderr, "%d: dd_on_geometry_change: max_range = %f, min_cell_size = %f, max_skin = %f\n", this_node, max_range, min_cell_size, max_skin));
+  
+  if (max_range > min_cell_size) {
+    /* if new box length leads to too small cells, redo cell structure
+       using smaller number of cells. */
+    cells_re_init(CELL_STRUCTURE_DOMDEC);
+    return;
+  }
+
+  /* If we are not in a hurry, check if we can maybe optimize the cell
+     system by using smaller cells. */
+  if (!(flags & CELL_FLAG_FAST)) {
+    int i;
+    for(i=0; i<3; i++) {
+      int poss_size = (int)floor(local_box_l[i]/max_range);
+      if (poss_size > dd.cell_grid[i])
+	break;
+    }
+    if (i < 3) {
+      /* new range/box length allow smaller cells, redo cell structure,
+	 possibly using smaller number of cells. */
+      cells_re_init(CELL_STRUCTURE_DOMDEC);
+      return;
+    }
+  }
+
+  dd_update_communicators_w_boxl();
+
+  /* tell other algorithms that the box length might have changed. */
+  on_boxl_change();
 }
-#endif
 
 /************************************************************/
 void dd_topology_init(CellPList *old)
@@ -645,7 +677,7 @@ void dd_topology_init(CellPList *old)
   CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: Number of recieved cells=%d\n", this_node, old->n));
 
   /** broadcast the flag for using verlet list */
-  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&dd.use_vList, 1, MPI_INT, 0, comm_cart);
  
   cell_structure.type             = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -859,12 +891,12 @@ void  dd_exchange_and_sort_particles(int global_flag)
     if(global_flag == CELL_GLOBAL_EXCHANGE) {
       if(this_node==0) {
 	int sum;
-	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, comm_cart);
 	if( sum < n_nodes ) finished=0; else finished=sum; 
       } else {
-	MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&finished, NULL, 1, MPI_INT, MPI_SUM, 0, comm_cart);
       }
-      MPI_Bcast(&finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
     } else {
       if(finished == 0) {
 	char *errtext = runtime_error(128);
@@ -899,46 +931,16 @@ void  dd_exchange_and_sort_particles(int global_flag)
 
 /*************************************************/
 
-int tclcallback_max_num_cells(Tcl_Interp *interp, void *_data)
-{
-  int data = *(int *)_data;
-  if (data < min_num_cells) {
-    Tcl_AppendResult(interp, "max_num_cells cannot be smaller than min_num_cells", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  max_num_cells = data;
-  mpi_bcast_parameter(FIELD_MAXNUMCELLS);
-  return (TCL_OK);
-}
-
 int calc_processor_min_num_cells()
 {
   int i, min = 1;
   /* the minimal number of cells can be lower if there are at least two nodes serving a direction,
      since this also ensures that the cell size is at most half the box length. However, if there is
      only one processor for a direction, there have to be at least two cells for this direction. */
-  for (i = 0; i < 3; i++) if (node_grid[i] == 1) min *= 2;
+  for (i = 0; i < 3; i++) 
+    if (node_grid[i] == 1) 
+      min *= 2;
   return min;
-}
-
-int tclcallback_min_num_cells(Tcl_Interp *interp, void *_data)
-{
-  char buf[TCL_INTEGER_SPACE];
-  int data = *(int *)_data;
-  int min = calc_processor_min_num_cells();
-
-  if (data < min) {
-    sprintf(buf, "%d", min);
-    Tcl_AppendResult(interp, "min_num_cells must be at least ", buf, (char *) NULL);
-    return (TCL_ERROR);
-  }
-  if (data > max_num_cells) {
-    Tcl_AppendResult(interp, "min_num_cells cannot be larger than max_num_cells", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  min_num_cells = data;
-  mpi_bcast_parameter(FIELD_MINNUMCELLS);
-  return (TCL_OK);
 }
 
 void calc_link_cell()
@@ -949,14 +951,13 @@ void calc_link_cell()
   Particle *p1, *p2;
   double dist2, vec21[3];
 
-  EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
- 
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {
 
     cell = local_cells.cell[c];
     p1   = cell->part;
     np1  = cell->n;
+
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
       neighbor = &dd.cell_inter[c].nList[n];
@@ -971,6 +972,9 @@ void calc_link_cell()
 #ifdef CONSTRAINTS
 	  add_constraints_forces(&p1[i]);
 #endif
+	  if (rebuild_verletlist)
+	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+
 	  j_start = i+1;
 	}
 	/* Loop neighbor cell particles */
@@ -980,15 +984,13 @@ void calc_link_cell()
 #endif
 	    {
 	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-	      if(dist2 <= max_range_non_bonded2) {
-		/* calc non bonded interactions */
-		add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-	      }
+	      add_non_bonded_pair_force(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
 	    }
 	}
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
 /************************************************************/
@@ -1017,6 +1019,9 @@ void calculate_link_cell_energies()
 #endif
     }
 
+    if (rebuild_verletlist)
+      memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+
     CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
     /* Loop cell neighbors */
     for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
@@ -1040,6 +1045,62 @@ void calculate_link_cell_energies()
       }
     }
   }
+  rebuild_verletlist = 0;
+}
+
+/************************************************************/
+
+void calculate_link_cell_virials(int v_comp)
+{
+  int c, np1, np2, n, i, j, j_start;
+  Cell *cell;
+  IA_Neighbor *neighbor;
+  Particle *p1, *p2;
+  double dist2, vec21[3];
+
+  CELL_TRACE(fprintf(stderr,"%d: calculate link-cell energies\n",this_node));
+
+  /* Loop local cells */
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p1   = cell->part;
+    np1  = cell->n;
+    /* calculate bonded interactions (loop local particles) */
+    for(i = 0; i < np1; i++)  {
+      add_kinetic_virials(&p1[i], v_comp);
+      add_bonded_virials(&p1[i]);
+#ifdef BOND_ANGLE
+      add_three_body_bonded_stress(&p1[i]);
+#endif
+    }
+
+    if (rebuild_verletlist)
+      memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+
+    CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
+    /* Loop cell neighbors */
+    for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+      neighbor = &dd.cell_inter[c].nList[n];
+      p2  = neighbor->pList->part;
+      np2 = neighbor->pList->n;
+      /* Loop cell particles */
+      for(i=0; i < np1; i++) {
+	j_start = 0;
+	if(n == 0) j_start = i+1;
+	/* Loop neighbor cell particles */
+	for(j = j_start; j < np2; j++) {	
+#ifdef EXCLUSIONS
+          if(do_nonbonded(&p1[i], &p2[j]))
+#endif
+	    {
+	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
+	      add_non_bonded_pair_virials(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
+	    }
+	}
+      }
+    }
+  }
+  rebuild_verletlist = 0;
 }
 
 /************************************************************/

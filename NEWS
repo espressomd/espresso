@@ -5,22 +5,19 @@
 ESPResSo 3.1
 ============
 
-User-visible changes
---------------------
+New user-visible features
+-------------------------
 
-* Added new feature LANGEVIN_PER_PARTICLE that allows to set tha
-  Langevon parameters temperature and gamma per particle.
+* The new feature COLLISION_DETECTION allows to dynamically add new
+  bonds between colliding particles.
+
+* Added new feature LANGEVIN_PER_PARTICLE that allows to set the
+  Langevin parameters temperature and gamma per particle.
 
 * Added new feature ROTATION_PER_PARTICLE that allow to choose whether
   a particle has rotational degrees of freedom or not. 
 
 * Added new constraint and LB boundary condition "rhomboid".
-
-* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
-  coulomb memd).
-
-* Added basic tutorial on Lennard-Jones liquid, made second tutorial
-  (simple charged systems) better available (all in doc/tutorials)
 
 * Lattice-Boltzmann:
 
@@ -28,10 +25,48 @@ User-visible changes
 
   * forces on boundaries can be calculated
 
+  * wall constraints work
+
+* Added basic tutorial on Lennard-Jones liquid, made second tutorial
+  (simple charged systems) better available (all in doc/tutorials/)
+
+User-visible changes
+--------------------
+
+* The NPT barostat now works in many more combinations of
+  algorithms than so far (e.g. MMM2D, ELC, ...)
+
+* The CPU Lattice-Boltzmann code now work also when Verlet lists are
+  used.
+
+* Removed unneccessary overhead of neutral particles in simulations
+  with P3M.
+
+* Removed unneccessary overhead of activated but ununsed interaction
+  features.
+
+* Some changes in the Verlet list construction yield a performance
+  gain of up to 90% in systems where the interaction ranges differ
+  significantly, or where some particle types do not interact at all
+  (phantom particles).
+
+* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
+  coulomb memd).
+
 Changes visible for developers
 ------------------------------
 
-* Added ESPResSo logos to the repo (doc/logo).
+* The domain decomposition, P3M, LB and MEMD now use MPI cartesian
+  communicators. This will hopefully speed up the simulations on some
+  platforms.
+
+* Split interaction code into .c and .h files.
+
+* Split off most the Tcl interface (into src/tcl/) from the C core
+  code (in src/). Still incomplete.
+
+* Added ESPResSo logos, cover issue images, and some other material to
+  the repo (doc/).
 
 * A new LaTeX-Developer's Guide (DG) was started, and all "Related
   pages" from the doxygen docs have been moved there.

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -146,7 +147,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
     for(c = 0; c < n; c++) {
       comm->comm[c].part_lists = malloc(sizeof(ParticleList *));
       comm->comm[c].n_part_lists = 1;
-      comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+      comm->comm[c].mpi_comm = comm_cart;
     }
 
     c = 0;
@@ -264,7 +265,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts)
       for(c = 0; c < n; c++) {
 	comm->comm[c].part_lists = malloc(2*sizeof(ParticleList *));
 	comm->comm[c].n_part_lists = 2;
-	comm->comm[c].mpi_comm = MPI_COMM_WORLD;
+	comm->comm[c].mpi_comm = comm_cart;
 	comm->comm[c].node = this_node;
       }
 
@@ -339,7 +340,7 @@ void layered_topology_init(CellPList *old)
     else
       n_layers = 1;
   }
-  MPI_Bcast(&n_layers, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
   top = this_node + 1;
   if (top == n_nodes && (layered_flags & LAYERED_PERIODIC))
@@ -528,7 +529,7 @@ void layered_exchange_and_sort_particles(int global_flag)
     CELL_TRACE(if (flag) fprintf(stderr, "%d: requesting another exchange round\n", this_node));
 
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
-      MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, comm_cart);
       if (!redo)
 	break;
       CELL_TRACE(fprintf(stderr, "%d: another exchange round\n", this_node));
@@ -663,7 +664,7 @@ void layered_calculate_energies()
   rebuild_verletlist = 0;
 }
 
-void layered_calculate_virials()
+void layered_calculate_virials(int v_comp)
 {
   int c, i, j;
   Cell  *celll, *cellb;
@@ -686,7 +687,7 @@ void layered_calculate_virials()
       if (rebuild_verletlist)
 	memcpy(p1->l.p_old, p1->r.p, 3*sizeof(double));
 
-      add_kinetic_virials(p1,0);
+      add_kinetic_virials(p1,v_comp);
 
       add_bonded_virials(p1);
 #ifdef BOND_ANGLE

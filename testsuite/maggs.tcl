@@ -191,3 +191,5 @@ if { [catch {
 } res ] } {
     error_exit $res
 }
+
+exit 0
