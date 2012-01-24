@@ -81,32 +81,37 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
    Tcl_AppendResult(interp, "Need a ditance, two bond types, and a particle type as args.", (char*) NULL);
    return TCL_ERROR;
   }
+
   double d;
   if (!ARG_IS_D(2,d))
   {
    Tcl_AppendResult(interp, "Need a ditance as 1st arg.", (char*) NULL);
    return TCL_ERROR;
   }
+
   int bond1,bond2,t;
   if ((!ARG_IS_I(3,bond1)) || (!ARG_IS_I(4,bond2)) || (!ARG_IS_I(5,t)))
   {
    Tcl_AppendResult(interp, "Need two bond types as 2nd and 3rd and a particle type as 4th argument.", (char*) NULL);
    return TCL_ERROR;
   }
+
   res=collision_detection_set_params(2,d,bond1,bond2,t);
-  if (res==1)
-  {
+  switch (res) {
+  case 1:
    Tcl_AppendResult(interp, "This mode requires the VIRTUAL_SITES_RELATIVE feature to be comiled in.", (char*) NULL);
    return TCL_ERROR;
-  }
-  if (res==2)
-  {
+  case 2:
    Tcl_AppendResult(interp, "Collision detection only works on a single cpu.", (char*) NULL);
    return TCL_ERROR;
-  }
-  if (res==3)
-  {
+  case 3:
    Tcl_AppendResult(interp, "A bond of the specified type does not exist.", (char*) NULL);
+   return TCL_ERROR;
+  case 4:
+   Tcl_AppendResult(interp, "real particles need a pair bond.", (char*) NULL);
+   return TCL_ERROR;
+  case 5:
+   Tcl_AppendResult(interp, "virtual particles need a pair bond or triple bond.", (char*) NULL);
    return TCL_ERROR;
   }
  }
