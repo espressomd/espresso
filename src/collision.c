@@ -222,6 +222,7 @@ void handle_collisions ()
 	    bondG[0] = collision_detection_bond_vs;
 	    bondG[1] = max_seen_particle-1;
 	    local_change_bond(max_seen_particle, bondG, 0);
+            break;
           }
 	  case 2: {
 	    // Create 1st bond between the virtual particles
@@ -230,7 +231,7 @@ void handle_collisions ()
 	    bondG[2] = collision_queue[i].pp2;
 	    local_change_bond(max_seen_particle,   bondG, 0);
 	    local_change_bond(max_seen_particle-1, bondG, 0);
-	    
+	    break;
           }
           }
 	}
