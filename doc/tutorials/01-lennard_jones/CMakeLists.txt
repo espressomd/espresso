@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,25 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = src . scripts tools testsuite doc
-
-ACLOCAL_AMFLAGS = -I config
-
-# List files that should go into the distribution but are not required
-# by any other means
-EXTRA_DIST = bootstrap.sh samples packages $(extra)
-
-all: Espresso
-
-Espresso: 
-	$(LN_S) src/Espresso .
-
-CLEANFILES = Espresso
-
-#################################################################
-# Documentation
-#################################################################
-.PHONY: FORCE doc ug dg tutorials
-doc ug dg tutorials: FORCE
-	cd doc; $(MAKE) --print-directory $@
-FORCE:
+latexit(01-lennard_jones 
+  ${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/../common)
+add_dependencies(tutorials 01-lennard_jones)

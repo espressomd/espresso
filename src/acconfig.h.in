@@ -5,7 +5,7 @@
 #define PACKAGE_NAME  "@PROJECT_NAME@"
 
 /* Version number of package (translate from cmake to autoconf macro name) */
-#define PACKAGE_VERSION  "@PACKAGE_VERSION@"
+#define PACKAGE_VERSION  "@PROJECT_VERSION@"
 
 /* When the last change to the code was done */
 #define LAST_CHANGE "@LAST_CHANGE@"

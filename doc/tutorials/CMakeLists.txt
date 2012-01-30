@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Olaf Lenz
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-EXTRA_DIST= \
-	myconfig-maxset.h \
-	myconfig-LB.h \
-	myconfig-LBGPU.h
+add_custom_target(tutorials)
+add_dependencies(doc tutorials)
+
+file(GLOB TUTORIALS [0-9][0-9]-*)
+foreach(TUTORIAL ${TUTORIALS})
+  add_subdirectory(${TUTORIAL})
+endforeach(TUTORIAL)

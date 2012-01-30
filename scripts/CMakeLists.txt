@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
+# Copyright (C) 2007,2008,2009,2010,2011,2012 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-dist_tools_DATA =\
-	vmd_plg.tcl \
-	uwerr.tcl
-dist_tools_SCRIPTS = \
-        set_features \
-	trace_memory.py \
-	trace_memory.tcl 
-noinst_SCRIPTS = \
-	es_mpiexec
+add_custom_target(scripts ALL COMMENT "Copying Tcl scripts to builddir")
+
+# copy all tcl files to bin dir
+file(GLOB TCL_SCRIPTS *.tcl)
+foreach(FILENAME ${TCL_SCRIPTS})
+  add_custom_command(TARGET scripts 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${FILENAME} ${CMAKE_CURRENT_BINARY_DIR})
+  install(FILES ${FILENAME} DESTINATION share/espresso/scripts)
+endforeach(FILENAME)
+

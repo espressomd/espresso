@@ -24,7 +24,7 @@
 #  Remember to have a cmakedefine for it too...
 
 MACRO(ESP_TEST_INLINE VARIABLE)
-    IF(NOT DEFINED TEST_${VARIABLE})
+    IF(NOT TEST_${VARIABLE})
 
         MESSAGE(STATUS "Checking for inline keyword")
 
@@ -39,14 +39,15 @@ MACRO(ESP_TEST_INLINE VARIABLE)
         ENDFOREACH(KEYWORD)
              
         IF(TEST_${VARIABLE})
-            SET(${VARIABLE} ${CHK_INLINE_KEYWORD})
+	  SET(${VARIABLE} ${CHK_INLINE_KEYWORD} CACHE INTERNAL "espresso inline keyword")
             MESSAGE(STATUS "Checking for inline keyword - using ${CHK_INLINE_KEYWORD}")
         ELSE(TEST_${VARIABLE})
-	    SET(${VARIABLE} " ")
+	  SET(${VARIABLE} INLINE-NOTFOUND CACHE INTERNAL "espresso inline keyword")
             MESSAGE(FATAL_ERROR "Checking for inline keyword - none found")
         ENDIF(TEST_${VARIABLE})
 
-    ENDIF(NOT DEFINED TEST_${VARIABLE})        
+    ENDIF(NOT TEST_${VARIABLE})
+    MARK_AS_ADVANCED(${VARIABLE})
 ENDMACRO(ESP_TEST_INLINE VARIABLE)
 
 

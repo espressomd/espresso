@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010,2011,2012 Olaf Lenz, Axel Arnold
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,17 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = logo doxygen dg ug tutorials
-
-.PHONY: FORCE doc ug dg tutorials doxygen
-doc: ug dg tutorials doxygen
-dg: FORCE
-	cd dg; $(MAKE) --print-directory $@
-doxygen: FORCE
-	cd doxygen; $(MAKE) --print-directory $@
-ug: latexit.sh FORCE
-	cd ug; $(MAKE) --print-directory $@
-tutorial: latexit.sh FORCE
-	cd tutorials; $(MAKE) --print-directory $@
-FORCE:
-
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+  add_custom_target(doxygen
+    COMMAND /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/background_errors.sh ${CMAKE_CURRENT_SOURCE_DIR} ${ESPRESSO_SOURCES}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    COMMENT "Running Doxygen."
+    )
+else(DOXYGEN_FOUND)
+  message(FATAL_ERROR "Doxygen is not available.")
+endif(DOXYGEN_FOUND)

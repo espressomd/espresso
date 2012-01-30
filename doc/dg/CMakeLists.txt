@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Olaf Lenz
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,34 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-dg_TEXFILES = \
-	dg.tex
-
-dg_FILES = \
-	$(dg_TEXFILES) \
-	$(dg_FIGURES) \
-	todonotes.sty
-
-# bibliography.bib
-
-.PHONY: doc dg
-
-doc: dg
-dg: dg.pdf
-dg.pdf: $(dg_FILES)
-if HAVE_LATEX
-	sh ../latexit.sh $(srcdir) dg
-else
-	@echo "No complete LaTeX-installation was not found in your PATH."
-	@echo "Can't build the Developer's Guide without pdflatex, makeindex and bibtex."
-	@echo "Install these and rerun configure."
-endif
-
-CLEANFILES = dg.pdf
-
-MOSTLYCLEANFILES = \
-	quickref.inp\
-	*.aux *.aux.bak\
-	dg.bbl dg.blg \
-	dg.idx dg.idx.bak dg.ilg dg.ind\
-	dg.log dg.out dg.toc dg.tdo
+latexit(dg ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies(doc dg)

@@ -1,4 +1,4 @@
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,14 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-EXTRA_DIST=common/common.tex
-SUBDIRS=01-lennard_jones 02-charged_system
+#
+latexit(ug ${CMAKE_CURRENT_SOURCE_DIR})
+add_dependencies(doc ug)
 
-.PHONY: FORCE doc tutorial $(SUBDIRS)
-doc: tutorial
-tutorial: FORCE
-	for dir in $(SUBDIRS); do \
-		cd $$dir; $(MAKE) --print-directory $@; cd ..;\
-	done
-FORCE:
-
+file(GLOB TEX_FILES *.tex)
+add_custom_command(OUTPUT quickref.inp
+  DEPENDS ${TEX_FILES}
+  COMMAND awk  -f ${CMAKE_CURRENT_SOURCE_DIR}/assemble_quickref.awk ${TEX_FILES} > quickref.inp
+  COMMENT "Building Quick Reference"
+  )
+add_custom_command(OUTPUT ug.pdf
+  DEPENDS quickref.inp
+  APPEND
+  )

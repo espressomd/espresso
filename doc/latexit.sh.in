@@ -1,13 +1,16 @@
-#!/bin/sh 
+#!/bin/sh
 SRCDIR=$1
 TEXFILE=$2
-TEXINPUTS=.:$SRCDIR:@abs_srcdir@:
+TEXINPUTS=.:$SRCDIR:@CMAKE_CURRENT_SOURCE_DIR@:
 BIBINPUTS=.:$SRCDIR:
+PDFLATEX="@PDFLATEX_COMPILER@ -halt-on-error -interaction=batchmode"
+BIBTEX=@BIBTEX_COMPILER@
+MAKEINDEX=@MAKEINDEX_COMPILER@
+
 export TEXINPUTS BIBINPUTS
 
 echo "TEXINPUTS=$TEXINPUTS"
 
-PDFLATEX="@PDFLATEX@ -halt-on-error -interaction=batchmode"
 
 echo "Running LaTeX stage 1..."
 
@@ -25,7 +28,7 @@ fi
 
 echo "Running bibtex..."
 # Don't fail on bibtex error: it fails if no .bib-file is there!
-@BIBTEX@ $TEXFILE
+$BIBTEX $TEXFILE
 
 echo "Running LaTeX stage 2..."
 $PDFLATEX $TEXFILE 
@@ -42,7 +45,7 @@ fi
 
 if test -e $TEXFILE.idx; then
     echo "Running makeindex..."
-    @MAKEINDEX@ $TEXFILE || exit $?
+    $MAKEINDEX $TEXFILE || exit $?
 fi
 
 echo "Running LaTeX stage 3..."

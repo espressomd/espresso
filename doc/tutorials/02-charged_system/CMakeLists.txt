@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Olaf Lenz
+# Copyright (C) 2012 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,4 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-EXTRA_DIST = whitebg.png transparentbg.png powered_by.png
+latexit(02-charged_system 
+  ${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_SOURCE_DIR}/../common)
+add_dependencies(tutorials 02-charged_system)
