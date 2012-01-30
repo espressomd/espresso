@@ -62,31 +62,45 @@
 */
 int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
 {
-  int mesh;
-  double f_mass;
+    int mesh;
+    double f_mass;
+    double epsilon = 1.0;
+    int finite_epsilon_flag = 1;
 	
+    if(argc < 2) {
+        Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
+        return TCL_ERROR;
+    }
 	
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
+    if(! ARG_IS_D(0, f_mass))
+        return TCL_ERROR;
 	
-  if(! ARG_IS_D(0, f_mass))
-    return TCL_ERROR;
+    if(! ARG_IS_I(1, mesh)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR;
+    }
 	
-  if(! ARG_IS_I(1, mesh)) {
-    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(argc > 2) {
-    Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
+    if(argc > 4) {
+        Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh> [epsilon <eps>]", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if(argc == 3) {
+        Tcl_AppendResult(interp, "Usage: inter coulomb memd <f_mass> <mesh> [epsilon <eps>]", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if(argc == 4) {
+        if (ARG_IS_S(2, "epsilon")) {
+            if(! (ARG_IS_D(3, epsilon) && epsilon > 0.0)) {
+                Tcl_AppendResult(interp, "epsilon expects a positive double",
+                             (char *) NULL);
+                return TCL_ERROR;
+            }
+        }
+    } else finite_epsilon_flag=0;
+
   coulomb.method = COULOMB_MAGGS;
 	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh);
+  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh, finite_epsilon_flag, epsilon);
 }
 
 #endif // ELECTROSTATICS
