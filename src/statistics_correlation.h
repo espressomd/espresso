@@ -125,11 +125,6 @@
 #define MIN(a,b) ((a)>(b)?(b):(a))
 
 // IDs of different correlations
-#define CORR_TYPE_GENERIC       0
-#define CORR_TYPE_SF            1
-#define CORR_TYPE_AVERAGED_SF   2
-#define CORR_TYPE_VACF          3
-#define CORR_TYPE_MSD           4
 
 
 void autoupdate_correlations();
@@ -144,20 +139,16 @@ void autoupdate_correlations();
  */
 typedef struct {
   unsigned int autocorrelation;    // autocorrelation flag
-  unsigned int correlation_type;   // to help keeping track what we are actually correlating
   unsigned int finalized;          // non-zero of correlation is finialized
   unsigned int hierarchy_depth;    // maximum level of data compression
+  unsigned int tau_lin;            // number of frames in the linear correlation
   unsigned int dim_A;              // dimensionality of A
   unsigned int dim_B;
   unsigned int dim_corr;
-  unsigned int *n_sweeps;          // number of correlation sweeps at a particular value of tau
-  unsigned int *n_vals;            // number of data values already present at a particular value of tau
   unsigned int t;                  // global time in number of frames
   double dt;                       // time interval at which samples arrive
-  int update_frequency;              // time distance between updates in MD timesteps 
   double tau_max;                  // maximum time, for which the correlation should be calculated
-  unsigned int tau_lin;            // number of frames in the linear correlation
-  unsigned int* newest;            // index of the newest entry in each hierarchy level
+  int update_frequency;              // time distance between updates in MD timesteps 
   unsigned int window_distance; 
 
   // Convenience pointers to our stored data
@@ -169,6 +160,9 @@ typedef struct {
   unsigned int n_result;           // the total number of result values
   
   // The actual allocated storage space
+  unsigned int *n_sweeps;          // number of correlation sweeps at a particular value of tau
+  unsigned int *n_vals;            // number of data values already present at a particular value of tau
+  unsigned int* newest;            // index of the newest entry in each hierarchy level
   double* A_data;
   double* B_data;
   double* result_data;
@@ -183,9 +177,12 @@ typedef struct {
   // compressing functions
   int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
   int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
+  char *compressA_name;
+  char *compressB_name;
 
   // correlation function
   int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+  char *corr_operation_name;
 
   // Functions producing observables A and B from the input data
   observable* A_obs;
@@ -228,7 +225,8 @@ int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  cha
 //void print_sf_params(sf_params *params);
 // parsing generic correlation call
 int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, observable** obs);
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
+//int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
 
   
 
@@ -255,11 +253,17 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
  *     the linear compression method)
  *
  */
-int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
+/* 
+   int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   observable* A, observable* B, void* corr_operation, 
                   void* compressA, void* compressB,
-		  int correlation_type, int autocorrelation);
+		  int autocorrelation);
+		  */ 
+int double_correlation_init(Tcl_Interp* interp, double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
+                  unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
+                  observable* A, observable* B, char* corr_operation_name, 
+                  char* compressA_name, char* compressB_name);
 
 
 /** The function to process a new datapoint of A and B
