@@ -30,7 +30,9 @@
 #include "random_tcl.h"
 #include "statistics_chain_tcl.h"
 #include "statistics_cluster_tcl.h"
+#include "statistics_correlation_tcl.h"
 #include "statistics_fluid_tcl.h"
+#include "statistics_observable_tcl.h"
 #include "statistics_tcl.h"
 #include "thermostat_tcl.h"
 #include "topology_tcl.h"
@@ -97,6 +99,10 @@ void register_tcl_commands(Tcl_Interp* interp) {
   /* in utils.h */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
+  REGISTER_COMMAND("observable", tclcommand_observable);
+  /* in statistics_obsrvable.h */
+  REGISTER_COMMAND("correlation", tclcommand_correlation);
+  /* in statistics_correlation.h */
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);

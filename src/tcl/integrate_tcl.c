@@ -32,6 +32,7 @@
 #include "pressure_tcl.h"
 #include "communication.h"
 #include "parser.h"
+#include "statistics_correlation.h"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);
@@ -194,6 +195,7 @@ int tclcommand_integrate_set_npt_isotropic(Tcl_Interp *interp, int argc, char **
 int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
   int  n_steps;
+  int i;
   
   INTEG_TRACE(fprintf(stderr,"%d: integrate:\n",this_node));
 
@@ -220,8 +222,15 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
     return tclcommand_integrate_print_usage(interp);;
   }
   /* perform integration */
-  if (mpi_integrate(n_steps))
-    return mpi_gather_runtime_errors(interp, TCL_OK);
+  if (!correlations_autoupdate) {
+    if (mpi_integrate(n_steps))
+      return mpi_gather_runtime_errors(interp, TCL_OK);
+  } else  {
+    for (i=0; i<n_steps; i++) {
+      mpi_integrate(1);
+      autoupdate_correlations();
+    }
+  }
   return TCL_OK;
 }
 

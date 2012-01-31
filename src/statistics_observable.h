@@ -3,11 +3,11 @@
 #define STATISTICS_OBSERVABLE_H
 
 //#include "statistics_correlation.h"
+#include "config.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "tcl.h"
-#include "parser.h"
 
 
 typedef struct {
@@ -22,15 +22,8 @@ extern observable** observables;
 extern int n_observables; 
 
 int* observable_calc(observable* self, double* A);
-int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ); 
-
-
-//int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args);
 
 /* Here we have the particular observables listed */
-
-
 int observable_particle_velocities(void* idlist, double* A, unsigned int n_A);
 int observable_com_velocity(void* idlist, double* A, unsigned int n_A); 
 int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A); 

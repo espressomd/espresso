@@ -109,8 +109,10 @@ libEspresso_a_SOURCES = \
 	statistics.c statistics.h \
 	statistics_chain.c statistics_chain.h \
 	statistics_cluster.c statistics_cluster.h \
+	statistics_correlation.c statistics_correlation.h \
 	statistics_fluid.c statistics_fluid.h \
 	statistics_molecule.c statistics_molecule.h \
+	statistics_observable.c statistics_observable.h \
 	steppot.h \
 	subt_lj.h \
 	tab.h \
@@ -169,7 +171,9 @@ libEspresso_a_SOURCES += \
 	tcl/random_tcl.c tcl/random_tcl.h \
 	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
 	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
+	tcl/statistics_correlation_tcl.c tcl/statistics_correlation_tcl.h \
 	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
+	tcl/statistics_observable_tcl.c tcl/statistics_observable_tcl.h \
 	tcl/statistics_tcl.c tcl/statistics_tcl.h \
 	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
 	tcl/tab_tcl.c tcl/tab_tcl.h \

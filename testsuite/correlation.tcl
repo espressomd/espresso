@@ -17,10 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
-#source "tests_common.tcl"
+source "tests_common.tcl"
 
-# FIXME temporary workaround 
-exit 0;
 
 puts "---------------------------------------------------------------"
 puts "- Testcase correlation.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -41,17 +39,21 @@ correlation 0 autoupdate start
 correlation 1 autoupdate start
 integrate 20000
 
+#set corr [ correlation ]
+#puts "correlations: \n$corr";
 set corr [ correlation 1 print ]
+#puts "obs: [observable 0 print]"
+#puts "corr: \n$corr";
 for { set i 0 } { $i < [ llength $corr ]} { incr i } {
   set t [ lindex [ lindex $corr $i ] 0 ] 
   if { abs([ lindex [ lindex $corr $i ] 2 ] -  $t*$t ) > 0.0001 } {
-    error "test failed"
+    error "test failed1"
   }
   if { abs([ lindex [ lindex $corr $i ] 3 ] -  2*2*$t*$t ) > 0.0001 } {
-    error "test failed"
+    error "test failed2, "
   }
   if { abs([ lindex [ lindex $corr $i ] 4 ] -  3*3*$t*$t ) > 0.0001 } {
-    error "test failed"
+    error "test failed3"
   }
 }
 

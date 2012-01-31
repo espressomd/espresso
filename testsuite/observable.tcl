@@ -1,6 +1,3 @@
-# FIXME this is a temporary workaround
-exit 0;
-
 proc veccompare { a b } {
 #  puts "$a $b"
   if { [ llength $a ]  != [ llength $b ] } {
@@ -16,7 +13,7 @@ proc veccompare { a b } {
   return 1
 }
 
-#source "tests_common.tcl"
+source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
 

@@ -116,13 +116,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "tcl.h"
-#include "parser.h"
 #include "statistics_observable.h"
 
 #define MAXLINELENGTH 2048
 
 #define MIN(a,b) ((a)>(b)?(b):(a))
+
 
 // IDs of different correlations
 
@@ -194,8 +193,10 @@ typedef struct {
 
 } double_correlation;
 
+extern unsigned int n_correlations;
 extern int correlations_autoupdate;
 extern double_correlation* correlations;
+
 
 
 
@@ -213,22 +214,6 @@ typedef struct {
   int data_left;
 } file_data_source;
 
-/** The TCL command parser 
- */
-int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char** argv);
-int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
-
-int correlation_print_usage(Tcl_Interp* interp);
-// parsing calls to pre-defined correlations
-int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p);
-// TESTING
-//void print_sf_params(sf_params *params);
-// parsing generic correlation call
-int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, observable** obs);
-//int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
-
-  
 
 /**
  * The initialization procedure for the correlation object. All important parameters have to be speciefied
@@ -260,7 +245,7 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
                   void* compressA, void* compressB,
 		  int autocorrelation);
 		  */ 
-int double_correlation_init(Tcl_Interp* interp, double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
+int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   observable* A, observable* B, char* corr_operation_name, 
                   char* compressA_name, char* compressB_name);
