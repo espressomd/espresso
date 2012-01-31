@@ -53,10 +53,12 @@ int observable_dipole_moment(void* typelist, double* A, unsigned int n_A);
 /** Calculate structure factor from positions and scattering length */
 int observable_structure_factor(void* params, double* A, unsigned int n_A);
 typedef struct {
+// FIXME finish the implementation of scattering length
   int order;
   int dim_sf; // number of q vectors
   int *q_vals; // values of q vectors
   double *q_density; // number of q vectors per bin
+//  DoubleList *scattering_length; // Scattering lengths of particles
   // entries for spherical averaging
 } observable_sf_params;
 

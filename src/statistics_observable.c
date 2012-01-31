@@ -1364,11 +1364,15 @@ int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A
 }
 
 int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
+  // FIXME Currently scattering length is hardcoded as 1.0
   int i,j,k,l,p;
   int order, order2, n;
-  double twoPI_L, C_sum, S_sum, qr;
+  double twoPI_L, C_sum, S_sum, qr; 
+//  DoubleList *scattering_length;
   observable_sf_params* params;
   params = (observable_sf_params*)params_p;
+//  scattering_length = params->scattering_length;
+  const double scattering_length=1.0;
   order = params->order;
   order2=order*order;
   twoPI_L = 2*PI/box_l[0];
@@ -1390,8 +1394,8 @@ int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
             //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
 	    for(p=0; p<n_total_particles; p++) {
 	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
-	      C_sum+= partCfg[p].p.scattering_length * cos(qr);
-	      S_sum-= partCfg[p].p.scattering_length * sin(qr);
+	      C_sum+= scattering_length * cos(qr);
+	      S_sum-= scattering_length * sin(qr);
 	    }
             A[l]   =C_sum;
             A[l+1] =S_sum;

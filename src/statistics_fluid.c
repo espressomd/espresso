@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,12 +27,10 @@
 
 #include <mpi.h>
 #include "utils.h"
-#include "parser.h"
 #include "communication.h"
 #include "lb.h"
 #include "lb-boundaries.h"
 #include "statistics_fluid.h"
-#include "lbgpu.h"
 
 #ifdef LB
 
@@ -58,7 +56,7 @@ void lb_calc_fluid_mass(double *result) {
     }
   }
 
-  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&sum_rho, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 /** Calculate momentum of the LB fluid.
@@ -87,7 +85,7 @@ void lb_calc_fluid_momentum(double *result) {
     momentum[1] *= lblattice.agrid/lbpar.tau;
     momentum[2] *= lblattice.agrid/lbpar.tau;
 
-    MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     
 }
 
@@ -113,7 +111,7 @@ void lb_calc_fluid_temp(double *result) {
 
   temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
 
-  MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 void lb_collect_boundary_forces(double *result) {
@@ -124,7 +122,7 @@ void lb_collect_boundary_forces(double *result) {
     for (int j = 0; j < 3; j++)
       boundary_forces[3*i+j]=lb_boundaries[i].force[j];
 
-  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(boundary_forces, result, 3*n_lb_boundaries, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   free(boundary_forces);
 #endif
 }
@@ -141,7 +139,7 @@ void lb_calc_densprof(double *result, int *params) {
 
   if (this_node !=0) params = malloc(3*sizeof(int));
 
-  MPI_Bcast(params, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(params, 3, MPI_INT, 0, comm_cart);
 
   int pdir = params[0];
   int x1   = params[1];
@@ -159,7 +157,7 @@ void lb_calc_densprof(double *result, int *params) {
     involved = 1;
   }
 
-  MPI_Comm_split(MPI_COMM_WORLD, involved, this_node, &slice_comm);
+  MPI_Comm_split(comm_cart, involved, this_node, &slice_comm);
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
@@ -197,26 +195,16 @@ void lb_calc_densprof(double *result, int *params) {
 
   if (newroot != 0) {
     if (this_node == newroot) {
-      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_DENSPROF, MPI_COMM_WORLD);
+      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_DENSPROF, comm_cart);
       free(result);
     }
     if (this_node == 0) {
-      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_DENSPROF, MPI_COMM_WORLD, &status);
+      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_DENSPROF, comm_cart, &status);
     }
   }
 
   if (this_node != 0) free(params);
 
-}
-
-static void lb_master_calc_densprof(double *profile, int pdir, int x1, int x2) {
-
-  /* this is a quick and dirty hack to issue slave calls with parameters */
-
-  int params[3] = { pdir, x1, x2 };
-  
-  mpi_gather_stats(9, profile, params, NULL, NULL);
-  
 }
 
 #define REQ_VELPROF 701
@@ -232,7 +220,7 @@ void lb_calc_velprof(double *result, int *params) {
 
   if (this_node != 0) params = malloc(4*sizeof(int));
 
-  MPI_Bcast(params, 4, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(params, 4, MPI_INT, 0, comm_cart);
 
   int vcomp = params[0];
   int pdir  = params[1];
@@ -255,7 +243,7 @@ void lb_calc_velprof(double *result, int *params) {
     involved = 1;
   }
 
-  MPI_Comm_split(MPI_COMM_WORLD, involved, this_node, &slice_comm);
+  MPI_Comm_split(comm_cart, involved, this_node, &slice_comm);
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
@@ -305,12 +293,12 @@ void lb_calc_velprof(double *result, int *params) {
 
   if (newroot != 0) {
     if (this_node == newroot) {
-      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_VELPROF, MPI_COMM_WORLD);
+      MPI_Send(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, 0, REQ_VELPROF, comm_cart);
       free(result);
     }
     if (this_node == 0) {
       //fprintf(stderr,"%d: I'm just here!\n",this_node);
-      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_VELPROF, MPI_COMM_WORLD, &status);
+      MPI_Recv(result, lblattice.grid[pdir]*node_grid[pdir], MPI_DOUBLE, newroot, REQ_VELPROF, comm_cart, &status);
       //fprintf(stderr,"%d: And now I'm here!\n",this_node);
     }
   }
@@ -319,247 +307,5 @@ void lb_calc_velprof(double *result, int *params) {
 
 }
 
-static void lb_master_calc_velprof(double *result, int vcomp, int pdir, int x1, int x2) {
-
-  /* this is a quick and dirty hack to issue slave calls with parameters */
-
-  int params[4];
-
-  params[0] = vcomp;
-  params[1] = pdir;
-  params[2] = x1;
-  params[3] = x2;
-
-  mpi_gather_stats(8, result, params, NULL, NULL);
-
-}
-
-static int tclcommand_analyze_fluid_parse_mass(Tcl_Interp *interp, int argc, char** argv) {
-  char buffer[TCL_DOUBLE_SPACE];
-  double mass;
-
-  mpi_gather_stats(5, &mass, NULL, NULL, NULL);
-
-  Tcl_PrintDouble(interp, mass, buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-
-  return TCL_OK;
-}
-
-static int tclcommand_analyze_fluid_parse_momentum(Tcl_Interp* interp, int argc, char *argv[]) {
-  char buffer[TCL_DOUBLE_SPACE];
-  double mom[3];
-
-  mpi_gather_stats(6, mom, NULL, NULL, NULL);
-  
-  Tcl_PrintDouble(interp, mom[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, mom[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, mom[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-
-  return TCL_OK;
-}
-
-static int tclcommand_analyze_fluid_parse_temp(Tcl_Interp *interp, int argc, char *argv[]) {
-  char buffer[TCL_DOUBLE_SPACE];
-  double temp;
-
-  mpi_gather_stats(7, &temp, NULL, NULL, NULL);
-
-  Tcl_PrintDouble(interp, temp, buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-  
-  return TCL_OK;
-}
-
-static int tclcommand_analyze_fluid_parse_densprof(Tcl_Interp *interp, int argc, char **argv) {
-  
-  int i, pdir, x1, x2;
-  char buffer[TCL_DOUBLE_SPACE];
-  double *profile;
-
-  if (argc <3) {
-    Tcl_AppendResult(interp, "usage: analyze fluid density <p_dir> <x1> <x2>", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (!ARG_IS_I(0,pdir)) return TCL_ERROR;
-  if (!ARG_IS_I(1,x1)) return TCL_ERROR;
-  if (!ARG_IS_I(2,x2)) return TCL_ERROR;
-
-  if (pdir != 2) {
-    Tcl_AppendResult(interp, "analyze fluid density is only implemented for pdir=2 yet!", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  profile = malloc(lblattice.grid[pdir]*node_grid[pdir]*sizeof(double));
-
-  lb_master_calc_densprof(profile, pdir, x1, x2);
-
-  for (i=0; i<lblattice.grid[pdir]*node_grid[pdir]; i++) {
-    Tcl_PrintDouble(interp, i*lblattice.agrid, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    Tcl_PrintDouble(interp, profile[i], buffer);
-    Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
-  }
-  free(profile);
-  
-  return TCL_OK;
-
-}
-
-static int tclcommand_analyze_fluid_parse_velprof(Tcl_Interp *interp, int argc, char **argv) {
-    int i, pdir, vcomp, x1, x2;
-    char buffer[TCL_DOUBLE_SPACE];
-    double *velprof;
-
-    //fprintf(stderr, "NOTE: analyze fluid velprof is not completely implemented by now.\n      The calling interface might still change without backwards compatibility!\n");
-
-    /*
-    if (n_nodes > 1) {
-	Tcl_AppendResult(interp, "velocity profile not yet implemented for parallel execution!", (char *)NULL);
-	return TCL_ERROR;
-    }
-    */
-
-    if (argc < 4) {
-	Tcl_AppendResult(interp, "usage: analyze fluid velprof <v_comp> <p_dir> <x1> <x2>", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    if (!ARG_IS_I(0,vcomp)) return TCL_ERROR;
-    if (!ARG_IS_I(1,pdir)) return TCL_ERROR;
-    if (!ARG_IS_I(2,x1)) return TCL_ERROR;
-    if (!ARG_IS_I(3,x2)) return TCL_ERROR;
-
-    if (pdir != 2) {
-	Tcl_AppendResult(interp, "analyze fluid velprof is only implemented for pdir=2 yet!", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if (vcomp != 0) {
-	Tcl_AppendResult(interp, "analyze fluid velprof is only implemented for vdir=0 yet", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    velprof = malloc(box_l[pdir]/lblattice.agrid*sizeof(double));
-
-    lb_master_calc_velprof(velprof, vcomp, pdir, x1, x2);
-
-    for (i=0; i<box_l[pdir]/lblattice.agrid; i++) {
-	Tcl_PrintDouble(interp, i*lblattice.agrid, buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	Tcl_PrintDouble(interp, velprof[i], buffer);
-	Tcl_AppendResult(interp, buffer, "\n", (char *)NULL);
-    }	
-
-    free(velprof);
-
-    return TCL_OK;
-
-}
 #endif /* LB */
 
-/** Parser for fluid related analysis functions. */
-int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv) {
-#ifdef LB
-    int err = TCL_ERROR;
-
-    if (argc==0) {
-	Tcl_AppendResult(interp, "usage: analyze fluid <what>", (char *)NULL);
-	return TCL_ERROR;
-    } 
-
-    if (ARG0_IS_S("mass"))
-      err = tclcommand_analyze_fluid_parse_mass(interp, argc - 1, argv + 1);
-    else if (ARG0_IS_S("momentum"))
-      err = tclcommand_analyze_fluid_parse_momentum(interp, argc - 1, argv + 1);
-    else if (ARG0_IS_S("temperature"))
-      err = tclcommand_analyze_fluid_parse_temp(interp, argc - 1, argv + 1);
-    else if (ARG0_IS_S("density"))
-      err = tclcommand_analyze_fluid_parse_densprof(interp, argc - 1, argv + 1);
-    else if (ARG0_IS_S("velprof"))
-      err = tclcommand_analyze_fluid_parse_velprof(interp, argc - 1, argv + 1);
-    else {
-	Tcl_AppendResult(interp, "unkown feature \"", argv[0], "\" of analyze fluid", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    return err;
-#else /* !defined LB */
-  Tcl_AppendResult(interp, "LB is not compiled in!?", NULL);
-  return TCL_ERROR;
-#endif
-}
-
-#ifdef LB_GPU
-static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
-  char buffer[TCL_DOUBLE_SPACE];
-  double host_mom[3];
-
-  lb_calc_fluid_momentum_GPU(host_mom);
-  
-  Tcl_PrintDouble(interp, host_mom[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, host_mom[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, host_mom[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-
-  return TCL_OK;
-}
-
-static int tclcommand_analyze_fluid_parse_temperature_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
-  char buffer[TCL_DOUBLE_SPACE];
-  double host_temp[1];
-
-  lb_calc_fluid_temperature_GPU(host_temp);
-  
-  Tcl_PrintDouble(interp, host_temp[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-
-  return TCL_OK;
-}
-#endif
-
-int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv) {
-#ifdef LB_GPU
-    int err = TCL_ERROR;
-
-    if (argc==0) {
-	Tcl_AppendResult(interp, "usage: analyze fluid <what>", (char *)NULL);
-	return TCL_ERROR;
-    } 
-
-    if (ARG0_IS_S("mass"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
-    else if (ARG0_IS_S("momentum"))
-      err = tclcommand_analyze_fluid_parse_momentum_gpu(interp, argc - 1, argv + 1);
-    else if (ARG0_IS_S("temperature"))
-      err = tclcommand_analyze_fluid_parse_temperature_gpu(interp, argc - 1, argv + 1);
-
-    else if (ARG0_IS_S("velprof"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_velprof(interp, argc - 1, argv + 1);
-    else {
-	Tcl_AppendResult(interp, "unkown feature \"", argv[0], "\" of analyze fluid", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    return err;
-#else /* !defined LB_GPU */
-  Tcl_AppendResult(interp, "LB_GPU is not compiled in!", NULL);
-  return TCL_ERROR;
-#endif
-}
-
-int tclcommand_analyze_parse_fluid(Tcl_Interp *interp, int argc, char **argv) {
-
-  if (lattice_switch & LATTICE_LB_GPU){
-      return tclcommand_analyze_parse_fluid_gpu(interp, argc, argv);
-  } else 
-      return tclcommand_analyze_parse_fluid_cpu(interp, argc, argv);
-
-}

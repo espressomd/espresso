@@ -61,29 +61,35 @@ for { set i 0 } { $i <= [setmd max_part] } { incr i } {
 #puts [inter coulomb 1.0 p3m tune accuracy 1.e-3]
 
 # If you want to use specific P3M params, use
-#inter coulomb 1.0 p3m 2.000000 32 6 1.322773
+# inter coulomb 1.0 p3m 2.000000 32 6 1.322773
+# inter coulomb n_interpol 0
 
 puts [inter coulomb]
 
-# inter coulomb n_interpol 0
-invalidate_system
-integrate 0
+if { [catch {
 
-set rmsf 0
-for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-    set resF [part $i pr f]
-    set tgtF $F($i)
-    set dx [expr ([lindex $resF 0] - [lindex $tgtF 0])]
-    set dy [expr ([lindex $resF 1] - [lindex $tgtF 1])]
-    set dz [expr ([lindex $resF 2] - [lindex $tgtF 2])]
+    invalidate_system
+    integrate 0
+
+    set rmsf 0
+    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+	set resF [part $i pr f]
+	set tgtF $F($i)
+	set dx [expr ([lindex $resF 0] - [lindex $tgtF 0])]
+	set dy [expr ([lindex $resF 1] - [lindex $tgtF 1])]
+	set dz [expr ([lindex $resF 2] - [lindex $tgtF 2])]
     
-    set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
+	set rmsf [expr $rmsf + $dx*$dx + $dy*$dy + $dz*$dz]
+    }
+
+    set rmsf [expr sqrt($rmsf / [setmd n_part])]
+    puts [format "rms_force_error=%e" $rmsf]
+    if { $rmsf > $accuracy } {
+	error [format "p3m-charges: rms_force_error=%e larger than accuracy=%e" $rmsf $accuracy]
+    }
+    
+} res ] } {
+    error_exit $res
 }
 
-set rmsf [expr sqrt($rmsf / [setmd n_part])]
-puts [format "rms_force_error=%e" $rmsf]
-if { $rmsf > $accuracy } {
-    error [format "p3m-charges: rms_force_error=%e larger than accuracy=%e" $rmsf $accuracy]
-}
-
-puts [analyze energy]
+exit 0

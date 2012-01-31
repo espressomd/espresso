@@ -331,7 +331,9 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
 
 int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
-int square_distance_cond_1d_int ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+
+int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
 
 /**************  Functions that calculate A and B from MD state ************/

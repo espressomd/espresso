@@ -26,9 +26,8 @@
 
  */
 
-#include <tcl.h>
+//#include <tcl.h>
 #include "utils.h"
-#include "grid.h"
 #include "global.h"
 
 /************************************************
@@ -73,8 +72,6 @@ typedef struct {
   /** particle mass */
   double mass;
 #endif
-  /** scattering length for calculating structure factor */
-  double scattering_length;
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
@@ -231,6 +228,12 @@ typedef struct {
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
 #endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  double T;
+  double gamma;
+#endif
+
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -287,10 +290,6 @@ extern int *partBondPartners;
  * Functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tclcommand_part. This command allows to
-    modify particle data. */
-int tclcommand_part(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
 
 /*       Functions acting on Particles          */
 /************************************************/
@@ -516,6 +515,22 @@ int set_particle_dipm(int part, double dipm);
 int set_particle_virtual(int part,int isVirtual);
 #endif
 
+#ifdef LANGEVIN_PER_PARTICLE
+/** Call only on the master node: set particle temperature.
+    @param part the particle.
+    @param T its new temperature.
+    @return TCL_OK if particle existed
+*/
+int set_particle_temperature(int part, double T);
+
+/** Call only on the master node: set particle frictional coefficient.
+    @param part the particle.
+    @param gamma its new frictional coefficient.
+    @return TCL_OK if particle existed
+*/
+int set_particle_gamma(int part, double gamma);
+#endif
+
 #ifdef EXTERNAL_FORCES
 /** Call only on the master node: set particle external forced.
     @param part  the particle.
@@ -531,14 +546,6 @@ int set_particle_ext(int part, int flag, double force[3]);
 */
 int set_particle_fix(int part,  int flag);
 #endif
-
-/** Call only on the master node: Set the scattering length of the particle
-    @param part  particle ID.
-    @param scattering_length     new value of the scattering length
-    @return TCL_OK if set successfuly
-*/
-int set_particle_scattering_length(int part,  double scattering_length);
-
 
 /** Call only on the master node: change particle bond.
     @param part     identity of principal atom of the bond.
@@ -667,18 +674,36 @@ void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be calculated */
-int do_nonbonded(Particle *p1, Particle *p2);
+MDINLINE int do_nonbonded(Particle *p1, Particle *p2)
+{
+  int i, i2;
+  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
+     symmetric, so this is sufficient. */
+  i2  = p2->p.identity;
+  for (i = 0; i < p1->el.n; i++)
+    if (i2 == p1->el.e[i]) return 0;
+  return 1;
+}
 #endif
 
-/*TODO: this function is not used anywhere. To be removed? */
-/** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
-    @param id particle identity.
- */
-MDINLINE void complain_on_particle(int id)
-{
-  char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-  ERROR_SPRINTF(errtxt,"{087 bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
-}
+/** Remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
 
+/** Remove exclusion from particle if possible */
+void try_delete_exclusion(Particle *part, int part2);
+
+/** Insert an exclusion if not already set */
+void try_add_exclusion(Particle *part, int part2);
+
+/** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
+ This uses the bond topology obtained directly from the particles, since only this contains
+ the full topology, in contrast to \ref topology::topology. To easily setup the bonds, all data
+ should be on a single node, therefore the \ref partCfg array is used. With large amounts
+ of particles, you should avoid this function and setup exclusions manually. */
+void auto_exclusion(int distance);
+
+/* keep a unique list for particle i. Particle j is only added if it is not i
+ and not already in the list. */
+void add_partner(IntList *il, int i, int j, int distance);
 
 #endif

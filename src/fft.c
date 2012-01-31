@@ -35,9 +35,6 @@ void *fftw_malloc(size_t n);
 #include <mpi.h>
 #include "communication.h"
 #include "grid.h"
-#ifdef NPT
-#include "pressure.h"
-#endif
 #include "fft-common.h"
 
 /************************************************
@@ -55,7 +52,7 @@ fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out);
 
 /** communicate the grid data according to the given fft_forw_plan/fft_bakc_plan. 
  * \param plan_f communication plan (see \ref fft_forw_plan).
- * \param plan_b additional back plan (see \ref fft.back_plan).
+ * \param plan_b additional back plan (see \ref fft_back_plan).
  * \param in     input mesh.
  * \param out    output mesh.
 */
@@ -99,9 +96,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     my_pos[0][i] = node_pos[i];
   }
   for(i=0;i<n_nodes;i++) {
-    n_id[0][i] = i;
-    get_grid_pos(i,&(n_pos[0][3*i+0]),&(n_pos[0][3*i+1]),&(n_pos[0][3*i+2]),
-		 n_grid[0]);
+    int lin_ind;
+    map_node_array(i, &(n_pos[0][3*i+0])); 
+    lin_ind = get_linear_index( n_pos[0][3*i+0],n_pos[0][3*i+1],n_pos[0][3*i+2], n_grid[0]);
+    n_id[0][lin_ind] = i;
   }
     
   /* FFT node grids (n_grid[1 - 3]) */
@@ -150,6 +148,10 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     permute_ifield(fft.plan[i].start,3,-(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0]*fft.plan[i].new_mesh[1];
 
+    FFT_TRACE( printf("%d: comm_group_size %d. comm_group( ",this_node ));
+    FFT_TRACE( for(j=0; j< fft_plan[i].g_size; j++) printf("%d "));
+    FFT_TRACE( printf(")\n"));
+
     /* === send/recv block specifications === */
     for(j=0; j<fft.plan[i].g_size; j++) {
       int k, node;
@@ -191,7 +193,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     }
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
-      /* MPI_Barrier(MPI_COMM_WORLD); */
+      /* MPI_Barrier(comm_cart); */
       if(j==this_node) FFT_TRACE(fft_print_fft.plan(fft.plan[i]));
     }
   }
@@ -411,15 +413,15 @@ void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out)
 
     if(plan.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(fft.send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);
+	       plan.group[i], REQ_FFT_FORW, comm_cart);
       MPI_Recv(fft.recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
     }
     else if(plan.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(fft.recv_buf, plan.recv_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD, &status); 	
+	       plan.group[i], REQ_FFT_FORW, comm_cart, &status); 	
       MPI_Send(fft.send_buf, plan.send_size[i], MPI_DOUBLE, 
-	       plan.group[i], REQ_FFT_FORW, MPI_COMM_WORLD);      
+	       plan.group[i], REQ_FFT_FORW, comm_cart);      
     }
     else {                              /* Self communication... */   
       tmp_ptr  = fft.send_buf;
@@ -448,15 +450,15 @@ void fft_back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in,
 
     if(plan_f.group[i]<this_node) {       /* send first, receive second */
       MPI_Send(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);
       MPI_Recv(fft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
     }
     else if(plan_f.group[i]>this_node) {  /* receive first, send second */
       MPI_Recv(fft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD, &status); 	
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart, &status); 	
       MPI_Send(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, 
-	       plan_f.group[i], REQ_FFT_BACK, MPI_COMM_WORLD);      
+	       plan_f.group[i], REQ_FFT_BACK, comm_cart);      
     }
     else {                                /* Self communication... */   
       tmp_ptr  = fft.send_buf;
@@ -467,6 +469,5 @@ void fft_back_grid_comm(fft_forw_plan plan_f,  fft_back_plan plan_b, double *in,
 		 &(plan_f.send_block[6*i+3]), plan_f.old_mesh, plan_f.element);
   }
 }
-
 
 #endif

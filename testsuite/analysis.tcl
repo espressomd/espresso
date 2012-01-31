@@ -282,3 +282,5 @@ test_catch {
 	error "force error too large"
     }
 }
+
+exit 0

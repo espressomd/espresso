@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -56,7 +56,7 @@
 #include "particle_data.h"
 #include "random.h"
 #include "topology.h"
-
+#include <mpi.h>
 /**************************************************
  * exported variables
  **************************************************/
@@ -68,6 +68,7 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 /*@}*/
+extern MPI_Comm comm_cart;
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -268,14 +269,6 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete);
 void mpi_send_exclusion(int part, int part2, int delete);
 
 
-/** Issue REQ_SET_SCATTERING_LENGTH: send particle scattering length.
-    Also calls \ref on_particle_change.
-    \param part the particle.
-    \param node the node it is attached to.
-    \param b its new scattering length.
-*/
-void mpi_send_scattering_length(int node, int part, double b);
-
 /** Issue REQ_REM_PART: remove a particle.
     Also calls \ref on_particle_change.
     \param id   the particle to remove.
@@ -393,6 +386,14 @@ void mpi_bcast_coulomb_params();
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
 void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 
+#ifdef LANGEVIN_PER_PARTICLE
+/** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */
+void mpi_set_particle_temperature(int pnode, int part, double _T);
+
+/** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional coefficient. */
+void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#endif
+
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
 
@@ -490,12 +491,19 @@ int mpi_iccp3m_iteration(int dummy);
 */
 int mpi_iccp3m_init(int dummy);
 
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to
  * @param index index of the lattice site
  * @param pop   local fluid population
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
+
+/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param pop   local fluid population
+ */
+void mpi_send_fluid_populations(int node, int index, double *pop);
 
 /** Part of MDLC
  */

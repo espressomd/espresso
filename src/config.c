@@ -122,6 +122,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #ifdef BOND_VIRTUAL
   Tcl_AppendResult(interp, "{ BOND_VIRTUAL } ", (char *) NULL);
 #endif
+#ifdef COLLISION_DETECTION 
+  Tcl_AppendResult(interp, "{ COLLISION_DETECTION } ", (char *) NULL);
+#endif
 #ifdef EXCLUSIONS
   Tcl_AppendResult(interp, "{ EXCLUSIONS } ", (char *) NULL);
 #endif
@@ -214,6 +217,9 @@ int tclcallback_compilation(Tcl_Interp *interp)
 #endif
 #ifdef LB_BOUNDARIES
   Tcl_AppendResult(interp, "{ LB_BOUNDARIES } ", (char *) NULL);
+#endif
+#ifdef LB_BOUNDARIES_GPU
+  Tcl_AppendResult(interp, "{ LB_BOUNDARIES_GPU } ", (char *) NULL);
 #endif
 #ifdef INTER_DPD
   Tcl_AppendResult(interp, "{ INTER_DPD } ", (char *) NULL);

@@ -73,41 +73,6 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], do
 /*@}*/
 
 /** convert quaternions to the director */
-void convert_quat_to_quatu(double quat[4], double quatu[3])
-{
-  /* director */
-  quatu[0] = 2*(quat[1]*quat[3] + quat[0]*quat[2]);
-  quatu[1] = 2*(quat[2]*quat[3] - quat[0]*quat[1]);
-  quatu[2] =   (quat[0]*quat[0] - quat[1]*quat[1] -
-		quat[2]*quat[2] + quat[3]*quat[3]); 
-}
-
-#ifdef DIPOLES
-
-/** convert a dipole moment to quaternions and dipolar strength  */
-int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
-{
-  double dm;
-  // Calculate magnitude of dipole moment
-  dm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
-  *dipm = dm;
-  convert_quatu_to_quat(dip,quat);
-
-  return 0;
-}
-
-
-
-/** convert quaternion director to the dipole moment */
-void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
-{
-  /* dipole moment */
-  dip[0] = quatu[0]*dipm;
-  dip[1] = quatu[1]*dipm;
-  dip[2] = quatu[2]*dipm;
-}
-
-#endif
 /** Convert director to quaternions */
 int convert_quatu_to_quat(double d[3], double quat[4])
 {
@@ -156,12 +121,22 @@ int convert_quatu_to_quat(double d[3], double quat[4])
     the body-fixed frames */  
 void define_rotation_matrix(Particle *p, double A[9])
 {
-  A[0 + 3*0] = p->r.quat[0]*p->r.quat[0] + p->r.quat[1]*p->r.quat[1] -
-               p->r.quat[2]*p->r.quat[2] - p->r.quat[3]*p->r.quat[3] ;
-  A[1 + 3*1] = p->r.quat[0]*p->r.quat[0] - p->r.quat[1]*p->r.quat[1] +
-               p->r.quat[2]*p->r.quat[2] - p->r.quat[3]*p->r.quat[3] ;
-  A[2 + 3*2] = p->r.quat[0]*p->r.quat[0] - p->r.quat[1]*p->r.quat[1] -
-               p->r.quat[2]*p->r.quat[2] + p->r.quat[3]*p->r.quat[3] ;
+  double q0q0 =p->r.quat[0];
+  q0q0 *=q0q0;
+
+  double q1q1 =p->r.quat[1];
+  q1q1 *=q1q1;
+
+  double q2q2 =p->r.quat[2];
+  q2q2 *=q2q2;
+
+  double q3q3 =p->r.quat[3];
+  q3q3 *=q3q3;
+
+  A[0 + 3*0] = q0q0 + q1q1 -q2q2 - q3q3;
+  A[1 + 3*1] = q0q0 - q1q1 +
+               q2q2 - q3q3 ;
+  A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3 ;
 
   A[0 + 3*1] = 2*(p->r.quat[1]*p->r.quat[2] + p->r.quat[0]*p->r.quat[3]);
   A[0 + 3*2] = 2*(p->r.quat[1]*p->r.quat[3] - p->r.quat[0]*p->r.quat[2]);
@@ -232,57 +207,37 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd
 
 /** propagate angular velocities and quaternions \todo implement for
        fixed_coord_flag */
-void propagate_omega_quat()
+void propagate_omega_quat_particle(Particle* p)
 {
-  Particle *p;
-  Cell *cell;
-  int c,i,j, np;
-  double lambda, dt2, dt4, dtdt, dtdt2;
+  double lambda;
 
-  dt2 = time_step*0.5;
-  dt4 = time_step*0.25;
-  dtdt = time_step*time_step;
-  dtdt2 = dtdt*0.5;
 
-  INTEG_TRACE(fprintf(stderr,"%d: propagate_omega_quat:\n",this_node));
 
-  for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
-    p  = cell->part;
-    np = cell->n;
-    for(i = 0; i < np; i++) {
 	  double Qd[4], Qdd[4], S[3], Wd[3];
 	  
-	  #ifdef VIRTUAL_SITES
-	   // Virtual sites are not propagated in the integration step
-	   if (ifParticleIsVirtual(&p[i]))
-	    continue;
-	  #endif
 
-	  define_Qdd(&p[i], Qd, Qdd, S, Wd);
+	  define_Qdd(p, Qd, Qdd, S, Wd);
 	  
-	  lambda = 1 - S[0]*dtdt2 - sqrt(1 - dtdt*(S[0] + time_step*(S[1] + dt4*(S[2]-S[0]*S[0]))));
+	  lambda = 1 - S[0]*time_step_squared_half - sqrt(1 - time_step_squared*(S[0] + time_step*(S[1] + time_step_half/2.*(S[2]-S[0]*S[0]))));
 
-	  for(j=0; j < 3; j++){
-	    p[i].m.omega[j]+= dt2*Wd[j];
+	  for(int j=0; j < 3; j++){
+	    p->m.omega[j]+= time_step_half*Wd[j];
 	  }
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 
-	  p[i].r.quat[0]+= time_step*(Qd[0] + dt2*Qdd[0]) - lambda*p[i].r.quat[0];
-	  p[i].r.quat[1]+= time_step*(Qd[1] + dt2*Qdd[1]) - lambda*p[i].r.quat[1];
-	  p[i].r.quat[2]+= time_step*(Qd[2] + dt2*Qdd[2]) - lambda*p[i].r.quat[2];
-	  p[i].r.quat[3]+= time_step*(Qd[3] + dt2*Qdd[3]) - lambda*p[i].r.quat[3];
+	  p->r.quat[0]+= time_step*(Qd[0] + time_step_half*Qdd[0]) - lambda*p->r.quat[0];
+	  p->r.quat[1]+= time_step*(Qd[1] + time_step_half*Qdd[1]) - lambda*p->r.quat[1];
+	  p->r.quat[2]+= time_step*(Qd[2] + time_step_half*Qdd[2]) - lambda*p->r.quat[2];
+	  p->r.quat[3]+= time_step*(Qd[3] + time_step_half*Qdd[3]) - lambda*p->r.quat[3];
 	  // Update the director
-	  convert_quat_to_quatu(p[i].r.quat, p[i].r.quatu);
+	  convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
 	  // When dipoles are enabled, update dipole moment
-	  convert_quatu_to_dip(p[i].r.quatu, p[i].p.dipm, p[i].r.dip);
+	  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
 #endif
 	
 
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
-    }
-  }
 }
 
 /** convert the torques to the body-fixed frames and propagate angular velocities */
@@ -291,9 +246,8 @@ void convert_torques_propagate_omega()
   Particle *p;
   Cell *cell;
   int c,i, np, times;
-  double dt2, tx, ty, tz;
+  double tx, ty, tz;
 
-  dt2 = time_step*0.5;
   INTEG_TRACE(fprintf(stderr,"%d: convert_torques_propagate_omega:\n",this_node));
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -328,13 +282,13 @@ void convert_torques_propagate_omega()
       ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",this_node,p[i].f.f[0],p[i].f.f[1],p[i].f.f[2],p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
     
 #ifdef ROTATIONAL_INERTIA
-	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
-	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
-	  p[i].m.omega[2]+= dt2*p[i].f.torque[2]/p[i].p.rinertia[2]/I[2];
+	  p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/p[i].p.rinertia[0]/I[0];
+	  p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/p[i].p.rinertia[1]/I[1];
+	  p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/p[i].p.rinertia[2]/I[2];
 #else
-	  p[i].m.omega[0]+= dt2*p[i].f.torque[0]/I[0];
-	  p[i].m.omega[1]+= dt2*p[i].f.torque[1]/I[1];
-	  p[i].m.omega[2]+= dt2*p[i].f.torque[2]/I[2];
+	  p[i].m.omega[0]+= time_step_half*p[i].f.torque[0]/I[0];
+	  p[i].m.omega[1]+= time_step_half*p[i].f.torque[1]/I[1];
+	  p[i].m.omega[2]+= time_step_half*p[i].f.torque[2]/I[2];
 #endif
 	  /* if the tensor of inertia is isotrpic, the following refinement is not needed.
 	     Otherwise repeat this loop 2-3 times depending on the required accuracy */
@@ -351,9 +305,9 @@ void convert_torques_propagate_omega()
 	    Wd[2] = (p[i].m.omega[0]*p[i].m.omega[1]*(I[0]-I[1]))/I[2];
 #endif
  
-	    p[i].m.omega[0]+= dt2*Wd[0];
-	    p[i].m.omega[1]+= dt2*Wd[1];
-	    p[i].m.omega[2]+= dt2*Wd[2];
+	    p[i].m.omega[0]+= time_step_half*Wd[0];
+	    p[i].m.omega[1]+= time_step_half*Wd[1];
+	    p[i].m.omega[2]+= time_step_half*Wd[2];
 	  }
 	
       

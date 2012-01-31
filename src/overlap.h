@@ -194,7 +194,7 @@ MDINLINE int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_param
     @param p2        Pointer to second/middle particle.
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param dx        particle distance vector
-    @param force     returns force of particle 1
+    @param _energy   returns energy of this interaction
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h).
 */
@@ -341,12 +341,13 @@ MDINLINE int overlap_angle_energy(Particle *p_mid, Particle *p_left,
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
+    @param force3 returns force of particle 3
     @return 0
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
 */
 MDINLINE int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
-				     Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
-				     double force2[3], double force1[3], double force3[3])
+					 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
+					 double force2[3], double force1[3], double force3[3])
 {
  int i;
   /* vectors for dihedral angle calculation */

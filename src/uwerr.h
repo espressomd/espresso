@@ -17,17 +17,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef UWERR_H
-#define UWERR_H
+#ifndef _UWERR_H
+#define _UWERR_H
 /** \file uwerr.h
  *
  *  PLEASE INSERT DOCUMENTATION
 */
+double UWerr_dsum_double(double * v, double * w, int len);
+double UWerr_dsum_int(int * v, double * w, int len);
+double UWerr_sum(double * v, int len);
+double gammaq(double a, double x);
 
 
-#include <tcl.h>
-
-/** The C implementation of the tcl function uwerr \ref tclcommand_uwerr.
-*/
-int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
-#endif
+#endif /* _UWERR_H */

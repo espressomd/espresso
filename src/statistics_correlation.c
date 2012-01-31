@@ -37,7 +37,7 @@ const char init_errors[][64] = {
   "window_distance must be >1",  // 5
   "dimension of A was not >1",   // 6
   "dimension of B was not >1",   // 7
-  "dim_corr was not >1",         // 8
+  "dimension of B must match dimension of A ",   // 8
   "no proper function for first observable given",                // 9
   "no proper function for second observable given",               //10 
   "no proper function for correlation operation given",           //11
@@ -46,7 +46,9 @@ const char init_errors[][64] = {
   "tau_lin must be divisible by 2", // 14
   "dt is smaller than the MD timestep",//15
   "dt is not a multiple of the MD timestep", //16
-  "cannot set compress2 for autocorrelation" //17
+  "cannot set compress2 for autocorrelation", //17
+  "dim_A and dim_corr do not match for conditional correlation", //18
+  "unknown error, dim_corr should not be 0 at this point" //19
 };
 
 const char file_data_source_init_errors[][64] = {
@@ -92,7 +94,6 @@ int correlation_update_from_file(unsigned int no) {
 }
 
 int correlation_print_parameters(double_correlation* self, Tcl_Interp* interp) {
-  int i;
   char buffer[16 + TCL_INTEGER_SPACE ];
   sprintf(buffer, " %d } ", self->autocorrelation);
   Tcl_AppendResult(interp, "{ autocorrelation ", buffer, (char *)NULL);
@@ -131,6 +132,7 @@ int correlation_print_parameters(double_correlation* self, Tcl_Interp* interp) {
 int correlation_print_parameters_all(Tcl_Interp* interp) {
   int i;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 4];
+  Tcl_AppendResult(interp, " { ", (char *)NULL);
   for (i=0; i< n_correlations; i++) {
     sprintf(buffer, " %d ", i);
     Tcl_AppendResult(interp, "{ correlation ", buffer, (char *)NULL);
@@ -794,28 +796,35 @@ static int convert_types_to_ids(IntList * type_list, IntList * id_list){
 
 int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B) {
   *corr_operation_name = strdup(argv[0]);
+  int dim; // dimensionality of the observable for the conditional correlations
   if (ARG_IS_S_EXACT(0,"componentwise_product")) {
-    *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"complex_conjugate_product")) {
-    *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {
-    *dim_corr = dim_A;
     *change=1;
     return TCL_OK;
-  } else if (ARG_IS_S_EXACT(0,"square_distance")) {
-    *dim_corr = 1;
-    *change=1;
+  } else if (ARG_IS_S_EXACT(0,"square_distance_cond_chain")) {
+    if (ARG_IS_I(1,dim)) 
+      *dim_corr = dim;
+    else {
+      Tcl_AppendResult(interp, "Wrong dimension: ", argv[1], "\n" , (char *)NULL);
+      return TCL_ERROR;
+    }
+    *change=2;
     return TCL_OK;
-  } else if (ARG_IS_S_EXACT(0,"square_distance_conditional_1d_int")) {
-    *dim_corr = 1;
-    *change=1;
+  } else if (ARG_IS_S_EXACT(0,"square_distance_cond")) {
+    if (ARG_IS_I(1,dim)) 
+      *dim_corr = dim;
+    else {
+      Tcl_AppendResult(interp, "Wrong dimension: ", argv[1], "\n" , (char *)NULL);
+      return TCL_ERROR;
+    }
+    *change=2;
     return TCL_OK;
   } else if (ARG0_IS_S("scalar_product")) {
-    *dim_corr = 1;
     *change=1;
     return TCL_OK;
   } else {
@@ -883,13 +892,12 @@ int double_correlation_init(Tcl_Interp* interp, double_correlation* self, double
     dim_B = dim_A;
   else if (dim_B>0)
     self->autocorrelation=0;
+  else if (dim_A != dim_B) 
+    return 8;
+    // currently there is no correlation function able to handel observables of different dimensionalities
   else 
     return 7;
   self->dim_B = dim_B;
-
-  if (dim_corr<1)
-    return 8;
-  self->dim_corr = dim_corr;
 
   if (A == 0)
     return 9;
@@ -904,20 +912,34 @@ int double_correlation_init(Tcl_Interp* interp, double_correlation* self, double
   if (corr_operation_name==0) { 
     return 11; // there is no reasonable default
   } else if ( strcmp(corr_operation_name,"componentwise_product") == 0 ) {
+    dim_corr = dim_A;
     self->corr_operation = &componentwise_product;
   } else if ( strcmp(corr_operation_name,"complex_conjugate_product") == 0 ) {
+    dim_corr = dim_A;
     self->corr_operation = &complex_conjugate_product;
   } else if ( strcmp(corr_operation_name,"square_distance_componentwise") == 0 ) {
+    dim_corr = dim_A;
     self->corr_operation = &square_distance_componentwise;
-  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
-    self->corr_operation = &square_distance;
-  } else if ( strcmp(corr_operation_name,"square_distance_cond_1d_int") == 0 ) {
-    self->corr_operation = &square_distance_cond_1d_int;
+// square_distance will be removed -- will be replaced by strides and blocks
+//  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
+//    self->corr_operation = &square_distance;
+  } else if ( strcmp(corr_operation_name,"square_distance_cond_chain") == 0 ) {
+    if ( (dim_A-1) % (dim_corr + 1) ) 
+      return 18;
+    dim_corr = (dim_A-1) / (dim_corr + 1) * dim_corr;
+    self->corr_operation = &square_distance_cond_chain;
+  } else if ( strcmp(corr_operation_name,"square_distance_cond") == 0 ) {
+    if (dim_A % (dim_corr + 1) ) 
+      return 18;
+    dim_corr = dim_A / (dim_corr + 1) * dim_corr;
+    self->corr_operation = &square_distance_cond;
   } else if ( strcmp(corr_operation_name,"scalar_product") == 0 ) {
-    self->corr_operation = &scalar_product; 
+    dim_corr=1;
+    self->corr_operation = &scalar_product;
   } else {
     return 11; 
   }
+  self->dim_corr = dim_corr;
   self->corr_operation_name = corr_operation_name;
   
   // Choose the compression function
@@ -1459,6 +1481,7 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
   return 0;
 }
 
+/* to be removed
 int square_distance ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
   unsigned int i;
   double tmp=0.0;
@@ -1472,6 +1495,7 @@ int square_distance ( double* A, unsigned int dim_A, double* B, unsigned int dim
   C[0]=tmp;
   return 0;
 }
+*/
 
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
@@ -1486,45 +1510,70 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   return 0;
 }
 
-int square_distance_cond_1d_int ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  /* assume that each of the dim_A entries has the following sub-units:
-     int condition; 
-     double position;
+/** 
+Compute the correlation if the condition is fulfiled, or zero otherwise
+
+Assume that the observable array is composed of the following sub-units
+arranged linearly one after another:
+     condition; 
+     position[ dim_A / (dim_A - dim_corr) ];
 
      correlate only values within the same block and if condition > 0
-     last entry in A gives the maximum value of correlation
-     */
-  const double tiny=0.00001; // to void roundoff errors in double->int conversion
-  char fname[]="square_distance_conditional_1d";
-  unsigned int i;
-  double tmp=0.0;
-  int dist, distmax;
-  if ( dim_A%2 != 1) {
-    printf("Error in %s: dim_A\%2 = %d, dim_A = %d\n",fname, dim_A%2, (int)dim_A);
-    return 5;
-  }
-  if ( dim_B%2 != 1) {
-    printf("Error in %s: dim_B\%2 = %d, dim_B= %d\n",fname, dim_B%2, (int)dim_B);
-    return 5;
-  }
-  if (dim_A != dim_B ) {
-    printf("Error in %s: The vector sizes do not match\n",fname);
-    return 5;
-  }
-  distmax=(int)nearbyint(A[dim_A-1]);
-  for ( i = 0; i < dim_A-2; i+=2 ) { 
-    // if both conditions are the same
-    if ( fabs(A[i] - B[i]) < tiny ) {
-      // integer division using doubles :-(
-      dist=(int)nearbyint( A[i+1] - B[i+1] );
-      if (dist > 0.5*distmax) 
-	dist-=distmax;
-      tmp += dist*dist;
+*/
+int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+  const double tiny=0.00001; // to avoid roundoff errors
+  unsigned int i, j, stepA, stepC, n_vals;
+  double dist;
+  n_vals = dim_A - dim_corr; // A contains the values in d dimensions plus condition per each value, corr contains just the values
+  stepA=dim_A/n_vals;
+  stepC=dim_corr/n_vals;
+  for ( i = 0; i < n_vals; i++ ) { 
+    // if both conditions are positive and the same and positive
+    if ( A[i*stepA] > 0 &&  fabs( A[i*stepA] - B[i*stepA] ) < tiny  ) {
+      for (j=0; j<stepC; j++) { 
+        dist = A[i*stepA+j+1] - B[i*stepA+j+1];
+        C[i*stepC+j] = dist*dist; 
+      }
+    } else { 
+      for (j=0; j<stepC; j++) {
+        C[i*stepC+j] = 0.0;
+      }
     }
-    //if (dist>distmax-5) 
-//	printf("data to correlate: A: %lf, %lf, B: %lf, %lf, result: %lf", A[i], A[i+1], B[i], B[i+1], tmp);
   }
-  C[0]=tmp;
+  return 0;
+}
+
+/** 
+Compute the correlation if the condition is fulfiled, or zero otherwise
+
+Assume that the observable array is composed of the following sub-units
+arranged linearly one after another:
+     condition; 
+     position;
+
+     correlate only values within the same block and if condition > 0
+     the last entry in the observable array is the chain length.
+     All computed distances are folded to be <= chain_length/2;
+     Warning: this function is very problem-specific.
+     
+*/
+int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+  const double tiny=0.00001; // to void roundoff errors in double->int conversion
+  unsigned int i, imax;
+  double dist, distmax, halfmax;
+  distmax=(double)(A[dim_A-1]);
+  halfmax=0.5*distmax;
+  imax=(dim_A-1)/2;
+  for ( i = 0; i < imax; i++ ) { 
+    // if both conditions are positive and the same and positive
+    if ( A[2*i] > 0 &&  fabs(A[2*i] - B[2*i]) < tiny  ) {
+      dist= fabs(A[2*i+1] - B[2*i+1]);
+      if (dist > halfmax) 
+	dist -= distmax;
+      C[i] = dist < tiny ? 0.0 : dist*dist;
+    } else 
+      C[i] = 0.0;
+  }
   return 0;
 }
 

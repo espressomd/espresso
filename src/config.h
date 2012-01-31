@@ -140,11 +140,6 @@
 #endif
 #endif
 
-/* MAGNETOSTATICS implies DIPOLES */
-#ifdef MAGNETOSTATICS
-#define DIPOLES
-#endif
-
 /* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
 #ifdef LB_ELECTROHYDRODYNAMICS
 #define LB
@@ -225,6 +220,10 @@
 
 #if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)
 #define VIRTUAL_SITES
+#endif
+
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Can only compile either VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE

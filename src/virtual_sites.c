@@ -79,14 +79,5 @@ int update_mol_pos_cfg(){
   return 1;
 }
 
-// Now, load the rules deciding, how to place virtual particles
-// and transfer back forces to the real particles
-#ifdef VIRTUAL_SITES_COM
- #include "virtual_sites_com.c"
-#endif
-#ifdef VIRTUAL_SITES_RELATIVE
- #include "virtual_sites_relative.c"
-#endif
-
 #endif 
 

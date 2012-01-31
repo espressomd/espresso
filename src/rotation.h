@@ -35,8 +35,8 @@
  * ---------                                                 *
  *************************************************************/
  
-/** Propagate angular velocities and update quaternions */
-void propagate_omega_quat(); 
+/** Propagate angular velocities and update quaternions on a particle */
+void propagate_omega_quat_particle(Particle* p); 
 
 /** Convert torques to the body-fixed frame and propogate
     angular velocities */
@@ -49,15 +49,15 @@ void convert_initial_torques();
 /** convert torques from the body-fixed frames to space-fixed coordinates */
 void convert_torques_body_to_space(Particle *p, double torque[3]);
 
-/** convert quaternions to the director */
-void convert_quat_to_quatu(double quat[4], double quatu[3]);
 
-/** convert dipole moment of one particle to the quaternions. Returns 1 if
-    everything is ok, or 0 if the dipole vector was too small. */
-int convert_dip_to_quat(double dip[3], double quat[4], double *dipm);
-
-/** convert quaternion director to the dipole moment */
-void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]);
+MDINLINE void convert_quat_to_quatu(double quat[4], double quatu[3])
+{
+  /* director */
+  quatu[0] = 2*(quat[1]*quat[3] + quat[0]*quat[2]);
+  quatu[1] = 2*(quat[2]*quat[3] - quat[0]*quat[1]);
+  quatu[2] =   (quat[0]*quat[0] - quat[1]*quat[1] -
+		quat[2]*quat[2] + quat[3]*quat[3]); 
+}
 
 /** Multiply two quaternions */ 
 void multiply_quaternions(double a[4], double b[4], double result[4]);
@@ -66,4 +66,30 @@ void multiply_quaternions(double a[4], double b[4], double result[4]);
 int convert_quatu_to_quat(double d[3], double quat[4]);
 
 void convert_omega_body_to_space(Particle *p, double *omega);
+
+#ifdef DIPOLES
+
+/** convert a dipole moment to quaternions and dipolar strength  */
+MDINLINE int convert_dip_to_quat(double dip[3], double quat[4], double *dipm)
+{
+  double dm;
+  // Calculate magnitude of dipole moment
+  dm = sqrt(dip[0]*dip[0] + dip[1]*dip[1] + dip[2]*dip[2]);
+  *dipm = dm;
+  convert_quatu_to_quat(dip,quat);
+
+  return 0;
+}
+
+/** convert quaternion director to the dipole moment */
+MDINLINE void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3])
+{
+  /* dipole moment */
+  dip[0] = quatu[0]*dipm;
+  dip[1] = quatu[1]*dipm;
+  dip[2] = quatu[2]*dipm;
+}
+
+#endif
+
 #endif
