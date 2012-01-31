@@ -26,7 +26,7 @@
 
 #include "parser.h"
 
-#ifdef ELECTROSTATICS
+#ifdef DIPOLES
 
 ///
 int       tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv) ; 

@@ -231,8 +231,15 @@ dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
 
 if test .$with_tcl = .no; then
-   AC_MSG_WARN([Without Tcl, ESPResSo doesn't do anything useful!])
+   AC_MSG_WARN([
+*********************************************************
+*                                                       *
+* Without Tcl, ESPResSo doesn't do anything useful yet! *
+*                                                       *
+*********************************************************
+])
    use_tcl=none
+   AC_DEFINE(TCL,[],[Whether Tcl is available])
 elif test .$with_tcl = .yes; then
 	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
@@ -242,12 +249,8 @@ else
 	ES_ADDPATH_CHECK_LIB($with_tcl, Tcl_Init, [use_tcl=$with_tcl])
 fi
 
-if test .$use_tcl = .; then
-   use_tcl=none
-fi
-
 # check the results
-if test .$use_tcl = .none; then
+if test .$use_tcl = . ; then
    # Tcl was not found
    case $target_os in
 	*darwin*) AC_MSG_NOTICE(
@@ -278,6 +281,10 @@ if test .$use_tcl != .none; then
 * (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
 ********************************************************************************
 ])], $extrapaths)
+fi
+
+if test .$use_tcl = .; then
+   use_tcl=none
 fi
 
 AM_CONDITIONAL(TCL, [test .$use_tcl != .none])

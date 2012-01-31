@@ -23,6 +23,7 @@
 #ifndef LB_GPU_H
 #define LB_GPU_H
 
+#include "utils.h"
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation

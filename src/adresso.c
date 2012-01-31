@@ -24,6 +24,7 @@
 */
 
 #include "adresso.h"
+#include "interaction_data.h"
 #include "communication.h"
 #include "cells.h"
 #include "grid.h"

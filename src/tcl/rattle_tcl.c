@@ -22,8 +22,10 @@
  *
  *  Implementation of \ref rattle_tcl.h
  */
-#include "utils.h"
 #include "parser.h"
+#include "integrate.h"
+#include "rattle.h"
+#include "interaction_data.h"
 
 #ifdef BOND_CONSTRAINT
 

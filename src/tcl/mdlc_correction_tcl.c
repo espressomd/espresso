@@ -25,7 +25,7 @@
 #include "mdlc_correction_tcl.h"
 #include "mdlc_correction.h"
 
-#ifdef ELECTROSTATICS
+#ifdef DIPOLES
 
 int tclprint_to_result_MDLC(Tcl_Interp *interp)
 {
