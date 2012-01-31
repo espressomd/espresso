@@ -19,8 +19,8 @@
 */
 #ifndef DOMAIN_DECOMP_TCL_H
 #define DOMAIN_DECOMP_TCL_H
-#include "config.h"
-#include <tcl.h>
+
+#include "parser.h"
 
 /** Callback for setmd max_num_cells (maxnumcells >= 27). 
     see also \ref max_num_cells */

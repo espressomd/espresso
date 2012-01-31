@@ -28,66 +28,38 @@
 */
 
 #include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "mol_cut.h"
 
 #ifdef MORSE
 
-#include "morse.h"
-#include "interaction_data.h"
-#include "communication.h"
+/** For the warmup you can cap the singularity of the Morse
+    potential at r=0. look into the warmup documentation for more
+    details (who wants to wite that?).*/
+extern double morse_force_cap;
 
 /** set the force cap for the Morse interaction.
     @param morseforcecap the maximal force, 0 to disable, -1 for individual cutoff
     for each of the interactions.
 */
+int morseforcecap_set_params(double morseforcecap);
 
-MDINLINE int morseforcecap_set_params(double morseforcecap)
-{
-  if (morse_force_cap != -1.0)
-    mpi_morse_cap_forces(morse_force_cap);
-  
-  return TCL_OK;
-}
+///
+int morse_set_params(int part_type_a, int part_type_b,
+		     double eps, double alpha,
+		     double rmin, double cut, double cap_radius);
 
-
-MDINLINE int morse_set_params(int part_type_a, int part_type_b,
-				      double eps, double alpha,
-              double rmin, double cut, double cap_radius)
-{
-  double add1, add2;
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data) return TCL_ERROR;
-
-  data->MORSE_eps   = eps;
-  data->MORSE_alpha = alpha;
-  data->MORSE_rmin  = rmin;
-  data->MORSE_cut   = cut;
-
-  /* calculate dependent parameter */
-  add1 = exp(-2.0*data->MORSE_alpha*(data->MORSE_cut - data->MORSE_rmin));
-  add2 = 2.0*exp(-data->MORSE_alpha*(data->MORSE_cut - data->MORSE_rmin));
-  data->MORSE_rest = data->MORSE_eps * (add1 - add2); 
- 
-  if (cap_radius > 0) {
-    data->MORSE_capradius = cap_radius;
-  }
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  if (morse_force_cap != -1.0)
-    mpi_morse_cap_forces(morse_force_cap);
-
-  return TCL_OK;
-}
+/** calculate morse_capradius from morse_force_cap */
+void calc_morse_cap_radii(double force_cap);
 
 /** Calculate Morse force between particle p1 and p2 */
 MDINLINE void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
-				double d[3], double dist, double force[3])
+				   double d[3], double dist, double force[3])
 {
   double add1, add2, fac=0.0;
   int j;
-  if(dist < ia_params->MORSE_cut) { 
+  if(CUTOFF_CHECK(dist < ia_params->MORSE_cut)) { 
     /* normal case: resulting force/energy smaller than capping. */
 
     if(dist > ia_params->MORSE_capradius ) {
@@ -143,7 +115,7 @@ MDINLINE double morse_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 
   double add1, add2, fac;
 
-  if(dist < ia_params->MORSE_cut) {
+  if(CUTOFF_CHECK(dist < ia_params->MORSE_cut)) {
 
     /* normal case: resulting force/energy smaller than capping. */
     if(dist > ia_params->MORSE_capradius) { 
@@ -172,49 +144,6 @@ MDINLINE double morse_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
   }
 
   return 0.0;
-}
-
-/** calculate morse_capradius from morse_force_cap */
-
-MDINLINE void calc_morse_cap_radii(double force_cap)
-{
-  int i,j,cnt=0;
-  IA_parameters *params;
-  double force=0.0, rad=0.0, step, add1, add2;
-
-  for(i=0; i<n_particle_types; i++) {
-    for(j=0; j<n_particle_types; j++) {
-      params = get_ia_param(i,j);
-      if(force_cap > 0.0 && params->MORSE_eps > 0.0) {
-
-	/* I think we have to solve this numerically... and very crude as well */
-
-	cnt=0;
-	rad = params->MORSE_rmin - 0.69314719 / params->MORSE_alpha;
-	step = -0.1 * rad;
-	force=0.0;
-	
-	while(step != 0) {
-
-          add1 = exp(-2.0 * params->MORSE_alpha * (rad - params->MORSE_rmin));
-          add2 = exp( -params->MORSE_alpha * (rad - params->MORSE_rmin));
-          force   = -params->MORSE_eps * 2.0 * params->MORSE_alpha * (add2 - add1) / rad;
-
-	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-	    step = - (step/2.0); 
-	  }
-	  if(fabs(force-force_cap) < 1.0e-6) step=0;
-	  rad += step; cnt++;
-	} 
-      	params->MORSE_capradius = rad;
-      }
-      else {
-	params->MORSE_capradius = 0.0; 
-      }
-      FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-			  this_node,i,j,rad,force,cnt));
-    }
-  }
 }
 
 #endif /* ifdef MORSE */

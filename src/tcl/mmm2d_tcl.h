@@ -30,8 +30,7 @@
  */
 #ifndef MMM2D_TCL_H
 #define MMM2D_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef ELECTROSTATICS
 

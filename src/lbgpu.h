@@ -23,9 +23,6 @@
 #ifndef LB_GPU_H
 #define LB_GPU_H
 
-#include <tcl.h>
-#include "utils.h"
-
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -211,13 +208,13 @@ extern int n_lb_boundaries;
 }
 #endif
 
+
+/*@}*/
+
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** 
- */
 
 #ifdef __cplusplus
 extern "C" {
@@ -246,7 +243,6 @@ void lb_reinit_fluid_gpu();
 
 /** (Re-)initializes the particle array*/
 void lb_realloc_particles_gpu();
-
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
@@ -277,15 +273,9 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 #ifdef __cplusplus
 }
 #endif
-#endif /* LB || LB_GPU */
 
-#ifdef LB_GPU
-//void on_lb_params_change_gpu(int field);
-/** Parser for the TCL command lbnode. */
+/*@{*/
 
-int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+#endif /* LB_GPU */
 
-#endif /* LB || LB_GPU */
 #endif /* LB_GPU_H */
-
-/*@}*/

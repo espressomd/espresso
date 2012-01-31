@@ -195,7 +195,7 @@ static t_dirs* neighbor;
 // void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double delta); /* update fields on plaquette */
 
 /****** setup everything: ******/
-// int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh); /* set the system parameters */
+// int maggs_set_parameters(double bjerrum, double f_mass, int mesh); /* set the system parameters */
 // void maggs_setup_neighbors(); /* setup the site neighbors */
 // void maggs_setup_local_lattice(); /* set lattice parameters */
 // void maggs_calc_surface_patches(t_surf_patch* surface_patch); /* prepare for communication */
@@ -235,7 +235,6 @@ static t_dirs* neighbor;
 /****** get energy and print out stuff ******/
 // double maggs_electric_energy(); /* calculate electric (E-field) energy */
 // double maggs_magnetic_energy(); /* calculate magnetic (B-field) energy */
-// int tclprint_to_result_Maggs(Tcl_Interp *interp) /* print result for TCL interface */
 
 /****** init and exit ******/
 // maggs_init(); /* initialize: check parameters, assign memory, calculate initial field */
@@ -529,22 +528,13 @@ maggs.pref2      = maggs.bjerrum * temperature;
 /****** setup everything: ******/
 /*******************************/
 
-/** set and calculate the system wide parameters
-    @return zero if successful
-    @param interp    TCL interpreter handle
-    @param bjerrum   Bjerrum length to set
-    @param f_mass    \f$1/c^2\f$ to set
-    @param mesh      Mesh size in 1D of the system
-*/
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty)
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty)
 {
   if (f_mass <=0.) {
-    Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
-    return TCL_ERROR;
+    return -1;
   } 
   if(mesh<0) {
-    Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
-    return TCL_ERROR;
+    return -2;
   }
 	
   maggs.mesh           = mesh;
@@ -556,7 +546,7 @@ int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int 
 	
   mpi_bcast_coulomb_params();
 	
-  return TCL_OK;
+  return ES_OK;
 }
 
 
@@ -2315,30 +2305,6 @@ double maggs_magnetic_energy()
   result *= 0.5*maggs.a;
   return result;
 }
-
-/** print out current setup of maggs method
-    @return 0 if successful
-    @param interp TCL interpreter handle
-*/
-int tclprint_to_result_Maggs(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-	
-  Tcl_PrintDouble(interp, maggs.f_mass, buffer);
-  Tcl_AppendResult(interp, "maggs ", buffer, " ", (char *) NULL);
-  sprintf(buffer,"%d",maggs.mesh);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
-	
-  return TCL_OK;
-}
-
-
-
-
-
-
-
-
 
 /***************************/
 /****** init and exit ******/

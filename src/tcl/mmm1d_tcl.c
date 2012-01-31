@@ -105,7 +105,15 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
   }
 
   MMM1D_set_params(switch_rad, bessel_cutoff, maxPWerror);
-  return mmm1d_tune(interp);
+
+  char *log = NULL;
+  int result = mmm1d_tune(&log) == ES_OK ? TCL_OK : TCL_ERROR;
+
+  Tcl_AppendResult(interp, log, NULL);
+  if (log)
+    free(log);
+
+  return gather_runtime_errors(interp, result);
 }
 
 #endif

@@ -95,12 +95,13 @@ extern MAGGS_struct maggs;
 void maggs_init(); /** called from: initialize.c */
 
 /** set the main parameters for the algorithm.
-    @param interp    TCL Interpreter handle
     @param bjerrum   Bjerrum length for the system
     @param f_mass    parameter to tune the speed of light (1/c^2)
     @param mesh      Mesh size in one dimension
+    @param finite_epsilon_flag whether to do epsilon-at-infinity-correction
+    @param epsilon_infty epsilon-at-infinity
  */
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
 
 /** Propagate the B-field in the system.
     Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.
@@ -121,12 +122,6 @@ int maggs_count_charged_particles();
 
 /** Clean up, free memory. Not used at the moment. */
 void maggs_exit();
-
-/** Print out the results.
-    @return 0 for success, -1 otherwise
-    @param interp TCL Interpreter handle
-*/
-int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 /*@}*/
 

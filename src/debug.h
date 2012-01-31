@@ -28,7 +28,6 @@
 */
 
 #include "config.h"
-#include <tcl.h>
 
 #ifdef MEM_DEBUG
 #ifdef __GNUC__
@@ -51,9 +50,6 @@ void *__malloc(unsigned int size, char *where, int line);
 void __free(void *p, char *where, int line);
 
 #endif
-
-/** callback for debug status. */
-int tclcallback_debug(Tcl_Interp *interp);
 
 #if defined FORCE_CORE || defined MPI_CORE
 /** this functions kills the task with SIGSEGV */

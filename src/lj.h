@@ -27,13 +27,16 @@
  *  \ref forces.c
 */
 
-#ifdef LENNARD_JONES
-
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
+#include "utils.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "mol_cut.h"
+
+#ifdef LENNARD_JONES
+/** For the warmup you can cap the singularity of the Lennard-Jones
+    potential at r=0. look into the warmup documentation for more
+    details (who wants to wite that?).*/
+extern double lj_force_cap;
 
 /** set the force cap for the LJ interaction.
     @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff

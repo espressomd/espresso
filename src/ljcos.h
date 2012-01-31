@@ -26,13 +26,12 @@
  *  \ref forces.c
 */
 
-#include "config.h"
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "mol_cut.h"
 
 #ifdef LJCOS
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
 
 int lj_cos_set_params(int part_type_a, int part_type_b,
 		      double eps, double sig, double cut,
@@ -44,7 +43,7 @@ MDINLINE void add_ljcos_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
   int j;
   double r_off, frac2, frac6, fac=0.0;
 
-  if(dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset) {
+  if(CUTOFF_CHECK(dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset)) {
     r_off = dist - ia_params->LJCOS_offset;
     /* cos part of ljcos potential. */
     if(dist > ia_params->LJCOS_rmin+ia_params->LJCOS_offset) {
@@ -91,7 +90,7 @@ MDINLINE double ljcos_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 {
   double r_off, frac2, frac6;
 
-  if(dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset) {
+  if(CUTOFF_CHECK(dist < ia_params->LJCOS_cut+ia_params->LJCOS_offset)) {
     r_off = dist-ia_params->LJCOS_offset;
     /* lennard-jones part of the potential. */
     if (dist < (ia_params->LJCOS_rmin+ia_params->LJCOS_offset)) {

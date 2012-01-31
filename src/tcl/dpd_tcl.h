@@ -20,8 +20,7 @@
 #ifndef DPD_TCL_H
 #define DPD_TCL_H
 
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef DPD
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv);

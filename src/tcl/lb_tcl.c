@@ -27,6 +27,7 @@
 #include "thermostat.h"
 #include "lb_tcl.h"
 #include "lb.h"
+#include "parser.h"
 
 #if defined (LB) || defined (LB_GPU)
 /* ********************* TCL Interface part *************************************/
@@ -336,7 +337,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
     	  return TCL_ERROR ;
       }
 
-      if ((err = mpi_gather_runtime_errors(interp, err)) != TCL_OK)
+      if ((err = gather_runtime_errors(interp, err)) != TCL_OK)
         return TCL_ERROR;
   }
 

@@ -47,9 +47,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../interaction_data.h"
-#include "../maggs.h"
-#include "../parser.h"
+#include "interaction_data.h"
+#include "maggs.h"
+#include "parser.h"
 
 #ifdef ELECTROSTATICS
 
@@ -100,7 +100,32 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
 
   coulomb.method = COULOMB_MAGGS;
 	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh, finite_epsilon_flag, epsilon);
+  int res = maggs_set_parameters(coulomb.bjerrum, f_mass, mesh,
+                                 finite_epsilon_flag, epsilon);
+  switch (res) {
+  case -1:
+    Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
+    return TCL_ERROR;
+  case -2:
+    Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+    return TCL_ERROR;
+  case ES_OK:
+    return TCL_OK;
+  }
+  Tcl_AppendResult(interp, "unknown error", (char *) NULL);
+  return TCL_ERROR;
+}
+
+int tclprint_to_result_Maggs(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+	
+  Tcl_PrintDouble(interp, maggs.f_mass, buffer);
+  Tcl_AppendResult(interp, "maggs ", buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",maggs.mesh);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
+	
+  return TCL_OK;
 }
 
 #endif // ELECTROSTATICS

@@ -77,7 +77,7 @@ int tclcommand_inter_parse_ljcos2(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "ljcos2 needs 4 DOUBLE parameters: "
 		     "<ljcos2_eps> <ljcos2_sig> <ljcos2_offset> <ljcos2_w>",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change = 5;
 
@@ -90,15 +90,11 @@ int tclcommand_inter_parse_ljcos2(Tcl_Interp * interp,
 
   if (ljcos2_set_params(part_type_a, part_type_b,
 			       eps, sig, offset, w
-			       ) == TCL_ERROR) {
+			       ) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
   return change;
 }
-
-
-
-/** calculate ljcos2_capradius from ljcos2_force_cap */
 
 #endif /* ifdef LJCOS2 */

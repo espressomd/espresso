@@ -21,8 +21,7 @@
 #ifndef _LJCOS_TCL_H
 #define _LJCOS_TCL_H
 
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef LJCOS
 

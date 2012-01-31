@@ -28,8 +28,8 @@
 */
 
 #include "utils.h"
-#include "particle_data.h"
 #include "interaction_data.h"
+#include "particle_data.h"
 
 #ifdef TUNABLE_SLIP
 
