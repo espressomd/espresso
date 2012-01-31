@@ -165,7 +165,6 @@ typedef struct {
   double* A_data;
   double* B_data;
   double* result_data;
-  int* tau_data;                     // just for double-checking, store tau for all results
 
   double* A_accumulated_average;     // all A values are added up here
   double* B_accumulated_average;     // all B values are added up here
@@ -186,6 +185,8 @@ typedef struct {
   // Functions producing observables A and B from the input data
   observable* A_obs;
   observable* B_obs;
+  int A_obs_id;
+  int B_obs_id;
 
   int is_from_file;
   int autoupdate;
@@ -214,6 +215,11 @@ typedef struct {
   int data_left;
 } file_data_source;
 
+/********** The error codes ********************************/
+extern const char init_errors[][64];
+extern const char init_from_checkpoint_errors[][64];
+extern const char file_data_source_init_errors[][64];
+extern const char double_correlation_get_data_errors[][64];
 
 /**
  * The initialization procedure for the correlation object. All important parameters have to be speciefied
@@ -251,6 +257,14 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
                   char* compressA_name, char* compressB_name);
 
 
+/** Restore a correlation from a checkpoint
+*/
+int double_correlation_init_from_checkpoint(double_correlation* self, char* filename, int dim_A, int dim_B, observable *A, observable *B);
+
+/** Write a checkpoint, saving all history buffers and other important variables of a correlation in a file
+*/
+int double_correlation_write_checkpoint( double_correlation* self, char* filename);
+
 /** The function to process a new datapoint of A and B
  *  
  * First the function finds out if it necessary to make some space for the new entries of A and B.
@@ -268,7 +282,15 @@ int double_correlation_get_data(  double_correlation* self );
  * is already available.
  *
  */
-int double_correlation_get_data(double_correlation* self);
+int double_correlation_finalize(double_correlation* self);
+
+/** Return an estimate of the integrated correlation time
+ *  
+ *  We calculate the correlation time for each dim_corr by normalizing the correlation,
+ * integrating it and finding out where C(tau)=tau;
+ *
+ */
+int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
 
 /** writes the correlation to the TCL console */
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 

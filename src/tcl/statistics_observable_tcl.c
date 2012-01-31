@@ -5,56 +5,78 @@
 #include "lb.h"
 #include "pressure.h"
 
+/* forward declarations */
+int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values);
+int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
+
 static int convert_types_to_ids(IntList * type_list, IntList * id_list); 
   
+int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
+  int i,ret;
+//  char** temp_argv; int temp_argc;
+//  int temp;
+  IntList* input=malloc(sizeof(IntList));
+  IntList* output=malloc(sizeof(IntList));
+  init_intlist(input);
+  alloc_intlist(input,1);
+  init_intlist(output);
+  alloc_intlist(output,1);
+  if (argc<1) {
+    Tcl_AppendResult(interp, "Error parsing id list\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+
+  if (ARG0_IS_S("ids")) {
+    if (!parse_int_list(interp, argv[1],input)) {
+      Tcl_AppendResult(interp, "Error parsing id list\n", (char *)NULL);
+      return TCL_ERROR;
+    } 
+    *ids=input;
+    for (i=0; i<input->n; i++) {
+      if (input->e[i] >= n_total_particles) {
+        Tcl_AppendResult(interp, "Error parsing ID list. Given particle ID exceeds the number of existing particles\n", (char *)NULL);
+        return TCL_ERROR;
+      }
+    }
+    *change=2;
+    return TCL_OK;
+
+  } else if ( ARG0_IS_S("types") ) {
+    if (!parse_int_list(interp, argv[1],input)) {
+      Tcl_AppendResult(interp, "Error parsing types list\n", (char *)NULL);
+      return TCL_ERROR;
+    } 
+    if( (ret=convert_types_to_ids(input,output))<=0){
+        Tcl_AppendResult(interp, "Error parsing types list. No particle with given types found.\n", (char *)NULL);
+        return TCL_ERROR;
+    } else { 
+      *ids=output;
+    }
+    *change=2;
+    return TCL_OK;
+  } else if ( ARG0_IS_S("all") ) {
+    if( (ret=convert_types_to_ids(NULL,output))<=0){
+        Tcl_AppendResult(interp, "Error parsing keyword all. No particle found.\n", (char *)NULL);
+        return TCL_ERROR;
+    } else { 
+      *ids=output;
+    }
+    *change=1;
+    return TCL_OK;
+  }
+
+  Tcl_AppendResult(interp, "unknown keyword given to observable: ", argv[0] , (char *)NULL);
+  return TCL_ERROR;
+}
+
+
+
 int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, profile_data** pdata_);
 int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, int* change, int* dim_A, radial_profile_data** pdata);
 int sf_print_usage(Tcl_Interp* interp);
 
 
-int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  char buffer[TCL_DOUBLE_SPACE];
-  double* values=malloc(obs->n*sizeof(double));
-  (*obs->fun)(obs->args, values, obs->n);
-  if (argc==0) {
-    for (int i = 0; i<obs->n; i++) {
-      Tcl_PrintDouble(interp, values[i], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
-    }
-  } else if (argc>0 && ARG0_IS_S("formatted")) {
-    tclcommand_observable_print_formatted(interp, argc-1, argv+1, change, obs, values);
-  } else {
-    Tcl_AppendResult(interp, "Unknown argument to observable print: ", argv[0], "\n", (char *)NULL );
-    return TCL_ERROR;
-  }
-  free(values);
-  return TCL_OK;
-}
-
-int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
-  if (0) {
-#ifdef LB
-  } else if (obs->fun == (&observable_lb_velocity_profile)) {
-    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
-#endif
-  } else if (obs->fun == (&observable_density_profile)) {
-    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
-#ifdef LB
-  } else if (obs->fun == (&observable_lb_radial_velocity_profile)) {
-    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
-#endif
-  } else if (obs->fun == (&observable_radial_density_profile)) {
-    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
-  } else if (obs->fun == (&observable_radial_flux_density_profile)) {
-    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
-  } else if (obs->fun == (&observable_flux_density_profile)) {
-    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
-  } else { 
-    Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
-    return TCL_ERROR;
-  }
-
-}
 
 int tclcommand_observable_print_profile_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values, int groupsize, int shifted) {
   profile_data* pdata=(profile_data*) obs->args;
@@ -471,6 +493,107 @@ int tclcommand_observable_structure_factor(Tcl_Interp* interp, int argc, char** 
   }
 }
 
+int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p) {
+  observable_sf_params* params;
+  int order,order2,tau_lin;
+  int i,j,k,l,n;
+  double delta_t,tau_max;
+  char ibuffer[TCL_INTEGER_SPACE + 2];
+  char dbuffer[TCL_DOUBLE_SPACE];
+//  int *vals;
+  double *q_density;
+  params=(observable_sf_params*)malloc(sizeof(observable_sf_params));
+  
+  if(argc!=5) { 
+    sprintf(ibuffer, "%d ", argc);
+    Tcl_AppendResult(interp, "structure_factor  needs 5 arguments, got ", ibuffer, (char*)NULL);
+    sf_print_usage(interp);
+    return TCL_ERROR;
+  }
+  if (ARG_IS_I(1,order)) {
+    sprintf(ibuffer, "%d ", order);
+    if(order>1) {
+      params->order=order;
+      order2=order*order;
+    } else {
+      Tcl_AppendResult(interp, "order must be > 1, got ", ibuffer, (char*)NULL);
+      sf_print_usage(interp);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading order",(char*)NULL);
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_D(2,delta_t)) {
+    if (delta_t > 0.0) *delta_t_p=delta_t;
+    else {
+      Tcl_PrintDouble(interp,delta_t,dbuffer);
+      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", dbuffer,(char*)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading delta_t, got ",argv[2],(char*)NULL);
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_D(3,tau_max)) {
+    if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
+    else {
+      Tcl_PrintDouble(interp,tau_max,dbuffer);
+      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", dbuffer,(char*)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading tau_max, got",argv[3],(char*)NULL);
+    return TCL_ERROR; 
+  }
+  if (ARG_IS_I(4,tau_lin)) {
+    if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
+    else {
+      sprintf(ibuffer, "%d", tau_lin);
+      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", ibuffer,(char*)NULL);
+      return TCL_ERROR;
+    }
+  } else {
+    Tcl_AppendResult(interp, "problem reading tau_lin, got",argv[4],(char*)NULL);
+    sf_print_usage(interp);
+    return TCL_ERROR; 
+  }
+  // compute the number of vectors
+  l=0;
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) {
+            l++;
+	  }
+        }
+  params->dim_sf=l;
+  params->q_vals=(int*)malloc(3*l*sizeof(double));
+  q_density=(double*)malloc(order2*sizeof(double));
+  for(i=0;i<order2;i++) q_density[i]=0.0;
+  l=0;
+  // Store their values and density
+  for(i=-order; i<=order; i++) 
+      for(j=-order; j<=order; j++) 
+        for(k=-order; k<=order; k++) {
+          n = i*i + j*j + k*k;
+          if ((n<=order2) && (n>0)) {
+	    params->q_vals[3*l  ]=i;
+	    params->q_vals[3*l+1]=j;
+	    params->q_vals[3*l+2]=k;
+	    q_density[n-1]+=1.0;
+            l++;
+	  }
+        }
+  for(i=0;i<order2;i++) q_density[i]/=(double)l;
+  params->q_density=q_density;
+  *A_args=(void*)params;
+  *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
+  return 0;
+}
+
+
 int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList *ids1, *ids2;
   int temp;
@@ -512,7 +635,8 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
 
 
 int tclcommand_observable_nearest_neighbour_conditional(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
-  IntList *ids1, *ids2, *partners, *conditions;
+  IntList *ids1, *ids2; 
+  //IntList *partners, *conditions;
   char usage_msg[]="Usage: analyze correlation ... nearest_neighbour_conditional id_list1 id_list2 cutoff chain_length";
   int temp, i;
   double cutoff;
@@ -640,8 +764,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   int n;
   int id;
   int temp;
-  int no;
-  
+  //int no;
 
   if (argc<2) {
     Tcl_AppendResult(interp, "Usage!!!\n", (char *)NULL);
@@ -704,65 +827,6 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
   return TCL_ERROR;
 }
 
-
-int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
-  int i,ret;
-//  char** temp_argv; int temp_argc;
-//  int temp;
-  IntList* input=malloc(sizeof(IntList));
-  IntList* output=malloc(sizeof(IntList));
-  init_intlist(input);
-  alloc_intlist(input,1);
-  init_intlist(output);
-  alloc_intlist(output,1);
-  if (argc<1) {
-    Tcl_AppendResult(interp, "Error parsing id list\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-
-  if (ARG0_IS_S("ids")) {
-    if (!parse_int_list(interp, argv[1],input)) {
-      Tcl_AppendResult(interp, "Error parsing id list\n", (char *)NULL);
-      return TCL_ERROR;
-    } 
-    *ids=input;
-    for (i=0; i<input->n; i++) {
-      if (input->e[i] >= n_total_particles) {
-        Tcl_AppendResult(interp, "Error parsing ID list. Given particle ID exceeds the number of existing particles\n", (char *)NULL);
-        return TCL_ERROR;
-      }
-    }
-    *change=2;
-    return TCL_OK;
-
-  } else if ( ARG0_IS_S("types") ) {
-    if (!parse_int_list(interp, argv[1],input)) {
-      Tcl_AppendResult(interp, "Error parsing types list\n", (char *)NULL);
-      return TCL_ERROR;
-    } 
-    if( (ret=convert_types_to_ids(input,output))<=0){
-        Tcl_AppendResult(interp, "Error parsing types list. No particle with given types found.\n", (char *)NULL);
-        return TCL_ERROR;
-    } else { 
-      *ids=output;
-    }
-    *change=2;
-    return TCL_OK;
-  } else if ( ARG0_IS_S("all") ) {
-    if( (ret=convert_types_to_ids(NULL,output))<=0){
-        Tcl_AppendResult(interp, "Error parsing keyword all. No particle found.\n", (char *)NULL);
-        return TCL_ERROR;
-    } else { 
-      *ids=output;
-    }
-    *change=1;
-    return TCL_OK;
-  }
-
-  Tcl_AppendResult(interp, "unknown keyword given to observable: ", argv[0] , (char *)NULL);
-  return TCL_ERROR;
-}
 
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list){ 
@@ -1152,6 +1216,50 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
     return TCL_ERROR;
   else
     return TCL_OK;
+}
+
+int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  char buffer[TCL_DOUBLE_SPACE];
+  double* values=malloc(obs->n*sizeof(double));
+  (*obs->fun)(obs->args, values, obs->n);
+  if (argc==0) {
+    for (int i = 0; i<obs->n; i++) {
+      Tcl_PrintDouble(interp, values[i], buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *)NULL );
+    }
+  } else if (argc>0 && ARG0_IS_S("formatted")) {
+    tclcommand_observable_print_formatted(interp, argc-1, argv+1, change, obs, values);
+  } else {
+    Tcl_AppendResult(interp, "Unknown argument to observable print: ", argv[0], "\n", (char *)NULL );
+    return TCL_ERROR;
+  }
+  free(values);
+  return TCL_OK;
+}
+
+int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
+  if (0) {
+#ifdef LB
+  } else if (obs->fun == (&observable_lb_velocity_profile)) {
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
+#endif
+  } else if (obs->fun == (&observable_density_profile)) {
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
+#ifdef LB
+  } else if (obs->fun == (&observable_lb_radial_velocity_profile)) {
+    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 0);
+#endif
+  } else if (obs->fun == (&observable_radial_density_profile)) {
+    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 1, 1);
+  } else if (obs->fun == (&observable_radial_flux_density_profile)) {
+    return tclcommand_observable_print_radial_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else if (obs->fun == (&observable_flux_density_profile)) {
+    return tclcommand_observable_print_profile_formatted(interp, argc, argv, change, obs, values, 3, 1);
+  } else { 
+    Tcl_AppendResult(interp, "Observable can not be printed formatted\n", (char *)NULL );
+    return TCL_ERROR;
+  }
+
 }
 
 

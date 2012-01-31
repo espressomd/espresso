@@ -19,6 +19,7 @@
 //comentario siguiente
 #include "statistics_correlation_tcl.h"
 #include "statistics_correlation.h"
+#include "statistics_observable_tcl.h"
 #include "statistics_observable.h"
 #include "particle_data.h"
 #include "parser.h"
@@ -26,52 +27,14 @@
 
 //  printf("\nOK here\n\n"); fflush(stdout);
 
-const char init_errors[][64] = {
-  "",                            // 0
-  "No valid correlation given" , // 1
-  "delta_t must be specified and > 0",         // 2
-  "tau_lin must be >= 2",        // 3
-  "tau_max must be >= delta_t", //4
-  "window_distance must be >1",  // 5
-  "dimension of A was not >1",   // 6
-  "dimension of B was not >1",   // 7
-  "dimension of B must match dimension of A ",   // 8
-  "no proper function for first observable given",                // 9
-  "no proper function for second observable given",               //10 
-  "no proper function for correlation operation given",           //11
-  "no proper function for compression of first observable given", //12
-  "no proper function for compression of second observable given",//13
-  "tau_lin must be divisible by 2", // 14
-  "dt is smaller than the MD timestep",//15
-  "dt is not a multiple of the MD timestep", //16
-  "cannot set compress2 for autocorrelation", //17
-  "dim_A and dim_corr do not match for conditional correlation", //18
-  "unknown error, dim_corr should not be 0 at this point" //19
-};
-
-const char file_data_source_init_errors[][64] = {
-  "",
-  "No valid filename given." ,
-  "File could not be opened.",
-  "No line found that was not commented out"
-};
-
-const char double_correlation_get_data_errors[][64] = {
-  "",
-  "Error calculating variable A" ,
-  "Error calculating variable B" ,
-  "Error calculating correlation\n", 
-  "Error allocating temporary memory\n", 
-  "Error in correlation operation: The vector sizes do not match\n"
-};
-
 
 /* forward declarations */
-int tclcommand_printe_correlation_time(double_correlation* self, Tcl_Interp* interp);
+int tclcommand_print_correlation_time(double_correlation* self, Tcl_Interp* interp);
 int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* interp); 
 int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** argv);
 int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv);
 int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv);
+int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
 
 /* General purpose and error reporting functions
 ************************************************
@@ -140,14 +103,14 @@ int correlation_print_parameters_all(Tcl_Interp* interp) {
   Tcl_AppendResult(interp, " { ", (char *)NULL);
   for (i=0; i< n_correlations; i++) {
     sprintf(buffer, " %d ", i);
-    Tcl_AppendResult(interp, "{ correlation ", buffer, (char *)NULL);
+    Tcl_AppendResult(interp, "\n{ correlation ", buffer, (char *)NULL);
     if ( correlations+i == NULL ) {
       Tcl_AppendResult(interp, " NULL } ", (char *)NULL);
     } else { 
       correlation_print_parameters(correlations+i, interp);
     }
   }
-  Tcl_AppendResult(interp, " } ", (char *)NULL);
+  Tcl_AppendResult(interp, " \n} ", (char *)NULL);
   return TCL_OK;
 }
 
@@ -361,10 +324,14 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   unsigned int dim_corr;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
+  char *error_msg=NULL;
   int temp;
 //  tcl_input_data tcl_input_d;
   char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE+2];
 //  int autocorrelation=1; // by default, we are doing autocorrelation
+  char *chkpt_filename=NULL;
+  int from_checkpoint=0;
+
 
   // Check if ID is negative
   if ( no < 0 ) {
@@ -476,7 +443,49 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     // Else we must parse the other arguments and see if we can construct a fully
     // working correlation class instance from that.
     while (argc > 0) {
-      if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
+      if (ARG0_IS_S("from_checkpoint")) {
+        if (argc != 4 && argc !=6) {
+           Tcl_AppendResult(interp, "\n***\nRestoring correlation form a checkpoint:\ncorrelation obs1 $id [obs2 $id] from_checkpoint $filename\n***\n", (char *)NULL);
+           fprintf(stderr,"\n***\nargc=%d\n***\n",argc);
+           return TCL_ERROR;
+        }
+        chkpt_filename=argv[1];
+        argc-=2;
+        argv+=2;
+        if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
+          if (argc>1 && ARG1_IS_I(temp)) {
+            if (temp>=n_observables) {
+               Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
+               return TCL_ERROR;
+            }
+            A=observables[temp];
+            dim_A=observables[temp]->n;
+            change+=2; argv+=2; argc-=2;
+          } else {
+            tclcommand_correlation_print_usage(interp);
+            return TCL_ERROR;
+          }
+        } 
+        argc-=2;
+        argv+=2;
+        if ( argc == 2 && (ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) ) {
+          if (argc>1 && ARG1_IS_I(temp)) {
+            if (temp>=n_observables) {
+               Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
+               return TCL_ERROR;
+            }
+            B=observables[temp];
+            dim_B=observables[temp]->n;
+            change+=2; argv+=2; argc-=2;
+  	  //autocorrelation=0;
+          } else {
+            tclcommand_correlation_print_usage(interp);
+            return TCL_ERROR;
+          }
+        } 
+        from_checkpoint=1; 
+        argc=0;
+      } else if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
              Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
@@ -510,14 +519,14 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           return TCL_ERROR;
         argc -= change;
         argv += change;
-      } else if ( ARG0_IS_S("tau_lin") ) {
-	if ( argc < 2 || !ARG1_IS_I(tau_lin))
-          Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL);
-        else { 
-          argc -= 2;
-          argv += 2;
-        }
-	// tau_lin is already set
+      } else if ( ARG0_IS_S("tau_lin") ) { 
+          if ( argc < 2 || ! (ARG1_IS_I(tau_lin)) ) 
+              Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL); 
+          else { 
+              argc -= 2; 
+              argv += 2; 
+          }
+	  // tau_lin is already set
       } else if ( ARG0_IS_S("tau_max") ) {
         if ( argc < 2 || !ARG1_IS_D(tau_max)) {
           Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_max $tau_max\n", (char *)NULL);
@@ -597,9 +606,15 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   correlations=(double_correlation*) realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
 
   // Now initialize the new correlation and check the arguments for consistency
-  error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, tau_max, 1, 
+  if (from_checkpoint) {
+      error = double_correlation_init_from_checkpoint(&correlations[n_correlations], chkpt_filename, dim_A, dim_B, A, B);
+      error_msg = (char *)init_from_checkpoint_errors[error]; 
+  } else {
+      error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, tau_max, 1, 
       dim_A, dim_B, dim_corr, A, B, 
       corr_operation_name, compressA_name, compressB_name);
+      error_msg = (char *)init_errors[error]; 
+  }
   if ( error == 0 ) {
   //printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
     if ( no == n_correlations ) n_correlations++;
@@ -608,154 +623,36 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     return TCL_OK;
   } else {
     printf("Error number %d\n", error);
-    Tcl_AppendResult(interp, "correlation could not be corretly initialized: ", init_errors[error], "\n", (char *)NULL);
+    Tcl_AppendResult(interp, "correlation could not be corretly initialized: ", error_msg, "\n", (char *)NULL);
     return TCL_ERROR;
   }
 
 }
 
-int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int* change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p) {
-  observable_sf_params* params;
-  int order,order2,tau_lin;
-  int i,j,k,l,n;
-  double delta_t,tau_max;
-  char ibuffer[TCL_INTEGER_SPACE + 2];
-  char dbuffer[TCL_DOUBLE_SPACE];
-//  int *vals;
-  double *q_density;
-  params=(observable_sf_params*)malloc(sizeof(observable_sf_params));
-  
-  if(argc!=5) { 
-    sprintf(ibuffer, "%d ", argc);
-    Tcl_AppendResult(interp, "structure_factor  needs 5 arguments, got ", ibuffer, (char*)NULL);
-    sf_print_usage(interp);
-    return TCL_ERROR;
-  }
-  if (ARG_IS_I(1,order)) {
-    sprintf(ibuffer, "%d ", order);
-    if(order>1) {
-      params->order=order;
-      order2=order*order;
-    } else {
-      Tcl_AppendResult(interp, "order must be > 1, got ", ibuffer, (char*)NULL);
-      sf_print_usage(interp);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading order",(char*)NULL);
-    return TCL_ERROR; 
-  }
-  if (ARG_IS_D(2,delta_t)) {
-    if (delta_t > 0.0) *delta_t_p=delta_t;
-    else {
-      Tcl_PrintDouble(interp,delta_t,dbuffer);
-      Tcl_AppendResult(interp, "delta_t must be > 0.0, got ", dbuffer,(char*)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading delta_t, got ",argv[2],(char*)NULL);
-    return TCL_ERROR; 
-  }
-  if (ARG_IS_D(3,tau_max)) {
-    if (tau_max > 2.0*delta_t) *tau_max_p=tau_max;
-    else {
-      Tcl_PrintDouble(interp,tau_max,dbuffer);
-      Tcl_AppendResult(interp, "tau_max must be > 2.0*delta_t, got ", dbuffer,(char*)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading tau_max, got",argv[3],(char*)NULL);
-    return TCL_ERROR; 
-  }
-  if (ARG_IS_I(4,tau_lin)) {
-    if (tau_lin > 2 && tau_lin < (tau_max/delta_t+1)) *tau_lin_p=tau_lin;
-    else {
-      sprintf(ibuffer, "%d", tau_lin);
-      Tcl_AppendResult(interp, "tau_lin must be < tau_max/delta_t+1, got ", ibuffer,(char*)NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    Tcl_AppendResult(interp, "problem reading tau_lin, got",argv[4],(char*)NULL);
-    sf_print_usage(interp);
-    return TCL_ERROR; 
-  }
-  // compute the number of vectors
-  l=0;
-  for(i=-order; i<=order; i++) 
-      for(j=-order; j<=order; j++) 
-        for(k=-order; k<=order; k++) {
-          n = i*i + j*j + k*k;
-          if ((n<=order2) && (n>0)) {
-            l++;
-	  }
-        }
-  params->dim_sf=l;
-  params->q_vals=(int*)malloc(3*l*sizeof(double));
-  q_density=(double*)malloc(order2*sizeof(double));
-  for(i=0;i<order2;i++) q_density[i]=0.0;
-  l=0;
-  // Store their values and density
-  for(i=-order; i<=order; i++) 
-      for(j=-order; j<=order; j++) 
-        for(k=-order; k<=order; k++) {
-          n = i*i + j*j + k*k;
-          if ((n<=order2) && (n>0)) {
-	    params->q_vals[3*l  ]=i;
-	    params->q_vals[3*l+1]=j;
-	    params->q_vals[3*l+2]=k;
-	    q_density[n-1]+=1.0;
-            l++;
-	  }
-        }
-  for(i=0;i<order2;i++) q_density[i]/=(double)l;
-  params->q_density=q_density;
-  *A_args=(void*)params;
-  *change=5; // if we reach this point, we have parsed 5 arguments, if not, error is returned anyway
-  return 0;
-}
 
-// just a test function, will be removed later
-void print_sf_params(observable_sf_params *params) {
-  int i, imax;
-  int *vals;
-  printf("order: %d\n",params->order);
-  printf("dim_sf: %d\n",params->dim_sf);
-  //printf("n_bins: %d\n",params->n_bins);
-  //printf("qmax: %g\n",params->qmax);
-  //printf("q2max2: %g\n",params->q2max);
-  printf("q_vals: \n");
-  imax=params->dim_sf;
-  vals=params->q_vals;
-  for(i=0;i<imax;i++)
-    printf("i:%d %d %d %d\n",i,vals[3*i],vals[3*i+1],vals[3*i+ 2]);
-  printf("End of sf_params\n");
-  return;
-}
-
-
-// FIXME: compiler complains it is not used anywhere
-static int convert_types_to_ids(IntList * type_list, IntList * id_list)
-{ 
-      int i,j,n_ids=0,flag;
-      sortPartCfg();
-      for ( i = 0; i<n_total_particles; i++ ) {
-         if(type_list==NULL) { 
-		/* in this case we select all particles */
-               flag=1 ;
-         } else {  
-                flag=0;
-                for ( j = 0; j<type_list->n ; j++ ) {
-                    if(partCfg[i].p.type == type_list->e[j])  flag=1;
-	        }
-         }
-	 if(flag==1){
-              realloc_intlist(id_list, id_list->n=n_ids+1);
-	      id_list->e[n_ids] = i;
-	      n_ids++;
-	 }
-      }
-      return n_ids;
-}
+// FIXME: compiler complains it is defined but not used anywhere
+//static int convert_types_to_ids(IntList * type_list, IntList * id_list)
+//{ 
+//      int i,j,n_ids=0,flag;
+//      sortPartCfg();
+//      for ( i = 0; i<n_total_particles; i++ ) {
+//         if(type_list==NULL) { 
+//		/* in this case we select all particles */
+//               flag=1 ;
+//         } else {  
+//                flag=0;
+//                for ( j = 0; j<type_list->n ; j++ ) {
+//                    if(partCfg[i].p.type == type_list->e[j])  flag=1;
+//	        }
+//         }
+//	 if(flag==1){
+//              realloc_intlist(id_list, id_list->n=n_ids+1);
+//	      id_list->e[n_ids] = i;
+//	      n_ids++;
+//	 }
+//      }
+//      return n_ids;
+//}
 
 int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B) {
   *corr_operation_name = strdup(argv[0]);
@@ -914,82 +811,4 @@ int double_correlation_write_to_file( double_correlation* self, char* filename) 
   return 0;
 }
 
-int double_correlation_write_checkpoint( double_correlation* self, char* filename) {
-    return TCL_ERROR;
-}
-/* 
-   int double_correlation_write_checkpoint( double_correlation* self, char* filename) {
-  FILE* file=0;
-  int j, k;
-  double dt=self->dt;
-  file=fopen(filename, "w");
-  if (!file) {
-    return 1;
-  }
-  fprintf(f,"%d #autocorrelation \n", autocorrelation); // autocorrelation flag
-  fprintf(f,"%d #finalized \n",       finalized);       // non-zero if correlation is finialized
-  fprintf(f,"%d #hierarchy_depth \n", hierarchy_depth); // maximum level of data compression
-  fprintf(f,"%d #tau_lin \n", tau_lin);                 // number of frames in the linear correlation
-  fprintf(f,"%d #dim_A \n", dim_A);                     // dimensionality of A
-  fprintf(f,"%d #dim_B \n", dim_B);
-  fprintf(f,"%d #dim_corr \n", dim_corr);
-  fprintf(f,"%d #time (No of frames)\n", t);            // global time in number of frames
-  fprintf(f,"% #comment \n", double dt;                       // time interval at which samples arrive
-  fprintf(f,"% #comment \n", double tau_max;                  // maximum time, for which the correlation should be calculated
-  fprintf(f,"% #comment \n", int update_frequency;              // time distance between updates in MD timesteps 
-  fprintf(f,"% #comment \n", unsigned int window_distance; 
 
-  fprintf(f,"% #comment \n", // Convenience pointers to our stored data
-  fprintf(f,"% #comment \n", // indices: A[level][tau_i][component]
-  fprintf(f,"% #comment \n", int* tau;                       // time differences
-  fprintf(f,"% #comment \n", double*** A;                     // input quantity 1
-  fprintf(f,"% #comment \n", double*** B;                     // input quantity 2
-  fprintf(f,"% #comment \n", double** result;                // output quantity
-  fprintf(f,"% #comment \n", unsigned int n_result;           // the total number of result values
-  fprintf(f,"% #comment \n", 
-  fprintf(f,"% #comment \n", // The actual allocated storage space
-  fprintf(f,"% #comment \n", unsigned int *n_sweeps;          // number of correlation sweeps at a particular value of tau
-  fprintf(f,"% #comment \n", unsigned int *n_vals;            // number of data values already present at a particular value of tau
-  fprintf(f,"% #comment \n", unsigned int* newest;            // index of the newest entry in each hierarchy level
-  fprintf(f,"% #comment \n", double* A_data;
-  fprintf(f,"% #comment \n", double* B_data;
-  fprintf(f,"% #comment \n", double* result_data;
-  fprintf(f,"% #comment \n", int* tau_data;                     // just for double-checking, store tau for all results
-
-  fprintf(f,"% #comment \n", double* A_accumulated_average;     // all A values are added up here
-  fprintf(f,"% #comment \n", double* B_accumulated_average;     // all B values are added up here
-  fprintf(f,"% #comment \n", double* A_accumulated_variance;    // all A**2 values are added up here
-  fprintf(f,"% #comment \n", double* B_accumulated_variance;    // all B**2 values are added up here
-  fprintf(f,"% #comment \n", unsigned int n_data;               // a counter to calculated averages and variances
-
-  fprintf(f,"% #comment \n", // compressing functions
-  fprintf(f,"% #comment \n", int (*compressA)( double* A1, double*A2, double* A_compressed, unsigned int dim_A );
-  fprintf(f,"% #comment \n", int (*compressB)( double* B1, double*B2, double* A_compressed, unsigned int dim_B );
-  fprintf(f,"% #comment \n", char *compressA_name;
-  fprintf(f,"% #comment \n", char *compressB_name;
-
-  fprintf(f,"% #comment \n", // correlation function
-  fprintf(f,"% #comment \n", int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
-  fprintf(f,"% #comment \n", char *corr_operation_name;
-
-  fprintf(f,"% #comment \n", // Functions producing observables A and B from the input data
-  fprintf(f,"% #comment \n", observable* A_obs;
-  fprintf(f,"% #comment \n", observable* B_obs;
-
-  fprintf(f,"% #comment \n", int is_from_file;
-  fprintf(f,"% #comment \n", int autoupdate;
-  fprintf(f,"% #comment \n", double last_update;
-  for (j=0; j<self->n_result; j++) {
-    fprintf(file, "%.6g %d ", self->tau[j]*dt, self->n_sweeps[j]);
-    for (k=0; k< self->dim_corr; k++) {
-      if (self->n_sweeps[j] == 0 )
-        fprintf(file, "%.6g ", 0.);
-      else 
-        fprintf(file, "%.6g ", self->result[j][k]/ (double) self->n_sweeps[j]);
-    }
-    fprintf(file, "\n");
-  }
-  fclose(file);
-  return 0;
-}
-*/

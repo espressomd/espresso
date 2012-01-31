@@ -7,6 +7,7 @@
 #include "statistics_observable.h"
 
 int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values);
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ); 
 
 //int parse_observable(Tcl_Interp* interp, int argc, char** argv, int* change, int (**A_fun)  ( void* A_args, double* A, unsigned int dim_A), int* dim_A, void** A_args);

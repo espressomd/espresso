@@ -11,6 +11,7 @@
 
 
 typedef struct {
+  char* obs_name;
   void* args;
   int n;
   int (*fun)  ( void* A_args, double* A, unsigned int dim_A);

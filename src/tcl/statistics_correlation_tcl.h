@@ -49,8 +49,6 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 int correlation_print_usage(Tcl_Interp* interp);
 // parsing calls to pre-defined correlations
 int parse_structure_factor (Tcl_Interp* interp, int argc, char** argv, int*  change, void** A_args, int *tau_lin_p, double *tau_max_p, double* delta_t_p);
-// TESTING
-//void print_sf_params(sf_params *params);
 // parsing generic correlation call
 int tclcommand_correlation_parse_observable(Tcl_Interp* interp, int argc, char** argv, observable** obs);
 //int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, int (**corr_fun)( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ), unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B);
