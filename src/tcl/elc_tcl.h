@@ -26,7 +26,7 @@
 
 #include "parser.h"
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 
 /// print the elc parameters to the interpreters result
 int tclprint_to_result_ELC(Tcl_Interp *interp);

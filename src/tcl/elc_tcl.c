@@ -25,7 +25,7 @@
 #include "elc_tcl.h"
 #include "elc.h"
 
-#ifdef ELECTROSTATICS
+#ifdef P3M
 
 int tclprint_to_result_ELC(Tcl_Interp *interp)
 {
