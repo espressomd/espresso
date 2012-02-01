@@ -261,7 +261,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
 							       
   // load free energy profile
   int i, tmp_argc, parse_error = 0, empty_line=0;
-  const char  **tmp_argv;
+  char  **tmp_argv;
   DoubleList profile, force;
   
   init_doublelist(&profile);
@@ -282,7 +282,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   
   for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
-    const char  **tmp_argv2;
+    char  **tmp_argv2;
     Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
     if (tmp_argc2 != 1) {
       Tcl_AppendResult(interp, "data set has to be a list of doubles", (char *) NULL);
@@ -313,7 +313,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   }
   for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
-    const char  **tmp_argv2;
+    char  **tmp_argv2;
     Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
     if (tmp_argc2 != 1) {
       Tcl_AppendResult(interp, "data set has to be a list of doubles", (char *) NULL);
@@ -361,7 +361,7 @@ int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char 
     Tcl_AppendResult(interp, "Unknown metadynamics command ", argv[1], "\n", (char *)NULL);
     return tclcommand_metadynamics_print_usage(interp, argc, argv);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }
 
 #endif
