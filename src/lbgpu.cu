@@ -647,7 +647,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
 __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
 	
   float mode[4];
-  unsigned int my_left[3];
+  int my_left[3];
   float interpolated_u1, interpolated_u2, interpolated_u3;
   float Rho;
   interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.f;
@@ -659,7 +659,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   #pragma unroll
   for(int i=0; i<3; ++i){
     float scaledpos = particle_data[part_index].p[i]/para.agrid;
-    my_left[i] = (unsigned int)(floorf(scaledpos));
+    my_left[i] = (int)(floorf(scaledpos - 0.5f));
+    //printf("scaledpos %f \t myleft: %u \n", scaledpos, my_left[i]);
     temp_delta[3+i] = scaledpos - my_left[i];
     temp_delta[i] = 1.f - temp_delta[3+i];
     /**further value used for interpolation of fluid velocity at part pos near boundaries */
@@ -676,19 +677,19 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
   delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
-  unsigned int x = my_left[0];
-  unsigned int y = my_left[1];
-  unsigned int z = my_left[2];
+  int x = my_left[0];
+  int y = my_left[1];
+  int z = my_left[2];
 
-  node_index[0] = x                + para.dim_x*y                  + para.dim_x*para.dim_y*z;
-  node_index[1] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*z;
-  node_index[2] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  node_index[4] = x                + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[5] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-
+  printf("myleft: %i %i %i nodeindex %u %u %u %u %u %u %u %u\n", my_left[0], my_left[1], my_left[2],node_index[0],node_index[1],node_index[2],node_index[3],node_index[4],node_index[5],node_index[6],node_index[7]);
   #pragma unroll
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
