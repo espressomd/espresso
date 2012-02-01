@@ -22,10 +22,11 @@
  *
  *  Implementation of \ref mol_cut_tcl.h
  */
-#include "utils.h"
 #include "parser.h"
 
 #ifdef MOL_CUT
+#include "mol_cut.h"
+#include "interaction_data.h"
 
 int tclprint_to_result_molcutIA(Tcl_Interp *interp, int i, int j)
 {

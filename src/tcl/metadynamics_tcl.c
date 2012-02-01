@@ -18,9 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "metadynamics.h"
+#include "parser.h"
 
 #ifdef METADYNAMICS
+#include "metadynamics.h"
 
 int tclcommand_metadynamics_print_status(Tcl_Interp *interp)
 {

@@ -346,6 +346,8 @@ int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int 
   return err_code;
 }
 
+#ifdef INTERFACE_CORRECTION
+
 int adress_tab_parser(Tcl_Interp * interp,
 		      int part_type_a, int part_type_b,
 		      int argc, char ** argv)
@@ -384,5 +386,7 @@ int adress_tab_parser(Tcl_Interp * interp,
     }
     return 2;
 }
+
+#endif
 
 #endif

@@ -25,6 +25,8 @@
 #include "utils.h"
 
 #ifdef MOL_CUT
+#include "interaction_data.h"
+#include "communication.h"
 
 int molcut_set_params(int part_type_a, int part_type_b,int mol_cut_type,double mol_cut_cutoff)
 {

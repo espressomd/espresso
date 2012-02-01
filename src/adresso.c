@@ -140,6 +140,7 @@ void adress_update_weights(){
   }
 }
 
+#ifdef INTERFACE_CORRECTION
 int adress_tab_set_params(int part_type_a, int part_type_b, char* filename)
 {
     IA_parameters *data;
@@ -237,6 +238,8 @@ int adress_tab_set_params(int part_type_a, int part_type_b, char* filename)
     //  mpi_tab_cap_forces(tab_force_cap);}
     return 0;
 }
+
+#endif
 
 int tf_set_params(int part_type, double prefactor, char * filename)
 {

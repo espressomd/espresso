@@ -29,6 +29,77 @@
 #include "lb.h"
 #include "parser.h"
 
+#ifdef LB_GPU
+static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
+  double f[3];
+  
+  while (argc > 0) {
+    if(ARG0_IS_S("force")){
+      if (argc < 4 ||
+ 	  !ARG_IS_D(1, f[0]) ||
+ 	  !ARG_IS_D(2, f[1]) ||
+ 	  !ARG_IS_D(3, f[2])
+	  ) {
+	Tcl_AppendResult(interp, "force expects three doubles as argument", (char *)NULL);
+	return TCL_ERROR;
+      }
+      argc -= 4;
+      argv += 4;
+      if (argc > 0) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "Error in lbnode_extforce force. You can only change one field at the same time.", (char *)NULL);
+	return ES_ERROR;
+      }
+    }
+    else {
+      Tcl_AppendResult(interp, "unknown parameter \"", argv[0], "\" to set", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  if (lb_lbnode_set_extforce_GPU(ind, f) == ES_ERROR) {
+    Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  return ES_OK;
+}
+
+/** Parser for the \ref tclcommand_lbnode_extforce_gpu command. Can be used in future to set more values like rho,u e.g.
+*/
+int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
+
+  int err=ES_ERROR;
+  int coord[3];
+
+  --argc; ++argv;
+  
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "too few arguments for lbnode_extforce", (char *)NULL);
+    return ES_ERROR;
+  }
+
+  if (!ARG_IS_I(0,coord[0]) || !ARG_IS_I(1,coord[1]) || !ARG_IS_I(2,coord[2])) {
+    Tcl_AppendResult(interp, "wrong arguments for lbnode", (char *)NULL);
+    return ES_ERROR;
+  } 
+  argc-=3; argv+=3;
+
+  if (argc == 0 ) { 
+    Tcl_AppendResult(interp, "lbnode_extforce syntax: lbnode_extforce X Y Z [ print | set ] [ F(X) | F(Y) | F(Z) ]", (char *)NULL);
+    return ES_ERROR;
+  }
+
+  if (ARG0_IS_S("set")) 
+    err = lbnode_parse_set(interp, argc-1, argv+1, coord);
+  else {
+    Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode_extforce", (char *)NULL);
+    return  ES_ERROR;
+  }     
+  return err;
+}
+#endif/* LB_GPU */
+
 #if defined (LB) || defined (LB_GPU)
 /* ********************* TCL Interface part *************************************/
 /* ******************************************************************************/

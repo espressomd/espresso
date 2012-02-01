@@ -271,6 +271,8 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity);
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
+int lb_lbnode_set_extforce_GPU(int ind[3], double f[3]);
+
 #ifdef __cplusplus
 }
 #endif

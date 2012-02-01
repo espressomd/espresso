@@ -22,10 +22,11 @@
  *
  *  Implementation of \ref tunable_slip_tcl.h
  */
-#include "utils.h"
 #include "parser.h"
 
 #ifdef TUNABLE_SLIP
+#include "tunable_slip.h"
+#include "interaction_data.h"
 
 int tclprint_to_result_tunable_slipIA(Tcl_Interp *interp, int i, int j)
 {
