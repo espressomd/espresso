@@ -26,6 +26,8 @@
 
 #include "parser.h"
 
+#ifdef TUNABLE_SLIP
+
 ///
 int tclprint_to_result_tunable_slipIA(Tcl_Interp *interp, int i, int j);
 
@@ -33,5 +35,7 @@ int tclprint_to_result_tunable_slipIA(Tcl_Interp *interp, int i, int j);
 int tclcommand_inter_parse_tunable_slip(Tcl_Interp * interp,
 					int part_type_a, int part_type_b,
 					int argc, char ** argv);
+
+#endif
 
 #endif

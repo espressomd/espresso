@@ -52,6 +52,7 @@
 #include "soft_sphere_tcl.h"
 #include "steppot_tcl.h"
 #include "tab_tcl.h"
+#include "tunable_slip_tcl.h"
 
 // Coulomb
 #include "debye_hueckel_tcl.h"
