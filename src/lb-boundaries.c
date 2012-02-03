@@ -32,6 +32,10 @@
 #include "communication.h"
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
+
+int n_lb_boundaries = 0;
+LB_Boundary *lb_boundaries = NULL;
+
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
   double vec[3] = {1e100, 1e100, 1e100};
   double dist=1e100;

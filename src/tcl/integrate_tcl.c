@@ -224,10 +224,11 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
   /* perform integration */
   if (!correlations_autoupdate) {
     if (mpi_integrate(n_steps))
-      return mpi_gather_runtime_errors(interp, TCL_OK);
+      return gather_runtime_errors(interp, TCL_OK);
   } else  {
     for (i=0; i<n_steps; i++) {
-      mpi_integrate(1);
+      if (mpi_integrate(1))
+        return gather_runtime_errors(interp, TCL_OK);
       autoupdate_correlations();
     }
   }

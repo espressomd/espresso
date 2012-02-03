@@ -19,8 +19,7 @@
 */
 #ifndef STATISTICS_TCL_H
 #define STATISTICS_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /** Implements the Tcl command \ref tclcommand_analyze. This allows for basic system analysis,
     both online and offline.

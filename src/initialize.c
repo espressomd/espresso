@@ -21,10 +21,6 @@
 /** \file initialize.c
     Implementation of \ref initialize.h "initialize.h"
 */
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "utils.h"
 #include "initialize.h"
 #include "global.h"
@@ -59,7 +55,6 @@
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "rattle.h"
-#include "bin.h"
 #include "lattice.h"
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
@@ -67,11 +62,6 @@
 #include "statistics_observable.h"
 #include "statistics_correlation.h"
 #include "lb-boundaries.h"
-
-#include "tcl/initialize_interpreter.h"
-
-// import function from scriptsdir.c
-char *get_default_scriptsdir();
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -81,11 +71,26 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-static void init_tcl(Tcl_Interp *interp);
-
-int on_program_start(Tcl_Interp *interp)
+void on_program_start()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
+
+  /* tell Electric fence that we do realloc(0) on purpose. */
+#ifdef EFENCE
+  extern int EF_ALLOW_MALLOC_0;
+  EF_ALLOW_MALLOC_0 = 1;
+#endif
+
+  register_sigint_handler();
+
+  if (this_node == 0) {
+    /* master node */
+#ifdef FORCE_CORE
+    /* core should be the last exit handler (process dies) */
+    atexit(core);
+#endif
+    atexit(mpi_stop);
+  }
 
   /*
     call the initialization of the modules here
@@ -133,11 +138,7 @@ int on_program_start(Tcl_Interp *interp)
   if (this_node == 0) {
     /* interaction_data.c: make sure 0<->0 ia always exists */
     make_particle_type_exist(0);
-    
-    init_tcl(interp);
   }
-  return TCL_OK;
-
 }
 
 
@@ -727,38 +728,3 @@ void on_ghost_flags_change()
     cells_re_init(CELL_STRUCTURE_CURRENT);    
 }
 
-static void init_tcl(Tcl_Interp *interp)
-{
-  char cwd[1024];
-  char *scriptdir;
-
-  /*
-    installation of tcl commands
-  */
-  register_tcl_commands(interp);
-
-  /* evaluate the Tcl initialization script */
-  scriptdir = getenv("ESPRESSO_SCRIPTS");
-  if (!scriptdir)
-    scriptdir = get_default_scriptsdir();
-  
-  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
-
-  if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
-    fprintf(stderr,
-	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
-	    scriptdir);
-    exit(1);
-  }
-  if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
-    fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
-	    Tcl_GetStringResult(interp));
-    exit(1);
-  }
-  if (chdir(cwd) != 0) {
-    fprintf(stderr,
-	    "\n\ncould not change back to execution dir %s ????\n\n\n",
-	    cwd);
-    exit(1);
-  }
-}

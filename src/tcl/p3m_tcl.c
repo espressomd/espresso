@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "parser.h"
 #include "integrate.h"
 #include "global.h"
 #include "grid.h"
@@ -349,19 +350,21 @@ int tclcommand_inter_coulomb_p3m_print_adaptive_tune_parameters(Tcl_Interp *inte
     return (TCL_ERROR);
   }
   
-  if(p3m_adaptive_tune(interp) == TCL_ERROR) {  
-    Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
-    return (TCL_ERROR);
+  char *log = NULL;
+  if(p3m_adaptive_tune(&log) == ES_ERROR) {  
+    Tcl_AppendResult(interp, log, "\nfailed to tune P3M parameters to required accuracy", (char *) NULL);
+    if (log)
+      free(log);
+    return TCL_ERROR;
   }
   
-  /* Tell the user about the outcome */
-  Tcl_AppendResult(interp, "\nresulting parameters:\n", (char *) NULL);
-  sprintf(b2,"%-4d",p3m.params.mesh[0]); sprintf(b3,"%-3d",p3m.params.cao);
-  Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-  sprintf(b1,"%.5e",p3m.params.r_cut_iL); sprintf(b2,"%.5e",p3m.params.alpha_L); sprintf(b3,"%.5e",p3m.params.accuracy);
-  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
+  /* Tell the user about the tuning outcome */
+  Tcl_AppendResult(interp, log, (char *) NULL);
 
-  return (TCL_OK);  
+  if (log)
+    free(log);
+
+  return TCL_OK;
 }
 
 

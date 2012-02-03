@@ -21,8 +21,7 @@
 #ifndef _LJANGLE_TCL_H
 #define _LJANGLE_TCL_H
 
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef LJ_ANGLE
 

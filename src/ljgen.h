@@ -30,25 +30,24 @@
  *  \ref forces.c
 */
 
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "mol_cut.h"
+
 #ifdef LENNARD_JONES_GENERIC
 
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
-
-
 int ljgen_set_params(int part_type_a, int part_type_b,
-			       double eps, double sig, double cut,
-			       double shift, double offset,
-			       int a1, int a2, double b1, double b2,
-			       double cap_radius);
+		     double eps, double sig, double cut,
+		     double shift, double offset,
+		     int a1, int a2, double b1, double b2,
+		     double cap_radius);
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				   double d[3], double dist, double force[3])
 {
-  if (dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset) {
+  if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset)) {
     int j;
     double r_off, frac, fac=0.0;
     r_off = dist - ia_params->LJGEN_offset;
@@ -105,7 +104,7 @@ MDINLINE double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 {
   double r_off, frac;
 
-  if (dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset) {
+  if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset)) {
     r_off = dist - ia_params->LJGEN_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJGEN_capradius) {

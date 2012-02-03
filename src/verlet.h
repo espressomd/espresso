@@ -48,7 +48,6 @@
  *
  *  For more information see \ref verlet.c "verlet.c".
  */
-#include <tcl.h>
 #include "particle_data.h"
 
 /************************************************

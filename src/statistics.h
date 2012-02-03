@@ -23,7 +23,6 @@
     This file contains the code for statistics on the data.
 */
 
-#include <tcl.h>
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "utils.h"
@@ -102,10 +101,6 @@ extern int n_part_conf;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-
-/** EXPERIMENTAL: Implements the Tcl command \ref acf_cmd for online calculation of autocorrelation functions. */
-int acf_cmd(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** the minimal distance of two particles with types in set1 rsp. set2.
     @param set1 types of particles

@@ -34,6 +34,10 @@
 #include "domain_decomposition.h"
 #include "magnetic_non_p3m_methods_tcl.h"
 
+// splitting, tbd
+#include <tcl.h>
+#include "tcl/parser.h"
+
 #ifdef DIPOLES
 
 /* =============================================================================

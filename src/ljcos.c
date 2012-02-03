@@ -23,7 +23,6 @@
 #include "ljcos.h"
 
 #ifdef LJCOS
-#include "parser.h"
 #include "communication.h"
 
 int lj_cos_set_params(int part_type_a, int part_type_b,
@@ -33,7 +32,7 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
   double facsq;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
 
   data->LJCOS_eps    = eps;
   data->LJCOS_sig    = sig;
@@ -49,6 +48,6 @@ int lj_cos_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
   
-  return TCL_OK;
+  return ES_OK;
 }
 #endif

@@ -20,8 +20,7 @@
 */
 #ifndef _P3M_MAGNETOSTATICS_TCL_H
 #define _P3M_MAGNETOSTATICS_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef DP3M
 

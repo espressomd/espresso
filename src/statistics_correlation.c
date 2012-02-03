@@ -19,7 +19,6 @@
 //comentario siguiente
 #include "statistics_correlation.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "integrate.h"
 
 /* global variables */
@@ -806,7 +805,7 @@ void autoupdate_correlations() {
   for (i=0; i<n_correlations; i++) {
 //    printf("checking correlation %d autoupdate is %d \n", i, correlations[i].autoupdate);
     if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
-//      printf("updating %d\n", i);
+      //printf("updating %d\n", i);
       correlations[i].last_update=sim_time;
       double_correlation_get_data(&correlations[i]);
     }
@@ -889,7 +888,7 @@ int double_correlation_write_checkpoint( double_correlation* self, char* filenam
           fprintf(f,"%.6g ", self->B_data[i]); 
   }
   fclose(f);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int double_correlation_init_from_checkpoint(double_correlation* self, char* filename, int dim_A, int dim_B, observable *A, observable *B) {
@@ -1141,7 +1140,7 @@ int double_correlation_init_from_checkpoint(double_correlation* self, char* file
   }
   
   fclose(f);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int read_until_end_of_line(FILE *f) {

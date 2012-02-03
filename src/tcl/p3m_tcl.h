@@ -21,8 +21,7 @@
 #ifndef _P3M_TCL_H 
 #define _P3M_TCL_H
 
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef P3M
 

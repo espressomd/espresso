@@ -22,9 +22,10 @@
 
 #ifdef LENNARD_JONES
 #include "lj.h"
-#include "parser.h"
 #include "mol_cut.h"
 #include "communication.h"
+
+double lj_force_cap = 0.0;
 
 /** set the force cap for the LJ interaction.
     @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
@@ -35,7 +36,7 @@ int ljforcecap_set_params(double ljforcecap)
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);
   
-  return TCL_OK;
+  return ES_OK;
 }
 
 int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -45,7 +46,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
 
   data->LJ_eps    = eps;
   data->LJ_sig    = sig;
@@ -65,7 +66,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /** Calculate lennard Jones force between particle p1 and p2 */

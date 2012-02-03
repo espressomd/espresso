@@ -1,6 +1,5 @@
 #include "statistics_observable.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "integrate.h"
 #include "lb.h"
 #include "pressure.h"

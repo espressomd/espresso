@@ -292,13 +292,6 @@ int double_correlation_finalize(double_correlation* self);
  */
 int correlation_get_correlation_time(double_correlation* self, double* correlation_time);
 
-/** writes the correlation to the TCL console */
-int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp); 
-int double_correlation_write_to_file( double_correlation* self, char* filename); 
-
-/** Prints spherically averaged SF */
-int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp);
-
 int file_data_source_init(file_data_source* self, char* filename, IntList* columns);
 int file_data_source_readline(void* xargs, double* A, unsigned int dim_A); 
 
@@ -323,11 +316,9 @@ int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int
 
 /* *************************
 *
-* Functions for computing observables
+* Functions for correlation operations
 *
 **************************/
-/** The minimal version of observable computing function */
-
 int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
 int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
@@ -342,17 +333,4 @@ int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned in
 
 int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
 
-
-/**************  Functions that calculate A and B from MD state ************/
-
-/** Obtain the particle velocities.
- */ 
-//
-//typedef struct {
-//  Tcl_Interp* interp;
-//  int argc;
-//  char** argv;
-//} tcl_input_data;
-//
-//int tcl_input(void* data, double* A, unsigned int n_A);
 #endif

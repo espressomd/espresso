@@ -48,8 +48,7 @@ team. Use them at your own risk!
     of a subsequent particle).
     </ol>
 */
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /** This string is to be put in the \ref MDHeader::magic field of \ref MDHeader
     to allow unique identification of binary packed MD data.
