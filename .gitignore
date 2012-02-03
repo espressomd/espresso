@@ -22,7 +22,6 @@ tools/es_mpiexec
 # object files and executable
 *.o
 src/libEspresso.a
-src/libespressobf.a
 Espresso
 Espresso.install
 

@@ -20,8 +20,7 @@
 */
 #ifndef MAG_NON_P3M_TCL_H
 #define MAG_NON_P3M_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef DIPOLES
 

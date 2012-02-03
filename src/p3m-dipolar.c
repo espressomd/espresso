@@ -552,7 +552,7 @@ int dp3m_set_mesh_offset(double x, double y, double z)
   if(x < 0.0 || x > 1.0 ||
      y < 0.0 || y > 1.0 ||
      z < 0.0 || z > 1.0 )
-    return TCL_ERROR;
+    return ES_ERROR;
 
   dp3m.params.mesh_off[0] = x;
   dp3m.params.mesh_off[1] = y;
@@ -560,7 +560,7 @@ int dp3m_set_mesh_offset(double x, double y, double z)
 
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /* We left the handling of the epsilon, due to portability reasons in
@@ -576,20 +576,20 @@ int dp3m_set_eps(double eps)
 
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 
 int dp3m_set_ninterpol(int n)
 {
   if (n < 0)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   dp3m.params.inter = n;
 
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /*****************************************************************************/
@@ -1914,12 +1914,12 @@ int dp3m_sanity_checks_boxl() {
      for(i=0;i<3;i++) {
     /* check k-space cutoff */
     if(dp3m.params.cao_cut[i] >= 0.5*box_l[i]) {
-      errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
       ERROR_SPRINTF(errtxt,"{039 dipolar P3M_init: k-space cutoff %g is larger than half of box dimension %g} ",dp3m.params.cao_cut[i],box_l[i]);
       ret = 1;
     }
     if(dp3m.params.cao_cut[i] >= local_box_l[i]) {
-      errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+      errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
       ERROR_SPRINTF(errtxt,"{040 dipolar P3M_init: k-space cutoff %g is larger than local box dimension %g} ",dp3m.params.cao_cut[i],local_box_l[i]);
       ret = 1;
     }
@@ -1969,7 +1969,7 @@ int dp3m_sanity_checks()
   if (dp3m_sanity_checks_boxl()) ret = 1;
 
   if (skin == -1) {
-    errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+    errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
     ERROR_SPRINTF(errtxt,"{047 dipolar P3M_init: skin is not yet set} ");
     ret = 1;
   }
@@ -1980,7 +1980,7 @@ int dp3m_sanity_checks()
     ret = 1;
   }
   if( dp3m.params.cao == 0) {
-    errtxt = runtime_error(128 + 2*TCL_DOUBLE_SPACE);
+    errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
     ERROR_SPRINTF(errtxt,"{046 dipolar P3M_init: cao is not yet set} ");
     ret = 1;
   }

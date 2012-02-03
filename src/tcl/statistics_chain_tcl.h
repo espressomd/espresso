@@ -19,8 +19,7 @@
 */
 #ifndef STATISTICS_CHAIN_TCL_H
 #define STATISTICS_CHAIN_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 int tclcommand_analyze_parse_set_chains(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, char **argv);

@@ -815,6 +815,7 @@ general tabulated potentials.
 \index{rigid bond|mainindex}
 \index{interactions!rigid bond|mainindex}
 \index{Rattle Shake algorithm}
+\label{sec:rattle}
 
 \begin{essyntax}
   inter \var{bondid}
@@ -1273,7 +1274,7 @@ refer to appendix \vref{chap:mmm}.
 
 \begin{essyntax}
   inter coulomb \var{l_B}
-  memd \var{f\_mass} \var{mesh}
+  memd \var{f\_mass} \var{mesh} \opt{epsilon \var{\varepsilon_{\infty}}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1299,6 +1300,9 @@ The algorithm currently works with the following constraints:
   to the square root of the inverted speed of light.
 \item[\var{mesh}] is the number of mesh points for the interpolation
   of the electromagnetic field in one dimension.
+\item[\var{\varepsilon_{\infty}}] is the background dielectric
+  permittivity at infinity. This defaults to metallic boundary
+  conditions, to match the results of P3M.
 \end{arguments}
 
 The arising self-interactions are treated with a modified version of

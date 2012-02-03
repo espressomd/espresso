@@ -20,8 +20,7 @@
 */
 #ifndef _LJGEN_TCL_H
 #define _LJGEN_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef LENNARD_JONES_GENERIC
 

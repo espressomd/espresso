@@ -1,30 +1,27 @@
 
 #include <tcl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
+#include "global.h"
 #include "adresso_tcl.h"
-#include "bin_tcl.h"
 #include "binary_file_tcl.h"
-#include "blockfile_tcl.h"
-#include "cells_tcl.h"
 #include "constraint_tcl.h"
 #include "domain_decomposition_tcl.h"
 #include "dpd_tcl.h"
 #include "global_tcl.h"
 #include "grid_tcl.h"
 #include "iccp3m_tcl.h"
-#include "imd_tcl.h"
 #include "integrate_tcl.h"
 #include "interaction_data_tcl.h"
-#include "lb-boundaries_tcl.h"
 #include "lb_tcl.h"
-#include "lb.h"
 #include "lj_tcl.h"
 #include "maggs_tcl.h"
 #include "metadynamics_tcl.h"
-#include "nemd_tcl.h"
 #include "p3m-dipolar_tcl.h"
 #include "p3m_tcl.h"
-#include "particle_data_tcl.h"
 #include "polymer_tcl.h"
 #include "pressure_tcl.h"
 #include "random_tcl.h"
@@ -33,16 +30,66 @@
 #include "statistics_fluid_tcl.h"
 #include "statistics_tcl.h"
 #include "thermostat_tcl.h"
-#include "topology_tcl.h"
-#include "uwerr_tcl.h"
 #include "virtual_sites_com_tcl.h"
-#include "cuda_init_tcl.h"
-#include "collision_tcl.h"
+
+/****************************************
+ * various forwards
+ *****************************************/
+
+/** Implementation of the tcl command bin, which can be used
+    to bin data into arbitrary bins. See \ref bin_tcl.c
+*/
+int tclcommand_bin(ClientData data, Tcl_Interp *interp,
+		   int argc, char **argv);
+/** Implementation of the Tcl command blockfile. Allows to read and write
+    blockfile comfortably from Tcl. See \ref blockfile_tcl.c */
+int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+/** implementation of the Tcl command cellsystem. See \ref cells_tcl.c */
+int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
+	       int argc, char **argv);
+/** replaces one of TCLs standart channels with a named pipe. See \ref channels_tcl.c */
+int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+/** Implements the Tcl command code_info.  It provides information on the
+    Version, Compilation status and the debug status of the used
+    code. See \ref config_tcl.c */
+int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
+	 int argc, char **argv);
+/** Set the CUDA device to use or retrieve information
+    available devices. See \ref cuda_init_tcl.c */
+int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
+		    int argc, char **argv);
+/** VMD connection. See \ref imd_tcl.c */
+int tclcommand_imd(ClientData data, Tcl_Interp *interp,
+		   int argc, char **argv);
+/** tcl procedure for nemd steering.
+    USAGE: nemd \<n_slabs\> \<n_exchange\>   
+    see also \ref tclcommand_nemd. See \ref nemd_tcl.c */
+int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
+		    int argc, char **argv);
+/** Collision detection. See \ref collision_tcl.c */
+int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+/** Implementation of the tcl command "part". This command allows to
+    modify particle data. See \ref particle_data_tcl.c */
+int tclcommand_part(ClientData data, Tcl_Interp *interp,
+		    int argc, char **argv);
+/** The C implementation of the tcl function uwerr. See \ref uwerr_tcl.c */
+int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
+/** callback for \ref timing_samples. See \ref tuning_tcl.c */
+int tclcallback_timings(Tcl_Interp *interp, void *data);
+
+
+/// from \ref scriptsdir.c
+char *get_default_scriptsdir();
+
+/****************************************
+ * Registration functions
+ *****************************************/
 
 #define REGISTER_COMMAND(name, routine)					\
   Tcl_CreateCommand(interp, name, (Tcl_CmdProc *)routine, 0, NULL);
 
-void register_tcl_commands(Tcl_Interp* interp) {
+static void register_tcl_commands(Tcl_Interp* interp) {
   /* in cells.c */
   REGISTER_COMMAND("cellsystem", tclcommand_cellsystem);
   /* in integrate.c */
@@ -52,7 +99,7 @@ void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("setmd", tclcommand_setmd);
   /* in grid.c */
   REGISTER_COMMAND("change_volume", tclcommand_change_volume);
-  /* in global.c */
+  /* in config_tcl.c */
   REGISTER_COMMAND("code_info", tclcommand_code_info);
   /* in interaction_data.c */
   REGISTER_COMMAND("inter",tclcommand_inter);
@@ -94,7 +141,7 @@ void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
   REGISTER_COMMAND("lbnode", tclcommand_lbnode);
   REGISTER_COMMAND("lbboundary", tclcommand_lbboundary);
-  /* in utils.h */
+  /* here */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
 #ifdef ELECTROSTATICS
@@ -125,4 +172,65 @@ void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
+}
+
+static void register_global_variables(Tcl_Interp *interp)
+{
+  /* register all writeable TCL variables with their callback functions */
+  register_global_callback(FIELD_BOXL, tclcallback_box_l);
+  register_global_callback(FIELD_MAXNUMCELLS, tclcallback_max_num_cells);
+  register_global_callback(FIELD_MINNUMCELLS, tclcallback_min_num_cells);
+  register_global_callback(FIELD_NODEGRID, tclcallback_node_grid);
+  register_global_callback(FIELD_NPTISO_PDIFF, tclcallback_npt_p_diff);
+  register_global_callback(FIELD_NPTISO_PISTON, tclcallback_npt_piston);
+  register_global_callback(FIELD_PERIODIC, tclcallback_periodicity);
+  register_global_callback(FIELD_SKIN, tclcallback_skin);
+  register_global_callback(FIELD_SIMTIME, tclcallback_time);
+  register_global_callback(FIELD_TIMESTEP, tclcallback_time_step);
+  register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
+}
+
+int appinit(Tcl_Interp *interp)
+{
+  if (Tcl_Init(interp) == TCL_ERROR)
+    return TCL_ERROR;
+
+#ifdef TK
+  if (Tk_Init(interp) == TCL_ERROR)
+    return TCL_ERROR;
+#endif
+
+  /*
+    installation of tcl commands
+  */
+  register_tcl_commands(interp);
+  register_global_variables(interp);
+
+  /* evaluate the Tcl initialization script */
+  char *scriptdir = getenv("ESPRESSO_SCRIPTS");
+  if (!scriptdir)
+    scriptdir = get_default_scriptsdir();
+  
+  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
+
+  char cwd[1024];
+  if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
+    fprintf(stderr,
+	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
+	    scriptdir);
+    exit(1);
+  }
+  if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
+    fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
+	    Tcl_GetStringResult(interp));
+    exit(1);
+  }
+  if (chdir(cwd) != 0) {
+    fprintf(stderr,
+	    "\n\ncould not change back to execution dir %s ????\n\n\n",
+	    cwd);
+    exit(1);
+  }
+
+  return (TCL_OK);
 }

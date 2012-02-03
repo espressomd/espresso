@@ -43,8 +43,6 @@
  */
 
 #include "config.h"
-#include "debug.h"
-
 #include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
@@ -87,12 +85,9 @@ extern ewald_struct ewald;
 /************************************************************/
 /*@{*/
 
-/// print the ewald parameters to the interpreters result
-int tclprint_to_result_EWALD(Tcl_Interp *interp);
+///
+int ewald_set_params(double r_cut, double alpha, int kmax);
 
-/// parse the ewald parameters
-int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv);
-  
 /// sanity checks
 int EWALD_sanity_checks();
 

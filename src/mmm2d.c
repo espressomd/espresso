@@ -35,7 +35,6 @@
 #include "specfunc.h"
 #include "integrate.h"
 #include "layered.h"
-#include "parser.h"
 
 #ifdef ELECTROSTATICS
 char const *mmm2d_errors[] = {
@@ -1846,7 +1845,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
       cell_structure.type != CELL_STRUCTURE_LAYERED) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   mmm2d_params.maxPWerror = maxPWerror;
@@ -1893,7 +1892,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
 
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 int MMM2D_sanity_checks()

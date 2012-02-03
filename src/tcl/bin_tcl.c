@@ -18,10 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "bin.h"
-#include "bin_tcl.h"
-#include "parser.h"
 #include "utils.h"
+#include "parser.h"
+
+static void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins)
+{
+  int i;
+  realloc_doublelist(dl, dl->n = bins + 1);
+  for (i = 0; i <= bins; i++)
+    dl->e[i] = min_bin + ((max_bin - min_bin)/bins)*i;
+}
+
+static void setup_log_bins(DoubleList *dl, double min_bin, double max_bin, int bins)
+{
+  int i;
+  realloc_doublelist(dl, dl->n = bins + 1);
+  for (i = 0; i <= bins; i++)
+    dl->e[i] = min_bin*pow(max_bin/min_bin, ((double)i)/bins);
+}
 
 int tclcommand_bin(ClientData cdata, Tcl_Interp *interp,
 	int argc, char **argv)

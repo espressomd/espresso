@@ -87,7 +87,7 @@ int tclcommand_inter_parse_ljcos(Tcl_Interp * interp,
   else
     Tcl_ResetResult(interp);
 
-  if (lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset) == TCL_ERROR) {
+  if (lj_cos_set_params(part_type_a, part_type_b, eps, sig, cut, offset) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }

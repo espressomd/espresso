@@ -22,13 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define METADYNAMICS_H
 
 #include <string.h>
-#include <tcl.h>
 #include <math.h>
 #include "particle_data.h"
 #include "utils.h"
-#include "parser.h"
-#include "communication.h"
-#include "cells.h"
 
 /** \file metadynamics.h 
 *

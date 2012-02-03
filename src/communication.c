@@ -2034,9 +2034,11 @@ void mpi_random_stat_slave(int pnode, int cnt) {
 /*************** REQ_BCAST_LJFORCECAP ************/
 void mpi_lj_cap_forces(double fc)
 {
+#ifdef LENNARD_JONES
   lj_force_cap = fc;
   mpi_call(mpi_lj_cap_forces_slave, 1, 0);
   mpi_lj_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_lj_cap_forces_slave(int node, int parm)
@@ -2057,9 +2059,11 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 /*************** REQ_BCAST_LJANGLEFORCECAP ************/
 void mpi_ljangle_cap_forces(double fc)
 {
+#ifdef LJ_ANGLE
   ljangle_force_cap = fc;
   mpi_call(mpi_ljangle_cap_forces_slave, 1, 0);
   mpi_ljangle_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_ljangle_cap_forces_slave(int node, int parm)
@@ -2074,9 +2078,11 @@ void mpi_ljangle_cap_forces_slave(int node, int parm)
 /*************** REQ_BCAST_MORSEFORCECAP ************/
 void mpi_morse_cap_forces(double fc)
 {
+#ifdef MORSE
   morse_force_cap = fc;
   mpi_call(mpi_morse_cap_forces_slave, 1, 0);
   mpi_morse_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_morse_cap_forces_slave(int node, int parm)
@@ -2368,65 +2374,38 @@ void mpi_bcast_lb_params_slave(int node, int field) {
 
 /******************* REQ_GET_ERRS ********************/
 
-int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
+int mpi_gather_runtime_errors(char **errors)
 {
-  char nr_buf[TCL_INTEGER_SPACE + 3];
-  char *other_error_msg;
-  int *errcnt;
-  int node, n_other_error_msg;
-  
   // Tell other processors to send their erros
   mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
 
-  
-  // If no proessor encountered an error, return
+  // If no processor encountered an error, return
   if (!check_runtime_errors())
-    return error_code;
+    return ES_OK;
 
-  if (error_code != TCL_ERROR)
-    Tcl_ResetResult(interp);
-  else
-    Tcl_AppendResult(interp, " ", (char *) NULL);
-
-  Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
-
-  /* gather the maximum length of the error messages, and allocate transfer space */
-  errcnt = malloc(n_nodes*sizeof(int));
+  // gather the maximum length of the error messages
+  int *errcnt = malloc(n_nodes*sizeof(int));
   MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
-  /* allocate transfer buffer for maximal error message length */
-  n_other_error_msg = n_error_msg;
-  for (node = 1; node < n_nodes; node++)
-    // Has this node error messages
-    if (errcnt[node] > n_other_error_msg)
-      n_other_error_msg = errcnt[node];
-      //  Allocate memory for the error messages
-  other_error_msg = malloc(n_other_error_msg);
 
-  /* first handle node master errors. */
-  if (n_error_msg > 0)
-    Tcl_AppendResult(interp, "0 ", error_msg, (char *) NULL);
-    
-  for (node = 1; node < n_nodes; node++) {
+  for (int node = 0; node < n_nodes; node++) {
     if (errcnt[node] > 0) {
-      MPI_Recv(other_error_msg, errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
-      sprintf(nr_buf, "%d ", node);
+      errors[node] = (char *)malloc(errcnt[node]);
 
-      /* check wether it's the same message as from the master, then just consent */
-      if (error_msg && strcmp(other_error_msg, error_msg) == 0) {
-	Tcl_AppendResult(interp, nr_buf, "<consent> ", (char *) NULL);
-      }
-      else {
-	Tcl_AppendResult(interp, nr_buf, other_error_msg, (char *) NULL);
-      }
+      if (node == 0)
+	strcpy(errors[node], error_msg);
+      else 
+	MPI_Recv(errors[node], errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
     }
+    else
+      errors[node] = NULL;
   }
 
   /* reset error message on master node */
   error_msg = realloc(error_msg, n_error_msg = 0);
-  free(other_error_msg);
+
   free(errcnt);
 
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 void mpi_gather_runtime_errors_slave(int node, int parm)

@@ -27,19 +27,17 @@
  *  \ref forces.c
 */
 
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "mol_cut.h"
+
 #ifdef LJCOS2
 #include <math.h>
 
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
-
-
 int ljcos2_set_params(int part_type_a, int part_type_b,
-				      double eps, double sig, double offset,
-				      double w);
-
+		      double eps, double sig, double offset,
+		      double w);
 
 /** Calculate lj-cos2 force between particle p1 and p2 */
 MDINLINE void add_ljcos2_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -47,7 +45,7 @@ MDINLINE void add_ljcos2_pair_force(Particle *p1, Particle *p2, IA_parameters *i
 {
   int j;
   double r_off, frac2, frac6, fac=0.0;
-  if(dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset) { 
+  if(CUTOFF_CHECK(dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset)) { 
     r_off = dist - ia_params->LJCOS2_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJCOS2_capradius) {
@@ -102,7 +100,7 @@ MDINLINE double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia
 {
   double r_off, frac2, frac6;
 
-  if(dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset) {
+  if(CUTOFF_CHECK(dist < ia_params->LJCOS2_cut+ia_params->LJCOS2_offset)) {
     r_off = dist - ia_params->LJCOS2_offset;
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJCOS2_capradius) {

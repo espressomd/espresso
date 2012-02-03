@@ -19,8 +19,7 @@
 */
 #ifndef POLYMER_TCL_H
 #define POLYMER_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /************************************************************* 
  * Functions                                                 *

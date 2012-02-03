@@ -81,7 +81,6 @@ int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** 
 
   CHECK_VALUE(morseforcecap_set_params(morse_force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR;
 }
 
 
@@ -109,7 +108,7 @@ int tclcommand_inter_parse_morse(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "morse needs 4 DOUBLE parameters: "
 		     "<morse_eps> <morse_alpha> <morse_rmin> <morse_cut>",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change = 5;
 	
@@ -120,7 +119,7 @@ int tclcommand_inter_parse_morse(Tcl_Interp * interp,
   else
     Tcl_ResetResult(interp);
   if (morse_set_params(part_type_a, part_type_b,
-			       eps, alpha, rmin, cut, cap_radius) == TCL_ERROR) {
+			       eps, alpha, rmin, cut, cap_radius) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }

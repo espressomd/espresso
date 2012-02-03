@@ -30,7 +30,6 @@
 #include <mpi.h>
 #include <stdio.h>
 #include "utils.h"
-#include "parser.h"
 #include "communication.h"
 #include "grid.h"
 #include "domain_decomposition.h"
@@ -597,7 +596,7 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   FILE* cpfile;
   cpfile=fopen(filename, "w");
   if (!cpfile) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
   double pop[19];
   int ind[3];
@@ -628,20 +627,20 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
     }
   }
   fclose(cpfile);
-  return TCL_OK;
+  return ES_OK;
 #endif
   if(!(lattice_switch & LATTICE_LB_GPU)) {
-    printf("Not implemented");
-    return TCL_ERROR;
+    fprintf(stderr, "Not implemented\n");
+    return ES_ERROR;
   }
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
   if (!cpfile) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
   double pop[19];
   int ind[3];
@@ -661,12 +660,12 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         ind[2]=k;
         if (!binary) {
 	  if (fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]) != 19) {
-	    return TCL_ERROR;
+	    return ES_ERROR;
 	  } 
         }
         else {
           if (fread(pop, sizeof(double), 19, cpfile) != 19)
-	    return TCL_ERROR;
+	    return ES_ERROR;
         }
         lb_lbnode_set_pop(ind, pop);
       } 
@@ -675,13 +674,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   fclose(cpfile);
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
-  return TCL_OK;
+  return ES_OK;
 #endif
   if(!(lattice_switch & LATTICE_LB_GPU)) {
-    printf("Not implemented");
-    return TCL_ERROR;
+    fprintf(stderr, "Not implemented\n");
+    return ES_ERROR;
   }
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 
