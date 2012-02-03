@@ -270,6 +270,7 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
       }
     } else if (ARG0_IS_S("stop")) {
       correlations_autoupdate=0;
+      correlations[no].autoupdate=0;
       for (i=0; i<n_correlations; i++) {
         if (correlations[i].autoupdate)
           correlations_autoupdate=1;
