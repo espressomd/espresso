@@ -29,10 +29,8 @@
  *  (see thesis chapter 3 of H. Schmitz for details) 
  */
 
-//#include <tcl.h>
 #include "interaction_data.h"
 #include "particle_data.h"
-//#include "parser.h"
 
 /** \name Data structures */
 /************************************************************/

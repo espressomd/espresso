@@ -467,7 +467,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
          argc--; argv++;
          for (counter = 0; counter < 3; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
-             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;
            }
            argc--; argv++;
@@ -519,7 +519,7 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
     if (!ARG_IS_D(i, p[i]))
       printf("usage: print_interpolated_velocity $x $y $z");
   }
-  lb_lbfluid_get_interpolated_velocity(p, v);
+  lb_lbfluid_get_interpolated_velocity_global(p, v);
   for (int i = 0; i < 3; i++) {
     Tcl_PrintDouble(interp, v[i], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
