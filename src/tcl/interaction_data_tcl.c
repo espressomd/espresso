@@ -29,6 +29,7 @@
 
 #include "comforce_tcl.h"
 #include "comfixed_tcl.h"
+#include "rattle_tcl.h"
 
 // for the force caps
 #include "lj.h"
