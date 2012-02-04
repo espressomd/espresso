@@ -25,11 +25,7 @@
     see \ref particle_data.c "particle_data.c"
 */
 
-<<<<<<< HEAD
- */
 
-=======
->>>>>>> master
 #include "utils.h"
 #include "global.h"
 
