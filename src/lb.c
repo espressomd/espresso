@@ -762,14 +762,24 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 	double local_v[3],rel[3],delta[6];
 	int 	 ind[6], tmpind[6]; //node indices
 	int		 i, x, y, z; //counters
-printf ("pre-fold %E %E %E\n",  p[0],p[1],p[2]);
+
 	// fold the position onto the local box, note here ind is used as a dummy variable
 	fold_position (p,ind);
-	printf ("post-fold %E %E %E\n",  p[0],p[1],p[2]);
 
 	// convert the position into lower left grid point
-	for (i=0;i<3;i++) {
-		rel[i] = (p[i] - 0.5)/lbpar.agrid;
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+		for (i=0;i<3;i++) {
+			rel[i] = (p[i])/lbpar_gpu.agrid;
+			//Note this should be changed once GPU LB is shifted
+		}
+#endif
+  } else {  
+#ifdef LB
+		for (i=0;i<3;i++) {
+			rel[i] = (p[i])/lbpar.agrid-0.5;
+		}
+#endif
 	}
 	// calculate the index of the position
 	for (i=0;i<3;i++) {
@@ -786,7 +796,6 @@ printf ("pre-fold %E %E %E\n",  p[0],p[1],p[2]);
 	v[0] = 0;
 	v[1] = 0;
 	v[2] = 0;
-	printf ("pre interp\n");
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
@@ -794,8 +803,8 @@ printf ("pre-fold %E %E %E\n",  p[0],p[1],p[2]);
         tmpind[0] = ind[0]+x;
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
-	printf ("getting node %d %d %d\n", tmpind[0],tmpind[1],tmpind[2]);
-        lb_lbnode_get_u (tmpind, local_v);
+
+				lb_lbnode_get_u (tmpind, local_v);
 
 				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
@@ -804,7 +813,6 @@ printf ("pre-fold %E %E %E\n",  p[0],p[1],p[2]);
       }
     }
   }
-	printf ("post interps\n");
 
 	return 0;
 }

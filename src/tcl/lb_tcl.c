@@ -389,6 +389,10 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
      Tcl_AppendResult(interp, "Coordinates are not integer.", (char *)NULL);
      return TCL_ERROR;
    } 
+   if (coord[0]<0 || coord[0]>box_l[0] || coord[1]<0 || coord[1]>box_l[1] || coord[2]<0 || coord[2]>box_l[2]) {
+     Tcl_AppendResult(interp, "Coordinates is not a valid LB node index", (char *)NULL);
+     return TCL_ERROR;
+   } 
    argc-=3; argv+=3;
 
    if (ARG0_IS_S("print")) {
