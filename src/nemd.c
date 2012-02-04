@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include "integrate.h"
 #include "communication.h"
-#include "parser.h"
 #include "errorhandling.h"
 #include "grid.h"
 
@@ -62,7 +61,7 @@ int nemd_free(void)
   nemddata.slab             = NULL;
   nemddata.shear_rate       = 0.0;
   nemddata.slab_vel         = 0.0;
-  return (TCL_OK);
+  return ES_OK;
 }
 
 /** Initialize all data structures for nemd. */
@@ -151,7 +150,7 @@ void nemd_change_momentum()
     INTEG_TRACE(fprintf(stderr,"%d: parts_in_slabs: top %d mid %d\n",this_node,top_slab->n_parts_in_slab,mid_slab->n_parts_in_slab));
     if(mid_slab->n_fastest != nemddata.n_exchange || 
        top_slab->n_fastest != nemddata.n_exchange) {
-      char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{038 nemd_exchange_momentum: Not enough particles in slab!} ");
       /* cannot continue */
       return;

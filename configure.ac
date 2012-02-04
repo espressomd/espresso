@@ -23,7 +23,7 @@ AC_INIT([ESPResSo],[3.0.2],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 
-AC_CONFIG_SRCDIR([src/main.c])
+AC_CONFIG_SRCDIR([src/initialize.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -231,7 +231,15 @@ dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
 
 if test .$with_tcl = .no; then
-   AC_MSG_ERROR([Tcl is required by ESPResSo!])
+   AC_MSG_WARN([
+*********************************************************
+*                                                       *
+* Without Tcl, ESPResSo doesn't do anything useful yet! *
+*                                                       *
+*********************************************************
+])
+   use_tcl=none
+   AC_DEFINE(TCL,[],[Whether Tcl is available])
 elif test .$with_tcl = .yes; then
 	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
@@ -242,7 +250,7 @@ else
 fi
 
 # check the results
-if test .$use_tcl = .; then
+if test .$use_tcl = . ; then
    # Tcl was not found
    case $target_os in
 	*darwin*) AC_MSG_NOTICE(
@@ -264,18 +272,22 @@ case $target_os in
 	  extrapaths=/usr/include/$version ;;
 esac
 
-ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
-		[AC_MSG_FAILURE([
+if test .$use_tcl != .none; then
+   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
+			[AC_MSG_FAILURE([
 ********************************************************************************
 * Could not find the Tcl header files (tcl.h).                                 *
 * Please add the include path to CPPFLAGS                                      *
 * (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
 ********************************************************************************
 ])], $extrapaths)
+fi
 
 if test .$use_tcl = .; then
    use_tcl=none
 fi
+
+AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
 
 ##################################
 # check for tk

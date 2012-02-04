@@ -28,7 +28,6 @@
 
 #include "utils.h"
 #include "statistics.h"
-#include "parser.h"
 
 #ifdef FFTW
 

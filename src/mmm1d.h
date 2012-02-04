@@ -80,8 +80,12 @@ void add_mmm1d_coulomb_pair_force(double chprf, double d[3], double dist2,
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);
 
 /** tuning of the parameters which are not set by the user, e.g. the
-    switching radius or the bessel_cutoff.x */
-int mmm1d_tune(Tcl_Interp *interp);
+    switching radius or the bessel_cutoff. Call this only on the master node.
+
+    @param log contains information about the tuning (tried values and errors)
+    @return \ref ES_OK or \ref ES_ERROR
+*/
+int mmm1d_tune(char **log);
 
 #endif
 #endif

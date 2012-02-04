@@ -39,8 +39,6 @@
 #include "communication.h"
 
 #include "utils.h"
-#include "tcl.h"
-#include "parser.h"
 #include "verlet.h"
 #include "cells.h"
 #include "particle_data.h"

@@ -232,7 +232,7 @@ int tclcommand_nemd(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return tclcommand_nemd_print_usage(interp);
   }
 
-  return mpi_gather_runtime_errors(interp, status);
+  return gather_runtime_errors(interp, status);
 
 #endif
   INTEG_TRACE(fprintf(stderr,"%d: call to nemd but not compiled in!\n",this_node));

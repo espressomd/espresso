@@ -123,7 +123,7 @@ void dd_create_cell_grid()
 	/* ok, too many cells for this direction, set to minimum */
 	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
 	if ( dd.cell_grid[i] < 1 ) {
-	  char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+	  char *error_msg = runtime_error(ES_INTEGER_SPACE + 2*ES_DOUBLE_SPACE + 128);
 	  ERROR_SPRINTF(error_msg, "{002 interaction range %g in direction %d is larger than the local box size %g} ",
 			max_range, i, local_box_l[i]);
 	  dd.cell_grid[i] = 1;
@@ -160,7 +160,7 @@ void dd_create_cell_grid()
 
     /* sanity check */
     if (n_local_cells < min_num_cells) {
-      char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+      char *error_msg = runtime_error(ES_INTEGER_SPACE + 2*ES_DOUBLE_SPACE + 128);
       ERROR_SPRINTF(error_msg, "{001 number of cells %d is smaller than minimum %d (interaction range too large or min_num_cells too large)} ",
 		    n_local_cells, min_num_cells);
     }
@@ -537,7 +537,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC*box_l[i]) {
-	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_DOUBLE_SPACE);
 	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
 #endif
@@ -546,7 +546,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC*box_l[i]) {
-	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_DOUBLE_SPACE);
 	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
 #endif
@@ -611,7 +611,7 @@ void dd_on_geometry_change(int flags) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
-      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
+      char *errtext = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtext,"{013 box_l in direction %d is too small} ", i);
     }
 

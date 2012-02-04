@@ -20,9 +20,7 @@
 */
 #ifndef _INTEGRATE_TCL_H
 #define _INTEGRATE_TCL_H
-#include "config.h"
-#include <tcl.h>
-#include "integrate.h"
+#include "parser.h"
 
 /** \name Exported Functions */
 /************************************************************/

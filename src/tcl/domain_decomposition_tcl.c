@@ -22,6 +22,8 @@
  *  This file contains everything related to the cell system: domain decomposition.
  *  See also \ref domain_decomposition.h
  */
+#include "utils.h"
+#include "parser.h"
 
 #include "domain_decomposition.h"
 

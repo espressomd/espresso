@@ -40,13 +40,6 @@
 #include "thermostat_tcl.h"
 
 
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data)
-{
-  Tcl_AppendResult(interp, "variable is readonly: use the thermostat command to set thermostat parameters.", (char *) NULL);
-  return (TCL_ERROR);
-}
-
-
 int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 
 {
   /* set temperature to zero */
@@ -256,7 +249,7 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
     return tclcommand_thermostat_print_usage(interp, argc, argv);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }
 
 int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)

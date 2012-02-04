@@ -6,7 +6,6 @@
 #include "integrate.h"
 #include "cells.h"
 #include "communication.h" 
-#include "parser.h" 
 
 #ifdef COLLISION_DETECTION
 
