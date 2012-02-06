@@ -1,0 +1,52 @@
+# Measure the amount of time, by which certain features slow down Espresso
+# Use myconfig-basic.h and one of the features from featurelist.
+
+
+# Path to espresso source tree
+esdir=~/espresso-dev
+# Path to Espresso binary
+es=./Espresso
+
+# Scripts to be run to test the performance
+$ Long-running script for timing accurately
+scriptLong=../lj_liquid_long.tcl
+# Short-running script to get profiling information
+scriptShort=../lj_liquid_short.tcl
+
+
+
+# Iterate over the features
+for f in `cat featurelist`
+do
+# Generate the myconfig.h with the feature
+cp myconfig-basic.h myconfig.h
+echo "#define $f" >> myconfig.h
+
+# Prepare the build directory
+mkdir build
+cd build
+cp ../myconfig.h .
+
+# Build for profiling
+$esdir/configure CFLAGS='-O5 -pg' 
+make -j20
+
+# run
+$es $scriptShort > ../$f.out 2> ../$f.err
+# Save the profile information
+gprof Espresso > ../$f.prof
+
+# Build for optimal performance without profiling
+make distclean
+$esdir/configure 
+make -j20
+/usr/bin/time -f %e -o ../$f.time  $es $scriptShort > ../$f.out 2> ../$f.err
+
+
+cd ..
+
+# Cleanup
+rm -rf build
+done
+
+

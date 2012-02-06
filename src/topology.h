@@ -97,9 +97,9 @@ extern int topo_part_info_synced;
     particle list. */    
 void realloc_topology(int new_size);
 
-int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
-
 void sync_topo_part_info();
+
+int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double spring_constant, double drag_constant, int noforce_flag, int isrelative);
 /*@}*/
 
 

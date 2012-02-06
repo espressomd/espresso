@@ -1,9 +1,47 @@
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for the Research on Soft Matter Systems").
 
-ESPResSo is a parallelized, flexible molecular dynamics simulation
-program for scientific coarse-grained simulations as they are used in
-soft matter research.
+ESPResSo is a highly versatile software package for performing and
+analyzing scientific Molecular Dynamics many-particle simulations of
+"coarse-grained" bead-spring models as they are used in soft-matter
+research in physics, chemistry and molecular biology. It can be used
+to simulate systems as for example polymers, liquid crystals,
+colloids, ferrofluids and biological systems such as DNA and lipid
+membranes.
+
+In "coarse-grained" models, a whole group of atoms or molecules are
+treated as a single bead.  Although many details are coarse-grained
+away in these models, they can often predict qualitative properties,
+such as for example the scaling behavior of a system, and can give
+insight into theoretical models.  Due to the drastic reduction of
+degrees of freedom, coarse-graining allows to investigate systems
+which would be out of reach of the commonly used atom-based
+simulations, due to the large time- and length scales of the studied
+processes.
+
+ESPResSo is capable of doing classical Molecular dynamics simulations
+of many types of systems in different statistical ensembles (NVE, NVT,
+NPT) and non-equilibrium situations, using standard potentials such as
+the Lennard-Jones or Morse potential. It contains many advanced
+simulation algorithms, which take into account hydrodynamic (lattice
+Boltzmann) and electrostatic interactions (P3M, ELC, MMMxD). Rigid
+bodies can be modelled by virtual site interactions, and it can
+integrate rotationally non-invariant particles.
+
+ESPResSo is free, open-source software (GPL). It is parallelized and
+can be employed on desktop machines, convenience clusters as well as
+on supercomputers with hundreds of CPUs. The parallel code is
+controlled via the scripting language Tcl, which gives the software
+its great flexibility and allows for many unconventional simulation
+protocols, as are often required when studying coarse-grained models.
+
+ESPResSo is used in scientific working groups all over the world both
+as a production platform as well as a research platform for developing
+new algorithms and methods and designing new models for coarse-grained
+simulations.  It is mainly developed at the Institute for
+Computational Physics of the University of Stuttgart, but has
+contributors from all over the world.
+
 
 DOCUMENTATION
 -------------

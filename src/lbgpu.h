@@ -20,16 +20,11 @@
  * This is the header file for the Lattice Boltzmann implementation in lbgpu_cfile.c
  */
 
-
-
-
 #ifndef LB_GPU_H
 #define LB_GPU_H
 
 #include <tcl.h>
 #include "utils.h"
-
-//#include "lattice.h"
 
 #ifdef LB_GPU
 
@@ -55,8 +50,7 @@
 #define LBPAR_BOUNDARY  7 /**< boundary parameters */
 #endif
 /*@}*/
-#endif /* LB_GPU */
-#if defined (LB) || defined (LB_GPU)
+
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
@@ -118,6 +112,7 @@ typedef struct {
   unsigned int reinit;
 
 } LB_parameters_gpu;
+
 /** Data structure holding the phys. values for the Lattice Boltzmann system. */
 typedef struct {
 
@@ -274,7 +269,7 @@ void lb_calc_fluid_temperature_GPU(double* host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
 void lb_get_boundary_flags_GPU(unsigned int* host_bound_array);
 
-void lb_set_node_veloctiy_GPU(int single_nodeindex, float* host_velocity);
+void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity);
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
@@ -290,7 +285,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 
 int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
-#endif /* LB_GPU */
+#endif /* LB || LB_GPU */
 #endif /* LB_GPU_H */
 
 /*@}*/

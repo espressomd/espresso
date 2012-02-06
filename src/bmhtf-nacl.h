@@ -54,36 +54,25 @@ MDINLINE int BMHTF_set_params(int part_type_a, int part_type_b,
 			      double A, double B, double C,
 			      double D, double sig, double cut)
 {
-  IA_parameters *data, *data_sym;
   double shift, dist2, pw6;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return TCL_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* should be symmetrically */
-  data->BMHTF_A   = data_sym->BMHTF_A   = A;
-  data->BMHTF_B   = data_sym->BMHTF_B   = B;
-  data->BMHTF_C   = data_sym->BMHTF_C   = C;
-  data->BMHTF_D   = data_sym->BMHTF_D   = D;
-  data->BMHTF_sig = data_sym->BMHTF_sig = sig;
-  data->BMHTF_cut = data_sym->BMHTF_cut = cut;
   dist2 = cut*cut;
   pw6 = dist2*dist2*dist2;
   shift = -(A*exp(B*(sig - cut)) - C/pw6 - D/pw6/dist2);
 
-  data->BMHTF_computed_shift =
-    data_sym->BMHTF_computed_shift = shift;
+  data->BMHTF_A   = A;
+  data->BMHTF_B   = B;
+  data->BMHTF_C   = C;
+  data->BMHTF_D   = D;
+  data->BMHTF_sig = sig;
+  data->BMHTF_cut = cut;
+  data->BMHTF_computed_shift = shift;
  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   return TCL_OK;
 }

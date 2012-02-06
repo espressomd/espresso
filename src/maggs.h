@@ -59,6 +59,8 @@
     Maggs structure. Contains global system information for MEMD algorithm
 */
 typedef struct {
+  int finite_epsilon_flag;
+  double epsilon_infty;
   /** = 1/c^2    speed of light parameter. */
   double f_mass;
   /** inverse of square root of f_mass. */
@@ -92,22 +94,13 @@ extern MAGGS_struct maggs;
 */
 void maggs_init(); /** called from: initialize.c */
 
-/** parse TCL command. The number of parameters is checked and
-    maggs_set_parameters function is called.
-    @return 0 for success, -1 otherwise
-    @param interp  TCL Interpreter handle
-    @param argc    number of TCL arguments after "inter coulomb $bjerrum maggs"
-    @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
-*/
-int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
-
 /** set the main parameters for the algorithm.
     @param interp    TCL Interpreter handle
     @param bjerrum   Bjerrum length for the system
     @param f_mass    parameter to tune the speed of light (1/c^2)
     @param mesh      Mesh size in one dimension
  */
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh);
+int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
 
 /** Propagate the B-field in the system.
     Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.

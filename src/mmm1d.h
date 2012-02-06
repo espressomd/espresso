@@ -52,12 +52,6 @@ typedef struct {
 } MMM1D_struct;
 extern MMM1D_struct mmm1d_params;
 
-/// print the mmm1d parameters to the interpreters result
-int tclprint_to_result_MMM1D(Tcl_Interp *interp);
-
-/// parse the mmm1d parameters
-int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **argv);
-
 /** parameters for MMM1D. Most of the parameters can also be tuned automatically. Unlike
     P3M, this tuning is redone automatically whenever parameters change, but not immediately
     if you set this parameters.
@@ -69,10 +63,6 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
                       prefactors, i. e. for the pure lattice 1/r-sum. */
 int MMM1D_set_params(double switch_rad, int bessel_cutoff, double maxPWerror);
 
-/** tuning of the parameters which are not set by the user, e.g. the switching radius or the
-    bessel_cutoff. */
-int tclcommand_inter_coulomb_print_mmm1d_parameteres(Tcl_Interp *interp);
-
 /** recalculate the polygamma taylor series. */
 void MMM1D_recalcTables();
 
@@ -83,11 +73,15 @@ int MMM1D_sanity_checks();
 void MMM1D_init();
 
 ///
-void add_mmm1d_coulomb_pair_force(Particle *p1, Particle *p2, double d[3], double dist2,
+void add_mmm1d_coulomb_pair_force(double chprf, double d[3], double dist2,
 				  double dist, double force[3]);
 
 ///
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double r2, double r);
+
+/** tuning of the parameters which are not set by the user, e.g. the
+    switching radius or the bessel_cutoff.x */
+int mmm1d_tune(Tcl_Interp *interp);
 
 #endif
 #endif

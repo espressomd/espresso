@@ -29,41 +29,71 @@
  *  (see thesis chapter 3 of H. Schmitz for details) 
  */
 
-#include <tcl.h>
+//#include <tcl.h>
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "parser.h"
+//#include "parser.h"
 
-/** Parser for the necklace cluster algorithm
+/** \name Data structures */
+/************************************************************/
+/*@{*/
 
-    \verbatim analyze necklace <pearl_treshold> <back_dist> <space_dist> <first> <length> \endverbatim 
+/** Structure for cluster element */
+struct StructClusterElement{  
+    /** Element identity */
+    int id;
+    /** Pointer to next cluster element.*/
+    struct StructClusterElement *next;
+};
 
-    For more information see: Limbach H.J. and Holm C.  Single-Chain
-    Properties of Polyelectrolytes in Poor Solvent J. Phys. Chem. B,
-    107 (32), 8041 -8055, AUG 14 2003.  The first three parameters are
-    tune parameters for the algorithm: pearl_treshold is the minimal
-    number of monomers in a pearl. back_dist is the number of monomers
-    along the chain backbone which are excluded from the space
-    distance criterion to form clusters. space_dist is the distance
-    between two monomers up to which they are considered to belong to
-    the same clusters. The three parameters may be connected by
-    scaling arguments. Make sure that your results are only weakly
-    dependent on the exact choice of your parameters. For the
-    algorithm the coordinates stored in \ref partCfg are used. The
-    chain itself is defined by the identity first of its first monomer
-    and the chain length length.
-*/
-int tclcommand_analyze_parse_necklace(Tcl_Interp *interp, int argc, char **argv);
+/** Cluster Element */
+typedef struct StructClusterElement ClusterElement;
 
-/** Parser for Hole cluster algorithm
-    \verbatim analyze holes <prob_part_type_number> <mesh_size> \endverbatim
+/** Structure for Cluster */
+struct StructCluster {  
+    /** Cluster identity */
+    int id;
+    /** Cluster size */
+    int size;
+    /** Pointer to first cluster element.*/
+    ClusterElement *first;
+    /** Pointer to next cluster */
+    struct StructCluster *next;
+    /** Pointer to previous cluster */
+    struct StructCluster *prev;
+};
 
-    Identifies free space in the simulation box via a mesh based 
-    cluster algorithm. Free space is defined via a probe particle 
-    and its interactions with other particles which have to be 
-    defined through LJ interactions with the other existing particle
-    types via the inter command before calling this routine.
-*/
-int tclcommand_analyze_parse_holes(Tcl_Interp *interp, int argc, char **argv);
+/** Cluster */
+typedef struct StructCluster Cluster;
+
+/*@}*/
+
+/** \name Variables */
+/************************************************************/
+/*@{*/
+
+/** NULL terminated linked list of elements of a cluster (indices in particle list) */
+extern ClusterElement *element;
+/** Double linked list of \ref statistics_cluster::Cluster */
+extern Cluster        *cluster;
+/** first cluster in list of \ref statistics_cluster::Cluster */
+extern Cluster        *first_cluster;
+/** last cluster in list of \ref statistics_cluster::Cluster */
+extern Cluster        *last_cluster;
+
+/** parameter of necklace cluster algorithm */
+extern int    backbone_distance;
+/** parameter of necklace cluster algorithm */
+extern double space_distance2;
+/** parameter of necklace cluster algorithm */
+extern int    pearl_treshold;
+
+/*@}*/
+
+void cluster_free();
+void create_free_volume_grid(IntList mesh, int dim[3], int probe_part_type);
+int analyze_necklace(Particle *part, int np);
+int cluster_free_volume_grid(IntList mesh, int dim[3], int ***holes);
+void cluster_free_volume_surface(IntList mesh, int dim[3], int nholes, int **holes, int *surface);
 
 #endif

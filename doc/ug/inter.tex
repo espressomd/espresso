@@ -815,6 +815,7 @@ general tabulated potentials.
 \index{rigid bond|mainindex}
 \index{interactions!rigid bond|mainindex}
 \index{Rattle Shake algorithm}
+\label{sec:rattle}
 
 \begin{essyntax}
   inter \var{bondid}
@@ -1273,7 +1274,7 @@ refer to appendix \vref{chap:mmm}.
 
 \begin{essyntax}
   inter coulomb \var{l_B}
-  memd \var{f\_mass} \var{mesh}
+  memd \var{f\_mass} \var{mesh} \opt{epsilon \var{\varepsilon_{\infty}}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1299,6 +1300,9 @@ The algorithm currently works with the following constraints:
   to the square root of the inverted speed of light.
 \item[\var{mesh}] is the number of mesh points for the interpolation
   of the electromagnetic field in one dimension.
+\item[\var{\varepsilon_{\infty}}] is the background dielectric
+  permittivity at infinity. This defaults to metallic boundary
+  conditions, to match the results of P3M.
 \end{arguments}
 
 The arising self-interactions are treated with a modified version of
@@ -1439,7 +1443,7 @@ using the \texttt{part} command to set the dipole moment \texttt{dip},
   inter magnetic \var{l_B} p3m 
   \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1471,7 +1475,7 @@ Note that dipolar P3M does not work with non-cubic boxes.
   \opt{r_cut \var{r_\mathrm{cut}}} \opt{mesh \var{mesh}} \opt{cao
     \var{cao}} \opt{alpha \var{\alpha}}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1490,7 +1494,7 @@ in \cite{cerda08a}.
   inter magnetic mdlc \var{accuracy} \var{gap\_size}
   \opt{\var{far\_cutoff}}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1517,7 +1521,7 @@ As a reference for the DLC method, see \cite{brodka04a}.
 \begin{essyntax}
   inter magnetic \var{l_{B}} dawaanr
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
   \end{features}
 \end{essyntax}
 
@@ -1538,7 +1542,7 @@ In a non-periodic system, the DAWAANR-method gives the exact result.
 \begin{essyntax}
   inter magnetic \var{l_{B}} mdds n\_cut \var{value\_n\_cut}
   \begin{features}
-    \required{MAGNETOSTATICS}
+    \required{DIPOLES}
     \required{MAGNETIC_DIPOLAR_DIRECT_SUM}
   \end{features}
 \end{essyntax}

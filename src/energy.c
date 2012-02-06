@@ -81,7 +81,7 @@ void energy_calc(double *result)
   calc_long_range_energies();
   
   /* gather data */
-  MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 /************************************************************/
@@ -123,7 +123,6 @@ void calc_long_range_energies()
 #endif
   case COULOMB_EWALD:
     energy.coulomb[1] = EWALD_calc_kspace_forces(0,1);
-    EWALD_TRACE(fprintf(stderr,"%d: EWALD: energy.coulomb[1]=%g\n",this_node,energy.coulomb[1]));
     break;
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();

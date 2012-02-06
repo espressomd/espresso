@@ -20,16 +20,20 @@ SUBDIRS = configs .
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
+	collision-detection-centers.tcl \
+	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
 	command_syntax.tcl \
 	constraints.tcl \
 	constraints_reflecting.tcl \
+	constraints_rhomboid.tcl \
 	dh.tcl \
 	dielectric_test.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
+	exclusions.tcl \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \
