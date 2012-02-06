@@ -75,7 +75,7 @@ int gather_runtime_errors(Tcl_Interp *interp, int error_code)
       
       /* check whether it's the same message as from the master, then
 	 just consent */
-      if (errors[0] && strcmp(errors[node], errors[0]) == 0)
+      if (node > 0 && errors[0] && strcmp(errors[node], errors[0]) == 0)
 	Tcl_AppendResult(interp, nr_buf, "<consent> ", (char *) NULL);
       else
 	Tcl_AppendResult(interp, nr_buf, errors[node], (char *) NULL);
