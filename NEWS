@@ -27,6 +27,11 @@ New user-visible features
 User-visible changes
 --------------------
 
+* The blockfile C-library has been removed. In theory, there was a
+  library usable from C that could be used to read and write
+  blockfiles. Since several years, it was broken, so apparently it
+  wasn't used anyway.
+
 * The NPT barostat now works in many more combinations of
   algorithms than so far (e.g. MMM2D, ELC, ...)
 
