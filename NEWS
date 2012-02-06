@@ -35,8 +35,8 @@ User-visible changes
 * The NPT barostat now works in many more combinations of
   algorithms than so far (e.g. MMM2D, ELC, ...)
 
-* The CPU Lattice-Boltzmann code now work also when Verlet lists are
-  used.
+* The Lattice-Boltzmann CPU implementation now works when Verlet lists
+  are used.
 
 * Removed unneccessary overhead of neutral particles in simulations
   with P3M.
@@ -61,14 +61,15 @@ Changes visible for developers
 
 * Split interaction code into .c and .h files.
 
-* Split off most the Tcl interface (into src/tcl/) from the C core
-  code (in src/). Still incomplete.
+* Split off the Tcl interface (into src/tcl/) from the C core code (in
+  src/)
 
 * Added ESPResSo logos, cover issue images, and some other material to
   the repo (doc/).
 
-* A new LaTeX-Developer's Guide (DG) was started, and all "Related
-  pages" from the doxygen docs have been moved there.
+* Started new LaTeX-Developer's Guide (DG), and moved all "Related
+  pages" from the doxygen docs. The doxygen stuff still exists and is
+  available via doc/doxygen/.
 
 ESPResSo 3.0.2
 ==============
