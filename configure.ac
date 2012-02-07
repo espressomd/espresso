@@ -180,7 +180,8 @@ AM_CONDITIONAL(HAVE_LATEX,
 	[test .$PDFLATEX != .no && 
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
-
+AC_PATH_PROG(PYTHON,python,no)
+AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
 
 cat <<EOF
 ****************************************************************

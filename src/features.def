@@ -1,27 +1,111 @@
-LENNARD_JONES
+# Feature definitions
+#
+# Lines commented with '//' are copied to myconfig-sample.h
+# Lines commented with '#' are ignored
+
 PARTIAL_PERIODIC
+EXTERNAL_FORCES
+CONSTRAINTS
+MASS
+EXCLUSIONS
+COMFORCE
+COMFIXED
+MOLFORCES
+BOND_CONSTRAINT
+MODES			requires FFTW
+BOND_VIRTUAL
+LANGEVIN_PER_PARTICLE
+COLLISION_DETECTION
+METADYNAMICS
+OVERLAPPED
+NEMD
+NPT 
+
+// Rotation
+ROTATION
+ROTATIONAL_INERTIA	implies ROTATION
+BOND_CONSTRAINT		requires not ROTATION
+
+// Adress
+ADRESS			implies MOL_CUT, VIRTUAL_SITES_COM 
+ADRESS			requires not ROTATION and not GAY_BERNE
+MOL_CUT			implies VIRTUAL_SITES_COM
+
+// Electrostatics
 ELECTROSTATICS
-VIRTUAL_SITES_COM	implies VIRTUAL_SITES
-VIRTUAL_SITES_COM	excludes VIRTUAL_SITES_RELATIVE
-VIRTUAL_SITES_RELATIVE	implies VIRTUAL_SITES
-VIRTUAL_SITES_RELATIVE 	excludes VIRTUAL_SITES_COM
-ADRESS			requires VIRTUAL_SITES
-ADDRESS			implies MOL_CUT
-DPD_MASS_RED		excludes DPD_MASS_LIN
-DPD_MASS_LIN		excludes DPD_MASS_RED
+P3M			equals ELECTROSTATICS and FFTW
+INTER_RF		implies ELECTROSTATICS
 
-# LB
+// Magnetostatics
+DIPOLES
+DP3M 			equals DIPOLES and FFTW
+
+// Virtual sites features
+VIRTUAL_SITES_COM	requires not VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES_RELATIVE 	requires not VIRTUAL_SITES_COM
+VIRTUAL_SITES		equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
+VIRTUAL_SITES_NO_VELOCITY
+VIRTUAL_SITES_THERMOSTAT
+THERMOSTAT_IGNORE_NON_VIRTUAL
+
+// DPD features 
+DPD
+TRANS_DPD		implies DPD
+DPD_MASS_RED		requires not DPD_MASS_LIN
+DPD_MASS_LIN		requires not DPD_MASS_RED
+DPD_MASS		equals DPD_MASS_RED or DPD_MASS_LIN
+DPD_MASS		implies MASS, DPD
+TUNABLE_SLIP		implies DPD
+
+// Alternative implementation of DPD
+INTER_DPD
+
+// Lattice-Boltzmann features
 LB
-LB_GPU			implies LATTICE
-LB_BOUNDARIES		requires LB
-LB_BOUNDARIES_GPU	requires LB_GPU
+LB_GPU			requires CUDA
+LB_BOUNDARIES		implies LB, CONSTRAINTS
+LB_BOUNDARIES_GPU	implies LB_GPU, CONSTRAINTS
 LB_ELECTROHYDRODYNAMICS	implies LB
+LATTICE			equals LB or LB_GPU
+USE_TEMPORARY		equals LB or LB_GPU
 
-# internal switches
-LATTICE			internal
-VIRTUAL_SITES		internal
+// Interaction features
+TABULATED
+LENNARD_JONES
+LJ_WARN_WHEN_CLOSE
+LENNARD_JONES_GENERIC
+LJCOS
+LJCOS2
+LJ_ANGLE
+GAY_BERNE
+SMOOTH_STEP
+HERTZIAN
+BMHTF_NACL
+MORSE
+BUCKINGHAM
+SOFT_SPHERE
+GAY_BERNE		implies ROTATION
+NO_INTRA_NB
 
-# implies A and B
-# requires A or B
-# excludes A and B = requires not (A or B)
-# internal   	 Not a user option, not in sample file
+// Bond angle 
+// Note: Activate ONLY ONE bonded angle potential out of the following! 
+BOND_ANGLE_HARMONIC	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSINE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSSQUARE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
+BOND_ANGLE		equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
+BOND_ANGLEDIST
+BOND_ENDANGLEDIST
+BOND_ANGLEDIST_HARMONIC	implies BOND_ANGLEDIST, CONSTRAINTS
+BOND_ENDANGLEDIST_HARMONIC implies BOND_ENDANGLEDIST, CONSTRAINTS
+
+// activate the old dihedral form. Only use this if you need
+// to run old code using the previous phase definition.
+OLD_DIHEDRAL
+
+// Debugging
+
+# External switches
+# Switches that are set by configure or gcc, not to be set manually
+CUDA			external
+FFTW			external
+TK			external

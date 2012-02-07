@@ -255,7 +255,6 @@ endif
 # Handling of myconfig.h
 #################################################################
 libEspresso_a_SOURCES += myconfig-final.h
-config.h: myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 
@@ -282,6 +281,38 @@ myconfig-final.h: FORCE
 	  echo "ERROR: Couldn't find $(myconfig) anywhere"; \
 	  exit 1; \
 	fi
+
+#################################################################
+# Handling of the features
+#################################################################
+libEspresso_a_SOURCES += featureconfig.c
+EXTRA_DIST = \
+	tools/generate_featureconfig.py \
+	tools/generate_doxyconfig.py \
+	tools/featuredefs.py \
+	featureconfig.h featureconfig.c \
+	doxyconfig.c
+
+if HAVE_PYTHON
+
+BUILT_SOURCES +=  featureconfig.h featureconfig.c
+CLEANFILES += featureconfig.h featureconfig.c doxyconfig.h
+featureconfig.h featureconfig.c: features.def
+	$(PYTHON) $(srcdir)/tools/generate_featureconfig.py $(srcdir)/features.def featureconfig.h featureconfig.c
+
+doxyconfig.h: features.def
+	$(PYTHON) $(srcdir)/tools/generate_doxyconfig.py $(srcdir)/features.def doxyconfig.h
+
+else
+
+doxyconfig.h featureconfig.h featureconfig.c: features.def
+	@echo "Python was not found in your PATH."
+	@echo "If you change the set of features, you need Python!"
+	@echo "Install these and rerun configure."
+
+endif
+
+doxygen: doxyconfig.h
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -317,5 +348,5 @@ endif
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
 
-EXTRA_DIST = $(CUDA_SOURCES)
+EXTRA_DIST += $(CUDA_SOURCES)
 endif

@@ -33,7 +33,10 @@ CLEANFILES = Espresso
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc ug dg tutorials
-doc ug dg tutorials: FORCE
+.PHONY: FORCE doc ug dg tutorials doxygen 
+ug dg tutorials: FORCE
+	cd doc; $(MAKE) --print-directory $@
+doc doxygen: FORCE
+	cd src; $(MAKE) --print-directory $@
 	cd doc; $(MAKE) --print-directory $@
 FORCE:
