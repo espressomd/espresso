@@ -25,6 +25,8 @@
     A random generator
 */
 
+#include "utils.h"
+
 /*----------------------------------------------------------*/
 
 /* Stuff for Franks ran1-generator */

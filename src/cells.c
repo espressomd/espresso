@@ -36,7 +36,6 @@
 #include "communication.h"
 #include "verlet.h"
 #include "ghosts.h"
-#include "parser.h"
 #include "domain_decomposition.h"
 #include "nsquare.h"
 #include "layered.h"

@@ -32,9 +32,10 @@
 
 #ifdef LENNARD_JONES_GENERIC
 
+// we use their force cap
+#include "lj.h"
 #include "ljgen.h"
 #include "communication.h"
-#include "parser.h"
 
 int ljgen_set_params(int part_type_a, int part_type_b,
 			       double eps, double sig, double cut,
@@ -44,7 +45,7 @@ int ljgen_set_params(int part_type_a, int part_type_b,
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
 
   data->LJGEN_eps    = eps;
   data->LJGEN_sig    = sig;
@@ -65,7 +66,7 @@ int ljgen_set_params(int part_type_a, int part_type_b,
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /** calculate lj_capradius from lj_force_cap */

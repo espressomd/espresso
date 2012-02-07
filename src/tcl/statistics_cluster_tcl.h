@@ -19,8 +19,7 @@
 */
 #ifndef STATISTICS_CLUSTER_TCL_H
 #define STATISTICS_CLUSTER_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /** Parser for the necklace cluster algorithm
 

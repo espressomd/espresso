@@ -19,7 +19,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 #include "tunable_slip.h"
-#include "parser.h"
 #include "random.h"
 #include "communication.h"
 
@@ -31,7 +30,7 @@ int tunable_slip_set_params(int part_type_a, int part_type_b,
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
   
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
   
   /* TUNABLE SLIP should be symmetrical! */
   data->TUNABLE_SLIP_temp     = temp;
@@ -45,67 +44,9 @@ int tunable_slip_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
   
-  return TCL_OK;
+  return ES_OK;
 }
 
-int tclprint_to_result_tunable_slipIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
-
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_temp, buffer);
-  Tcl_AppendResult(interp, "tunable_slip ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_gamma, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_r_cut, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_time, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_vx, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_vy, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->TUNABLE_SLIP_vz, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  return TCL_OK;
-}
-
-int tclcommand_inter_parse_tunable_slip(Tcl_Interp * interp,
-					int part_type_a, int part_type_b,
-					int argc, char ** argv)
-{
-  double temp, gamma, r_cut, time, vx, vy, vz;
-  int change;
-
-  if (argc < 8) {
-    Tcl_AppendResult(interp, "tunable_slip needs 7 parameters: "
-		     "<tunable_slip_temp> <tunable_slip_gamma> <tunable_slip_r_cut> <tunable_slip_time> <vx> <vy> <vz>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy lj-cos parameters */
-  if ((! ARG_IS_D(1, temp))    ||
-      (! ARG_IS_D(2, gamma))   ||
-      (! ARG_IS_D(3, r_cut))   ||
-      (! ARG_IS_D(4, time))   ||
-      (! ARG_IS_D(5, vx))   ||
-      (! ARG_IS_D(6, vy))   ||
-      (! ARG_IS_D(7, vz)    )) {
-    Tcl_AppendResult(interp, "tunable_slip needs 7 DOUBLE parameters: "
-		     "<tunable_slip_temp> <tunable_slip_gamma> <tunable_slip_r_cut> <tunable_slip_time> <vx> <vy> <vz>",
-		     (char *) NULL);
-    return 0;
-  }
-  change = 8;
-
-  if (tunable_slip_set_params(part_type_a, part_type_b, temp, gamma, r_cut, time, vx, vy, vz) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-
-  return change;
-}
 
 void add_tunable_slip_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double force[3])
 {

@@ -155,14 +155,14 @@ void inter_dpd_cool_down()
 }
 
 int inter_dpd_set_params(int part_type_a, int part_type_b,
-				      double gamma, double r_c, int wf,
-				      double tgamma, double tr_c,
-				      int twf)
+			 double gamma, double r_c, int wf,
+			 double tgamma, double tr_c,
+			 int twf)
 {
   extern double temperature;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
 
   data->dpd_gamma  = gamma;
   data->dpd_r_cut  = r_c;
@@ -178,7 +178,7 @@ int inter_dpd_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 void inter_dpd_init(){

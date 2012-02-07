@@ -32,7 +32,6 @@
 #include "imd.h"
 #include "communication.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
 
@@ -76,6 +75,8 @@ typedef struct {
 
 #define HEADERSIZE 8
 #define IMDVERSION 2
+
+int transfer_rate = 0;
 
 static void swap4(char *data, int ndata) {
   int i;

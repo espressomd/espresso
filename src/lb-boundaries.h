@@ -36,7 +36,6 @@
 
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
-#include <tcl.h>
 #include "utils.h"
 #include "halo.h"
 #include "constraint.h"

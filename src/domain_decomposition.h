@@ -58,7 +58,6 @@
 #include "utils.h"
 #include "cells.h"
 #include "integrate.h"
-#include "communication.h"
 #include "verlet.h"
 #include "thermostat.h"
 

@@ -27,7 +27,6 @@
  *   */
 
 #include "utils.h"
-#include "parser.h"
 #include "topology.h"
 #include "statistics_chain.h"
 #include "particle_data.h"
@@ -114,10 +113,10 @@ int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double 
     if ((topology[i].trap_flag != 32) && (topology[i].noforce_flag != 32)) {
       IsTrapped = 1;
     }
-    return TCL_OK;
+    return ES_OK;
   }
 #endif
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 
