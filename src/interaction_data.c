@@ -507,8 +507,11 @@ static void recalc_global_maximal_nonbonded_cutoff()
   }
 #endif /*ifdef ELECTROSTATICS */
   
-#ifdef DP3M
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
     double r_cut = dp3m.params.r_cut_iL* box_l[0];
@@ -516,8 +519,9 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = r_cut;
     break;
   }
-  }       
 #endif /*ifdef DP3M */
+  }       
+#endif
 
 #ifdef DPD
   if (dpd_r_cut != 0) {
@@ -926,6 +930,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
+      // fall through
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
       dp3m_set_bjerrum();
