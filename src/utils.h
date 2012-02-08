@@ -908,9 +908,16 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
     increases the string space */
 MDINLINE char *strcat_alloc(char *left, char *right)
 {
-  char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
-  strcat(res, right);
-  return res;
+  if (!left) {
+    char *res = (char *)malloc(strlen(right) + 1);
+    strcpy(res, right);
+    return res;
+  }
+  else {
+    char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
+    strcat(res, right);
+    return res;
+  }
 }
 
 /*@}*/
