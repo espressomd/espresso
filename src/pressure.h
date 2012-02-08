@@ -525,6 +525,10 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 /** implementation of 'analyse local_stress_tensor */
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
 
+/** function to calculate stress tensor for the observables */
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
+
+
 /*@}*/
 
 #endif

@@ -59,6 +59,8 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
+#include "statistics_observable.h"
+#include "statistics_correlation.h"
 #include "lb-boundaries.h"
 
 /** whether the thermostat has to be reinitialized before integration */

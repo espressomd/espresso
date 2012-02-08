@@ -61,6 +61,7 @@ int gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define ARG_IS_S(no, str) !strncasecmp(argv[(no)], (str), strlen(argv[(no)]))
 #define ARG0_IS_S(str) ARG_IS_S(0, (str))
 #define ARG1_IS_S(str) ARG_IS_S(1, (str))
+#define ARG_IS_S_EXACT(no, str) !strcmp(argv[(no)], (str))
 
 #define ARG_IS_I(no, dest) (!(Tcl_GetInt(interp, argv[(no)], &(dest)) == TCL_ERROR))
 #define ARG0_IS_I(dest) ARG_IS_I(0, (dest))

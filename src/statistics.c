@@ -30,6 +30,7 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "statistics_fluid.h"
+//#include "statistics_correlation.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
@@ -1409,5 +1410,4 @@ void centermass_conf(int k, int type_1, double *com)
   }
   return;
 }
-
 

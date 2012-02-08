@@ -1525,6 +1525,8 @@ void lb_reinit_fluid() {
     double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
+    LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
+
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
       lb_calc_n_equilibrium(index,rho,v,pi);
@@ -2476,9 +2478,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   pos[1]=p[1];
   pos[2]=p[2];
 #endif
-
-/* determine elementary lattice cell surrounding the particle 
-   and the relative position of the particle in this cell */ 
+  
+  /* determine elementary lattice cell surrounding the particle 
+     and the relative position of the particle in this cell */ 
   map_position_to_lattice(&lblattice,pos,node_index,delta);
 
   /* calculate fluid velocity at particle's position
@@ -2747,7 +2749,7 @@ static void lb_check_halo_regions() {
       for (y=0;y<lblattice.halo_grid[1];++y) {
 
 	index  = get_linear_index(0,y,z,lblattice.halo_grid);
-	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<n_veloc;i++) { s_buffer[i] = lbfluid[0][i][index];
 
 	s_node = node_neighbors[1];
 	r_node = node_neighbors[0];
@@ -2760,7 +2762,7 @@ static void lb_check_halo_regions() {
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);
 	  }

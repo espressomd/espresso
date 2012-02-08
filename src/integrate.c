@@ -56,6 +56,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
+#include "statistics_correlation.h"
 
 /************************************************
  * DEFINES

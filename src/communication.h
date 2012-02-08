@@ -269,6 +269,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete);
 */
 void mpi_send_exclusion(int part, int part2, int delete);
 
+
 /** Issue REQ_REM_PART: remove a particle.
     Also calls \ref on_particle_change.
     \param id   the particle to remove.
