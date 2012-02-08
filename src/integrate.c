@@ -206,7 +206,7 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 
-ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ROTATION
     convert_initial_torques();

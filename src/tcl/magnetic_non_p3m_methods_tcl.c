@@ -31,14 +31,11 @@
  *
  */
 
-#include "domain_decomposition.h"
-#include "magnetic_non_p3m_methods_tcl.h"
-
-// splitting, tbd
-#include <tcl.h>
-#include "tcl/parser.h"
+#include "parser.h"
 
 #ifdef DIPOLES
+#include "magnetic_non_p3m_methods_tcl.h"
+#include "magnetic_non_p3m_methods.h"
 
 /* =============================================================================
                   DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA                
@@ -54,20 +51,13 @@ int  tclprint_to_result_DAWAANR(Tcl_Interp *interp)
 /************************************************************/
 
 int tclcommand_inter_magnetic_parse_dawaanr(Tcl_Interp * interp, int argc, char ** argv)
-{  
-  if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
-    coulomb.Dmethod = DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA;
-  } 
-    
-  if (n_nodes > 1) {
+{
+  if (dawaanr_set_params() != ES_OK) {
     Tcl_AppendResult(interp, "sorry: DAWAANR only works with 1 cpu", (char *) NULL);
-    return TCL_ERROR;  
+    return TCL_ERROR;
   }
-
-  coulomb.Dprefactor = (temperature > 0) ? temperature*coulomb.Dbjerrum : coulomb.Dbjerrum;
   return TCL_OK;
 }
-
 
 /************************************************************/
 
@@ -105,39 +95,26 @@ int tclcommand_inter_magnetic_parse_mdds(Tcl_Interp * interp, int argc, char ** 
 {
   int  n_cut=-1;
    
-  if (coulomb.Dmethod != DIPOLAR_DS  && coulomb.Dmethod !=DIPOLAR_MDLC_DS ) {
-    coulomb.Dmethod = DIPOLAR_DS;
-  }  
-    
-
-  if (n_nodes > 1) {
-    Tcl_AppendResult(interp, "sorry: magnetic dipolar direct sum only works with 1 cpu", (char *) NULL);
-    return TCL_ERROR;  
-  }
-   
   while(argc > 0) {
     if (ARG0_IS_S("n_cut")) {
       if (! (argc > 1 && ARG1_IS_I(n_cut) && n_cut >= 0)) {
 	Tcl_AppendResult(interp, "n_cut expects an nonnegative integer",
 			 (char *) NULL);
 	return TCL_ERROR;
-      } else {
-	Ncut_off_magnetic_dipolar_direct_sum=n_cut;
-      }    
+      }
     } else { /* unknown parameter*/
       Tcl_AppendResult(interp, "unknown parameter/s for the magnetic dipolar direct sum, the only one accepted is:  n_cut  positive_integer", (char *) NULL);
       return TCL_ERROR;
     }
     
-    if( Ncut_off_magnetic_dipolar_direct_sum==0) {
-      fprintf(stderr,"Careful:  the number of extra replicas to take into account during the direct sum calculation is zero \n");
-    }
-    
     argc -= 2;
     argv += 2;
   }
-   
-  coulomb.Dprefactor = (temperature > 0) ? temperature*coulomb.Dbjerrum : coulomb.Dbjerrum; 
+
+  if (mdds_set_params(n_cut) != ES_OK) {
+    Tcl_AppendResult(interp, "sorry: magnetic dipolar direct sum only works with 1 cpu", (char *) NULL);
+    return TCL_ERROR;
+  }
   return TCL_OK;
 }
 
