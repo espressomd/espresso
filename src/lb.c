@@ -2441,7 +2441,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 }
 
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
-  index_t nod9e_index[8], index;
+  index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
