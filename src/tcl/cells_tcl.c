@@ -23,7 +23,7 @@
  *
  *  For more information on cells, see cells.h
  *   */
-#include <tcl.h>
+#include "parser.h"
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "ghosts.h"
@@ -91,6 +91,6 @@ int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
     return TCL_ERROR;
   }
-  return mpi_gather_runtime_errors(interp, TCL_OK);
+  return gather_runtime_errors(interp, TCL_OK);
 }
 

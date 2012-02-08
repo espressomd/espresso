@@ -1211,7 +1211,7 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
     return (TCL_ERROR);
   }
 
-  return mpi_gather_runtime_errors(interp, status);
+  return gather_runtime_errors(interp, status);
 
 #else /* !defined(CONSTRAINTS) */
   Tcl_AppendResult(interp, "Constraints not compiled in!" ,(char *) NULL);

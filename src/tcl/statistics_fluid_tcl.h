@@ -26,8 +26,7 @@
 
 #ifndef STATISTICS_FLUID_TCL_H
 #define STATISTICS_FLUID_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef LB
 /** Parser for fluid related analysis functions. */

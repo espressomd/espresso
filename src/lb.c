@@ -30,7 +30,6 @@
 #include <mpi.h>
 #include <stdio.h>
 #include "utils.h"
-#include "parser.h"
 #include "communication.h"
 #include "grid.h"
 #include "domain_decomposition.h"
@@ -405,7 +404,7 @@ int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz){
   return 0;
 }
 
-int lb_lbfluid_print_vtk_boundary(char* filename) { //TODO: this must be fucked up
+int lb_lbfluid_print_vtk_boundary(char* filename) {
 	  FILE* fp = fopen(filename, "w");
 	
 	  if(fp == NULL)
@@ -433,7 +432,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) { //TODO: this must be fucked 
 	   int gridsize[3];
 	
 	   gridsize[0] = box_l[0] / lblattice.agrid;
-   	gridsize[1] = box_l[1] / lblattice.agrid;
+	   gridsize[1] = box_l[1] / lblattice.agrid;
 	   gridsize[2] = box_l[2] / lblattice.agrid;
 	
 	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
@@ -442,6 +441,8 @@ int lb_lbfluid_print_vtk_boundary(char* filename) { //TODO: this must be fucked 
 		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
 			   for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
 				    lb_lbnode_get_boundary(pos, &boundary);
+				    if (boundary) 
+				      boundary = 1;
 				    fprintf(fp, "%d ", boundary);
 			   }
 #endif
@@ -466,7 +467,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       /** print of the calculated phys values */
-      fprintf(fp, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+      fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
     }
     free(host_values);
 #endif
@@ -487,7 +488,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 			    for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
 			    {
 				    lb_lbnode_get_u(pos, u);
-				    fprintf(fp, "%f %f %f \n", u[0], u[1], u[2]);
+				    fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
 			    }
 #endif     
   }
@@ -598,7 +599,7 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   FILE* cpfile;
   cpfile=fopen(filename, "w");
   if (!cpfile) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
   double pop[19];
   int ind[3];
@@ -629,20 +630,20 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
     }
   }
   fclose(cpfile);
-  return TCL_OK;
+  return ES_OK;
 #endif
   if(!(lattice_switch & LATTICE_LB_GPU)) {
-    printf("Not implemented");
-    return TCL_ERROR;
+    fprintf(stderr, "Not implemented\n");
+    return ES_ERROR;
   }
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
   if (!cpfile) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
   double pop[19];
   int ind[3];
@@ -662,12 +663,12 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         ind[2]=k;
         if (!binary) {
 	  if (fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]) != 19) {
-	    return TCL_ERROR;
+	    return ES_ERROR;
 	  } 
         }
         else {
           if (fread(pop, sizeof(double), 19, cpfile) != 19)
-	    return TCL_ERROR;
+	    return ES_ERROR;
         }
         lb_lbnode_set_pop(ind, pop);
       } 
@@ -676,13 +677,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   fclose(cpfile);
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
-  return TCL_OK;
+  return ES_OK;
 #endif
   if(!(lattice_switch & LATTICE_LB_GPU)) {
-    printf("Not implemented");
-    return TCL_ERROR;
+    fprintf(stderr, "Not implemented\n");
+    return ES_ERROR;
   }
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 
@@ -747,6 +748,75 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
     }
   return 0;
 }
+
+
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. This version of the function
+ * can be called without the position needing to be on the local processor.
+ * Note that this gives a slightly different version then the values used to
+ * couple to MD beads when near a wall, see lb_lbfluid_get_interpolated_velocity.
+ */
+
+int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
+	double local_v[3],rel[3],delta[6];
+	int 	 ind[6], tmpind[6]; //node indices
+	int		 i, x, y, z; //counters
+
+	// fold the position onto the local box, note here ind is used as a dummy variable
+	fold_position (p,ind);
+
+	// convert the position into lower left grid point
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+		for (i=0;i<3;i++) {
+			rel[i] = (p[i])/lbpar_gpu.agrid;
+			//Note this should be changed once GPU LB is shifted
+		}
+#endif
+  } else {  
+#ifdef LB
+		for (i=0;i<3;i++) {
+			rel[i] = (p[i])/lbpar.agrid-0.5;
+		}
+#endif
+	}
+	// calculate the index of the position
+	for (i=0;i<3;i++) {
+		ind[i] = floor(rel[i]);
+	}
+
+  // calculate the linear interpolation weighting
+	for (i=0;i<3;i++) {
+		delta[3+i] = rel[i] - ind[i];
+		delta[i] = 1 - delta[3+i];
+	}
+
+	//set the initial velocity to zero in all directions
+	v[0] = 0;
+	v[1] = 0;
+	v[2] = 0;
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+				//give the index of the neighbouring nodes
+        tmpind[0] = ind[0]+x;
+        tmpind[1] = ind[1]+y;
+        tmpind[2] = ind[2]+z;
+
+				lb_lbnode_get_u (tmpind, local_v);
+
+				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+        v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
+        v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
+
+      }
+    }
+  }
+
+	return 0;
+}
+
 
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -885,7 +955,7 @@ int lb_lbnode_set_u(int* ind, double* u){
     host_velocity[1] = (float)u[1];
     host_velocity[2] = (float)u[2];
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-    lb_set_node_veloctiy_GPU(single_nodeindex, host_velocity);
+    lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif
   } else {
 #ifdef LB
@@ -964,8 +1034,8 @@ MDINLINE void halo_push_communication() {
   rbuf = malloc(count*sizeof(double));
 
   /* send to right, recv from left i = 1, 7, 9, 11, 13 */
-  snode = node_neighbors[0];
-  rnode = node_neighbors[1];
+  snode = node_neighbors[1];
+  rnode = node_neighbors[0];
 
   buffer = sbuf;
   index = get_linear_index(lblattice.grid[0]+1,0,0,lblattice.halo_grid);
@@ -1008,8 +1078,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 2, 8, 10, 12, 14 */
-  snode = node_neighbors[1];
-  rnode = node_neighbors[0];
+  snode = node_neighbors[0];
+  rnode = node_neighbors[1];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1059,8 +1129,8 @@ MDINLINE void halo_push_communication() {
   rbuf = realloc(rbuf, count*sizeof(double));
 
   /* send to right, recv from left i = 3, 7, 10, 15, 17 */
-  snode = node_neighbors[2];
-  rnode = node_neighbors[3];
+  snode = node_neighbors[3];
+  rnode = node_neighbors[2];
 
   buffer = sbuf;
   index = get_linear_index(0,lblattice.grid[1]+1,0,lblattice.halo_grid);
@@ -1105,8 +1175,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 4, 8, 9, 16, 18 */
-  snode = node_neighbors[3];
-  rnode = node_neighbors[2];
+  snode = node_neighbors[2];
+  rnode = node_neighbors[3];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1158,8 +1228,8 @@ MDINLINE void halo_push_communication() {
   rbuf = realloc(rbuf, count*sizeof(double));
   
   /* send to right, recv from left i = 5, 11, 14, 15, 18 */
-  snode = node_neighbors[4];
-  rnode = node_neighbors[5];
+  snode = node_neighbors[5];
+  rnode = node_neighbors[4];
 
   buffer = sbuf;
   index = get_linear_index(0,0,lblattice.grid[2]+1,lblattice.halo_grid);
@@ -1202,8 +1272,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 6, 12, 13, 16, 17 */
-  snode = node_neighbors[5];
-  rnode = node_neighbors[4];
+  snode = node_neighbors[4];
+  rnode = node_neighbors[5];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -2373,7 +2443,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 
 }
 
-int lb_lbfluid_get_interpolated_velocity(double* p, double* v) { //TODO: this must be fucked up
+int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   index_t node_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
@@ -2385,7 +2455,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) { //TODO: this mu
   double pos[3];
 
 #ifdef LB_BOUNDARIES
-  int boundary_no; //TODO: this must be fucked up
+  int boundary_no;
   int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
 
   lbboundary_mindist_position(p, &lbboundary_mindist, distvec, &boundary_no);
@@ -2512,7 +2582,7 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) { //TODO: this mu
  * on average only one communication phase for the random numbers, which
  * probably makes this method preferable compared to the above one.
  */
-void calc_particle_lattice_ia() { //TODO: this must be fucked up
+void calc_particle_lattice_ia() {
   int i, c, np;
   Cell *cell ;
   Particle *p ;
@@ -2594,7 +2664,7 @@ void calc_particle_lattice_ia() { //TODO: this must be fucked up
       for (i=0;i<np;i++) {
 	/* for ghost particles we have to check if they lie
 	 * in the range of the local lattice nodes */
- 	if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid //TODO: this must be fucked up Fixed?
+ 	if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid
 	    && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid
 	    && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid) {
 
@@ -3076,7 +3146,7 @@ MDINLINE void lb_init_mode_transformation() {
   }
   
   fprintf(stderr,"e[%d][%d] = {\n",n_veloc,n_veloc);
-  for (i=0;i<n_veloc;i++) { //TODO: this must be fucked up
+  for (i=0;i<n_veloc;i++) {
     fprintf(stderr,"{ % .3f",e[i][0]);
     for (j=1;j<n_veloc;j++) {
       fprintf(stderr,", % .3f",e[i][j]);

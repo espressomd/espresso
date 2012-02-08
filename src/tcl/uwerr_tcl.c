@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file uwerr_tcl.c
-    Implementation of \ref uwerr_tcl.h "uwerr_tcl.h".
+    Implements the uwerr command.
 */
 
 #include <stdlib.h>

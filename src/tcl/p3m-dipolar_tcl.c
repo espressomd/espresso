@@ -49,6 +49,9 @@
 #include "p3m-dipolar.h"
 #include "fft-dipolar.h"
 
+// splitting, tbd
+#include "tcl/parser.h"
+
 #ifdef DP3M
 
 /************************************************

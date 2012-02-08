@@ -25,6 +25,7 @@
  */
 
 #include "iccp3m.h"
+#include "parser.h"
 
 #ifdef ELECTROSTATICS
 enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_EXTFIELD } ;

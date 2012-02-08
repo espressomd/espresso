@@ -22,7 +22,6 @@
 */
 #include "statistics.h"
 #include "utils.h"
-#include "parser.h"
 #include "topology.h"
 #include "communication.h"
 #include "cells.h"

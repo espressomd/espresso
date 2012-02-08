@@ -1,5 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2011,2012 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -112,3 +111,5 @@ if {!((($bond1=="{ {1 4} } ") && ($bond2=="{ } ")) || (($bond2=="{ {1 3} } ") &&
 if { (! ([part 3 print type]==1 && [part 4 print type]==1))} {
  error_exit "
 }
+
+exit 0

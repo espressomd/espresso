@@ -221,7 +221,7 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
   }
   /* perform integration */
   if (mpi_integrate(n_steps))
-    return mpi_gather_runtime_errors(interp, TCL_OK);
+    return gather_runtime_errors(interp, TCL_OK);
   return TCL_OK;
 }
 

@@ -96,7 +96,7 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "lj-gen needs 7 DOUBLE and 2 INT parameers: "
 		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return ES_ERROR;
   }
   change = 10;
 	
@@ -108,7 +108,7 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
     Tcl_ResetResult(interp);
   if (ljgen_set_params(part_type_a, part_type_b,
 		       eps, sig, cut, shift, offset, a1, a2, b1, b2,
-		       cap_radius) == TCL_ERROR) {
+		       cap_radius) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
