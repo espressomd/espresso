@@ -22,7 +22,6 @@
 #define _VIRTUAL_SITES_H
 
 #include "particle_data.h"
-#include <tcl.h>
 
 /** \file virtual_sites.h
  *  This file contains routine to handle virtual sites

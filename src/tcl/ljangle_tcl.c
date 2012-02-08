@@ -117,7 +117,6 @@ int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char *
   }
   CHECK_VALUE(ljangleforcecap_set_params(ljangle_force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR; 
 }
 
 

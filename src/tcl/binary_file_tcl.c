@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file binary_file_tcl.c
-    Implementation of \ref binary_file.h "binary_file_tcl.h".
+    Implementation of \ref binary_file_tcl.h "binary_file_tcl.h".
 */
 #include <stdio.h>
 #include <stdlib.h>

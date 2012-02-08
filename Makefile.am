@@ -23,31 +23,12 @@ ACLOCAL_AMFLAGS = -I config
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
-#################################################################
-# Installation of the main program
-#################################################################
-# Two binaries are generated: Espresso for the build dir,
-# Espresso.install for the installation dir. 
-# The ".install" suffix is removed upon installation.
-noinst_PROGRAMS = Espresso
-Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-Espresso_SOURCES = src/scriptsdir.c src/main.c
-Espresso_LDADD = src/libEspresso.a
+all: Espresso
 
-bin_PROGRAMS = Espresso.install
-Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
-Espresso_install_SOURCES = src/scriptsdir.c src/main.c
-Espresso_install_LDADD = src/libEspresso.a
+Espresso: 
+	$(LN_S) src/Espresso .
 
-# rename Espresso after installation
-install-exec-hook:
-	$(am__mv) \
-		$(DESTDIR)$(bindir)/Espresso.install \
-		$(DESTDIR)$(bindir)/Espresso
-
-uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/Espresso
-
+CLEANFILES = Espresso
 
 #################################################################
 # Documentation

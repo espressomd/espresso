@@ -26,10 +26,8 @@
  *
  *  For more information see forces.c .
  */
-#include <tcl.h>
 #include "utils.h"
 #include "thermostat.h"
-#include "communication.h"
 #ifdef MOLFORCES
 #include "topology.h"
 #endif
@@ -299,43 +297,50 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef ELECTROSTATICS
 
   /* real space coulomb */
+  double q1q2 = p1->p.q*p2->p.q;
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
-    p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    if (q1q2) {
+      p3m_add_pair_force(q1q2,d,dist2,dist,force); 
     
-    // forces from the virtual charges
-    // they go directly onto the particles, since they are not pairwise forces
-    if (elc_params.dielectric_contrast_on)
-      ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+      // forces from the virtual charges
+      // they go directly onto the particles, since they are not pairwise forces
+      if (elc_params.dielectric_contrast_on)
+	ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+    }
     break;
   }
   case COULOMB_P3M: {
 #ifdef NPT
-    double eng = p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
+    if (q1q2) {
+      double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+	nptiso.p_vir[0] += eng;
+    }
 #else
-    p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
 #endif
     break;
   }
 #endif
   case COULOMB_EWALD: {
 #ifdef NPT
-    double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
+    if (q1q2) {
+      double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+	nptiso.p_vir[0] += eng;
+    }
 #else
-    add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    if (q1q2) add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
 #endif
     break;
   }
   case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
+    if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
   case COULOMB_NONE:
     break;
@@ -423,7 +428,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -433,7 +438,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -444,7 +449,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -508,7 +513,7 @@ MDINLINE void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
@@ -527,7 +532,7 @@ MDINLINE void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -540,7 +545,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
@@ -548,7 +553,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
 		p1->p.identity, p2->p.identity); 
 	continue;
@@ -590,7 +595,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
@@ -613,7 +618,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     case 3:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;

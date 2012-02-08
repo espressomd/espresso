@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "metadynamics.h"
 #include "errorhandling.h"
 #include "grid.h"
+#include "cells.h"
 
 /** \file metadynamics.h 
 *
@@ -75,7 +76,7 @@ void meta_init(){
    
    
    /* Initialize arrays if they're empty. These get freed upon calling the Tcl
-   * parser */
+    * parser */
    if (meta_acc_force == NULL || meta_acc_fprofile == NULL) {
       meta_acc_force       = calloc(meta_xi_num_bins * sizeof *meta_acc_force, sizeof *meta_acc_force);
       meta_acc_fprofile    = calloc(meta_xi_num_bins * sizeof *meta_acc_fprofile, sizeof *meta_acc_fprofile);
@@ -86,7 +87,7 @@ void meta_init(){
    /* Check that the simulation uses onle a single processor. Otherwise exit. 
    *  MPI interface *not* implemented. */
    if (n_nodes != 1) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"Can't use metadynamics on more than one processor.\n");
       return;
    }
@@ -142,7 +143,7 @@ void meta_perform()
    }
    
    if (flag1 == 0 || flag2 == 0) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"Metadynamics: can't find pid1 or pid2.\n");
       return;
    }
@@ -173,7 +174,7 @@ void meta_perform()
          meta_apply_direction[0] = meta_apply_direction[1] = 0.;
          meta_apply_direction[2] = -1.;
       } else {
-         char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+         char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
          ERROR_SPRINTF(errtxt,"Undefined metadynamics scheme.\n");
          return;      
       }

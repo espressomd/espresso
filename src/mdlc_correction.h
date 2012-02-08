@@ -39,6 +39,7 @@
 #define _DLC_DIPOLAR_H
 
 #ifdef DIPOLES
+#include "utils.h"
 
 /** parameters for the MDLC method */
 typedef struct {
@@ -64,14 +65,12 @@ typedef struct {
 } DLC_struct;
 extern DLC_struct dlc_params;
 
-   int       mdlc_sanity_checks(); 
-   void      add_mdlc_force_corrections();
-   double    add_mdlc_energy_corrections();
-   int       tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv) ; 
-   int       tclprint_to_result_MDLC(Tcl_Interp *interp);
-   double get_mu_max(void);
-#endif  /* of MAGNETOSTATICS */
-
+int       mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
+int       mdlc_sanity_checks(); 
+void      add_mdlc_force_corrections();
+double    add_mdlc_energy_corrections();
+double    get_mu_max(void);
+#endif
 
 #endif
 

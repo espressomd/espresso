@@ -22,15 +22,8 @@
 #define IA_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
-
-    interaction_data.h contains the parser \ref tclcommand_inter for the
-    Tcl command "inter". Therefore the parsing of bonded and nonbonded
-    interaction definition commands both is done here. It also contains
-    procedures for low-level interactions setup and some helper functions.
-    Moreover it contains code for the treatments of constraints.
 */
 
-#include <tcl.h>
 #include "utils.h"
 #include "particle_data.h" /* needed for constraints */
 
@@ -68,17 +61,21 @@
     may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_OVERLAPPED 10 
 
-/* Specify tabulated bonded interactions  */
+/** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
 #define TAB_BOND_LENGTH      1
 #define TAB_BOND_ANGLE       2
 #define TAB_BOND_DIHEDRAL    3
 
-/* Specify overlapped bonded interactions  */
+/** Specify overlapped bonded interactions  */
 #define OVERLAP_UNKNOWN          0
 #define OVERLAP_BOND_LENGTH      1
 #define OVERLAP_BOND_ANGLE       2
 #define OVERLAP_BOND_DIHEDRAL    3
+
+/** cutoff for deactivated interactions. Below 0, so that even particles on
+    top of each other don't interact by chance. */
+#define INACTIVE_CUTOFF -1.0
 
 /*@}*/
 
@@ -366,7 +363,6 @@ typedef struct {
   double TAB_minval;
   double TAB_minval2;
   double TAB_maxval;
-  double TAB_maxval2;
   double TAB_stepsize;
   /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
@@ -416,22 +412,18 @@ typedef struct {
   double mol_cut_cutoff;
 #endif
   
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
   /** \name Tabulated potential */
   /*@{*/
   int ADRESS_TAB_npoints;
   int ADRESS_TAB_startindex;
   double ADRESS_TAB_minval;
-  double ADRESS_TAB_minval2;
   double ADRESS_TAB_maxval;
-  double ADRESS_TAB_maxval2;
   double ADRESS_TAB_stepsize;
   /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_ADRESSTABFILE_NAME 256
   char ADRESS_TAB_filename[MAXLENGTH_ADRESSTABFILE_NAME];
   /*@}*/    
-#endif
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -464,8 +456,6 @@ typedef struct{
 } TF_parameters;
 /* #endif */
 #endif
-
-
 
 /** \name Compounds for Coulomb interactions */
 /*@{*/
@@ -811,48 +801,7 @@ extern double max_cut_nonbonded;
 /** Maximal interaction cutoff (real space/short range bonded interactions). */
 extern double max_cut_bonded;
 
-/** For the warmup you can cap the singularity of the Lennard-Jones
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-extern double lj_force_cap;
-
-/** For the warmup you can cap the singularity of the directionnal LJ
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to write that?).*/
-extern double ljangle_force_cap;
-
-/** For the warmup you can cap the singularity of the Morse
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-extern double morse_force_cap;
-
-/** For warm up integration, the maximum force between any two particles
-    interacting via Buckingham potential can be set and this magnitude of max
-    force is stored in buck_force_cap*/
-extern double buck_force_cap;
-
-/** For the warmup you can cap any tabulated potential at the value
-    tab_force_cap.  This works for most common potentials where a
-    singularity in the force occurs at small separations.  If you have
-    more specific requirements calculate a separate lookup table for
-    each stage of the warm up.
-
-    \note If the maximum value of the tabulated force at small
-    separations is less than the force cap then a warning will be
-    issued since the user should provide tabulated values in the range
-    where particle interactions are expected.  Even so the program
-    will still run and a linear extrapolation will be used at small
-    separations until the force reaches the capped value or until zero
-    separation */
-extern double tab_force_cap;
-
-#ifdef CONSTRAINTS
-/** numnber of constraints. */
-extern int n_constraints;
-/** field containing constraints. */
-extern Constraint *constraints;
-#endif
-/**Switch for nonbonded interaction exclusion*/
+/** Switch for nonbonded interaction exclusion */
 extern int ia_excl;
 
 /************************************************
@@ -949,13 +898,15 @@ MDINLINE int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
+///
+char *get_name_of_bonded_ia(int i);
+
 #ifdef ADRESS
 int checkIfTF(TF_parameters *data);
 #endif
 
-char *get_name_of_bonded_ia(int i);
-#endif
-
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type);
+#endif
+
 #endif

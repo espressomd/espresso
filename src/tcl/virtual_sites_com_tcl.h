@@ -20,8 +20,7 @@
 */
 #ifndef _VIRTUAL_SITES_COM_TCL_H
 #define _VIRTUAL_SITES_COM_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef VIRTUAL_SITES_COM
 

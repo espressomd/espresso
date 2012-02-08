@@ -25,7 +25,6 @@
  *  This file contains functions for handling the system topology.
  */
 
-#include <tcl.h>
 #include "utils.h"
 
 /************************************************/

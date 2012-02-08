@@ -64,4 +64,4 @@ if { $deviation > 0.2 } {
   error_exit "The deviation from Stokes law larger than expected"
 }
 
-
+exit 0

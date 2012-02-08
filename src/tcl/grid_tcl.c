@@ -22,21 +22,10 @@
  *  For more information on the domain decomposition, 
  *  see \ref grid.h "grid.h". 
 */
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include "utils.h"
-#include "grid.h"
+#include "parser.h"
 #include "communication.h"
-#include "verlet.h"
-#include "cells.h"
-#include "interaction_data.h"
-#include <limits.h>
-#include "errorhandling.h"
-
-
+#include "grid.h"
 
 int tclcallback_node_grid(Tcl_Interp *interp, void *_data)
 {
@@ -136,6 +125,6 @@ int tclcommand_change_volume(ClientData data, Tcl_Interp *interp, int argc, char
   }
   sprintf(buffer, "%f", box_l[0]*box_l[1]*box_l[2]);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, TCL_OK);
+  return gather_runtime_errors(interp, TCL_OK);
 }
 

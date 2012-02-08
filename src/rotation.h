@@ -24,7 +24,6 @@
 
 */
 
-#include <tcl.h>
 #include "utils.h"
 #include "particle_data.h"
 #include "thermostat.h"

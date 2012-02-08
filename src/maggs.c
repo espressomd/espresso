@@ -154,7 +154,7 @@ typedef struct {
 /*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
-MAGGS_struct maggs = { 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
+MAGGS_struct maggs = { 1, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
 
 /* local mesh. */
 static lattice_parameters lparams;
@@ -195,7 +195,7 @@ static t_dirs* neighbor;
 // void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double delta); /* update fields on plaquette */
 
 /****** setup everything: ******/
-// int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh); /* set the system parameters */
+// int maggs_set_parameters(double bjerrum, double f_mass, int mesh); /* set the system parameters */
 // void maggs_setup_neighbors(); /* setup the site neighbors */
 // void maggs_setup_local_lattice(); /* set lattice parameters */
 // void maggs_calc_surface_patches(t_surf_patch* surface_patch); /* prepare for communication */
@@ -235,7 +235,6 @@ static t_dirs* neighbor;
 /****** get energy and print out stuff ******/
 // double maggs_electric_energy(); /* calculate electric (E-field) energy */
 // double maggs_magnetic_energy(); /* calculate magnetic (B-field) energy */
-// int tclprint_to_result_Maggs(Tcl_Interp *interp) /* print result for TCL interface */
 
 /****** init and exit ******/
 // maggs_init(); /* initialize: check parameters, assign memory, calculate initial field */
@@ -477,6 +476,50 @@ int maggs_sanity_checks()
   return ret;
 }
 
+void maggs_compute_dipole_correction()
+{
+/*
+maggs.prefactor  = sqrt(4. * M_PI * maggs.bjerrum * temperature);
+                 = sqrt(1/epsilon)
+maggs.pref2      = maggs.bjerrum * temperature;
+                 = 1/4*pi*epsilon
+*/
+ 
+    /* Local dipole moment */
+    double local_dipole_moment[3] = {0.0, 0.0, 0.0};
+    /* Global dipole moment */
+    double dipole_moment[3];
+    
+    int dim,c,np,i;
+    Particle* p;
+    Cell* cell;
+
+    /* Compute the global dipole moment */
+    for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p  = cell->part;
+        np = cell->n;
+        for(i=0; i<np; i++)
+            for (dim=0;dim<3;dim++)
+                 local_dipole_moment[dim] += p[i].r.p[dim] * p[i].p.q;
+    }
+
+    MPI_Allreduce(local_dipole_moment, dipole_moment, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
+    
+    double volume = box_l[0] * box_l[1] * box_l[2];
+    double dipole_prefactor = 4.0*M_PI / (2.0*volume*(maggs.epsilon_infty + 1.0));
+
+    /* apply correction to all particles: */
+    for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p  = cell->part;
+        np = cell->n;
+        for(i=0; i<np; i++)
+            for (dim=0;dim<3;dim++)
+                p[i].f.f[dim] += p[i].p.q * dipole_prefactor * dipole_moment[dim];
+    }
+}
+
 
 
 
@@ -485,32 +528,25 @@ int maggs_sanity_checks()
 /****** setup everything: ******/
 /*******************************/
 
-/** set and calculate the system wide parameters
-    @return zero if successful
-    @param interp    TCL interpreter handle
-    @param bjerrum   Bjerrum length to set
-    @param f_mass    \f$1/c^2\f$ to set
-    @param mesh      Mesh size in 1D of the system
-*/
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh)
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty)
 {
   if (f_mass <=0.) {
-    Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
-    return TCL_ERROR;
+    return -1;
   } 
   if(mesh<0) {
-    Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
-    return TCL_ERROR;
+    return -2;
   }
 	
-  maggs.mesh           = mesh; 
+  maggs.mesh           = mesh;
+  maggs.finite_epsilon_flag  = finite_epsilon_flag;
+  maggs.epsilon_infty  = epsilon_infty;
   maggs.bjerrum        = bjerrum;
   maggs.f_mass         = f_mass; 
   maggs.invsqrt_f_mass = 1./sqrt(f_mass); 	
 	
   mpi_bcast_coulomb_params();
 	
-  return TCL_OK;
+  return ES_OK;
 }
 
 
@@ -2212,6 +2248,9 @@ void maggs_calc_forces()
       }
     }
   }
+
+  if (maggs.finite_epsilon_flag) maggs_compute_dipole_correction();
+
 }
 
 
@@ -2266,30 +2305,6 @@ double maggs_magnetic_energy()
   result *= 0.5*maggs.a;
   return result;
 }
-
-/** print out current setup of maggs method
-    @return 0 if successful
-    @param interp TCL interpreter handle
-*/
-int tclprint_to_result_Maggs(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-	
-  Tcl_PrintDouble(interp, maggs.f_mass, buffer);
-  Tcl_AppendResult(interp, "maggs ", buffer, " ", (char *) NULL);
-  sprintf(buffer,"%d",maggs.mesh);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
-	
-  return TCL_OK;
-}
-
-
-
-
-
-
-
-
 
 /***************************/
 /****** init and exit ******/

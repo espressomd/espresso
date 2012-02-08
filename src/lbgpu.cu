@@ -689,7 +689,6 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-//  printf("myleft: %i %i %i nodeindex %u %u %u %u %u %u %u %u\n", my_left[0], my_left[1], my_left[2],node_index[0],node_index[1],node_index[2],node_index[3],node_index[4],node_index[5],node_index[6],node_index[7]);
   #pragma unroll
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
@@ -867,16 +866,18 @@ __global__ void calc_n_equilibrium(LB_nodes_gpu n_a, int *gpu_check) {
     n_a.seed[index] = para.your_seed + index;
   }
 }
-/**kernel to calculate local populations from hydrodynamic fields from given flow field velocities.
- * The mapping is given in terms of the equilibrium distribution.
+/** kernel to calculate local populations from hydrodynamic fields
+ * from given flow field velocities.  The mapping is given in terms of
+ * the equilibrium distribution.
  *
  * Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
  * Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
  *
- * @param n_a		 Pointer to the lattice site (Input).
- * @param *gpu_check additional check if gpu kernel are executed(Input).
-*/
-__global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex, float *velocity) {
+ * @param n_a		   the current nodes array (double buffering!)
+ * @param single_nodeindex the node to set the velocity for
+ * @param velocity         the velocity to set
+ */
+__global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *velocity) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -1152,9 +1153,9 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
 }
 
 /** get boundary flags
- * @param n_a		Pointer to local node residing in array a (Input)
- * @param *d_v		Pointer to local device values (Input)
-*/
+ *  @param n_a	              Pointer to local node residing in array a (Input)
+ *  @param device_bound_array Pointer to local device values (Input)
+ */
 __global__ void lb_get_boundaries(LB_nodes_gpu n_a, unsigned int *device_bound_array){
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
@@ -1547,9 +1548,9 @@ void lb_get_values_GPU(LB_values_gpu *host_values){
 
 }
 
-/** setup and call kernel to calculate the temperature of the hole fluid
- * @param *host_flag value of the boundary flag
-*/
+/** get all the boundary flags for all nodes
+ *  @param host_bound_array here go the values of the boundary flag
+ */
 void lb_get_boundary_flags_GPU(unsigned int* host_bound_array){
    
   unsigned int* device_bound_array;
@@ -1609,8 +1610,8 @@ void lb_calc_fluid_mass_GPU(double* mass){
 }
 
 /** setup and call kernel to calculate the total momentum of the hole fluid
- * @param *mom value of the momentum calcutated on the GPU
-*/
+ *  @param host_mom value of the momentum calcutated on the GPU
+ */
 void lb_calc_fluid_momentum_GPU(double* host_mom){
 
   float* tot_momentum;
@@ -1634,7 +1635,7 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
   host_mom[2] = (double)(host_momentum[2]* lbpar_gpu.agrid/lbpar_gpu.tau);
 }
 /** setup and call kernel to calculate the temperature of the hole fluid
- * @param *cpu_temp value of the temperatur calcutated on the GPU
+ *  @param host_temp value of the temperatur calcutated on the GPU
 */
 void lb_calc_fluid_temperature_GPU(double* host_temp){
   float host_jsquared = 0.f;
@@ -1654,9 +1655,11 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
   host_temp[0] = (double)(host_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
-/** setup and call kernel to calculate the temperature of the hole fluid
- * @param *host_flag value of the boundary flag
-*/
+
+/** setup and call kernel to get the boundary flag of a single node
+ *  @param single_nodeindex number of the node to get the flag for
+ *  @param host_flag her goes the value of the boundary flag
+ */
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
    
   unsigned int* device_flag;
@@ -1673,10 +1676,11 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
   cudaFree(device_flag);
 
 }
-/** setup and call kernel to calculate the temperature of the hole fluid
- * @param *host_flag value of the boundary flag
-*/
-void lb_set_node_veloctiy_GPU(int single_nodeindex, float* host_velocity){
+/** set the net velocity at a single node
+ *  @param single_nodeindex the node to set the velocity for 
+ *  @param host_velocity the velocity to set
+ */
+void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity){
    
   float* device_velocity;
   cuda_safe_mem(cudaMalloc((void**)&device_velocity, 3*sizeof(float)));	

@@ -20,17 +20,12 @@
 */
 #ifndef _THERMOSTAT_TCL_H
 #define _THERMOSTAT_TCL_H
-#include "config.h"
-#include <tcl.h>
-#include "thermostat.h"
+#include "parser.h"
 
 /** Implementation of the tcl command \ref tclcommand_thermostat. This function
     allows to change the used thermostat and to set its parameters.
  */
 int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-/** Callback marking setting the temperature as outdated */
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
 
 #if defined(LB) || defined(LB_GPU)
 int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);

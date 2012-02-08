@@ -680,7 +680,7 @@ int mdlc_tune(double error)
                         will be equal or less than for this one */
  
  h=dlc_params.h;
- if (h < 0) return TCL_ERROR;
+ if (h < 0) return ES_ERROR;
 
  if(h > lz) {
    fprintf(stderr,"tune DLC dipolar: Slab is larger than the box size !!! \n");
@@ -708,14 +708,14 @@ int mdlc_tune(double error)
  if(flag==0) {
   fprintf(stderr,"tune DLC dipolar: Sorry, unable to find a proper cut-off for such system and accuracy.\n");
   fprintf(stderr,"Try modifiying the variable limitkc in the c-code: dlc_correction.c  ... \n");
-  return TCL_ERROR;
+  return ES_ERROR;
  }
  
  dlc_params.far_cut=kc;
  
  MDLC_TRACE(fprintf(stderr, "%d: done mdlc_tune().\n", this_node));
  
-return TCL_OK;
+return ES_OK;
  
 }		
 
@@ -759,7 +759,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
     coulomb.Dmethod =DIPOLAR_MDLC_P3M; 
     break;
   default:
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   dlc_params.far_cut = far_cut;
@@ -768,65 +768,14 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
   }
   else {
     dlc_params.far_calculated = 1;
-    if (mdlc_tune(dlc_params.maxPWerror) == TCL_ERROR) {
+    if (mdlc_tune(dlc_params.maxPWerror) == ES_ERROR) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{009 mdlc tuning failed, gap size too small} ");
     }
   }
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
-}
-/* ***************************************************************** */
-
-int tclprint_to_result_MDLC(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  
-  Tcl_PrintDouble(interp, dlc_params.maxPWerror, buffer);
- Tcl_AppendResult(interp, "} {magnetic mdlc ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, dlc_params.gap_size, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, dlc_params.far_cut, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  return TCL_OK;
-}
-/* ***************************************************************** */
-
-int tclcommand_inter_magnetic_parse_mdlc_params(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double pwerror;
-  double gap_size;
-  double far_cut = -1;
- 
-  MDLC_TRACE(fprintf(stderr, "%d: tclcommand_inter_magnetic_parse_mdlc_params().\n", this_node));
-  
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "either nothing or mdlc <pwerror> <minimal layer distance> {<cutoff>}  expected, not \"", argv[0], "\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if (!ARG0_IS_D(pwerror))
-    return TCL_ERROR;
-  if (!ARG1_IS_D(gap_size))
-    return TCL_ERROR;
-
-  argc -= 2; argv += 2;
-
-  if (argc > 0) {
-    // if there, parse away manual cutoff
-    if(ARG0_IS_D(far_cut)) {
-      argc--; argv++;
-    }
-    else
-      Tcl_ResetResult(interp);
-
-    if(argc > 0) {
-	Tcl_AppendResult(interp, "either nothing or mdlc <pwerror> <minimal layer distance=size of the gap without particles> {<cutoff>}   expected, not \"", argv[0], "\"", (char *)NULL);
-	return TCL_ERROR;
-    }
-  }
-  CHECK_VALUE(mdlc_set_params(pwerror,gap_size,far_cut),"choose a 3d electrostatics method prior to use mdlc");
-  coulomb.Dprefactor = (temperature > 0) ? temperature*coulomb.Dbjerrum : coulomb.Dbjerrum;
+  return ES_OK;
 }
 /* ***************************************************************** */
 

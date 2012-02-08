@@ -24,6 +24,8 @@ puts "-------------------------------------------"
 
 set nrep { 1000 1000 1000 1000 1000 1000 1000 1000 }
 
+set epsilon 1e-7
+
 proc blubb {vec} {
    return [expr -1 * log([lindex $vec 1] / [lindex $vec 0])]
 }
@@ -36,8 +38,25 @@ while {![eof $df]} {
 close $df
 set data [lrange $data 0 end-1]
 
-puts "Expected values:"
-puts "0.190161129416 0.0149872743495 0.00120248945994 8.70337780606 1.27314416767 0.992579964046"
-puts [uwerr $data $nrep blubb plot]
+set expect "0.190161129416 0.0149872743495 0.00120248945994 8.70337780606 1.27314416767 0.992579964046"
 
-exit 1
+if { [catch {
+
+    set got [uwerr $data $nrep blubb plot]
+
+    if {[llength $expect] != [llength $got]} {
+	error "uwerr does not give the correct number of values back"
+    }
+
+    for e $expect g $got {
+	if {abs(($e - $g)/$g) > $epsilon} {
+	    error "uwerr deviations too large, expecting $e, not $g"
+	}
+    } 
+
+} res ] } {
+    error_exit $res
+}
+
+exit 0
+

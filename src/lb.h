@@ -268,18 +268,27 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
 
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. This version of the function
+ * can be called without the position needing to be on the local processor */
+int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
 
-/** Calculate the local fluid density.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param rho local fluid density
+
+/** Calculation of hydrodynamic modes.
+ *
+ *  @param index number of the node to calculate the modes for
+ *  @param mode output pointer to a double[19] 
  */
-
-/** Calculation of hydrodynamic modes */
 void lb_calc_modes(index_t index, double *mode);
 
 void lb_check_halo_regions();
 
+/** Calculate the local fluid density.
+ * The calculation is implemented explicitly for the special case of D3Q19.
+ * @param index the local lattice site (Input).
+ * @param rho   local fluid density
+ */
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;

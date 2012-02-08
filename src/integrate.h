@@ -23,7 +23,6 @@
  *
  *  For more information see \ref integrate.c "integrate.c".
 */   
-#include <tcl.h>
 
 #define INTEG_METHOD_NPT_ISO   0
 #define INTEG_METHOD_NVT       1
@@ -68,12 +67,6 @@ extern double verlet_reuse;
 /************************************************************/
 /*@{*/
 
-/** Calculate maximal interaction range. 
-    Uses \ref calc_maximal_cutoff.
-    \ref max_range  = \ref max_cut + \ref #skin;
- */
-void integrate_vv_recalc_maxrange();
-
 /** Initialize the used thermodynamic Ensemble (NVT or NPT) */
 void integrate_ensemble_init();
 
@@ -86,9 +79,6 @@ void integrate_vv(int n_steps);
     new time step. */
 void rescale_velocities(double scale); 
 
-/** Callback for setmd skin.
-    \return TCL status.
-*/
 /** local routine of \ref tclcommand_invalidate_system */
 void local_invalidate_system();
 

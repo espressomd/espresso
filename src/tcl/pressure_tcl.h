@@ -24,8 +24,7 @@
 
 #ifndef _PRESSURE_TCL_H
 #define _PRESSURE_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /** \name Exported Functions */
 /************************************************************/

@@ -1,31 +1,50 @@
+ESPResSo is maintained and developed mainly at the Institute for
+Computational Physics at Stuttgart University, Germany, in the group
+of Prof. Dr. Christian Holm (http://www.icp.uni-stuttgart.de).
+
+Until 2010, ESPResSo was maintained and developed mainly at the
+Max-Planck-Institute for Polymer Research in Mainz, Germany in the
+group of Prof. Dr. Kurt Kremer.
+
 The following people have contributed to ESPResSo:
 
-ESPResSo core team:
--------------------
+Core developers
+---------------
 Axel Arnold
-Bernward Mann
-Christian Holm
-Christoph Junghans
-Olaf Lenz
-Hans-Jörg Limbach
-Torsten Stühn
+Olaf Lenz (maintainer)
+Stefan Kesselheim
 
-Further contributions came from:
---------------------------------
+Bernward Mann (deceased 2006)
+Christoph Junghans (inactive)
+Hans-Jörg Limbach (inactive)
+Torsten Stühn (inactive)
+
+Contributors
+------------
 Adolfo Poma
+Alexander Schlaich
 Arjit Maitra
+Ben Reynwar (formerly: Reynolds)
 Christoph Schneider
 Dmitro Galperin
 Dmytro Antypov
-Florian Rühle
+Dominic Röhm
+Florian Fahrenberger (formerly: Rühle)
+Florian Weik
+Florian Häußermann
+Francesca Lugli
 Frank Mühlbach
+Georg Rempfer
+Gizem Inci
 Gregoria Illya
 Igor Pasichny
 Ira Cooke
 Joan Josep Cerdà
 Jon Halverson
 Kai Grass
+Kai Kratzer
 Karen Johnston
+Konrad Breitsprecher
 Marcello Sega
 Matej Praprotnik
 Mehmet Sayar
@@ -33,13 +52,18 @@ Mehmet Süzen
 Mingyang Hu
 Muhammad Anwar
 Nils Binz
+Owen Hickey
+Pedro Sanchez
 Peter Kosovan
 Rudolf Weeber
 Sandeep Tyagi
 Sathish K. Sukumaran
+Sela Samin
+Shervin Raafatnia
 Simon Poblete
-Stefan Kesselheim
+Thomas Spura
 Timo Schürg
+Tobias Richter
 Tristan Bereau
 Ulf Schiller
 Vagelis Harmandaris
@@ -47,6 +71,7 @@ Vincent Ballenegger
 Vladimir Lobaskin
 Zunjing Wang
 
-Special thanks go to:
----------------------
-Henrik Skov Midtiby for providing a GPL version of todonotes.sty.
+Special thanks
+--------------
+Special thanks to Henrik Skov Midtiby for providing a GPL version of
+todonotes.sty.
