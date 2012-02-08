@@ -228,29 +228,22 @@ extern const char double_correlation_get_data_errors[][64];
  *
  * @param self: The pointer to the correlation class instance that should be initialized
  * @param dt: The time interval between subsequent updates
- * @param @param tau_lin: The linear part of the correlation function. 
- * @param hierarchy_depth: The depth of the hierarchichal memory
+ * @param tau_lin: The linear part of the correlation function. 
+ * @param tau_max: maximal time delay tau to sample
  * @param window_distance: The distance in time domain between update of the correlation estimate
  * @param dim_A: The dimension of the A vector
  * @param dim_B: The dimension of the B vector
+ * @param A: First observable to correlate
+ * @param B: Second observable to correlate
  * @param dim_corr: The dimension of the correlation to be calculated
- * @param A_fun: A pointer to the function that is used to calculate the value of A
- * @param A_args: The arguments passed to function A
- * @param B_fun: A pointer to the function that is used to calculate the value of B
- * @param B_args: The arguments passed to function B
- * @param compressA: A pointer to the function that indicates how the A values should be compressed (usually 
+ * @param corr_operation_name: how to correlate the two observables A and B
+ *     (this has no default)
+ * @param compressA_name: how the A values should be compressed (usually 
  *     the linear compression method)
- * @param compressB: A pointer to the function that indicates how the B values should be compressed (usually 
+ * @param compressB_name: how the B values should be compressed (usually 
  *     the linear compression method)
  *
  */
-/* 
-   int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, unsigned int hierarchy_depth, 
-                  unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
-                  observable* A, observable* B, void* corr_operation, 
-                  void* compressA, void* compressB,
-		  int autocorrelation);
-		  */ 
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   observable* A, observable* B, char* corr_operation_name, 

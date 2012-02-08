@@ -35,6 +35,7 @@ int tclcommand_analyze_parse_correlation(Tcl_Interp* interp, int argc, char** ar
 int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv);
 int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, char** argv);
 int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv);
+int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp);
 
 /* General purpose and error reporting functions
 ************************************************
@@ -318,11 +319,11 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   observable *B=0;
   int dim_A=0;
   int dim_B=0;
-  unsigned int tau_lin = 1; 
+  int tau_lin = 1; 
   double delta_t = 0.0;
   double tau_max = 0;
 //  int(*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) = 0;
-  unsigned int dim_corr;
+  unsigned int dim_corr = 0;
   int change; // how many tcl argmuents are "consumed" by the parsing of arguments
   int error;
   char *error_msg=NULL;
@@ -465,7 +466,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           return TCL_ERROR;
         argc -= change;
         argv += change;
-      } else if ( ARG0_IS_S("tau_lin") ) { 
+      } else if ( ARG0_IS_S("tau_lin") ) {
           if ( argc < 2 || ! (ARG1_IS_I(tau_lin)) ) 
               Tcl_AppendResult(interp, "Usage: analyze correlation ... tau_lin $tau_lin", (char *)NULL); 
           else { 

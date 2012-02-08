@@ -282,8 +282,6 @@ int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v);
  */
 void lb_calc_modes(index_t index, double *mode);
 
-void lb_check_halo_regions();
-
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index the local lattice site (Input).
@@ -587,8 +585,6 @@ int lb_lbfluid_set_gamma_odd(double p_gamma_odd);
 int lb_lbfluid_set_gamma_even(double p_gamma_even);
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_friction(double p_friction);
-
-int lb_lbfluid_get_interpolated_velocity(double* p, double* v);
 
 int lb_lbfluid_get_density(double* p_dens);
 int lb_lbfluid_get_agrid(double* p_agrid);

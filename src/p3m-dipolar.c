@@ -1847,8 +1847,7 @@ static double dp3m_m_time(char **log, int mesh,
 }
 
 
-/** a probably faster adaptive tuning method. Uses the same error estimates and parameters as
-    \ref tclcommand_inter_magnetic_dp3m_print_adaptive_tune_parameters, but a different strategy for finding the optimum. The algorithm
+/** Tuning of dipolar P3M. The algorithm
     basically determines the mesh, cao and then the real space cutoff, in this nested order.
 
     For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
@@ -1861,9 +1860,6 @@ static double dp3m_m_time(char **log, int mesh,
 
     Both the search over mesh and cao stop to search in a specific direction once the computation time is
     significantly higher than the currently known optimum.
-
-    Compared to \ref tclcommand_inter_magnetic_dp3m_print_tune_parameters, this function will test more parameters sets for efficiency, but
-    the error estimate is calculated less often. In general this should be faster and give better results.
  */
 
 int dp3m_adaptive_tune(char **logger)

@@ -758,43 +758,43 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
  */
 
 int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
-	double local_v[3],rel[3],delta[6];
-	int 	 ind[6], tmpind[6]; //node indices
-	int		 i, x, y, z; //counters
+  double local_v[3] = {0, 0, 0} ,rel[3],delta[6];
+  int 	 ind[6], tmpind[6]; //node indices
+  int		 i, x, y, z; //counters
 
-	// fold the position onto the local box, note here ind is used as a dummy variable
-	fold_position (p,ind);
+  // fold the position onto the local box, note here ind is used as a dummy variable
+  fold_position (p,ind);
 
-	// convert the position into lower left grid point
+  // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-		for (i=0;i<3;i++) {
-			rel[i] = (p[i])/lbpar_gpu.agrid;
-			//Note this should be changed once GPU LB is shifted
-		}
+    for (i=0;i<3;i++) {
+      rel[i] = (p[i])/lbpar_gpu.agrid;
+      //Note this should be changed once GPU LB is shifted
+    }
 #endif
   } else {  
 #ifdef LB
-		for (i=0;i<3;i++) {
-			rel[i] = (p[i])/lbpar.agrid-0.5;
-		}
+    for (i=0;i<3;i++) {
+      rel[i] = (p[i])/lbpar.agrid-0.5;
+    }
 #endif
-	}
-	// calculate the index of the position
-	for (i=0;i<3;i++) {
-		ind[i] = floor(rel[i]);
-	}
+  }
+  // calculate the index of the position
+  for (i=0;i<3;i++) {
+    ind[i] = floor(rel[i]);
+  }
 
   // calculate the linear interpolation weighting
-	for (i=0;i<3;i++) {
-		delta[3+i] = rel[i] - ind[i];
-		delta[i] = 1 - delta[3+i];
-	}
+  for (i=0;i<3;i++) {
+    delta[3+i] = rel[i] - ind[i];
+    delta[i] = 1 - delta[3+i];
+  }
 
-	//set the initial velocity to zero in all directions
-	v[0] = 0;
-	v[1] = 0;
-	v[2] = 0;
+  //set the initial velocity to zero in all directions
+  v[0] = 0;
+  v[1] = 0;
+  v[2] = 0;
   for (z=0;z<2;z++) {
     for (y=0;y<2;y++) {
       for (x=0;x<2;x++) {
@@ -803,9 +803,9 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
 
-				lb_lbnode_get_u (tmpind, local_v);
+	lb_lbnode_get_u (tmpind, local_v);
 
-				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+	v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
         v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
 
@@ -813,7 +813,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
     }
   }
 
-	return 0;
+  return 0;
 }
 
 
@@ -1010,7 +1010,7 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
 /********************** The Main LB Part *************************************/
 
 /* Halo communication for push scheme */
-MDINLINE void halo_push_communication() {
+static void halo_push_communication() {
 
   index_t index;
   int x, y, z, count;
@@ -2376,7 +2376,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 
 #if 0 // I have no idea what this should be for!
-  if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2))) {
+  if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
 #endif
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
@@ -2441,7 +2441,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 }
 
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
-  index_t node_index[8], index;
+  index_t nod9e_index[8], index;
   double delta[6];
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
@@ -2712,7 +2712,7 @@ void lb_calc_average_rho() {
   /* calculate average density in MD units */
   // TODO!!!
   lbpar.rho = sum_rho / (box_l[0]*box_l[1]*box_l[2]);
-
+  
 }
 
 /*@}*/
@@ -2732,9 +2732,11 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
 }
 
 /** Checks consistency of the halo regions (ADDITIONAL_CHECKS)
- * This function can be used as an additional check. It test whether the 
- * halo regions have been exchanged correctly. */
-static void lb_check_halo_regions() {
+    This function can be used as an additional check. It test whether the 
+    halo regions have been exchanged correctly.
+*/
+static void lb_check_halo_regions()
+{
 
   index_t index;
   int i,x,y,z, s_node, r_node, count=n_veloc;
@@ -2749,7 +2751,7 @@ static void lb_check_halo_regions() {
       for (y=0;y<lblattice.halo_grid[1];++y) {
 
 	index  = get_linear_index(0,y,z,lblattice.halo_grid);
-	for (i=0;i<n_veloc;i++) { s_buffer[i] = lbfluid[0][i][index];
+	for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 
 	s_node = node_neighbors[1];
 	r_node = node_neighbors[0];
@@ -2787,7 +2789,7 @@ static void lb_check_halo_regions() {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);	  
 	  }
 	}
-
+	
       }      
     }
   }
@@ -2906,7 +2908,7 @@ static void lb_check_halo_regions() {
 #endif /* ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
-MDINLINE void lb_lattice_sum() {
+static void lb_lattice_sum() {
 
     int n_veloc = lbmodel.n_veloc;
     double *w   = lbmodel.w;
@@ -3007,7 +3009,7 @@ MDINLINE void lb_lattice_sum() {
 #endif
 
 #ifdef ADDITIONAL_CHECKS
-MDINLINE void lb_check_mode_transformation(index_t index, double *mode) {
+static void lb_check_mode_transformation(index_t index, double *mode) {
 
   /* check if what I think is right */
 
@@ -3057,7 +3059,7 @@ MDINLINE void lb_check_mode_transformation(index_t index, double *mode) {
 
 }
 
-MDINLINE void lb_init_mode_transformation() {
+static void lb_init_mode_transformation() {
 
 #ifdef D3Q19
   int i, j, k, l;
@@ -3265,15 +3267,16 @@ MDINLINE void lb_init_mode_transformation() {
 #endif /* ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
+
 /** Check for negative populations.  
- *
- * Checks for negative populations and increases failcounter for each
- * occurence.
- *
- * @param  index Index of the local lattice site (Input).
- * @return Number of negative populations on the local lattice site.
- */
-MDINLINE int lb_check_negative_n(index_t index) {
+ 
+    Checks for negative populations and increases failcounter for each
+    occurence.
+ 
+    @param  index Index of the local lattice site (Input).
+    @return Number of negative populations on the local lattice site. */
+static int lb_check_negative_n(index_t index)
+{
   int i, localfails=0;
 
   for (i=0; i<n_veloc; i++) {
