@@ -32,52 +32,6 @@ int read_until_end_of_line(FILE *f);
 
 
 /* Error codes */
-const char init_from_checkpoint_errors[][64] = {
-  "                                                ",                 //0
-  "unknown error",                                                    //1
-  "cannot open the file",                                             //2
-  "failed reading autocorrelation",                                   //3
-  "failed reading finalized",                                         //4
-  "failed reading hierarchy_depth",                                   //5
-  "failed reading tau_lin",                                           //6
-  "failed reading dim_A",                                             //7
-  "dim_A from checkpoint != dim_A from observable",                   //8
-  "failed reading dim_B",                                             //9
-  "failed reading dim_corr",                                          //10
-  "failed reading t",                                                 //11
-  "failed reading dt",                                                //12
-  "failed reading tau_max",                                           //13
-  "failed reading update_frequency",                                  //14
-  "failed reading window_distance",                                   //15
-  "failed reading n_result",                                          //16
-  "failed reading n_data",                                            //17
-  "failed reading compressA_name",                                    //18
-  "failed reading compressB_name",                                    //19
-  "failed reading corr_operation_name",                               //20
-  "failed reading is_from_file",                                      //21
-  "failed reading autoupdate",                                        //22
-  "failed reading last_update",                                       //23
-  "failed reading tau",                                               //24
-  "failed reading n_sweeps",                                          //25
-  "failed reading result_data",                                       //26
-  "failed reading n_vals",                                            //27
-  "failed reading newest",                                            //28
-  "failed reading A_accumulated_average",                             //29
-  "failed reading A_accumulated_variance",                            //30
-  "failed reading A_data",                                            //31
-  "failed reading B_accumulated_average",                             //32
-  "failed reading B_accumulated_variance",                            //33
-  "failed reading B_data",                                            //34
-  "dim_A does not match dim_corr",                                    //35
-  "unknown corr_operation",                                           //36
-  "unknown compression operation for obs1",                           //37
-  "unknown compressB has to be none for autocorrelation",             //38
-  "unknown compression operation for obs2",                           //39
-  "you need to specify obs2",                                         //40
-  "dim_B from checkpoint != dim_B from observable",                   //41
-  "no error"                                                          //end of the eror codes
-};
-
 const char init_errors[][64] = {
   "",                            // 0
   "No valid correlation given" , // 1
@@ -96,9 +50,7 @@ const char init_errors[][64] = {
   "tau_lin must be divisible by 2", // 14
   "dt is smaller than the MD timestep",//15
   "dt is not a multiple of the MD timestep", //16
-  "cannot set compress2 for autocorrelation", //17
-  "dim_A and dim_corr do not match for conditional correlation", //18
-  "unknown error, dim_corr should not be 0 at this point" //19
+  "cannot set compress2 for autocorrelation" //17
 };
 
 const char file_data_source_init_errors[][64] = {
@@ -189,7 +141,6 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
 
-  // FIXME After shuffling consistency checks around the source file, some error messages may be still messed up!
   if (self==0)
     return 1;
   // first input-independent values
@@ -272,16 +223,6 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
 // square_distance will be removed -- will be replaced by strides and blocks
 //  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
 //    self->corr_operation = &square_distance;
-  } else if ( strcmp(corr_operation_name,"square_distance_cond_chain") == 0 ) {
-    if ( (dim_A-1) % (dim_corr + 1) ) 
-      return 18;
-    dim_corr = (dim_A-1) / (dim_corr + 1) * dim_corr;
-    self->corr_operation = &square_distance_cond_chain;
-  } else if ( strcmp(corr_operation_name,"square_distance_cond") == 0 ) {
-    if (dim_A % (dim_corr + 1) ) 
-      return 18;
-    dim_corr = dim_A / (dim_corr + 1) * dim_corr;
-    self->corr_operation = &square_distance_cond;
   } else if ( strcmp(corr_operation_name,"scalar_product") == 0 ) {
     dim_corr=1;
     self->corr_operation = &scalar_product;
@@ -703,22 +644,6 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
   return 0;
 }
 
-/* to be removed
-int square_distance ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  unsigned int i;
-  double tmp=0.0;
-  if (!(dim_A == dim_B )) {
-    printf("Error in square distance: The vector sizes do not match\n");
-    return 5;
-  }
-  for ( i = 0; i < dim_A; i++ ) {
-    tmp += (A[i]-B[i])*(A[i]-B[i]);
-  }
-  C[0]=tmp;
-  return 0;
-}
-*/
-
 
 int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
   unsigned int i;
@@ -732,73 +657,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   return 0;
 }
 
-/** 
-Compute the correlation if the condition is fulfiled, or zero otherwise
-
-Assume that the observable array is composed of the following sub-units
-arranged linearly one after another:
-     condition; 
-     position[ dim_A / (dim_A - dim_corr) ];
-
-     correlate only values within the same block and if condition > 0
-*/
-int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  const double tiny=0.00001; // to avoid roundoff errors
-  unsigned int i, j, stepA, stepC, n_vals;
-  double dist;
-  n_vals = dim_A - dim_corr; // A contains the values in d dimensions plus condition per each value, corr contains just the values
-  stepA=dim_A/n_vals;
-  stepC=dim_corr/n_vals;
-  for ( i = 0; i < n_vals; i++ ) { 
-    // if both conditions are positive and the same and positive
-    if ( A[i*stepA] > 0 &&  fabs( A[i*stepA] - B[i*stepA] ) < tiny  ) {
-      for (j=0; j<stepC; j++) { 
-        dist = A[i*stepA+j+1] - B[i*stepA+j+1];
-        C[i*stepC+j] = dist*dist; 
-      }
-    } else { 
-      for (j=0; j<stepC; j++) {
-        C[i*stepC+j] = 0.0;
-      }
-    }
-  }
-  return 0;
-}
-
-/** 
-Compute the correlation if the condition is fulfiled, or zero otherwise
-
-Assume that the observable array is composed of the following sub-units
-arranged linearly one after another:
-     condition; 
-     position;
-
-     correlate only values within the same block and if condition > 0
-     the last entry in the observable array is the chain length.
-     All computed distances are folded to be <= chain_length/2;
-     Warning: this function is very problem-specific.
-     
-*/
-int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
-  const double tiny=0.00001; // to void roundoff errors in double->int conversion
-  unsigned int i, imax;
-  double dist, distmax, halfmax;
-  distmax=(double)(A[dim_A-1]);
-  halfmax=0.5*distmax;
-  imax=(dim_A-1)/2;
-  for ( i = 0; i < imax; i++ ) { 
-    // if both conditions are positive and the same and positive
-    if ( A[2*i] > 0 &&  fabs(A[2*i] - B[2*i]) < tiny  ) {
-      dist= fabs(A[2*i+1] - B[2*i+1]);
-      if (dist > halfmax) 
-	dist -= distmax;
-      C[i] = dist < tiny ? 0.0 : dist*dist;
-    } else 
-      C[i] = 0.0;
-  }
-  return 0;
-}
-
 
 void autoupdate_correlations() {
   int i;
@@ -806,358 +664,12 @@ void autoupdate_correlations() {
 //    printf("checking correlation %d autoupdate is %d \n", i, correlations[i].autoupdate);
     if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
       //printf("updating %d\n", i);
+      if (i==1)
+        fprintf(stderr,"updating %d\n", i);
       correlations[i].last_update=sim_time;
       double_correlation_get_data(&correlations[i]);
     }
   }
 }
 
-int double_correlation_write_checkpoint( double_correlation* self, char* filename) {
-  FILE* f=0;
-  int i, imax; // indexing variables
-  f=fopen(filename, "w");
-  if (!f) {
-    return 1;
-  }
-  fprintf(f,"%d\t#autocorrelation \n", self->autocorrelation); // autocorrelation flag
-  fprintf(f,"%d\t#finalized \n", self->finalized);       // non-zero if correlation is finialized
-  fprintf(f,"%d\t#hierarchy_depth \n", self->hierarchy_depth); // maximum level of data compression
-  fprintf(f,"%d\t#tau_lin \n", self->tau_lin);                 // number of frames in the linear correlation
-  fprintf(f,"%d\t#dim_A \n", self->dim_A);                     // dimensionality of A
-  fprintf(f,"%d\t#dim_B \n", self->dim_B);
-  fprintf(f,"%d\t#dim_corr \n", self->dim_corr);
-  fprintf(f,"%d\t#time (No of frames)\n", self->t);            // global time in number of frames
-  fprintf(f,"%.6g\t#dt \n", self->dt);                         // time interval at which samples arrive
-  fprintf(f,"%.6g\t#tau_max \n", self->tau_max);               // maximum time, for which the correlation should be calculated
-  fprintf(f,"%d\t#update_frequency \n", self->update_frequency);// time distance between updates in MD timesteps 
-  fprintf(f,"%d\t#window_distance \n", self->window_distance); 
-  
-  fprintf(f,"%d\t#n_result \n", self->n_result);                     // the total number of result values
-  fprintf(f,"%d\t#n_data\n", self->n_data);               // a counter to calculated averages and variances
 
-  fprintf(f,"%s\t#compressA_name\n", self->compressA_name);
-  fprintf(f,"%s\t#compressB_name\n", self->compressB_name);
-  fprintf(f,"%s\t#corr_operation_name\n", self->corr_operation_name);
-  fprintf(f,"%d\t#is_from_file \n", self->is_from_file);
-  fprintf(f,"%d\t#autoupate \n", self->autoupdate);
-  fprintf(f,"%10g\t#last_update\n", self->last_update); // this requires high precision
-
-  // print the buffers
-  fprintf(f,"#tau values: \n"); // time differences                  
-  for (i=0;i<self->n_result;i++)
-    fprintf(f,"%d ", self->tau[i]); 
-  fprintf(f,"\n#n_sweeps values: \n");                       
-  for (i=0;i<self->n_result;i++)
-    fprintf(f,"%d ", self->n_sweeps[i]); 
-  fprintf(f,"\n#result_data values: \n");
-  imax=self->n_result*self->dim_corr;
-  for (i=0;i<imax;i++)
-    fprintf(f,"%.6g ", self->result_data[i]); 
-  fprintf(f,"\n#result_data values: \n");
-  for (i=0;i<self->hierarchy_depth;i++)
-    fprintf(f,"%d ", self->n_vals[i]); 
-  fprintf(f,"\n#newest values: \n");
-  for (i=0;i<self->hierarchy_depth;i++)
-    fprintf(f,"%d ", self->newest[i]); 
-
-//  fprintf(f,"%\t#comment \n", double*** A;                     // input quantity 1
-//  fprintf(f,"%\t#comment \n", double*** B;                     // input quantity 2
-//  fprintf(f,"%\t#comment \n", double** result;                // output quantity
-
-  fprintf(f,"\n#A_accumulated_average:\n");
-  for (i=0;i<self->dim_A;i++)  
-      fprintf(f,"%.6g ", self->A_accumulated_average[i]);     // all A values are added up here
-  fprintf(f,"\n#A_accumulated_variance:\n");                       
-  for (i=0;i<self->dim_A;i++)  
-    fprintf(f,"%.6g ", self->A_accumulated_variance[i]);    // all A**2 values are added up here
-  fprintf(f,"\n#A_data:\n");
-  imax=(self->tau_lin+1)*self->hierarchy_depth*self->dim_A;
-  for (i=0;i<imax;i++)  
-    fprintf(f,"%.6g ", self->A_data[i]);
-
-  if (!self->autocorrelation) { 
-      fprintf(f,"\n#B_accumulated_average:\n");
-      for (i=0;i<self->dim_B;i++)  
-          fprintf(f,"%.6g ", self->B_accumulated_average[i]);     // all B values are added up here 
-      fprintf(f,"\n#B_accumulated_variance:\n");                       
-      for (i=0;i<self->dim_B;i++)  
-          fprintf(f,"%.6g ", self->B_accumulated_variance[i]);    // all B**2 values are added up here 
-      fprintf(f,"\n#B_data:\n"); 
-      imax=(self->tau_lin+1)*self->hierarchy_depth*self->dim_B; 
-      for (i=0;i<imax;i++)  
-          fprintf(f,"%.6g ", self->B_data[i]); 
-  }
-  fclose(f);
-  return ES_OK;
-}
-
-int double_correlation_init_from_checkpoint(double_correlation* self, char* filename, int dim_A, int dim_B, observable *A, observable *B) {
-  FILE* f=0;
-  char *buffer; // make sure that no names are longer than this!
-  int i, imax; // indexing variables
-  int j, jmax; // indexing variables
-  //int tmp;
-  f=fopen(filename, "r");
-  if (!f) 
-    return 2;
-  if (fscanf(f,"%d", &self->autocorrelation) < 1) // autocorrelation flag
-    return 3;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->finalized))       // non-zero if correlation is finialized
-    return 4;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->hierarchy_depth)) // maximum level of data compression
-    return 5;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->tau_lin) )                 // number of frames in the linear correlation
-    return 6;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->dim_A) )                     // dimensionality of A
-    return 7;
-  //fprintf(stderr, "\n***\ndim_A: %d, self->dim_A: %d\n***n\n",dim_A, self->dim_A);
-  if (dim_A != self->dim_A) 
-    return 8;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->dim_B) )
-    return 9;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->dim_corr) )
-    return 10;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->t) )            // global time in number of frames
-    return 11;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%lf", &self->dt) )                         // time interval at which samples arrive
-    return 12;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%lf", &self->tau_max) )               // maximum time, for which the correlation should be calculated
-    return 13;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->update_frequency) )// time distance between updates in MD timesteps 
-    return 14;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->window_distance) ) 
-    return 15;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->n_result) )                     // the total number of result values
-    return 16;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->n_data) )               // a counter to calculated averages and variances
-    return 17;
-  read_until_end_of_line(f);
-  buffer=(char*)malloc(256*sizeof(char));
-  if (1 > fscanf(f,"%s ", buffer) )
-    return 18;
-  self->compressA_name=strdup(buffer);
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%s", buffer) )
-    return 19;
-  self->compressB_name=strdup(buffer);
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%s", buffer) )
-    return 20;
-  self->corr_operation_name=strdup(buffer);
-  free((void*)buffer);
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->is_from_file) )
-    return 21;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%d", &self->autoupdate) )
-    return 22;
-  read_until_end_of_line(f);
-  if (1 > fscanf(f,"%lf", &self->last_update) ) // this requires high precision
-      return 23;
-  read_until_end_of_line(f);
-  
-  // read the buffers
-  imax=self->n_result;
-  self->tau=(int*)malloc(imax*sizeof(int));
-  for (i=0;i<imax;i++) { 
-    if (1 > fscanf(f,"%d", &self->tau[i]) ) 
-      return 24;
-  }
-  read_until_end_of_line(f);
-  imax=self->n_result;
-  self->n_sweeps=(unsigned int*)malloc(imax*sizeof(unsigned int));
-  for (i=0;i<imax;i++) { 
-    if (1 > fscanf(f,"%u", &self->n_sweeps[i]) )
-      return 25;
-  }
-  read_until_end_of_line(f);
-  imax=self->n_result*self->dim_corr;
-  self->result_data=(double*)malloc(imax*sizeof(double));
-  for (i=0;i<imax;i++) {
-    if (1 > fscanf(f,"%lf", &self->result_data[i]) )
-      return 26;
-  }
-  read_until_end_of_line(f);
-  imax=self->hierarchy_depth;
-  self->n_vals=(unsigned int*)malloc(imax*sizeof(unsigned int));
-  for (i=0;i<imax;i++) { 
-    if (1 > fscanf(f,"%u", &self->n_vals[i]) )
-      return 27;
-  }
-  read_until_end_of_line(f);
-  self->newest=(unsigned int*)malloc(self->hierarchy_depth*sizeof(unsigned int));
-  for (i=0;i<self->hierarchy_depth;i++) {
-    if (1 > fscanf(f,"%u ", &self->newest[i]) )
-      return 28;
-  }
-  read_until_end_of_line(f);
-  imax=self->dim_A;
-  self->A_accumulated_average=(double*)malloc(imax*sizeof(double));
-  for (i=0;i<imax;i++)  {
-      if (1 > fscanf(f,"%lf", &self->A_accumulated_average[i]) )     // all A values are added up here
-        return 29;
-  }
-  read_until_end_of_line(f);
-  imax=self->dim_A;
-  self->A_accumulated_variance=(double*)malloc(imax*sizeof(double));
-  for (i=0;i<imax;i++)  {
-      if (1 > fscanf(f,"%lf", &self->A_accumulated_variance[i]) )     // all A values are added up here
-        return 30;
-  }
-  read_until_end_of_line(f);
-  imax=(self->tau_lin+1)*self->hierarchy_depth*self->dim_A;
-  self->A_data=(double*)malloc(imax*sizeof(double));
-  for (i=0;i<imax;i++) { 
-    if (1 > fscanf(f,"%lf", &self->A_data[i]) )
-      return 31;
-  }
-  if (self->autocorrelation) { 
-    self->B_accumulated_average=self->A_accumulated_average;
-    self->B_accumulated_variance=self->A_accumulated_variance;
-    self->B_data=self->A_data;
-  } else {
-    read_until_end_of_line(f);
-    imax=self->dim_B;
-    self->B_accumulated_average=(double*)malloc(imax*sizeof(double));
-    for (i=0;i<imax;i++)  {
-        if (1 > fscanf(f,"%lf", &self->B_accumulated_average[i]) )     // all B values are added up here
-          return 32;
-    }
-    read_until_end_of_line(f);
-    imax=self->dim_B;
-    self->B_accumulated_variance=(double*)malloc(imax*sizeof(double));
-    for (i=0;i<imax;i++)  {
-        if (1 > fscanf(f,"%lf", &self->B_accumulated_variance[i]) )     
-          return 33;
-    }
-    read_until_end_of_line(f);
-    imax=(self->tau_lin+1)*self->hierarchy_depth*self->dim_B;
-    self->B_data=(double*)malloc(imax*sizeof(double));
-    for (i=0;i<imax;i++) { 
-      if (1 > fscanf(f,"%lf", &self->B_data[i]) )
-        return 34;
-    }
-  }
- 
-  // finally, get the function pointers
-  // choose the correlation operation 
-  if ( strcmp(self->corr_operation_name,"componentwise_product") == 0 ) {
-    self->corr_operation = &componentwise_product;
-  } else if ( strcmp(self->corr_operation_name,"complex_conjugate_product") == 0 ) {
-    self->corr_operation = &complex_conjugate_product;
-  } else if ( strcmp(self->corr_operation_name,"square_distance_componentwise") == 0 ) {
-    self->corr_operation = &square_distance_componentwise;
-// square_distance will be removed -- will be replaced by strides and blocks
-//  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
-//    self->corr_operation = &square_distance;
-  } else if ( strcmp(self->corr_operation_name,"square_distance_cond_chain") == 0 ) {
-    if ( (dim_A-1) % (self->dim_corr + 1) ) 
-      return 35;
-    self->corr_operation = &square_distance_cond_chain;
-  } else if ( strcmp(self->corr_operation_name,"square_distance_cond") == 0 ) {
-    self->corr_operation = &square_distance_cond;
-  } else if ( strcmp(self->corr_operation_name,"scalar_product") == 0 ) {
-    self->corr_operation = &scalar_product;
-  } else {
-    return 36; 
-  }
-  // Choose the compression function
-  if ( strcmp(self->compressA_name,"discard2") == 0 ) {
-    self->compressA=&compress_discard2;
-  } else if ( strcmp(self->compressA_name,"discard1") == 0 ) {
-    self->compressA=&compress_discard1;
-  } else if ( strcmp(self->compressA_name,"linear") == 0 ) {
-    self->compressA=&compress_linear;
-  } else {
-    return 37;
-  }
-  
-  if ( strcmp(self->compressB_name,"none") == 0 ) {
-      self->compressB=&compress_do_nothing;
-  } else if ( self->autocorrelation ) {
-    return 38;
-  } else if ( strcmp(self->compressB_name,"discard2") == 0 ) {
-    self->compressB=&compress_discard2;
-  } else if ( strcmp(self->compressB_name,"discard1") == 0 ) {
-    self->compressB=&compress_discard1;
-  } else if ( strcmp(self->compressB_name,"linear") == 0 ) {
-    self->compressB=&compress_linear;
-  } else {
-    return 39;
-  }
-  
-  // set the observable pointer
-  self->A_obs = A;
-  // set the observable pointer
-  if (B == 0 && !self->autocorrelation)
-      return 40;
-  self->B_obs = B;
-
-  // finally restore the convenience pointers
-  // to obs1 buffer
-  imax=self->hierarchy_depth;
-  jmax=self->tau_lin + 1;
-  self->A = (double***)malloc(imax*sizeof(double**));
-  for (i=0;i<imax;i++) 
-      self->A[i] = (double**)malloc(jmax*sizeof(double*));
-  for (i=0;i<imax;i++) 
-      for (j=0;j<imax;j++) 
-        self->A[i][j] = &self->A_data[(i*(self->tau_lin+1))*self->dim_A+j*self->dim_A];
-  // and to the result
-  imax=self->n_result;
-  self->result  = (double**) malloc(imax*sizeof(double*));
-  for (i=0; i<imax; i++)
-    self->result[i]=&self->result_data[i*self->dim_corr];
-    
-  if ( self->autocorrelation ) {
-    self->B = self->A; 
-  } else {
-    if (dim_B != self->dim_B) 
-      return 41;
-    // convenience pointer to obs2 buffer
-    imax=self->hierarchy_depth;
-    jmax=self->tau_lin + 1;
-    self->B = (double***)malloc(imax*sizeof(double**));
-    for (i=0;i<imax;i++) 
-      self->B[i] = (double**)malloc(jmax*sizeof(double*));
-    for (i=0;i<imax;i++) 
-      for (j=0;j<imax;j++) 
-        self->B[i][j] = &self->B_data[(i*(self->tau_lin+1))*self->dim_B+j*self->dim_B];
-   
-  }
-  
-  fclose(f);
-  return ES_OK;
-}
-
-int read_until_end_of_line(FILE *f) {
-    char c;
-    c=fgetc(f);
-    while (c!='\n' && c!=EOF)  {
-        c=fgetc(f); 
-    }
-    if (c=='\n') {
-        c=fgetc(f);
-        if (c=='#')
-            return read_until_end_of_line(f);
-        else {
-            ungetc(c,f); 
-            return 0;
-        }
-    } 
-    else
-        return 1;
-}

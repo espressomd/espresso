@@ -330,8 +330,6 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 //  tcl_input_data tcl_input_d;
   char buffer[TCL_INTEGER_SPACE+TCL_DOUBLE_SPACE+2];
 //  int autocorrelation=1; // by default, we are doing autocorrelation
-  char *chkpt_filename=NULL;
-  int from_checkpoint=0;
 
 
   // Check if ID is negative
@@ -349,17 +347,6 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
               return TCL_ERROR;
           }
           return correlation_print_parameters(&correlations[no], interp);
-      } else if (ARG0_IS_S("write_checkpoint")) {
-        if (argc <2) {
-          Tcl_AppendResult(interp, "You must pass a filename as argument of write_checkpoint", (char *)NULL);
-          return TCL_ERROR;
-        }
-        error = double_correlation_write_checkpoint(&correlations[no], argv[1]);
-        if (error) {
-          Tcl_AppendResult(interp, "error in write_checkpoint", (char *)NULL);
-        } else {
-          return TCL_OK;
-        }
       } else if (ARG0_IS_S("write_to_file")) {
         if (argc <2) {
           Tcl_AppendResult(interp, "You must pass a filename as argument of write_to_file", (char *)NULL);
@@ -444,49 +431,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     // Else we must parse the other arguments and see if we can construct a fully
     // working correlation class instance from that.
     while (argc > 0) {
-      if (ARG0_IS_S("from_checkpoint")) {
-        if (argc != 4 && argc !=6) {
-           Tcl_AppendResult(interp, "\n***\nRestoring correlation form a checkpoint:\ncorrelation obs1 $id [obs2 $id] from_checkpoint $filename\n***\n", (char *)NULL);
-           fprintf(stderr,"\n***\nargc=%d\n***\n",argc);
-           return TCL_ERROR;
-        }
-        chkpt_filename=argv[1];
-        argc-=2;
-        argv+=2;
-        if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
-          if (argc>1 && ARG1_IS_I(temp)) {
-            if (temp>=n_observables) {
-               Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
-               return TCL_ERROR;
-            }
-            A=observables[temp];
-            dim_A=observables[temp]->n;
-            change+=2; argv+=2; argc-=2;
-          } else {
-            tclcommand_correlation_print_usage(interp);
-            return TCL_ERROR;
-          }
-        } 
-        argc-=2;
-        argv+=2;
-        if ( argc == 2 && (ARG0_IS_S("second_obs") || ARG0_IS_S("obs2") ) ) {
-          if (argc>1 && ARG1_IS_I(temp)) {
-            if (temp>=n_observables) {
-               Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
-               return TCL_ERROR;
-            }
-            B=observables[temp];
-            dim_B=observables[temp]->n;
-            change+=2; argv+=2; argc-=2;
-  	  //autocorrelation=0;
-          } else {
-            tclcommand_correlation_print_usage(interp);
-            return TCL_ERROR;
-          }
-        } 
-        from_checkpoint=1; 
-        argc=0;
-      } else if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
+      if ( ARG0_IS_S("first_obs") || ARG0_IS_S("obs1") ) {
         if (argc>1 && ARG1_IS_I(temp)) {
           if (temp>=n_observables) {
              Tcl_AppendResult(interp, "Error in correlation observable. The specified observable does not exist\n", (char *)NULL);
@@ -508,7 +453,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
           B=observables[temp];
           dim_B=observables[temp]->n;
           change+=2; argv+=2; argc-=2;
-	  //autocorrelation=0;
+	    //autocorrelation=0;
         } else {
           tclcommand_correlation_print_usage(interp);
           return TCL_ERROR;
@@ -607,15 +552,10 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   correlations=(double_correlation*) realloc(correlations, (n_correlations+1)*sizeof(double_correlation)); 
 
   // Now initialize the new correlation and check the arguments for consistency
-  if (from_checkpoint) {
-      error = double_correlation_init_from_checkpoint(&correlations[n_correlations], chkpt_filename, dim_A, dim_B, A, B);
-      error_msg = (char *)init_from_checkpoint_errors[error]; 
-  } else {
-      error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, tau_max, 1, 
-      dim_A, dim_B, dim_corr, A, B, 
-      corr_operation_name, compressA_name, compressB_name);
-      error_msg = (char *)init_errors[error]; 
-  }
+  error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, tau_max, 1, 
+  dim_A, dim_B, dim_corr, A, B, 
+  corr_operation_name, compressA_name, compressB_name);
+  error_msg = (char *)init_errors[error]; 
   if ( error == 0 ) {
   //printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
     if ( no == n_correlations ) n_correlations++;
@@ -631,33 +571,8 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 }
 
 
-// FIXME: compiler complains it is defined but not used anywhere
-//static int convert_types_to_ids(IntList * type_list, IntList * id_list)
-//{ 
-//      int i,j,n_ids=0,flag;
-//      sortPartCfg();
-//      for ( i = 0; i<n_total_particles; i++ ) {
-//         if(type_list==NULL) { 
-//		/* in this case we select all particles */
-//               flag=1 ;
-//         } else {  
-//                flag=0;
-//                for ( j = 0; j<type_list->n ; j++ ) {
-//                    if(partCfg[i].p.type == type_list->e[j])  flag=1;
-//	        }
-//         }
-//	 if(flag==1){
-//              realloc_intlist(id_list, id_list->n=n_ids+1);
-//	      id_list->e[n_ids] = i;
-//	      n_ids++;
-//	 }
-//      }
-//      return n_ids;
-//}
-
 int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B) {
   *corr_operation_name = strdup(argv[0]);
-  int dim; // dimensionality of the observable for the conditional correlations
   if (ARG_IS_S_EXACT(0,"componentwise_product")) {
     *change=1;
     return TCL_OK;
@@ -666,24 +581,6 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {
     *change=1;
-    return TCL_OK;
-  } else if (ARG_IS_S_EXACT(0,"square_distance_cond_chain")) {
-    if (ARG_IS_I(1,dim)) 
-      *dim_corr = dim;
-    else {
-      Tcl_AppendResult(interp, "Wrong dimension: ", argv[1], "\n" , (char *)NULL);
-      return TCL_ERROR;
-    }
-    *change=2;
-    return TCL_OK;
-  } else if (ARG_IS_S_EXACT(0,"square_distance_cond")) {
-    if (ARG_IS_I(1,dim)) 
-      *dim_corr = dim;
-    else {
-      Tcl_AppendResult(interp, "Wrong dimension: ", argv[1], "\n" , (char *)NULL);
-      return TCL_ERROR;
-    }
-    *change=2;
     return TCL_OK;
   } else if (ARG0_IS_S("scalar_product")) {
     *change=1;
