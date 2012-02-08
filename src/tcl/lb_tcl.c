@@ -461,6 +461,10 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
      Tcl_AppendResult(interp, "Coordinates are not integer.", (char *)NULL);
      return TCL_ERROR;
    } 
+   if (coord[0]<0 || coord[0]>box_l[0] || coord[1]<0 || coord[1]>box_l[1] || coord[2]<0 || coord[2]>box_l[2]) {
+     Tcl_AppendResult(interp, "Coordinates is not a valid LB node index", (char *)NULL);
+     return TCL_ERROR;
+   } 
    argc-=3; argv+=3;
 
    if (ARG0_IS_S("print")) {
@@ -539,7 +543,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
          argc--; argv++;
          for (counter = 0; counter < 3; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
-             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;
            }
            argc--; argv++;
@@ -591,7 +595,7 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
     if (!ARG_IS_D(i, p[i]))
       printf("usage: print_interpolated_velocity $x $y $z");
   }
-  lb_lbfluid_get_interpolated_velocity(p, v);
+  lb_lbfluid_get_interpolated_velocity_global(p, v);
   for (int i = 0; i < 3; i++) {
     Tcl_PrintDouble(interp, v[i], buffer);
     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
