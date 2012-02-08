@@ -94,9 +94,9 @@ void lb_init_boundaries() {
     for(z=0; z<lbpar_gpu.dim_z; z++) {
       for(y=0; y<lbpar_gpu.dim_y; y++) {
         for (x=0; x<lbpar_gpu.dim_x; x++) {	    
-          pos[0] = x*lbpar_gpu.agrid;
-          pos[1] = y*lbpar_gpu.agrid;
-          pos[2] = z*lbpar_gpu.agrid;
+          pos[0] = (x-0.5)*lbpar_gpu.agrid;
+          pos[1] = (y-0.5)*lbpar_gpu.agrid;
+          pos[2] = (z-0.5)*lbpar_gpu.agrid;
              
           dist = 0.;
 
