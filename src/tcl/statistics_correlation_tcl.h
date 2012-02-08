@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -16,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef STATISTICS_CORRELATION_TCL_H
-#define STATISTICS_CORRELATION_TCL_H
+#ifndef _STATISTICS_CORRELATION_TCL_H
+#define _STATISTICS_CORRELATION_TCL_H
 
 #include "config.h"
 #include "tcl.h"

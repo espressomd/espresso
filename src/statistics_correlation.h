@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -110,8 +110,8 @@
  *
  *
  */
-#ifndef STATISTICS_CORRELATION_H
-#define STATISTICS_CORRELATION_H
+#ifndef _STATISTICS_CORRELATION_H
+#define _STATISTICS_CORRELATION_H
 
 #include <stdio.h>
 #include <stdlib.h>
