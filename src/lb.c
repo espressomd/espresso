@@ -777,7 +777,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   } else {  
 #ifdef LB
 		for (i=0;i<3;i++) {
-			rel[i] = (p[i])/lbpar.agrid-0.5;
+			rel[i] = (p[i])/lbpar.agrid;
 		}
 #endif
 	}

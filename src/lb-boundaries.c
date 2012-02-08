@@ -98,7 +98,7 @@ void lb_init_boundaries() {
           pos[1] = (y-0.5)*lbpar_gpu.agrid;
           pos[2] = (z-0.5)*lbpar_gpu.agrid;
              
-          dist = 0.;
+          dist = 1e99;
 
           for (n=0;n<n_lb_boundaries;n++) {
             switch (lb_boundaries[n].type) {
