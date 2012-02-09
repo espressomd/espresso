@@ -566,7 +566,6 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
 }
 
 int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
-  unsigned int i;
   sortPartCfg();
   observable_compute_stress_tensor(1,A,n_A);
   return 0;
@@ -574,10 +573,9 @@ int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
 
 
 int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A) {
-  unsigned int i;
   double stress_tensor[9];
   sortPartCfg();
-  observable_compute_stress_tensor(1,&stress_tensor,9);
+  observable_compute_stress_tensor(1,stress_tensor,9);
   A[0]=stress_tensor[1];
   A[1]=stress_tensor[5];
   A[2]=stress_tensor[6];

@@ -783,7 +783,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut)
 }
 /* ***************************************************************** */
 
-#endif  /* of MAGNETOSTATICS */
+#endif
 
 
 

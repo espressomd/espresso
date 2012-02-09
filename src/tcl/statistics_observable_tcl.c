@@ -347,10 +347,10 @@ int tclcommand_observable_density_profile(Tcl_Interp* interp, int argc, char** a
 }
 
 int tclcommand_observable_lb_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
-  int temp;
 #ifndef LB
   return TCL_ERROR;
 #else
+  int temp;
   profile_data* pdata;
   obs->fun = &observable_lb_velocity_profile;
   if (! tclcommand_parse_profile(interp, argc-1, argv+1, &temp, &obs->n, &pdata) == TCL_OK ) 
@@ -412,11 +412,10 @@ int tclcommand_observable_flux_density_profile(Tcl_Interp* interp, int argc, cha
 }
 
 int tclcommand_observable_lb_radial_velocity_profile(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs){
-  int temp;
 #ifndef LB
   return TCL_ERROR;
 #else
-
+  int temp;
   radial_profile_data* rpdata;
   obs->fun = &observable_lb_radial_velocity_profile;
   if (! tclcommand_parse_radial_profile(interp, argc-1, argv+1, &temp, &obs->n, &rpdata) == TCL_OK ) 
