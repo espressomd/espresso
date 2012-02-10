@@ -19,9 +19,10 @@
 #
 
 files=`git ls-files --exclude-standard |
-    egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf)$' |
+    egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib)$' |
     egrep -v '^testsuite/configs/|^old/' |
-    egrep -v '(ChangeLog|AUTHORS|INSTALL|Doxyfile|latexmk.1|latexmkrc)'
+    egrep -v '(ChangeLog|AUTHORS|INSTALL|Doxyfile|latexmk.1|latexmkrc|bootstrap.sh)' |
+    egrep -v '(\.gitignore|assemble_quickref.awk)'
     `
 
 num=`echo $files | wc -w`
