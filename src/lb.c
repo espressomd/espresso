@@ -191,7 +191,7 @@ int lb_lbfluid_set_visc(double p_visc){
   } else {
 #ifdef LB
     lbpar.viscosity = p_visc;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_VISCOSITY);
 #endif
     }
   return 0;
@@ -227,7 +227,7 @@ int lb_lbfluid_set_bulk_visc(double p_bulk_visc){
   } else {
 #ifdef LB
     lbpar.bulk_viscosity = p_bulk_visc;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif
     }
   return 0;
@@ -284,7 +284,7 @@ int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
     lbpar.ext_force[0] = p_fx;
     lbpar.ext_force[1] = p_fy;
     lbpar.ext_force[2] = p_fz;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_EXTFORCE);
 #endif
     }
   return 0;
@@ -302,7 +302,7 @@ int lb_lbfluid_set_friction(double p_friction){
   } else {
 #ifdef LB
     lbpar.friction = p_friction;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_FRICTION);
 #endif
     }
   return 0;
@@ -762,38 +762,25 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
  */
 
 int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
-  double local_v[3] = {0, 0, 0} ,rel[3],delta[6];
-  int 	 ind[6], tmpind[6]; //node indices
-  int		 i, x, y, z; //counters
-
-  // fold the position onto the local box, note here ind is used as a dummy variable
-  fold_position (p,ind);
+  double local_v[3] = {0, 0, 0},delta[6]; //velocity field, relative positions to surrounding nodes
+  int 	 ind[3], tmpind[3]; //node indices
+  int		 x, y, z; //counters
 
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    for (i=0;i<3;i++) {
-      rel[i] = (p[i])/lbpar_gpu.agrid;
-      //Note this should be changed once GPU LB is shifted
-    }
+printf ("pre crash %f\n", lbpar_gpu.agrid);
+fflush(stdout);
+	map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+printf ("post crash %f\n", lbpar_gpu.agrid);
+fflush(stdout);
 #endif
   } else {  
 #ifdef LB
-    for (i=0;i<3;i++) {
-      rel[i] = (p[i])/lbpar.agrid-0.5;
-    }
+	map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
 #endif
   }
-  // calculate the index of the position
-  for (i=0;i<3;i++) {
-    ind[i] = floor(rel[i]);
-  }
 
-  // calculate the linear interpolation weighting
-  for (i=0;i<3;i++) {
-    delta[3+i] = rel[i] - ind[i];
-    delta[i] = 1 - delta[3+i];
-  }
 
   //set the initial velocity to zero in all directions
   v[0] = 0;
@@ -806,10 +793,14 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
         tmpind[0] = ind[0]+x;
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
+printf ("pre crash %d %d %d\n", tmpind[0], tmpind[1], tmpind[2]);
+fflush(stdout);
 
 	lb_lbnode_get_u (tmpind, local_v);
+printf ("pre crash %d %d %d\n", tmpind[0], tmpind[1], tmpind[2]);
+fflush(stdout);
 
-	v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
         v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
 
@@ -1472,7 +1463,6 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-printf ("reinit 1\n");
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
     lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
 
@@ -1492,7 +1482,6 @@ printf ("reinit 1\n");
 /** Resets the forces on the fluid nodes */
 void lb_reinit_forces() {
   index_t index;
-printf ("reinit 2\n");
   for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 #ifdef EXTERNAL_FORCES
@@ -1520,7 +1509,6 @@ printf ("reinit 2\n");
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
-printf ("reinit fluid\n");
     index_t index;
 
     /* default values for fields in lattice units */
@@ -1552,7 +1540,6 @@ printf ("reinit fluid\n");
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init() {
-printf ("init fluid\n");
 
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
 
