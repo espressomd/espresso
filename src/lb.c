@@ -16,7 +16,7 @@
   GNU General Public License for more details.
   
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file lb.c
  *
@@ -594,47 +594,51 @@ int lb_lbfluid_print_velocity(char* filename) {
 	return 0;
 }
 int lb_lbfluid_save_checkpoint(char* filename, int binary) {
+  if(lattice_switch & LATTICE_LB_GPU) {
+    fprintf(stderr, "LB checkpointing not implemented for GPU\n");
+    return ES_ERROR;
+  }
+  else
+	if(lattice_switch & LATTICE_LB) {
 #ifdef LB
-  FILE* cpfile;
-  cpfile=fopen(filename, "w");
-  if (!cpfile) {
-    return ES_ERROR;
-  }
-  double pop[19];
-  int ind[3];
-   
-  int gridsize[3];
+		FILE* cpfile;
+		cpfile=fopen(filename, "w");
+		if (!cpfile) {
+			return ES_ERROR;
+		}
+		double pop[19];
+		int ind[3];
+		
+		int gridsize[3];
 
-  gridsize[0] = box_l[0] / lblattice.agrid;
-  gridsize[1] = box_l[1] / lblattice.agrid;
-  gridsize[2] = box_l[2] / lblattice.agrid;
+		gridsize[0] = box_l[0] / lblattice.agrid;
+		gridsize[1] = box_l[1] / lblattice.agrid;
+		gridsize[2] = box_l[2] / lblattice.agrid;
 
-  for (int i=0; i < gridsize[0]; i++) {
-    for (int j=0; j < gridsize[1]; j++) {
-      for (int k=0; k < gridsize[2]; k++) {
-        ind[0]=i;
-        ind[1]=j;
-        ind[2]=k;
-        lb_lbnode_get_pop(ind, pop);
-        if (!binary) {
-          for (int n=0; n<19; n++) {
-            fprintf(cpfile, "%.16e ", pop[n]); 
-          }
-          fprintf(cpfile, "\n"); 
-        }
-        else {
-          fwrite(pop, sizeof(double), 19, cpfile);
-        }
-      } 
-    }
-  }
-  fclose(cpfile);
-  return ES_OK;
+		for (int i=0; i < gridsize[0]; i++) {
+			for (int j=0; j < gridsize[1]; j++) {
+				for (int k=0; k < gridsize[2]; k++) {
+					ind[0]=i;
+					ind[1]=j;
+					ind[2]=k;
+					lb_lbnode_get_pop(ind, pop);
+					if (!binary) {
+						for (int n=0; n<19; n++) {
+							fprintf(cpfile, "%.16e ", pop[n]); 
+						}
+						fprintf(cpfile, "\n"); 
+					}
+					else {
+						fwrite(pop, sizeof(double), 19, cpfile);
+					}
+				} 
+			}
+		}
+		fclose(cpfile);
+		return ES_OK;
+	}
 #endif
-  if(!(lattice_switch & LATTICE_LB_GPU)) {
-    fprintf(stderr, "Not implemented\n");
-    return ES_ERROR;
-  }
+
   return ES_ERROR;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
@@ -1468,7 +1472,7 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-
+printf ("reinit 1\n");
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
     lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
 
@@ -1488,7 +1492,7 @@ void lb_reinit_parameters() {
 /** Resets the forces on the fluid nodes */
 void lb_reinit_forces() {
   index_t index;
-
+printf ("reinit 2\n");
   for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 #ifdef EXTERNAL_FORCES
@@ -1516,7 +1520,7 @@ void lb_reinit_forces() {
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
-
+printf ("reinit fluid\n");
     index_t index;
 
     /* default values for fields in lattice units */
@@ -1546,6 +1550,7 @@ void lb_reinit_fluid() {
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init() {
+printf ("init fluid\n");
 
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
 
