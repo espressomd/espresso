@@ -27,4 +27,11 @@ directory
 Make sure to run the test on a computer which does not have cpu
 frequency scaling activated.
 
+LICENSE
+-------
+Copyright (C) 2012 The ESPResSo project
 
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without any warranty.

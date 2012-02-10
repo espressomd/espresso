@@ -27,13 +27,11 @@ echo "Examining $num_files files."
 current_year=`date +%Y`
 echo "Checking for copyright disclaimer missing the current year $current_year"
 echo "-------------------------------------------------------------------"
-egrep -L "Copyright (C) 2012 The ESPResSo project
 egrep -L "Copyright.*$current_year" $files
 echo
 
 echo "Checking for missing copyright disclaimer"
 echo "-----------------------------------------"
-egrep -L "Copyright (C) 2012 The ESPResSo project
 egrep -L "Copyright" $files
 echo
 
