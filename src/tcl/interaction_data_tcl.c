@@ -30,6 +30,7 @@
 #include "comforce_tcl.h"
 #include "comfixed_tcl.h"
 #include "rattle_tcl.h"
+#include "mol_cut_tcl.h"
 
 // for the force caps
 #include "lj.h"

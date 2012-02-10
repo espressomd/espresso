@@ -1,6 +1,7 @@
 /*
   Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -75,7 +76,7 @@ int gather_runtime_errors(Tcl_Interp *interp, int error_code)
       
       /* check whether it's the same message as from the master, then
 	 just consent */
-      if (errors[0] && strcmp(errors[node], errors[0]) == 0)
+      if (node > 0 && errors[0] && strcmp(errors[node], errors[0]) == 0)
 	Tcl_AppendResult(interp, nr_buf, "<consent> ", (char *) NULL);
       else
 	Tcl_AppendResult(interp, nr_buf, errors[node], (char *) NULL);

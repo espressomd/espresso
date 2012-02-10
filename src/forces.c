@@ -174,7 +174,7 @@ void calc_long_range_forces()
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
-     add_mdlc_force_corrections();
+    add_mdlc_force_corrections();
     //fall through 
   case DIPOLAR_P3M:
     dp3m_dipole_assign();
@@ -185,19 +185,18 @@ void calc_long_range_forces()
     } else
 #endif
       dp3m_calc_kspace_forces(1,0);
-
-      break;
+    
+    break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
-      dawaanr_calculations(1,0);
-      break;
+    dawaanr_calculations(1,0);
+    break;
   case DIPOLAR_MDLC_DS:
-     add_mdlc_force_corrections();
+    add_mdlc_force_corrections();
     //fall through 
   case DIPOLAR_DS: 
-        magnetic_dipolar_direct_sum_calculations(1,0);
-      break;
-
+    magnetic_dipolar_direct_sum_calculations(1,0);
+    break;
   }
 #endif  /*ifdef DIPOLES */
 }

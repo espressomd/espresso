@@ -445,9 +445,39 @@ double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag
   return 0.5*u;
 } 
  
+int dawaanr_set_params()
+{
+  if (n_nodes > 1) {
+    return ES_ERROR;
+  }
+  if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA ) {
+    coulomb.Dmethod = DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA;
+  } 
+  // also necessary on 1 CPU, does more than just broadcasting
+  mpi_bcast_coulomb_params();
 
+  return ES_OK;
+}
 
-
-
+int mdds_set_params(int n_cut)
+{
+  if (n_nodes > 1) {
+    return ES_ERROR;  
+  }
+  
+  Ncut_off_magnetic_dipolar_direct_sum = n_cut;
+  
+  if (Ncut_off_magnetic_dipolar_direct_sum == 0) {
+    fprintf(stderr,"Careful:  the number of extra replicas to take into account during the direct sum calculation is zero \n");
+  }
+  
+  if (coulomb.Dmethod != DIPOLAR_DS  && coulomb.Dmethod != DIPOLAR_MDLC_DS) {
+    coulomb.Dmethod = DIPOLAR_DS;
+  }  
+  
+  // also necessary on 1 CPU, does more than just broadcasting
+  mpi_bcast_coulomb_params();
+  return ES_OK;
+}
 
 #endif

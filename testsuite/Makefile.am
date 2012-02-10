@@ -27,6 +27,7 @@ tests = \
 	command_syntax.tcl \
 	constraints.tcl \
 	constraints_reflecting.tcl \
+	correlation.tcl \
 	constraints_rhomboid.tcl \
 	dh.tcl \
 	el2d.tcl \
@@ -56,6 +57,7 @@ tests = \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	observable.tcl \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
