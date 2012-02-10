@@ -2609,24 +2609,27 @@ void mpi_send_fluid_populations_slave(int node, int index) {
 #endif
 }
 
-void mpi_bcast_max_mu_slave(int node, int dummy) {
-#ifdef DIPOLES
-  
-  get_mu_max();
- 
-#endif
-}
+/****************************************************/
 
 void mpi_bcast_max_mu() {
 #ifdef DIPOLES
   mpi_call(mpi_bcast_max_mu_slave, -1, 0);
   
-  get_mu_max();
+  calc_mu_max();
   
 #endif
 }
 
+void mpi_bcast_max_mu_slave(int node, int dummy) {
+#ifdef DIPOLES
+  
+  calc_mu_max();
+ 
+#endif
+}
+
 #ifdef LANGEVIN_PER_PARTICLE
+
 /******************** REQ_SEND_PARTICLE_T ********************/
 void mpi_set_particle_temperature(int pnode, int part, double _T)
 {

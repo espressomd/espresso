@@ -8,10 +8,21 @@ ESPResSo 3.1
 New user-visible features
 -------------------------
 
+* While so far, observables were typically computed and stored on the
+  Tcl-level after a call to "integrate", a new observable concept now
+  allows to compute observables while the C-core is running. This is
+  particularly useful for observables that have to be computed very
+  frequently, as for example in the case of time-correlations
+  (e.g. the RMSD of particles).
+  The new concept is documented in the User's Guide in Section 8.4
+  ("Correlations and observables").
+
 * The new feature COLLISION_DETECTION allows to dynamically add new
   bonds between colliding particles.
 
-* Added new constraint and LB boundary condition "rhomboid".
+* Added new constraint and LB boundary condition "rhomboid" that
+  allows to create arbitrary rhomboids. When combining several
+  rhomboids, almost any shape of a constraint is doable.
 
 * Lattice-Boltzmann:
 
