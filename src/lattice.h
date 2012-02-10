@@ -242,12 +242,15 @@ MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double 
   int i;
   double rel[3];
   // fold the position onto the local box, note here ind is used as a dummy variable
+	for (i=0;i<3;i++) {
+		pos[i] = pos[i]-0.5*tmp_agrid;
+	}
+	
   fold_position (pos,ind);
 
   // convert the position into lower left grid point
 	for (i=0;i<3;i++) {
-		rel[i] = (pos[i])/tmp_agrid-0.5;
-		//Note this should only work once GPU LB is shifted
+		rel[i] = (pos[i])/tmp_agrid;
 	}
 
   // calculate the index of the position

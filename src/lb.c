@@ -120,6 +120,7 @@ static int failcounter=0;
 
 /***********************************************************************/
 #endif
+
 #if defined (LB) || defined (LB_GPU)
 
 /* *********************** C Interface part *************************************/
@@ -769,11 +770,7 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-printf ("pre crash %f\n", lbpar_gpu.agrid);
-fflush(stdout);
 	map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
-printf ("post crash %f\n", lbpar_gpu.agrid);
-fflush(stdout);
 #endif
   } else {  
 #ifdef LB
@@ -793,13 +790,26 @@ fflush(stdout);
         tmpind[0] = ind[0]+x;
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
-printf ("pre crash %d %d %d\n", tmpind[0], tmpind[1], tmpind[2]);
-fflush(stdout);
 
-	lb_lbnode_get_u (tmpind, local_v);
-printf ("pre crash %d %d %d\n", tmpind[0], tmpind[1], tmpind[2]);
-fflush(stdout);
+				if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+					if (tmpind[0] == lbpar_gpu.dim_x) tmpind[0] =0;
+					if (tmpind[1] == lbpar_gpu.dim_y) tmpind[1] =0;
+					if (tmpind[2] == lbpar_gpu.dim_z) tmpind[2] =0;
+#endif
+				} else {  
+#ifdef LB
+					if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
+					if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
+					if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
 
+#endif
+				}
+
+//printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
+				lb_lbnode_get_u(tmpind, local_v);
+				
+				
 				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
         v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
@@ -1000,6 +1010,10 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
   return 0;
 }
 #endif
+
+int lb_lbnode_set_extforce(int* ind, double* f) {
+  return -100;
+}
 
 #ifdef LB
 /********************** The Main LB Part *************************************/
