@@ -1123,7 +1123,7 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
   double vec[3];
   double dist=1e100;
   double mindist = 1e100;
-  double minvec[3];
+  double minvec[3] = { 1e100, 1e100, 1e100};
   int n;
   char buffer[TCL_DOUBLE_SPACE];
   if (n_constraints==0) {

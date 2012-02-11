@@ -29,14 +29,13 @@
 
 #ifdef ELECTROSTATICS
 enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_SIGMA, ICCP3M_EXTFIELD } ;
-static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag);
+int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string);
+int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *string, int flag); 
 
 /** Parses the ICCP3M command.
  */
 int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int num_iteration,normal_args,area_args;
   char buffer[TCL_DOUBLE_SPACE];
-  double e1,convergence,relax;
 
   if(iccp3m_initialized==0){
       iccp3m_init();
@@ -166,70 +165,7 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
    return TCL_OK;
 }
 
-static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag) {
-  /* This function parses a vector give as C-String */
-  /* It currently is not too elegant. But works. */
-  int size,i,k=0;
-  int scan_succes;
-  static double *numbers=NULL;
-  const char delimiters[] = " ";
-  char *token,*cp;
-  float temp;
-
-  size= normal_args;
-  numbers = malloc((size)*sizeof(double));
-
-  cp = strdup(string);                /* Make writable copy.  */
-  token = strtok (cp, delimiters);
-  scan_succes = sscanf(token,"%f",&temp);
-  if (scan_succes < 1) 
-    return 1;
-
-  numbers[0]=temp;
-    
-  for(i=1;i<size;i++) {
-    token = strtok (NULL, delimiters);
-    if(token == NULL)
-      return 1;
-    scan_succes = sscanf(token,"%lf",&(numbers[i]));
-    if (scan_succes < 1 ) 
-      return 1;
-  }
-
-  switch(flag) {
-    case ICCP3M_AREA: 
-      iccp3m_cfg.areas = (double*) realloc(iccp3m_cfg.areas, (size+1)*sizeof(double)); 
-      for( i = 0 ; i < size ; i++ )  
-        iccp3m_cfg.areas[i]=numbers[i];
-      break;
-    case ICCP3M_EPSILON:
-      iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size+1)*sizeof(double));
-      for( i = 0 ; i < size; i++)  
-        iccp3m_cfg.ein[i]=numbers[i];
-    break;
-    case ICCP3M_NORMAL:
-      iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.n_ic));
-      iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.n_ic));
-      iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.n_ic));
-      for(i=0;i<size;i++) {
-        if( i%3 == 0 ) { iccp3m_cfg.nvectorx[k] = numbers[i]; } 
-        if( i%3 == 1 ) { iccp3m_cfg.nvectory[k] = numbers[i]; }
-        if( i%3 == 2 ) { iccp3m_cfg.nvectorz[k] = numbers[i];  k++; } 
-       }
-    break;
-
-    case ICCP3M_EXTFIELD:
-        if( i%3 == 0 ) { iccp3m_cfg.extx = numbers[i]; } 
-        if( i%3 == 1 ) { iccp3m_cfg.exty = numbers[i]; }
-        if( i%3 == 2 ) { iccp3m_cfg.extz = numbers[i];  k++; } 
-  }
-
-  free(numbers);
-  return (0);
-}
-
 int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
-  double temp;
   char *arg, *token;
   int scan_succes;
   arg=strdup(string);
@@ -293,7 +229,7 @@ int tclcommand_iccp3m_parse_normals(Tcl_Interp *interp,int n_ic, char *string) {
 int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *string, int flag) {
   /* This function parses a vector give as C-String */
   /* It currently is not too elegant. But works. */
-  int size,i,k=0;
+  int size,i=0;
   int scan_succes;
   static double *numbers=NULL;
   const char delimiters[] = " ";
