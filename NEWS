@@ -8,10 +8,21 @@ ESPResSo 3.1
 New user-visible features
 -------------------------
 
+* While so far, observables were typically computed and stored on the
+  Tcl-level after a call to "integrate", a new observable concept now
+  allows to compute observables while the C-core is running. This is
+  particularly useful for observables that have to be computed very
+  frequently, as for example in the case of time-correlations
+  (e.g. the RMSD of particles).
+  The new concept is documented in the User's Guide in Section 8.4
+  ("Correlations and observables").
+
 * The new feature COLLISION_DETECTION allows to dynamically add new
   bonds between colliding particles.
 
-* Added new constraint and LB boundary condition "rhomboid".
+* Added new constraint and LB boundary condition "rhomboid" that
+  allows to create arbitrary rhomboids. When combining several
+  rhomboids, almost any shape of a constraint is doable.
 
 * Lattice-Boltzmann:
 
@@ -27,11 +38,16 @@ New user-visible features
 User-visible changes
 --------------------
 
+* The blockfile C-library has been removed. In theory, there was a
+  library usable from C that could be used to read and write
+  blockfiles. Since several years, it was broken, so apparently it
+  wasn't used anyway.
+
 * The NPT barostat now works in many more combinations of
   algorithms than so far (e.g. MMM2D, ELC, ...)
 
-* The CPU Lattice-Boltzmann code now work also when Verlet lists are
-  used.
+* The Lattice-Boltzmann CPU implementation now works when Verlet lists
+  are used.
 
 * Removed unneccessary overhead of neutral particles in simulations
   with P3M.
@@ -56,14 +72,15 @@ Changes visible for developers
 
 * Split interaction code into .c and .h files.
 
-* Split off most the Tcl interface (into src/tcl/) from the C core
-  code (in src/). Still incomplete.
+* Split off the Tcl interface (into src/tcl/) from the C core code (in
+  src/)
 
 * Added ESPResSo logos, cover issue images, and some other material to
   the repo (doc/).
 
-* A new LaTeX-Developer's Guide (DG) was started, and all "Related
-  pages" from the doxygen docs have been moved there.
+* Started new LaTeX-Developer's Guide (DG), and moved all "Related
+  pages" from the doxygen docs. The doxygen stuff still exists and is
+  available via doc/doxygen/.
 
 ESPResSo 3.0.2
 ==============
@@ -240,7 +257,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011 The ESPResSo project
+Copyright (C) 2010,2011,2012 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

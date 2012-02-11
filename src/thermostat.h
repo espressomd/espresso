@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,14 +24,11 @@
 
 */
 
-#include <tcl.h>
 #include <math.h>
 #include "utils.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "random.h"
 #include "global.h"
-#include "communication.h"
 #include "integrate.h"
 #include "cells.h"
 #include "lb.h"

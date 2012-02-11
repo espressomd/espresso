@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -56,6 +56,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
+#include "statistics_correlation.h"
 
 /************************************************
  * DEFINES
@@ -206,7 +207,7 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 
-ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ROTATION
     convert_initial_torques();
@@ -548,7 +549,7 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-	char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
         ERROR_SPRINTF(errtxt, "{015 your choice of piston=%g, dt=%g, p_diff=%g just caused the volume to become negative, decrease dt} ",
                 nptiso.piston,time_step,nptiso.p_diff);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];

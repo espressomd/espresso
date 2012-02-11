@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,37 +18,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "utils.h"
-#include "integrate.h"
-#include "global.h"
-#include "grid.h"
-#include "domain_decomposition.h"
-#include "particle_data.h"
-#include "communication.h"
-#include "fft.h"
-#include "p3m.h"
-#include "p3m_tcl.h"
-#include "thermostat.h"
-#include "cells.h"
-#include "tuning.h"
-#include "elc.h"
+#include "parser.h"
 
 #ifdef P3M
-
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
-
-int tclcommand_inter_coulomb_p3m_print_adaptive_tune_parameters(Tcl_Interp *interp);
-
-/*@}*/
-
+#include "p3m_tcl.h"
+#include "p3m.h"
 
 int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
@@ -104,8 +78,21 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
       return TCL_ERROR;
   }
 
-  if(tclcommand_inter_coulomb_p3m_print_adaptive_tune_parameters(interp) == TCL_ERROR) 
-      return TCL_ERROR;
+  /* do the tuning */
+  char *log = NULL;
+  if (p3m_adaptive_tune(&log) == ES_ERROR) {  
+    Tcl_AppendResult(interp, log, "\nfailed to tune P3M parameters to required accuracy", (char *) NULL);
+    if (log)
+      free(log);
+    return TCL_ERROR;
+  }
+  
+  /* Tell the user about the tuning outcome */
+  Tcl_AppendResult(interp, log, (char *) NULL);
+
+  if (log)
+    free(log);
+
   return TCL_OK;
 }
 
@@ -114,28 +101,9 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   double r_cut, alpha, accuracy = -1.0;
   int mesh, cao, i;
 
-  if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M)
-    coulomb.method = COULOMB_P3M;
-    
-#ifdef PARTIAL_PERIODIC
-  if(PERIODIC(0) == 0 ||
-     PERIODIC(1) == 0 ||
-     PERIODIC(2) == 0)
-    {
-      Tcl_AppendResult(interp, "Need periodicity (1,1,1) with Coulomb P3M",
-		       (char *) NULL);
-      return TCL_ERROR;  
-    }
-#endif
-
   if (argc < 1) {
     Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> <mesh> <cao> [<alpha> [<accuracy>]]",
 		     (char *) NULL);
-    return TCL_ERROR;  
-  }
-
-  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
-    Tcl_AppendResult(interp, "Node grid not suited for Coulomb P3M.PARAMS. Node grid must be sorted, largest first.", (char *) NULL);
     return TCL_ERROR;  
   }
 
@@ -199,7 +167,6 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
     }
 
     return TCL_ERROR;
-
   }
 
   return TCL_OK;
@@ -302,75 +269,6 @@ int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc,
 
   return TCL_OK;
 }
-
-
-/************************************* method ********************************/
-/*****************************************************************************/
-
-
-
-
-/************************************************
- * Functions for P3M Parameter tuning
- * This tuning is based on P3M_tune by M. Deserno
- ************************************************/
-
-#define P3M_TUNE_MAX_CUTS 50
-
-int tclcommand_inter_coulomb_p3m_print_adaptive_tune_parameters(Tcl_Interp *interp)
-{
-  char
-    b1[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
-    b2[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 12],
-    b3[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE + 17];
- 
-  P3M_TRACE(fprintf(stderr,"%d: tclcommand_inter_coulomb_p3m_print_adaptive_tune_parameteres\n",this_node));
-
-  if (skin == -1) {
-    Tcl_AppendResult(interp, "p3m cannot be tuned, since the skin is not yet set", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  mpi_bcast_event(P3M_COUNT_CHARGES);
-
-  /* Print Status */
-  sprintf(b1,"%.5e",p3m.params.accuracy);
-  Tcl_AppendResult(interp, "P3M tune parameters: Accuracy goal = ",b1,"\n", (char *) NULL);
-  Tcl_PrintDouble(interp, box_l[0], b1);
-
-  sprintf(b2,"%d",p3m.sum_qpart);
-  Tcl_PrintDouble(interp, p3m.sum_q2, b3);
-  Tcl_AppendResult(interp, "System: box_l = ",b1,", # charged part = ",b2," Sum[q_i^2] = ",b3,"\n", (char *) NULL);
-
-  mpi_bcast_event(P3M_COUNT_CHARGES);
-
-  if (p3m.sum_qpart == 0) {
-    Tcl_AppendResult(interp, "no charged particles in the system, cannot tune P3M", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  
-  if(p3m_adaptive_tune(interp) == TCL_ERROR) {  
-    Tcl_AppendResult(interp, "failed to tune P3M parameters to required accuracy", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  
-  /* Tell the user about the outcome */
-  Tcl_AppendResult(interp, "\nresulting parameters:\n", (char *) NULL);
-  sprintf(b2,"%-4d",p3m.params.mesh[0]); sprintf(b3,"%-3d",p3m.params.cao);
-  Tcl_AppendResult(interp, b2," ", b3," ", (char *) NULL);
-  sprintf(b1,"%.5e",p3m.params.r_cut_iL); sprintf(b2,"%.5e",p3m.params.alpha_L); sprintf(b3,"%.5e",p3m.params.accuracy);
-  Tcl_AppendResult(interp, b1,"  ", b2,"  ", b3,"  ", (char *) NULL);
-
-  return (TCL_OK);  
-}
-
-
-
-
-
-
-
-
 
 /*********************** miscelanea of functions *************************************/
 

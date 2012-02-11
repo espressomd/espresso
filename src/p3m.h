@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -47,6 +47,8 @@
  *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
  *  </ul>
  */
+
+#include "utils.h"
 
 #include "p3m-common.h"
 #include "interaction_data.h"
@@ -123,8 +125,7 @@ void p3m_pre_init(void);
 
 void p3m_set_bjerrum(void);
 
-int p3m_adaptive_tune(Tcl_Interp *interp);
-
+int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for charge-charge interactions.

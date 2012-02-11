@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -42,7 +42,7 @@ void update_mol_pos_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
    ERROR_SPRINTF(errtxt,"virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
    return;
  }
@@ -106,7 +106,7 @@ void update_mol_vel_particle(Particle *p)
  // Check, if a real particle was found
  if (!p_real)
  {
-   char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+   char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
    ERROR_SPRINTF(errtxt, "virtual_sites_relative.c - update_mol_pos_particle(): No real particle associated with virtual site.\n");
    return;
  }
@@ -201,10 +201,11 @@ int vs_relate_to(int part_num, int relate_to)
     // Get the data for the particle we act on and the one we wnat to relate
     // it to.
     Particle  p_current,p_relate_to;
-    if ((get_particle_data(relate_to,&p_relate_to)!=TCL_OK) || 
-        (get_particle_data(part_num,&p_current)!=TCL_OK)) {
-         printf("Could not retrieve particle data for the given id.\n");
-          return TCL_ERROR;
+    if ((get_particle_data(relate_to,&p_relate_to)!=ES_OK) || 
+        (get_particle_data(part_num,&p_current)!=ES_OK)) {
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt, "Could not retrieve particle data for the given id");
+      return ES_ERROR;
     }
     
     // get teh distance between the particles
@@ -212,9 +213,10 @@ int vs_relate_to(int part_num, int relate_to)
     get_mi_vector(d, p_current.r.p,p_relate_to.r.p);
     
     // Set the particle id of the particle we want to relate to and the distnace
-    if (set_particle_vs_relative(part_num, relate_to, sqrt(sqrlen(d))) == TCL_ERROR) {
-      printf("setting the vs_relative attributes failed.\n");
-      return TCL_ERROR;
+    if (set_particle_vs_relative(part_num, relate_to, sqrt(sqrlen(d))) == ES_ERROR) {
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt, "setting the vs_relative attributes failed");
+      return ES_ERROR;
     }
 
     // Now, calculate the quaternions which specify the angle between 
@@ -268,18 +270,20 @@ int vs_relate_to(int part_num, int relate_to)
    double qtemp[4];
    multiply_quaternions(p_relate_to.r.quat,quat,qtemp);
    for (i=0;i<4;i++)
-    if (fabs(qtemp[i]-quat_director[i])>1E-9)
-     printf("Component %d: %f instead of %f\n",i,qtemp[i],quat_director[i]);
+     if (fabs(qtemp[i]-quat_director[i])>1E-9)
+       fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n",
+	       i, qtemp[i], quat_director[i]);
 
 
    // Save the quaternions in the particle
-   if (set_particle_quat(part_num, quat) == TCL_ERROR) {
-     printf("set particle position first\n");
+   if (set_particle_quat(part_num, quat) == ES_ERROR) {
+     char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
+     ERROR_SPRINTF(errtxt, "set particle position first");
 
-     return TCL_ERROR;
+     return ES_ERROR;
    }
    
-   return TCL_OK;
+   return ES_OK;
 }
 
 #endif

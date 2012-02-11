@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -20,18 +20,24 @@
 */
 #ifndef TAB_TCL_H
 #define TAB_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
+#include "interaction_data.h"
 
 #ifdef TABULATED
 
 /// parse parameters for the tabulated bonded potential
 int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
+///
+int tclprint_to_result_tabulated_bondedIA(Tcl_Interp *interp,
+					  Bonded_ia_parameters *params);
+
 /// parser for the force cap
 int tclcommand_inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv);
+
+///
 int tclcommand_inter_parse_tab(Tcl_Interp * interp,
-		int part_type_a, int part_type_b,
-		int argc, char ** argv);
+			       int part_type_a, int part_type_b,
+			       int argc, char ** argv);
 #endif
 #endif

@@ -40,15 +40,18 @@
  */
 
 #include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "mol_cut.h"
+#include "grid.h"
 
 #ifdef LJ_ANGLE
 #include <math.h>
 
-/* These headers are needed to define types used in this header, hence
- * they are included here.  */
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "grid.h"
+/** For the warmup you can cap the singularity of the directionnal LJ
+    potential at r=0. look into the warmup documentation for more
+    details (who wants to write that?).*/
+extern double ljangle_force_cap;
 
 /** set the force cap for the directional LJ interaction.
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
@@ -68,8 +71,8 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				     double d[3], double dist)
 {
-  if(dist > ia_params->LJANGLE_cut) 
-   return;
+  if(!CUTOFF_CHECK(dist < ia_params->LJANGLE_cut)) 
+    return;
   int j;
   double frac2=0.0, frac10=0.0, rad=0.0, radprime=0.0;
   double r31[3], r41[3], r52[3], r62[3], rij[3], rik[3], rkn[3];
@@ -265,8 +268,8 @@ MDINLINE void add_ljangle_pair_force(Particle *p1, Particle *p2, IA_parameters *
 MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				    double d[3], double dist)
 {
-  if(dist > ia_params->LJANGLE_cut) 
-   return 0.;
+  if(!CUTOFF_CHECK(dist < ia_params->LJANGLE_cut)) 
+    return 0.0;
 
   int j;
   double frac2, frac10;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -116,7 +116,7 @@
 /*@}*/
 
 /*********************************************************/
-/** \name  */
+/** \name dependencies */
 /*********************************************************/
 /*@{*/
 
@@ -222,16 +222,69 @@
 #define VIRTUAL_SITES
 #endif
 
-#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
-#error Can only compile either VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
-#endif
-
 #ifdef VIRTUAL_SITES_RELATIVE
 #define ROTATION
 #endif
 
 #ifdef ROTATIONAL_INERTIA
 #define ROTATION
+#endif
+
+/*@}*/
+
+/*********************************************************/
+/** \name feature compatibility checks */
+/*********************************************************/
+/*@{*/
+
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Can only compile either VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
+#endif
+
+#ifdef BOND_CONSTRAINT
+#ifdef ROTATION
+#error BOND_CONSTRAINT and ROTATION currently do not work together
+#endif
+#endif
+
+#ifdef ADRESS
+
+#ifdef ROTATION
+#error ADRESS and ROTATION currently do not work together 
+#endif
+
+#ifdef GAY_BERNE
+#error ADRESS and ROTATION (required by GAY_BERNE) are not compatible
+#endif
+
+#endif
+
+/* errors for all modules that require fftw if not present */
+#ifndef FFTW
+#ifdef MODES
+#error MODES requires the fftw
+#endif
+#endif
+
+#if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
+  || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
+  || defined(BOND_ANGLE_COSSQUARE) && defined(BOND_ANGLE_COSINE)
+#error Activate only one of features BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE!
+#endif
+
+#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
+#error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
+#endif
+
+#if defined(ADRESS) && !defined(VIRTUAL_SITES_COM)
+// Adress requires the "center of mass" implementation of virtual sites
+#error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
+#endif
+
+#ifdef LB_GPU
+#ifndef CUDA
+#error To use LB_GPU, you have to activate CUDA (use the configure option --with-cuda)
+#endif
 #endif
 
 /*@}*/
@@ -252,18 +305,5 @@
 #define M_SQRT2	       	1.4142135623730950488016887242096981L  /* sqrt(2) */
 #define M_SQRT1_2	0.7071067811865475244008443621048490L  /* 1/sqrt(2) */
 #endif
-
-/********************************************/
-/* \name exported functions of config.c     */
-/********************************************/
-/*@{*/
-#include <tcl.h>
-
-/** callback for version status. */
-int tclcallback_version(Tcl_Interp *interp);
-
-/** callback for compilation status. */
-int tclcallback_compilation(Tcl_Interp *interp);
-/*@}*/
 
 #endif

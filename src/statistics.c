@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,7 +22,6 @@
     This is the place for analysis (so far...).
     Implementation of statistics.h
 */
-#include <tcl.h>
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
@@ -31,12 +30,12 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "statistics_fluid.h"
+//#include "statistics_correlation.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
 #include "communication.h"
 #include "grid.h"
-#include "parser.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "domain_decomposition.h"
@@ -1200,7 +1199,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 
 
   //  printf("done \n");
-  return TCL_OK;
+  return ES_OK;
 }
 
 double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, double *msd, double **vanhove) 
@@ -1323,8 +1322,8 @@ void analyze_activate(int ind) {
     pos[0] = configs[ind][3*i];
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
-    if (place_particle(i, pos)==TCL_ERROR) {
-      char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+    if (place_particle(i, pos)==ES_ERROR) {
+      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{057 failed upon replacing particle %d in Espresso} ", i); 
     }
   }
@@ -1411,5 +1410,4 @@ void centermass_conf(int k, int type_1, double *com)
   }
   return;
 }
-
 

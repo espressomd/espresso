@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -40,7 +40,6 @@
 #include "interaction_data.h"
 #include "integrate.h"
 #include "cells.h"
-#include "parser.h"
 #include "rotation.h"
 #include "virtual_sites.h"
 
@@ -453,22 +452,22 @@ int get_particle_data(int part, Particle *data)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   pnode = particle_node[part];
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_recv_part(pnode, part, data);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int place_particle(int part, double p[3])
 {
   int new, i;
-  int pnode, retcode = TCL_OK;
+  int pnode, retcode = ES_PART_OK;
 
   if (part < 0)
-    return TCL_ERROR;
+    return ES_PART_ERROR;
 
   if (!particle_node)
     build_particle_node();
@@ -487,7 +486,7 @@ int place_particle(int part, double p[3])
     for (i = max_seen_particle + 1; i < part; i++)
       particle_node[i] = -1;
 
-    retcode = TCL_CONTINUE;
+    retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
   } else {
@@ -504,13 +503,13 @@ int set_particle_v(int part, double v[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_v(pnode, part, v);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_f(int part, double F[3])
@@ -520,13 +519,13 @@ int set_particle_f(int part, double F[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_f(pnode, part, F);
-  return TCL_OK;
+  return ES_OK;
 }
 
 #ifdef MASS
@@ -537,13 +536,13 @@ int set_particle_mass(int part, double mass)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_mass(pnode, part, mass);
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
@@ -555,13 +554,13 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_rotational_inertia(pnode, part, rinertia);
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
@@ -573,13 +572,13 @@ int set_particle_dipm(int part, double dipm)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_dipm(pnode, part, dipm);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_dip(int part, double dip[3])
@@ -590,14 +589,14 @@ int set_particle_dip(int part, double dip[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_dip(pnode, part, dip);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif
@@ -610,13 +609,13 @@ int set_particle_virtual(int part, int isVirtual)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_virtual(pnode, part, isVirtual); 
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
@@ -629,15 +628,15 @@ int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   
   // Send the stuff
   mpi_send_vs_relative(pnode, part, vs_relative_to, vs_distance);
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
@@ -648,13 +647,13 @@ int set_particle_q(int part, double q)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_q(pnode, part, q);
-  return TCL_OK;
+  return ES_OK;
 }
 
 #ifdef LB_ELECTROHYDRODYNAMICS
@@ -665,13 +664,13 @@ int set_particle_mu_E(int part, double mu_E[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_mu_E(pnode, part, mu_E);
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
@@ -684,13 +683,13 @@ int set_particle_type(int part, int type)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_type(pnode, part, type);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_mol_id(int part, int mid)
@@ -701,13 +700,13 @@ int set_particle_mol_id(int part, int mid)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_mol_id(pnode, part, mid);
-  return TCL_OK;
+  return ES_OK;
 }
 
 #ifdef ROTATION
@@ -718,13 +717,13 @@ int set_particle_quat(int part, double quat[4])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_quat(pnode, part, quat);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_omega(int part, double omega[3])
@@ -734,13 +733,13 @@ int set_particle_omega(int part, double omega[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_omega(pnode, part, omega);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_torque(int part, double torque[3])
@@ -750,13 +749,13 @@ int set_particle_torque(int part, double torque[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_torque(pnode, part, torque);
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif
@@ -769,15 +768,15 @@ int set_particle_temperature(int part, double T)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
     
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
     
   mpi_set_particle_temperature(pnode, part, T);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_gamma(int part, double gamma)
@@ -788,15 +787,15 @@ int set_particle_gamma(int part, double gamma)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
     
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
     
   mpi_set_particle_gamma(pnode, part, gamma);
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
@@ -808,13 +807,13 @@ int set_particle_ext(int part, int flag, double force[3])
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_ext(pnode, part, flag, PARTICLE_EXT_FORCE, force);
-  return TCL_OK;
+  return ES_OK;
 }
 
 int set_particle_fix(int part,  int flag)
@@ -824,13 +823,13 @@ int set_particle_fix(int part,  int flag)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_ext(pnode, part, flag, COORDS_FIX_MASK, NULL);
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif
@@ -842,19 +841,19 @@ int change_particle_bond(int part, int *bond, int delete)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   if(delete != 0 || bond == NULL)
     delete = 1;
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
-      char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{048 invalid/unknown bonded interaction type %d}", bond[0]);
-      return TCL_ERROR;
+      return ES_ERROR;
     }
   }
   return mpi_send_bond(pnode, part, bond, delete);
@@ -874,11 +873,11 @@ int remove_particle(int part)
     build_particle_node();
 
   if (part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   pnode = particle_node[part];
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   particle_node[part] = -1;
 
@@ -890,7 +889,7 @@ int remove_particle(int part)
     mpi_bcast_parameter(FIELD_MAXPART);
   }
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 void local_remove_particle(int part)
@@ -1048,7 +1047,7 @@ int local_change_bond(int part, int *bond, int delete)
   realloc_intlist(bl, bl->n + bond_size);
   for(i = 0; i < bond_size; i++)
     bl->e[bl->n++] = bond[i];
-  return TCL_OK;
+  return ES_OK;
 }
 
 int try_delete_bond(Particle *part, int *bond)
@@ -1058,7 +1057,7 @@ int try_delete_bond(Particle *part, int *bond)
 
   if (!bond) {
     realloc_intlist(bl, bl->n = 0);
-    return TCL_OK;
+    return ES_OK;
   }
 
   for (i = 0; i < bl->n;) {
@@ -1076,12 +1075,12 @@ int try_delete_bond(Particle *part, int *bond)
 	bl->n -= 1 + partners;
 	memcpy(bl->e + i, bl->e + i + 1 + partners, sizeof(int)*(bl->n - i));
 	realloc_intlist(bl, bl->n);
-	return TCL_OK;
+	return ES_OK;
       }
       i += 1 + partners;
     }
   }
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 void remove_all_bonds_to(int identity)
@@ -1320,10 +1319,10 @@ int change_exclusion(int part1, int part2, int delete)
       part1 == part2 ||
       particle_node[part1] == -1 ||
       particle_node[part2] == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   mpi_send_exclusion(part1, part2, delete);
-  return TCL_OK;
+  return ES_OK;
 }
 
 void remove_all_exclusions()

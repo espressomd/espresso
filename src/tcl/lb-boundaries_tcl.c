@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,24 +18,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb-boundaries.c
+/** \file lb-boundaries_tcl.c
  *
  * Boundary conditions parser file for Lattice Boltzmann fluid dynamics.
- * Header file for \ref lb-boundaries.h.
  *
  */
 #include "utils.h"
+#include "parser.h"
 #include "constraint.h"
-#include "lb-boundaries_tcl.h"
 #include "lb.h"
 #include "interaction_data.h"
 #include "lb-boundaries.h"
 #include "communication.h"
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-
-int n_lb_boundaries = 0;
-LB_Boundary *lb_boundaries = NULL;
 
 // TCL Parser functions
 int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
@@ -840,7 +837,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     return (TCL_ERROR);
   }
 
-  return mpi_gather_runtime_errors(interp, status);
+  return gather_runtime_errors(interp, status);
 
 #else /* !defined(LB_BOUNDARIES) || !defined(LB_BOUNDARIES_GPU */
   Tcl_AppendResult(interp, "LB_BOUNDARIES/LB_BOUNDARIES_GPU not compiled in!" ,(char *) NULL);

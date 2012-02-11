@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -45,7 +45,12 @@
 #include "virtual_sites_com_tcl.h"
 #include "initialize.h"
 #include "statistics_chain_tcl.h"
-#include "topology_tcl.h"
+
+/** Set the topology. See \ref topology_tcl.c */
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
+
+/** write out energy. See \ref energy_tcl.c */
+int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /** Variables for measuring the compressibility from volume fluctuations.
     Will be used by \ref parse_Vkappa exclusively. */
@@ -2488,5 +2493,5 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		     "\" you requested is not implemented.", (char *)NULL);
     err = (TCL_ERROR);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }

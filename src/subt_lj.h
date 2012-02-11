@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -24,48 +25,13 @@
  *  for a particle pair.
  *  \ref forces.c
 */
+#include "utils.h"
+#include "interaction_data.h"
 
 #ifdef LENNARD_JONES
 
-/************************************************************/
-
 /// set the parameters for the subtract LJ potential
-MDINLINE int subt_lj_set_params(int bond_type, double k, double r)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.subt_lj.k = k;
-  bonded_ia_params[bond_type].p.subt_lj.r = r;
-  bonded_ia_params[bond_type].type = BONDED_IA_SUBT_LJ;  
-  bonded_ia_params[bond_type].p.subt_lj.r2 = SQR(bonded_ia_params[bond_type].p.subt_lj.r);
-  bonded_ia_params[bond_type].num = 1;
-
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-/// parse parameters for the subt_lj potential
-MDINLINE int tclcommand_inter_parse_subt_lj(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  double k, r;
-  if (argc != 3) {
-    Tcl_AppendResult(interp, "subt_lj needs 2 dummy parameters: "
-		     "<k_subt_lj> <r_subt_lj>", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-    Tcl_AppendResult(interp, "subt_lj needs 2 dummy DOUBLE parameters: "
-		     "<k_subt_lj> <r_subt_lj>", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(subt_lj_set_params(bond_type, k, r), "bond type must be nonnegative");
-}
+int subt_lj_set_params(int bond_type, double k, double r);
 
 /** Computes the negative of the LENNARD-JONES pair forces 
     and adds this force to the particle forces (see \ref tclcommand_inter). 
@@ -146,5 +112,7 @@ MDINLINE int subt_lj_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameter
   *_energy = -energy;
   return 0;
 }
+
 #endif
+
 #endif

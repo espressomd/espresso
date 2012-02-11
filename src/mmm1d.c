@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -22,8 +23,6 @@
  *  For more information about MMM1D, see \ref mmm1d.h "mmm1d.h".
  */
 
-#include <mpi.h>
-#include <tcl.h>
 #include "utils.h"
 #include "mmm1d.h"
 #include "polynom.h"
@@ -34,7 +33,6 @@
 #include "tuning.h"
 #include "interaction_data.h"
 #include "mmm-common.h"
-#include "parser.h"
 #include "errorhandling.h"
 
 #ifdef ELECTROSTATICS
@@ -332,10 +330,9 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3], double
   return chpref*E;
 }
 
-/// \todo separate out Tcl stuff
-int mmm1d_tune(Tcl_Interp *interp)
+int mmm1d_tune(char **log)
 {
-  char buffer[32 + 2*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[32 + 2*ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time=1e200, min_rad = -1;
   double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
   double switch_radius;
@@ -361,11 +358,11 @@ int mmm1d_tune(Tcl_Interp *interp)
 
       /* exit on errors */
       if (int_time < 0)
-	return mpi_gather_runtime_errors(interp, TCL_ERROR);
+	return ES_ERROR;
 
       sprintf(buffer, "r= %f c= %d t= %f ms\n",
 	      switch_radius, mmm1d_params.bessel_cutoff, int_time);
-      Tcl_AppendResult(interp, buffer, (char*)NULL);
+      *log = strcat_alloc(*log, buffer);
 
       if (int_time < min_time) {
 	min_time = int_time;
@@ -385,8 +382,8 @@ int mmm1d_tune(Tcl_Interp *interp)
     mmm1d_params.bessel_cutoff = determine_bessel_cutoff(sqrt(mmm1d_params.far_switch_radius_2),
 							 mmm1d_params.maxPWerror, MAXIMAL_B_CUT);
     if (mmm1d_params.bessel_cutoff == MAXIMAL_B_CUT) {
-      Tcl_AppendResult(interp, "could not find reasonable bessel cutoff", (char *)NULL);
-      return TCL_ERROR;
+      *log = strcat_alloc(*log, "could not find reasonable bessel cutoff");
+      return ES_ERROR;
     }
     mmm1d_params.bessel_calculated = 1;
   }
@@ -397,7 +394,7 @@ int mmm1d_tune(Tcl_Interp *interp)
 
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif

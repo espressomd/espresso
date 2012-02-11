@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -26,10 +27,8 @@
  *
  *  For more information see forces.c .
  */
-#include <tcl.h>
 #include "utils.h"
 #include "thermostat.h"
-#include "communication.h"
 #ifdef MOLFORCES
 #include "topology.h"
 #endif
@@ -433,7 +432,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -443,7 +442,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -454,7 +453,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -518,7 +517,7 @@ MDINLINE void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
@@ -537,7 +536,7 @@ MDINLINE void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -550,7 +549,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
@@ -558,7 +557,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
 		p1->p.identity, p2->p.identity); 
 	continue;
@@ -600,7 +599,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
@@ -623,7 +622,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     case 3:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;

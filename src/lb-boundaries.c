@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group,
   
@@ -32,6 +32,9 @@
 #include "communication.h"
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
+
+int n_lb_boundaries = 0;
+LB_Boundary *lb_boundaries = NULL;
 
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no) {
   double vec[3] = {1e100, 1e100, 1e100};

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,70 +26,21 @@
  *  \ref forces.c
 */
 
-#ifdef BOND_ANGLE
-
 #include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
 
-/************************************************************/
+#ifdef BOND_ANGLE
+#include "grid.h"
 
-/** set parameters for the angle potential. The type of the angle potential
+/** set parameters for the angle potential.
+
+    \todo The type of the angle potential
     is chosen via config.h and cannot be changed at runtime.
 */
-MDINLINE int angle_set_params(int bond_type, double bend, double phi0)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
+int angle_set_params(int bond_type, double bend, double phi0);
 
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.angle.bend = bend;
-  bonded_ia_params[bond_type].p.angle.phi0 = phi0;
-#ifdef BOND_ANGLE_COSINE
-  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
-  bonded_ia_params[bond_type].p.angle.sin_phi0 = sin(phi0);
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
-#endif
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
-  bonded_ia_params[bond_type].num = 2;
- 
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-/// parse parameters for the angle potential
-MDINLINE int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  double bend, phi0;
-
-  /* the optional parameter phi0 is due to backwards compatibility and is set to PI if not given */
-  if (argc != 2 && argc != 3) {
-    Tcl_AppendResult(interp, "angle needs 1 or 2 parameters: "
-		     "<bend> [<phi0>]", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  if (! ARG_IS_D(1, bend)) {
-    Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
-		     "<bend> ", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  /* special treatment of the optional parameter phi0 */
-  if (argc == 3) {
-    if (! ARG_IS_D(2, phi0)) {
-      Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
-		       "<phi0> ", (char *) NULL);
-      return TCL_ERROR;
-    }
-  } else {
-    phi0 = PI;
-  }
-  CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
-}
+/************************************************************/
 
 /** Computes the three body angle interaction force and adds this
     force to the particle forces (see \ref tclcommand_inter). 

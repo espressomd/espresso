@@ -57,6 +57,7 @@
 #include "random.h"
 #include "topology.h"
 #include <mpi.h>
+
 /**************************************************
  * exported variables
  **************************************************/
@@ -267,6 +268,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete);
     \param delete   if true, do not add the exclusion, rather delete it if found
 */
 void mpi_send_exclusion(int part, int part2, int delete);
+
 
 /** Issue REQ_REM_PART: remove a particle.
     Also calls \ref on_particle_change.
@@ -508,16 +510,13 @@ void mpi_send_fluid_populations(int node, int index, double *pop);
  */
 void mpi_bcast_max_mu();
 
-/** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
-    to these error messages. This called only on the master node.
-    The errors are append to the result, if ret_state == TCL_ERROR, otherwise the result is overwritten.
-    Therefore you should end any Tcl command handler by return gather_runtime_errors(<return_value>).
-    This code uses asynchronous communication.
-    @param ret_state return value of the procedure
-    @param interp where to put the errors
-    @return new return value after the background errors, if any, have been handled
+/** Issue REQ_GET_ERRS: gather all error messages from all nodes and return them
+
+    @param errors contains the errors from all nodes. This has to point to an array
+    of character pointers, one for each node.
+    @return \ref ES_OK if no error occured, otherwise \ref ES_ERROR
 */
-int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
+int mpi_gather_runtime_errors(char **errors);
 
 /*@}*/
 

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -33,6 +34,7 @@
 #include "interaction_data.h"
 #include "parser.h"
 #include "grid.h"
+#include "constraint.h"
 
 /************************************************************* 
  * Functions                                                 *
@@ -255,7 +257,7 @@ if(type_bond<0 || type_bond>=n_bonded_ia){
 else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, tmp_try);
+  return gather_runtime_errors(interp, tmp_try);
 }
 
 int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -339,7 +341,7 @@ int tclcommand_counterions (ClientData data, Tcl_Interp *interp, int argc, char 
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, tmp_try);
+  return gather_runtime_errors(interp, tmp_try);
 }
 
 int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -456,7 +458,7 @@ int tclcommand_salt (ClientData data, Tcl_Interp *interp, int argc, char **argv)
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, tmp_try);
+  return gather_runtime_errors(interp, tmp_try);
 }
 
 int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -515,7 +517,7 @@ int tclcommand_velocities (ClientData data, Tcl_Interp *interp, int argc, char *
 
   tmp_try = velocitiesC(v_max, part_id, N_T);
   sprintf(buffer, "%f", tmp_try); Tcl_AppendResult(interp, buffer, (char *)NULL); 
-  return mpi_gather_runtime_errors(interp, TCL_OK);
+  return gather_runtime_errors(interp, TCL_OK);
 }
 
 int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -563,7 +565,7 @@ int tclcommand_maxwell_velocities (ClientData data, Tcl_Interp *interp, int argc
 
   tmp_try = maxwell_velocitiesC(part_id, N_T);
   sprintf(buffer, "%f", tmp_try); Tcl_AppendResult(interp, buffer, (char *)NULL); 
-  return mpi_gather_runtime_errors(interp, TCL_OK);
+  return gather_runtime_errors(interp, TCL_OK);
 }
 
 int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -696,7 +698,7 @@ int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, tmp_try);
+  return gather_runtime_errors(interp, tmp_try);
 }
 
 int tclcommand_diamond (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -784,7 +786,7 @@ if(0 == n_bonded_ia){
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, tmp_try);
+  return gather_runtime_errors(interp, tmp_try);
 }
 
 int tclcommand_icosaeder (ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -861,6 +863,6 @@ if(0 == n_bonded_ia){
   else {
     sprintf(buffer, "Unknown error %d occured!\nAborting...\n",tmp_try); tmp_try = TCL_ERROR; }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  return mpi_gather_runtime_errors(interp, tmp_try);
+  return gather_runtime_errors(interp, tmp_try);
 }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -25,13 +25,13 @@
 #include "virtual_sites.h"
 #include "particle_data.h"
 #include "interaction_data.h"
-#include "communication.h"
-#include "parser.h"
-#include <tcl.h>
 
 #ifdef MOL_CUT
 
 #define CUTOFF_CHECK(cond) ((ia_params->mol_cut_type!=0)||(cond))
+
+///
+int molcut_set_params(int part_type_a, int part_type_b,int mol_cut_type,double mol_cut_cutoff);
 
 MDINLINE int checkIfParticlesInteractViaMolCut(Particle *p1, Particle *p2,IA_parameters *data){
    if (data->mol_cut_type==0){
@@ -61,73 +61,6 @@ MDINLINE int checkIfParticlesInteractViaMolCut_partcfg(Particle *p1, Particle *p
    return 0;
 }
 
-MDINLINE int tclprint_to_result_molcutIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
-
-  sprintf(buffer,"%i",data->mol_cut_type);
-  Tcl_AppendResult(interp, "molcut ", buffer, " ",(char *) NULL);
-  Tcl_PrintDouble(interp, data->mol_cut_cutoff, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  return TCL_OK;
-}
-
-MDINLINE int molcut_set_params(int part_type_a, int part_type_b,int mol_cut_type,double mol_cut_cutoff)
-{
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data) return TCL_ERROR;
-
-  data->mol_cut_type   = mol_cut_type;
-  data->mol_cut_cutoff = mol_cut_cutoff;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return TCL_OK;
-}
-
-MDINLINE int tclcommand_inter_parse_molcut(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv)
-{
-  /* parameters needed for molcut */
-  int mol_cut_type;
-  double mol_cut_cutoff;
-  int change;
-
-  /* get interaction type */
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "molcut needs 2 parameter: "
-		     "<type> <cutoff>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy parameters */
-  if (! ARG_IS_I(1, mol_cut_type)) {
-    Tcl_AppendResult(interp, "type must be int",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  if (! ARG_IS_D(2, mol_cut_cutoff)) {
-    Tcl_AppendResult(interp, "cutoff must be double",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  change = 3;
-	
-  if (! ((mol_cut_type==0) || (mol_cut_type==1)) ) {
-    Tcl_AppendResult(interp, "type must be 0 or 1", (char *) NULL);
-    return 0;
-  }
-  if (molcut_set_params(part_type_a, part_type_b,mol_cut_type,mol_cut_cutoff) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-  return change;
-}
 #else
 #define CUTOFF_CHECK(cond) (cond)
 #endif

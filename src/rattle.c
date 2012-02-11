@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -146,7 +147,7 @@ void compute_pos_corr_vec(int *repeat_)
 	  cnt++;
 	  p2 = local_particles[p1->bl.e[k++]];
 	  if (!p2) {
-	    char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	    char *errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	    ERROR_SPRINTF(errtxt,"{051 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
 		    p1->p.identity, p1->bl.e[k-1]);
 	    return;
@@ -229,7 +230,7 @@ void correct_pos_shake()
        cnt++;
    }// while(repeat) loop
    if (cnt >= SHAKE_MAX_ITERATIONS) {
-     char *errtxt = runtime_error(100 + TCL_INTEGER_SPACE);
+     char *errtxt = runtime_error(100 + ES_INTEGER_SPACE);
      ERROR_SPRINTF(errtxt, "{053 RATTLE failed to converge after %d iterations} ", cnt);
    }
 
@@ -299,7 +300,7 @@ void compute_vel_corr_vec(int *repeat_)
 	      {
 		p2 = local_particles[p1->bl.e[k++]];
 		if (!p2) {
-		  char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+		  char *errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 		  ERROR_SPRINTF(errtxt,"{054 rigid bond broken between particles %d and %d (particles not stored on the same node)} ",
 			  p1->p.identity, p1->bl.e[k-1]);
 		  return;
@@ -443,7 +444,7 @@ void print_bond_len()
              {
 	       Particle *p2 = local_particles[p[i].bl.e[k++]];
 	       if (!p2) {
-		 char *errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+		 char *errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 		 ERROR_SPRINTF(errtxt,"{056 rigid bond broken between particles %d and %d (particles not stored on the same node)} ", p[i].p.identity, p[i].bl.e[k-1]);
 		 return;
 	       }
@@ -465,7 +466,7 @@ void print_bond_len()
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol)
 {
   if(bond_type < 0)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
@@ -478,7 +479,7 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol)
   mpi_bcast_ia_params(bond_type, -1);
   mpi_bcast_parameter(FIELD_RIGIDBONDS);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,10 +23,9 @@
 /** \file particle_data.h
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"
+*/
 
- */
 
-//#include <tcl.h>
 #include "utils.h"
 #include "global.h"
 
@@ -34,11 +33,17 @@
  * defines
  ************************************************/
 
+/// ok code for \ref place_particle
+#define ES_PART_OK 0
+/// error code for \ref place_particle
+#define ES_PART_ERROR -1
+/// ok code for \ref place_particle, particle is new
+#define ES_PART_CREATED 1
+
 /**  bonds_flag "bonds_flag" value for updating particle config without bonding information */
 #define WITHOUT_BONDS 0
 /**  bonds_flag "bonds_flag" value for updating particle config with bonding information */
 #define WITH_BONDS 1
-
 
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external force. */
@@ -395,7 +400,7 @@ void realloc_local_particles();
     allocated so that you are responsible to free it later.
     @param part the identity of the particle to fetch
     @param data where to store its contents.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int get_particle_data(int part, Particle *data);
 
@@ -404,29 +409,29 @@ int get_particle_data(int part, Particle *data);
     If it does not exist, it is created.
     @param part the identity of the particle to move
     @param p    its new position
-    @return TCL_OK if particle existed, TCL_CONTINUE
-    if created and TCL_ERROR if id is illegal
+    @return ES_PART_OK if particle existed, ES_PART_CREATED
+    if created and ES_PART_ERROR if id is illegal
 */
 int place_particle(int part, double p[3]);
 
 /** Call only on the master node: set particle velocity.
     @param part the particle.
     @param v its new velocity.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_v(int part, double v[3]);
 
 /** Call only on the master node: set particle force.
     @param part the particle.
     @param F its new force.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_f(int part, double F[3]);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.
     @param mass its new mass.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_mass(int part, double mass);
 
@@ -434,7 +439,7 @@ int set_particle_mass(int part, double mass);
 /** Call only on the master node: set particle rotational inertia.
     @param part the particle.
     @param rinertia its new inertia.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
@@ -442,28 +447,28 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 /** Call only on the master node: set particle charge.
     @param part the particle.
     @param q its new charge.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_q(int part, double q);
 
 /** Call only on the master node: set particle electrophoretic mobility.
     @param part the particle.
     @param mu_E its new mobility.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_mu_E(int part, double mu_E[3]);
 
 /** Call only on the master node: set particle type.
     @param part the particle.
     @param type its new type.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_type(int part, int type);
 
 /** Call only on the master node: set particle's molecule id.
     @param part the particle.
     @param mid  its new mol id.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_mol_id(int part, int mid);
 
@@ -471,21 +476,21 @@ int set_particle_mol_id(int part, int mid);
 /** Call only on the master node: set particle orientation using quaternions.
     @param part the particle.
     @param quat its new value for quaternions.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_quat(int part, double quat[4]);
 
 /** Call only on the master node: set particle angular velocity.
     @param part the particle.
     @param omega its new angular velocity.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_omega(int part, double omega[3]);
 
 /** Call only on the master node: set particle torque.
     @param part the particle.
     @param torque its new torque.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_torque(int part, double torque[3]);
 #endif
@@ -494,14 +499,14 @@ int set_particle_torque(int part, double torque[3]);
 /** Call only on the master node: set particle dipole orientation.
     @param part the particle.
     @param dip its new dipole orientation.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_dip(int part, double dip[3]);
 
 /** Call only on the master node: set particle dipole moment (absolut value).
     @param part the particle.
     @param dipm its new dipole moment.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_dipm(int part, double dipm);
 #endif
@@ -510,7 +515,7 @@ int set_particle_dipm(int part, double dipm);
 /** Call only on the master node: set particle dipole moment (absolut value).
     @param part the particle.
     @param isVirtual its new dipole moment.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_virtual(int part,int isVirtual);
 #endif
@@ -519,14 +524,14 @@ int set_particle_virtual(int part,int isVirtual);
 /** Call only on the master node: set particle temperature.
     @param part the particle.
     @param T its new temperature.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_temperature(int part, double T);
 
 /** Call only on the master node: set particle frictional coefficient.
     @param part the particle.
     @param gamma its new frictional coefficient.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_gamma(int part, double gamma);
 #endif
@@ -536,13 +541,13 @@ int set_particle_gamma(int part, double gamma);
     @param part  the particle.
     @param flag  new value for ext_flag.
     @param force new value for ext_force.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_ext(int part, int flag, double force[3]);
 /** Call only on the master node: set coordinate axes for which the particles motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_fix(int part,  int flag);
 #endif
@@ -552,7 +557,7 @@ int set_particle_fix(int part,  int flag);
     @param bond     field containing the bond type number and the
     identity of all bond partners (secundary atoms of the bond). If NULL, delete all bonds.
     @param delete   if true, do not add the bond, rather delete it if found
-    @return TCL_OK on success or TCL_ERROR if no success
+    @return ES_OK on success or ES_ERROR if no success
     (e. g. particle or bond to delete does not exist)
 */
 int change_particle_bond(int part, int *bond, int delete);
@@ -562,7 +567,7 @@ int change_particle_bond(int part, int *bond, int delete);
     @param part     identity of particle for which the exclusion is set.
     @param part2    identity of particle for which the exclusion is set. If -1, delete all exclusions.
     @param delete   if true, do not add the exclusion, rather delete it if found
-    @return TCL_OK on success or TCL_ERROR if no success
+    @return ES_OK on success or ES_ERROR if no success
     (e. g. particles do not exist / did not have exclusion set)
 */
 int change_exclusion(int part, int part2, int delete);
@@ -573,7 +578,7 @@ void remove_all_exclusions();
 
 /** remove particle with a given identity. Also removes all bonds to the particle.
     @param part     identity of the particle to remove
-    @return TCL_OK on success or TCL_ERROR if particle does not exist
+    @return ES_OK on success or ES_ERROR if particle does not exist
 */
 int remove_particle(int part);
 
@@ -632,7 +637,7 @@ void added_particle(int part);
     @param part the identity of the particle to change
     @param bond the bond to do
     @param delete if true, delete the bond instead of add
-    @return TCL_OK for add or successful delete, TCL_ERROR else
+    @return ES_OK for add or successful delete, ES_ERROR else
 */
 int local_change_bond(int part, int *bond, int delete);
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,51 +26,14 @@
  *  the maximal bond length!  \ref forces.c
 */
 
-#define ANGLE_NOT_DEFINED -100
-
+#include "utils.h"
 #include "interaction_data.h"
-#include "parser.h"
-#include "communication.h"
 #include "grid.h"
 
+#define ANGLE_NOT_DEFINED -100
+
 /// set dihedral parameters
-MDINLINE int dihedral_set_params(int bond_type, int mult, double bend, double phase)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_DIHEDRAL;
-  bonded_ia_params[bond_type].num  = 3;
-  bonded_ia_params[bond_type].p.dihedral.mult = mult;
-  bonded_ia_params[bond_type].p.dihedral.bend = bend;
-  bonded_ia_params[bond_type].p.dihedral.phase = phase;
-
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-/// parse parameters for the dihedral potential
-MDINLINE int tclcommand_inter_parse_dihedral(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  int mult;
-  double bend, phase;
-
-  if (argc < 4 ) {
-    Tcl_AppendResult(interp, "dihedral needs 3 parameters: "
-		     "<mult> <bend> <phase>", (char *) NULL);
-    return (TCL_ERROR);
-  }
-  if ( !ARG_IS_I(1, mult) || !ARG_IS_D(2, bend) || !ARG_IS_D(3, phase) ) {
-    Tcl_AppendResult(interp, "dihedral needs 3 parameters of types INT DOUBLE DOUBLE: "
-		     "<mult> <bend> <phase> ", (char *) NULL);
-    return TCL_ERROR;
-  }
-  
-  CHECK_VALUE(dihedral_set_params(bond_type, mult, bend, phase), "bond type must be nonnegative");
-}
+int dihedral_set_params(int bond_type, int mult, double bend, double phase);
 
 /** Calculates the dihedral angle between particle quadruple p1, p2,
 p3 and p4. The dihedral angle is the angle between the planes

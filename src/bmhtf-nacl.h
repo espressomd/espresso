@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,97 +20,23 @@
 */
 #ifndef BMHTF_NACL_H
 #define BMHTF_NACL_H
-
 /** \file bmhtf-nacl.h
  *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi energy and/or force 
  *  for a particle pair.
  *  \ref forces.c
 */
 
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "mol_cut.h"
+
 #ifdef BMHTF_NACL
 
-MDINLINE int tclprint_to_result_BMHTFIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE+TCL_INTEGER_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
-
-  Tcl_AppendResult(interp, "bmhtf-nacl ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->BMHTF_A, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->BMHTF_B, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->BMHTF_C, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->BMHTF_D, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->BMHTF_sig, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->BMHTF_cut, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
-  
-  return TCL_OK;
-}
-
-MDINLINE int BMHTF_set_params(int part_type_a, int part_type_b,
-			      double A, double B, double C,
-			      double D, double sig, double cut)
-{
-  double shift, dist2, pw6;
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data) return TCL_ERROR;
-
-  dist2 = cut*cut;
-  pw6 = dist2*dist2*dist2;
-  shift = -(A*exp(B*(sig - cut)) - C/pw6 - D/pw6/dist2);
-
-  data->BMHTF_A   = A;
-  data->BMHTF_B   = B;
-  data->BMHTF_C   = C;
-  data->BMHTF_D   = D;
-  data->BMHTF_sig = sig;
-  data->BMHTF_cut = cut;
-  data->BMHTF_computed_shift = shift;
- 
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return TCL_OK;
-}
-
-MDINLINE int tclcommand_inter_parse_BMHTF(Tcl_Interp * interp,
-			  int part_type_a, int part_type_b,
-			  int argc, char ** argv)
-{
-  double A, B, C, D, sig, cut;
-
-  if (argc < 7) {
-    Tcl_AppendResult(interp, "BMHTF NaCl potential needs 6 parameters: "
-		     "<A> <B> <C> <D> <sigma> <cutoff>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy smooth step parameters */
-  if ((! ARG_IS_D(1, A))    ||
-      (! ARG_IS_D(2, B))    ||
-      (! ARG_IS_D(3, C))    ||
-      (! ARG_IS_D(4, D))    ||
-      (! ARG_IS_D(5, sig))  ||
-      (! ARG_IS_D(6, cut)   )) {
-    Tcl_AppendResult(interp, "BMHTF NaCl potential needs 6 parameters: "
-		     "<A> <B> <C> <D> <sigma> <cutoff>",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if (BMHTF_set_params(part_type_a, part_type_b,
-		       A, B, C, D, sig, cut) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-  return 7;
-}
+///
+int BMHTF_set_params(int part_type_a, int part_type_b,
+		     double A, double B, double C,
+		     double D, double sig, double cut);
 
 /** Calculate smooth step force between particle p1 and p2 */
 MDINLINE void add_BMHTF_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -117,7 +44,7 @@ MDINLINE void add_BMHTF_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
 {
   int j;
   double pw8, fac = 0.0;
-  if(dist < ia_params->BMHTF_cut) {
+  if(CUTOFF_CHECK(dist < ia_params->BMHTF_cut)) {
     pw8 = dist2*dist2*dist2*dist2;
     fac = ia_params->BMHTF_A*ia_params->BMHTF_B*
       exp(ia_params->BMHTF_B*(ia_params->BMHTF_sig - dist))/dist -
@@ -133,7 +60,7 @@ MDINLINE double BMHTF_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 {
   double pw6;
  
-  if(dist < ia_params->BMHTF_cut) {
+  if(CUTOFF_CHECK(dist < ia_params->BMHTF_cut)) {
     pw6 = dist2*dist2*dist2;
     return ia_params->BMHTF_A*
       exp(ia_params->BMHTF_B*(ia_params->BMHTF_sig - dist)) -

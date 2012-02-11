@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,17 +20,16 @@
 */
 #ifndef GLOBAL_TCL_H
 #define GLOBAL_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /// Implements the Tcl command setmd. It allows to modify simulation parameters
 int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
 	  int argc, char **argv);
 
-/** Implements the Tcl command code_info.  It provides information on the
-    Version, Compilation status and the debug status of the used
-    code. */
-int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
+/// Function signature for the write callback procedures for global variables
+typedef int (SetCallback)(Tcl_Interp *interp, void *data);
+
+/// Register a global variable, should be used only in \ref register_global_variables
+void register_global_callback(int field, SetCallback *callback);
 
 #endif

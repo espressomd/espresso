@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -21,7 +21,6 @@
 extern "C" {
 
 #include "utils.h"
-#include "parser.h"
 #include "cuda_init.h"
 
 }
@@ -32,46 +31,69 @@ static const int computeCapabilityMinMajor = 1;
 static const int computeCapabilityMinMinor = 1;
 /*@}*/
 
-/** returns 1 if and only if the GPU with the given id is usable for
-    CUDA computations.  Only devices with compute capability of 1.1 or
-    higher are ok, since atomic operations are required for
-    CUDA-LB. */
-int check_gpu(int dev)
+const char *cuda_error;
+
+/// get the number of CUDA devices.
+int cuda_get_n_gpus()
+{
+  int deviceCount;
+  cudaError_t error = cudaGetDeviceCount(&deviceCount);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
+    return -1;
+  }
+  return deviceCount;
+}
+
+int cuda_check_gpu(int dev)
 {
   cudaDeviceProp deviceProp;
-  if (cudaGetDeviceProperties(&deviceProp, dev) != cudaSuccess) {
-    return 0;
+  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
+    return ES_ERROR;
   }
   if (deviceProp.major < computeCapabilityMinMajor ||
       (deviceProp.major == computeCapabilityMinMajor &&
        deviceProp.minor < computeCapabilityMinMinor)) {
-    return 0;
+    cuda_error = "compute capability insufficient";
+    return ES_ERROR;
   }
-  return 1;
+  return ES_OK;
 }
 
-/** prints a list of the available GPUs to the result of the Tcl interpreter.
-    Only devices with compute capability of 1.1 or higher are listed, since
-    atomic operations are required for CUDA-LB. */
-int list_gpus(Tcl_Interp *interp)
+void cuda_get_gpu_name(int dev, char name[64])
 {
-  int deviceCount, dev;
-
-  if (cudaGetDeviceCount(&deviceCount) != cudaSuccess) {
-    Tcl_AppendResult(interp, "cannot initialize CUDA", NULL);
-    return TCL_ERROR;
+  cudaDeviceProp deviceProp;
+  cudaError_t error = cudaGetDeviceProperties(&deviceProp, dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
+    strcpy(name, "no GPU");
+    return;
   }
-
-  // look for devices with compute capability > 1.1 (for atomic operations)
-  for (dev = 0; dev < deviceCount; ++dev) {
-    if (check_gpu(dev)) {
-      cudaDeviceProp deviceProp;
-      cudaGetDeviceProperties(&deviceProp, dev);
-      char id[4 + 64 + TCL_INTEGER_SPACE];
-      sprintf(id, " {%d %.64s}", dev, deviceProp.name);
-      Tcl_AppendResult(interp, id, NULL);
-    }
-  }
-  return TCL_OK;
+  strncpy(name, deviceProp.name, 63);
+  name[63] = 0;
 }
 
+int cuda_set_device(int dev)
+{
+  cudaError_t error = cudaSetDevice(dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
+    return ES_ERROR;
+  }
+  else
+    return ES_OK;
+}
+
+int cuda_get_device()
+{
+  int dev;
+  cudaError_t error = cudaGetDevice(&dev);
+  if (error != cudaSuccess) {
+    cuda_error = cudaGetErrorString(error);
+    return -1;
+  }
+  else
+    return dev;
+}

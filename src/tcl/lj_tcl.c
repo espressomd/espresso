@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -89,12 +89,11 @@ int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** arg
 
   CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR;
 }
 
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv)
+			      int part_type_a, int part_type_b,
+			      int argc, char ** argv)
 {
   /* parameters needed for LJ */
   double eps, sig, cut, shift, offset, cap_radius, min;
@@ -105,7 +104,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "lennard-jones needs at least 3 parameters: "
 		     "<lj_eps> <lj_sig> <lj_cut> [<lj_shift> [<lj_offset> [<lj_cap> [<lj_min>]]]]",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change = 1;
 
@@ -114,7 +113,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
   if (! ARG_IS_D(1, eps)) {
     Tcl_AppendResult(interp, "<lj_eps> should be a double",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change++;
 
@@ -122,7 +121,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
   if (! ARG_IS_D(2, sig)) {
     Tcl_AppendResult(interp, "<lj_sig> should be a double",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change++;
 
@@ -130,7 +129,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
   if (! ARG_IS_D(3, cut)) {
     Tcl_AppendResult(interp, "<lj_cut> should be a double",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change++;
   
@@ -147,7 +146,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
     } else {
       Tcl_AppendResult(interp, "<lj_shift> should be a double or \"auto\"",
 		       (char *) NULL);
-      return TCL_ERROR;
+      return 0;
     }
   } else {
     /* by default, compute the shift automatically */
@@ -161,7 +160,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
     if (!ARG_IS_D(5, offset)) {
       Tcl_AppendResult(interp, "<lj_off> should be a double",
 		       (char *) NULL);
-      return TCL_ERROR;
+      return 0;
     }
     change++;
   } else {
@@ -173,7 +172,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
     if (!ARG_IS_D(6, cap_radius)) {
       Tcl_AppendResult(interp, "<lj_cap> should be a double",
 		       (char *) NULL);
-      return TCL_ERROR;
+      return 0;
     }
     change++;
   } else {
@@ -185,7 +184,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
     if (!ARG_IS_D(7, min)) {
       Tcl_AppendResult(interp, "<lj_rmin> should be a double",
 		       (char *) NULL);
-      return TCL_ERROR;
+      return 0;
     }
     change ++;
   } else {
@@ -199,7 +198,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
   /* now set the parameters */
   if (lennard_jones_set_params(part_type_a, part_type_b,
 			       eps, sig, cut, shift, offset,
-			       cap_radius, min) == TCL_ERROR) {
+			       cap_radius, min) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", 
 		     (char *) NULL);
     return 0;

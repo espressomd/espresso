@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,7 +27,6 @@
 #include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"
-#include "communication.h"
 
 /* include the energy files */
 #include "p3m.h"
@@ -72,6 +71,12 @@ extern Observable_stat energy, total_energy;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** allocate energy arrays and initialize with zero */
+void init_energies(Observable_stat *stat);
+
+/** on the master node: calc energies only if necessary */
+void master_energy_calc();
 
 /** parallel energy calculation.
     @param result non-zero only on master node; will contain the cumulative over all nodes. */
@@ -270,7 +275,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{069 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -280,7 +285,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{070 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -291,7 +296,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{071 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -351,7 +356,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
 	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
 	break;
       default :
-	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
@@ -370,7 +375,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
         bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
       default :
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -383,7 +388,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{073 add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
@@ -391,23 +396,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{074 bond broken between particles %d and %d} ",
-		p1->p.identity, p2->p.identity);
-	continue;
-      }
-      break;
-    case 2:
-      if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{075 bond broken between particles %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity); 
-	continue;
-      }
-      break;
-    case 3:
-      if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{076 bond broken between particles %d, %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
@@ -445,9 +434,6 @@ MDINLINE void add_kinetic_energy(Particle *p1)
 #endif
 #endif	
 }
-
-/** implementation of analyze energy */
-int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

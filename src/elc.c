@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -1186,7 +1187,7 @@ int ELC_tune(double error)
   }
 
   if (h < 0)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   elc_params.far_cut = min_inv_boxl;
   do {
@@ -1201,98 +1202,16 @@ int ELC_tune(double error)
   }
   while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
   if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
-    return TCL_ERROR;
+    return ES_ERROR;
   elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = SQR(elc_params.far_cut);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /****************************************
  * COMMON PARTS
  ****************************************/
-
-int tclprint_to_result_ELC(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-  Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
-  Tcl_AppendResult(interp, "} {coulomb elc ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, elc_params.gap_size, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  if (!elc_params.neutralize)
-    Tcl_AppendResult(interp, " noneutralization", (char *) NULL);
-  if (elc_params.dielectric_contrast_on) {
-    Tcl_PrintDouble(interp, elc_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.di_mid, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.di_bot, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.space_layer, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  }
-  return TCL_OK;
-}
-
-int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double pwerror;
-  double gap_size;
-  double far_cut = -1;
-  double top = 1, mid = 1, bot = 1;
-  int neutralize = 1;
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
-		     argv[0], "\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if (!ARG0_IS_D(pwerror))
-    return TCL_ERROR;
-  if (!ARG1_IS_D(gap_size))
-    return TCL_ERROR;
-
-  argc -= 2; argv += 2;
-
-  if (argc > 0) {
-    // if there, parse away manual cutoff
-    if(ARG0_IS_D(far_cut)) {
-      argc--; argv++;
-    }
-    else
-      Tcl_ResetResult(interp);
-
-    while (argc > 0) {
-      if (ARG0_IS_S("noneutralization") || ARG0_IS_S("-noneutralization")) {
-	neutralize = 0;
-	argc--; argv++;
-      }
-      else if (argc >= 4 && ARG0_IS_S("dielectric")) {
-	// just a dummy, not used, as it is only printed for information
-	// purposes. We need to calculate it
-	double space_layer_dummy;
-
-	if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
-	  return TCL_ERROR;
-	argc -= 4; argv += 4;
-
-	if (argc > 0 && ARG_IS_D(4, space_layer_dummy)) {
-	  argc--; argv++;
-	}
-      }
-      else {
-	Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
-			 argv[0], "\"", (char *)NULL);
-	return TCL_ERROR;
-      }
-    }
-  }
-  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, top, mid, bot),
-	      "choose a 3d electrostatics method prior to ELC");
-}
 
 int ELC_sanity_checks()
 {
@@ -1339,7 +1258,7 @@ void ELC_init()
 
   if (elc_params.far_calculated &&
       (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
-    if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
+    if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, gap size too small} ");
     }
@@ -1405,7 +1324,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
     coulomb.method = COULOMB_ELC_P3M;
     break;
   default:
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   elc_params.far_cut = far_cut;
@@ -1415,14 +1334,14 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   }
   else {
     elc_params.far_calculated = 1;
-    if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
+    if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{009 ELC tuning failed, gap size too small} ");
     }
   }
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -38,13 +39,6 @@
 #include "dpd_tcl.h"
 #include "virtual_sites.h"
 #include "thermostat_tcl.h"
-
-
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data)
-{
-  Tcl_AppendResult(interp, "variable is readonly: use the thermostat command to set thermostat parameters.", (char *) NULL);
-  return (TCL_ERROR);
-}
 
 
 int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv) 
@@ -256,7 +250,7 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);
     return tclcommand_thermostat_print_usage(interp, argc, argv);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }
 
 int tclcommand_thermostat_parse_lb(Tcl_Interp *interp, int argc, char ** argv)

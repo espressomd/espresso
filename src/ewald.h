@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -43,8 +44,6 @@
  */
 
 #include "config.h"
-#include "debug.h"
-
 #include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
@@ -87,12 +86,9 @@ extern ewald_struct ewald;
 /************************************************************/
 /*@{*/
 
-/// print the ewald parameters to the interpreters result
-int tclprint_to_result_EWALD(Tcl_Interp *interp);
+///
+int ewald_set_params(double r_cut, double alpha, int kmax);
 
-/// parse the ewald parameters
-int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv);
-  
 /// sanity checks
 int EWALD_sanity_checks();
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -43,8 +43,9 @@
 #include "ljangle.h"
 #include <math.h>
 #include "interaction_data.h"
-#include "parser.h"
 #include "communication.h"
+
+double ljangle_force_cap = 0.0;
 
 /** set the force cap for the directional LJ interaction.
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
@@ -55,7 +56,7 @@ int ljangleforcecap_set_params(double ljangleforcecap)
   if (ljangle_force_cap != -1.0)
     mpi_ljangle_cap_forces(ljangle_force_cap);
    
-  return TCL_OK;
+  return ES_OK;
 }
 
 int ljangle_set_params(int part_type_a, int part_type_b,
@@ -66,7 +67,7 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
 
   data->LJANGLE_eps         = eps;
   data->LJANGLE_sig         = sig;
@@ -95,7 +96,7 @@ int ljangle_set_params(int part_type_a, int part_type_b,
   if (ljangle_force_cap != -1.0)
     mpi_ljangle_cap_forces(ljangle_force_cap);
     
-  return TCL_OK;
+  return ES_OK;
 }
 
 /** calculate ljangle_capradius from ljangle_force_cap */

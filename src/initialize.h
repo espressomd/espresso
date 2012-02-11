@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -36,8 +36,6 @@
     such changes in the corresponding hook procedure.
  */
 
-#include <tcl.h>
-
 /** \name Hook procedures
     These procedures are called if several significant changes to
     the system happen which may make a reinitialization of subsystems
@@ -49,7 +47,7 @@
 /*@{*/
 
 /** called once at the very beginning of the program start. */
-int on_program_start(Tcl_Interp *interp);
+void on_program_start();
 
 /** called every time the simulation is continued/started, i. e.
     when switching from Tcl to the simulation core. */

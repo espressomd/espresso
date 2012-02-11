@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -27,9 +28,12 @@
  *
 */
 
-#ifdef ELECTROSTATICS
-
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
 #include "mol_cut.h"
+
+#ifdef ELECTROSTATICS
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {
@@ -52,83 +56,8 @@ extern Reaction_field_params rf_params;
 /************************************************************/
 /*@{*/
 
-MDINLINE int tclprint_to_result_rf(Tcl_Interp *interp,char *name)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  sprintf(buffer,"%s",name);
-  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.kappa, buffer);
-  Tcl_AppendResult(interp, buffer, " ",(char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.epsilon1, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.epsilon2, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, rf_params.r_cut, buffer);
-  Tcl_AppendResult(interp, buffer, (char *) NULL);
-
-  return TCL_OK;
-}
-
-MDINLINE int rf_set_params(double kappa,double epsilon1,double epsilon2, double r_cut)
-{
-  rf_params.kappa = kappa;
-  rf_params.epsilon1 = epsilon1;
-  rf_params.epsilon2 = epsilon2;
-  rf_params.r_cut = r_cut;
-  rf_params.B =(2*(epsilon1-epsilon2)*(1+kappa*r_cut)-epsilon2*kappa*kappa*r_cut*r_cut)/((epsilon1+2*epsilon2)*(1+kappa*r_cut)+epsilon2*kappa*kappa*r_cut*r_cut);
-  if(rf_params.epsilon1 < 0.0)
-    return -1;
-
-  if(rf_params.epsilon2 < 0.0)
-    return -1;
-
-  if(rf_params.r_cut < 0.0)
-    return -2;
-
-  mpi_bcast_coulomb_params();
-
-  return 1;
-}
-
-MDINLINE int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp, int argc, char ** argv,int method)
-{
-  double kappa,epsilon1,epsilon2, r_cut;
-  int i;
-
-  if(argc < 4) {
-    Tcl_AppendResult(interp, "rf needs 4 parameters: "
-                               "<kappa> <epsilon1> <epsilon2> <r_cut>",(char *) NULL);
-    return TCL_ERROR;
-  }
-
-  coulomb.method = method;
-
-  if ((! ARG_IS_D(0, kappa))      ||
-      (! ARG_IS_D(1, epsilon1))   ||
-      (! ARG_IS_D(2, epsilon2))   ||
-      (! ARG_IS_D(3, r_cut)        )) {
-      Tcl_AppendResult(interp, "rf needs 4 parameters: "
-                               "<kappa> <epsilon1> <epsilon2> <r_cut>",(char *) NULL);
-       return TCL_ERROR;
-  }
-
-  if ( (i = rf_set_params(kappa,epsilon1,epsilon2,r_cut)) < 0) {
-    switch (i) {
-    case -1:
-      Tcl_AppendResult(interp, "rf eps must be positive.",(char *) NULL);
-      break;
-    case -2:
-      Tcl_AppendResult(interp, "rf r_cut must be positive.",(char *) NULL);
-      break;
-    default:
-      Tcl_AppendResult(interp, "unspecified error",(char *) NULL);
-    }
-    
-    return TCL_ERROR;
-  }
-
-  return TCL_OK;
-}
+///
+int rf_set_params(double kappa,double epsilon1,double epsilon2, double r_cut);
 
 MDINLINE void add_rf_coulomb_pair_force_no_cutoff(Particle *p1, Particle *p2, double d[3], double dist, double force[3])
 {
@@ -181,64 +110,9 @@ MDINLINE double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist)
 
 /*from I. G. Tironi et al., J. Chem. Phys. 102, 5451 (1995)*/
 #ifdef INTER_RF
-MDINLINE int tclprint_to_result_interrfIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
 
-  sprintf(buffer,"%i",data->rf_on);
-  Tcl_AppendResult(interp, "inter_rf ", buffer, " ",(char *) NULL);
-  return TCL_OK;
-}
-
-MDINLINE int interrf_set_params(int part_type_a, int part_type_b,int rf_on)
-{
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data) return TCL_ERROR;
-
-  data->rf_on = rf_on;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return TCL_OK;
-}
-
-MDINLINE int tclcommand_inter_parse_interrf(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv)
-{
-  /* parameters needed for RF */
-  int rf_on;
-  int change;
-
-  /* get reaction_field interaction type */
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "inter_rf needs 1 parameter: "
-		     "<rf_on>",
-		     (char *) NULL);
-    return 0;
-  }
-
-  /* copy reaction_field parameters */
-  if (! ARG_IS_I(1, rf_on)) {
-    Tcl_AppendResult(interp, "<rf_on> must be int",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  change = 2;
-	
-  if (! ((rf_on==0) || (rf_on==1)) ) {
-    Tcl_AppendResult(interp, "rf_on must be 0 or 1", (char *) NULL);
-    return 0;
-  }
-  if (interrf_set_params(part_type_a, part_type_b,rf_on) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-  return change;
-}
+///
+int interrf_set_params(int part_type_a, int part_type_b,int rf_on);
 
 MDINLINE void add_interrf_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
 				double d[3], double dist, double force[3])

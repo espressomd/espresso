@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -27,6 +28,7 @@ tests = \
 	command_syntax.tcl \
 	constraints.tcl \
 	constraints_reflecting.tcl \
+	correlation.tcl \
 	constraints_rhomboid.tcl \
 	dh.tcl \
 	dielectric_test.tcl \
@@ -58,6 +60,7 @@ tests = \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	observable.tcl \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \

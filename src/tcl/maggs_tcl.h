@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2010,2011 Florian Fahrenberger
- Copyright (C) 2010,2011 The ESPResSo project
+ Copyright (C) 2010,2011,2012 The ESPResSo project
  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
  
@@ -48,8 +48,7 @@
 #ifndef _MAGGS_TCL_H
 #define _MAGGS_TCL_H
 
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef ELECTROSTATICS
 
@@ -67,6 +66,12 @@
     @param argv    array of TCL arguments after "inter coulomb $bjerrum maggs"
 */
 int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv);
+
+/** Print out the results.
+    @return 0 for success, -1 otherwise
+    @param interp TCL Interpreter handle
+*/
+int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 /*@}*/
 
