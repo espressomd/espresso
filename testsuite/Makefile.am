@@ -31,6 +31,7 @@ tests = \
 	correlation.tcl \
 	constraints_rhomboid.tcl \
 	dh.tcl \
+	dielectric_test.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
@@ -38,6 +39,7 @@ tests = \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \
+	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
