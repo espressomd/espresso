@@ -1,5 +1,6 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -26,7 +27,7 @@ require_feature "FFTW"
 require_feature "MOL_CUT" off
 
 puts "---------------------------------------------------------------"
-puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 set epsilon 1e-3
@@ -60,6 +61,7 @@ if { [catch {
     # the P3M parameters are stored in p3m_system.data
 
     # to ensure force recalculation
+#    inter coulomb n_interpol 0
     invalidate_system
     integrate 0
 
@@ -92,9 +94,9 @@ if { [catch {
 
     set rel_prs_error [expr abs(($curprs - $pressure)/$pressure)]
     puts "p3m-charges: relative pressure deviations: $rel_prs_error"
-#    if { $rel_prs_error > $epsilon } {
-#	error "p3m charges: relative pressure error too large"
-#    }
+    if { $rel_prs_error > $epsilon } {
+	error "p3m charges: relative pressure error too large"
+    }
 
 
     ############## end, here RMS force error for P3M
@@ -124,8 +126,8 @@ if { [catch {
    part deleteall
    inter coulomb 0.0
 
-        
 } res ] } {
     error_exit $res
 }
 
+exit 0

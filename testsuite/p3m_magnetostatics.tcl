@@ -1,5 +1,6 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#    Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -20,7 +21,7 @@
 #=======================================================================================================
 # test-1:  compute trajectories for a dipolar system of two particles using the dipolar P3M-algorithm 
 #          and compare against well-know trajectories:
-#          aim: discover errors in MAGNETOSTATICS, DIPOLES, ROTATION, INTEGRATION and
+#          aim: discover errors in DIPOLES, ROTATION, INTEGRATION and
 #               CONSTRAINT for MAGNETIC FIELD
 #
 # NB:      In this first test, we also test the ability of changing epsilon to metallic BC, which
@@ -28,7 +29,8 @@
 #=======================================================================================================
 source "tests_common.tcl"
 
-require_feature "MAGNETOSTATICS" 
+require_feature "DIPOLES"
+require_feature "FFTW"
 require_feature "CONSTRAINTS"
 require_feature "ROTATION"
 
@@ -120,4 +122,4 @@ if { [catch {
    puts " P3M magnetostatics: test-1  oK"
 }
 
- 
+exit 0

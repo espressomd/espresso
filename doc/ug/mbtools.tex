@@ -1,5 +1,6 @@
-% Copyright (C) 2010,2011 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%   Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -88,8 +89,8 @@ simplebilayer example cd to the examples directory and then type:
 \end{code}
 
 The first part of this command is simply the full path to the
-appropriate espresso executable on your machine (You might have to use
-\codebox{Espresso_bin} when running on multiple processors). Obviously
+appropriate espresso executable on your machine 
+when running on multiple processors). Obviously
 you will need to have the \codebox{\$ESPRESSO\_SOURCE} and
 \codebox{\$PLATFORM} environment variables set for it to work. After
 this executable the relative paths to two tcl scripts are given. The
@@ -1156,6 +1157,22 @@ Calculate an autocorrelation function on a set of data.
 \item \var{pos2} A position vector
 \end{itemize}
 Calculate the distance between two points whose position vectors are given.
+\begin{code}    
+  ::mbtools::utils::distance_min : pos1 pos2
+\end{code}
+\begin{itemize}
+\item \var{pos1} A position vector
+\item \var{pos2} A position vector
+\end{itemize}
+Calculate the minimum image distance between two position vectors.
+\begin{code}    
+  ::mbtools::utils::min_vec : pos1 pos2
+\end{code}
+\begin{itemize}
+\item \var{pos1} A position vector
+\item \var{pos2} A position vector
+\end{itemize}
+Calculate the minimum image vector from position vector2 to postition 1, \emph{i.e.} pos1 - pos2.
 \begin{code}    
   ::mbtools::utils::normalize : vec
 \end{code}

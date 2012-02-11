@@ -1,5 +1,6 @@
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #   
@@ -30,7 +31,9 @@ namespace eval mbtools::utils {
     namespace export acorr
     namespace export normalize
     namespace export scalevec
+    namespace export min_vec 
     namespace export distance
+    namespace export distance_min
     namespace export find_proportions
     namespace export matrix_multiply
     namespace export matrix_vec_multiply
@@ -222,6 +225,26 @@ proc ::mbtools::utils::acorr { data } {
 	return $acorr
 }
 
+# ::mbtools::utils::min_vec --
+#
+# Minimal vector between two vectors
+#
+proc ::mbtools::utils::min_vec { vec1 vec2 } {
+
+
+    if { [ llength $vec1 ] != [llength $vec2] } {
+	mmsg::err [namespace current] "cannot find distance between vectors $vec1 and $vec2 because they are different lengths"
+    }
+    
+    set box [setmd box_l]
+    set sum 0
+    for {set i 0 } { $i < [llength $vec1] } { incr i } {
+	lappend diff [expr [lindex $vec1 $i] - [lindex $vec2 $i]]
+	lappend add [expr -floor(([lindex $diff $i]/[lindex $box $i])+0.5)*[lindex $box $i]]
+    }
+    set vec [vecadd $diff $add]
+    return $vec
+}
 
 # ::mbtools::utils::distance --
 #
@@ -241,6 +264,28 @@ proc ::mbtools::utils::distance { vec1 vec2 } {
     }
 
     return [expr sqrt($sum)]
+}
+
+
+# ::mbtools::utils::distance_min --
+#
+# Minimal distance between two vectors
+#
+proc ::mbtools::utils::distance_min { vec1 vec2 } {
+
+
+    if { [ llength $vec1 ] != [llength $vec2] } {
+	mmsg::err [namespace current] "cannot find distance between vectors $vec1 and $vec2 because they are different lengths"
+    }
+    
+    set box [setmd box_l]
+    set sum 0
+    for {set i 0 } { $i < [llength $vec1] } { incr i } {
+	lappend diff [expr [lindex $vec1 $i] - [lindex $vec2 $i]]
+	lappend add [expr -floor(([lindex $diff $i]/[lindex $box $i])+0.5)*[lindex $box $i]]
+    }
+    set vec [vecadd $diff $add]
+    return [veclen $vec]
 }
 
 

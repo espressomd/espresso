@@ -1,5 +1,6 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -29,8 +30,6 @@ set epsilon 5e-4
 thermostat off
 
 setmd time_step 0.001
-setmd skin 0.5
-
 proc read_data {file} {
     set f [open $file "r"]
     while {![eof $f]} { blockfile $f read auto}
@@ -39,6 +38,8 @@ proc read_data {file} {
 
 if { [catch {
     read_data "gb_system.data"
+
+    setmd skin 0.5
 
     # to ensure force recalculation
     invalidate_system

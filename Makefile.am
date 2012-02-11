@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -26,31 +27,12 @@ EXTRA_DIST = bootstrap.sh baseversion.txt samples packages $(extra)
 baseversion.txt: FORCE
 	$(top_srcdir)/config/genversion.sh $(top_srcdir) > baseversion.txt
 
-#################################################################
-# Installation of the main program
-#################################################################
-# Two binaries are generated: Espresso for the build dir,
-# Espresso.install for the installation dir. 
-# The ".install" suffix is removed upon installation.
+all: Espresso
 
-noinst_PROGRAMS = Espresso
-Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-Espresso_SOURCES = src/scriptsdir.c src/main.c
-Espresso_LDADD = src/libEspresso.a
+Espresso: 
+	$(LN_S) src/Espresso .
 
-bin_PROGRAMS = Espresso.install
-Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
-Espresso_install_SOURCES = src/scriptsdir.c src/main.c
-Espresso_install_LDADD = src/libEspresso.a
-
-# rename Espresso after installation
-install-exec-hook:
-	$(am__mv) \
-		$(DESTDIR)$(bindir)/Espresso.install \
-		$(DESTDIR)$(bindir)/Espresso
-
-uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/Espresso
+CLEANFILES = Espresso
 
 #################################################################
 # Documentation

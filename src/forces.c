@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -49,7 +49,6 @@
 #include "mdlc_correction.h"
 #include "virtual_sites.h"
 #include "constraint.h"
-#include "lbgpu.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -125,17 +124,17 @@ void calc_long_range_forces()
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     if (elc_params.dielectric_contrast_on) {
       ELC_P3M_modify_p3m_sums_both();
-      ELC_P3M_charge_assign_both();
+      ELC_p3m_charge_assign_both();
       ELC_P3M_self_forces();
     }
     else
-      P3M_charge_assign();
+      p3m_charge_assign();
 
-    P3M_calc_kspace_forces_for_charges(1,0);
+    p3m_calc_kspace_forces(1,0);
 
     if (elc_params.dielectric_contrast_on)
       ELC_P3M_restore_p3m_sums();
@@ -144,13 +143,13 @@ void calc_long_range_forces()
 
     break;
   case COULOMB_P3M:
-    P3M_charge_assign();
+    p3m_charge_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_charges(1,1);
+      nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
     else
 #endif
-      P3M_calc_kspace_forces_for_charges(1,0);
+      p3m_calc_kspace_forces(1,0);
     break;
 #endif
   case COULOMB_EWALD:
@@ -170,45 +169,36 @@ void calc_long_range_forces()
   }
 #endif  /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS  
+#ifdef DIPOLES  
   /* calculate k-space part of the magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
-#ifdef MDLC
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
-     add_mdlc_force_corrections();
+    add_mdlc_force_corrections();
     //fall through 
-#endif
   case DIPOLAR_P3M:
-    P3M_dipole_assign();
+    dp3m_dipole_assign();
 #ifdef NPT
     if(integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += P3M_calc_kspace_forces_for_dipoles(1,1);
+      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1,1);
       fprintf(stderr,"dipolar_P3M at this moment is added to p_vir[0]\n");    
     } else
 #endif
-      P3M_calc_kspace_forces_for_dipoles(1,0);
-
-      break;
+      dp3m_calc_kspace_forces(1,0);
+    
+    break;
 #endif
-#ifdef DAWAANR
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
-      dawaanr_calculations(1,0);
-      break;
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
+    dawaanr_calculations(1,0);
+    break;
   case DIPOLAR_MDLC_DS:
-     add_mdlc_force_corrections();
+    add_mdlc_force_corrections();
     //fall through 
-#endif
   case DIPOLAR_DS: 
-        magnetic_dipolar_direct_sum_calculations(1,0);
-      break;
-#endif
-
+    magnetic_dipolar_direct_sum_calculations(1,0);
+    break;
   }
-#endif  /*ifdef MAGNETOSTATICS */
+#endif  /*ifdef DIPOLES */
 }
 
 /************************************************************/
@@ -307,11 +297,11 @@ MDINLINE void init_local_particle_force(Particle *part)
 #endif
 
 #ifdef ADRESS
-  /** #ifdef THERMODYNAMIC_FORCE */
+  /* #ifdef THERMODYNAMIC_FORCE */
   if(ifParticleIsVirtual(part))
     if(part->p.adress_weight > 0 && part->p.adress_weight < 1)
       add_thermodynamic_force(part);
-  /** #endif */  
+  /* #endif */  
 #endif
 }
 
@@ -397,6 +387,33 @@ void init_forces()
 #ifdef CONSTRAINTS
   init_constraint_forces();
 #endif
+}
+
+
+// This function is no longer called from force_calc().
+// The check was moved to rescale_fores() to avoid an additional iteration over all particles
+void check_forces()
+{
+  Cell *cell;
+  Particle *p;
+  int np, c, i;
+
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++) {
+      check_particle_force(&p[i]);
+    }
+  }
+  
+  for (c = 0; c < ghost_cells.n; c++) {
+    cell = ghost_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for (i = 0; i < np; i++)
+      check_particle_force(&p[i]);
+  }
 }
 
 void init_forces_ghosts()

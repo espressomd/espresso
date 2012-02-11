@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef GRID_H
-#define GRID_H
+#ifndef _GRID_H
+#define _GRID_H
 /** \file grid.h   Domain decomposition for parallel computing.
  *
  *  The primary simulation box is divided into orthogonal rectangular
@@ -41,9 +42,9 @@
  *
  *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
 */
-#include <tcl.h>
-#include <limits.h>
 #include "utils.h"
+#include <limits.h>
+#include "communication.h"
 #include "errorhandling.h"
 
 /** Macro that tests for a coordinate being periodic or not. */
@@ -103,17 +104,25 @@ int node_grid_is_set();
 
 /** node mapping: array -> node. 
  *
- * \param node   number of the node you want to know the position for.
+ * \param node   rank of the node you want to know the position for.
  * \param pos    position of the node in node grid.        
 */
-void map_node_array(int node, int pos[3]);
+MDINLINE void map_node_array(int node, int pos[3])
+{
+  MPI_Cart_coords(comm_cart, node, 3, pos);
+}
 
 /** node mapping: node -> array. 
  *
- * \return       number of the node at position pos.
+ * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.        
 */
-int map_array_node(int pos[3]);
+MDINLINE int map_array_node(int pos[3])
+{
+  int rank;
+  MPI_Cart_rank(comm_cart, pos, &rank);
+  return rank;
+}
 
 /** map a spatial position to the node grid */
 int map_position_node_array(double pos[3]);
@@ -144,9 +153,6 @@ void calc_minimal_box_dimensions();
 /** calculate most square 2d grid. */
 void calc_2d_grid(int n, int grid[3]);
 
-/** Calculate most cubic 3d grid. */
-void calc_3d_grid(int n, int grid[3]);
-
 /** calculate 'best' mapping between a 2d and 3d grid.
  *  This we need for the communication from 3d domain decomposition 
  *  to 2d row decomposition. 
@@ -158,18 +164,6 @@ void calc_3d_grid(int n, int grid[3]);
  *  \return         index of the row direction [0,1,2].
 */ 
 int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3]);
-
-/** datafield callback for \ref node_grid. */
-int tclcallback_node_grid(Tcl_Interp *interp, void *data);
-
-/** datafield callback for \ref #periodic. Determines wether a coordinate is pbc (default). */
-int tclcallback_periodicity(Tcl_Interp *interp, void *_data);
-
-/** datafield callback for \ref box_l. Sets the box dimensions. */
-int tclcallback_box_l(Tcl_Interp *interp, void *_data);
-
-/** changes the volume by resizing the box and isotropically adjusting the particles coordinates as well */
-int tclcommand_change_volume(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales the particles accordingly */
 void rescale_boxl(int dir, double d_new);
@@ -212,7 +206,7 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
       if(pos[dir] < 0 || pos[dir] >= box_l[dir]) {
 	/* slow but safe */
 	if (fabs(pos[dir]*box_l_i[dir]) >= INT_MAX/2) {
-	  char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE);
+	  char *errtext = runtime_error(128 + ES_INTEGER_SPACE + ES_DOUBLE_SPACE);
 	  ERROR_SPRINTF(errtext,"{086 particle coordinate out of range, pos = %g, image box = %d} ", pos[dir], image_box[dir]);
 	  image_box[dir] = 0;
 	  pos[dir] = 0;

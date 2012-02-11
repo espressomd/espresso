@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef FORCES_H
-#define FORCES_H
+#ifndef _FORCES_H
+#define _FORCES_H
 /** \file forces.h Force calculation. 
  *
  *  \todo Preprocessor switches for all forces (Default: everything is turned on).
@@ -26,10 +27,8 @@
  *
  *  For more information see forces.c .
  */
-#include <tcl.h>
 #include "utils.h"
 #include "thermostat.h"
-#include "communication.h"
 #ifdef MOLFORCES
 #include "topology.h"
 #endif
@@ -40,6 +39,7 @@
 
 /* include the force files */
 #include "p3m.h"
+#include "p3m-dipolar.h"
 #include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
@@ -71,6 +71,7 @@
 #include "molforces.h"
 #include "morse.h"
 #include "elc.h"
+#include "collision.h" 
 /* end of force files */
 
 /** \name Exported Functions */
@@ -105,6 +106,10 @@ void force_calc();
 /** Set forces of all ghosts to zero
 */
 void init_forces_ghosts();
+
+/** Check if forces are NAN 
+*/
+void check_forces();
 
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
@@ -232,6 +237,12 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   double torque2[3] = { 0., 0., 0. };
   int j;
   
+
+#ifdef COLLISION_DETECTION
+  if (collision_detection_mode > 0)
+     detect_collision(p1,p2);
+#endif 
+
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
   if (force_weight<ROUND_ERROR_PREC) return;
@@ -287,43 +298,50 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #ifdef ELECTROSTATICS
 
   /* real space coulomb */
+  double q1q2 = p1->p.q*p2->p.q;
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M: {
-    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    if (q1q2) {
+      p3m_add_pair_force(q1q2,d,dist2,dist,force); 
     
-    // forces from the virtual charges
-    // they go directly onto the particles, since they are not pairwise forces
-    if (elc_params.dielectric_contrast_on)
-      ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+      // forces from the virtual charges
+      // they go directly onto the particles, since they are not pairwise forces
+      if (elc_params.dielectric_contrast_on)
+	ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+    }
     break;
   }
   case COULOMB_P3M: {
 #ifdef NPT
-    double eng = add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
+    if (q1q2) {
+      double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+	nptiso.p_vir[0] += eng;
+    }
 #else
-    add_p3m_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
+    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
 #endif
     break;
   }
 #endif
   case COULOMB_EWALD: {
 #ifdef NPT
-    double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
+    if (q1q2) {
+      double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+	nptiso.p_vir[0] += eng;
+    }
 #else
-    add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    if (q1q2) add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
 #endif
     break;
   }
   case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
+    if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
   case COULOMB_NONE:
     break;
@@ -337,27 +355,25 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   /***********************************************/
 
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   switch (coulomb.Dmethod) {
-#ifdef ELP3M
-#ifdef MDLC
+#ifdef DP3M
   case  DIPOLAR_MDLC_P3M: 
    //fall trough 
-#endif
   case DIPOLAR_P3M: {
 #ifdef NPT
-    double eng = add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
+    double eng = dp3m_add_pair_force(p1,p2,d,dist2,dist,force);
     if(integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
 #else
-    add_p3m_dipolar_pair_force(p1,p2,d,dist2,dist,force);
+    dp3m_add_pair_force(p1,p2,d,dist2,dist,force);
 #endif
     break;
   }
-#endif /*ifdef ELP3M */
+#endif /*ifdef DP3M */
   }  
-#endif /* ifdef MAGNETOSTATICS */
+#endif /* ifdef DIPOLES */
 
   /***********************************************/
   /* add total nonbonded forces to particle      */
@@ -413,7 +429,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{078 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -423,7 +439,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{079 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -434,7 +450,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{080 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -498,7 +514,7 @@ MDINLINE void add_bonded_force(Particle *p1)
 	bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
 	break;
       default:
-	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{081 add_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
@@ -517,7 +533,7 @@ MDINLINE void add_bonded_force(Particle *p1)
         bond_broken = calc_overlap_dihedral_force(p1, p2, p3, p4, iaparams, force, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{081 add_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -530,7 +546,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{082 add_bonded_force: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
@@ -538,7 +554,7 @@ MDINLINE void add_bonded_force(Particle *p1)
     switch (n_partners) {
     case 1:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
 		p1->p.identity, p2->p.identity); 
 	continue;
@@ -580,7 +596,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     case 2:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity); 
 	continue;
@@ -603,7 +619,7 @@ MDINLINE void add_bonded_force(Particle *p1)
       break;
     case 3:
       if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
 		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
 	continue;
@@ -638,6 +654,27 @@ MDINLINE void add_force(ParticleForce *F_to, ParticleForce *F_add)
 #ifdef ROTATION
   for (i = 0; i < 3; i++)
     F_to->torque[i] += F_add->torque[i];
+#endif
+}
+
+MDINLINE void check_particle_force(Particle *part)
+{
+  
+  int i;
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.f[i]) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
+
+#ifdef ROTATION
+  for (i=0; i< 3; i++) {
+    if isnan(part->f.torque[i]) {
+      char *errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
+    }
+  }
 #endif
 }
 

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -21,14 +22,13 @@
     Pressure calculation. Really similar to \ref energy.h "energy.h".
 */
 
-#ifndef PRESSURE_H
-#define PRESSURE_H
+#ifndef _PRESSURE_H
+#define _PRESSURE_H
 
 #include "utils.h"
 #include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"
-#include "communication.h"
 #include "adresso.h"
 #include "forces.h"
 #include "npt.h"
@@ -37,25 +37,20 @@
 /************************************************************/
 /*@{*/
 ///
-extern Observable_stat virials, total_pressure;
+extern Observable_stat virials, total_pressure, p_tensor, total_p_tensor;
 ///
-extern Observable_stat p_tensor;
-///
-extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded;
-///
-extern Observable_stat_non_bonded p_tensor_non_bonded;
+extern Observable_stat_non_bonded virials_non_bonded, total_pressure_non_bonded, p_tensor_non_bonded, total_p_tensor_non_bonded;
 /*@}*/
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+void init_virials(Observable_stat *stat);
+void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb);
+void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
+void init_p_tensor(Observable_stat *stat);
+void master_pressure_calc(int v_comp);
 
-/** Callback for setting \ref nptiso_struct::piston */
-int tclcallback_npt_piston(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref nptiso_struct::p_ext */
-int tclcallback_p_ext(Tcl_Interp *interp, void *_data);
-/** Callback for setting \ref nptiso_struct::p_diff */
-int tclcallback_npt_p_diff(Tcl_Interp *interp, void *_data);
 
 /** Calculates the pressure in the system from a virial expansion using the terms from \ref calculate_verlet_virials or \ref nsq_calculate_virials dependeing on the used cell system.<BR>
     @param result here the data about the scalar pressure are stored
@@ -80,7 +75,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 {
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
-#if defined(ELECTROSTATICS)  || defined(MAGNETOSTATICS)
+#if defined(ELECTROSTATICS)  || defined(DIPOLES)
   double ret=0;
 #endif
   calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
@@ -113,9 +108,9 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   /* real space coulomb */
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
     case COULOMB_P3M:
-      ret = p3m_coulomb_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
 #endif
     case COULOMB_DH:
@@ -162,38 +157,34 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   if (coulomb.Dmethod != DIPOLAR_NONE) {
     switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
     case  DIPOLAR_P3M:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles P3M .... pressure.h \n");
 	ret=0;
         break; 
 #endif
-#ifdef DAWAANR
     case  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles DAWAANR .... pressure.h \n");
 	ret=0;
         break; 
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
     case  DIPOLAR_DS:
-        /*ret = p3m_dipolar_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
+        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
 	fprintf(stderr,"virials Not working for dipoles MAGNETIC DIRECT SUM .... pressure.h \n");
 	ret=0;
         break; 
-#endif
 
       default:
       ret = 0;
     }
     virials.dipolar[0] += ret;
   }  
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 }
 
 MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, int *i, double dx[3], double force[3]) {
@@ -240,7 +231,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
         case TAB_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-	  errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	  return;
       }
@@ -257,7 +248,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
         case OVERLAP_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-          errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+          errtxt = runtime_error(128 + ES_INTEGER_SPACE);
           ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
           return;
       }
@@ -313,7 +304,7 @@ MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle
         calc_angle_3body_tabulated_forces(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -354,7 +345,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the cutoff, see calc_maximal_cutoff()
       if ((type_num==BONDED_IA_HARMONIC)&&(iaparams->p.harmonic.r_cut>0)) return;
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{088 bond broken between particles %d and %d (particles not stored on the same node)} ",
 		    p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -486,7 +477,7 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
         i = i + 4;
       }
       else {
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"add_three_body_bonded_stress: match not found for particle %d.\n", p1->p.identity);
       }
     }
@@ -502,7 +493,7 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
     }
 #endif
     else {
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"add_three_body_bonded_stress: match not found for particle %d.\n", p1->p.identity);
     }
   } 
@@ -524,10 +515,6 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
   else
     virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
-#ifdef ROTATION
-  virials.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*SQR(time_step);
-#endif
-
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)
     for(l=0;l<3;l++)
@@ -535,28 +522,12 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 
 }
 
-/** implementation of 'analyze pressure'
-    @param interp Tcl interpreter
-    @param argc   arguments
-    @param argv   arguments
-    @param v_comp flag which enables (1) compensation of the velocities required
-		  for deriving a pressure reflecting \ref nptiso_struct::p_inst
-		  (hence it only works with domain decomposition); naturally it
-		  therefore doesn't make sense to use it without NpT. */
-int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv);
-
-/** Implementation of 'analyze bins' */
-int tclcommand_analyze_parse_bins(Tcl_Interp *interp, int argc, char **argv);
-
-/** implementation of 'analyze p_IK1' */
-int tclcommand_analyze_parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv);
-
-/** implementation of 'analyze stress_tensor' */
-int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv);
-
 /** implementation of 'analyse local_stress_tensor */
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
-int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv);
+
+/** function to calculate stress tensor for the observables */
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
+
 
 /*@}*/
 

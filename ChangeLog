@@ -1,3 +1,13 @@
-2010-10-14  Olaf Lenz  <olenz@icp.uni-stuttgart.de>
+ESPResSo does not maintain a ChangeLog.
 
-	* Started ChangeLog. For older changes, see ./old/RELEASE_NOTES.
+If you want to see the user-visible changes in the different versions
+of ESPResSo, have a look at the file NEWS that came with this
+distribution. 
+
+If you want to know details about the changes in the source code of
+ESPResSo, consult the log of the git repository at
+
+  http://git.savannah.gnu.org/cgit/espressomd.git
+or
+  https://github.com/espressomd/espresso
+

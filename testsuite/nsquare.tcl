@@ -1,5 +1,6 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -18,6 +19,7 @@
 # 
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "LENNARD_JONES"
 
 if {[setmd n_nodes] > 1} {
@@ -46,13 +48,7 @@ proc write_data {file} {
     global energy pressure verlet_reuse op
     set f [open "|gzip > $file" "w"]
     set energy [analyze energy total]
-    if { [regexp "ROTATION" [code_info]]} { 
-	set pressrot [analyze pressure total]
-	set pressure [expr $pressrot - [analyze pressure ideal]]
-    } else {
-	set pressure [analyze pressure total]
-	set pressrot [expr $pressure - 0.5*[analyze pressure ideal]]
-    }
+    set pressure [analyze pressure total];
     set verlet_reuse [setmd verlet_reuse]
     blockfile $f write tclvariable {energy pressure verlet_reuse}
     blockfile $f write variable box_l
@@ -99,18 +95,17 @@ if { [catch {
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
 
-#     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
-#     puts "relative energy deviations: $rel_eng_error  ($toteng / $energy)"
-#     if { $rel_eng_error > $epsilon } {
-# 	error "relative energy error too large"
-#     }
+     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
+     puts "relative energy deviations: $rel_eng_error  ($toteng / $energy)"
+     if { $rel_eng_error > $epsilon } {
+	 error "relative energy error too large"
+     }
 
-#     if { [regexp "ROTATION" [code_info]]} { set pressure $pressrot }
-#     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
-#     puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
-#     if { $rel_prs_error > $epsilon } {
-# 	error "relative pressure error too large"
-#     }
+    set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
+    puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
+    if { $rel_prs_error > $epsilon } {
+	error "relative pressure error too large"
+    }
 
     set maxdx 0
     set maxpx 0
@@ -148,3 +143,5 @@ if { [catch {
 } res ] } {
     error_exit $res
 }
+
+exit 0

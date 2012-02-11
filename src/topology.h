@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -25,7 +26,6 @@
  *  This file contains functions for handling the system topology.
  */
 
-#include <tcl.h>
 #include "utils.h"
 
 /************************************************/
@@ -97,9 +97,9 @@ extern int topo_part_info_synced;
     particle list. */    
 void realloc_topology(int new_size);
 
-int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
-
 void sync_topo_part_info();
+
+int set_molecule_trap(int mol_num, int trap_flag,DoubleList *trap_center,double spring_constant, double drag_constant, int noforce_flag, int isrelative);
 /*@}*/
 
 

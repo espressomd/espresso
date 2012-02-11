@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -23,7 +24,8 @@ m4_define([ESPRESSO_VERSION],[esyscmd([/bin/sh config/genversion.sh .])])
 AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
-AC_CONFIG_SRCDIR([src/main.c])
+
+AC_CONFIG_SRCDIR([src/initialize.c])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -31,7 +33,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu])
+AM_INIT_AUTOMAKE([1.10 gnu subdir-objects])
 AM_MAINTAINER_MODE
 
 cat <<EOF
@@ -51,7 +53,7 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
      fake implementation for only one processor is used. Default: auto])
 ],,[with_mpi=auto])
 
-AX_MPI_ONLY([test x"$with_mpi" != xno],,[
+AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
     AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
   else
@@ -102,26 +104,29 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# test for -O5
-AC_MSG_CHECKING([whether the compiler accepts -O5])
-saved_CFLAGS=$CFLAGS
-CFLAGS="-O5 $CFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
-  AC_MSG_RESULT(yes);try_add_flag_res=yes
-],[
-  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
-])
-
-##################################
-# test for -Wall
-AC_MSG_CHECKING([whether the compiler accepts -Wall])
-saved_CFLAGS=$CFLAGS
-CFLAGS="-Wall $CFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
-  AC_MSG_RESULT(yes);try_add_flag_res=yes
-],[
-  AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
-])
+# never overwrite users CFLAGS
+if test "${CFLAGS+set}" != set; then
+  # test for -O5
+  AC_MSG_CHECKING([whether the compiler accepts -O5])
+  saved_CFLAGS=$CFLAGS
+  CFLAGS="-O5 $CFLAGS"
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+    AC_MSG_RESULT(yes);try_add_flag_res=yes
+  ],[
+    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+  ])
+  
+  ##################################
+  # test for -Wall
+  AC_MSG_CHECKING([whether the compiler accepts -Wall])
+  saved_CFLAGS=$CFLAGS
+  CFLAGS="-Wall $CFLAGS"
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
+    AC_MSG_RESULT(yes);try_add_flag_res=yes
+  ],[
+    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+  ])
+fi
 
 ##################################
 # test inlining
@@ -159,9 +164,9 @@ cat <<EOF
 ****************************************************************
 EOF
 
+AC_PROG_RANLIB
 AC_PROG_AWK
 AC_PROG_EGREP
-AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PATH_PROG(DOXYGEN,doxygen,no)
@@ -169,7 +174,7 @@ AM_CONDITIONAL(HAVE_DOXYGEN,[test .$DOXYGEN != .no])
 AC_PATH_PROG(DOT,dot)
 if test "$DOT"; then HAVE_DOT=YES; else HAVE_DOT=NO; fi
 AC_SUBST(HAVE_DOT)
-AC_SUBST(DOT_PATH, AS_DIRNAME(["$DOT"]))
+AC_SUBST(DOT_PATH, `AS_DIRNAME(["$DOT"])`)
 AC_PATH_PROG(PDFLATEX,pdflatex,no)
 AC_PATH_PROG(MAKEINDEX,makeindex,no)
 AC_PATH_PROG(BIBTEX,bibtex,no)
@@ -228,7 +233,15 @@ dnl with_tcl=no   bail out
 dnl otherwise     use the specified version
 
 if test .$with_tcl = .no; then
-   AC_MSG_ERROR([Tcl is required by ESPResSo!])
+   AC_MSG_WARN([
+*********************************************************
+*                                                       *
+* Without Tcl, ESPResSo doesn't do anything useful yet! *
+*                                                       *
+*********************************************************
+])
+   use_tcl=none
+   AC_DEFINE(TCL,[],[Whether Tcl is available])
 elif test .$with_tcl = .yes; then
 	for version in $TCL_VERSION tcl8.6 tcl8.5 tcl8.4 tcl8.3 tcl8.2 tcl; do
 		ES_ADDPATH_CHECK_LIB($version, Tcl_Init, [use_tcl=$version])
@@ -239,7 +252,7 @@ else
 fi
 
 # check the results
-if test .$use_tcl = .; then
+if test .$use_tcl = . ; then
    # Tcl was not found
    case $target_os in
 	*darwin*) AC_MSG_NOTICE(
@@ -261,18 +274,22 @@ case $target_os in
 	  extrapaths=/usr/include/$version ;;
 esac
 
-ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
-		[AC_MSG_FAILURE([
+if test .$use_tcl != .none; then
+   ES_ADDPATH_CHECK_HEADER(tcl.h, [], 
+			[AC_MSG_FAILURE([
 ********************************************************************************
 * Could not find the Tcl header files (tcl.h).                                 *
 * Please add the include path to CPPFLAGS                                      *
 * (e.g. configure CPPFLAGS=-I/usr/include)!                                    *
 ********************************************************************************
 ])], $extrapaths)
+fi
 
 if test .$use_tcl = .; then
    use_tcl=none
 fi
+
+AM_CONDITIONAL(TCL, [test .$use_tcl != .none])
 
 ##################################
 # check for tk
@@ -343,7 +360,7 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw=VERSION],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -361,8 +378,8 @@ AS_IF([test x$fftw_found = xno],[
          ])
     ])
   ])
-
-AC_DEFINE_UNQUOTED(FFTW,$fftw_found,[Whether FFTW is available])
+AS_IF([test x$fftw_found = xyes],[
+  AC_DEFINE(FFTW,[],[Whether FFTW is available])])
 
 ##################################
 # check for CUDA
@@ -405,7 +422,7 @@ if test x$with_cuda != xno; then
    # if no other compute capability is defined by the user, we need at least 1.1
    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode  arch=compute_20,code=compute_20"
    esac
    # use nvcc
    save_CC=$CC
@@ -485,11 +502,14 @@ AC_CONFIG_FILES([
 	testsuite/Makefile
 	testsuite/configs/Makefile
 	doc/Makefile
-	doc/latexit.sh
-	doc/dg/Makefile
+	doc/logo/Makefile
 	doc/ug/Makefile
+	doc/dg/Makefile
+	doc/doxygen/Makefile
 	doc/tutorials/Makefile
-	doc/tutorials/tut2/Makefile 
+	doc/tutorials/01-lennard_jones/Makefile 
+	doc/tutorials/02-charged_system/Makefile 
+	doc/latexit.sh
 	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],

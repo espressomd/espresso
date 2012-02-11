@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -35,114 +36,11 @@
 
 #ifdef OVERLAPPED 
 
-
 /** Bonded overlapped potentials: Reads overlapped parameters from a file.  
     ia_params are then communicated to each node \warning No checking is
     performed for the file read!! */
-MDINLINE int overlapped_bonded_set_params(int bond_type, int overlap_type, char * filename) 
-{
-  int i, scan_success = 0, size;
-  FILE* fp;
-
-  if(bond_type < 0)
-    return 1;
-  
-  make_bond_type_exist(bond_type);
-
-  /* set types */
-  bonded_ia_params[bond_type].type       = BONDED_IA_OVERLAPPED;
-  bonded_ia_params[bond_type].p.overlap.type = overlap_type;
-
-  /* set number of interaction partners */
-  if(overlap_type == OVERLAP_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;
-  if(overlap_type == OVERLAP_BOND_ANGLE) bonded_ia_params[bond_type].num = 2;
-  if(overlap_type == OVERLAP_BOND_DIHEDRAL) bonded_ia_params[bond_type].num = 3;
-
-  /* set max bondlength of between two beads, in Unit Angstrom */
-  bonded_ia_params[bond_type].p.overlap.maxval = 6.0;
-
-  /* copy filename */
-  size = strlen(filename);
-  bonded_ia_params[bond_type].p.overlap.filename = (char*)malloc((size+1)*sizeof(char));
-  strcpy(bonded_ia_params[bond_type].p.overlap.filename,filename);
-
-  fp = fopen( filename , "r");
-  if ( !fp )
-    return 2;
-  
-  /* Read in size of overlapps from file */
-  scan_success = fscanf( fp , "%d ", &size);
-  if ( scan_success < 1 ) { 
-    fclose(fp);
-    return 3;
-  } 
-
-  bonded_ia_params[bond_type].p.overlap.noverlaps = size;
-
-  /* allocate overlapped funciton parameter arrays */
-  bonded_ia_params[bond_type].p.overlap.para_a = (double*)malloc(size*sizeof(double));
-  bonded_ia_params[bond_type].p.overlap.para_b = (double*)malloc(size*sizeof(double));
-  bonded_ia_params[bond_type].p.overlap.para_c = (double*)malloc(size*sizeof(double));
-
-   /* Read in the overlapped funciton parameter data */
-  for (i=0; i<size; i++) {
-  	scan_success = fscanf(fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_a[i]);
-  	if ( scan_success < 1 ) { 
-    		fclose(fp);
-    		return 3;
-  	} 
-  	scan_success = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_b[i]);
-  	if ( scan_success < 1 ) { 
-    		fclose(fp);
-    		return 3;
-  	} 
-	scan_success = fscanf( fp, "%lg ", &bonded_ia_params[bond_type].p.overlap.para_c[i]);
-  	if ( scan_success < 1 ) { 
-    		fclose(fp);
-    		return 3;
-  	} 
-  }
-  fclose(fp);
-
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-/// parse parameters for the overlapped bonded potential
-MDINLINE int tclcommand_inter_parse_overlapped_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  int overlap_type = OVERLAP_UNKNOWN;
-
-  if (argc < 3 ) {
-    Tcl_AppendResult(interp, "overlappedd needs two string parameter: "
-		     "<type> <filename>", (char *) NULL);
-    return (TCL_ERROR);
-  }  
-
-  if (ARG_IS_S(1,"bond"))     overlap_type = OVERLAP_BOND_LENGTH;
-  if (ARG_IS_S(1,"angle"))    overlap_type = OVERLAP_BOND_ANGLE;
-  if (ARG_IS_S(1,"dihedral")) overlap_type = OVERLAP_BOND_DIHEDRAL;
-  if (overlap_type == OVERLAP_UNKNOWN) {
-    Tcl_AppendResult(interp, "Unknown type of bonded overlapped interaction. Should be: "
-		     "\"bond\" or \"angle\" or \"dihedral\"", (char *) NULL);
-    return (TCL_ERROR);
-  }
-
-  switch (overlapped_bonded_set_params(bond_type, overlap_type, argv[2])) {
-  case 1:
-    Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
-    return TCL_ERROR;
-  case 2:
-    Tcl_AppendResult(interp, "cannot open \"", argv[2], "\"", (char *)NULL);
-    return TCL_ERROR;
-  case 3:
-    Tcl_AppendResult(interp, "the number of parameters is wrong in the file \"", argv[2], "\"", (char *)NULL);
-    return TCL_ERROR;
-  default:
-    return TCL_OK;
-  }
-}
+int overlapped_bonded_set_params(int bond_type, int overlap_type,
+				 char * filename);
 
 /** Computes the two body overlapped bonded force.
     Adds this force to the particle forces in forces.h (see \ref tclcommand_inter). 
@@ -194,7 +92,7 @@ MDINLINE int calc_overlap_bond_force(Particle *p1, Particle *p2, Bonded_ia_param
     @param p2        Pointer to second/middle particle.
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param dx        particle distance vector
-    @param force     returns force of particle 1
+    @param _energy   returns energy of this interaction
     @return 0.
     Needs feature OVERLAPPED compiled in (see \ref config.h).
 */
@@ -341,12 +239,13 @@ MDINLINE int overlap_angle_energy(Particle *p_mid, Particle *p_left,
     @param iaparams  bond type number of the angle interaction (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
+    @param force3 returns force of particle 3
     @return 0
     Needs feature OVERLAPPED compiled in (see \ref config.h). 
 */
 MDINLINE int calc_overlap_dihedral_force(Particle *p2, Particle *p1,
-				     Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
-				     double force2[3], double force1[3], double force3[3])
+					 Particle *p3, Particle *p4, Bonded_ia_parameters *iaparams,
+					 double force2[3], double force1[3], double force3[3])
 {
  int i;
   /* vectors for dihedral angle calculation */

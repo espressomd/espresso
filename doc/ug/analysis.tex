@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%    Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -23,18 +24,18 @@
 
 \es provides some tools for online (during the simulation run) and
 offline (on stored data) analysis of your simulation. The
-\keyword{analyze} command can hereby has into two main uses:
-Calculation of observables (\keyword{analyze \var{observable}}) and
-definition and analysis of topologies in the system (\keyword{analyze
-  \var{topology command}}).
+\keyword{analyze} command has two main uses: Calculation of
+observables (\keyword{analyze \var{observable}}) and definition and
+analysis of topologies in the system (\keyword{analyze \var{topology
+    command}}).
 
 In addition, \es offers the command \keyword{uwerr} (see section
 \ref{sec:uwerr} for computing statistical errors in time series.
 
 \section{Measuring observables}
 
-The \keyword{analyze}-command provides online-calculation of local and
-global observables.
+The command \keyword{analyze} provides online-calculation of local and
+global observables. 
 
 \subsection{Minimal distances between particles}
 \label{analyze:mindist}
@@ -84,8 +85,8 @@ types specified in \var{part\_type\_list\_a} around particles with
 types specified in \var{part\_type\_list\_b} with distances between
 \var{rmin} and \var{rmax}, binned into \var{rbins} bins. The
 bins are either equidistant (if $\var{log\_flag} = 0$) or
-logarithmically equidistant (if $\var{log_flag} \geq 1$). If an
-integrated distribution is required, use $\var{int_flag}=1$. The
+logarithmically equidistant (if $\var{log\_flag} \geq 1$). If an
+integrated distribution is required, use $\var{int\_flag}=1$. The
 distance is defined as the \emph{minimal} distance between a particle
 of one group to any of the other group.
 
@@ -105,9 +106,9 @@ The output corresponds to the blockfile format (see section
 \label{analyze:radialdensitymap}
 
 \begin{essyntax}
-  analyze radial_density_map xbins ybins xrange yrange
-  \{axisofrotation\} \{centerofrotation\} \{beadtypelist\}
-  \opt{thetabins}
+  analyze radial_density_map \var{xbins} \var{ybins} \var{xrange} \var{yrange}
+  \opt{\var{axisofrotation} \var{centerofrotation} \var{beadtypelist}
+  \opt{\var{thetabins}}}
 \end{essyntax}
 
 Returns the radial density of particles around a given
@@ -116,14 +117,14 @@ axis. Parameters are:
 \todo{Someone who knows or wrote this command should check this.}
 
 \begin{itemize}
-\item \keyword{xbins} histogram bins in x direction.
-\item \keyword{ybins} histogram bins in y direction.
-\item \keyword{xrange} range for analysis in x direction.
-\item \keyword{yrange} range for analysis in y direction.
-\item \keyword{axisofrotation} rotate around given axis. (x, y, or z)
-\item \keyword{centerofrotation} rotate around given point.
-\item \keyword{beadtypelist} only analyze beads of given types.
-\item \keyword{thetabins} histogram bins in angle theta.
+\item \var{xbins} histogram bins in x direction.
+\item \var{ybins} histogram bins in y direction.
+\item \var{xrange} range for analysis in x direction.
+\item \var{yrange} range for analysis in y direction.
+\item \var{axisofrotation} rotate around given axis. (x, y, or z)
+\item \var{centerofrotation} rotate around given point.
+\item \var{beadtypelist} only analyze beads of given types.
+\item \var{thetabins} histogram bins in angle theta.
 \end{itemize}
 
 \subsection{Modes}
@@ -458,13 +459,15 @@ Variant \variant{2} will return the total pressure only.  Variants
 \variant{3}, \variant{4} and \variant{5} return the corresponding
 contributions to the total pressure.
 
+\warning{Pressure works only with certain interactions and
+features. Read in detail before use!}
+
 \todo{Document arguments nb_inter, nb_intra, tot_nb_inter and
   tot_nb_intra}
 
-\todo{Description of how electrostatic contribution to Pressure is calculated}
-
 The pressure is calculated (if there are no electrostatic interactions) by 
 \begin{equation}
+\label{eq:ptens}
   p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
 \end{equation}
 where $f$ is the number of degrees of freedom of each particle, $V$
@@ -481,10 +484,19 @@ when the ROTATION option is turned off and
  when the ROTATION option is compiled in.  $I_{i}$ is the moment of inertia of the particle and
  $w_{i}$ is the angular velocity.
 
-Care should be taken when using constraints of any kind, since these are not accounted for
-in the pressure calculations. . Concerning bonded interactions
-only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-For all electrostatic interactions only the real space part is included.
+Note that Equation~\ref{eq:ptens} can only be applied to pair potentials and central forces.
+Description of how contributions from other interactions are calculated is beyond the scope
+of this manual. Three body potentials are implemented following the procedure in 
+Ref.~\cite{thompson09a}.
+A different formula is used to calculate contribution from electrostatic interactions 
+in P3M. For electrostatic interactions, the $k$-space contribution is not 
+well tested, so use with caution!
+\todo{Description of how electrostatic contribution to Pressure is calculated}
+Anything outside that is currently not implemented.
+Four-body dihedral potentials are not included.
+In case of rigid body rotation, virial contribution from torques is not included.
+Constraints of any kind are not currently accounted for in the pressure calculations. 
+The pressure is no longer correct, e.g., when particles are confined to a plane.
 
 The command is implemented in parallel.
 
@@ -526,6 +538,10 @@ Computes the stress tensor of the system.  The various options are equivalent to
 \keyword{analyze pressure} in \vref{analyze:pressure}. It is called a stress tensor but the sign
 convention follows that of a pressure tensor.
 
+\warning{Stress tensor works only with certain interactions and features. 
+Same restrictions as in the case of Pressure are applicable 
+(see scetion~\ref{analyze:pressure}).}
+
 The stress tensor is calculated by 
 \begin{equation}
   p^{(kl)} = \frac{\sum_{i} {m_{i}v_{i}^{(k)}v_{i}^{(l)}}}{V} + \frac{\sum_{j>i}{F_{ij}^{(k)}r_{ij}^{(l)}}}{V}
@@ -537,13 +553,6 @@ means that when the ROTATION option is compiled in the instantaneous pressure ca
 \keyword{analyze pressure} will be different from the pressure implied by
 the stress tensor.  However, the time averages should be in agreement.
 
-If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
-stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
-only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
-For all electrostatic interactions only the real space part is included.
-
-Care should be taken when using constraints of any kind, since these are not accounted for
-in the stress tensor calculations.
 
 The command is implemented in parallel.
 
@@ -583,8 +592,9 @@ tensor is calculated using the Irving Kirkwood method.  That is, a given interac
 towards the stress tensor in a bin proportional to the fraction of the line connecting the two
 particles that is within the bin.
 
-If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
-local stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
+If the P3M and MMM1D electrostatic methods are used, these
+interactions are not included in the local stress tensor.  The DH and
+RF methods, in contrast, are included. Concerning bonded interactions 
 only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
 For all electrostatic interactions only the real space part is included.
 
@@ -607,8 +617,7 @@ specifying the local pressure tensor in each bin.
 \analyzeindex{topologies}
 \label{analyze:set}
 
-The following set of functions is designed to facilitate analysis 
-of molecules. Molecules are expected to be a group of particles
+The following set of functions is designed to facilitate analysis of molecules. Molecules are expected to be a group of particles
 comprising a contiguous range of particle IDs. Each molecule
 is a set of consecutively numbered particles and all molecules
 are supposed to consist of the same number of particles.
@@ -632,7 +641,7 @@ Variant \variant{1} defines a set of \var{n\_chains} chains of equal
 length \var{chain\_length} which start with the particle with particle
 number \var{chain\_start} and are consecutively numbered (\ie the last
 particle in that topology has number $\var{chain\_start} +
-\var{n\_chains}*\var{chain\_length}$). 
+\var{n\_chains}*\var{chain\_length} - 1$). 
 
 Variant \variant{2} synchronizes topology and particle data, assigning \var{mol\_id} values to particles.
 
@@ -941,58 +950,314 @@ Variant \variant{1} returns all stored configurations, while variant
 \}
 \end{code}
 
-\section{Statistical analysis}
 
-\subsection{Computing averages and errors}
+\section{Correlations and observables}
+\index{Correlations}
+\index{Observables}
 
+\subsection{Introduction to the concept}
+There is a fundamental difference between the observables defined in this
+section and in the previous one. All the observables computed using the
+\lit{analyze} command were temporary variables in the simulation kernel
+and ceased to exist when they were returned to the script level.
+The new concept of observables defined by the \lit{observable} command
+creates variables in the kernel which exist for the entire simulation 
+and when desired, their value is updated and either returned at the 
+script level, or used by the kernel for further processing.
+The ultimate goal of the whole framework is to provide a tool for
+data processing on the fly. This is often desirable for 
+the calculation of correlation functions. 
+
+In general, a correlation function is any function of the form
+\begin{equation}
+C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>\,,
+\end{equation}
+where $t$ is time, $\tau$ is the time difference between the moments
+when the observables $A$ and $B$ were measured and $\otimes$ is an
+arbitrary operator which produces a vector quantity 
+$C$ from the two vectors $A$ and $B$. The ensemble averaging $\left< \cdot \right>$
+implies averaging over all time origins $t$ and when applicable also
+over realizations of observables $A$ and $B$ within individual configurations.
+When both $A$ and $B$ are
+the same quantity, $C(\tau)$ is called the autocorrelation, 
+in the opposite case it is called the cross-correlation.
+
+A stanadard example of an autocorrelation function is the velocity
+autocorrelation function (vacf) and other correlation functions
+which are useful in the Green-Kubo relations. In this case the observables
+are particle velocities and the opeartion is scalar product.
+The mean-square displacement (msd) is formally the same category of
+a function, but now the observables are particle positions and
+the operation is the square distance. 
+
+In general, correlation functions
+contain information on dynamics of the system. A typical vacf of a 
+simple liquid oscillates and its envelope decays to zero beyond the 
+time scale of molecular collisions.
+To obtain it, one has to sample the velocities at very short intervals,
+typically every timestep. If this should be done through the script interface
+of \es, a significant part of cpu time would be spent on passing the control
+from script to kernel and back. In more complex systems, the physically relevant 
+part of correlation functions may span many orders of magnitude, ranging
+from the time step to the total simulation time. In such cases offline
+analysis is not possible becasue there is not enough space on the hard
+drive to store the data. In addition to that, the trivial correlation algorithm
+scales as $(\tau_{\mathrm{min}}/\tau_{\mathrm{max}})^2$ and if $\tau$
+should span several orders of magnitude, the computation of correlation
+functions may easily consume more cpu time than the actual simulation.
+\es now features an efficient multiple tau correlation algorithm which
+allows for computation of correlation functions over many orders of magnitude.
+It is described in more detail in section~\ref{sec:multipleTau}.
+
+The generic correlation interface of \es may process either observables
+defined in the kernel, or data which it reads from an external file
+or values entered through the scripting interface. 
+\todo{Processing data from TCL input or from input files is not
+  fully supported yet.}
+Thus, apart from
+data processing on the fly, it can also be used as an efficient correlator
+for data produced by other programs. In all cases it produces a matrix of 
+$n+2$ columns. The first two columns are the values of $\tau$ and 
+the number of samples takes for a particular value of $\tau$ and the
+remaining ones are the elements of the $n$-dimensional $C(\tau)$.
+
+
+An example of the usage of observables and correlations is provided 
+in the script \lit{correlation.tcl} in the samples directory.
+
+\subsection{Observables}
+\label{ssec:observable}
+\newescommand{observable}
+\index{Observables}
+
+The following lines describe a generic call to work with 
+observables. Different observables may require different further parameters.
 \begin{essyntax}
-  \variant{1} calcObAv \var{file} \var{index} \opt{\var{start}}
-  \variant{2} calcObErr \var{file} \var{index} \opt{\var{start}}
-  \variant{3} calcObsAv \var{file} \{ \var{i1} \var{i2} \dots \} \opt{\var{start}}
-  \variant{4} nameObsAv \var{file} \{ \var{name1} \var{name2} \dots \} \opt{\var{start}}
-  \variant{5} findObsAv \var{val} \var{what}
+  \variant{1} observable new \var{name} \opt{\var{parameters+}}
+  \variant{2} observable \var{id} print \opt{formatted}
+  \variant{3} observable \var{id} delete
+\end{essyntax}
+  
+\variant{1} 
+Defines a new observable and returns an integer $id$ which has been assigned to it.
+The keyword \var{name} and the parameters have to correspond to one of the
+observables described below.
+
+\variant{2} Prints the value of the observable with a given $id$. If the observable
+refers to the current state of the system, its value is updated before printing.
+\todo{Formatted printing is not fully supported yet.}
+
+\variant{3} Deletes the observable and makes the $id$ free for a new one.
+
+\subsubsection{Implemented observables and their arguments}
+Currently the following observables are implemented:
+
+\todo{Missing description of parameters}
+  \begin{itemize}
+    \item \lit{particle_positions} \\
+          Types or ids have to be specified as described above.
+    \item \lit{particle_velocities}\\
+          Types or ids have to be specified as described above.
+    \item \lit{com_velocity}
+    \item \lit{com_position}
+    \item \lit{particle_positions}
+    \item \lit{particle_positions_conditional} \todo{this has been lost in a git stash and has to be re-implemented.}
+    \item \lit{stress_tensor}
+    \item \lit{stress_tensor_acf_obs}
+    \item \lit{particle_currents}
+    \item \lit{currents}
+    \item \lit{dipole_moment}
+    \item \lit{structure_factor}
+    \item \lit{interacts_with types \var{type\_list\_1} types \var{type\_list\_2} \var{cutoff} } \\
+          For each particle belonging to \var{type\_list\_1} the observable is unity if 
+	  a neighbour of a type from \var{type\_list\_2} is found within the distance 
+	  defined by the \var{cutoff}. If no such neighbour is found, the observable is
+	  zero. 
+	  The observable has as one dimension per each particle which has a type 
+	  given in the type list.
+    \item \lit{nearest_neighbour_conditional} \\
+          For each particle belonging to \var{type\_list\_1} return the particle id
+	  of the nearest neighbour which has a particle type from \var{type\_list\_2}. 
+	  If no such neighbour is found within the \var{cutoff}, it returns -1. 
+	  The observable has 2 dimensions per particle of \var{type\_list\_1}. First
+	  value is the neighbour id, the second one is the condition. Condition is
+	  incremented when the particle state changes from \emph{no partners}
+	  to \emph{some partner} or vice versa. In addition, in the former case
+	  also the sign is changed.
+          
+    \item \lit{density_profile}
+    \item \lit{lb_velocity_profile}
+    \item \lit{radial_density_profile}
+    \item \lit{radial_flux_density_profile}
+    \item \lit{flux_density_profile}
+    \item \lit{lb_radial_velocity_profile}
+    \todo{the following observables do not work propely yet}
+    \item \lit{textfile \var{textfilename} \opt{\var{column\_1} \dots \var{column\_n} }}
+      This option allows to read data from an arbitrary text file, organized in columns.
+      The name of the textfile is 
+    \item \lit{tclinput \var{dimQ} } TCL input of length  \var{dimQ} is used as ``observable''. 
+  \end{itemize}
+
+The generic arguments to any observable for which they make sense are
+  \begin{itemize}
+    \item \lit{all} \\
+          Requests observable calculation based on all particles in the system.
+    \item \lit{types} \var{ type\_list } \\
+          Restricts observable calculation to a given particle type(s). The type
+	  list is a tcl list of existing particle types.
+    \todo{All should not be a keyword but a default value?}
+    \item \lit{id} \var{ id\_list } \\
+          Restricts observable calculation to a given list of particle id(s). The id 
+	  list is a tcl list of existing particle ids.
+    \todo{the following two do not really work yet}
+    \item \lit{blocks} \var{ m } \\
+          From an $n$-dimensional observable craeates an $n/m$-dimensional one by 
+	  averaging over $m$ neighbouring entries in the data array.
+    \item \lit{strides} \var{ m } \\
+          From an $n$-dimensional observable craeates an $n/m$-dimensional one by 
+	  averaging over entries which are separated by $m$ in the data array.
+  \end{itemize}
+
+
+\subsection{Correlations}
+\label{ssec:correlations}
+\newescommand{correlation}
+\index{Correlations}
+
+The observables defined by the \lit{observable} command can be used further 
+to compute correlation functions. This requires some history of the observable values
+to be stored in buffers and may consume a considerable amount of computer time.
+The correlation first has to be defined by saying which observables 
+are to be correlated, what should be the correlation operation, sampling
+frequency, etc. When a correlation is defined, its id is returned which is
+used further to do other operations with the correlation.
+The general form is the following.
+\begin{essyntax}
+  \variant{0} correlation 
+  \variant{1} correlation n_corr
+  \variant{2} correlation \var{id} \{ update | autoupdate \{ start | stop\}  \}
+  \variant{3} correlation \var{id} finalize
+  \variant{4} correlation \var{id} print \opt{ average1 | variance1 | correlation_time | avarage_errorbars | spherically_averaged_sf }
+  \variant{5} correlation \var{id} write_to_file \var{filname}
+  \variant{6} correlation new obs1 \var{id1} \opt{obs2 \var{id2}} corr_operation \var{operation} dt \var{delta\_t} tau_max \var{tau\_max} \opt{tau_lin \var{tau\_lin}} \opt{compress1 \var{name} \opt{compress2 \var{name}} }
 \end{essyntax}
 
-These commands will compute mean values or errors of the data in file
-\var{file}. The data in \var{file} should be stored column-wise. If
-\var{start} is specified, the first \var{start} lines will be ignored.
+Variants \variant{1} to \variant{5} operate only on existing
+correlations. Variant\variant{6} creates an new correlation.
+  
+Variant \variant{0} currently prints short help on using the
+correlations. In future it should return the parameters of all
+correlations which are currently defined.
+\todo{fix}
 
-Variant \variant{1} returns the mean value of the column with index
-\var{index} in \var{file}, variant \variant{2} returns the error of
-its mean value. Variant \variant{3} computes mean values and errors of
-the observables with index $\var{i1}, \var{i2}, \dots$ in
-\var{file}. It expects the first line of \var{file} to contain the
-names of the columns, which it will also return.
+Variant \variant{1} returns the number of currently defined
+correlations.
 
-In variant \variant{4}, the names used in the first line of \var{file}
-can be used to specify which column is to be used.  The mean value and
-its error are computed for each of the columns.
+Variant \variant{2} updates the correlation estimates. Using this is
+deprecated, unless you are updating your correlations using data from
+the script level.
 
-\todo{????}  Variant \variant{5} extracts the values whose names are
-given in the tcl-list \var{val} at their respective positions in
-\var{what}, where \var{what} has the list-format as returned by
-variant \variant{3}, returning just these values as tiny tcl-list.
+Variant \variant{2} starts or stops automatically updating the
+correlation estimates. The update frequency is automatically adjusted
+based on the value of \var{dt} provided when defining the correlation.
+With \lit{update} it updates the correlation estimates based on the instantaneous
+state of the system.
+A correlation cen be either in autoupdate or manual update regime but not in both.
+In the manual update mode it is the user's responsibility to provide samples
+in the proper time interval. The correlator has no way to check for it.
+It is technically possible to stop autoupdating and start updating manually but
+make if you want to do it, make sure that you exactly know what you are doing.
 
-\minisec{Output format (variant \variant{3})}
+Variant \variant{3} correlates all data from history which are left in
+the buffers. Once this has been done, the history is lost and no
+further updates are possible. This operation improves the quality of
+data in the tail of the  
+correlation function if \var{tau\_max} is comparable to the total
+simulation time. If \var{tau\_max} is much shorter, it does not
+have much effect.
 
-\begin{code}
-\{
-  \var{#samples} 
-  \{ \var{name1} \var{name2} \dots \}
-  \{ \var{mean1} \var{mean2} \dots \} 
-  \{ \var{error1} \var{error2} \dots \}
-\}
-\end{code}
+Variant \variant{4} returns the current status of the correlation
+estimate as a Tcl variable. 
 
-\minisec{Output format (variant \variant{4})}
+Variant \variant{5} writes the current status of the correlation
+estimate to the specified filename.
 
-\begin{code}
-\{
-  \var{#samples} 
-  \var{mean1} \var{mean2} \dots
-  \var{error1} \var{error2} \dots
-\}
-\end{code}
+Variant \variant{6} defines a new correlation and returns an integer
+$id$ which has been assigned to it. Its further arguments are
+described below.
+
+\begin{arguments}
+\item \lit{obs1} and \lit{obs2} \\ 
+  are ids of the observables A and B that are to correlated. The ids have to refer to existing 
+  observables which have been previously defined by the \lit{observable} command.
+  Some observables are already implemented, and others can be easily added. This can be done
+  with very limited \es{} knowledge just by following the implementations that are already
+  in. If \lit{obs2} is omitted, autocorrelation of \lit{obs1} is calculated by default.
+\item \lit{corr_operation} \\
+  The operation that is performed on $A(t)$ and $B(t+\tau)$ to obtain $C(\tau)$. 
+  The following operations are currently is available:
+  \begin{itemize}
+    \item List them here! \todo{write the list}
+  \end{itemize}
+\item \lit{dt} \\
+  The time interval of sampling data points. When autoupdate is used, \var{dt} has
+  to be a multiple of timestep. It is also used to produce time axis in real units.
+  \textit{Warning: if \var{dt} is close to the timestep, autoupdate is strongly recommended.
+  Otherwise cpu time is wasted on passing the control between the script and kernel.}
+\item \lit{tau_max} \\
+  This is the maximum value of $\tau$ for which the correlation should be computed.
+  \textit{Warning: Unless you are using the multiple tau correlator, choosing \var{tau\_max}
+  of more than 100\var{dt} will result in a huge computational overhead.
+  In a multiple tau correlator with reasonable parameters, 
+  \var{tau\_max} can span the entire simulation without
+  too much additional cpu time.}
+\item \lit{tau_lin} \\
+  The number of datapoints for which the results are linearly spaced in tau. 
+  This is a parameter of the multiple tau correlator. If you want to use it, make sure that
+  you know how it works. By default, it is set equal to \var{tau\_max} which results
+  in the trivial linear correlator. By setting \var{tau\_lin} < \var{tau\_max} the multiple
+  tau correlator is switched on. In many cases, \var{tau\_lin}=16 is a good choice
+  but this may strongly depend on the observables you are correlating.
+  For more information, we recommend to read Ref.\cite{ramirez10a} or to perform
+  your own tests.
+\item \lit{compress1} and \lit{compress2} \\
+  Are functions used to compress the data when going to the next level of the 
+  multiple tau correlator. Different compression functions for different observables
+  can be specified if desired, otherwise the same function is used for both.
+  Default is \lit{discard} which takes one of the observable
+  values and discards the other one. This is safe for all observables but produces poor 
+  statistics in the tail. For some observables, \lit{linear} compression can be used which
+  makes an average of two neighbouring values but produces systematic errors.
+  Depending on the observable, the systematic error can be anything between
+  harmless and disastrous. For more information, we recommend to read 
+  Ref.\cite{ramirez10a} or to perform your own tests.
+\end{arguments}
+
+\subsubsection{Multiple tau correlator}
+\label{sec:multipleTau}
+\index{Multiple tau correlator}
+
+Here we briefly describe the multiple tau correlator which is implemented in \es.
+For a more detailed description and discussion of its behaviour with respect to
+statistical and systematic errores, please read the cited literature.
+This type of correlator has been in use for years in the analysis of
+dynamic light scattering~\cite{dls}. About a decade later it has been
+re-invented for the Fluorescence Correlation Spectroscopy (FCS)~\cite{fcs}.
+Despite its obvious advantages, has been used scarcely by the simulation community.
+Even a detailed description in the book of Frenkel and Smit~\cite{frenkel02b}
+for the special case of the velocity autocorrelation function did not really
+help spreading the message.
+
+\begin{figure}[ht]
+%\includegraphics[width=7cm]{figures/data_set_N}
+\caption{Schematic representation of buffers in the correlator.}
+\label{fig:dataSet}
+\end{figure}
+
+Let us consider a set of $N$ observable values as schematically shown
+in Figures~\ref{fig:dataSet}, where a value of index $i$ was measured
+in time $i\delta t$. To simplify the notation, we further drop $\delta t$
+when refering to observables.
 
 \section{\lit{uwerr}: Computing statistical errors in time series}
 \label{sec:uwerr}

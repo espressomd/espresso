@@ -1,6 +1,7 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-#   Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#   
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -34,6 +35,9 @@ source "tests_common.tcl"
 
 require_feature "TUNABLE_SLIP"
 require_feature "DPD"
+require_feature "CONSTRAINTS"
+require_feature "EXTERNAL_FORCES"
+require_feature "LENNARD_JONES"
 
 puts "----------------------------------------"
 puts "- Testcase tunable_slip.tcl running on [format %02d [setmd n_nodes]] nodes  -"
@@ -48,11 +52,8 @@ set box_y                $box_l
 
 set box_z                $box_l
 
-# reuse of Verlet lists  
-setmd verlet_reuse
-
-# skin depth
-setmd skin               0.4
+# skin depth, not used here
+setmd skin               0.0
 
 # box length
 setmd box_l              $box_l $box_l $box_l
@@ -62,12 +63,6 @@ set volume               [expr $box_x*$box_y*$box_z]
 
 # periodic boundary conditions
 setmd periodic           1 1 1
-
-# cell size
-setmd cell_size
-
-# cell grid
-setmd cell_grid  
 
 ################################################
 #         Solvent parameters                   #
@@ -109,9 +104,8 @@ set lj_off               0.0
 ################################################
 #            Thermostat                        #
 ################################################
-# temperature
-setmd temperature
 
+# temperature
 set temp                 1.0
 
 #Tunable Slip Boundaries
@@ -206,18 +200,27 @@ proc measure_kinetic_energy {} {
     set energy [analyze energy kinetic]
     set E_ref [expr $n_solvent*1.5]
     if {$energy <= $E_ref} {
-	puts "Tunable-slip layer does not work ..."
-	puts "Tunable slip boundaries fail!"
-	exit 1;
+	error "Tunable-slip layer does not work ..."
     }
 }
 
 ################### Integration #############################
 
-for {set step 0} {$step < $int_loops} {incr step} {
-    integrate $int_steps
+puts "cells = [setmd cell_grid]"
+puts "max_range = [setmd max_range]"
+puts "n_particles = [setmd n_part]"
+
+if { [catch {
+
+    for {set step 0} {$step < $int_loops} {incr step} {
+	puts "step $step"
+	integrate $int_steps
+    }
+
+    measure_kinetic_energy
+
+} res ] } {
+    error_exit $res
 }
 
-measure_kinetic_energy
-
-puts "Tunable-slip boundary conditions with constraints are ready..."
+exit 0

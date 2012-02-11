@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -43,8 +44,6 @@
  */
 
 #include "config.h"
-#include "debug.h"
-
 #include "interaction_data.h"
 
 #ifdef ELECTROSTATICS
@@ -87,12 +86,9 @@ extern ewald_struct ewald;
 /************************************************************/
 /*@{*/
 
-/// print the ewald parameters to the interpreters result
-int tclprint_to_result_EWALD(Tcl_Interp *interp);
+///
+int ewald_set_params(double r_cut, double alpha, int kmax);
 
-/// parse the ewald parameters
-int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv);
-  
 /// sanity checks
 int EWALD_sanity_checks();
 
@@ -115,7 +111,7 @@ void EWALD_scaleby_box_l();
 double EWALD_calc_kspace_forces(int force_flag, int energy_flag);
 
 /** Calculate real space contribution of coulomb pair forces.
-    If NPT is compiled in, it returns the energy, which is needed for NPT. */
+    Returns the energy, which is needed for NPT. */
 MDINLINE double add_ewald_coulomb_pair_force(Particle *p1, Particle *p2,
 					   double *d,double dist2,double dist,double force[3])
 {
@@ -142,9 +138,7 @@ MDINLINE double add_ewald_coulomb_pair_force(Particle *p1, Particle *p2,
     ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,dist,fac2));
     ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: ESR  f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,dist,fac2));
 
-#ifdef NPT
     return fac1 * erfc_part_ri;
-#endif
   }
   return 0.0;
 }

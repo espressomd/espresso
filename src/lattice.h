@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -184,7 +185,7 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
      and the relative position of the particle in this cell */ 
   for (dir=0;dir<3;dir++) {
 
-    rel = (lpos = pos[dir] - my_left[dir])/lattice->agrid + 1.0; // +1 for halo offset
+    rel = (lpos = pos[dir] - my_left[dir])/lattice->agrid + 0.5; // +1 for halo offset
     ind[dir] = (int)floor(rel);
     
     /* surrounding elementary cell is not completely inside this box,

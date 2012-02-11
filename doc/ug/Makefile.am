@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -27,7 +28,7 @@ ug_TEXFILES = \
 	analysis.tex \
 	io.tex \
 	lb.tex \
-	maggs.tex \
+	memd.tex \
 	aux.tex \
 	internal.tex \
 	contributing.tex \
@@ -38,16 +39,22 @@ ug_TEXFILES = \
         mbtools.tex
 
 ug_FIGURES = \
-	figures/logo.png \
 	figures/nacl-rdf.pdf \
 	figures/dihedral-angle.pdf \
 	figures/salt.png \
-	figures/hbond.pdf
+	figures/hbond.pdf \
+	figures/diamond.png \
+	figures/elc-errordist.pdf \
+	figures/fullerene.png \
+	figures/maggs-charge-assignment.pdf \
+	figures/maggs-initial-scheme.pdf \
+	figures/maggs-rotation.pdf
 
 ug_FILES = \
 	$(ug_TEXFILES) \
 	$(ug_FIGURES) \
-	bibliography.bib
+	bibliography.bib \
+	todonotes.sty
 
 EXTRA_DIST = \
 	$(ug_FILES) \
@@ -64,8 +71,7 @@ if HAVE_LATEX
 	cd $(srcdir); \
 		$(AWK) -f assemble_quickref.awk $(ug_TEXFILES) \
 			> $(abs_builddir)/quickref.inp
-	sh ../latexit.sh $(srcdir) ug || rm ug.pdf
-	@echo "See LaTeX output in ug.log"
+	sh ../latexit.sh $(srcdir) ug
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the User's Guide without pdflatex, makeindex and bibtex."

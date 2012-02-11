@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -49,9 +49,8 @@
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define ROTATION
-#define ROTATIONAL_INTERIA
+#define ROTATIONAL_INERTIA
 #define DIPOLES
-#define MAGNETOSTATICS
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
@@ -62,13 +61,12 @@
 #define BOND_CONSTRAINT
 #define MODES
 #define BOND_VIRTUAL
+#define LANGEVIN_PER_PARTICLE
+#define COLLISION_DETECTION
 
 /* To use address, also activate VIRTUAL_SITES and VIRTUAL_SITES_COM */
 #define ADRESS
 
-#define DAWAANR
-#define MAGNETIC_DIPOLAR_DIRECT_SUM
-#define MDLC
 #define METADYNAMICS
 #define OVERLAPPED
 
@@ -121,7 +119,6 @@
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_DPD
 #define INTER_RF
 #define MOL_CUT
 #define TUNABLE_SLIP

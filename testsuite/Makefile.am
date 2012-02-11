@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -20,14 +21,20 @@ SUBDIRS = configs .
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
+	collision-detection-centers.tcl \
+	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
 	command_syntax.tcl \
 	constraints.tcl \
+	constraints_reflecting.tcl \
+	correlation.tcl \
+	constraints_rhomboid.tcl \
 	dh.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
+	exclusions.tcl \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \
@@ -36,26 +43,33 @@ tests = \
 	kinetic.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_stokes_sphere.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
 	madelung.tcl \
 	maggs.tcl \
+	magnetic-field.tcl \
 	mass.tcl \
+	mass-and-rinertia.tcl \
 	mdlc.tcl \
 	mmm1d.tcl \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	observable.tcl \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
+	p3m_simple_noncubic.tcl \
+	p3m_wall.tcl \
 	rotation.tcl \
-	tabulated.tcl 
+	tabulated.tcl \
 	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
+# please keep the alphabetic ordering of the above list!
 
 deactivated_tests =
 
@@ -72,6 +86,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	constraints_system.data \
         p3m_magnetostatics.data \
         p3m_magnetostatics2_system.data p3m_magnetostatics2_expected.data \
+	p3m_wall_system.data \
 	p3m_system.data el2d_system.data el2d_system_die.data \
 	mdlc_system.data mdlc_expected_energy.data mdlc_expected_force_torque.data \
 	mmm1d_system.data dh_system.data \
@@ -99,7 +114,8 @@ check-local: runtest.sh
 	else \
 	  @builddir@/runtest.sh $(tests); \
 	fi
+
+CLEANFILES=runtest.log
+
 DISTCLEANFILES=\
-	runtest.sh \
-	fftw3_1d_wisdom_forw_n32.file \
-	fftw3_1d_wisdom_back_n32.file
+	fftw3_1d_wisdom_*.file

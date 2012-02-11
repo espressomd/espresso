@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -21,7 +22,6 @@
     Implementation of \ref pressure.h "pressure.h".
 */
 #include "pressure.h"
-#include "parser.h"
 #include "cells.h"
 #include "integrate.h"
 #include "initialize.h"
@@ -47,27 +47,6 @@ nptiso_struct   nptiso   = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,{0.0,0.0,0.0},{0.0,0.0,0
 /* callbacks for setmd                                      */
 /************************************************************/
 
-int tclcallback_npt_piston(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  if (data < 0.0) { Tcl_AppendResult(interp, "the piston's mass must be positive.", (char *) NULL); return (TCL_ERROR); }
-  nptiso.piston = data;
-  mpi_bcast_parameter(FIELD_NPTISO_PISTON);
-  return (TCL_OK);
-}
-
-int tclcallback_p_ext(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  nptiso.p_ext = data;
-  mpi_bcast_parameter(FIELD_NPTISO_PEXT);
-  return (TCL_OK);
-}
-
-int tclcallback_npt_p_diff(Tcl_Interp *interp, void *_data) {
-  double data = *(double *)_data;
-  nptiso.p_diff = data;
-  mpi_bcast_parameter(FIELD_NPTISO_PDIFF);
-  return (TCL_OK);
-}
 
 
 /************************************************************/
@@ -120,21 +99,22 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
-    layered_calculate_virials();
+    layered_calculate_virials(v_comp);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    if (rebuild_verletlist) build_verlet_lists();
-    calculate_verlet_virials(v_comp);
+    if(dd.use_vList) {
+      if (rebuild_verletlist)  
+	build_verlet_lists();
+      calculate_verlet_virials(v_comp);
+    }
+    else
+      calculate_link_cell_virials(v_comp);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_virials();
+    nsq_calculate_virials(v_comp);
   }
   /* rescale kinetic energy (=ideal contribution) */
-#ifdef ROTATION
-  virials.data.e[0] /= (6.0*volume*time_step*time_step);
-#else
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
-#endif
 
   calc_long_range_virials();
 
@@ -159,11 +139,11 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     p_tensor_non_bonded.data_nb.e[i]  /= volume;
   
   /* gather data */
-  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   
-  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb, virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb, p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb, virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb, p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
 }
 
 /************************************************************/
@@ -173,18 +153,18 @@ void calc_long_range_virials()
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
   case COULOMB_ELC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
     break;
   case COULOMB_P3M: {
     int k;
-    P3M_charge_assign();
-    virials.coulomb[1] = P3M_calc_kspace_forces_for_charges(0,1);
+    p3m_charge_assign();
+    virials.coulomb[1] = p3m_calc_kspace_forces(0,1);
     
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = virials.coulomb[1]/3.;
-    P3M_calc_kspace_stress(p_tensor.coulomb);
+    p3m_calc_kspace_stress(p_tensor.coulomb);
     break;
   }
 #endif
@@ -197,35 +177,28 @@ void calc_long_range_virials()
   }
 #endif /*ifdef ELECTROSTATICS */  
   
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
   switch (coulomb.Dmethod) {
-#ifdef DAWAANR 
      case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     fprintf(stderr, "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
     break;
-#endif 
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
-#ifdef MDLC
- case DIPOLAR_MDLC_DS:
+  case DIPOLAR_MDLC_DS:
     fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
     break;
-#endif    
-    case DIPOLAR_DS:
+  case DIPOLAR_DS:
     fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM pressure not implemented\n");
     break;
-#endif 
+
    
-#ifdef ELP3M
-#ifdef MDLC
+#ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but DLC pressure not implemented\n");
     break;
-#endif    
   case DIPOLAR_P3M: {
     int k;
-    P3M_dipole_assign();
-    virials.dipolar[1] = P3M_calc_kspace_forces_for_dipoles(0,1);
+    dp3m_dipole_assign();
+    virials.dipolar[1] = dp3m_calc_kspace_forces(0,1);
      
     for(k=0;k<3;k++)
       p_tensor.coulomb[9+ k*3 + k] = virials.dipolar[1]/3.;
@@ -236,7 +209,7 @@ void calc_long_range_virials()
   }
 #endif
  } 
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 }
 
 /* Initialize the virials used in the calculation of the scalar pressure */
@@ -257,7 +230,7 @@ void init_virials(Observable_stat *stat)
   default: n_coulomb  = 1;
   }
 #endif
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:  n_dipolar = 0; break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:  n_dipolar = 0; break;
@@ -303,7 +276,7 @@ void init_p_tensor(Observable_stat *stat)
   }
 #endif
   
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE: n_dipolar = 0; break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:  n_dipolar = 0; break;
@@ -363,13 +336,13 @@ int getintersection(double pos1[3], double pos2[3],int given, int get, double va
   //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f value is %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],oldvalue,value););
   
   if ((value)*(p2r[given]) < -0.0001) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{analyze stress_profile: getintersection: intersection is not between the two given particles - %e is not between %e and %e and box size is %e, given is %d\n ",value,0.0,p2r[given],box_size[given],given);
     return 0; 
   } else if (given == get) {
     *answer =  drem_down(value + pos1[given],box_size[given]);;
   } else if (0==p2r[given]) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{analyze stress_profile: getintersection: intersection is a line, not a point - value is %g same as %g and %g\n",value,0.0,p2r[given]);
     return 0;   
   } else {
@@ -762,7 +735,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: calclength is %e and length is %e\n}",this_node,calclength,length););
     
     if (calclength - length >0.0000000001) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{%d: analyze stess_profile: bug in distribute tensor code - calclength is %e and length is %e}",this_node,calclength,length);
       return 0;
     }
@@ -834,7 +807,7 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
 #ifdef ELECTROSTATICS
     if (coulomb.method != COULOMB_NONE) {
       switch (coulomb.method) {
-#ifdef ELP3M
+#ifdef P3M
       case COULOMB_P3M:
 	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
 	break;
@@ -864,30 +837,26 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
     }
 #endif /*ifdef ELECTROSTATICS */
 
-#ifdef MAGNETOSTATICS
+#ifdef DIPOLES
     if (coulomb.Dmethod != DIPOLAR_NONE) {
       switch (coulomb.Dmethod) {
-#ifdef ELP3M
+#ifdef DP3M
       case DIPOLAR_P3M:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M magnetostatics so it is left out\n");  
 	break;
 #endif
-#ifdef DAWAANR
       case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle DAWAANR magnetostatics so it is left out\n");  
 	break;
-#endif
-#ifdef MAGNETIC_DIPOLAR_DIRECT_SUM
       case DIPOLAR_DS:
     	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle MAGNETIC DIPOLAR SUM magnetostatics so it is left out\n");  
 	break;
-#endif
 
       default:
 	fprintf(stderr,"WARNING: Local stress tensor calculation does not recognise this magnetostatic interaction\n");  
       }
     }
-#endif /*ifdef MAGNETOSTATICS */
+#endif /*ifdef DIPOLES */
 
 
   } /*if p1-> ... */
@@ -935,13 +904,13 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
      creating unnecessary work since I can't imagine when we might want that */
 
   if (skin < 0) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{analyze stess_profile: skin cannot be negative}");
     return 0;
   }
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{analyze stress_profile: Analyzed box (%g) with skin+max_cut(%g) is larger than simulation box (%g).\n",range[i],skin+max_cut,box_l[i]);
       return 0;
     }
@@ -1024,457 +993,12 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 }
 
 
-/****************************************************************************************
- *                                 parser
- ****************************************************************************************/
-
-static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
+/************************************************************/
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A)
 {
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
+  int i, j;
   double value;
-  int i, j;
-  value = 0.0;
-
-  value = total_pressure.data.e[0];
-  for (i = 1; i < total_pressure.data.n; i++)
-    value += total_pressure.data.e[i];
-
-  Tcl_PrintDouble(interp, value, buffer);
-  Tcl_AppendResult(interp, "{ pressure ", buffer, " } ", (char *)NULL);
-
-  Tcl_PrintDouble(interp, total_pressure.data.e[0], buffer);
-  Tcl_AppendResult(interp, "{ ideal ", buffer, " } ", (char *)NULL);
-
-  for(i=0;i<n_bonded_ia;i++) {
-    if (bonded_ia_params[i].type != BONDED_IA_NONE) {
-      sprintf(buffer, "%d ", i);
-      Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-      Tcl_PrintDouble(interp, *obsstat_bonded(&total_pressure, i), buffer);
-      Tcl_AppendResult(interp,
-		       get_name_of_bonded_ia(bonded_ia_params[i].type),
-		       " ", buffer, " } ", (char *) NULL);
-    }
-  }
-
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      if (checkIfParticlesInteract(i, j)) {
-	sprintf(buffer, "%d ", i);
-	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	sprintf(buffer, "%d ", j);
-	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
-	Tcl_PrintDouble(interp, *obsstat_nonbonded(&total_pressure, i, j), buffer);
-	Tcl_AppendResult(interp, "nonbonded ", buffer, " } ", (char *)NULL);
-      }
-    }
-  
-/* In case we need intra- and inter- nonbonded (nb) contribution of total pressure  */
-  value = 0.0;
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      value += *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
-    }
-  Tcl_PrintDouble(interp, value, buffer);
-  Tcl_AppendResult(interp, " { total_nb_intra ", (char *)NULL);
-  Tcl_PrintDouble(interp, value, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
- 
-  value = 0.0;
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      value += *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
-    }
-  Tcl_PrintDouble(interp, value, buffer);
-  Tcl_AppendResult(interp, " { total_nb_inter ", (char *)NULL);
-  Tcl_PrintDouble(interp, value, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-  
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      if (checkIfParticlesInteract(i, j)) {
-	sprintf(buffer, "%d ", i);
-	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	sprintf(buffer, "%d ", j);
-	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
-	Tcl_PrintDouble(interp, *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j), buffer);
-	Tcl_AppendResult(interp, "nb_intra ", buffer, " } ", (char *)NULL);
-      }
-    }
-  
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      if (checkIfParticlesInteract(i, j)) {
-	sprintf(buffer, "%d ", i);
-	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	sprintf(buffer, "%d ", j);
-	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
-	Tcl_PrintDouble(interp, *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j), buffer);
-	Tcl_AppendResult(interp, "nb_inter ", buffer, " } ", (char *)NULL);
-      }
-    } 
-  
-#if  defined(ELECTROSTATICS) || defined (MAGNETOSTATICS)
-  if( 
-#ifdef ELECTROSTATICS
-      coulomb.method != COULOMB_NONE
-#else
-      0
-#endif
-      ||
-#ifdef MAGNETOSTATICS
-      coulomb.Dmethod != DIPOLAR_NONE
-#else
-      0
-#endif     
-   ) {
-    /* total Coulomb pressure */
-    value = total_pressure.coulomb[0];
-    for (i = 1; i < total_pressure.n_coulomb; i++)
-      value += total_pressure.coulomb[i];
-    for (i = 0; i < total_pressure.n_dipolar; i++)
-      value += total_pressure.dipolar[i];
-    Tcl_PrintDouble(interp, value, buffer);
-#if  defined(ELECTROSTATICS) && defined (MAGNETOSTATICS)
-    Tcl_AppendResult(interp, "{ coulomb+magdipoles ", buffer, (char *)NULL);
-#else
-#if defined(ELECTROSTATICS)
-    Tcl_AppendResult(interp, "{ coulomb ", buffer, (char *)NULL);
-#endif	
-#if defined(MAGNETOSTATICS)
-    Tcl_AppendResult(interp, "{ magdipoles ", buffer, (char *)NULL);
-#endif		
-#endif
-
-    /* if it is split up, then print the split up parts */
-    if (total_pressure.n_coulomb > 1) {
-      for (i = 0; i < total_pressure.n_coulomb; i++) {
-	Tcl_PrintDouble(interp, total_pressure.coulomb[i], buffer);
-	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
-      }
-    }
-    Tcl_AppendResult(interp, " }", (char *)NULL);
-  }
-#endif
-}
-
-/************************************************************/
-
-int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, int argc, char **argv)
-{
-  /* 'analyze pressure [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
-  int i, j;
-  double value, p_vel[3];
-  value = 0.0;
-
-  if (n_total_particles == 0) {
-    Tcl_AppendResult(interp, "(no particles)",
-		     (char *)NULL);
-    return (TCL_OK);
-  }
-
-  /* if desired (v_comp==1) replace ideal component with instantaneous one */
-  if (total_pressure.init_status != 1+v_comp ) {
-    init_virials(&total_pressure);
-    init_p_tensor(&total_p_tensor);
-    
-    init_virials_non_bonded(&total_pressure_non_bonded);
-    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
-    
-    if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
-      if (total_pressure.init_status == 0)
-	master_pressure_calc(0);
-      total_pressure.data.e[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-      for(i=0; i<3; i++)
-	if(nptiso.geometry & nptiso.nptgeom_dir[i])
-	  total_pressure.data.e[0] += p_vel[i];
-      total_pressure.data.e[0] /= (nptiso.dimension*nptiso.volume);
-      total_pressure.init_status = 1+v_comp;   }
-    else
-      master_pressure_calc(v_comp);
-  }
-
-  if (argc == 0)
-    tclcommand_analyze_print_pressure_all(interp);
-  else {
-
-    if      (ARG0_IS_S("ideal"))
-      value = total_pressure.data.e[0];
-    else if (ARG0_IS_S("bonded") ||
-	     ARG0_IS_S("fene") ||
-	     ARG0_IS_S("subt_lj_harm") ||
-	     ARG0_IS_S("subt_lj_fene") ||
-	     ARG0_IS_S("subt_lj") ||
-	     ARG0_IS_S("harmonic") ||
-	     ARG0_IS_S("endangledist")) {
-      if(argc<2 || ! ARG1_IS_I(i)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure bonded <type_num>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_bonded_ia) {
-	Tcl_AppendResult(interp, "bond type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      value = *obsstat_bonded(&total_pressure, i);
-    }
-    else if (ARG0_IS_S("nonbonded") ||
-	     ARG0_IS_S("lj") ||
-	     ARG0_IS_S("buckingham") ||
-             ARG0_IS_S("morse") ||
-             ARG0_IS_S("soft-sphere") ||
-	     ARG0_IS_S("lj-cos") ||
-	     ARG0_IS_S("lj-cos2") ||
-	     ARG0_IS_S("tabulated") ||
-	     ARG0_IS_S("gb")) {
-      if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nonbonded <type1> <type2>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_particle_types || j < 0 || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      value = *obsstat_nonbonded(&total_pressure, i, j);
-    }
-    else if( ARG0_IS_S("tot_nb_intra") ||
-	     ARG0_IS_S("tot_nonbonded_intra")) {
-      value = 0.0;
-      for (i = 0; i < n_particle_types; i++)
-        for (j = i; j < n_particle_types; j++)
-        value += *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
-    }
-    else if( ARG0_IS_S("tot_nb_inter") ||
-	     ARG0_IS_S("tot_nonbonded_inter")) {
-      value = 0.0;
-      for (i = 0; i < n_particle_types; i++)
-        for (j = i; j < n_particle_types; j++)
-        value += *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
-    }
-    else if( ARG0_IS_S("nb_intra") ||
-	     ARG0_IS_S("nonbonded_intra")) {
-      if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_intra <type1> <type2>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_particle_types || j < 0 || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      value = *obsstat_nonbonded_intra(&total_pressure_non_bonded, i, j);
-    }   
-    else if( ARG0_IS_S("nb_inter") ||
-	     ARG0_IS_S("nonbonded_inter")) {
-      if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nb_inter <type1> <type2>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_particle_types || j < 0 || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      value = *obsstat_nonbonded_inter(&total_pressure_non_bonded, i, j);
-    }
-    else if( ARG0_IS_S("coulomb")) {
-#ifdef ELECTROSTATICS
-      value = 0;
-      for (i = 0; i < total_pressure.n_coulomb; i++)
-	value += total_pressure.coulomb[i];
-#else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
-#endif
-    }
-    else if( ARG0_IS_S("dipolar")) {
-#ifdef MAGNETOSTATICS
-      value = 0;
-      for (i = total_pressure.n_coulomb-1; i < total_pressure.n_coulomb; i++)  /*when DLC will be installed this has to be changed */
-        value += total_pressure.coulomb[i];
-#else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
-#endif
-    }
-    else if (ARG0_IS_S("total")) {
-      value = total_pressure.data.e[0];
-      for (i = 1; i < total_pressure.data.n; i++) {
-	value += total_pressure.data.e[i];
-      }
-    }
-    else {
-      Tcl_AppendResult(interp, "unknown feature of: analyze pressure",
-		       (char *)NULL);
-      return (TCL_ERROR);
-    }
-    Tcl_PrintDouble(interp, value, buffer);
-    Tcl_AppendResult(interp, buffer, (char *)NULL);
-  }
-
-  return (TCL_OK);
-}
-
-int tclcommand_analyze_parse_and_print_p_IK1(Tcl_Interp *interp, int argc, char **argv)
-{
-  Tcl_AppendResult(interp, "analyze p_IK no longer exists", (char *)NULL);
-  return (TCL_ERROR);
-}
- 
-int tclcommand_analyze_parse_bins(Tcl_Interp *interp, int argc, char **argv)
-{
-  Tcl_AppendResult(interp, "analyze bins no longer exists", (char *)NULL);
-  return (TCL_ERROR);
-}
-
-/****************************************************************************************
- *                                 parser
- ****************************************************************************************/
-/* Parser routines used in the "analyze stress_tensor" command */ 
-static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
-  double value, tvalue[9];
-  int i, j, k;
-  value = 0.0;
-
-  Tcl_AppendResult(interp, "{ pressure ", (char *)NULL);
-  for(j=0; j<9; j++) {
-    value = total_p_tensor.data.e[j];
-    for (i = 1; i < total_p_tensor.data.n/9; i++) value += total_p_tensor.data.e[9*i + j];
-    Tcl_PrintDouble(interp, value, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-
-  Tcl_AppendResult(interp, "{ ideal ", (char *)NULL);
-  for(j=0; j<9; j++) {
-    Tcl_PrintDouble(interp, total_p_tensor.data.e[j], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-
-  for(i=0;i<n_bonded_ia;i++) {
-    if (bonded_ia_params[i].type != BONDED_IA_NONE) {
-      sprintf(buffer, "%d ", i);
-      Tcl_AppendResult(interp, "{ ", buffer, get_name_of_bonded_ia(bonded_ia_params[i].type)," ", (char *)NULL);
-      for(j=0; j<9; j++) {
-	Tcl_PrintDouble(interp, obsstat_bonded(&total_p_tensor, i)[j], buffer);
-	Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-      }
-      Tcl_AppendResult(interp, "} ", (char *)NULL);
-    }
-  }
-
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      if (checkIfParticlesInteract(i, j)) {
-	sprintf(buffer, "%d ", i);
-	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	sprintf(buffer, "%d ", j);
-	Tcl_AppendResult(interp, " ", buffer, "nonbonded ", (char *)NULL);
-	for(k=0; k<9; k++) {
-	  Tcl_PrintDouble(interp, obsstat_nonbonded(&total_p_tensor, i, j)[k], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	}
-	Tcl_AppendResult(interp, "} ", (char *)NULL);
-      }
-    }
-
-  Tcl_AppendResult(interp, " { total_nb_intra ", (char *)NULL);
-  for(k=0; k<9; k++) {
-    tvalue[k] = 0.0;
-    for (i = 0; i < n_particle_types; i++)
-      for (j = i; j < n_particle_types; j++) {
-        tvalue[k] += obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k];
-      }
-    Tcl_PrintDouble(interp, tvalue[k], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
-  
-  Tcl_AppendResult(interp, " { total_nb_inter ", (char *)NULL);
-  for(k=0; k<9; k++) {
-    tvalue[k] = 0.0;
-    for (i = 0; i < n_particle_types; i++)
-      for (j = i; j < n_particle_types; j++) {
-        tvalue[k] += obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k];
-      }
-    Tcl_PrintDouble(interp, tvalue[k], buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  }
-  Tcl_AppendResult(interp, "} ", (char *)NULL);
- 
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      if (checkIfParticlesInteract(i, j)) {
-	sprintf(buffer, "%d ", i);
-	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	sprintf(buffer, "%d ", j);
-	Tcl_AppendResult(interp, " ", buffer, "nb_intra_tensor ", (char *)NULL);
-	for(k=0; k<9; k++) {
-	  Tcl_PrintDouble(interp, obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	}
-	Tcl_AppendResult(interp, "} ", (char *)NULL);
-      }
-    }
-  
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      if (checkIfParticlesInteract(i, j)) {
-	sprintf(buffer, "%d ", i);
-	Tcl_AppendResult(interp, "{ ", buffer, (char *)NULL);
-	sprintf(buffer, "%d ", j);
-	Tcl_AppendResult(interp, " ", buffer, "nb_inter_tensor ", (char *)NULL);
-	for(k=0; k<9; k++) {
-	  Tcl_PrintDouble(interp, obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	}
-	Tcl_AppendResult(interp, "} ", (char *)NULL);
-      }
-    }
-
-#ifdef ELECTROSTATICS
-  if(coulomb.method != COULOMB_NONE) {
-    Tcl_AppendResult(interp, "{ coulomb ", (char *)NULL);
-    for(j=0; j<9; j++) {
-      sprintf(buffer, " %lf ", total_p_tensor.coulomb[j]);
-      Tcl_AppendResult(interp, buffer, (char *)NULL);
-    }
-    Tcl_AppendResult(interp, "} ", (char *)NULL);
-  }
-#endif
-
-#ifdef MAGNETOSTATICS
-  if(coulomb.Dmethod != DIPOLAR_NONE) {
-    fprintf(stderr,"tensor magnetostatics, something should go here, file pressure.c ... \n");
-  }  
-#endif
-
-  
-}
-
-/************************************************************/
-int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_comp, int argc, char **argv)
-{
-  /* 'analyze stress_tensor [{ bond <type_num> | nonbonded <type1> <type2> | coulomb | ideal | total }]' */
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 2];
-  int i, j, k;
-  double p_vel[3], tvalue[9];
-  for(j=0; j<9; j++)  tvalue[j] = 0.0;
-
-  if (n_total_particles == 0) {
-    Tcl_AppendResult(interp, "(no particles)",
-		     (char *)NULL);
-    return (TCL_OK);
-  }
+  double p_vel[3];
 
   /* if desired (v_comp==1) replace ideal component with instantaneous one */
    if (total_pressure.init_status != 1+v_comp ) {
@@ -1498,236 +1022,10 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
       master_pressure_calc(v_comp);
   }
 
-  if (argc == 0)
-    tclcommand_analyze_print_stress_tensor_all(interp);
-  else {
-
-    if      (ARG0_IS_S("ideal")) {
-      for(j=0; j<9; j++)  tvalue[j] = total_p_tensor.data.e[j];
-    }
-    else if (ARG0_IS_S("bonded") ||
-	     ARG0_IS_S("fene") ||
-	     ARG0_IS_S("subt_lj_harm") ||
-	     ARG0_IS_S("subt_lj_fene") ||
-	     ARG0_IS_S("subt_lj") ||
-	     ARG0_IS_S("harmonic") ||
-	     ARG0_IS_S("endangledist")) {
-      if(argc<2 || ! ARG1_IS_I(i)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure bonded <type_num>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_bonded_ia) {
-	Tcl_AppendResult(interp, "bond type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      for(k=0; k<9; k++) tvalue[k] = obsstat_bonded(&total_p_tensor, i)[k];
-    }
-    else if (ARG0_IS_S("nonbonded") ||
-	     ARG0_IS_S("lj") ||
-	     ARG0_IS_S("buckingham") ||
-             ARG0_IS_S("morse") ||
-             ARG0_IS_S("soft-sphere") ||
-	     ARG0_IS_S("lj-cos") ||
-	     ARG0_IS_S("lj-cos2") ||
-	     ARG0_IS_S("tabulated") ||
-	     ARG0_IS_S("gb")) {
-      if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze pressure nonbonded <type1> <type2>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_particle_types || j < 0 || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      for(k=0; k<9; k++) tvalue[k] = obsstat_nonbonded(&total_p_tensor, i, j)[k];
-    }
-    else if( ARG0_IS_S("tot_nb_intra")) {
-      for(k=0; k<9; k++) {
-        for (i = 0; i < n_particle_types; i++)
-          for (j = i; j < n_particle_types; j++) {
-            tvalue[k] += obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k];
-          }
-      }
-    }
-    else if( ARG0_IS_S("tot_nb_inter")) {
-      for(k=0; k<9; k++) {
-        for (i = 0; i < n_particle_types; i++)
-          for (j = i; j < n_particle_types; j++) {
-            tvalue[k] += obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k];
-          }
-      }
-    }
-    else if( ARG0_IS_S("nb_intra")) {
-      if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze stress tensor nonbonded <type1> <type2>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_particle_types || j < 0 || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      for(k=0; k<9; k++) tvalue[k] = obsstat_nonbonded_intra(&total_p_tensor_non_bonded, i, j)[k];
-    }
-    else if( ARG0_IS_S("nb_inter")) {
-      if(argc<3 || ! ARG_IS_I(1, i) || ! ARG_IS_I(2, j)) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "wrong # or type of arguments for: analyze stress tensor nonbonded <type1> <type2>",
-			 (char *)NULL);
-	return (TCL_ERROR);
-      }
-      if(i < 0 || i >= n_particle_types || j < 0 || j >= n_particle_types) {
-	Tcl_AppendResult(interp, "particle type does not exist", (char *)NULL);
-	return (TCL_ERROR);
-      }
-      for(k=0; k<9; k++) tvalue[k] = obsstat_nonbonded_inter(&total_p_tensor_non_bonded, i, j)[k];
-    }
-    else if( ARG0_IS_S("coulomb")) {
-#ifdef ELECTROSTATICS
-      for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];
-#else
-      Tcl_AppendResult(interp, "ELECTROSTATICS not compiled (see config.h)\n", (char *)NULL);
-#endif
-    }
-    else if( ARG0_IS_S("dipolar")) {
-#ifdef MAGNETOSTATICS
-      /* for(j=0; j<9; j++) tvalue[j] = total_p_tensor.coulomb[j];*/
-      fprintf(stderr," stress tensor, magnetostatics, something should go here, file pressure.c ");
-#else
-      Tcl_AppendResult(interp, "MAGNETOSTATICS not compiled (see config.h)\n", (char *)NULL);
-#endif
-    }
-    else if (ARG0_IS_S("total")) {
-      for(j=0; j<9; j++) {
-        tvalue[j] = p_tensor.data.e[j];
-        for (i = 1; i < p_tensor.data.n/9; i++) tvalue[j] += total_p_tensor.data.e[9*i + j];
-     }
-    }
-    else {
-      Tcl_AppendResult(interp, "unknown feature of: analyze pressure",
-		       (char *)NULL);
-      return (TCL_ERROR);
-    }
-
-    Tcl_AppendResult(interp, *argv, (char *)NULL);
-    Tcl_AppendResult(interp, " ", (char *)NULL);
-    for(j=0; j<9; j++) {
-      Tcl_PrintDouble(interp, tvalue[j], buffer);
-      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-    }
+  for(j=0; j<9; j++) {
+    value = total_p_tensor.data.e[j];
+    for (i = 1; i < total_p_tensor.data.n/9; i++) value += total_p_tensor.data.e[9*i + j];
+    A[j]=value;
   }
-
-  return (TCL_OK);
-}
-
-int tclcommand_analyze_parse_local_stress_tensor(Tcl_Interp *interp, int argc, char **argv)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  char* usage;
-  int periodic[3];
-  double range_start[3];
-  double range[3];
-  int bins[3];
-  int i,j,k,l;
-  DoubleList *TensorInBin;
-  PTENSOR_TRACE(fprintf(stderr,"%d: Running tclcommand_analyze_parse_local_stress_tensor\n",this_node));
-  /* 'analyze stress profile ' */
-  if (argc != 12) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "local_stress_tensor requires 12 inputs: x_periodic, y_periodic, z_periodic, x_range_start, y_range_start, z_range_start, x_range, y_range, z_range, x_bins, y_bins, z_bins", (char *)NULL);
-    return(TCL_ERROR);
-  }
-  usage = "usage: analyse local_stress_tensor <x_periodic> <y_periodic> <z_periodic> <x_range_start> <y_range_start> <z_range_start> <x_range> <y_range> <z_range> <x_bins> <y_bins> <z_bins>";
- 
-  for (i=0;i<3;i++) {
-    if ( !ARG0_IS_I(periodic[i]) ) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp,usage, (char *)NULL);
-      return (TCL_ERROR);
-    } else {
-      argc -= 1;
-      argv += 1;
-    }
-  }
-  for (i=0;i<3;i++) {
-    if ( !ARG0_IS_D(range_start[i]) ) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp,usage, (char *)NULL);
-      return (TCL_ERROR);
-    } else {
-      argc -= 1;
-      argv += 1;
-    }
-  }
-  for (i=0;i<3;i++) {
-    if ( !ARG0_IS_D(range[i]) ) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp,usage, (char *)NULL);
-      return (TCL_ERROR);
-    } else {
-      argc -= 1;
-      argv += 1;
-    }
-  }
-  for (i=0;i<3;i++) {
-    if ( !ARG0_IS_I(bins[i]) ) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp,usage, (char *)NULL);
-      return (TCL_ERROR);
-    } else {
-      argc -= 1;
-      argv += 1;
-    }
-  }
-
-  /* Allocate a doublelist of bins to keep track of stress profile */
-  TensorInBin = (DoubleList *)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
-  if ( TensorInBin ) {
-  /* Initialize the stress profile */
-    for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
-      init_doublelist(&TensorInBin[i]);
-      alloc_doublelist(&TensorInBin[i],9);
-      for ( j = 0 ; j < 9 ; j++ ) {
-	TensorInBin[i].e[j] = 0.0;
-      }
-    }
-  } else {
-    Tcl_AppendResult(interp,"could not allocate memory for local_stress_tensor", (char *)NULL);
-    return (TCL_ERROR);
-  }
-
-  mpi_local_stress_tensor(TensorInBin, bins, periodic,range_start, range);
-  PTENSOR_TRACE(fprintf(stderr,"%d: tclcommand_analyze_parse_local_stress_tensor: finished mpi_local_stress_tensor \n",this_node));
-
-  /* Write stress profile to Tcl export */
-  Tcl_AppendResult(interp, "{ LocalStressTensor } ", (char *)NULL);
-  for ( i = 0 ; i < bins[0] ; i++) {
-    for ( j = 0 ; j < bins[1] ; j++) {
-      for ( k = 0 ; k < bins[2] ; k++) {
-	Tcl_AppendResult(interp, " { ", (char *)NULL);
-	sprintf(buffer," { %d %d %d } ",i,j,k);
-	Tcl_AppendResult(interp,buffer, (char *)NULL);
-	Tcl_AppendResult(interp, " { ", (char *)NULL);
-	for ( l = 0 ; l < 9 ; l++) {
-	  Tcl_PrintDouble(interp,TensorInBin[i*bins[1]*bins[2]+j*bins[2]+k].e[l],buffer);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
-	  Tcl_AppendResult(interp, " ", (char *)NULL);
-	}
-	Tcl_AppendResult(interp, " } ", (char *)NULL);
-	Tcl_AppendResult(interp, " } ", (char *)NULL);
-      }
-    }
-  }
-  
-  /* Free memory */
-  for ( i = 0 ; i < bins[0]*bins[1]*bins[2] ; i++ ) {
-    realloc_doublelist(&TensorInBin[i],0);
-  }
-  free(TensorInBin);
-  return TCL_OK;
+  return 0;
 }

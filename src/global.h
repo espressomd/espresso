@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,14 +20,11 @@
 */
 #ifndef GLOBAL_H
 #define GLOBAL_H
-/** \file global.h
-    This file contains the code for access to globally defined
-    variables using the script command setmd. \ref add_vars "Here"
-    you can find details on how to add new variables in the interpreter's
-    space.
-*/
-
-#include <tcl.h>
+/** \file global.h This file contains the code for access to globally
+    defined variables using the script command setmd. Please refer to
+    the Developer's guide, section "Adding global variables", for
+    details on how to add new variables in the interpreter's
+    space.  */
 
 /**********************************************
  * description of global variables
@@ -49,11 +47,8 @@
 /** Maximal size of an array in \ref Datafield. */
 #define MAX_DIMENSION 64
 
-/** type int (SetCallback)(Tcl_Interp *interp, void *data)
-    Type for the write callback procedure of \ref Datafield */
-typedef int (SetCallback)(Tcl_Interp *interp, void *data);
-
-/** Type describing variables that are accessible via Tcl. */
+/** Type describing global variables. These are accessible from the
+    front end, and are distributed to all compute nodes. */
 typedef struct {
   /** Physical address of the variable. */
   void        *data;
@@ -61,23 +56,17 @@ typedef struct {
   int          type;
   /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
   int          dimension;
-  /** Name used in the Tcl script. */
+  /** Name of the variable, mainly used for the front end and debugging */
   const char  *name;
-  /** changeproc is called with an array of type \ref Datafield#type
-      and dimension \ref Datafield#dimension every time a setmd is
-      done in Tcl script code.  The procedure is assumed to actually
-      set the value and return TCL_OK or not change the value and
-      return TCL_ERROR and an appropriate error message in the
-      interpreters result stack. 
-  */
-  SetCallback *changeproc;
-  /** Minimal number of characters needed for identification. */
+  /** Minimal number of characters needed for unique identification of the
+      variable. */
   int min_length;
 } Datafield;
 
-/** This array contains the description of all variables that can be
-    changed/adressed via the TCL command setmd. read the
-    documentation of \ref Datafield befor you add new features. */
+/** This array contains the description of all global variables that
+    are synchronized across nodes and that can be changed/adressed via
+    the TCL command setmd. read the documentation of \ref Datafield
+    befor you add new features. */
 extern const Datafield fields[];
 
 /** \name Field Enumeration
@@ -155,8 +144,8 @@ extern const Datafield fields[];
 #define FIELD_TIMINGSAMP          33
 /** index of \ref transfer_rate  in \ref #fields */
 #define FIELD_TRANSFERRATE        34
-/** index of \ref rebuild_verletlist in \ref #fields */
-#define FIELD_VERLETFLAG          35
+/** index of \ref max_cut_nonbonded in \ref #fields */
+#define FIELD_MCUT_NONBONDED      35
 /** index of \ref verlet_reuse in  \ref #fields */
 #define FIELD_VERLETREUSE         36
 /** index of \ref lattice_switch in \ref #fields */
@@ -164,27 +153,17 @@ extern const Datafield fields[];
 /** index of \ref dpd_tgamma in \ref #fields */
 #define FIELD_DPD_TGAMMA          38
 /** index of \ref dpd_tr_cut in \ref #fields */
-#define FIELD_DPD_TRCUT          39
+#define FIELD_DPD_TRCUT           39
 /** index of \ref dpd_twf in \ref #fields */
-#define FIELD_DPD_TWF          40
+#define FIELD_DPD_TWF             40
 /** index of \ref dpd_wf in \ref #fields */
-#define FIELD_DPD_WF           41
+#define FIELD_DPD_WF              41
 /** index of address variable in \ref #fields */
-#define FIELD_ADRESS           42
+#define FIELD_ADRESS              42
+/** index of \ref max_cut_bonded in \ref #fields */
+#define FIELD_MCUT_BONDED         43
+/** index of \ref transfer_rate in \ref #fields */
+#define FIELD_TRANSFER_RATE       44
 /*@}*/
-
-/**********************************************
- * misc procedures
- **********************************************/
-
-/// Implements the Tcl command setmd. It allows to modify simulation parameters
-int tclcommand_setmd(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implements the Tcl command code_info.  It provides information on the
-    Version, Compilation status and the debug status of the used
-    code. */
-int tclcommand_code_info(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
 
 #endif

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -26,6 +27,7 @@
 #include <mpi.h>
 #include "utils.h"
 #include "communication.h"
+#include "grid.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "cells.h"
@@ -34,9 +36,18 @@
 #include "specfunc.h"
 #include "integrate.h"
 #include "layered.h"
-#include "parser.h"
 
 #ifdef ELECTROSTATICS
+char const *mmm2d_errors[] = {
+   "ok",
+   "Layer height too large for MMM2D near formula, increase n_layers",
+   "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
+   "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
+   "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
+   "Far cutoff too large, decrease the error bound",
+   "Layer height too small for MMM2D far formula, decrease n_layers or skin",
+   "IC requires layered cellsystem with more than 3 layers",
+};
 
 /** if you define this, the Besselfunctions are calculated up
     to machine precision, otherwise 10^-14, which should be
@@ -134,18 +145,6 @@ MMM2D_struct mmm2d_params = { 1e100, 10, 1, 0, 0, 1, 1, 1 };
 /** IC layer requirement */
 #define ERROR_ICL 7
 /*@}*/
-
-/** error messages, see above */
-static char *mmm2d_errors[] = {
-  "ok",
-  "Layer height too large for MMM2D near formula, increase n_layers",
-  "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and y",
-  "Could find not reasonable Bessel cutoff. Please decrease n_layers or the error bound",
-  "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
-  "Far cutoff too large, decrease the error bound",
-  "Layer height too small for MMM2D far formula, decrease n_layers or skin",
-  "IC requires layered cellsystem with more than 3 layers",
-};
 
 /****************************************
  * LOCAL ARRAYS
@@ -419,7 +418,7 @@ void gather_image_contributions(int e_size)
   double recvbuf[8];
 
   /* collect the image charge contributions with at least a layer distance */
-  MPI_Allreduce(lclimge, recvbuf, 2*e_size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(lclimge, recvbuf, 2*e_size, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer below our system,
@@ -452,11 +451,11 @@ void distribute(int e_size, double fac)
       if (node + 1 < n_nodes) {
 	addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size), blwentry(lclcblk, n_layers - 1, e_size), e_size);
 	copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
-	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, node + 1, 0, MPI_COMM_WORLD);
+	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     }
     else if (node + 1 == this_node) {
-      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, node, 0, MPI_COMM_WORLD, &status);
+      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, node, 0, comm_cart, &status);
       copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
       copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
     }
@@ -471,11 +470,11 @@ void distribute(int e_size, double fac)
       if (inv_node -  1 >= 0) {
 	addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size), abventry(lclcblk, 2, e_size), e_size);
 	copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
-	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, inv_node - 1, 0, MPI_COMM_WORLD);
+	MPI_Send(sendbuf, 2*e_size, MPI_DOUBLE, inv_node - 1, 0, comm_cart);
       }
     }
     else if (inv_node - 1 == this_node) {
-      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, inv_node, 0, MPI_COMM_WORLD, &status);
+      MPI_Recv(recvbuf, 2*e_size, MPI_DOUBLE, inv_node, 0, comm_cart, &status);
       copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
       copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size, e_size);
     }
@@ -1534,156 +1533,159 @@ void add_mmm2d_coulomb_pair_force(double charge_factor,
   }
 #endif
 
-  if (pref != 0.0) {
-    F[0] = F[1] = F[2] = 0;
+  F[0] = F[1] = F[2] = 0;
 
-    /* Bessel sum */
-    {
-      int p, l;
-      double k0, k1;
-      double k0Sum, k1ySum, k1Sum;
-      double freq;
-      double rho_l, ypl;
-      double c, s;
+  /* Bessel sum */
+  {
+    int p, l;
+    double k0, k1;
+    double k0Sum, k1ySum, k1Sum;
+    double freq;
+    double rho_l, ypl;
+    double c, s;
 
-      for (p = 1; p < besselCutoff.n; p++) {
-	k0Sum  = 0;
-	k1ySum = 0;
-	k1Sum  = 0;
+    for (p = 1; p < besselCutoff.n; p++) {
+      k0Sum  = 0;
+      k1ySum = 0;
+      k1Sum  = 0;
 
-	freq = C_2PI*ux*p;
+      freq = C_2PI*ux*p;
 
-	for (l = 1; l < besselCutoff.e[p-1]; l++) {
-	  ypl   = d[1] + l*box_l[1];
-	  rho_l = sqrt(ypl*ypl + z2);
+      for (l = 1; l < besselCutoff.e[p-1]; l++) {
+	ypl   = d[1] + l*box_l[1];
+	rho_l = sqrt(ypl*ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
-	  k0 = K0(freq*rho_l);
-	  k1 = K1(freq*rho_l);
+	k0 = K0(freq*rho_l);
+	k1 = K1(freq*rho_l);
 #else
-	  LPK01(freq*rho_l, &k0, &k1);
+	LPK01(freq*rho_l, &k0, &k1);
 #endif
-	  k1 /= rho_l;
-	  k0Sum  += k0;
-	  k1Sum  += k1;
-	  k1ySum += k1*ypl;
+	k1 /= rho_l;
+	k0Sum  += k0;
+	k1Sum  += k1;
+	k1ySum += k1*ypl;
 
-	  ypl   = d[1] - l*box_l[1];
-	  rho_l = sqrt(ypl*ypl + z2);
+	ypl   = d[1] - l*box_l[1];
+	rho_l = sqrt(ypl*ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
-	  k0 = K0(freq*rho_l);
-	  k1 = K1(freq*rho_l);
+	k0 = K0(freq*rho_l);
+	k1 = K1(freq*rho_l);
 #else
-	  LPK01(freq*rho_l, &k0, &k1);
+	LPK01(freq*rho_l, &k0, &k1);
 #endif
-	  k1 /= rho_l;
-	  k0Sum  += k0;
-	  k1Sum  += k1;
-	  k1ySum += k1*ypl;
-	}
-
-	/* the ux is multiplied in to bessel, complex and psi at once, not here */
-	c = 4*freq*cos(freq*d[0]);
-	s = 4*freq*sin(freq*d[0]);
-	F[0] +=      s*k0Sum;
-	F[1] +=      c*k1ySum;
-	F[2] += d[2]*c*k1Sum;
+	k1 /= rho_l;
+	k0Sum  += k0;
+	k1Sum  += k1;
+	k1ySum += k1*ypl;
       }
-      // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
+
+      /* the ux is multiplied in to bessel, complex and psi at once, not here */
+      c = 4*freq*cos(freq*d[0]);
+      s = 4*freq*sin(freq*d[0]);
+      F[0] +=      s*k0Sum;
+      F[1] +=      c*k1ySum;
+      F[2] += d[2]*c*k1Sum;
     }
-
-    /* complex sum */
-    {
-      double zeta_r, zeta_i;
-      double zet2_r, zet2_i;
-      double ztn_r,  ztn_i;
-      double tmp_r;
-      int end, n;
-
-      ztn_r = zeta_r = uy*d[2];
-      ztn_i = zeta_i = uy*d[1];
-      zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
-      zet2_i = 2*zeta_r*zeta_i;
-
-      end = (int)ceil(COMPLEX_FAC*uy2*rho2);
-      if (end > COMPLEX_STEP) {
-	end = COMPLEX_STEP;
-	fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
-      }
-      end = complexCutoff[end];
-
-      for (n = 0; n < end; n++) {
-	F[1] -= bon.e[n]*ztn_i;
-	F[2] += bon.e[n]*ztn_r;
-
-	tmp_r = ztn_r*zet2_r - ztn_i*zet2_i;
-	ztn_i = ztn_r*zet2_i + ztn_i*zet2_r;
-	ztn_r = tmp_r;
-      }
-      // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
-    }
-
-    /* psi sum */
-    {
-      int n;
-      double uxx = ux*d[0];
-      double uxrho2 = ux2*rho2;
-      double uxrho_2n, uxrho_2nm2; /* rho^{2n-2} */
-      double mpe, mpo;
-
-      /* n = 0 inflicts only Fx and pot */
-      /* one ux is multiplied in to bessel, complex and psi at once, not here */
-      F[0] += ux*mod_psi_odd(0, uxx);
-
-      uxrho_2nm2 = 1.0;
-      for (n = 1;n < n_modPsi; n++) {
-	mpe    = mod_psi_even(n, uxx);
-	mpo    = mod_psi_odd(n, uxx);
-	uxrho_2n = uxrho_2nm2*uxrho2;
-
-	F[0] +=     ux *uxrho_2n  *mpo;
-	F[1] += 2*n*ux2*uxrho_2nm2*mpe*d[1];
-	F[2] += 2*n*ux2*uxrho_2nm2*mpe*d[2];
-
-	/* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
-	if (fabs(2*n*ux*uxrho_2n*mpe) < part_error)
-	  break;
-
-	uxrho_2nm2 = uxrho_2n;
-      }
-      // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
-    }
-
-
-    for (i = 0; i < 3; i++)
-      F[i] *= ux;
-
-    /* explicitly added potentials r_{-1,0} and r_{1,0} */
-    {
-      double cx    = d[0] + box_l[0];
-      double rinv2 = 1.0/(cx*cx + rho2), rinv = sqrt(rinv2);
-      double rinv3 = rinv*rinv2;
-      F[0] +=   cx*rinv3;
-      F[1] += d[1]*rinv3;
-      F[2] += d[2]*rinv3;
-
-      cx   = d[0] - box_l[0];
-      rinv2 = 1.0/(cx*cx + rho2); rinv = sqrt(rinv2);
-      rinv3 = rinv*rinv2;
-      F[0] +=   cx*rinv3;
-      F[1] += d[1]*rinv3;
-      F[2] += d[2]*rinv3;
-
-      rinv3 = 1/(dl2*dl);
-      F[0] += d[0]*rinv3;
-      F[1] += d[1]*rinv3;
-      F[2] += d[2]*rinv3;
-
-      // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
-    }
-
-    for (i = 0; i < 3; i++)
-      force[i] += pref*F[i];
+    // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
   }
+
+  /* complex sum */
+  {
+    double zeta_r, zeta_i;
+    double zet2_r, zet2_i;
+    double ztn_r,  ztn_i;
+    double tmp_r;
+    int end, n;
+
+    ztn_r = zeta_r = uy*d[2];
+    ztn_i = zeta_i = uy*d[1];
+    zet2_r = zeta_r*zeta_r - zeta_i*zeta_i;
+    zet2_i = 2*zeta_r*zeta_i;
+
+    end = (int)ceil(COMPLEX_FAC*uy2*rho2);
+    if (end > COMPLEX_STEP) {
+      end = COMPLEX_STEP;
+      fprintf(stderr, "MMM2D: some particles left the assumed slab, precision might be lost\n");
+    }
+    if (end < 0) {
+      char *errtxt = runtime_error(100);
+      ERROR_SPRINTF(errtxt, "{MMM2D: distance was negative, coordinates probably out of range } ");
+      end = 0;
+    }
+    end = complexCutoff[end];
+
+    for (n = 0; n < end; n++) {
+      F[1] -= bon.e[n]*ztn_i;
+      F[2] += bon.e[n]*ztn_r;
+
+      tmp_r = ztn_r*zet2_r - ztn_i*zet2_i;
+      ztn_i = ztn_r*zet2_i + ztn_i*zet2_r;
+      ztn_r = tmp_r;
+    }
+    // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
+  }
+
+  /* psi sum */
+  {
+    int n;
+    double uxx = ux*d[0];
+    double uxrho2 = ux2*rho2;
+    double uxrho_2n, uxrho_2nm2; /* rho^{2n-2} */
+    double mpe, mpo;
+
+    /* n = 0 inflicts only Fx and pot */
+    /* one ux is multiplied in to bessel, complex and psi at once, not here */
+    F[0] += ux*mod_psi_odd(0, uxx);
+
+    uxrho_2nm2 = 1.0;
+    for (n = 1;n < n_modPsi; n++) {
+      mpe    = mod_psi_even(n, uxx);
+      mpo    = mod_psi_odd(n, uxx);
+      uxrho_2n = uxrho_2nm2*uxrho2;
+
+      F[0] +=     ux *uxrho_2n  *mpo;
+      F[1] += 2*n*ux2*uxrho_2nm2*mpe*d[1];
+      F[2] += 2*n*ux2*uxrho_2nm2*mpe*d[2];
+
+      /* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
+      if (fabs(2*n*ux*uxrho_2n*mpe) < part_error)
+	break;
+
+      uxrho_2nm2 = uxrho_2n;
+    }
+    // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
+  }
+
+
+  for (i = 0; i < 3; i++)
+    F[i] *= ux;
+
+  /* explicitly added potentials r_{-1,0} and r_{1,0} */
+  {
+    double cx    = d[0] + box_l[0];
+    double rinv2 = 1.0/(cx*cx + rho2), rinv = sqrt(rinv2);
+    double rinv3 = rinv*rinv2;
+    F[0] +=   cx*rinv3;
+    F[1] += d[1]*rinv3;
+    F[2] += d[2]*rinv3;
+
+    cx   = d[0] - box_l[0];
+    rinv2 = 1.0/(cx*cx + rho2); rinv = sqrt(rinv2);
+    rinv3 = rinv*rinv2;
+    F[0] +=   cx*rinv3;
+    F[1] += d[1]*rinv3;
+    F[2] += d[2]*rinv3;
+
+    rinv3 = 1/(dl2*dl);
+    F[0] += d[0]*rinv3;
+    F[1] += d[1]*rinv3;
+    F[2] += d[2]*rinv3;
+
+    // fprintf(stderr, "explcit force %f %f %f\n", F[0], F[1], F[2]);
+  }
+
+  for (i = 0; i < 3; i++)
+    force[i] += pref*F[i];
 }
 
 MDINLINE double calc_mmm2d_copy_pair_energy(double d[3])
@@ -1838,89 +1840,13 @@ void MMM2D_self_energy()
  * COMMON PARTS
  ****************************************/
 
-int tclprint_to_result_MMM2D(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-  Tcl_PrintDouble(interp, mmm2d_params.maxPWerror, buffer);
-  Tcl_AppendResult(interp, "mmm2d ", buffer,(char *) NULL);
-  Tcl_PrintDouble(interp, mmm2d_params.far_cut, buffer);
-  Tcl_AppendResult(interp, " ", buffer,(char *) NULL);
-
-  if (mmm2d_params.dielectric_contrast_on) {
-    Tcl_PrintDouble(interp, mmm2d_params.delta_mid_top, buffer);
-    Tcl_AppendResult(interp, " dielectric-contrasts ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, mmm2d_params.delta_mid_bot, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  }
-
-  return TCL_OK;
-}
-
-int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int err;
-  double maxPWerror;
-  double far_cut = -1;
-  double top = 1, mid = 1, bot = 1;
-  double delta_top = 0, delta_bot = 0;
-
-  if (argc < 1) {
-    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm2d <maximal pairwise error> "
-		     "{<fixed far cutoff>} {dielectric <e1> <e2> <e3>} | {dielectric-contrasts <d1> <d2>}", (char *) NULL);
-    return TCL_ERROR;
-  }
-  
-  if (! ARG0_IS_D(maxPWerror))
-    return TCL_ERROR;
-  --argc; ++argv;
-  
-  if (argc >= 1) {
-    if (ARG0_IS_D(far_cut)){
-      --argc; ++argv;
-    } else {
-      Tcl_ResetResult(interp);
-    }
-  }
-  
-  if (argc != 0) {
-    if (argc == 4 && ARG0_IS_S("dielectric")) {
-      if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
-	return TCL_ERROR;
-
-      delta_top = (mid - top)/(mid + top);
-      delta_bot = (mid - bot)/(mid + bot);
-    }
-    else if (argc == 3 && ARG0_IS_S("dielectric-contrasts")) {
-      if (!ARG_IS_D(1,delta_top) || !ARG_IS_D(2,delta_bot))
-	return TCL_ERROR;
-    } else {
-      Tcl_AppendResult(interp, "wrong # arguments: inter coulomb mmm2d <maximal pairwise error> "
-		       "{<fixed far cutoff>} {dielectric <e1> <e2> <e3>} | {dielectric-contrasts <d1> <d2>}", (char *) NULL);
-      return TCL_ERROR;
-    }
-  }
-
-  if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
-      cell_structure.type != CELL_STRUCTURE_LAYERED) {
-    Tcl_AppendResult(interp, "MMM2D requires layered of nsquare cell structure", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if ((err = MMM2D_set_params(maxPWerror, far_cut, delta_top, delta_bot)) > 0) {
-    Tcl_AppendResult(interp, mmm2d_errors[err], (char *)NULL);
-    return TCL_ERROR;
-  }
-  return TCL_OK;
-}
-
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot)
 {
   int err;
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
       cell_structure.type != CELL_STRUCTURE_LAYERED) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   mmm2d_params.maxPWerror = maxPWerror;
@@ -1967,7 +1893,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double
 
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 int MMM2D_sanity_checks()
