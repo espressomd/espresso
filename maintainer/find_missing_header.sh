@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -18,28 +19,26 @@
 # check for missing GPL and copyright headers
 #
 
-files=`git ls-files --exclude-standard |
-    egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf)$' |
-    egrep -v '^testsuite/configs/|^old/' |
-    egrep -v '(ChangeLog|AUTHORS|INSTALL|Doxyfile|latexmk.1|latexmkrc)'
-    `
+files=`sh maintainer/files_with_header.sh`
+num_files=`echo $files | wc -w`
 
-num=`echo $files | wc -w`
+echo "Examining $num_files files."
 
-echo "Examining $num files."
-
-# current_year=`date +%Y`
+current_year=`date +%Y`
+echo "Checking for copyright disclaimer missing the current year $current_year"
+echo "-------------------------------------------------------------------"
+egrep -L "Copyright.*$current_year" $files
+echo
 
 echo "Checking for missing copyright disclaimer"
 echo "-----------------------------------------"
 egrep -L "Copyright" $files
 echo
 
-# echo "Checking for missing GPL header"
-# echo "--------------------------------"
-# egrep -L "ESPResSo is free software" $files
-# echo
+echo "Checking for missing GPL/simple header"
+echo "--------------------------------------"
+no_gpl_files=`egrep -L "(ESPResSo|This program) is free software" $files`
+egrep -L "Copying and distribution of this file" $no_gpl_files
+echo
 
-#echo "Checking for missing Copyright line with current year $current_year:"
-#egrep -rL "Copyright.*$current_year" *.[ch]
     
