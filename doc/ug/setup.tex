@@ -79,6 +79,10 @@ set:
   nodes.
 \item[max_cut] (double, \ro) Maximal cutoff of real space
   interactions.
+\item[max_cut_nonbonded] (double, \ro) Maximal cutoff of nonbonded
+  real space interactions.
+\item[max_cut_bonded] (double, \ro) Maximal cutoff of bonded
+  real space interactions.
 \item[max_num_cells] (int) Maximal number of cells for the link cell
   algorithm.  Reasonable values are between 125 and 1000, or for some
   problems (\var{n_total_particles} / \var{n_nodes}).
@@ -89,6 +93,10 @@ set:
 \item[max_skin] (double, \ro) Maximal skin to be used for the link
   cell/verlet algorithm. This is the minimum of \var{cell\_size} -
   \var{max\_range}.
+\item[min_global_cut] (double) Minimal total cutoff for real space.
+  Effectively, this plus the skin is the minimally possible cell size.
+  Espresso typically determines this value automatically, but some
+  algorithms, \eg{} virtual sites, require you to specify it manually.
 \item[min_num_cells] (int) Minimal number of cells for the link cell
   algorithm. Reasonable values range in $10^{-6} N^2$ to $10^{-7}
   N^2$. In general just make sure that the Verlet lists are not

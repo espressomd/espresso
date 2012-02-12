@@ -26,11 +26,14 @@ source "tests_common.tcl"
 require_feature "COLLISION_DETECTION"
 require_max_nodes_per_side {1 1 1}
 
+puts "---------------------------------------------------------------"
+puts "- Testcase collision-detection-centers.tcl running on 1 nodes"
+puts "---------------------------------------------------------------"
+
 setmd box_l 10 10 10
 
 thermostat off
 setmd time_step 0.01
-inter 0 0 lennard-jones 1 1.1 1.1 auto
 inter 0 harmonic 1 1
 setmd skin 0
 part 0 pos 0 0 0 
@@ -47,7 +50,9 @@ if { "[on_collision]" != "off" } {
   error_exit "Disabling collision_detection does not work"
 }
 
+setmd min_global_cut 1.0
 on_collision bind_centers 1.0 0
+
 set res [on_collision]
 if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 0)) } {
   error_exit "Setting collision_detection parameters for bind_centers does not work"

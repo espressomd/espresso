@@ -27,12 +27,15 @@ require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "COLLISION_DETECTION"
 require_max_nodes_per_side {1 1 1}
 
+puts "---------------------------------------------------------------"
+puts "- Testcase collision-detection-poc.tcl running on 1 nodes"
+puts "---------------------------------------------------------------"
+
 # Setup
 setmd box_l 10 10 10
 
 thermostat off
 setmd time_step 0.01
-inter 0 0 lennard-jones 0.1 1.01 1.01 auto
 inter 0 harmonic 1 1
 inter 1 harmonic 1 0.0001
 setmd skin 0
@@ -61,6 +64,7 @@ if {! ([part 0 print bond]== "{ } " && [part 1 print bond] == "{ } ") } {
 
 # Check setting of parameters
 on_collision bind_at_point_of_collision 1.0 0 1 1
+setmd min_global_cut 1.0
 set res [on_collision]
 if { ! ( ([lindex $res 0] == "bind_at_point_of_collision") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 0) && ([lindex $res 3] == 1) && ([lindex $res 4] == 1)) } {
   error_exit "Setting collision_detection parameters for bind_centers does not work"
