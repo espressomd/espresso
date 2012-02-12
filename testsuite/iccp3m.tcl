@@ -20,8 +20,12 @@
 
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "ELECTROSTATICS"
+require_feature "EXTERNAL_FORCES"
 require_feature "FFTW"
+# we can't reach our precision with more than 2 CPUS per side
+require_max_nodes_per_side {2 2 2}
 
 puts "---------------------------------------------------------------"
 puts "- Testcase iccp3m.tcl running on [format %02d [setmd n_nodes]] nodes"

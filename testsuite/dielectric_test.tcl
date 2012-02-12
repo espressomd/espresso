@@ -2,6 +2,7 @@
 source "tests_common.tcl"
 
 require_feature "CONSTRAINTS"
+require_feature "EXTERNAL_FORCES"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase dielectric_test.tcl running on [format %02d [setmd n_nodes]] nodes"
