@@ -628,11 +628,16 @@ void resize_verlet_list_iccp3m(PairList *pl)
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force_iccp3m(Particle *part)
 {
-
     part->f.f[0] = 0.0; /* no need to friction_thermo_langevin function */
     part->f.f[1] = 0.0;
     part->f.f[2] = 0.0;
 
+#ifdef ROTATION
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+#endif
 }
 
 /** initialize the forces for a ghost particle */
@@ -641,6 +646,13 @@ MDINLINE void init_ghost_force_iccp3m(Particle *part)
   part->f.f[0] = 0.0;
   part->f.f[1] = 0.0;
   part->f.f[2] = 0.0;
+
+#ifdef ROTATION
+  /* set torque to zero */
+  part->f.torque[0] = 0;
+  part->f.torque[1] = 0;
+  part->f.torque[2] = 0;
+#endif
 }
 
 /* integer mod*/
