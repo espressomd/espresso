@@ -10,6 +10,7 @@ exec $ESPRESSO_SOURCE/Espresso $0 $*
 #  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
 #  write to 
 #   Max-Planck-Institute for Polymer Research, Theory Group.
+#  Copyright (C) 2012 The ESPResSo project
 #  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 #
 #  Offline Analysis
