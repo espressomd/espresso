@@ -22,4 +22,5 @@ egrep -v '^testsuite/configs/|^old/' |
 egrep -v '(ChangeLog|AUTHORS|COPYING|bootstrap\.sh)' |
 egrep -v '(\.gitignore|pkgIndex\.tcl)' |
 egrep -v '(config\.guess|config\.sub|install-sh)' |
-egrep -v '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk)'
+egrep -v '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette.html)' |
+egrep -v '(featurelist)'
