@@ -220,6 +220,52 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
 
 }
 
+/** Map a spatial position to the surrounding lattice sites.
+ *
+ * This function takes a global spatial position and determines the
+ * surrounding elementary cell of the lattice for this position. 
+ * The distance fraction in each direction is also calculated.
+ * <br><em>Remarks:</em>
+ * <ul>
+ * <li>The spatial position is given in global coordinates.</li>
+ * <li>The lattice sites of the elementary cell are returned as local indices</li>
+ * </ul>
+ * \param lattice    pointer to the lattice (Input)
+ * \param pos        spatial position (Input)
+ * \param node_index local indices of the surrounding lattice sites (Output)
+ * \param delta      distance fraction of pos from the surrounding
+ *                   elementary cell, 6 directions (Output)
+ */
+
+MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+//not sure why I don't have access to agrid here so I make a temp var and pass it to this function
+  int i;
+  double rel[3];
+  // fold the position onto the local box, note here ind is used as a dummy variable
+	for (i=0;i<3;i++) {
+		pos[i] = pos[i]-0.5*tmp_agrid;
+	}
+	
+  fold_position (pos,ind);
+
+  // convert the position into lower left grid point
+	for (i=0;i<3;i++) {
+		rel[i] = (pos[i])/tmp_agrid;
+	}
+
+  // calculate the index of the position
+  for (i=0;i<3;i++) {
+    ind[i] = floor(rel[i]);
+  }
+
+  // calculate the linear interpolation weighting
+  for (i=0;i<3;i++) {
+    delta[3+i] = rel[i] - ind[i];
+    delta[i] = 1 - delta[3+i];
+  }
+
+}
+
 #endif /* LATTICE */
 
 #endif /* LATTICE_H */

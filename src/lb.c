@@ -16,7 +16,7 @@
   GNU General Public License for more details.
   
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file lb.c
  *
@@ -120,6 +120,7 @@ static int failcounter=0;
 
 /***********************************************************************/
 #endif
+
 #if defined (LB) || defined (LB_GPU)
 
 /* *********************** C Interface part *************************************/
@@ -191,7 +192,7 @@ int lb_lbfluid_set_visc(double p_visc){
   } else {
 #ifdef LB
     lbpar.viscosity = p_visc;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_VISCOSITY);
 #endif
     }
   return 0;
@@ -227,7 +228,7 @@ int lb_lbfluid_set_bulk_visc(double p_bulk_visc){
   } else {
 #ifdef LB
     lbpar.bulk_viscosity = p_bulk_visc;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif
     }
   return 0;
@@ -284,7 +285,7 @@ int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
     lbpar.ext_force[0] = p_fx;
     lbpar.ext_force[1] = p_fy;
     lbpar.ext_force[2] = p_fz;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_EXTFORCE);
 #endif
     }
   return 0;
@@ -302,7 +303,7 @@ int lb_lbfluid_set_friction(double p_friction){
   } else {
 #ifdef LB
     lbpar.friction = p_friction;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_FRICTION);
 #endif
     }
   return 0;
@@ -594,47 +595,51 @@ int lb_lbfluid_print_velocity(char* filename) {
 	return 0;
 }
 int lb_lbfluid_save_checkpoint(char* filename, int binary) {
+  if(lattice_switch & LATTICE_LB_GPU) {
+    fprintf(stderr, "LB checkpointing not implemented for GPU\n");
+    return ES_ERROR;
+  }
+  else
+	if(lattice_switch & LATTICE_LB) {
 #ifdef LB
-  FILE* cpfile;
-  cpfile=fopen(filename, "w");
-  if (!cpfile) {
-    return ES_ERROR;
-  }
-  double pop[19];
-  int ind[3];
-   
-  int gridsize[3];
+		FILE* cpfile;
+		cpfile=fopen(filename, "w");
+		if (!cpfile) {
+			return ES_ERROR;
+		}
+		double pop[19];
+		int ind[3];
+		
+		int gridsize[3];
 
-  gridsize[0] = box_l[0] / lblattice.agrid;
-  gridsize[1] = box_l[1] / lblattice.agrid;
-  gridsize[2] = box_l[2] / lblattice.agrid;
+		gridsize[0] = box_l[0] / lblattice.agrid;
+		gridsize[1] = box_l[1] / lblattice.agrid;
+		gridsize[2] = box_l[2] / lblattice.agrid;
 
-  for (int i=0; i < gridsize[0]; i++) {
-    for (int j=0; j < gridsize[1]; j++) {
-      for (int k=0; k < gridsize[2]; k++) {
-        ind[0]=i;
-        ind[1]=j;
-        ind[2]=k;
-        lb_lbnode_get_pop(ind, pop);
-        if (!binary) {
-          for (int n=0; n<19; n++) {
-            fprintf(cpfile, "%.16e ", pop[n]); 
-          }
-          fprintf(cpfile, "\n"); 
-        }
-        else {
-          fwrite(pop, sizeof(double), 19, cpfile);
-        }
-      } 
-    }
-  }
-  fclose(cpfile);
-  return ES_OK;
+		for (int i=0; i < gridsize[0]; i++) {
+			for (int j=0; j < gridsize[1]; j++) {
+				for (int k=0; k < gridsize[2]; k++) {
+					ind[0]=i;
+					ind[1]=j;
+					ind[2]=k;
+					lb_lbnode_get_pop(ind, pop);
+					if (!binary) {
+						for (int n=0; n<19; n++) {
+							fprintf(cpfile, "%.16e ", pop[n]); 
+						}
+						fprintf(cpfile, "\n"); 
+					}
+					else {
+						fwrite(pop, sizeof(double), 19, cpfile);
+					}
+				} 
+			}
+		}
+		fclose(cpfile);
+		return ES_OK;
+	}
 #endif
-  if(!(lattice_switch & LATTICE_LB_GPU)) {
-    fprintf(stderr, "Not implemented\n");
-    return ES_ERROR;
-  }
+
   return ES_ERROR;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
@@ -758,38 +763,21 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
  */
 
 int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
-  double local_v[3] = {0, 0, 0} ,rel[3],delta[6];
-  int 	 ind[6], tmpind[6]; //node indices
-  int		 i, x, y, z; //counters
-
-  // fold the position onto the local box, note here ind is used as a dummy variable
-  fold_position (p,ind);
+  double local_v[3] = {0, 0, 0},delta[6]; //velocity field, relative positions to surrounding nodes
+  int 	 ind[3], tmpind[3]; //node indices
+  int		 x, y, z; //counters
 
   // convert the position into lower left grid point
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    for (i=0;i<3;i++) {
-      rel[i] = (p[i])/lbpar_gpu.agrid;
-      //Note this should be changed once GPU LB is shifted
-    }
+	map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
 #endif
   } else {  
 #ifdef LB
-    for (i=0;i<3;i++) {
-      rel[i] = (p[i])/lbpar.agrid-0.5;
-    }
+	map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
 #endif
   }
-  // calculate the index of the position
-  for (i=0;i<3;i++) {
-    ind[i] = floor(rel[i]);
-  }
 
-  // calculate the linear interpolation weighting
-  for (i=0;i<3;i++) {
-    delta[3+i] = rel[i] - ind[i];
-    delta[i] = 1 - delta[3+i];
-  }
 
   //set the initial velocity to zero in all directions
   v[0] = 0;
@@ -803,9 +791,26 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
 
-	lb_lbnode_get_u (tmpind, local_v);
+				if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+					if (tmpind[0] == lbpar_gpu.dim_x) tmpind[0] =0;
+					if (tmpind[1] == lbpar_gpu.dim_y) tmpind[1] =0;
+					if (tmpind[2] == lbpar_gpu.dim_z) tmpind[2] =0;
+#endif
+				} else {  
+#ifdef LB
+					if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
+					if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
+					if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
 
-	v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+#endif
+				}
+
+//printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
+				lb_lbnode_get_u(tmpind, local_v);
+				
+				
+				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
         v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
 
@@ -1005,6 +1010,10 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
   return 0;
 }
 #endif
+
+int lb_lbnode_set_extforce(int* ind, double* f) {
+  return -100;
+}
 
 #ifdef LB
 /********************** The Main LB Part *************************************/
@@ -1468,7 +1477,6 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
     lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
 
@@ -1488,7 +1496,6 @@ void lb_reinit_parameters() {
 /** Resets the forces on the fluid nodes */
 void lb_reinit_forces() {
   index_t index;
-
   for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 #ifdef EXTERNAL_FORCES
@@ -1516,7 +1523,6 @@ void lb_reinit_forces() {
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
-
     index_t index;
 
     /* default values for fields in lattice units */
