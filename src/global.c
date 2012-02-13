@@ -83,5 +83,6 @@ const Datafield fields[] = {
   {adress_vars,      TYPE_DOUBLE, 7, "adress_vars",       1 },         /* 42  from adresso.c */
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9 },         /* 43 from interaction_data.c */
   {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", 5 },         /* 44 from imd_tcl.c */
+  {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 45 from interaction_data.c */
   { NULL, 0, 0, NULL, 0 }
 };

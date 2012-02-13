@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -20,8 +20,12 @@
 
 source "tests_common.tcl"
 
+require_feature "ADRESS" off
 require_feature "ELECTROSTATICS"
+require_feature "EXTERNAL_FORCES"
 require_feature "FFTW"
+# we can't reach our precision with more than 2 CPUS per side
+require_max_nodes_per_side {2 2 2}
 
 puts "---------------------------------------------------------------"
 puts "- Testcase iccp3m.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -60,18 +64,22 @@ part 200 pos 5 5 1 q 1
 puts "[ inter coulomb 1. p3m tunev2 accuracy 1e-3 mesh 32 cao 4 ]"
 
 iccp3m 200 eps_out 1 max_iterations 60 convergence 1e-1 relax 0.7 areas $areas normals $normals epsilons $epsilons
-integrate 0
+if {[catch {
+    integrate 0
+    integrate 100
+} res]} {
+    error_exit "iccp3m: caught error $res"
+}
 
-integrate 100
 set refpos 1.0429519727877221 
 set refforce 0.07816245324943571
 set pos [ lindex [ part 200 print pos ] 2 ] 
 set force [ lindex [ part 200 print force ] 2 ]
 if { abs($refpos-$pos) > 1e-4 } {
-  puts "position is wrong"
-  error "P3M noncubic test failed"
+    error_exit "iccp3m: position is wrong"
 }
 if { abs($refforce - $force) > 1e-4 } {
-  puts "force is wrong"
-  error "P3M noncubic test failed"
+    error_exit "iccp3m: force is wrong"
 }
+
+exit 0

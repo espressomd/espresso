@@ -72,12 +72,13 @@ void force_calc()
   if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
 #endif
 
+#ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)
     iccp3m_iteration();
-  else {
+  else
+#endif
     init_forces();
-  }
-  
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
