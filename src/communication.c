@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -2497,9 +2497,7 @@ int mpi_iccp3m_iteration(int dummy)
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
-  printf("(%d) performing ICC iteration \n", this_node );
   iccp3m_iteration();
-  printf("(%d) performed ICC iteration \n", this_node );
 
   COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node, dummy));
 
@@ -2513,9 +2511,7 @@ int mpi_iccp3m_iteration(int dummy)
 void mpi_iccp3m_iteration_slave(int dummy, int dummy2)
 {
 #ifdef ELECTROSTATICS
-  printf("(%d) performing ICC iteration \n", this_node );
   iccp3m_iteration();
-  printf("(%d) performed ICC iteration \n", this_node );
   COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
@@ -2532,9 +2528,7 @@ int mpi_iccp3m_init(int n_induced_charges)
   
   mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
    
-  printf("(%d) broadcasting the ICC configuration\n", this_node);
   bcast_iccp3m_cfg();
-  printf("(%d) broadcasted ICC configuration\n", this_node);
 
   COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node, n_induced_charges));
 
@@ -2555,12 +2549,8 @@ void mpi_iccp3m_init_slave(int node, int dummy)
     iccp3m_initialized=1;
  }
 
-  printf("(%d) recieving the ICC configuration\n", this_node);
-  
   bcast_iccp3m_cfg();
   
-  printf("(%d) recieved ICC configuration\n", this_node);
-
   check_runtime_errors();
 #endif
 }
@@ -2609,24 +2599,27 @@ void mpi_send_fluid_populations_slave(int node, int index) {
 #endif
 }
 
-void mpi_bcast_max_mu_slave(int node, int dummy) {
-#ifdef DIPOLES
-  
-  get_mu_max();
- 
-#endif
-}
+/****************************************************/
 
 void mpi_bcast_max_mu() {
 #ifdef DIPOLES
   mpi_call(mpi_bcast_max_mu_slave, -1, 0);
   
-  get_mu_max();
+  calc_mu_max();
   
 #endif
 }
 
+void mpi_bcast_max_mu_slave(int node, int dummy) {
+#ifdef DIPOLES
+  
+  calc_mu_max();
+ 
+#endif
+}
+
 #ifdef LANGEVIN_PER_PARTICLE
+
 /******************** REQ_SEND_PARTICLE_T ********************/
 void mpi_set_particle_temperature(int pnode, int part, double _T)
 {

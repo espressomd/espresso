@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -56,6 +56,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
+#include "statistics_correlation.h"
 
 /************************************************
  * DEFINES
@@ -206,7 +207,7 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 
-ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ROTATION
     convert_initial_torques();

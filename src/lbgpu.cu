@@ -1,18 +1,21 @@
-/* $Id: lbgpu.cu $
- *
- * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
- * It is therefore subject to the ESPResSo license agreement which you
- * accepted upon receiving the distribution and by which you are
- * legally bound while utilizing this file in any form or way.
- * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * You should have received a copy of that license along with this
- * program; if not, refer to http://www.espresso.mpg.de/license.html
- * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group,
- * PO Box 3148, 55021 Mainz, Germany.
- * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
- */
+/* 
+   Copyright (C) 2010,2011,2012 The ESPResSo project
+
+   This file is part of ESPResSo.
+  
+   ESPResSo is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
+   ESPResSo is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /** \file lbgpu.cu
  *
@@ -647,7 +650,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
 __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
 	
   float mode[4];
-  unsigned int my_left[3];
+  int my_left[3];
   float interpolated_u1, interpolated_u2, interpolated_u3;
   float Rho;
   interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.f;
@@ -659,7 +662,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   #pragma unroll
   for(int i=0; i<3; ++i){
     float scaledpos = particle_data[part_index].p[i]/para.agrid;
-    my_left[i] = (unsigned int)(floorf(scaledpos));
+    my_left[i] = (int)(floorf(scaledpos - 0.5f));
+    //printf("scaledpos %f \t myleft: %u \n", scaledpos, my_left[i]);
     temp_delta[3+i] = scaledpos - my_left[i];
     temp_delta[i] = 1.f - temp_delta[3+i];
     /**further value used for interpolation of fluid velocity at part pos near boundaries */
@@ -676,19 +680,18 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
   delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
-  unsigned int x = my_left[0];
-  unsigned int y = my_left[1];
-  unsigned int z = my_left[2];
+  int x = my_left[0];
+  int y = my_left[1];
+  int z = my_left[2];
 
-  node_index[0] = x                + para.dim_x*y                  + para.dim_x*para.dim_y*z;
-  node_index[1] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*z;
-  node_index[2] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;
-  node_index[4] = x                + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[5] = (x+1)%para.dim_x + para.dim_x*y                  + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-  node_index[6] = x                + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[2] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[3] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*(z%para.dim_z);
+  node_index[4] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[5] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*((z+1)%para.dim_z);
+  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
   node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
-
   #pragma unroll
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
@@ -923,38 +926,38 @@ __global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *
     /** update the q=1 sublattice */
     rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
 
-    n_a.vd[1*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[2*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[3*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[4*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[5*para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
-    n_a.vd[6*para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[1*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[2*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+    n_a.vd[3*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[4*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+    n_a.vd[5*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+    n_a.vd[6*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
 
     /** update the q=2 sublattice */
     rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
 
     tmp1 = local_pi[0] + local_pi[2];
     tmp2 = 2.0f*local_pi[1];
-    n_a.vd[7*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[8*para.number_of_nodes + index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[9*para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[10*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[7*para.number_of_nodes + single_nodeindex]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[8*para.number_of_nodes + single_nodeindex]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[9*para.number_of_nodes + single_nodeindex]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[10*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     tmp1 = local_pi[0] + local_pi[5];
     tmp2 = 2.0f*local_pi[3];
 
-    n_a.vd[11*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[12*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[13*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[14*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[11*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[12*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[13*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[14*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
     tmp1 = local_pi[2] + local_pi[5];
     tmp2 = 2.0f*local_pi[4];
 
-    n_a.vd[15*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[16*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[17*para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[18*para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[15*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[16*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+    n_a.vd[17*para.number_of_nodes + single_nodeindex] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+    n_a.vd[18*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
   }
 }
@@ -1588,7 +1591,7 @@ void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values){
 /** setup and call kernel to calculate the total momentum of the hole fluid
  * @param *mass value of the mass calcutated on the GPU
 */
-void calc_fluid_mass_GPU(double* mass){
+void lb_calc_fluid_mass_GPU(double* mass){
 
   float* tot_mass;
   float cpu_mass =  0.f ;
@@ -1613,7 +1616,6 @@ void calc_fluid_mass_GPU(double* mass){
  *  @param host_mom value of the momentum calcutated on the GPU
  */
 void lb_calc_fluid_momentum_GPU(double* host_mom){
-
 
   float* tot_momentum;
   float host_momentum[3] = { 0.f, 0.f, 0.f};

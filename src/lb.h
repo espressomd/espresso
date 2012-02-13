@@ -282,8 +282,6 @@ int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v);
  */
 void lb_calc_modes(index_t index, double *mode);
 
-void lb_check_halo_regions();
-
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index the local lattice site (Input).
@@ -355,9 +353,9 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
 #ifdef EXTERNAL_FORCES
   /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
 #endif
 
 }
@@ -541,9 +539,9 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 
 #ifdef EXTERNAL_FORCES
   /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
 #endif
 
 }

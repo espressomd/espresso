@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -69,7 +69,7 @@ int       mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
 int       mdlc_sanity_checks(); 
 void      add_mdlc_force_corrections();
 double    add_mdlc_energy_corrections();
-double    get_mu_max(void);
+void      calc_mu_max();
 #endif
 
 #endif

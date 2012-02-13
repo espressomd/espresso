@@ -30,6 +30,7 @@
 #include "comforce_tcl.h"
 #include "comfixed_tcl.h"
 #include "rattle_tcl.h"
+#include "mol_cut_tcl.h"
 
 // for the force caps
 #include "lj.h"
@@ -1073,4 +1074,11 @@ int tclcommand_inter(ClientData _data, Tcl_Interp *interp,
   }
   /* check for background errors which have not been handled so far */
   return gather_runtime_errors(interp, err_code);
+}
+
+int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data)
+{
+  min_global_cut = *((double *)_data);
+  mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT);
+  return TCL_OK;
 }

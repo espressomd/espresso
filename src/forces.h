@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -70,6 +71,7 @@
 #include "molforces.h"
 #include "morse.h"
 #include "elc.h"
+#include "iccp3m.h"
 #include "collision.h" 
 /* end of force files */
 
@@ -298,52 +300,54 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   double q1q2 = p1->p.q*p2->p.q;
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M: {
-    if (q1q2) {
-      p3m_add_pair_force(q1q2,d,dist2,dist,force); 
-    
-      // forces from the virtual charges
-      // they go directly onto the particles, since they are not pairwise forces
-      if (elc_params.dielectric_contrast_on)
-	ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+  if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
+    switch (coulomb.method) {
+  #ifdef P3M
+    case COULOMB_ELC_P3M: {
+      if (q1q2) {
+        p3m_add_pair_force(q1q2,d,dist2,dist,force); 
+      
+        // forces from the virtual charges
+        // they go directly onto the particles, since they are not pairwise forces
+        if (elc_params.dielectric_contrast_on)
+  	ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f, p2->f.f);
+      }
+      break;
     }
-    break;
-  }
-  case COULOMB_P3M: {
-#ifdef NPT
-    if (q1q2) {
-      double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir[0] += eng;
+    case COULOMB_P3M: {
+  #ifdef NPT
+      if (q1q2) {
+        double eng = p3m_add_pair_force(q1q2,d,dist2,dist,force);
+        if(integ_switch == INTEG_METHOD_NPT_ISO)
+  	nptiso.p_vir[0] += eng;
+      }
+  #else
+      if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
+  #endif
+      break;
     }
-#else
-    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
-#endif
-    break;
-  }
-#endif
-  case COULOMB_EWALD: {
-#ifdef NPT
-    if (q1q2) {
-      double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-	nptiso.p_vir[0] += eng;
+  #endif
+    case COULOMB_EWALD: {
+  #ifdef NPT
+      if (q1q2) {
+        double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+        if(integ_switch == INTEG_METHOD_NPT_ISO)
+  	nptiso.p_vir[0] += eng;
+      }
+  #else
+      if (q1q2) add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+  #endif
+      break;
     }
-#else
-    if (q1q2) add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-#endif
-    break;
-  }
-  case COULOMB_MMM1D:
-    if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
-    break;
-  case COULOMB_MMM2D:
-    if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
-    break;
-  case COULOMB_NONE:
-    break;
+    case COULOMB_MMM1D:
+      if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+      break;
+    case COULOMB_MMM2D:
+      if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
+      break;
+    case COULOMB_NONE:
+      break;
+    }
   }
 
 #endif /*ifdef ELECTROSTATICS */

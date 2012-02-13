@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -35,7 +35,7 @@ static int list_gpus(Tcl_Interp *interp)
   int found = 0; 
   for (int dev = 0; dev < deviceCount; ++dev) {
     // look only for devices with compute capability > 1.1 (for atomic operations)
-    if (cuda_check_gpu(dev)) {
+    if (cuda_check_gpu(dev) == ES_OK) {
       char id[4 + 64 + TCL_INTEGER_SPACE];
       char name[64];
       cuda_get_gpu_name(dev, name);
@@ -77,7 +77,7 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
       Tcl_AppendResult(interp, "expected: cuda setdevice <devnr>", (char *)NULL);
       return TCL_ERROR;
     }
-    if (!cuda_check_gpu(dev)) {
+    if (cuda_check_gpu(dev) == ES_ERROR) {
       Tcl_AppendResult(interp, "GPU not present or compute model not sufficient", (char *)NULL);
       return TCL_ERROR;
     }

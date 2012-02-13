@@ -1,4 +1,21 @@
-
+/*
+  Copyright (C) 2012 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include <tcl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -27,7 +44,9 @@
 #include "random_tcl.h"
 #include "statistics_chain_tcl.h"
 #include "statistics_cluster_tcl.h"
+#include "statistics_correlation_tcl.h"
 #include "statistics_fluid_tcl.h"
+#include "statistics_observable_tcl.h"
 #include "statistics_tcl.h"
 #include "thermostat_tcl.h"
 #include "virtual_sites_com_tcl.h"
@@ -144,6 +163,10 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   /* here */
   REGISTER_COMMAND("replacestdchannel", tclcommand_replacestdchannel);
   /* in iccp3m.h */
+  REGISTER_COMMAND("observable", tclcommand_observable);
+  /* in statistics_obsrvable.h */
+  REGISTER_COMMAND("correlation", tclcommand_correlation);
+  /* in statistics_correlation.h */
 #ifdef ELECTROSTATICS
 #ifdef P3M
   REGISTER_COMMAND("iccp3m", tclcommand_iccp3m);
@@ -188,6 +211,7 @@ static void register_global_variables(Tcl_Interp *interp)
   register_global_callback(FIELD_SIMTIME, tclcallback_time);
   register_global_callback(FIELD_TIMESTEP, tclcallback_time_step);
   register_global_callback(FIELD_TIMINGSAMP, tclcallback_timings);
+  register_global_callback(FIELD_MIN_GLOBAL_CUT, tclcallback_min_global_cut);
 }
 
 int appinit(Tcl_Interp *interp)

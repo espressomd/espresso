@@ -92,6 +92,8 @@ Reaction_field_params rf_params = { 0.0, 0.0 };
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
+double min_global_cut = 0.0;
+
 double max_cut;
 double max_cut_nonbonded;
 double max_cut_bonded;
@@ -469,6 +471,12 @@ static void recalc_maximal_cutoff_bonded()
 
 static void recalc_global_maximal_nonbonded_cutoff()
 {
+  /* user defined minimal global cut. This makes sure that data of
+   pairs of particles with a distance smaller than this are always
+   available on the same node (through ghosts). Required for example
+   for the relative virtual sites algorithm. */
+  max_cut_global = min_global_cut;
+
 #ifdef ELECTROSTATICS
   /* Cutoff for the real space electrostatics.
      Note that the box length may have changed,
@@ -507,8 +515,11 @@ static void recalc_global_maximal_nonbonded_cutoff()
   }
 #endif /*ifdef ELECTROSTATICS */
   
-#ifdef DP3M
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
     double r_cut = dp3m.params.r_cut_iL* box_l[0];
@@ -516,8 +527,9 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = r_cut;
     break;
   }
-  }       
 #endif /*ifdef DP3M */
+  }       
+#endif
 
 #ifdef DPD
   if (dpd_r_cut != 0) {
@@ -926,6 +938,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
+      // fall through
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
       dp3m_set_bjerrum();

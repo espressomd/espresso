@@ -1,5 +1,6 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -31,11 +32,22 @@ require_feature "THERMOSTAT_IGNORE_NON_VIRTUAL" off
 require_feature "ELECTROSTATICS"
 require_feature "LENNARD_JONES"
 
+puts "---------------------------------------------------------------"
+puts "- Testcase virtual-sites.tcl running on 1 nodes"
+puts "---------------------------------------------------------------"
+
 setmd box_l 10 10 10
 cellsystem domain_decomposition 
 setmd time_step 0.01 
 setmd skin 1
 thermostat off
+
+# check that the min global_cutoff works
+setmd min_global_cut 1
+if {[setmd max_range] < [setmd min_global_cut] + [setmd skin] - 0.001} {
+    error_exit "max cut is too small ( [setmd max_cut_nonbonded] vs. [setmd min_global_cut] + [setmd skin]) "
+}
+puts "OK: max cut is [setmd max_range], should not be smaller than [setmd min_global_cut] + [setmd skin]"
 
 part 0 pos 5 5 5 omega 1 2 3
 part 1 pos 5 5 6 virtual 1 vs_auto_relate_to 0 
@@ -123,15 +135,23 @@ part delete
 setmd time_step 0.005
 cellsystem domain_decomposition 
 
-setmd skin 1
+setmd skin 0.5
 setmd box_l 20 20 20 
 setmd min_num_cells 27
 setmd max_num_cells 100000
 setmd periodic 1 1 1
 thermostat langevin 1 1 
 
+
 inter coulomb 1 dh 0.45 0.45
 inter 1 1 lennard-jones 10 0.41 0.42
+
+# check that reseting the max cut works
+setmd min_global_cut 0
+if {[setmd max_range] > 0.45 + [setmd skin] + 0.001} {
+    error_exit "max cut ([setmd max_cut_nonbonded]) was not reduced correctly"
+}
+puts "OK: max cut is [setmd max_range], should not be bigger than 0.45 + [setmd skin]"
 
 part 0 pos 2 2 2 v -1 0 0 type 0
 part 1 pos 1.8 2 2 virtual 1 vs_auto_relate_to 0 q 1 type 1

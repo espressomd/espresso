@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -992,3 +992,40 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
   return 1;
 }
 
+
+/************************************************************/
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A)
+{
+  int i, j;
+  double value;
+  double p_vel[3];
+
+  /* if desired (v_comp==1) replace ideal component with instantaneous one */
+   if (total_pressure.init_status != 1+v_comp ) {
+    init_virials(&total_pressure);
+    init_p_tensor(&total_p_tensor);
+
+    init_virials_non_bonded(&total_pressure_non_bonded);
+    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+
+    if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
+      if (total_pressure.init_status == 0)
+	master_pressure_calc(0);
+      p_tensor.data.e[0] = 0.0;
+      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      for(i=0; i<3; i++)
+	if(nptiso.geometry & nptiso.nptgeom_dir[i])
+	  p_tensor.data.e[0] += p_vel[i];
+      p_tensor.data.e[0] /= (nptiso.dimension*nptiso.volume);
+      total_pressure.init_status = 1+v_comp;   }
+    else
+      master_pressure_calc(v_comp);
+  }
+
+  for(j=0; j<9; j++) {
+    value = total_p_tensor.data.e[j];
+    for (i = 1; i < total_p_tensor.data.n/9; i++) value += total_p_tensor.data.e[9*i + j];
+    A[j]=value;
+  }
+  return 0;
+}

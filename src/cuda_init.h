@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2012 The ESPResSo project
   
   This file is part of ESPResSo.
   

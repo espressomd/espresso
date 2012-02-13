@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -222,6 +222,19 @@ int tclcommand_analyze_parse_fluid_cpu(Tcl_Interp *interp, int argc, char **argv
 }
 
 #ifdef LB_GPU
+static int tclcommand_analyze_fluid_mass_gpu(Tcl_Interp* interp, int argc, char *argv[]){
+  char buffer[TCL_DOUBLE_SPACE];
+  double host_mass[1];
+  
+  lb_calc_fluid_mass_GPU(host_mass);
+
+  Tcl_PrintDouble(interp, host_mass[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+
+  return TCL_OK;
+
+}
+
 static int tclcommand_analyze_fluid_parse_momentum_gpu(Tcl_Interp* interp, int argc, char *argv[]) {
   char buffer[TCL_DOUBLE_SPACE];
   double host_mom[3];
@@ -261,8 +274,8 @@ int tclcommand_analyze_parse_fluid_gpu(Tcl_Interp *interp, int argc, char **argv
     } 
 
     if (ARG0_IS_S("mass"))
-		fprintf(stderr, "sry not implemented yet");
-      //err = parse_analyze_fluid_mass(interp, argc - 1, argv + 1);
+		//fprintf(stderr, "sry not implemented yet");
+      err = tclcommand_analyze_fluid_mass_gpu(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("momentum"))
       err = tclcommand_analyze_fluid_parse_momentum_gpu(interp, argc - 1, argv + 1);
     else if (ARG0_IS_S("temperature"))

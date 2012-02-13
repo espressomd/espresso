@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -908,9 +908,16 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
     increases the string space */
 MDINLINE char *strcat_alloc(char *left, char *right)
 {
-  char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
-  strcat(res, right);
-  return res;
+  if (!left) {
+    char *res = (char *)malloc(strlen(right) + 1);
+    strcpy(res, right);
+    return res;
+  }
+  else {
+    char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
+    strcat(res, right);
+    return res;
+  }
 }
 
 /*@}*/

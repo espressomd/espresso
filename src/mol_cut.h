@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -29,6 +29,9 @@
 #ifdef MOL_CUT
 
 #define CUTOFF_CHECK(cond) ((ia_params->mol_cut_type!=0)||(cond))
+
+///
+int molcut_set_params(int part_type_a, int part_type_b,int mol_cut_type,double mol_cut_cutoff);
 
 MDINLINE int checkIfParticlesInteractViaMolCut(Particle *p1, Particle *p2,IA_parameters *data){
    if (data->mol_cut_type==0){

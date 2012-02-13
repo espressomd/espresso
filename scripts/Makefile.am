@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -25,6 +26,7 @@ ESSCRIPTS = \
 	blockfile_support.tcl \
 	bundle.tcl \
 	countBonds.tcl \
+	dielectrics.tcl \
 	pdb.tcl \
 	polymer.tcl \
 	statistics.tcl \

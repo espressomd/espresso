@@ -165,6 +165,8 @@ static void dp3m_compute_constants_energy_dipolar();
  */
 static double dp3m_perform_aliasing_sums_force(int n[3], double nominator[1]);
 static double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1]);
+
+static double dp3m_k_space_error(double box_size, double prefac, int mesh, int cao, int n_c_part, double sum_q2, double alpha_L);
 /*@}*/
 
 
@@ -511,8 +513,11 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao,
 /*****************************************************************************/
 
 int dp3m_set_params(double r_cut, int mesh, int cao,
-		   double alpha, double accuracy)
+		    double alpha, double accuracy)
 {
+  if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
+    coulomb.Dmethod = DIPOLAR_P3M;
+    
   if(r_cut < 0)
     return -1;
 
@@ -1519,7 +1524,7 @@ double dp3m_perform_aliasing_sums_energy(int n[3], double nominator[1])
 
 /************************************************
  * Functions for dipoloar P3M Parameter tuning
- * This tuning is based on the P3M tunning of the charges
+ * This tuning is based on the P3M tuning of the charges
  which in turn is based on the P3M_tune by M. Deserno
  ************************************************/
 
@@ -1606,12 +1611,14 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L, d
 /*****************************************************************************/
 
 /** get the optimal alpha and the corresponding computation time for fixed mesh, cao, r_cut and alpha */
-double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
+static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
 {
   /* rounded up 2000/n_charges timing force evaluations */
-    int int_num = (1999 + dp3m.sum_dip_part)/dp3m.sum_dip_part;
-
+  int int_num = (1999 + dp3m.sum_dip_part)/dp3m.sum_dip_part;
+  
   /* broadcast p3m parameters for test run */
+  if (coulomb.Dmethod != DIPOLAR_P3M && coulomb.Dmethod != DIPOLAR_MDLC_P3M)
+    coulomb.Dmethod = DIPOLAR_P3M;
   dp3m.params.r_cut_iL = r_cut_iL;
   dp3m.params.mesh[0]  = dp3m.params.mesh[1] = dp3m.params.mesh[2] = mesh;
   dp3m.params.cao      = cao;
@@ -1623,6 +1630,370 @@ double dp3m_mcr_time(int mesh, int cao, double r_cut_iL, double alpha_L)
   return time_force_calc(int_num);    
 }
 
+/*****************************************************************************/
+/** get the optimal alpha and the corresponding computation time for
+    fixed mesh, cao. The r_cut is determined via a simple
+    bisection. Returns -1 if the force evaluation does not work, -2 if
+    there is no valid r_cut, and -3 if the charge assigment order is
+    to large for this grid */
+static double dp3m_mc_time(char **log, int mesh, int cao,
+			   double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
+			   double *_alpha_L, double *_accuracy)
+{
+  double int_time;
+  double r_cut_iL;
+  double rs_err, ks_err, mesh_size, k_cut;
+  int i, n_cells;
+  char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
+
+  /* initial checks. */
+  mesh_size = box_l[0]/(double)mesh;
+  k_cut =  mesh_size*cao/2.0;
+  P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
+		    mesh, cao, r_cut_iL_min, r_cut_iL_max));
+  if(cao >= mesh || k_cut >= dmin(min_box_l,min_local_box_l) - skin) {
+    /* print result */
+    sprintf(b,"%-4d %-3d  cao too large for this mesh\n", mesh, cao);
+    *log = strcat_alloc(*log, b);
+    return -3;
+  }
+
+  /* Either low and high boundary are equal (for fixed cut), or the low border is initially 0 and therefore
+     has infinite error estimate, as required. Therefore if the high boundary fails, there is no possible r_cut */
+  if ((*_accuracy = dp3m_get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L, &rs_err, &ks_err)) > dp3m.params.accuracy) {
+    /* print result */
+    sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
+	    mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
+    *log = strcat_alloc(*log, b);
+    return -2;
+  }
+
+  for (;;) {
+    P3M_TRACE(fprintf(stderr, "dp3m_mc_time: interval [%f,%f]\n", r_cut_iL_min, r_cut_iL_max));
+    r_cut_iL = 0.5*(r_cut_iL_min + r_cut_iL_max);
+
+    if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC)
+      break;
+
+    /* bisection */
+    if (dp3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) > dp3m.params.accuracy)
+      r_cut_iL_min = r_cut_iL;
+    else
+      r_cut_iL_max = r_cut_iL;
+  }
+  /* final result is always the upper interval boundary, since only there
+     we know that the desired minimal accuracy is obtained */
+  *_r_cut_iL = r_cut_iL = r_cut_iL_max;
+
+  /* check whether we are running P3M+DLC, and whether we leave a reasonable gap space */
+  if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{dipolar P3M: tuning when dlc needs to be fixed} ");
+  }
+
+  /* check whether this radius is too large, so that we would use less cells than allowed */
+  n_cells = 1;
+  for (i = 0; i < 3; i++)
+    n_cells *= (int)(floor(local_box_l[i]/(r_cut_iL*box_l[0] + skin)));
+  if (n_cells < min_num_cells) {
+    P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n", mesh, cao, r_cut_iL, n_cells));
+    /* print result */
+    sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
+	    mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
+    *log = strcat_alloc(*log, b);
+    return -2;
+  }
+
+  int_time = dp3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
+  if (int_time == -1) {
+    *log = strcat_alloc(*log, "tuning failed, test integration not possible\n");
+    return -1;
+  }
+
+  *_accuracy = dp3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
+
+  P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
+  /* print result */
+  sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n",
+	  mesh, cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);
+  *log = strcat_alloc(*log, b);
+  return int_time;
+}
+
+
+/*****************************************************************************/
+
+/** get the optimal alpha and the corresponding computation time for fixed mesh. *cao
+    should contain an initial guess, which is then adapted by stepping up and down. Returns the time
+    upon completion, -1 if the force evaluation does not work, and -2 if the accuracy cannot be met */
+static double dp3m_m_time(char **log, int mesh,
+			  int cao_min, int cao_max, int *_cao,
+			  double r_cut_iL_min, double r_cut_iL_max, double *_r_cut_iL,
+			  double *_alpha_L, double *_accuracy)
+{
+  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L=0.0, tmp_accuracy=0.0;
+  /* in which direction improvement is possible. Initially, we dont know it yet. */
+  int final_dir = 0;
+  int cao = *_cao;
+
+  P3M_TRACE(fprintf(stderr, "dp3m_m_time: Dmesh=%d, Dcao_min=%d, Dcao_max=%d, Drmin=%f, Drmax=%f\n",
+		    mesh, cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
+  /* the initial step sets a timing mark. If there is no valid r_cut, we can only try
+     to increase cao to increase the obtainable precision of the far formula. */
+  do {
+    tmp_time = dp3m_mc_time(log, mesh, cao,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    /* bail out if the force evaluation is not working */
+    if (tmp_time == -1) return -1;
+    /* cao is too large for this grid, but still the accuracy cannot be achieved, give up */
+    if (tmp_time == -3) {
+      P3M_TRACE(fprintf(stderr, "dp3m_m_time: no possible cao found\n"));
+      return -2;
+    }
+    /* we have a valid time, start optimising from there */
+    if (tmp_time >= 0) {
+      best_time  = tmp_time;
+      *_r_cut_iL = tmp_r_cut_iL;
+      *_alpha_L  = tmp_alpha_L;
+      *_accuracy = tmp_accuracy;
+      *_cao      = cao;
+      break;
+    }
+    /* the required accuracy could not be obtained, try higher caos. Therefore optimisation can only be
+       obtained with even higher caos, but not lower ones */
+    P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_p3m_print_m_time: doesn't give precision, step up\n"));
+    cao++;
+    final_dir = 1;
+  }
+  while (cao <= cao_max);
+  /* with this mesh, the required accuracy cannot be obtained. */
+  if (cao > cao_max) return -2;
+
+  /* at the boundaries, only the opposite direction can be used for optimisation */
+  if (cao == cao_min)      final_dir = 1;
+  else if (cao == cao_max) final_dir = -1;
+
+  P3M_TRACE(fprintf(stderr, "dp3m_m_time: final constraints dir %d\n", final_dir));
+
+  if (final_dir == 0) {
+    /* check in which direction we can optimise. Both directions are possible */
+    double dir_times[3];
+    for (final_dir = -1; final_dir <= 1; final_dir += 2) {
+      dir_times[final_dir + 1] = tmp_time =
+	dp3m_mc_time(log, mesh, cao + final_dir,  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+      /* bail out on errors, as usual */
+      if (tmp_time == -1) return -1;
+      /* in this direction, we cannot optimise, since we get into precision trouble */
+      if (tmp_time < 0) continue;
+
+      if (tmp_time < best_time) {
+	best_time  = tmp_time;
+	*_r_cut_iL = tmp_r_cut_iL;
+	*_alpha_L  = tmp_alpha_L;
+	*_accuracy = tmp_accuracy;
+	*_cao      = cao + final_dir;
+      }
+    }
+    /* choose the direction which was optimal, if any of the two */
+    if      (dir_times[0] == best_time) { final_dir = -1; }
+    else if (dir_times[2] == best_time) { final_dir = 1; }
+    else {
+      /* no improvement in either direction, however if one is only marginally worse, we can still try*/
+      /* down is possible and not much worse, while up is either illegal or even worse */
+      if ((dir_times[0] >= 0 && dir_times[0] < best_time + P3M_TIME_GRAN) &&
+	  (dir_times[2] < 0 || dir_times[2] > dir_times[0]))
+	final_dir = -1;
+      /* same for up */
+      else if ((dir_times[2] >= 0 && dir_times[2] < best_time + P3M_TIME_GRAN) &&
+	       (dir_times[0] < 0 || dir_times[0] > dir_times[2]))
+	final_dir = 1;
+      else {
+	/* really no chance for optimisation */
+	P3M_TRACE(fprintf(stderr, "dp3m_m_time: Dmesh=%d final Dcao=%d time=%f\n",mesh, cao, best_time));
+	return best_time;
+      }
+    }
+    /* we already checked the initial cao and its neighbor */
+    cao += 2*final_dir;
+  }
+  else {
+    /* here some constraint is active, and we only checked the initial cao itself */
+    cao += final_dir;
+  }
+
+  P3M_TRACE(fprintf(stderr, "dp3m_m_time: optimise in direction %d\n", final_dir));
+
+  /* move cao into the optimisation direction until we do not gain anymore. */
+  for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
+    tmp_time = dp3m_mc_time(log, mesh, cao,  r_cut_iL_min, r_cut_iL_max,
+			    &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
+    /* bail out on errors, as usual */
+    if (tmp_time == -1) return -1;
+    /* if we cannot meet the precision anymore, give up */
+    if (tmp_time < 0) break;
+
+    if (tmp_time < best_time) {
+      best_time  = tmp_time;
+      *_r_cut_iL = tmp_r_cut_iL;
+      *_alpha_L  = tmp_alpha_L;
+      *_accuracy = tmp_accuracy;
+      *_cao      = cao;
+    }
+    /* no hope of further optimisation */
+    else if (tmp_time > best_time + P3M_TIME_GRAN)
+      break;
+  }
+  P3M_TRACE(fprintf(stderr, "tclcommand_inter_magnetic_p3m_print_m_time: Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",mesh, *_cao, *_r_cut_iL, best_time));
+  return best_time;
+}
+
+
+/** Tuning of dipolar P3M. The algorithm
+    basically determines the mesh, cao and then the real space cutoff, in this nested order.
+
+    For each mesh, the cao optimal for the mesh tested previously is used as an initial guess,
+    and the algorithm tries whether increasing or decreasing it leads to a better solution. This
+    is efficient, since the optimal cao only changes little with the meshes in general.
+
+    The real space cutoff for a given mesh and cao is determined via a bisection on the error estimate,
+    which determines where the error estimate equals the required accuracy. Therefore the smallest 
+    possible, i.e. fastest real space cutoff is determined.
+
+    Both the search over mesh and cao stop to search in a specific direction once the computation time is
+    significantly higher than the currently known optimum.
+ */
+
+int dp3m_adaptive_tune(char **logger)
+{
+  int    mesh_max,                   mesh     = -1, tmp_mesh;
+  double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
+  int    cao_min, cao_max,           cao      = -1, tmp_cao;
+
+  double                             alpha_L  = -1, tmp_alpha_L=0.0;
+  double                             accuracy = -1, tmp_accuracy=0.0;
+  double                            time_best=1e20, tmp_time;
+  char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
+ 
+  P3M_TRACE(fprintf(stderr,"%d: dp3m_adaptive_tune\n",this_node));
+
+  if (skin == -1) {
+    *logger = strcat_alloc(*logger, "p3m cannot be tuned, since the skin is not yet set");
+    return ES_ERROR;
+  }
+
+  /* preparation */
+  mpi_bcast_event(P3M_COUNT_DIPOLES);
+
+  /* Print Status */
+  sprintf(b, "dipolar P3M tune parameters: Accuracy goal = %.5e\n", dp3m.params.accuracy);
+  *logger = strcat_alloc(*logger, b);
+  sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
+	  box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);
+  *logger = strcat_alloc(*logger, b);
+
+  if (dp3m.sum_dip_part == 0) {
+    *logger = strcat_alloc(*logger, "no dipolar particles in the system, cannot tune dipolar P3M");
+    return ES_ERROR;
+  }
+  
+  /* parameter ranges */
+  if (dp3m.params.mesh[0] == 0 ) {
+    double expo;
+    expo = log(pow((double)dp3m.sum_dip_part,(1.0/3.0)))/log(2.0);  
+
+    tmp_mesh = (int)(pow(2.0,(double)((int)expo))+0.1);
+    /* this limits the tried meshes if the accuracy cannot
+       be obtained with smaller meshes, but normally not all these
+       meshes have to be tested */
+    mesh_max = tmp_mesh * 256;
+    /* avoid using more than 1 GB of FFT arrays (per default, see config.h) */
+    if (mesh_max > P3M_MAX_MESH)
+      mesh_max = P3M_MAX_MESH;
+  }
+  else {
+    tmp_mesh = mesh_max = dp3m.params.mesh[0];
+
+    sprintf(b, "fixed mesh %d\n", dp3m.params.mesh[0]);
+    *logger = strcat_alloc(*logger, b);
+  }
+
+  if(dp3m.params.r_cut_iL == 0.0) {
+    r_cut_iL_min = 0;
+    r_cut_iL_max = min_local_box_l/2 - skin;
+    r_cut_iL_min *= box_l_i[0];
+    r_cut_iL_max *= box_l_i[0];
+  }
+  else {
+    r_cut_iL_min = r_cut_iL_max = dp3m.params.r_cut_iL;
+
+    sprintf(b, "fixed r_cut_iL %f\n", dp3m.params.r_cut_iL);
+    *logger = strcat_alloc(*logger, b);
+  }
+
+  if(dp3m.params.cao == 0) {
+    cao_min = 1;
+    cao_max = 7;
+    cao = 3;
+  }
+  else {
+    cao_min = cao_max = cao = dp3m.params.cao;
+
+    sprintf(b, "fixed cao %d\n", dp3m.params.cao);
+    *logger = strcat_alloc(*logger, b);
+  }
+
+  *logger = strcat_alloc(*logger, "Dmesh cao Dr_cut_iL   Dalpha_L     Derr         Drs_err    Dks_err    time [ms]\n");
+
+  /* mesh loop */
+  for (;tmp_mesh <= mesh_max; tmp_mesh *= 2) {
+    tmp_cao = cao;
+    tmp_time = dp3m_m_time(logger, tmp_mesh,
+			   cao_min, cao_max, &tmp_cao,
+			   r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
+			   &tmp_alpha_L, &tmp_accuracy);
+    /* some error occured during the tuning force evaluation */
+    if (tmp_time == -1) return ES_ERROR;
+    /* this mesh does not work at all */
+    if (tmp_time < 0) continue;
+
+    /* the optimum r_cut for this mesh is the upper limit for higher meshes,
+       everything else is slower */
+    r_cut_iL_max = tmp_r_cut_iL;
+
+    /* new optimum */
+    if (tmp_time < time_best) {
+      time_best = tmp_time;
+      mesh      = tmp_mesh;
+      cao       = tmp_cao;
+      r_cut_iL  = tmp_r_cut_iL;
+      alpha_L   = tmp_alpha_L;
+      accuracy  = tmp_accuracy;
+    }
+    /* no hope of further optimisation */
+    else if (tmp_time > time_best + P3M_TIME_GRAN)
+      break;
+  }
+  
+  P3M_TRACE(fprintf(stderr,"finshed tuning\n"));
+  if(time_best == 1e20) {
+    *logger = strcat_alloc(*logger, "failed to tune dipolar P3M parameters to required accuracy\n");
+    return ES_ERROR;
+  }
+
+  /* set tuned p3m parameters */
+  dp3m.params.r_cut_iL = r_cut_iL;
+  dp3m.params.mesh[0]  = dp3m.params.mesh[1] = dp3m.params.mesh[2] = mesh;
+  dp3m.params.cao      = cao;
+  dp3m.params.alpha_L  = alpha_L;
+  dp3m.params.accuracy = accuracy;
+  dp3m_scaleby_box_l();
+  /* broadcast tuned p3m parameters */
+  mpi_bcast_coulomb_params();
+  /* Tell the user about the outcome */
+  sprintf(b, "\nresulting parameters:\n%-4d %-3d %.5e %.5e %.5e %-8d\n",
+	  mesh, cao, r_cut_iL, alpha_L, accuracy, (int)time_best);
+  *logger = strcat_alloc(*logger, b);
+  return ES_OK;
+}
 
 /*****************************************************************************/
 
@@ -1691,7 +2062,7 @@ void dp3m_count_magnetic_particles()
 
 
    
-double dp3m_k_space_error(double box_size, double prefac, int mesh, int cao, int n_c_part, double sum_q2, double alpha_L)
+static double dp3m_k_space_error(double box_size, double prefac, int mesh, int cao, int n_c_part, double sum_q2, double alpha_L)
 {
   int  nx, ny, nz;
   double he_q = 0.0, mesh_i = 1./mesh, alpha_L_i = 1./alpha_L;
@@ -1963,13 +2334,11 @@ int dp3m_sanity_checks()
     ERROR_SPRINTF(errtxt, "{044 dipolar P3M requires a cubic mesh} ");
     ret = 1;
   }
-  
-  
 
   if (dp3m_sanity_checks_boxl()) ret = 1;
 
   if (skin == -1) {
-    errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
+    errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{047 dipolar P3M_init: skin is not yet set} ");
     ret = 1;
   }
@@ -1980,11 +2349,15 @@ int dp3m_sanity_checks()
     ret = 1;
   }
   if( dp3m.params.cao == 0) {
-    errtxt = runtime_error(128 + 2*ES_DOUBLE_SPACE);
+    errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{046 dipolar P3M_init: cao is not yet set} ");
     ret = 1;
   }
-  
+  if(node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt,"{046 dipolar P3M_init: node grid must be sorted, largest first} ");
+    ret = 1;
+  }
   
   return ret;
 }

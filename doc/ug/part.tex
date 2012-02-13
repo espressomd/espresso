@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2010,2011,2012 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -834,7 +834,7 @@ for extended dipoles and raspberry-particles, but also for more
 complex configurations.  Position and velocity of a virtual site are
 obtained from the position and orientation of exactly one non-virtual
 particle, which has to be placed in the center of mass of the rigid
-body. Several virtaul sites can be related to one and the same
+body. Several virtual sites can be related to one and the same
 non-virtual particle.  The position of the virtual site is given by
 \begin{equation}
 \vec{x_v} =\vec{x_n} +O_n (O_v \vec{E_z}) d,
@@ -843,7 +843,7 @@ where $\vec{x_n}$ is the position of the non-virtual particle, $O_n$
 is the orientation of the non-virtual particle, $O_v$ denotes the
 orientation of the vector $\vec{x_v}-\vec{x_n}$ with respect to the
 non-virtual particle's body fixed frame and $d$ the distance between
-virtual and non-virtaul particle.  In words: The virtual site is
+virtual and non-virtual particle.  In words: The virtual site is
 placed at a fixed distance from the non-virtual particle. When the
 non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particle's center.
@@ -891,12 +891,11 @@ Please note:
   \end{essyntaxbox}
   where n is the id of the non-virtual particle and d is its distance
   from the virtual site.
-\item In a simulation on more than one cpu, at least one non-bonded
-  interaction needs to have a range greater or equal to the largest
-  distance between a non-virtual particle and its associated virtual
-  sites. If such an interaction does not exist in your system, you can
-  declare a dummy interaction for a particle type not present in the
-  simulation.
+\item In a simulation on more than one cpu, the effective cell size
+  needs to be larger than the largest distance between a non-virtual
+  particle and its associated virtual sites. To this aim, you need to
+  set the global variable \texttt{min\_global\_cut} to this largest
+  distance.
 \item If the virtual sites represent actual particles carrying a mass,
   the inertia tensor of the non-virtual particle in the center of mass
   needs to be adapted.

@@ -59,6 +59,8 @@
 #include "iccp3m.h" /* -iccp3m- */
 #include "adresso.h"
 #include "metadynamics.h"
+#include "statistics_observable.h"
+#include "statistics_correlation.h"
 #include "lb-boundaries.h"
 
 /** whether the thermostat has to be reinitialized before integration */
@@ -319,6 +321,7 @@ void on_observable_calc()
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
+      // fall through
     case DIPOLAR_P3M:
       dp3m_count_magnetic_particles();
       break;
@@ -501,6 +504,8 @@ void on_boxl_change() {
 #ifdef DIPOLES
   switch(coulomb.Dmethod) {
 #ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
     break;
@@ -604,6 +609,10 @@ void on_parameter_change(int field)
     grid_changed_box_l();
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    break;
+  case FIELD_MIN_GLOBAL_CUT:
     recalc_maximal_cutoff();
     cells_on_geometry_change(0);
     break;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -800,6 +800,10 @@ extern double max_cut;
 extern double max_cut_nonbonded;
 /** Maximal interaction cutoff (real space/short range bonded interactions). */
 extern double max_cut_bonded;
+/** Minimal global interaction cutoff. Particles with a distance
+    smaller than this are guaranteed to be available on the same node
+    (through ghosts).  */
+extern double min_global_cut;
 
 /** Switch for nonbonded interaction exclusion */
 extern int ia_excl;
