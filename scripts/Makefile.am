@@ -26,6 +26,7 @@ ESSCRIPTS = \
 	blockfile_support.tcl \
 	bundle.tcl \
 	countBonds.tcl \
+	dielectrics.tcl \
 	pdb.tcl \
 	polymer.tcl \
 	statistics.tcl \
