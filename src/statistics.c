@@ -1410,4 +1410,3 @@ void centermass_conf(int k, int type_1, double *com)
   }
   return;
 }
-
