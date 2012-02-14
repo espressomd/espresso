@@ -26,7 +26,7 @@ if len(sys.argv) < 3:
     print "Usage: %s DEFFILE [FILE...]" % sys.argv[0]
     exit(2)
 
-print "Checking completeness of features in test configurations..."
+print "Checking for completeness of features in test configurations..."
 
 fdefs = featuredefs.defs(sys.argv[1])
 
@@ -41,6 +41,6 @@ for line in fileinput.input(sys.argv[2:]):
 unused = fdefs.features.difference(featurefound)
 if len(unused) > 0:
     for feature in unused:
-        print "WARNING: " + feature + " is not used"
+        print "%s: %s is not used" % (sys.argv[0], feature)
         
 

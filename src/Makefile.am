@@ -316,7 +316,7 @@ doxyconfig.h featureconfig.h featureconfig.c: features.def
 
 endif
 
-doxygen: doxyconfig.h
+doc doxygen: doxyconfig.h
 
 #################################################################
 # Handling of the MPI fake implementation
