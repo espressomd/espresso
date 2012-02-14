@@ -66,6 +66,12 @@ User-visible changes
 Changes visible for developers
 ------------------------------
 
+* The various features are now defined in the file
+  src/features.def. From this file, a couple of Python scripts
+  automatically generate myconfig-sample.h and what was config.h and
+  config.c. Also, this allows to check whether all features are
+  documented, tested and defined.
+
 * The domain decomposition, P3M, LB and MEMD now use MPI cartesian
   communicators. This will hopefully speed up the simulations on some
   platforms.
