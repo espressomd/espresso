@@ -38,4 +38,7 @@ int tclcommand_inter(ClientData data, Tcl_Interp *interp,
 int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
 
+/** datafield callback for \ref min_global_cut. Sets the minimal cell size. */
+int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data);
+
 #endif

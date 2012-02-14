@@ -17,7 +17,7 @@
 #
 source "tests_common.tcl"
 
-require_feature "ELECTROSTATICS"
+require_feature "ELECTROSTATICS MASS"
 
 proc veccompare { a b } {
 #  puts "$a $b"

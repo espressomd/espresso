@@ -15,7 +15,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-EXTRA_DIST= \
+MYCONFIGS = \
+	myconfig-empty.h \
+	myconfig-nofftw.h \
+	myconfig-compileonly.h \
+	\
 	myconfig-maxset.h \
+	myconfig-restcompile1.h \
+	myconfig-restcompile2.h \
 	myconfig-LB.h \
-	myconfig-LBGPU.h
+	myconfig-LBGPU.h \
+	myconfig-tunableslip.h \
+        myconfig-adress.h
+
+EXTRA_DIST = $(MYCONFIGS) \
+	check_myconfig_complete.py
+
+all-local:
+	for file in $(MYCONFIGS); do \
+		if ! test -e $$file; then \
+			$(LN_S) $(srcdir)/$$file .; \
+		fi; \
+	done
+
+if HAVE_PYTHON
+
+check-local: $(MYCONFIGS)
+	cd $(srcdir); $(PYTHON) -B check_myconfig_complete.py \
+	  $(abs_top_srcdir)/src/features.def $(MYCONFIGS)
+
+else
+
+check:
+	@echo "Python was not found in your PATH."
+	@echo "Can't check whether test configs are complete."
+
+endif
+

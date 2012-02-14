@@ -42,6 +42,7 @@
 #include "verlet.h"
 #include "cells.h"
 #include "particle_data.h"
+#include "interaction_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
 #include "forces.h"
@@ -81,58 +82,51 @@ void iccp3m_init(void){
    iccp3m_cfg.nvectorx = NULL;
    iccp3m_cfg.nvectory = NULL;
    iccp3m_cfg.nvectorz = NULL;
-   iccp3m_cfg.extx = NULL;
-   iccp3m_cfg.exty = NULL;
-   iccp3m_cfg.extz = NULL;
-   iccp3m_cfg.fx = NULL;
-   iccp3m_cfg.fy = NULL;
-   iccp3m_cfg.fz = NULL;
+   iccp3m_cfg.extx = 0;
+   iccp3m_cfg.exty = 0;
+   iccp3m_cfg.extz = 0;
 }
+
+
 
 int bcast_iccp3m_cfg(void){
   int i;
 
 
-  MPI_Bcast((int*)&iccp3m_cfg.last_ind_id, 1, MPI_INT, 0, comm_cart); 
+  MPI_Bcast((int*)&iccp3m_cfg.n_ic, 1, MPI_INT, 0, comm_cart); 
 
   /* allocates Memory on slave nodes 
    * Master node allocates the memory when parsing tcl arguments
    * */
   if (this_node != 0) {
-    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.extx       = (double*) realloc (iccp3m_cfg.extx      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.exty       = (double*) realloc (iccp3m_cfg.exty      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.extz       = (double*) realloc (iccp3m_cfg.extz      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
   }
-
 
   MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
   MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast((int*)&iccp3m_cfg.update, 1, MPI_INT, 0, comm_cart);
   
   /* broadcast the vectors element by element. This is slow
    * but safe and only performed at the beginning of each simulation*/
-  for ( i = 0; i < iccp3m_cfg.last_ind_id +1; i++) {
+  for ( i = 0; i < iccp3m_cfg.n_ic; i++) {
     MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double*)&iccp3m_cfg.extx[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double*)&iccp3m_cfg.exty[i], 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast((double*)&iccp3m_cfg.extz[i], 1, MPI_DOUBLE, 0, comm_cart);
   }
+  MPI_Bcast((double*)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.extz, 1, MPI_DOUBLE, 0, comm_cart);
 
   MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, comm_cart);
 
-  printf("node %d: no iterations: %d\n", this_node, iccp3m_cfg.num_iteration);
   return 0 ;
     
 }
@@ -145,6 +139,7 @@ int iccp3m_iteration() {
    int i, j,id;
    char* errtxt;
    double globalmax;
+   double f1, f2 = 0;
 
    iccp3m_sanity_check();
 
@@ -166,7 +161,7 @@ int iccp3m_iteration() {
             np   = cell->n;
             for(i=0 ; i < np; i++) {
                 id = part[i].p.identity ;
-                if( id <= iccp3m_cfg.last_ind_id) {
+                if( id < iccp3m_cfg.n_ic ) {
            /* the dielectric-related prefactor: */                     
                       del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
            /* calculate the electric field at the certain position */
@@ -175,9 +170,9 @@ int iccp3m_iteration() {
                       ez=part[i].f.f[2]/part[i].p.q;
 
           /* let's add the contribution coming from the external field */
-                      ex += iccp3m_cfg.extx[id]; 
-                      ey += iccp3m_cfg.exty[id]; 
-                      ez += iccp3m_cfg.extz[id];
+                      ex += iccp3m_cfg.extx; 
+                      ey += iccp3m_cfg.exty; 
+                      ez += iccp3m_cfg.extz;
                       
                       if (ex == 0 && ey == 0 && ez == 0) {
                         	errtxt = runtime_error(128);
@@ -193,12 +188,16 @@ int iccp3m_iteration() {
                       qold=part[i].p.q;
           /* determine if it is higher than the previously highest charge density */            
                       if(hold>fabs(hmax))hmax=fabs(hold); 
+                      f1 =  (+del_eps*fdot/l_b);
+//                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
+                      if (iccp3m_cfg.sigma!=0) {
+                        f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
+                      } 
 
-                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*del_eps*fdot/l_b;
+                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
                       difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
                                                                               an estimator which can be negative
                                                                               here */
-//                      printf("(%d) difftemp = %f diff = %f\n",this_node,difftemp,diff);
                       if(difftemp > diff && part[i].p.q > 1e-5)
                       {
 //                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
@@ -227,8 +226,8 @@ int iccp3m_iteration() {
          return iccp3m_cfg.citeration++;
 
   } /* iteration */
+  //on_particle_change();
 
-  on_particle_change();
   return iccp3m_cfg.citeration++;
 }
 
@@ -299,9 +298,7 @@ void layered_calculate_ia_iccp3m()
         if (do_nonbonded(p1, &pl[j])) {
 #endif
           /* avoid source-source computation */
-         if(!(p1->p.identity > iccp3m_cfg.last_ind_id && pl[j].p.identity >iccp3m_cfg.last_ind_id)) {
            add_non_bonded_pair_force_iccp3m(p1, &pl[j], d, sqrt(dist2), dist2);
-          }
 #ifdef EXCLUSIONS  
          }
 #endif
@@ -315,9 +312,7 @@ void layered_calculate_ia_iccp3m()
         if (do_nonbonded(p1, &pl[j])) {
 #endif
              /* avoid source-source computation */
-         if(!(p1->p.identity > iccp3m_cfg.last_ind_id && pb[j].p.identity >iccp3m_cfg.last_ind_id)) {
            add_non_bonded_pair_force_iccp3m(p1, &pb[j], d, sqrt(dist2), dist2);
-          }
 #ifdef EXCLUSIONS
          }
 #endif
@@ -340,7 +335,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
   int estimate, sum=0;
   fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_non_bonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
@@ -384,13 +379,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 
 	    add_pair_iccp3m(pl, &p1[i], &p2[j]);
 	    /* calc non bonded interactions */ 
-           if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) {
 	       add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                } 
-/*           else {
-             printf("Ever here \n");
-             }*/
-             /* avoid source-source computation */ 
 	  }
 	 }
 	}
@@ -427,8 +416,7 @@ void calculate_verlet_ia_iccp3m()
 	      p1 = pairs[i];                    /* pointer to particle 1 */
 	      p2 = pairs[i+1];                  /* pointer to particle 2 */
 	      dist2 = distance2vec(p1->r.p, p2->r.p, vec21); 
-          if(!(p1->p.identity > iccp3m_cfg.last_ind_id && p2->p.identity >iccp3m_cfg.last_ind_id))  /* avoid source-source computation */
-	          add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
+	      add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
   }
@@ -469,9 +457,7 @@ void calc_link_cell_iccp3m()
 	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 	      if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
 		/* calc non bonded interactions */
-                if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) 
 		add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                 /* avoid source-source computation */
 	      }
 	    }
 	}
@@ -504,9 +490,7 @@ void nsq_calculate_ia_iccp3m()
       get_mi_vector(d, pt1->r.p, pt2->r.p);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-          /* avoid source-source computation */
-         if(!(pt1->p.identity > iccp3m_cfg.last_ind_id && pt2->p.identity >iccp3m_cfg.last_ind_id))
-	 add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
+	    add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
     }
 
     /* calculate with my ghosts */
@@ -515,13 +499,11 @@ void nsq_calculate_ia_iccp3m()
       partg = me_do_ghosts_icc.cell[c]->part;
 
       for (p2 = 0; p2 < npg; p2++) {
-	pt2 = &partg[p2];
-	get_mi_vector(d, pt1->r.p, pt2->r.p);
-	dist2 = sqrlen(d);
-	dist = sqrt(dist2);
-           /* avoid source-source computation */
-        if(!(pt1->p.identity > iccp3m_cfg.last_ind_id && pt2->p.identity >iccp3m_cfg.last_ind_id))
-	add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
+	      pt2 = &partg[p2];
+	      get_mi_vector(d, pt1->r.p, pt2->r.p);
+	      dist2 = sqrlen(d);
+	      dist = sqrt(dist2);
+	      add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
       }
     }
   }
@@ -647,11 +629,16 @@ void resize_verlet_list_iccp3m(PairList *pl)
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force_iccp3m(Particle *part)
 {
-
     part->f.f[0] = 0.0; /* no need to friction_thermo_langevin function */
     part->f.f[1] = 0.0;
     part->f.f[2] = 0.0;
 
+#ifdef ROTATION
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+#endif
 }
 
 /** initialize the forces for a ghost particle */
@@ -660,6 +647,13 @@ MDINLINE void init_ghost_force_iccp3m(Particle *part)
   part->f.f[0] = 0.0;
   part->f.f[1] = 0.0;
   part->f.f[2] = 0.0;
+
+#ifdef ROTATION
+  /* set torque to zero */
+  part->f.torque[0] = 0;
+  part->f.torque[1] = 0;
+  part->f.torque[2] = 0;
+#endif
 }
 
 /* integer mod*/
@@ -671,6 +665,7 @@ int imod(int x,int y) {
    z=m;
   return z;
 }
+
 
 void reset_forces() {
      Cell *cell;    
