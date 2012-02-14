@@ -25,15 +25,15 @@ ACLOCAL_AMFLAGS = -I config
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
 all-local: Espresso myconfig-sample.h
+CLEANFILES = Espresso myconfig-sample.h
 
 Espresso: 
 	$(LN_S) src/Espresso .
 
-CLEANFILES = Espresso
-
 myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 	cat config/myconfig-sample-header.h > myconfig-sample.h
 	cat config/myconfig-sample-body.h >> myconfig-sample.h
+
 
 #################################################################
 # Documentation

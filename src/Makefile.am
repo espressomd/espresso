@@ -294,6 +294,7 @@ myconfig-final.h: FORCE
 #################################################################
 libEspresso_a_SOURCES += featureconfig.c
 EXTRA_DIST = \
+	features.def \
 	featureconfig.h featureconfig.c \
 	doxyconfig.h
 

@@ -22,19 +22,25 @@ EXTRA_DIST = \
 	featuredefs.py \
 	myconfig-sample-body.h
 
-all: myconfig-sample-body.h
+CLEANFILES = myconfig-sample-body.h
 
 if HAVE_PYTHON
 
-myconfig-sample-body.h: $(top_srcdir)/src/features.def
+all-local: 
 	$(PYTHON) -B $(srcdir)/gen_sampleconfig.py $(top_srcdir)/src/features.def myconfig-sample-body.h
 
 else
 
-myconfig-sample-body.h: $(top_srcdir)/src/features.def
-	@echo "Python was not found in your PATH."
-	@echo "If you change the set of features, you need Python!"
-	@echo "Install it and rerun configure."
-	test -e $(top_srcdir)/config/myconfig-sample-body.h && $(LN_S) $(top_srcdir)/config/myconfig-sample-body.h
+all-local:
+	if test -e $(srcdir)/myconfig-sample-body.h; then \
+		if ! test -e myconfig-sample-body.h; then \
+			$(LN_S) $(srcdir)/myconfig-sample-body.h .; \
+	else \
+		echo "ERROR: Python was not found in your PATH."; \
+		echo "ERROR: When compiling development code or changing the set of features, you need Python!"; \
+		echo "ERROR: Install it and rerun configure."; \
+		exit 1; \
+		fi; \
+	fi
 
 endif

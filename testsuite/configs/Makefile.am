@@ -28,7 +28,8 @@ MYCONFIGS = \
 	myconfig-tunableslip.h \
         myconfig-adress.h
 
-EXTRA_DIST = $(MYCONFIGS)
+EXTRA_DIST = $(MYCONFIGS) \
+	check_myconfig_complete.py
 
 all-local:
 	for file in $(MYCONFIGS); do \
@@ -40,8 +41,8 @@ all-local:
 if HAVE_PYTHON
 
 check-local: $(MYCONFIGS)
-	cd $(srcdir); $(PYTHON) -B $(srcdir)/check_myconfig_complete.py \
-	  $(top_srcdir)/src/features.def $(MYCONFIGS)
+	cd $(srcdir); $(PYTHON) -B check_myconfig_complete.py \
+	  $(abs_top_srcdir)/src/features.def $(MYCONFIGS)
 
 else
 
