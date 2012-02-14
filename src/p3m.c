@@ -1670,7 +1670,12 @@ double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, doub
 	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
 	  cs = p3m_analytic_cotangent_sum(nz,mesh_i[2],cao)*ctan_y;
 	  p3m_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
-	  he_q += (alias1  -  SQR(alias2/cs) / n2);
+
+	  double d = alias1  -  SQR(alias2/cs) / n2;
+	  /* at high precisions, d can become negative due to extinction;
+	     also, don't take values that have no significant digits left*/
+	  if (d > 0 && (fabs(d/alias1) > ROUND_ERROR_PREC))
+	    he_q += d;
 	}
       }
     }

@@ -2068,8 +2068,6 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh, int c
   double he_q = 0.0, mesh_i = 1./mesh, alpha_L_i = 1./alpha_L;
   double alias1, alias2, n2, cs;
 
-
- 
   for (nx=-mesh/2; nx<mesh/2; nx++)
     for (ny=-mesh/2; ny<mesh/2; ny++)
       for (nz=-mesh/2; nz<mesh/2; nz++)
@@ -2079,7 +2077,11 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh, int c
  	       p3m_analytic_cotangent_sum(ny,mesh_i,cao)*
 	       p3m_analytic_cotangent_sum(nz,mesh_i,cao);
 	  dp3m_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
-	  he_q += (alias1  -  SQR(alias2/cs) / (n2*n2*n2));
+	  double d = alias1  -  SQR(alias2/cs) / (n2*n2*n2);
+	  /* at high precisions, d can become negative due to extinction;
+	     also, don't take values that have no significant digits left*/
+	  if (d > 0 && (fabs(d/alias1) > ROUND_ERROR_PREC))
+	    he_q += d;
 	}
 
   return 8.*PI*PI/3.*sum_q2*sqrt(he_q/(double)n_c_part) / (box_size*box_size*box_size*box_size);
