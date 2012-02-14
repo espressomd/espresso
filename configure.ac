@@ -527,8 +527,8 @@ cat <<EOF
 ****************************************************************
 platform detected	= $target
 
-Compiler settings:
-------------------
+Compiler
+--------
 compiler		= $CC
 linker			= $LD
 c compiler flags	= $CFLAGS
@@ -539,15 +539,15 @@ using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
 inline			= $MDINLINE
 
-Libraries:
-----------
+Libraries
+---------
 Tcl version		= $use_tcl
 Tk version		= $use_tk
 FFTW 			= $fftw_found
 efence			= $with_efence
 
-Other settings:
----------------
+Other settings
+--------------
 local config header	= $myconfig
 installation prefix	= $prefix
 number of test tasks    = $CPU_COUNT
@@ -558,17 +558,21 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
+EOF
+
+if test x$with_cuda != xno; then
+cat <<EOF
+CUDA compiler		= $NVCC
+CUDA flags		= $NVCCFLAGS
 
 EOF
+else
+   echo
+   echo "CUDA disabled or not supported."
+fi
 
 if test x"$use_mpi_fake" = x"yes"; then
    echo "WARNING: MPI disabled or not supported! Parallelization turned off."
-fi
-
-if test x$with_cuda != xno; then
-   echo "Using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS."
-else
-   echo "CUDA disabled or not supported."
 fi
 
 if test .$pdflatex = .no; then

@@ -641,8 +641,8 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 		}
 		fclose(cpfile);
 		return ES_OK;
-	}
 #endif
+	}
 
   return ES_ERROR;
 }
