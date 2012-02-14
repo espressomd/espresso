@@ -663,8 +663,6 @@ void autoupdate_correlations() {
 //    printf("checking correlation %d autoupdate is %d \n", i, correlations[i].autoupdate);
     if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
       //printf("updating %d\n", i);
-      if (i==1)
-        fprintf(stderr,"updating %d\n", i);
       correlations[i].last_update=sim_time;
       double_correlation_get_data(&correlations[i]);
     }
