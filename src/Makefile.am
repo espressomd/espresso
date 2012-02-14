@@ -27,7 +27,7 @@ noinst_LIBRARIES = libEspresso.a
 libEspresso_a_SOURCES = \
 	adresso.c adresso.h \
 	cells.c cells.h \
-    collision.c collision.h \
+	collision.c collision.h \
 	communication.c communication.h \
 	comfixed.c comfixed.h \
 	comforce.h comforce.c \
@@ -144,7 +144,7 @@ libEspresso_a_SOURCES += \
 	tcl/blockfile_tcl.c \
 	tcl/cells_tcl.c \
 	tcl/channels_tcl.c \
-    tcl/collision_tcl.c \
+	tcl/collision_tcl.c \
 	tcl/comfixed_tcl.c tcl/comfixed_tcl.h \
 	tcl/comforce_tcl.c tcl/comforce_tcl.h \
 	tcl/config_tcl.c \
@@ -266,7 +266,8 @@ CLEANFILES = myconfig-final.h
 
 FORCE:
 myconfig-final.h: FORCE
-	config_files="\
+	@echo -n "Determining myconfig file..."
+	@config_files="\
 	  $(top_builddir)/$(myconfig) \
 	  $(top_srcdir)/$(myconfig)"; \
 	if test $(myconfig) = myconfig.h; then \
@@ -274,6 +275,7 @@ myconfig-final.h: FORCE
 	fi; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
+	    echo " $$file"; \
 	    myconfig_found=1; \
 	    if test -e $@; then \
 	      cmp -s $$file $@ || cp $$file $@; \
