@@ -17,15 +17,30 @@
 #
 # Check whether all features used in the code are defined
 #
-import sys, os
-sys.path.append(os.path.join(sys.path[0], '..', 'config'))
+import sys, os, re, fileinput
+sys.path.append(os.path.join(sys.path[0], '..', '..', 'config'))
 
 import featuredefs
 
-if len(sys.argv) != 2:
-    print "Usage: %s FILE" % sys.argv[0]
+if len(sys.argv) < 3:
+    print "Usage: %s DEFFILE [FILE...]" % sys.argv[0]
     exit(2)
+
+print "Checking completeness of features in test configurations..."
 
 fdefs = featuredefs.defs(sys.argv[1])
 
+featurefound = set()
+featurere = re.compile('^#define (\w+)')
+for line in fileinput.input(sys.argv[2:]):
+    res = featurere.match(line)
+    if res is not None:
+        feature = res.group(1)
+        featurefound.add(feature)
+
+unused = fdefs.features.difference(featurefound)
+if len(unused) > 0:
+    for feature in unused:
+        print "WARNING: " + feature + " is not used"
+        
 

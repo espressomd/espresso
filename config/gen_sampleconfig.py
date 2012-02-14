@@ -31,7 +31,7 @@ defs = featuredefs.defs(deffilename)
 print "Done."
 
 print "Writing " + hfilename + "..."
-hfile = file(hfilename, 'a');
+hfile = file(hfilename, 'w');
 
 featuresdone = set()
 
@@ -53,5 +53,6 @@ for line in fileinput.input(deffilename):
 
     if feature in defs.features and feature not in featuresdone:
         hfile.write('//#define %s\n' % feature)
+        featuresdone.add(feature)
 
 hfile.close()
