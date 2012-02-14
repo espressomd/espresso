@@ -302,10 +302,10 @@ if HAVE_PYTHON
 
 BUILT_SOURCES +=  featureconfig.h featureconfig.c
 CLEANFILES += featureconfig.h featureconfig.c doxyconfig.h
-featureconfig.h featureconfig.c: features.def
+featureconfig.h featureconfig.c: features.def $(top_srcdir)/config/gen_featureconfig.py
 	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def featureconfig.h featureconfig.c
 
-doxyconfig.h: features.def
+doxyconfig.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
 	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def doxyconfig.h
 
 else
