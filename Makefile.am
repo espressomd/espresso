@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = src . scripts tools testsuite doc
+SUBDIRS = config src . scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
 
@@ -24,12 +24,16 @@ ACLOCAL_AMFLAGS = -I config
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
-all: Espresso
+all: Espresso myconfig-sample.h
 
 Espresso: 
 	$(LN_S) src/Espresso .
 
 CLEANFILES = Espresso
+
+myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
+	cat config/myconfig-sample-header.h > myconfig-sample.h
+	cat config/myconfig-sample-body.h >> myconfig-sample.h
 
 #################################################################
 # Documentation

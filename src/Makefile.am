@@ -292,28 +292,25 @@ myconfig-final.h: FORCE
 #################################################################
 libEspresso_a_SOURCES += featureconfig.c
 EXTRA_DIST = \
-	tools/generate_featureconfig.py \
-	tools/generate_doxyconfig.py \
-	tools/featuredefs.py \
 	featureconfig.h featureconfig.c \
-	doxyconfig.c
+	doxyconfig.h
 
 if HAVE_PYTHON
 
 BUILT_SOURCES +=  featureconfig.h featureconfig.c
 CLEANFILES += featureconfig.h featureconfig.c doxyconfig.h
 featureconfig.h featureconfig.c: features.def
-	$(PYTHON) $(srcdir)/tools/generate_featureconfig.py $(srcdir)/features.def featureconfig.h featureconfig.c
+	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def featureconfig.h featureconfig.c
 
 doxyconfig.h: features.def
-	$(PYTHON) $(srcdir)/tools/generate_doxyconfig.py $(srcdir)/features.def doxyconfig.h
+	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def doxyconfig.h
 
 else
 
 doxyconfig.h featureconfig.h featureconfig.c: features.def
 	@echo "Python was not found in your PATH."
 	@echo "If you change the set of features, you need Python!"
-	@echo "Install these and rerun configure."
+	@echo "Install it and rerun configure."
 
 endif
 

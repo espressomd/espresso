@@ -52,7 +52,8 @@ class defs:
         for line in fileinput.input(filename):
             line = line.strip()
             # Ignore empty and comment lines
-            if len(line) == 0 or line.startswith('#') or line.startswith('//'): continue
+            if len(line) == 0 or line.startswith('#') \
+                or line.startswith('//') or line.startswith('/*'): continue
 
             # Tokenify line
             tokens = line.split(None, 2)

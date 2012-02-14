@@ -1,6 +1,11 @@
 # Feature definitions
 #
-# Lines commented with '//' are copied to myconfig-sample.h
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+#
+# Lines commented with '/* ... */' are copied to myconfig-sample.h
 # Lines commented with '#' are ignored
 
 PARTIAL_PERIODIC
@@ -21,26 +26,26 @@ OVERLAPPED
 NEMD
 NPT 
 
-// Rotation
+/* Rotation */
 ROTATION
 ROTATIONAL_INERTIA	implies ROTATION
 BOND_CONSTRAINT		requires not ROTATION
 
-// Adress
+/* Adress */
 ADRESS			implies MOL_CUT, VIRTUAL_SITES_COM 
 ADRESS			requires not ROTATION and not GAY_BERNE
 MOL_CUT			implies VIRTUAL_SITES_COM
 
-// Electrostatics
+/* Electrostatics */
 ELECTROSTATICS
 P3M			equals ELECTROSTATICS and FFTW
 INTER_RF		implies ELECTROSTATICS
 
-// Magnetostatics
+/* Magnetostatics */
 DIPOLES
 DP3M 			equals DIPOLES and FFTW
 
-// Virtual sites features
+/* Virtual sites features */
 VIRTUAL_SITES_COM	requires not VIRTUAL_SITES_RELATIVE
 VIRTUAL_SITES_RELATIVE 	requires not VIRTUAL_SITES_COM
 VIRTUAL_SITES		equals VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
@@ -48,7 +53,7 @@ VIRTUAL_SITES_NO_VELOCITY
 VIRTUAL_SITES_THERMOSTAT
 THERMOSTAT_IGNORE_NON_VIRTUAL
 
-// DPD features 
+/* DPD features */
 DPD
 TRANS_DPD		implies DPD
 DPD_MASS_RED		requires not DPD_MASS_LIN
@@ -57,10 +62,10 @@ DPD_MASS		equals DPD_MASS_RED or DPD_MASS_LIN
 DPD_MASS		implies MASS, DPD
 TUNABLE_SLIP		implies DPD
 
-// Alternative implementation of DPD
+/* Alternative implementation of DPD */
 INTER_DPD
 
-// Lattice-Boltzmann features
+/* Lattice-Boltzmann features */
 LB
 LB_GPU			requires CUDA
 LB_BOUNDARIES		implies LB, CONSTRAINTS
@@ -69,7 +74,7 @@ LB_ELECTROHYDRODYNAMICS	implies LB
 LATTICE			equals LB or LB_GPU
 USE_TEMPORARY		equals LB or LB_GPU
 
-// Interaction features
+/* Interaction features */
 TABULATED
 LENNARD_JONES
 LJ_WARN_WHEN_CLOSE
@@ -87,22 +92,23 @@ SOFT_SPHERE
 GAY_BERNE		implies ROTATION
 NO_INTRA_NB
 
-// Bond angle 
-// Note: Activate ONLY ONE bonded angle potential out of the following! 
+/* Bond angle */
+/* Note: Activate ONLY ONE bonded angle potential out of the following! */
 BOND_ANGLE_HARMONIC	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
 BOND_ANGLE_COSINE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
 BOND_ANGLE_COSSQUARE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
 BOND_ANGLE		equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
+
 BOND_ANGLEDIST
 BOND_ENDANGLEDIST
 BOND_ANGLEDIST_HARMONIC	implies BOND_ANGLEDIST, CONSTRAINTS
 BOND_ENDANGLEDIST_HARMONIC implies BOND_ENDANGLEDIST, CONSTRAINTS
 
-// activate the old dihedral form. Only use this if you need
-// to run old code using the previous phase definition.
+/* activate the old dihedral form. Only use this if you need */
+/* to run old code using the previous phase definition. */
 OLD_DIHEDRAL
 
-// Debugging
+/* Debugging */
 
 # External switches
 # Switches that are set by configure or gcc, not to be set manually

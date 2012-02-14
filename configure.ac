@@ -496,6 +496,8 @@ EOF
 AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
+	config/Makefile
+	config/myconfig-sample-header.h
 	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
@@ -510,7 +512,6 @@ AC_CONFIG_FILES([
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
 	doc/latexit.sh
-	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
