@@ -312,6 +312,7 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
 int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 //  int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
  // int(*compressB)  ( double* B1, double*B2, double* B_compressed, unsigned int dim_B ) = 0;
+  void **args = malloc(sizeof(void*)); // arguments to be passed to the correlation
   char *compressA_name=NULL;
   char *compressB_name=NULL;
   char *corr_operation_name=NULL;
@@ -462,8 +463,8 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       } else if ( ARG0_IS_S("corr_operation") ) {
         argc -= 1;
         argv += 1;
-        if ( parse_corr_operation(interp, argc, argv, &change, &corr_operation_name, &dim_corr, dim_A, dim_B) ) 
-          return TCL_ERROR;
+        if ( parse_corr_operation(interp, argc, argv, &change, &corr_operation_name, &dim_corr, dim_A, dim_B, args) ) 
+          return TCL_ERROR; 
         argc -= change;
         argv += change;
       } else if ( ARG0_IS_S("tau_lin") ) {
@@ -555,7 +556,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   // Now initialize the new correlation and check the arguments for consistency
   error = double_correlation_init(&correlations[n_correlations], delta_t, tau_lin, tau_max, 1, 
   dim_A, dim_B, dim_corr, A, B, 
-  corr_operation_name, compressA_name, compressB_name);
+  corr_operation_name, compressA_name, compressB_name, *args);
   error_msg = (char *)init_errors[error]; 
   if ( error == 0 ) {
   //printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
@@ -572,8 +573,10 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
 }
 
 
-int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B) {
+int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change, char **corr_operation_name, unsigned int* dim_corr, unsigned int dim_A, unsigned int dim_B, void **args) {
   *corr_operation_name = strdup(argv[0]);
+  DoubleList *dl;
+  int i;
   if (ARG_IS_S_EXACT(0,"componentwise_product")) {
     *change=1;
     return TCL_OK;
@@ -582,6 +585,22 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
     return TCL_OK;
   } else if (ARG_IS_S_EXACT(0,"square_distance_componentwise")) {
     *change=1;
+    return TCL_OK;
+  } else if (ARG_IS_S_EXACT(0,"fcs_acf")) {
+    dl = (DoubleList*)malloc(sizeof(DoubleList));
+    alloc_doublelist(dl, 3);
+    dl->n = 3;
+    for (i=0; i<3; i++ )  { 
+        if ( ! ARG_IS_D(i+1,dl->e[i])  )  { 
+            Tcl_AppendResult(interp, "\nError: fcs_acf mut be folowed by 3 arguments of type double, got: ", argv[i+1], "\n\n" , (char *)NULL);
+            return TCL_ERROR;
+        }
+    }
+    // convert beam waist radii to their squares
+    for (i=0; i<3; i++ ) 
+        dl->e[i] *=  dl->e[i];
+    *args = (void*) dl;
+    *change=4;
     return TCL_OK;
   } else if (ARG0_IS_S("scalar_product")) {
     *change=1;
