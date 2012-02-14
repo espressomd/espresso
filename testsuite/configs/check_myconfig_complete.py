@@ -41,6 +41,6 @@ for line in fileinput.input(sys.argv[2:]):
 unused = fdefs.features.difference(featurefound)
 if len(unused) > 0:
     for feature in unused:
-        print "%s: %s is not used" % (sys.argv[0], feature)
+        print "check_myconfig_complete: %s is not used" % feature
         
 
