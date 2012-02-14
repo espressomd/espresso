@@ -1176,24 +1176,21 @@ The general form is the following.
 Variants \variant{1} to \variant{5} operate only on existing
 correlations. Variant\variant{6} creates an new correlation.
   
-Variant \variant{0} 
-Returns a tcl list of the defined correlations including their parameters.
-\todo{Maybe not all parameters are printed.}
-
-Variant \variant{1} returns the number of currently defined
-correlations.
-
-Variant \variant{2} 
-with \lit{autoupdate \{start | stop\}} it starts or stops automatically updating 
-the correlation estimates. The update frequency is automatically adjusted based 
-based on the value of \var{dt} provided when defining the correlation.
-With \lit{update} it updates the correlation estimates based on the instantaneous
-state of the system.
-A correlation can be either in autoupdate or manual update regime but not in both.
-In the manual update mode it is the user's responsibility to provide samples
-in the proper time interval. The correlator has no way to check for it.
-It is technically possible to stop autoupdating and start updating manually but
-if you opt for it, make sure that you exactly know what you are doing.
+Variant \variant{0} returns a tcl list of the defined correlations
+including their parameters.  \todo{Maybe not all parameters are
+  printed.}  Variant \variant{1} returns the number of currently
+defined correlations.  Variant \variant{2} starts or stops
+automatically updating the correlation estimates (when using
+\lit{autoupdate \{start | stop\}}. The update frequency is
+automatically adjusted based based on the value of \var{dt} provided
+when defining the correlation.  With \lit{update} it updates the
+correlation estimates based on the instantaneous state of the system.
+A correlation can be either in autoupdate or manual update regime but
+not in both.  In the manual update mode it is the user's
+responsibility to provide samples in the proper time interval. The
+correlator has no way to check for it.  It is technically possible to
+stop autoupdating and start updating manually but if you opt for it,
+make sure that you exactly know what you are doing.
 
 Variant \variant{3} correlates all data from history which are left in
 the buffers. Once this has been done, the history is lost and no
@@ -1262,25 +1259,28 @@ components of the correlation.
   \var{tau\_max} can span the entire simulation without
   too much additional cpu time.}
 \item \lit{tau_lin} \\
-  The number of datapoints for which the results are linearly spaced in tau. 
-  This is a parameter of the multiple tau correlator. If you want to use it, make sure that
-  you know how it works. By default, it is set equal to \var{tau\_max} which results
-  in the trivial linear correlator. By setting \var{tau\_lin} < \var{tau\_max} the multiple
-  tau correlator is switched on. In many cases, \var{tau\_lin}=16 is a good choice
-  but this may strongly depend on the observables you are correlating.
-  For more information, we recommend to read Ref.\cite{ramirez10a} or to perform
-  your own tests.
+  The number of datapoints for which the results are linearly spaced
+  in tau.  This is a parameter of the multiple tau correlator. If you
+  want to use it, make sure that you know how it works. By default, it
+  is set equal to \var{tau\_max} which results in the trivial linear
+  correlator. By setting \var{tau\_lin} < \var{tau\_max} the multiple
+  tau correlator is switched on. In many cases, \var{tau\_lin}=16 is a
+  good choice but this may strongly depend on the observables you are
+  correlating.  For more information, we recommend to read
+  Ref.~\cite{ramirez10a} or to perform your own tests.
 \item \lit{compress1} and \lit{compress2} \\
-  Are functions used to compress the data when going to the next level of the 
-  multiple tau correlator. Different compression functions for different observables
-  can be specified if desired, otherwise the same function is used for both.
-  Default is \lit{discard} which takes one of the observable
-  values and discards the other one. This is safe for all observables but produces poor 
-  statistics in the tail. For some observables, \lit{linear} compression can be used which
-  makes an average of two neighbouring values but produces systematic errors.
-  Depending on the observable, the systematic error can be anything between
-  harmless and disastrous. For more information, we recommend to read 
-  Ref.\cite{ramirez10a} or to perform your own tests.
+  Are functions used to compress the data when going to the next level
+  of the multiple tau correlator. Different compression functions for
+  different observables can be specified if desired, otherwise the
+  same function is used for both.  Default is \lit{discard} which
+  takes one of the observable values and discards the other one. This
+  is safe for all observables but produces poor statistics in the
+  tail. For some observables, \lit{linear} compression can be used
+  which makes an average of two neighbouring values but produces
+  systematic errors.  Depending on the observable, the systematic
+  error can be anything between harmless and disastrous. For more
+  information, we recommend to read Ref.~\cite{ramirez10a} or to
+  perform your own tests.
 \end{arguments}
 
 \subsubsection{Multiple tau correlator}
