@@ -47,6 +47,10 @@
 /*********************************************************/
 /*@{*/
 
+#ifndef ONEPART_DEBUG_ID
+#define ONEPART_DEBUG_ID 13
+#endif
+
 /** CELLS: Default value for the maximal number of cells per node. */
 #ifndef CELLS_MAX_NUM_CELLS
 #define CELLS_MAX_NUM_CELLS 32768
