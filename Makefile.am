@@ -24,7 +24,7 @@ ACLOCAL_AMFLAGS = -I config
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
-all: Espresso myconfig-sample.h
+all-local: Espresso myconfig-sample.h
 
 Espresso: 
 	$(LN_S) src/Espresso .
