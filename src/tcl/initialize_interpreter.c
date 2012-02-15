@@ -51,6 +51,10 @@
 #include "thermostat_tcl.h"
 #include "virtual_sites_com_tcl.h"
 
+#ifdef TK
+#include <tk.h>
+#endif
+
 /****************************************
  * various forwards
  *****************************************/
