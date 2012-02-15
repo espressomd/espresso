@@ -198,6 +198,13 @@ typedef struct {
   /** check whether a particle is a ghost or not */
   int ghost;
 #endif
+
+#ifdef GHMC
+  /** Data for the ghmc thermostat, last saved 
+      position and monentum of particle */
+  ParticlePosition r_ls;
+  ParticleMomentum m_ls;
+#endif
 } ParticleLocal;
 
 #ifdef LB

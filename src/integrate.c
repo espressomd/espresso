@@ -57,6 +57,7 @@
 #include "virtual_sites.h"
 #include "adresso.h"
 #include "statistics_correlation.h"
+#include "ghmc.h"
 
 /************************************************
  * DEFINES
@@ -231,6 +232,11 @@ void integrate_vv(int n_steps)
 #endif
   }
 
+#ifdef GHMC
+    if(thermo_switch & THERMO_GHMC)
+      ghmc_init();
+#endif
+
   if (check_runtime_errors())
     return;
 
@@ -242,6 +248,13 @@ void integrate_vv(int n_steps)
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
+#endif
+
+#ifdef GHMC
+    if(thermo_switch & THERMO_GHMC) {
+      if ((int) fmod(i,ghmc_nmd) == 0)
+        ghmc_momentum_update();
+    }
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
@@ -379,6 +392,13 @@ void integrate_vv(int n_steps)
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
+#ifdef GHMC
+    if(thermo_switch & THERMO_GHMC) {
+      if ((int) fmod(i,ghmc_nmd) == ghmc_nmd-1)
+      ghmc_mc();
+    }
+#endif
+
     /* Propagate time: t = t+dt */
     sim_time += time_step;
   }
@@ -396,6 +416,11 @@ void integrate_vv(int n_steps)
     if(this_node==0) nptiso.p_inst_av /= 1.0*n_steps;
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
+#endif
+
+#ifdef GHMC
+  if(thermo_switch & THERMO_GHMC)
+    ghmc_close();
 #endif
 
 }

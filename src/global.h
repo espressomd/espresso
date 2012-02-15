@@ -166,6 +166,10 @@ extern const Datafield fields[];
 #define FIELD_TRANSFER_RATE       44
 /** index of \ref min_global_cut in \ref #fields */
 #define FIELD_MIN_GLOBAL_CUT      45
+/** index of \ref ghmc_nmd in \ref #fields */
+#define FIELD_GHMC_NMD            46
+/** index of \ref ghmc_phi in \ref #fields */
+#define FIELD_GHMC_PHI            47 
 /*@}*/
 
 #endif

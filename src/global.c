@@ -84,5 +84,7 @@ const Datafield fields[] = {
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9 },         /* 43 from interaction_data.c */
   {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", 5 },         /* 44 from imd_tcl.c */
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 45 from interaction_data.c */
+  {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          5 },         /* 46 from thermostat.c */
+  {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",         13 },         /* 47 from thermostat.c */
   { NULL, 0, 0, NULL, 0 }
 };

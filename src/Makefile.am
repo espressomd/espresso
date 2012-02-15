@@ -88,7 +88,8 @@ libEspresso_a_SOURCES = \
 	virtual_sites.c virtual_sites.h \
 	virtual_sites_com.c virtual_sites_com.h \
 	virtual_sites_relative.c virtual_sites_relative.h \
-	vmdsock.c vmdsock.h
+	vmdsock.c vmdsock.h \
+	ghmc.c ghmc.h
 
 # nonbonded potentials and forces
 libEspresso_a_SOURCES += \
@@ -179,7 +180,8 @@ libEspresso_a_SOURCES += \
 	tcl/topology_tcl.c \
 	tcl/tuning_tcl.c \
 	tcl/uwerr_tcl.c \
-	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
+	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h \
+	tcl/ghmc_tcl.c tcl/ghmc_tcl.h
 
 # nonbonded potentials and forces
 libEspresso_a_SOURCES += \

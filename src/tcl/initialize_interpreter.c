@@ -50,6 +50,7 @@
 #include "statistics_tcl.h"
 #include "thermostat_tcl.h"
 #include "virtual_sites_com_tcl.h"
+#include "ghmc_tcl.h"
 
 #ifdef TK
 #include <tk.h>
@@ -100,7 +101,6 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
 int tclcommand_uwerr(ClientData data, Tcl_Interp *interp, int argc, char *argv[]);
 /** callback for \ref timing_samples. See \ref tuning_tcl.c */
 int tclcallback_timings(Tcl_Interp *interp, void *data);
-
 
 /// from \ref scriptsdir.c
 char *get_default_scriptsdir();
@@ -159,6 +159,10 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("thermostat", tclcommand_thermostat);
   /* in bin.c */
   REGISTER_COMMAND("bin", tclcommand_bin);
+  /* in ghmc.c */
+  REGISTER_COMMAND("ghmc", tclcommand_ghmc);
+  REGISTER_COMMAND("save_state", tclcommand_save_state);
+  REGISTER_COMMAND("load_state", tclcommand_load_state);
   /* in lb.c */
 
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);
