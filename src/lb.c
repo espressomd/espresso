@@ -705,6 +705,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
     lb_print_node_GPU(single_nodeindex, host_print_values);
     rho = (double)host_print_values[0].rho;
     *p_rho = rho;
+		free (host_print_values);
 #endif
   } else {
 #ifdef LB
@@ -736,6 +737,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
     p_u[0] = (double)host_print_values[0].v[0];
     p_u[1] = (double)host_print_values[0].v[1];
     p_u[2] = (double)host_print_values[0].v[2];
+		free (host_print_values);
 #endif
   } else {  
 #ifdef LB
@@ -842,6 +844,8 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
     p_pi[3] = (double)host_print_values[0].pi[3];
     p_pi[4] = (double)host_print_values[0].pi[4];
     p_pi[5] = (double)host_print_values[0].pi[5];
+		free (host_print_values);
+
 #endif
 #endif
   printf("single node stress tensor values not available due to memory consumption!\n But can be made available hardcoded in lb.c and lbgpu.h!\n");
