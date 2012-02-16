@@ -22,13 +22,14 @@ ACLOCAL_AMFLAGS = -I config
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = bootstrap.sh baseversion.txt samples packages $(extra)
+EXTRA_DIST = bootstrap.sh version.txt samples packages $(extra)
 
-baseversion.txt: FORCE
-	cd $(top_srcdir); sh config/genversion.sh -r > $(abs_builddir)/baseversion.txt
+version.txt: FORCE
+	cd $(top_srcdir); sh config/genversion.sh -r > $(abs_builddir)/version.txt
 
 all-local: Espresso myconfig-sample.h
-CLEANFILES = Espresso myconfig-sample.h
+CLEANFILES = Espresso myconfig-sample.h 
+DISTCLEANFILES = version.txt
 
 Espresso: 
 	$(LN_S) src/Espresso .
@@ -36,6 +37,18 @@ Espresso:
 myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 	cat config/myconfig-sample-header.h > myconfig-sample.h
 	cat config/myconfig-sample-body.h >> myconfig-sample.h
+
+dist-hook:
+	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -r`; \
+	if test "$$VERSION" != "$(PACKAGE_VERSION)" && \
+		test "$$VERSION" != "$(PACKAGE_VERSION)-dist"; then \
+		echo "***************************************************************************"; \
+		echo "ERROR: Package version ($(PACKAGE_VERSION)) is not up-to-date."; \
+		echo "ERROR: Please run autoreconf -vf"; \
+		echo "ERROR: before running 'make dist' again."; \
+		echo "***************************************************************************"; \
+		exit 1; \
+	fi
 
 
 #################################################################

@@ -323,6 +323,7 @@ doc doxygen: config-doxygen.h
 #################################################################
 libEspresso_a_SOURCES += config-version.c 
 BUILT_SOURCES += config-version.c
+CLEANFILES += config-version.c
 config-version.c: FORCE
 	VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
 	if test "$$VERSION" != "`cat config-version.c`"; then \

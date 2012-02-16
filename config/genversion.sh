@@ -20,19 +20,19 @@
 test "$1" = "-r" && RAW=1
 test "$1" = "-c" && CFILE=1
 
-BASEVERSIONFILE=baseversion.txt
+VERSIONFILE=version.txt
 
 # try to use git describe --dirty
 if ! VERSION=`git describe --dirty --match=?\.?\.? 2> /dev/null`; then
     # try to use git without --dirty
     if ! VERSION=`git describe --match=?\.?\.? 2> /dev/null`-maybedirty; then
 	# otherwise use the baseversionfile
-	if ! test -f $BASEVERSIONFILE; then
+	if ! test -f $VERSIONFILE; then
 	    echo -n "unknown"
-	    echo "ERROR: Can't find $BASEVERSIONFILE!" > /dev/stderr
+	    echo "ERROR: Can't find $VERSIONFILE!" > /dev/stderr
 	    exit 1
 	else
-	    VERSION=`cat $BASEVERSIONFILE`-dist
+	    VERSION=`cat $VERSIONFILE`-dist
 	fi
     fi
 fi

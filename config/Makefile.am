@@ -20,7 +20,8 @@ EXTRA_DIST = \
 	gen_doxyconfig.py \
 	gen_sampleconfig.py \
 	featuredefs.py \
-	myconfig-sample-body.h
+	myconfig-sample-body.h \
+	genversion.sh
 
 CLEANFILES = myconfig-sample-body.h
 
