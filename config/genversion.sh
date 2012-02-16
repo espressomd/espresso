@@ -17,34 +17,35 @@
 # Shell script to find out the version of ESPResSo 
 #
 
-test "$1" = "-r" && RAW=1
+test "$1" = "-d" && DFILE=1
 test "$1" = "-c" && CFILE=1
 
 VERSIONFILE=version.txt
 
+test ! "$DFILE" && LONG="--long"
+
 # try to use git describe --dirty
-if ! VERSION=`git describe --dirty --match=?\.?\.? 2> /dev/null`; then
+if ! VERSION=`git describe --dirty --match=?\.?\.? $LONG 2> /dev/null`; then
     # try to use git without --dirty
-    if ! VERSION=`git describe --match=?\.?\.? 2> /dev/null`-maybedirty; then
-	# otherwise use the baseversionfile
+    if ! VERSION=`git describe --match=?\.?\.? $LONG 2> /dev/null`-maybedirty; then
+	# otherwise use the versionfile
 	if ! test -f $VERSIONFILE; then
 	    echo -n "unknown"
 	    echo "ERROR: Can't find $VERSIONFILE!" > /dev/stderr
 	    exit 1
 	else
-	    VERSION=`cat $VERSIONFILE`-dist
+	    VERSION=`cat $VERSIONFILE`
 	fi
     fi
 fi
 
 # OUTPUT
-if test "$RAW"; then
+if test "$DFILE"; then
     # Raw output
     echo $VERSION | tr -d '\n'
 elif test "$CFILE"; then
     # Output to CFILE
     echo "const char* ESPRESSO_VERSION=\"$VERSION\";"
 else
-    # Normal output
     echo $VERSION
 fi
