@@ -287,6 +287,29 @@ proc writevcf { file args } {
     if { ! $short } then { puts $file "" }
 }
 
+#dumps particle positions in a file so that paraview can visualize it
+proc writevtk {filename} {
+	set max_pid [setmd max_part]
+	set n 0
+	set fp [open $filename "w"]
+
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid] != "na"} then {
+			incr n
+		}
+	}
+
+	puts $fp "# vtk DataFile Version 2.0\nparticles\nASCII\nDATASET UNSTRUCTURED_GRID\nPOINTS $n floats"
+
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid] != "na"} then {
+			puts $fp [part $pid print folded_pos]
+		}
+	}
+
+	close $fp
+}
+
 # get the VMD pid of a given ESPResSo-PID
 proc vtfpid { pid } {
     global vtf_pid
