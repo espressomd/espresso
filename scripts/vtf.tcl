@@ -303,7 +303,10 @@ proc writevtk {filename} {
 
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
 		if {[part $pid] != "na"} then {
-			puts $fp [part $pid print folded_pos]
+			set xpos [expr [lindex [part $pid print folded_pos] 0] - 0.5]
+			set ypos [expr [lindex [part $pid print folded_pos] 1] - 0.5]
+			set zpos [expr [lindex [part $pid print folded_pos] 2] - 0.5]
+			puts $fp "$xpos $ypos $zpos"
 		}
 	}
 
