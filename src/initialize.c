@@ -629,6 +629,12 @@ void on_parameter_change(int field)
     reinit_thermo = 1;
     break;
   case FIELD_TIMESTEP:
+#ifdef LB_GPU
+    lb_reinit_parameters_gpu();
+#endif    
+#ifdef LB
+    lb_reinit_parameters();
+#endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_DPD_TGAMMA:
   case FIELD_DPD_GAMMA:
