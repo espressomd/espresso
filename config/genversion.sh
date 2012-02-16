@@ -22,15 +22,13 @@ test "$1" = "-c" && CFILE=1
 
 VERSIONFILE=version.txt
 
-test ! "$DFILE" && LONG="--long"
-
 # try to use git describe --dirty
-if VERSION=`git describe --dirty --match=?\.?\.? $LONG 2> /dev/null`; then
-    test "$CFILE" && VERSION=git-$VERSION
+if VERSION=`git describe --dirty --match=?\.?\.? 2> /dev/null`; then
+    test "$CFILE" && VERSION=$VERSION-git
 
 # try to use git without --dirty
-elif VERSION=`git describe --match=?\.?\.? $LONG 2> /dev/null`-maybedirty; then
-    test "$CFILE" && VERSION=git-$VERSION
+elif VERSION=`git describe --match=?\.?\.? 2> /dev/null`-maybedirty; then
+    test "$CFILE" && VERSION=$VERSION-git
 
 # otherwise use the versionfile
 elif test -f "$VERSIONFILE"; then
