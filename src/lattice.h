@@ -230,11 +230,11 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
  * <li>The spatial position is given in global coordinates.</li>
  * <li>The lattice sites of the elementary cell are returned as local indices</li>
  * </ul>
- * \param lattice    pointer to the lattice (Input)
  * \param pos        spatial position (Input)
- * \param node_index local indices of the surrounding lattice sites (Output)
+ * \param ind        global index of the lower left lattice site (Output)
  * \param delta      distance fraction of pos from the surrounding
  *                   elementary cell, 6 directions (Output)
+ * \param tmp_agrid  lattice mesh distance
  */
 
 MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {

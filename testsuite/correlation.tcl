@@ -54,3 +54,4 @@ for { set i 0 } { $i < [ llength $corr ]} { incr i } {
   }
 }
 
+exit 0

@@ -90,12 +90,6 @@ typedef struct {
 
   /* Stores the value of the energy correction due to MS effects */
   double  energy_correction;
-
-  /** Flag to know if we should calculate the constants for the energy 
-      (If you neither compute the energy, is a waste of time
-      spendig circa 3 or 4 min computing such constants) **/
-  int flag_constants_energy_dipolar;
-
 } dp3m_data_struct;
 
 /** dipolar P3M parameters. */

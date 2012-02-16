@@ -25,14 +25,13 @@ EXTRA_DIST = \
 
 CLEANFILES = myconfig-sample-body.h
 
+all-local: myconfig-sample-body.h
+
 if HAVE_PYTHON
-
-all-local: 
+myconfig-sample-body.h: FORCE
 	$(PYTHON) -B $(srcdir)/gen_sampleconfig.py $(top_srcdir)/src/features.def myconfig-sample-body.h
-
 else
-
-all-local:
+myconfig-sample-body.h: FORCE
 	if test -e $(srcdir)/myconfig-sample-body.h; then \
 		if ! test -e myconfig-sample-body.h; then \
 			$(LN_S) $(srcdir)/myconfig-sample-body.h .; \
@@ -43,5 +42,7 @@ all-local:
 		exit 1; \
 		fi; \
 	fi
-
 endif
+
+.PHONY: FORCE
+FORCE:

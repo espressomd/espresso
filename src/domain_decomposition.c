@@ -618,7 +618,7 @@ void dd_on_geometry_change(int flags) {
   /* A full resorting is necessary if the grid has changed. We simply
      don't have anything fast for this case. Probably also not
      necessary. */
-  if (!(flags & CELL_FLAG_GRIDCHANGED)) {
+  if (flags & CELL_FLAG_GRIDCHANGED) {
     CELL_TRACE(fprintf(stderr,"%d: dd_on_geometry_change full redo\n",
 		       this_node));
     cells_re_init(CELL_STRUCTURE_CURRENT);
