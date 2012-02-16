@@ -25,18 +25,22 @@ VERSIONFILE=version.txt
 test ! "$DFILE" && LONG="--long"
 
 # try to use git describe --dirty
-if ! VERSION=`git describe --dirty --match=?\.?\.? $LONG 2> /dev/null`; then
-    # try to use git without --dirty
-    if ! VERSION=`git describe --match=?\.?\.? $LONG 2> /dev/null`-maybedirty; then
-	# otherwise use the versionfile
-	if ! test -f $VERSIONFILE; then
-	    echo -n "unknown"
-	    echo "ERROR: Can't find $VERSIONFILE!" > /dev/stderr
-	    exit 1
-	else
-	    VERSION=`cat $VERSIONFILE`
-	fi
-    fi
+if VERSION=`git describe --dirty --match=?\.?\.? $LONG 2> /dev/null`; then
+    test "$CFILE" && VERSION=git-$VERSION
+
+# try to use git without --dirty
+elif VERSION=`git describe --match=?\.?\.? $LONG 2> /dev/null`-maybedirty; then
+    test "$CFILE" && VERSION=git-$VERSION
+
+# otherwise use the versionfile
+elif test -f "$VERSIONFILE"; then
+    VERSION=`cat $VERSIONFILE`
+
+# otherwise the version is unknown
+else
+    echo -n "unknown"
+    echo "ERROR: Can't find $VERSIONFILE!" > /dev/stderr
+    exit 1
 fi
 
 # OUTPUT

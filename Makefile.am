@@ -24,8 +24,9 @@ ACLOCAL_AMFLAGS = -I config
 # by any other means
 EXTRA_DIST = bootstrap.sh version.txt samples packages $(extra)
 
-version.txt: FORCE
-	cd $(top_srcdir); sh config/genversion.sh -d > $(abs_builddir)/version.txt
+version.txt:
+	VERSION=`cd $(top_srcdir); sh config/genversion.sh -d`;\
+	echo $$VERSION > $(abs_builddir)/version.txt
 
 all-local: Espresso myconfig-sample.h
 CLEANFILES = Espesso myconfig-sample.h 
@@ -42,7 +43,8 @@ dist-hook:
 	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -d`; \
 	if test "$$VERSION" != "$(PACKAGE_VERSION)"; then \
 		echo "***************************************************************************"; \
-		echo "ERROR: Package version ($(PACKAGE_VERSION)) is not up-to-date."; \
+		echo "ERROR: Package version is not up-to-date."; \
+		echo "ERROR: $(PACKAGE_VERSION) != $$VERSION"; \
 		echo "ERROR: Please run autoreconf -vf"; \
 		echo "ERROR: before running 'make dist' again."; \
 		echo "***************************************************************************"; \
