@@ -62,12 +62,13 @@ const char file_data_source_init_errors[][64] = {
 };
 
 const char double_correlation_get_data_errors[][64] = {
-  "",
-  "Error calculating variable A" ,
-  "Error calculating variable B" ,
-  "Error calculating correlation\n", 
-  "Error allocating temporary memory\n", 
-  "Error in correlation operation: The vector sizes do not match\n"
+  "",                                                                // 0
+  "Error calculating variable A" ,                                   // 2
+  "Error calculating variable B" ,                                   // 3
+  "Error calculating correlation\n",                                 // 4
+  "Error allocating temporary memory\n",                             // 4
+  "Error in corr_operation: observable dimensions do not match\n",   // 5
+  "Error: dim_corr and dim_A do not match for fcs_acf\n"             // 6
 };
 
 int correlations_autoupdate=0;
@@ -176,7 +177,10 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   if (tau_max <= dt) { 
     return 4;
   } else { //set hierarchy depth which can  accomodate at least tau_max
-    hierarchy_depth=(int)ceil( 1 + log( (tau_max/dt)/(tau_lin-1) ) / log(2.0) );
+    if ( (tau_max/dt) < tau_lin ) 
+      hierarchy_depth = 1;
+    else 
+      hierarchy_depth=(unsigned int)ceil( 1 + log( (tau_max/dt)/(tau_lin-1) ) / log(2.0) );
   }
   self->tau_max=tau_max;
   self->hierarchy_depth = hierarchy_depth;
@@ -326,6 +330,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     self->A[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
     if(!self->autocorrelation) self->B[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
   }
+
   // and initialize the values
   for (i=0; i<self->hierarchy_depth; i++) {
     self->n_vals[i]=0;
@@ -676,22 +681,16 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
   double tmp;
   if (args == NULL )
     return 1;
-  double wsq[3] = {10000.0,10000.0,40000.0}; // FIXME should become an input argument
-  // debug: print the wsquare values and exit
-  //fprintf(stderr,"wsquare[%d]: %.3e  %.3e  %.3e\n***\n", wsquare->n, wsquare->e[0], wsquare->e[1], wsquare->e[2]);
-  //exit(1);
   if (!(dim_A == dim_B )) {
-    printf("Error in square distance componentwise: The vector sizes do not match\n");
     return 5;
   }
   if ( dim_A / dim_corr != 3) {
-    return 5; // FIXME choose a new error code
+    return 6; 
   }
   for ( i = 0; i < dim_corr; i++ ) 
     C[i] = 0;
   for ( i = 0; i < dim_A; i++ ) {
     C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsquare->e[i%3];
-//    C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsq[i%3];
   }
   for ( i = 0; i < dim_corr; i++ ) 
     C[i] = exp(C[i]);
