@@ -37,10 +37,12 @@
 #ifndef DOXYGEN_RUN
 #include "myconfig-final.h"
 #else
-#include "doxyconfig.h"
+#include "config-doxygen.h"
 #endif
 
-#include "featureconfig.h"
+#include "config-features.h"
+
+extern const char* ESPRESSO_VERSION;
 
 /*********************************************************/
 /** \name Parameters from myconfig.h that need to be set */

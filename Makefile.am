@@ -25,7 +25,7 @@ ACLOCAL_AMFLAGS = -I config
 EXTRA_DIST = bootstrap.sh baseversion.txt samples packages $(extra)
 
 baseversion.txt: FORCE
-	$(top_srcdir)/config/genversion.sh $(top_srcdir) > baseversion.txt
+	cd $(top_srcdir); sh config/genversion.sh -r > $(abs_builddir)/baseversion.txt
 
 all-local: Espresso myconfig-sample.h
 CLEANFILES = Espresso myconfig-sample.h

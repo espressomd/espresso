@@ -263,7 +263,6 @@ libEspresso_a_SOURCES += myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 
-FORCE:
 myconfig-final.h: FORCE
 	@echo -n "Determining myconfig file..."
 	@config_files="\
@@ -292,32 +291,43 @@ myconfig-final.h: FORCE
 #################################################################
 # Handling of the features
 #################################################################
-libEspresso_a_SOURCES += featureconfig.c
+libEspresso_a_SOURCES += config-features.c
 EXTRA_DIST = \
 	features.def \
-	featureconfig.h featureconfig.c \
-	doxyconfig.h
+	config-features.h config-features.c \
+	config-doxygen.h
 
 if HAVE_PYTHON
 
-BUILT_SOURCES +=  featureconfig.h featureconfig.c
-CLEANFILES += featureconfig.h featureconfig.c doxyconfig.h
-featureconfig.h featureconfig.c: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def featureconfig.h featureconfig.c
+BUILT_SOURCES +=  config-features.h config-features.c
+CLEANFILES += config-features.h config-features.c config-doxygen.h
+config-features.h config-features.c: features.def $(top_srcdir)/config/gen_featureconfig.py
+	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.h config-features.c
 
-doxyconfig.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
-	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def doxyconfig.h
+config-doxygen.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
+	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.h
 
 else
 
-doxyconfig.h featureconfig.h featureconfig.c: features.def
+config-doxygen.h config-features.h config-features.c: features.def
 	@echo "Python was not found in your PATH."
 	@echo "If you change the set of features, you need Python!"
 	@echo "Install it and rerun configure."
 
 endif
 
-doc doxygen: doxyconfig.h
+doc doxygen: config-doxygen.h
+
+#################################################################
+# Handling of the version
+#################################################################
+libEspresso_a_SOURCES += config-version.c 
+BUILT_SOURCES += config-version.c
+config-version.c: FORCE
+	VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
+	if test "$$VERSION" != "`cat config-version.c`"; then \
+		echo "$$VERSION" > config-version.c; \
+	fi
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -355,3 +365,6 @@ libEspresso_a_SOURCES += $(CUDA_SOURCES)
 
 EXTRA_DIST += $(CUDA_SOURCES)
 endif
+
+.PHONY: FORCE
+FORCE:
