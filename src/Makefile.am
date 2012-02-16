@@ -236,12 +236,12 @@ if TCL
 # Espresso.install for the installation dir. 
 # The ".install" suffix is removed upon installation.
 noinst_PROGRAMS = Espresso
-Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c 
+Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
+Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_LDADD = libEspresso.a
 
 bin_PROGRAMS = Espresso.install
-Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
+Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_install_LDADD = libEspresso.a
 
