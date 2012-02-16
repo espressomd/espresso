@@ -4,7 +4,6 @@
 #define DIPOLES
 #define ROTATION
 #define ROTATIONAL_INERTIA
-#define MDLC
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS
@@ -15,6 +14,7 @@
 #define MODES
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
+#define LANGEVIN_PER_PARTICLE
 
 #define NEMD
 #define NPT 

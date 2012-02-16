@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,43 +32,52 @@
 /* Include the defines created by configure. */
 #include <acconfig.h>
 
-/************************************************/
-/** \name Default Parameter Settings            */
-/** These values can be changed from Tcl        */
-/** */
-/************************************************/
-/*@{*/
-
-/** CELLS: Default value for the maximal number of cells per node. */
-#define CELLS_MAX_NUM_CELLS 32768
-
-/** P3M: Default for number of interpolation points of the charge
-    assignment function. */
-#define P3M_N_INTERPOL 32768
-
-/** P3M: Default for boundary condition: Epsilon of the surrounding
-    medium. */
-#define P3M_EPSILON 0.0
-
-/** P3M: Default for boundary condition in magnetic calculations */
-#define P3M_EPSILON_MAGNETIC 0.0
-
-/** P3M: Default for offset of first mesh point from the origin (left
-    down corner of the simulation box. */
-#define P3M_MESHOFF 0.5
-
-/*@}*/
-
+/* doxyconfig.h is used instead of myconfig when doxygen is run */
+/* doxyconfig.h defines all features so that all features are documented */
 #ifndef DOXYGEN_RUN
-#include <myconfig-final.h>
+#include "myconfig-final.h"
 #else
-#include <myconfig-sample.h>
+#include "doxyconfig.h"
 #endif
+
+#include "featureconfig.h"
 
 /*********************************************************/
 /** \name Parameters from myconfig.h that need to be set */
 /*********************************************************/
 /*@{*/
+
+#ifndef ONEPART_DEBUG_ID
+#define ONEPART_DEBUG_ID 13
+#endif
+
+/** CELLS: Default value for the maximal number of cells per node. */
+#ifndef CELLS_MAX_NUM_CELLS
+#define CELLS_MAX_NUM_CELLS 32768
+#endif
+
+/** P3M: Default for number of interpolation points of the charge
+    assignment function. */
+#ifndef P3M_N_INTERPOL
+#define P3M_N_INTERPOL 32768
+#endif
+
+/** P3M: Default for boundary condition: Epsilon of the surrounding
+    medium. */
+#ifndef P3M_EPSILON
+#define P3M_EPSILON 0.0
+#endif
+
+/** P3M: Default for boundary condition in magnetic calculations */
+#ifndef P3M_EPSILON_MAGNETIC
+#define P3M_EPSILON_MAGNETIC 0.0
+#endif
+
+/** P3M: Default for offset of first mesh point from the origin (left
+    down corner of the simulation box. */
+#ifndef P3M_MESHOFF
+#define P3M_MESHOFF 0.5
+#endif
 
 /** P3M: Number of Brillouin zones taken into account
     in the calculation of the optimal influence function (aliasing
@@ -112,182 +121,6 @@
 #ifndef SHAKE_MAX_ITERATIONS
 #define SHAKE_MAX_ITERATIONS 1000
 #endif
-
-/*@}*/
-
-/*********************************************************/
-/** \name dependencies */
-/*********************************************************/
-/*@{*/
-
-//inter_rf needs ELECTROSTATICS
-#ifdef INTER_RF
-#define ELECTROSTATICS
-#endif
-
-#ifdef GAY_BERNE
-#define ROTATION
-#endif
-
-#ifdef FFTW
-/* activate P3M only with FFTW */
-#ifdef ELECTROSTATICS
-#define P3M
-#endif
-/* activate dipolar P3M only with FFTW */
-#ifdef DIPOLES
-#define DP3M
-#endif
-#endif
-
-/* LB_ELECTROHYDRODYNAMICS needs LB, obviously... */
-#ifdef LB_ELECTROHYDRODYNAMICS
-#define LB
-#endif
-
-/* LB_BOUNDARIES need constraints */
-#ifdef LB_BOUNDARIES
-#define LB
-#define CONSTRAINTS 
-#endif
-
-#ifdef LB_BOUNDARIES_GPU
-#define LB_GPU
-#define CONSTRAINTS
-#endif
-
-/* Lattice Boltzmann needs lattice structures and temporary particle data */
-#ifdef LB
-#define USE_TEMPORARY
-#define LATTICE
-#endif
-
-#ifdef LB_GPU
-#define USE_TEMPORARY
-#define LATTICE
-//#define ALTERNATIVE_INTEGRATOR
-#endif
-
-//adress needs mol_cut
-#ifdef ADRESS
-#ifndef MOL_CUT
-#define MOL_CUT
-#endif
-#endif
-
-//mol_cut needs virtual sites
-#ifdef MOL_CUT
-#ifndef VIRTUAL_SITES_COM
-#define VIRTUAL_SITES_COM
-#endif
-#endif
-
-#if defined(DPD_MASS_RED) || defined(DPD_MASS_LIN)
-#ifndef DPD_MASS
-#define DPD_MASS
-#endif
-#endif
-
-/*DPD with mass needs MASS and DPD */
-#ifdef DPD_MASS
-#ifndef MASS
-#define MASS
-#endif
-#endif
-
-/*Transversal DPD -> needs normal DPD*/
-#ifdef TRANS_DPD
-#ifndef DPD
-#define DPD
-#endif
-#endif
-
-/* If any bond angle potential is activated, actiavte the whole bond angle code */
-#if defined(BOND_ANGLE_HARMONIC) || defined(BOND_ANGLE_COSINE) || defined(BOND_ANGLE_COSSQUARE)
-#define BOND_ANGLE
-#endif
-
-/* If any bond angledist potential is activated, activate the whole bond angle code and constraints */
-#if defined(BOND_ANGLEDIST_HARMONIC)
-#define BOND_ANGLEDIST
-#define CONSTRAINTS
-#endif
-
-#if defined(BOND_ENDANGLEDIST_HARMONIC)
-#define BOND_ENDANGLEDIST
-#define CONSTRAINTS
-#endif
-
-#if defined(VIRTUAL_SITES_COM) || defined(VIRTUAL_SITES_RELATIVE)
-#define VIRTUAL_SITES
-#endif
-
-#ifdef VIRTUAL_SITES_RELATIVE
-#define ROTATION
-#endif
-
-#ifdef ROTATIONAL_INERTIA
-#define ROTATION
-#endif
-
-/*@}*/
-
-/*********************************************************/
-/** \name feature compatibility checks */
-/*********************************************************/
-/*@{*/
-
-#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
-#error Can only compile either VIRTUAL_SITES_COM or VIRTUAL_SITES_RELATIVE
-#endif
-
-#ifdef BOND_CONSTRAINT
-#ifdef ROTATION
-#error BOND_CONSTRAINT and ROTATION currently do not work together
-#endif
-#endif
-
-#ifdef ADRESS
-
-#ifdef ROTATION
-#error ADRESS and ROTATION currently do not work together 
-#endif
-
-#ifdef GAY_BERNE
-#error ADRESS and ROTATION (required by GAY_BERNE) are not compatible
-#endif
-
-#endif
-
-/* errors for all modules that require fftw if not present */
-#ifndef FFTW
-#ifdef MODES
-#error MODES requires the fftw
-#endif
-#endif
-
-#if defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSINE) \
-  || defined(BOND_ANGLE_HARMONIC) && defined(BOND_ANGLE_COSSQUARE) \
-  || defined(BOND_ANGLE_COSSQUARE) && defined(BOND_ANGLE_COSINE)
-#error Activate only one of features BOND_ANGLE_HARMONIC, BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE!
-#endif
-
-#if defined(VIRTUAL_SITES_COM) && defined(VIRTUAL_SITES_RELATIVE)
-#error Activate only one of the features VIRTUAL_SITES_RELATIVE or VIRTUAL_SITES_COM!
-#endif
-
-#if defined(ADRESS) && !defined(VIRTUAL_SITES_COM)
-// Adress requires the "center of mass" implementation of virtual sites
-#error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
-#endif
-
-#ifdef LB_GPU
-#ifndef CUDA
-#error To use LB_GPU, you have to activate CUDA (use the configure option --with-cuda)
-#endif
-#endif
-
-/*@}*/
 
 /* Mathematical constants, from gcc's math.h */
 #ifndef M_PI

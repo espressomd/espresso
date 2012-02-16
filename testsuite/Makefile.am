@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -30,6 +31,7 @@ tests = \
 	correlation.tcl \
 	constraints_rhomboid.tcl \
 	dh.tcl \
+	dielectric_test.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
@@ -37,6 +39,7 @@ tests = \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \
+	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
@@ -74,6 +77,7 @@ deactivated_tests =
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) $(deactivated_tests) \
+	configs \
 	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
@@ -114,7 +118,7 @@ check-local: runtest.sh
 	  @builddir@/runtest.sh $(tests); \
 	fi
 
-CLEANFILES=runtest.log
+CLEANFILES = runtest.log
 
-DISTCLEANFILES=\
+DISTCLEANFILES = \
 	fftw3_1d_wisdom_*.file

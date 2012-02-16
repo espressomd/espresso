@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2010,2011 Florian Fahrenberger
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
  
@@ -1553,7 +1553,10 @@ void maggs_calc_init_e_field()
   MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
   gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
 
-  MAGGS_TRACE( if(!this_node) iteration = 0;);
+#ifdef MAGGS_DEBUG
+  int iteration; 
+  if(!this_node) iteration = 0;
+#endif
   do {
     goldE = gsqrE;
     sqrE = 0.;
@@ -1567,16 +1570,16 @@ void maggs_calc_init_e_field()
     gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
     maxcurl = maggs_check_curl_E();
 		
-    MAGGS_TRACE(
-		if(!this_node) {
-		  iteration++;
-		  if(iteration%1==0) {
-		    fprintf(stderr, "# iteration for field equilibration %d, diff=%9.4e, curlE=%9.4e\n", 
-			    iteration, fabs(gsqrE-goldE),maxcurl);
-		    fflush(stderr);    
-		  }
-		}
-		);
+#ifdef MAGGS_DEBUG
+    if(!this_node) {
+      iteration++;
+      if(iteration%1==0) {
+	fprintf(stderr, "# iteration for field equilibration %d, diff=%9.4e, curlE=%9.4e\n", 
+		iteration, fabs(gsqrE-goldE),maxcurl);
+	fflush(stderr);    
+      }
+    }
+#endif
 		
   } while(fabs(maxcurl)>1000000.*ROUND_ERROR_PREC);
 	

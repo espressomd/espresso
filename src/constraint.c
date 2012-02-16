@@ -47,6 +47,16 @@ Constraint *generate_constraint()
   return &constraints[n_constraints-1];
 }
 
+void init_constraint_forces()
+{
+  int n, i;
+  
+  for (n = 0; n < n_constraints; n++)
+    for (i = 0; i < 3; i++)
+      constraints[n].part_rep.f.f[i] = 0;
+}
+
+
 static double sign(double x) {
   if (x > 0)
     return 1.;
@@ -886,10 +896,7 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
      double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r, temp;
 
      
-     c->smoothing_radius = 1.;
-
-      
-     slope = (c->rad_right - c->rad_left)/2./c->length;
+     slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
      average_radius = 0.5*(c->rad_left + c->rad_right);
 
   /* compute the position relative to the center of the pore */
@@ -938,7 +945,8 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_left - c1_z ) );
   c2_r = c->rad_left + slope * ( z_right + c->length ) +
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
-  slope=(c2_r-c1_r)/(c2_z-c1_z);
+  c1_r = c->rad_left+c->smoothing_radius;
+  c2_r = c->rad_right+c->smoothing_radius;
  
   /* Check if we are in the region of the left wall */
   if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
@@ -1560,15 +1568,5 @@ double add_constraints_energy(Particle *p1)
   return 0.;
 }
 
-void init_constraint_forces()
-{
-  int n, i;
-  
-  for (n = 0; n < n_constraints; n++)
-    for (i = 0; i < 3; i++)
-      constraints[n].part_rep.f.f[i] = 0;
-}
 #endif
-
-
 

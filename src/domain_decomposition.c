@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -618,7 +618,7 @@ void dd_on_geometry_change(int flags) {
   /* A full resorting is necessary if the grid has changed. We simply
      don't have anything fast for this case. Probably also not
      necessary. */
-  if (!(flags & CELL_FLAG_GRIDCHANGED)) {
+  if (flags & CELL_FLAG_GRIDCHANGED) {
     CELL_TRACE(fprintf(stderr,"%d: dd_on_geometry_change full redo\n",
 		       this_node));
     cells_re_init(CELL_STRUCTURE_CURRENT);

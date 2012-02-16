@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -180,7 +181,8 @@ AM_CONDITIONAL(HAVE_LATEX,
 	[test .$PDFLATEX != .no && 
 	test .$MAKEINDEX != .no && 
 	test .$BIBTEX != .no])
-
+AC_PATH_PROG(PYTHON,python,no)
+AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
 
 cat <<EOF
 ****************************************************************
@@ -494,6 +496,8 @@ EOF
 AC_CONFIG_HEADERS([src/acconfig.h])
 AC_CONFIG_FILES([
 	Makefile
+	config/Makefile
+	config/myconfig-sample-header.h
 	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
@@ -508,12 +512,12 @@ AC_CONFIG_FILES([
 	doc/tutorials/01-lennard_jones/Makefile 
 	doc/tutorials/02-charged_system/Makefile 
 	doc/latexit.sh
-	myconfig-sample.h
 	])
 AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
+
 
 AC_OUTPUT
 
@@ -523,8 +527,8 @@ cat <<EOF
 ****************************************************************
 platform detected	= $target
 
-Compiler settings:
-------------------
+Compiler
+--------
 compiler		= $CC
 linker			= $LD
 c compiler flags	= $CFLAGS
@@ -535,15 +539,15 @@ using debug flags	= $enable_debug
 using profiling flags	= $enable_profiling
 inline			= $MDINLINE
 
-Libraries:
-----------
+Libraries
+---------
 Tcl version		= $use_tcl
 Tk version		= $use_tk
 FFTW 			= $fftw_found
 efence			= $with_efence
 
-Other settings:
----------------
+Other settings
+--------------
 local config header	= $myconfig
 installation prefix	= $prefix
 number of test tasks    = $CPU_COUNT
@@ -554,17 +558,21 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
+EOF
+
+if test x$with_cuda != xno; then
+cat <<EOF
+CUDA compiler		= $NVCC
+CUDA flags		= $NVCCFLAGS
 
 EOF
+else
+   echo
+   echo "CUDA disabled or not supported."
+fi
 
 if test x"$use_mpi_fake" = x"yes"; then
    echo "WARNING: MPI disabled or not supported! Parallelization turned off."
-fi
-
-if test x$with_cuda != xno; then
-   echo "Using NVIDA CUDA compiler nvcc = $NVCC, flags = $NVCCFLAGS."
-else
-   echo "CUDA disabled or not supported."
 fi
 
 if test .$pdflatex = .no; then

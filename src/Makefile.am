@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -26,7 +27,7 @@ noinst_LIBRARIES = libEspresso.a
 libEspresso_a_SOURCES = \
 	adresso.c adresso.h \
 	cells.c cells.h \
-    collision.c collision.h \
+	collision.c collision.h \
 	communication.c communication.h \
 	comfixed.c comfixed.h \
 	comforce.h comforce.c \
@@ -143,7 +144,7 @@ libEspresso_a_SOURCES += \
 	tcl/blockfile_tcl.c \
 	tcl/cells_tcl.c \
 	tcl/channels_tcl.c \
-    tcl/collision_tcl.c \
+	tcl/collision_tcl.c \
 	tcl/comfixed_tcl.c tcl/comfixed_tcl.h \
 	tcl/comforce_tcl.c tcl/comforce_tcl.h \
 	tcl/config_tcl.c \
@@ -259,13 +260,13 @@ endif
 # Handling of myconfig.h
 #################################################################
 libEspresso_a_SOURCES += myconfig-final.h
-config.h: myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 
 FORCE:
 myconfig-final.h: FORCE
-	config_files="\
+	@echo -n "Determining myconfig file..."
+	@config_files="\
 	  $(top_builddir)/$(myconfig) \
 	  $(top_srcdir)/$(myconfig)"; \
 	if test $(myconfig) = myconfig.h; then \
@@ -273,6 +274,7 @@ myconfig-final.h: FORCE
 	fi; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
+	    echo " $$file"; \
 	    myconfig_found=1; \
 	    if test -e $@; then \
 	      cmp -s $$file $@ || cp $$file $@; \
@@ -286,6 +288,36 @@ myconfig-final.h: FORCE
 	  echo "ERROR: Couldn't find $(myconfig) anywhere"; \
 	  exit 1; \
 	fi
+
+#################################################################
+# Handling of the features
+#################################################################
+libEspresso_a_SOURCES += featureconfig.c
+EXTRA_DIST = \
+	features.def \
+	featureconfig.h featureconfig.c \
+	doxyconfig.h
+
+if HAVE_PYTHON
+
+BUILT_SOURCES +=  featureconfig.h featureconfig.c
+CLEANFILES += featureconfig.h featureconfig.c doxyconfig.h
+featureconfig.h featureconfig.c: features.def $(top_srcdir)/config/gen_featureconfig.py
+	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def featureconfig.h featureconfig.c
+
+doxyconfig.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
+	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def doxyconfig.h
+
+else
+
+doxyconfig.h featureconfig.h featureconfig.c: features.def
+	@echo "Python was not found in your PATH."
+	@echo "If you change the set of features, you need Python!"
+	@echo "Install it and rerun configure."
+
+endif
+
+doc doxygen: doxyconfig.h
 
 #################################################################
 # Handling of the MPI fake implementation
@@ -321,5 +353,5 @@ endif
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
 
-EXTRA_DIST = $(CUDA_SOURCES)
+EXTRA_DIST += $(CUDA_SOURCES)
 endif

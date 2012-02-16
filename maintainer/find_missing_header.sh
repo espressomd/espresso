@@ -1,3 +1,5 @@
+#! /bin/bash -x
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -18,28 +20,42 @@
 # check for missing GPL and copyright headers
 #
 
-files=`git ls-files --exclude-standard |
-    egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf)$' |
-    egrep -v '^testsuite/configs/|^old/' |
-    egrep -v '(ChangeLog|AUTHORS|INSTALL|Doxyfile|latexmk.1|latexmkrc)'
-    `
+files=`sh maintainer/files_with_header.sh`
+num_files=`echo $files | wc -w`
+current_year=`date +%Y`
 
-num=`echo $files | wc -w`
-
-echo "Examining $num files."
-
-# current_year=`date +%Y`
-
-echo "Checking for missing copyright disclaimer"
-echo "-----------------------------------------"
-egrep -L "Copyright" $files
+echo "Examining $num_files files."
 echo
 
-# echo "Checking for missing GPL header"
-# echo "--------------------------------"
-# egrep -L "ESPResSo is free software" $files
-# echo
+missing_current_copyright=`egrep -IL "Copyright.*$current_year" $files`
 
-#echo "Checking for missing Copyright line with current year $current_year:"
-#egrep -rL "Copyright.*$current_year" *.[ch]
+echo "Copyright disclaimer missing the current year $current_year"
+echo "--------------------------------------------------"
+if [ -n "$missing_current_copyright" ]; then
+    egrep -Il "Copyright" $missing_current_copyright
+else
+    echo "NONE"
+fi
+echo
+
+echo "Missing copyright disclaimer"
+echo "----------------------------"
+if [ -n "$missing_current_copyright" ]; then
+    egrep -IL "Copyright" $missing_current_copyright
+else
+    echo "NONE"
+fi
+echo
+
+echo "Missing GPL/simple header"
+echo "-------------------------"
+nolicense=`egrep -IL "((ESPResSo|This program) is free software|Copying and distribution of this file)" $files`
+if [ -n "$nolicense" ]; then
+    echo $nolicense
+else
+    echo "NONE"
+fi
+echo
+
+
     
