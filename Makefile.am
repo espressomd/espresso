@@ -16,25 +16,49 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = src . scripts tools testsuite doc
+SUBDIRS = config src . scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
 
 # List files that should go into the distribution but are not required
 # by any other means
-EXTRA_DIST = bootstrap.sh samples packages $(extra)
+EXTRA_DIST = bootstrap.sh version.txt samples packages $(extra)
 
-all: Espresso
+version.txt:
+	VERSION=`cd $(top_srcdir); sh config/genversion.sh -d`;\
+	echo $$VERSION > $(abs_builddir)/version.txt
+
+all-local: Espresso myconfig-sample.h
+CLEANFILES = Espesso myconfig-sample.h 
+DISTCLEANFILES = version.txt
 
 Espresso: 
 	$(LN_S) src/Espresso .
 
-CLEANFILES = Espresso
+myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
+	cat config/myconfig-sample-header.h > myconfig-sample.h
+	cat config/myconfig-sample-body.h >> myconfig-sample.h
+
+dist-hook:
+	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -d`; \
+	if test "$$VERSION" != "$(PACKAGE_VERSION)"; then \
+		echo "***************************************************************************"; \
+		echo "ERROR: Package version is not up-to-date."; \
+		echo "ERROR: $(PACKAGE_VERSION) != $$VERSION"; \
+		echo "ERROR: Please run autoreconf -vf"; \
+		echo "ERROR: before running 'make dist' again."; \
+		echo "***************************************************************************"; \
+		exit 1; \
+	fi
+
 
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc ug dg tutorials
-doc ug dg tutorials: FORCE
+.PHONY: FORCE doc ug dg tutorials doxygen 
+ug dg tutorials: FORCE
+	cd doc; $(MAKE) --print-directory $@
+doc doxygen: FORCE
+	cd src; $(MAKE) --print-directory $@
 	cd doc; $(MAKE) --print-directory $@
 FORCE:

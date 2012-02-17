@@ -42,7 +42,7 @@ int regular_exit = 1;
 static int core_done = 0;
 
 #ifdef ONEPART_DEBUG
-int check_id =  ONEPART_DEBUG ;
+int check_id =  ONEPART_DEBUG_ID ;
 #endif
 
 #ifdef MEM_DEBUG

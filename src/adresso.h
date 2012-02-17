@@ -51,11 +51,6 @@ extern double adress_vars[7];
 */
 
 #ifdef ADRESS
-// This code requires the "center of mass" implementation of virtual sites
-#ifndef VIRTUAL_SITES_COM
- #error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
-#endif
-/* #endif */
 
 /** Calc adress weight function of a vector
     @param x input vector

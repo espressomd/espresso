@@ -481,7 +481,7 @@ void on_boxl_change() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
-    break;
+    // fall through
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     break;

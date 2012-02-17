@@ -45,11 +45,8 @@ puts "----------------------------------------"
 
 # System parameters 
 set box_l                10.0
-
 set box_x                $box_l
-
 set box_y                $box_l
-
 set box_z                $box_l
 
 # skin depth, not used here

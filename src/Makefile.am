@@ -27,7 +27,7 @@ noinst_LIBRARIES = libEspresso.a
 libEspresso_a_SOURCES = \
 	adresso.c adresso.h \
 	cells.c cells.h \
-    collision.c collision.h \
+	collision.c collision.h \
 	communication.c communication.h \
 	comfixed.c comfixed.h \
 	comforce.h comforce.c \
@@ -144,7 +144,7 @@ libEspresso_a_SOURCES += \
 	tcl/blockfile_tcl.c \
 	tcl/cells_tcl.c \
 	tcl/channels_tcl.c \
-    tcl/collision_tcl.c \
+	tcl/collision_tcl.c \
 	tcl/comfixed_tcl.c tcl/comfixed_tcl.h \
 	tcl/comforce_tcl.c tcl/comforce_tcl.h \
 	tcl/config_tcl.c \
@@ -236,12 +236,12 @@ if TCL
 # Espresso.install for the installation dir. 
 # The ".install" suffix is removed upon installation.
 noinst_PROGRAMS = Espresso
-Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c 
+Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
+Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_LDADD = libEspresso.a
 
 bin_PROGRAMS = Espresso.install
-Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
+Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_install_LDADD = libEspresso.a
 
@@ -260,13 +260,12 @@ endif
 # Handling of myconfig.h
 #################################################################
 libEspresso_a_SOURCES += myconfig-final.h
-config.h: myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 
-FORCE:
 myconfig-final.h: FORCE
-	config_files="\
+	@echo -n "Determining myconfig file..."
+	@config_files="\
 	  $(top_builddir)/$(myconfig) \
 	  $(top_srcdir)/$(myconfig)"; \
 	if test $(myconfig) = myconfig.h; then \
@@ -274,6 +273,7 @@ myconfig-final.h: FORCE
 	fi; \
 	for file in $$config_files; do \
 	  if test -e $$file; then \
+	    echo " $$file"; \
 	    myconfig_found=1; \
 	    if test -e $@; then \
 	      cmp -s $$file $@ || cp $$file $@; \
@@ -286,6 +286,48 @@ myconfig-final.h: FORCE
 	if test ! $$myconfig_found; then \
 	  echo "ERROR: Couldn't find $(myconfig) anywhere"; \
 	  exit 1; \
+	fi
+
+#################################################################
+# Handling of the features
+#################################################################
+libEspresso_a_SOURCES += config-features.c
+EXTRA_DIST = \
+	features.def \
+	config-features.h config-features.c \
+	config-doxygen.h
+
+if HAVE_PYTHON
+
+BUILT_SOURCES +=  config-features.h config-features.c
+CLEANFILES += config-features.h config-features.c config-doxygen.h
+config-features.h config-features.c: features.def $(top_srcdir)/config/gen_featureconfig.py
+	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.h config-features.c
+
+config-doxygen.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
+	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.h
+
+else
+
+config-doxygen.h config-features.h config-features.c: features.def
+	@echo "Python was not found in your PATH."
+	@echo "If you change the set of features, you need Python!"
+	@echo "Install it and rerun configure."
+
+endif
+
+doc doxygen: config-doxygen.h
+
+#################################################################
+# Handling of the version
+#################################################################
+libEspresso_a_SOURCES += config-version.c 
+BUILT_SOURCES += config-version.c
+CLEANFILES += config-version.c
+config-version.c: FORCE
+	VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
+	if test "$$VERSION" != "`cat config-version.c`"; then \
+		echo "$$VERSION" > config-version.c; \
 	fi
 
 #################################################################
@@ -322,5 +364,8 @@ endif
 
 libEspresso_a_SOURCES += $(CUDA_SOURCES)
 
-EXTRA_DIST = $(CUDA_SOURCES)
+EXTRA_DIST += $(CUDA_SOURCES)
 endif
+
+.PHONY: FORCE
+FORCE:
