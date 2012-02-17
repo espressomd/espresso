@@ -107,16 +107,6 @@ This can make it easier to calculate flow profiles independent of
 the lattice constant.
 
 \begin{essyntax}
-  lbfluid print \opt{vtk} \var{property} \var{filename}
-\end{essyntax}
-The print parameter is a feature to simplify visualization. It allows for the 
-export of the whole fluid field data into a file with name \var{filename} at 
-once. Currently supported values for the parameter \var{property} are boundary 
-and velocity. The additional option \lit{vtk} enables export in the vtk format 
-which is readable by visualization software such as paraview or mayavi. 
-Otherwise gnuplot readable data will be exported.
-
-\begin{essyntax}
   lbfluid save_ascii_checkpoint \var{filename}
   lbfluid save_binary_checkpoint \var{filename}
   lbfluid load_ascii_checkpoint \var{filename}
@@ -186,6 +176,18 @@ Example:
 \begin{tclcode}
 puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{tclcode}
+
+\section{Visualization}
+\label{ssec:LBvisualization}
+\begin{essyntax}
+  lbfluid print \opt{vtk} \var{property} \var{filename}
+\end{essyntax}
+The print parameter of the \lit{lbfluid} command is a feature to simplify visualization. It allows for the export of the whole fluid field data into a 
+file with name \var{filename} at once. Currently supported values for the 
+parameter \var{property} are boundary and velocity. The additional option 
+\lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
+exported. If you plan to use paraview for visualization, note that also the 
+particle positions can be exportet in the VTK format \ref{sec:writevtk}.
 
 \section{Setting up boundary conditions}
 \begin{essyntax}
