@@ -676,9 +676,7 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
 
 int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   DoubleList *wsquare = (DoubleList*)args;
-  unsigned int i;
-  double square_distance;
-  double tmp;
+  int i;
   if (args == NULL )
     return 1;
   if (!(dim_A == dim_B )) {
