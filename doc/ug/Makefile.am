@@ -26,6 +26,7 @@ ug_TEXFILES = \
 	setup.tex \
 	run.tex \
 	analysis.tex \
+	analysis-core.tex \
 	io.tex \
 	lb.tex \
 	memd.tex \
