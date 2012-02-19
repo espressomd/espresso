@@ -18,7 +18,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 dnl Determine the version of ESPResSo at autoconf time
-m4_define([ESPRESSO_VERSION],[esyscmd([/bin/sh config/genversion.sh -d])])
+m4_define([ESPRESSO_VERSION],[esyscmd([/bin/sh config/genversion.sh -rd])])
 
 # Initialise autoconf
 AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
@@ -527,6 +527,7 @@ cat <<EOF
 *                   Configuration summary                      *
 ****************************************************************
 platform detected	= $target
+package version		= $PACKAGE_VERSION
 
 Compiler
 --------

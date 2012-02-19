@@ -326,7 +326,8 @@ BUILT_SOURCES += config-version.c
 CLEANFILES += config-version.c
 config-version.c: FORCE
 	VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
-	if test "$$VERSION" != "`cat config-version.c`"; then \
+	if test -e config-version.c || \
+		test "$$VERSION" != "`cat config-version.c`"; then \
 		echo "$$VERSION" > config-version.c; \
 	fi
 
