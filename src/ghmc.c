@@ -60,13 +60,13 @@ void hamiltonian_calc();
 
 double calc_local_temp();
 
-double calc_total_energy();
-
 void calc_temp(double *temp_trans , double *temp_rot);
 
 void simple_momentum_update();
 
 void partial_momentum_update();
+
+void tscale_momentum_update();
 
 void momentum_flip();
 /************************************************************/
@@ -139,27 +139,13 @@ void hamiltonian_calc()
     init_energies(&total_energy);
   master_energy_calc();
 	for (i = 0; i < total_energy.data.n; i++) {
-		//fprintf(stderr,"energy element %d: %f\n",i,total_energy.data.e[i]);
 		result += total_energy.data.e[i];
 	}
 	ghmcdata.hmlt_new=result;
 	
 }
 
-double calc_total_energy()
-{
-	int i;
-	double result = 0.0;
-	if (total_energy.init_status == 0)
-    init_energies(&total_energy);
-  master_energy_calc();
-	for (i = 0; i < total_energy.data.n; i++) {
-		//fprintf(stderr,"energy element %d: %f\n",i,total_energy.data.e[i]);
-		result += total_energy.data.e[i];
-	}
-	return result;
-	
-}
+//get local temperature - here for debbuging purposes
 double calc_local_temp()
 {
 	
@@ -240,19 +226,52 @@ void ghmc_momentum_update()
 {
 	
 	INTEG_TRACE(fprintf(stderr,"%d: ghmc_momentum_update:\n",this_node));
-	partial_momentum_update();
-	//simple_momentum_update();
-	
-	/*
-	
-	int i, j, c, np;
-  Particle *part;
+  
+  /* currently, when temperature scaling is enabled the procedure tscale_momentum_update is used,
+   although it may seem like a code duplication, this separation is maintained for now until this feature is tested thoroughly*/
+  
+  if (ghmc_tscale == GHMC_TSCALE_ON)
+    tscale_momentum_update();
+  else
+    partial_momentum_update();
 
-	//fprintf(stderr,"energy before update: %f\n",calc_total_energy());
-	//fprintf(stderr,"temp before update: %f\n",calc_local_temp());
-	
-	simple_momentum_update();
-	
+  hamiltonian_calc();
+  
+}
+
+/* momentum update step of ghmc with temperature scaling */
+void tscale_momentum_update()
+{
+  
+  int i, j, c, np;
+  Particle *part;
+  
+  //fprintf(stderr,"temp before update: %f\n",calc_local_temp());
+
+  save_last_state();
+  
+  simple_momentum_update();
+
+  double tempt, tempr, scalet, scaler;
+  calc_temp(&tempt, &tempr);
+  scalet = sqrt(temperature / tempt);
+  #ifdef ROTATION
+    scaler = sqrt(temperature / tempr);
+  #endif  
+            
+  for (c = 0; c < local_cells.n; c++) {
+    np   = local_cells.cell[c]->n;
+    part = local_cells.cell[c]->part;
+    for (i = 0; i < np; i++) {
+      for (j = 0; j < 3; j++) {
+        part[i].m.v[j] *= scalet;
+        #ifdef ROTATION
+          part[i].m.omega[j] *= scaler;
+        #endif  
+      }
+    }
+  }
+  
 	for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
     part = local_cells.cell[c]->part;
@@ -269,12 +288,8 @@ void ghmc_momentum_update()
 			}
     }
 	}
-	*/
-	
-	hamiltonian_calc();
 	
 	//fprintf(stderr,"temp after update: %f\n",calc_local_temp());
-	//fprintf(stderr,"energy after update: %f\n",calc_total_energy());
 	
 }
 
@@ -311,28 +326,6 @@ void simple_momentum_update()
     }
 	}
 	
-	if (ghmc_tscale == GHMC_TSCALE_ON) {
-		double tempt, tempr, scalet, scaler;
-		calc_temp(&tempt, &tempr);
-		scalet = sqrt(temperature / tempt);
-		#ifdef ROTATION
-			scaler = sqrt(temperature / tempr);
-		#endif	
-						
-		for (c = 0; c < local_cells.n; c++) {
-			np   = local_cells.cell[c]->n;
-			part = local_cells.cell[c]->part;
-			for (i = 0; i < np; i++) {
-				for (j = 0; j < 3; j++) {
-					part[i].m.v[j] *= scalet;
-					#ifdef ROTATION
-						part[i].m.omega[j] *= scaler;
-					#endif	
-				}
-			}
-		}
-	}
-	
 	//fprintf(stderr,"temp after update: %f\n",calc_local_temp());
 	
 }
@@ -345,10 +338,7 @@ void partial_momentum_update()
   Particle *part;
 	double sigmat, sigmar;
 
-
-	
-	//fprintf(stderr,"temp before update: %f\n",calc_local_temp());
-
+	//fprintf(stderr,"temp before partial update: %f\n",calc_local_temp());
 	sigmat = sqrt(temperature); sigmar = sqrt(temperature);
 	for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -365,12 +355,10 @@ void partial_momentum_update()
 					#endif
 					part[i].m.omega[j] = cosp*(part[i].m.omega[j])+sinp*(sigmar*gaussian_random());
 				#endif	
-				//cell_momentum[j] += part[i].m.v[j];
 			}
     }
 	}
-
-	//fprintf(stderr,"temp after update: %f\n",calc_local_temp());
+	//fprintf(stderr,"temp after partial update: %f\n",calc_local_temp());
 }
 
 /* momentum flip for ghmc */
@@ -452,8 +440,6 @@ void ghmc_mc()
 			ghmcdata.att++;
 			hamiltonian_calc();
 			
-			//fprintf(stderr,"energy before mc: %f\n",calc_total_energy());
-			
 			boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
 			if (boltzmann < 0)
 				boltzmann = 1.0;
@@ -466,20 +452,17 @@ void ghmc_mc()
 			if ( d_random() < boltzmann) {
 				ghmcdata.acc++;
 				save_last_state();
-				//fprintf(stderr,"mc move accept\n");
 			} else {
 				
 				load_last_state();
 				cells_resort_particles(CELL_GLOBAL_EXCHANGE);
 				invalidate_obs();
-				//fprintf(stderr,"mc move reject\n");
 				
 				if (ghmc_mflip == GHMC_MFLIP_ON) {
 				  momentum_flip();
 				} else if (ghmc_mflip == GHMC_MFLIP_RAND) {
 					if (d_random() < 0.5) momentum_flip();
 				}
-				//fprintf(stderr,"energy after restore: %f\n",calc_total_energy());
 			}
 			//fprintf(stderr,"temp after mc: %f\n",calc_local_temp());
 }

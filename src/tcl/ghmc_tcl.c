@@ -69,7 +69,6 @@ int tclcommand_ghmc(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     return tclcommand_ghmc_print_usage(interp);
   }
 
-  // return 3_runtime_errors(interp, status);
   return TCL_OK;
 
 #endif
@@ -80,15 +79,12 @@ int tclcommand_ghmc(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 int tclcommand_save_state(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
 #ifdef GHMC
-  //int status = TCL_OK;
 
   Tcl_ResetResult(interp);
 
   /* save system state */
 	save_last_state();
-	//invalidate_obs();
 
-  //return mpi_gather_runtime_errors(interp, status);
 	return TCL_OK;
 
 #endif
@@ -99,7 +95,6 @@ int tclcommand_save_state(ClientData data, Tcl_Interp *interp, int argc, char **
 int tclcommand_load_state(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
 #ifdef GHMC
-  //int status = TCL_OK;
 
   Tcl_ResetResult(interp);
 
@@ -107,7 +102,7 @@ int tclcommand_load_state(ClientData data, Tcl_Interp *interp, int argc, char **
 	load_last_state();
 	cells_resort_particles(CELL_GLOBAL_EXCHANGE);
 	invalidate_obs();
-  //return mpi_gather_runtime_errors(interp, status);
+
 	return TCL_OK;
 
 #endif
