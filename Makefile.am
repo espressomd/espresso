@@ -39,7 +39,7 @@ dist-hook:
 	if test "$$VERSION" != "$(PACKAGE_VERSION)"; then \
 		echo "***************************************************************************"; \
 		echo "ERROR: Package version is not up-to-date."; \
-		echo "ERROR: $(PACKAGE_VERSION) != $$VERSION"; \
+		echo "ERROR: $$VERSION (current) != $(PACKAGE_VERSION) (configure)"; \
 		echo "ERROR: Please run autoreconf -vf"; \
 		echo "ERROR: before running 'make dist' again."; \
 		echo "***************************************************************************"; \
