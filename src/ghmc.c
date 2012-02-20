@@ -40,6 +40,8 @@
 int ghmc_mflip = GHMC_MFLIP_OFF;
 //temperature scaling flag
 int ghmc_tscale = GHMC_TSCALE_OFF;
+//result of mc decision
+int ghmc_mc_res;
 
 #ifdef GHMC
 //MC statistics variables
@@ -85,8 +87,8 @@ void save_last_state()
 	Particle *part;
 	
 	//part = local_cells.cell[0]->part;
-	//fprintf(stderr,"save part %d: px_ls before %f, px before %f\n",part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-	//fprintf(stderr,"save part %d: mx_ls before %f, mx before %f\n",part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
+	//fprintf(stderr,"%d: save part %d: px_ls before %f, px before %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
+	//fprintf(stderr,"%d: save part %d: mx_ls before %f, mx before %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
 	
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -98,8 +100,8 @@ void save_last_state()
 	}
 	
 		//part = local_cells.cell[0]->part;
-		//fprintf(stderr,"save part %d: px_ls after %f, px after %f\n",part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-		//fprintf(stderr,"save part %d: mx_ls after %f, mx after %f\n",part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
+		//fprintf(stderr,"%d: save part %d: px_ls after %f, px after %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
+		//fprintf(stderr,"%d: save part %d: mx_ls after %f, mx after %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
 		
 }
 
@@ -110,8 +112,8 @@ void load_last_state()
 	Particle *part;
 	
 	//part = local_cells.cell[0]->part;
-	//fprintf(stderr,"load part %d: px_ls before %f, px before %f\n",part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-	//fprintf(stderr,"load part %d: mx_ls before %f, mx before %f\n",part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
+	//fprintf(stderr,"%d: load part %d: px_ls before %f, px before %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
+	//fprintf(stderr,"%d: load part %d: mx_ls before %f, mx before %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
 	
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -121,10 +123,10 @@ void load_last_state()
 			memcpy(&part[i].m, &part[i].l.m_ls, sizeof(ParticleMomentum));
 		}
 	}
-		//part = local_cells.cell[0]->part;
-		//fprintf(stderr,"load part %d: px_ls after %f, px after %f\n",part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
-		//fprintf(stderr,"load part %d: mx_ls after %f, mx after %f\n",part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
-		
+  //part = local_cells.cell[0]->part;
+  //fprintf(stderr,"%d: load part %d: px_ls after %f, px after %f\n",this_node,part[0].p.identity,part[0].l.r_ls.p[0],part[0].r.p[0]);
+  //fprintf(stderr,"%d: load part %d: mx_ls after %f, mx after %f\n",this_node,part[0].p.identity,part[0].l.m_ls.v[0],part[0].m.v[0]);
+  
 }
 
 
@@ -134,14 +136,18 @@ void hamiltonian_calc()
 	int i;
 	double result = 0.0;
 	INTEG_TRACE(fprintf(stderr,"%d: hamiltonian_calc:\n",this_node));
-	ghmcdata.hmlt_old = ghmcdata.hmlt_new;
+	
 	if (total_energy.init_status == 0)
     init_energies(&total_energy);
   master_energy_calc();
-	for (i = 0; i < total_energy.data.n; i++) {
-		result += total_energy.data.e[i];
-	}
-	ghmcdata.hmlt_new=result;
+  
+  if (this_node==0) {
+    ghmcdata.hmlt_old = ghmcdata.hmlt_new;
+    for (i = 0; i < total_energy.data.n; i++) {
+      result += total_energy.data.e[i];
+    }
+    ghmcdata.hmlt_new=result;
+  }
 	
 }
 
@@ -179,7 +185,7 @@ double calc_local_temp()
 void calc_temp(double *temp_trans , double *temp_rot)
 {
 	
-	int i, c, np, tot_np = 0;
+	int i, c, np;
   Particle *part;
 	double tt = 0.0, tr = 0.0;
 		
@@ -191,7 +197,6 @@ void calc_temp(double *temp_trans , double *temp_rot)
 			#ifdef VIRTUAL_SITES
 				if (ifParticleIsVirtual(&part[i])) continue;
 			#endif
-			tot_np++;
 			
 			/* kinetic energy */
 			tt += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*PMASS(part[i]);
@@ -209,10 +214,12 @@ void calc_temp(double *temp_trans , double *temp_rot)
     }
 	}
 	
-	tt /= 3*tot_np*time_step*time_step;
+  MPI_Allreduce(MPI_IN_PLACE, &tt, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(MPI_IN_PLACE, &tr, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 	
+	tt /= 3*n_total_particles*time_step*time_step;
 	#ifdef ROTATION
-		tr /= 3*tot_np;
+		tr /= 3*n_total_particles;
 	#endif
 		
 	*temp_trans=tt;
@@ -246,14 +253,17 @@ void tscale_momentum_update()
   int i, j, c, np;
   Particle *part;
   
-  //fprintf(stderr,"temp before update: %f\n",calc_local_temp());
+  //fprintf(stderr,"%d: temp before update: %f\n",this_node,calc_local_temp());
 
   save_last_state();
   
   simple_momentum_update();
 
+  //fprintf(stderr,"%d: temp after simple update: %f\n",this_node,calc_local_temp());
+  
   double tempt, tempr, scalet, scaler;
   calc_temp(&tempt, &tempr);
+  
   scalet = sqrt(temperature / tempt);
   #ifdef ROTATION
     scaler = sqrt(temperature / tempr);
@@ -289,7 +299,7 @@ void tscale_momentum_update()
     }
 	}
 	
-	//fprintf(stderr,"temp after update: %f\n",calc_local_temp());
+	//fprintf(stderr,"%d : temp after partial update: %f\n",this_node,calc_local_temp());
 	
 }
 
@@ -326,7 +336,7 @@ void simple_momentum_update()
     }
 	}
 	
-	//fprintf(stderr,"temp after update: %f\n",calc_local_temp());
+	//fprintf(stderr,"%d: temp after simple update: %f\n",this_node,calc_local_temp());
 	
 }
 
@@ -338,7 +348,7 @@ void partial_momentum_update()
   Particle *part;
 	double sigmat, sigmar;
 
-	//fprintf(stderr,"temp before partial update: %f\n",calc_local_temp());
+	//fprintf(stderr,"%d: temp before partial update: %f. expected: %f\n",this_node,calc_local_temp(),temperature);
 	sigmat = sqrt(temperature); sigmar = sqrt(temperature);
 	for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -358,7 +368,7 @@ void partial_momentum_update()
 			}
     }
 	}
-	//fprintf(stderr,"temp after partial update: %f\n",calc_local_temp());
+	//fprintf(stderr,"%d: temp after partial update: %f\n", this_node, calc_local_temp());
 }
 
 /* momentum flip for ghmc */
@@ -430,41 +440,62 @@ void ghmc_close()
 		
 }
 
-/* monte carlo step of ghmc */
+/* monte carlo step of ghmc - evaluation stage */
 void ghmc_mc()
 {
 			INTEG_TRACE(fprintf(stderr,"%d: ghmc_mc:\n",this_node));
 			
 		  double boltzmann;
-	
-			ghmcdata.att++;
+			
 			hamiltonian_calc();
 			
-			boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
-			if (boltzmann < 0)
-				boltzmann = 1.0;
-			else if (boltzmann > 30)
-				boltzmann = 0.0;
-			else
-				boltzmann = exp(-beta*boltzmann);
-		
-			//fprintf(stderr,"old hamiltonian : %f, new hamiltonian: % f, boltzmann factor: %f\n",ghmcdata.hmlt_old,ghmcdata.hmlt_new,boltzmann);
-			if ( d_random() < boltzmann) {
-				ghmcdata.acc++;
-				save_last_state();
-			} else {
-				
-				load_last_state();
-				cells_resort_particles(CELL_GLOBAL_EXCHANGE);
-				invalidate_obs();
-				
-				if (ghmc_mflip == GHMC_MFLIP_ON) {
-				  momentum_flip();
-				} else if (ghmc_mflip == GHMC_MFLIP_RAND) {
-					if (d_random() < 0.5) momentum_flip();
-				}
-			}
-			//fprintf(stderr,"temp after mc: %f\n",calc_local_temp());
+      //make MC decision only on the master
+      if (this_node==0) {
+      
+        ghmcdata.att++;
+      
+        //metropolis algorithm
+        boltzmann = ghmcdata.hmlt_new - ghmcdata.hmlt_old;
+        if (boltzmann < 0)
+          boltzmann = 1.0;
+        else if (boltzmann > 30)
+          boltzmann = 0.0;
+        else
+          boltzmann = exp(-beta*boltzmann);
+        
+        //fprintf(stderr,"old hamiltonian : %f, new hamiltonian: % f, boltzmann factor: %f\n",ghmcdata.hmlt_old,ghmcdata.hmlt_new,boltzmann);
+
+        if ( d_random() < boltzmann) {
+          ghmcdata.acc++;
+          ghmc_mc_res = GHMC_MOVE_ACCEPT;
+        } else {
+          ghmc_mc_res = GHMC_MOVE_REJECT;
+        }
+        
+      }
+      
+      //let all nodes know about the MC decision result
+      mpi_bcast_parameter(FIELD_GHMC_RES);
+      
+      if (ghmc_mc_res == GHMC_MOVE_ACCEPT) {
+        save_last_state();
+        //fprintf(stderr,"%d: mc move accepted\n",this_node);
+      } else {
+        load_last_state();
+        //fprintf(stderr,"%d: mc move rejected\n",this_node);
+        
+        //if the move is rejected we might need to resort particles according to the loaded configurations
+        cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+        invalidate_obs();
+        
+        if (ghmc_mflip == GHMC_MFLIP_ON) {
+          momentum_flip();
+        } else if (ghmc_mflip == GHMC_MFLIP_RAND) {
+          if (d_random() < 0.5) momentum_flip();
+        }
+      }      
+        
+      //fprintf(stderr,"%d: temp after mc: %f\n",this_node,calc_local_temp());
 }
 
 /*@}*/

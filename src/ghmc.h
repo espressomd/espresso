@@ -30,8 +30,11 @@
 #define GHMC_MFLIP_ON        1
 #define GHMC_MFLIP_RAND      2
 
-#define GHMC_TSCALE_OFF       0
-#define GHMC_TSCALE_ON        1
+#define GHMC_TSCALE_OFF      0
+#define GHMC_TSCALE_ON       1
+
+#define GHMC_MOVE_REJECT     0
+#define GHMC_MOVE_ACCEPT     1
 
 #ifdef GHMC
 
@@ -63,6 +66,7 @@ extern Ghmc ghmcdata;
 extern int ghmc_mflip;
 extern int ghmc_tscale;
 extern int ghmc_att, ghmc_acc;
+extern int ghmc_mc_res;
 
 /************************************************************/
 /** \name Exported Functions */
@@ -93,7 +97,6 @@ void save_last_state();
 void load_last_state();
 
 /*@}*/
-
 
 /* endif GHMC */
 #endif

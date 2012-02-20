@@ -32,6 +32,7 @@
 #include "adresso.h"
 #include "rattle.h"
 #include "imd.h"
+#include "ghmc.h"
 
 /** This array contains the description of all global variables.
 
@@ -86,5 +87,8 @@ const Datafield fields[] = {
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 45 from interaction_data.c */
   {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          5 },         /* 46 from thermostat.c */
   {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",         13 },         /* 47 from thermostat.c */
+  {&ghmc_mc_res,     TYPE_INT,    1, "ghmc_mc_res",       5 },         /* 48 from ghmc.c */
+  {&ghmc_mflip,      TYPE_INT,    1, "ghmc_mflip",        5 },         /* 49 from ghmc.c */
+  {&ghmc_tscale,     TYPE_INT,    1, "ghmc_tscale",       5 },         /* 50 from ghmc.c */
   { NULL, 0, 0, NULL, 0 }
 };

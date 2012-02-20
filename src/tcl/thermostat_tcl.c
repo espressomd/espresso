@@ -71,7 +71,9 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   ghmc_phi = 1;
   mpi_bcast_parameter(FIELD_GHMC_PHI);
   ghmc_mflip = GHMC_MFLIP_OFF;
+  mpi_bcast_parameter(FIELD_GHMC_FLIP);
   ghmc_tscale = GHMC_TSCALE_OFF;
+  mpi_bcast_parameter(FIELD_GHMC_SCALE);
 #endif
   /* switch thermostat off */
   thermo_switch = THERMO_OFF;
@@ -171,6 +173,7 @@ int tclcommand_thermostat_parse_ghmc(Tcl_Interp *interp, int argc, char **argv)
   if(argc > 5) {
     if (ARG_IS_S(5,"-flip")) {
       ghmc_mflip = GHMC_MFLIP_ON;
+      
     } 
     else if (ARG_IS_S(5,"-no_flip")) {
       ghmc_mflip = GHMC_MFLIP_OFF;
@@ -181,7 +184,7 @@ int tclcommand_thermostat_parse_ghmc(Tcl_Interp *interp, int argc, char **argv)
   } else {
     ghmc_mflip = GHMC_MFLIP_OFF;
   }
-	
+  
 	if(argc > 6) {
     if (ARG_IS_S(6,"-scale")) {
       ghmc_tscale = GHMC_TSCALE_ON;
@@ -203,6 +206,8 @@ int tclcommand_thermostat_parse_ghmc(Tcl_Interp *interp, int argc, char **argv)
   mpi_bcast_parameter(FIELD_TEMPERATURE);
   mpi_bcast_parameter(FIELD_GHMC_NMD);
   mpi_bcast_parameter(FIELD_GHMC_PHI);
+  mpi_bcast_parameter(FIELD_GHMC_FLIP);
+  mpi_bcast_parameter(FIELD_GHMC_SCALE);
   return (TCL_OK);
 }
 #endif

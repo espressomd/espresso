@@ -395,7 +395,7 @@ void integrate_vv(int n_steps)
 #ifdef GHMC
     if(thermo_switch & THERMO_GHMC) {
       if ((int) fmod(i,ghmc_nmd) == ghmc_nmd-1)
-      ghmc_mc();
+        ghmc_mc();
     }
 #endif
 
