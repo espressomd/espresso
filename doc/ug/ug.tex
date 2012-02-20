@@ -53,8 +53,13 @@ index=totoc,                    % add the index to the TOC
 \usepackage[numbers]{natbib}
 
 % For building the distribution docs, disable todo boxes.
-%\usepackage[disable]{todonotes}
+\ifdefined\todosoff
+\usepackage[disable]{todonotes}
+\message{ToDo-Notes turned OFF}
+\else
 \usepackage{todonotes}
+\message{ToDo-Notes turned ON}
+\fi
 
 % Make '_' a normal character
 \usepackage[strings]{underscore}
@@ -260,14 +265,19 @@ index=totoc,                    % add the index to the TOC
     \includegraphics[width=5cm]{logo/transparentbg}
   \end{center}
 }
-%\subject{}
+\subject{}
 \title{\es User's Guide}
-%\author{}
-%\date{\today}
+\ifdefined\esversion%
+\author{for version \esversion}
+\fi
+\date{\today}
 \maketitle
 
+\ifdefined\todosoff
+\else
 \listoftodos
 \cleardoublepage
+\fi
 
 \pdfbookmark{Contents}{toc}
 \setcounter{tocdepth}{1}
@@ -283,6 +293,7 @@ index=totoc,                    % add the index to the TOC
 \include{setup}
 \include{run}
 \include{analysis}
+\include{analysis-core}
 \include{io}
 \include{aux}
 \include{lb}

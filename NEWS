@@ -66,6 +66,10 @@ User-visible changes
 Changes visible for developers
 ------------------------------
 
+* code_info does now not only show the main package version, but also
+  the exact git commit id and whether or not the code was modified
+  ("dirty"). Also, the distribution package provides this information.
+
 * The various features are now defined in the file
   src/features.def. From this file, a couple of Python scripts
   automatically generate myconfig-sample.h and what was config.h and

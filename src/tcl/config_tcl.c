@@ -27,7 +27,7 @@
 
 static int tclcommand_code_info_version(Tcl_Interp *interp)
 {
-  Tcl_AppendResult(interp, PACKAGE_NAME ": " PACKAGE_VERSION, (char *) NULL);
+  Tcl_AppendResult(interp, PACKAGE_NAME, "-", ESPRESSO_VERSION, (char *) NULL);
   return (TCL_OK);
 }
 
