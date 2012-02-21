@@ -1916,7 +1916,7 @@ int dp3m_adaptive_tune(char **logger)
 
   if(dp3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = min_local_box_l/2 - skin;
+    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }

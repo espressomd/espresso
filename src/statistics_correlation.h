@@ -137,6 +137,7 @@ void autoupdate_correlations();
  * it starts again from the beginning. 
  */
 typedef struct {
+  void *args; // arbitrary additional arguments, which the correlation may need
   unsigned int autocorrelation;    // autocorrelation flag
   unsigned int finalized;          // non-zero of correlation is finialized
   unsigned int hierarchy_depth;    // maximum level of data compression
@@ -179,7 +180,7 @@ typedef struct {
   char *compressB_name;
 
   // correlation function
-  int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+  int (*corr_operation)  ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
   char *corr_operation_name;
 
   // Functions producing observables A and B from the input data
@@ -247,12 +248,12 @@ extern const char double_correlation_get_data_errors[][64];
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   observable* A, observable* B, char* corr_operation_name, 
-                  char* compressA_name, char* compressB_name);
+                  char* compressA_name, char* compressB_name, void *args);
 
 
 /** Restore a correlation from a checkpoint
 */
-int double_correlation_init_from_checkpoint(double_correlation* self, char* filename, int dim_A, int dim_B, observable *A, observable *B);
+int double_correlation_init_from_checkpoint(double_correlation* self, char* filename, int dim_A, int dim_B, observable *A, observable *B, void *args);
 
 /** Write a checkpoint, saving all history buffers and other important variables of a correlation in a file
 */
@@ -312,18 +313,20 @@ int compress_discard2( double* A1, double*A2, double* A_compressed, unsigned int
 * Functions for correlation operations
 *
 **************************/
-int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 
-int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
+int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
 
-int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ); 
+int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ); 
 
-int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 
-int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 
-int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+int square_distance( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 
-int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr );
+int square_distance_cond ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
+
+int square_distance_cond_chain ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args );
 
 #endif

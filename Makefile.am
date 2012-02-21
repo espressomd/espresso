@@ -25,7 +25,7 @@ ACLOCAL_AMFLAGS = -I config
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
 all-local: Espresso myconfig-sample.h
-CLEANFILES = Espresso myconfig-sample.h
+CLEANFILES = Espesso myconfig-sample.h 
 
 Espresso: 
 	$(LN_S) src/Espresso .
@@ -34,6 +34,19 @@ myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 	cat config/myconfig-sample-header.h > myconfig-sample.h
 	cat config/myconfig-sample-body.h >> myconfig-sample.h
 
+dist-hook:
+	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -rd`; \
+	if test "$$VERSION" != "$(PACKAGE_VERSION)"; then \
+		echo "***************************************************************************"; \
+		echo "ERROR: Package version is not up-to-date."; \
+		echo "ERROR: $$VERSION (current) != $(PACKAGE_VERSION) (configure)"; \
+		echo "ERROR: Please run autoreconf -vf"; \
+		echo "ERROR: before running 'make dist' again."; \
+		echo "***************************************************************************"; \
+		exit 1; \
+	fi; \
+	echo $$VERSION > $(top_distdir)/version.txt
+DISCLEANFILES = version.txt
 
 #################################################################
 # Documentation

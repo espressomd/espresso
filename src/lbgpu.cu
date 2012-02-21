@@ -294,6 +294,10 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 
   float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 
+  /*
+    if (Rho <0)
+    printf("Rho too small! %f %f %f", Rho, mode[0], para.rho*para.agrid*para.agrid*para.agrid);
+  */
 #ifdef GAUSSRANDOM
   /** stress modes */
   gaussian_random(rn);
@@ -658,12 +662,12 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   float temp_delta[6];
   float temp_delta_half[6];
 
-  /** see ahlrichs + duennweg page 8227 equ (10) and (11) */
+  /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
   #pragma unroll
   for(int i=0; i<3; ++i){
     float scaledpos = particle_data[part_index].p[i]/para.agrid;
     my_left[i] = (int)(floorf(scaledpos - 0.5f));
-    //printf("scaledpos %f \t myleft: %u \n", scaledpos, my_left[i]);
+    //printf("scaledpos %f \t myleft: %d \n", scaledpos, my_left[i]);
     temp_delta[3+i] = scaledpos - my_left[i];
     temp_delta[i] = 1.f - temp_delta[3+i];
     /**further value used for interpolation of fluid velocity at part pos near boundaries */
@@ -680,9 +684,10 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   delta[6] = temp_delta[0] * temp_delta[4] * temp_delta[5];
   delta[7] = temp_delta[3] * temp_delta[4] * temp_delta[5];
 
-  int x = my_left[0];
-  int y = my_left[1];
-  int z = my_left[2];
+  // modulo for negative numbers is strange at best, shift to make sure we are positive
+  int x = my_left[0] + para.dim_x;
+  int y = my_left[1] + para.dim_y;
+  int z = my_left[2] + para.dim_z;
 
   node_index[0] = x%para.dim_x     + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
   node_index[1] = (x+1)%para.dim_x + para.dim_x*(y%para.dim_y)     + para.dim_x*para.dim_y*(z%para.dim_z);
@@ -700,7 +705,6 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
     interpolated_u2 += delta[i]*mode[2]/(Rho);
     interpolated_u3 += delta[i]*mode[3]/(Rho);
   }
-
 
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
@@ -921,7 +925,7 @@ __global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *
     float tmp1,tmp2;
 
     /** update the q=0 sublattice */
-    n_a.vd[0*para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
+    n_a.vd[0*para.number_of_nodes + single_nodeindex] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
 
     /** update the q=1 sublattice */
     rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);

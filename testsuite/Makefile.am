@@ -121,4 +121,5 @@ check-local: runtest.sh
 CLEANFILES = runtest.log
 
 DISTCLEANFILES = \
-	fftw3_1d_wisdom_*.file
+	fftw3_1d_wisdom_*.file \
+	dfftw3_1d_wisdom_*.file
