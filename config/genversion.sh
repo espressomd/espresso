@@ -16,19 +16,32 @@
 #
 # Shell script to find out the version of ESPResSo 
 #
-# -d: out dist version (without ...-git)
-# -r: output raw (no newline)
-# -c: output c constant definition
-# -l: output LaTeX \newcommand
+# -r?: output raw (no newline)
+# -c?: output c constant definition
+# -l?: output LaTeX \newcommand
+# -?d: out dist version (without ...-git)
 
-for opt in $@; do
-    case $opt in
-	(-r*) OUT_RAW=1 ;;&
-	(-c*) OUT_C=1 ;;&
-	(-t*) OUT_TEX=1 ;;&
-	(-*d) DIST=1 ;;&
-    esac;
-done
+if test -n "$1"; then
+    if test "$1" = -r; then
+	OUT_RAW=1
+    elif test "$1" = -rd; then
+	OUT_RAW=1
+	DIST=1
+    elif test "$1" = -c; then
+	OUT_C=1
+    elif test "$1" = -cd; then
+	OUT_C=1
+	DIST=1
+    elif test "$1" = -t; then
+	OUT_TEX=1
+    elif test "$1" = -td; then
+	OUT_TEX=1
+	DIST=1
+    else
+	echo "Unrecognized option to $0: $1"
+	exit 2
+    fi
+fi
 
 VERSIONFILE=version.txt
 
