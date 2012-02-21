@@ -651,6 +651,8 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
     for ( j = 0; j<ids2->n; j++ ) {
       if (ids2->e[j] >= n_total_particles)
         return 1;
+      if (ids2->e[j] == ids1->e[i]) // do not count self-interaction :-)
+        continue;
       A[i] = 0;
       pos2[0]=partCfg[ids2->e[j]].r.p[0];
       pos2[1]=partCfg[ids2->e[j]].r.p[1];
