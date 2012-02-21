@@ -40,6 +40,7 @@
 #include "lb-d3q19.h"
 #include "lb-boundaries.h"
 #include "lb.h"
+//#include "lbgpu.h"
 
 #ifdef LB
 
@@ -600,8 +601,36 @@ int lb_lbfluid_print_velocity(char* filename) {
 }
 int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   if(lattice_switch & LATTICE_LB_GPU) {
-    fprintf(stderr, "LB checkpointing not implemented for GPU\n");
-    return ES_ERROR;
+  		FILE* cpfile;
+		  cpfile=fopen(filename, "w");
+		  if (!cpfile) {
+			  return ES_ERROR;
+		  }
+    //float* host_checkpoint;
+    float* host_checkpoint_vd = malloc(size_of_nodes_gpu);
+    unsigned int* host_checkpoint_seed = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+    unsigned int* host_checkpoint_boundary = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+    float* host_checkpoint_force = malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+    lb_print_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
+    for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
+							fprintf(cpfile, "%f \n", host_checkpoint_vd[n]); 
+						}
+    for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+							fprintf(cpfile, "%u \n", host_checkpoint_seed[n]); 
+						}
+				for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+							fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]); 
+						}
+				for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
+							fprintf(cpfile, "%f \n", host_checkpoint_force[n]); 
+						}
+    fclose(cpfile);
+    free(host_checkpoint_vd);
+    free(host_checkpoint_seed);
+    free(host_checkpoint_boundary);
+    free(host_checkpoint_force);
+    //fprintf(stderr, "LB checkpointing not implemented for GPU\n");
+    return ES_OK;
   }
   else
 	if(lattice_switch & LATTICE_LB) {
@@ -810,7 +839,6 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 #endif
 				}
 
-//printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
 				lb_lbnode_get_u(tmpind, local_v);
 				
 				
@@ -1739,7 +1767,7 @@ void lb_calc_modes(index_t index, double *mode) {
   
   /* mass mode */
   mode[0] = n0 + n1p + n2p + n3p + n4p + n5p + n6p + n7p + n8p + n9p;
-  
+ 
   /* momentum modes */
   mode[1] = n1m + n4m + n5m + n6m + n7m;
   mode[2] = n2m + n4m - n5m + n8m + n9m;
@@ -1929,7 +1957,7 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
 MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
 #ifdef GAUSSRANDOM
-    double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho*agrid*agrid*agrid));
+    double rootrho_gauss = sqrt(mode[0]+lbpar.rho*agrid*agrid*agrid);
 
     /* stress modes */
     mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random());
@@ -1953,7 +1981,7 @@ MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
 #endif
 
 #else
-    double rootrho = sqrt(fabs(12.0*(mode[0]+lbpar.rho*agrid*agrid*agrid)));
+    double rootrho = sqrt(12.0*(mode[0]+lbpar.rho*agrid*agrid*agrid));
 
     /* stress modes */
     mode[4] += (fluct[0] = rootrho*lb_phi[4]*(d_random()-0.5));
