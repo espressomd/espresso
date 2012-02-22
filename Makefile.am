@@ -35,7 +35,7 @@ myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 	cat config/myconfig-sample-body.h >> myconfig-sample.h
 
 dist-hook:
-	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -d`; \
+	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -rd`; \
 	if test "$$VERSION" != "$(PACKAGE_VERSION)"; then \
 		echo "***************************************************************************"; \
 		echo "ERROR: Package version is not up-to-date."; \
