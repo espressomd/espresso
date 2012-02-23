@@ -351,7 +351,7 @@ void simple_momentum_update()
 				part[i].m.v[j] = sigmat*gaussian_random()*time_step;
 				#ifdef ROTATION
 					#ifdef ROTATIONAL_INERTIA
-						sigmtr = sqrt(temperature / part[i].p.rinertia[j]);
+						sigmar = sqrt(temperature / part[i].p.rinertia[j]);
 					#endif
 					part[i].m.omega[j] = sigmar*gaussian_random();
 				#endif	
