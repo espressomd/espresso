@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -58,11 +58,11 @@ Ghmc ghmcdata = { 0, 0, 0.0, 0.0};
 /* local prototypes                                         */
 /************************************************************/
 
-void hamiltonian_calc();
+void hamiltonian_calc(int ekin_update_flag);
 
 double calc_local_temp();
 
-void calc_temp(double *temp_trans , double *temp_rot);
+void calc_kinetic(double *ek_trans , double *ek_rot);
 
 void simple_momentum_update();
 
@@ -130,25 +130,43 @@ void load_last_state()
 }
 
 
-void hamiltonian_calc()
+void hamiltonian_calc(int ekin_update_flag)
 {
-	
-	int i;
-	double result = 0.0;
-	INTEG_TRACE(fprintf(stderr,"%d: hamiltonian_calc:\n",this_node));
-	
-	if (total_energy.init_status == 0)
-    init_energies(&total_energy);
-  master_energy_calc();
   
+  /* if ekin_update_flag = 0, we calculate all energies with \ref master_energy_calc().
+   if ekin_update_flag = 1, we only updated momenta, so there we only need to recalculate 
+   kinetic energy with \ref calc_kinetic(). */
+  
+  int i;
+  double result = 0.0;
+  double ekt, ekr;
+  
+  INTEG_TRACE(fprintf(stderr,"%d: hamiltonian_calc:\n",this_node));
+  
+  //initialize energy struct 
+  if (total_energy.init_status == 0) {
+    init_energies(&total_energy);
+    //if we are initializing energy we have to calculate all energies anyway
+    ekin_update_flag = 0;
+  }
+  
+  //calculate energies
+  if (ekin_update_flag == 0)
+    master_energy_calc();
+  else
+    calc_kinetic(&ekt, &ekr);
+
+  //sum up energies on master node, and update ghmcdata struct
   if (this_node==0) {
     ghmcdata.hmlt_old = ghmcdata.hmlt_new;
-    for (i = 0; i < total_energy.data.n; i++) {
+    for (i = ekin_update_flag; i < total_energy.data.n; i++) {
       result += total_energy.data.e[i];
     }
+    if (ekin_update_flag == 1)
+      result += ekt+ekr;
     ghmcdata.hmlt_new=result;
   }
-	
+
 }
 
 //get local temperature - here for debbuging purposes
@@ -182,12 +200,12 @@ double calc_local_temp()
 	
 }
 
-void calc_temp(double *temp_trans , double *temp_rot)
+void calc_kinetic(double *ek_trans , double *ek_rot)
 {
 	
 	int i, c, np;
   Particle *part;
-	double tt = 0.0, tr = 0.0;
+	double et = 0.0, er = 0.0;
 		
 	for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -199,31 +217,31 @@ void calc_temp(double *temp_trans , double *temp_rot)
 			#endif
 			
 			/* kinetic energy */
-			tt += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*PMASS(part[i]);
+			et += (SQR(part[i].m.v[0]) + SQR(part[i].m.v[1]) + SQR(part[i].m.v[2]))*PMASS(part[i]);
 
 			/* rotational energy */
 			#ifdef ROTATION
 			#ifdef ROTATIONAL_INERTIA
-				tr += SQR(part[i].m.omega[0])*part[i].p.rinertia[0] +
+				er += SQR(part[i].m.omega[0])*part[i].p.rinertia[0] +
 								SQR(part[i].m.omega[1])*part[i].p.rinertia[1] +
 								SQR(part[i].m.omega[2])*part[i].p.rinertia[2];
 			#else
-				tr += SQR(part[i].m.omega[0]) + SQR(part[i].m.omega[1]) + SQR(part[i].m.omega[2]);
+				er += SQR(part[i].m.omega[0]) + SQR(part[i].m.omega[1]) + SQR(part[i].m.omega[2]);
 			#endif
 			#endif	
     }
 	}
 	
-  MPI_Allreduce(MPI_IN_PLACE, &tt, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
-  MPI_Allreduce(MPI_IN_PLACE, &tr, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(MPI_IN_PLACE, &et, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
+  MPI_Allreduce(MPI_IN_PLACE, &er, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 	
-	tt /= 3*n_total_particles*time_step*time_step;
+	et /= (2.0*time_step*time_step);
 	#ifdef ROTATION
-		tr /= 3*n_total_particles;
+		er /= 2.0;
 	#endif
 		
-	*temp_trans=tt;
-	*temp_rot=tr;
+	*ek_trans=et;
+	*ek_rot=er;
 
 }
 
@@ -241,8 +259,9 @@ void ghmc_momentum_update()
     tscale_momentum_update();
   else
     partial_momentum_update();
-
-  hamiltonian_calc();
+  
+  int ekin_update_flag = 1;
+  hamiltonian_calc(ekin_update_flag);
   
 }
 
@@ -261,12 +280,14 @@ void tscale_momentum_update()
 
   //fprintf(stderr,"%d: temp after simple update: %f\n",this_node,calc_local_temp());
   
-  double tempt, tempr, scalet, scaler;
-  calc_temp(&tempt, &tempr);
+  double tempt, tempr;
+  calc_kinetic(&tempt, &tempr);
+  tempt /= (1.5*n_total_particles);
+  tempr /= (1.5*n_total_particles);
   
-  scalet = sqrt(temperature / tempt);
-  #ifdef ROTATION
-    scaler = sqrt(temperature / tempr);
+  double scalet = sqrt(temperature / tempt);
+  #ifdef ROTATION    
+    double scaler = sqrt(temperature / tempr);
   #endif  
             
   for (c = 0; c < local_cells.n; c++) {
@@ -281,6 +302,8 @@ void tscale_momentum_update()
       }
     }
   }
+  
+  //fprintf(stderr,"%d: temp after scale: %f\n",this_node,calc_local_temp());
   
 	for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -447,7 +470,8 @@ void ghmc_mc()
 			
 		  double boltzmann;
 			
-			hamiltonian_calc();
+      int ekin_update_flag = 0;
+			hamiltonian_calc(ekin_update_flag);
 			
       //make MC decision only on the master
       if (this_node==0) {

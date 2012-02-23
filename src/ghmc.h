@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -22,7 +22,7 @@
 /** \file ghmc.h
 
     This file contains the implementation of the GHMC (Generalized 
-    Hybrid MOnte Carlo) thermostat.
+    Hybrid Monte Carlo) thermostat.
     
  */
 
