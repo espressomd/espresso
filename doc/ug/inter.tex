@@ -1358,6 +1358,9 @@ appendix~\vref{sec:MEMD} or the publications~\cite{maggs02a,
 \begin{essyntax}
   inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}
   \opt{\var{far\_cutoff}}
+  \opt{noneutralization}
+  \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
+  \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1368,21 +1371,40 @@ that you will first have to set up the P3M algorithm (via
 \texttt{inter coulomb p3m \var{params}}) before using ELC.  The
 algorithm is definitely faster than MMM2D for larger numbers of
 particles ($>400$ at reasonable accuracy requirements). The maximal
-pairwise error is the LUB error of the force between any two charges
-without prefactors (see the papers).  The gap size gives the height of
-the empty region between the system box and the neighboring artificial
-images (again, see the paper).  \es{} does not make sure that the gap
-is actually empty, this is the users responsibility. The method will
-compute fine of the condition is not fulfilled, however, the error
-bound will not be reached. Therefore you should really make sure that
-the gap region is empty (e. g. by constraints). The far cutoff finally
-is only intended for testing and allows to directly set the cutoff. In
-this case, the maximal pairwise error is ignored. The periodicity has
-to be set to \texttt{1 1 1} still, and the 3d method has to be set to
-epsilon metallic, i.e.  metallic boundary conditions. For details, see
+pairwise error \var{maximal\_pairwise\_error} sets the LUB error of
+the force between any two charges without prefactors (see the
+papers). The algorithm tries to find parameters to meet this LUB
+requirements or will throw an error if there are none.
+
+The gap size \var{gap\_size} gives the height of the empty region
+between the system box and the neighboring artificial images (again,
+see the paper).  \es{} does not make sure that the gap is actually
+empty, this is the users responsibility. The method will compute fine
+of the condition is not fulfilled, however, the error bound will not
+be reached. Therefore you should really make sure that the gap region
+is empty (e. g. by constraints).
+
+The setting of the far cutoff \var{far\_cutoff} is only intended for
+testing and allows to directly set the cutoff. In this case, the
+maximal pairwise error is ignored. The periodicity has to be set to
+\texttt{1 1 1} still, and the 3d method has to be set to epsilon
+metallic, i.e.  metallic boundary conditions. For details, see
 appendix \vref{chap:mmm}.
 
-Make sure that you read the papers on ELC (e.~g. \cite{brodka04a,
+By default, ELC just as P3M adds a homogeneous neutralizing background
+to the system in case of a net charge. However, unlike in three
+dimensions, this background adds a parabolic potential across the
+slab~\cite{ballenegger09a}. Therefore, under normal circumstance, you
+will probably want to disable the neutralization using
+\opt{noneutralization}. This corresponds then to a formal
+regularization of the forces and energies~\cite{ballenegger09a}. Also,
+if you add neutralizing walls explicitely as constraints, you have to
+disable the neutralization.
+
+The dielectric contrast features work exactly the same as MMM2D, see
+the documentation above.
+
+Make sure that you read the papers on ELC (\cite{arnold02c,
   tyagi08a}) before using it!!!
 
 \section{Dipolar interaction}
