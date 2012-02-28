@@ -92,6 +92,8 @@ Reaction_field_params rf_params = { 0.0, 0.0 };
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
+double min_global_cut = 0.0;
+
 double max_cut;
 double max_cut_nonbonded;
 double max_cut_bonded;
@@ -469,6 +471,12 @@ static void recalc_maximal_cutoff_bonded()
 
 static void recalc_global_maximal_nonbonded_cutoff()
 {
+  /* user defined minimal global cut. This makes sure that data of
+   pairs of particles with a distance smaller than this are always
+   available on the same node (through ghosts). Required for example
+   for the relative virtual sites algorithm. */
+  max_cut_global = min_global_cut;
+
 #ifdef ELECTROSTATICS
   /* Cutoff for the real space electrostatics.
      Note that the box length may have changed,

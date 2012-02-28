@@ -49,7 +49,9 @@ const char init_errors[][64] = {
   "tau_lin must be divisible by 2", // 14
   "dt is smaller than the MD timestep",//15
   "dt is not a multiple of the MD timestep", //16
-  "cannot set compress2 for autocorrelation" //17
+  "cannot set compress2 for autocorrelation", //17
+  "dim_A must be divisible by 3 for fcs_acf", //18
+  "fcs_acf requires 3 additional parameters"  //19
 };
 
 const char file_data_source_init_errors[][64] = {
@@ -60,12 +62,13 @@ const char file_data_source_init_errors[][64] = {
 };
 
 const char double_correlation_get_data_errors[][64] = {
-  "",
-  "Error calculating variable A" ,
-  "Error calculating variable B" ,
-  "Error calculating correlation\n", 
-  "Error allocating temporary memory\n", 
-  "Error in correlation operation: The vector sizes do not match\n"
+  "",                                                                // 0
+  "Error calculating variable A" ,                                   // 2
+  "Error calculating variable B" ,                                   // 3
+  "Error calculating correlation\n",                                 // 4
+  "Error allocating temporary memory\n",                             // 4
+  "Error in corr_operation: observable dimensions do not match\n",   // 5
+  "Error: dim_corr and dim_A do not match for fcs_acf\n"             // 6
 };
 
 int correlations_autoupdate=0;
@@ -136,7 +139,7 @@ int correlation_get_correlation_time(double_correlation* self, double* correlati
 int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
                   unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
                   observable* A, observable* B, char* corr_operation_name, 
-                  char* compressA_name, char* compressB_name) {
+                  char* compressA_name, char* compressB_name, void *args) {
   unsigned int i,j,k;
   unsigned int hierarchy_depth=0;
 
@@ -174,7 +177,10 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   if (tau_max <= dt) { 
     return 4;
   } else { //set hierarchy depth which can  accomodate at least tau_max
-    hierarchy_depth=(int)ceil( 1 + log( (tau_max/dt)/(tau_lin-1) ) / log(2.0) );
+    if ( (tau_max/dt) < tau_lin ) 
+      hierarchy_depth = 1;
+    else 
+      hierarchy_depth=(unsigned int)ceil( 1 + log( (tau_max/dt)/(tau_lin-1) ) / log(2.0) );
   }
   self->tau_max=tau_max;
   self->hierarchy_depth = hierarchy_depth;
@@ -213,18 +219,28 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
   } else if ( strcmp(corr_operation_name,"componentwise_product") == 0 ) {
     dim_corr = dim_A;
     self->corr_operation = &componentwise_product;
+    self->args = NULL;
   } else if ( strcmp(corr_operation_name,"complex_conjugate_product") == 0 ) {
     dim_corr = dim_A;
     self->corr_operation = &complex_conjugate_product;
+    self->args = NULL;
   } else if ( strcmp(corr_operation_name,"square_distance_componentwise") == 0 ) {
     dim_corr = dim_A;
     self->corr_operation = &square_distance_componentwise;
+    self->args = NULL;
+  } else if ( strcmp(corr_operation_name,"fcs_acf") == 0 ) {
+    if (dim_A %3 )
+      return 18;
+    dim_corr = dim_A/3;
+    self->corr_operation = &fcs_acf;
+    self->args = args;
 // square_distance will be removed -- will be replaced by strides and blocks
 //  } else if ( strcmp(corr_operation_name,"square_distance") == 0 ) {
 //    self->corr_operation = &square_distance;
   } else if ( strcmp(corr_operation_name,"scalar_product") == 0 ) {
     dim_corr=1;
     self->corr_operation = &scalar_product;
+    self->args = NULL;
   } else {
     return 11; 
   }
@@ -314,6 +330,7 @@ int double_correlation_init(double_correlation* self, double dt, unsigned int ta
     self->A[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
     if(!self->autocorrelation) self->B[i] = (double**) malloc((self->tau_lin+1)*sizeof(double*));
   }
+
   // and initialize the values
   for (i=0; i<self->hierarchy_depth; i++) {
     self->n_vals[i]=0;
@@ -427,7 +444,7 @@ int double_correlation_get_data( double_correlation* self ) {
     index_new = self->newest[0];
     index_old =  (self->newest[0] - j + self->tau_lin + 1) % (self->tau_lin + 1);
 //    printf("old %d new %d\n", index_old, index_new);
-    error = (self->corr_operation)(self->A[0][index_old], self->dim_A, self->B[0][index_new], self->dim_B, temp, self->dim_corr);
+    error = (self->corr_operation)(self->A[0][index_old], self->dim_A, self->B[0][index_new], self->dim_B, temp, self->dim_corr, self->args);
     if ( error != 0)
       return error;
     self->n_sweeps[j]++;
@@ -441,7 +458,7 @@ int double_correlation_get_data( double_correlation* self ) {
       index_new = self->newest[i];
       index_old = (self->newest[i] - j + self->tau_lin + 1) % (self->tau_lin + 1);
       index_res = self->tau_lin + (i-1)*self->tau_lin/2 + (j - self->tau_lin/2+1) -1;
-      error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr);
+      error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr, self->args);
       if ( error != 0)
         return error;
       self->n_sweeps[index_res]++;
@@ -538,7 +555,7 @@ int double_correlation_finalize( double_correlation* self ) {
           index_new = self->newest[i];
           index_old = (self->newest[i] - j + tau_lin + 1) % (tau_lin + 1);
           index_res = tau_lin + (i-1)*tau_lin/2 + (j - tau_lin/2+1) -1;
-          error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr);
+          error=(self->corr_operation)(self->A[i][index_old], self->dim_A, self->B[i][index_new], self->dim_B, temp, self->dim_corr, self->args);
           if ( error != 0)
             return error;
           self->n_sweeps[index_res]++;
@@ -599,7 +616,7 @@ int obs_nothing (void* params, double* A, unsigned int n_A) {
   return 0;
 }
 
-int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   double temp = 0;
   unsigned int i;
   if (!(dim_A == dim_B && dim_corr == 1 )) {
@@ -613,7 +630,7 @@ int scalar_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_
   return 0;
 }
 
-int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   unsigned int i;
   if (!(dim_A == dim_B )) {
     printf("Error in componentwise product: The vector sizes do not match");
@@ -628,7 +645,7 @@ int componentwise_product ( double* A, unsigned int dim_A, double* B, unsigned i
   return 0;
 }
 
-int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   unsigned int i,j;
   if (!(dim_A == dim_B )) {
     printf("Error in complex_conjugate product: The vector sizes do not match");
@@ -644,7 +661,7 @@ int complex_conjugate_product ( double* A, unsigned int dim_A, double* B, unsign
 }
 
 
-int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr ) {
+int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   unsigned int i;
   if (!(dim_A == dim_B )) {
     printf("Error in square distance componentwise: The vector sizes do not match\n");
@@ -653,6 +670,28 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
   for ( i = 0; i < dim_A; i++ ) {
     C[i] = (A[i]-B[i])*(A[i]-B[i]);
   }
+  return 0;
+}
+
+
+int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
+  DoubleList *wsquare = (DoubleList*)args;
+  int i;
+  if (args == NULL )
+    return 1;
+  if (!(dim_A == dim_B )) {
+    return 5;
+  }
+  if ( dim_A / dim_corr != 3) {
+    return 6; 
+  }
+  for ( i = 0; i < dim_corr; i++ ) 
+    C[i] = 0;
+  for ( i = 0; i < dim_A; i++ ) {
+    C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsquare->e[i%3];
+  }
+  for ( i = 0; i < dim_corr; i++ ) 
+    C[i] = exp(C[i]);
   return 0;
 }
 

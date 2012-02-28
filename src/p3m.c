@@ -25,6 +25,7 @@
 
 #include "utils.h"
 #include "integrate.h"
+#include "initialize.h"
 #include "global.h"
 #include "grid.h"
 #include "domain_decomposition.h"
@@ -308,7 +309,6 @@ void   p3m_init() {
     P3M_TRACE(fprintf(stderr,"%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",this_node,p3m.params.mesh[0],p3m.params.cao,p3m.params.mesh_off[0],p3m.params.mesh_off[1],p3m.params.mesh_off[2]));
     p3m.params.cao3 = p3m.params.cao*p3m.params.cao*p3m.params.cao;
 
-
     /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and the cutoff for charge assignment p3m.params.cao_cut */
     p3m_init_a_ai_cao_cut();
 
@@ -325,6 +325,9 @@ void   p3m_init() {
     P3M_TRACE(p3m_p3m_print_send_mesh(p3m.sm));
     p3m.send_grid = (double *) realloc(p3m.send_grid, sizeof(double)*p3m.sm.max);
     p3m.recv_grid = (double *) realloc(p3m.recv_grid, sizeof(double)*p3m.sm.max);
+
+    /* fix box length dependent constants */
+    p3m_scaleby_box_l();
 
     if (p3m.params.inter > 0)
       p3m_interpolate_charge_assignment_function();
@@ -1510,7 +1513,7 @@ int p3m_adaptive_tune(char **log) {
   
   if(p3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = min_local_box_l/2 - skin;
+    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }
@@ -1670,7 +1673,12 @@ double p3m_k_space_error(double prefac, int mesh[3], int cao, int n_c_part, doub
 	  n2 = SQR(nx) + SQR(ny) + SQR(nz);
 	  cs = p3m_analytic_cotangent_sum(nz,mesh_i[2],cao)*ctan_y;
 	  p3m_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
-	  he_q += (alias1  -  SQR(alias2/cs) / n2);
+
+	  double d = alias1  -  SQR(alias2/cs) / n2;
+	  /* at high precisions, d can become negative due to extinction;
+	     also, don't take values that have no significant digits left*/
+	  if (d > 0 && (fabs(d/alias1) > ROUND_ERROR_PREC))
+	    he_q += d;
 	}
       }
     }
@@ -1741,8 +1749,6 @@ void p3m_calc_local_ca_mesh() {
   /* index of left down grid point in global mesh */
   for(i=0;i<3;i++) 
     p3m.local_mesh.ld_ind[i]=(int)ceil((my_left[i]-full_skin[i])*p3m.params.ai[i]-p3m.params.mesh_off[i]);
-  /* spacial position of left down mesh point */
-  p3m_calc_lm_ld_pos();
   /* left down margin */
   for(i=0;i<3;i++) p3m.local_mesh.margin[i*2] = p3m.local_mesh.in_ld[i]-p3m.local_mesh.ld_ind[i];
   /* up right grid point */
@@ -1764,7 +1770,6 @@ void p3m_calc_local_ca_mesh() {
   p3m.local_mesh.q_21_off = p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
  
 }
-
 
 void p3m_calc_lm_ld_pos() {
   int i; 
@@ -1942,12 +1947,17 @@ void p3m_calc_send_mesh()
 /************************************************/
 
 void p3m_scaleby_box_l() {
+  if (coulomb.bjerrum == 0.0) {
+    return;
+  }
 
   p3m.params.r_cut = p3m.params.r_cut_iL* box_l[0];
   p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
   p3m_init_a_ai_cao_cut();
   p3m_calc_lm_ld_pos();
   p3m_sanity_checks_boxl(); 
+  p3m_calc_influence_function_force();
+  p3m_calc_influence_function_energy();  
 }
 
 /************************************************/

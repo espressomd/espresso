@@ -481,7 +481,7 @@ void on_boxl_change() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
-    break;
+    // fall through
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     break;
@@ -609,6 +609,10 @@ void on_parameter_change(int field)
     grid_changed_box_l();
     /* Electrostatics cutoffs mostly depend on the system size,
        therefore recalculate them. */
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    break;
+  case FIELD_MIN_GLOBAL_CUT:
     recalc_maximal_cutoff();
     cells_on_geometry_change(0);
     break;

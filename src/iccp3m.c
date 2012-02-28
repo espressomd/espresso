@@ -42,6 +42,7 @@
 #include "verlet.h"
 #include "cells.h"
 #include "particle_data.h"
+#include "interaction_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
 #include "forces.h"
@@ -334,7 +335,7 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
   int estimate, sum=0;
   fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_non_bonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
@@ -628,11 +629,16 @@ void resize_verlet_list_iccp3m(PairList *pl)
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force_iccp3m(Particle *part)
 {
-
     part->f.f[0] = 0.0; /* no need to friction_thermo_langevin function */
     part->f.f[1] = 0.0;
     part->f.f[2] = 0.0;
 
+#ifdef ROTATION
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+#endif
 }
 
 /** initialize the forces for a ghost particle */
@@ -641,6 +647,13 @@ MDINLINE void init_ghost_force_iccp3m(Particle *part)
   part->f.f[0] = 0.0;
   part->f.f[1] = 0.0;
   part->f.f[2] = 0.0;
+
+#ifdef ROTATION
+  /* set torque to zero */
+  part->f.torque[0] = 0;
+  part->f.torque[1] = 0;
+  part->f.torque[2] = 0;
+#endif
 }
 
 /* integer mod*/

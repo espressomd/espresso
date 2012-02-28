@@ -164,6 +164,8 @@ extern const Datafield fields[];
 #define FIELD_MCUT_BONDED         43
 /** index of \ref transfer_rate in \ref #fields */
 #define FIELD_TRANSFER_RATE       44
+/** index of \ref min_global_cut in \ref #fields */
+#define FIELD_MIN_GLOBAL_CUT      45
 /*@}*/
 
 #endif

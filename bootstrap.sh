@@ -1,2 +1,3 @@
 #!/bin/sh
-exec autoreconf -i -v -Wall
+autoreconf -iv -Wall
+autoreconf -fv -Wall
