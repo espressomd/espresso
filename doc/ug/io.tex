@@ -544,6 +544,34 @@ return value of an invocation of \keyword{open}.
 If \var{pid} is the id of a particle as used in \es, this command
 returns the atom id used in the VTF, VSF or VCF formats.
 
+\section{\texttt{writevtk}: Particle Visualization in paraview}
+\label{sec:writevtk}
+\newescommand{writevtk}
+
+This feature allows to export the particle positions in a paraview
+\footnote{http://www.paraview.org/} compatible VTK file. Paraview is a powerful
+ and easy to use open-source visualization program for scientific data. Since 
+\es can export the lattice-Boltzmann velocity field \ref{ssec:LBvisualization} in the VTK format as well 
+and paraview allows to visualize particles with glyphs and vector fields with 
+stream lines, glyphs, contourplots, etc., one can use it so completely visualize
+ a coupled lattice-Boltzmann MD simulation. It can also create videos without 
+much effort if one exports data of individual time steps into separate files 
+with filenames including a running index (\texttt{data_0.vtk}, 
+\texttt{data_1.vtk}, ...).
+
+\begin{essyntax}
+  writevtk \var{filename} 
+  \opt{\alt{all \asep \var{type}}}
+\end{essyntax}
+
+\begin{arguments}
+\item[\var{filename}]
+  Name of the file to export the particle positions into.
+
+\item[\opt{\alt{all \asep \var{type}}}]
+  Specifies which particle type should be exportet. The default is \keyword{all}. Alternatively, a type number can be given. Exporting the positions of all particles but in separate files might make sense if one wants to distinguish the different particle types in the visualization (i.e. by color or size).
+\end{arguments}
+
 \section{Online-visualisation with VMD}
 IMD (Interactive Molecular Dynamics) is the protocol that VMD uses to
 communicate with a simulation. Tcl\_md implements this protocol to
