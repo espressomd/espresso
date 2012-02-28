@@ -188,7 +188,7 @@ AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
 if test .$PYTHON != .no; then
    # Check whether python -B works
    AC_MSG_CHECKING([whether python -B works])
-   if $PYTHON -B -c pass; then
+   if $PYTHON -B -c pass > /dev/null 2>&1; then
       PYTHON="$PYTHON -B"
       AC_MSG_RESULT(yes)
    else
