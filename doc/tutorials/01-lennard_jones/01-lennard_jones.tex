@@ -104,7 +104,11 @@ pagesize,                       % set the pagesize in a DVI document
 
 \esptitlehead
 
-\title{Tutorial 1: Lennard-Jones Liquid}
+\title{Tutorial 1: Lennard-Jones Liquid%
+\ifdefined\esversion%
+\thanks{For \es \esversion}%
+\fi%
+}
 \subtitle{\es Basics}
 \author{H.-J. Limbach \and M. S\"uzen \and K. Grass \and M. Sega \and
   A. Arnold \and N. Gribova}

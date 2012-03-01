@@ -80,10 +80,12 @@ idxtotoc                        % add the index to the TOC
     \includegraphics[width=5cm]{logo/transparentbg.png}
   \end{center}
 }
-%\subject{}
 \title{\es Developer's Guide}
-%\author{}
-%\date{\today}
+\date{\today}
+\ifdefined\esversion%
+\author{for version \esversion}
+\fi%
+
 \maketitle
 
 \tableofcontents

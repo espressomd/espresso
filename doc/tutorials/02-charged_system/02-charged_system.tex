@@ -32,7 +32,12 @@ pagesize,                       % set the pagesize in a DVI document
 
 \begin{document}
 \esptitlehead
-\title{Tutorial 2: A simple charged system}
+\title{Tutorial 2: A simple charged system%
+\ifdefined\esversion%
+\thanks{For \es \esversion}%
+\fi%
+}
+
 \maketitle
 \tableofcontents
 

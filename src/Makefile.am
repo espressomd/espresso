@@ -302,10 +302,10 @@ if HAVE_PYTHON
 BUILT_SOURCES +=  config-features.h config-features.c
 CLEANFILES += config-features.h config-features.c config-doxygen.h
 config-features.h config-features.c: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.h config-features.c
+	$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.h config-features.c
 
 config-doxygen.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
-	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.h
+	$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.h
 
 else
 
@@ -326,7 +326,8 @@ BUILT_SOURCES += config-version.c
 CLEANFILES += config-version.c
 config-version.c: FORCE
 	VERSION=`cd $(top_srcdir); sh config/genversion.sh -c`; \
-	if test "$$VERSION" != "`cat config-version.c`"; then \
+	if ! test -e "config-version.c" || \
+		test "$$VERSION" != "`cat config-version.c`"; then \
 		echo "$$VERSION" > config-version.c; \
 	fi
 

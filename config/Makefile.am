@@ -29,7 +29,7 @@ all-local: myconfig-sample-body.h
 
 if HAVE_PYTHON
 myconfig-sample-body.h: FORCE
-	$(PYTHON) -B $(srcdir)/gen_sampleconfig.py $(top_srcdir)/src/features.def myconfig-sample-body.h
+	$(PYTHON) $(srcdir)/gen_sampleconfig.py $(top_srcdir)/src/features.def myconfig-sample-body.h
 else
 myconfig-sample-body.h: FORCE
 	if test -e $(srcdir)/myconfig-sample-body.h; then \

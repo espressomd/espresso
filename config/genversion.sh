@@ -16,19 +16,42 @@
 #
 # Shell script to find out the version of ESPResSo 
 #
+# -r?: output raw (no newline)
+# -c?: output c constant definition
+# -l?: output LaTeX \newcommand
+# -?d: out dist version (without ...-git)
 
-test "$1" = "-d" && DFILE=1
-test "$1" = "-c" && CFILE=1
+if test -n "$1"; then
+    if test "$1" = -r; then
+	OUT_RAW=1
+    elif test "$1" = -rd; then
+	OUT_RAW=1
+	DIST=1
+    elif test "$1" = -c; then
+	OUT_C=1
+    elif test "$1" = -cd; then
+	OUT_C=1
+	DIST=1
+    elif test "$1" = -t; then
+	OUT_TEX=1
+    elif test "$1" = -td; then
+	OUT_TEX=1
+	DIST=1
+    else
+	echo "Unrecognized option to $0: $1"
+	exit 2
+    fi
+fi
 
 VERSIONFILE=version.txt
 
 # try to use git describe --dirty
 if VERSION=`git describe --dirty --match=?\.?\.? 2> /dev/null`; then
-    test "$CFILE" && VERSION=$VERSION-git
+    test ! "$DIST" && VERSION=$VERSION-git
 
 # try to use git without --dirty
 elif VERSION=`git describe --match=?\.?\.? 2> /dev/null`-maybedirty; then
-    test "$CFILE" && VERSION=$VERSION-git
+    test ! "$DIST" && VERSION=$VERSION-git
 
 # otherwise use the versionfile
 elif test -f "$VERSIONFILE"; then
@@ -42,12 +65,15 @@ else
 fi
 
 # OUTPUT
-if test "$DFILE"; then
+if test "$OUT_RAW"; then
     # Raw output
     echo $VERSION | tr -d '\n'
-elif test "$CFILE"; then
-    # Output to CFILE
+elif test "$OUT_C"; then
+    # Output to C-file
     echo "const char* ESPRESSO_VERSION=\"$VERSION\";"
+elif test "$OUT_TEX"; then
+    # Output TeX command def
+    echo "\def\esversion{$VERSION}"
 else
     echo $VERSION
 fi
