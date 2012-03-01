@@ -24,7 +24,7 @@ BIBINPUTS=.:$SRCDIR:
 export TEXINPUTS BIBINPUTS
 echo "TEXINPUTS=$TEXINPUTS"
 
-ESPRESSO_VERSION=`cd @abs_top_srcdir@; sh config/genversion.sh -d`
+ESPRESSO_VERSION=`cd @abs_top_srcdir@; sh config/genversion.sh -rd`
 echo "ESPRESSO_VERSION=$ESPRESSO_VERSION"
 
 PDFLATEX="@PDFLATEX@ -halt-on-error -interaction=batchmode"
