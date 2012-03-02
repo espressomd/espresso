@@ -311,6 +311,19 @@ int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char*
   return TCL_OK;
 }
 
+int tclcommand_observable_particle_forces(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  IntList* ids;
+  int temp;
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
+     return TCL_ERROR;
+  obs->fun = &observable_particle_forces;
+  obs->args=(void*)ids;
+  obs->n=3*ids->n;
+  *change=1+temp;
+  return TCL_OK;
+}
+
+
 
 int tclcommand_observable_stress_tensor(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   obs->fun = &observable_stress_tensor;
@@ -806,6 +819,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
       observables=(observable**) realloc(observables, (n_observables+1)*sizeof(observable*)); 
 
     REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities,id);
+    REGISTER_OBSERVABLE(particle_forces, tclcommand_observable_particle_forces,id);
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity,id);
     REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position,id);
     REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions,id);
