@@ -296,7 +296,7 @@ void dp3m_pre_init(void) {
   dp3m.send_grid = NULL;
   dp3m.recv_grid = NULL;
   
-  dp3m.flag_constants_energy_dipolar = 0;
+  dp3m.energy_correction = 0.0;
   
   dfft_pre_init();
 }
@@ -347,8 +347,8 @@ void dp3m_init() {
  
     dp3m_calc_local_ca_mesh();
 
-       dp3m_calc_send_mesh();
-       P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
+    dp3m_calc_send_mesh();
+    P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
     
     /* DEBUG */
     for(n=0;n<n_nodes;n++) {
@@ -358,6 +358,9 @@ void dp3m_init() {
     
     dp3m.send_grid = (double *) realloc(dp3m.send_grid, sizeof(double)*dp3m.sm.max);
     dp3m.recv_grid = (double *) realloc(dp3m.recv_grid, sizeof(double)*dp3m.sm.max);
+
+    /* fix box length dependent constants */
+    dp3m_scaleby_box_l();
     
     if (dp3m.params.inter > 0) dp3m_interpolate_dipole_assignment_function();
 
@@ -390,9 +393,6 @@ void dp3m_init() {
 
     dp3m_count_magnetic_particles();
 
-     /* to ensure constants will be computed in case you want to calculate the energy */
-    dp3m.flag_constants_energy_dipolar=0;
-   
     P3M_TRACE(fprintf(stderr,"%d: p3m initialized\n",this_node));
   }
 }
@@ -408,14 +408,14 @@ void dp3m_free_dipoles() {
 }
 
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
-	int	i,ind,n[3];
-	double node_phi = 0.0, phi = 0.0;
-	double U2;
+  int	i,ind,n[3];
+  double node_phi = 0.0, phi = 0.0;
+  double U2;
 	
-        int end[3];
-        int size=1;
+  int end[3];
+  int size=1;
 	
-   for(i=0;i<3;i++) {
+  for(i=0;i<3;i++) {
     size *= dfft.plan[3].new_mesh[i];
     end[i] = dfft.plan[3].start[i] + dfft.plan[3].new_mesh[i];
   }
@@ -439,12 +439,12 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
       }}}
   
       
-     MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);   
+  MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);   
      
-     phi*=PI/3./box_l/pow(mesh,3);
+  phi*=PI/3./box_l/pow(mesh,3);
      
 
-   return phi ;
+  return phi ;
 }
 
 
@@ -950,13 +950,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     node_k_space_energy_dip *= dipole_prefac * PI / box_l[0];
     MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
    
-   if (dp3m.flag_constants_energy_dipolar==0) 
-     dp3m.flag_constants_energy_dipolar = 1;
+    dp3m_compute_constants_energy_dipolar(); 
    
-   dp3m_compute_constants_energy_dipolar(); 
-   
- 
-   P3M_TRACE(fprintf(stderr,"%d: dp3m.params.epsilon=%lf\n", this_node, dp3m.params.epsilon));
+    P3M_TRACE(fprintf(stderr,"%d: dp3m.params.epsilon=%lf\n", this_node, dp3m.params.epsilon));
    
     if(this_node==0) {
       double a;
@@ -964,7 +960,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
       P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",this_node, dp3m.energy_correction));
       a = k_space_energy_dip;
       k_space_energy_dip -= coulomb.Dprefactor*(dp3m.sum_mu2*2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
-      k_space_energy_dip += coulomb.Dprefactor*dp3m.energy_correction; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
+
+      double volume=box_l[0]*box_l[1]*box_l[2];
+      k_space_energy_dip += coulomb.Dprefactor*dp3m.energy_correction/volume; /* add the dipolar energy correction due to systematic Madelung-Self effects */  
       
       P3M_TRACE(fprintf(stderr, "%d: Energy correction: %lf\n", this_node, k_space_energy_dip - a));
     }
@@ -1918,7 +1916,7 @@ int dp3m_adaptive_tune(char **logger)
 
   if(dp3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = min_local_box_l/2 - skin;
+    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }
@@ -2068,8 +2066,6 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh, int c
   double he_q = 0.0, mesh_i = 1./mesh, alpha_L_i = 1./alpha_L;
   double alias1, alias2, n2, cs;
 
-
- 
   for (nx=-mesh/2; nx<mesh/2; nx++)
     for (ny=-mesh/2; ny<mesh/2; ny++)
       for (nz=-mesh/2; nz<mesh/2; nz++)
@@ -2079,7 +2075,11 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh, int c
  	       p3m_analytic_cotangent_sum(ny,mesh_i,cao)*
 	       p3m_analytic_cotangent_sum(nz,mesh_i,cao);
 	  dp3m_tune_aliasing_sums(nx,ny,nz,mesh,mesh_i,cao,alpha_L_i,&alias1,&alias2);
-	  he_q += (alias1  -  SQR(alias2/cs) / (n2*n2*n2));
+	  double d = alias1  -  SQR(alias2/cs) / (n2*n2*n2);
+	  /* at high precisions, d can become negative due to extinction;
+	     also, don't take values that have no significant digits left*/
+	  if (d > 0 && (fabs(d/alias1) > ROUND_ERROR_PREC))
+	    he_q += d;
 	}
 
   return 8.*PI*PI/3.*sum_q2*sqrt(he_q/(double)n_c_part) / (box_size*box_size*box_size*box_size);
@@ -2446,55 +2446,41 @@ void dp3m_calc_send_mesh()
 /************************************************/
 
 void dp3m_scaleby_box_l() {
- 
+  if (coulomb.Dbjerrum == 0.0) {
+    return;
+  }
+
   dp3m.params.r_cut = dp3m.params.r_cut_iL* box_l[0];
   dp3m.params.alpha = dp3m.params.alpha_L * box_l_i[0];  
   dp3m_init_a_ai_cao_cut();
   dp3m_calc_lm_ld_pos();
   dp3m_sanity_checks_boxl();
-  /* to ensure constants will be computed in case you want to calculate the energy */
-  dp3m.flag_constants_energy_dipolar=0;
+
+  dp3m_calc_influence_function_force();
+  dp3m_calc_influence_function_energy();
 }
 
 /*****************************************************************************/
  
  
- /* fucntion to give the dipolar-P3M energy  correction -------*/
- void dp3m_compute_constants_energy_dipolar() {
-      double  Eself, Ukp3m;
-      double volume;
-      
-      P3M_TRACE(fprintf(stderr, "%d: dp3m_compute_constants_energy_dipolar().\n", this_node));
-      
-       if (dp3m.flag_constants_energy_dipolar == 1) { 
- 
- /*             double sumi1_value,sumi2_value, Eself, Ukp3m, Uk, Ur_cut;
-                sumi1_value=dp3m_sumi1(dp3m.params.alpha_L);
-            sumi2_value=dp3m_sumi2(dp3m.params.alpha_L);
-             Eself=-1.*(*2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
-	     Ukp3m=dp3m_average_dipolar_self_energy(box_l[0],dp3m.params.mesh[0]);
-	     Uk=4.*PI*dp3m.sum_mu2/6./pow(box_l[0],3)*sumi1_value;
-	     Ur_cut=-dp3m.sum_mu2*4.*pow(dp3m.params.alpha_L*box_l_i[0],3)*wupii/6.*sumi2_value;	
-	     dp3m.energy_correction= Eself + Uk - Ukp3m + Ur_cut;
-	     */
-	     
-	     Ukp3m=dp3m_average_dipolar_self_energy(box_l[0],dp3m.params.mesh[0]);
-	     
-	     P3M_TRACE(fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
-	     
-             Eself=-(2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
-             volume=box_l[0]*box_l[1]*box_l[2];
+/* fucntion to give the dipolar-P3M energy  correction -------*/
+void dp3m_compute_constants_energy_dipolar() {
+  double  Eself, Ukp3m;
 
-       	     dp3m.energy_correction= - dp3m.sum_mu2*(Ukp3m+Eself+2.*PI/(3.*volume));
+  if (dp3m.energy_correction != 0.0)
+    return;
+      
+  P3M_TRACE(fprintf(stderr, "%d: dp3m_compute_constants_energy_dipolar().\n", this_node));
+      
+  double volume=box_l[0]*box_l[1]*box_l[2];
+  Ukp3m=dp3m_average_dipolar_self_energy(box_l[0],dp3m.params.mesh[0])*volume;
+
+  P3M_TRACE(fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
 	     
-	     /*fprintf(stderr,"dp3m.sum_mu2=%lf\n",dp3m.sum_mu2);
-	     fprintf(stderr,"Ukp3m=%lf\n",Ukp3m);
-	     fprintf(stderr,"Eself=%lf\n",Eself);
-	     fprintf(stderr,"2.*PI/(3.*volume)=%lf\n",2.*PI/(3.*volume));*/
-	 
-	    dp3m.flag_constants_energy_dipolar = 2;
-        }
-  } 
+  Eself=-(2*pow(dp3m.params.alpha_L,3) * wupii/3.0);
+
+  dp3m.energy_correction = - dp3m.sum_mu2*(Ukp3m+Eself+2.*PI/3.);
+} 
 
 /*****************************************************************************/
 

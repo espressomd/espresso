@@ -98,6 +98,7 @@ proc dielectric_wall { args } {
     set e_1_y [ expr - $nz ]
     set e_1_z $ny
   }
+  puts "e_1 is $e_1_x $e_1_y $e_1_z"
 # and normalize
   set sq_sum [ expr sqrt($e_1_x*$e_1_x +  $e_1_y*$e_1_y + $e_1_z*$e_1_z) ] 
   set e_1_x [ expr $e_1_x/$sq_sum ]
@@ -558,7 +559,7 @@ proc dielectric_pore { args } {
     }
     if { [ lindex $args $argno ] == "type" } {
       incr argno
-      set type [ expr 1.0*[ lindex $args $argno ] ]
+      set type [ expr [ lindex $args $argno ] ]
       incr argno
       continue
     }
@@ -669,7 +670,7 @@ proc dielectric_pore { args } {
       set px [ expr $circle_center_x + $radius*cos($phi)*$e_1_x + $radius*sin($phi)*$e_2_x ]
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
-      part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ]
+      part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
       set nx [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_x + sin($phi)*$e_2_x)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_x ]
       set ny [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_y + sin($phi)*$e_2_y)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_y ]
       set nz [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_z + sin($phi)*$e_2_z)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_z ]
@@ -698,7 +699,7 @@ proc dielectric_pore { args } {
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
       if { $px > 0 && $px < $box_l_x && $py > 0 && $py < $box_l_y &&$pz > 0 && $pz < $box_l_z } {  
-        part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ]
+        part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1 
         set nx [ expr -$axis_x ]
         set ny [ expr -$axis_y ]
         set nz [ expr -$axis_z ]
@@ -721,7 +722,7 @@ proc dielectric_pore { args } {
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
       if { $px > 0 && $px < $box_l_x && $py > 0 && $py < $box_l_y && $pz > 0 && $pz < $box_l_z } {  
-        part [ expr $n_induced_charges ] pos $px $py $pz type $type
+        part [ expr $n_induced_charges ] pos $px $py $pz type $type fix 1 1 1
         set nx [ expr +$axis_x ]
         set ny [ expr +$axis_y ]
         set nz [ expr +$axis_z ]

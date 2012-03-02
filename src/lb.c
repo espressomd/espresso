@@ -43,6 +43,10 @@
 
 #ifdef LB
 
+#ifdef ADDITIONAL_CHECKS
+static void lb_check_halo_regions();
+#endif
+
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
 

@@ -48,6 +48,7 @@ int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A);
  * TODO: Folded or unfolded?
  */ 
 int observable_particle_positions(void* typelist, double* A, unsigned int n_A);
+int observable_particle_forces(void* typelist, double* A, unsigned int n_A);
 int observable_stress_tensor(void* typelist, double* A, unsigned int n_A);
 int observable_stress_tensor_acf_obs(void* typelist, double* A, unsigned int n_A);
 int observable_com_position(void* idlist, double* A, unsigned int n_A);
