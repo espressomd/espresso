@@ -38,8 +38,8 @@ myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 # Handle version
 MOSTLYCLEANFILES = version.txt
 EXTRA_DIST += version.txt
-version.txt:
-	cd $(top_srcdir); sh config/genversion.sh -r > $(abs_top_builddir)/version.txt
+version.txt: FORCE
+	cd $(top_srcdir); sh config/genversion.sh -rd > $(abs_top_builddir)/version.txt
 
 dist-hook:
 	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -rd`; \
