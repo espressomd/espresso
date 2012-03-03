@@ -529,7 +529,6 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 	[chmod 755 testsuite/runtest.sh])
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
-AC_CONFIG_COMMANDS([version.txt], [cd ${ac_top_srcdir}; sh config/genversion.sh > ${ac_abs_top_builddir}/version.txt])
 
 AC_OUTPUT
 
