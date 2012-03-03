@@ -224,7 +224,7 @@ namespace eval gibbs_ghmc {
 					#limit the change:
          if {[expr $mv_param/$mvp_old]>1.5} { set mv_param [expr $mvp_old*1.5]}
          if {[expr $mv_param/$mvp_old]<0.5} { set mv_param [expr $mvp_old*0.5]}
-				puts "MC move parameter set to : $mv_param (old : $mvp_old), Frac. acc.: $frac, attempts: [expr $tries-$triesp] succes: [expr $succ-$succp]"
+				puts "gibbs_ghmc: MC move parameter set to : $mv_param (old : $mvp_old), Frac. acc.: $frac, attempts: [expr $tries-$triesp] succes: [expr $succ-$succp]"
 				#store current try data for next use
         set acceptance_prev($id1,$id2,$rtype) "$tries $succ"
       }
@@ -668,10 +668,10 @@ namespace eval gibbs_ghmc {
 								puts "gibbs_ghmc listing acceptance_rates:"
 								foreach {channel1 id1 channel2 id2} $clients {
 									if {$id1 != "" && $id2 != ""} {
-										puts "gibbs_ghmc volume acceptance_rate $id1 $id2 [get_acceptance_rate $id1 $id2 0]"
-										puts "gibbs_ghmc particle acceptance_rate $id1 $id2 [get_acceptance_rate $id1 $id2 1]"
-										puts "gibbs_ghmc move acceptance_rate $channel1 $id1 [get_acceptance_rate $channel1 $id1 2]"
-										puts "gibbs_ghmc move acceptance_rate $channel2 $id2 [get_acceptance_rate $channel2 $id2 2]"
+										puts "gibbs_ghmc: volume acceptance rate $id1 $id2 [get_acceptance_rate $id1 $id2 0]"
+										puts "gibbs_ghmc: particle acceptance rate $id1 $id2 [get_acceptance_rate $id1 $id2 1]"
+										puts "gibbs_ghmc: move acceptance rate $channel1 $id1 [get_acceptance_rate $channel1 $id1 2]"
+										puts "gibbs_ghmc: move acceptance rate $channel2 $id2 [get_acceptance_rate $channel2 $id2 2]"
 										if {$gibbs_ghmc::adjust_vol} {set gibbs_ghmc::Vmax [adjust_acceptance_rates $id1 $id2 0 $gibbs_ghmc::Vmax]}
 										if {$gibbs_ghmc::adjust_dt} {
 											set gibbs_ghmc::md_dt($channel1,$id1) [expr min([adjust_acceptance_rates $channel1 $id1 2 $gibbs_ghmc::md_dt($channel1,$id1)],$gibbs_ghmc::dt_max)]
@@ -705,17 +705,16 @@ namespace eval gibbs_ghmc {
     
 }
 
-    # gibbs_ghmc public methods
-    ################################################
+# gibbs_ghmc public methods
+################################################
 
-    ####
-    proc set_shareddata {data} {
+proc set_shareddata {data} {
 	variable shareddata
 	set shareddata $data
 	set master::shareddata_changed 1
-    }
-    ####
-    proc main {args} {
+}
+###
+proc main {args} {
 	variable rounds; variable master; variable port
 	variable values; variable load;	variable info
 	variable init; variable swap_vol; variable swap_part; variable move_part; variable sample
@@ -770,11 +769,11 @@ namespace eval gibbs_ghmc {
 	    error "you either have to specify master or the simulation temperature"
 	}
 
-	if {$Vmax == 0 && $master == ""} { set Vmax = [expr log([lindex [lindex $values 0] 0]+[lindex [lindex $values 1] 0])*0.015]}
+	if {$Vmax == 0 && $master == ""} { set Vmax [expr log([lindex [lindex $values 0] 0]+[lindex [lindex $values 1] 0])*0.015]}
 
-	if {$mc_cycle == 0 && $master == ""} { set mc_cycle = [expr $nvol+$nmove+$npart]}
+	if {$mc_cycle == 0 && $master == ""} { set mc_cycle [expr $nvol+$nmove+$npart]}
 
-  if {$sample_rounds == 0 && $master == ""} { set sample_rounds = [expr $rounds/2]}
+  if {$sample_rounds == 0 && $master == ""} { set sample_rounds [expr $rounds/2]}
 
 	if {$master == ""} { master::main } { slave::main }
     }
