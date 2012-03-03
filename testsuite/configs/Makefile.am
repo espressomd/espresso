@@ -41,7 +41,7 @@ all-local:
 if HAVE_PYTHON
 
 check-local: $(MYCONFIGS)
-	cd $(srcdir); $(PYTHON) -B check_myconfig_complete.py \
+	cd $(srcdir); $(PYTHON) check_myconfig_complete.py \
 	  $(abs_top_srcdir)/src/features.def $(MYCONFIGS)
 
 else

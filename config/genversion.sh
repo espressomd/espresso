@@ -59,9 +59,7 @@ elif test -f "$VERSIONFILE"; then
 
 # otherwise the version is unknown
 else
-    echo -n "unknown"
-    echo "ERROR: Can't find $VERSIONFILE!" > /dev/stderr
-    exit 1
+    VERSION='unknown'
 fi
 
 # OUTPUT

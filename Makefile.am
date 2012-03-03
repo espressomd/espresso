@@ -19,6 +19,7 @@
 SUBDIRS = config src . scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
+AUTOMAKE_OPTIONS = subdir-objects
 
 # List files that should go into the distribution but are not required
 # by any other means
@@ -27,12 +28,18 @@ EXTRA_DIST = bootstrap.sh samples packages $(extra)
 all-local: Espresso myconfig-sample.h
 CLEANFILES = Espesso myconfig-sample.h 
 
-Espresso: 
-	$(LN_S) src/Espresso .
+Espresso: version.txt
+	test -e Espresso || $(LN_S) src/Espresso .
 
 myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 	cat config/myconfig-sample-header.h > myconfig-sample.h
 	cat config/myconfig-sample-body.h >> myconfig-sample.h
+
+# Handle version
+MOSTLYCLEANFILES = version.txt
+EXTRA_DIST += version.txt
+version.txt:
+	cd $(top_srcdir); sh config/genversion.sh -r > $(abs_top_builddir)/version.txt
 
 dist-hook:
 	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -rd`; \
@@ -44,9 +51,7 @@ dist-hook:
 		echo "ERROR: before running 'make dist' again."; \
 		echo "***************************************************************************"; \
 		exit 1; \
-	fi; \
-	echo $$VERSION > $(top_distdir)/version.txt
-DISCLEANFILES = version.txt
+	fi;
 
 #################################################################
 # Documentation
