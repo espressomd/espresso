@@ -23,6 +23,7 @@
  *  Implementation of \ref overlap.h
  */
 #include "utils.h"
+#include "interaction_data.h"
 
 #ifdef OVERLAPPED
 

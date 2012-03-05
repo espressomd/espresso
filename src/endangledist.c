@@ -23,6 +23,10 @@
  *  Implementation of \ref endangledist.h
  */
 #include "utils.h"
+#include "interaction_data.h"
+#include "communication.h"
+#include "constraint.h"
+#include "grid.h"
 
 #ifdef BOND_ENDANGLEDIST
 
@@ -50,6 +54,7 @@ int endangledist_set_params(int bond_type, double bend, double phi0 ,double dist
   return ES_OK;
 }
 
+#ifdef CONSTRAINTS
 /// Calculates the minimum distance between a particle to any wall constraint
 static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clconstr)
 {
@@ -145,6 +150,7 @@ static double calc_pwangle(Particle *p1, Particle *p2, Bonded_ia_parameters *iap
   */
   return phi;
 }
+#endif
 
 ///
 int calc_endangledist_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force1[3], double force2[3])

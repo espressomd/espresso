@@ -24,6 +24,7 @@
  */
 #include "utils.h"
 #include "parser.h"
+#include "interaction_data.h"
 
 #ifdef OVERLAPPED
 
