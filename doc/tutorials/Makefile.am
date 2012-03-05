@@ -18,9 +18,9 @@
 EXTRA_DIST=common/common.tex
 SUBDIRS=01-lennard_jones 02-charged_system
 
-.PHONY: FORCE doc tutorial $(SUBDIRS)
-doc: tutorial
-tutorial: FORCE
+.PHONY: FORCE doc tutorials $(SUBDIRS)
+doc: tutorials
+tutorials: FORCE
 	for dir in $(SUBDIRS); do \
 		cd $$dir; $(MAKE) --print-directory $@; cd ..;\
 	done
