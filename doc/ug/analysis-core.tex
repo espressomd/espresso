@@ -108,6 +108,11 @@ They are generic to all observables and are described after the list of observab
           If \lit{blocked \var{size}} is specified,
           the particles are subdivided into blocks of size \var{size} and the centre
           of mass velocity is calculated for each block separately.
+    \item \lit{com_force} \var{particle\_specifications} \opt{blocked \var{size}}\\
+          Total force on the specified particles. 
+          If \lit{blocked \var{size}} is specified,
+          the particles are subdivided into blocks of size \var{size} and the total
+          force is calculated for each block separately.
     \item \lit{stress_tensor} \\
           The stress tensor. It only works with all particles. 
           It is returned as a 9-dimensional array:\\

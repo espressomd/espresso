@@ -299,6 +299,38 @@ int tclcommand_observable_com_position(Tcl_Interp* interp, int argc, char** argv
   }
 }
 
+
+int tclcommand_observable_com_force(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  IntList* ids;
+  int temp, blocksize;
+  if (parse_id_list(interp, argc-1, argv+1, &temp, &ids) != TCL_OK ) 
+    return TCL_ERROR;
+  argc-=temp+1;
+  argv+=temp+1;
+  for ( int i = 0; i < argc; i++) {
+    printf("%s\n", argv[i]);
+  }
+  if (argc>0 && ARG0_IS_S("blocked")) {
+    if (argc >= 2 && ARG1_IS_I(blocksize) && (ids->n % blocksize ==0 )) {
+      obs->fun=&observable_blocked_com_force;
+      obs->args=ids;
+      obs->n=3*ids->n/blocksize;
+      *change=3+temp;
+      printf("found %d ids and a blocksize of %d, that makes %d dimensions\n", ids->n, blocksize, obs->n);
+      return TCL_OK;
+    } else {
+      Tcl_AppendResult(interp, "com_velocity blocked expected integer argument that fits the number of particles\n", (char *)NULL );
+      return TCL_ERROR;
+    }
+  } else /* if nonblocked com is to be taken */ {
+    obs->fun=&observable_com_force;
+    obs->args=ids;
+    obs->n=3;
+    *change=1+temp;
+    return TCL_OK;
+  }
+}
+
 int tclcommand_observable_particle_positions(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   IntList* ids;
   int temp;
@@ -759,6 +791,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(particle_forces, tclcommand_observable_particle_forces,id);
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity,id);
     REGISTER_OBSERVABLE(com_position, tclcommand_observable_com_position,id);
+    REGISTER_OBSERVABLE(com_force, tclcommand_observable_com_force,id);
     REGISTER_OBSERVABLE(particle_positions, tclcommand_observable_particle_positions,id);
     REGISTER_OBSERVABLE(stress_tensor, tclcommand_observable_stress_tensor,id);
     REGISTER_OBSERVABLE(stress_tensor_acf_obs, tclcommand_observable_stress_tensor_acf_obs,id);
