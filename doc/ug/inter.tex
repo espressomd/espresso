@@ -1415,7 +1415,7 @@ on a coulomb solver that is already initialized. This Coulomb solver can be P3M,
 As most of the times, ICC$\star$ will be used with P3M the corresponding command
 is called \keyword{iccp3m}.
 Please make sure to 
-read the corresponding articles, mainly \cite{lenz12a, suzen07a, kesselheim09a}before using it.\\
+read the corresponding articles, mainly \cite{arnold12a, tyagi10a, kesselheim11a}before using it.\\
 \begin{essyntax}
   iccp3m \var{n\_induced\_charges} 
   convergence \var{convergence\_criterion}
@@ -1450,7 +1450,7 @@ and adds the correct values to the global TCL variables \var{icc\_areas} \var{ic
 shapes, it is still necessary to register them by calling \keyword{iccp3m}, usually in the following way:
 \begin{code}
   iccp3m \$n\_induced\_charges epsilons \$icc\_epsilons normals \\ 
-  \$icc\_normas areas \$icc\_areas sigmas \$icc\_sigmas
+  \$icc\_normals areas \$icc\_areas sigmas \$icc\_sigmas
 \end{code}
 
 \begin{essyntax}
