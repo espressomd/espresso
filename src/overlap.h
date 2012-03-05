@@ -20,8 +20,8 @@
 */
 #include "dihedral.h"
 
-#ifndef OVERLAP_H
-#define OVERLAP_H
+#ifndef _OVERLAP_H
+#define _OVERLAP_H
 
 /** \file overlap.h
  *  Routines to calculate the energy and/or force 
@@ -30,8 +30,6 @@
  *  angles--- parameter: [N, a_i, b_i, c_i], function: U(cos(angl)) = sum_(i=1,N) {a_i*exp[-(cos(angl)-b_i)^2 / (2 * c_i^2)]}.
  *  dihedrals---parameter: [N, a_i, b_i, c_i], function: U(dihe)= sum_(i=1,N) {a_i*(1+Math.cos(c_i*dihe+b_i))}.
  *  Require feature OVERLAPPED compiled in myconfig.h (for more info of FEATURES, see \ref config.h ).
- *  <b>Responsible:</b>
- *  <a href="mailto:zwang@cmu.edu">Zun-Jing</a>
 */
 
 #ifdef OVERLAPPED 

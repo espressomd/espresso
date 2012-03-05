@@ -77,6 +77,7 @@
 #include "dihedral_tcl.h"
 #include "endangledist_tcl.h"
 #include "fene_tcl.h"
+#include "overlap_tcl.h"
 #include "harmonic_tcl.h"
 #include "subt_lj_tcl.h"
 

@@ -23,7 +23,8 @@
  *  Implementation of \ref endangledist_tcl.h
  */
 #include "utils.h"
-#include "parser.h"
+#include "endangledist.h"
+#include "endangledist_tcl.h"
 
 #ifdef BOND_ENDANGLEDIST
 

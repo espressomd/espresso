@@ -530,7 +530,6 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 
-
 AC_OUTPUT
 
 cat <<EOF
