@@ -389,7 +389,7 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
 
 /*@}*/
 
-int p3m_set_params(double r_cut, int mesh, int cao,
+int p3m_set_params(double r_cut, int *mesh, int cao,
 		   double alpha, double accuracy)
 {
   if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M)
@@ -398,15 +398,17 @@ int p3m_set_params(double r_cut, int mesh, int cao,
   if(r_cut < 0)
     return -1;
 
-  if(mesh < 0)
+  if((mesh[0] < 0) || (mesh[1] < 0) || (mesh[2] < 0))
     return -2;
 
-  if(cao < 1 || cao > 7 || cao > mesh)
+  if(cao < 1 || cao > 7 || cao > mesh[0] || cao > mesh[1] || cao > mesh[2] )
     return -3;
 
   p3m.params.r_cut    = r_cut;
   p3m.params.r_cut_iL = r_cut*box_l_i[0];
-  p3m.params.mesh[2]  = p3m.params.mesh[1] = p3m.params.mesh[0] = mesh;
+  p3m.params.mesh[2]  = mesh[2];
+  p3m.params.mesh[1] = mesh[1];
+  p3m.params.mesh[0] = mesh[0];
   p3m.params.cao      = cao;
 
   if (alpha > 0) {
