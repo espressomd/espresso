@@ -240,7 +240,7 @@ MDINLINE double p3m_add_pair_force(double chgfac, double *d,double dist2,double 
 void p3m_set_tune_params(double r_cut, int mesh, int cao,
 			 double alpha, double accuracy, int n_interpol);
 
-int p3m_set_params(double r_cut, int mesh, int cao,
+int p3m_set_params(double r_cut, int *mesh, int cao,
 		   double alpha, double accuracy);
 
 int p3m_set_mesh_offset(double x, double y, double z);
