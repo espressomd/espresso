@@ -24,7 +24,9 @@ noinst_HEADERS = \
 noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
+# config-features.c must be at the beginning so that it is compiled first
 libEspresso_a_SOURCES = \
+	config-features.c \
 	adresso.c adresso.h \
 	cells.c cells.h \
 	collision.c collision.h \
@@ -291,6 +293,7 @@ myconfig-final.h: FORCE
 #################################################################
 # Handling of the features
 #################################################################
+# config-features.c must occur at the beginning of the SOURCES so that it is compiled first
 libEspresso_a_SOURCES += config-features.c
 EXTRA_DIST = \
 	features.def \
@@ -302,10 +305,10 @@ if HAVE_PYTHON
 BUILT_SOURCES +=  config-features.h config-features.c
 CLEANFILES += config-features.h config-features.c config-doxygen.h
 config-features.h config-features.c: features.def $(top_srcdir)/config/gen_featureconfig.py
-	$(PYTHON) -B $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.h config-features.c
+	$(PYTHON) $(top_srcdir)/config/gen_featureconfig.py $(srcdir)/features.def config-features.h config-features.c
 
 config-doxygen.h: features.def $(top_srcdir)/config/gen_doxyconfig.py
-	$(PYTHON) -B $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.h
+	$(PYTHON) $(top_srcdir)/config/gen_doxyconfig.py $(srcdir)/features.def config-doxygen.h
 
 else
 

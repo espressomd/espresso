@@ -185,6 +185,17 @@ AM_CONDITIONAL(HAVE_LATEX,
 AC_PATH_PROG(PYTHON,python,no)
 AM_CONDITIONAL(HAVE_PYTHON, [test .$PYTHON != .no])
 
+if test .$PYTHON != .no; then
+   # Check whether python -B works
+   AC_MSG_CHECKING([whether python -B works])
+   if $PYTHON -B -c pass > /dev/null 2>&1; then
+      PYTHON="$PYTHON -B"
+      AC_MSG_RESULT(yes)
+   else
+      AC_MSG_RESULT(no)
+   fi
+fi
+
 cat <<EOF
 ****************************************************************
 *               Checking for standard headers                  *
@@ -519,7 +530,6 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 
-
 AC_OUTPUT
 
 cat <<EOF
@@ -560,6 +570,7 @@ makeindex		= $MAKEINDEX
 bibtex			= $BIBTEX
 doxygen			= $DOXYGEN
 dot			= $DOT
+python			= $PYTHON
 EOF
 
 if test x$with_cuda != xno; then

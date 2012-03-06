@@ -45,6 +45,8 @@
 #define VIRTUAL_SITES_RELATIVE
 
 // DEBUG Switches
+#define LJ_WARN_WHEN_CLOSE
+
 #define ADDITIONAL_CHECKS
 #define ASYNC_BARRIER
 
