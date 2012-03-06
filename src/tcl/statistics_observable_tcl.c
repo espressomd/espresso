@@ -16,6 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
+#include <string.h>
+#include "tcl/statistics_observable_tcl.h"
 #include "statistics_observable.h"
 #include "particle_data.h"
 #include "parser.h"
@@ -222,6 +224,30 @@ int tclcommand_observable_print_radial_profile_formatted(Tcl_Interp* interp, int
         }
         Tcl_AppendResult(interp, "\n", (char *)NULL );
       }
+  return TCL_OK;
+}
+
+int tclcommand_observable_tclcommand(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  int n_A;
+  Observable_Tclcommand_Arg_Container* container;
+  if (argc!=3) {
+      Tcl_AppendResult(interp, "Usage: observable tclcommand <n_vec> <command>\n", (char *)NULL );
+      return TCL_ERROR;
+  }
+  if (!ARG1_IS_I(n_A)) {
+      Tcl_AppendResult(interp, "Error in observable tclcommand: n_vec is not int\n", (char *)NULL );
+      return TCL_ERROR;
+  }
+  container = (Observable_Tclcommand_Arg_Container*) malloc(sizeof(Observable_Tclcommand_Arg_Container));
+  container->command = (char*)malloc(strlen(argv[2])*sizeof(char*));
+  strcpy(container->command, argv[2]);
+  container->n_A = n_A;
+  container->interp = interp;
+
+  obs->fun=&observable_tclcommand;
+  obs->n=n_A;
+  obs->args=(void*) container;
+          
   return TCL_OK;
 }
 
@@ -808,6 +834,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(radial_flux_density_profile, tclcommand_observable_radial_flux_density_profile,id);
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
+    REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -1266,4 +1293,27 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 int sf_print_usage(Tcl_Interp* interp) {
   Tcl_AppendResult(interp, "\nusage: structure_factor order delta_t tau_max  tau_lin", (char *)NULL);
   return TCL_ERROR;
+}
+
+int observable_tclcommand(void* _container, double* A, unsigned int n_A) {
+  Observable_Tclcommand_Arg_Container* container = (Observable_Tclcommand_Arg_Container*) _container;
+  Tcl_Interp* interp = (Tcl_Interp*) container->interp;
+  int error = Tcl_Eval(interp, container->command);
+  if (error) {
+    return 1;
+  }
+  char* result = Tcl_GetStringResult(interp);
+  char* token;
+  int counter=0;
+  token = strtok(result, " ");
+  while ( token != NULL && counter < n_A ) {
+    A[counter] = atof(token);
+    token = strtok(NULL, " ");
+    counter++;
+  }
+  Tcl_ResetResult(interp);
+  if (counter != n_A) {
+      return 1;
+  }
+  return 0;
 }

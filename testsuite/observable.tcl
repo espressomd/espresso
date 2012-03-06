@@ -162,3 +162,15 @@ set com_force [ observable new com_force id { 0 1 } ]
 if { ![ veccompare [ observable $com_force print ] { -1 0 0 } ] } {
   error "particle_forces is not working"
 }
+
+############# Observable tcl command #######################
+proc p1 {} {
+  return { 1 2 3 }
+}
+set tclcommand [ observable new tclcommand 3 "p1" ] 
+puts [ p1 ]
+puts "This is the output [ observable $tclcommand print ]"
+if { ![ veccompare [ observable $tclcommand print ] { 1 2 3 } ] } {
+  error "tclcommand is not working"
+}
+
