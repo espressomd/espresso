@@ -119,7 +119,9 @@ class defs:
                         raise SyntaxError("<feature> notest", line)
                     notestfeatures.add(feature)
 
-        self.features = features.difference(derived, externals)
+        features = features.difference(derived)
+        features = features.difference(externals)
+        self.features = features
         self.requirements = requirements
         self.implications = implications
         self.derived = derived
