@@ -634,10 +634,16 @@ void on_parameter_change(int field)
     break;
   case FIELD_TIMESTEP:
 #ifdef LB_GPU
-    lb_reinit_parameters_gpu();
+    if(this_node == 0) {
+      if (lattice_switch & LATTICE_LB_GPU) {
+        lb_reinit_parameters_gpu();
+      }
+    }  
 #endif    
 #ifdef LB
-    lb_reinit_parameters();
+    if (lattice_switch & LATTICE_LB) {
+      lb_reinit_parameters();
+    }
 #endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_DPD_TGAMMA:
