@@ -35,10 +35,10 @@ New user-visible features
 * Added basic tutorial on Lennard-Jones liquid, made second tutorial
   (simple charged systems) better available (all in doc/tutorials/)
 
-* The ICC* algorithm is now ready to use. It is used with the iccp3m 
-  command and allows to take into account dielectric boundaries of
-  arbirtrary shape. The dielectric command allows to create the
-  in a similar fashion as constraints and lbboundaries
+* The ICC* algorithm is now ready to use. It is used with the command
+  "iccp3m" and allows to take into account dielectric boundaries of
+  arbitrary shape. The command "dielectric" allows to create the
+  boundaries in a similar fashion as constraints and lbboundaries.
 
 User-visible changes
 --------------------
