@@ -385,59 +385,8 @@ stored configurations if \var{whatever} is whatever, but \lit{-}.
 Furthermore, it saves the state (\lit{state}) or the seed (\lit{seed})
 of the random number generator.
 
-\section{Writing PDB/PSF files}
-The PDB (Brookhaven Protein DataBase) format is a widely used format
-for describing atomistic configurations. PSF is a format that is used
-by VMD to describe the topology of a PDB file. You need the PDB and
-PSF files for example for IMD.
-
-\subsection{\lit{writepsf}: Writing the topology}
-\newescommand{writepsf}
-
-\begin{essyntax}
-  writepsf \var{file} \opt{-molecule} \var{N_P} \var{MPC} \var{N_CI}
-  \var{N_pS} \var{N_nS}
-\end{essyntax}
-Writes the current topology to the file \var{file} (here, \var{file}
-is not a channel, since additional information cannot be written
-anyway).  \var{N_P}, \var{MPC} and so on are parameters describing a
-system consisting of equally long charged polymers, counterions and
-salt.  This information is used to set the residue name and can be
-used to color the atoms in VMD. If you specify \lit{-molecule}, the
-residue name is taken from the molecule identity of the particle. Of
-course different kinds of topologies can also be handled by modified
-versions of \lit{writepsf}.
-
-
-\subsection{\lit{writepdb}: Writing the coordinates}
-\newescommand{writepdb}
-\newescommand{writepdbfoldchains}
-\newescommand{writepdbfoldtopo}
-
-\begin{essyntax}
-  \variant{1} writepdb \var{file}
-  \variant{2} writepdbfoldchains \var{file} \var{chain\_start}
-  \var{n\_chains} \var{chain\_length} \var{box\_l}
-  \variant{3} writepdbfoldtopo \var{file} \var{shift}
-\end{essyntax}
-
-Variant \variant{1} writes the corresponding particle data. 
-
-Variant \variant{2} writes folded particle data where the folding is
-performed on chain centers of mass rather than single particles. In
-order to fold in this way the chain topology and box length must be
-specified.  Note that this method is outdated. Use variant \variant{3}
-instead.
-
-Variant \variant{3} writes folded particle data where the folding is
-performed on chain centers of mass rather than single particles. This
-method uses the internal box length and topology information from
-espresso. If you wish to shift particles prior to folding then supply
-the optional shift information. \var{shift} should be a three member
-tcl list consisting of x, y, and z shifts respectively and each number
-should be a floating point (ie with decimal point).
-
 \section{Writing VTF files}
+\label{sec:vtf}
 %\quickrefheading{Handling of VTF files}
 \index{vtf|mainindex}
 \index{vcf|mainindex}
@@ -452,10 +401,10 @@ are intended to be human-readable and easy to produce automatically
 and modify.
 
 The format distinguishes between \emph{structure blocks} that contain
-the topological information of the system (\ie the particle names,
-types, radii and bonding information, amongst others), while
-\emph{coordinate blocks} (a.k.a. as \emph{timestep blocks}) contain
-the coordinates for the particles at a single timestep.  For a
+the topological information of the system (\ie the system size,
+particle names, types, radii and bonding information, amongst others),
+while \emph{coordinate blocks} (a.k.a. as \emph{timestep blocks})
+contain the coordinates for the particles at a single timestep.  For a
 visualization with VMD, one structure block and at least one
 coordinate block is required.
 
@@ -471,8 +420,8 @@ Creating files in these formats from within \es is supported by the
 commands \lit{writevsf} and \lit{writevcf}, that write a structure
 respectively a coordinate block to the given Tcl channel. To create a
 VTF file, first use \lit{writevsf} at the beginning of the simulation,
-and then \texttt{writevcf} after each timestep to get a trajectory of
-the whole simulation.
+and then \texttt{writevcf} after each timestep to generate a
+trajectory of the whole simulation.
 
 The structure definitions in the VTF/VSF formats are incremental, \ie
 a user can easily add further structure lines to the VTF/VSF file
@@ -488,7 +437,7 @@ get the VMD particle id for a given \es particle id.
 
 Also note, that these formats can not be used to write trajectories
 where the number of particles or their types varies between the
-timesteps. This is a restriction of VMD, not of the format itself.
+timesteps. This is a restriction of VMD itself, not of the format.
 
 \subsection{\texttt{writevsf}: Writing the topology}
 \newescommand{writevsf}
@@ -581,7 +530,68 @@ return value of an invocation of \keyword{open}.
 If \var{pid} is the id of a particle as used in \es, this command
 returns the atom id used in the VTF, VSF or VCF formats.
 
+\section{Writing PDB/PSF files}
+The PDB (Brookhaven Protein DataBase) format is a widely used format
+for describing atomistic configurations. PSF is a format that is used
+to describe the topology of a PDB file. 
+
+When visualizing your system with VMD, it is recommended to use the
+VTF format instead (see section \ref{sec:vtf}), as it was specifically
+designed for visualizations with VMD. In contrast to the PDB/PSF
+formats, in VTF files it is possible to specify the VDW radii of the
+particles, to have a varying simulation box size, etc.
+
+\subsection{\lit{writepsf}: Writing the topology}
+\newescommand{writepsf}
+
+\begin{essyntax}
+  writepsf \var{file} \opt{-molecule} \var{N_P} \var{MPC} \var{N_CI}
+  \var{N_pS} \var{N_nS}
+\end{essyntax}
+Writes the current topology to the file \var{file} (here, \var{file}
+is not a channel, since additional information cannot be written
+anyway).  \var{N_P}, \var{MPC} and so on are parameters describing a
+system consisting of equally long charged polymers, counterions and
+salt.  This information is used to set the residue name and can be
+used to color the atoms in VMD. If you specify \lit{-molecule}, the
+residue name is taken from the molecule identity of the particle. Of
+course different kinds of topologies can also be handled by modified
+versions of \lit{writepsf}.
+
+
+\subsection{\lit{writepdb}: Writing the coordinates}
+\newescommand{writepdb}
+\newescommand{writepdbfoldchains}
+\newescommand{writepdbfoldtopo}
+
+\begin{essyntax}
+  \variant{1} writepdb \var{file}
+  \variant{2} writepdbfoldchains \var{file} \var{chain\_start}
+  \var{n\_chains} \var{chain\_length} \var{box\_l}
+  \variant{3} writepdbfoldtopo \var{file} \var{shift}
+\end{essyntax}
+
+Variant \variant{1} writes the corresponding particle data. 
+
+Variant \variant{2} writes folded particle data where the folding is
+performed on chain centers of mass rather than single particles. In
+order to fold in this way the chain topology and box length must be
+specified.  Note that this method is outdated. Use variant \variant{3}
+instead.
+
+Variant \variant{3} writes folded particle data where the folding is
+performed on chain centers of mass rather than single particles. This
+method uses the internal box length and topology information from
+espresso. If you wish to shift particles prior to folding then supply
+the optional shift information. \var{shift} should be a three member
+tcl list consisting of x, y, and z shifts respectively and each number
+should be a floating point (ie with decimal point).
+
+
 \section{Online-visualisation with VMD}
+\label{sec:IMD}
+\index{IMD}
+
 IMD (Interactive Molecular Dynamics) is the protocol that VMD uses to
 communicate with a simulation. Tcl\_md implements this protocol to
 allow online visual analysis of running simulations.
