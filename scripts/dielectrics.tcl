@@ -740,3 +740,24 @@ proc dielectric_pore { args } {
   }
 
 }
+
+
+proc dielectric { args } {
+  if { [ llength $args ] == 0 } {
+    error "Usage: dielectric sphere <args> / dielectric cylinder <args> / dielectric wall <args> / dielectric pore <args>"
+  }
+  set args1 $args
+  set args1 [ lreplace $args 0 0 ]
+  if { [ lindex $args 0 ] == "sphere" } { 
+    return [ eval dielectric_sphere $args1 ]
+  }
+  if { [ lindex $args 0 ] == "cylinder" } { 
+    return [ eval dielectric_cylinder $args1 ]
+  }
+  if { [ lindex $args 0 ] == "wall" } { 
+    return [ eval dielectric_wall $args1 ]
+  }
+  if { [ lindex $args 0 ] == "pore" } { 
+    return [ eval dielectric_pore $args1 ]
+  }
+}
