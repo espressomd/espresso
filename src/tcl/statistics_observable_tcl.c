@@ -1092,7 +1092,10 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
   radial_profile_data* pdata=(radial_profile_data*)malloc(sizeof(radial_profile_data));
   *pdata_ = pdata;
   pdata->id_list=0;
-  pdata->maxr=sqrt(box_l[0]*box_l[0]/4.+ box_l[1]*box_l[1]/4.);
+  if (box_l[0]<box_l[1]) 
+    pdata->maxr = box_l[0];
+  else 
+    pdata->maxr = box_l[1];
   pdata->minr=0;
   pdata->maxphi=PI;
   pdata->minphi=-PI;

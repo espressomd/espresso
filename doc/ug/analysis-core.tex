@@ -168,10 +168,15 @@ They are generic to all observables and are described after the list of observab
     \item \lit{flux_density_profile}  \var{particle\_specifications} \var{profile_specifications} \\
           Compute the flux denisty within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-
-%    \item \lit{radial_density_profile}
-%    \item \lit{radial_flux_density_profile}
-%    \item \lit{lb_radial_velocity_profile}
+    \item \lit{radial_density_profile}
+        Compute the density profile in cylindrical coordinates.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
+    \item \lit{radial_flux_density_profile}
+        Compute the flux density profile in cylindrical coordinates.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
+    \item \lit{lb_radial_velocity_profile}
+        Compute the Lattice-Boltzmann velocity profile in cylindrical coordinates.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
     \item \lit{textfile \var{textfilename} \opt{\var{column\_1} \dots \var{column\_n} }}
       This option allows to read data from an arbitrary text file, organized in columns.
       The name of the textfile is 
@@ -228,46 +233,46 @@ of types) will not be automatically reflected in the observable.
 %      \todo{Not fully supported yet!}
   \end{itemize}
 
-\subsection{Density profile specifications}
+\subsection{Profile specifications}
 \label{sec:DensProfSpec}
-Profile specifications define corners of a cube in which the profile
-should be calculated and the number of bins which should be used in 
-each dimension. All specifications are optional and they have defaults described below.
-  \begin{itemize}
+Profiles are specified by giving the spacial area that is to be profiled and
+the number of bins in each spacial direction. The area to be analyzed is characterized
+by \var{minx}/\var{maxx} \var{miny}/\var{maxy} and \var{minz}/\var{maxz}. The defaults
+correspond to the box size when the observable is created.
+The bin size in each direction defaults to 1, and can be change with the parameter 
+\var{xbins}/\var{ybins}/\var{zbins}. Changeing one, two or three of them to 
+a value $>1$ with thus create a one-, two- or threedimensional map of the desired quantity.
+The full syntax thus reads as:
+\begin{essyntax}
+    observable new needs\_profile\_specs \opt{\var{other\_parameters}} 
+    \opt{ minx \var{minx}  }
+    \opt{ maxx \var{maxx}  }
+    \opt{ miny \var{miny}  }
+    \opt{ maxy \var{maxy}  }
+    \opt{ minz \var{minz}  }
+    \opt{ maxz \var{maxz}  }
+    \opt{ xbins \var{xbins}  }
+    \opt{ ybins \var{ybins}  }
+    \opt{ zbins \var{zbins}  }
+\end{essyntax}
 
-    \item \opt {minx \var{minx}} \opt {miny \var{miny}} \opt {minz \var{minz}} \\
-          Defines the minimum of the $(x,y,z)$ range of the cube. 
-          Default value: 0.0.
-
-    \item \opt {maxx \var{maxx}} \opt {maxy \var{maxy}} \opt {maxz \var{maxz}} \\
-          Defines the maximum of the $(x,y,z)$ range of the cube. 
-          Default value: Box length in the specified direction.
-          
-    \item \opt {xbins \var{xbins}} \opt {ybins \var{ybins}} \opt {zbins \var{zbins}} \\
-          Defines the number of bins in the specified direction.
-          Default value: 1.
-  \end{itemize}
-
-%\subsection{Radial profile specifications}
-%\label{sec:RadProfSpec}
-%Profile specifications define corners of a cube in which the profile
-%Should be calculated and the number of bins which should be used in 
-%Each dimension. All specifications are optional and they have defaults described below.
-%  \begin{itemize}
-%
-%    \item \opt {center \var{x}\var{y}\var{z}} 
-%          Coordinates of the centre around which the profile should be computed.
-%          Default value: centre of the simulation box.
-%
-%    \item \opt {minz \var{minz}} \opt {maxz \var{maxz}} \opt {zbins \var{zbins}} 
-%          Default value: $+$ and $-$ the box length in the $z$ direction and 
-%          \var{zbins=1}
-%          
-%    \item \opt {xbins \var{xbins}} \opt {ybins \var{ybins}} \opt {zbins \var{zbins}}
-%          Defines the number of bins in the specified direction.
-%          Default value: 1.
-%  \end{itemize}
-
+Radial profiles allow to do the same as usual profiles, except the coordinate system is a cylindrical
+one and the binning is done in the cylindrical coordinates (defined with the axis in z-direction). 
+This is very helpful if the symmetry of the
+system is cylindrical. The spacial are is characterized by a center (default to the center of the box)
+a maximum radial position \var{maxr} (defaults to the smaller value of the box lengths in x and y directions)
+and a minimum and maximum value of $z$. It is possible to also resolve different polar angles, thus using it
+as a full 3D mapping tool, but this will only rarely be used. The full syntax is:
+\begin{essyntax}
+    observable new needs\_radial\_profile\_specs \opt{\var{other\_parameters}} 
+    \opt{ \var{center} <cx> <cy> <cx> }
+    \opt{ maxr \var{maxr}  }
+    \opt{ minz \var{minz}  }
+    \opt{ maxz \var{maxz}  }
+    \opt{ rbins \var{rbins}  }
+    \opt{ phibins \var{phibins}  }
+    \opt{ zbins \var{zbins}  }
+\end{essyntax}
 
 
 \section{Correlations}
