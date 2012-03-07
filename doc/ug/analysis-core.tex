@@ -28,7 +28,7 @@ that the analysis functions do more than just return a value to the
 scripting interface.  For some observables it is desirable to be
 sampled every few integrations steps. In addition, it should be
 possible to pass the observable values to other functions which
-compute history-dependent quantitites, such as correlation functions.
+compute history-dependent quantities, such as correlation functions.
 All this should be done without the need to interrupt the integration
 by passing the control to the script level and back, which produces a
 significant overhead when performed too often.
@@ -164,33 +164,31 @@ They are generic to all observables and are described after the list of observab
           defined by the \var{cutoff}. If no such neighbour is found, the 
           observable is zero. The observable has one dimension per each 
           particle of \var{particle\_specifications_1}
-    \item \lit{density_profile}  \var{particle\_specifications} \var{profile_specifications} \\
+    \item \lit{density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the density profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
 
-    \item \lit{lb_velocity_profile}  \var{particle\_specifications} \var{profile_specifications} \\
+    \item \lit{lb_velocity_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the Lattice-Boltzmann velocity profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
 
-    \item \lit{flux_density_profile}  \var{particle\_specifications} \var{profile_specifications} \\
-          Compute the flux denisty within the specified cube.
+    \item \lit{flux_density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
+          Compute the flux density within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
     \item \lit{radial_density_profile}
         Compute the density profile in cylindrical coordinates.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-    \item \lit{radial_flux_density_profile}
+    \item \lit{radial_flux_density_profile} \\
         Compute the flux density profile in cylindrical coordinates.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-    \item \lit{lb_radial_velocity_profile}
+    \item \lit{lb_radial_velocity_profile} \\
         Compute the Lattice-Boltzmann velocity profile in cylindrical coordinates.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-    \item \lit{textfile \var{textfilename} \opt{\var{column\_1} \dots \var{column\_n} }}
-      This option allows to read data from an arbitrary text file, organized in columns.
-      The name of the textfile is 
-      \todo{Texfile input observable not fully supported yet!}
-  \item \lit{tclcommand \var{dimQ} \var{command}} An arbitrary Tcl function that returns a list of floating point numbers of fixed size
-      dimQ can be specified. Althought its execution might be slow, it allows to protoype new observables without a lot of trouble.
-      Many existing analysis commands can be made to cooperate with the core analysis that way.
+    \item \lit{tclcommand \var{dimQ} \var{command}} \\
+        An arbitrary Tcl function that returns a list of floating point numbers of fixed size
+        \var{dimQ} can be specified. Although its execution might be slow, it allows 
+        to prototype new observables without a lot of trouble.
+        Many existing analysis commands can be made to cooperate with the core analysis that way.
   \end{itemize}
 
 \subsection{Printing an observable}
@@ -247,8 +245,8 @@ the number of bins in each spacial direction. The area to be analyzed is charact
 by \var{minx}/\var{maxx} \var{miny}/\var{maxy} and \var{minz}/\var{maxz}. The defaults
 correspond to the box size when the observable is created.
 The bin size in each direction defaults to 1, and can be change with the parameter 
-\var{xbins}/\var{ybins}/\var{zbins}. Changeing one, two or three of them to 
-a value $>1$ with thus create a one-, two- or threedimensional map of the desired quantity.
+\var{xbins}/\var{ybins}/\var{zbins}. Changing one, two or three of them to 
+a value $>1$ with thus create a one-, two- or three-dimensional map of the desired quantity.
 The full syntax thus reads as:
 \begin{essyntax}
     observable new needs\_profile\_specs \opt{\var{other\_parameters}} 
@@ -324,7 +322,7 @@ remaining ones are the elements of the $n$-dimensional vector $C(\tau)$.
 The \lit{uwerr} command for computing averages and error estimates 
 of a time series of observables relies on estimates of autocorrelation
 functions and the respective autocorrelation times.
-The correlator provides the same functionality as a by-product of comupting
+The correlator provides the same functionality as a by-product of computing
 the correlation function (see section~\ref{ssec:CorrError}.
 
 An example of the usage of observables and correlations is provided 
@@ -368,7 +366,7 @@ Its further arguments are described below.
     Each component of the correlation vector is the square of the difference between the 
     corresponding components of the observables, \ie $C_i = (A_i-B_i)^2$. 
     Example: when $A$ is \lit{particle_positions}, it produces the mean square displacement
-    (for each componnent separately).
+    (for each component separately).
     \item \lit{complex_conjugate_product}
     %\item List them here! \todo{write the list}
   \end{itemize}
@@ -385,7 +383,7 @@ Its further arguments are described below.
   \var{tau\_max} can span the entire simulation without
   too much additional cpu time.}
 \item \lit{tau_lin} \\
-  The number of datapoints for which the results are linearly spaced
+  The number of data-points for which the results are linearly spaced
   in tau.  This is a parameter of the multiple tau correlator. If you
   want to use it, make sure that you know how it works. By default, it
   is set equal to \var{tau\_max} which results in the trivial linear
@@ -433,7 +431,7 @@ defined correlations.
 Variant \variant{1} is the recommended way of updating the correlations.
 By specifying \lit{start} or \lit{stop} it starts or stops automatically
 updating the correlation estimates. The automatic updates are done
-within the integration loop without furhter user interventin.
+within the integration loop without further user intervention.
 The update frequency is adjusted based based on the value of \var{dt} 
 provided when defining the correlation.  
 
@@ -466,15 +464,15 @@ is much shorter, it does not have a big effect.
 \subsection{Printing out the correlation and related quantities}
 \label{ssec:CorrError}
 \begin{essyntax}
-\variant{1} correlation \var{id} write_to_file \var{filname}
+\variant{1} correlation \var{id} write_to_file \var{filename}
 \variant{2} correlation \var{id} print 
 \variant{3a} correlation \var{id} print \opt{ average1 | variance1 | correlation_time } 
-\variant{3b} correlation \var{id} print \opt{ avarage_errorbars }
+\variant{3b} correlation \var{id} print \opt{ average_errorbars }
 \end{essyntax}
 
 Variant \variant{1} writes the current status of the correlation
 estimate to the specified filename. If the file exists, its contents will
-be owerwritten.
+be overwritten.
 
 \minisec{Output format} 
 The output looks as follows:
@@ -502,7 +500,7 @@ estimate of the statistical property as a Tcl variable.             \\
 \lit{correlation_time} prints the estimate of the correlation time. \\
 \lit{average_errorbars} prints the estimate of the error of the average based
 on the method according to~\cite{wolff04a} (same as 
-used by the \lit{uwerr} comamnd). 
+used by the \lit{uwerr} command). 
 
 
 \subsection{The correlation algorithm: multiple tau correlator}
@@ -511,7 +509,7 @@ used by the \lit{uwerr} comamnd).
 
 Here we briefly describe the multiple tau correlator which is implemented in \es.
 For a more detailed description and discussion of its behaviour with respect to
-statistical and systematic errores, please read the cited literature.
+statistical and systematic errors, please read the cited literature.
 This type of correlator has been in use for years in the analysis of
 dynamic light scattering~\cite{schatzel88a}. About a decade later it found its way
 to the Fluorescence Correlation Spectroscopy (FCS)~\cite{magatti01a}.
@@ -532,7 +530,7 @@ in time $i\delta t$. We are interested in computing the correlation
 function according to Equation~\ref{eq:CtauDef} for a range lag times
 $\tau = (i-j)\delta t$ between the measurements $i$ and $j$.
 To simplify the notation, we further drop $\delta t$
-when refering to observables and lag times. 
+when referring to observables and lag times. 
 
 The trivial implementation takes all possible pairs of values
 corresponding to lag times $\tau \in [\taumin:\taumax]$. 
@@ -563,18 +561,18 @@ The speedup is gained at the expense of statistical accuracy.
 The loss of accuracy occurs at the compression step.
 In principle one can use any value of $m$ and $p$ to tune the algorithm
 performance. However, it turns out that using a high $m$ dilutes the
-data at high $\tau$. Therefore $m=2$ is hardcoded in the \es correlator
+data at high $\tau$. Therefore $m=2$ is hard-coded in the \es correlator
 and cannot be modified by user. The value of $p$ remains an adjustable
 parameter which can be modified by user by setting \lit{tau_lin}
-when defining a correlation. In genral, one should choose $p \gg m$
+when defining a correlation. In general, one should choose $p \gg m$
 to avoid loss of statistical accuracy. Choosing $p=16$ seems to be
 safe but it may depend on the properties of the analyzed
-corerlation functions. A detailed analysis has been performed
+correlation functions. A detailed analysis has been performed
 in Ref.~\cite{ramirez10a}.
 
 The choice of the compression function also influences the statistical
 accuracy and can even lead to systematic errors. The default compression 
-function is \lit{discard2} which discards the second fo the compressed 
+function is \lit{discard2} which discards the second for the compressed 
 values and pushes the first one to the higher level. This is robust and 
 can be applied universally to any combination of observables and
 correlation operation. On the other hand, it reduces the
@@ -593,6 +591,6 @@ properties of the difference
 For example in the case of velocity autocorrelation function, the
 above-mentioned difference has a small value and a random sign, \ie\ 
 different contributions cancel each other. On the other hand, in the
-of the case of mean square displacmenent the difference is always positive,
+of the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref.~\cite{ramirez10a}.

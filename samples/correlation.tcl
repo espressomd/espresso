@@ -100,6 +100,11 @@ set msd [correlation new obs1 $pos corr_operation square_distance_componentwise 
 # same msd as above, but we will update it manually, with much lower frequency
 set msd_man [correlation new obs1 $pos corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
 
+# example of correlating data from an input file
+# one more vacf, this time we use the tclcommand observable to read velocities from a file and pass them to the correlator
+set msd_file [correlation new obs1 $pos_file corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
+
+
 # Tell Espresso to update the desired correlations automatically
 correlation $vacf1 autoupdate start
 correlation $vacf2 autoupdate start
@@ -126,7 +131,9 @@ correlation $vacf_force autoupdate start
 ## Now comes the main integration loop
 set round 0;
 set time [setmd time];
-#set ofile [ open "v.dat" "w"]
+
+set pos_file_name "xyz.dat"
+set fp [ open $pos_file_name "w"]
 while { $time < $run_time } {
   if { [expr $round%1000] == 0 } { 
     puts "Integration round $round, time $time";
@@ -135,11 +142,41 @@ while { $time < $run_time } {
     puts "integration failed";
     exit;
   } else { incr round; }
+  # write down the velocities into the file
+  puts $fp [observable $pos print];
   # Explicit call to update a correlation 
   correlation $msd_man update;
   # Updating the correlation from TCL input
   set time [setmd time];
 }
+close $fp;
+
+# Example of feeding arbitrary data to the correlator
+# here we compute msd again, using the positions which we stored in a file
+
+# first we need to define a procedure which enables feeding 
+# values of the current tcl variable to an observable tclcommand
+proc my_get_line { } {
+    global line;
+    return $line;
+}
+# the observable which will be used to read positions from file
+set pos_file [observable new tclcommand [expr 3*[setmd n_part]] my_get_line];
+
+# now read-in the positions from the file and feed them to msd_file
+set fp [open $pos_file_name r];
+set file_data [read $fp];
+close $fp;
+#  Process data file
+set data [split $file_data "\n"];
+# the values in variable line are used to compute observable pos_file
+foreach line $data {
+    if { [llength $line] == "0" } { 
+        break; 
+    }
+    correlation $msd_file update; 
+}
+
 
 # to make use of all the history, finalize all correlations when the integration is done
 for {set i 0} {$i < [correlation n_corr] } {incr i} {
@@ -150,5 +187,5 @@ correlation $vacf1 write_to_file "vacf1.dat"
 correlation $vacf2 write_to_file "vacf2.dat"
 correlation $msd write_to_file "msd.dat"
 correlation $msd_man write_to_file "msd_man.dat"
-#correlation $msd_tcl write_to_file "msd_tcl.dat"
+correlation $msd_file write_to_file "msd_file.dat"
 correlation $vacf_force write_to_file "vacf_force.dat"
