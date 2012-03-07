@@ -22,26 +22,26 @@
 \label{chap:analysis-core}
 \index{Analysis in the Core}
 
-Analysis in the core is a new concept introduced in \es since version 3.1.
-It was motivated by the fact, that sometimes it is desirable that the analysis
-functions do more than just return a value to the scripting interface.
-For some observables it is desirable to be sampled every few
-integrations steps. In addition, it should be possible to pass the
-observable values to other functions which compute history-dependent
-quantitites, such as correlation functions.  
-All this should be done without the need to interrupt
-the integration by passing the control to the script level and back, which
-produces a significant overhead when performed too often. 
+Analysis in the core is a new concept introduced in \es since version
+3.1.  It was motivated by the fact, that sometimes it is desirable
+that the analysis functions do more than just return a value to the
+scripting interface.  For some observables it is desirable to be
+sampled every few integrations steps. In addition, it should be
+possible to pass the observable values to other functions which
+compute history-dependent quantitites, such as correlation functions.
+All this should be done without the need to interrupt the integration
+by passing the control to the script level and back, which produces a
+significant overhead when performed too often.
 
-Some observables in the core have their corresponding counterparts
-in the TCL observables of the \verb!analyze! command
-described in Chapter~\ref{chap:analysis}. 
-However, only the core-observables can be used on the fly with the 
-toolbox of the correlator and on the fly analysis of time series.
-Similarly, some special cases of using the correlator have their redundant
-counterparts in the analysis in Tcl (Chapter~\ref{chap:analysis}),
-but the correlator provides a general and versatile toolbox which
-can be used with any implemented core-observables.
+Some observables in the core have their corresponding counterparts in
+the Tcl observables of the \verb!analyze! command described in
+Chapter~\ref{chap:analysis}.  However, only the core-observables can
+be used on the fly with the toolbox of the correlator and on the fly
+analysis of time series.  Similarly, some special cases of using the
+correlator have their redundant counterparts in the analysis in Tcl
+(Chapter~\ref{chap:analysis}), but the correlator provides a general
+and versatile toolbox which can be used with any implemented
+core-observables.
 
 \section{Observables}
 \index{Observables}
@@ -181,7 +181,7 @@ They are generic to all observables and are described after the list of observab
       This option allows to read data from an arbitrary text file, organized in columns.
       The name of the textfile is 
       \todo{Texfile input observable not fully supported yet!}
-  \item \lit{tclcommand \var{dimQ} \var{command}} An arbitrary TCL command that returns a list of floating point numbers of fixed size
+  \item \lit{tclcommand \var{dimQ} \var{command}} An arbitrary Tcl command that returns a list of floating point numbers of fixed size
       dimQ can be specified. Althought its execution might be slow, it allows to protoype new observables without a lot of trouble.
       Many existing analysis commands can be made to cooperate with the core analysis that way.
   \end{itemize}
@@ -305,7 +305,7 @@ many orders of magnitude in the lag time.
 The generic correlation interface of \es may process either observables
 defined in the kernel, or data which it reads from an external file
 or values entered through the scripting interface. 
-\todo{Processing data from TCL input or from input files is not
+\todo{Processing data from Tcl input or from input files is not
   fully supported yet.}
 Thus, apart from
 data processing on the fly, it can also be used as an efficient correlator
