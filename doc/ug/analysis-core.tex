@@ -172,12 +172,10 @@ They are generic to all observables and are described after the list of observab
 %    \item \lit{radial_density_profile}
 %    \item \lit{radial_flux_density_profile}
 %    \item \lit{lb_radial_velocity_profile}
-    \item \lit{textfile \var{textfilename} \opt{\var{column\_1} \dots \var{column\_n} }}
-      This option allows to read data from an arbitrary text file, organized in columns.
-      The name of the textfile is 
-      \todo{Texfile input observable not fully supported yet!}
-  \item \lit{tclcommand \var{dimQ} \var{command}} An arbitrary Tcl command that returns a list of floating point numbers of fixed size
-      dimQ can be specified. Althought its execution might be slow, it allows to protoype new observables without a lot of trouble.
+  \item \lit{tclcommand \var{dimQ} \var{command}} \\
+      An arbitrary Tcl command that returns a list of floating point numbers of fixed size
+      \var{dimQ} can be specified. Althought its execution might be slow, it allows 
+      to protoype new observables without a lot of trouble.
       Many existing analysis commands can be made to cooperate with the core analysis that way.
   \end{itemize}
 
