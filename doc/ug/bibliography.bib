@@ -1,4 +1,4 @@
-% This file was created with JabRef 2.7.
+% This file was created with JabRef 2.6.
 % Encoding: ISO8859_1
 
 @ARTICLE{andersen80a,
@@ -128,16 +128,60 @@
 }
 
 @INCOLLECTION{arnold12a,
-  author = { Axel Arnold and Olaf Lenz and Stefan Kesselheim and Rudolf Weeber and Florian Fahrenberger and Dominic Roehm and Peter Kosovan and Christian Holm },
-  title = { {ESPResSo 3.1} -- Molecular Dynamics Software for Coarse-Grained Models },
-  booktitle = { Proceedings of  the Sixth
-International Workshop on Meshfree Methods for Partial
-Differential Equations},
+  author = { Axel Arnold and Olaf Lenz and Stefan Kesselheim and Rudolf Weeber
+	and Florian Fahrenberger and Dominic Roehm and Peter Kosovan and
+	Christian Holm },
+  title = { {ESPResSo 3.1} -- Molecular Dynamics Software for Coarse-Grained
+	Models },
+  booktitle = { Proceedings of the Sixth International Workshop on Meshfree Methods
+	for Partial Differential Equations},
   publisher = {Springer},
   year = {submitted},
-  editor = { Michael Griebel and Christian Rieger and Marc Alexander Schweitzer },
-  series = {  Lecture Notes in Computational Science and Engineering },
-  address = {Berlin, Germany},
+  editor = { Michael Griebel and Christian Rieger and Marc Alexander Schweitzer
+	},
+  series = { Lecture Notes in Computational Science and Engineering },
+  address = {Berlin, Germany}
+}
+
+@ARTICLE{ballenegger09a,
+  author = {V. Ballenegger and A. Arnold and J. J. Cerda},
+  title = {Simulations of non-neutral slab systems with long-range electrostatic
+	interactions in two-dimensional periodic boundary conditions},
+  journal = {J. Chem. Phys.},
+  year = {2009},
+  volume = {131},
+  pages = {094107},
+  number = {9},
+  eid = {094107},
+  abstract = {We introduce a regularization procedure to define electrostatic energies
+	and forces in a slab system of thickness h that is periodic in two
+	dimensions and carries a net charge. The regularization corresponds
+	to a neutralization of the system by two charged walls and can be
+	viewed as the extension to the two-dimensional (2D)+h geometry of
+	the neutralization by a homogeneous background in the standard three-dimensional
+	Ewald method. The energies and forces can be computed efficiently
+	by using advanced methods for systems with 2D periodicity, such as
+	MMM2D or P3M-ELC, or by introducing a simple background-charge correction
+	to the Yeh???Berkowitz approach of slab systems. The results are
+	checked against direct lattice sum calculations on simple systems.
+	We show, in particular, that the Madelung energy of a 2D square charge
+	lattice in a uniform compensating background is correctly reproduced
+	to high accuracy. A molecular dynamics simulation of a sodium ion
+	close to an air-water interface is performed to demonstrate that
+	the method does indeed provide consistent long-range electrostatics.
+	The mean force on the ion reduces at large distances to the image-charge
+	interaction predicted by macroscopic electrostatics. This result
+	is used to determine precisely the position of the macroscopic dielectric
+	interface with respect to the true molecular surface},
+  doi = {10.1063/1.3216473},
+  file = {:/home/icpwiki/bib/ballenegger09a.pdf:PDF;ballenegger09a.pdf:ballenegger09a.pdf:PDF},
+  keywords = {boundary-value problems; electrostatics; lattice energy; molecular
+	dynamics method},
+  numpages = {10},
+  owner = {jcerda},
+  publisher = {AIP},
+  timestamp = {2009.11.17},
+  url = {http://link.aip.org/link/?JCP/131/094107/1}
 }
 
 @ARTICLE{berendsen84a,
@@ -150,47 +194,6 @@ Differential Equations},
   pages = {3684--3690},
   owner = {dommert},
   timestamp = {2009.03.16}
-}
-
-@ARTICLE{ballenegger09a,
-  author = {V. Ballenegger and A. Arnold and J. J. Cerda},
-  title = {Simulations of non-neutral slab systems with long-range electrostatic
-        interactions in two-dimensional periodic boundary conditions},
-  journal = {J. Chem. Phys.},
-  year = {2009},
-  volume = {131},
-  pages = {094107},
-  number = {9},
-  eid = {094107},
-  abstract = {We introduce a regularization procedure to define electrostatic energies
-        and forces in a slab system of thickness h that is periodic in two
-        dimensions and carries a net charge. The regularization corresponds
-        to a neutralization of the system by two charged walls and can be
-        viewed as the extension to the two-dimensional (2D)+h geometry of
-        the neutralization by a homogeneous background in the standard three-dimensional
-        Ewald method. The energies and forces can be computed efficiently
-        by using advanced methods for systems with 2D periodicity, such as
-        MMM2D or P3M-ELC, or by introducing a simple background-charge correction
-        to the Yeh???Berkowitz approach of slab systems. The results are
-        checked against direct lattice sum calculations on simple systems.
-        We show, in particular, that the Madelung energy of a 2D square charge
-        lattice in a uniform compensating background is correctly reproduced
-        to high accuracy. A molecular dynamics simulation of a sodium ion
-        close to an air-water interface is performed to demonstrate that
-        the method does indeed provide consistent long-range electrostatics.
-        The mean force on the ion reduces at large distances to the image-charge
-        interaction predicted by macroscopic electrostatics. This result
-        is used to determine precisely the position of the macroscopic dielectric
-        interface with respect to the true molecular surface},
-  doi = {10.1063/1.3216473},
-  file = {:/home/icpwiki/bib/ballenegger09a.pdf:PDF;ballenegger09a.pdf:ballenegger09a.pdf:PDF},
-  keywords = {boundary-value problems; electrostatics; lattice energy; molecular
-        dynamics method},
-  numpages = {10},
-  owner = {jcerda},
-  publisher = {AIP},
-  timestamp = {2009.11.17},
-  url = {http://link.aip.org/link/?JCP/131/094107/1}
 }
 
 @ARTICLE{brodka04a,
@@ -348,6 +351,17 @@ Differential Equations},
   timestamp = {2012.02.17}
 }
 
+@ARTICLE{humphrey96a,
+  author = {W. Humphrey and A. Dalke and K. Schulten},
+  title = {{VMD}: Visual Molecular Dynamics},
+  journal = {J. Mol. Graphics},
+  year = {1996},
+  volume = {14},
+  pages = {33--38},
+  owner = {dommert},
+  timestamp = {2009.03.16}
+}
+
 @ARTICLE{junghans10,
   author = {C.~Junghans and S.~Poblete},
   title = {A reference implementation of the adaptive resolution scheme in {ESPResSo}},
@@ -370,24 +384,21 @@ Differential Equations},
   timestamp = {2008.09.05}
 }
 
-@article{kesselheim11a,
-  title = "Applying to DNA translocation: Effect of dielectric boundaries",
-  journal = "Computer Physics Communications",
-  volume = "182",
-  number = "1",
-  pages = "33 - 35",
-  year = "2011",
-  note = "<ce:title>Computer Physics Communications Special Edition for Conference on Computational Physics Kaohsiung, Taiwan, Dec 15-19, 2009</ce:title>",
-  issn = "0010-4655",
-  doi = "10.1016/j.cpc.2010.08.014",
-  url = "http://www.sciencedirect.com/science/article/pii/S001046551000305X",
-  author = "Stefan Kesselheim and Marcello Sega and Christian Holm",
-  keywords = "Dielectric boundary force",
-  keywords = "Electrostatic algorithm",
-  keywords = "DNA translocation",
-  keywords = "Molecular dynamics"
+@ARTICLE{kesselheim11a,
+  author = {Stefan Kesselheim and Marcello Sega and Christian Holm},
+  title = {Applying to DNA translocation: Effect of dielectric boundaries},
+  journal = {Computer Physics Communications},
+  year = {2011},
+  volume = {182},
+  pages = {33 - 35},
+  number = {1},
+  note = {<ce:title>Computer Physics Communications Special Edition for Conference
+	on Computational Physics Kaohsiung, Taiwan, Dec 15-19, 2009</ce:title>},
+  doi = {10.1016/j.cpc.2010.08.014},
+  issn = {0010-4655},
+  keywords = {Dielectric boundary force},
+  url = {http://www.sciencedirect.com/science/article/pii/S001046551000305X}
 }
-
 
 @ARTICLE{kolafa92,
   author = {Jiri Kolafa and John W. Perram},
@@ -788,13 +799,12 @@ Differential Equations},
 	on arbitrary dielectric boundaries},
   journal = {J. Chem. Phys.},
   year = {2010},
-  volume = {132}, 
+  volume = {132},
   pages = { 154112 },
   doi = {10.1063/1.3376011},
   owner = {flol},
   timestamp = {2010.05.03}
 }
-
 
 @ARTICLE{wolff04a,
   author = {Ulli Wolff},
