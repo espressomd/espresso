@@ -17,6 +17,7 @@
 #
 source "tests_common.tcl"
 
+require_feature "ELECTROSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "EXTERNAL_FORCES"
 
