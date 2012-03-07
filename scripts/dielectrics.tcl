@@ -393,7 +393,7 @@ proc dielectric_cylinder { args } {
       set x [ expr $circle_center_x + $radius*cos($phi)*$e_1_x + $radius*sin($phi)*$e_2_x ]
       set y [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set z [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
-      part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] type $type
+      part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] type $type fix 1 1 1
       set nx [ expr $direction*(cos($phi)*$e_1_x + sin($phi)*$e_2_x) ]
       set ny [ expr $direction*(cos($phi)*$e_1_y + sin($phi)*$e_2_y) ]
       set nz [ expr $direction*(cos($phi)*$e_1_z + sin($phi)*$e_2_z) ]
@@ -421,7 +421,7 @@ proc dielectric_cylinder { args } {
         set x [ expr $circle_center_x + $this_radius*cos($phi)*$e_1_x + $this_radius*sin($phi)*$e_2_x ]
         set y [ expr $circle_center_y + $this_radius*cos($phi)*$e_1_y + $this_radius*sin($phi)*$e_2_y ]
         set z [ expr $circle_center_z + $this_radius*cos($phi)*$e_1_z + $this_radius*sin($phi)*$e_2_z ]
-        part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ]
+        part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
         set nx [ expr -$direction*$axis_x  ]
         set ny [ expr -$direction*$axis_y  ]
         set nz [ expr -$direction*$axis_z  ]
@@ -443,7 +443,7 @@ proc dielectric_cylinder { args } {
         set x [ expr $circle_center_x + $this_radius*cos($phi)*$e_1_x + $this_radius*sin($phi)*$e_2_x ]
         set y [ expr $circle_center_y + $this_radius*cos($phi)*$e_1_y + $this_radius*sin($phi)*$e_2_y ]
         set z [ expr $circle_center_z + $this_radius*cos($phi)*$e_1_z + $this_radius*sin($phi)*$e_2_z ]
-        part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] 
+        part [ expr $n_induced_charges ] pos $x $y $z type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
         set nx [ expr +$direction*$axis_x  ]
         set ny [ expr +$direction*$axis_y  ]
         set nz [ expr +$direction*$axis_z  ]
@@ -722,7 +722,7 @@ proc dielectric_pore { args } {
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
       if { $px > 0 && $px < $box_l_x && $py > 0 && $py < $box_l_y && $pz > 0 && $pz < $box_l_z } {  
-        part [ expr $n_induced_charges ] pos $px $py $pz type $type fix 1 1 1
+        part [ expr $n_induced_charges ] pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
         set nx [ expr +$axis_x ]
         set ny [ expr +$axis_y ]
         set nz [ expr +$axis_z ]
@@ -739,4 +739,25 @@ proc dielectric_pore { args } {
     lappend icc_sigmas $sigma 
   }
 
+}
+
+
+proc dielectric { args } {
+  if { [ llength $args ] == 0 } {
+    error "Usage: dielectric sphere <args> / dielectric cylinder <args> / dielectric wall <args> / dielectric pore <args>"
+  }
+  set args1 $args
+  set args1 [ lreplace $args 0 0 ]
+  if { [ lindex $args 0 ] == "sphere" } { 
+    return [ eval dielectric_sphere $args1 ]
+  }
+  if { [ lindex $args 0 ] == "cylinder" } { 
+    return [ eval dielectric_cylinder $args1 ]
+  }
+  if { [ lindex $args 0 ] == "wall" } { 
+    return [ eval dielectric_wall $args1 ]
+  }
+  if { [ lindex $args 0 ] == "pore" } { 
+    return [ eval dielectric_pore $args1 ]
+  }
 }

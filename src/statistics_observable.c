@@ -203,6 +203,52 @@ int observable_com_position(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
+
+int observable_com_force(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  double f_com[3] = { 0. , 0., 0. } ;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+    f_com[0] += partCfg[ids->e[i]].f.f[0]/time_step/time_step*2;
+    f_com[1] += partCfg[ids->e[i]].f.f[1]/time_step/time_step*2;
+    f_com[2] += partCfg[ids->e[i]].f.f[2]/time_step/time_step*2;
+  }
+  A[0]=f_com[0];
+  A[1]=f_com[1];
+  A[2]=f_com[2];
+  return 0;
+}
+
+
+int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  unsigned int block;
+  unsigned int n_blocks;
+  unsigned int blocksize;
+  unsigned int id;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  n_blocks=n_A/3; 
+  blocksize=ids->n/n_blocks;
+  for ( block = 0; block < n_blocks; block++ ) {
+    for ( i = 0; i < blocksize; i++ ) {
+      id = ids->e[block*blocksize+i];
+      if (ids->e[i] >= n_total_particles)
+        return 1;
+      A[3*block+0] +=  partCfg[id].f.f[0]/time_step/time_step*2;
+      A[3*block+1] +=  partCfg[id].f.f[1]/time_step/time_step*2;
+      A[3*block+2] +=  partCfg[id].f.f[2]/time_step/time_step*2;
+    }
+  }
+  return 0;
+}
+
+
 int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i;
   int binx, biny, binz;

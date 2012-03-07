@@ -29,8 +29,11 @@
 */
 
 /************************************************************/
-#ifndef ENDANGLEDIST_H
-#define ENDANGLEDIST_H
+#ifndef _ENDANGLEDIST_H
+#define _ENDANGLEDIST_H
+
+#include "particle_data.h"
+#include "interaction_data.h"
 
 #ifdef BOND_ENDANGLEDIST
 
