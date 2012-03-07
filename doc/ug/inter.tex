@@ -1063,7 +1063,7 @@ requires assigning charges to the particles.  This is done using the
 
 \begin{essyntax}
   inter coulomb \var{l_B} p3m 
-  \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
+  \var{r_\mathrm{cut}} \alt{\var{mesh} \asep \{\var{mesh_x} \var{mesh_y} \var{mesh_z}\}} \var{cao} \var{alpha}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1081,6 +1081,8 @@ described in more detail in \cite{deserno98a}.
   floating point number.
 \item[\var{mesh}] The number of mesh points, as a single positive
   integer.
+\item[\var{mesh_{x,y,z}}] The number of mesh points in x, y and z
+  direction. This is relevant for noncubic boxes.
 \item[\var{cao}] The \emph{charge-assignment order}, an integer
   between $0$ and $7$.
 \item[\var{alpha}] The Ewald parameter as a positive floating point
