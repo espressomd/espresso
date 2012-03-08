@@ -19,7 +19,7 @@
 SUBDIRS = config src . scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz
 
 # List files that should go into the distribution but are not required
 # by any other means
