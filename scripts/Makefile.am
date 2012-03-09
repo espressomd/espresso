@@ -32,7 +32,9 @@ ESSCRIPTS = \
 	statistics.tcl \
 	vtf.tcl \
 	tclline.tcl \
-	parallel_tempering.tcl
+	parallel_tempering.tcl \
+	gibbs_ghmc.tcl
+
 
 EXTRA_DIST=$(ESSCRIPTS)
 
