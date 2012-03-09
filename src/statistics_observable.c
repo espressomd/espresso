@@ -565,6 +565,22 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
+int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+      A[3*i + 0] = partCfg[ids->e[i]].f.f[0]/time_step/time_step*2;
+      A[3*i + 1] = partCfg[ids->e[i]].f.f[1]/time_step/time_step*2;
+      A[3*i + 2] = partCfg[ids->e[i]].f.f[2]/time_step/time_step*2;
+  }
+  return 0;
+}
+
+
 int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
   sortPartCfg();
   observable_compute_stress_tensor(1,A,n_A);
@@ -651,6 +667,8 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
     for ( j = 0; j<ids2->n; j++ ) {
       if (ids2->e[j] >= n_total_particles)
         return 1;
+      if (ids2->e[j] == ids1->e[i]) // do not count self-interaction :-)
+        continue;
       A[i] = 0;
       pos2[0]=partCfg[ids2->e[j]].r.p[0];
       pos2[1]=partCfg[ids2->e[j]].r.p[1];
@@ -668,62 +686,6 @@ int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
 }
 
 
-int observable_nearest_neighbour_conditional (void* params_p, double* A, unsigned int n_A) {
-  nn_cond_params *params=(nn_cond_params*)params_p;
-  /* assume that each of the dim_A entries maps to the following sub-entries:
-     A[i] -> int condition
-     A[i] -> int position;
-     */
-  IntList* ids1;
-  IntList* ids2;
-  int i,j;
-  double dist2;
-  double mindist2;
-  double cutoff2=params->cutoff*params->cutoff;
-  int partner=-1;
-  double pos1[3], pos2[3], dist[3];
-  ids1=params->ids1;
-  ids2=params->ids2;
-  sortPartCfg();
-  A[n_A-1]=params->chain_length; 
-  if (n_A < 2*(ids1->n)+1) {
-    // this should never happen
-    printf("Error: n_A should be %d but is %d\n",2*(ids1->n)+1,n_A); fflush(stdout);
-    return 1;
-  }
-  for ( i = 0; i<ids1->n; i++ ) {
-    // just a safety check
-    if (ids1->e[i] >= n_total_particles)
-      return 1;
-    pos1[0]=partCfg[ids1->e[i]].r.p[0];
-    pos1[1]=partCfg[ids1->e[i]].r.p[1];
-    pos1[2]=partCfg[ids1->e[i]].r.p[2];
-    mindist2=cutoff2; partner=-1;
-    for ( j = 0; j<ids2->n; j++ ) {
-      if (ids2->e[j] >= n_total_particles)
-        return 1;
-      pos2[0]=partCfg[ids2->e[j]].r.p[0];
-      pos2[1]=partCfg[ids2->e[j]].r.p[1];
-      pos2[2]=partCfg[ids2->e[j]].r.p[2];
-      get_mi_vector(dist,pos1,pos2);
-      dist2= dist[0]*dist[0] + dist[1]*dist[1] + dist[2]*dist[2];
-      if ( mindist2 > dist2 ) { 
-	mindist2=dist2; 
-	partner=ids2->e[j];
-      }
-    }
-    // check for a detachment event 
-    if ( partner == -1 && params->prev_partners->e[i] != -1) {
-      params->conditions->e[i] += 1;
-    }
-    if ( partner > -1 && params->prev_partners->e[i] == -1) {
-      params->conditions->e[i] += 1;
-    }
-    A[2*i]=params->conditions->e[i];
-    A[2*i+1]=partner;
-    params->prev_partners->e[i]=partner;
-  }
-  return 0;
-}
+
 
 

@@ -1358,6 +1358,9 @@ appendix~\vref{sec:MEMD} or the publications~\cite{maggs02a,
 \begin{essyntax}
   inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}
   \opt{\var{far\_cutoff}}
+  \opt{noneutralization}
+  \opt{dielectric \var{\epsilon_t} \var{\epsilon_m} \var{\epsilon_b}}
+  \opt{dielectric-contrasts \var{\Delta_t} \var{\Delta_b}}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1368,22 +1371,96 @@ that you will first have to set up the P3M algorithm (via
 \texttt{inter coulomb p3m \var{params}}) before using ELC.  The
 algorithm is definitely faster than MMM2D for larger numbers of
 particles ($>400$ at reasonable accuracy requirements). The maximal
-pairwise error is the LUB error of the force between any two charges
-without prefactors (see the papers).  The gap size gives the height of
-the empty region between the system box and the neighboring artificial
-images (again, see the paper).  \es{} does not make sure that the gap
-is actually empty, this is the users responsibility. The method will
-compute fine of the condition is not fulfilled, however, the error
-bound will not be reached. Therefore you should really make sure that
-the gap region is empty (e. g. by constraints). The far cutoff finally
-is only intended for testing and allows to directly set the cutoff. In
-this case, the maximal pairwise error is ignored. The periodicity has
-to be set to \texttt{1 1 1} still, and the 3d method has to be set to
-epsilon metallic, i.e.  metallic boundary conditions. For details, see
+pairwise error \var{maximal\_pairwise\_error} sets the LUB error of
+the force between any two charges without prefactors (see the
+papers). The algorithm tries to find parameters to meet this LUB
+requirements or will throw an error if there are none.
+
+The gap size \var{gap\_size} gives the height of the empty region
+between the system box and the neighboring artificial images (again,
+see the paper).  \es{} does not make sure that the gap is actually
+empty, this is the users responsibility. The method will compute fine
+of the condition is not fulfilled, however, the error bound will not
+be reached. Therefore you should really make sure that the gap region
+is empty (e. g. by constraints).
+
+The setting of the far cutoff \var{far\_cutoff} is only intended for
+testing and allows to directly set the cutoff. In this case, the
+maximal pairwise error is ignored. The periodicity has to be set to
+\texttt{1 1 1} still, and the 3d method has to be set to epsilon
+metallic, i.e.  metallic boundary conditions. For details, see
 appendix \vref{chap:mmm}.
 
-Make sure that you read the papers on ELC (e.~g. \cite{brodka04a,
+By default, ELC just as P3M adds a homogeneous neutralizing background
+to the system in case of a net charge. However, unlike in three
+dimensions, this background adds a parabolic potential across the
+slab~\cite{ballenegger09a}. Therefore, under normal circumstance, you
+will probably want to disable the neutralization using
+\opt{noneutralization}. This corresponds then to a formal
+regularization of the forces and energies~\cite{ballenegger09a}. Also,
+if you add neutralizing walls explicitely as constraints, you have to
+disable the neutralization.
+
+The dielectric contrast features work exactly the same as MMM2D, see
+the documentation above.
+
+Make sure that you read the papers on ELC (\cite{arnold02c,
   tyagi08a}) before using it!!!
+
+\subsection{Dielectric interfaces with the ICC$\star$ algorithm}
+The ICC$\star$ algorithm allows to take into account arbitrarily shaped dielectric interfaces. 
+This is done by iterating the charge on the particles with the ids 0 to \emph{n\_induced\_particles-1}
+until the correctly represent the influence of the dielectric discontinuity. It relies
+on a coulomb solver that is already initialized. This Coulomb solver can be P3M, P3M+ELC, MMM2D or MMM1D. 
+As most of the times, ICC$\star$ will be used with P3M the corresponding command
+is called \keyword{iccp3m}.
+Please make sure to 
+read the corresponding articles, mainly \cite{lenz12a, suzen07a, kesselheim09a}before using it.\\
+\begin{essyntax}
+  iccp3m \var{n\_induced\_charges} 
+  convergence \var{convergence\_criterion}
+  areas \var{areas}
+  normals \var{normals}
+  sigmas \var{sigmas}
+  epsilons \var{epsilons}
+  \opt{eps\_out \var{eps\_out} }
+  \opt{relax \var{relaxation\_parameter} }
+  \opt{max\_iterations \var{max\_iterations} }
+  \opt{ext\_field \var{ext\_field}}
+  \begin{features}
+    \required{ELECTROSTATICS}
+  \end{features}
+\end{essyntax}
+The particles with ids 0 to  \var{n\_induced\_particles-1} are treated as iterated particles by ICC$\star$.
+The constitute the dielectric interface and should be fixed in space. The parameters \var{areas} and \var{epsilons}
+are TCL lists containing one floating point number describing each surface elements area and
+dielectric constant. \var{sigmas} allows to take into account a (bare) charge density, thus a surface
+charge density in absence of any charge induction. \var{normals} is a TCL list of TCL lists with three
+floating point numbers describing the outward pointing normal vectors for every surface element.
+The parameter  \var{convergence\_criterion} allows to specify
+the accuracy of the iteration. It corresponds to the maximum relative change of any of the interface
+particle's charge. After  \var{max\_iterations} the iteration stops anyways. The dielectric constant in bulk,
+i.~e. outside the dielectric walls is specified by \var{eps\_out}. A homogenous electric field can
+be added to the calculation of dielectric boundary forces by specifying it in the parameter  \var{ext\_field}.
+\subsubsection{Quick setup of dielectric interfaces}
+The command \keyword{dielectric} allows to conveniently create dielectric interfaces similar to the constraint
+and the lbboundary command. Currently the creation of spherical, cylindrical and planar geometries as well as a 
+pore geometry is supported. It is implemented in TCL and places particles in the right positions
+and adds the correct values to the global TCL variables \var{icc\_areas} \var{icc\_normals} \var{icc\_sigmas} \var{icc\_epsilons} and increases the global TCL variable var{n\_induced\_charges}. Thus after setting up the 
+shapes, it is still necessary to register them by calling \keyword{iccp3m}, usually in the following way:
+\begin{code}
+  iccp3m \$n\_induced\_charges epsilons \$icc\_epsilons normals \\ 
+  \$icc\_normas areas \$icc\_areas sigmas \$icc\_sigmas
+\end{code}
+
+\begin{essyntax}
+  \variant{1} dielectric sphere center \var{cx} \var{cy} \var{cz} radius \var{r} res \var{res} 
+  \variant{2} dielectric wall normal \var{nx} \var{ny} \var{nz} dist \var{d} res \var{res}
+  \variant{3} dielectric cylinder  center \var{cx} \var{cy} \var{cz} axis \var{ax} \var{ay} \var{az} radius \var{r} direction \var{d} 
+  \variant{4} dielectric pore center \var{cx} \var{cy} \var{cz}  axis \var{ax} \var{ay} \var{az} radius \var{r} length \var {l} smoothing\_radius \var{rs} res \var{res}
+\end{essyntax}
+
+
 
 \section{Dipolar interaction}
 \label{sec:inter-dipolar}

@@ -48,6 +48,7 @@ int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A);
  * TODO: Folded or unfolded?
  */ 
 int observable_particle_positions(void* typelist, double* A, unsigned int n_A);
+int observable_particle_forces(void* typelist, double* A, unsigned int n_A);
 int observable_stress_tensor(void* typelist, double* A, unsigned int n_A);
 int observable_stress_tensor_acf_obs(void* typelist, double* A, unsigned int n_A);
 int observable_com_position(void* idlist, double* A, unsigned int n_A);
@@ -64,11 +65,12 @@ int observable_dipole_moment(void* typelist, double* A, unsigned int n_A);
 int observable_structure_factor(void* params, double* A, unsigned int n_A);
 typedef struct {
 // FIXME finish the implementation of scattering length
+  IntList* id_list;
+  DoubleList *scattering_length; // Scattering lengths of particles
   int order;
   int dim_sf; // number of q vectors
   int *q_vals; // values of q vectors
   double *q_density; // number of q vectors per bin
-//  DoubleList *scattering_length; // Scattering lengths of particles
   // entries for spherical averaging
 } observable_sf_params;
 
@@ -81,24 +83,6 @@ typedef struct {
   IntList *ids1;
   IntList *ids2;
 } iw_params;
-
-/** For each particle from ids1 get the nearest interaction partner out of 
-  those among ids2; 
-  If no partner is found within cutoff, set it to -1. 
-  Increment the condition when changing from some interaction (before) 
-  to some interaction (now).
-  Input parameters are passed via struct nn_cond_params
-*/
-int observable_nearest_neighbour_conditional(void* params, double* A, unsigned int n_A);
-typedef struct {
-  double cutoff;
-  // maximum difference between ids whic makes physical sense
-  int chain_length; 
-  IntList *ids1;
-  IntList *ids2;
-  IntList *prev_partners;
-  IntList *conditions;
-} nn_cond_params;
 
 
 /** Do nothing */
