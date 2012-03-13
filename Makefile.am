@@ -19,7 +19,7 @@
 SUBDIRS = config src . scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz
 
 # List files that should go into the distribution but are not required
 # by any other means
@@ -38,8 +38,8 @@ myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 # Handle version
 MOSTLYCLEANFILES = version.txt
 EXTRA_DIST += version.txt
-version.txt:
-	cd $(top_srcdir); sh config/genversion.sh -r > $(abs_top_builddir)/version.txt
+version.txt: FORCE
+	cd $(top_srcdir); sh config/genversion.sh -rd > $(abs_top_builddir)/version.txt
 
 dist-hook:
 	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -rd`; \

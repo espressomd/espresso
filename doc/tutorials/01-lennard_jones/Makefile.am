@@ -37,8 +37,8 @@ EXTRA_DIST = \
 
 .PHONY: doc $(BASENAME).pdf
 
-doc: tutorial
-tutorial: $(BASENAME).pdf
+doc: tutorials
+tutorials: $(BASENAME).pdf
 $(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
 if HAVE_LATEX
 	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)

@@ -22,15 +22,31 @@
 \index{analysis}
 \newescommand{analyze}
 
-\es provides some tools for online (during the simulation run) and
-offline (on stored data) analysis of your simulation. The
-\keyword{analyze} command has two main uses: Calculation of
+\es has two fundamentally different classes of observables for
+analyzing the systems.  On the one hand, some observables are
+computed from the Tcl level. In that case, the observable is measured
+in the moment that the corresponding Tcl function is called, and the
+results are returned to the Tcl script. In general, observables in
+this class should only be computed after a large number of timesteps,
+as switching forth and back between the C- and the Tcl-level is
+costly. This chapter describes all observables in this class.
+
+On the other hand, some observables are computed and stored in the
+C-core of \es during a call to the function \keyword{integrate}, while
+they are set up and their results are collected from the Tcl level.
+These observables are more complex to implement and offer less
+flexibility, while the are significantly faster and more memory
+efficient, and they can be set up to be computed every few
+timesteps. The observables in this class are described in chapter
+\ref{chap:analysis-core}.
+
+The class of Tcl-level analysis functions is mainly controlled via the
+\keyword{analyze} command. It has two main uses: Calculation of
 observables (\keyword{analyze \var{observable}}) and definition and
 analysis of topologies in the system (\keyword{analyze \var{topology
-    command}}).
-
-In addition, \es offers the command \keyword{uwerr} (see section
-\ref{sec:uwerr} for computing statistical errors in time series.
+    command}}).  In addition, \es offers the command \keyword{uwerr}
+(see section \ref{sec:uwerr} for computing statistical errors in time
+series.
 
 \section{Available observables}
 
@@ -355,7 +371,7 @@ particles.
 Algorithm for identifying pearl necklace structures for
 polyelectrolytes in poor solvent \citep{limbach03a}. The first three
 parameters are tuning parameters for the algorithm:
-\var{pearl\_treshold} is the minimal number of monomers in a pearl.
+\var{pearl\_threshold} is the minimal number of monomers in a pearl.
 \var{back\_dist} is the number of monomers along the chain backbone
 which are excluded from the space distance criterion to form clusters.
 \var{space\_dist} is the distance between two monomers up to which
@@ -540,7 +556,7 @@ convention follows that of a pressure tensor.
 
 \warning{Stress tensor works only with certain interactions and features. 
 Same restrictions as in the case of Pressure are applicable 
-(see scetion~\ref{analyze:pressure}).}
+(see section~\ref{analyze:pressure}).}
 
 The stress tensor is calculated by 
 \begin{equation}
