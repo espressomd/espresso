@@ -353,6 +353,10 @@ void initialize_ia_params(IA_parameters *params) {
   params->mol_cut_type = 0;
   params->mol_cut_cutoff = 0.0;
 #endif
+
+#ifdef REACTIONS
+  params->REACTION_range = 0.0;
+#endif
 }
 
 /** Copy interaction parameters. */
@@ -652,6 +656,11 @@ static void recalc_maximal_cutoff_nonbonded()
 #ifdef TUNABLE_SLIP
       if (max_cut_current < data->TUNABLE_SLIP_r_cut)
 	max_cut_current = data->TUNABLE_SLIP_r_cut;
+#endif
+
+#ifdef REACTIONS
+      if (max_cut_current < data->REACTION_range)
+	max_cut_current = data->REACTION_range;
 #endif
 
       IA_parameters *data_sym = get_ia_param(j, i);

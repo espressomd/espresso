@@ -26,7 +26,7 @@
 #include "global.h"
 #include "particle_data.h"
 #include "interaction_data.h"
-#include "integrate.h"
+#include "reaction.h"
 #include "statistics.h"
 #include "energy.h"
 #include "pressure.h"
@@ -62,6 +62,7 @@
 #include "statistics_observable.h"
 #include "statistics_correlation.h"
 #include "lb-boundaries.h"
+#include "domain_decomposition.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -130,6 +131,10 @@ void on_program_start()
 #endif
 #ifdef LB
   lb_pre_init();
+#endif
+
+#ifdef REACTIONS
+  reaction.back_rate=-1.0;
 #endif
 
   /*
@@ -261,6 +266,15 @@ if(this_node == 0){
 
 #ifdef METADYNAMICS
   meta_init();
+#endif
+
+#ifdef REACTIONS
+if(reaction.rate != 0.0) {
+  if(max_cut < reaction.range) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{105 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+  }
+}
 #endif
 
   /********************************************/

@@ -436,6 +436,10 @@ typedef struct {
   double TUNABLE_SLIP_vz;
 #endif
 
+#ifdef REACTIONS
+  double REACTION_range;
+#endif
+
 } IA_parameters;
 
 /** thermodynamic force parameters */
