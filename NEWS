@@ -35,6 +35,11 @@ New user-visible features
 * Added basic tutorial on Lennard-Jones liquid, made second tutorial
   (simple charged systems) better available (all in doc/tutorials/)
 
+* The ICC* algorithm is now ready to use. It is used with the command
+  "iccp3m" and allows to take into account dielectric boundaries of
+  arbitrary shape. The command "dielectric" allows to create the
+  boundaries in a similar fashion as constraints and lbboundaries.
+
 User-visible changes
 --------------------
 
@@ -75,6 +80,8 @@ Changes visible for developers
   automatically generate myconfig-sample.h and what was config.h and
   config.c. Also, this allows to check whether all features are
   documented, tested and defined.
+  Note that due to this change, ESPResSo development now requires
+  Python.
 
 * The domain decomposition, P3M, LB and MEMD now use MPI cartesian
   communicators. This will hopefully speed up the simulations on some

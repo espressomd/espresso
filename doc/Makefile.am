@@ -26,7 +26,7 @@ doxygen: FORCE
 	cd doxygen; $(MAKE) --print-directory $@
 ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
-tutorial: latexit.sh FORCE
+tutorials: latexit.sh FORCE
 	cd tutorials; $(MAKE) --print-directory $@
 FORCE:
 

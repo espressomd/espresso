@@ -31,7 +31,7 @@ tests = \
 	correlation.tcl \
 	constraints_rhomboid.tcl \
 	dh.tcl \
-	dielectric_test.tcl \
+	dielectric.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
@@ -104,7 +104,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	lb_system.data \
 	\
 	pe_micelle.tcl pe_micelle.data \
-	uwerr_test.tcl uwerr_test.data \
+	uwerr.tcl uwerr.data \
 	\
 	gen_fene.tcl gen_harm.tcl \
 	\

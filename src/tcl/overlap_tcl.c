@@ -23,7 +23,9 @@
  *  Implementation of \ref overlap_tcl.h
  */
 #include "utils.h"
-#include "parser.h"
+#include "interaction_data.h"
+#include "overlap_tcl.h"
+#include "overlap.h"
 
 #ifdef OVERLAPPED
 
@@ -65,8 +67,6 @@ int tclcommand_inter_parse_overlapped_bonded(Tcl_Interp *interp, int bond_type,
 int tclprint_to_result_overlapIA(Tcl_Interp *interp,
 				 Bonded_ia_parameters *params)
 {
-  char buffer[TCL_DOUBLE_SPACE];
-
   switch (params->p.overlap.type) {
   case OVERLAP_BOND_LENGTH:
     Tcl_AppendResult(interp, "overlapped bond \"",params->p.overlap.filename,"\"",(char *) NULL);
@@ -81,6 +81,7 @@ int tclprint_to_result_overlapIA(Tcl_Interp *interp,
     fprintf(stderr, "INTERNAL ERROR: unexpected overlap bond type!\n");
     errexit();
   }
+  return TCL_OK;
 }
 
 #endif

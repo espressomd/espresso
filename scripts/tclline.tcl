@@ -39,7 +39,7 @@ catch {
 
 # Initialise our own env variables:
 foreach {var val} {
-    PROMPT ">"
+    PROMPT "> "
     HISTORY ""
     HISTORY_BUFFER 100
     COMPLETION_MATCH ""

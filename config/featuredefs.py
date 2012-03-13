@@ -44,10 +44,14 @@ class defs:
         implications = list()
         # list of requirements (pairs of feature -> requirement expr)
         requirements = list()
+        # set of derived features
+        derived = set()
         # list of derivations (pairs of feature -> derivation expr)
         derivations = list()
         # list of external features
         externals = set()
+        # list of features that are to be tested
+        notestfeatures = set()
 
         for line in fileinput.input(filename):
             line = line.strip()
@@ -74,26 +78,23 @@ class defs:
                 if keyword == 'equals':
                     if rest is None:
                         raise SyntaxError("<feature> equals <expr>", line)
-                    derived = map((lambda(x,y,z):x), derivations)
                     if feature in derived:
                         raise SyntaxError("Derived feature is already defined above:", line);
                     if feature in externals:
                         raise SyntaxError("Derived feature is already defined as external above:", line);
-                    features.discard(feature)
+                    derived.add(feature)
                     derivations.append((feature, rest, toCPPExpr(rest)))
 
                 # externals
                 elif keyword == 'external':
                     if rest is not None:
                         raise SyntaxError("<feature> external", line)
-                    derived = map((lambda(x,y,z):x), derivations)
                     if feature in derived:
                         raise SyntaxError("External feature is already defined as derived above:", line);
                     implied = set(map((lambda (x,y):y), implications))
                     if feature in implied:
                         raise SyntaxError("External feature is implied above:", line);
                     externals.add(feature)
-                    features.discard(feature)
 
                 # implications
                 elif keyword == 'implies':
@@ -113,10 +114,19 @@ class defs:
                         raise SyntaxError("<feature> requires <expr>", line)
                     requirements.append((feature, rest, toCPPExpr(rest)))
 
+                elif keyword == 'notest':
+                    if rest is not None:
+                        raise SyntaxError("<feature> notest", line)
+                    notestfeatures.add(feature)
+
+        features = features.difference(derived)
+        features = features.difference(externals)
         self.features = features
         self.requirements = requirements
         self.implications = implications
+        self.derived = derived
         self.derivations = derivations
         self.externals = externals
+        self.notestfeatures = notestfeatures
 
 # Test whether all implied features or features in an expression are defined
