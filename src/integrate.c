@@ -174,37 +174,31 @@ void integrate_vv(int n_steps)
 
     ratexp = exp(-time_step*reaction.rate);
     
-    //on_observable_calc(); //Axel's idea. Doesn't help.
+    on_observable_calc();
 
     for (c = 0; c < local_cells.n; c++) {
-//printf("\n");
       /* Loop cell neighbors */
       for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
         pairs = dd.cell_inter[c].nList[n].vList.pair;
         np = dd.cell_inter[c].nList[n].vList.n;
-//printf("cell has %d particle pairs\n", np);
         
         /* verlet list loop */
         for(i = 0; i < 2 * np; i += 2) {
-//printf("looping over pairs\n");
           p1 = pairs[i];   //pointer to particle 1
           p2 = pairs[i+1]; //pointer to particle 2
           
           if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
             get_mi_vector(vec21, p1->r.p, p2->r.p);
             dist2 = sqrlen(vec21);
-//printf("dist=(%f, %f, %f), dist2=%f\n", vec21[0], vec21[1], vec21[2], dist2);
             
             if(dist2 < reaction.range * reaction.range) {
            	  rand =d_random();
            	  
            		if(rand > ratexp) {
            		  if(p1->p.type==reaction.reactant_type) {
-printf("REACTION: particle %d rects forwards from type %d to %d\n", p1->p.identity, p1->p.type, reaction.product_type);
 						      p1->p.type = reaction.product_type;
 					      }
 					      else {
-printf("REACTION: particle %d forwards from type %d to %d\n", p2->p.identity, p2->p.type, reaction.product_type);
 						      p2->p.type = reaction.product_type;
 					      }
               }
@@ -249,7 +243,6 @@ printf("REACTION: particle %d forwards from type %d to %d\n", p2->p.identity, p2
             rand = d_random();
             
 			      if(rand > back_ratexp) {
-printf("REACTION: particle %d reacts backwards from type %d to %d\n", p1[i].p.identity, p1[i].p.type, reaction.reactant_type);
 			        p1[i].p.type=reaction.reactant_type;
 			      }
           }

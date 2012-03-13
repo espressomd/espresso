@@ -605,6 +605,45 @@ virtual sites created at the point of collision (if applicable). Be sure not to
 define a Lennard-Jones interaction for this particle type, as two particles will
 be generated in the same place.
 
+
+\section{Reactions}
+\label{sec:Reactions}
+
+With the help of the feature \feature{REACTIONS}, one can define three particle
+types to act as reactant, catalyzer and product. Reactant particles that are 
+closer to at least one catalyzer particle than a user defined range are 
+stochastically converted into particles of the product type. The rate at which 
+this reaction happens can be defined by the user as well. Since an Espresso 
+simulation only contains a finite number of particles, product particles also
+must react back into reactant particles in order allow for an equilibrium other 
+than only product particles.
+This back reaction takes place at any point of the simulation volume and unless 
+the user defines a custom rate for the back reaction, the rate is dynamically 
+chosen to be
+\begin{equation}
+k_\text{back} = k_\text{back} \cdot \frac{n_\text{product}}{n_\text{reactant}},
+\end{equation}
+which results in an equilibrium of half product and half reactant, independently 
+of the number of catalyzer particles or their arrangement.
+
+\begin{essyntax}
+\variant{0} reaction reactant_type \var{rt} catalyzer_type \var{ct} 
+product_type \var{pt} range \var{r} rate \var{k} 
+\opt{back_rate \var{k_\text{back}}}
+\variant{1} reaction off
+\begin{features}
+  \required{REACTIONS}
+\end{features}
+\end{essyntax}
+
+Variant \variant{0} defines a reaction with particles of type number \var{rt} 
+as reactant, type \var{ct} as catalyzer and type \var{pt} as product. The 
+reaction rate is given by \var{r} and to override the dynamically determined 
+rate for the back reaction, one can specify it by \var{k_\text{back}}.
+
+Variant \variant{1} disables the reaction. Note that at the moment, there can 
+only be one reaction in the simulation.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

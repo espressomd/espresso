@@ -133,6 +133,10 @@ void on_program_start()
   lb_pre_init();
 #endif
 
+#ifdef REACTIONS
+  reaction.back_rate=-1.0;
+#endif
+
   /*
     call all initializations to do only on the master node here.
   */
