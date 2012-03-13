@@ -72,6 +72,7 @@ libEspresso_a_SOURCES = \
 	pressure.c pressure.h \
 	random.c random.h \
 	rattle.c rattle.h \
+	reaction.c reaction.h \
 	rotation.c rotation.h \
 	specfunc.c specfunc.h \
 	statistics.c statistics.h \
@@ -170,6 +171,7 @@ libEspresso_a_SOURCES += \
 	tcl/polymer_tcl.c tcl/polymer_tcl.h \
 	tcl/pressure_tcl.c tcl/pressure_tcl.h \
 	tcl/random_tcl.c tcl/random_tcl.h \
+	tcl/reaction_tcl.c tcl/reaction_tcl.h \
 	tcl/rattle_tcl.c tcl/rattle_tcl.h \
 	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
 	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
