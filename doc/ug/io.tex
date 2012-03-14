@@ -385,11 +385,196 @@ stored configurations if \var{whatever} is whatever, but \lit{-}.
 Furthermore, it saves the state (\lit{state}) or the seed (\lit{seed})
 of the random number generator.
 
+\section{Writing VTF files}
+\label{sec:vtf}
+%\quickrefheading{Handling of VTF files}
+\index{vtf|mainindex}
+\index{vcf|mainindex}
+\index{vsf|mainindex}
+
+The formats VTF (\textbf{V}TF \textbf{T}rajectory \textbf{F}ormat),
+VSF (\textbf{V}TF \textbf{S}tructure \textbf{F}ormat) and VCF
+(\textbf{V}TF \textbf{C}oordinate \textbf{F}ormat) are formats for the
+visualization software
+VMD\cite{humphrey96a}\footnote{\url{http://www.ks.uiuc.edu/Research/vmd/}}. They
+are intended to be human-readable and easy to produce automatically
+and modify.
+
+The format distinguishes between \emph{structure blocks} that contain
+the topological information of the system (\ie the system size,
+particle names, types, radii and bonding information, amongst others),
+while \emph{coordinate blocks} (a.k.a. as \emph{timestep blocks})
+contain the coordinates for the particles at a single timestep.  For a
+visualization with VMD, one structure block and at least one
+coordinate block is required.
+
+Files in the VSF format contain a single structure block, files in the
+VCF format contain at least one coordinate block, while files in the
+VTF format contain a single structure block first and an arbitrary
+number of coordinate blocks afterwards, thus allowing to store all
+information for a whole simulation in a single file. For more details
+on the format, refer to the homepage of the
+format\footnote{\url{https://github.com/olenz/vtfplugin/wiki/VTF-format}}.
+
+Creating files in these formats from within \es is supported by the
+commands \lit{writevsf} and \lit{writevcf}, that write a structure
+respectively a coordinate block to the given Tcl channel. To create a
+VTF file, first use \lit{writevsf} at the beginning of the simulation,
+and then \texttt{writevcf} after each timestep to generate a
+trajectory of the whole simulation.
+
+The structure definitions in the VTF/VSF formats are incremental, \ie
+a user can easily add further structure lines to the VTF/VSF file
+after a structure block has been written to specify further particle
+properties for visualization.
+
+Note that the ids of the particles in \es and VMD may differ. VMD
+requires the particle ids to be enumerated continuously without any
+holes, while this is not required in \es. When using \lit{writevsf}
+and \lit{writevcf}, the \es particle ids are automatically translated
+into VMD particle ids. The function \lit{vtfpid} allows the user to
+get the VMD particle id for a given \es particle id.
+
+Also note, that these formats can not be used to write trajectories
+where the number of particles or their types varies between the
+timesteps. This is a restriction of VMD itself, not of the format.
+
+\subsection{\texttt{writevsf}: Writing the topology}
+\newescommand{writevsf}
+
+\begin{essyntax}
+  writevsf \var{channelId} 
+  \opt{\alt{short \asep verbose}}
+  \opt{radius \alt{\var{radii} \asep auto}} 
+  \opt{typedesc \var{typedesc}}
+\end{essyntax}
+Writes a structure block describing the system's structure to the
+channel given by \var{channelId}. \var{channelId} must be an
+identifier for an open channel such as the return value of an
+invocation of \keyword{open}.  The output of this command can be used
+for a standalone VSF file, or at the beginning of a VTF file that
+contains a trajectory of a whole simulation.
+
+\begin{arguments}
+\item[\opt{\alt{short \asep verbose}}]
+  Specify, whether the output is in a human-readable, but somewhat
+  longer format (\keyword{verbose}), or in a more compact form
+  (\keyword{short}). The default is \keyword{verbose}.
+  
+\item[\opt{radius \alt{\var{radii} \asep auto}}] Specify the VDW radii
+  of the atoms. \var{radii} is either \keyword{auto}, or a Tcl-list
+  describing the radii of the different particle types. When the
+  keyword \keyword{auto} is used and a Lennard-Jones interaction
+  between two particles of the given type is defined, the radius is
+  set to be $\frac{\sigma_{LJ}}{2}$ plus the LJ shift.  Otherwise, the
+  radius $0.5$ is substituted. The default is \keyword{auto}.
+  \minisec{Example}
+  \verb!writevsf $file radius {0 2.0 1 auto 2 1.0}!
+
+\item[\opt{typedesc \var{typedesc}}]
+  \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
+  specify additional VMD characteristics of the atoms of the given type.
+  If no description is given for a certain particle type, it defaults to
+  \texttt{name \textit{name} type \textit{type}}, where \textit{name}
+  is an atom name and \textit{type} is the type id.
+  \minisec{Example} 
+  \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
+\end{arguments}
+
+\subsection{\texttt{writevcf}: Writing  the coordinates}
+\newescommand{writevcf}
+
+\begin{essyntax}
+  writevcf \var{channelId} 
+  \opt{\alt{short \asep verbose}}
+  \opt{\alt{folded \asep absolute}}
+  \opt{pids \alt{\var{pids} \asep all}}
+  \opt{userdata \var{userdata}}
+\end{essyntax}
+Writes a coordinate (or timestep) block that contains all coordinates
+of the system's particles to the channel given by \var{channelId}.
+\var{channelId} must be an identifier for an open channel such as the
+return value of an invocation of \keyword{open}.
+
+\begin{arguments}
+\item[\opt{\alt{short \asep verbose}}] Specify, whether the output is
+  in a human-readable, but somewhat longer format (\keyword{verbose}),
+  or in a more compact form (\keyword{short}). The default is
+  \keyword{verbose}.
+  
+\item[\opt{\alt{folded \asep absolute}}] Specify whether the particle
+  positions are written in absolute coordinates (\keyword{absolute})
+  or folded into the central image of a periodic system
+  (\keyword{folded}). The default is \keyword{absolute}.
+  
+\item[\opt{pids \alt{\var{pids} \asep all}}] Specify the coordinates
+  of which particles should be written. If \keyword{all} is used, all
+  coordinates will be written (in the ordered timestep format).
+  Otherwise, \var{pids} has to be a Tcl-list specifying the pids of
+  the particles. The default is \keyword{all}.
+  \minisec{Example} \verb!pids {0 23 42}!
+
+\item[\opt{userdata \var{userdata}}] Specify arbitrary user data for
+  the particles. \var{userdata} has to be a Tcl list containing the
+  user data for every particle. The user data is appended to the
+  coordinate line and can be read into VMD via the VMD plugin
+  \texttt{VTFTools}. The default is to provide no userdata.
+  \minisec{Example} \verb!userdata {"red" "blue" "green"}!
+\end{arguments}
+
+
+\subsection{\texttt{vtfpid}: Translating \es particles ids to VMD
+  particle ids}
+\begin{essyntax}
+  vtfpid \var{pid}
+\end{essyntax}
+If \var{pid} is the id of a particle as used in \es, this command
+returns the atom id used in the VTF, VSF or VCF formats.
+
+\section{\texttt{writevtk}: Particle Visualization in paraview}
+\label{sec:writevtk}
+\newescommand{writevtk}
+
+This feature allows to export the particle positions in a paraview
+\footnote{\url{http://www.paraview.org/}} compatible VTK
+file. Paraview is a powerful and easy to use open-source visualization
+program for scientific data. Since \es can export the
+lattice-Boltzmann velocity field \ref{ssec:LBvisualization} in the VTK
+format as well and paraview allows to visualize particles with glyphs
+and vector fields with stream lines, glyphs, contourplots, etc., one
+can use it so completely visualize a coupled lattice-Boltzmann MD
+simulation. It can also create videos without much effort if one
+exports data of individual time steps into separate files with
+filenames including a running index (\texttt{data_0.vtk},
+\texttt{data_1.vtk}, ...).
+
+\begin{essyntax}
+  writevtk \var{filename} 
+  \opt{\alt{all \asep \var{type}}}
+\end{essyntax}
+
+\begin{arguments}
+\item[\var{filename}]
+  Name of the file to export the particle positions into.
+
+\item[\opt{\alt{all \asep \var{type}}}] Specifies which particle type
+  should be exportet. The default is \keyword{all}. Alternatively, a
+  type number can be given. Exporting the positions of all particles
+  but in separate files might make sense if one wants to distinguish
+  the different particle types in the visualization (i.e. by color or
+  size).
+\end{arguments}
+
 \section{Writing PDB/PSF files}
 The PDB (Brookhaven Protein DataBase) format is a widely used format
 for describing atomistic configurations. PSF is a format that is used
-by VMD to describe the topology of a PDB file. You need the PDB and
-PSF files for example for IMD.
+to describe the topology of a PDB file. 
+
+When visualizing your system with VMD, it is recommended to use the
+VTF format instead (see section \ref{sec:vtf}), as it was specifically
+designed for visualizations with VMD. In contrast to the PDB/PSF
+formats, in VTF files it is possible to specify the VDW radii of the
+particles, to have a varying simulation box size, etc.
 
 \subsection{\lit{writepsf}: Writing the topology}
 \newescommand{writepsf}
@@ -437,114 +622,10 @@ the optional shift information. \var{shift} should be a three member
 tcl list consisting of x, y, and z shifts respectively and each number
 should be a floating point (ie with decimal point).
 
-\section{Writing VTF files}
-%\quickrefheading{Handling of VTF files}
-
-There are two commands in \es{} that support writing files in the VMD
-formats VTF, VSF and VCF.\footnote{A description of the format and a
-  plugin to read the format in VMD is found in the subdirectory
-  \texttt{vmdplugin/} of the \es{} source directory.} The commands can
-be used to write the structure (\texttt{writevsf}) and coordinates
-(\texttt{writevcf}) of the system to a single trajectory file (usually
-with the extension \texttt{.vtf}), or to separate files (extensions
-\texttt{.vsf} and \texttt{.vtf}).
-
-\subsection{\texttt{writevsf}: Writing the topology}
-\newescommand{writevsf}
-
-\begin{essyntax}
-  writevsf \var{channelId} 
-  \opt{\alt{short \asep verbose}}
-  \opt{radius \alt{\var{radii} \asep auto}} 
-  \opt{typedesc \var{typedesc}}
-\end{essyntax}
-Writes a structure block describing the system's structure to the
-channel given by \var{channelId}. \var{channelId} must be an
-identifier for an open channel such as the return value of an
-invocation of \keyword{open}. The atom ids used in the file are not
-necessarily identical to \es's particle ids. To get the atom id used
-in the vtf file from an \es particle id, use the command
-\keyword{vtfpid} described below. This makes it easy to write
-additional structure lines to the file, e.g. to specify the
-\texttt{resname} of particle compounds, like chains.  The output of
-this command can be used for a standalone VSF file, or at the
-beginning of a trajectory VTF file that contains a trajectory of a
-whole simulation.
-
-\begin{arguments}
-\item[\opt{\alt{short \asep verbose}}]
-  Specify, whether the output is in a human-readable, but somewhat
-  longer format (\keyword{verbose}), or in a more compact form
-  (\keyword{short}). The default is \keyword{verbose}.
-  
-\item[\opt{radius \alt{\var{radii} \asep auto}}] 
-  Specify the VDW radii of the atoms. \var{radii} is either
-  \keyword{auto}, or a Tcl-list describing the radii of the different
-  particle types. When the keyword \keyword{auto} is used and a
-  Lennard-Jones interaction between two particles of the given type is
-  defined, the radius is set to be $\frac{\sigma_{LJ}}{2}$ plus the LJ
-  shift.  Otherwise, the radius $0.5$ is substituted. The default is
-  \keyword{auto}.\\
-  Example: \verb!writevsf $file radius {0 2.0 1 auto 2 1.0}!
-\item[\opt{typedesc \var{typedesc}}]
-  \var{typedesc} is a Tcl-list giving additional VTF atom-keywords to
-  specify additional VMD characteristics of the atoms of the given type.
-  If no description is given for a certain particle type, it defaults to
-  \texttt{name \textit{name} type \textit{type}}, where \textit{name}
-  is an atom name and \textit{type} is the type id.\\
-  Example: \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
-\end{arguments}
-
-\subsection{\texttt{writevcf}: Writing  the coordinates}
-\newescommand{writevcf}
-
-\begin{essyntax}
-  writevcf \var{channelId} 
-  \opt{\alt{short \asep verbose}}
-  \opt{\alt{folded \asep absolute}}
-  \opt{pids \alt{\var{pids} \asep all}}
-  \opt{userdata \var{userdata}}
-\end{essyntax}
-Writes a coordinate (or timestep) block that contains all coordinates
-of the system's particles to the channel given by \var{channelId}.
-\var{channelId} must be an identifier for an open channel such as the
-return value of an invocation of \keyword{open}.
-
-\begin{arguments}
-\item[\opt{\alt{short \asep verbose}}] Specify, whether the output is
-  in a human-readable, but somewhat longer format (\keyword{verbose}),
-  or in a more compact form (\keyword{short}). The default is
-  \keyword{verbose}.
-  
-\item[\opt{\alt{folded \asep absolute}}] Specify whether the particle
-  positions are written in absolute coordinates (\keyword{absolute})
-  or folded into the central image of a periodic system
-  (\keyword{folded}). The default is \keyword{absolute}.
-  
-\item[\opt{pids \alt{\var{pids} \asep all}}] Specify the coordinates
-  of which particles should be written. If \keyword{all} is used, all
-  coordinates will be written (in the ordered timestep format).
-  Otherwise, \var{pids} has to be a Tcl-list specifying the pids of
-  the particles. The default is \keyword{all}.\\
-  Example: \verb!pids {0 23 42}!
-
-\item[\opt{userdata \var{userdata}}] Specify arbitrary user data for
-  the particles. \var{userdata} has to be a Tcl list containing the
-  user data for every particle. The user data is appended to the
-  coordinate line and can be read into VMD via the VMD plugin
-  \texttt{VTFTools}. The default is to provide no userdata.\\
-  Example: \verb!userdata {"red" "blue" "green"}!
-\end{arguments}
-
-\subsection{\texttt{vtfpid}: Translating \es particles ids to VMD
-  particle ids}
-\begin{essyntax}
-  vtfpid \var{pid}
-\end{essyntax}
-If \var{pid} is the id of a particle as used in \es, this command
-returns the atom id used in the VTF, VSF or VCF formats.
-
 \section{Online-visualisation with VMD}
+\label{sec:IMD}
+\index{IMD}
+
 IMD (Interactive Molecular Dynamics) is the protocol that VMD uses to
 communicate with a simulation. Tcl\_md implements this protocol to
 allow online visual analysis of running simulations.

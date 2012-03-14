@@ -100,6 +100,13 @@ Features can be activated in the configuration header
 \item \newfeature{MODES}
 \item \newfeature{ADRESS}
 \item \newfeature{METADYNAMICS}
+\item \newfeature{LANGEVIN_PER_PARTICLE} Allows to define the temperature and
+  friction coefficient for individual particles. See 
+  \ref{ssec:particleproperties} for details.
+\item \newfeature{REACTIONS} Allows to define three particle types to be
+  reactant, catalyzer and product. The reaction reactant to product 
+  stochastically happens in a radius around the catalyzer, the back reaction
+  everywhere. See section \ref{sec:Reactions} for details.
 \item \newfeature{OVERLAPPED}
 \item \newfeature{COLLISION\_DETECTION} Allows particles to be bound oo collision. See section \ref{sec:collision}
 \item \newfeature{OLD\_RW\_VERSION} This switches back to the old,

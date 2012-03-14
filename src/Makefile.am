@@ -72,6 +72,7 @@ libEspresso_a_SOURCES = \
 	pressure.c pressure.h \
 	random.c random.h \
 	rattle.c rattle.h \
+	reaction.c reaction.h \
 	rotation.c rotation.h \
 	specfunc.c specfunc.h \
 	statistics.c statistics.h \
@@ -170,6 +171,7 @@ libEspresso_a_SOURCES += \
 	tcl/polymer_tcl.c tcl/polymer_tcl.h \
 	tcl/pressure_tcl.c tcl/pressure_tcl.h \
 	tcl/random_tcl.c tcl/random_tcl.h \
+	tcl/reaction_tcl.c tcl/reaction_tcl.h \
 	tcl/rattle_tcl.c tcl/rattle_tcl.h \
 	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
 	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
@@ -247,14 +249,16 @@ Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_install_LDADD = libEspresso.a
 
+ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
+ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
 # rename Espresso after installation
 install-exec-hook:
 	$(am__mv) \
-		$(DESTDIR)$(bindir)/Espresso.install \
-		$(DESTDIR)$(bindir)/Espresso
+		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
+		$(DESTDIR)$(bindir)/$(ESPRESSO)
 
 uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/Espresso
+	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
 
 endif
 

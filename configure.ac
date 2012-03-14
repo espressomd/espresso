@@ -33,8 +33,12 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 # Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu subdir-objects])
+AM_INIT_AUTOMAKE([1.10 gnu subdir-objects dist-xz])
 AM_MAINTAINER_MODE
+
+# silent rules, backwards compatiblity
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
+AM_SILENT_RULES
 
 cat <<EOF
 ****************************************************************

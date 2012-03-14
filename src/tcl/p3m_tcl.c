@@ -104,7 +104,7 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   init_intlist(&il);
 
   if (argc < 1) {
-    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> <mesh> <cao> [<alpha> [<accuracy>]]",
+    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
 		     (char *) NULL);
     return TCL_ERROR;  
   }
