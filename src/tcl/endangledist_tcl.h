@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ENDANGLEDIST_TCL_H
-#define ENDANGLEDIST_TCL_H
+#ifndef _ENDANGLEDIST_TCL_H
+#define _ENDANGLEDIST_TCL_H
 /** \file endangledist_tcl.h
  * Tcl interface for \ref endangledist.h
  */

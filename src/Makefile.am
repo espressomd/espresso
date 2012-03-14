@@ -24,7 +24,9 @@ noinst_HEADERS = \
 noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
+# config-features.c must be at the beginning so that it is compiled first
 libEspresso_a_SOURCES = \
+	config-features.c \
 	adresso.c adresso.h \
 	cells.c cells.h \
 	collision.c collision.h \
@@ -245,14 +247,16 @@ Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_install_LDADD = libEspresso.a
 
+ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
+ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
 # rename Espresso after installation
 install-exec-hook:
 	$(am__mv) \
-		$(DESTDIR)$(bindir)/Espresso.install \
-		$(DESTDIR)$(bindir)/Espresso
+		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
+		$(DESTDIR)$(bindir)/$(ESPRESSO)
 
 uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/Espresso
+	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
 
 endif
 
@@ -291,6 +295,7 @@ myconfig-final.h: FORCE
 #################################################################
 # Handling of the features
 #################################################################
+# config-features.c must occur at the beginning of the SOURCES so that it is compiled first
 libEspresso_a_SOURCES += config-features.c
 EXTRA_DIST = \
 	features.def \
