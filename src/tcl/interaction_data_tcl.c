@@ -52,6 +52,7 @@
 #include "morse_tcl.h"
 #include "dpd_tcl.h"
 #include "soft_sphere_tcl.h"
+#include "hat_tcl.h"
 #include "steppot_tcl.h"
 #include "tab_tcl.h"
 #include "tunable_slip_tcl.h"
@@ -412,6 +413,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef SOFT_SPHERE
   if (data->soft_cut > 0.0) tclprint_to_result_softIA(interp,i,j);
+#endif
+
+#ifdef HAT
+  if (data->HAT_r > 0.0) tclprint_to_result_softIA(interp,i,j);
 #endif
 
 #ifdef LJCOS2
@@ -816,6 +821,10 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef SOFT_SPHERE
     REGISTER_NONBONDED("soft-sphere", tclcommand_inter_parse_soft);
+#endif
+
+#ifdef HAT
+    REGISTER_NONBONDED("hat", tclcommand_inter_parse_hat);
 #endif
 
 #ifdef COMFORCE
