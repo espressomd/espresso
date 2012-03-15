@@ -48,6 +48,7 @@
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
+#include "hat.h"
 #include "maggs.h"
 #include "tab.h"
 #include "overlap.h"
@@ -154,6 +155,10 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
  /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   add_soft_pair_force(p1,p2,ia_params,d,dist,force);
+#endif
+ /*hat potential*/
+#ifdef HAT
+  add_hat_pair_force(p1,p2,ia_params,d,dist,force);
 #endif
   /* lennard jones cosine */
 #ifdef LJCOS

@@ -314,6 +314,14 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef HAT
+  /** \name hat potential */
+  /*@{*/
+  double HAT_Fmax;
+  double HAT_r;
+  /*@}*/
+#endif
+
 #ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/
