@@ -99,6 +99,7 @@ libEspresso_a_SOURCES += \
 	buckingham.c buckingham.h \
 	dpd.c dpd.h \
 	gb.c gb.h \
+	hat.c hat.h \
 	hertzian.c hertzian.h \
 	lj.c lj.h \
 	ljangle.c ljangle.h \
@@ -191,6 +192,7 @@ libEspresso_a_SOURCES += \
 	tcl/buckingham_tcl.c tcl/buckingham_tcl.h \
 	tcl/dpd_tcl.c tcl/dpd_tcl.h \
 	tcl/gb_tcl.c tcl/gb_tcl.h \
+	tcl/hat_tcl.c tcl/hat_tcl.h \
 	tcl/hertzian_tcl.c tcl/hertzian_tcl.h \
 	tcl/lj_tcl.c tcl/lj_tcl.h \
 	tcl/ljangle_tcl.c tcl/ljangle_tcl.h \

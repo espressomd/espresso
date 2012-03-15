@@ -452,6 +452,39 @@ implemented currently, which means that the potential is discontinuous
 at $r=\var{r_\mathrm{cut}}$. Therefore energy calculations should be
 used with great caution.
 
+\subsection{Hat interaction}
+\index{hat interaction|mainindex}
+\index{interactions!hat|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  hat \var{F_\text{max}} \var{r}
+  \begin{features}
+    \required{HAT}
+  \end{features}
+\end{essyntax}
+This defines a simple force ramp between particles of the types \var{type1} and
+ \var{type2}. The maximal force \var{F_\text{max}} acts at zero distance and 
+zero force is applied at distances r and bigger. For distances smaller than 
+\var{r}, the force is given by
+\begin{equation}
+  F(d)=F_{\text{max}} \cdot \left( 1 - \frac{d}{r} \right),
+\end{equation}
+for distances exceeding \var{r}, the force is zero.
+
+The potential energy is given by
+\begin{equation}
+  V(d)=F_{\text{max}} \cdot (d-r) \cdot \left( \frac{d+r}{2r} - 1 \right),
+\end{equation}
+which is zero for distances bigger than \var{r} and continuous at distance 
+\var{r}.
+
+This is the standard conservative DPD potential and can be used in combination 
+with \lit{inter DPD} \ref{sec:DPDinter}. Also it is useful for live 
+demonstrations, where you might want to use a big time step to make it look 
+interesting on a weak machine but do not want it to crash and the physics don't 
+matter.
+
 \subsection{Hertzian interaction}
 \index{Hertzian interaction|mainindex}
 \index{interactions!hertzian|mainindex}
