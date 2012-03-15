@@ -416,7 +416,7 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 #endif
 
 #ifdef HAT
-  if (data->HAT_r > 0.0) tclprint_to_result_softIA(interp,i,j);
+  if (data->HAT_r > 0.0) tclprint_to_result_hatIA(interp,i,j);
 #endif
 
 #ifdef LJCOS2
