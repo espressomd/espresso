@@ -1071,7 +1071,7 @@ int tclcommand_inter(ClientData _data, Tcl_Interp *interp,
     is_i2 = ARG_IS_I(2, j);
 
     Tcl_ResetResult(interp);
- 
+
     // non bonded interactions
     if (is_i1 && is_i2)
       err_code = tclcommand_inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
