@@ -271,11 +271,10 @@ propably want to try this out yourself to get a feeling for how fast
 temperature jumps during a simulation are. The dpd thermostat does not
 act on the system center of mass motion.  Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you
-can achieve by using the command \keyword{galileiTransformParticles}.
-\todo{Docs for galileiTransformParticles is missing} This may be
-repeated once in a while for long runs due to round off errors (check
-this with the command \keyword{system_com_vel}).  \todo{Docs from
-  system_com_vel is missing}
+can achieve by using the command \keyword{galileiTransformParticles} 
+\ref{sec:centerofmassmotion}. This may be repeated once in a while for long 
+runs due to round off errors (check this with the command 
+\keyword{system_com_vel}) \ref{sec:centerofmassmotion}.
 
 Two restrictions apply for the dpd implementation of \es:
 
