@@ -2,6 +2,21 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.2
+============
+
+New user-visible features
+-------------------------
+
+* The feature HAT introduces a short-ranged nonbonded interaction
+  "hat", the classical conservative DPD interaction, a simple force
+  ramp.
+
+* The feature REACTIONS and the command "reaction" model a simple
+  chemical reaction: when a particle of the reactant type comes into
+  the vincinity of a particle of the catalysator type, the reactant is
+  transformed into a particle of the product type.
+
 ESPResSo 3.1
 ============
 
