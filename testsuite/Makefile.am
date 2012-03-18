@@ -69,6 +69,7 @@ tests = \
 	rotation.tcl \
 	tabulated.tcl \
 	thermostat.tcl \
+	thermostat2.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 # please keep the alphabetic ordering of the above list!
