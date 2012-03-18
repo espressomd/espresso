@@ -119,6 +119,11 @@ typedef struct {
   /** particles adress weight */
   double adress_weight;
 #endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  double T;
+  double gamma;
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
@@ -239,11 +244,6 @@ typedef struct {
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
-#endif
-
-#ifdef LANGEVIN_PER_PARTICLE
-  double T;
-  double gamma;
 #endif
 
 } Particle;

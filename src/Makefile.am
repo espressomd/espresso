@@ -24,7 +24,9 @@ noinst_HEADERS = \
 noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
+# config-features.c must be at the beginning so that it is compiled first
 libEspresso_a_SOURCES = \
+	config-features.c \
 	adresso.c adresso.h \
 	cells.c cells.h \
 	collision.c collision.h \
@@ -70,6 +72,7 @@ libEspresso_a_SOURCES = \
 	pressure.c pressure.h \
 	random.c random.h \
 	rattle.c rattle.h \
+	reaction.c reaction.h \
 	rotation.c rotation.h \
 	specfunc.c specfunc.h \
 	statistics.c statistics.h \
@@ -97,6 +100,7 @@ libEspresso_a_SOURCES += \
 	buckingham.c buckingham.h \
 	dpd.c dpd.h \
 	gb.c gb.h \
+	hat.c hat.h \
 	hertzian.c hertzian.h \
 	lj.c lj.h \
 	ljangle.c ljangle.h \
@@ -169,6 +173,7 @@ libEspresso_a_SOURCES += \
 	tcl/polymer_tcl.c tcl/polymer_tcl.h \
 	tcl/pressure_tcl.c tcl/pressure_tcl.h \
 	tcl/random_tcl.c tcl/random_tcl.h \
+	tcl/reaction_tcl.c tcl/reaction_tcl.h \
 	tcl/rattle_tcl.c tcl/rattle_tcl.h \
 	tcl/statistics_chain_tcl.c tcl/statistics_chain_tcl.h \
 	tcl/statistics_cluster_tcl.c tcl/statistics_cluster_tcl.h \
@@ -189,6 +194,7 @@ libEspresso_a_SOURCES += \
 	tcl/buckingham_tcl.c tcl/buckingham_tcl.h \
 	tcl/dpd_tcl.c tcl/dpd_tcl.h \
 	tcl/gb_tcl.c tcl/gb_tcl.h \
+	tcl/hat_tcl.c tcl/hat_tcl.h \
 	tcl/hertzian_tcl.c tcl/hertzian_tcl.h \
 	tcl/lj_tcl.c tcl/lj_tcl.h \
 	tcl/ljangle_tcl.c tcl/ljangle_tcl.h \
@@ -247,14 +253,16 @@ Espresso_install_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(scriptsdir)\"
 Espresso_install_SOURCES = tcl/scriptsdir.c tcl/main.c
 Espresso_install_LDADD = libEspresso.a
 
+ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
+ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
 # rename Espresso after installation
 install-exec-hook:
 	$(am__mv) \
-		$(DESTDIR)$(bindir)/Espresso.install \
-		$(DESTDIR)$(bindir)/Espresso
+		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
+		$(DESTDIR)$(bindir)/$(ESPRESSO)
 
 uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/Espresso
+	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
 
 endif
 
@@ -293,6 +301,7 @@ myconfig-final.h: FORCE
 #################################################################
 # Handling of the features
 #################################################################
+# config-features.c must occur at the beginning of the SOURCES so that it is compiled first
 libEspresso_a_SOURCES += config-features.c
 EXTRA_DIST = \
 	features.def \

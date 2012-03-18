@@ -22,27 +22,25 @@
 \newescommand{inter}
 \index{interactions|mainindex}
 
-In \es, interactions are setup and investigated by the \keyword{inter}
-command. There are mainly two types of interactions: non-bonded and
-bonded interactions. Non-bonded interactions only depend on the type
-of the two involved particles. This also applies to the electrostatic
-interaction; however, due to its long-ranged nature, it requires
-special care and \es handles it separately with a number of state of
-the art algorithms. The particle type and the charge are both defined
-using the \lit{part} command.
+In \es, interactions are set up and investigated by the
+\keyword{inter} command. There are mainly two types of interactions:
+non-bonded and bonded interactions. Non-bonded interactions only
+depend on the \emph{type} of the two involved particles. This also
+applies to the electrostatic interaction; however, due to its
+long-ranged nature, it requires special care and \es handles it
+separately with a number of state-of-the-art algorithms. The particle
+type and the charge are both defined using the \lit{part} command.
 
 A bonded interaction defines an interaction between a number of
-particles; it however only applies to sets of particles for which it
-has been explicitely set.  A bonded interaction between a set of
+specific particles; it only applies to the set of particles for which
+it has been explicitely set.  A bonded interaction between a set of
 particles has to be specified explicitely by the \lit{part bond}
 command, while the \lit{inter} command is used to define the
 interaction parameters.
 
-\section{Getting the currently defined interactions}
 \begin{essyntax}
   inter
 \end{essyntax}
-
 Without any arguments, \lit{inter} returns a list of all defined
 interactions as a Tcl-list. The format of each entry corresponds to
 the syntax for defining the interaction as described below. Typically,
@@ -51,7 +49,8 @@ this list looks like
   {0 0 lennard-jones 1.0 2.0 1.1225 0.0 0.0} {0 FENE 7.0 2.0}
 \end{tclcode}
 
-\section{Non-bonded, short-ranged interactions}
+
+\section{Isotropic non-bonded interactions}
 \label{sec:inter-nb}
 \index{Non-bonded interactions|mainindex}
 \index{interactions!non-bonded|mainindex}
@@ -75,6 +74,46 @@ interaction, \eg
 For many non-bonded interactions, it is possible to artificially cap
 the forces, which often allows to equilibrate the system much
 faster. See the subsection~\ref{sec:forcecap} for details.
+
+
+\subsection{Tabulated interaction}
+\index{tabulated interaction|mainindex}
+\index{interactions!tabulated|mainindex}
+\label{sec:tabnonbonded}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2} tabulated \var{filename}%
+  \begin{features}
+    \required{TABULATED}
+  \end{features}
+\end{essyntax}
+
+This defines an interaction between particles of the types \var{type1} and
+\var{type2} according to an arbitrary tabulated pair potential. \var{filename}
+specifies a file which contains the tabulated forces and energies as a function
+of the separation distance. The tabulated potential allows capping the force
+using \lit{inter tabforcecap}, see section~\ref{sec:forcecap}.
+
+At present the required file format is simply an ordered list separated by
+whitespace. The data reader first looks for a {\tt \#} character and begins
+reading from that point in the file. Anything before the {\tt \#} will be
+ignored.
+
+The first three parameters after the {\tt \#} specify the number of data points
+$N_\mathrm{points}$ and the minimal and maximal tabulated separation distances
+$r_\mathrm{min}$ and $r_\mathrm{max}$. The number of data points obviously should
+be an integer, the two other can be arbitrary positive doubles. Take care when
+choosing the number of points, since a copy of each lookup table is kept on each
+node and must be referenced very frequently. The maximal tabulated separation
+distance also acts as the effective cutoff value for the potential.
+
+The remaining data in the file should consist of n data triples $r$, $F(r)$ and
+$V(r)$. $r$ gives the particle separation, $V(r)$ specifies the interaction
+potential, and $F(r)= -V'(r)/r$ the force (note the factor $1/r$!). The values
+of $r$ are assumed to be equally distributed between $r_\mathrm{min}$ and
+$r_\mathrm{max}$ with a fixed distance of
+$(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)$; the distance values $r$ in
+the file are ignored and only included for human readability.
 
 \subsection{Lennard-Jones interaction}
 \label{sec:LennardJones}
@@ -232,86 +271,12 @@ between $\var{r_\mathrm{min}}$ and $\var{r_\mathrm{cut}}$ is given by
 \begin{equation}
   V(r)=\epsilon\cos^2\left[\frac{\pi}{2\omega}(\var{r} - \var{r_\mathrm{min}})\right].
 \end{equation}
-For $\var{r} < \var{r_\mathrm{min}}$, $V(r)$ is implemented as normal Lennard-Jones potential, see equation \ref{eq:lj} with $\var{c_\mathrm{shift}} = 0$.
+For $\var{r} < \var{r_\mathrm{min}}$, $V(r)$ is implemented as normal
+Lennard-Jones potential, see equation \ref{eq:lj} with
+$\var{c_\mathrm{shift}} = 0$.
 
 Only the second variant allows capping the force using \lit{inter
   ljforcecap}, see section~\ref{sec:forcecap}.
-
-\subsection{Directional Lennard-Jones interaction}
-\index{Directional Lennard-Jones interaction|mainindex}
-\index{interactions!Directional Lennard-Jones|mainindex}
-\begin{essyntax}
-  inter \var{type1} \var{type2} lj-angle
-  \var{\epsilon} \var{\sigma}
-  \var{r_\mathrm{cut}} \var{b1_a} \var{b1_b}
-  \var{b2_a} \var{b2_b} \opt{\var{r_\mathrm{cap}} 
-    \var{z_0} \var{\delta z} \var{\kappa} \var{\epsilon'}}
-  \begin{features}
-    \required{LJ_ANGLE}
-  \end{features}
-\end{essyntax}
-
-\begin{center}
-  \includegraphics[height=8em]{figures/hbond}
-\end{center}
-
-Specifies a 12-10 Lennard-Jones interaction with angular dependence between
-particles of the types \var{type1} and \var{type2}. These two particles need
-two bonded partners oriented in a symmetric way. They define an orientation
-for the central particle. The purpose of using bonded partners is to avoid
-dealing with torques, therefore the interaction does \emph{not} need the
-ROTATION feature. The angular part of the potential minimizes the system when
-the two central beads are oriented along the vector formed by these two
-particles. The shaded beads on the image are virtual particles that are formed
-from the orientation of the bonded partners, connected to the central
-beads. They are used to define angles. The potential is of the form
-\begin{equation}
-  U(r_{ik},\theta_{jik},\theta_{ikn})=\epsilon\left[5\left(\frac{\sigma}r\right)^{12}-6\left(\frac{\sigma}{r}\right)^{10}\right]\cos^2\theta_{jik}\cos^2\theta_{ikn},
-\end{equation}
-where $r_{ik}$ is the distance between the two central beads, and each angle
-defines the orientation between the direction of a central bead (determined
-from the two bonded partners) and the vector $\mathbf{r_{ik}}$. Note that the
-potential is turned off if one of the angle is more than $\pi/2$. This way we
-don't end up creating a minimum for an anti-parallel configuration.
-
-Unfortunately, the bonded partners are not seeked dynamically. One has to keep
-track of the relative positions of the particle IDs. This can be done by
-setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a}, and \var{b2_b}. Say
-the first bead \var{type1} has particle ID \var{n}, then one should set the
-simulation such as its two bonded partners have particle IDs \var{n+b1_a} and
-\var{n+b1_b}, respectively. On a linear chain, for example, one would
-typically have \var{b1_a=1} and \var{b1_b=-1} such that the central bead and
-its two bonded partners have position IDs \var{n}, \var{n+1}, and \var{n-1},
-respectively. This is surely not optimized, but once the simulation is set
-correctly the algorithm is very fast.
-
-The force can be capped using \lit{inter ljangleforcecap}. It might turn out
-to be useful in some cases to keep this capping during the whole
-simulation. This is due to the very sharp angular dependence for small
-distance, compared to $\sigma$. Two beads might come very close to each other
-while having unfavorable angles such that the interaction is turned off. Then
-a change in the angle might suddenly turn on the interaction and the system
-will blow up (the potential is so steep that one would need extremely small
-time steps to deal with it, which is not very clever for such rare events).
-
-For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid
-simulating hydrogens and oxygens by using this potential. This comes down to
-implementing a HBond potential between N and C atoms.
-
-The optional parameter \var{r_\mathrm{cap}} is the usual cap radius. The four
-other optional parameters (\var{z_0}, \var{\delta z}, \var{\kappa},
-\var{\epsilon'}) describe a different interaction strength \var{\epsilon'} for
-a subset of the simulation box. The box is divided through the \var{z} plane
-in two different regions: region 1 which creates an interaction with strength
-\var{\epsilon}, region 2 with interaction strength \var{\epsilon'}. The 2nd
-region is defined by its \var{z}-midplane \var{z_0}, its total thickness
-\var{\delta z}, and the interface width \var{\kappa}. Therefore, the
-interaction strength is \var{\epsilon} everywhere except for the region of the
-box $z_0-\delta z/2<z<z_0+\delta z/2$. The interface width smoothly
-interpolates between the two regions to avoid discontinuities. As an example,
-one can think of modeling hydrogen bonds in two different environments: water,
-where the interaction is rather weak, and in a lipid bilayer, where it is
-comparatively stronger.
 
 \subsection{Smooth step interaction}
 \index{smooth-step interaction|mainindex}
@@ -450,6 +415,39 @@ implemented currently, which means that the potential is discontinuous
 at $r=\var{r_\mathrm{cut}}$. Therefore energy calculations should be
 used with great caution.
 
+\subsection{Hat interaction}
+\index{hat interaction|mainindex}
+\index{interactions!hat|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  hat \var{F_\text{max}} \var{r}
+  \begin{features}
+    \required{HAT}
+  \end{features}
+\end{essyntax}
+This defines a simple force ramp between particles of the types \var{type1} and
+ \var{type2}. The maximal force \var{F_\text{max}} acts at zero distance and 
+zero force is applied at distances r and bigger. For distances smaller than 
+\var{r}, the force is given by
+\begin{equation}
+  F(d)=F_{\text{max}} \cdot \left( 1 - \frac{d}{r} \right),
+\end{equation}
+for distances exceeding \var{r}, the force is zero.
+
+The potential energy is given by
+\begin{equation}
+  V(d)=F_{\text{max}} \cdot (d-r) \cdot \left( \frac{d+r}{2r} - 1 \right),
+\end{equation}
+which is zero for distances bigger than \var{r} and continuous at distance 
+\var{r}.
+
+This is the standard conservative DPD potential and can be used in combination 
+with \lit{inter DPD} \ref{sec:DPDinter}. Also it is useful for live 
+demonstrations, where you might want to use a big time step to make it look 
+interesting on a weak machine but do not want it to crash and the physics don't 
+matter.
+
 \subsection{Hertzian interaction}
 \index{Hertzian interaction|mainindex}
 \index{interactions!hertzian|mainindex}
@@ -474,7 +472,90 @@ The potential has no singularity and is defined everywhere; the
 potential has nondifferentiable maximum at $r=0$, where the force is
 undefined.
 
-\subsection{Gay-Berne interaction}
+\section{Anisotropic non-bonded interactions}
+\label{inter-anisotropic}
+\index{Anisotropic interactions}
+
+\subsection{Directional Lennard-Jones interaction}
+\index{Directional Lennard-Jones interaction|mainindex}
+\index{interactions!Directional Lennard-Jones|mainindex}
+\begin{essyntax}
+  inter \var{type1} \var{type2} lj-angle
+  \var{\epsilon} \var{\sigma}
+  \var{r_\mathrm{cut}} \var{b1_a} \var{b1_b}
+  \var{b2_a} \var{b2_b} \opt{\var{r_\mathrm{cap}} 
+    \var{z_0} \var{\delta z} \var{\kappa} \var{\epsilon'}}
+  \begin{features}
+    \required{LJ_ANGLE}
+  \end{features}
+\end{essyntax}
+
+\begin{center}
+  \includegraphics[height=8em]{figures/hbond}
+\end{center}
+
+Specifies a 12-10 Lennard-Jones interaction with angular dependence between
+particles of the types \var{type1} and \var{type2}. These two particles need
+two bonded partners oriented in a symmetric way. They define an orientation
+for the central particle. The purpose of using bonded partners is to avoid
+dealing with torques, therefore the interaction does \emph{not} need the
+ROTATION feature. The angular part of the potential minimizes the system when
+the two central beads are oriented along the vector formed by these two
+particles. The shaded beads on the image are virtual particles that are formed
+from the orientation of the bonded partners, connected to the central
+beads. They are used to define angles. The potential is of the form
+\begin{equation}
+  U(r_{ik},\theta_{jik},\theta_{ikn})=
+  \epsilon\left[5\left(\frac{\sigma}r\right)^{12} - 
+    6\left(\frac{\sigma}{r}\right)^{10}\right]
+  \cos^2\theta_{jik}\cos^2\theta_{ikn},
+\end{equation}
+where $r_{ik}$ is the distance between the two central beads, and each angle
+defines the orientation between the direction of a central bead (determined
+from the two bonded partners) and the vector $\mathbf{r_{ik}}$. Note that the
+potential is turned off if one of the angle is more than $\pi/2$. This way we
+don't end up creating a minimum for an anti-parallel configuration.
+
+Unfortunately, the bonded partners are not seeked dynamically. One has to keep
+track of the relative positions of the particle IDs. This can be done by
+setting the parameters \var{b1_a}, \var{b1_b}, \var{b2_a}, and \var{b2_b}. Say
+the first bead \var{type1} has particle ID \var{n}, then one should set the
+simulation such as its two bonded partners have particle IDs \var{n+b1_a} and
+\var{n+b1_b}, respectively. On a linear chain, for example, one would
+typically have \var{b1_a=1} and \var{b1_b=-1} such that the central bead and
+its two bonded partners have position IDs \var{n}, \var{n+1}, and \var{n-1},
+respectively. This is surely not optimized, but once the simulation is set
+correctly the algorithm is very fast.
+
+The force can be capped using \lit{inter ljangleforcecap}. It might turn out
+to be useful in some cases to keep this capping during the whole
+simulation. This is due to the very sharp angular dependence for small
+distance, compared to $\sigma$. Two beads might come very close to each other
+while having unfavorable angles such that the interaction is turned off. Then
+a change in the angle might suddenly turn on the interaction and the system
+will blow up (the potential is so steep that one would need extremely small
+time steps to deal with it, which is not very clever for such rare events).
+
+For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid
+simulating hydrogens and oxygens by using this potential. This comes down to
+implementing a HBond potential between N and C atoms.
+
+The optional parameter \var{r_\mathrm{cap}} is the usual cap radius. The four
+other optional parameters (\var{z_0}, \var{\delta z}, \var{\kappa},
+\var{\epsilon'}) describe a different interaction strength \var{\epsilon'} for
+a subset of the simulation box. The box is divided through the \var{z} plane
+in two different regions: region 1 which creates an interaction with strength
+\var{\epsilon}, region 2 with interaction strength \var{\epsilon'}. The 2nd
+region is defined by its \var{z}-midplane \var{z_0}, its total thickness
+\var{\delta z}, and the interface width \var{\kappa}. Therefore, the
+interaction strength is \var{\epsilon} everywhere except for the region of the
+box $z_0-\delta z/2<z<z_0+\delta z/2$. The interface width smoothly
+interpolates between the two regions to avoid discontinuities. As an example,
+one can think of modeling hydrogen bonds in two different environments: water,
+where the interaction is rather weak, and in a lipid bilayer, where it is
+comparatively stronger.
+
+\section{Gay-Berne interaction}
 \index{Gay-Berne interaction|mainindex}
 \index{interactions!Gay-Berne|mainindex}
 
@@ -543,172 +624,6 @@ exponents \var{\mu} and \var{\nu} are adjustable parameters of the
 potential.  Several Gay-Berne parametrizations exist, the original one
 being $\var{k_1} = 3$, $\var{k_2} = 5$, $\var{\mu} = 2$ and $\var{\nu}
 = 1$.
-
-\subsection{Tabulated interaction}
-\index{tabulated interaction|mainindex}
-\index{interactions!tabulated|mainindex}
-\label{sec:tabnonbonded}
-
-\begin{essyntax}
-  inter \var{type1} \var{type2} tabulated \var{filename}%
-  \begin{features}
-    \required{TABULATED}
-  \end{features}
-\end{essyntax}
-
-This defines an interaction between particles of the types \var{type1} and
-\var{type2} according to an arbitrary tabulated pair potential. \var{filename}
-specifies a file which contains the tabulated forces and energies as a function
-of the separation distance. The tabulated potential allows capping the force
-using \lit{inter tabforcecap}, see section~\ref{sec:forcecap}.
-
-At present the required file format is simply an ordered list separated by
-whitespace. The data reader first looks for a {\tt \#} character and begins
-reading from that point in the file. Anything before the {\tt \#} will be
-ignored.
-
-The first three parameters after the {\tt \#} specify the number of data points
-$N_\mathrm{points}$ and the minimal and maximal tabulated separation distances
-$r_\mathrm{min}$ and $r_\mathrm{max}$. The number of data points obviously should
-be an integer, the two other can be arbitrary positive doubles. Take care when
-choosing the number of points, since a copy of each lookup table is kept on each
-node and must be referenced very frequently. The maximal tabulated separation
-distance also acts as the effective cutoff value for the potential.
-
-The remaining data in the file should consist of n data triples $r$, $F(r)$ and
-$V(r)$. $r$ gives the particle separation, $V(r)$ specifies the interaction
-potential, and $F(r)= -V'(r)/r$ the force (note the factor $1/r$!). The values
-of $r$ are assumed to be equally distributed between $r_\mathrm{min}$ and
-$r_\mathrm{max}$ with a fixed distance of
-$(r_\mathrm{max}-r_\mathrm{min})/(N_\mathrm{points}-1)$; the distance values $r$ in
-the file are ignored and only included for human readability.
-
-\subsection{Tunable-slip boundary interaction}\label{sec:tunableSlip}
-\index{Tunable-slip boundary interaction|mainindex}
-\index{interactions!Tunable-slip boundary interactions|mainindex}
-\begin{essyntax}
-  inter \var{type1} \var{type2}
-  tunable_slip \var{T} \var{\gamma_L} \var{r_\mathrm{cut}} \var{\delta t}
-  \var{v_x} \var{v_y} \var{v_z}
-  \begin{features}
-    \required{TUNABLE_SLIP}
-  \end{features}
-\end{essyntax}
-Simulating microchannel flow phenomena like the Plane Poiseuille and
-the Plane Couette Flow require accurate boundary conditions. There are
-two main boundary conditions in use:
-
-\begin{enumerate} 
-\item \emph{slip boundary condition} which means that the flow
-  velocity at the the hydrodynamic boundaries is zero.
-\item \emph{partial-slip boundary condition} which means that the flow 
-  velocity at the hydrodynamic boundaries does not vanish.
-\end{enumerate}
-
-In recent years, experiments have indicated that the no-slip boundary
-condition is indeed usually not valid on the micrometer
-scale. Instead, it has to be replaced by the {\em {partial-slip
-    boundary condition}}
-\begin{displaymath}
-\delta_B \: \: \partial_{{\bf n}} v_{\parallel}|_{{\bf r}_B} =
-v_{\parallel}|_{{\bf r}_B},
-\end{displaymath}
-where $v_{\parallel}$ denotes the tangential component of the velocity
-and $\partial_{{\bf n}} v_{\parallel}$ its spatial derivative normal
-to the surface, both evaluated at the position ${\bf r}_B$ of the
-so-called {\em hydrodynamic boundary}.  This boundary condition is
-characterized by two effective parameters, namely (i) the slip length
-$\delta_B$ and (ii) the hydrodynamic boundary ${\bf r}_B$.
-
-Within the approach of the tunable-slip boundary interactions it is
-possible to tune the slip length systematically from full-slip to
-no-slip.  A coordinate-dependent Langevin-equation describes a viscous
-layer in the vicinity of the channel walls which exerts an additional
-friction on the fluid particles.  \var{T} is the temperature,
-\var{\gamma_L} the friction coefficient and \var{r_\mathrm{cut}} is
-the cut-off radius of this layer. \var{\delta t} is the timestep of
-the integration scheme. With \var{v_x} \var{v_y} and \var{v_z} it is
-possible to give the layer a reference velocity to create a Plane
-Couette Flow.  Make sure that the cutoff radius \var{r_\mathrm{cut}}
-is larger than the cutoff radius of the constraint Lennard-Jones
-interactions. Otherwise there is no possibility that the particles
-feel the viscous layer.
-
-This method was tested for Dissipative Particle Dynamics but it is
-intended for mesoscopic simulation methods in general. Note, that to
-use tunable-slip boundary interactions you have to apply \textbf{two}
-plane cell constraints with Lennard-Jones in addition to the
-tunable-slip interaction. Make sure that the cutoff radius
-\var{r_\mathrm{cut}} is larger than the cutoff radius of the
-constraint Lennard-Jones interactions. Otherwise there is no
-possibility that the particles feel the viscous layer.  Please read
-reference \cite{smiatek08a} before using this interaction.
-
-\subsection{DPD interaction}\label{sec:DPDinter}
-\index{DPD interaction|mainindex}
-\index{interactions!DPD|mainindex}
-\index{DPD}
-
-\begin{essyntax}
-  inter \var{type1} \var{type2} inter_dpd \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
-  \begin{features}
-    \required{INTER_DPD}
-  \end{features}
-\end{essyntax}
-
-This is a special interaction that is to be used in conjunction with
-the Dissipative Particle Dynamics algorithm \ref{sec:DPD} when the
-\texttt{INTER_DPD} implementation is used. The parameters correspond
-to the parameters of the DPD thermostat \vref{sec:DPDinter}, but
-can be set individually for the different interactions.
-
-\subsection{Capping the force during warmup}
-\label{sec:forcecap}
-
-\begin{essyntax}
-  \variant{1} inter ljforcecap \alt{\var{F_\mathrm{max}} \asep individual}
-  \variant{2} inter morseforcecap \alt{\var{F_\mathrm{max}} \asep individual}
-  \variant{3} inter buckforcecap \alt{\var{F_\mathrm{max}} \asep individual}
-  \variant{4} inter tabforcecap \alt{\var{F_\mathrm{max}} \asep individual}
-  \begin{features}
-    \required[\variant{1}]{LENNARD_JONES}
-    \required[\variant{2}]{MORSE}
-    \required[\variant{3}]{BUCKINGHAM}
-    \required[\variant{4}]{TABULATED}
-  \end{features}  
-\end{essyntax}
-
-Non-bonded interactions are often used to model the hard core
-repulsion between particles. Most of the potentials in the section are
-therefore singular at zero distance, and forces usually become very
-large for distances below the particle size. This is not a problem
-during the simulation, as particles will simply avoid overlapping.
-However, creating an initial dense random configuration without
-overlap is often difficult.
-
-By artificially capping the forces, it is possible to simulate a
-system with overlaps. By gradually raising the cap value
-\var{F_\mathrm{max}}, possible overlaps become unfavorable, and the
-system equilibrates to a overlap free configuration.
-
-This command will cap the force to \var{F_\mathrm{\var{max}}}, \ie for
-particle distances which would lead to larger forces than
-\var{F_\mathrm{max}}, the force remains at \var{F_\mathrm{max}}.
-Accordingly, the potential is replaced by replaced by $r
-\var{F_\mathrm{max}}$. Particles placed exactly on top of each other
-will be subject to a force of magnitude \var{F_\mathrm{max}} along
-the first coordinate axis.
-
-The force capping is switched off by setting $\var{F_\mathrm{max}}=0$.
-Note that force capping always applies to all interactions of the
-corresponding type (\eg all Lennard-Jones interactions) regardless of
-the particle types.
-
-If instead of a force capping value, the string ``individual'' is
-given, the force capping can be set individually for each
-interaction. The capping radius is in this case not derived from the
-potential parameters, but is given by an additional signal floating
-point parameter to the interaction.
 
 \section{Bonded interactions}
 \label{sec:inter-bonded}
@@ -1061,7 +976,7 @@ requires assigning charges to the particles.  This is done using the
 
 \begin{essyntax}
   inter coulomb \var{l_B} p3m 
-  \var{r_\mathrm{cut}} \var{mesh} \var{cao} \var{alpha}
+  \var{r_\mathrm{cut}} \alt{\var{mesh} \asep \{\var{mesh_x} \var{mesh_y} \var{mesh_z}\}} \var{cao} \var{alpha}
   \begin{features}
     \required{ELECTROSTATICS}
   \end{features}
@@ -1079,6 +994,8 @@ described in more detail in \cite{deserno98a}.
   floating point number.
 \item[\var{mesh}] The number of mesh points, as a single positive
   integer.
+\item[\var{mesh_{x,y,z}}] The number of mesh points in x, y and z
+  direction. This is relevant for noncubic boxes.
 \item[\var{cao}] The \emph{charge-assignment order}, an integer
   between $0$ and $7$.
 \item[\var{alpha}] The Ewald parameter as a positive floating point
@@ -1378,7 +1295,7 @@ requirements or will throw an error if there are none.
 
 The gap size \var{gap\_size} gives the height of the empty region
 between the system box and the neighboring artificial images (again,
-see the paper).  \es{} does not make sure that the gap is actually
+see the paper).  \es does not make sure that the gap is actually
 empty, this is the users responsibility. The method will compute fine
 of the condition is not fulfilled, however, the error bound will not
 be reached. Therefore you should really make sure that the gap region
@@ -1401,21 +1318,17 @@ regularization of the forces and energies~\cite{ballenegger09a}. Also,
 if you add neutralizing walls explicitely as constraints, you have to
 disable the neutralization.
 
-The dielectric contrast features work exactly the same as MMM2D, see
-the documentation above.
+The dielectric contrast features work exactly the same as for MMM2D,
+see the documentation above.
 
-Make sure that you read the papers on ELC (\cite{arnold02c,
-  tyagi08a}) before using it!!!
+Make sure that you read the papers on ELC (\cite{arnold02c, tyagi08a})
+before using it.
 
 \subsection{Dielectric interfaces with the ICC$\star$ algorithm}
-The ICC$\star$ algorithm allows to take into account arbitrarily shaped dielectric interfaces. 
-This is done by iterating the charge on the particles with the ids 0 to \emph{n\_induced\_particles-1}
-until the correctly represent the influence of the dielectric discontinuity. It relies
-on a coulomb solver that is already initialized. This Coulomb solver can be P3M, P3M+ELC, MMM2D or MMM1D. 
-As most of the times, ICC$\star$ will be used with P3M the corresponding command
-is called \keyword{iccp3m}.
-Please make sure to 
-read the corresponding articles, mainly \cite{lenz12a, suzen07a, kesselheim09a}before using it.\\
+\index{ICC$\star$|mainindex}
+\index{Dielectric interfaces}
+\newescommand{iccp3m}
+
 \begin{essyntax}
   iccp3m \var{n\_induced\_charges} 
   convergence \var{convergence\_criterion}
@@ -1431,27 +1344,40 @@ read the corresponding articles, mainly \cite{lenz12a, suzen07a, kesselheim09a}b
     \required{ELECTROSTATICS}
   \end{features}
 \end{essyntax}
-The particles with ids 0 to  \var{n\_induced\_particles-1} are treated as iterated particles by ICC$\star$.
-The constitute the dielectric interface and should be fixed in space. The parameters \var{areas} and \var{epsilons}
-are TCL lists containing one floating point number describing each surface elements area and
-dielectric constant. \var{sigmas} allows to take into account a (bare) charge density, thus a surface
-charge density in absence of any charge induction. \var{normals} is a TCL list of TCL lists with three
-floating point numbers describing the outward pointing normal vectors for every surface element.
-The parameter  \var{convergence\_criterion} allows to specify
-the accuracy of the iteration. It corresponds to the maximum relative change of any of the interface
-particle's charge. After  \var{max\_iterations} the iteration stops anyways. The dielectric constant in bulk,
-i.~e. outside the dielectric walls is specified by \var{eps\_out}. A homogenous electric field can
-be added to the calculation of dielectric boundary forces by specifying it in the parameter  \var{ext\_field}.
+
+The ICC$\star$ algorithm allows to take into account arbitrarily
+shaped dielectric interfaces.  This is done by iterating the charge on
+the particles with the ids 0 to \var{n\_induced\_particles-1} until
+the correctly represent the influence of the dielectric
+discontinuity. It relies on a coulomb solver that is already
+initialized. This Coulomb solver can be P3M, P3M+ELC, MMM2D or MMM1D.
+As most of the times, ICC$\star$ will be used with P3M the
+corresponding command is called \keyword{iccp3m}.
+
+Please make sure to read the corresponding articles,
+mainly\cite{arnold12a, tyagi10a, kesselheim11a} before using it.
+
+The particles with ids 0 to \var{n\_induced\_particles-1} are treated
+as iterated particles by ICC$\star$.  The constitute the dielectric
+interface and should be fixed in space. The parameters \var{areas} and
+\var{epsilons} are Tcl lists containing one floating point number
+describing each surface elements area and dielectric
+constant. \var{sigmas} allows to take into account a (bare) charge
+density, thus a surface charge density in absence of any charge
+induction. \var{normals} is a Tcl list of Tcl lists with three
+floating point numbers describing the outward pointing normal vectors
+for every surface element.  The parameter \var{convergence\_criterion}
+allows to specify the accuracy of the iteration. It corresponds to the
+maximum relative change of any of the interface particle's
+charge. After \var{max\_iterations} the iteration stops anyways. The
+dielectric constant in bulk, i.~e. outside the dielectric walls is
+specified by \var{eps\_out}. A homogenous electric field can be added
+to the calculation of dielectric boundary forces by specifying it in
+the parameter \var{ext\_field}.
+
 \subsubsection{Quick setup of dielectric interfaces}
-The command \keyword{dielectric} allows to conveniently create dielectric interfaces similar to the constraint
-and the lbboundary command. Currently the creation of spherical, cylindrical and planar geometries as well as a 
-pore geometry is supported. It is implemented in TCL and places particles in the right positions
-and adds the correct values to the global TCL variables \var{icc\_areas} \var{icc\_normals} \var{icc\_sigmas} \var{icc\_epsilons} and increases the global TCL variable var{n\_induced\_charges}. Thus after setting up the 
-shapes, it is still necessary to register them by calling \keyword{iccp3m}, usually in the following way:
-\begin{code}
-  iccp3m \$n\_induced\_charges epsilons \$icc\_epsilons normals \\ 
-  \$icc\_normas areas \$icc\_areas sigmas \$icc\_sigmas
-\end{code}
+\index{Dielectric interfaces}
+\newescommand{dielectric}
 
 \begin{essyntax}
   \variant{1} dielectric sphere center \var{cx} \var{cy} \var{cz} radius \var{r} res \var{res} 
@@ -1460,7 +1386,20 @@ shapes, it is still necessary to register them by calling \keyword{iccp3m}, usua
   \variant{4} dielectric pore center \var{cx} \var{cy} \var{cz}  axis \var{ax} \var{ay} \var{az} radius \var{r} length \var {l} smoothing\_radius \var{rs} res \var{res}
 \end{essyntax}
 
-
+The command \keyword{dielectric} allows to conveniently create
+dielectric interfaces similar to the constraint and the lbboundary
+command. Currently the creation of spherical, cylindrical and planar
+geometries as well as a pore geometry is supported. It is implemented
+in Tcl and places particles in the right positions and adds the
+correct values to the global Tcl variables \var{icc\_areas}
+\var{icc\_normals} \var{icc\_sigmas} \var{icc\_epsilons} and increases
+the global Tcl variable var{n\_induced\_charges}. Thus after setting
+up the shapes, it is still necessary to register them by calling
+\keyword{iccp3m}, usually in the following way:
+\begin{code}
+  iccp3m \$n\_induced\_charges epsilons \$icc\_epsilons normals \\ 
+  \$icc\_normals areas \$icc\_areas sigmas \$icc\_sigmas
+\end{code}
 
 \section{Dipolar interaction}
 \label{sec:inter-dipolar}
@@ -1634,8 +1573,87 @@ As it is very slow, this method is not intended to do simulations,
 but rather to check the results you get from more efficient methods
 like P3M.
   
-\section{Other interaction types}
+\section{Special interaction commands}
 \label{sec:inter-other}
+
+\subsection{Tunable-slip boundary interaction}\label{sec:tunableSlip}
+\index{Tunable-slip boundary interaction|mainindex}
+\index{interactions!Tunable-slip boundary interactions|mainindex}
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  tunable_slip \var{T} \var{\gamma_L} \var{r_\mathrm{cut}} \var{\delta t}
+  \var{v_x} \var{v_y} \var{v_z}
+  \begin{features}
+    \required{TUNABLE_SLIP}
+  \end{features}
+\end{essyntax}
+Simulating microchannel flow phenomena like the Plane Poiseuille and
+the Plane Couette Flow require accurate boundary conditions. There are
+two main boundary conditions in use:
+
+\begin{enumerate} 
+\item \emph{slip boundary condition} which means that the flow
+  velocity at the the hydrodynamic boundaries is zero.
+\item \emph{partial-slip boundary condition} which means that the flow 
+  velocity at the hydrodynamic boundaries does not vanish.
+\end{enumerate}
+
+In recent years, experiments have indicated that the no-slip boundary
+condition is indeed usually not valid on the micrometer
+scale. Instead, it has to be replaced by the {\em {partial-slip
+    boundary condition}}
+\begin{displaymath}
+\delta_B \: \: \partial_{{\bf n}} v_{\parallel}|_{{\bf r}_B} =
+v_{\parallel}|_{{\bf r}_B},
+\end{displaymath}
+where $v_{\parallel}$ denotes the tangential component of the velocity
+and $\partial_{{\bf n}} v_{\parallel}$ its spatial derivative normal
+to the surface, both evaluated at the position ${\bf r}_B$ of the
+so-called {\em hydrodynamic boundary}.  This boundary condition is
+characterized by two effective parameters, namely (i) the slip length
+$\delta_B$ and (ii) the hydrodynamic boundary ${\bf r}_B$.
+
+Within the approach of the tunable-slip boundary interactions it is
+possible to tune the slip length systematically from full-slip to
+no-slip.  A coordinate-dependent Langevin-equation describes a viscous
+layer in the vicinity of the channel walls which exerts an additional
+friction on the fluid particles.  \var{T} is the temperature,
+\var{\gamma_L} the friction coefficient and \var{r_\mathrm{cut}} is
+the cut-off radius of this layer. \var{\delta t} is the timestep of
+the integration scheme. With \var{v_x} \var{v_y} and \var{v_z} it is
+possible to give the layer a reference velocity to create a Plane
+Couette Flow.  Make sure that the cutoff radius \var{r_\mathrm{cut}}
+is larger than the cutoff radius of the constraint Lennard-Jones
+interactions. Otherwise there is no possibility that the particles
+feel the viscous layer.
+
+This method was tested for Dissipative Particle Dynamics but it is
+intended for mesoscopic simulation methods in general. Note, that to
+use tunable-slip boundary interactions you have to apply \textbf{two}
+plane cell constraints with Lennard-Jones in addition to the
+tunable-slip interaction. Make sure that the cutoff radius
+\var{r_\mathrm{cut}} is larger than the cutoff radius of the
+constraint Lennard-Jones interactions. Otherwise there is no
+possibility that the particles feel the viscous layer.  Please read
+reference \cite{smiatek08a} before using this interaction.
+
+\subsection{DPD interaction}\label{sec:DPDinter}
+\index{DPD interaction|mainindex}
+\index{interactions!DPD|mainindex}
+\index{DPD}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2} inter_dpd \var{gamma} \var{r\_cut} \opt{ WF \var{wf}  \var{tgamma} \var{tr\_cut} TWF \var{twf}}
+  \begin{features}
+    \required{INTER_DPD}
+  \end{features}
+\end{essyntax}
+
+This is a special interaction that is to be used in conjunction with
+the Dissipative Particle Dynamics algorithm \ref{sec:DPD} when the
+\texttt{INTER_DPD} implementation is used. The parameters correspond
+to the parameters of the DPD thermostat \vref{sec:DPDinter}, but
+can be set individually for the different interactions.
 
 \subsection{Fixing the center of mass}
 \begin{essyntax}
@@ -1682,6 +1700,54 @@ total applied force on the bundle and on the target molecule the same.
 A force of magnitude \var{force} is applied on \var{typeid2}
 particles, and a force of magnitude (\var{force} * \var{fratio}) is
 applied on \var{typeid1} particles.
+
+\subsection{Capping the force during warmup}
+\label{sec:forcecap}
+
+\begin{essyntax}
+  \variant{1} inter ljforcecap \alt{\var{F_\mathrm{max}} \asep individual}
+  \variant{2} inter morseforcecap \alt{\var{F_\mathrm{max}} \asep individual}
+  \variant{3} inter buckforcecap \alt{\var{F_\mathrm{max}} \asep individual}
+  \variant{4} inter tabforcecap \alt{\var{F_\mathrm{max}} \asep individual}
+  \begin{features}
+    \required[\variant{1}]{LENNARD_JONES}
+    \required[\variant{2}]{MORSE}
+    \required[\variant{3}]{BUCKINGHAM}
+    \required[\variant{4}]{TABULATED}
+  \end{features}  
+\end{essyntax}
+
+Non-bonded interactions are often used to model the hard core
+repulsion between particles. Most of the potentials in the section are
+therefore singular at zero distance, and forces usually become very
+large for distances below the particle size. This is not a problem
+during the simulation, as particles will simply avoid overlapping.
+However, creating an initial dense random configuration without
+overlap is often difficult.
+
+By artificially capping the forces, it is possible to simulate a
+system with overlaps. By gradually raising the cap value
+\var{F_\mathrm{max}}, possible overlaps become unfavorable, and the
+system equilibrates to a overlap free configuration.
+
+This command will cap the force to \var{F_\mathrm{\var{max}}}, \ie for
+particle distances which would lead to larger forces than
+\var{F_\mathrm{max}}, the force remains at \var{F_\mathrm{max}}.
+Accordingly, the potential is replaced by replaced by $r
+\var{F_\mathrm{max}}$. Particles placed exactly on top of each other
+will be subject to a force of magnitude \var{F_\mathrm{max}} along
+the first coordinate axis.
+
+The force capping is switched off by setting $\var{F_\mathrm{max}}=0$.
+Note that force capping always applies to all interactions of the
+corresponding type (\eg all Lennard-Jones interactions) regardless of
+the particle types.
+
+If instead of a force capping value, the string ``individual'' is
+given, the force capping can be set individually for each
+interaction. The capping radius is in this case not derived from the
+potential parameters, but is given by an additional signal floating
+point parameter to the interaction.
 
 %%% Local Variables:
 %%% mode: latex

@@ -52,6 +52,7 @@
 #include "morse_tcl.h"
 #include "dpd_tcl.h"
 #include "soft_sphere_tcl.h"
+#include "hat_tcl.h"
 #include "steppot_tcl.h"
 #include "tab_tcl.h"
 #include "tunable_slip_tcl.h"
@@ -77,6 +78,7 @@
 #include "dihedral_tcl.h"
 #include "endangledist_tcl.h"
 #include "fene_tcl.h"
+#include "overlap_tcl.h"
 #include "harmonic_tcl.h"
 #include "subt_lj_tcl.h"
 
@@ -411,6 +413,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef SOFT_SPHERE
   if (data->soft_cut > 0.0) tclprint_to_result_softIA(interp,i,j);
+#endif
+
+#ifdef HAT
+  if (data->HAT_r > 0.0) tclprint_to_result_hatIA(interp,i,j);
 #endif
 
 #ifdef LJCOS2
@@ -817,6 +823,10 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("soft-sphere", tclcommand_inter_parse_soft);
 #endif
 
+#ifdef HAT
+    REGISTER_NONBONDED("hat", tclcommand_inter_parse_hat);
+#endif
+
 #ifdef COMFORCE
     REGISTER_NONBONDED("comforce", tclcommand_inter_parse_comforce);
 #endif
@@ -1061,7 +1071,7 @@ int tclcommand_inter(ClientData _data, Tcl_Interp *interp,
     is_i2 = ARG_IS_I(2, j);
 
     Tcl_ResetResult(interp);
- 
+
     // non bonded interactions
     if (is_i1 && is_i2)
       err_code = tclcommand_inter_parse_non_bonded(interp, i, j, argc-3, argv+3);

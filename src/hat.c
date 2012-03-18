@@ -18,25 +18,29 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _ENDANGLEDIST_TCL_H
-#define _ENDANGLEDIST_TCL_H
-/** \file endangledist_tcl.h
- * Tcl interface for \ref endangledist.h
+/** \file soft_sphere.c
+ *
+ *  Implementation of \ref soft_sphere.h
  */
+#include "hat.h"
+#include "communication.h"
 
-#include "parser.h"
+#ifdef HAT
 
-#ifdef BOND_ENDANGLEDIST
+int hat_set_params(int part_type_a, int part_type_b,
+			   double Fmax, double r)
+{
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-/// parse parameters for the endangledist potential
-int tclcommand_inter_parse_endangledist(Tcl_Interp *interp,
-					int bond_type, int argc, char **argv);
+  if (!data) return ES_ERROR;
 
-///
-int tclprint_to_result_endangledistIA(Tcl_Interp *interp,
-				      Bonded_ia_parameters *params);
+  data->HAT_Fmax = Fmax;
+  data->HAT_r    = r;
+ 
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+
+  return ES_OK;
+}
 
 #endif
-
-#endif
-

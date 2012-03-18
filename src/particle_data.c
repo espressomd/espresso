@@ -250,8 +250,8 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-  part->T = -1.0;
-  part->gamma = -1.0;
+  part->p.T = -1.0;
+  part->p.gamma = -1.0;
 #endif
 }
 

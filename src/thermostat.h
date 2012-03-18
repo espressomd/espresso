@@ -161,19 +161,19 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 #endif
     {
 #ifdef LANGEVIN_PER_PARTICLE  
-      if(p->gamma >= 0.) {
-        langevin_pref1_temp = -p->gamma/time_step;
+      if(p->p.gamma >= 0.) {
+        langevin_pref1_temp = -p->p.gamma/time_step;
         
-        if(p->T >= 0.)
-          langevin_pref2_temp = sqrt(24.0*p->T*p->gamma/time_step);
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
         else
-          langevin_pref2_temp = sqrt(24.0*temperature*p->gamma/time_step);
+          langevin_pref2_temp = sqrt(24.0*temperature*p->p.gamma/time_step);
         
         p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
       }
       else {
-        if(p->T >= 0.)
-          langevin_pref2_temp = sqrt(24.0*p->T*langevin_gamma/time_step);
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->p.T*langevin_gamma/time_step);
         else          
           langevin_pref2_temp = langevin_pref2;
         

@@ -22,26 +22,29 @@
 \label{chap:analysis-core}
 \index{Analysis in the Core}
 
-Analysis in the core is a new concept introduced in \es since version 3.1.
-It was motivated by the fact, that sometimes it is desirable that the analysis
-functions do more than just return a value to the scripting interface.
-For some observables it is desirable to be sampled every few
-integrations steps. In addition, it should be possible to pass the
-observable values to other functions which compute history-dependent
-quantitites, such as correlation functions.  
-All this should be done without the need to interrupt
-the integration by passing the control to the script level and back, which
-produces a significant overhead when performed too often. 
+Analysis in the core is a new concept introduced in \es since version
+3.1.  It was motivated by the fact, that sometimes it is desirable
+that the analysis functions do more than just return a value to the
+scripting interface.  For some observables it is desirable to be
+sampled every few integrations steps. In addition, it should be
+possible to pass the observable values to other functions which
+compute history-dependent quantities, such as correlation functions.
+All this should be done without the need to interrupt the integration
+by passing the control to the script level and back, which produces a
+significant overhead when performed too often.
 
-Some observables in the core have their corresponding counterparts
-in the TCL observables of the \verb!analyze! command
-described in Chapter~\ref{chap:analysis}. 
-However, only the core-observables can be used on the fly with the 
-toolbox of the correlator and on the fly analysis of time series.
-Similarly, some special cases of using the correlator have their redundant
-counterparts in the analysis in Tcl (Chapter~\ref{chap:analysis}),
-but the correlator provides a general and versatile toolbox which
-can be used with any implemented core-observables.
+Some observables in the core have their corresponding counterparts in
+the Tcl observables of the \verb!analyze! command described in
+Chapter~\ref{chap:analysis}.  However, only the core-observables can
+be used on the fly with the toolbox of the correlator and on the fly
+analysis of time series.  Similarly, some special cases of using the
+correlator have their redundant counterparts in the analysis in Tcl
+(Chapter~\ref{chap:analysis}), but the correlator provides a general
+and versatile toolbox which can be used with any implemented
+core-observables. The only trick to bridge the gap between Tcl based 
+analysis and core analysis is the tclcommand observable that allows
+use the return value of arbitrary Tcl functions (also self-written) 
+as input for the core analysis. See more below.
 
 \section{Observables}
 \index{Observables}
@@ -50,8 +53,12 @@ can be used with any implemented core-observables.
 
 \subsection{Introduction}
 The first step of the core analysis is to tell \es to create an observable.
-That means just allocating the corresponding memory, assigning a function 
-to compute the observable value and an \var{id} which will be used to refer 
+An observable in the sense of the core analysis can be considered as 
+a rule how to compute a certain set of numbers from a given state of the system.
+It does not refer to the numbers itself.
+
+Creating an observable means just allocating the corresponding memory, assigning a function 
+to compute the observable value and reserving an \var{id} which will be used to refer 
 to the observable. 
 In addition to the possibility to  print the observable value 
 (return the observable value to the script interface), 
@@ -108,6 +115,11 @@ They are generic to all observables and are described after the list of observab
           If \lit{blocked \var{size}} is specified,
           the particles are subdivided into blocks of size \var{size} and the centre
           of mass velocity is calculated for each block separately.
+    \item \lit{com_force} \var{particle\_specifications} \opt{blocked \var{size}}\\
+          Total force on the specified particles. 
+          If \lit{blocked \var{size}} is specified,
+          the particles are subdivided into blocks of size \var{size} and the total
+          force is calculated for each block separately.
     \item \lit{stress_tensor} \\
           The stress tensor. It only works with all particles. 
           It is returned as a 9-dimensional array:\\
@@ -152,27 +164,31 @@ They are generic to all observables and are described after the list of observab
           defined by the \var{cutoff}. If no such neighbour is found, the 
           observable is zero. The observable has one dimension per each 
           particle of \var{particle\_specifications_1}
-    \item \lit{density_profile}  \var{particle\_specifications} \var{profile_specifications} \\
+    \item \lit{density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the density profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
 
-    \item \lit{lb_velocity_profile}  \var{particle\_specifications} \var{profile_specifications} \\
+    \item \lit{lb_velocity_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
           Compute the Lattice-Boltzmann velocity profile within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
 
-    \item \lit{flux_density_profile}  \var{particle\_specifications} \var{profile_specifications} \\
-          Compute the flux denisty within the specified cube.
+    \item \lit{flux_density_profile}  \var{particle\_specifications} \var{profile\_specifications} \\
+          Compute the flux density within the specified cube.
           For profile specifications, see section~\ref{sec:DensProfSpec}.
-
-%    \item \lit{radial_density_profile}
-%    \item \lit{radial_flux_density_profile}
-%    \item \lit{lb_radial_velocity_profile}
-    \item \lit{textfile \var{textfilename} \opt{\var{column\_1} \dots \var{column\_n} }}
-      This option allows to read data from an arbitrary text file, organized in columns.
-      The name of the textfile is 
-      \todo{Texfile input observable not fully supported yet!}
-    \item \lit{tclinput \var{dimQ} } TCL input of length  \var{dimQ} is used as ``observable''. 
-      \todo{Tcl input observable not fully supported yet!}
+    \item \lit{radial_density_profile}
+        Compute the density profile in cylindrical coordinates.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
+    \item \lit{radial_flux_density_profile} \\
+        Compute the flux density profile in cylindrical coordinates.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
+    \item \lit{lb_radial_velocity_profile} \\
+        Compute the Lattice-Boltzmann velocity profile in cylindrical coordinates.
+          For profile specifications, see section~\ref{sec:DensProfSpec}.
+    \item \lit{tclcommand \var{dimQ} \var{command}} \\
+        An arbitrary Tcl function that returns a list of floating point numbers of fixed size
+        \var{dimQ} can be specified. Although its execution might be slow, it allows 
+        to prototype new observables without a lot of trouble.
+        Many existing analysis commands can be made to cooperate with the core analysis that way.
   \end{itemize}
 
 \subsection{Printing an observable}
@@ -222,46 +238,46 @@ of types) will not be automatically reflected in the observable.
 %      \todo{Not fully supported yet!}
   \end{itemize}
 
-\subsection{Density profile specifications}
+\subsection{Profile specifications}
 \label{sec:DensProfSpec}
-Profile specifications define corners of a cube in which the profile
-should be calculated and the number of bins which should be used in 
-each dimension. All specifications are optional and they have defaults described below.
-  \begin{itemize}
+Profiles are specified by giving the spacial area that is to be profiled and
+the number of bins in each spacial direction. The area to be analyzed is characterized
+by \var{minx}/\var{maxx} \var{miny}/\var{maxy} and \var{minz}/\var{maxz}. The defaults
+correspond to the box size when the observable is created.
+The bin size in each direction defaults to 1, and can be change with the parameter 
+\var{xbins}/\var{ybins}/\var{zbins}. Changing one, two or three of them to 
+a value $>1$ with thus create a one-, two- or three-dimensional map of the desired quantity.
+The full syntax thus reads as:
+\begin{essyntax}
+    observable new needs\_profile\_specs \opt{\var{other\_parameters}} 
+    \opt{ minx \var{minx}  }
+    \opt{ maxx \var{maxx}  }
+    \opt{ miny \var{miny}  }
+    \opt{ maxy \var{maxy}  }
+    \opt{ minz \var{minz}  }
+    \opt{ maxz \var{maxz}  }
+    \opt{ xbins \var{xbins}  }
+    \opt{ ybins \var{ybins}  }
+    \opt{ zbins \var{zbins}  }
+\end{essyntax}
 
-    \item \opt {minx \var{minx}} \opt {miny \var{miny}} \opt {minz \var{minz}} \\
-          Defines the minimum of the $(x,y,z)$ range of the cube. 
-          Default value: 0.0.
-
-    \item \opt {maxx \var{maxx}} \opt {maxy \var{maxy}} \opt {maxz \var{maxz}} \\
-          Defines the maximum of the $(x,y,z)$ range of the cube. 
-          Default value: Box length in the specified direction.
-          
-    \item \opt {xbins \var{xbins}} \opt {ybins \var{ybins}} \opt {zbins \var{zbins}} \\
-          Defines the number of bins in the specified direction.
-          Default value: 1.
-  \end{itemize}
-
-%\subsection{Radial profile specifications}
-%\label{sec:RadProfSpec}
-%Profile specifications define corners of a cube in which the profile
-%Should be calculated and the number of bins which should be used in 
-%Each dimension. All specifications are optional and they have defaults described below.
-%  \begin{itemize}
-%
-%    \item \opt {center \var{x}\var{y}\var{z}} 
-%          Coordinates of the centre around which the profile should be computed.
-%          Default value: centre of the simulation box.
-%
-%    \item \opt {minz \var{minz}} \opt {maxz \var{maxz}} \opt {zbins \var{zbins}} 
-%          Default value: $+$ and $-$ the box length in the $z$ direction and 
-%          \var{zbins=1}
-%          
-%    \item \opt {xbins \var{xbins}} \opt {ybins \var{ybins}} \opt {zbins \var{zbins}}
-%          Defines the number of bins in the specified direction.
-%          Default value: 1.
-%  \end{itemize}
-
+Radial profiles allow to do the same as usual profiles, except the coordinate system is a cylindrical
+one and the binning is done in the cylindrical coordinates (defined with the axis in z-direction). 
+This is very helpful if the symmetry of the
+system is cylindrical. The spacial are is characterized by a center (default to the center of the box)
+a maximum radial position \var{maxr} (defaults to the smaller value of the box lengths in x and y directions)
+and a minimum and maximum value of $z$. It is possible to also resolve different polar angles, thus using it
+as a full 3D mapping tool, but this will only rarely be used. The full syntax is:
+\begin{essyntax}
+    observable new needs\_radial\_profile\_specs \opt{\var{other\_parameters}} 
+    \opt{ \var{center} <cx> <cy> <cx> }
+    \opt{ maxr \var{maxr}  }
+    \opt{ minz \var{minz}  }
+    \opt{ maxz \var{maxz}  }
+    \opt{ rbins \var{rbins}  }
+    \opt{ phibins \var{phibins}  }
+    \opt{ zbins \var{zbins}  }
+\end{essyntax}
 
 
 \section{Correlations}
@@ -294,7 +310,7 @@ many orders of magnitude in the lag time.
 The generic correlation interface of \es may process either observables
 defined in the kernel, or data which it reads from an external file
 or values entered through the scripting interface. 
-\todo{Processing data from TCL input or from input files is not
+\todo{Processing data from Tcl input or from input files is not
   fully supported yet.}
 Thus, apart from
 data processing on the fly, it can also be used as an efficient correlator
@@ -306,7 +322,7 @@ remaining ones are the elements of the $n$-dimensional vector $C(\tau)$.
 The \lit{uwerr} command for computing averages and error estimates 
 of a time series of observables relies on estimates of autocorrelation
 functions and the respective autocorrelation times.
-The correlator provides the same functionality as a by-product of comupting
+The correlator provides the same functionality as a by-product of computing
 the correlation function (see section~\ref{ssec:CorrError}.
 
 An example of the usage of observables and correlations is provided 
@@ -350,7 +366,7 @@ Its further arguments are described below.
     Each component of the correlation vector is the square of the difference between the 
     corresponding components of the observables, \ie $C_i = (A_i-B_i)^2$. 
     Example: when $A$ is \lit{particle_positions}, it produces the mean square displacement
-    (for each componnent separately).
+    (for each component separately).
     \item \lit{complex_conjugate_product}
     %\item List them here! \todo{write the list}
   \end{itemize}
@@ -367,7 +383,7 @@ Its further arguments are described below.
   \var{tau\_max} can span the entire simulation without
   too much additional cpu time.}
 \item \lit{tau_lin} \\
-  The number of datapoints for which the results are linearly spaced
+  The number of data-points for which the results are linearly spaced
   in tau.  This is a parameter of the multiple tau correlator. If you
   want to use it, make sure that you know how it works. By default, it
   is set equal to \var{tau\_max} which results in the trivial linear
@@ -415,7 +431,7 @@ defined correlations.
 Variant \variant{1} is the recommended way of updating the correlations.
 By specifying \lit{start} or \lit{stop} it starts or stops automatically
 updating the correlation estimates. The automatic updates are done
-within the integration loop without furhter user interventin.
+within the integration loop without further user intervention.
 The update frequency is adjusted based based on the value of \var{dt} 
 provided when defining the correlation.  
 
@@ -448,15 +464,15 @@ is much shorter, it does not have a big effect.
 \subsection{Printing out the correlation and related quantities}
 \label{ssec:CorrError}
 \begin{essyntax}
-\variant{1} correlation \var{id} write_to_file \var{filname}
+\variant{1} correlation \var{id} write_to_file \var{filename}
 \variant{2} correlation \var{id} print 
 \variant{3a} correlation \var{id} print \opt{ average1 | variance1 | correlation_time } 
-\variant{3b} correlation \var{id} print \opt{ avarage_errorbars }
+\variant{3b} correlation \var{id} print \opt{ average_errorbars }
 \end{essyntax}
 
 Variant \variant{1} writes the current status of the correlation
 estimate to the specified filename. If the file exists, its contents will
-be owerwritten.
+be overwritten.
 
 \minisec{Output format} 
 The output looks as follows:
@@ -484,7 +500,7 @@ estimate of the statistical property as a Tcl variable.             \\
 \lit{correlation_time} prints the estimate of the correlation time. \\
 \lit{average_errorbars} prints the estimate of the error of the average based
 on the method according to~\cite{wolff04a} (same as 
-used by the \lit{uwerr} comamnd). 
+used by the \lit{uwerr} command). 
 
 
 \subsection{The correlation algorithm: multiple tau correlator}
@@ -493,7 +509,7 @@ used by the \lit{uwerr} comamnd).
 
 Here we briefly describe the multiple tau correlator which is implemented in \es.
 For a more detailed description and discussion of its behaviour with respect to
-statistical and systematic errores, please read the cited literature.
+statistical and systematic errors, please read the cited literature.
 This type of correlator has been in use for years in the analysis of
 dynamic light scattering~\cite{schatzel88a}. About a decade later it found its way
 to the Fluorescence Correlation Spectroscopy (FCS)~\cite{magatti01a}.
@@ -514,7 +530,7 @@ in time $i\delta t$. We are interested in computing the correlation
 function according to Equation~\ref{eq:CtauDef} for a range lag times
 $\tau = (i-j)\delta t$ between the measurements $i$ and $j$.
 To simplify the notation, we further drop $\delta t$
-when refering to observables and lag times. 
+when referring to observables and lag times. 
 
 The trivial implementation takes all possible pairs of values
 corresponding to lag times $\tau \in [\taumin:\taumax]$. 
@@ -545,18 +561,18 @@ The speedup is gained at the expense of statistical accuracy.
 The loss of accuracy occurs at the compression step.
 In principle one can use any value of $m$ and $p$ to tune the algorithm
 performance. However, it turns out that using a high $m$ dilutes the
-data at high $\tau$. Therefore $m=2$ is hardcoded in the \es correlator
+data at high $\tau$. Therefore $m=2$ is hard-coded in the \es correlator
 and cannot be modified by user. The value of $p$ remains an adjustable
 parameter which can be modified by user by setting \lit{tau_lin}
-when defining a correlation. In genral, one should choose $p \gg m$
+when defining a correlation. In general, one should choose $p \gg m$
 to avoid loss of statistical accuracy. Choosing $p=16$ seems to be
 safe but it may depend on the properties of the analyzed
-corerlation functions. A detailed analysis has been performed
+correlation functions. A detailed analysis has been performed
 in Ref.~\cite{ramirez10a}.
 
 The choice of the compression function also influences the statistical
 accuracy and can even lead to systematic errors. The default compression 
-function is \lit{discard2} which discards the second fo the compressed 
+function is \lit{discard2} which discards the second for the compressed 
 values and pushes the first one to the higher level. This is robust and 
 can be applied universally to any combination of observables and
 correlation operation. On the other hand, it reduces the
@@ -575,6 +591,6 @@ properties of the difference
 For example in the case of velocity autocorrelation function, the
 above-mentioned difference has a small value and a random sign, \ie\ 
 different contributions cancel each other. On the other hand, in the
-of the case of mean square displacmenent the difference is always positive,
+of the case of mean square displacement the difference is always positive,
 resulting in a non-negligible systematic error. A more general
 discussion is presented in Ref.~\cite{ramirez10a}.

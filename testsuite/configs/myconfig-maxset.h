@@ -15,6 +15,7 @@
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
+#define REACTIONS
 
 #define NEMD
 #define NPT 
@@ -28,6 +29,7 @@
 #define LENNARD_JONES_GENERIC
 #define LJCOS
 #define LJCOS2
+#define HAT
 #define LJ_ANGLE
 #define GAY_BERNE
 #define SMOOTH_STEP
@@ -37,8 +39,12 @@
 #define BUCKINGHAM
 #define SOFT_SPHERE
 #define INTER_RF
+#define OVERLAPPED
 
 #define BOND_ANGLE_COSINE
 #define BOND_ANGLEDIST
+#define BOND_ANGLEDIST_HARMONIC
+#define BOND_ENDANGLEDIST
+#define BOND_ENDANGLEDIST_HARMONIC
 
 #define VIRTUAL_SITES_RELATIVE

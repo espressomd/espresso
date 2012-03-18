@@ -17,7 +17,9 @@
 #
 source "tests_common.tcl"
 
-require_feature "ELECTROSTATICS MASS"
+require_feature ELECTROSTATICS 
+require_feature MASS
+require_feature EXTERNAL_FORCES
 
 proc veccompare { a b } {
 #  puts "$a $b"
@@ -44,11 +46,12 @@ setmd skin 0.5
 setmd time_step 0.01
 thermostat off
 
-part 0 pos 1 0 0 v 2 0 0 type 0 q 1 mass 1
-part 1 pos 2 0 0 v 4 0 0 type 0 q -1
+part 0 pos 1 0 0 v 2 0 0 type 0 q 1 mass 1 ext_force 1 0 0 
+part 1 pos 2 0 0 v 4 0 0 type 0 q -1 ext_force -2 0 0
 part 2 pos 1 1 0 v 2 2 0 type 1
 part 3 pos 2 1 0 v 4 2 0 type 1
 part 4 pos 3 0 0 v 6 0 0 type 0 mass 2
+integrate 0
 
 
 ############### Observable particle_position ##########################
@@ -149,4 +152,25 @@ if { ![ veccompare [ observable $stress_tensor print ] [ lreplace [ lindex [ ana
   error "stress_tensor is not working"
 }
 
-############# Observable   
+############# Observable com force and particle force ###### 
+set particle_forces [ observable new particle_forces id { 0 1 } ] 
+if { ![ veccompare [ observable $particle_forces print ] { 1 0 0 -2 0 0 } ] } {
+  error "particle_forces is not working"
+}
+
+set com_force [ observable new com_force id { 0 1 } ] 
+if { ![ veccompare [ observable $com_force print ] { -1 0 0 } ] } {
+  error "particle_forces is not working"
+}
+
+############# Observable tcl command #######################
+proc p1 {} {
+  return { 1 2 3 }
+}
+set tclcommand [ observable new tclcommand 3 "p1" ] 
+puts [ p1 ]
+puts "This is the output [ observable $tclcommand print ]"
+if { ![ veccompare [ observable $tclcommand print ] { 1 2 3 } ] } {
+  error "tclcommand is not working"
+}
+

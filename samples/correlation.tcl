@@ -19,9 +19,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
 
-## This is a sample script that shows how the correlation
-## module is supposed to work. It should be extended soon, but
-## should already give an overview of the correlation engine.
+## This is a sample script that shows how the core analysis is
+## supposed to work. Out showcase is the calculation of the
+## diffusion coefficient of noninteracting particles, by calculating the
+## MSD and by applying the Green-Kubo relation that uses the
+## velocity autocorrelation function (VACF)
 
 ## First set up particles in a simulation box
 ## with (not so important MD parameters)
@@ -35,13 +37,14 @@ set int_steps 100; # number of steps per integration round
 
 thermostat langevin $temperature $friction
 setmd time_step $time_step
-setmd skin 0.1
+setmd skin 2.0
 t_random seed [ pid ]
 
 # set up some non-interacting particles of type 0
 part 0 pos 0. 0. 0. type 0
 part 1 pos 1. 1. 1. type 0
 
+################################
 # Define some observables
 ################################
 
@@ -52,11 +55,27 @@ set vel [observable new particle_velocities type [list 0]]
 set pos [observable new particle_positions all]
 
 # center of mass of particles with ids 0 and 2
+# This is not used for actual analysis, but to get
+# an idea how it works
 set com_pos [observable new com_position id [list 0 1]]
+
+# Only for demonstration purpose we show an observable that 
+# contains the x-velocities of both particles with implemented in TCL:
+proc x_vels {} {
+  set v1 [ lindex [ part 0 print v ] 0 ]
+  set v2 [ lindex [ part 1 print v ] 0 ]
+  return [ list $v1 $v2 ]
+}
+# It is twodimensional an the corresponding command is "x_vels"
+set x_vels_observable [ observable new tclcommand 2 "x_vels" ]
 
 # Particle specifications always refer to currently existing particles
 # and are internally translated to a list of particle ids
-# if we add more particles later, they will not be accounted for
+# if we add more particles later, they will not be accounted for.
+
+##################################################
+# Define the corresponding correlations
+##################################################
 
 # velocity autocorrelation function of particles of type 0
 set vacf1 [correlation new obs1 $vel corr_operation scalar_product tau_max 1 dt $time_step]
@@ -81,11 +100,10 @@ set msd [correlation new obs1 $pos corr_operation square_distance_componentwise 
 # same msd as above, but we will update it manually, with much lower frequency
 set msd_man [correlation new obs1 $pos corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
 
-# FIXME tcl_input used to be implemented, but somehow got lost?
-# msd of particle 1 based on TCL input, but with much lower sampling frequency
-#set dim_input 3; # dimensionality of the input needs to be specified
-#set msd_tcl [correlation new obs1 tclinput $dim_input corr_operation scalar_product tau_lin 20 tau_max 100 delta_t [expr $time_step*$int_steps] compress1 discard1]
-# this will be also updated manually 
+# example of correlating data from an input file
+# one more vacf, this time we use the tclcommand observable to read velocities from a file and pass them to the correlator
+set msd_file [correlation new obs1 $pos_file corr_operation square_distance_componentwise tau_lin 16 tau_max $run_time dt [expr $time_step*$int_steps] compress1 discard1]
+
 
 # Tell Espresso to update the desired correlations automatically
 correlation $vacf1 autoupdate start
@@ -110,23 +128,12 @@ set vacf_force [correlation new obs1 $vel_force corr_operation componentwise_pro
 # and make it autoupdate
 correlation $vacf_force autoupdate start
 
-
-# FIXME the rest has to be updated by Stefan, because I do not completely understand, what kind of results is should produce
-
-#correlation [ correlation n_corr ] first_obs density_profile type { 0 } startz 0 stopz 10 nbins 10 second_obs density_profile id { 0 } startz 0 stopz 10 nbins 10 corr_operation componentwise_product tau_lin 10 tau_max 1. delta_t [ setmd time_step ] compress1 discard1 compress2 discard2
-#correlation 1 first_obs radial_density_profile type { 0 } center 5. 5. 5. stopr 5 nbins 10 second_obs radial_density_profile type { 0 } center 5. 5. 5. stopr 5 nbins 10 corr_operation componentwise_product tau_lin 5 hierarchy_depth 1 delta_t [ setmd time_step ] compress1 discard1 compress2 discard2
-
-#inter 0 0 lennard-jones 0 0.25 0. 0. 
-## We also calculate the variance of the x component of the velocity 
-## as reference value (to see that everything works).
-set var 0.
-set av 0.
-
-
 ## Now comes the main integration loop
 set round 0;
 set time [setmd time];
-#set ofile [ open "v.dat" "w"]
+
+set pos_file_name "xyz.dat"
+set fp [ open $pos_file_name "w"]
 while { $time < $run_time } {
   if { [expr $round%1000] == 0 } { 
     puts "Integration round $round, time $time";
@@ -135,21 +142,41 @@ while { $time < $run_time } {
     puts "integration failed";
     exit;
   } else { incr round; }
+  # write down the velocities into the file
+  puts $fp [observable $pos print];
   # Explicit call to update a correlation 
   correlation $msd_man update;
   # Updating the correlation from TCL input
-  #correlation $msd_tcl update [ part 0 print v ];
-  set av [ expr $av + [ lindex [ part 0 print v ] 0 ] ]
-  set var [expr $var + [ lindex [ part 0 print v ] 0 ] *  [ lindex [ part 0 print v ] 0 ] ]
-  #puts $ofile [ part 0 print v ]
   set time [setmd time];
-
 }
-#close $ofile
-#set file_corr_number [ correlation n_corr ]
-#correlation $file_corr_number first_obs textfile "v.dat" corr_operation scalar_product tau_lin 20 tau_max 100. delta_t .01 compress1 discard1
-#correlation $file_corr_number update_from_file
-#correlation $file_corr_number write_to_file "test.dat"
+close $fp;
+
+# Example of feeding arbitrary data to the correlator
+# here we compute msd again, using the positions which we stored in a file
+
+# first we need to define a procedure which enables feeding 
+# values of the current tcl variable to an observable tclcommand
+proc my_get_line { } {
+    global line;
+    return $line;
+}
+# the observable which will be used to read positions from file
+set pos_file [observable new tclcommand [expr 3*[setmd n_part]] my_get_line];
+
+# now read-in the positions from the file and feed them to msd_file
+set fp [open $pos_file_name r];
+set file_data [read $fp];
+close $fp;
+#  Process data file
+set data [split $file_data "\n"];
+# the values in variable line are used to compute observable pos_file
+foreach line $data {
+    if { [llength $line] == "0" } { 
+        break; 
+    }
+    correlation $msd_file update; 
+}
+
 
 # to make use of all the history, finalize all correlations when the integration is done
 for {set i 0} {$i < [correlation n_corr] } {incr i} {
@@ -160,62 +187,5 @@ correlation $vacf1 write_to_file "vacf1.dat"
 correlation $vacf2 write_to_file "vacf2.dat"
 correlation $msd write_to_file "msd.dat"
 correlation $msd_man write_to_file "msd_man.dat"
-#correlation $msd_tcl write_to_file "msd_tcl.dat"
+correlation $msd_file write_to_file "msd_file.dat"
 correlation $vacf_force write_to_file "vacf_force.dat"
-exit;
-
-#Lets look at the average velocities of the particles
-#with external force
-set average [ correlation 4 print average1 ]
-set variance [ correlation 4 print variance1 ]
-set corrtime [ correlation 4 print correlation_time ]
-set stdev_mean [ correlation 4 print average_errorbars]
-set true_value [ list ]
-set true_correlation_time [ list ]
-for { set i 0 } { $i < $part_with_force } { incr i } {
-  lappend true_value [ expr $force/$friction ] 0. 0.
-  lappend true_correlation_time [ expr 1/$friction ]  [ expr 1/$friction ] [ expr 1/$friction ]
-}
-#for { set i 0 } { $i < [ llength $average ] } { incr i } {
-#  if { [ lindex $corrtime $i  ] > 0 } {
-#    lappend stdev_mean [ expr sqrt( [ lindex $variance $i ] / $nsteps / [ setmd time_step ] * [ lindex $corrtime $i ] ) ]
-#  } else {
-#    lappend stdev_mean 0.
-#  }
-#}
-
-puts "average    [ lrange $average    0 5 ] "
-puts "stdev_mean [ lrange $stdev_mean 0 5 ] "
-puts "true value [ lrange $true_value 0 5 ] "
-puts "corrtime   [ lrange $corrtime   0 5 ] "
-puts "true ctime [ lrange $true_correlation_time 0 5 ]"
-set counter 0.
-for { set i 0 } { $i < [ llength $average ] } { incr i } {
-  if { abs([ lindex $average $i ] - [ lindex $true_value $i ]) < [ lindex $stdev_mean $i ] } {
-    set counter [ expr $counter + 1 ]
-  }
-}
-puts "[ expr $counter/([llength $average ]) *100] % are within 1 sigma"
-
-exit
-
-## Finally we print the result to the screen.
-
-#puts "average [ expr $av/$nsteps ] [ lindex [ correlation 0 print average1 ] 0 ]"
-#puts "variance [ expr $var/$nsteps ] [ lindex [ correlation 0 print variance1 ] 0 ]"
-#set ct [ correlation 0 print correlation_time ]
-#correlation 0 print
-#set dens [ correlation 0 print average1 ] 
-puts [ correlation 0 print average1 ] 
-#puts [ correlation 1 print average1 ] 
-
-set mean 0
-set var 0
-foreach { x } $ct {
-  puts $x
-  set mean [ expr $mean + $x ]
-  set var [ expr $var + $x*$x ]
-}
-set mean [expr $mean / [ llength $ct ] ]
-set stddev [ expr sqrt( $var/[ llength $ct ] - $mean*$mean) ]
-puts "mean: $mean stddev: $stddev stderr: [ expr $stddev/sqrt([llength $ct]-1) ] "

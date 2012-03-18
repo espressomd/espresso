@@ -42,6 +42,7 @@
 #include "polymer_tcl.h"
 #include "pressure_tcl.h"
 #include "random_tcl.h"
+#include "reaction_tcl.h"
 #include "statistics_chain_tcl.h"
 #include "statistics_cluster_tcl.h"
 #include "statistics_correlation_tcl.h"
@@ -202,6 +203,9 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   /* from collision.c */
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
+#endif
+#ifdef REACTIONS
+  REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif
 }
 
