@@ -26,10 +26,6 @@ if { [setmd n_nodes] >= 5 } {
     puts "Testcase layered.tcl does not run on more than 5 nodes -- too many cells"
     ignore_exit
 }
-if { [setmd n_nodes] > 1} {
-    # MOL_CUT increases the short ranged radius so much that this test's box is too small
-    require_feature "MOL_CUT" off
-}
 
 puts "----------------------------------------"
 puts "- Testcase layered.tcl running on [format %02d [setmd n_nodes]] nodes: -"

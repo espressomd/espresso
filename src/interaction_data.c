@@ -674,6 +674,14 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->REACTION_range;
 #endif
 
+#ifdef MOL_CUT
+      if (data->mol_cut_type != 0) {
+	if (max_cut_current < data->mol_cut_cutoff)
+	  max_cut_current = data->mol_cut_cutoff;
+	max_cut_current += 2.0* max_cut_bonded;
+      }
+#endif
+
       IA_parameters *data_sym = get_ia_param(j, i);
 
       /* no interaction ever touched it, at least no real
@@ -684,10 +692,6 @@ static void recalc_maximal_cutoff_nonbonded()
       /* take into account any electrostatics */
       if (max_cut_global > max_cut_current)
 	max_cut_current = max_cut_global;
-
-#if defined(MOL_CUT) && !defined(ONE_PROC_ADRESS)
-      max_cut_current += 2.0* max_cut_bonded;
-#endif
 
       data_sym->max_cut =
 	data->max_cut = max_cut_current;
