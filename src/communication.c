@@ -1125,10 +1125,10 @@ void mpi_integrate_slave(int pnode, int task)
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j)
 {
-  int tablesize=0;
-
   mpi_call(mpi_bcast_ia_params_slave, i, j);
-  tablesize = tabulated_forces.max;
+#ifdef TABULATED
+  int tablesize = tabulated_forces.max;
+#endif
 #ifdef INTERFACE_CORRECTION
   int adress_tablesize = adress_tab_forces.max;
 #endif
