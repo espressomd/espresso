@@ -331,7 +331,7 @@ int getintersection(double pos1[3], double pos2[3],int given, int get, double va
     p2r[i] = drem_down((pos2[i]-pos1[i])+box_size[i]/2.0,box_size[i])-box_size[i]/2.0;
   }
   value = drem_down((value-pos1[given])+box_size[given]/2.0,box_size[given])-box_size[given]/2.0;
-  //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f value is %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],oldvalue,value););
+  //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],value););
   
   if ((value)*(p2r[given]) < -0.0001) {
     char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);

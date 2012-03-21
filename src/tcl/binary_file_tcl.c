@@ -199,10 +199,17 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
   f_row[3] = { -1 };
   
   int av_pos = 0, av_v = 0, 
-  #ifdef DIPOLES 
-  av_dip=0, 
-  #endif
-  av_mass=0, av_f = 0, av_q = 0, av_type = 0;
+#ifdef DIPOLES 
+    av_dip=0, 
+#endif
+#ifdef MASS
+    av_mass=0,
+#endif
+    av_f = 0,
+#ifdef ELECTROSTATICS
+    av_q = 0,
+#endif
+    av_type = 0;
   
   int node, i;
   struct MDHeader header;
@@ -254,8 +261,12 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
     case   FX:   f_row[0] = i; break;
     case   FY:   f_row[1] = i; break;
     case   FZ:   f_row[2] = i; break;
+#ifdef MASS
     case MASSES: av_mass  = 1; break;
+#endif
+#ifdef ELECTROSTATICS
     case    Q:   av_q     = 1; break;
+#endif
     case TYPE:   av_type  = 1; break;
     }
   }
