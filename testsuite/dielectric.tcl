@@ -17,6 +17,7 @@
 #
 source "tests_common.tcl"
 
+require_feature "ELECTROSTATICS"
 require_feature "CONSTRAINTS"
 require_feature "EXTERNAL_FORCES"
 
@@ -29,18 +30,18 @@ setmd box_l 20 20 20
 set dist 0.5
 
 puts "Creating Wall 1"
-dielectric_wall normal 1. 0 0 dist 0.5 res 1.2
+dielectric wall normal 1. 0 0 dist 0.5 res 1.2
 constraint wall normal 1. 0 0 dist -0.0 type 0
 puts "Done. Now we have $n_induced_charges induced charges"
 puts "Creating Wall 2"
-dielectric_wall normal -1. 0 0 dist -19 res 1.2
+dielectric wall normal -1. 0 0 dist -19 res 1.2
 constraint wall normal -1. 0 0 dist -19.5 type 0
 puts "Done. Now we have $n_induced_charges induced charges"
 
 
 puts "Creating sphere"
 set r 3
-dielectric_sphere center 14 10 10 radius $r res 0.5 eps 0.2 
+dielectric sphere center 14 10 10 radius $r res 0.5 eps 0.2 
 constraint sphere center 14 10 10 radius [ expr $r-$dist ] direction 1 type 0
 puts "Done. Now we have $n_induced_charges induced charges"
 
@@ -49,7 +50,7 @@ set r1 5.
 set r2 8.
 set rs 2.5
 set l 4.
-dielectric_pore  center 10 10 10 axis 1 0 0 radii $r1 $r2 length $l res 1.9 smoothing_radius $rs eps 0.2
+dielectric pore  center 10 10 10 axis 1 0 0 radii $r1 $r2 length $l res 1.9 smoothing_radius $rs eps 0.2
 
 constraint pore center 10 10 10 axis 1 0 0 radii [ expr $r1 + $dist ] [ expr $r2 + $dist ] length [ expr $l - $dist ] type 0 smoothing_radius [ expr $rs - $dist ]
 puts "Done. Now we have $n_induced_charges induced charges"

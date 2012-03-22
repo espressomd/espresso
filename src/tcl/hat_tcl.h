@@ -18,25 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _ENDANGLEDIST_TCL_H
-#define _ENDANGLEDIST_TCL_H
-/** \file endangledist_tcl.h
- * Tcl interface for \ref endangledist.h
+#ifndef HAT_TCL_H
+#define HAT_TCL_H
+/** \file hat_tcl.h
+ * Tcl interface for \ref hat.h
  */
 
 #include "parser.h"
 
-#ifdef BOND_ENDANGLEDIST
-
-/// parse parameters for the endangledist potential
-int tclcommand_inter_parse_endangledist(Tcl_Interp *interp,
-					int bond_type, int argc, char **argv);
+#ifdef HAT
 
 ///
-int tclprint_to_result_endangledistIA(Tcl_Interp *interp,
-				      Bonded_ia_parameters *params);
+int tclprint_to_result_hatIA(Tcl_Interp *interp, int i, int j);
+
+///
+int tclcommand_inter_parse_hat(Tcl_Interp * interp,
+				int part_type_a, int part_type_b,
+				int argc, char ** argv);
 
 #endif
 
 #endif
-

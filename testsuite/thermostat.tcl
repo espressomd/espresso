@@ -23,6 +23,8 @@ puts "------------------------------------------------"
 puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 
+require_feature THERMOSTAT_IGNORE_NON_VIRTUAL off
+
 # we expect to stay in this confidence interval (times stddeviation)
 # 20 is a really small chance, but since we measure quite a lot,
 # that is still quite a small interval, and the test probably only
@@ -35,6 +37,8 @@ set intstep 100
 set epsilon 1e-5
 
 set tcl_precision 5
+
+
 
 proc read_data {file} {
     set f [open $file "r"]

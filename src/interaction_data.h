@@ -314,6 +314,14 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef HAT
+  /** \name hat potential */
+  /*@{*/
+  double HAT_Fmax;
+  double HAT_r;
+  /*@}*/
+#endif
+
 #ifdef LJCOS
   /** \name Lennard-Jones+Cos potential */
   /*@{*/
@@ -434,6 +442,10 @@ typedef struct {
   double TUNABLE_SLIP_vx;
   double TUNABLE_SLIP_vy;
   double TUNABLE_SLIP_vz;
+#endif
+
+#ifdef REACTIONS
+  double REACTION_range;
 #endif
 
 } IA_parameters;

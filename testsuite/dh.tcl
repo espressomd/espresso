@@ -25,11 +25,6 @@ require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 require_max_nodes_per_side 2
 
-if { [setmd n_nodes] != 1} {
-    # MOL_CUT increases the short ranged radius so much that this test's box is too small
-    require_feature "MOL_CUT" off
-}
-
 puts "----------------------------------------"
 puts "- Testcase dh.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"

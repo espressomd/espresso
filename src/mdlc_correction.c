@@ -142,7 +142,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my)
 
 double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, double *ty, double *tz){
 
-  int    ix,iy,kcut2,ip; 
+  int    ix,iy,ip; 
   double gx,gy,gr;
 
   double S[4] = {0.0,0.0,0.0,0.0}; // S of Brodka methode, oder is S[4] = {Re(S+), Im(S+), Re(S-), Im(S-)}
@@ -173,8 +173,6 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
   ReGrad_Mum = (double *) malloc(sizeof(double)*n_local_particles);
   ImGrad_Mum = (double *) malloc(sizeof(double)*n_local_particles);
 
-  kcut2=kcut*kcut;
-    
   for(ix=-kcut;ix<=+kcut;ix++){
     for(iy=-kcut;iy<=+kcut;iy++){
 
@@ -359,7 +357,7 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 
 double get_DLC_energy_dipolar(int kcut){
 
-  int    ix,iy,kcut2,ip; 
+  int    ix,iy,ip; 
   double gx,gy,gr;
 
   double S[4], global_S[4];
@@ -385,8 +383,6 @@ double get_DLC_energy_dipolar(int kcut){
   
   energy=0.0;
 
-  kcut2=kcut*kcut;
- 
   for(ix=-kcut;ix<=+kcut;ix++){ 	
     for(iy=-kcut;iy<=+kcut;iy++){ 	
 

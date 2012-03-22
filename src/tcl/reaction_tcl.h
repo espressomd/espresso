@@ -18,25 +18,19 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _ENDANGLEDIST_TCL_H
-#define _ENDANGLEDIST_TCL_H
-/** \file endangledist_tcl.h
- * Tcl interface for \ref endangledist.h
- */
-
+#ifndef _REACTION_TCL_H
+#define _REACTION_TCL_H
 #include "parser.h"
 
-#ifdef BOND_ENDANGLEDIST
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
 
-/// parse parameters for the endangledist potential
-int tclcommand_inter_parse_endangledist(Tcl_Interp *interp,
-					int bond_type, int argc, char **argv);
+/** tcl procedure to set up reactions
+*/
+int tclcommand_reaction(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
 
-///
-int tclprint_to_result_endangledistIA(Tcl_Interp *interp,
-				      Bonded_ia_parameters *params);
+/*@}*/
 
 #endif
-
-#endif
-

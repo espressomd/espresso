@@ -18,25 +18,30 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef _ENDANGLEDIST_TCL_H
-#define _ENDANGLEDIST_TCL_H
-/** \file endangledist_tcl.h
- * Tcl interface for \ref endangledist.h
+#ifndef REACTION_H
+#define REACTION_H
+/** \file reaction.h
+ *
  */
+ 
+#include "utils.h"
 
-#include "parser.h"
+typedef struct {
+	int reactant_type;
+	int product_type;
+	int catalyzer_type;
+	double range;
+	double rate;
+	double back_rate;
+}  reaction_struct;
 
-#ifdef BOND_ENDANGLEDIST
+reaction_struct reaction;
 
-/// parse parameters for the endangledist potential
-int tclcommand_inter_parse_endangledist(Tcl_Interp *interp,
-					int bond_type, int argc, char **argv);
-
-///
-int tclprint_to_result_endangledistIA(Tcl_Interp *interp,
-				      Bonded_ia_parameters *params);
-
+#ifdef REACTIONS
+/** broadcasts reaction parameters and sets up an entry in the ia_params, so
+    that the verlet radius is equal or bigger than the reaction range.
+**/
+void setup_reaction();
 #endif
 
-#endif
-
+#endif /* ifdef REACTION_H */

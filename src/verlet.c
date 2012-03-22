@@ -51,8 +51,8 @@
 
 /** Add a particle pair to a verlet pair list.
     Checks verlet pair list size and reallocates memory if necessary.
- *  \param p1 Pointer to paricle one.
- *  \param p2 Pointer to paricle two.
+ *  \param p1 Pointer to particle one.
+ *  \param p2 Pointer to particle two.
  *  \param pl Pointer to the verlet pair list.
  */
 MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)

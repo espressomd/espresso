@@ -243,12 +243,18 @@ extern const char double_correlation_get_data_errors[][64];
  *     the linear compression method)
  * @param compressB_name: how the B values should be compressed (usually 
  *     the linear compression method)
+ * @param args: the parameters of the observables
  *
  */
-int double_correlation_init(double_correlation* self, double dt, unsigned int tau_lin, double tau_max,
-                  unsigned int window_distance, unsigned int dim_A, unsigned int dim_B, unsigned int dim_corr, 
-                  observable* A, observable* B, char* corr_operation_name, 
-                  char* compressA_name, char* compressB_name, void *args);
+int double_correlation_init(double_correlation* self, double dt, 
+			    unsigned int tau_lin, double tau_max,
+			    unsigned int window_distance, 
+			    unsigned int dim_A, unsigned int dim_B, 
+			    unsigned int dim_corr, 
+			    observable* A, observable* B, 
+			    char* corr_operation_name, 
+			    char* compressA_name, char* compressB_name, 
+			    void *args);
 
 
 /** Restore a correlation from a checkpoint

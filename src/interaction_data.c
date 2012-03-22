@@ -45,6 +45,7 @@
 #include "hertzian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
+#include "hat.h"
 #include "tab.h"
 #include "overlap.h"
 #include "ljcos.h"
@@ -258,6 +259,11 @@ void initialize_ia_params(IA_parameters *params) {
   params->soft_cut = INACTIVE_CUTOFF;
 #endif
 
+#ifdef HAT
+  params->HAT_Fmax =
+    params->HAT_r = 0.0;
+#endif
+
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
@@ -352,6 +358,10 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef MOL_CUT
   params->mol_cut_type = 0;
   params->mol_cut_cutoff = 0.0;
+#endif
+
+#ifdef REACTIONS
+  params->REACTION_range = 0.0;
 #endif
 }
 
@@ -618,6 +628,11 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->soft_cut;
 #endif
 
+#ifdef HAT
+      if (max_cut_current < data->HAT_r)
+	max_cut_current = data->HAT_r;
+#endif
+
 #ifdef LJCOS
       {
 	double max_cut_tmp = data->LJCOS_cut + data->LJCOS_offset;
@@ -654,6 +669,19 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->TUNABLE_SLIP_r_cut;
 #endif
 
+#ifdef REACTIONS
+      if (max_cut_current < data->REACTION_range)
+	max_cut_current = data->REACTION_range;
+#endif
+
+#ifdef MOL_CUT
+      if (data->mol_cut_type != 0) {
+	if (max_cut_current < data->mol_cut_cutoff)
+	  max_cut_current = data->mol_cut_cutoff;
+	max_cut_current += 2.0* max_cut_bonded;
+      }
+#endif
+
       IA_parameters *data_sym = get_ia_param(j, i);
 
       /* no interaction ever touched it, at least no real
@@ -664,10 +692,6 @@ static void recalc_maximal_cutoff_nonbonded()
       /* take into account any electrostatics */
       if (max_cut_global > max_cut_current)
 	max_cut_current = max_cut_global;
-
-#if defined(MOL_CUT) && !defined(ONE_PROC_ADRESS)
-      max_cut_current += 2.0* max_cut_bonded;
-#endif
 
       data_sym->max_cut =
 	data->max_cut = max_cut_current;

@@ -955,10 +955,11 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
     P3M_TRACE(fprintf(stderr,"%d: dp3m.params.epsilon=%lf\n", this_node, dp3m.params.epsilon));
    
     if(this_node==0) {
-      double a;
       /* self energy correction */
       P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",this_node, dp3m.energy_correction));
-      a = k_space_energy_dip;
+#ifdef P3M_DEBUG
+      double a = k_space_energy_dip;
+#endif
       k_space_energy_dip -= coulomb.Dprefactor*(dp3m.sum_mu2*2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
 
       double volume=box_l[0]*box_l[1]*box_l[2];
@@ -2135,7 +2136,7 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz,  int mesh, double mesh_i, i
    
  double P3M_DIPOLAR_real_space_error(double box_size, double prefac, double r_cut_iL,  int n_c_part, double sum_q2, double alpha_L)
 {
-  double d_error_f,d_cc,d_dc,d_bc,d_rcut2,d_con;
+  double d_error_f,d_cc,d_dc,d_rcut2,d_con;
   double d_a2,d_c,d_RCUT;
  
    
@@ -2154,9 +2155,6 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz,  int mesh, double mesh_i, i
 
  d_dc=8.0*d_a2*d_a2*d_a2*d_rcut2*d_rcut2*d_rcut2+20.0*d_a2*d_a2*d_rcut2*d_rcut2 \
       +30*d_a2*d_rcut2+15.0;
-
- d_bc=2.0*d_a2*d_rcut2 +1.0;
-
 
  d_con=1.0/sqrt(box_size*box_size*box_size*d_a2*d_a2*d_rcut2*d_rcut2*d_rcut2*d_rcut2*d_RCUT*(double)n_c_part);
 

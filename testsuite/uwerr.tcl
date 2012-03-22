@@ -31,7 +31,7 @@ proc blubb {vec} {
    return [expr -1 * log([lindex $vec 1] / [lindex $vec 0])]
 }
 
-set df [open "uwerr_test.data" r]
+set df [open "uwerr.data" r]
 while {![eof $df]} {
    gets $df row
    lappend data [split $row " "]

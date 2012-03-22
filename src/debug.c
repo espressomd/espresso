@@ -109,7 +109,7 @@ void check_particle_consistency()
     cell_part_cnt += cell->n;
     part = cell->part;
     np   = cell->n;
-    for(n=0; n<cell->n ; n++) {
+    for(n = 0; n < np ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: check_particle_consistency: ERROR: Cell %d Part %d has corrupted id=%d\n",
 		this_node,c,n,cell->part[n].p.identity);
@@ -210,7 +210,7 @@ void check_particles()
     cell_part_cnt += cell->n;
     part = cell->part;
     np   = cell->n;
-    for(n=0; n<cell->n ; n++) {
+    for(n = 0; n < np ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: check_particles: ERROR: Cell %d Part %d has corrupted id=%d\n",
 		this_node,c,n,cell->part[n].p.identity);

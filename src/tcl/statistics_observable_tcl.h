@@ -27,4 +27,12 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
 int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values);
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ); 
 
+int observable_tclcommand(void* _container, double* A, unsigned int n_A);
+
+typedef struct {
+  Tcl_Interp* interp;
+  int n_A;
+  char* command;
+} Observable_Tclcommand_Arg_Container;
+
 #endif

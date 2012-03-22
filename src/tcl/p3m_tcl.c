@@ -99,10 +99,12 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
 int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv)
 {
   double r_cut, alpha, accuracy = -1.0;
-  int mesh, cao, i;
+  int mesh[3], cao, i;
+  IntList il;
+  init_intlist(&il);
 
   if (argc < 1) {
-    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> <mesh> <cao> [<alpha> [<accuracy>]]",
+    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
 		     (char *) NULL);
     return TCL_ERROR;  
   }
@@ -117,12 +119,25 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
     return TCL_ERROR;  
 
   if(argc < 3 || argc > 5) {
-    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb <bjerrum> p3m <r_cut> <mesh> <cao> [<alpha> [<accuracy>]]",
+    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb <bjerrum> p3m <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
 		     (char *) NULL);
     return TCL_ERROR;  
   }
 
-  if((! ARG_IS_I(1, mesh)) || (! ARG_IS_I(2, cao))) {
+  if(! ARG_IS_I(1, mesh[0])) {
+    if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) ) {
+      Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
+      return TCL_ERROR;
+    } else {
+      mesh[0] = il.e[0];
+      mesh[1] = il.e[1];
+      mesh[2] = il.e[2];
+    }
+  } else {
+    mesh[1] = mesh[2] = mesh[0];
+  }
+
+  if(! ARG_IS_I(2, cao)) {
     Tcl_AppendResult(interp, "integer expected", (char *) NULL);
     return TCL_ERROR;
   }

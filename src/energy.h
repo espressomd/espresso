@@ -38,6 +38,7 @@
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
+#include "hat.h"
 #include "ljcos.h"
 #include "ljcos2.h"
 #include "ljangle.h"
@@ -149,6 +150,11 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef SOFT_SPHERE
   /* soft-sphere */
   ret  += soft_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef HAT
+  /* hat */
+  ret  += hat_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef LJCOS2

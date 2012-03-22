@@ -531,6 +531,7 @@ int mpi_gather_runtime_errors(char **errors);
 #define MAGGS_COUNT_CHARGES 3
 #define EWALD_COUNT_CHARGES 4
 #define P3M_COUNT_DIPOLES   5
+#define REACTION 6
 /*@}*/
 
 #endif
