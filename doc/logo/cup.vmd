@@ -1,0 +1,114 @@
+set draw_steam 0
+
+# COLORS
+proc h2v { hex } {
+    return [expr (1.0*0x$hex)/0xff]
+}
+
+# redefine some colors
+color change rgb white [h2v e7] [h2v ed] [h2v f9]
+color change rgb blue 0 0 1
+color change rgb red 1 0 0
+color change rgb gray 0.6 0.6 0.6
+
+# LOAD THE FILE
+mol new cup_espresso.vtf type vtf first 0 last -1 step 1 filebonds 1 waitfor all
+mol rename top cup_espresso.vtf
+animate goto 24
+
+# AXES OFF
+axes location off
+display depthcue off
+
+# set the BG
+color Display {Background} white
+
+# REPRESENTATIONS
+mol delrep 0 top
+
+# The cup
+color Name {O} blue
+mol representation VDW 1.1 28
+mol color Name
+mol selection {name O}
+mol material Goodsell
+mol addrep top
+
+# The saucer
+mol representation VDW 1.1 28
+mol color Name
+color Name {N} red
+mol selection {name N}
+mol material Goodsell
+mol addrep top
+
+if { $draw_steam } then {
+    # The steam
+    mol representation Surf 1.4
+    mol color Name
+    color Name {S} gray
+    mol selection {name S}
+    mol material Ghost
+    mol addrep top
+    
+    # DRAW ARROWS IN THE STEAM
+    set n_steam 5
+    set l_steam 6
+    
+    # get steam atom positions
+    set steamatoms [atomselect top "name S"]
+    set pos [$steamatoms get { x y z }]
+    
+    proc vmd_draw_arrow {mol start end} {
+	# an arrow is made of a cylinder and a cone
+	set length [vecsub $end $start]
+	set tip [vecadd $start [vecscale 0.8 $length]]
+	set middle [vecadd $start [vecscale 0.5 $length]]
+	graphics $mol cylinder $start $middle radius 0.05
+	graphics $mol cone $middle $tip radius 0.1
+    }
+
+    graphics top color black
+    graphics top material Transparent
+    # get steam bonds
+    for { set i 0 } { $i < $n_steam } { incr i } {
+	for { set j 0 } { $j < [expr $l_steam-1]} { incr j } {
+	    set index [expr $i*$l_steam + $j]
+	    draw arrow [lindex $pos $index] [lindex $pos [expr $index+1]]
+	}
+    }
+}    
+
+# VIEWPOINT
+molinfo top set {center_matrix rotate_matrix scale_matrix global_matrix} \
+{ 
+	{
+		{1 0 0 -9.804324}
+		{0 1 0 -9.545079}
+		{0 0 1 -9.741856}
+		{0 0 0 1}
+	} {
+		{1 0 0 0} 
+		{-0 1 -0.33 0} 
+		{0 0.33 1 0} 
+		{0 0 0 1}
+	} {
+		{0.175 0 0 0} 
+		{0 0.175 0 0} 
+		{0 0 0.175 0} 
+		{0 0 0 1}
+	} {
+		{1 0 0 0.05} 
+		{0 1 0 0.55} 
+		{0 0 1 0} 
+		{0 0 0 1}
+	}
+}
+	
+render options Tachyon \
+       "$::env(VMDDIR)/tachyon_LINUXAMD64 \
+       -res 2000 2000 \
+       -aasamples 4 -trans_vmd -mediumshade %s \
+       -format TARGA -o %s.tga; \
+       convert %s.tga %s.png; display %s.png &"
+
