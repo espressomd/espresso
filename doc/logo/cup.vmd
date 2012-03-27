@@ -1,4 +1,15 @@
-set draw_steam 0
+set draw_steam 1
+
+# MATERIALS
+# Sphere material
+material add Beads
+material change ambient Beads 0.4
+material change diffuse Beads 0.6
+material change specular Beads 0.2
+material change shininess Beads 0.4
+material change opacity Beads 1
+material change outline Beads 4
+material change outlinewidth Beads 0.7
 
 # COLORS
 proc h2v { hex } {
@@ -18,7 +29,7 @@ animate goto 24
 
 # AXES OFF
 axes location off
-display depthcue off
+display depthcue on
 
 # set the BG
 color Display {Background} white
@@ -31,7 +42,7 @@ color Name {O} blue
 mol representation VDW 1.1 28
 mol color Name
 mol selection {name O}
-mol material Goodsell
+mol material Beads
 mol addrep top
 
 # The saucer
@@ -39,7 +50,7 @@ mol representation VDW 1.1 28
 mol color Name
 color Name {N} red
 mol selection {name N}
-mol material Goodsell
+mol material Beads
 mol addrep top
 
 if { $draw_steam } then {
