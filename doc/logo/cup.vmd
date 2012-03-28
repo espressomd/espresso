@@ -1,4 +1,4 @@
-set draw_steam 1
+set draw_steam 0
 
 # MATERIALS
 # Sphere material
@@ -29,10 +29,15 @@ animate goto 24
 
 # AXES OFF
 axes location off
-display depthcue on
 
 # set the BG
 color Display {Background} white
+if { $draw_steam } then {
+    display depthcue on
+} else {
+    display depthcue off
+}
+
 
 # REPRESENTATIONS
 mol delrep 0 top
