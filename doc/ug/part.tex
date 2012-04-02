@@ -895,7 +895,7 @@ Please note:
   needs to be larger than the largest distance between a non-virtual
   particle and its associated virtual sites. To this aim, you need to
   set the global variable \texttt{min\_global\_cut} to this largest
-  distance.
+  distance. Espresso issues a warning when creating a virtual site with vs\_auto\_relate\_to and the cutoff is insufficient.
 \item If the virtual sites represent actual particles carrying a mass,
   the inertia tensor of the non-virtual particle in the center of mass
   needs to be adapted.
