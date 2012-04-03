@@ -14,7 +14,7 @@
    height="725.48163"
    id="svg2844"
    version="1.1"
-   inkscape:version="0.47 r22583"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="logo.svg"
    inkscape:export-filename="/auto.anoa/home/olenz/projects/espresso/src/doc/logo/logo01.png"
    inkscape:export-xdpi="90"
@@ -33,14 +33,14 @@
      inkscape:cx="55.093231"
      inkscape:cy="366.77458"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer2"
      showgrid="false"
      units="mm"
      showborder="true"
      borderlayer="false"
-     inkscape:window-width="1837"
-     inkscape:window-height="1180"
-     inkscape:window-x="34"
+     inkscape:window-width="1512"
+     inkscape:window-height="880"
+     inkscape:window-x="33"
      inkscape:window-y="-3"
      inkscape:window-maximized="1"
      showguides="true"
@@ -296,27 +296,5 @@ Stefan Kesselheim</dc:title>
        id="image3056"
        x="164.71652"
        y="-11.678528" />
-    <text
-       xml:space="preserve"
-       style="font-size:76.73752594px;font-style:normal;font-weight:normal;fill:#475f91;fill-opacity:1;stroke:none;display:inline;enable-background:new;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
-       x="158.05545"
-       y="1002.7374"
-       id="text2841-7"><tspan
-         sodipodi:role="line"
-         id="tspan2843-3"
-         x="158.05545"
-         y="1002.7374" /></text>
-    <text
-       xml:space="preserve"
-       style="font-size:28px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Malache Crunch;-inkscape-font-specification:Malache Crunch"
-       x="156.97771"
-       y="936.336"
-       id="text2882"
-       transform="translate(17.716535,-12.639854)"><tspan
-         sodipodi:role="line"
-         id="tspan2884"
-         x="156.97771"
-         y="936.336"
-         style="font-size:72px" /></text>
   </g>
 </svg>
