@@ -1274,6 +1274,7 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
      has infinite error estimate, as required. Therefore if the high boundary fails, there is no possible r_cut */
   if ((*_accuracy = p3m_get_accuracy(mesh, cao, r_cut_iL_max, _alpha_L, &rs_err, &ks_err)) > p3m.params.accuracy) {
     /* print result */
+    P3M_TRACE(puts("p3m_mc_time: accuracy not achieved."));
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e accuracy not achieved\n",
 	    mesh[0], cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
     *log = strcat_alloc(*log, b);
@@ -1321,7 +1322,6 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
 	    mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err);
     *log = strcat_alloc(*log, b);
-    return -P3M_TUNE_CUTOFF_TOO_LARGE;
   }
   int_time = p3m_mcr_time(mesh, cao, r_cut_iL, *_alpha_L);
   if (int_time == -1) {
@@ -1515,7 +1515,7 @@ int p3m_adaptive_tune(char **log) {
   
   if(p3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
-    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2) - skin;
+    r_cut_iL_max = dmin(min_local_box_l, min_box_l/2.0) - skin;
     r_cut_iL_min *= box_l_i[0];
     r_cut_iL_max *= box_l_i[0];
   }
