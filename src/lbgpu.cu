@@ -668,7 +668,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   for(int i=0; i<3; ++i){
     float scaledpos = particle_data[part_index].p[i]/para.agrid;
     my_left[i] = (int)(floorf(scaledpos - 0.5f));
-    temp_delta[3+i] = scaledpos - my_left[i];
+    temp_delta[3+i] = scaledpos - my_left[i] - 0.5f;
     temp_delta[i] = 1.f - temp_delta[3+i];
     /**further value used for interpolation of fluid velocity at part pos near boundaries */
     temp_delta_half[3+i] = (scaledpos - my_left[i])*2.f;
