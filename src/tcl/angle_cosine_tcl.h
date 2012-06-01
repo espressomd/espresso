@@ -20,20 +20,19 @@
 */
 #ifndef ANGLE_TCL_H
 #define ANGLE_TCL_H
-/** \file angle_tcl.h
- * Tcl interface for \ref angle.h
+/** \file angle_cosine_tcl.h
+ * Tcl interface for \ref angle_cosine.h
  */
 
 #include "parser.h"
 #include "interaction_data.h"
 
-#ifdef BOND_ANGLE_OLD
-
+#ifdef BOND_ANGLE
 /// parse parameters for the angle potential
-int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int tclcommand_inter_parse_angle_cosine(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
 ///
-int tclprint_to_result_angleIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+int tclprint_to_result_angle_cosineIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
 #endif
 

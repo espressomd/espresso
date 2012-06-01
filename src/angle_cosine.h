@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLE_H
-#define ANGLE_H
-/** \file angle.h
+#ifndef ANGLE_COSINE_H
+#define ANGLE_COSINE_H
+/** \file angle_cosine.h
  *  Routines to calculate the angle energy or/and and force 
  *  for a particle triple.
  *  \ref forces.c
@@ -30,7 +30,7 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 
-#ifdef BOND_ANGLE_OLD
+#ifdef BOND_ANGLE
 #include "grid.h"
 
 /** set parameters for the angle potential.
@@ -38,7 +38,7 @@
     \todo The type of the angle potential
     is chosen via config.h and cannot be changed at runtime.
 */
-int angle_set_params(int bond_type, double bend, double phi0);
+int angle_cosine_set_params(int bond_type, double bend, double phi0);
 
 /************************************************************/
 
@@ -52,7 +52,7 @@ int angle_set_params(int bond_type, double bend, double phi0);
     @param force2 returns force of particle 2
     @return 0
 */
-MDINLINE int calc_angle_force(Particle *p_mid, Particle *p_left, Particle *p_right,
+MDINLINE int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle *p_right,
 			      Bonded_ia_parameters *iaparams, double force1[3], double force2[3])
 {
   double cosine, vec1[3], vec2[3], d1i, d2i, dist2,  fac, f1=0.0, f2=0.0;
@@ -71,27 +71,14 @@ MDINLINE int calc_angle_force(Particle *p_mid, Particle *p_left, Particle *p_rig
   for(j=0;j<3;j++) vec2[j] *= d2i;
   /* scalar produvt of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
-  fac    = iaparams->p.angle.bend;
+  fac    = iaparams->p.angle_cosine.bend;
 
-#ifdef BOND_ANGLE_HARMONIC
-  {
-    double phi,sinphi;
-    if ( cosine >  TINY_COS_VALUE) cosine = TINY_COS_VALUE;
-    if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-    phi =  acos(-cosine);
-    sinphi = sin(phi);
-    if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
-    fac *= (phi - iaparams->p.angle.phi0)/sinphi;
-  }
-#endif
-#ifdef BOND_ANGLE_COSINE
+//#ifdef BOND_ANGLE_COSINE
   if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac *= iaparams->p.angle.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle.cos_phi0;
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  fac *= iaparams->p.angle.cos_phi0 + cosine;
-#endif
+  fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle_cosine.cos_phi0;
+//#endif
+  
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
     f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;
@@ -104,7 +91,7 @@ MDINLINE int calc_angle_force(Particle *p_mid, Particle *p_left, Particle *p_rig
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
+MDINLINE void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
               Particle *p_right, Bonded_ia_parameters *iaparams,
               double force1[3], double force2[3], double force3[3]) {
 
@@ -140,42 +127,19 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
   if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE; 
   phi = acos(cos_phi);
   */
-#ifdef BOND_ANGLE_HARMONIC
-  {
-    double K, phi, phi0;
-    if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
-    if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
-    phi = acos(cos_phi);
 
-    K = iaparams->p.angle.bend;
-    phi0 = iaparams->p.angle.phi0;
-
-    // potential dependent term [dU/dphi = K * (phi - phi0)]
-    pot_dep = K * (phi - phi0);
-  }
-#endif
-#ifdef BOND_ANGLE_COSINE
+//#ifdef BOND_ANGLE_COSINE
   {
     double K, sin_phi0, cos_phi0;
-    K = iaparams->p.angle.bend;
-    sin_phi0 = iaparams->p.angle.sin_phi0;
-    cos_phi0 = iaparams->p.angle.cos_phi0;
+    K = iaparams->p.angle_cosine.bend;
+    sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
+    cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
 
     // potential dependent term [dU/dphi = K * sin(phi - phi0)]
     // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b) 
     pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
   }
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  {
-    double K, cos_phi0;
-    K = iaparams->p.angle.bend;
-    cos_phi0 = iaparams->p.angle.cos_phi0;
-    
-    // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi * sin_phi)]
-    pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
-  }
-#endif
+//#endif
 
   fac = pot_dep / sin_phi;
 
@@ -201,7 +165,7 @@ MDINLINE void calc_angle_3body_forces(Particle *p_mid, Particle *p_left,
     @param _energy   return energy pointer.
     @return 0.
 */
-MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
+MDINLINE int angle_cosine_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
 			     Bonded_ia_parameters *iaparams, double *_energy)
 {
   double cosine, vec1[3], vec2[3],  d1i, d2i, dist2;
@@ -223,21 +187,13 @@ MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   if ( cosine >  TINY_COS_VALUE)  cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
-#ifdef BOND_ANGLE_HARMONIC
-  {
-    double phi;
-    phi =  acos(-cosine);
-    *_energy = 0.5*iaparams->p.angle.bend*SQR(phi - iaparams->p.angle.phi0);
-  }
-#endif
-#ifdef BOND_ANGLE_COSINE
-  *_energy = iaparams->p.angle.bend*(cosine*iaparams->p.angle.cos_phi0 - sqrt(1-SQR(cosine))*iaparams->p.angle.sin_phi0+1);
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  *_energy = 0.5*iaparams->p.angle.bend*SQR(cosine + iaparams->p.angle.cos_phi0);
-#endif
+
+//#ifdef BOND_ANGLE_COSINE
+  *_energy = iaparams->p.angle_cosine.bend*(cosine*iaparams->p.angle_cosine.cos_phi0 - sqrt(1-SQR(cosine))*iaparams->p.angle_cosine.sin_phi0+1);
+//#endif
+
   return 0;
 }
 
-#endif /* BOND_ANGLE_OLD */
-#endif /* ANGLE_H */
+#endif /* BOND_ANGLE */
+#endif /* ANGLE_COSINE_H */

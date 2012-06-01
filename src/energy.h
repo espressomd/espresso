@@ -49,6 +49,9 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angle_harmonic.h"
+#include "angle_cosine.h"
+#include "angle_cossquare.h"
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
@@ -325,9 +328,21 @@ MDINLINE void add_bonded_energy(Particle *p1)
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+    /* the first case is not needed and should not be called */ 
+    case BONDED_IA_ANGLE_OLD:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
+      break; 
+#endif
+#ifdef BOND_ANGLE
+    case BONDED_IA_ANGLE_HARMONIC:
+      bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_ANGLE_COSINE:
+      bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_ANGLE_COSSQUARE:
+      bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLEDIST

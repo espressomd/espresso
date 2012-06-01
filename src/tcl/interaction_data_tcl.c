@@ -74,6 +74,9 @@
 
 // bonded
 #include "angle_tcl.h"
+#include "angle_harmonic_tcl.h"
+#include "angle_cosine_tcl.h"
+#include "angle_cossquare_tcl.h"
 #include "angledist_tcl.h"
 #include "dihedral_tcl.h"
 #include "endangledist_tcl.h"
@@ -289,9 +292,17 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     return tclprint_to_result_feneIA(interp, params);
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
-#ifdef BOND_ANGLE
-  case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+  case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
+#endif
+#ifdef BOND_ANGLE_
+  case BONDED_IA_ANGLE_HARMONIC:
+    return tclprint_to_result_angle_harmonicIA(interp, params);
+  case BONDED_IA_ANGLE_COSINE:
+    return tclprint_to_result_angle_cosineIA(interp, params);
+  case BONDED_IA_ANGLE_COSSQUARE:
+    return tclprint_to_result_angle_cossquareIA(interp, params);
 #endif
 #ifdef BOND_ANGLEDIST
   case BONDED_IA_ANGLEDIST:
@@ -937,8 +948,13 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
   REGISTER_BONDED("angle", tclcommand_inter_parse_angle);
+#endif
+#ifdef BOND_ANGLE
+  REGISTER_BONDED("angle_harmonic", tclcommand_inter_parse_angle_harmonic);
+  REGISTER_BONDED("angle_cosine", tclcommand_inter_parse_angle_cosine);
+  REGISTER_BONDED("angle_cossquare", tclcommand_inter_parse_angle_cossquare);
 #endif
 #ifdef BOND_ANGLEDIST
   REGISTER_BONDED("angledist", tclcommand_inter_parse_angledist);

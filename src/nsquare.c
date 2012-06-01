@@ -361,6 +361,9 @@ void nsq_calculate_virials(int v_comp)
     pt1 = &partl[p];
     add_kinetic_virials(pt1,v_comp);
     add_bonded_virials(pt1);
+#ifdef BOND_ANGLE_OLD
+    add_three_body_bonded_stress(pt1);
+#endif
 #ifdef BOND_ANGLE
     add_three_body_bonded_stress(pt1);
 #endif

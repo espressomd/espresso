@@ -22,14 +22,15 @@
  *
  *  Implementation of \ref angle_tcl.h
  */
-#include "angle_tcl.h"
+#include "angle_harmonic_tcl.h"
 
-#ifdef BOND_ANGLE_OLD
-#include "angle.h"
+#ifdef BOND_ANGLE
+#include "angle_harmonic.h"
+
 #include "communication.h"
 
-/// parse parameters for the angle potential
-int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+/// parse parameters for the angle_harmonic potential
+int tclcommand_inter_parse_angle_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double bend, phi0;
 
@@ -56,15 +57,15 @@ int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, ch
   } else {
     phi0 = PI;
   }
-  CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
+  CHECK_VALUE(angle_harmonic_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
 }
 
-int tclprint_to_result_angleIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
+int tclprint_to_result_angle_harmonicIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {
   char buffer[TCL_DOUBLE_SPACE];
-  Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
+  Tcl_PrintDouble(interp, params->p.angle_harmonic.bend, buffer);
   Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
+  Tcl_PrintDouble(interp, params->p.angle_harmonic.phi0, buffer);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
   return TCL_OK;
 }
