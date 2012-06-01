@@ -73,11 +73,9 @@ MDINLINE int calc_angle_cosine_force(Particle *p_mid, Particle *p_left, Particle
   cosine = scalar(vec1, vec2);
   fac    = iaparams->p.angle_cosine.bend;
 
-//#ifdef BOND_ANGLE_COSINE
   if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   fac *= iaparams->p.angle_cosine.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle_cosine.cos_phi0;
-//#endif
   
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
@@ -128,7 +126,6 @@ MDINLINE void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
   phi = acos(cos_phi);
   */
 
-//#ifdef BOND_ANGLE_COSINE
   {
     double K, sin_phi0, cos_phi0;
     K = iaparams->p.angle_cosine.bend;
@@ -139,7 +136,6 @@ MDINLINE void calc_angle_cosine_3body_forces(Particle *p_mid, Particle *p_left,
     // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b) 
     pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi0);
   }
-//#endif
 
   fac = pot_dep / sin_phi;
 
@@ -188,9 +184,7 @@ MDINLINE int angle_cosine_energy(Particle *p_mid, Particle *p_left, Particle *p_
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
   /* bond angle energy */
 
-//#ifdef BOND_ANGLE_COSINE
   *_energy = iaparams->p.angle_cosine.bend*(cosine*iaparams->p.angle_cosine.cos_phi0 - sqrt(1-SQR(cosine))*iaparams->p.angle_cosine.sin_phi0+1);
-//#endif
 
   return 0;
 }

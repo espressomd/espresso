@@ -73,25 +73,8 @@ MDINLINE int calc_angle_cossquare_force(Particle *p_mid, Particle *p_left, Parti
   cosine = scalar(vec1, vec2);
   fac    = iaparams->p.angle_cossquare.bend;
 
-#ifdef BOND_ANGLE_HARMONIC
-  {
-    double phi,sinphi;
-    if ( cosine >  TINY_COS_VALUE) cosine = TINY_COS_VALUE;
-    if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-    phi =  acos(-cosine);
-    sinphi = sin(phi);
-    if ( sinphi < TINY_SIN_VALUE ) sinphi = TINY_SIN_VALUE;
-    fac *= (phi - iaparams->p.angle_cossquare.phi0)/sinphi;
-  }
-#endif
-#ifdef BOND_ANGLE_COSINE
-  if ( cosine >  TINY_COS_VALUE ) cosine = TINY_COS_VALUE;
-  if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  fac *= iaparams->p.angle_cossquare.sin_phi0 * (cosine/sqrt(1-SQR(cosine))) + iaparams->p.angle_cossquare.cos_phi0;
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
   fac *= iaparams->p.angle_cossquare.cos_phi0 + cosine;
-#endif
+  
   for(j=0;j<3;j++) {
     f1               = fac * (cosine * vec1[j] - vec2[j]) * d1i;
     f2               = fac * (cosine * vec2[j] - vec1[j]) * d2i;
