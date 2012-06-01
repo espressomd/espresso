@@ -41,7 +41,7 @@
 #define LJCOS2
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define BOND_ANGLE_COSINE
+#define BOND_ANGLE
 
 #define MPI_CORE
 #define FORCE_CORE
