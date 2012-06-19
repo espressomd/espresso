@@ -303,9 +303,9 @@ proc writevtk {filename {type "all"}} {
 
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
 		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			set xpos [expr [lindex [part $pid print folded_pos] 0] - 0.5] ;#shifted since the LB and MD grid are shifted but the vtk output for the LB field doesn't acknowledge that
-			set ypos [expr [lindex [part $pid print folded_pos] 1] - 0.5]
-			set zpos [expr [lindex [part $pid print folded_pos] 2] - 0.5]
+			set xpos [expr [lindex [part $pid print folded_pos] 0]] ;#shifted since the LB and MD grid are shifted but the vtk output for the LB field doesn't acknowledge that
+			set ypos [expr [lindex [part $pid print folded_pos] 1]]
+			set zpos [expr [lindex [part $pid print folded_pos] 2]]
 			puts $fp "$xpos $ypos $zpos"
 		}
 	}
