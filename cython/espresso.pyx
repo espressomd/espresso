@@ -15,7 +15,7 @@ import cellsystem
 cimport cellsystem
 
 import debye_hueckel
-import lbfluid
+import lb
 import cuda_init
 #cimport myconfig
 #import utils
@@ -97,7 +97,7 @@ cdef class EspressoHandle:
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
-lb=lbfluid.DeviceList()
+lbfluid=lb.DeviceList()
 IF LB_GPU == 1:
     cu=cuda_init.CudaInitHandle()
 

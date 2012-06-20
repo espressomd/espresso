@@ -1,3 +1,5 @@
+include "myconfig.pxi"
+
 #cimport global_variables
 import numpy as np
 cimport lb
@@ -83,8 +85,11 @@ cdef class LBparaHandle:
       
   property friction:
     def __set__(self, double _friction):
-      if lb_lbfluid_set_friction(_friction):
-        raise Exception("lb_lbfluid_set_friction error")
+      IF LB == 1:
+        if lb_lbfluid_set_friction(_friction):
+          raise Exception("lb_lbfluid_set_friction error")
+      ELSE:
+        pass
     def __get__(self):
       cdef double _p_friction
       raise Exception("get friction c function not implemented in lb.c")
