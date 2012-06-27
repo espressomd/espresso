@@ -1645,13 +1645,11 @@ int delete_particle_of_type(int type) {
 	int in_type = type_index_of_type.id[type];
 	// maximal possible index id
 	int max = type_array[in_type].max_entry - 1;
-	printf("max array id: %d index_id: %d part_id: %d\n", max, *index_id, *p_id);
 	if ( max < 0 ) 
 		return ES_ERROR;
 
 	if ( remove_particle(*p_id) == ES_ERROR ) {
 		// takes also care of removing the index from the array
-		printf("removing particle failed\n");
 		return ES_ERROR;
 	}
 //	//update array:
