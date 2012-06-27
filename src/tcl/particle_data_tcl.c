@@ -1052,6 +1052,14 @@ int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_ERROR;
   }
+//#ifdef GRANDCANONICAL
+//  if ( Type_array_init ) { 
+//	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
+//		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+//		  return TCL_ERROR;
+//	  }
+//  }
+//#endif
 
   return TCL_OK;
 }
@@ -1330,6 +1338,74 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
   }
 
   return TCL_OK;
+}
+
+#endif
+
+#ifdef GRANDCANONICAL
+int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
+	if (argc < 1) {
+	  Tcl_AppendResult(interp, "gc requires at least particle type as argument\nUsage: part gc {<part_type> | {find | delete} <part_type> }\nThe call with only a part_type will init the array lists for the given type\nfind will return a randomly chosen particle id that has the given type\ndelete consequently removes a random particle of given type", (char *) NULL);
+	  return TCL_ERROR;
+	} else if (ARG0_IS_S("delete")) {
+		//delete particle of certain type
+		argc--;
+		argv++;
+		if ( argc < 1 ){
+		  Tcl_AppendResult(interp, "gc delete needs particle type as argument", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		int type = atoi (argv[0]);
+		if (type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		if ( Type_array_init ) {
+			if (delete_particle_of_type(type) == ES_ERROR ) {
+			  Tcl_AppendResult(interp, "no particles with type left", (char *) NULL);
+			  return TCL_ERROR;
+			}
+		} else {
+			Tcl_AppendResult(interp, "particle lists not initialized", (char *) NULL);
+			return TCL_ERROR;
+		}
+	} else if (ARG0_IS_S("find")) {
+		argc--;
+		argv++;
+		if ( argc < 1 ){ 
+		  Tcl_AppendResult(interp, "gc find needs a particle type as argument", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		int type = atoi (argv[0]);
+		if (type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		int id;
+		if (find_particle_type(type, &id) == ES_ERROR ){
+			char buffer[TCL_INTEGER_SPACE + 32];
+			sprintf(buffer, "no particle of type %d found", type);
+			Tcl_AppendResult(interp, buffer, (char *) NULL);
+			return TCL_ERROR;
+		}
+		char buffer[32+TCL_INTEGER_SPACE];
+		sprintf(buffer, "%d", id);
+		Tcl_AppendResult(interp, buffer, (char *) NULL);
+	
+	} else if ( argc == 1 ) {
+		// initialize particle array for given type
+		int type = atoi(argv[0]);
+		if (type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		if (init_type_array(type) == ES_ERROR ) {
+			Tcl_AppendResult(interp, "gc init failed", (char *) NULL);
+			return TCL_ERROR;
+		}
+
+	}
+	return TCL_OK;
 }
 #endif
 
@@ -1696,6 +1772,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 	else if (ARG0_IS_S("gamma"))
 	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
 #endif
+#ifdef GRANDCANONICAL
+	else if (ARG0_IS_S("gc")) { 
+	  argc--;
+	  argv++;
+	  err = part_parse_gc(interp, argc, argv);
+	}
+#endif
 
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
@@ -1757,6 +1840,17 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
     return TCL_OK;
   }
 #endif
+
+#ifdef GRANDCANONICAL
+  else if ( ARG1_IS_S("gc")) {
+	 argc-=2;
+	 argv+=2;
+	 if (part_parse_gc(interp, argc, argv) == TCL_ERROR)
+		 return TCL_ERROR;
+	 return TCL_OK;
+  }
+#endif
+  
 
   /* only one argument is given */
   if (argc == 2) {

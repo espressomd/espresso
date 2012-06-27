@@ -210,6 +210,7 @@ void init_particle(Particle *part)
   part->p.T = -1.0;
   part->p.gamma = -1.0;
 #endif
+
 }
 
 void free_particle(Particle *part) {
@@ -489,6 +490,15 @@ int place_particle(int part, double p[3])
     retcode = ES_PART_CREATED;
 
     mpi_place_new_particle(pnode, part, p);
+#ifdef GRANDCANONICAL 
+  if ( Type_array_init ) { 
+	  if ( add_particle_to_list(part) ==  ES_ERROR ){
+		  return ES_ERROR;
+	  }
+  }
+#endif
+
+
   } else {
     mpi_place_particle(pnode, part, p);
   }
@@ -689,6 +699,7 @@ int set_particle_type(int part, int type)
   if (pnode == -1)
     return ES_ERROR;
   mpi_send_type(pnode, part, type);
+
   return ES_OK;
 }
 
@@ -869,6 +880,16 @@ int remove_particle(int part)
 {
   int pnode;
 
+#ifdef GRANDCANONICAL
+  Particle *cur_par = (Particle *) malloc (sizeof(Particle));
+  if (get_particle_data(part, cur_par) == ES_ERROR )
+	  return ES_ERROR;
+  int type = cur_par->p.type;
+  free(cur_par);
+  if (remove_id_type_array(part, type) == ES_ERROR )
+	  return ES_ERROR;
+#endif
+
   if (!particle_node)
     build_particle_node();
 
@@ -888,7 +909,6 @@ int remove_particle(int part)
       max_seen_particle--;
     mpi_bcast_parameter(FIELD_MAXPART);
   }
-
   return ES_OK;
 }
 
@@ -1401,5 +1421,306 @@ void auto_exclusion(int distance)
   }
   free(partners);
 }
+
+#endif
+
+
+#ifdef GRANDCANONICAL 
+
+int init_gc(void){
+	if ( type_array == (TypeList *) NULL) {
+	//stores the number of currently available type_list's 
+	number_of_type_lists=10;
+
+	type_of_type_index.max_entry = 0;
+	type_index_of_type.max_entry = 0;
+
+	type_array = (TypeList *) malloc(sizeof(TypeList) * number_of_type_lists);
+	if ( type_array == (TypeList *) 0 )
+		return ES_ERROR;
+
+	GC_init = 1;
+	Type_array_init = 0;
+	}
+	return ES_OK;
+}
+
+int init_type_array(int type){
+	if (init_gc() == ES_ERROR)
+		return ES_ERROR;
+
+	// TODO create particle list of all particles
+
+	updatePartCfg(WITHOUT_BONDS);
+
+	if (!partCfg)
+		return ES_ERROR;
+
+	int type_index=-1;
+	type_index= (type_of_type_index.max_entry++);
+	if ( type_index == number_of_type_lists ) {
+		reallocate_global_type_list(number_of_type_lists*2);
+	}
+
+	type_of_type_index.id = (int *) realloc ( (void *) type_of_type_index.id, sizeof(int)*type_of_type_index.max_entry);
+
+	//reallocate the array that holds the particle type and points to the type index used for the type_list
+	
+	if ( type >= type_index_of_type.max_entry ) { 
+		type_index_of_type.id= (int * ) realloc( (void *) type_index_of_type.id, (type+1)*sizeof(int));
+		type_index_of_type.max_entry = type + 1;
+	}
+	for (int i=0; i<type_index_of_type.max_entry; i++) 
+		type_index_of_type.id[i]=-1;
+
+	if (type_of_type_index.id == (int *) 0 || type_index_of_type.id == (int *) 0)
+		return ES_ERROR;
+
+	//allocates a list for ids for as many entries as there are particles right now
+	if ( !(partCfg) ||  type < 0 ) { 
+		return ES_ERROR;
+	}
+	type_of_type_index.id[type_index]=type;
+	//fill in array type_index_of_type
+	for (int i=0; i<type_of_type_index.max_entry; i++ ) {
+		type_index_of_type.id[type_of_type_index.id[i]] = i;
+	}
+
+	int t_c = 0; //index
+	type_array[type_index_of_type.id[type]].id_list = (int *) malloc (sizeof (int) * n_total_particles);
+	for (int i=0; i<n_total_particles; i++) {
+		if ( partCfg[i].p.type==type ) 
+			type_array[type_index_of_type.id[type]].id_list[t_c++]=partCfg[i].p.identity;
+	}
+	int max_size=n_total_particles;
+	while ( t_c < (double) max_size/4.0) { 
+		max_size= floor( (double ) max_size/2.0);
+	}
+	// now the array is shrinked to at least 4 times the highest entry
+	type_array[type_index_of_type.id[type]].id_list= (int *) realloc( (void *) type_array[type_index_of_type.id[type]].id_list, sizeof(int)*2*max_size);
+	type_array[type_index_of_type.id[type]].max_entry = t_c;
+	type_array[type_index_of_type.id[type]].cur_size = max_size*2;
+	//fill remaining entries with -1
+	for (int i=type_array[type_index_of_type.id[type]].max_entry; i<type_array[type_index_of_type.id[type]].cur_size; i++) {
+		type_array[type_index_of_type.id[type]].id_list[i] = -1;
+	}
+	Type_array_init = 1;
+	return ES_OK;
+}
+
+int reallocate_type_array(int type){
+	type_array[type_index_of_type.id[type]].id_list = (int *) realloc ( (void *) type_array[type_index_of_type.id[type]].id_list, sizeof (int) * type_array[type_index_of_type.id[type]].cur_size * 2);	
+	if (type_array[type_index_of_type.id[type]].id_list == (int *) 0) {
+		return ES_ERROR;
+	}
+	type_array[type_index_of_type.id[type]].cur_size = type_array[type_index_of_type.id[type]].cur_size*2;
+	return ES_OK;
+}
+
+int remove_id_type_array(int part_id, int type){
+
+	int in_type = type_index_of_type.id[type];
+	int temp_id;
+	int max = type_array[in_type].max_entry;
+	for (int i=0; i<max; i++){
+		if ( type_array[in_type].id_list[i] == part_id )
+			temp_id = i;
+			break;
+	}
+	if ( temp_id == max - 1 ) { 
+		type_array[in_type].id_list[temp_id] = -1;
+	} else {
+		int temp=type_array[in_type].id_list[max-1]; 
+		type_array[in_type].id_list[max-1] = -1;
+		type_array[in_type].id_list[temp_id]=temp;
+	}
+	type_array[in_type].max_entry--;
+	return ES_OK;
+}
+
+int update_particle_array(int type) {
+	updatePartCfg(WITHOUT_BONDS);
+	if (!partCfg) 
+		return ES_ERROR;
+
+	int t_c = 0;
+	for (int i=0; i<n_total_particles; i++) {
+		if (partCfg[i].p.type == type ) {
+			type_array[type_index_of_type.id[type]].id_list[t_c++] = partCfg[i].p.identity;
+		}	
+		if ( t_c > (double) type_array[type_index_of_type.id[type]].cur_size/2.0 ) {
+			if ( reallocate_type_array(type) == ES_ERROR ) 
+				return ES_ERROR;
+		}
+	}
+	type_array[type_index_of_type.id[type]].max_entry = t_c;
+	for ( int i = t_c; i<type_array[type_index_of_type.id[type]].cur_size; i++)
+		type_array[type_index_of_type.id[type]].id_list[i] = -1;
+
+	return ES_OK;
+}
+
+int reallocate_global_type_list(int size){
+	if (size <= 0 ) 
+		return ES_ERROR;
+	type_array = (TypeList *) realloc( (void *) type_array, sizeof(TypeList)*size);
+	number_of_type_lists=size;
+	if ( type_array == (TypeList *) 0)
+		return ES_ERROR;
+
+	return ES_OK;
+}
+
+int free_particle_lists(void){
+	if ( type_of_type_index.id == (int *) 0 )
+		return ES_ERROR;
+
+	for (int i=0; i<type_of_type_index.max_entry; i++)
+		free(type_array[i].id_list);
+	return ES_OK;
+}
+
+int find_particle_type(int type, int *id){ 
+	int l_err=1;
+	// type i not indexed, so no list for this particle exists
+	for (int i = 0; i<type_of_type_index.max_entry; i++){
+		if ( type_of_type_index.id[i] == type ){
+			l_err=0;
+			break;
+		}
+	}
+	if ( l_err ) {
+		return ES_ERROR;
+	}
+	if ( type_array[type_index_of_type.id[type]].max_entry == 0 ){ 
+		return ES_ERROR;
+	}
+	int rand_index = i_random ( type_array[type_index_of_type.id[type]].max_entry );
+	*id = type_array[type_index_of_type.id[type]].id_list[rand_index];
+
+	return ES_OK;
+}
+
+int find_particle_type_id(int type, int *id, int *in_id ){
+	int l_err=1;
+	// type i not indexed, so no list for this particle exists
+	for (int i = 0; i<type_of_type_index.max_entry; i++){
+		if ( type_of_type_index.id[i] == type ){
+			l_err=0;
+			break;
+		}
+	}
+	if ( l_err ) {
+		return ES_ERROR;
+	}
+	if ( type_array[type_index_of_type.id[type]].max_entry == 0 )
+		return ES_ERROR;
+
+	int rand_index = i_random ( type_array[type_index_of_type.id[type]].max_entry );
+	if (id == (int *) 0 && in_id == (int *) 0) 
+		return ES_ERROR;
+	else {
+		*in_id = rand_index;
+		*id = type_array[type_index_of_type.id[type]].id_list[*in_id];
+		return ES_OK;
+	}
+}
+
+//static int *find_particle_type(int type){
+//	int *temp=(int *) malloc( sizeof(int)*2);
+//	if (temp == (int *) 0)
+//		return ES_ERROR;
+//	int temp[1] = i_random ( type_array[type_index_of_type[type]].max_entry );
+//	int temp[0] = type_array[type_index_of_type[type]]->id_list[temp[1]];
+//	return temp;
+//}
+
+int delete_particle_of_type(int type) { 
+	int *p_id, *index_id;
+	p_id=(int *) malloc (sizeof(int));
+	index_id=(int *) malloc (sizeof(int));
+	if (find_particle_type_id(type, p_id, index_id) == ES_ERROR )
+		return ES_ERROR;
+
+	int in_type = type_index_of_type.id[type];
+	// maximal possible index id
+	int max = type_array[in_type].max_entry - 1;
+	printf("max array id: %d index_id: %d part_id: %d\n", max, *index_id, *p_id);
+	if ( max < 0 ) 
+		return ES_ERROR;
+
+	if ( remove_particle(*p_id) == ES_ERROR ) {
+		// takes also care of removing the index from the array
+		printf("removing particle failed\n");
+		return ES_ERROR;
+	}
+//	//update array:
+//	printf ("delete part update array\n");
+//
+//	if ( *index_id == max ) { 
+//		type_array[in_type].id_list[*index_id] = -1;
+//	} else {
+//		int temp=type_array[in_type].id_list[max]; 
+//		type_array[in_type].id_list[max] = -1;
+//		type_array[in_type].id_list[*index_id]=temp;
+//	}
+//	type_array[in_type].max_entry--;
+//	free(p_id);
+//	free(index_id);
+//	printf ("returned ok\n");
+	return ES_OK;
+}
+
+int add_particle_to_list(int part_id){
+	Particle *cur_par = (Particle *) malloc(sizeof(Particle));
+	if (cur_par == (Particle *) 0 )
+		return ES_ERROR;
+	if (get_particle_data(part_id, cur_par) == ES_ERROR ) 
+		return ES_ERROR; 
+
+	int type = cur_par->p.type;
+	int l_err=1;
+	// type i not indexed, so no list for this particle exists
+	for (int i = 0; i<type_of_type_index.max_entry; i++){
+		if ( type_of_type_index.id[i] == type ){
+			l_err=0;
+			break;
+		}
+	}
+	if ( l_err ) {
+		return ES_ERROR;
+	}
+	int in_type = type_index_of_type.id[type];
+	int max = type_array[in_type].max_entry;
+	if ( max >= (double ) type_array[in_type].cur_size/2.0 )
+		if (reallocate_type_array(type)== ES_ERROR)
+			return ES_ERROR;
+
+	//add particle id to list:
+	type_array[in_type].id_list[max]=part_id;
+	type_array[in_type].max_entry++;
+	free(cur_par);
+	return ES_OK;
+}
+//int init_particle_list(int type, ParticleList* plist, type_list* list){
+//	struct type_list *root;
+//	root=malloc (sizeof( struct type_list ));
+//	// save root pointer of the list
+//	root=list;
+//	list->max=0;
+//	for (int i=0; i<plist->n; i++){
+//		if (plist->part[i]->type == type){
+//			list->list->identifier=plist->part[i]->identity;
+//			list->type=type;
+//			list->list->next=malloc( sizeof (struct type_list) );
+//			list->max++;
+//		}
+//	}
+//	list->next= (type_list_item *)0;
+//	// restore list to root pointer
+//	list=root;
+//	return ES_OK
+//}
+
 
 #endif

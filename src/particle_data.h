@@ -711,4 +711,82 @@ void auto_exclusion(int distance);
  and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance);
 
+#ifdef GRANDCANONICAL
+//struct that associates the index used for the type_list and the real particle type
+typedef struct {
+	int max_entry;
+	int * id;
+} TypeOfType;
+
+TypeOfType type_of_type_index; 
+//type_of_type_index.max_entry=0;
+//type_of_type_index->type = (int *) 0;
+
+TypeOfType type_index_of_type; 
+//type_index_of_type.max_entry=0;
+//type_index_of_type->type = (int *) 0;
+
+
+typedef struct {
+	int max_entry;
+	int cur_size;
+	int *id_list;
+} TypeList;
+
+//undefined array size
+TypeList *type_array;
+int number_of_type_lists;
+
+// flag indicating init_gc was called 
+int GC_init;
+
+// flag that indicates that the function init_type_array was called already
+int Type_array_init;
+
+/** linked list for particles of a given type */
+//typedef struct {
+//	int identifier;
+//	struct type_list_item *next;
+//} type_list item;
+//
+//typedef struct {
+//	struct type_list_item *list;
+//	int type;
+//	int max;
+//} type_list
+
+/** vars and fields */
+
+int init_gc(void);
+
+/** init particle lists		*/
+int init_type_array(int type);
+
+/** resize the array for the list of ids for a certain type */
+int reallocate_type_array(int type);
+
+/** make more type_arrays available */
+int reallocate_global_type_list(int size);
+
+/** free particle lists		*/
+int free_particle_lists(void);
+
+//update particle list
+int update_particle_array(int type);
+
+/* find a particle of given type and return its id */
+int find_particle_type(int type, int *id);
+/** return an array with real particle id and the corresponding index of typelist */
+//static int *find_particle_type(int type);
+
+int find_particle_type_id(int type, int *id, int *in_id );
+
+/** delete one randomly chosen particle of given type 
+ * returns ES_OK if succesful or else ES_ERROR		*/
+int delete_particle_of_type(int type);
+
+int remove_id_type_array(int part_id, int type);
+int add_particle_to_list(int part_id);
+#endif
+
 #endif
