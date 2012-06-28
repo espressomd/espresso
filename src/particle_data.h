@@ -787,6 +787,8 @@ int delete_particle_of_type(int type);
 
 int remove_id_type_array(int part_id, int type);
 int add_particle_to_list(int part_id);
+// print out a list of currently indexed ids
+int gc_status(int type);
 #endif
 
 #endif
