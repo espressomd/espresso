@@ -23,6 +23,7 @@ tools/es_mpiexec
 *.o
 *.lo
 *.m4
+cython/*.c
 src/libEspresso_core.la
 src/libEspresso_main.la
 src/libEspresso.a
