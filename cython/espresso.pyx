@@ -15,10 +15,13 @@ import cellsystem
 cimport cellsystem
 
 import debye_hueckel
-import lb
+#import lb
 import cuda_init
 #cimport myconfig
 #import utils
+
+
+import code_info
 
 #public enum:
 #  ERROR=-1
@@ -58,7 +61,6 @@ cdef extern from "initialize.h":
   void on_program_start(Tcl_Interp*)
   void mpi_loop()
 
-
 ## Now comes the real deal
 cdef class EspressoHandle:
   cdef Tcl_Interp* interp
@@ -97,7 +99,7 @@ cdef class EspressoHandle:
 _espressoHandle=EspressoHandle()
 glob=global_variables.GlobalsHandle()
 part=particle_data.particleList()
-lbfluid=lb.DeviceList()
+#lbfluid=lb.DeviceList()
 IF LB_GPU == 1:
     cu=cuda_init.CudaInitHandle()
 
@@ -121,8 +123,3 @@ else:
 #  def __init__(self, id):
 #    self.id=id
 #   
-
-
-
-
-
