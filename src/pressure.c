@@ -905,7 +905,7 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 
   if (skin < 0.0) {
     char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{analyze stress_profile: skin cannot be negative}");
+    ERROR_SPRINTF(errtxt, "{analyze stress_profile: parameter skin not set}");
     return 0;
   }
   for (i=0;i<3;i++) {
