@@ -58,8 +58,8 @@ proc writevsf { file args } {
 		    set r [expr 0.5*($lj_sigma+$lj_offset)]
 		    lset list $type $r
 		} else {
-		    # default radius is 1.0
-		    lset list $type 1.0
+		    # default radius is 0.5
+		    lset list $type 0.5
 		}
 	    }
 	}

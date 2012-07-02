@@ -218,6 +218,14 @@ int vs_relate_to(int part_num, int relate_to)
       ERROR_SPRINTF(errtxt, "setting the vs_relative attributes failed");
       return ES_ERROR;
     }
+    
+    
+    // Check, if the distance between virtual and non-virtual particles is larger htan minimum global cutoff
+    // If so, warn user
+    double l=sqrt(sqrlen(d));
+    if (l>min_global_cut) {
+     printf("Warning: The distance between virtual and non-virtual particle (%f) is\nlarger than the minimum global cutoff (%f). This may lead to incorrect simulations\nunder certain conditions. Use \"setmd min_global_cut\" to increase the minimum cutoff.\n",l,min_global_cut);
+    }
 
     // Now, calculate the quaternions which specify the angle between 
     // the director of the particel we relate to and the vector
@@ -232,7 +240,6 @@ int vs_relate_to(int part_num, int relate_to)
     // Resolving this for the quat_(virtaul particle)
 
     //Normalize desired director
-    double l=sqrt(sqrlen(d));
     int i;
     for (i=0;i<3;i++)
      d[i]/=l;
