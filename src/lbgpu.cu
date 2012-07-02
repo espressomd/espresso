@@ -666,7 +666,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
   #pragma unroll
   for(int i=0; i<3; ++i){
-    float scaledpos = particle_data[part_index].p[i]/para.agrid - 0.5f;
+    float scaledpos = (particle_data[part_index].p[i] - 0.5f)/para.agrid;
     my_left[i] = (int)(floorf(scaledpos));
     temp_delta[3+i] = scaledpos - my_left[i];
     temp_delta[i] = 1.f - temp_delta[3+i];
