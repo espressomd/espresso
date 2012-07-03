@@ -964,14 +964,14 @@ void mpi_send_vs_relative_slave(int pnode, int part)
 void mpi_send_rotation(int pnode, int part, int rot)
 {
 #ifdef ROTATION_PER_PARTICLE
-  mpi_issue(REQ_SET_ROTATION, pnode, part);
+  mpi_call(mpi_send_rotation_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     p->p.rotation = rot;
   }
   else {
-    MPI_Send(&rot, 1, MPI_INT, pnode, REQ_SET_ROTATION, MPI_COMM_WORLD);
+    MPI_Send(&rot, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
   }
 
   on_particle_change();
@@ -984,7 +984,7 @@ void mpi_send_rotation_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     MPI_Status status;
-    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, REQ_SET_ROTATION,
+    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, SOME_TAG,
 	     MPI_COMM_WORLD, &status);
   }
 

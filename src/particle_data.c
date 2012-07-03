@@ -577,13 +577,13 @@ int set_particle_rotation(int part, int rot)
     build_particle_node();
 
   if (part < 0 || part > max_seen_particle)
-    return TCL_ERROR;
+    return ES_ERROR;
   pnode = particle_node[part];
 
   if (pnode == -1)
-    return TCL_ERROR;
+    return ES_ERROR;
   mpi_send_rotation(pnode, part, rot);
-  return TCL_OK;
+  return ES_OK;
 }
 #endif
 
