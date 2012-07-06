@@ -30,6 +30,7 @@ print es.lbfluid[dev].agrid
 es.lbfluid[dev].print_vtk_velocity="test.vtk"
 #es.lb[dev].checkpoint_style=1
 #es.lb[dev].checkpoint="cp.dat"
+
 for i in range(N):
   es.part[i].pos=numpy.random.random(3)*es.glob.box_l
 

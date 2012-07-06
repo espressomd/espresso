@@ -15,7 +15,7 @@ th.setLangevin(11., 12.)
 print th.getStatus() # langevin
 
 try:
-    th.setLangevin()
+    th.setLangevin(1,0.1)
 except ValueError, err:
     print err # wrong args
 

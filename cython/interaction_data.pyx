@@ -3,7 +3,6 @@ cdef class NonBondedInteractionHandle:
   cdef int type2
   cdef IA_parameters* params
 
-  
   def __init__(self, _type1, _type2):
     self.type1=_type1
     self.type2=_type2
@@ -59,7 +58,6 @@ cdef class NonBondedInteractionHandle:
       self.update()
 
 
-
     def __get__(self):
       self.update()
       return {"eps":self.params[0].LJ_eps,
@@ -69,6 +67,7 @@ cdef class NonBondedInteractionHandle:
               "offset":self.params[0].LJ_offset,
               "capradius":self.params[0].LJ_capradius,
               "min":self.params[0].LJ_min}
+
 
 class InteractionList:
   def __getItem__(key):
