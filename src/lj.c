@@ -65,6 +65,8 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   if (cap_radius > 0) {
     data->LJ_capradius = cap_radius;
     data_sym->LJ_capradius = cap_radius;
+
+    printf("test");
   }
 
   if (min > 0) {
