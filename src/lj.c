@@ -33,8 +33,11 @@
 int ljforcecap_set_params(double ljforcecap)
 {
   if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
-  
+    mpi_lj_cap_forces(ljforcecap);
+
+  printf("c-print: ljforcecap set to %f\n", lj_force_cap);
+  printf("c-print: ljforcecap set to %f\n", ljforcecap);
+ 
   return TCL_OK;
 }
 
@@ -65,8 +68,6 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   if (cap_radius > 0) {
     data->LJ_capradius = cap_radius;
     data_sym->LJ_capradius = cap_radius;
-
-    printf("test");
   }
 
   if (min > 0) {

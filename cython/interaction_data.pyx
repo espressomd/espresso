@@ -35,9 +35,14 @@ cdef class NonBondedInteractionHandle:
         self.params[0].LJ_offset =value["offset"]
         del value["offset"]
 
-      if "capradius" in value:
-        self.params[0].LJ_capradius =value["capradius"]
-        del value["capradius"]
+      if "ljcap" in value:
+        temp =value["ljcap"]
+        del value["ljcap"]
+
+# Currently not working:
+#      if "capradius" in value:
+#        self.params[0].LJ_capradius =value["capradius"]
+#        del value["capradius"]
 
       if "min" in value:
         self.params[0].LJ_min =value["min"]
@@ -46,10 +51,14 @@ cdef class NonBondedInteractionHandle:
       if (len(value) >0):
         raise Exception("Unsupported parameters: " +value.__str__())
 
+      print "setting params\n"
       lennard_jones_set_params(self.type1, self.type2, 
          self.params[0].LJ_eps,self.params[0].LJ_sig, self.params[0].LJ_cut,
          self.params[0].LJ_shift,self.params[0].LJ_offset, self.params[0].LJ_capradius,
          self.params[0].LJ_min)
+
+      print "pyprint: %s\n" % temp
+      ljforcecap_set_params(temp)
       
       self.update()
 

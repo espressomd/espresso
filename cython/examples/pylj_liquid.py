@@ -32,7 +32,7 @@ lj_eps   =  1.0
 lj_sig   =  1.0
 lj_cut   =  1.12246
 lj_shift =  float(es._espressoHandle.Tcl_Eval('calc_lj_shift %f %f' % (lj_sig,lj_cut)))
-lj_cap   =  0.1
+lj_cap   = 20 
 
 # Integration parameters
 #############################################################
@@ -65,10 +65,9 @@ es.glob.box_l=[box_l,box_l,box_l]
 es.inter[0,0].lennardJones = \
 	{"eps": lj_eps, "sigma": lj_sig, \
 	 "shift": lj_shift, "cut": lj_cut,\
-	 "capradius": lj_cap}
+	 "ljcap": lj_cap}
 
 print es.inter[0,0].lennardJones
-
 
 # Particle setup
 #############################################################
@@ -103,7 +102,8 @@ print "Stop if minimal distance is larger than %f" % min_dist
 
 # set LJ cap
 lj_cap = 20
-es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
+es.inter[0,0].lennardJones = {"ljcap": lj_cap}
+#es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
 print es.inter[0,0].lennardJones
 
 # Warmup Integration Loop
@@ -125,8 +125,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
 #   Increase LJ cap
   lj_cap = lj_cap + 10
-#  es.inter[0,0].lennardJones = {"capradius": lj_cap}
-  es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
+  es.inter[0,0].lennardJones = {"ljcap": lj_cap}
+#  es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
   print es.inter[0,0].lennardJones
 
 
@@ -155,7 +155,8 @@ print "verlet_reuse   %s" % es.glob.verlet_reuse
 print "\nStart integration: run %d times %d steps" % (int_n_times, int_steps)
 
 lj_cap = 0 
-es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
+es.inter[0,0].lennardJones = {"ljcap": lj_cap}
+#es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
 print es.inter[0,0].lennardJones
 
 energies = es._espressoHandle.Tcl_Eval('analyze energy')

@@ -19,4 +19,4 @@ cdef extern from "../src/interaction_data.h":
                                         double eps, double sig, double cut,
                                         double shift, double offset,
                                         double cap_radius, double min)
-														    
+  cdef int ljforcecap_set_params(double ljforcecap)
