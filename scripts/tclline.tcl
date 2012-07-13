@@ -31,6 +31,7 @@
 #                                                             #
 ###############################################################
 # 
+if { $tcl_interactive } {
 # Use Tclx if available:
 catch {
     package require Tclx
@@ -738,8 +739,12 @@ proc tclline {} {
     }
     prompt $env(CMDLINE)
 }
+
+# switch to original PWD
+cd $env(PWD)
 tclline
 
 fileevent stdin readable tclline
 vwait forever
 doExit
+}
