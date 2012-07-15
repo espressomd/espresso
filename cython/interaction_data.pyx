@@ -36,10 +36,10 @@ cdef class NonBondedInteractionHandle:
         del value["offset"]
 
       if "ljcap" in value:
-        temp =value["ljcap"]
+        ljcap =value["ljcap"]
         del value["ljcap"]
 
-# Currently not working:
+# Currently not working, since overwritten by c:
 #      if "capradius" in value:
 #        self.params[0].LJ_capradius =value["capradius"]
 #        del value["capradius"]
@@ -57,8 +57,7 @@ cdef class NonBondedInteractionHandle:
          self.params[0].LJ_shift,self.params[0].LJ_offset, self.params[0].LJ_capradius,
          self.params[0].LJ_min)
 
-      print "pyprint: %s\n" % temp
-      ljforcecap_set_params(temp)
+      ljforcecap_set_params(ljcap)
       
       self.update()
 
