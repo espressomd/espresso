@@ -35,9 +35,6 @@ int ljforcecap_set_params(double ljforcecap)
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(ljforcecap);
 
-  printf("c-print: ljforcecap set to %f\n", lj_force_cap);
-  printf("c-print: ljforcecap set to %f\n", ljforcecap);
- 
   return TCL_OK;
 }
 
