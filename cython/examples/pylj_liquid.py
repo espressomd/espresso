@@ -8,7 +8,7 @@ import code_info
 
 print " "
 print "======================================================="
-print "=       lj_liquid.tcl                                 ="
+print "=       lj_liquid.py                                  ="
 print "======================================================="
 print " "
 
@@ -67,7 +67,9 @@ es.inter[0,0].lennardJones = \
 	 "shift": lj_shift, "cut": lj_cut,\
 	 "ljcap": lj_cap}
 
+print "LJ-parameters:\n"
 print es.inter[0,0].lennardJones
+print "\n"
 
 # Particle setup
 #############################################################
@@ -79,9 +81,10 @@ for i in range(n_part):
   es.part[i].pos=numpy.random.random(3)*es.glob.box_l
 
 print "Simulate %d particles in a cubic simulation box " % n_part
-print "%f at density %f" % (box_l,density)
-print "Interactions:\n[inter]"	# Nicht angepasst
-act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
+print "%f at density %f\n" % (box_l,density)
+#print "Interactions:\n"	# Nicht angepasst
+#act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
+act_min_dist = es.analyze.pmindist()
 print "Start with minimal distance %f" % act_min_dist
 
 es.glob.max_num_cells = 2744
@@ -114,7 +117,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
   es.integrate(warm_steps)
 
   # Warmup criterion
-  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
+#  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
+  act_min_dist = es.analyze.pmindist() 
   print "run %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist)
 
   i = i + 1
@@ -127,7 +131,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
   lj_cap = lj_cap + 10
   es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 #  es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
-  print es.inter[0,0].lennardJones
+#	print es.inter[0,0].lennardJones
 
 
 # Just to see what else we may get from the c code

@@ -51,7 +51,6 @@ cdef class NonBondedInteractionHandle:
       if (len(value) >0):
         raise Exception("Unsupported parameters: " +value.__str__())
 
-      print "setting params\n"
       lennard_jones_set_params(self.type1, self.type2, 
          self.params[0].LJ_eps,self.params[0].LJ_sig, self.params[0].LJ_cut,
          self.params[0].LJ_shift,self.params[0].LJ_offset, self.params[0].LJ_capradius,

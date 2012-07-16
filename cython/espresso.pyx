@@ -13,6 +13,8 @@ from changeVolume import changeVolume
 from invalidateSystem import invalidateSystem
 import cellsystem
 cimport cellsystem
+import analyze
+cimport analyze
 
 import debye_hueckel
 #import lb
