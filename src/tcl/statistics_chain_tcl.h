@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,16 +20,7 @@
 */
 #ifndef STATISTICS_CHAIN_TCL_H
 #define STATISTICS_CHAIN_TCL_H
-/** \file statistics_chain.h 
-
-    This file contains the code for statistics on the data using the
-    molecule information set with analyse set chains.
-*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
+#include "parser.h"
 
 int tclcommand_analyze_parse_set_chains(Tcl_Interp *interp, int argc, char **argv);
 int tclcommand_analyze_set_parse_chain_topology(Tcl_Interp *interp, int argc, char **argv);
@@ -53,10 +45,9 @@ int tclcommand_analyze_parse_g_av(Tcl_Interp *interp, int average, int argc, cha
 int tclcommand_analyze_parse_formfactor(Tcl_Interp *interp, int average, int argc, char **argv);
 ///
 int tclcommand_analyze_parse_rdfchain(Tcl_Interp *interp, int argc, char **argv);
-///
 #ifdef ELECTROSTATICS
+///
 int tclcommand_analyze_parse_cwvac(Tcl_Interp *interp, int argc, char **argv);
 #endif
-/*@}*/
 
 #endif

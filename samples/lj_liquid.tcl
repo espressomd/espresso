@@ -7,8 +7,9 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -58,7 +59,6 @@ set density 0.7
 set lj1_eps     1.0
 set lj1_sig     1.0
 set lj1_cut     1.12246
-set lj1_shift   [calc_lj_shift $lj1_sig $lj1_cut]
 
 # Integration parameters
 #############################################################
@@ -90,7 +90,7 @@ set tcl_precision 6
 
 setmd box_l $box_l $box_l $box_l
 
-inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut $lj1_shift 0
+inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut
 
 # Particle setup
 #############################################################

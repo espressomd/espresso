@@ -1,4 +1,5 @@
-# Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
+# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2007,2008,2009,2010,2011,2012 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
 #
@@ -15,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = logo homepage doxygen dg ug tutorials
+SUBDIRS = logo doxygen dg ug tutorials
 
 .PHONY: FORCE doc ug dg tutorials doxygen
 doc: ug dg tutorials doxygen
@@ -25,7 +26,7 @@ doxygen: FORCE
 	cd doxygen; $(MAKE) --print-directory $@
 ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
-tutorial: latexit.sh FORCE
+tutorials: latexit.sh FORCE
 	cd tutorials; $(MAKE) --print-directory $@
 FORCE:
 

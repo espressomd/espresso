@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -16,7 +16,7 @@
   GNU General Public License for more details.
   
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file lb.c
  *
@@ -28,10 +28,8 @@
  */
 
 #include <mpi.h>
-#include <tcl.h>
 #include <stdio.h>
 #include "utils.h"
-#include "parser.h"
 #include "communication.h"
 #include "grid.h"
 #include "domain_decomposition.h"
@@ -42,9 +40,12 @@
 #include "lb-d3q19.h"
 #include "lb-boundaries.h"
 #include "lb.h"
-#include "lbgpu.h"
 
 #ifdef LB
+
+#ifdef ADDITIONAL_CHECKS
+static void lb_check_halo_regions();
+#endif
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum = 0;
@@ -123,6 +124,7 @@ static int failcounter=0;
 
 /***********************************************************************/
 #endif
+
 #if defined (LB) || defined (LB_GPU)
 
 /* *********************** C Interface part *************************************/
@@ -226,7 +228,7 @@ int lb_lbfluid_set_visc(double p_visc){
   } else {
 #ifdef LB
     lbpar.viscosity = p_visc;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_VISCOSITY);
 #endif
     }
   return 0;
@@ -262,7 +264,7 @@ int lb_lbfluid_set_bulk_visc(double p_bulk_visc){
   } else {
 #ifdef LB
     lbpar.bulk_viscosity = p_bulk_visc;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif
     }
   return 0;
@@ -319,7 +321,7 @@ int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz) {
     lbpar.ext_force[0] = p_fx;
     lbpar.ext_force[1] = p_fy;
     lbpar.ext_force[2] = p_fz;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_EXTFORCE);
 #endif
     }
   return 0;
@@ -337,7 +339,7 @@ int lb_lbfluid_set_friction(double p_friction){
   } else {
 #ifdef LB
     lbpar.friction = p_friction;
-    mpi_bcast_lb_params(0);
+    mpi_bcast_lb_params(LBPAR_FRICTION);
 #endif
     }
   return 0;
@@ -452,7 +454,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
   
     int j;	
          /** print of the calculated phys values */
-      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
         for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
         /** print of the calculated phys values */
         fprintf(fp, " %u \n", bound_array[j]);
@@ -466,15 +468,17 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 	   int gridsize[3];
 	
 	   gridsize[0] = box_l[0] / lblattice.agrid;
-   	gridsize[1] = box_l[1] / lblattice.agrid;
+	   gridsize[1] = box_l[1] / lblattice.agrid;
 	   gridsize[2] = box_l[2] / lblattice.agrid;
 	
-	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
 	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
 			   for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
 				    lb_lbnode_get_boundary(pos, &boundary);
+				    if (boundary) 
+				      boundary = 1;
 				    fprintf(fp, "%d ", boundary);
 			   }
 #endif
@@ -495,11 +499,11 @@ int lb_lbfluid_print_vtk_velocity(char* filename){
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
     host_values = (LB_values_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
-		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       /** print of the calculated phys values */
-      fprintf(fp, " %f \t %f \t %f \n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+      fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
     }
     free(host_values);
 #endif
@@ -513,14 +517,14 @@ int lb_lbfluid_print_vtk_velocity(char* filename){
 	   gridsize[1] = box_l[1] / lblattice.agrid;
 	   gridsize[2] = box_l[2] / lblattice.agrid;
 
-	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid*0.5, lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
 	    for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 		    for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
 			    for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
 			    {
 				    lb_lbnode_get_u(pos, u);
-				    fprintf(fp, "%f %f %f \n", u[0], u[1], u[2]);
+				    fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
 			    }
 #endif     
   }
@@ -548,36 +552,34 @@ int lb_lbfluid_print_boundary(char* filename){
       int k = j/lbpar_gpu.dim_x;
       xyz[1] = k%lbpar_gpu.dim_y;
       k /= lbpar_gpu.dim_y;
-      xyz[2] = k; 
+      xyz[2] = k;
       /** print of the calculated phys values */
-      fprintf(fp, "%i \t %i \t%i \t %u \n", xyz[0], xyz[1], xyz[2], bound_array[j]);
+      fprintf(fp, "%f %f %f %d\n", (xyz[0]+0.5)*lbpar_gpu.agrid, (xyz[1]+0.5)*lbpar_gpu.agrid, (xyz[2]+0.5)*lbpar_gpu.agrid, bound_array[j]);
     }
     free(bound_array);
 #endif  
   } else {
 #ifdef LB
     int pos[3];
-	   int boundary;
-	   int gridsize[3];
+    int boundary;
+    int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
-	
+    gridsize[0] = box_l[0] / lblattice.agrid;
+    gridsize[1] = box_l[1] / lblattice.agrid;
+    gridsize[2] = box_l[2] / lblattice.agrid;	
 
-	  for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-		  for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-			  for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
-			  {
-				  lb_lbnode_get_boundary(pos, &boundary);
-				  fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
-			  }
+    for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+      for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+        for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+          lb_lbnode_get_boundary(pos, &boundary);
+          boundary = boundary != 0 ? 1 : 0;
+          fprintf(fp, "%f %f %f %d\n", (pos[0]+0.5)*lblattice.agrid, (pos[1]+0.5)*lblattice.agrid, (pos[2]+0.5)*lblattice.agrid, boundary);
+        }
 #endif
-			 }
+  }
 	
-	 fclose(fp);
-				
-	return 0;
+  fclose(fp);
+  return 0;
 }
 
 int lb_lbfluid_print_velocity(char* filename){
@@ -593,89 +595,94 @@ int lb_lbfluid_print_velocity(char* filename){
     lb_get_values_GPU(host_values);
     int xyz[3];
     int j;	
-    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+    for(j=0; j<lbpar_gpu.number_of_nodes; ++j) {
       xyz[0] = j%lbpar_gpu.dim_x;
       int k = j/lbpar_gpu.dim_x;
       xyz[1] = k%lbpar_gpu.dim_y;
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;     
             /** print of the calculated phys values */
-      fprintf(fp, "%i \t %i \t%i \t %f \t %f \t %f \n", xyz[0], xyz[1], xyz[2], host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
+      fprintf(fp, "%f %f %f %f %f %f\n", (xyz[0]+0.5)*lbpar_gpu.agrid, (xyz[1]+0.5)*lbpar_gpu.agrid, (xyz[2]+0.5)*lbpar_gpu.agrid, host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
     }
     free(host_values);
 #endif
   } else {
 #ifdef LB
-	   int pos[3];
-	   double u[3];
-	   int gridsize[3];
+    int pos[3];
+    double u[3];
+    int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+    gridsize[0] = box_l[0] / lblattice.agrid;
+    gridsize[1] = box_l[1] / lblattice.agrid;
+    gridsize[2] = box_l[2] / lblattice.agrid;
  	
-	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
-	   	for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
-		   	for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
-		   	{
-		   		lb_lbnode_get_u(pos, u);
-		   		fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
-		   	}
+    for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
+      for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
+        for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+          lb_lbnode_get_u(pos, u);
+          fprintf(fp, "%f %f %f %f %f %f\n", (pos[0]+0.5)*lblattice.agrid, (pos[1]+0.5)*lblattice.agrid, (pos[2]+0.5)*lblattice.agrid, u[0], u[1], u[2]);
+        }
 #endif		
-    }		
- fclose(fp);		
-	return 0;
-}
-int lb_lbfluid_save_checkpoint(char* filename, int binary) {
-#ifdef LB
-  FILE* cpfile;
-  cpfile=fopen(filename, "w");
-  if (!cpfile) {
-    return TCL_ERROR;
-  }
-  double pop[19];
-  int ind[3];
-   
-  int gridsize[3];
-
-  gridsize[0] = box_l[0] / lblattice.agrid;
-  gridsize[1] = box_l[1] / lblattice.agrid;
-  gridsize[2] = box_l[2] / lblattice.agrid;
-
-  for (int i=0; i < gridsize[0]; i++) {
-    for (int j=0; j < gridsize[1]; j++) {
-      for (int k=0; k < gridsize[2]; k++) {
-        ind[0]=i;
-        ind[1]=j;
-        ind[2]=k;
-        lb_lbnode_get_pop(ind, pop);
-        if (!binary) {
-          for (int n=0; n<19; n++) {
-            fprintf(cpfile, "%.16e ", pop[n]); 
-          }
-          fprintf(cpfile, "\n"); 
-        }
-        else {
-          fwrite(pop, sizeof(double), 19, cpfile);
-        }
-      } 
     }
+    
+    fclose(fp);		
+    return 0;
+}
+
+int lb_lbfluid_save_checkpoint(char* filename, int binary) {
+  if(lattice_switch & LATTICE_LB_GPU) {
+    fprintf(stderr, "LB checkpointing not implemented for GPU\n");
+    return ES_ERROR;
   }
-  fclose(cpfile);
-  return TCL_OK;
+  else
+	if(lattice_switch & LATTICE_LB) {
+#ifdef LB
+		FILE* cpfile;
+		cpfile=fopen(filename, "w");
+		if (!cpfile) {
+			return ES_ERROR;
+		}
+		double pop[19];
+		int ind[3];
+		
+		int gridsize[3];
+
+		gridsize[0] = box_l[0] / lblattice.agrid;
+		gridsize[1] = box_l[1] / lblattice.agrid;
+		gridsize[2] = box_l[2] / lblattice.agrid;
+
+		for (int i=0; i < gridsize[0]; i++) {
+			for (int j=0; j < gridsize[1]; j++) {
+				for (int k=0; k < gridsize[2]; k++) {
+					ind[0]=i;
+					ind[1]=j;
+					ind[2]=k;
+					lb_lbnode_get_pop(ind, pop);
+					if (!binary) {
+						for (int n=0; n<19; n++) {
+							fprintf(cpfile, "%.16e ", pop[n]); 
+						}
+						fprintf(cpfile, "\n"); 
+					}
+					else {
+						fwrite(pop, sizeof(double), 19, cpfile);
+					}
+				} 
+			}
+		}
+		fclose(cpfile);
+		return ES_OK;
 #endif
-  if(!(lattice_switch & LATTICE_LB_GPU)) {
-    printf("Not implemented");
-    return TCL_ERROR;
-  }
-  return TCL_ERROR;
+	}
+
+  return ES_ERROR;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 #ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
   if (!cpfile) {
-    return TCL_ERROR;
+    return ES_ERROR;
   }
   double pop[19];
   int ind[3];
@@ -694,12 +701,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
         ind[1]=j;
         ind[2]=k;
         if (!binary) {
-//          for (int n=0; n<19; n++) {
-            fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]); 
-//          }
+	  if (fscanf(cpfile, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf \n", &pop[0],&pop[1],&pop[2],&pop[3],&pop[4],&pop[5],&pop[6],&pop[7],&pop[8],&pop[9],&pop[10],&pop[11],&pop[12],&pop[13],&pop[14],&pop[15],&pop[16],&pop[17],&pop[18]) != 19) {
+	    return ES_ERROR;
+	  } 
         }
         else {
-          fread(pop, sizeof(double), 19, cpfile);
+          if (fread(pop, sizeof(double), 19, cpfile) != 19)
+	    return ES_ERROR;
         }
         lb_lbnode_set_pop(ind, pop);
       } 
@@ -708,13 +716,13 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   fclose(cpfile);
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
-  return TCL_OK;
+  return ES_OK;
 #endif
   if(!(lattice_switch & LATTICE_LB_GPU)) {
-    printf("Not implemented");
-    return TCL_ERROR;
+    fprintf(stderr, "Not implemented\n");
+    return ES_ERROR;
   }
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 
@@ -728,6 +736,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
     lb_print_node_GPU(single_nodeindex, host_print_values);
     rho = (double)host_print_values[0].rho;
     *p_rho = rho;
+		free (host_print_values);
 #endif
   } else {
 #ifdef LB
@@ -759,6 +768,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
     p_u[0] = (double)host_print_values[0].v[0];
     p_u[1] = (double)host_print_values[0].v[1];
     p_u[2] = (double)host_print_values[0].v[2];
+		free (host_print_values);
 #endif
   } else {  
 #ifdef LB
@@ -780,6 +790,75 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
   return 0;
 }
 
+
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. This version of the function
+ * can be called without the position needing to be on the local processor.
+ * Note that this gives a slightly different version then the values used to
+ * couple to MD beads when near a wall, see lb_lbfluid_get_interpolated_velocity.
+ */
+
+int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
+  double local_v[3] = {0, 0, 0},delta[6]; //velocity field, relative positions to surrounding nodes
+  int 	 ind[3], tmpind[3]; //node indices
+  int		 x, y, z; //counters
+
+  // convert the position into lower left grid point
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+	map_position_to_lattice_global(p, ind, delta, lbpar_gpu.agrid);
+#endif
+  } else {  
+#ifdef LB
+	map_position_to_lattice_global(p, ind, delta,  lbpar.agrid);
+#endif
+  }
+
+
+  //set the initial velocity to zero in all directions
+  v[0] = 0;
+  v[1] = 0;
+  v[2] = 0;
+  for (z=0;z<2;z++) {
+    for (y=0;y<2;y++) {
+      for (x=0;x<2;x++) {
+				//give the index of the neighbouring nodes
+        tmpind[0] = ind[0]+x;
+        tmpind[1] = ind[1]+y;
+        tmpind[2] = ind[2]+z;
+
+				if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+					if (tmpind[0] == lbpar_gpu.dim_x) tmpind[0] =0;
+					if (tmpind[1] == lbpar_gpu.dim_y) tmpind[1] =0;
+					if (tmpind[2] == lbpar_gpu.dim_z) tmpind[2] =0;
+#endif
+				} else {  
+#ifdef LB
+					if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
+					if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
+					if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
+
+#endif
+				}
+
+//printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
+				lb_lbnode_get_u(tmpind, local_v);
+				
+				
+				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+        v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
+        v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
+
+      }
+    }
+  }
+
+  return 0;
+}
+
+
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
@@ -796,6 +875,8 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
     p_pi[3] = (double)host_print_values[0].pi[3];
     p_pi[4] = (double)host_print_values[0].pi[4];
     p_pi[5] = (double)host_print_values[0].pi[5];
+		free (host_print_values);
+
 #endif
 #endif
   printf("single node stress tensor values not available due to memory consumption!\n But can be made available hardcoded in lb.c and lbgpu.h!\n");
@@ -917,7 +998,7 @@ int lb_lbnode_set_u(int* ind, double* u){
     host_velocity[1] = (float)u[1];
     host_velocity[2] = (float)u[2];
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-    lb_set_node_veloctiy_GPU(single_nodeindex, host_velocity);
+    lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif
   } else {
 #ifdef LB
@@ -969,11 +1050,15 @@ int lb_lbnode_set_pop(int* ind, double* p_pop) {
 }
 #endif
 
+int lb_lbnode_set_extforce(int* ind, double* f) {
+  return -100;
+}
+
 #ifdef LB
 /********************** The Main LB Part *************************************/
 
 /* Halo communication for push scheme */
-MDINLINE void halo_push_communication() {
+static void halo_push_communication() {
 
   index_t index;
   int x, y, z, count;
@@ -992,8 +1077,8 @@ MDINLINE void halo_push_communication() {
   rbuf = malloc(count*sizeof(double));
 
   /* send to right, recv from left i = 1, 7, 9, 11, 13 */
-  snode = node_neighbors[0];
-  rnode = node_neighbors[1];
+  snode = node_neighbors[1];
+  rnode = node_neighbors[0];
 
   buffer = sbuf;
   index = get_linear_index(lblattice.grid[0]+1,0,0,lblattice.halo_grid);
@@ -1014,7 +1099,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1036,8 +1121,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 2, 8, 10, 12, 14 */
-  snode = node_neighbors[1];
-  rnode = node_neighbors[0];
+  snode = node_neighbors[0];
+  rnode = node_neighbors[1];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1058,7 +1143,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1087,8 +1172,8 @@ MDINLINE void halo_push_communication() {
   rbuf = realloc(rbuf, count*sizeof(double));
 
   /* send to right, recv from left i = 3, 7, 10, 15, 17 */
-  snode = node_neighbors[2];
-  rnode = node_neighbors[3];
+  snode = node_neighbors[3];
+  rnode = node_neighbors[2];
 
   buffer = sbuf;
   index = get_linear_index(0,lblattice.grid[1]+1,0,lblattice.halo_grid);
@@ -1110,7 +1195,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1133,8 +1218,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 4, 8, 9, 16, 18 */
-  snode = node_neighbors[3];
-  rnode = node_neighbors[2];
+  snode = node_neighbors[2];
+  rnode = node_neighbors[3];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1156,7 +1241,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1186,8 +1271,8 @@ MDINLINE void halo_push_communication() {
   rbuf = realloc(rbuf, count*sizeof(double));
   
   /* send to right, recv from left i = 5, 11, 14, 15, 18 */
-  snode = node_neighbors[4];
-  rnode = node_neighbors[5];
+  snode = node_neighbors[5];
+  rnode = node_neighbors[4];
 
   buffer = sbuf;
   index = get_linear_index(0,0,lblattice.grid[2]+1,lblattice.halo_grid);
@@ -1208,7 +1293,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1230,8 +1315,8 @@ MDINLINE void halo_push_communication() {
   }
 
   /* send to left, recv from right i = 6, 12, 13, 16, 17 */
-  snode = node_neighbors[5];
-  rnode = node_neighbors[4];
+  snode = node_neighbors[4];
+  rnode = node_neighbors[5];
 
   buffer = sbuf;
   index = get_linear_index(0,0,0,lblattice.halo_grid);
@@ -1252,7 +1337,7 @@ MDINLINE void halo_push_communication() {
   if (node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
 		 rbuf, count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
-		 MPI_COMM_WORLD, &status);
+		 comm_cart, &status);
   } else {
     memcpy(rbuf,sbuf,count*sizeof(double));
   }
@@ -1290,11 +1375,12 @@ int lb_sanity_checks() {
       ERROR_SPRINTF(errtxt, "{103 LB requires domain-decomposition cellsystem} ");
       ret = -1;
     } 
-    else if (dd.use_vList) {
+    else if (dd.use_vList && skin>=lbpar.agrid/2.0) {
       errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{104 LB requires no Verlet Lists} ");
+      ERROR_SPRINTF(errtxt, "{104 LB requires either no Verlet lists or that the skin of the verlet list to be less than half of lattice-Boltzmann grid spacing.} ");
       ret = -1;
-    }    
+    }
+
 
     if (thermo_switch & ~THERMO_LB) {
       errtxt = runtime_error(128);
@@ -1430,7 +1516,6 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-
     lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
     lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
 
@@ -1450,7 +1535,6 @@ void lb_reinit_parameters() {
 /** Resets the forces on the fluid nodes */
 void lb_reinit_forces() {
   index_t index;
-
   for (index=0; index<lblattice.halo_grid_volume; index++) {
 
 #ifdef EXTERNAL_FORCES
@@ -1478,7 +1562,6 @@ void lb_reinit_forces() {
 
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid() {
-
     index_t index;
 
     /* default values for fields in lattice units */
@@ -1486,6 +1569,8 @@ void lb_reinit_fluid() {
     double rho = lbpar.rho*agrid*agrid*agrid;
     double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
+
+    LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
@@ -2336,7 +2421,7 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
 #endif
 
 #if 0 // I have no idea what this should be for!
-  if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2))) {
+  if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
 #endif
   
   ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
@@ -2438,9 +2523,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   pos[1]=p[1];
   pos[2]=p[2];
 #endif
-
-/* determine elementary lattice cell surrounding the particle 
-   and the relative position of the particle in this cell */ 
+  
+  /* determine elementary lattice cell surrounding the particle 
+     and the relative position of the particle in this cell */ 
   map_position_to_lattice(&lblattice,pos,node_index,delta);
 
   /* calculate fluid velocity at particle's position
@@ -2621,9 +2706,9 @@ void calc_particle_lattice_ia() {
       for (i=0;i<np;i++) {
 	/* for ghost particles we have to check if they lie
 	 * in the range of the local lattice nodes */
-	if (p[i].r.p[0] >= my_left[0]-lblattice.agrid && p[i].r.p[0] < my_right[0]
-	    && p[i].r.p[1] >= my_left[1]-lblattice.agrid && p[i].r.p[1] < my_right[1]
-	    && p[i].r.p[2] >= my_left[2]-lblattice.agrid && p[i].r.p[2] < my_right[2]) {
+ 	if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid
+	    && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid
+	    && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid) {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
@@ -2667,12 +2752,12 @@ void lb_calc_average_rho() {
     index += 2*lblattice.halo_grid[0];
   }
 
-  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&rho, &sum_rho, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
   /* calculate average density in MD units */
   // TODO!!!
   lbpar.rho = sum_rho / (box_l[0]*box_l[1]*box_l[2]);
-
+  
 }
 
 /*@}*/
@@ -2692,9 +2777,11 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
 }
 
 /** Checks consistency of the halo regions (ADDITIONAL_CHECKS)
- * This function can be used as an additional check. It test whether the 
- * halo regions have been exchanged correctly. */
-static void lb_check_halo_regions() {
+    This function can be used as an additional check. It test whether the 
+    halo regions have been exchanged correctly.
+*/
+static void lb_check_halo_regions()
+{
 
   index_t index;
   int i,x,y,z, s_node, r_node, count=n_veloc;
@@ -2716,13 +2803,13 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
 	} else {
 	  index = get_linear_index(lblattice.grid[0],y,z,lblattice.halo_grid);
-	  for (i=0;i<n_veloc;i++) r_buffer[i] = lbfluid[0][i][index];
+	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  if (compare_buffers(s_buffer,r_buffer,count*sizeof(double))) {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);
 	  }
@@ -2736,7 +2823,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(1,y,z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2747,7 +2834,7 @@ static void lb_check_halo_regions() {
 	    fprintf(stderr,"buffers differ in dir=%d at index=%ld y=%d z=%d\n",0,index,y,z);	  
 	  }
 	}
-
+	
       }      
     }
   }
@@ -2764,7 +2851,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,lblattice.grid[1],z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2787,7 +2874,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,1,z,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2815,7 +2902,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,y,lblattice.grid[2],lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2840,7 +2927,7 @@ static void lb_check_halo_regions() {
 	if (n_nodes > 1) {
 	  MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
 		       r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
-		       MPI_COMM_WORLD, status);
+		       comm_cart, status);
 	  index = get_linear_index(x,y,1,lblattice.halo_grid);
 	  for (i=0;i<n_veloc;i++) s_buffer[i] = lbfluid[0][i][index];
 	  compare_buffers(s_buffer,r_buffer,count*sizeof(double));
@@ -2866,7 +2953,7 @@ static void lb_check_halo_regions() {
 #endif /* ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
-MDINLINE void lb_lattice_sum() {
+static void lb_lattice_sum() {
 
     int n_veloc = lbmodel.n_veloc;
     double *w   = lbmodel.w;
@@ -2967,7 +3054,7 @@ MDINLINE void lb_lattice_sum() {
 #endif
 
 #ifdef ADDITIONAL_CHECKS
-MDINLINE void lb_check_mode_transformation(index_t index, double *mode) {
+static void lb_check_mode_transformation(index_t index, double *mode) {
 
   /* check if what I think is right */
 
@@ -3017,7 +3104,7 @@ MDINLINE void lb_check_mode_transformation(index_t index, double *mode) {
 
 }
 
-MDINLINE void lb_init_mode_transformation() {
+static void lb_init_mode_transformation() {
 
 #ifdef D3Q19
   int i, j, k, l;
@@ -3225,15 +3312,16 @@ MDINLINE void lb_init_mode_transformation() {
 #endif /* ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
+
 /** Check for negative populations.  
- *
- * Checks for negative populations and increases failcounter for each
- * occurence.
- *
- * @param  index Index of the local lattice site (Input).
- * @return Number of negative populations on the local lattice site.
- */
-MDINLINE int lb_check_negative_n(index_t index) {
+ 
+    Checks for negative populations and increases failcounter for each
+    occurence.
+ 
+    @param  index Index of the local lattice site (Input).
+    @return Number of negative populations on the local lattice site. */
+static int lb_check_negative_n(index_t index)
+{
   int i, localfails=0;
 
   for (i=0; i<n_veloc; i++) {

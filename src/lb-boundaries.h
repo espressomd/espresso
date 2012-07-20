@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -36,7 +36,6 @@
 
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
-#include <tcl.h>
 #include "utils.h"
 #include "halo.h"
 #include "constraint.h"
@@ -161,7 +160,7 @@ MDINLINE void lb_bounce_back() {
                 }
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k] + population_shift;
               }
-              else 
+              else
                 lbfluid[1][reverse[i]][k-next[i]]   = lbfluid[1][i][k];
             }
           }

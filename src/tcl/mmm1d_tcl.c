@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -105,7 +105,15 @@ int tclcommand_inter_coulomb_parse_mmm1d(Tcl_Interp *interp, int argc, char **ar
   }
 
   MMM1D_set_params(switch_rad, bessel_cutoff, maxPWerror);
-  return tclcommand_inter_coulomb_print_mmm1d_parameteres(interp);
+
+  char *log = NULL;
+  int result = mmm1d_tune(&log) == ES_OK ? TCL_OK : TCL_ERROR;
+
+  Tcl_AppendResult(interp, log, NULL);
+  if (log)
+    free(log);
+
+  return gather_runtime_errors(interp, result);
 }
 
 #endif

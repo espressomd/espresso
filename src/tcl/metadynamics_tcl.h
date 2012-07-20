@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -18,10 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef METADYNAMICS_TCL_H
-#define METADYNAMICS_TCL_H
-
-#include<tcl.h>
+#ifndef _METADYNAMICS_TCL_H
+#define _METADYNAMICS_TCL_H
+#include "parser.h"
 
 #ifdef METADYNAMICS
 

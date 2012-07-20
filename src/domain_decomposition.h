@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -58,7 +58,6 @@
 #include "utils.h"
 #include "cells.h"
 #include "integrate.h"
-#include "communication.h"
 #include "verlet.h"
 #include "thermostat.h"
 
@@ -152,10 +151,14 @@ extern int min_num_cells;
 /************************************************************/
 /*@{*/
 
-/** Re-derive the topology dimensions after changing the box length.
-    This tries to do minimal changes to be fast, e.g. when used with
-    the NpT every time step. */
-void dd_change_boxl();
+/** adjust the domain decomposition to a change in the geometry.
+    Tries to speed up things if possible.
+
+    @param flags a combination of \ref CELL_FLAG_FAST and \ref
+    CELL_FLAG_GRIDCHANGED, see documentation of \ref
+    cells_on_geometry_change.
+*/
+void dd_on_geometry_change(int flags);
 
 /** Initialize the topology. The argument is a list of cell pointers,
     containing particles that have to be sorted into new cells. The

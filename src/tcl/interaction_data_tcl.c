@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,49 +23,64 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include "rattle.h"
+#include "interaction_data_tcl.h"
 #include "interaction_data.h"
-#include "errorhandling.h"
 #include "communication.h"
-#include "grid.h"
-#include "pressure.h"
-#include "p3m.h"
-#include "ewald.h"
-#include "debye_hueckel.h"
-#include "reaction_field.h"
-#include "mmm1d.h"
-#include "mmm2d.h"
-#include "mmm2d_tcl.h"
-#include "maggs.h"
-#include "elc.h"
+
+#include "comforce_tcl.h"
+#include "comfixed_tcl.h"
+#include "rattle_tcl.h"
+#include "mol_cut_tcl.h"
+
+// for the force caps
 #include "lj.h"
-#include "lj_tcl.h"
-#include "ljgen_tcl.h"
 #include "ljangle.h"
-#include "steppot.h"
-#include "hertzian.h"
+#include "morse.h"
+#include "tab.h"
 #include "buckingham.h"
-#include "soft_sphere.h"
-#include "tab_tcl.h"
-#include "overlap.h"
+
+// nonbonded
+#include "bmhtf-nacl_tcl.h"
+#include "buckingham_tcl.h"
+#include "gb_tcl.h"
+#include "lj_tcl.h"
+#include "ljangle_tcl.h"
 #include "ljcos_tcl.h"
 #include "ljcos2_tcl.h"
-#include "gb.h"
-#include "parser.h"
-#include "cells.h"
-#include "comforce.h"
-#include "comfixed.h"
+#include "ljgen_tcl.h"
+#include "hertzian_tcl.h"
 #include "morse_tcl.h"
-#include "dpd.h"
-#include "tunable_slip.h"
-#include "magnetic_non_p3m_methods.h"
-#include "mdlc_correction.h"
+#include "dpd_tcl.h"
+#include "soft_sphere_tcl.h"
+#include "hat_tcl.h"
+#include "steppot_tcl.h"
+#include "tab_tcl.h"
+#include "tunable_slip_tcl.h"
 
+// Coulomb
+#include "debye_hueckel_tcl.h"
+#include "elc_tcl.h"
+#include "ewald_tcl.h"
 #include "maggs_tcl.h"
 #include "mmm1d_tcl.h"
+#include "mmm2d_tcl.h"
 #include "p3m_tcl.h"
+#include "reaction_field_tcl.h"
+
+// Magnetostatics
+#include "mdlc_correction_tcl.h"
 #include "p3m-dipolar_tcl.h"
 #include "magnetic_non_p3m_methods_tcl.h"
+
+// bonded
+#include "angle_tcl.h"
+#include "angledist_tcl.h"
+#include "dihedral_tcl.h"
+#include "endangledist_tcl.h"
+#include "fene_tcl.h"
+#include "overlap_tcl.h"
+#include "harmonic_tcl.h"
+#include "subt_lj_tcl.h"
 
 ///
 int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
@@ -264,118 +279,52 @@ int tclcommand_inter_parse_magnetic(Tcl_Interp * interp, int argc, char ** argv)
 int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
 {
   Bonded_ia_parameters *params = &bonded_ia_params[i];
-  char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  char buffer[TCL_INTEGER_SPACE];
 
   sprintf(buffer, "%d ", i);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   
   switch (params->type) {
   case BONDED_IA_FENE:
-    Tcl_PrintDouble(interp, params->p.fene.k, buffer);
-    Tcl_AppendResult(interp, "FENE ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.fene.drmax, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.fene.r0, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    return (TCL_OK);
+    return tclprint_to_result_feneIA(interp, params);
   case BONDED_IA_HARMONIC:
-    Tcl_PrintDouble(interp, params->p.harmonic.k, buffer);
-    Tcl_AppendResult(interp, "HARMONIC ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.harmonic.r, buffer);
-    Tcl_AppendResult(interp, buffer," ", (char *) NULL);
-    if (params->p.harmonic.r_cut > 0.0) {
-      Tcl_PrintDouble(interp, params->p.harmonic.r_cut, buffer);
-      Tcl_AppendResult(interp, buffer, (char *) NULL);
-    }
-    return (TCL_OK);
+    return tclprint_to_result_harmonicIA(interp, params);
+#ifdef BOND_ANGLE
   case BONDED_IA_ANGLE:
-    Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
-    Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
+    return tclprint_to_result_angleIA(interp, params);
+#endif
+#ifdef BOND_ANGLEDIST
   case BONDED_IA_ANGLEDIST:
-    Tcl_PrintDouble(interp, params->p.angledist.bend, buffer);
-    Tcl_AppendResult(interp, "angledist ", buffer," ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angledist.phimin, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angledist.distmin, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angledist.phimax, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.angledist.distmax, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
-  case BONDED_IA_DIHEDRAL:  
-    sprintf(buffer, "%d", (int)(params->p.dihedral.mult));
-    Tcl_AppendResult(interp, "dihedral ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.dihedral.bend, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.dihedral.phase, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
+    return tclprint_to_result_angledistIA(interp, params);
+#endif
+  case BONDED_IA_DIHEDRAL:
+    return tclprint_to_result_dihedralIA(interp, params);
+#ifdef BOND_ENDANGLEDIST
   case BONDED_IA_ENDANGLEDIST:
-    Tcl_PrintDouble(interp, params->p.endangledist.bend, buffer);
-    Tcl_AppendResult(interp, "endangledist ", buffer," ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.endangledist.phi0, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.endangledist.distmin, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.endangledist.distmax, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
+    return tclprint_to_result_endangledistIA(interp, params);
+#endif
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
-    switch (params->p.tab.type) {
-    case TAB_BOND_LENGTH:
-      Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    case TAB_BOND_ANGLE:
-      Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    case TAB_BOND_DIHEDRAL:
-      Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    }
+    return tclprint_to_result_tabulated_bondedIA(interp, params);
 #endif
 #ifdef OVERLAPPED
   case BONDED_IA_OVERLAPPED:
-    switch (params->p.overlap.type) {
-    case OVERLAP_BOND_LENGTH:
-      Tcl_AppendResult(interp, "overlapped bond \"",params->p.overlap.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    case OVERLAP_BOND_ANGLE:
-      Tcl_AppendResult(interp, "overlapped angle \"",params->p.overlap.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    case OVERLAP_BOND_DIHEDRAL:
-      Tcl_AppendResult(interp, "overlapped dihedral \"",params->p.overlap.filename,"\"",(char *) NULL);
-      return (TCL_OK);
-    }
+    return tclprint_to_result_overlapIA(interp, params);
 #endif
 #ifdef BOND_CONSTRAINT
   case BONDED_IA_RIGID_BOND:
-    Tcl_PrintDouble(interp, sqrt(params->p.rigid_bond.d2), buffer);
-    Tcl_AppendResult(interp, "RIGID_BOND ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.rigid_bond.p_tol/2.0, buffer);
-    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.rigid_bond.v_tol/time_step, buffer);
-    Tcl_AppendResult(interp, buffer, (char *) NULL);
-    return (TCL_OK);
+    return tclprint_to_result_rigid_bond(interp, params);
+#endif
+#ifdef LENNARD_JONES
+  case BONDED_IA_SUBT_LJ:
+    return tclprint_to_result_subt_ljIA(interp, params);
 #endif
 #ifdef BOND_VIRTUAL
   case BONDED_IA_VIRTUAL_BOND:
     Tcl_AppendResult(interp, "VIRTUAL_BOND ", (char *) NULL);
     return (TCL_OK);
 #endif
-#ifdef LENNARD_JONES
-  case BONDED_IA_SUBT_LJ:
-    Tcl_PrintDouble(interp, params->p.subt_lj.k, buffer);
-    Tcl_AppendResult(interp, "SUBT_LJ ", buffer, " ", (char *) NULL);
-    Tcl_PrintDouble(interp, params->p.subt_lj.r, buffer);
-    Tcl_AppendResult(interp, buffer,(char *) NULL);
-    return (TCL_OK);
-#endif
- case BONDED_IA_NONE:
+  case BONDED_IA_NONE:
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "unknown bonded interaction number ",buffer,
 		     (char *) NULL);
@@ -425,62 +374,79 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
   sprintf(buffer, "%d %d ", i, j);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
+
 #ifdef LENNARD_JONES
-  if (data->LJ_cut != 0) tclprint_to_result_ljIA(interp,i,j);
+  if (data->LJ_cut > 0.0) tclprint_to_result_ljIA(interp,i,j);
 #endif
+
 #ifdef LENNARD_JONES_GENERIC
-  if (data->LJGEN_cut != 0) tclprint_to_result_ljgenIA(interp,i,j);
+  if (data->LJGEN_cut > 0.0) tclprint_to_result_ljgenIA(interp,i,j);
 #endif
+
 #ifdef LJ_ANGLE
-  if (data->LJANGLE_cut != 0) tclprint_to_result_ljangleIA(interp,i,j);
+  if (data->LJANGLE_cut > 0.0) tclprint_to_result_ljangleIA(interp,i,j);
 #endif
+
 #ifdef SMOOTH_STEP
-  if (data->SmSt_cut != 0) tclprint_to_result_SmStIA(interp,i,j);
+  if (data->SmSt_cut > 0.0) tclprint_to_result_SmStIA(interp,i,j);
 #endif
+
 #ifdef HERTZIAN
-  if (data->Hertzian_sig != 0) tclprint_to_result_HertzianIA(interp,i,j);
+  if (data->Hertzian_sig > 0.0) tclprint_to_result_HertzianIA(interp,i,j);
 #endif
+
 #ifdef BMHTF_NACL
-  if (data->BMHTF_cut != 0) tclprint_to_result_BMHTFIA(interp,i,j);
+  if (data->BMHTF_cut > 0.0) tclprint_to_result_BMHTFIA(interp,i,j);
 #endif
+
 #ifdef MORSE
-  if (data->MORSE_cut != 0) tclprint_to_result_morseIA(interp,i,j);
+  if (data->MORSE_cut > 0.0) tclprint_to_result_morseIA(interp,i,j);
 #endif
+
 #ifdef LJCOS
-  if (data->LJCOS_cut != 0) tclprint_to_result_ljcosIA(interp,i,j);
+  if (data->LJCOS_cut > 0.0) tclprint_to_result_ljcosIA(interp,i,j);
 #endif
+
 #ifdef BUCKINGHAM
-  if (data->BUCK_cut != 0) tclprint_to_result_buckIA(interp,i,j);
+  if (data->BUCK_cut > 0.0) tclprint_to_result_buckIA(interp,i,j);
 #endif
+
 #ifdef SOFT_SPHERE
-  if (data->soft_cut != 0) tclprint_to_result_softIA(interp,i,j);
+  if (data->soft_cut > 0.0) tclprint_to_result_softIA(interp,i,j);
 #endif
+
+#ifdef HAT
+  if (data->HAT_r > 0.0) tclprint_to_result_hatIA(interp,i,j);
+#endif
+
 #ifdef LJCOS2
-  if (data->LJCOS2_cut != 0) tclprint_to_result_ljcos2IA(interp,i,j);
+  if (data->LJCOS2_cut > 0.0) tclprint_to_result_ljcos2IA(interp,i,j);
 #endif
+
 #ifdef GAY_BERNE
-  if (data->GB_cut != 0) tclprint_to_result_gbIA(interp,i,j);
+  if (data->GB_cut > 0.0) tclprint_to_result_gbIA(interp,i,j);
 #endif
+
 #ifdef TABULATED
-  if (data->TAB_maxval != 0)
+  if (data->TAB_maxval > 0.0)
     Tcl_AppendResult(interp, "tabulated \"", data->TAB_filename,"\"", (char *) NULL);
 #endif
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  if(data->ADRESS_TAB_maxval !=0)
+
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
+  if(data->ADRESS_TAB_maxval > 0.0)
     Tcl_AppendResult(interp, "adress \"", data->ADRESS_TAB_filename,"\"", (char *) NULL);
 #endif
-#endif
+
 #ifdef COMFORCE
-  if (data->COMFORCE_flag != 0) tclprint_to_result_comforceIA(interp,i,j);
+  if (data->COMFORCE_flag > 0.0) tclprint_to_result_comforceIA(interp,i,j);
 #endif
 
 #ifdef COMFIXED
-  if (data->COMFIXED_flag != 0) tclprint_to_result_comfixedIA(interp,i,j);
+  if (data->COMFIXED_flag > 0.0) tclprint_to_result_comfixedIA(interp,i,j);
 #endif
 
 #ifdef INTER_DPD
-  if ((data->dpd_r_cut != 0)||(data->dpd_tr_cut != 0)) tclprint_to_result_inter_dpdIA(interp,i,j);
+  if ((data->dpd_r_cut > 0.0)||(data->dpd_tr_cut > 0.0)) tclprint_to_result_inter_dpdIA(interp,i,j);
 #endif
 
 #ifdef INTER_RF
@@ -488,11 +454,11 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 #endif
   
 #ifdef MOL_CUT
-  if (data->mol_cut_type != 0) tclprint_to_result_molcutIA(interp,i,j);
+  if (data->mol_cut_type > 0.0) tclprint_to_result_molcutIA(interp,i,j);
 #endif
 
 #ifdef TUNABLE_SLIP
-  if (data->TUNABLE_SLIP_r_cut != 0) tclprint_to_result_tunable_slipIA(interp,i,j);
+  if (data->TUNABLE_SLIP_r_cut > 0.0) tclprint_to_result_tunable_slipIA(interp,i,j);
 #endif
 
   return (TCL_OK);
@@ -620,7 +586,7 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
   }
 #endif
 
-
+#ifdef LENNARD_JONES
 
   if(lj_force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
@@ -639,6 +605,8 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
+
+#endif
 
 #ifdef LJ_ANGLE
   if(ljangle_force_cap != 0.0) {
@@ -855,6 +823,10 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
     REGISTER_NONBONDED("soft-sphere", tclcommand_inter_parse_soft);
 #endif
 
+#ifdef HAT
+    REGISTER_NONBONDED("hat", tclcommand_inter_parse_hat);
+#endif
+
 #ifdef COMFORCE
     REGISTER_NONBONDED("comforce", tclcommand_inter_parse_comforce);
 #endif
@@ -939,7 +911,7 @@ int tclcommand_inter_print_partner_num(Tcl_Interp *interp, int bond_type)
 #ifdef BOND_VIRTUAL
 int tclcommand_inter_parse_virtual_bonds(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
-	CHECK_VALUE(virtual_set_params(bond_type), "bond type must be nonnegative");
+  CHECK_VALUE(virtual_set_params(bond_type), "bond type must be nonnegative");
 }
 #endif
 
@@ -1099,7 +1071,7 @@ int tclcommand_inter(ClientData _data, Tcl_Interp *interp,
     is_i2 = ARG_IS_I(2, j);
 
     Tcl_ResetResult(interp);
- 
+
     // non bonded interactions
     if (is_i1 && is_i2)
       err_code = tclcommand_inter_parse_non_bonded(interp, i, j, argc-3, argv+3);
@@ -1111,5 +1083,12 @@ int tclcommand_inter(ClientData _data, Tcl_Interp *interp,
       err_code = tclcommand_inter_parse_rest(interp, argc-1, argv+1);
   }
   /* check for background errors which have not been handled so far */
-  return mpi_gather_runtime_errors(interp, err_code);
+  return gather_runtime_errors(interp, err_code);
+}
+
+int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data)
+{
+  min_global_cut = *((double *)_data);
+  mpi_bcast_parameter(FIELD_MIN_GLOBAL_CUT);
+  return TCL_OK;
 }

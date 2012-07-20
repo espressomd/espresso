@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -50,8 +51,8 @@
 
 /** Add a particle pair to a verlet pair list.
     Checks verlet pair list size and reallocates memory if necessary.
- *  \param p1 Pointer to paricle one.
- *  \param p2 Pointer to paricle two.
+ *  \param p1 Pointer to particle one.
+ *  \param p2 Pointer to particle two.
  *  \param pl Pointer to the verlet pair list.
  */
 MDINLINE void add_pair(PairList *pl, Particle *p1, Particle *p2)
@@ -389,3 +390,4 @@ void resize_verlet_list(PairList *pl)
     pl->pair = (Particle **)realloc(pl->pair, 2*pl->max*sizeof(Particle *));
   }
 }
+

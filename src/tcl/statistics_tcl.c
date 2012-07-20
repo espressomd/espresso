@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,16 +27,13 @@
 #include <string.h>
 #include "utils.h"
 #include "statistics.h"
-#include "statistics_chain.h"
 #include "statistics_chain_tcl.h"
 #include "statistics_molecule.h"
-#include "statistics_cluster.h"
 #include "statistics_cluster_tcl.h"
-#include "statistics_fluid.h"
 #include "statistics_fluid_tcl.h"
 #include "energy.h"
 #include "modes.h"
-#include "pressure.h"
+#include "pressure_tcl.h"
 #include "communication.h"
 #include "grid.h"
 #include "parser.h"
@@ -45,11 +42,15 @@
 #include "domain_decomposition.h"
 #include "verlet.h"
 #include "lb.h"
-#include "virtual_sites.h"
 #include "virtual_sites_com_tcl.h"
 #include "initialize.h"
 #include "statistics_chain_tcl.h"
-#include "topology_tcl.h"
+
+/** Set the topology. See \ref topology_tcl.c */
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
+
+/** write out energy. See \ref energy_tcl.c */
+int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /** Variables for measuring the compressibility from volume fluctuations.
     Will be used by \ref parse_Vkappa exclusively. */
@@ -1134,7 +1135,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   /* 'analyze find_principal_axis [<type0>]' */
   double MofImatrix[9],eva[3],eve[3];
   char buffer[4*TCL_DOUBLE_SPACE+20];
-  int p1,i,j;
+  int p1,j;
 
   /* parse arguments */
   if (argc != 1) {
@@ -1149,12 +1150,12 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   }
 
   momentofinertiamatrix(p1, MofImatrix);
-  i=calc_eigenvalues_3x3(MofImatrix, eva);
+  calc_eigenvalues_3x3(MofImatrix, eva);
   
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {
-    i=calc_eigenvector_3x3(MofImatrix,eva[j],eve);
+    calc_eigenvector_3x3(MofImatrix,eva[j],eve);
     sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
@@ -2492,5 +2493,5 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		     "\" you requested is not implemented.", (char *)NULL);
     err = (TCL_ERROR);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }

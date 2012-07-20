@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -24,18 +25,16 @@
  *  This file contains routines to setup and handle interaction pair
  *  lists (verlet pair lists) for the non bonded interactions. 
  *
- *  For the non-bonded interactions, the integrator uses verlet pair
- *  lists which contain all particle pairs with a distance smaller
- *  than \ref max_range_non_bonded = \ref max_cut_non_bonded + 
- *  \ref integrate::skin .
- *  This allows one to use these verlet pair lists for several
- *  time steps, as long no particle has moved further than 
- *  \ref integrate::skin /
- *  2.0. You can tune the verlet pair algorithm with the variable
- *  \ref integrate::skin 
- *  which you can set via the \ref tclcommand_setmd command. You can also
- *  acces the average number of integration steps the verlet lists
- *  have been reused with \ref tclcommand_setmd \ref verlet_reuse.
+ *  For the non-bonded interactions, the domain decomposition force
+ *  calculation uses verlet pair lists which contain all particle
+ *  pairs with a distance smaller than their maximal interaction
+ *  range, based on their types, plus the \ref skin.  This allows one
+ *  to use these verlet pair lists for several time steps, as long no
+ *  particle has moved further than \ref skin / 2.0. You can tune the
+ *  verlet pair algorithm with the variable \ref skin which you can
+ *  set via the \ref tclcommand_setmd command. You can also acces the
+ *  average number of integration steps the verlet lists have been
+ *  reused with \ref tclcommand_setmd \ref verlet_reuse.
  *
  *  The verlet algorithm uses the data type \ref PairList to store
  *  interacting particle pairs.
@@ -50,7 +49,6 @@
  *
  *  For more information see \ref verlet.c "verlet.c".
  */
-#include <tcl.h>
 #include "particle_data.h"
 
 /************************************************

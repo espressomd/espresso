@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -29,7 +29,6 @@
 #include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"
-#include "communication.h"
 #include "adresso.h"
 #include "forces.h"
 #include "npt.h"
@@ -76,9 +75,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
 {
   int p1molid, p2molid, k, l;
   double force[3] = {0, 0, 0};
-#if defined(ELECTROSTATICS)  || defined(DIPOLES)
-  double ret=0;
-#endif
+
   calc_non_bonded_pair_force_simple(p1, p2,d, dist, dist2,force);
 
   *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d[0]*force[0] + d[1]*force[1] + d[2]*force[2];
@@ -111,80 +108,47 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
+      virials.coulomb[0] += p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
 #endif
-    case COULOMB_DH:
-      ret = dh_coulomb_pair_energy(p1,p2,dist);
+
+    /* short range potentials, where we use the virial */
+    /***************************************************/
+    case COULOMB_DH: {
+      double force[3] = {0, 0, 0};
+    
+      add_dh_coulomb_pair_force(p1,p2,d,dist, force);
+      for(k=0;k<3;k++)
+	for(l=0;l<3;l++)
+	  p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+      virials.coulomb[0] += force[0]*d[0] + force[1]*d[1] + force[2]*d[2];
       break;
-    case COULOMB_RF:
-      ret = rf_coulomb_pair_energy(p1,p2,dist);
+    }
+    case COULOMB_RF: {
+      double force[3] = {0, 0, 0};
+    
+      add_rf_coulomb_pair_force(p1,p2,d,dist, force);
+      for(k=0;k<3;k++)
+	for(l=0;l<3;l++)
+	  p_tensor.coulomb[k*3 + l] += force[k]*d[l];
+      virials.coulomb[0] += force[0]*d[0] + force[1]*d[1] + force[2]*d[2];
       break;
+    }
     case COULOMB_INTER_RF:
-      //this is done elsewhere
-      ret = 0;
-      break;
-    case COULOMB_MMM1D:
-      ret = mmm1d_coulomb_pair_energy(p1,p2,d, dist2,dist);
+      // this is done together with the other short range interactions
       break;
     default:
-      ret = 0;
+      fprintf(stderr,"calculating pressure for electrostatics method that doesn't have it implemented\n");
+      break;
     }
-    virials.coulomb[0] += ret;
-  }
-  /* stress tensor part */
-  if (coulomb.method == COULOMB_DH) {
-    int i;
-    for (i = 0; i < 3; i++)
-      force[i] = 0;
-    
-    add_dh_coulomb_pair_force(p1,p2,d,dist, force);
-    for(k=0;k<3;k++)
-      for(l=0;l<3;l++)
-	p_tensor.coulomb[k*3 + l] += force[k]*d[l];
-  }
-  if (coulomb.method == COULOMB_RF) {
-    int i;
-    for (i = 0; i < 3; i++)
-      force[i] = 0;
-    
-    add_rf_coulomb_pair_force(p1,p2,d,dist, force);
-    for(k=0;k<3;k++)
-      for(l=0;l<3;l++)
-	p_tensor.coulomb[k*3 + l] += force[k]*d[l];
-  }
-  if (coulomb.method == COULOMB_INTER_RF) {
-     //this is done elsewhere
   }
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   if (coulomb.Dmethod != DIPOLAR_NONE) {
-    switch (coulomb.Dmethod) {
-#ifdef DP3M
-    case  DIPOLAR_P3M:
-        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
-	fprintf(stderr,"virials Not working for dipoles P3M .... pressure.h \n");
-	ret=0;
-        break; 
-#endif
-    case  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
-	fprintf(stderr,"virials Not working for dipoles DAWAANR .... pressure.h \n");
-	ret=0;
-        break; 
-    case  DIPOLAR_DS:
-        /*ret = dp3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);*/
-	fprintf(stderr,"virials Not working for dipoles MAGNETIC DIRECT SUM .... pressure.h \n");
-	ret=0;
-        break; 
-
-      default:
-      ret = 0;
-    }
-    virials.dipolar[0] += ret;
-  }  
+    fprintf(stderr,"calculating pressure for magnetostatics which doesn't have it implemented\n");
+  }
 #endif /*ifdef DIPOLES */
 }
 
@@ -232,7 +196,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
         case TAB_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-	  errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	  return;
       }
@@ -249,7 +213,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
         case OVERLAP_BOND_DIHEDRAL:
           (*i)+=2; force[0] = force[1] = force[2] = 0; break;
         default:
-          errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+          errtxt = runtime_error(128 + ES_INTEGER_SPACE);
           ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: overlapped bond type of atom %d unknown\n", p1->p.identity);
           return;
       }
@@ -305,7 +269,7 @@ MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle
         calc_angle_3body_tabulated_forces(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       default:
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{081 calc_bonded_force: tabulated bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -346,7 +310,7 @@ MDINLINE void add_bonded_virials(Particle *p1)
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the cutoff, see calc_maximal_cutoff()
       if ((type_num==BONDED_IA_HARMONIC)&&(iaparams->p.harmonic.r_cut>0)) return;
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{088 bond broken between particles %d and %d (particles not stored on the same node)} ",
 		    p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -478,7 +442,7 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
         i = i + 4;
       }
       else {
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"add_three_body_bonded_stress: match not found for particle %d.\n", p1->p.identity);
       }
     }
@@ -494,7 +458,7 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
     }
 #endif
     else {
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"add_three_body_bonded_stress: match not found for particle %d.\n", p1->p.identity);
     }
   } 
@@ -525,6 +489,10 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
 
 /** implementation of 'analyse local_stress_tensor */
 int local_stress_tensor_calc (DoubleList *TensorInBin, int bins[3], int periodic[3], double range_start[3], double range[3]);
+
+/** function to calculate stress tensor for the observables */
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A);
+
 
 /*@}*/
 

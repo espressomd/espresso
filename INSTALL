@@ -21,7 +21,7 @@ QUICK START
 In most cases, once you have obtained the sources, compiling and
 running ESPResSo requires only two steps:
 
-> configure
+> ./configure
 > make
  
 If you have the development sources (obtained from out git source code
@@ -34,10 +34,18 @@ to generate the required configure script.
 When these steps have completed successfully, you can run Espresso with
 help of the command
 
-> Espresso
+> ./Espresso
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.  This file is offered as-is,
 without any warranty.
 
+LICENSE
+-------
+Copyright (C) 2010,2011,2012 The ESPResSo project
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without any warranty.

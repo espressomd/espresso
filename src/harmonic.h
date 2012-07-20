@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -27,52 +28,13 @@
 
 /************************************************************/
 
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "random.h"
+
 /// set the parameters for the harmonic potential
-MDINLINE int harmonic_set_params(int bond_type, double k, double r,double r_cut)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.harmonic.k = k;
-  bonded_ia_params[bond_type].p.harmonic.r = r;
-  bonded_ia_params[bond_type].p.harmonic.r_cut = r_cut;
-  bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-
-  return TCL_OK;
-}
-
-/// parse parameters for the harmonic potential
-MDINLINE int tclcommand_inter_parse_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  double k, r,r_cut;
-
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "harmonic needs at least 2 parameters: "
-		     "<k_harmonic> <r_harmonic> [<r_cut>]", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, r))) {
-    Tcl_AppendResult(interp, "harmonic needs at least 2 DOUBLE parameters: "
-		     "<k_harmonic> <r_harmonic> [<r_cut>]", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if (argc < 4) {
-    r_cut = -1.0;
-  } else if (! ARG_IS_D(3, r_cut))  {
-    Tcl_AppendResult(interp, "<r_cut> should be DOUBLE", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(harmonic_set_params(bond_type, k, r, r_cut), "bond type must be nonnegative");
-}
+int harmonic_set_params(int bond_type, double k, double r,double r_cut);
 
 /** Computes the HARMONIC pair force and adds this
     force to the particle forces (see \ref interaction_data.c). 

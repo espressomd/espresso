@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -36,8 +37,8 @@ EXTRA_DIST = \
 
 .PHONY: doc $(BASENAME).pdf
 
-doc: tutorial
-tutorial: $(BASENAME).pdf
+doc: tutorials
+tutorials: $(BASENAME).pdf
 $(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
 if HAVE_LATEX
 	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,8 +24,8 @@
  * This is the header file for the Lattice Boltzmann implementation in lb.c
  */
 
-#ifndef _LB_H
-#define _LB_H
+#ifndef LB_H
+#define LB_H
 
 #include "utils.h"
 #include "lattice.h"
@@ -268,16 +268,25 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
 
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. This version of the function
+ * can be called without the position needing to be on the local processor */
+int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
+
+
+/** Calculation of hydrodynamic modes.
+ *
+ *  @param index number of the node to calculate the modes for
+ *  @param mode output pointer to a double[19] 
+ */
+void lb_calc_modes(index_t index, double *mode);
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param rho local fluid density
+ * @param index the local lattice site (Input).
+ * @param rho   local fluid density
  */
-
-/** Calculation of hydrodynamic modes */
-void lb_calc_modes(index_t index, double *mode);
-
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -344,9 +353,9 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
 #ifdef EXTERNAL_FORCES
   /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
 #endif
 
 }
@@ -530,9 +539,9 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 
 #ifdef EXTERNAL_FORCES
   /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
 #endif
 
 }
@@ -542,14 +551,6 @@ MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
   *boundary = lbfields[index].boundary;
 }
 #endif
-
-#endif // LB
-/** Parser for the TCL command lbfluid. */
-int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
-/** Parser for the lbnode command. */
-int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-#ifdef LB
 
 /** Calculate the local fluid momentum.
  * The calculation is implemented explicitly for the special case of D3Q19.
@@ -570,6 +571,8 @@ MDINLINE void lb_set_populations(index_t index, double* pop) {
   }
 }
 #endif
+
+#include "lbgpu.h"
 
 #if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
@@ -615,10 +618,6 @@ int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
 void cython_lb_init(int dev);
 #endif
-#ifdef LB
-void lb_check_halo_regions();
-
-#endif /* LB */
 
 #endif /* _LB_H */
 

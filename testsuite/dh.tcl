@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -24,11 +24,6 @@ require_feature "ADRESS" off
 require_feature "ELECTROSTATICS"
 require_feature "PARTIAL_PERIODIC"
 require_max_nodes_per_side 2
-
-if { [setmd n_nodes] != 1} {
-    # MOL_CUT increases the short ranged radius so much that this test's box is too small
-    require_feature "MOL_CUT" off
-}
 
 puts "----------------------------------------"
 puts "- Testcase dh.tcl running on [format %02d [setmd n_nodes]] nodes: -"

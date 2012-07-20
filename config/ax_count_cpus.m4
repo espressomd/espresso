@@ -23,7 +23,7 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 8
+#serial 9
 
 AC_DEFUN([AX_COUNT_CPUS], [
     AC_REQUIRE([AC_PROG_EGREP])
@@ -31,8 +31,10 @@ AC_DEFUN([AX_COUNT_CPUS], [
     CPU_COUNT="0"
 
     #On MacOS
-    if test -x /usr/sbin/sysctl -a `/sbin/sysctl -a 2>/dev/null| grep -c hw.cpu`; then
-        CPU_COUNT=`/usr/sbin/sysctl -n hw.ncpu`
+    if test -x /usr/sbin/sysctl; then
+        if test `/usr/sbin/sysctl -a 2>/dev/null| grep -c hw.cpu`; then
+            CPU_COUNT=`/usr/sbin/sysctl -n hw.ncpu`
+        fi
     fi
 
     #On Linux

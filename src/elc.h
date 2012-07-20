@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -25,6 +26,9 @@
     for example \ref p3m.h "P3M", with metallic boundary conditions.  */
 #ifndef _ELC_H
 #define _ELC_H
+
+#include "utils.h"
+#include "particle_data.h"
 
 #ifdef P3M
 
@@ -70,12 +74,6 @@ typedef struct {
 } ELC_struct;
 extern ELC_struct elc_params;
 
-/// print the elc parameters to the interpreters result
-int tclprint_to_result_ELC(Tcl_Interp *interp);
-
-/// parse the elc parameters
-int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv);
-
 /** set parameters for ELC.
     @param maxPWerror the required accuracy of the potential and the force. Note that this counts for the
     plain 1/r contribution alone, without the Bjerrum length and the charge prefactor.
@@ -84,6 +82,9 @@ int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, cha
     the error formulas.
     @param neutralize whether to add a neutralizing background. WARNING: This background exerts forces, which
     are dependent on the simulation box; especially the gap size enters into the value of the forces.
+    @param top dielectric constant of upper part
+    @param mid dielectric constant of center part
+    @param bottom  dielectric constant of lower part
 */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize,
 		   double top, double mid, double bottom);
