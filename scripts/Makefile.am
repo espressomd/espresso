@@ -31,6 +31,7 @@ ESSCRIPTS = \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
+	vtk.tcl \
 	tclline.tcl \
 	parallel_tempering.tcl
 

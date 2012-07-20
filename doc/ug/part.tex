@@ -703,8 +703,9 @@ constraint.
 
 The resulting surface in variant \variant{4} is a rhomboid, defined by one 
 corner located at \var{p_x} \var{p_y} \var{p_z} and three adjacent edges, 
-a (\var{a_x} \var{a_y} \var{a_z}), b (\var{b_x} \var{b_y} \var{b_z}) and 
-c (\var{c_x} \var{c_y} \var{c_z}).
+defined by the three vectors connecting the corner p with it's three neighboring
+corners, a (\var{a_x} \var{a_y} \var{a_z}), b (\var{b_x} \var{b_y} \var{b_z}) 
+and c (\var{c_x} \var{c_y} \var{c_z}).
 
 The resulting surface in variant \variant{5} is \var{n}
 spheres of radius \var{r_s} along each dimension, connected by
@@ -891,11 +892,12 @@ Please note:
   \end{essyntaxbox}
   where n is the id of the non-virtual particle and d is its distance
   from the virtual site.
-\item In a simulation on more than one cpu, the effective cell size
+\item In a simulation on more than one CPU, the effective cell size
   needs to be larger than the largest distance between a non-virtual
   particle and its associated virtual sites. To this aim, you need to
-  set the global variable \texttt{min\_global\_cut} to this largest
-  distance.
+  set the global variable \var{min\_global\_cut} to this largest
+  distance. \es issues a warning when creating a virtual site with
+  \lit{vs\_auto\_relate\_to} and the cutoff is insufficient.
 \item If the virtual sites represent actual particles carrying a mass,
   the inertia tensor of the non-virtual particle in the center of mass
   needs to be adapted.
