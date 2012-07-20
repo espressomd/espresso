@@ -734,7 +734,7 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     
     if (calclength - length >0.0000000001) {
       char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{%d: analyze stess_profile: bug in distribute tensor code - calclength is %e and length is %e}",this_node,calclength,length);
+      ERROR_SPRINTF(errtxt, "{%d: analyze stress_profile: bug in distribute tensor code - calclength is %e and length is %e}",this_node,calclength,length);
       return 0;
     }
     free(occupiedzbins);
@@ -901,9 +901,9 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
      skin from on opposite sides of the box overlaps then we produce an error message.  To code dround this would be
      creating unnecessary work since I can't imagine when we might want that */
 
-  if (skin < 0) {
+  if (skin < 0.0) {
     char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{analyze stess_profile: skin cannot be negative}");
+    ERROR_SPRINTF(errtxt, "{analyze stress_profile: parameter skin not set}");
     return 0;
   }
   for (i=0;i<3;i++) {

@@ -1,0 +1,178 @@
+set draw_steam 1
+set animate_steam 0
+set render_images 1
+
+# MATERIALS
+# Sphere material
+material add Beads
+material change ambient Beads 0.4
+material change diffuse Beads 0.6
+material change specular Beads 0.2
+material change shininess Beads 0.4
+material change opacity Beads 1
+material change outline Beads 4
+material change outlinewidth Beads 0.7
+
+# COLORS
+proc h2v { hex } {
+    return [expr (1.0*0x$hex)/0xff]
+}
+
+# redefine some colors
+color change rgb white [h2v e7] [h2v ed] [h2v f9]
+color change rgb blue 0 0 1
+color change rgb red 1 0 0
+color change rgb gray 0.6 0.6 0.6
+
+# LOAD THE FILE
+mol new cup_espresso.vtf type vtf first 0 last -1 step 1 filebonds 1 waitfor all
+mol rename top cup_espresso.vtf
+
+# AXES OFF
+axes location off
+display fps off
+
+# set the BG
+color Display {Background} white
+if { $draw_steam } then {
+    display depthcue on
+} else {
+    display depthcue off
+}
+
+
+# REPRESENTATIONS
+mol delrep 0 top
+
+# The cup
+color Name {O} blue
+mol representation VDW 1.1 28
+mol color Name
+mol selection {name O}
+mol material Beads
+mol addrep top
+
+# The saucer
+mol representation VDW 1.1 28
+mol color Name
+color Name {N} red
+mol selection {name N}
+mol material Beads
+mol addrep top
+
+if { $draw_steam } then {
+    package require moregraphics
+
+    proc vmd_draw_arrow {mol start end} {
+	# an arrow is made of a cylinder and a cone
+	set length [vecsub $end $start]
+	set tip [vecadd $start [vecscale 0.8 $length]]
+	set middle [vecadd $start [vecscale 0.5 $length]]
+	graphics $mol cylinder $start $middle radius 0.05
+	graphics $mol cone $middle $tip radius 0.1
+    }
+
+    # The steam
+    mol representation Surf 1.6
+    mol color Name
+    color Name {S} gray
+    mol selection {name S}
+    mol material Ghost
+    mol addrep top
+    
+    # DRAW ARROWS IN THE STEAM
+    # get steam atom positions
+    set steamatoms [atomselect top "name S"]
+
+    graphics top material Transparent
+    proc update_steam_callback { name molid op } {
+	global steamatoms steamgids
+	set n_steam 5
+	set l_steam 6
+    
+	$steamatoms update
+	set pos [$steamatoms get { x y z }]
+	# get steam bonds
+	for { set i 0 } { $i < $n_steam } { incr i } {
+	    for { set j 0 } { $j < [expr $l_steam-1]} { incr j } {
+		set index [expr $i*$l_steam + $j]
+		set start [lindex $pos $index]
+		set end [lindex $pos [expr $index + 1]]
+		set dir [vecsub $end $start]
+		set length [expr 0.8 * [veclength $dir]]
+		set center [vecadd $start [vecscale 0.4 $dir]]
+		::moregraphics::arrow pos $center dir $dir length $length \
+		    radius 0.05 conelength 0.5 coneradius 2 \
+		    color1 black color2 black \
+		    replace steamgids newgids
+	    }
+	}
+	set steamgids $newgids
+    }
+
+    trace add variable vmd_frame(0) write update_steam_callback
+    update_steam_callback {} 0 {}
+}    
+
+# VIEWPOINT
+molinfo top set {center_matrix rotate_matrix scale_matrix global_matrix} \
+{ 
+	{
+		{1 0 0 -9.804324}
+		{0 1 0 -9.545079}
+		{0 0 1 -9.741856}
+		{0 0 0 1}
+	} {
+		{1 0 0 0} 
+		{-0 1 -0.33 0} 
+		{0 0.33 1 0} 
+		{0 0 0 1}
+	} {
+		{0.175 0 0 0} 
+		{0 0.175 0 0} 
+		{0 0 0.175 0} 
+		{0 0 0 1}
+	} {
+		{1 0 0 0.05} 
+		{0 1 0 0.55} 
+		{0 0 1 0} 
+		{0 0 0 1}
+	}
+}
+	
+
+animate goto 24
+
+render options Tachyon \
+    "$::env(VMDDIR)/tachyon_LINUXAMD64 \
+       -res 2000 2000 \
+       -aasamples 4 -trans_vmd -mediumshade %s \
+       -format TARGA -o %s.tga; \
+       convert -transparent -transparent '#e6edf9' -trim %s.tga %s.png; 
+       rm %s.tga; display %s.png &"
+
+
+if { $render_images } then {
+    if { $animate_steam } then {
+	file mkdir cup-animation
+	
+	for { set frame 24 } { $frame <= 50 } { incr frame } {
+	    animate goto $frame
+	    render Tachyon cup-animation/$frame \
+		"$::env(VMDDIR)/tachyon_LINUXAMD64 \
+                -res 500 500 \
+                -aasamples 4 -trans_vmd -mediumshade %s \
+                -format TARGA -o %s.tga; \
+                convert -transparent '#e6edf9' -crop 311x500+121+0! -resize 284x426 %s.tga %s.png; \
+                rm %s.tga"
+	}
+    } else {
+	render Tachyon cup \
+	    "$::env(VMDDIR)/tachyon_LINUXAMD64 \
+                -res 2000 2000 \
+                -aasamples 4 -trans_vmd -mediumshade %s \
+                -format TARGA -o %s.tga; \
+                convert -transparent '#e6edf9' -trim %s.tga %s.png; \
+                rm %s.tga"
+    }
+}
