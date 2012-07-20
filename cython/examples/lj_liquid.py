@@ -8,14 +8,13 @@ import code_info
 
 print " "
 print "======================================================="
-print "=       lj_liquid.py                                  ="
+print "=                    lj_liquid.py                     ="
 print "======================================================="
 print " "
 
 print "Program Information: \n%s\n" % code_info.electrostatics_defined()
 
 dev="cpu"
-
 
 
 # System parameters
@@ -31,7 +30,6 @@ density = 0.7
 lj_eps   =  1.0
 lj_sig   =  1.0
 lj_cut   =  1.12246
-lj_shift =  float(es._espressoHandle.Tcl_Eval('calc_lj_shift %f %f' % (lj_sig,lj_cut)))
 lj_cap   = 20 
 
 # Integration parameters
@@ -64,8 +62,7 @@ es.glob.box_l=[box_l,box_l,box_l]
 
 es.inter[0,0].lennardJones = \
 	{"eps": lj_eps, "sigma": lj_sig, \
-	 "shift": lj_shift, "cut": lj_cut,\
-	 "ljcap": lj_cap}
+	 "cut": lj_cut, "ljcap": lj_cap}
 
 print "LJ-parameters:\n"
 print es.inter[0,0].lennardJones
@@ -84,7 +81,7 @@ print "Simulate %d particles in a cubic simulation box " % n_part
 print "%f at density %f\n" % (box_l,density)
 #print "Interactions:\n"	# Nicht angepasst
 #act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
-act_min_dist = es.analyze.pmindist()
+act_min_dist = es.analyze.pmindist(0,0)
 print "Start with minimal distance %f" % act_min_dist
 
 es.glob.max_num_cells = 2744
@@ -94,7 +91,8 @@ es.glob.max_num_cells = 2744
 #############################################################
 
 #open Observable file
-obs_file = open("lj_test.obs", "w")
+obs_file = open("pylj_liquid.obs", "w")
+obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
 #set obs_file [open "$name$ident.obs" "w"]
 #puts $obs_file "\# System: $name$ident"
 #puts $obs_file "\# Time\tE_tot\tE_kin\t..."
@@ -118,8 +116,8 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
   # Warmup criterion
 #  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
-  act_min_dist = es.analyze.pmindist() 
-  print "run %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist)
+  act_min_dist = es.analyze.pmindist(0,0) 
+  print "\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist),
 
   i = i + 1
 
@@ -131,11 +129,9 @@ while (i < warm_n_times and act_min_dist < min_dist):
   lj_cap = lj_cap + 10
   es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 #  es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
-#	print es.inter[0,0].lennardJones
-
 
 # Just to see what else we may get from the c code
-print "\nro variables:"
+print "\n\nro variables:"
 print "cell_grid     %s" % es.glob.cell_grid
 print "cell_size     %s" % es.glob.cell_size 
 print "local_box_l    %s" % es.glob.local_box_l 
@@ -151,7 +147,10 @@ print "transfer_rate  %s" % es.glob.transfer_rate
 print "verlet_reuse   %s" % es.glob.verlet_reuse
 
 # write parameter file
+
 #polyBlockWrite "$name$ident.set" {box_l time_step skin} "" 
+set_file = open("pylj_liquid.set", "w")
+set_file.write("box_li %s\ntime_step %s\nskin %s\n" % (box_l, es.glob.time_step, es.glob.skin))
 
 #############################################################
 #      Integration                                          #
