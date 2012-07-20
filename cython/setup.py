@@ -15,21 +15,24 @@ ext_params["depends"] = ["myconfig.pxi"]
 
 #include myconfig.pxi dependency!!
 
+libs = ['Espresso','tcl8.5', 'mpi', 'fftw3']
+lib_dirs = ['']
+
 ext_modules=[
-    Extension("espresso", ["espresso.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
-    Extension("particle_data", ["particle_data.pyx"], libraries=['espresso_main','tcl8.5', 'mpi' ], **ext_params),
-    Extension("interaction_data", ["interaction_data.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
-    Extension("global_variables", ["global_variables.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
-    Extension("lb", ["lb.pyx"], libraries=['espresso_main','tcl8.5', 'mpi', 'fftw3'], **ext_params),
-    Extension("debye_hueckel", ["debye_hueckel.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
-    Extension("integrate", ["integrate.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-    Extension("thermostat", ["thermostat.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-    Extension("changeVolume", ["changeVolume.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-    Extension("cuda_init", ["cuda_init.pyx"], libraries=['espresso_main','tcl8.5', 'mpi'], **ext_params),
-    Extension("invalidateSystem", ["invalidateSystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-    Extension("code_info", ["code_info.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-    Extension("cellsystem", ["cellsystem.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
-    Extension("analyze", ["analyze.pyx"], libraries=['espresso_main', 'tcl8.5', 'mpi'], **ext_params),
+    Extension("espresso", ["espresso.pyx"], libraries=libs, **ext_params),
+    Extension("particle_data", ["particle_data.pyx"], libraries=libs, **ext_params),
+    Extension("interaction_data", ["interaction_data.pyx"], libraries=libs, **ext_params),
+    Extension("global_variables", ["global_variables.pyx"], libraries=libs, **ext_params),
+    Extension("lb", ["lb.pyx"], libraries=libs, **ext_params),
+    Extension("debye_hueckel", ["debye_hueckel.pyx"], libraries=libs, **ext_params),
+    Extension("integrate", ["integrate.pyx"], libraries=libs, **ext_params),
+    Extension("thermostat", ["thermostat.pyx"], libraries=libs, **ext_params),
+    Extension("changeVolume", ["changeVolume.pyx"], libraries=libs, **ext_params),
+    Extension("cuda_init", ["cuda_init.pyx"], libraries=libs, **ext_params),
+    Extension("invalidateSystem", ["invalidateSystem.pyx"], libraries=libs, **ext_params),
+    Extension("code_info", ["code_info.pyx"], libraries=libs, **ext_params),
+    Extension("cellsystem", ["cellsystem.pyx"], libraries=libs, **ext_params),
+    Extension("analyze", ["analyze.pyx"], libraries=libs, **ext_params),
 ]
 
 setup(

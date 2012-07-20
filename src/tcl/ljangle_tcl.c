@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
+  Copyright (C) 2010,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -117,7 +117,6 @@ int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char *
   }
   CHECK_VALUE(ljangleforcecap_set_params(ljangle_force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
-  return TCL_ERROR; 
 }
 
 

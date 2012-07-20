@@ -26,53 +26,40 @@
  *  Used for attractive tail/tail interactions in lipid bilayer calculations
  *  \ref forces.c
 */
-
-#include "utils.h"
+#include "ljcos2.h"
 
 #ifdef LJCOS2
 #include <math.h>
 
-#include "ljcos2.h"
-#include "parser.h"
+// we use lj's force capping
+#include "lj.h"
 #include "communication.h"
 
 int ljcos2_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double offset,
 				      double w)
 {
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
-    
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
+  if (!data) return ES_ERROR;
 
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* lj-cos2 should be symmetrically */
-  data->LJCOS2_eps    = data_sym->LJCOS2_eps    = eps;
-  data->LJCOS2_sig    = data_sym->LJCOS2_sig    = sig;
-  data->LJCOS2_offset = data_sym->LJCOS2_offset = offset;
-  data->LJCOS2_w      = data_sym->LJCOS2_w      = w;
+  data->LJCOS2_eps    = eps;
+  data->LJCOS2_sig    = sig;
+  data->LJCOS2_offset = offset;
+  data->LJCOS2_w      = w;
 
   /* calculate dependent parameters */
-  data->LJCOS2_rchange = data_sym->LJCOS2_rchange = pow(2,1/6.)*sig;
-  data->LJCOS2_cut     = data_sym->LJCOS2_cut     = w + data_sym->LJCOS2_rchange;
+  data->LJCOS2_rchange = pow(2,1/6.)*sig;
+  data->LJCOS2_cut     = w + data->LJCOS2_rchange;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);
 
-  return TCL_OK;
+  return ES_OK;
 }
-
-
 
 /** calculate ljcos2_capradius from ljcos2_force_cap */
 void calc_ljcos2_cap_radii(double force_cap)

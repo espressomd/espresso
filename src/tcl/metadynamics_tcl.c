@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,13 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include "utils.h"
-#include <tcl.h>
-#include "metadynamics.h"
+#include "parser.h"
 
 #ifdef METADYNAMICS
-
-
+#include "metadynamics.h"
 
 int tclcommand_metadynamics_print_status(Tcl_Interp *interp)
 {
@@ -263,7 +261,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
 							       
   // load free energy profile
   int i, tmp_argc, parse_error = 0, empty_line=0;
-  const char  **tmp_argv;
+  char  **tmp_argv;
   DoubleList profile, force;
   
   init_doublelist(&profile);
@@ -284,7 +282,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   
   for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
-    const char  **tmp_argv2;
+    char  **tmp_argv2;
     Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
     if (tmp_argc2 != 1) {
       Tcl_AppendResult(interp, "data set has to be a list of doubles", (char *) NULL);
@@ -315,7 +313,7 @@ int tclcommand_metadynamics_parse_load_stat(Tcl_Interp *interp, int argc, char *
   }
   for(i = 0 ; i < tmp_argc-empty_line; i++) {
     int tmp_argc2;
-    const char  **tmp_argv2;
+    char  **tmp_argv2;
     Tcl_SplitList(interp, tmp_argv[i], &tmp_argc2, &tmp_argv2);
     if (tmp_argc2 != 1) {
       Tcl_AppendResult(interp, "data set has to be a list of doubles", (char *) NULL);
@@ -363,7 +361,7 @@ int tclcommand_metadynamics(ClientData data, Tcl_Interp *interp, int argc, char 
     Tcl_AppendResult(interp, "Unknown metadynamics command ", argv[1], "\n", (char *)NULL);
     return tclcommand_metadynamics_print_usage(interp, argc, argv);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }
 
 #endif

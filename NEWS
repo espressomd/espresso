@@ -2,19 +2,42 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.2
+============
+
+New user-visible features
+-------------------------
+
+* The feature HAT introduces a short-ranged nonbonded interaction
+  "hat", the classical conservative DPD interaction, a simple force
+  ramp.
+
+* The feature REACTIONS and the command "reaction" model a simple
+  chemical reaction: when a particle of the reactant type comes into
+  the vincinity of a particle of the catalysator type, the reactant is
+  transformed into a particle of the product type.
+
 ESPResSo 3.1
 ============
 
-User-visible changes
---------------------
+New user-visible features
+-------------------------
 
-* Added new constraint and LB boundary condition "rhomboid".
+* While so far, observables were typically computed and stored on the
+  Tcl-level after a call to "integrate", a new observable concept now
+  allows to compute observables while the C-core is running. This is
+  particularly useful for observables that have to be computed very
+  frequently, as for example in the case of time-correlations
+  (e.g. the RMSD of particles).
+  The new concept is documented in the User's Guide in Section 8.4
+  ("Correlations and observables").
 
-* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
-  coulomb memd).
+* The new feature COLLISION_DETECTION allows to dynamically add new
+  bonds between colliding particles.
 
-* Added basic tutorial on Lennard-Jones liquid, made second tutorial
-  (simple charged systems) better available (all in doc/tutorials)
+* Added new constraint and LB boundary condition "rhomboid" that
+  allows to create arbitrary rhomboids. When combining several
+  rhomboids, almost any shape of a constraint is doable.
 
 * Lattice-Boltzmann:
 
@@ -22,13 +45,74 @@ User-visible changes
 
   * forces on boundaries can be calculated
 
+  * wall constraints work
+
+* Added basic tutorial on Lennard-Jones liquid, made second tutorial
+  (simple charged systems) better available (all in doc/tutorials/)
+
+* The ICC* algorithm is now ready to use. It is used with the command
+  "iccp3m" and allows to take into account dielectric boundaries of
+  arbitrary shape. The command "dielectric" allows to create the
+  boundaries in a similar fashion as constraints and lbboundaries.
+
+User-visible changes
+--------------------
+
+* The blockfile C-library has been removed. In theory, there was a
+  library usable from C that could be used to read and write
+  blockfiles. Since several years, it was broken, so apparently it
+  wasn't used anyway.
+
+* The NPT barostat now works in many more combinations of
+  algorithms than so far (e.g. MMM2D, ELC, ...)
+
+* The Lattice-Boltzmann CPU implementation now works when Verlet lists
+  are used.
+
+* Removed unneccessary overhead of neutral particles in simulations
+  with P3M.
+
+* Removed unneccessary overhead of activated but ununsed interaction
+  features.
+
+* Some changes in the Verlet list construction yield a performance
+  gain of up to 90% in systems where the interaction ranges differ
+  significantly, or where some particle types do not interact at all
+  (phantom particles).
+
+* Renamed Coulomb method maggs to MEMD (inter coulomb maggs => inter
+  coulomb memd).
+
 Changes visible for developers
 ------------------------------
 
-* Added ESPResSo logos to the repo (doc/logo).
+* code_info does now not only show the main package version, but also
+  the exact git commit id and whether or not the code was modified
+  ("dirty"). Also, the distribution package provides this information.
 
-* A new LaTeX-Developer's Guide (DG) was started, and all "Related
-  pages" from the doxygen docs have been moved there.
+* The various features are now defined in the file
+  src/features.def. From this file, a couple of Python scripts
+  automatically generate myconfig-sample.h and what was config.h and
+  config.c. Also, this allows to check whether all features are
+  documented, tested and defined.
+  Note that due to this change, ESPResSo development now requires
+  Python.
+
+* The domain decomposition, P3M, LB and MEMD now use MPI cartesian
+  communicators. This will hopefully speed up the simulations on some
+  platforms.
+
+* Split interaction code into .c and .h files.
+
+* Split off the Tcl interface (into src/tcl/) from the C core code (in
+  src/)
+
+* Added ESPResSo logos, cover issue images, and some other material to
+  the repo (doc/).
+
+* Started new LaTeX-Developer's Guide (DG), and moved all "Related
+  pages" from the doxygen docs. The doxygen stuff still exists and is
+  available via doc/doxygen/.
 
 ESPResSo 3.0.2
 ==============
@@ -205,7 +289,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011 The ESPResSo project
+Copyright (C) 2010,2011,2012 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

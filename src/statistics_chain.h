@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -114,21 +115,25 @@ void calc_g123(double *g1, double *g2, double *g3);
 
 /** calculate \<g1\> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
-    @param g1 contains <tt>g1[0],...,g1[n_configs-1]</tt>
+    @param _g1     contains <tt>g1[0],...,g1[n_configs-1]</tt>
+    @param window  if large than 0, the window size for a sliding window analysis
+    @param weights weights for the different coordinates, basically to allow to calculate 2d g1
 */
 void calc_g1_av(double **_g1, int window, double weights[3]);
-//void calc_g1_av(double **g1);
 
 /** calculate \<g2\> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
-    @param g2 contains <tt>g2[0],...,g2[n_configs-1]</tt>
+    @param _g2 contains <tt>g2[0],...,g2[n_configs-1]</tt>
+    @param window  if large than 0, the window size for a sliding window analysis
+    @param weights weights for the different coordinates, basically to allow to calculate 2d g1
 */
 void calc_g2_av(double **_g2, int window, double weights[3]);
-//void calc_g2_av(double **g2);
 
 /** calculate \<g3\> averaged over all configurations stored in \ref #configs. 
     Chain information \ref chain_start etc. must be set!
-    @param g3 contains <tt>g3[0],...,g3[n_configs-1]</tt>
+    @param _g3 contains <tt>g3[0],...,g3[n_configs-1]</tt>
+    @param window  if large than 0, the window size for a sliding window analysis
+    @param weights weights for the different coordinates, basically to allow to calculate 2d g1
 */
 void calc_g3_av(double **_g3, int window, double weights[3]);
 //void calc_g3_av(double **g3);

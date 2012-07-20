@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,19 +24,15 @@
 
 */
 
-#include <tcl.h>
 #include <math.h>
 #include "utils.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "random.h"
 #include "global.h"
-#include "communication.h"
 #include "integrate.h"
 #include "cells.h"
 #include "lb.h"
 #include "dpd.h"
-#include "lbgpu.h"
 #include "virtual_sites.h"
 
 /** \name Thermostat switches*/
@@ -115,9 +111,6 @@ MDINLINE double friction_thermV_nptiso(double p_diff) {
 }
 #endif
 
-/** Callback marking setting the temperature as outdated */
-int tclcallback_thermo_ro(Tcl_Interp *interp, void *_data);
-
 /** overwrite the forces of a particle with
     the friction term, i.e. \f$ F_i= -\gamma v_i + \xi_i\f$.
 */
@@ -162,19 +155,19 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 #endif
     {
 #ifdef LANGEVIN_PER_PARTICLE  
-      if(p->gamma >= 0.) {
-        langevin_pref1_temp = -p->gamma/time_step;
+      if(p->p.gamma >= 0.) {
+        langevin_pref1_temp = -p->p.gamma/time_step;
         
-        if(p->T >= 0.)
-          langevin_pref2_temp = sqrt(24.0*p->T*p->gamma/time_step);
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
         else
-          langevin_pref2_temp = sqrt(24.0*temperature*p->gamma/time_step);
+          langevin_pref2_temp = sqrt(24.0*temperature*p->p.gamma/time_step);
         
         p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
       }
       else {
-        if(p->T >= 0.)
-          langevin_pref2_temp = sqrt(24.0*p->T*langevin_gamma/time_step);
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->p.T*langevin_gamma/time_step);
         else          
           langevin_pref2_temp = langevin_pref2;
         
@@ -234,10 +227,6 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
       ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
       THERMO_TRACE(fprintf(stderr,"%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",this_node,p->p.identity,p->f.f[0],p->f.f[1],p->f.f[2]));
 }
-#endif
-
-#if defined(LB) || defined(LB_GPU)
-int tclcommand_thermostat_parse_lb(Tcl_Interp * interp, int argc, char ** argv);
 #endif
 
 #endif

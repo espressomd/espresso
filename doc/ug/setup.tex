@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2010,2011,2012 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -79,6 +79,10 @@ set:
   nodes.
 \item[max_cut] (double, \ro) Maximal cutoff of real space
   interactions.
+\item[max_cut_nonbonded] (double, \ro) Maximal cutoff of nonbonded
+  real space interactions.
+\item[max_cut_bonded] (double, \ro) Maximal cutoff of bonded
+  real space interactions.
 \item[max_num_cells] (int) Maximal number of cells for the link cell
   algorithm.  Reasonable values are between 125 and 1000, or for some
   problems (\var{n_total_particles} / \var{n_nodes}).
@@ -89,6 +93,10 @@ set:
 \item[max_skin] (double, \ro) Maximal skin to be used for the link
   cell/verlet algorithm. This is the minimum of \var{cell\_size} -
   \var{max\_range}.
+\item[min_global_cut] (double) Minimal total cutoff for real space.
+  Effectively, this plus the skin is the minimally possible cell size.
+  Espresso typically determines this value automatically, but some
+  algorithms, \eg{} virtual sites, require you to specify it manually.
 \item[min_num_cells] (int) Minimal number of cells for the link cell
   algorithm. Reasonable values range in $10^{-6} N^2$ to $10^{-7}
   N^2$. In general just make sure that the Verlet lists are not
@@ -156,10 +164,10 @@ thermostats.
   \variant{3} thermostat \var{parameters}
 \end{essyntax}
 
-Variant \variant{1} returns the thermostat parameters. A TCL list is given containing all
-the parameters needed to set the specific thermostat. (exactly the
-same as the input command line, without the preceding
-\texttt{thermostat}).
+Variant \variant{1} returns the thermostat parameters. A Tcl list is
+given containing all the parameters needed to set the specific
+thermostat. (exactly the same as the input command line, without the
+preceding \texttt{thermostat}).
 
 Variant \variant{2} turns off all thermostats and sets all thermostat 
 variables to zero. Setting temperature to zero also affects the way in which 
@@ -180,9 +188,10 @@ refer to \cite{berendsen84a, grest86a}.
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.
 
-Using the Langevin thermostat, it is posible to set a temperature and a friction
-coefficient for every particle individually. Consult the \texttt{part} commands reference
-(chapter \ref{chap:part}) for information on how to achieve this. 
+Using the Langevin thermostat, it is posible to set a temperature and
+a friction coefficient for every particle individually. Consult the
+\texttt{part} commands reference (chapter \ref{chap:part}) for
+information on how to achieve this.
 
 \subsection{Dissipative Particle Dynamics (DPD) } \label{sec:DPD}
 \index{DPD|mainindex}
@@ -262,11 +271,10 @@ propably want to try this out yourself to get a feeling for how fast
 temperature jumps during a simulation are. The dpd thermostat does not
 act on the system center of mass motion.  Therefore, before using dpd,
 you have to stop the center of mass motion of your system, which you
-can achieve by using the command \keyword{galileiTransformParticles}.
-\todo{Docs for galileiTransformParticles is missing} This may be
-repeated once in a while for long runs due to round off errors (check
-this with the command \keyword{system_com_vel}).  \todo{Docs from
-  system_com_vel is missing}
+can achieve by using the command \keyword{galileiTransformParticles} 
+\ref{sec:centerofmassmotion}. This may be repeated once in a while for long 
+runs due to round off errors (check this with the command 
+\keyword{system_com_vel}) \ref{sec:centerofmassmotion}.
 
 Two restrictions apply for the dpd implementation of \es:
 
@@ -286,7 +294,7 @@ Two restrictions apply for the dpd implementation of \es:
 This is an extension of the above standard DPD thermostat
 \cite{junghans2008}, which dampens the degrees of freedom
 perpendicular on the axis between two particles. To switch it on, the
-feature \texttt{TRANS_DPD} is required instead of the feature
+feature \feature{TRANS_DPD} is required instead of the feature
 \texttt{DPD}.
 
 The dissipative force is calculated by
@@ -319,15 +327,15 @@ the friction and other parameters have to be set via the command
 set the friction on a per-interaction basis.
 
 \subsubsection{Other DPD extensions}
-The features \texttt{DPD_MASS_RED} or \texttt{DPD_MASS_LIN} make the
+The features \feature{DPD_MASS_RED} or \feature{DPD_MASS_LIN} make the
 friction constant mass dependent:
 $$ \zeta \to \zeta M_{ij} $$ 
 and 
 $$ \zeta \to \zeta M_{ij} $$
-There are two cases implemented. \texttt{DPD_MASS_RED} uses the
+There are two implemented cases. \feature{DPD_MASS_RED} uses the
 reduced mass:
 $$ M_{ij}=2\frac{m_i m_j}{m_i+m_j} $$
-while \texttt{DPD_MASS_LIN} uses the real mass mass:
+while \feature{DPD_MASS_LIN} uses the real mass mass:
 $$ M_{ij}=\frac{m_i+m_j}{2} $$
 The prefactors are such that equal masses result in a factor 1.
 
@@ -539,6 +547,101 @@ names. Variant \variant{2} allows to choose the device by its id,
 which can be determined using \texttt{cuda list}, or for example the
 \texttt{deviceQuery} example code in the CUDA SDK. Variant \variant{3}
 finally gives the id of the currently active GPU.
+
+
+\section{Creating bonds when particles collide}
+
+With the help of the feature \feature{COLLISION_DETECTION}, bonds between
+particles can be created automatically during the simulation, every time
+two particles collide. This is useful for simulations of chemical reactions
+and irreversible adhesion processes.
+
+Two methods of binding are available:
+In the ``bind centers`` method, a bonded interaction is added between the
+colliding particles. This leads to the distance between the particles being
+fixed, the particles can, however still slide around each other. The second
+method, called ``bind at point of collision``, aims to prevent this sliding
+at the the contact. This is achieved by creating two virtual sites at the
+point of collision. They are rigidly connectd to the colliding particles,
+respectively. A bond is then created between the virtual sites, or an angular
+bond between the two real particles and the virtual particles. In the latter
+case, the virtual particles are the centers of the angle potentials (particle
+2 in the description of the angle potential, see \ref{sec:angle}). Due to the
+rigid connection between each of the particles in the collision and its
+respective virtual site, a sliding at the contact point is no longer possible.
+See the documentation on rigid bodies for details. In addition to the bond
+between the virtual sites, the bond between the colliding particles is also
+created. You can either use a real bonded interaction to prevent wobbling
+around the point of contact or you can use a virtual bond to prevent
+additional force contributions, at the expensive of RATTLE, see \ref{sec:rattle}.
+
+The following limitations currently apply for the collision detection:
+\begin{itemize}
+\item The method is currently limited to simulations with a single cpu
+\item No distinction is currently made between different particle types
+\item The ``bind at point of collision'' approach requires the
+  \feature{VIRTUAL_SITES_RELATIVE} feature
+\item The ``bind at point of collision'' approach cannot handle
+  collisions between virtual sites
+\end{itemize}
+
+
+\begin{essyntax}
+\variant{1} collision_detection
+\variant{1} collision_detection off
+\variant{2} collision_detection bind_centers \var{d} \var{bond1}
+\variant{3} collision_detection bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\end{essyntax}
+
+Here, \var{d} is the distance at which the bond is created, \var{bond1} denotes
+the type of the bond created between the colliding partecles, and \var{bond2}
+determines the type of the bond created between the virtual sites (if applicable).
+\var{bond1} needs to denote a pair bond, like FENE or harmonic, \var{bond2} can
+be either a pair or a triple (angle) bond. If it is a pair bond, it connects the
+two virtual particles, otherwise it constraints the angle between the two real
+particles around the virtual ones. \var{Type} denotes the particle type of the
+virtual sites created at the point of collision (if applicable). Be sure not to
+define a Lennard-Jones interaction for this particle type, as two particles will
+be generated in the same place.
+
+
+\section{Reactions}
+\label{sec:Reactions}
+
+With the help of the feature \feature{REACTIONS}, one can define three particle
+types to act as reactant, catalyzer and product. Reactant particles that are 
+closer to at least one catalyzer particle than a user defined range are 
+stochastically converted into particles of the product type. The rate at which 
+this reaction happens can be defined by the user as well. Since an Espresso 
+simulation only contains a finite number of particles, product particles also
+must react back into reactant particles in order allow for an equilibrium other 
+than only product particles.
+This back reaction takes place at any point of the simulation volume and unless 
+the user defines a custom rate for the back reaction, the rate is dynamically 
+chosen to be
+\begin{equation}
+k_\text{back} = k_\text{back} \cdot \frac{n_\text{product}}{n_\text{reactant}},
+\end{equation}
+which results in an equilibrium of half product and half reactant, independently 
+of the number of catalyzer particles or their arrangement.
+
+\begin{essyntax}
+\variant{0} reaction reactant_type \var{rt} catalyzer_type \var{ct} 
+product_type \var{pt} range \var{r} rate \var{k} 
+\opt{back_rate \var{k_\text{back}}}
+\variant{1} reaction off
+\begin{features}
+  \required{REACTIONS}
+\end{features}
+\end{essyntax}
+
+Variant \variant{0} defines a reaction with particles of type number \var{rt} 
+as reactant, type \var{ct} as catalyzer and type \var{pt} as product. The 
+reaction rate is given by \var{r} and to override the dynamically determined 
+rate for the back reaction, one can specify it by \var{k_\text{back}}.
+
+Variant \variant{1} disables the reaction. Note that at the moment, there can 
+only be one reaction in the simulation.
 
 %%% Local Variables: 
 %%% mode: latex

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -45,13 +45,12 @@
 #include "hertzian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
-#include "tcl/tab_tcl.h"
+#include "hat.h"
 #include "tab.h"
 #include "overlap.h"
 #include "ljcos.h"
 #include "ljcos2.h"
 #include "gb.h"
-#include "parser.h"
 #include "cells.h"
 #include "comforce.h"
 #include "comfixed.h"
@@ -94,20 +93,14 @@ Reaction_field_params rf_params = { 0.0, 0.0 };
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
+double min_global_cut = 0.0;
+
 double max_cut;
 double max_cut_nonbonded;
 double max_cut_bonded;
-
-double lj_force_cap = 0.0;
-double ljangle_force_cap = 0.0;
-double morse_force_cap = 0.0;
-double tab_force_cap = 0.0;
-double buck_force_cap = 0.0;
-
-#ifdef CONSTRAINTS
-int n_constraints       = 0;
-Constraint *constraints = NULL;
-#endif
+/** maximal cutoff of type-independent short range ia, mainly
+    electrostatics and DPD*/
+double max_cut_global;
 
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
@@ -128,6 +121,18 @@ DoubleList thermodynamic_forces;
 DoubleList thermodynamic_f_energies;
 /* #endif */
 #endif
+
+/*****************************************
+ * function prototypes
+ *****************************************/
+
+/** calculates and returns the maximal global nonbonded cutoff that is
+    required.  Currently, this are just the cutoffs from the
+    electrostatics method and some dpd cutoffs. */
+static void recalc_global_maximal_nonbonded_cutoff();
+/** calculate the maximal cutoff of bonded interactions, required to
+    determine the cell size for communication. */
+static void recalc_maximal_cutoff_bonded();
 
 /*****************************************
  * general lowlevel functions
@@ -156,28 +161,25 @@ void tf_tables_init() {
 /* #endif */
 #endif
 
-
-
 /** Initialize interaction parameters. */
 void initialize_ia_params(IA_parameters *params) {
  
   params->particlesInteract = 0;
-  params->max_cut = 0;
+  params->max_cut = max_cut_global;
 
 #ifdef LENNARD_JONES
   params->LJ_eps =
     params->LJ_sig =
-    params->LJ_cut =
     params->LJ_shift =
     params->LJ_offset =
     params->LJ_capradius =
     params->LJ_min = 0.0;
+  params->LJ_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
   params->LJGEN_eps =
     params->LJGEN_sig =
-    params->LJGEN_cut =
     params->LJGEN_shift =
     params->LJGEN_offset =
     params->LJGEN_capradius =
@@ -185,36 +187,37 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
     params->LJGEN_b2 = 0.0;
+  params->LJGEN_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LJ_ANGLE
   params->LJANGLE_eps =
     params->LJANGLE_sig =
-    params->LJANGLE_cut =
     params->LJANGLE_bonded1type=
     params->LJANGLE_bonded1pos = 
     params->LJANGLE_bonded1neg = 
     params->LJANGLE_bonded2pos = 
     params->LJANGLE_bonded2neg = 
-    params->LJANGLE_capradius = 0;
-  params->LJANGLE_z0 = 0.;
-  params->LJANGLE_dz = -1.;
-  params->LJANGLE_kappa = 0.;
-  params->LJANGLE_epsprime = 0.;
+    params->LJANGLE_capradius =
+    params->LJANGLE_z0 =
+    params->LJANGLE_kappa =
+    params->LJANGLE_epsprime = 0.0;
+  params->LJANGLE_dz = -1.0;
+  params->LJANGLE_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef SMOOTH_STEP
   params->SmSt_eps =
     params->SmSt_sig =
-    params->SmSt_cut =
     params->SmSt_d =
     params->SmSt_n =
-    params->SmSt_k0 = 0;
+    params->SmSt_k0 = 0.0;
+  params->SmSt_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef HERTZIAN
-  params->Hertzian_eps =
-    params->Hertzian_sig = 0;
+  params->Hertzian_eps = 0.0;
+  params->Hertzian_sig = INACTIVE_CUTOFF;
 #endif
 
 #ifdef BMHTF_NACL
@@ -223,96 +226,87 @@ void initialize_ia_params(IA_parameters *params) {
     params->BMHTF_C =
     params->BMHTF_D =
     params->BMHTF_sig =
-    params->BMHTF_cut =
-    params->BMHTF_computed_shift = 0;
+    params->BMHTF_computed_shift = 0.0;
+  params->BMHTF_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef MORSE
   params->MORSE_eps = 
     params->MORSE_alpha =
     params->MORSE_rmin =
-    params->MORSE_cut = 
     params->MORSE_rest = 
     params->MORSE_capradius = 0;
+  params->MORSE_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef BUCKINGHAM
-    params->BUCK_A =
+  params->BUCK_A =
     params->BUCK_B =
     params->BUCK_C =
     params->BUCK_D =
-    params->BUCK_cut =
     params->BUCK_discont =
     params->BUCK_shift =
-    params->BUCK_capradius = 0;
-    params->BUCK_F1 = 0;
-    params->BUCK_F2 = 0;
+    params->BUCK_capradius =
+    params->BUCK_F1 =
+    params->BUCK_F2 = 0.0;
+  params->BUCK_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef SOFT_SPHERE
   params->soft_a =
     params->soft_n =
-    params->soft_cut =
-    params->soft_offset = 0;
+    params->soft_offset = 0.0;
+  params->soft_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef HAT
+  params->HAT_Fmax =
+    params->HAT_r = 0.0;
 #endif
 
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
-    params->LJCOS_cut =
     params->LJCOS_offset =
     params->LJCOS_alfa =
     params->LJCOS_beta =
-    params->LJCOS_rmin = 0 ;
+    params->LJCOS_rmin = 0.0;
+  params->LJCOS_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LJCOS2
   params->LJCOS2_eps =
     params->LJCOS2_sig =
-    params->LJCOS2_cut =
     params->LJCOS2_offset =
     params->LJCOS2_w =
     params->LJCOS2_rchange = 
-    params->LJCOS2_capradius = 0 ;
+    params->LJCOS2_capradius = 0.0;
+  params->LJCOS2_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef GAY_BERNE
   params->GB_eps =
     params->GB_sig =
-    params->GB_cut =
     params->GB_k1 =
     params->GB_k2 =
     params->GB_mu =
     params->GB_nu =
     params->GB_chi1 =
-    params->GB_chi2 = 0 ;
+    params->GB_chi2 = 0.0;
+  params->GB_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef TABULATED
-  params->TAB_npoints = 0;
-  params->TAB_startindex = 0;
-  params->TAB_minval = 0.0;
-  params->TAB_minval2 = 0.0;
-  params->TAB_maxval = 0.0;
-  params->TAB_maxval2 = 0.0;
-  params->TAB_stepsize = 0.0;
+  params->TAB_npoints =
+    params->TAB_startindex = 0;
+  params->TAB_minval =
+    params->TAB_stepsize = 0.0;
   strcpy(params->TAB_filename,"");
-#endif
-
-#ifdef COMFORCE
-  params->COMFORCE_flag = 0;
-  params->COMFORCE_dir = 0;
-  params->COMFORCE_force = 0.;
-	params->COMFORCE_fratio = 0.;
-#endif
-
-#ifdef COMFIXED
-  params->COMFIXED_flag = 0;
+  params->TAB_maxval = INACTIVE_CUTOFF;
 #endif
 
 #ifdef INTER_DPD
   params->dpd_gamma = 0.0;
-  params->dpd_r_cut = 0.0;
   params->dpd_wf = 0;
   params->dpd_pref1 = 0.0;
   params->dpd_pref2 = 0.0;
@@ -321,6 +315,40 @@ void initialize_ia_params(IA_parameters *params) {
   params->dpd_wf = 0;
   params->dpd_pref3 = 0;
   params->dpd_pref4 = 0;
+  params->dpd_r_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef TUNABLE_SLIP
+  params->TUNABLE_SLIP_temp  = 0.0;
+  params->TUNABLE_SLIP_gamma = 0.0;
+  params->TUNABLE_SLIP_time  = 0.0;
+  params->TUNABLE_SLIP_vx  = 0.0;
+  params->TUNABLE_SLIP_vy  = 0.0;
+  params->TUNABLE_SLIP_vz  = 0.0;
+  params->TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
+#endif
+
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
+  //params->ADRESS_IC_npoints = 0;
+  params->ADRESS_TAB_npoints = 0;
+  params->ADRESS_TAB_startindex = 0;
+  params->ADRESS_TAB_minval = 0.0;
+  params->ADRESS_TAB_stepsize = 0.0;
+  strcpy(params->ADRESS_TAB_filename,"");
+  params->ADRESS_TAB_maxval = INACTIVE_CUTOFF;
+#endif
+
+  /* things that are not strictly speaking short-ranged interactions,
+     and do not have a cutoff */
+#ifdef COMFORCE
+  params->COMFORCE_flag = 0;
+  params->COMFORCE_dir = 0;
+  params->COMFORCE_force = 0.;
+  params->COMFORCE_fratio = 0.;
+#endif
+
+#ifdef COMFIXED
+  params->COMFIXED_flag = 0;
 #endif
 
 #ifdef INTER_RF
@@ -332,29 +360,19 @@ void initialize_ia_params(IA_parameters *params) {
   params->mol_cut_cutoff = 0.0;
 #endif
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  //params->ADRESS_IC_npoints = 0;
-  params->ADRESS_TAB_npoints = 0;
-  params->ADRESS_TAB_startindex = 0;
-  params->ADRESS_TAB_minval = 0.0;
-  params->ADRESS_TAB_minval2 = 0.0;
-  params->ADRESS_TAB_maxval = 0.0;
-  params->ADRESS_TAB_maxval2 = 0.0;
-  params->ADRESS_TAB_stepsize = 0.0;
-  strcpy(params->ADRESS_TAB_filename,"");
+#ifdef REACTIONS
+  params->REACTION_range = 0.0;
 #endif
-#endif
+}
 
-#ifdef TUNABLE_SLIP
-  params->TUNABLE_SLIP_temp  = 0.0;
-  params->TUNABLE_SLIP_gamma = 0.0;
-  params->TUNABLE_SLIP_r_cut = 0.0;
-  params->TUNABLE_SLIP_time  = 0.0;
-  params->TUNABLE_SLIP_vx  = 0.0;
-  params->TUNABLE_SLIP_vy  = 0.0;
-  params->TUNABLE_SLIP_vz  = 0.0;
-#endif
+/** Copy interaction parameters. */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
+  memcpy(dst, src, sizeof(IA_parameters));
+}
+
+IA_parameters *get_ia_param_safe(int i, int j) {
+  make_particle_type_exist(imax(i, j));
+  return get_ia_param(i, j);
 }
 
 #ifdef ADRESS
@@ -369,222 +387,11 @@ void initialize_tf_params(TF_parameters *params){
   params->TF_TAB_stepsize = 0.0;
   strcpy(params->TF_TAB_filename, "");
 }
-/** endif */
-#endif
 
-
-/** Copy interaction parameters. */
-void copy_ia_params(IA_parameters *dst, IA_parameters *src) {
-#ifdef LENNARD_JONES
-  dst->LJ_eps = src->LJ_eps;
-  dst->LJ_sig = src->LJ_sig;
-  dst->LJ_cut = src->LJ_cut;
-  dst->LJ_shift = src->LJ_shift;
-  dst->LJ_offset = src->LJ_offset;
-  dst->LJ_capradius = src->LJ_capradius;
-  dst->LJ_min = src->LJ_min;
-#endif
-
-#ifdef LENNARD_JONES_GENERIC
-  dst->LJGEN_eps = src->LJGEN_eps;
-  dst->LJGEN_sig = src->LJGEN_sig;
-  dst->LJGEN_cut = src->LJGEN_cut;
-  dst->LJGEN_shift = src->LJGEN_shift;
-  dst->LJGEN_offset = src->LJGEN_offset;
-  dst->LJGEN_capradius = src->LJGEN_capradius;
-  dst->LJGEN_a1 = src->LJGEN_a1;
-  dst->LJGEN_a2 = src->LJGEN_a2;
-  dst->LJGEN_b1 = src->LJGEN_b1;
-  dst->LJGEN_b2 = src->LJGEN_b2;
-#endif
-
-#ifdef LJ_ANGLE
-  dst->LJANGLE_eps = src->LJANGLE_eps;
-  dst->LJANGLE_sig = src->LJANGLE_sig;
-  dst->LJANGLE_cut = src->LJANGLE_cut;
-  dst->LJANGLE_bonded1type = src->LJANGLE_bonded1type;
-  dst->LJANGLE_bonded1pos = src->LJANGLE_bonded1pos;
-  dst->LJANGLE_bonded1neg = src->LJANGLE_bonded1neg;
-  dst->LJANGLE_bonded2pos = src->LJANGLE_bonded2pos;
-  dst->LJANGLE_bonded2neg = src->LJANGLE_bonded2neg;
-  dst->LJANGLE_capradius = src->LJANGLE_capradius;
-  dst->LJANGLE_z0 = src->LJANGLE_z0;
-  dst->LJANGLE_dz = src->LJANGLE_dz;
-  dst->LJANGLE_kappa = src->LJANGLE_kappa;
-  dst->LJANGLE_epsprime = src->LJANGLE_epsprime;
-#endif
-
-#ifdef SMOOTH_STEP
-  dst->SmSt_eps = src->SmSt_eps;
-  dst->SmSt_sig = src->SmSt_sig;
-  dst->SmSt_cut = src->SmSt_cut;
-  dst->SmSt_d = src->SmSt_d;
-  dst->SmSt_n = src->SmSt_n;
-  dst->SmSt_k0 = src->SmSt_k0;
-#endif
-
-#ifdef HERTZIAN
-  dst->Hertzian_eps = src->Hertzian_eps;
-  dst->Hertzian_sig = src->Hertzian_sig;
-#endif
-
-#ifdef BMHTF_NACL
-  dst->BMHTF_A = src->BMHTF_A;
-  dst->BMHTF_B = src->BMHTF_B;
-  dst->BMHTF_C = src->BMHTF_C;
-  dst->BMHTF_D = src->BMHTF_D;
-  dst->BMHTF_sig = src->BMHTF_sig;
-  dst->BMHTF_cut = src->BMHTF_cut;
-  dst->BMHTF_computed_shift = src->BMHTF_computed_shift;
-#endif
-
-#ifdef MORSE
-  dst->MORSE_eps = src->MORSE_eps;
-  dst->MORSE_alpha = src->MORSE_alpha;
-  dst->MORSE_rmin = src->MORSE_rmin;
-  dst->MORSE_cut = src->MORSE_cut;
-  dst->MORSE_rest = src->MORSE_rest;
-  dst->MORSE_capradius = src->MORSE_capradius;
-#endif
-
-#ifdef BUCKINGHAM
-  dst->BUCK_A = src->BUCK_A;
-  dst->BUCK_B = src->BUCK_B;
-  dst->BUCK_C = src->BUCK_C;
-  dst->BUCK_D = src->BUCK_D;
-  dst->BUCK_cut = src->BUCK_cut;
-  dst->BUCK_discont = src->BUCK_discont;
-  dst->BUCK_shift  = src->BUCK_shift;
-  dst->BUCK_capradius = src->BUCK_capradius;
-  dst->BUCK_F1 = src->BUCK_F1;
-  dst->BUCK_F2 = src->BUCK_F2;
-#endif
-
-#ifdef SOFT_SPHERE
-  dst->soft_a = src->soft_a;
-  dst->soft_n = src->soft_n;
-  dst->soft_cut = src->soft_cut;
-  dst->soft_offset = src->soft_offset;
-#endif
-
-#ifdef LJCOS
-  dst->LJCOS_eps = src->LJCOS_eps;
-  dst->LJCOS_sig = src->LJCOS_sig;
-  dst->LJCOS_cut = src->LJCOS_cut;
-  dst->LJCOS_offset = src->LJCOS_offset;
-  dst->LJCOS_alfa = src->LJCOS_alfa;
-  dst->LJCOS_beta = src->LJCOS_beta;
-  dst->LJCOS_rmin = src->LJCOS_rmin;
-#endif
-
-#ifdef LJCOS2
-  dst->LJCOS2_eps       = src->LJCOS2_eps;
-  dst->LJCOS2_sig       = src->LJCOS2_sig;
-  dst->LJCOS2_cut       = src->LJCOS2_cut;
-  dst->LJCOS2_offset    = src->LJCOS2_offset;
-  dst->LJCOS2_w         = src->LJCOS2_w;
-  dst->LJCOS2_rchange   = src->LJCOS2_rchange;
-  dst->LJCOS2_capradius = src->LJCOS2_capradius;
-#endif
-  
-#ifdef GAY_BERNE
-  dst->GB_eps = src->GB_eps;
-  dst->GB_sig = src->GB_sig;
-  dst->GB_cut = src->GB_cut;
-  dst->GB_k1 = src->GB_k1;
-  dst->GB_k2 = src->GB_k2;
-  dst->GB_mu = src->GB_mu;
-  dst->GB_nu = src->GB_nu;
-  dst->GB_chi1 = src->GB_chi1;
-  dst->GB_chi2 = src->GB_chi2; 
-#endif
-
-#ifdef TABULATED
-  dst->TAB_npoints = src->TAB_npoints;
-  dst->TAB_startindex = src->TAB_startindex;
-  dst->TAB_minval = src->TAB_minval;
-  dst->TAB_minval2 = src->TAB_minval2;
-  dst->TAB_maxval = src->TAB_maxval;
-  dst->TAB_maxval2 = src->TAB_maxval2;
-  dst->TAB_stepsize = src->TAB_stepsize;
-  strcpy(dst->TAB_filename,src->TAB_filename);
-#endif
-
-#ifdef COMFORCE
-  dst->COMFORCE_flag = src->COMFORCE_flag;
-  dst->COMFORCE_dir = src->COMFORCE_dir;
-  dst->COMFORCE_force = src->COMFORCE_force;
-  dst->COMFORCE_fratio = src->COMFORCE_fratio;
-#endif
-
-#ifdef COMFIXED
-  dst->COMFIXED_flag = src->COMFIXED_flag;
-#endif
-
-#ifdef INTER_DPD
-  dst->dpd_gamma  = src->dpd_gamma;
-  dst->dpd_r_cut  = src-> dpd_r_cut;
-  dst->dpd_wf     = src->dpd_wf;
-  dst->dpd_pref1  = src->dpd_pref1;
-  dst->dpd_pref2  = src->dpd_pref2;
-  dst->dpd_tgamma = src->dpd_tgamma;
-  dst->dpd_tr_cut = src-> dpd_tr_cut;
-  dst->dpd_twf    = src->dpd_twf;
-  dst->dpd_pref3  = src->dpd_pref3;
-  dst->dpd_pref4  = src->dpd_pref4;
-#endif
-
-#ifdef INTER_RF
-  dst->rf_on = src->rf_on;
-#endif
-
-#ifdef MOL_CUT
-  dst->mol_cut_type = src->mol_cut_type;
-  dst->mol_cut_cutoff = src->mol_cut_cutoff;
-#endif
-
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  //dst->ADRESS_IC_npoints = src->ADRESS_IC_npoints;
-  dst->ADRESS_TAB_npoints = src->ADRESS_TAB_npoints;
-  dst->ADRESS_TAB_startindex = src->ADRESS_TAB_startindex;
-  dst->ADRESS_TAB_minval = src->ADRESS_TAB_minval;
-  dst->ADRESS_TAB_minval2 = src->ADRESS_TAB_minval2;
-  dst->ADRESS_TAB_maxval = src->ADRESS_TAB_maxval;
-  dst->ADRESS_TAB_maxval2 = src->ADRESS_TAB_maxval2;
-  dst->ADRESS_TAB_stepsize = src->ADRESS_TAB_stepsize;
-  strcpy(dst->ADRESS_TAB_filename,src->ADRESS_TAB_filename);
-#endif
-#endif
-
-#ifdef TUNABLE_SLIP
-  dst->TUNABLE_SLIP_temp  = src->TUNABLE_SLIP_temp;
-  dst->TUNABLE_SLIP_gamma  = src->TUNABLE_SLIP_gamma;
-  dst->TUNABLE_SLIP_r_cut  = src->TUNABLE_SLIP_r_cut;
-  dst->TUNABLE_SLIP_time  = src->TUNABLE_SLIP_time;
-  dst->TUNABLE_SLIP_vx  = src->TUNABLE_SLIP_vx;
-  dst->TUNABLE_SLIP_vy  = src->TUNABLE_SLIP_vy;
-  dst->TUNABLE_SLIP_vz  = src->TUNABLE_SLIP_vz;
-#endif
-
-}
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
 void copy_tf_params(TF_parameters *dst, TF_parameters *src){
-  dst->TF_TAB_npoints = src->TF_TAB_npoints;
-  dst->TF_TAB_startindex = src->TF_TAB_startindex;
-  dst->TF_prefactor = src->TF_prefactor;
-  dst->TF_TAB_minval = src->TF_TAB_minval;
-  dst->TF_TAB_maxval = src->TF_TAB_maxval;
-  dst->TF_TAB_stepsize = src->TF_TAB_stepsize;
-  strcpy(dst->TF_TAB_filename,src->TF_TAB_filename);
+  memcpy(dst, src, sizeof(TF_parameters));
 }
-/* #endif */
-#endif
 
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
 int checkIfTF(TF_parameters *data){
   if (data->TF_TAB_maxval !=0)
     return 1;
@@ -592,6 +399,323 @@ int checkIfTF(TF_parameters *data){
 }
 /* #endif */
 #endif
+
+static void recalc_maximal_cutoff_bonded()
+{
+  int i;
+  double max_cut_tmp;
+
+  max_cut_bonded = 0.0;
+
+  for (i = 0; i < n_bonded_ia; i++) {
+    switch (bonded_ia_params[i].type) {
+    case BONDED_IA_FENE:
+      max_cut_tmp = bonded_ia_params[i].p.fene.r0+bonded_ia_params[i].p.fene.drmax;
+      if(max_cut_bonded < max_cut_tmp)
+	max_cut_bonded = max_cut_tmp;
+      break;
+    case BONDED_IA_HARMONIC:
+      if((bonded_ia_params[i].p.harmonic.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
+	max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
+      break;
+    case BONDED_IA_SUBT_LJ:
+      if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
+	max_cut_bonded = bonded_ia_params[i].p.subt_lj.r;
+      break;
+    case BONDED_IA_RIGID_BOND:
+      if(max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
+	max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
+       break;
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      if(bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
+	 max_cut_bonded < bonded_ia_params[i].p.tab.maxval)
+	max_cut_bonded = bonded_ia_params[i].p.tab.maxval;
+      break;
+#endif
+#ifdef OVERLAPPED 
+    case BONDED_IA_OVERLAPPED:
+      /* in UNIT Angstrom */
+      if(bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_LENGTH &&
+         max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
+        max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
+      break;
+#endif
+    default:
+     break;
+    }
+  }
+
+  /* Bond angle and dihedral potentials do not contain a cutoff
+     intrinsically. The cutoff for these potentials depends on the
+     bond length potentials. For bond angle potentials nothing has to
+     be done (it is assumed, that particles participating in a bond
+     angle or dihedral potential are bound to each other by some bond
+     length potential (FENE, Harmonic or tabulated)). For dihedral
+     potentials (both normal and tabulated ones) it follows, that the
+     cutoff is TWO TIMES the maximal cutoff! That's what the following
+     lines assure. */
+  max_cut_tmp = 2.0*max_cut_bonded;
+  for (i = 0; i < n_bonded_ia; i++) {
+    switch (bonded_ia_params[i].type) {
+    case BONDED_IA_DIHEDRAL:
+      max_cut_bonded = max_cut_tmp;
+      break;
+#ifdef TABULATED
+    case BONDED_IA_TABULATED:
+      if(bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
+	max_cut_bonded = max_cut_tmp;
+      break;
+#endif
+#ifdef OVERLAPPED 
+    case BONDED_IA_OVERLAPPED:
+      if(bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_DIHEDRAL)
+        max_cut_bonded = max_cut_tmp;
+      break;
+#endif
+    default:
+      break;
+    }
+  }
+}
+
+static void recalc_global_maximal_nonbonded_cutoff()
+{
+  /* user defined minimal global cut. This makes sure that data of
+   pairs of particles with a distance smaller than this are always
+   available on the same node (through ghosts). Required for example
+   for the relative virtual sites algorithm. */
+  max_cut_global = min_global_cut;
+
+#ifdef ELECTROSTATICS
+  /* Cutoff for the real space electrostatics.
+     Note that the box length may have changed,
+     but the method not yet reinitialized.
+   */
+  switch (coulomb.method) {
+#ifdef P3M 
+  case COULOMB_ELC_P3M:
+    if (max_cut_global < elc_params.space_layer)
+      max_cut_global = elc_params.space_layer;
+    // fall through
+  case COULOMB_P3M: {
+    /* do not use precalculated r_cut here, might not be set yet */
+    double r_cut = p3m.params.r_cut_iL* box_l[0];
+    if (max_cut_global < r_cut)
+      max_cut_global = r_cut;
+    break;
+  }
+#endif
+  case COULOMB_EWALD: {
+    /* do not use precalculated r_cut here, might not be set yet */
+    double r_cut  = ewald.r_cut_iL* box_l[0];
+    if (max_cut_global < r_cut)
+      max_cut_global = r_cut;
+    break;
+  }
+  case COULOMB_DH:
+    if (max_cut_global < dh_params.r_cut)
+      max_cut_global = dh_params.r_cut;
+    break;
+  case COULOMB_RF:
+  case COULOMB_INTER_RF:
+    if (max_cut_global < rf_params.r_cut)
+      max_cut_global = rf_params.r_cut;
+    break;
+  }
+#endif /*ifdef ELECTROSTATICS */
+  
+#ifdef DIPOLES
+  switch (coulomb.Dmethod) {
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
+  case DIPOLAR_P3M: {
+    /* do not use precalculated r_cut here, might not be set yet */
+    double r_cut = dp3m.params.r_cut_iL* box_l[0];
+    if (max_cut_global < r_cut)
+      max_cut_global = r_cut;
+    break;
+  }
+#endif /*ifdef DP3M */
+  }       
+#endif
+
+#ifdef DPD
+  if (dpd_r_cut != 0) {
+    if(max_cut_global < dpd_r_cut)
+      max_cut_global = dpd_r_cut;
+  }
+#endif
+  
+#ifdef TRANS_DPD
+  if (dpd_tr_cut != 0) {
+    if(max_cut_global < dpd_tr_cut)
+      max_cut_global = dpd_tr_cut;
+  }
+#endif
+}
+
+static void recalc_maximal_cutoff_nonbonded()
+{
+  int i, j;
+
+  CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded\n", this_node));
+
+  recalc_global_maximal_nonbonded_cutoff();
+
+  CELL_TRACE(fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded: max_cut_global = %f\n", this_node, max_cut_global));
+
+  max_cut_nonbonded = max_cut_global;
+  
+  for (i = 0; i < n_particle_types; i++)
+    for (j = i; j < n_particle_types; j++) {
+      double max_cut_current = 0;
+
+      IA_parameters *data = get_ia_param(i, j);
+
+#ifdef LENNARD_JONES
+      if(max_cut_current < (data->LJ_cut+data->LJ_offset))
+	max_cut_current = (data->LJ_cut+data->LJ_offset);
+#endif
+
+#ifdef INTER_DPD
+      {
+	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
+	  data->dpd_r_cut : data->dpd_tr_cut;
+	if (max_cut_current <  max_cut_tmp)
+	  max_cut_current = max_cut_tmp;
+      }
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+      if (max_cut_current < (data->LJGEN_cut+data->LJGEN_offset))
+	max_cut_current = (data->LJGEN_cut+data->LJGEN_offset);
+#endif
+
+#ifdef LJ_ANGLE
+      if (max_cut_current < (data->LJANGLE_cut))
+	max_cut_current = (data->LJANGLE_cut);
+#endif
+
+#ifdef SMOOTH_STEP
+      if (max_cut_current < data->SmSt_cut)
+	max_cut_current = data->SmSt_cut;
+#endif
+
+#ifdef HERTZIAN
+      if (max_cut_current < data->Hertzian_sig)
+	max_cut_current = data->Hertzian_sig;
+#endif
+
+#ifdef BMHTF_NACL
+      if (max_cut_current < data->BMHTF_cut)
+	max_cut_current = data->BMHTF_cut;
+#endif
+
+#ifdef MORSE
+      if (max_cut_current < data->MORSE_cut)
+	max_cut_current = data->MORSE_cut;
+#endif
+
+#ifdef BUCKINGHAM
+      if (max_cut_current < data->BUCK_cut)
+	max_cut_current = data->BUCK_cut;
+#endif
+
+#ifdef SOFT_SPHERE
+      if (max_cut_current < data->soft_cut)
+	max_cut_current = data->soft_cut;
+#endif
+
+#ifdef HAT
+      if (max_cut_current < data->HAT_r)
+	max_cut_current = data->HAT_r;
+#endif
+
+#ifdef LJCOS
+      {
+	double max_cut_tmp = data->LJCOS_cut + data->LJCOS_offset;
+	if (max_cut_current < max_cut_tmp)
+	  max_cut_current = max_cut_tmp;
+      }
+#endif
+
+#ifdef LJCOS2
+      {
+	double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
+	if (max_cut_current < max_cut_tmp)
+	  max_cut_current = max_cut_tmp;
+      }
+#endif
+
+#ifdef GAY_BERNE
+      if (max_cut_current < data->GB_cut)
+	max_cut_current = data->GB_cut;
+#endif
+
+#ifdef TABULATED
+      if (max_cut_current < data->TAB_maxval)
+	max_cut_current = data->TAB_maxval;
+#endif
+	 
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
+      if (max_cut_current < data->ADRESS_TAB_maxval)
+	max_cut_current = data->ADRESS_TAB_maxval;
+#endif
+
+#ifdef TUNABLE_SLIP
+      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
+	max_cut_current = data->TUNABLE_SLIP_r_cut;
+#endif
+
+#ifdef REACTIONS
+      if (max_cut_current < data->REACTION_range)
+	max_cut_current = data->REACTION_range;
+#endif
+
+#ifdef MOL_CUT
+      if (data->mol_cut_type != 0) {
+	if (max_cut_current < data->mol_cut_cutoff)
+	  max_cut_current = data->mol_cut_cutoff;
+	max_cut_current += 2.0* max_cut_bonded;
+      }
+#endif
+
+      IA_parameters *data_sym = get_ia_param(j, i);
+
+      /* no interaction ever touched it, at least no real
+	 short-ranged one (that writes to the nonbonded energy) */
+      data_sym->particlesInteract =
+	data->particlesInteract = (max_cut_current > 0.0);
+      
+      /* take into account any electrostatics */
+      if (max_cut_global > max_cut_current)
+	max_cut_current = max_cut_global;
+
+      data_sym->max_cut =
+	data->max_cut = max_cut_current;
+
+      if (max_cut_current > max_cut_nonbonded)
+	max_cut_nonbonded = max_cut_current;
+
+      CELL_TRACE(fprintf(stderr, "%d: pair %d,%d max_cut total %f\n",
+			 this_node, i, j, data->max_cut));
+    }
+}
+
+void recalc_maximal_cutoff()
+{
+  recalc_maximal_cutoff_bonded();
+  recalc_maximal_cutoff_nonbonded();
+
+  /* make max_cut the maximal cutoff of both bonded and non-bonded
+     interactions */
+  if (max_cut_nonbonded > max_cut_bonded)
+    max_cut = max_cut_nonbonded;
+  else
+    max_cut = max_cut_bonded;
+}
 
 char *get_name_of_bonded_ia(int i) {
   switch (i) {
@@ -699,10 +823,8 @@ void realloc_tf_params(int nsize)
 void make_particle_type_exist(int type)
 {
   int ns = type + 1;
-  if (ns <= n_particle_types) {
-    on_n_particle_types_change();
+  if (ns <= n_particle_types)
     return;
-  }
   mpi_bcast_n_particle_types(ns);
 }
 
@@ -736,329 +858,6 @@ void make_bond_type_exist(int type)
     bonded_ia_params[i].type = BONDED_IA_NONE;
  
   n_bonded_ia = ns;
-}
-
-static void calc_maximal_cutoff_bonded()
-{
-  int i;
-  double max_cut_tmp;
-
-  max_cut_bonded = 0.0;
-
-  for (i = 0; i < n_bonded_ia; i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_FENE:
-      max_cut_tmp = bonded_ia_params[i].p.fene.r0+bonded_ia_params[i].p.fene.drmax;
-      if(max_cut_bonded < max_cut_tmp)
-	max_cut_bonded = max_cut_tmp;
-      break;
-    case BONDED_IA_HARMONIC:
-      if((bonded_ia_params[i].p.harmonic.r_cut>0)&&(max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
-	max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
-      break;
-    case BONDED_IA_SUBT_LJ:
-      if(max_cut_bonded < bonded_ia_params[i].p.subt_lj.r)
-	max_cut_bonded = bonded_ia_params[i].p.subt_lj.r;
-      break;
-    case BONDED_IA_RIGID_BOND:
-      if(max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-	max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
-       break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if(bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-	 max_cut_bonded < bonded_ia_params[i].p.tab.maxval)
-	max_cut_bonded = bonded_ia_params[i].p.tab.maxval;
-      break;
-#endif
-#ifdef OVERLAPPED 
-    case BONDED_IA_OVERLAPPED:
-      /* in UNIT Angstrom */
-      if(bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_LENGTH &&
-         max_cut_bonded < bonded_ia_params[i].p.overlap.maxval)
-        max_cut_bonded = bonded_ia_params[i].p.overlap.maxval;
-      break;
-#endif
-    default:
-     break;
-    }
-  }
-
-  /* Bond angle and dihedral potentials do not contain a cutoff
-     intrinsically. The cutoff for these potentials depends on the
-     bond length potentials. For bond angle potentials nothing has to
-     be done (it is assumed, that particles participating in a bond
-     angle or dihedral potential are bound to each other by some bond
-     length potential (FENE, Harmonic or tabulated)). For dihedral
-     potentials (both normal and tabulated ones) it follows, that the
-     cutoff is TWO TIMES the maximal cutoff! That's what the following
-     lines assure. */
-  max_cut_tmp = 2.0*max_cut_bonded;
-  for (i = 0; i < n_bonded_ia; i++) {
-    switch (bonded_ia_params[i].type) {
-    case BONDED_IA_DIHEDRAL:
-      max_cut_bonded = max_cut_tmp;
-      break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if(bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-	max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-#ifdef OVERLAPPED 
-    case BONDED_IA_OVERLAPPED:
-      if(bonded_ia_params[i].p.overlap.type == OVERLAP_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
-    default:
-      break;
-    }
-  }
-}
-
-/**
-   calculates and returns the maximal cutoff that any electrostatics
-   method requires. This value is not available on Tcl-level,
-   therefore we just return it.
-*/
-static double get_maximal_cutoff_electrostatics()
-{
-  double max_cut_es = 0.0;
-
-#ifdef ELECTROSTATICS
-  /* real space electrostatic */
-  switch (coulomb.method) {
-#ifdef P3M 
-  case COULOMB_ELC_P3M:
-    if (max_cut_es < elc_params.space_layer)
-      max_cut_es = elc_params.space_layer;
-    // fall through
-  case COULOMB_P3M:
-    if (max_cut_es < p3m.params.r_cut)
-      max_cut_es = p3m.params.r_cut;
-    break;
-#endif
-  case COULOMB_EWALD:
-    if (max_cut_es < ewald.r_cut)
-      max_cut_es = ewald.r_cut;
-    break;
-  case COULOMB_DH:
-    if (max_cut_es < dh_params.r_cut)
-      max_cut_es = dh_params.r_cut;
-    break;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    if (max_cut_es < rf_params.r_cut)
-      max_cut_es = rf_params.r_cut;
-    break;
-  case COULOMB_MMM1D:
-    /* needs n-squared calculation anyways */
-    if (max_cut_es < 0)
-      max_cut_es = 0;
-    break;
-  case COULOMB_MMM2D:
-    /* needs n-squared rsp. layered calculation, and
-       it is pretty complicated to find the minimal
-       required cell height. */
-    if (max_cut_es < 0)
-      max_cut_es = 0;
-    break;
-  }
-#endif /*ifdef ELECTROSTATICS */
-  
-#ifdef DP3M
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_P3M:
-    if (max_cut_es < dp3m.params.r_cut)
-      max_cut_es = dp3m.params.r_cut;
-    break;
-  }       
-#endif /*ifdef DP3M */
-
-  return max_cut_es;
-}
-
-static void calc_maximal_cutoff_nonbonded()
-{
-  int i, j;
-
-  double max_cut_es = get_maximal_cutoff_electrostatics();
-
-  max_cut_nonbonded = max_cut_es;
-  
-  for (i = 0; i < n_particle_types; i++)
-    for (j = i; j < n_particle_types; j++) {
-      double max_cut_current = 0;
-
-      IA_parameters *data = get_ia_param(i, j);
-
-#ifdef LENNARD_JONES
-      if (data->LJ_cut != 0) {
-	if(max_cut_current < (data->LJ_cut+data->LJ_offset) )
-	  max_cut_current = (data->LJ_cut+data->LJ_offset);
-      }
-#endif
-
-#ifdef DPD
-      if (dpd_r_cut != 0) {
-	if(max_cut_current < dpd_r_cut)
-	  max_cut_current = dpd_r_cut;
-      }
-#endif
-
-#ifdef TRANS_DPD
-      if (dpd_tr_cut != 0) {
-	if(max_cut_current < dpd_tr_cut)
-	  max_cut_current = dpd_tr_cut;
-      }
-#endif
-
-#ifdef LENNARD_JONES_GENERIC
-      if (data->LJGEN_cut != 0) {
-	if(max_cut_current < (data->LJGEN_cut+data->LJGEN_offset) )
-	  max_cut_current = (data->LJGEN_cut+data->LJGEN_offset);
-      }
-#endif
-
-#ifdef LJ_ANGLE
-      if (data->LJANGLE_cut != 0) {
-	if(max_cut_current < (data->LJANGLE_cut) )
-	  max_cut_current = (data->LJANGLE_cut);
-      }
-#endif
-
-#ifdef INTER_DPD
-      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
-	  data->dpd_r_cut : data->dpd_tr_cut;
-	if(max_cut_current <  max_cut_tmp)
-	  max_cut_current = max_cut_tmp;
-      }
-#endif
-
-#ifdef SMOOTH_STEP
-      if (data->SmSt_cut != 0) {
-	if(max_cut_current < data->SmSt_cut)
-	  max_cut_current = data->SmSt_cut;
-      }
-#endif
-
-#ifdef HERTZIAN
-      if (data->Hertzian_sig != 0) {
-	if(max_cut_current < data->Hertzian_sig)
-	  max_cut_current = data->Hertzian_sig;
-      }
-#endif
-
-#ifdef BMHTF_NACL
-      if (data->BMHTF_cut != 0) {
-	if(max_cut_current < data->BMHTF_cut)
-	  max_cut_current = data->BMHTF_cut;
-      }
-#endif
-
-#ifdef MORSE
-      if (data->MORSE_cut != 0) {
-	if(max_cut_current < data->MORSE_cut)
-	  max_cut_current = data->MORSE_cut;
-      }
-#endif
-
-#ifdef BUCKINGHAM
-      if (data->BUCK_cut != 0) {
-	if(max_cut_current < data->BUCK_cut)
-	  max_cut_current = data->BUCK_cut;
-      }
-#endif
-
-#ifdef SOFT_SPHERE
-      if (data->soft_cut != 0) {
-	if(max_cut_current < data->soft_cut)
-	  max_cut_current = data->soft_cut;
-      }
-#endif
-
-#ifdef LJCOS
-      if (data->LJCOS_cut != 0) {
-	double max_cut_tmp = data->LJCOS_cut + data->LJCOS_offset;
-	if(max_cut_current < max_cut_tmp)
-	  max_cut_current = max_cut_tmp;
-      }
-#endif
-
-#ifdef LJCOS2
-      if (data->LJCOS2_cut != 0) {
-	double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
-	if(max_cut_current < max_cut_tmp)
-	  max_cut_current = max_cut_tmp;
-      }
-#endif
-
-#ifdef GAY_BERNE
-      if (data->GB_cut != 0) {
-	if(max_cut_current < data->GB_cut)
-	  max_cut_current = data->GB_cut;
-      }
-#endif
-
-#ifdef TABULATED
-      if (data->TAB_maxval != 0) {
-	if(max_cut_current < data->TAB_maxval)
-	  max_cut_current = data->TAB_maxval;
-      }
-#endif
-	 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-      if (data->ADRESS_TAB_maxval != 0) {
-	if(max_cut_current < data->ADRESS_TAB_maxval)
-	  max_cut_current = data->ADRESS_TAB_maxval;
-      }
-#endif
-#endif
-
-#ifdef TUNABLE_SLIP
-      if (data->TUNABLE_SLIP_r_cut != 0) {
-	if(max_cut_current < data->TUNABLE_SLIP_r_cut)
-	  max_cut_current = data->TUNABLE_SLIP_r_cut;
-      }
-#endif
-
-      IA_parameters *data_sym = get_ia_param(j, i);
-
-      /* no interaction ever touched it, at least no real
-	 short-ranged one (that writes to the nonbonded energy) */
-      data_sym->particlesInteract =
-	data->particlesInteract = (max_cut_current > 0.0);
-      
-      /* take into account any electrostatics */
-      if (max_cut_es > max_cut_current)
-	max_cut_current = max_cut_es;
-
-#if defined(MOL_CUT) && !defined(ONE_PROC_ADRESS)
-      max_cut_current += 2.0* max_cut_bonded;
-#endif
-
-      data_sym->max_cut =
-	data->max_cut = max_cut_current;
-
-      if (max_cut_current > max_cut_nonbonded)
-	max_cut_nonbonded = max_cut_current;
-    }
-}
-
-void calc_maximal_cutoff()
-{
-  calc_maximal_cutoff_bonded();
-  calc_maximal_cutoff_nonbonded();
-
-  /* make max_cut the maximal cutoff of both bonded and non-bonded
-     interactions */
-  if (max_cut_nonbonded > max_cut_bonded)
-    max_cut = max_cut_nonbonded;
-  else
-    max_cut = max_cut_bonded;
 }
 
 int check_obs_calc_initialized()
@@ -1102,7 +901,7 @@ int check_obs_calc_initialized()
 int coulomb_set_bjerrum(double bjerrum)
 {
   if (bjerrum < 0.0)
-    return TCL_ERROR;
+    return ES_ERROR;
   
   coulomb.bjerrum = bjerrum;
 
@@ -1141,7 +940,7 @@ int coulomb_set_bjerrum(double bjerrum)
 
   }
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 
@@ -1150,14 +949,12 @@ int coulomb_set_bjerrum(double bjerrum)
    ========================================================= */
 #endif /*ifdef ELECTROSTATICS */
 
-
 #ifdef DIPOLES
-
 
 int dipolar_set_Dbjerrum(double bjerrum)
 {
   if (bjerrum < 0.0)
-    return TCL_ERROR;
+    return ES_ERROR;
   
   coulomb.Dbjerrum = bjerrum;
 
@@ -1165,6 +962,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
+      // fall through
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
       dp3m_set_bjerrum();
@@ -1178,51 +976,33 @@ int dipolar_set_Dbjerrum(double bjerrum)
 
   }
 
-  return TCL_OK;
+  return ES_OK;
 }
-
-
-
 
 #endif   /* ifdef  DIPOLES */
 
-
-
-
-/********************************************************************************/
-/*                                       printing                               */
-/********************************************************************************/
-
-
-
-#ifdef ADRESS
-/* #ifdef THERMODYNAMIC_FORCE */
-/* TODO: This function is not used anywhere. To be removed?  */
-int tf_print(Tcl_Interp * interp, int part_type)
+void recalc_coulomb_prefactor()
 {
-  TF_parameters *data;
-  Tcl_ResetResult(interp);
-    
-    make_particle_type_exist(part_type);
-    
-    data = get_tf_param(part_type);
-    
-    return tclprint_to_result_TF(interp, part_type);
-}
-/* #endif */
+#ifdef ELECTROSTATICS
+  if(temperature > 0.0)
+    coulomb.prefactor = coulomb.bjerrum * temperature; 
+  else
+    coulomb.prefactor = coulomb.bjerrum;
 #endif
 
-
-
-/********************************************************************************/
-/*                                       parsing                                */
-/********************************************************************************/
+#ifdef DIPOLES
+  if(temperature > 0.0)
+    coulomb.Dprefactor = coulomb.Dbjerrum * temperature; 
+  else
+    coulomb.Dprefactor = coulomb.Dbjerrum;
+#endif
+}
 
 #ifdef BOND_VIRTUAL
 int virtual_set_params(int bond_type)
 {
   if(bond_type < 0)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
@@ -1232,10 +1012,7 @@ int virtual_set_params(int bond_type)
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
-  return TCL_OK;
+  return ES_OK;
 }
 
-
 #endif
-
-

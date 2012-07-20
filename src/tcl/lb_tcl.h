@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,21 +18,21 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file lb_tcl.h
- * Header file for lb_tcl.c
- *
- * This is the header file for the implementation of the TCL Interface of the Lattice Boltzmann code in lb_tcl.c
- */
-
 #ifndef _LB_TCL_H
 #define _LB_TCL_H
+#include "parser.h"
 
-#include <tcl.h>
-//#include "utils.h"
-//#include "lattice.h"
+/** Parser for the TCL command lbfluid. */
+int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
+/** Parser for the lbnode command. */
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 
+int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv);
+
+/** lb boundary command. From \ref lb-boundaries_tcl.c */
+extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 
 #endif /* LB_TCL_H */

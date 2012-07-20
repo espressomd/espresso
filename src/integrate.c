@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,6 +32,7 @@
 #include <math.h>
 #include "utils.h"
 #include "integrate.h"
+#include "reaction.h"
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "communication.h"
@@ -56,7 +57,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
-#include "lbgpu.h"
+#include "statistics_correlation.h"
 
 /************************************************
  * DEFINES
@@ -72,6 +73,10 @@ int    integ_switch     = INTEG_METHOD_NVT;
 int n_verlet_updates    = 0;
 
 double time_step        = -1.0;
+double time_step_half   = -1.0;
+double time_step_squared= -1.0;
+double time_step_squared_half = -1.0;
+
 double sim_time         = 0.0;
 double skin             = -1.0;
 double skin2;
@@ -156,6 +161,100 @@ void integrate_vv(int n_steps)
 {
   int i;
 
+#ifdef REACTIONS
+  int c, np, n;
+  Particle * p1, *p2, **pairs;
+  Cell * cell;
+  double dist2, vec21[3], rand;
+
+  if(reaction.rate > 0) {
+    int reactants = 0, products = 0;
+    int tot_reactants = 0, tot_products = 0;
+    double ratexp, back_ratexp;
+
+    ratexp = exp(-time_step*reaction.rate);
+    
+    on_observable_calc();
+
+    for (c = 0; c < local_cells.n; c++) {
+      /* Loop cell neighbors */
+      for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+        pairs = dd.cell_inter[c].nList[n].vList.pair;
+        np = dd.cell_inter[c].nList[n].vList.n;
+        
+        /* verlet list loop */
+        for(i = 0; i < 2 * np; i += 2) {
+          p1 = pairs[i];   //pointer to particle 1
+          p2 = pairs[i+1]; //pointer to particle 2
+          
+          if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
+            get_mi_vector(vec21, p1->r.p, p2->r.p);
+            dist2 = sqrlen(vec21);
+            
+            if(dist2 < reaction.range * reaction.range) {
+           	  rand =d_random();
+           	  
+           		if(rand > ratexp) {
+           		  if(p1->p.type==reaction.reactant_type) {
+						      p1->p.type = reaction.product_type;
+					      }
+					      else {
+						      p2->p.type = reaction.product_type;
+					      }
+              }
+           	}
+          }  
+        }
+      }
+    }
+
+    if (reaction.back_rate < 0) { // we have to determine it dynamically 
+      /* we count now how many reactants and products are in the sim box */
+      for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p1   = cell->part;
+        np  = cell->n;
+        
+        for(i = 0; i < np; i++) {
+          if(p1[i].p.type == reaction.reactant_type)
+            reactants++;
+          else if(p1[i].p.type == reaction.product_type)
+            products++;
+        }	
+      }
+      
+      MPI_Allreduce(&reactants, &tot_reactants, 1, MPI_INT, MPI_SUM, comm_cart);
+      MPI_Allreduce(&products, &tot_products, 1, MPI_INT, MPI_SUM, comm_cart);
+
+      back_ratexp = ratexp * tot_reactants / tot_products ; //with this the asymptotic ratio reactant/product becomes 1/1 and the catalyzer volume only determines the time that it takes to reach this
+    }
+    else { //use the back reaction rate supplied by the user
+  	  back_ratexp = exp(-time_step*reaction.back_rate);
+    }
+    
+    if(back_ratexp < 1 ) { 
+      for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p1   = cell->part;
+        np  = cell->n;
+        
+        for(i = 0; i < np; i++) {
+          if(p1[i].p.type == reaction.product_type) {
+            rand = d_random();
+            
+			      if(rand > back_ratexp) {
+			        p1[i].p.type=reaction.reactant_type;
+			      }
+          }
+        }
+      }
+    }
+
+    on_particle_change();
+
+  }
+#endif /* ifdef REACTIONS */
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -186,8 +285,11 @@ void integrate_vv(int n_steps)
     if (check_runtime_errors()) return;
 #ifdef ADRESS
     //    adress_update_weights();
-   if (check_runtime_errors()) return;
+    if (check_runtime_errors()) return;
 #endif
+#endif
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
    force_calc();
@@ -200,7 +302,7 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 
-ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ROTATION
     convert_initial_torques();
@@ -218,6 +320,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     rescale_forces();
     recalc_forces = 0;
+    
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
   }
 
   if (check_runtime_errors())
@@ -245,13 +351,11 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
       propagate_vel();  propagate_pos(); }
     else
       propagate_vel_pos();
-#ifdef ROTATION
-    propagate_omega_quat();
-#endif
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained bond */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    cells_update_ghosts();
+
     correct_pos_shake();
 #endif
 
@@ -296,6 +400,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 1;
+#endif
+
+#ifdef COLLISION_DETECTION
+    prepare_collision_queue();
 #endif
 
     force_calc();
@@ -357,6 +465,10 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
     }
 #endif
 
+#ifdef COLLISION_DETECTION
+    handle_collisions();
+#endif
+
 #ifdef NPT
     if((this_node==0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
@@ -373,11 +485,11 @@ ghost_communicator(&cell_structure.collect_ghost_force_comm);
 #ifdef NPT
   if(integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.invalidate_p_vel = 0;
-    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
     if(this_node==0) nptiso.p_inst_av /= 1.0*n_steps;
-    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
 
@@ -505,7 +617,7 @@ void finalize_p_inst_npt()
       }
     }
 
-    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
     if (this_node == 0) {
       nptiso.p_inst = p_tmp/(nptiso.dimension*nptiso.volume);
       nptiso.p_diff = nptiso.p_diff  +  (nptiso.p_inst-nptiso.p_ext)*0.5*time_step + friction_thermV_nptiso(nptiso.p_diff);
@@ -532,7 +644,7 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-	char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
         ERROR_SPRINTF(errtxt, "{015 your choice of piston=%g, dt=%g, p_diff=%g just caused the volume to become negative, decrease dt} ",
                 nptiso.piston,time_step,nptiso.p_diff);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];
@@ -546,7 +658,7 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[1] = L_new/box_l[nptiso.non_const_dim];
       scal[0] = 1/scal[1];
     }
-    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(scal,  3, MPI_DOUBLE, 0, comm_cart);
 
     /* propagate positions while rescaling positions and velocities */
     for (c = 0; c < local_cells.n; c++) {
@@ -591,8 +703,12 @@ void propagate_press_box_pos_and_rescale_npt()
 	}
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    on_NpT_boxl_change();
+    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
+
+    /* fast box length update */
+    grid_changed_box_l();
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(CELL_FLAG_FAST);
   }
 #endif
 }
@@ -640,6 +756,9 @@ void propagate_vel()
 	ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
+#endif
+#ifdef ROTATION
+     propagate_omega_quat_particle(&p[i]);
 #endif
       }
     }
@@ -736,6 +855,9 @@ void propagate_vel_pos()
 
 #ifdef ADDITIONAL_CHECKS
       force_and_velocity_check(&p[i]);
+#endif
+#ifdef ROTATION
+      propagate_omega_quat_particle(&p[i]);
 #endif
 
       /* Verlet criterion check */

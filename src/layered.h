@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -52,7 +53,7 @@ void layered_calculate_ia();
 void layered_calculate_energies();
 
 /// calculate short ranged virials
-void layered_calculate_virials();
+void layered_calculate_virials(int v_comp);
 
 /// calculate the minimum image vector
 void layered_get_mi_vector(double res[3], double a[3], double b[3]);

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
      Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -155,40 +155,30 @@ void inter_dpd_cool_down()
 }
 
 int inter_dpd_set_params(int part_type_a, int part_type_b,
-				      double gamma, double r_c, int wf,
-				      double tgamma, double tr_c,
-				      int twf)
+			 double gamma, double r_c, int wf,
+			 double tgamma, double tr_c,
+			 int twf)
 {
   extern double temperature;
-  IA_parameters *data, *data_sym;
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  make_particle_type_exist(part_type_a);
-  make_particle_type_exist(part_type_b);
+  if (!data) return ES_ERROR;
 
-  data     = get_ia_param(part_type_a, part_type_b);
-  data_sym = get_ia_param(part_type_b, part_type_a);
-
-  if (!data || !data_sym) {
-    return TCL_ERROR;
-  }
-
-  /* inter_dpd should be symmetrically */
-  data->dpd_gamma  = data_sym->dpd_gamma  = gamma;
-  data->dpd_r_cut  = data_sym->dpd_r_cut  = r_c;
-  data->dpd_wf     = data_sym->dpd_wf     = wf;
-  data->dpd_pref1  = data_sym->dpd_pref1  = gamma/time_step;
-  data->dpd_pref2  = data_sym->dpd_pref2  = sqrt(24.0*temperature*gamma/time_step);
-  data->dpd_tgamma = data_sym->dpd_tgamma = tgamma;
-  data->dpd_tr_cut = data_sym->dpd_tr_cut = tr_c;
-  data->dpd_twf    = data_sym->dpd_twf    = twf;
-  data->dpd_pref3  = data_sym->dpd_pref3  = tgamma/time_step;
-  data->dpd_pref4  = data_sym->dpd_pref4  = sqrt(24.0*temperature*tgamma/time_step);
+  data->dpd_gamma  = gamma;
+  data->dpd_r_cut  = r_c;
+  data->dpd_wf     = wf;
+  data->dpd_pref1  = gamma/time_step;
+  data->dpd_pref2  = sqrt(24.0*temperature*gamma/time_step);
+  data->dpd_tgamma = tgamma;
+  data->dpd_tr_cut = tr_c;
+  data->dpd_twf    = twf;
+  data->dpd_pref3  = tgamma/time_step;
+  data->dpd_pref4  = sqrt(24.0*temperature*tgamma/time_step);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
-  mpi_bcast_ia_params(part_type_b, part_type_a);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 void inter_dpd_init(){

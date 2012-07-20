@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #    Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -167,14 +167,6 @@ if { [catch {
 	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
 	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
 	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
-
-	#
-	if {$dx > $epsilon || $dy > $epsilon || $dz > $epsilon} {
-	    puts "part $i"
-	    puts "in  $resF"
-	    puts "out $tgtF"
-	}
-	#
 
 	if { $dx > $maxdx} {
 	    set maxdx $dx

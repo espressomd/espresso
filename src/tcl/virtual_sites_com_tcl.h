@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -20,11 +20,9 @@
 */
 #ifndef _VIRTUAL_SITES_COM_TCL_H
 #define _VIRTUAL_SITES_COM_TCL_H
-
-#include "config.h"
+#include "parser.h"
 
 #ifdef VIRTUAL_SITES_COM
-//#include "particle_data.h"
 
 // Analyze the pressure on the molecule level
 int tclcommand_analyze_parse_and_print_pressure_mol(Tcl_Interp *interp,int argc, char **argv);

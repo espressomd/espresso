@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2010,2011,2012 The ESPResSo project
 %  
 % This file is part of ESPResSo.
 %   
@@ -71,7 +71,10 @@ implementation works with a different set of units: all lengths are
 expressed in \var{agrid}, all times in \var{tau} and so on.  Therefore
 changing \var{agrid} and \var{tau}, might change the behaviour of the
 LB fluid, \eg at boundaries, due to characteristics of the LBM
-itself. Currently it is not possible to precisely give a parameter set
+itself. It should also be noted that the LB nodes are located at 0.5, 1.5, 2.5, etc (in terms of \var{agrid}).
+This has important implications for the location of hydrodynamic boundaries which are generally considered
+to be halfway between two nodes to first order.
+Currently it is not possible to precisely give a parameter set
 where reliable results are expected, but we are currently performing a
 study on that. Therefore the LBM should \emph{not be used as a black
   box}, but only after a careful check of all parameters that were
@@ -102,16 +105,6 @@ set up: \lit{agrid}, \lit {dens}, \lit{visc}, \lit{tau},
 This variant returns the velocity at point in countinous space. 
 This can make it easier to calculate flow profiles independent of
 the lattice constant.
-
-\begin{essyntax}
-  lbfluid print \opt{vtk} \var{property} \var{filename}
-\end{essyntax}
-The print parameter is a feature to simplify visualization. It allows for the 
-export of the whole fluid field data into a file with name \var{filename} at 
-once. Currently supported values for the parameter \var{property} are boundary 
-and velocity. The additional option \lit{vtk} enables export in the vtk format 
-which is readable by visualization software such as paraview or mayavi. 
-Otherwise gnuplot readable data will be exported.
 
 \begin{essyntax}
   lbfluid save_ascii_checkpoint \var{filename}
@@ -183,6 +176,18 @@ Example:
 \begin{tclcode}
 puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \end{tclcode}
+
+\section{Visualization}
+\label{ssec:LBvisualization}
+\begin{essyntax}
+  lbfluid print \opt{vtk} \var{property} \var{filename}
+\end{essyntax}
+The print parameter of the \lit{lbfluid} command is a feature to simplify visualization. It allows for the export of the whole fluid field data into a 
+file with name \var{filename} at once. Currently supported values for the 
+parameter \var{property} are boundary and velocity. The additional option 
+\lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
+exported. If you plan to use paraview for visualization, note that also the 
+particle positions can be exportet in the VTK format \ref{sec:writevtk}.
 
 \section{Setting up boundary conditions}
 \begin{essyntax}

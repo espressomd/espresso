@@ -1,4 +1,4 @@
-# Copyright (C) 2011 The ESPResSo project
+# Copyright (C) 2011,2012 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -46,10 +46,6 @@ if { [veclen [vecsub $expected $T]] >1E-6 } {
  error  "Torque for dipole in magnetic field incorrect. Should be $expected but is $T"
 }
 
-
 puts "Energy and torque for a dipole in a homogeneous magnetic field are correct."
 
-
-
-
-
+exit 0

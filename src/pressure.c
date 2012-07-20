@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,7 +22,6 @@
     Implementation of \ref pressure.h "pressure.h".
 */
 #include "pressure.h"
-#include "parser.h"
 #include "cells.h"
 #include "integrate.h"
 #include "initialize.h"
@@ -100,7 +99,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
-    layered_calculate_virials();
+    layered_calculate_virials(v_comp);
     break;
   case CELL_STRUCTURE_DOMDEC:
     if(dd.use_vList) {
@@ -112,7 +111,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
       calculate_link_cell_virials(v_comp);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_virials();
+    nsq_calculate_virials(v_comp);
   }
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
@@ -140,11 +139,11 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     p_tensor_non_bonded.data_nb.e[i]  /= volume;
   
   /* gather data */
-  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   
-  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb, virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb, p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD); 
+  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb, virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb, p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
 }
 
 /************************************************************/
@@ -326,24 +325,22 @@ int getintersection(double pos1[3], double pos2[3],int given, int get, double va
   /*this procedure returns the value of r[get] at that point                                   */
 
   double p2r[3];
-  double oldvalue;
   int i;
 
   for (i=0;i<3;i++) {
     p2r[i] = drem_down((pos2[i]-pos1[i])+box_size[i]/2.0,box_size[i])-box_size[i]/2.0;
   }
-  oldvalue =value;
   value = drem_down((value-pos1[given])+box_size[given]/2.0,box_size[given])-box_size[given]/2.0;
-  //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f value is %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],oldvalue,value););
+  //PTENSOR_TRACE(fprintf(stderr,"%d: getintersection: p1 is %f %f %f p2 is %f %f %f p2r is %f %f %f newvalue is %f\n",this_node,pos1[0],pos1[1],pos1[2],pos2[0],pos2[1],pos2[2],p2r[0],p2r[1],p2r[2],value););
   
   if ((value)*(p2r[given]) < -0.0001) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{analyze stress_profile: getintersection: intersection is not between the two given particles - %e is not between %e and %e and box size is %e, given is %d\n ",value,0.0,p2r[given],box_size[given],given);
     return 0; 
   } else if (given == get) {
     *answer =  drem_down(value + pos1[given],box_size[given]);;
   } else if (0==p2r[given]) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{analyze stress_profile: getintersection: intersection is a line, not a point - value is %g same as %g and %g\n",value,0.0,p2r[given]);
     return 0;   
   } else {
@@ -736,8 +733,8 @@ int distribute_tensors(DoubleList *TensorInBin, double *force, int bins[3], doub
     PTENSOR_TRACE(fprintf(stderr,"%d: distribute_tensors: calclength is %e and length is %e\n}",this_node,calclength,length););
     
     if (calclength - length >0.0000000001) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-      ERROR_SPRINTF(errtxt, "{%d: analyze stess_profile: bug in distribute tensor code - calclength is %e and length is %e}",this_node,calclength,length);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
+      ERROR_SPRINTF(errtxt, "{%d: analyze stress_profile: bug in distribute tensor code - calclength is %e and length is %e}",this_node,calclength,length);
       return 0;
     }
     free(occupiedzbins);
@@ -904,14 +901,14 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
      skin from on opposite sides of the box overlaps then we produce an error message.  To code dround this would be
      creating unnecessary work since I can't imagine when we might want that */
 
-  if (skin < 0) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-    ERROR_SPRINTF(errtxt, "{analyze stess_profile: skin cannot be negative}");
+  if (skin < 0.0) {
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
+    ERROR_SPRINTF(errtxt, "{analyze stress_profile: parameter skin not set}");
     return 0;
   }
   for (i=0;i<3;i++) {
     if ((! periodic[i]) && (range[i] + 2*skin +2*max_cut > box_l[i])) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{analyze stress_profile: Analyzed box (%g) with skin+max_cut(%g) is larger than simulation box (%g).\n",range[i],skin+max_cut,box_l[i]);
       return 0;
     }
@@ -994,3 +991,39 @@ int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3], int periodic[
 }
 
 
+/************************************************************/
+int observable_compute_stress_tensor(int v_comp, double *A, unsigned int n_A)
+{
+  int i, j;
+  double value;
+  double p_vel[3];
+
+  /* if desired (v_comp==1) replace ideal component with instantaneous one */
+   if (total_pressure.init_status != 1+v_comp ) {
+    init_virials(&total_pressure);
+    init_p_tensor(&total_p_tensor);
+
+    init_virials_non_bonded(&total_pressure_non_bonded);
+    init_p_tensor_non_bonded(&total_p_tensor_non_bonded);
+
+    if(v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) && !(nptiso.invalidate_p_vel)) {
+      if (total_pressure.init_status == 0)
+	master_pressure_calc(0);
+      p_tensor.data.e[0] = 0.0;
+      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+      for(i=0; i<3; i++)
+	if(nptiso.geometry & nptiso.nptgeom_dir[i])
+	  p_tensor.data.e[0] += p_vel[i];
+      p_tensor.data.e[0] /= (nptiso.dimension*nptiso.volume);
+      total_pressure.init_status = 1+v_comp;   }
+    else
+      master_pressure_calc(v_comp);
+  }
+
+  for(j=0; j<9; j++) {
+    value = total_p_tensor.data.e[j];
+    for (i = 1; i < total_p_tensor.data.n/9; i++) value += total_p_tensor.data.e[9*i + j];
+    A[j]=value;
+  }
+  return 0;
+}

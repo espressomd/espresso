@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -17,15 +18,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BINARYFILE_H
-#define BINARYFILE_H
-/** \file binary_file.h
+#ifndef BINARYFILE_TCL_H
+#define BINARYFILE_TCL_H
+/** \file binary_file_tcl.h
     This file defines a binary file format for the particle data.
 
 The functions in this file are no longer supported by the Espresso
 team. Use them at your own risk!
 
-    It is the header file for \ref binary_file.c "binary_file.c" and provides
+    It is the header file for \ref binary_file_tcl.c "binary_file_tcl.c" and provides
     functions to read and write binary particle data to Tcl channels.
     It also defines the structures and constants necessary to interprete/
     generate particle data files in this format. THE FILE FORMAT IS HARDWARE
@@ -48,7 +49,7 @@ team. Use them at your own risk!
     of a subsequent particle).
     </ol>
 */
-#include <tcl.h>
+#include "parser.h"
 
 /** This string is to be put in the \ref MDHeader::magic field of \ref MDHeader
     to allow unique identification of binary packed MD data.

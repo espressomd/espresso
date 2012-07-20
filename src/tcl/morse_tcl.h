@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,22 +20,15 @@
 */
 #ifndef MORSE_TCL_H
 #define MORSE_TCL_H
-
-/** \file morse_tcl.h
- *  TCL interface for the Morse potential
-*/
-
-#include "utils.h"
+#include "parser.h"
 
 #ifdef MORSE
-
-#include <tcl.h>
 
 int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j);
 int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv);
 int tclcommand_inter_parse_morse(Tcl_Interp * interp,
-		       int part_type_a, int part_type_b,
-		       int argc, char ** argv);
+				 int part_type_a, int part_type_b,
+				 int argc, char ** argv);
 
 #endif
 #endif /* MORSE_TCL_H */

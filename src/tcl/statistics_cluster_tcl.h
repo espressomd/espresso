@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,19 +20,7 @@
 */
 #ifndef STATISTICS_CLUSTER_TCL_H
 #define STATISTICS_CLUSTER_TCL_H
-/** \file statistics_cluster.h
- *
- *  1: This file contains the necklace cluster algorithm. It can be used
- *  to identify the substructures 'pearls' and 'strings' on a linear
- *  chain.
- *
- *  2: mesh based cluster algorithm to identify hole spaces 
- *  (see thesis chapter 3 of H. Schmitz for details) 
- */
-
-#include <tcl.h>
-//#include "interaction_data.h"
-//#include "particle_data.h"
+#include "parser.h"
 
 /** Parser for the necklace cluster algorithm
 

@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -46,7 +47,9 @@ doxygen:
 if HAVE_DOXYGEN
 	SRCDIR=$(srcdir) AWK=$(AWK)\
 	  $(SHELL) $(srcdir)/background_errors.sh $(top_srcdir)/src/*.c $(top_srcdir)/src/*.h 
-	SRCDIR=$(top_srcdir) INCLUDEDIR=$(top_builddir) PACKAGE="$(PACKAGE_STRING)" \
+	ESPRESSO_VERSION=`cd $(top_srcdir); sh config/genversion.sh` \
+	PACKAGE="ESPResSo $$ESPRESSO_VERSION" \
+	SRCDIR=$(top_srcdir) INCLUDEDIR=$(top_builddir) \
 	HAVE_DOT=$(HAVE_DOT) DOT_PATH=$(DOT_PATH) \
 	  $(DOXYGEN) $(srcdir)/Doxyfile
 	@echo "***************************************************************************"

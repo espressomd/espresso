@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -68,7 +69,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts)
     comm->comm[n].part_lists[0] = &cells[n];
     comm->comm[n].n_part_lists = 1;
     comm->comm[n].node = n;
-    comm->comm[n].mpi_comm = MPI_COMM_WORLD;
+    comm->comm[n].mpi_comm = comm_cart;
   }
 }
 
@@ -168,7 +169,7 @@ void nsq_balance_particles(int global_flag)
 
   CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n", this_node, minshare, maxshare));
 
-  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, MPI_COMM_WORLD);
+  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, comm_cart);
   for (;;) {
     /* find node with most excessive particles */
     surplus = -1;

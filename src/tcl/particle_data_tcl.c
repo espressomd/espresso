@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -675,7 +675,7 @@ int tclcommand_part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
     if (! ARG_IS_D(j, pos[j]))
       return TCL_ERROR;
 
-  if (place_particle(part_num, pos) == TCL_ERROR) {
+  if (place_particle(part_num, pos) == ES_PART_ERROR) {
     Tcl_AppendResult(interp, "particle could not be set", (char *) NULL);
 
     return TCL_ERROR;
@@ -1714,7 +1714,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
   mpi_bcast_event(CHECK_PARTICLES);
 #endif
 
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }
 
 

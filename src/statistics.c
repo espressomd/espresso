@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,7 +22,6 @@
     This is the place for analysis (so far...).
     Implementation of statistics.h
 */
-#include <tcl.h>
 #include <stdlib.h>
 #include <string.h>
 #include "utils.h"
@@ -31,12 +30,12 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster.h"
 #include "statistics_fluid.h"
+//#include "statistics_correlation.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure.h"
 #include "communication.h"
 #include "grid.h"
-#include "parser.h"
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "domain_decomposition.h"
@@ -232,7 +231,7 @@ void predict_momentum_particles(double *result)
   momentum[1] /= time_step;
   momentum[2] /= time_step;
 
-  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
 /** Calculate total momentum of the system (particles & LB fluid)
@@ -358,12 +357,10 @@ void calc_gyration_tensor(int type, double **_gt)
   double com[3];
   double eva[3],eve0[3],eve1[3],eve2[3];
   double *gt=NULL, tmp;
-  double M;
   double Smatrix[9],p1[3];
 
   for (i=0; i<9; i++) Smatrix[i] = 0;
   *_gt = gt = realloc(gt,16*sizeof(double)); /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  M=0.0;
 
   updatePartCfg(WITHOUT_BONDS);
 
@@ -421,7 +418,7 @@ void calc_gyration_tensor(int type, double **_gt)
 
 void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
 {
-  double d[3],dsize;
+  double d[3];
   int i,j;
   double r2;
 
@@ -436,7 +433,6 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
       get_mi_vector(d, pt, partCfg[i].r.p);
     } else {
       /* Calculate the in plane distance */
-      dsize = 0.0;
       for ( j= 0 ; j < 3 ; j++ ) {
 	d[j] = planedims[j]*(partCfg[i].r.p[j]-pt[j]);
       }
@@ -1200,7 +1196,7 @@ int calc_radial_density_map (int xbins,int ybins,int thetabins,double xrange,dou
 
 
   //  printf("done \n");
-  return TCL_OK;
+  return ES_OK;
 }
 
 double calc_vanhove(int ptype, double rmin, double rmax, int rbins, int tmax, double *msd, double **vanhove) 
@@ -1323,8 +1319,8 @@ void analyze_activate(int ind) {
     pos[0] = configs[ind][3*i];
     pos[1] = configs[ind][3*i+1];
     pos[2] = configs[ind][3*i+2];
-    if (place_particle(i, pos)==TCL_ERROR) {
-      char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+    if (place_particle(i, pos)==ES_ERROR) {
+      char *errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{057 failed upon replacing particle %d in Espresso} ", i); 
     }
   }
@@ -1411,5 +1407,3 @@ void centermass_conf(int k, int type_1, double *com)
   }
   return;
 }
-
-
