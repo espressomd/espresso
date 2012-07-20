@@ -801,14 +801,9 @@ typedef struct {
 	int * index;
 } TypeOfIndex;
 
-extern TypeOfIndex Type; 
-//index.max_entry=0;
-//index->type = (int *) 0;
+TypeOfIndex Type; 
 
-extern IndexOfType Index; 
-//tindex.max_entry=0;
-//tindex->type = (int *) 0;
-
+IndexOfType Index; 
 
 typedef struct {
 	int max_entry;
@@ -825,20 +820,6 @@ extern int GC_init;
 
 // flag that indicates that the function init_type_array was called already
 extern int Type_array_init;
-
-/** linked list for particles of a given type */
-//typedef struct {
-//	int identifier;
-//	struct type_list_item *next;
-//} type_list item;
-//
-//typedef struct {
-//	struct type_list_item *list;
-//	int type;
-//	int max;
-//} type_list
-
-/** vars and fields */
 
 int init_gc(void);
 
@@ -859,9 +840,8 @@ int update_particle_array(int type);
 
 /* find a particle of given type and return its id */
 int find_particle_type(int type, int *id);
-/** return an array with real particle id and the corresponding index of typelist */
-//static int *find_particle_type(int type);
 
+/** return an array with real particle id and the corresponding index of typelist */
 int find_particle_type_id(int type, int *id, int *in_id );
 
 /** delete one randomly chosen particle of given type 

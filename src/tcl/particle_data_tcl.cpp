@@ -1228,15 +1228,6 @@ int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_ERROR;
   }
-#ifdef ADDITIONAL_CHECKS
-  if ( Type_array_init ) { 
-	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
-		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
-		  return TCL_ERROR;
-	  }
-  }
-#endif
-
   return TCL_OK;
 }
 
@@ -1674,8 +1665,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		}
 		int id;
 		if (find_particle_type(type, &id) == ES_ERROR ){
-			//char buffer[TCL_INTEGER_SPACE + 32];
-			//sprintf(buffer, "no particle of type %d found", type);
 			Tcl_AppendResult(interp, "-1", (char *) NULL);
 			return TCL_OK;
 		}
@@ -1702,7 +1691,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
 		  return TCL_ERROR;
 		}
-		//if ( gc_status(type) == ES_ERROR ) {
 		if ( type_array!=(TypeList *) 0 && type_array[Index.type[type]].max_entry!= 0 ) {
 			int indexed=0;
 			for ( int i=0; i<Type.max_entry; i++) {
@@ -1719,7 +1707,6 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 					Tcl_AppendResult(interp, buffer, (char *) NULL);
 				}
 				Tcl_AppendResult(interp, " }", (char *) NULL);
-				//free(buffer);
 			}
 		}
 		else {

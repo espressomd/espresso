@@ -1775,9 +1775,6 @@ int remove_id_type_array(int part_id, int type){
 		//particle is not in the list
 		return ES_OK;
 	}
-	//for ( int i =0; i < type_array[in_type].cur_size; i++) {
-	//	printf("%d\n", type_array[in_type].id_list[i]);
-	//}
 	if ( temp_id == max - 1 ) { 
 		type_array[in_type].id_list[temp_id] = -1;
 	} else {
@@ -1785,10 +1782,6 @@ int remove_id_type_array(int part_id, int type){
 		type_array[in_type].id_list[max-1] = -1;
 		type_array[in_type].id_list[temp_id]=temp;
 	}
-//	for ( int i =0; i < type_array[in_type].cur_size; i++) {
-//		printf("%d\n", type_array[in_type].id_list[i]);
-//	}
-//	printf("removed id: %d temp_id %d max %d type %d\n", part_id, temp_id, max, type);
 	type_array[in_type].max_entry--;
 	return ES_OK;
 }
@@ -1872,15 +1865,6 @@ int find_particle_type_id(int type, int *id, int *in_id ){
 	}
 }
 
-//static int *find_particle_type(int type){
-//	int *temp=(int *) malloc( sizeof(int)*2);
-//	if (temp == (int *) 0)
-//		return ES_ERROR;
-//	int temp[1] = i_random ( type_array[type_index_of_type[type]].max_entry );
-//	int temp[0] = type_array[type_index_of_type[type]]->id_list[temp[1]];
-//	return temp;
-//}
-
 int delete_particle_of_type(int type) { 
 	int *p_id, *index_id;
 	p_id=(int *) malloc (sizeof(int));
@@ -1898,31 +1882,10 @@ int delete_particle_of_type(int type) {
 		// takes also care of removing the index from the array
 		return ES_ERROR;
 	}
-//	//update array:
-//	printf ("delete part update array\n");
-//
-//	if ( *index_id == max ) { 
-//		type_array[in_type].id_list[*index_id] = -1;
-//	} else {
-//		int temp=type_array[in_type].id_list[max]; 
-//		type_array[in_type].id_list[max] = -1;
-//		type_array[in_type].id_list[*index_id]=temp;
-//	}
-//	type_array[in_type].max_entry--;
-//	free(p_id);
-//	free(index_id);
-//	printf ("returned ok\n");
 	return ES_OK;
 }
 
 int add_particle_to_list(int part_id, int type){
-//	Particle *cur_par = (Particle *) malloc(sizeof(Particle));
-//	if (cur_par == (Particle *) 0 )
-//		return ES_ERROR;
-//	if (get_particle_data(part_id, cur_par) == ES_ERROR ) 
-//		return ES_ERROR; 
-//
-//	int type = cur_par->p.type;
 	int l_err=1;
 	int already_in = 0;
 //	int already_in_other_list = 0;
@@ -1948,22 +1911,6 @@ int add_particle_to_list(int part_id, int type){
 	if ( already_in ) { 
 		return ES_OK;
 	}
-//	int other_type_in = -1;
-//	int other_list_id = -1;
-//	for (int j=0; j<Type.max_entry; j++)
-//		for (int i=0; i<type_array[j].max_entry; i++ ) {
-//			if ( part_id == type_array[j].id_list[i] ) {
-//				already_in_other_list = 1;
-//				other_type_in = j;
-//				other_list_id= i;
-//				break;
-//			}
-//		}
-
-// if particle is already in an other list remove it
-//	if ( already_in_other_list ) {
-//		remove_id_type_array(type_array[other_type_in].id_list[other_list_id], Type.index[other_type_in]) ;
-//	}
 
 	if ( max >= (double ) type_array[in_type].cur_size/2.0 )
 		if (reallocate_type_array(type)== ES_ERROR)
@@ -1972,8 +1919,6 @@ int add_particle_to_list(int part_id, int type){
 	//add particle id to list:
 	type_array[in_type].id_list[max]=part_id;
 	type_array[in_type].max_entry++;
-//	free(cur_par);
-//	printf("added part %d to type list of type %d\n", part_id, type);
 	return ES_OK;
 }
 
@@ -1990,7 +1935,6 @@ int gc_status(int type){
 		return ES_ERROR;
 	}
 	int in_type = Index.type[type];
-	//printf("ids of particles with type %d\n", type);
 	for (int i = 0; i<type_array[in_type].max_entry; i++) {
 		printf("%d\n", type_array[in_type].id_list[i]);
 	}
@@ -2028,22 +1972,5 @@ int number_of_particles_with_type(int type, int *number){
 	}
 	return NOT_INDEXED;
 }
-//int init_particle_list(int type, ParticleList* plist, type_list* list){
-//	struct type_list *root;
-//	root=malloc (sizeof( struct type_list ));
-//	// save root pointer of the list
-//	root=list;
-//	list->max=0;
-//	for (int i=0; i<plist->n; i++){
-//		if (plist->part[i]->type == type){
-//			list->list->identifier=plist->part[i]->identity;
-//			list->type=type;
-//			list->list->next=malloc( sizeof (struct type_list) );
-//			list->max++;
-//		}
-//	}
-//	list->next= (type_list_item *)0;
-//	// restore list to root pointer
-//	list=root;
-//	return ES_OK
-//}
+
+#endif
