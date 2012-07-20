@@ -10,5 +10,5 @@ cdef extern from "../src/utils.h":
 		int n
 		int max
 
-cdef extern from "../src/statistics.h":
-	cdef double mindist(IntList *set1, IntList *set2)
+#cdef extern from "../src/statistics.h":
+#	cdef double mindist(IntList *set1, IntList *set2)

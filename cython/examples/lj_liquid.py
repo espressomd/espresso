@@ -81,7 +81,7 @@ print "Simulate %d particles in a cubic simulation box " % n_part
 print "%f at density %f\n" % (box_l,density)
 #print "Interactions:\n"	# Nicht angepasst
 #act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
-act_min_dist = es.analyze.pmindist(0,0)
+act_min_dist = es.analyze.mindist(0,0)
 print "Start with minimal distance %f" % act_min_dist
 
 es.glob.max_num_cells = 2744
@@ -116,7 +116,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
   # Warmup criterion
 #  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
-  act_min_dist = es.analyze.pmindist(0,0) 
+  act_min_dist = es.analyze.mindist(0,0) 
   print "\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist),
 
   i = i + 1
