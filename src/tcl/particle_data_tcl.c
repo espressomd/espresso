@@ -1052,14 +1052,14 @@ int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_ERROR;
   }
-#ifdef GRANDCANONICAL
-  if ( Type_array_init ) { 
-	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
-		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
-		  return TCL_ERROR;
-	  }
-  }
-#endif
+//#ifdef GRANDCANONICAL
+//  if ( Type_array_init ) { 
+//	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
+//		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+//		  return TCL_ERROR;
+//	  }
+//  }
+//#endif
 
   return TCL_OK;
 }
@@ -1404,12 +1404,52 @@ int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
 		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
 		  return TCL_ERROR;
 		}
-		if ( gc_status(type) == ES_ERROR ) {
+		//if ( gc_status(type) == ES_ERROR ) {
+		if ( type_array!=(TypeList *) 0 && type_array[Index.type[type]].max_entry!= 0 ) {
+			int indexed=0;
+			for ( int i=0; i<Type.max_entry; i++) {
+				if (type==Type.index[i]) {
+					indexed=1;
+					break;
+				}
+			}
+			if ( indexed ) {
+				char buffer[32 + TCL_INTEGER_SPACE];
+				Tcl_AppendResult(interp, "{ ", (char *) NULL);
+				for (int i=0; i<type_array[Index.type[type]].max_entry; i++ ) {
+					sprintf(buffer, "%d ", type_array[Index.type[type]].id_list[i]);
+					Tcl_AppendResult(interp, buffer, (char *) NULL);
+				}
+				Tcl_AppendResult(interp, " }", (char *) NULL);
+				//free(buffer);
+			}
+		}
+		else {
 			Tcl_AppendResult(interp, "no list for particle", (char *) NULL);
 			return TCL_ERROR;
 		}
 		return TCL_OK;
-
+	} else if ( ARG0_IS_S("number") ) {
+		argc--;
+		argv++;
+		if ( argc < 1 ) {
+			Tcl_AppendResult(interp, "number expects type as argument", (char *) NULL);
+			return TCL_ERROR;
+		}
+		int type = atoi( argv[0] );
+		int number;
+		if ( type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		if ( number_of_particles_with_type(type, &number) == NOT_INDEXED ) {
+			Tcl_AppendResult(interp, "no list for particle", (char *) NULL);
+			return TCL_OK;
+		}
+		char buffer[32 + TCL_INTEGER_SPACE];
+		sprintf(buffer, "%d", number);
+		Tcl_AppendResult(interp, buffer, (char *) NULL);
+		return TCL_OK;
 	} else if ( argc == 1 ) {
 		// initialize particle array for given type
 		int type = atoi(argv[0]);
