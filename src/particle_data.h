@@ -712,19 +712,27 @@ void auto_exclusion(int distance);
 void add_partner(IntList *il, int i, int j, int distance);
 
 #ifdef GRANDCANONICAL
+//value that is returned in the case there was no error, but the type was not yet indexed
+#define NOT_INDEXED -3
 //struct that associates the index used for the type_list and the real particle type
 typedef struct {
 	int max_entry;
-	int * id;
-} TypeOfType;
+	int * type;
+} IndexOfType;
 
-TypeOfType type_of_type_index; 
-//type_of_type_index.max_entry=0;
-//type_of_type_index->type = (int *) 0;
+//and the other way round
+typedef struct {
+	int max_entry;
+	int * index;
+} TypeOfIndex;
 
-TypeOfType type_index_of_type; 
-//type_index_of_type.max_entry=0;
-//type_index_of_type->type = (int *) 0;
+TypeOfIndex Type; 
+//index.max_entry=0;
+//index->type = (int *) 0;
+
+IndexOfType Index; 
+//tindex.max_entry=0;
+//tindex->type = (int *) 0;
 
 
 typedef struct {
@@ -786,7 +794,10 @@ int find_particle_type_id(int type, int *id, int *in_id );
 int delete_particle_of_type(int type);
 
 int remove_id_type_array(int part_id, int type);
-int add_particle_to_list(int part_id);
+int add_particle_to_list(int part_id, int type);
+// print out a list of currently indexed ids
+int gc_status(int type);
+int number_of_particles_with_type(int type, int *number);
 #endif
 
 #endif
