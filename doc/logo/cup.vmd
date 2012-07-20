@@ -163,7 +163,7 @@ if { $render_images } then {
                 -res 500 500 \
                 -aasamples 4 -trans_vmd -mediumshade %s \
                 -format TARGA -o %s.tga; \
-                convert -transparent '#e6edf9' -crop 311x500+121+0! %s.tga %s.png; \
+                convert -transparent '#e6edf9' -crop 311x500+121+0! -resize 284x426 %s.tga %s.png; \
                 rm %s.tga"
 	}
     } else {
