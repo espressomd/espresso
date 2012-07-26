@@ -67,7 +67,7 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #define GAUSSRANDOM
 #endif
 /** The underlying lattice structure */
-Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, -1.0, -1.0, NULL, NULL };
+Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, 0, { -1., -1., -1.}, -1.0, NULL, NULL };
 
 /** Pointer to the velocity populations of the fluid nodes */
 double **lbfluid[2] = { NULL, NULL };
@@ -435,11 +435,11 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
     int boundary;
 	   int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lbpar.agrid;
+	   gridsize[1] = box_l[1] / lbpar.agrid;
+	   gridsize[2] = box_l[2] / lbpar.agrid;
 	
-	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	   fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lbpar.agrid, lbpar.agrid, lbpar.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
 	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
@@ -481,11 +481,11 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     double u[3];
 	   int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lbpar.agrid;
+	   gridsize[1] = box_l[1] / lbpar.agrid;
+	   gridsize[2] = box_l[2] / lbpar.agrid;
 
-	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lblattice.agrid, lblattice.agrid, lblattice.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
+	    fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_cpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\nORIGIN 0 0 0\nSPACING %f %f %f\nPOINT_DATA %d\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", gridsize[0], gridsize[1], gridsize[2], lbpar.agrid, lbpar.agrid, lbpar.agrid, gridsize[0]*gridsize[1]*gridsize[2]);
 	
 	    for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 		    for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
@@ -532,9 +532,9 @@ int lb_lbfluid_print_boundary(char* filename) {
 	   int boundary;
 	   int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lbpar.agrid;
+	   gridsize[1] = box_l[1] / lbpar.agrid;
+	   gridsize[2] = box_l[2] / lbpar.agrid;
 	
 
 	  for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
@@ -542,7 +542,7 @@ int lb_lbfluid_print_boundary(char* filename) {
 			  for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
 			  {
 				  lb_lbnode_get_boundary(pos, &boundary);
-				  fprintf(fp, "%f %f %f %d\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, boundary);
+				  fprintf(fp, "%f %f %f %d\n", pos[0]*lbpar.agrid, pos[1]*lbpar.agrid, pos[2]*lbpar.agrid, boundary);
 			  }
 #endif
 			 }
@@ -582,16 +582,16 @@ int lb_lbfluid_print_velocity(char* filename) {
 	   double u[3];
 	   int gridsize[3];
 	
-	   gridsize[0] = box_l[0] / lblattice.agrid;
-	   gridsize[1] = box_l[1] / lblattice.agrid;
-	   gridsize[2] = box_l[2] / lblattice.agrid;
+	   gridsize[0] = box_l[0] / lbpar.agrid;
+	   gridsize[1] = box_l[1] / lbpar.agrid;
+	   gridsize[2] = box_l[2] / lbpar.agrid;
  	
 	   for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
 	   	for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
 		   	for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++)
 		   	{
 		   		lb_lbnode_get_u(pos, u);
-		   		fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lblattice.agrid, pos[1]*lblattice.agrid, pos[2]*lblattice.agrid, u[0], u[1], u[2]);
+		   		fprintf(fp, "%f %f %f %f %f %f\n", pos[0]*lbpar.agrid, pos[1]*lbpar.agrid, pos[2]*lbpar.agrid, u[0], u[1], u[2]);
 		   	}
 #endif		
     }		
@@ -616,9 +616,9 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 		
 		int gridsize[3];
 
-		gridsize[0] = box_l[0] / lblattice.agrid;
-		gridsize[1] = box_l[1] / lblattice.agrid;
-		gridsize[2] = box_l[2] / lblattice.agrid;
+		gridsize[0] = box_l[0] / lbpar.agrid;
+		gridsize[1] = box_l[1] / lbpar.agrid;
+		gridsize[2] = box_l[2] / lbpar.agrid;
 
 		for (int i=0; i < gridsize[0]; i++) {
 			for (int j=0; j < gridsize[1]; j++) {
@@ -659,9 +659,9 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   int gridsize[3];
   lbpar.resend_halo=1;
   mpi_bcast_lb_params(0);
-  gridsize[0] = box_l[0] / lblattice.agrid;
-  gridsize[1] = box_l[1] / lblattice.agrid;
-  gridsize[2] = box_l[2] / lblattice.agrid;
+  gridsize[0] = box_l[0] / lbpar.agrid;
+  gridsize[1] = box_l[1] / lbpar.agrid;
+  gridsize[2] = box_l[2] / lbpar.agrid;
 
   for (int i=0; i < gridsize[0]; i++) {
     for (int j=0; j < gridsize[1]; j++) {
@@ -1567,8 +1567,12 @@ void lb_init() {
 
   if (lb_sanity_checks()) return;
 
+  double temp[3];
+  for (int i =0; i<3; i++)
+    temp[i]=lbpar.agrid;
+
   /* initialize the local lattice domain */
-  init_lattice(&lblattice,lbpar.agrid,lbpar.tau);  
+  init_lattice(&lblattice, temp, lbpar.tau, 1, 0);  
 
   if (check_runtime_errors()) return;
 
@@ -2675,9 +2679,9 @@ void calc_particle_lattice_ia() {
       for (i=0;i<np;i++) {
 	/* for ghost particles we have to check if they lie
 	 * in the range of the local lattice nodes */
- 	if (p[i].r.p[0] >= my_left[0]-0.5*lblattice.agrid && p[i].r.p[0] < my_right[0]+0.5*lblattice.agrid
-	    && p[i].r.p[1] >= my_left[1]-0.5*lblattice.agrid && p[i].r.p[1] < my_right[1]+0.5*lblattice.agrid
-	    && p[i].r.p[2] >= my_left[2]-0.5*lblattice.agrid && p[i].r.p[2] < my_right[2]+0.5*lblattice.agrid) {
+ 	if (p[i].r.p[0] >= my_left[0]-0.5*lbpar.agrid && p[i].r.p[0] < my_right[0]+0.5*lbpar.agrid
+	    && p[i].r.p[1] >= my_left[1]-0.5*lbpar.agrid && p[i].r.p[1] < my_right[1]+0.5*lbpar.agrid
+	    && p[i].r.p[2] >= my_left[2]-0.5*lbpar.agrid && p[i].r.p[2] < my_right[2]+0.5*lbpar.agrid) {
 
 	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: LB coupling of ghost particle:\n",this_node));
 
