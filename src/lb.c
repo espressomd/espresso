@@ -797,26 +797,26 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
         tmpind[1] = ind[1]+y;
         tmpind[2] = ind[2]+z;
 
-				if (lattice_switch & LATTICE_LB_GPU) {
+	if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-					if (tmpind[0] == lbpar_gpu.dim_x) tmpind[0] =0;
-					if (tmpind[1] == lbpar_gpu.dim_y) tmpind[1] =0;
-					if (tmpind[2] == lbpar_gpu.dim_z) tmpind[2] =0;
+	  if (tmpind[0] == lbpar_gpu.dim_x) tmpind[0] =0;
+	  if (tmpind[1] == lbpar_gpu.dim_y) tmpind[1] =0;
+	  if (tmpind[2] == lbpar_gpu.dim_z) tmpind[2] =0;
 #endif
-				} else {  
+	} else {  
 #ifdef LB
-					if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
-					if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
-					if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
-
+	  if (tmpind[0] == box_l[0]/lbpar.agrid) tmpind[0] =0;
+	  if (tmpind[1] == box_l[1]/lbpar.agrid) tmpind[1] =0;
+	  if (tmpind[2] == box_l[2]/lbpar.agrid) tmpind[2] =0;
+	  
 #endif
-				}
+	}
 
 //printf (" %d %d %d %f %f %f\n", tmpind[0], tmpind[1],tmpind[2],v[0], v[1], v[2]);
-				lb_lbnode_get_u(tmpind, local_v);
+	lb_lbnode_get_u(tmpind, local_v);
 				
 				
-				v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
+	v[0] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[0];
         v[1] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[1];	  
         v[2] += delta[3*x+0]*delta[3*y+1]*delta[3*z+2]*local_v[2];
 

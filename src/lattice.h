@@ -58,6 +58,8 @@ extern int lattice_switch;
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 
+enum { LATTICE_ANISOTROPIC = 1, LATTICE_X_EXT = 2, LATTICE_Y_EXT = 4, LATTICE_Z_EXT = 8 };
+
 /** Data structure describing a lattice.
  *  Contains the lattice layout and pointers to the data fields.
  *  For parallelization purposes, it is assumed that a halo region
@@ -81,9 +83,9 @@ typedef struct _Lattice {
   index_t halo_offset;
 
   /** lattice constant */
-  double agrid ;
+  double agrid[3];
   /** time step of lattice dynamics */
-  double tau ;
+  double tau;
 
   /** pointer to the fields living on the lattice.
    *  For complex lattice data, this can be a struct holding
@@ -102,6 +104,7 @@ typedef struct _Lattice {
   MPI_Datatype datatype;
   struct _Fieldtype *fieldtype;
 
+  char flags;
 } Lattice;
 
 /** Initialize lattice.
@@ -129,9 +132,9 @@ void init_lattice(Lattice *lattice, double agrid, double tau);
 MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
   
   /* determine coordinates in node_grid */
-  grid[0] = (int)floor(ind[0]*lattice->agrid*box_l_i[0]*node_grid[0]);
-  grid[1] = (int)floor(ind[1]*lattice->agrid*box_l_i[1]*node_grid[1]);
-  grid[2] = (int)floor(ind[2]*lattice->agrid*box_l_i[2]*node_grid[2]);
+  grid[0] = (int)floor(ind[0]*lattice->agrid[0]*box_l_i[0]*node_grid[0]);
+  grid[1] = (int)floor(ind[1]*lattice->agrid[1]*box_l_i[1]*node_grid[1]);
+  grid[2] = (int)floor(ind[2]*lattice->agrid[2]*box_l_i[2]*node_grid[2]);
 
   //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,grid[0],grid[1],grid[2]);
 
@@ -156,6 +159,7 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
  * \param  grid    local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
+/* @TODO: Implement! */
 MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
   return 0;
 }
@@ -184,8 +188,8 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */ 
   for (dir=0;dir<3;dir++) {
-
-    rel = (lpos = pos[dir] - my_left[dir])/lattice->agrid + 0.5; // +1 for halo offset
+    lpos = pos[dir] - my_left[dir];
+    rel = lpos/lattice->agrid[dir] + 0.5; // +1 for halo offset
     ind[dir] = (int)floor(rel);
     
     /* surrounding elementary cell is not completely inside this box,
@@ -206,7 +210,6 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
 
     delta[3+dir] = rel - ind[dir]; // delta_x/a
     delta[dir]   = 1.0 - delta[3+dir];   
-
   }
 
   node_index[0] = get_linear_index(ind[0],ind[1],ind[2],lattice->halo_grid);
@@ -217,7 +220,6 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
   node_index[5] = node_index[4] + 1;
   node_index[6] = node_index[4] + lattice->halo_grid[0];
   node_index[7] = node_index[4] + lattice->halo_grid[0] + 1;
-
 }
 
 /** Map a spatial position to the surrounding lattice sites.

@@ -46,27 +46,27 @@ int lattice_switch = LATTICE_OFF ;
  * \param agrid   lattice spacing
  * \param tau     time step for lattice dynamics
  */
-void init_lattice(Lattice *lattice, double agrid, double tau) {
-
+void init_lattice(Lattice *lattice, double *agrid, double tau, char flags) {
+f
   int dir;
 
-  /* determine the number of local lattice nodes */
-  lattice->grid[0] = local_box_l[0]/agrid;
-  lattice->grid[1] = local_box_l[1]/agrid;
-  lattice->grid[2] = local_box_l[2]/agrid;
+ /* determine the number of local lattice nodes */
+  lattice->grid[0] = local_box_l[0]/agrid[0];
+  lattice->grid[1] = local_box_l[1]/agrid[1];
+  lattice->grid[2] = local_box_l[2]/agrid[2];
 
   /* sanity checks */
   for (dir=0;dir<3;dir++) {
     /* check if local_box_l is compatible with lattice spacing */
-    if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid) > ROUND_ERROR_PREC*box_l[dir]) {
+    if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",agrid,dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
+      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid[%d]=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",dir,agrid[dir],dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
       return;
     }
+  /* set the lattice spacing */
+  lattice->agrid[dir] = agrid[dir];
   }
 
-  /* set the lattice spacing */
-  lattice->agrid = agrid ;
   lattice->tau = tau ;
 
   LATTICE_TRACE(fprintf(stderr,"%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) node_neighbors (%d,%d,%d,%d,%d,%d)\n",this_node,local_box_l[0],local_box_l[1],local_box_l[2],lattice->grid[0],lattice->grid[1],lattice->grid[2],node_neighbors[0],node_neighbors[1],node_neighbors[2],node_neighbors[3],node_neighbors[4],node_neighbors[5]));
