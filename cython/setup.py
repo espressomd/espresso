@@ -33,6 +33,7 @@ ext_modules=[
     Extension("code_info", ["code_info.pyx"], libraries=libs, **ext_params),
     Extension("cellsystem", ["cellsystem.pyx"], libraries=libs, **ext_params),
     Extension("analyze", ["analyze.pyx"], libraries=libs, **ext_params),
+    Extension("utils", ["utils.pyx"], libraries=libs, **ext_params),
 ]
 
 setup(

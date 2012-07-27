@@ -15,12 +15,13 @@ import cellsystem
 cimport cellsystem
 import analyze
 cimport analyze
+import utils
+cimport utils
 
 import debye_hueckel
 #import lb
 import cuda_init
 #cimport myconfig
-#import utils
 
 
 import code_info
