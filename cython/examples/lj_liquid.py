@@ -162,19 +162,20 @@ es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 #es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
 print es.inter[0,0].lennardJones
 
-energies = es._espressoHandle.Tcl_Eval('analyze energy')
-print energies
+#energies = es._espressoHandle.Tcl_Eval('analyze energy')
+#print energies
 
 j = 0
 for i in range(0,int_n_times):
   print "run %d at time=[setmd time] " % i
 
-  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
+#  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
   #es.integrate(int_steps)
   
-  energies = es._espressoHandle.Tcl_Eval('analyze energy')
-  print energies
-  obs_file.write('{time %s } %s\n' % (es.glob.time,energies))
+#  energies = es._espressoHandle.Tcl_Eval('analyze energy')
+#  print energies
+#  obs_file.write('{time %s } %s\n' % (es.glob.time,energies))
+
 #   write observables
 #    set energies [analyze energy]
 #    puts $obs_file "{ time [setmd time] } $energies"
