@@ -44,8 +44,6 @@ extern int lattice_switch;
 /** Lattice off */
 #define LATTICE_OFF  0
 
-#ifdef LATTICE
-
 /** Lattice Boltzmann */
 //#define LATTICE_LB   1
 
@@ -86,8 +84,6 @@ typedef struct _Lattice {
 
   /** lattice constant */
   double agrid[3];
-  /** time step of lattice dynamics */
-  double tau;
 
   /** pointer to the actual lattice data.
    *  This can be a contiguous field of arbitrary data. */
@@ -111,9 +107,8 @@ typedef struct _Lattice {
  *
  * \param lattice pointer to the lattice
  * \param agrid   lattice spacing
- * \param tau     time step for lattice dynamics
  */
-void init_lattice(Lattice *lattice, double* agrid, double tau, int halo_size, char flags);
+int init_lattice(Lattice *lattice, double* agrid, int halo_size, char flags, size_t element_size);
 
 
 void lattice_allocate_memory(Lattice *lattice, size_t element_size);
@@ -288,8 +283,18 @@ Interpolation *interpolation_init(Lattice* lattice);
 
 int interpolation_calc_weights_and_indices(Interpolation* self, double* pos);
 
+MDINLINE void lattice_get_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void** data) {
+  (*data) = ((char*)lattice->_data) + get_linear_index(ind[0], ind[1], ind[2], lattice->halo_grid)*lattice->element_size;
+}
+
+MDINLINE void lattice_set_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void* data) {
+  memcpy(((char*)lattice->_data) + get_linear_index(ind[0], ind[1], ind[2],  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
+}
+
+MDINLINE void lattice_set_data_for_local_grid_index(Lattice* lattice, index_t* ind, void* data) {
+  memcpy(((char*)lattice->_data) + get_linear_index(ind[0]+lattice->halo_size, ind[1]+lattice->halo_size, ind[2]+lattice->halo_size,  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
+}
 
 
-#endif /* LATTICE */
 
 #endif /* LATTICE_H */

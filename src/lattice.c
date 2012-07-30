@@ -35,8 +35,6 @@
  */
 int lattice_switch = LATTICE_OFF ;
 
-#ifdef LATTICE
-
 /** Initialize lattice.
  *
  * This function initializes the variables describing the lattice
@@ -46,7 +44,8 @@ int lattice_switch = LATTICE_OFF ;
  * \param agrid   lattice spacing
  * \param tau     time step for lattice dynamics
  */
-void init_lattice(Lattice *lattice, double *agrid, double tau, int halo_size, char flags) {
+void _lattice_allocate_memory(Lattice *lattice); 
+int init_lattice(Lattice *lattice, double *agrid, int halo_size, char flags, size_t element_size) {
   int dir;
 
  /* determine the number of local lattice nodes */
@@ -63,13 +62,13 @@ void init_lattice(Lattice *lattice, double *agrid, double tau, int halo_size, ch
     if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid[%d]=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",dir,agrid[dir],dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid[dir]);
-      return;
+      return ES_ERROR;
     }
   /* set the lattice spacing */
   lattice->agrid[dir] = agrid[dir];
   }
 
-  lattice->tau = tau ;
+  lattice->element_size = element_size;
 
   LATTICE_TRACE(fprintf(stderr,"%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) node_neighbors (%d,%d,%d,%d,%d,%d)\n",this_node,local_box_l[0],local_box_l[1],local_box_l[2],lattice->grid[0],lattice->grid[1],lattice->grid[2],node_neighbors[0],node_neighbors[1],node_neighbors[2],node_neighbors[3],node_neighbors[4],node_neighbors[5]));
 
@@ -83,26 +82,18 @@ void init_lattice(Lattice *lattice, double *agrid, double tau, int halo_size, ch
   lattice->halo_grid_volume = lattice->halo_grid[0]*lattice->halo_grid[1]*lattice->halo_grid[2] ;
   lattice->halo_grid_surface = lattice->halo_grid_volume - lattice->grid_volume ;
   lattice->halo_offset = get_linear_index(halo_size,halo_size,halo_size,lattice->halo_grid) ;
+  
+  _lattice_allocate_memory(lattice);
 
 }
 
-void lattice_allocate_memory(Lattice *lattice, size_t element_size) {
+void _lattice_allocate_memory(Lattice *lattice) {
 
-  lattice->_data = malloc(element_size*lattice->halo_grid_volume);
+  lattice->_data = malloc(lattice->element_size*lattice->halo_grid_volume);
+  memset(lattice->_data, 0, lattice->element_size*lattice->halo_grid_volume);
 
 }
 
-void* lattice_get_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind) {
-  return lattice->_data + get_linear_index(ind[0], ind[1], ind[2], lattice->halo_grid)*lattice->element_size;
-}
-
-void lattice_set_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void* data) {
-  memcpy(lattice->_data + get_linear_index(ind[0], ind[1], ind[2],  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
-}
-
-void lattice_set_data_for_local_grid_index(Lattice* lattice, index_t* ind, void* data) {
-  memcpy(lattice->_data + get_linear_index(ind[0]+lattice->halo_size, ind[1]+lattice->halo_size, ind[2]+lattice->halo_size,  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
-}
 
 Interpolation *interpolation_init(Lattice* lattice) {
   Interpolation *self = malloc(sizeof(Interpolation));
@@ -119,4 +110,3 @@ Interpolation *interpolation_init(Lattice* lattice) {
   self->weights = malloc(self->max_number_indices*sizeof(double));
 }
 
-#endif /* LATTICE */

@@ -13,6 +13,7 @@ typedef struct {
 extern ExternalPotential* external_potentials;
 extern int n_external_potentials;
 
+int generate_external_potential(ExternalPotential** externalPotential);
 
 #endif
 
