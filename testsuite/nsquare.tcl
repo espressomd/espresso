@@ -22,10 +22,6 @@ source "tests_common.tcl"
 require_feature "ADRESS" off
 require_feature "LENNARD_JONES"
 
-if {[setmd n_nodes] > 1} {
-    require_feature "MOL_CUT" off
-}
-
 puts "----------------------------------------"
 puts "- Testcase nsquare.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "----------------------------------------"

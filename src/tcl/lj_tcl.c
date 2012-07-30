@@ -140,6 +140,7 @@ int tclcommand_inter_parse_lj(Tcl_Interp * interp,
       compute_auto_shift = 0;
       change++;
     } else if (ARG_IS_S(4, "auto")) {
+      Tcl_ResetResult(interp);
       compute_auto_shift = 1;
       /* if shift is "auto", autocompute the shift */
       change++;

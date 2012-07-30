@@ -200,7 +200,7 @@ proc dielectric_sphere { args } {
     }
     if { [ lindex $args $argno ] == "type" } {
       incr argno
-      set type [ expr 1.* [ lindex $args $argno ] ]
+      set type [ expr 1 * [ lindex $args $argno ] ]
       incr argno
       continue
     }
@@ -222,7 +222,7 @@ proc dielectric_sphere { args } {
        set y [ expr  $radius*sin($phi)*sin($theta) ]
        set z [ expr  $radius*cos($theta) ]
        set phi [ expr $phi+$incr_phi ]
-       part [ expr $n_induced_charges ] pos [expr $cx+$x] [expr $cy+$y] [expr $cy+$z] q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] type $type fix 1 1 1
+       part [ expr $n_induced_charges ] pos [expr $cx+$x] [expr $cy+$y] [expr $cz+$z] q [ expr $sigma*$res*$res +0.0*([ t_random ]-0.5) ] type $type fix 1 1 1
        incr n_induced_charges
        incr ic_counter
        lappend icc_normals [ list  [ expr $direction*$x/$radius ] [ expr $direction* $y/$radius ] [ expr $direction* $z/$radius ] ]

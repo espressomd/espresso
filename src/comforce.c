@@ -52,7 +52,7 @@ int comforce_set_params(int part_type_a, int part_type_b,
 
 void calc_comforce()
 {
-  int t0,t1,k, j;
+  int t0,t1, j;
   IA_parameters *ia_params;
   double com0[3], com1[3], MofImatrix[9], diff[3];
   double vect0[3], vect1[3], eva[3], eve[3], fvect[3];
@@ -70,10 +70,10 @@ void calc_comforce()
 		      diff[i]=com1[i]-com0[i];
 	      }
         momentofinertiamatrix(t0, MofImatrix);
-        k=calc_eigenvalues_3x3(MofImatrix, eva);
+        calc_eigenvalues_3x3(MofImatrix, eva);
         /* perpendicular force */
         if(ia_params->COMFORCE_dir == 1) {
-	        k=calc_eigenvector_3x3(MofImatrix,eva[0],eve);
+	        calc_eigenvector_3x3(MofImatrix,eva[0],eve);
           /*By doing two vector products find radial axis along the target system */
 	        vector_product(eve,diff,vect0);
 	        vector_product(vect0,eve,vect1);
@@ -82,7 +82,7 @@ void calc_comforce()
 	        unit_vector(vect1,fvect);
         } else {
         /* parallel force */
-	        k=calc_eigenvector_3x3(MofImatrix,eva[0],fvect);
+	        calc_eigenvector_3x3(MofImatrix,eva[0],fvect);
         }
         
         /* orient it along the com vector */

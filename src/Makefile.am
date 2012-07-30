@@ -39,7 +39,6 @@ libEspresso_a_SOURCES = \
 	domain_decomposition.c domain_decomposition.h \
 	energy.c energy.h \
 	errorhandling.c	errorhandling.h \
-	debye_hueckel.h \
 	fft.c fft.h \
 	fft-common.c fft-common.h \
 	fft-dipolar.c fft-dipolar.h \
@@ -99,6 +98,7 @@ libEspresso_a_SOURCES += \
 	buckingham.c buckingham.h \
 	dpd.c dpd.h \
 	gb.c gb.h \
+	hat.c hat.h \
 	hertzian.c hertzian.h \
 	lj.c lj.h \
 	ljangle.c ljangle.h \
@@ -191,6 +191,7 @@ libEspresso_a_SOURCES += \
 	tcl/buckingham_tcl.c tcl/buckingham_tcl.h \
 	tcl/dpd_tcl.c tcl/dpd_tcl.h \
 	tcl/gb_tcl.c tcl/gb_tcl.h \
+	tcl/hat_tcl.c tcl/hat_tcl.h \
 	tcl/hertzian_tcl.c tcl/hertzian_tcl.h \
 	tcl/lj_tcl.c tcl/lj_tcl.h \
 	tcl/ljangle_tcl.c tcl/ljangle_tcl.h \
@@ -298,7 +299,7 @@ myconfig-final.h: FORCE
 # Handling of the features
 #################################################################
 # config-features.c must occur at the beginning of the SOURCES so that it is compiled first
-libEspresso_a_SOURCES += config-features.c
+#libEspresso_a_SOURCES += config-features.c
 EXTRA_DIST = \
 	features.def \
 	config-features.h config-features.c \

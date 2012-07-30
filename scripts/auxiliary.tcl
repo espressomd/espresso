@@ -467,25 +467,41 @@ proc stopParticles { } {
 # center of mass
 # --------------
 #
-# Calculate the center of mass motion of the system stored in Espresso
+# Calculate the center of mass of the system stored in Espresso
 #
 #############################################################
 proc system_com { } {
-   set npart [setmd n_part]
+  set npart [setmd n_part]
     
-    # calculate center of mass motion
-    set com { 0 0 0 }
-    set part_cnt 0
-    set i 0
-    while { $part_cnt < $npart } {
-	if { [part $i] != "na" } {
-	    set pos [part $i print p] 
-	    set com [vecadd $com $pos]
-	    incr part_cnt
-	}
-	incr i
+  #calculate center of mass
+  set com {0 0 0}
+  set part_cnt 0
+  
+  if {[has_feature MASS]} {
+    set net_mass 0
+    
+    for {set i 0} {$part_cnt < $npart} {incr i} {
+      if {[part $i] != "na"} {
+        set pos [part $i print p]
+        set mass [part $i print mass]
+        set com [vecadd $com [vecscale $mass $pos]]
+        set net_mass [expr $net_mass + $mass]
+        incr part_cnt
+      }
     }
+    
+    return [vecscale [expr 1.0/$net_mass] $com]
+  } else {
+    for {set i 0} {$part_cnt < $npart} {incr i} {
+      if {[part $i] != "na"} {
+        set pos [part $i print p]
+        set com [vecadd $com $pos]
+        incr part_cnt
+      }
+    }
+    
     return [vecscale [expr 1.0/$npart] $com]
+  }
 }
 
 
@@ -493,25 +509,41 @@ proc system_com { } {
 # center of mass motion
 # ---------------------
 #
-# Calculate the center of mass motion of the system stored in Espresso
+# Calculate the center of mass velocity of the system stored in Espresso
 #
 #############################################################
-proc system_com_vel { } {
-   set npart [setmd n_part]
+proc system_com_vel {} {
+  set npart [setmd n_part]
     
-    # calculate center of mass motion
-    set com_vel { 0 0 0 }
-    set part_cnt 0
-    set i 0
-    while { $part_cnt < $npart } {
-	if { [part $i] != "na" } {
-	    set part_vel [part $i print v] 
-	    set com_vel  [vecadd $com_vel $part_vel]
-	    incr part_cnt
-	}
-	incr i
+  # calculate center of mass motion
+  set com_vel {0 0 0}
+  set part_cnt 0
+  
+  if {[has_feature MASS]} {
+    set net_mass 0
+    
+    for {set i 0} {$part_cnt < $npart } {incr i} {
+      if { [part $i] != "na" } {
+        set part_vel [part $i print v]
+        set part_mass [part $i print mass]
+        set com_vel [vecadd $com_vel [vecscale $part_mass $part_vel]]
+        set net_mass [expr $net_mass + $part_mass]
+        incr part_cnt
+      }
     }
+      
+    return [vecscale [expr 1.0/$net_mass] $com_vel]
+  } else {
+    for {set i 0} {$part_cnt < $npart } {incr i} {
+      if { [part $i] != "na" } {
+        set part_vel [part $i print v] 
+        set com_vel [vecadd $com_vel $part_vel]
+        incr part_cnt
+      }
+    }
+    
     return [vecscale [expr 1.0/$npart] $com_vel]
+  }
 }
 
 #
@@ -521,24 +553,25 @@ proc system_com_vel { } {
 # Perform a Galilei Transformation on all Particles stored 
 # in Espresso such that the center of mass motion of the 
 # system is zero. Returns old center of mass motion.
-# Assumes particles of equal mass!
 #
 #############################################################
 
-proc galileiTransformParticles { } {
-    set com_vel [system_com_vel]
+proc galileiTransformParticles {} {
+  set com_vel [system_com_vel]
     
-    # subtract center of mass motion from particle velocities
-    set npart [setmd n_part]; set part_cnt 0; set i 0
-    while { $part_cnt < $npart } {
-	if { [part $i] != "na" } {
-	    set part_vel [vecsub [part $i print v] $com_vel]
-	    part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
-	    incr part_cnt
-	}
-	incr i
+  #subtract center of mass motion from particle velocities
+  set npart [setmd n_part];
+  set part_cnt 0;
+  
+  for {set i 0} { $part_cnt < $npart } {incr i} {
+    if {[part $i] != "na"} {
+      set part_vel [vecsub [part $i print v] $com_vel]
+      part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
+      incr part_cnt
     }
-    return $com_vel
+  }
+  
+  return $com_vel
 }
 
 #
