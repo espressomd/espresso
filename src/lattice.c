@@ -54,6 +54,9 @@ void init_lattice(Lattice *lattice, double *agrid, double tau, int halo_size, ch
   lattice->grid[1] = local_box_l[1]/agrid[1];
   lattice->grid[2] = local_box_l[2]/agrid[2];
 
+  printf("initializing lattice with %f %f %f\n", agrid[0], agrid[1], agrid[2]);
+  printf("grid is %d %d %d\n", lattice->grid[0],  lattice->grid[1],  lattice->grid[2]); 
+
   /* sanity checks */
   for (dir=0;dir<3;dir++) {
     /* check if local_box_l is compatible with lattice spacing */
@@ -83,7 +86,7 @@ void init_lattice(Lattice *lattice, double *agrid, double tau, int halo_size, ch
 
 }
 
-void allocate_lattice(Lattice *lattice, size_t element_size) {
+void lattice_allocate_memory(Lattice *lattice, size_t element_size) {
 
   lattice->_data = malloc(element_size*lattice->halo_grid_volume);
 
@@ -95,6 +98,10 @@ void* lattice_get_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind)
 
 void lattice_set_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void* data) {
   memcpy(lattice->_data + get_linear_index(ind[0], ind[1], ind[2],  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
+}
+
+void lattice_set_data_for_local_grid_index(Lattice* lattice, index_t* ind, void* data) {
+  memcpy(lattice->_data + get_linear_index(ind[0]+lattice->halo_size, ind[1]+lattice->halo_size, ind[2]+lattice->halo_size,  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
 }
 
 Interpolation *interpolation_init(Lattice* lattice) {

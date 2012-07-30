@@ -40,6 +40,7 @@ libEspresso_a_SOURCES = \
 	energy.c energy.h \
 	errorhandling.c	errorhandling.h \
 	debye_hueckel.h \
+        external_potential.h external_potential.c \
 	fft.c fft.h \
 	fft-common.c fft-common.h \
 	fft-dipolar.c fft-dipolar.h \
@@ -155,6 +156,7 @@ libEspresso_a_SOURCES += \
 	tcl/constraint_tcl.c tcl/constraint_tcl.h \
 	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
 	tcl/energy_tcl.c \
+	tcl/external_potential_tcl.c tcl/external_potential_tcl.h \
 	tcl/global_tcl.c tcl/global_tcl.h \
 	tcl/grid_tcl.c tcl/grid_tcl.h \
 	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \

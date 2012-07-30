@@ -115,6 +115,9 @@ typedef struct _Lattice {
  */
 void init_lattice(Lattice *lattice, double* agrid, double tau, int halo_size, char flags);
 
+
+void lattice_allocate_memory(Lattice *lattice, size_t element_size);
+
 /** Map a global lattice site to the node grid.
  *
  *  This function determines the processor responsible for
