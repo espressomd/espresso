@@ -20,7 +20,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl Determine the version of ESPResSo at autoconf time
 m4_define([ESPRESSO_VERSION],[esyscmd([/bin/sh config/genversion.sh -rd])])
 
-# Initialise autoconf
+# Initialize autoconf
 AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
@@ -32,13 +32,12 @@ AC_PREFIX_DEFAULT($HOME/Espresso)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-# Initialise automake
-AM_INIT_AUTOMAKE([1.10 gnu subdir-objects dist-xz])
+# Initialize automake
+AM_INIT_AUTOMAKE([1.11 gnu subdir-objects dist-xz])
 AM_MAINTAINER_MODE
 
 # silent rules, backwards compatiblity
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
-AM_SILENT_RULES
 
 cat <<EOF
 ****************************************************************
