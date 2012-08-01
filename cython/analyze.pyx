@@ -6,8 +6,6 @@ import utils
 
 def mindist(p1 = 'default', p2 = 'default'):
 
-#	cdef IntList* set1 = create_IntList_from_python_object(p1)
-#	cdef IntList* set2 = create_IntList_from_python_object(p2)
 	cdef IntList* set1
 	cdef IntList* set2
 
@@ -44,5 +42,18 @@ def mindist(p1 = 'default', p2 = 'default'):
 
 	return result
 
-def energy():
+def energy(etype = 'total'):
+
+	if c_analyze.total_energy.init_status == 0:
+		c_analyze.init_energies(&c_analyze.total_energy)
+	c_analyze.master_energy_calc()
 	value = 0.0
+
+	if etype == 'total':
+		for i in range(c_analyze.total_energy.data.n):
+			value += c_analyze.total_energy.data.e[i]
+		return "Total Energy: %f" % value
+
+	if etype == 'kinetic':
+		value = c_analyze.total_energy.data.e[0]
+		return "Kinetic Energy: %f" % value

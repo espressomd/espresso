@@ -7,9 +7,15 @@ from utils cimport *
 cdef extern from "../src/statistics.h":
 	cdef double mindist(IntList *set1, IntList *set2)
 	
-cdef extern from "statistics.h":
+cdef extern from "../src/statistics.h":
 	ctypedef struct Observable_stat:
-		pass
-cdef extern from "energy.h":
-	extern Observable_stat energy
-	extern Observable_stat total_energy
+		int init_status
+		DoubleList data
+
+cdef extern from "../src/energy.h":
+	cdef Observable_stat energy
+	cdef Observable_stat total_energy
+
+cdef extern from "../src/energy.h":
+	cdef void master_energy_calc()
+	cdef void init_energies(Observable_stat *stat)

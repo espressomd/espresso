@@ -81,7 +81,7 @@ print "Simulate %d particles in a cubic simulation box " % n_part
 print "%f at density %f\n" % (box_l,density)
 #print "Interactions:\n"	# Nicht angepasst
 #act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
-act_min_dist = es.analyze.mindist(0,0)
+act_min_dist = es.analyze.mindist()
 print "Start with minimal distance %f" % act_min_dist
 
 es.glob.max_num_cells = 2744
@@ -116,7 +116,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
 
   # Warmup criterion
 #  act_min_dist = float(es._espressoHandle.Tcl_Eval('analyze mindist'))
-  act_min_dist = es.analyze.mindist(0,0) 
+  act_min_dist = es.analyze.mindist() 
   print "\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" % (i,es.glob.time,lj_cap,act_min_dist),
 
   i = i + 1
@@ -163,18 +163,22 @@ es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 print es.inter[0,0].lennardJones
 
 #energies = es._espressoHandle.Tcl_Eval('analyze energy')
-#print energies
+energies = es.analyze.energy()
+print energies
 
 j = 0
 for i in range(0,int_n_times):
-  print "run %d at time=[setmd time] " % i
+  print "run %d at time=%f " % (i,es.glob.time)
 
 #  es._espressoHandle.Tcl_Eval('integrate %d' % int_steps)
-  #es.integrate(int_steps)
+  es.integrate(int_steps)
   
 #  energies = es._espressoHandle.Tcl_Eval('analyze energy')
-#  print energies
-#  obs_file.write('{time %s } %s\n' % (es.glob.time,energies))
+  energies = es.analyze.energy('total')
+  print energies
+  energies = es.analyze.energy('kinetic')
+  print energies
+  obs_file.write('{time %s } %s\n' % (es.glob.time,energies))
 
 #   write observables
 #    set energies [analyze energy]
