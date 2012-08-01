@@ -263,7 +263,7 @@ endif
 #################################################################
 # Handling of myconfig.h
 #################################################################
-libEspresso_a_SOURCES += myconfig-final.h
+nodist_libEspresso_a_SOURCES = myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 
