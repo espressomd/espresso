@@ -163,7 +163,7 @@ es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 print es.inter[0,0].lennardJones
 
 #energies = es._espressoHandle.Tcl_Eval('analyze energy')
-energies = es.analyze.energy()
+energies = es.analyze.energy('total')
 print energies
 
 j = 0
