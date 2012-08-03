@@ -6,6 +6,8 @@ import utils
 import code_info
 import global_variables
 
+# Calculate the minimum distance between particles
+# of specific type
 def mindist(p1 = 'default', p2 = 'default'):
 
   cdef IntList* set1
@@ -44,6 +46,7 @@ def mindist(p1 = 'default', p2 = 'default'):
 
   return result
 
+
 def energy(etype = 'all', id1 = 'default', id2 = 'default'):
 
   if global_variables.GlobalsHandle().n_part == 0:
@@ -58,19 +61,22 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
   if etype == 'all':
     _result = energy('total') + ' ' + energy('kinetic')
     _result += energy('nonbonded',0,0)
-    # todo: check for existing particle and bond types and add those to _result
+    # todo: check for existing particle and bond types
+    # and add those to _result
     return _result
 
   if etype == 'total':
     if id1 != 'default' or id2 != 'default':
-      print 'warning: energy(\'total\') does not need further arguments, ignored.'
+      print ('warning: energy(\'total\') does not need '
+             'further arguments, ignored.')
     for i in range(c_analyze.total_energy.data.n):
       _value += c_analyze.total_energy.data.e[i]
     return '{ energy: %f }' % _value
 
   if etype == 'kinetic':
     if id1 != 'default' or id2 != 'default':
-      print 'warning: energy(\'kinetic\') does not need further arguments, ignored.'
+      print ('warning: energy(\'kinetic\') does not need '
+             'further arguments, ignored.')
     _value = c_analyze.total_energy.data.e[0]
     return '{ kinetic: %f }' % _value
 
@@ -96,8 +102,10 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
 # bonded interactions
   if etype == 'bonded':
     if not isinstance(id1, int):
-      print  'error: analyze.energy(\'bonded\',<bondid>): <bondid> must be integer'
-      raise TypeError('analyze.energy(\'bonded\',<bondid>): <bondid> must be integer')
+      print ('error: analyze.energy(\'bonded\',<bondid>): '
+             '<bondid> must be integer')
+      raise TypeError('analyze.energy(\'bonded\',<bondid>): '
+                      '<bondid> must be integer')
     else:
     # todo: check if bond type id1 exist
       _value = c_analyze.obsstat_bonded(&c_analyze.total_energy, id1)[0]
@@ -106,11 +114,15 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
 # nonbonded interactions
   if etype == 'nonbonded':
     if not isinstance(id1, int):
-      print  'error: analyze.energy(\'bonded\',<bondid>): <bondid> must be integer'
-      raise TypeError('analyze.energy(\'bonded\',<bondid>): <bondid> must be integer')
+      print  ('error: analyze.energy(\'bonded\',<bondid>): '
+              '<bondid> must be integer')
+      raise TypeError('analyze.energy(\'bonded\',<bondid>): '
+                      '<bondid> must be integer')
     if not isinstance(id2, int):
-      print  'error: analyze.energy(\'bonded\',<bondid>): <bondid> must be integer'
-      raise TypeError('analyze.energy(\'bonded\',<bondid>): <bondid> must be integer')
+      print  ('error: analyze.energy(\'bonded\',<bondid>): '
+              '<bondid> must be integer')
+      raise TypeError('analyze.energy(\'bonded\',<bondid>): '
+                      '<bondid> must be integer')
     else:
     # todo: check if particle types id1 and id2 exist
       _value = c_analyze.obsstat_nonbonded(&c_analyze.total_energy, id1, id2)[0]

@@ -9,23 +9,26 @@ cdef extern from "../src/particle_data.h":
   ctypedef struct IntList:
     pass
   ctypedef struct ParticleProperties:
+    int type
     pass
   ctypedef struct ParticlePosition:
     double p[3]
   ctypedef struct ParticleLocal:
     pass
   ctypedef struct ParticleMomentum:
+    double v[3]
     pass
   ctypedef struct ParticleForce:
+    double f[3]
     pass
   ctypedef struct ParticleLocal:
     pass
   ctypedef struct Particle:
-#    ParticleProperties p
+    ParticleProperties p
     ParticlePosition r
-#    ParticleMomentum m
-#    ParticleForce f
-#    ParticleLocal l
+    ParticleMomentum m
+    ParticleForce f
+    ParticleLocal l
 
 #    if cython.cmacro(cython.defined(LB)):
 #      ParticleLatticeCoupling lc
@@ -33,6 +36,9 @@ cdef extern from "../src/particle_data.h":
 #    if cython.cmacro(cython.defined(EXCLUSIONS)):
 #    IntList el
   int get_particle_data(int part, Particle *data)
+  int set_particle_type(int part, int type)
+  int set_particle_v(int part, double v[3])
+  int set_particle_f(int part, double F[3])
 
 
 cdef class ParticleHandle:
@@ -40,5 +46,4 @@ cdef class ParticleHandle:
   cdef bint valid
   cdef Particle particleData
   cdef int update_particle_data(self)
-  
 
