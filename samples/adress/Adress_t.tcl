@@ -39,7 +39,7 @@ source tetrahedral.tcl
 set n_mol 2520
 # System identification: 
 set name  "mono"
-set ident "_adress_$n_mon"
+set ident "_adress_$n_mol"
 set sfx "8d"
 
 # vmd options
@@ -66,7 +66,7 @@ adress set topo $topo_kind width [expr $ex_width*0.5] $hyb_width center x $ex_ce
 #thermodynamic force
 puts "Setting up thermodynamic forces"
 set s_pref 0.0
-#thermodynamic_force 1 "thermo_force.tab" $s_pref
+thermodynamic_force 1 "thermo_force.tab" $s_pref
 puts "Done"
 
 #############################################################
