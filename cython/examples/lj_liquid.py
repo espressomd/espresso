@@ -58,7 +58,7 @@ int_n_times = 5
 # Interaction setup
 #############################################################
 
-es.glob.box_l=[box_l,box_l,box_l]
+es.glob.box_l = [box_l,box_l,box_l]
 
 es.inter[0,0].lennardJones = \
 	{"eps": lj_eps, "sigma": lj_sig, \
@@ -150,20 +150,22 @@ print "verlet_reuse   %s" % es.glob.verlet_reuse
 
 #polyBlockWrite "$name$ident.set" {box_l time_step skin} "" 
 set_file = open("pylj_liquid.set", "w")
-set_file.write("box_li %s\ntime_step %s\nskin %s\n" % (box_l, es.glob.time_step, es.glob.skin))
+set_file.write("box_l %s\ntime_step %s\nskin %s\n" % (box_l, es.glob.time_step, es.glob.skin))
 
 #############################################################
 #      Integration                                          #
 #############################################################
 print "\nStart integration: run %d times %d steps" % (int_n_times, int_steps)
 
+# remove force capping
 lj_cap = 0 
 es.inter[0,0].lennardJones = {"ljcap": lj_cap}
 #es._espressoHandle.Tcl_Eval('inter ljforcecap %d' % lj_cap)
 print es.inter[0,0].lennardJones
 
+# print initial energies
 #energies = es._espressoHandle.Tcl_Eval('analyze energy')
-energies = es.analyze.energy('total')
+energies = es.analyze.energy()
 print energies
 
 j = 0
@@ -174,11 +176,9 @@ for i in range(0,int_n_times):
   es.integrate(int_steps)
   
 #  energies = es._espressoHandle.Tcl_Eval('analyze energy')
-  energies = es.analyze.energy('total')
+  energies = es.analyze.energy()
   print energies
-  energies = es.analyze.energy('kinetic')
-  print energies
-  obs_file.write('{time %s } %s\n' % (es.glob.time,energies))
+  obs_file.write('{ time %s } %s\n' % (es.glob.time,energies))
 
 #   write observables
 #    set energies [analyze energy]
@@ -194,15 +194,17 @@ for i in range(0,int_n_times):
 
 
 # write end configuration
-#polyBlockWrite "$name$ident.end" {time box_l} {id pos type}
+end_file = open("pylj_liquid.end", "w")
+end_file.write("{ time %f } \n { box_l %f }\n" % (es.glob.time, box_l) )
+end_file.write("{ particles {id pos type} }")
+for i in range(n_part):
+	end_file.write("%s\n" % es.part[i].pos)
+	# id & type not working yet
 
-#for i in range(n_part):
-#  print es.part[i].pos
-
-#close $obs_file
 obs_file.close()
+set_file.close()
+end_file.close()
 es._espressoHandle.die()
 
 # terminate program
 print "\n\nFinished"
-
