@@ -36,6 +36,12 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.10 gnu subdir-objects])
 AM_MAINTAINER_MODE
 
+# Are we in an unpacked dist or in the git repo?
+AC_MSG_CHECKING([whether we are using development sources])
+AS_IF([test -d $srcdir/.git], [devel_src=yes], [devel_src=no])
+AM_CONDITIONAL(DEVEL_SRC, [test ."$devel_src" = .yes])
+AC_MSG_RESULT($devel_src)
+
 cat <<EOF
 ****************************************************************
 *      Checking compiler characteristics and MPI support       *
@@ -538,6 +544,7 @@ cat <<EOF
 ****************************************************************
 platform detected	= $target
 package version		= $PACKAGE_VERSION
+development sources     = $devel_src
 
 Compiler
 --------

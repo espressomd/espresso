@@ -28,16 +28,24 @@ EXTRA_DIST = bootstrap.sh samples packages $(extra)
 all-local: Espresso myconfig-sample.h
 CLEANFILES = Espesso myconfig-sample.h 
 
+if !DEVEL_SRC
+Espresso: FORCE
+	test -e Espresso || $(LN_S) src/Espresso .
+else
 Espresso: version.txt
 	test -e Espresso || $(LN_S) src/Espresso .
+endif
 
 myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
 	cat config/myconfig-sample-header.h > myconfig-sample.h
 	cat config/myconfig-sample-body.h >> myconfig-sample.h
 
+
 # Handle version
-MOSTLYCLEANFILES = version.txt
 EXTRA_DIST += version.txt
+
+if DEVEL_SRC
+MOSTLYCLEANFILES = version.txt
 version.txt: FORCE
 	cd $(top_srcdir); sh config/genversion.sh -rd > $(abs_top_builddir)/version.txt
 
@@ -52,14 +60,17 @@ dist-hook:
 		echo "***************************************************************************"; \
 		exit 1; \
 	fi;
+endif
 
 #################################################################
 # Documentation
 #################################################################
 .PHONY: FORCE doc ug dg tutorials doxygen 
-ug dg tutorials: FORCE
-	cd doc; $(MAKE) --print-directory $@
+
 doc doxygen: FORCE
 	cd src; $(MAKE) --print-directory $@
 	cd doc; $(MAKE) --print-directory $@
+ug dg tutorials: FORCE
+	cd doc; $(MAKE) --print-directory $@
+
 FORCE:

@@ -32,7 +32,11 @@ doc: dg
 dg: dg.pdf
 dg.pdf: $(dg_FILES)
 if HAVE_LATEX
-	sh ../latexit.sh $(srcdir) dg
+	if test -e dg.tex; then \
+		sh ../latexit.sh $(srcdir) dg; \
+	else \
+		echo "No Developer's Guide in distribution package."; \
+	fi
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the Developer's Guide without pdflatex, makeindex and bibtex."

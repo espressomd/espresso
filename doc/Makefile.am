@@ -20,13 +20,13 @@ SUBDIRS = logo doxygen dg ug tutorials
 
 .PHONY: FORCE doc ug dg tutorials doxygen
 doc: ug dg tutorials doxygen
-dg: FORCE
+dg: latexit.sh FORCE
 	cd dg; $(MAKE) --print-directory $@
-doxygen: FORCE
-	cd doxygen; $(MAKE) --print-directory $@
 ug: latexit.sh FORCE
 	cd ug; $(MAKE) --print-directory $@
 tutorials: latexit.sh FORCE
 	cd tutorials; $(MAKE) --print-directory $@
-FORCE:
+doxygen: FORCE
+	cd doxygen; $(MAKE) --print-directory $@
 
+FORCE:
