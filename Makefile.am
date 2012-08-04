@@ -65,12 +65,20 @@ endif
 #################################################################
 # Documentation
 #################################################################
+if DEVEL_SRC
+
 .PHONY: FORCE doc ug dg tutorials doxygen 
+ug dg tutorials: FORCE
+	cd doc; $(MAKE) --print-directory $@
+
+else
+
+.PHONY: FORCE doc doxygen 
+
+endif
 
 doc doxygen: FORCE
 	cd src; $(MAKE) --print-directory $@
-	cd doc; $(MAKE) --print-directory $@
-ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
 
 FORCE:

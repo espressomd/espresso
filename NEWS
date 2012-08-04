@@ -2,8 +2,19 @@
 = ESPRESSO NEWS =
 =================
 
-ESPResSo 3.1
-============
+ESPResSo 3.1.1
+==============
+
+* Fixed bugs #36431.
+
+* Added new logo to ESPResSo.
+
+* The documentation sources are now left out of the distribution
+  package, only the PDF files are included. This fixes problems when
+  calling "make doc" in a distribution package.
+
+ESPResSo 3.1.0
+==============
 
 New user-visible features
 -------------------------
