@@ -20,19 +20,17 @@
 #
 import sys, featuredefs, time, string, fileinput
 
-if len(sys.argv) != 3:
-    print >> sys.stderr, "Usage: %s DEFFILE HFILE" % sys.argv[0]
+if len(sys.argv) != 2:
+    print >> sys.stderr, "Usage: %s DEFFILE" % sys.argv[0]
     exit(2)
 
-deffilename, hfilename = sys.argv[1:3]
+deffilename = sys.argv[1]
 
-print "Reading definitions from " + deffilename + "..."
+#print "Reading definitions from " + deffilename + "..."
 defs = featuredefs.defs(deffilename)
-print "Done."
+#print "Done."
 
-print "Writing " + hfilename + "..."
-hfile = file(hfilename, 'w');
-
+#print "Writing " + hfilename + "..."
 featuresdone = set()
 
 for line in fileinput.input(deffilename):
@@ -40,19 +38,17 @@ for line in fileinput.input(deffilename):
 
     # Handle empty and comment lines
     if len(line) == 0:
-        hfile.write('\n')
+        print 
         continue
     elif line.startswith('#'):
         continue
     elif line.startswith('//') or line.startswith('/*'):
-        hfile.write(line + '\n')
+        print line
         continue
 
     # Tokenify line
     feature = line.split(None, 1)[0]
 
     if feature in defs.features and feature not in featuresdone:
-        hfile.write('//#define %s\n' % feature)
+        print '//#define %s' % feature
         featuresdone.add(feature)
-
-hfile.close()

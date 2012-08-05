@@ -25,8 +25,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
-all-local: Espresso myconfig-sample.h
-CLEANFILES = Espesso myconfig-sample.h 
+all-local: Espresso
+CLEANFILES = Espresso 
 
 if !DEVEL_SRC
 Espresso: FORCE
@@ -36,10 +36,11 @@ Espresso: version.txt
 	test -e Espresso || $(LN_S) src/Espresso .
 endif
 
-myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
-	cat config/myconfig-sample-header.h > myconfig-sample.h
-	cat config/myconfig-sample-body.h >> myconfig-sample.h
-
+# Sample myconfig generation
+myconfig-sample.h: 
+	./config.status myconfig-sample.h
+CLEANFILES = myconfig-sample.h
+# config.status deps in configure.ac
 
 # Handle version
 EXTRA_DIST += version.txt

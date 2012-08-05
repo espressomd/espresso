@@ -7,6 +7,8 @@ ESPResSo 3.1.1
 
 * Fixed bugs #36431.
 
+* Fixed generation of myconfig-sample.h.
+
 * Added new logo to ESPResSo.
 
 * The documentation sources are now left out of the distribution

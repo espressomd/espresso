@@ -536,6 +536,16 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 
+AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
+AC_CONFIG_COMMANDS([myconfig-sample.h],
+        [if test x"$PYTHON" != xno; then \
+            cat config/myconfig-sample-header.h > myconfig-sample.h; \
+            $PYTHON $srcdir/config/gen_sampleconfig.py $srcdir/src/features.def >> myconfig-sample.h;\
+        else echo "Python is not available, not (re)creating sample config."; \
+        fi
+        ], [PYTHON="$PYTHON"])
+
+
 AC_OUTPUT
 
 cat <<EOF
