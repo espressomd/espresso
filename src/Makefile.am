@@ -25,6 +25,7 @@ noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
 # config-features.c must be at the beginning so that it is compiled first
+nodist_libEspresso_a_SOURCES = 
 libEspresso_a_SOURCES = \
 	config-features.c \
 	adresso.c adresso.h \
@@ -266,7 +267,7 @@ endif
 #################################################################
 # Handling of myconfig.h
 #################################################################
-libEspresso_a_SOURCES += myconfig-final.h
+nodist_libEspresso_a_SOURCES += myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 

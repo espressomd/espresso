@@ -13,7 +13,11 @@
    height="725.48163"
    id="svg2844"
    version="1.1"
+<<<<<<< HEAD
    inkscape:version="0.48.3.1 r9886"
+=======
+   inkscape:version="0.48.2 r9819"
+>>>>>>> 3.1
    sodipodi:docname="logo-template.svg"
    inkscape:export-filename="/auto.anoa/home/olenz/projects/espresso/src/doc/logo/logo01.png"
    inkscape:export-xdpi="90"
@@ -26,6 +30,7 @@
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
+<<<<<<< HEAD
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
@@ -33,13 +38,28 @@
      inkscape:cy="366.77458"
      inkscape:document-units="mm"
      inkscape:current-layer="layer4"
+=======
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.70710678"
+     inkscape:cx="57.921658"
+     inkscape:cy="366.77458"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer2"
+>>>>>>> 3.1
      showgrid="false"
      units="mm"
      showborder="true"
      borderlayer="false"
+<<<<<<< HEAD
      inkscape:window-width="1512"
      inkscape:window-height="880"
      inkscape:window-x="33"
+=======
+     inkscape:window-width="1837"
+     inkscape:window-height="1180"
+     inkscape:window-x="36"
+>>>>>>> 3.1
      inkscape:window-y="-3"
      inkscape:window-maximized="1"
      showguides="true"
@@ -236,7 +256,11 @@ Stefan Kesselheim</dc:title>
      id="layer4"
      inkscape:label="Text BG">
     <rect
+<<<<<<< HEAD
        style="color:#000000;fill:#e7edf9;fill-opacity:1;fill-rule:nonzero;stroke:#e7edf9;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;stroke-opacity:1"
+=======
+       style="color:#000000;fill:#e7edf9;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+>>>>>>> 3.1
        id="rect4112"
        width="410.75772"
        height="690.94489"

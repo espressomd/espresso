@@ -555,7 +555,7 @@ one can think of modeling hydrogen bonds in two different environments: water,
 where the interaction is rather weak, and in a lipid bilayer, where it is
 comparatively stronger.
 
-\section{Gay-Berne interaction}
+\subsection{Gay-Berne interaction}
 \index{Gay-Berne interaction|mainindex}
 \index{interactions!Gay-Berne|mainindex}
 
@@ -743,7 +743,60 @@ To simulate rigid bonds, \es uses the Rattle Shake algorithm which
 satisfies internal constraints for molecular models with internal
 constraints, using Lagrange multipliers.\cite{andersen83a}
 
-\subsection{Bond-angle interactions}
+\subsection{Tabulated bond interactions}
+\index{tabulated bond interactions|mainindex}
+\index{interactions!tabulated bond|mainindex}
+
+\begin{essyntax}
+    \variant{1} inter \var{bondid}
+    tabulated bond \var{filename}
+    \variant{2} inter \var{bondid}
+    tabulated angle \var{filename}
+    \variant{3} inter \var{bondid}
+    tabulated dihedral \var{filename}
+\end{essyntax}
+
+This creates a bond type with identificator \var{bondid} with a
+two-body bond length (variant \variant{1}), three-body angle (variant
+\variant{2}) or four-body dihedral (variant \variant{3}) tabulated
+potential. The tabulated forces and energies have to be provided in a
+file \var{filename}, which is formatted identically as the files for
+non-bonded tabulated potentials (see section \ref{sec:tabnonbonded}).
+
+The potential is calculated as follows:
+\begin{itemize}
+\item Variant~\variant{1} is a two body interaction depending on the distance of
+  two particles. The force acts in the direction of the connecting vector
+  between the particles. The bond breaks above the tabulated range, but for
+  distances smaller than the tabulated range, a linear extrapolation based on
+  the first two tabulated force values is used.
+\item Variant~\variant{2} is a three-body angle interaction similar to the
+  \texttt{angle} potential (see section~\ref{sec:angle}).  It is assumed that
+  the potential is tabulated for all angles between 0 and $ \pi $, where 0
+  corresponds to a stretched polymer, and just as for the tabulated pair
+  potential, the forces are scaled with the inverse length of the connecting
+  vectors. The force on particles $p_1$ and $p_3$ (in the notation of
+  section~\ref{sec:angle}) acts perpendicular to the connecting vector between
+  the particle and the center particle $p_2$ in the plane defined by the three
+  particles. The force on the center particle $p_2$ balances the other two
+  forces.
+\item Variant~\variant{3} tabulates a torsional dihedral angle potential (see
+  section~\ref{sec:dihedral}). It is assumed that the potential is tabulated for
+  all angles between 0 and $2\pi$. \em{This potential is not tested yet! Use on
+    own risk, and please report your findings and eventually necessary fixes.}
+\end{itemize}
+
+\subsection{Virtual bonds}
+\begin{essyntax}
+  inter \var{bondid} virtual_bond
+\end{essyntax}
+
+This creates a virtual bond type with identificator \var{bondid}, \ie
+a pair bond without associated potential or force. It can used to specify
+topologies and for some analysis that rely on bonds, or \eg for bonds that
+should be displayed in VMD.
+
+\section{Bond-angle interactions}
 \index{bond-angle interactions|mainindex}
 \index{interactions!bond-angle|mainindex}
 \label{sec:angle}
@@ -826,7 +879,7 @@ possible, which have to be activated in \texttt{myconfig.h}
   two potentials before.
 \end{itemize}
 
-\subsection{Dihedral interactions}
+\section{Dihedral interactions}
 \index{dihedral interactions|mainindex}
 \index{interactions!dihedral|mainindex}
 \label{sec:dihedral}
@@ -864,58 +917,6 @@ general form of the potential is used:
 \end{equation}
 where $p$ is rather a phase factor and can only take values $p=\pm 1$.
 
-\subsection{Tabulated bond interactions}
-\index{tabulated bond interactions|mainindex}
-\index{interactions!tabulated bond|mainindex}
-
-\begin{essyntax}
-    \variant{1} inter \var{bondid}
-    tabulated bond \var{filename}
-    \variant{2} inter \var{bondid}
-    tabulated angle \var{filename}
-    \variant{3} inter \var{bondid}
-    tabulated dihedral \var{filename}
-\end{essyntax}
-
-This creates a bond type with identificator \var{bondid} with a
-two-body bond length (variant \variant{1}), three-body angle (variant
-\variant{2}) or four-body dihedral (variant \variant{3}) tabulated
-potential. The tabulated forces and energies have to be provided in a
-file \var{filename}, which is formatted identically as the files for
-non-bonded tabulated potentials (see section \ref{sec:tabnonbonded}).
-
-The potential is calculated as follows:
-\begin{itemize}
-\item Variant~\variant{1} is a two body interaction depending on the distance of
-  two particles. The force acts in the direction of the connecting vector
-  between the particles. The bond breaks above the tabulated range, but for
-  distances smaller than the tabulated range, a linear extrapolation based on
-  the first two tabulated force values is used.
-\item Variant~\variant{2} is a three-body angle interaction similar to the
-  \texttt{angle} potential (see section~\ref{sec:angle}).  It is assumed that
-  the potential is tabulated for all angles between 0 and $ \pi $, where 0
-  corresponds to a stretched polymer, and just as for the tabulated pair
-  potential, the forces are scaled with the inverse length of the connecting
-  vectors. The force on particles $p_1$ and $p_3$ (in the notation of
-  section~\ref{sec:angle}) acts perpendicular to the connecting vector between
-  the particle and the center particle $p_2$ in the plane defined by the three
-  particles. The force on the center particle $p_2$ balances the other two
-  forces.
-\item Variant~\variant{3} tabulates a torsional dihedral angle potential (see
-  section~\ref{sec:dihedral}). It is assumed that the potential is tabulated for
-  all angles between 0 and $2\pi$. \em{This potential is not tested yet! Use on
-    own risk, and please report your findings and eventually necessary fixes.}
-\end{itemize}
-
-\subsection{Virtual bonds}
-\begin{essyntax}
-  inter \var{bondid} virtual_bond
-\end{essyntax}
-
-This creates a virtual bond type with identificator \var{bondid}, \ie
-a pair bond without associated potential or force. It can used to specify
-topologies and for some analysis that rely on bonds, or \eg for bonds that
-should be displayed in VMD.
 
 \section{Coulomb interaction}
 \label{sec:inter-electrostatics}

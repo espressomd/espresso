@@ -39,6 +39,12 @@ AM_MAINTAINER_MODE
 # silent rules, backwards compatiblity
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
+# Are we in an unpacked dist or in the git repo?
+AC_MSG_CHECKING([whether we are using development sources])
+AS_IF([test -d $srcdir/.git], [devel_src=yes], [devel_src=no])
+AM_CONDITIONAL(DEVEL_SRC, [test ."$devel_src" = .yes])
+AC_MSG_RESULT($devel_src)
+
 cat <<EOF
 ****************************************************************
 *      Checking compiler characteristics and MPI support       *
@@ -533,6 +539,16 @@ AC_CONFIG_FILES([testsuite/runtest.sh],
 AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 
+AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
+AC_CONFIG_COMMANDS([myconfig-sample.h],
+        [if test x"$PYTHON" != xno; then \
+            cat config/myconfig-sample-header.h > myconfig-sample.h; \
+            $PYTHON $srcdir/config/gen_sampleconfig.py $srcdir/src/features.def >> myconfig-sample.h;\
+        else echo "Python is not available, not (re)creating sample config."; \
+        fi
+        ], [PYTHON="$PYTHON"])
+
+
 AC_OUTPUT
 
 cat <<EOF
@@ -541,6 +557,7 @@ cat <<EOF
 ****************************************************************
 platform detected	= $target
 package version		= $PACKAGE_VERSION
+development sources     = $devel_src
 
 Compiler
 --------
