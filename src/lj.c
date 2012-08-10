@@ -33,8 +33,8 @@ double lj_force_cap = 0.0;
 */
 int ljforcecap_set_params(double ljforcecap)
 {
-  if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
+/*  if (ljforcecap != -1.0) */
+    mpi_lj_cap_forces(ljforcecap);
   
   return ES_OK;
 }
@@ -75,37 +75,40 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 /** calculate lj_capradius from lj_force_cap */
 void calc_lj_cap_radii(double force_cap)
 {
-  int i,j,cnt=0;
-  IA_parameters *params;
-  double force=0.0, rad=0.0, step, frac2, frac6;
+  /* only compute cap radii if not set "individual" */
+  if( force_cap != -1.0 ){
+    int i,j,cnt=0;
+    IA_parameters *params;
+    double force=0.0, rad=0.0, step, frac2, frac6;
 
-  for(i=0; i<n_particle_types; i++) {
-    for(j=0; j<n_particle_types; j++) {
-      params = get_ia_param(i,j);
-      if(force_cap > 0.0 && params->LJ_eps > 0.0) {
-	/* I think we have to solve this numerically... and very crude as well */
-	cnt=0;
-	rad = params->LJ_sig;
-	step = -0.1 * params->LJ_sig;
-	force=0.0;
-	
-	while(step != 0) {
-	  frac2 = SQR(params->LJ_sig/rad);
-	  frac6 = frac2*frac2*frac2;
-	  force = 48.0 * params->LJ_eps * frac6*(frac6 - 0.5)/rad;
-	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-	    step = - (step/2.0); 
-	  }
-	  if(fabs(force-force_cap) < 1.0e-6) step=0;
-	  rad += step; cnt++;
-	} 
-      	params->LJ_capradius = rad;
+    for(i=0; i<n_particle_types; i++) {
+      for(j=0; j<n_particle_types; j++) {
+        params = get_ia_param(i,j);
+        if(force_cap > 0.0 && params->LJ_eps > 0.0) {
+    /* I think we have to solve this numerically... and very crude as well */
+    cnt=0;
+    rad = params->LJ_sig;
+    step = -0.1 * params->LJ_sig;
+    force=0.0;
+    
+    while(step != 0) {
+      frac2 = SQR(params->LJ_sig/rad);
+      frac6 = frac2*frac2*frac2;
+      force = 48.0 * params->LJ_eps * frac6*(frac6 - 0.5)/rad;
+      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
+        step = - (step/2.0); 
       }
-      else {
-	params->LJ_capradius = 0.0; 
+      if(fabs(force-force_cap) < 1.0e-6) step=0;
+      rad += step; cnt++;
+    } 
+          params->LJ_capradius = rad;
+        }
+        else {
+    params->LJ_capradius = 0.0; 
+        }
+        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
+          this_node,i,j,rad,force,cnt));
       }
-      FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-			  this_node,i,j,rad,force,cnt));
     }
   }
 }

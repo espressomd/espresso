@@ -62,6 +62,8 @@ int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** arg
 {
   char buffer[TCL_DOUBLE_SPACE];
 
+  double ljforcecap;
+  
   if (argc == 0) {
     if (lj_force_cap == -1.0)
       Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
@@ -78,16 +80,19 @@ int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** arg
     return TCL_ERROR;
   }
   
-  if (ARG0_IS_S("individual"))
-      lj_force_cap = -1.0;
-  else if (! ARG0_IS_D(lj_force_cap) || lj_force_cap < 0) {
+  if (ARG0_IS_S("individual")){
+    ljforcecap = -1.0;
+    CHECK_VALUE(ljforcecap_set_params(ljforcecap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
+   }
+  else if (! ARG0_IS_D(ljforcecap) || ljforcecap < 0) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
 		     (char *) NULL);
     return TCL_ERROR;
   }
 
-  CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
+  CHECK_VALUE(ljforcecap_set_params(ljforcecap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
 }
 

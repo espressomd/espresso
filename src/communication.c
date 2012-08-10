@@ -2008,8 +2008,10 @@ void mpi_lj_cap_forces(double fc)
 {
 #ifdef LENNARD_JONES
   lj_force_cap = fc;
-  mpi_call(mpi_lj_cap_forces_slave, 1, 0);
-  mpi_lj_cap_forces_slave(1, 0);
+//  if(! lj_force_cap == -1.0){
+    mpi_call(mpi_lj_cap_forces_slave, 1, 0);
+    mpi_lj_cap_forces_slave(1, 0);
+//  }
 #endif
 }
 
