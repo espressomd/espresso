@@ -72,7 +72,7 @@ def distto(id_or_pos):
       cpos[i] = id_or_pos[i]
       _id = -1
   #update_particle_data()
-  #return c_analyze.distto(cpos,_id)
+  return c_analyze.distto(cpos,_id)
   return 'not working yet'
 
 #
