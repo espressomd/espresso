@@ -62,18 +62,13 @@ def distto(id_or_pos):
   if isinstance(id_or_pos,int):
     _id = id_or_pos
     _pos = particle_data.ParticleHandle(id_or_pos).pos
-      # There must be a more elegant way to do that...
     for i in range(3):
       cpos[i] = _pos[i]
-    # This produces a segmentation fault for some reason...
-    #print c_analyze.distto(cpos,_id)
   else:
     for i in range(3):
       cpos[i] = id_or_pos[i]
       _id = -1
-  #update_particle_data()
   return c_analyze.distto(cpos,_id)
-  return 'not working yet'
 
 #
 # Energy analysis
