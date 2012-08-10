@@ -77,6 +77,8 @@ n_part = int(volume*density)
 for i in range(n_part):
   es.part[i].pos=numpy.random.random(3)*es.glob.box_l
 
+es.analyze.distto(0)
+
 print "Simulate %d particles in a cubic simulation box " % n_part
 print "%f at density %f\n" % (box_l,density)
 #print "Interactions:\n"	# Nicht angepasst
