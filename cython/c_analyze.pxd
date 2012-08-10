@@ -18,6 +18,7 @@ cdef extern from "../src/statistics.h":
 
 cdef extern from "../src/statistics.h":
   cdef double mindist(IntList *set1, IntList *set2)
+  cdef double distto(double pos[3], int pid)
   cdef double *obsstat_bonded(Observable_stat *stat, int j)
   cdef double *obsstat_nonbonded(Observable_stat *stat, int i, int j)
 

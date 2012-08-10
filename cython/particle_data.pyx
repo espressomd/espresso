@@ -39,7 +39,7 @@ cdef class ParticleHandle:
           print 'position must be float'
         else:
           mypos[i]=_pos[i]
-      if place_particle(self.id, mypos) == 1:
+      if place_particle(self.id, mypos) == -1:
         print 'particle could not be set'
     def __get__(self):
       self.update_particle_data()

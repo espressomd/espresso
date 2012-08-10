@@ -2,12 +2,15 @@
 
 cimport c_analyze
 cimport utils
+cimport particle_data
 import utils
 import code_info
 import global_variables
+import particle_data
 
-# Calculate the minimum distance between particles
-# of specific type
+#
+# Minimal distance between particles
+#
 def mindist(p1 = 'default', p2 = 'default'):
 
   cdef IntList* set1
@@ -46,7 +49,35 @@ def mindist(p1 = 'default', p2 = 'default'):
 
   return result
 
+#
+# Distance to particle or point
+#
+def distto(id_or_pos):
+  cdef double cpos[3]
+  if global_variables.GlobalsHandle().n_part == 0:
+    print  'no particles'
+    return 'no particles'
 
+  # check if id_or_pos is position or particle id
+  if isinstance(id_or_pos,int):
+    _id = id_or_pos
+    _pos = particle_data.ParticleHandle(id_or_pos).pos
+      # There must be a more elegant way to do that...
+    for i in range(3):
+      cpos[i] = _pos[i]
+    # This produces a segmentation fault for some reason...
+    #print c_analyze.distto(cpos,_id)
+  else:
+    for i in range(3):
+      cpos[i] = id_or_pos[i]
+      _id = -1
+  #update_particle_data()
+  #return c_analyze.distto(cpos,_id)
+  return 'not working yet'
+
+#
+# Energy analysis
+#
 def energy(etype = 'all', id1 = 'default', id2 = 'default'):
 
   if global_variables.GlobalsHandle().n_part == 0:
@@ -80,7 +111,7 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
     _value = c_analyze.total_energy.data.e[0]
     return '{ kinetic: %f }' % _value
 
-# coulomb interaction
+  # coulomb interaction
   if etype == 'coulomb':
     if(code_info.electrostatics_defined()):
       for i in range(c_analyze.total_energy.n_coulomb):
@@ -99,7 +130,7 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
       print  'error: DIPOLES not compiled'
       return 'error: DIPOLES not compiled'
 
-# bonded interactions
+  # bonded interactions
   if etype == 'bonded':
     if not isinstance(id1, int):
       print ('error: analyze.energy(\'bonded\',<bondid>): '
@@ -111,7 +142,7 @@ def energy(etype = 'all', id1 = 'default', id2 = 'default'):
       _value = c_analyze.obsstat_bonded(&c_analyze.total_energy, id1)[0]
       return '{ %d bonded: %f }' % (id1,_value)
 
-# nonbonded interactions
+  # nonbonded interactions
   if etype == 'nonbonded':
     if not isinstance(id1, int):
       print  ('error: analyze.energy(\'bonded\',<bondid>): '
