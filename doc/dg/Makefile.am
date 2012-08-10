@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+if DEVEL_SRC
+
 dg_TEXFILES = \
 	dg.tex
 
@@ -31,8 +33,9 @@ dg_FILES = \
 doc: dg
 dg: dg.pdf
 dg.pdf: $(dg_FILES)
+
 if HAVE_LATEX
-	sh ../latexit.sh $(srcdir) dg
+	sh ../latexit.sh $(srcdir) dg;
 else
 	@echo "No complete LaTeX-installation was not found in your PATH."
 	@echo "Can't build the Developer's Guide without pdflatex, makeindex and bibtex."
@@ -47,3 +50,5 @@ MOSTLYCLEANFILES = \
 	dg.bbl dg.blg \
 	dg.idx dg.idx.bak dg.ilg dg.ind\
 	dg.log dg.out dg.toc dg.tdo
+
+endif
