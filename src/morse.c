@@ -31,8 +31,7 @@ double morse_force_cap = 0.0;
 
 int morseforcecap_set_params(double morseforcecap)
 {
-  if (morse_force_cap != -1.0)
-    mpi_morse_cap_forces(morse_force_cap);
+  mpi_cap_forces(morse_force_cap);
   
   return ES_OK;
 }
@@ -63,8 +62,7 @@ int morse_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  if (morse_force_cap != -1.0)
-    mpi_morse_cap_forces(morse_force_cap);
+  mpi_cap_forces(morse_force_cap);
 
   return ES_OK;
 }

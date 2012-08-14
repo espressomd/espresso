@@ -410,16 +410,16 @@ void mpi_random_seed(int cnt, long *seed);
 void mpi_random_stat(int cnt, RandomStatus *stat);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
-void mpi_lj_cap_forces(double force_cap);
+void mpi_cap_forces(double force_cap);
 
 /** Issue REQ_BCAST_MORSEFORCECAP: initialize Morse force capping. */
-void mpi_morse_cap_forces(double force_cap);
+//void mpi_morse_cap_forces(double force_cap);
 
 /** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
-void mpi_buck_cap_forces(double force_cap);
+//void mpi_buck_cap_forces(double force_cap);
 
 /** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
-void mpi_tab_cap_forces(double force_cap);
+//void mpi_tab_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
@@ -440,7 +440,7 @@ void mpi_bcast_cell_structure(int cs);
 void mpi_bcast_nptiso_geom(void);
 
 /** Issue REQ_BCAST_LJANGLEFORCECAP: initialize LJANGLE force capping. */
-void mpi_ljangle_cap_forces(double force_cap);
+//void mpi_ljangle_cap_forces(double force_cap);
 
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are

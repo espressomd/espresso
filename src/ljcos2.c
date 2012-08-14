@@ -55,8 +55,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
+  mpi_cap_forces(lj_force_cap);
 
   return ES_OK;
 }

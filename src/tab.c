@@ -31,8 +31,7 @@ double tab_force_cap = 0.0;
 
 int tabforcecap_set_params(double tabforcecap)
 {
-  if (tab_force_cap != -1.0)
-    mpi_tab_cap_forces(tab_force_cap);
+  mpi_cap_forces(tab_force_cap);
   
   return ES_OK;
 }
@@ -117,8 +116,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
   /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  if (tab_force_cap != -1.0) {
-    mpi_tab_cap_forces(tab_force_cap);}
+  mpi_cap_forces(tab_force_cap);
   return 0;
 }
 
@@ -211,36 +209,38 @@ int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename)
 
 void check_tab_forcecap(double force_cap)
 {
-  int i,j,startindex;
-  IA_parameters *params;
+  if( force_cap != -1.0){
+    int i,j,startindex;
+    IA_parameters *params;
 
-  for(i=0; i<n_particle_types; i++) {
-    for(j=0; j<n_particle_types; j++) {
-      params = get_ia_param(i,j);
-      startindex = params->TAB_startindex;
-      if ( tabulated_forces.max < (params->TAB_npoints + startindex )) { /* Make sure forces are initialized */
-	if(force_cap > 0.0 && params->TAB_maxval > 0.0 && tabulated_forces.e[startindex] > force_cap) {
-	  for ( i = 0 ; i < params->TAB_npoints ; i++) {
-	    if ( tabulated_forces.e[startindex + i] < force_cap ) {
-	      return; /* Everything is OK nothing to say :) */
-	    }	  
-	  }
-	  if ( i == params->TAB_npoints - 1) {
-	    tab_force_cap = -1.0;
-	    /* Force cap is below all known forces .. turn force capping off */
-	  }
-	}    
-	if ( force_cap > tabulated_forces.e[startindex] ) {
-	  fprintf(stderr,"calc_tab_cap_radii: Capped region is outside the force table");
-	  
-	  if ( tabulated_forces.e[startindex] < tabulated_forces.e[startindex+1] ) {
-	    fprintf(stderr,"Extrapolation does not make sense outside this table \n");
-	    errexit();
-	  }
-	  
-	  fprintf(stderr,", will extrapolate the force outside table \n");
-	  fprintf(stderr,"fc: %f \n",tab_force_cap);	
-	}
+    for(i=0; i<n_particle_types; i++) {
+      for(j=0; j<n_particle_types; j++) {
+        params = get_ia_param(i,j);
+        startindex = params->TAB_startindex;
+        if ( tabulated_forces.max < (params->TAB_npoints + startindex )) { /* Make sure forces are initialized */
+    if(force_cap > 0.0 && params->TAB_maxval > 0.0 && tabulated_forces.e[startindex] > force_cap) {
+      for ( i = 0 ; i < params->TAB_npoints ; i++) {
+        if ( tabulated_forces.e[startindex + i] < force_cap ) {
+          return; /* Everything is OK nothing to say :) */
+        }	  
+      }
+      if ( i == params->TAB_npoints - 1) {
+        tab_force_cap = -1.0;
+        /* Force cap is below all known forces .. turn force capping off */
+      }
+    }    
+    if ( force_cap > tabulated_forces.e[startindex] ) {
+      fprintf(stderr,"calc_tab_cap_radii: Capped region is outside the force table");
+      
+      if ( tabulated_forces.e[startindex] < tabulated_forces.e[startindex+1] ) {
+        fprintf(stderr,"Extrapolation does not make sense outside this table \n");
+        errexit();
+      }
+      
+      fprintf(stderr,", will extrapolate the force outside table \n");
+      fprintf(stderr,"fc: %f \n",tab_force_cap);	
+    }
+        }
       }
     }
   }
