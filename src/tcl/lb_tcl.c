@@ -27,6 +27,7 @@
 #include "thermostat.h"
 #include "lb_tcl.h"
 #include "lb.h"
+#include "lbgpu.h"
 #include "parser.h"
 
 #ifdef LB_GPU
@@ -461,10 +462,23 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
      Tcl_AppendResult(interp, "Coordinates are not integer.", (char *)NULL);
      return TCL_ERROR;
    } 
-   if (coord[0]<0 || coord[0]>box_l[0] || coord[1]<0 || coord[1]>box_l[1] || coord[2]<0 || coord[2]>box_l[2]) {
-     Tcl_AppendResult(interp, "Coordinates is not a valid LB node index", (char *)NULL);
-     return TCL_ERROR;
-   } 
+
+  if (lattice_switch & LATTICE_LB_GPU) {
+    if (coord[0]<0 || coord[0]>(box_l[0]-1)/lbpar_gpu.agrid || coord[1]<0 || coord[1]>(box_l[1]-1)/lbpar_gpu.agrid || coord[2]<0 || coord[2]>(box_l[2]-1)/lbpar_gpu.agrid) {
+       Tcl_AppendResult(interp, "Coordinates do not correspond to a valid LB node index", (char *)NULL);
+       return TCL_ERROR;
+    } 
+  } 
+  else {
+#ifdef LB
+    if (coord[0]<0 || coord[0]>(box_l[0]-1)/lbpar.agrid || coord[1]<0 || coord[1]>(box_l[1]-1)/lbpar.agrid || coord[2]<0 || coord[2]>(box_l[2]-1)/lbpar.agrid) {
+       Tcl_AppendResult(interp, "Coordinates do not correspond to a valid LB node index", (char *)NULL);
+       return TCL_ERROR;
+    } 
+#endif
+  }
+
+
    argc-=3; argv+=3;
 
    if (ARG0_IS_S("print")) {
