@@ -123,10 +123,10 @@ int tclcommand_inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** a
   char buffer[TCL_DOUBLE_SPACE];
 
   if (argc == 0) {
-    if (buck_force_cap == -1.0)
+    if (force_cap == -1.0)
       Tcl_AppendResult(interp, "buckforcecap individual", (char *) NULL);
     else {
-      Tcl_PrintDouble(interp, buck_force_cap, buffer);
+      Tcl_PrintDouble(interp, force_cap, buffer);
       Tcl_AppendResult(interp, "buckforcecap ", buffer, (char *) NULL);
     }
     return TCL_OK;
@@ -139,15 +139,15 @@ int tclcommand_inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** a
   }
 
   if (ARG0_IS_S("individual"))
-      buck_force_cap = -1.0;
-  else if (! ARG0_IS_D(buck_force_cap) || buck_force_cap < 0) {
+      force_cap = -1.0;
+  else if (! ARG0_IS_D(force_cap) || force_cap < 0) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
 		     (char *) NULL);
     return TCL_ERROR;
   }
 
-  CHECK_VALUE(buckforcecap_set_params(buck_force_cap),
+  CHECK_VALUE(buckforcecap_set_params(force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
 }
 

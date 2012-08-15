@@ -56,10 +56,10 @@ int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** 
   char buffer[TCL_DOUBLE_SPACE];
 
   if (argc == 0) {
-    if (morse_force_cap == -1.0)
+    if (force_cap == -1.0)
       Tcl_AppendResult(interp, "morseforcecap individual", (char *) NULL);
     else {
-      Tcl_PrintDouble(interp, morse_force_cap, buffer);
+      Tcl_PrintDouble(interp, force_cap, buffer);
       Tcl_AppendResult(interp, "morseforcecap ", buffer, (char *) NULL);
     }
     return TCL_OK;
@@ -72,15 +72,15 @@ int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** 
   }
   
   if (ARG0_IS_S("individual"))
-      morse_force_cap = -1.0;
-  else if (! ARG0_IS_D(morse_force_cap) || morse_force_cap < 0) {
+      force_cap = -1.0;
+  else if (! ARG0_IS_D(force_cap) || force_cap < 0) {
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
 		     (char *) NULL);
     return TCL_ERROR;
   }
 
-  CHECK_VALUE(morseforcecap_set_params(morse_force_cap),
+  CHECK_VALUE(morseforcecap_set_params(force_cap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
 }
 

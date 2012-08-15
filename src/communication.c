@@ -2117,24 +2117,20 @@ void mpi_tab_cap_forces_slave(int node, int parm)
 void mpi_cap_forces(double fc)
 {
 int call = 0;
+  force_cap = fc;
 #ifdef LENNARD_JONES
-  lj_force_cap = fc;
   call = 1;
 #endif
 #ifdef LJ_ANGLE
-  ljangle_force_cap = fc;
   call = 1;
 #endif
 #ifdef MORSE
-  morse_force_cap = fc;
   call = 1;
 #endif
 #ifdef BUCKINGHAM
-  buck_force_cap = fc;
   call = 1;
 #endif
 #ifdef TABULATED
-  tab_force_cap = fc;
   call = 1;
 #endif
   if(call == 1){
@@ -2146,34 +2142,34 @@ int call = 0;
 void mpi_cap_forces_slave(int node, int parm)
 {
 #ifdef LENNARD_JONES
-  MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_lj_cap_radii(lj_force_cap);
+  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
+  calc_lj_cap_radii(force_cap);
 #ifdef LENNARD_JONES_GENERIC
-  calc_ljgen_cap_radii(lj_force_cap);
+  calc_ljgen_cap_radii(force_cap);
 #endif
 #ifdef LJCOS2
-  calc_ljcos2_cap_radii(lj_force_cap);
+  calc_ljcos2_cap_radii(force_cap);
 #endif
   on_short_range_ia_change();
 #endif
 #ifdef LJ_ANGLE
-  MPI_Bcast(&ljangle_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_ljangle_cap_radii(ljangle_force_cap);
+  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
+  calc_ljangle_cap_radii(force_cap);
   on_short_range_ia_change();
 #endif
 #ifdef MORSE
-  MPI_Bcast(&morse_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_morse_cap_radii(morse_force_cap);
+  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
+  calc_morse_cap_radii(force_cap);
   on_short_range_ia_change();
 #endif
 #ifdef BUCKINGHAM
-  MPI_Bcast(&buck_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_buck_cap_radii(buck_force_cap);
+  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
+  calc_buck_cap_radii(force_cap);
   on_short_range_ia_change();
 #endif
 #ifdef TABULATED
-  MPI_Bcast(&tab_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  check_tab_forcecap(tab_force_cap);
+  MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
+  check_tab_forcecap(force_cap);
   on_short_range_ia_change();
 #endif
 }

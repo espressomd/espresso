@@ -43,6 +43,7 @@ libEspresso_a_SOURCES = \
 	fft.c fft.h \
 	fft-common.c fft-common.h \
 	fft-dipolar.c fft-dipolar.h \
+  forcecap.c forcecap.h \
 	forces.c forces.h \
 	ghosts.c ghosts.h \
 	global.c global.h \
@@ -191,6 +192,7 @@ libEspresso_a_SOURCES += \
 	tcl/bmhtf-nacl_tcl.c tcl/bmhtf-nacl_tcl.h \
 	tcl/buckingham_tcl.c tcl/buckingham_tcl.h \
 	tcl/dpd_tcl.c tcl/dpd_tcl.h \
+  tcl/forcecap_tcl.c tcl/forcecap_tcl.h \
 	tcl/gb_tcl.c tcl/gb_tcl.h \
 	tcl/hat_tcl.c tcl/hat_tcl.h \
 	tcl/hertzian_tcl.c tcl/hertzian_tcl.h \

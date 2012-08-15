@@ -60,15 +60,20 @@ int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 /// parser for the forcecap
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
+  Tcl_AppendResult(interp, "warning: \"inter ljforcecap\" has been replaced by \"inter forcecap\" and will be removed in some further version.\n", (char *) NULL);
+  return tclcommand_inter_parse_forcecap(interp, argc, argv);
+  
+
+/*
   char buffer[TCL_DOUBLE_SPACE];
 
   double ljforcecap;
   
   if (argc == 0) {
-    if (lj_force_cap == -1.0)
+    if (force_cap == -1.0)
       Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
     else {
-      Tcl_PrintDouble(interp, lj_force_cap, buffer);
+      Tcl_PrintDouble(interp, force_cap, buffer);
       Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
     }
     return TCL_OK;
@@ -94,6 +99,7 @@ int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** arg
 
   CHECK_VALUE(ljforcecap_set_params(ljforcecap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
+*/
 }
 
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,

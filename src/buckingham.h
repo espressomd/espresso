@@ -29,13 +29,15 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "mol_cut.h"
+#include "forcecap.h"
 
 #ifdef BUCKINGHAM
 
 /** For warm up integration, the maximum force between any two particles
     interacting via Buckingham potential can be set and this magnitude of max
     force is stored in buck_force_cap*/
-extern double buck_force_cap;
+    /* replaced by global force_cap -- to be removed */
+//extern double buck_force_cap;
 
 ///
 int buckingham_set_params(int part_type_a, int part_type_b,

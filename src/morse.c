@@ -27,11 +27,9 @@
 
 #ifdef MORSE
 
-double morse_force_cap = 0.0;
-
 int morseforcecap_set_params(double morseforcecap)
 {
-  mpi_cap_forces(morse_force_cap);
+  mpi_cap_forces(morseforcecap);
   
   return ES_OK;
 }
@@ -62,12 +60,12 @@ int morse_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  mpi_cap_forces(morse_force_cap);
+  mpi_cap_forces(force_cap);
 
   return ES_OK;
 }
 
-void calc_morse_cap_radii(double force_cap)
+void calc_morse_cap_radii(double forcecap)
 {
   int i,j,cnt=0;
   IA_parameters *params;
@@ -76,7 +74,7 @@ void calc_morse_cap_radii(double force_cap)
   for(i=0; i<n_particle_types; i++) {
     for(j=0; j<n_particle_types; j++) {
       params = get_ia_param(i,j);
-      if(force_cap > 0.0 && params->MORSE_eps > 0.0) {
+      if(forcecap > 0.0 && params->MORSE_eps > 0.0) {
 
 	/* I think we have to solve this numerically... and very crude as well */
 
@@ -91,10 +89,10 @@ void calc_morse_cap_radii(double force_cap)
           add2 = exp( -params->MORSE_alpha * (rad - params->MORSE_rmin));
           force   = -params->MORSE_eps * 2.0 * params->MORSE_alpha * (add2 - add1) / rad;
 
-	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
+	  if((step < 0 && forcecap < force) || (step > 0 && forcecap > force)) {
 	    step = - (step/2.0); 
 	  }
-	  if(fabs(force-force_cap) < 1.0e-6) step=0;
+	  if(fabs(force-forcecap) < 1.0e-6) step=0;
 	  rad += step; cnt++;
 	} 
       	params->MORSE_capradius = rad;

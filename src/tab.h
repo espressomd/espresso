@@ -34,6 +34,10 @@
 #include "mol_cut.h"
 #include "dihedral.h"
 
+/* should be changed to file containing force caps */
+#include "forcecap.h"
+
+
 #ifdef TABULATED
 
 /** For the warmup you can cap any tabulated potential at the value
@@ -49,7 +53,8 @@
     will still run and a linear extrapolation will be used at small
     separations until the force reaches the capped value or until zero
     separation */
-extern double tab_force_cap;
+    /* replaced by global force_cap -- to be removed */
+//extern double tab_force_cap;
 
 /// set parameters for the force capping of tabulated potentials
 int tabforcecap_set_params(double tabforcecap);
@@ -102,7 +107,7 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
   if (CUTOFF_CHECK(dist < ia_params->TAB_maxval)){ 
     double phi, dindex, fac;
     int tablepos, table_start,j;
-    double rescaled_force_cap = tab_force_cap/dist;
+    double rescaled_force_cap = force_cap/dist;
     
     fac = 0.0;
 
@@ -127,7 +132,7 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
       }
     }
     
-    if ( rescaled_force_cap < fac && tab_force_cap > 0.0) {
+    if ( rescaled_force_cap < fac && force_cap > 0.0) {
       fac = rescaled_force_cap;
     }
 

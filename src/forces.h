@@ -113,6 +113,7 @@ void init_forces_ghosts();
 */
 void check_forces();
 
+
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
 {

@@ -207,7 +207,7 @@ int tabulated_bonded_set_params(int bond_type, int tab_type, char * filename)
   return ES_OK;
 }
 
-void check_tab_forcecap(double force_cap)
+void check_tab_forcecap(double forcecap)
 {
   if( force_cap != -1.0){
     int i,j,startindex;
@@ -218,18 +218,18 @@ void check_tab_forcecap(double force_cap)
         params = get_ia_param(i,j);
         startindex = params->TAB_startindex;
         if ( tabulated_forces.max < (params->TAB_npoints + startindex )) { /* Make sure forces are initialized */
-    if(force_cap > 0.0 && params->TAB_maxval > 0.0 && tabulated_forces.e[startindex] > force_cap) {
+    if(forcecap > 0.0 && params->TAB_maxval > 0.0 && tabulated_forces.e[startindex] > forcecap) {
       for ( i = 0 ; i < params->TAB_npoints ; i++) {
-        if ( tabulated_forces.e[startindex + i] < force_cap ) {
+        if ( tabulated_forces.e[startindex + i] < forcecap ) {
           return; /* Everything is OK nothing to say :) */
         }	  
       }
       if ( i == params->TAB_npoints - 1) {
-        tab_force_cap = -1.0;
+        force_cap = -1.0;
         /* Force cap is below all known forces .. turn force capping off */
       }
     }    
-    if ( force_cap > tabulated_forces.e[startindex] ) {
+    if ( forcecap > tabulated_forces.e[startindex] ) {
       fprintf(stderr,"calc_tab_cap_radii: Capped region is outside the force table");
       
       if ( tabulated_forces.e[startindex] < tabulated_forces.e[startindex+1] ) {
@@ -238,7 +238,7 @@ void check_tab_forcecap(double force_cap)
       }
       
       fprintf(stderr,", will extrapolate the force outside table \n");
-      fprintf(stderr,"fc: %f \n",tab_force_cap);	
+      fprintf(stderr,"fc: %f \n",force_cap);	
     }
         }
       }

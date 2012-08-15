@@ -44,6 +44,8 @@
 #include "particle_data.h"
 #include "mol_cut.h"
 #include "grid.h"
+#include "forcecap.h"
+
 
 #ifdef LJ_ANGLE
 #include <math.h>
@@ -51,7 +53,8 @@
 /** For the warmup you can cap the singularity of the directionnal LJ
     potential at r=0. look into the warmup documentation for more
     details (who wants to write that?).*/
-extern double ljangle_force_cap;
+    /* replaced by global force_cap -- to be removed */
+//extern double ljangle_force_cap;
 
 /** set the force cap for the directional LJ interaction.
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff

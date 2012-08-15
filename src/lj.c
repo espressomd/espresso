@@ -25,8 +25,6 @@
 #include "mol_cut.h"
 #include "communication.h"
 
-double lj_force_cap = 0.0;
-
 /** set the force cap for the LJ interaction.
     @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
     for each of the interactions.
@@ -63,7 +61,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  mpi_cap_forces(lj_force_cap);
+  mpi_cap_forces(force_cap);
 
   return ES_OK;
 }
