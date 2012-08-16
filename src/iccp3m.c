@@ -132,7 +132,7 @@ int bcast_iccp3m_cfg(void){
 }
 
 int iccp3m_iteration() {
-   double fdot,hold,hnew,hmax,del_eps,diff=0.0,difftemp=0.0,qold, ex, ey, ez, l_b;
+   double fdot,hold,hnew,hmax,del_eps,diff=0.0,difftemp=0.0, ex, ey, ez, l_b;
    Cell *cell;
    int c,np;
    Particle *part;
@@ -185,7 +185,6 @@ int iccp3m_iteration() {
 
            /* recalculate the old charge density */
                       hold=part[i].p.q/iccp3m_cfg.areas[id];
-                      qold=part[i].p.q;
           /* determine if it is higher than the previously highest charge density */            
                       if(hold>fabs(hmax))hmax=fabs(hold); 
                       f1 =  (+del_eps*fdot/l_b);

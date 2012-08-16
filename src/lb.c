@@ -2459,7 +2459,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x,y,z;
-  LB_FluidNode *local_node;
 
   double lbboundary_mindist, distvec[3];
   double pos[3];
@@ -2507,8 +2506,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
         	
         index = node_index[(z*2+y)*2+x];
         
-        local_node = &lbfields[index];
-
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
