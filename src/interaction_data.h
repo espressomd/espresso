@@ -161,6 +161,8 @@
 #define CONSTRAINT_MAZE 6
 /** pore constraint applied */
 #define CONSTRAINT_PORE 7
+/** slitpore constraint applied */
+#define CONSTRAINT_SLITPORE 11
 //ER
 /** External magnetic field constraint applied */
 #define CONSTRAINT_EXT_MAGN_FIELD 8
@@ -696,6 +698,21 @@ typedef struct {
   int reflecting;
 } Constraint_pore;
 
+
+/** Parameters for a SLITPORE constraint. */
+typedef struct {
+  /** center of the cylinder. */
+  double pore_mouth;
+  /** Axis of the cylinder .*/
+  double upper_smoothing_radius;
+  double lower_smoothing_radius;
+  /** cylinder length. (!!!NOTE this is only the half length of the cylinder.)*/
+  double channel_width;
+  double pore_width;
+  double pore_length;
+  int reflecting;
+} Constraint_slitpore;
+
 /** Parameters for a ROD constraint. */
 typedef struct {
   /** center of the cylinder in the x-y plane. */
@@ -756,6 +773,7 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    Constraint_slitpore slitpore;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
