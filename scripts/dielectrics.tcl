@@ -741,6 +741,164 @@ proc dielectric_pore { args } {
 
 }
 
+proc doit { x z nx nz } {
+  upvar res res
+  global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
+  if { ![ info exists n_induced_charges ] } {
+    set n_induced_charges 0 
+    set icc_areas [ list ]
+    set icc_normals [ list ] 
+    set icc_epsilons [ list ] 
+    set icc_sigmas [ list ]
+  }
+  set ly [ lindex [ setmd box_l ] 1 ]
+  set ny [ expr int(floor($ly/$res)) ]
+  set ry [ expr $ly/$ny ]
+  
+  for { set i 0 } { $i < $ny } { incr i } {
+    part $n_induced_charges pos $x [ expr $i * $ry ] $z fix 1 1 1
+    incr n_induced_charges
+  }
+}
+
+
+
+proc dielectric_slitpore { args } {
+  global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
+  if { ![ info exists n_induced_charges ] } {
+    set n_induced_charges 0 
+    set icc_areas [ list ]
+    set icc_normals [ list ] 
+    set icc_epsilons [ list ] 
+    set icc_sigmas [ list ]
+  }
+
+  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+    if { [ lindex $args $argno ] == "pore_mouth" } {
+      incr argno
+      set pore_mouth [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "channel_width" } {
+      incr argno
+      set channel_width [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "pore_length" } {
+      incr argno
+      set pore_length [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "pore_width" } {
+      incr argno
+      set pore_width [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "upper_smoothing_radius" } {
+      incr argno
+      set upper_smoothing_radius [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "lower_smoothing_radius" } {
+      incr argno
+      set lower_smoothing_radius [ expr 1.0 * [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    if { [ lindex $args $argno ] == "res" } {
+      incr argno
+      set res [ expr 1.0* [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
+    puts "did not understand arg [ lindex args $argno ]"
+    error "did not understand arg [ lindex args $argno ]"
+  }
+  set box_l_x [ lindex [ setmd box_l ] 2 ]
+
+  set pi 3.1415
+  set x [ expr $box_l_x/2 - $res/2]
+  set c1x [ expr $box_l_x/2 - $pore_width/2 - $upper_smoothing_radius ]
+  set c2x [ expr $box_l_x/2 - $pore_width/2 + $lower_smoothing_radius ]
+  
+  set z [ expr $pore_mouth - $pore_length ]
+  set c2z [ expr $pore_mouth - $pore_length  + $lower_smoothing_radius ]
+  set c1z [ expr $pore_mouth -  $upper_smoothing_radius ]
+  
+  
+  
+  while { $x > $c2x } {
+  
+  
+  doit $x $z 0 1
+  doit [ expr $box_l_x - $x ] $z  0 1
+    set x [ expr $x - $res ]
+  }
+  
+  set a [ expr ($c2x-$x)/$lower_smoothing_radius ]
+  set x [ expr $c2x - sin($a)*$lower_smoothing_radius ]
+  set z [ expr $c2z - cos($a)*$lower_smoothing_radius ]
+  
+  while { $a < $pi/2 } {
+  
+  
+  doit $x $z [ expr sin($a) ] [ expr cos($a) ]
+  doit [ expr $box_l_x - $x ] $z [ expr -sin($a) ] [ expr cos($a) ]
+    set a [ expr $a + $res/$lower_smoothing_radius ] 
+    set x [ expr $c2x - sin($a) *$lower_smoothing_radius]
+    set z [ expr $c2z - cos($a) *$lower_smoothing_radius]
+  
+  }
+  
+  set x [ expr $box_l_x/2 - $pore_width/2 ]
+  set z [ expr $c2z + $lower_smoothing_radius*sin($a - $pi/2) ]
+  
+  while { $z < $c1z } {
+  
+    doit $x $z 1 0
+    doit [ expr $box_l_x - $x ] $z -1 0
+    set z [ expr $z + $res ] 
+  }
+  set a [ expr ($z - $c1z)/$upper_smoothing_radius ]
+  set x [ expr $c1x + cos($a)*$upper_smoothing_radius ]
+  set z [ expr $c1z + sin($a)*$upper_smoothing_radius ]
+  
+  while { $a < $pi/2 } {
+  doit $x $z [ expr cos($a) ] [ expr sin($a) ]  
+  doit [ expr $box_l_x - $x ] $z [ expr -cos($a) ] [ expr sin($a) ]  
+  
+    set a [ expr $a + $res/$upper_smoothing_radius ] 
+    set x [ expr $c1x + cos($a)*$upper_smoothing_radius ]
+    set z [ expr $c1z + sin($a)*$upper_smoothing_radius ]
+  }
+  set z $pore_mouth
+  while { $x > 0 } {
+  doit $x $z 0 1
+  doit [ expr $box_l_x - $x ] $z 0 1
+  
+    set x [ expr $x - $res ]
+  }
+  
+  set x [ expr $box_l_x/2 - $res/2]
+  set z [ expr $pore_mouth + $channel_width ]
+  while { $x > 0 } { 
+    doit $x $z 0 -1
+    doit [expr $box_l_x - $x ] $z 0 -1
+  
+    set x [ expr $x - $res ]
+  }
+}
+
+
+
+
+
+
 
 proc dielectric { args } {
   if { [ llength $args ] == 0 } {
@@ -760,4 +918,8 @@ proc dielectric { args } {
   if { [ lindex $args 0 ] == "pore" } { 
     return [ eval dielectric_pore $args1 ]
   }
+  if { [ lindex $args 0 ] == "slitpore" } { 
+    return [ eval dielectric_slitpore $args1 ]
+  }
+  error "unable to understand argument given to dielectric"
 }

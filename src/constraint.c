@@ -1358,6 +1358,24 @@ void add_constraints_forces(Particle *p1)
       }
       }
       break;
+    case CONSTRAINT_SLITPORE: 
+      if(checkIfInteraction(ia_params)) {
+	calculate_slitpore_dist(p1, folded_pos, &constraints[n].part_rep, &constraints[n].c.slitpore, &dist, vec); 
+	if ( dist >= 0 ) {
+	  calc_non_bonded_pair_force(p1, &constraints[n].part_rep,
+				     ia_params,vec,dist,dist*dist, force,
+				     torque1, torque2);
+	}
+	else {
+    if(constraints[n].c.pore.reflecting){
+      reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
+    } else {
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	  ERROR_SPRINTF(errtxt, "{063 pore constraint %d violated by particle %d} ", n, p1->p.identity);
+        }
+      }
+      }
+      break;
 	
       /* electrostatic "constraints" */
     case CONSTRAINT_ROD:
@@ -1567,5 +1585,102 @@ double add_constraints_energy(Particle *p1)
   return 0.;
 }
 
+void calculate_slitpore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_slitpore *c, double *dist, double *vec) {
+  // the left circles
+  double box_l_x = box_l[0];
+  double c11[2] = { box_l_x/2-c->pore_width/2-c->upper_smoothing_radius, c->pore_mouth - c->upper_smoothing_radius };
+  double c12[2] = { box_l_x/2-c->pore_width/2+c->lower_smoothing_radius, c->pore_mouth - c->pore_length  + c->lower_smoothing_radius };
+  // the right circles
+  double c21[2] = { box_l_x/2+c->pore_width/2+c->upper_smoothing_radius, c->pore_mouth - c->upper_smoothing_radius };
+  double c22[2] = { box_l_x/2+c->pore_width/2-c->lower_smoothing_radius, c->pore_mouth - c->pore_length  + c->lower_smoothing_radius };
+
+//  printf("c11 %f %f\n", c11[0], c11[1]);
+//  printf("c12 %f %f\n", c12[0], c12[1]);
+//  printf("c21 %f %f\n", c21[0], c21[1]);
+//  printf("c22 %f %f\n", c22[0], c22[1]);
+
+
+  if (ppos[2] > c->pore_mouth + c->channel_width/2) {
+//    printf("upper wall\n");
+    // Feel the upper wall
+    *dist = c->pore_mouth + c->channel_width - ppos[2];
+    vec[0] = vec[1] = 0;
+    vec[2] = -*dist;
+    return;
+  }
+
+  if (ppos[0]<c11[0] || ppos[0] > c21[0]) {
+    // Feel the lower wall of the channel
+//    printf("lower wall\n");
+    *dist = ppos[2] - c->pore_mouth;
+    vec[0] = vec[1] = 0;
+    vec[2] = *dist;
+    return;
+  }
+
+  if (ppos[2] > c11[1]) {
+    // Feel the upper smoothing
+    if (ppos[0] < box_l_x/2) {
+//    printf("upper smoothing left\n");
+      *dist = sqrt( SQR(c11[0] - ppos[0]) + SQR(c11[1] - ppos[2])) - c->upper_smoothing_radius;
+      vec[0] = -( c11[0] - ppos[0] ) * (*dist)/(*dist+c->upper_smoothing_radius);
+      vec[1] = 0;
+      vec[2] = -( c11[1] - ppos[2] ) * (*dist)/(*dist+c->upper_smoothing_radius);
+      return;
+    } else {
+//    printf("upper smoothing right\n");
+      *dist = sqrt( SQR(c21[0] - ppos[0]) + SQR(c21[1] - ppos[2])) - c->upper_smoothing_radius;
+      vec[0] = -( c21[0] - ppos[0] ) * (*dist)/(*dist+c->upper_smoothing_radius);
+      vec[1] = 0;
+      vec[2] = -( c21[1] - ppos[2] ) * (*dist)/(*dist+c->upper_smoothing_radius);
+      return;
+    }
+  }
+  
+  if (ppos[2] > c12[1]) {
+    // Feel the pore wall
+    if (ppos[0] < box_l_x/2) {
+//    printf("pore left\n");
+      *dist = ppos[0] - (box_l_x/2-c->pore_width/2);
+      vec[0]=*dist;
+      vec[1]=vec[2]=0;
+      return;
+    } else {
+//    printf("pore right\n");
+      *dist =  (box_l_x/2+c->pore_width/2) - ppos[0];
+      vec[0]=-*dist;
+      vec[1]=vec[2]=0;
+      return;
+    }
+  }
+
+  if (ppos[0]>c12[0] && ppos[0] < c22[0]) {
+//    printf("pore end\n");
+    // Feel the pore end wall
+    *dist = ppos[2] - (c->pore_mouth-c->pore_length);
+    vec[0]=vec[1]=0;
+    vec[2]=*dist;
+    return;
+  }
+  // Else
+  // Feel the lower smoothing
+    if (ppos[0] < box_l_x/2) {
+//    printf("lower smoothing left\n");
+      *dist = -sqrt( SQR(c12[0] - ppos[0]) + SQR(c12[1] - ppos[2])) + c->lower_smoothing_radius;
+      vec[0] = ( c12[0] - ppos[0] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
+      vec[1] = 0;
+      vec[2] = ( c12[1] - ppos[2] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
+      return;
+    } else {
+//    printf("lower smoothing right\n");
+      *dist = -sqrt( SQR(c22[0] - ppos[0]) + SQR(c22[1] - ppos[2])) + c->lower_smoothing_radius;
+      vec[0] = ( c22[0] - ppos[0] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
+      vec[1] = 0;
+      vec[2] = ( c22[1] - ppos[2] ) * (*dist)/(-*dist+c->lower_smoothing_radius);
+      return;
+    }
+
+
+}
 #endif
 
