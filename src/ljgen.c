@@ -68,7 +68,7 @@ int ljgen_set_params(int part_type_a, int part_type_b,
   return ES_OK;
 }
 
-/** calculate lj_capradius from lj_force_cap */
+/** calculate lj_capradius from force_cap */
 void calc_ljgen_cap_radii(double force_cap)
 {
   /* only compute cap radii if not set "individual" */

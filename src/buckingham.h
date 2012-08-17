@@ -35,9 +35,7 @@
 
 /** For warm up integration, the maximum force between any two particles
     interacting via Buckingham potential can be set and this magnitude of max
-    force is stored in buck_force_cap*/
-    /* replaced by global force_cap -- to be removed */
-//extern double buck_force_cap;
+    force is stored in force_cap */
 
 ///
 int buckingham_set_params(int part_type_a, int part_type_b,

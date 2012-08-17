@@ -60,46 +60,12 @@ int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 /// parser for the forcecap
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
-  Tcl_AppendResult(interp, "warning: \"inter ljforcecap\" has been replaced by \"inter forcecap\" and will be removed in some further version.\n", (char *) NULL);
+  if(argc==1){
+  Tcl_AppendResult(interp, "warning: \"inter ljforcecap\" is deprecated "
+                           "and will be removed in some further version. "
+                           "Use \"inter forcecap\" instead.\n", (char *) NULL);
+  }
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
-  
-
-/*
-  char buffer[TCL_DOUBLE_SPACE];
-
-  double ljforcecap;
-  
-  if (argc == 0) {
-    if (force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, force_cap, buffer);
-      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
-  }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual")){
-    ljforcecap = -1.0;
-    CHECK_VALUE(ljforcecap_set_params(ljforcecap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
-   }
-  else if (! ARG0_IS_D(ljforcecap) || ljforcecap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(ljforcecap_set_params(ljforcecap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
-*/
 }
 
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,

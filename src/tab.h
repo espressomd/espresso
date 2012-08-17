@@ -41,7 +41,7 @@
 #ifdef TABULATED
 
 /** For the warmup you can cap any tabulated potential at the value
-    tab_force_cap.  This works for most common potentials where a
+    force_cap.  This works for most common potentials where a
     singularity in the force occurs at small separations.  If you have
     more specific requirements calculate a separate lookup table for
     each stage of the warm up.
@@ -53,8 +53,6 @@
     will still run and a linear extrapolation will be used at small
     separations until the force reaches the capped value or until zero
     separation */
-    /* replaced by global force_cap -- to be removed */
-//extern double tab_force_cap;
 
 /// set parameters for the force capping of tabulated potentials
 int tabforcecap_set_params(double tabforcecap);

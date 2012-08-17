@@ -49,7 +49,7 @@ int tclcommand_inter_parse_forcecap(Tcl_Interp * interp, int argc, char ** argv)
   
   if (ARG0_IS_S("individual")){
     forcecap = -1.0;
-    CHECK_VALUE(ljforcecap_set_params(forcecap),
+    CHECK_VALUE(forcecap_set_params(forcecap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
    }
   else if (! ARG0_IS_D(forcecap) || forcecap < 0) {

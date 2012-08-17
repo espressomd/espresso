@@ -31,8 +31,7 @@
 */
 int ljforcecap_set_params(double ljforcecap)
 {
-/*  if (ljforcecap != -1.0) */
-    mpi_cap_forces(ljforcecap);
+  mpi_cap_forces(ljforcecap);
   
   return ES_OK;
 }
@@ -69,7 +68,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
 /** Calculate lennard Jones force between particle p1 and p2 */
 
 
-/** calculate lj_capradius from lj_force_cap */
+/** calculate lj_capradius from force_cap */
 void calc_lj_cap_radii(double force_cap)
 {
   /* only compute cap radii if not set "individual" */

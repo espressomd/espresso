@@ -37,9 +37,6 @@
 /** For the warmup you can cap the singularity of the Lennard-Jones
     potential at r=0. look into the warmup documentation for more
     details (who wants to wite that?).*/
-    /* replaced by global force_cap -- to be removed */
-//extern double lj_force_cap;
-
 
 /** set the force cap for the LJ interaction.
     @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
@@ -135,8 +132,8 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
   return 0.0;
 }
 
-/** calculate lj_capradius from lj_force_cap */
-void calc_lj_cap_radii(double force_cap);
+/** calculate lj_capradius from force_cap */
+void calc_lj_cap_radii(double forcecap);
 
 #endif /* ifdef LENNARD_JONES */
 #endif

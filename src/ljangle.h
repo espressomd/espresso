@@ -54,7 +54,7 @@
     potential at r=0. look into the warmup documentation for more
     details (who wants to write that?).*/
     /* replaced by global force_cap -- to be removed */
-//extern double ljangle_force_cap;
+//extern double force_cap;
 
 /** set the force cap for the directional LJ interaction.
     @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
@@ -388,7 +388,7 @@ MDINLINE double ljangle_pair_energy(Particle *p1, Particle *p2, IA_parameters *i
 }
 
 
-/** calculate ljangle_capradius from ljangle_force_cap */
+/** calculate ljangle_capradius from force_cap */
 /* This routine does not take the optional 2nd environment into account. */
 void calc_ljangle_cap_radii(double force_cap);
 

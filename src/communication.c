@@ -2004,111 +2004,6 @@ void mpi_random_stat_slave(int pnode, int cnt) {
   }
 }
 
-/*************** REQ_BCAST_LJFORCECAP ************
-void mpi_lj_cap_forces(double fc)
-{
-#ifdef LENNARD_JONES
-  lj_force_cap = fc;
-//  if(! lj_force_cap == -1.0){
-    mpi_call(mpi_lj_cap_forces_slave, 1, 0);
-    mpi_lj_cap_forces_slave(1, 0);
-//  }
-#endif
-}
-
-void mpi_lj_cap_forces_slave(int node, int parm)
-{
-#ifdef LENNARD_JONES
-  MPI_Bcast(&lj_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_lj_cap_radii(lj_force_cap);
-#ifdef LENNARD_JONES_GENERIC
-  calc_ljgen_cap_radii(lj_force_cap);
-#endif
-#ifdef LJCOS2
-  calc_ljcos2_cap_radii(lj_force_cap);
-#endif
-  on_short_range_ia_change();
-#endif
-}
-
-*************** REQ_BCAST_LJANGLEFORCECAP ************
-void mpi_ljangle_cap_forces(double fc)
-{
-#ifdef LJ_ANGLE
-  ljangle_force_cap = fc;
-  mpi_call(mpi_ljangle_cap_forces_slave, 1, 0);
-  mpi_ljangle_cap_forces_slave(1, 0);
-#endif
-}
-
-void mpi_ljangle_cap_forces_slave(int node, int parm)
-{
-#ifdef LJ_ANGLE
-  MPI_Bcast(&ljangle_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_ljangle_cap_radii(ljangle_force_cap);
-  on_short_range_ia_change();
-#endif
-}
-
-*************** REQ_BCAST_MORSEFORCECAP ************
-void mpi_morse_cap_forces(double fc)
-{
-#ifdef MORSE
-  morse_force_cap = fc;
-  mpi_call(mpi_morse_cap_forces_slave, 1, 0);
-  mpi_morse_cap_forces_slave(1, 0);
-#endif
-}
-
-void mpi_morse_cap_forces_slave(int node, int parm)
-{
-#ifdef MORSE
-  MPI_Bcast(&morse_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_morse_cap_radii(morse_force_cap);
-  on_short_range_ia_change();
-#endif
-}
-
-*************** REQ_BCAST_BUCKFORCECAP ************
-void mpi_buck_cap_forces(double fc)
-{
-#ifdef BUCKINGHAM
-  buck_force_cap = fc;
-  mpi_call(mpi_buck_cap_forces_slave, 1, 0);
-  mpi_buck_cap_forces_slave(1, 0);
-#endif
-}
-
-void mpi_buck_cap_forces_slave(int node, int parm)
-{
-#ifdef BUCKINGHAM
-  MPI_Bcast(&buck_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_buck_cap_radii(buck_force_cap);
-  on_short_range_ia_change();
-#endif
-}
-
-*************** REQ_BCAST_TABFORCECAP ************
-void mpi_tab_cap_forces(double fc)
-{
-#ifdef TABULATED
-  tab_force_cap = fc;
-  mpi_call(mpi_tab_cap_forces_slave, 1, 0);
-  mpi_tab_cap_forces_slave(1, 0);
-#endif
-}
-
-void mpi_tab_cap_forces_slave(int node, int parm)
-{
-#ifdef TABULATED
-  MPI_Bcast(&tab_force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  check_tab_forcecap(tab_force_cap);
-  on_short_range_ia_change();
-#endif
-}
-
-**************************************************/
-
 /*************** REQ_BCAST_LJFORCECAP ************/
 /*************** REQ_BCAST_LJANGLEFORCECAP ************/
 /*************** REQ_BCAST_MORSEFORCECAP ************/
@@ -2116,27 +2011,9 @@ void mpi_tab_cap_forces_slave(int node, int parm)
 /*************** REQ_BCAST_TABFORCECAP ************/
 void mpi_cap_forces(double fc)
 {
-int call = 0;
   force_cap = fc;
-#ifdef LENNARD_JONES
-  call = 1;
-#endif
-#ifdef LJ_ANGLE
-  call = 1;
-#endif
-#ifdef MORSE
-  call = 1;
-#endif
-#ifdef BUCKINGHAM
-  call = 1;
-#endif
-#ifdef TABULATED
-  call = 1;
-#endif
-  if(call == 1){
-    mpi_call(mpi_cap_forces_slave, 1, 0);
-    mpi_cap_forces_slave(1, 0);
-  }
+  mpi_call(mpi_cap_forces_slave, 1, 0);
+  mpi_cap_forces_slave(1, 0);
 }
 
 void mpi_cap_forces_slave(int node, int parm)

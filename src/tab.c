@@ -27,11 +27,9 @@
 #ifdef TABULATED
 #include "communication.h"
 
-double tab_force_cap = 0.0;
-
 int tabforcecap_set_params(double tabforcecap)
 {
-  mpi_cap_forces(tab_force_cap);
+  mpi_cap_forces(tabforcecap);
   
   return ES_OK;
 }
@@ -116,7 +114,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
   /* broadcast interaction parameters including force and energy tables*/
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  mpi_cap_forces(tab_force_cap);
+  mpi_cap_forces(force_cap);
   return 0;
 }
 

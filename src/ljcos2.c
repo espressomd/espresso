@@ -60,7 +60,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
   return ES_OK;
 }
 
-/** calculate ljcos2_capradius from ljcos2_force_cap */
+/** calculate ljcos2_capradius from force_cap */
 void calc_ljcos2_cap_radii(double forcecap)
 {
   /* only compute cap radii if not set "individual" */
