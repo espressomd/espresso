@@ -455,6 +455,8 @@ double distto(double p[3], int pid)
   double d[3];
   double mindist;
 
+  updatePartCfg(WITHOUT_BONDS);
+
   /* larger than possible */
   mindist=SQR(box_l[0] + box_l[1] + box_l[2]);
   for (i=0; i<n_total_particles; i++) {
