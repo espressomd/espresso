@@ -1,3 +1,21 @@
+/*
+  Copyright (C) 2011,2012 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "virtual_sites_relative.h"
@@ -7,7 +25,6 @@
 #include "cells.h"
 #include "communication.h" 
 #include "parser.h" 
-
 
 #ifdef COLLISION_DETECTION
 
@@ -81,32 +98,37 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
    Tcl_AppendResult(interp, "Need a ditance, two bond types, and a particle type as args.", (char*) NULL);
    return TCL_ERROR;
   }
+
   double d;
   if (!ARG_IS_D(2,d))
   {
    Tcl_AppendResult(interp, "Need a ditance as 1st arg.", (char*) NULL);
    return TCL_ERROR;
   }
+
   int bond1,bond2,t;
   if ((!ARG_IS_I(3,bond1)) || (!ARG_IS_I(4,bond2)) || (!ARG_IS_I(5,t)))
   {
    Tcl_AppendResult(interp, "Need two bond types as 2nd and 3rd and a particle type as 4th argument.", (char*) NULL);
    return TCL_ERROR;
   }
+
   res=collision_detection_set_params(2,d,bond1,bond2,t);
-  if (res==1)
-  {
+  switch (res) {
+  case 1:
    Tcl_AppendResult(interp, "This mode requires the VIRTUAL_SITES_RELATIVE feature to be comiled in.", (char*) NULL);
    return TCL_ERROR;
-  }
-  if (res==2)
-  {
+  case 2:
    Tcl_AppendResult(interp, "Collision detection only works on a single cpu.", (char*) NULL);
    return TCL_ERROR;
-  }
-  if (res==3)
-  {
+  case 3:
    Tcl_AppendResult(interp, "A bond of the specified type does not exist.", (char*) NULL);
+   return TCL_ERROR;
+  case 4:
+   Tcl_AppendResult(interp, "real particles need a pair bond.", (char*) NULL);
+   return TCL_ERROR;
+  case 5:
+   Tcl_AppendResult(interp, "virtual particles need a pair bond or triple bond.", (char*) NULL);
    return TCL_ERROR;
   }
  }

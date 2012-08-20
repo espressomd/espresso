@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -23,7 +24,7 @@
  *
  *  For more information on cells, see cells.h
  *   */
-#include <tcl.h>
+#include "parser.h"
 #include "domain_decomposition.h"
 #include "layered.h"
 #include "ghosts.h"
@@ -91,6 +92,6 @@ int tclcommand_cellsystem(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "unkown cell structure type \"", argv[1],"\"", (char *)NULL);
     return TCL_ERROR;
   }
-  return mpi_gather_runtime_errors(interp, TCL_OK);
+  return gather_runtime_errors(interp, TCL_OK);
 }
 

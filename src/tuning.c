@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -22,7 +23,6 @@
 */
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <tcl.h>
 #include "utils.h"
 #include "communication.h"
 #include "errorhandling.h"
@@ -42,15 +42,6 @@ double diffTime()
 {
   return 1e-3*(time1.ru_utime.tv_usec - time2.ru_utime.tv_usec) +
     1e3*(time1.ru_utime.tv_sec - time2.ru_utime.tv_sec);
-}
-
-int tclcallback_timings(Tcl_Interp *interp, void *data)
-{
-  if (*(int *)data <= 0)
-    timing_samples = 0;
-  else 
-    timing_samples = *(int *)data;
-  return TCL_OK;
 }
 
 double time_force_calc(int default_samples)

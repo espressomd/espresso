@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -26,71 +27,16 @@
  *  \ref forces.c
 */
 
-#ifdef HERTZIAN
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
 #include "mol_cut.h"
 
-MDINLINE int tclprint_to_result_HertzianIA(Tcl_Interp *interp, int i, int j)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-  IA_parameters *data = get_ia_param(i, j);
+#ifdef HERTZIAN
 
-  Tcl_PrintDouble(interp, data->Hertzian_eps, buffer);
-  Tcl_AppendResult(interp, "hertzian ", buffer, " ", (char *) NULL);
-  Tcl_PrintDouble(interp, data->Hertzian_sig, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
-
-  return TCL_OK;
-}
-
-MDINLINE int hertzian_set_params(int part_type_a, int part_type_b,
-				 double eps, double sig)
-{
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data) return TCL_ERROR;
-  
-  data->Hertzian_eps = eps;
-  data->Hertzian_sig = sig;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return TCL_OK;
-}
-
-MDINLINE int tclcommand_inter_parse_hertzian(Tcl_Interp * interp,
-			     int part_type_a, int part_type_b,
-			     int argc, char ** argv)
-{
-  /* parameters needed for Hertzian */
-  double eps, sig;
-  int change;
-
-  /* get interaction type */
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "Hertzian potential needs 2 parameters: "
-		     "<epsilon> <sigma>", (char *) NULL);
-    return 0;
-  }
-
-  /* copy parameters */
-  if ((! ARG_IS_D(1, eps))   ||
-      (! ARG_IS_D(2, sig))) {
-    Tcl_AppendResult(interp, "Hertzian potential needs 2 parameters: "
-		     "<epsilon> <sigma>", (char *) NULL);
-    return TCL_ERROR;
-  }
-  change = 3;
-  
-  Tcl_ResetResult(interp);
-  if (hertzian_set_params(part_type_a, part_type_b,
-			  eps, sig) == TCL_ERROR) {
-    Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 0;
-  }
-  return change;
-}
-
+///
+int hertzian_set_params(int part_type_a, int part_type_b,
+			double eps, double sig);
 
 /** Calculate Hertzian force between particle p1 and p2 */
 MDINLINE void add_hertzian_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,

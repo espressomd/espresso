@@ -1,6 +1,6 @@
 /*
  Copyright (C) 2010,2011 Florian Fahrenberger
- Copyright (C) 2010,2011 The ESPResSo project
+ Copyright (C) 2010,2011,2012 The ESPResSo project
  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
  
@@ -59,6 +59,8 @@
     Maggs structure. Contains global system information for MEMD algorithm
 */
 typedef struct {
+  int finite_epsilon_flag;
+  double epsilon_infty;
   /** = 1/c^2    speed of light parameter. */
   double f_mass;
   /** inverse of square root of f_mass. */
@@ -93,12 +95,13 @@ extern MAGGS_struct maggs;
 void maggs_init(); /** called from: initialize.c */
 
 /** set the main parameters for the algorithm.
-    @param interp    TCL Interpreter handle
     @param bjerrum   Bjerrum length for the system
     @param f_mass    parameter to tune the speed of light (1/c^2)
     @param mesh      Mesh size in one dimension
+    @param finite_epsilon_flag whether to do epsilon-at-infinity-correction
+    @param epsilon_infty epsilon-at-infinity
  */
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh);
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
 
 /** Propagate the B-field in the system.
     Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.
@@ -119,12 +122,6 @@ int maggs_count_charged_particles();
 
 /** Clean up, free memory. Not used at the moment. */
 void maggs_exit();
-
-/** Print out the results.
-    @return 0 for success, -1 otherwise
-    @param interp TCL Interpreter handle
-*/
-int tclprint_to_result_Maggs(Tcl_Interp *interp);
 
 /*@}*/
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,7 +32,6 @@
 #include "imd.h"
 #include "communication.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
 
@@ -76,6 +75,8 @@ typedef struct {
 
 #define HEADERSIZE 8
 #define IMDVERSION 2
+
+int transfer_rate = 0;
 
 static void swap4(char *data, int ndata) {
   int i;

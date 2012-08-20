@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -34,9 +35,6 @@ extern int timing_samples;
     @param default_samples the number of samples to take if
     \ref timing_samples is not set. */
 double time_force_calc(int default_samples);
-
-/** callback for \ref timing_samples */
-int tclcallback_timings(Tcl_Interp *interp, void *data);
 
 /** set a time marker. \ref diffTime always gives the time in ms between
     the last two calls to markTime. */

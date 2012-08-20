@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,14 +24,11 @@
 
 */
 
-#include <tcl.h>
 #include <math.h>
 #include "utils.h"
 #include "particle_data.h"
-#include "parser.h"
 #include "random.h"
 #include "global.h"
-#include "communication.h"
 #include "integrate.h"
 #include "cells.h"
 #include "lb.h"
@@ -158,19 +155,19 @@ MDINLINE void friction_thermo_langevin(Particle *p)
 #endif
     {
 #ifdef LANGEVIN_PER_PARTICLE  
-      if(p->gamma >= 0.) {
-        langevin_pref1_temp = -p->gamma/time_step;
+      if(p->p.gamma >= 0.) {
+        langevin_pref1_temp = -p->p.gamma/time_step;
         
-        if(p->T >= 0.)
-          langevin_pref2_temp = sqrt(24.0*p->T*p->gamma/time_step);
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->p.T*p->p.gamma/time_step);
         else
-          langevin_pref2_temp = sqrt(24.0*temperature*p->gamma/time_step);
+          langevin_pref2_temp = sqrt(24.0*temperature*p->p.gamma/time_step);
         
         p->f.f[j] = langevin_pref1_temp*p->m.v[j]*PMASS(*p) + langevin_pref2_temp*(d_random()-0.5)*massf;
       }
       else {
-        if(p->T >= 0.)
-          langevin_pref2_temp = sqrt(24.0*p->T*langevin_gamma/time_step);
+        if(p->p.T >= 0.)
+          langevin_pref2_temp = sqrt(24.0*p->p.T*langevin_gamma/time_step);
         else          
           langevin_pref2_temp = langevin_pref2;
         

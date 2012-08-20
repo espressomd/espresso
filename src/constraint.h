@@ -31,11 +31,18 @@
 #include "interaction_data.h"
 
 #ifdef CONSTRAINTS
+
+/** number of constraints. */
+extern int n_constraints;
+/** field containing constraints. */
+extern Constraint *constraints;
+
+extern int reflection_happened;
+
 /** Exported functions
  */
-Constraint *generate_constraint();
 
-extern int reflection_happened ;
+Constraint *generate_constraint();
 
 void calculate_wall_dist(Particle *p1, double ppos[3], 
 			 Particle *c_p, Constraint_wall *c, 

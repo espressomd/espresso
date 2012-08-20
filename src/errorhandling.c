@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -20,8 +21,9 @@
 /** \file errorhandling.c
     Implementation of \ref errorhandling.h "errorhandling.h".
 */
-#include <mpi.h>
 #include <string.h>
+#include <stdlib.h>
+#include <signal.h>
 #include "utils.h"
 #include "errorhandling.h"
 #include "communication.h"
@@ -49,4 +51,38 @@ int check_runtime_errors()
   int n_all_error_msg;
   MPI_Allreduce(&n_error_msg, &n_all_error_msg, 1, MPI_INT, MPI_SUM, comm_cart);
   return n_all_error_msg;
+}
+
+void errexit()
+{
+#ifdef FORCE_CORE
+  core();
+#endif
+  exit(1);
+}
+
+static void sigint_handler(int sig) 
+{
+  /* without this exit handler the nodes might exit asynchronously
+   * without calling MPI_Finalize, which may cause MPI to hang
+   * (e.g. this handler makes CTRL-c work properly with poe)
+   *
+   * NOTE: mpirun installs its own handler for SIGINT/SIGTERM
+   *       and takes care of proper cleanup and exit */
+
+  char *errtxt;
+
+  static int numcalls = 0;
+  if (numcalls++ > 0) exit(sig); // catch sig only once
+
+  /* we use runtime_error to indicate that sig was called;
+   * upon next call of mpi_gather_runtime_errors all nodes 
+   * will clean up and exit. */
+  errtxt = runtime_error(64);
+  ERROR_SPRINTF(errtxt, "{000 caught signal %d} ",sig);
+}
+
+void register_sigint_handler()
+{
+  signal(SIGINT, sigint_handler);
 }

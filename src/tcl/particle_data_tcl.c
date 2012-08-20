@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -152,7 +152,7 @@ void tclcommand_part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
 void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   sprintf(buffer,"%i", part->p.isVirtual);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 #endif
 
@@ -349,11 +349,11 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
 {
   if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_PrintDouble(interp, part->l.ext_force[0], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part->l.ext_force[1], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part->l.ext_force[2], buffer);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->l.ext_force[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->l.ext_force[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   else {
     Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
@@ -366,7 +366,9 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
     @param interp   the Tcl interpreter to which result to add to */
 int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 {
-  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  /* print to the buffer AT MOST a double or an integer, plus
+     at most 8 letters (like "{ ")  */
+  char buffer[8 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
 
   if (get_particle_data(part_num, &part) == TCL_ERROR)
@@ -376,25 +378,26 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_AppendResult(interp, " pos ", (char *)NULL);
   tclcommand_part_print_position(&part, buffer, interp);
-  Tcl_AppendResult(interp, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
+  Tcl_AppendResult(interp, " type ", buffer, (char *)NULL);
+
   if (part.p.mol_id > -1) {
-	Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
-  	sprintf(buffer, "%d", part.p.mol_id);
+    sprintf(buffer, "%d", part.p.mol_id);
+    Tcl_AppendResult(interp, " molecule ", buffer, (char *)NULL);
   }
 #ifdef MASS
-  Tcl_AppendResult(interp, buffer, " mass ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.mass, buffer);
+  Tcl_AppendResult(interp, " mass ", buffer, (char *)NULL);
 #endif
 #ifdef ELECTROSTATICS
-  Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.q, buffer);
+  Tcl_AppendResult(interp, " q ", buffer, (char *)NULL);
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  Tcl_AppendResult(interp, buffer, " mu_E ", (char *)NULL);
+  Tcl_AppendResult(interp, " mu_E ", (char *)NULL);
   tclcommand_part_print_mu_E(&part, buffer, interp);
 #endif
-  Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
+  Tcl_AppendResult(interp, " v ", (char *)NULL);
   tclcommand_part_print_v(&part, buffer, interp);
   Tcl_AppendResult(interp, " f ", (char *)NULL);
   tclcommand_part_print_f(&part, buffer, interp);
@@ -418,9 +421,18 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #endif
 
 #ifdef DIPOLES
-  /* print information about dipoles */
+#ifndef ROTATION
+  /* print full information about dipoles, no quaternions to keep
+     the rest */
   Tcl_AppendResult(interp, " dip ", (char *)NULL);
   tclcommand_part_print_dip(&part, buffer, interp);
+#else
+  /* quaternions are set, just put the scalar dipole moment, otherwise
+     reading back fails. */
+  Tcl_PrintDouble(interp, part.p.dipm, buffer);
+  Tcl_AppendResult(interp, " dipm ", buffer, (char *)NULL);
+#endif
+
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -575,8 +587,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip"))
       tclcommand_part_print_dip(&part, buffer, interp);
-    else if (ARG0_IS_S("dipm"))
+    else if (ARG0_IS_S("dipm")) {
       Tcl_PrintDouble(interp, part.p.dipm, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -675,7 +689,7 @@ int tclcommand_part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
     if (! ARG_IS_D(j, pos[j]))
       return TCL_ERROR;
 
-  if (place_particle(part_num, pos) == TCL_ERROR) {
+  if (place_particle(part_num, pos) == ES_PART_ERROR) {
     Tcl_AppendResult(interp, "particle could not be set", (char *) NULL);
 
     return TCL_ERROR;
@@ -1714,7 +1728,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
   mpi_bcast_event(CHECK_PARTICLES);
 #endif
 
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }
 
 

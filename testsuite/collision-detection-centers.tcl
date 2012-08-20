@@ -1,5 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2011,2012 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -25,13 +24,17 @@
 source "tests_common.tcl"
 
 require_feature "COLLISION_DETECTION"
+require_feature "ADRESS" off
 require_max_nodes_per_side {1 1 1}
+
+puts "---------------------------------------------------------------"
+puts "- Testcase collision-detection-centers.tcl running on 1 nodes"
+puts "---------------------------------------------------------------"
 
 setmd box_l 10 10 10
 
 thermostat off
 setmd time_step 0.01
-inter 0 0 lennard-jones 1 1.1 1.1 auto
 inter 0 harmonic 1 1
 setmd skin 0
 part 0 pos 0 0 0 
@@ -48,7 +51,9 @@ if { "[on_collision]" != "off" } {
   error_exit "Disabling collision_detection does not work"
 }
 
+setmd min_global_cut 1.0
 on_collision bind_centers 1.0 0
+
 set res [on_collision]
 if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 0)) } {
   error_exit "Setting collision_detection parameters for bind_centers does not work"
@@ -79,3 +84,5 @@ set bond3 [part 2 print bond]
 if {!((($bond1=="{ {0 1} } ") && ($bond2=="{ } ")) || (($bond2=="{ {0 0} } ") && ($bond1=="{ } "))) } {
  error_exit "Bond between first 2 particles incorrect."
 }
+
+exit 0

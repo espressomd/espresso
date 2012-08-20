@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -105,9 +105,8 @@ Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"indi
 return TCL_ERROR;
 }
 
-CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
-      "If you can read this, you should change it. (Use the source Luke!)");
-return TCL_ERROR;
+  CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
+	      "If you can read this, you should change it. (Use the source Luke!)");
 }
 
 int tclcommand_inter_parse_tab(Tcl_Interp * interp,
@@ -155,6 +154,24 @@ return 0;
 
 }
 return 2;
+}
+
+int tclprint_to_result_tabulated_bondedIA(Tcl_Interp *interp,
+					  Bonded_ia_parameters *params)
+{
+  switch (params->p.tab.type) {
+  case TAB_BOND_LENGTH:
+    Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\"",(char *) NULL);
+    return TCL_OK;
+  case TAB_BOND_ANGLE:
+    Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\"",(char *) NULL);
+    return TCL_OK;
+  case TAB_BOND_DIHEDRAL:
+    Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
+    return TCL_OK;
+  }
+  Tcl_AppendResult(interp, "unknown type of tabulated bonded interaction encountered",(char *) NULL);
+  return TCL_ERROR;
 }
 
 #endif

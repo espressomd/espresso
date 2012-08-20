@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -18,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file uwerr_tcl.c
-    Implementation of \ref uwerr_tcl.h "uwerr_tcl.h".
+    Implements the uwerr command.
 */
 
 #include <stdlib.h>
@@ -784,7 +785,7 @@ int uwerr_read_tcl_double_vector(Tcl_Interp *interp, char * data_in ,
 int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 {
   int i, nrows, ncols, len, plot = 0,
-    col_to_analyze = -1, analyze_col = 0, error = 0,
+    col_to_analyze = -1, analyze_col = 0,
     result = TCL_OK;
   double s_tau = 1.5;
   int * nrep;
@@ -812,7 +813,7 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
   if (!Tcl_GetCommandInfo(interp, argv[3], &cmdInfo)) {
     analyze_col = 1;
     if (Tcl_GetInt(interp, argv[3], &col_to_analyze) == TCL_ERROR) {
-      error = 1;
+      result = TCL_ERROR;
       str = (char *)malloc(TCL_INTEGER_SPACE*sizeof(char));
       sprintf(str, "%d", ncols);
       Tcl_AppendResult(interp, "third argument has to be a function or a ",
@@ -821,9 +822,9 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
     }
   }
   
-  if (!error && analyze_col &&
+  if ((result == TCL_OK) && analyze_col &&
       (col_to_analyze < 1 || col_to_analyze > ncols)) {
-    error = 1;
+    result = TCL_ERROR;
     str = (char *)malloc(TCL_INTEGER_SPACE*sizeof(char));
     sprintf(str, "%d", ncols);
     Tcl_AppendResult(interp, "third argument has to be a function or a ",
@@ -832,30 +833,30 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
   }
 
   /* check for plot as fourth argument */
-  if (argc > 4 && !error) {
+  if (argc > 4 && (result != TCL_OK)) {
     if (!strcmp(argv[4], "plot"))
       plot = 1;
     else {
 
       /* read s_tau if there is a fourth arg */
       if (Tcl_GetDouble(interp, argv[4], &s_tau) == TCL_ERROR) {
-	error = 1;
+	result = TCL_ERROR;
 	Tcl_AppendResult(interp, "fourth argument has to be a double or 'plot'.", (char *)NULL);
       }
 
     }
   }
 
-  if (argc > 5 && ! error)
+  if (argc > 5 && (result == TCL_OK))
     if (!strcmp(argv[argc-1], "plot"))
       plot = 1;
 
-  if (!error && analyze_col) {
+  if ((result == TCL_OK) && analyze_col) {
     result = UWerr(interp, data, nrows, ncols,
 		   col_to_analyze-1, nrep, len, s_tau, plot);
   }
 
-  if (!error && !analyze_col) {
+  if ((result == TCL_OK) && !analyze_col) {
     my_argv = (char**)malloc((argc-3)*sizeof(char*));
     my_argv[0] = argv[3];
     for (i = 0; i < argc-5-plot; ++i)
@@ -871,5 +872,5 @@ int tclcommand_uwerr(ClientData cd, Tcl_Interp *interp, int argc, char *argv[])
 
   free(nrep);
 
-  return error ? TCL_ERROR : TCL_OK;
+  return result;
 }

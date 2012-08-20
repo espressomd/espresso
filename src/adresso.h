@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2008,2009,2010 
+   Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -33,9 +34,8 @@
 */
 
 #include "particle_data.h"
-#include "virtual_sites.h"
 #include "interaction_data.h"
-#include "communication.h"
+#include "virtual_sites.h"
 #include "grid.h"
 
 /** \name Exported Variables */
@@ -51,18 +51,12 @@ extern double adress_vars[7];
 */
 
 #ifdef ADRESS
-// This code requires the "center of mass" implementation of virtual sites
-#ifndef VIRTUAL_SITES_COM
- #error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
-#endif
-/* #endif */
 
 /** Calc adress weight function of a vector
     @param x input vector
     @return weight of the vector
 */
 double adress_wf_vector(double x[3]);
-
 
 /** Calc adress weight function of a particle
     @param p input particle
@@ -196,10 +190,6 @@ MDINLINE double adress_dihedral_force_weight(Particle *p1, Particle *p2, Particl
   return weight;
 }
 
-
-
-
-
 #ifdef INTERFACE_CORRECTION
 /** Adress scheme for tabulated forces 
     - useful for particles that DO NOT 
@@ -259,146 +249,8 @@ MDINLINE double correction_function(double x){
   return ic_s;
 }
 
-MDINLINE int adress_tab_set_params(int part_type_a, int part_type_b, char* filename)
-{
-    IA_parameters *data;
-    FILE* fp;
-    //int ic_points;
-    int npoints;
-    double minval,minval2, maxval, maxval2;
-    int i, j, newsize;
-    int token;
-    double dummr;
-    token = 0;
-    
-    data = get_ia_param_safe(part_type_a, part_type_b);
-    
-    if (!data)
-        return 1;
-    
-    if (strlen(filename) > MAXLENGTH_ADRESSTABFILE_NAME-1 )
-        return 2;
-    
-    /*Open the file containing force and energy tables */
-    fp = fopen( filename , "r");
-    if ( !fp )
-        return 3;
-    
-    /*Look for a line starting with # */
-    while ( token != EOF) {
-        token = fgetc(fp);
-        if ( token == 35 ) { break; } // magic number for # symbol
-    }
-    if ( token == EOF ) {
-        fclose(fp);
-        return 4;
-    }
-    
-    /* First read two important parameters we read in the data later*/
-    //fscanf( fp , "%d ", &ic_points);
-    fscanf( fp , "%d ", &npoints);
-    fscanf( fp, "%lf ", &minval);
-    fscanf( fp, "%lf ", &maxval);
-    
-    // Set the newsize to the same as old size : only changed if a new force table is being added.
-    newsize = adress_tab_forces.max;
-    
-    if ( data->ADRESS_TAB_npoints == 0){
-        // A new potential will be added so set the number of points, the startindex and newsize
-        //considering that if ic_points = 0, we have two forces: ex and cg 
-        //we keep the same for npoints
-        data->ADRESS_TAB_npoints    = npoints;
-        data->ADRESS_TAB_startindex = adress_tab_forces.max;
-        newsize += 2*npoints;
-    } else {
-        // We have existing data for this pair of monomer types check array sizing
-        if ( data->ADRESS_TAB_npoints != npoints ) {
-            fclose(fp);
-            return 5;
-        }
-    }
-    
-    /* Update parameters */
-    data->ADRESS_TAB_maxval    = maxval;
-    data->ADRESS_TAB_minval    = minval;
-    strcpy(data->ADRESS_TAB_filename,filename);
-    
-    /* Calculate dependent parameters */
-    maxval2 = maxval*maxval;
-    minval2 = minval*minval;
-    data->ADRESS_TAB_maxval2 = maxval2;
-    data->ADRESS_TAB_minval2 = minval2;
-    data->ADRESS_TAB_stepsize = (maxval-minval)/(double)(data->ADRESS_TAB_npoints - 1);
-    
-    /* Allocate space for new data */
-    realloc_doublelist(&adress_tab_forces,newsize);
-    realloc_doublelist(&adress_tab_energies,newsize);
-    
-    /* Read in the new force and energy table data */
-    for (i =0 ; i < npoints ; i++)
-    {
-        fscanf(fp,"%lf",&dummr);
-        //for (j =0 ; j < ic_points + 2; j++)
-        for (j =0 ; j < 2; j++)
-        {
-            //j = 0 -> CG FORCE
-            //j = 1 -> CG_ic FORCE
-            
-            fscanf(fp,"%lf", &(adress_tab_forces.e[j*npoints+i+data->ADRESS_TAB_startindex]));
-            fscanf(fp,"%lf", &(adress_tab_energies.e[j*npoints+i+data->ADRESS_TAB_startindex]));
-        }
-    }
-    fclose(fp);
-    
-    /* broadcast interaction parameters including force and energy tables*/
-    mpi_bcast_ia_params(part_type_a, part_type_b);
-    
-    //no force cap for the moment!
-    //if (tab_force_cap != -1.0) {
-    //  mpi_tab_cap_forces(tab_force_cap);}
-    return 0;
-}
-
-
-
-MDINLINE int adress_tab_parser(Tcl_Interp * interp,
-                               int part_type_a, int part_type_b,
-                               int argc, char ** argv)
-{
-    char *filename = NULL;
-    
-    /* adress_tab interactions should supply a file name for a file containing
-     both force and energy profiles as well as number of points, max
-     values etc.
-     */
-    if (argc < 2) {
-        Tcl_AppendResult(interp, "tabulated potentials require a filename: "
-                         "<filename>",
-                         (char *) NULL);
-        return 0;
-    }
-    
-    /* copy tabulated parameters */
-    filename = argv[1];
-    
-    switch (adress_tab_set_params(part_type_a, part_type_b, filename)) {
-        case 1:
-            Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-            return 0;
-        case 2:
-            Tcl_AppendResult(interp, "the length of the filename must be less than 256 characters,"
-                             "but is \"", filename, "\"", (char *)NULL);
-            return 0;
-        case 3:
-            Tcl_AppendResult(interp, "cannot open \"", filename, "\"", (char *)NULL);
-            return 0;
-        case 4:
-            Tcl_AppendResult(interp, "attempt to read file \"", filename,
-                             "\" failed, could not find start the start token <#>", (char *)NULL);
-            return 0;
-    }
-    return 2;
-}
+///
+int adress_tab_set_params(int part_type_a, int part_type_b, char* filename);
 
 /** Adds force in an Adress way. Also useful for virial calculations */
 MDINLINE void add_adress_tab_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -535,93 +387,8 @@ MDINLINE double adress_dw_dir(double pos[3], double dir[3]){
   }
 }
 
-MDINLINE int tf_set_params(int part_type, double prefactor, char * filename){
-  TF_parameters *data;
-  FILE *fp;
-  int npoints;
-  double minval, maxval;
-  int i, newsize;
-  int token = 0;
-  double dummr;
-  
-  make_particle_type_exist(part_type);
-  data = get_tf_param(part_type);
-  if (!data)
-    return 1;
-  
-  if (strlen(filename) > MAXLENGTH_TABFILE_NAME-1 )
-    return 2;
-  
-  /*Open the file containing force and energy tables */
-  fp = fopen( filename , "r");
-  if ( !fp )
-    return 3;
-  
-  /*Look for a line starting with # */
-  while ( token != EOF) {
-    token = fgetc(fp);
-    if ( token == 35 ) { break; } // magic number for # symbol
-  }
-  if ( token == EOF ) {
-    fclose(fp);
-    return 4;
-  }
-  
-  /* First read two important parameters we read in the data later*/
-  if (fscanf( fp , "%d ", &npoints) != 1 ||
-      fscanf( fp, "%lf ", &minval) != 1 ||
-      fscanf( fp, "%lf ", &maxval) != 1)
-    return 5;
-  // Set the newsize to the same as old size : only changed if a new force table is being added.
-  newsize = thermodynamic_forces.max;
-  if ( data->TF_TAB_npoints == 0){
-    // A new potential will be added so set the number of points, the startindex and newsize
-    data->TF_TAB_npoints = npoints;
-    data->TF_TAB_startindex = thermodynamic_forces.max;
-    newsize += npoints;
-  } else {
-    // We have existing data for this pair of monomer type check array sizing
-    if ( data->TF_TAB_npoints != npoints ) {
-      fclose(fp);
-      return 5;
-    }
-  }
-  
-  /* Update parameters */
-  data->TF_TAB_maxval = maxval;
-  data->TF_TAB_minval = minval;
-  strcpy(data->TF_TAB_filename, filename);
-  data->TF_prefactor = prefactor;
-  
-  data->TF_TAB_stepsize = (maxval-minval)/(double)(data->TF_TAB_npoints - 1);
-  
-  /* Allocate space for new data */
-  realloc_doublelist(&thermodynamic_forces, newsize);
-  realloc_doublelist(&thermodynamic_f_energies, newsize);
-  
-  /* Read in the new force and energy table data */
-  for (i = 0 ; i < npoints ; i++){
-    if (fscanf(fp, "%lf", &dummr) != 1 ||
-	fscanf(fp, "%lf", &(thermodynamic_forces.e[i+data->TF_TAB_startindex])) != 1 ||
-	fscanf(fp, "%lf", &(thermodynamic_f_energies.e[i+data->TF_TAB_startindex])) != 1)
-      return 5;
-    if(i==0 && dummr !=0) {
-      fprintf(stderr, "First point of the thermodynamic force has to be zero.\n");
-      errexit();
-    }
-    else if (i== npoints-1 && dummr != 1){
-      fprintf(stderr, "Last point of the thermodynamic force has to be one.\n");
-      errexit();
-    }
-  }
-  
-  fclose(fp);
-  
-  /* broadcast interaction parameters including force and energy tables */
-  mpi_bcast_tf_params(part_type);
-  
-  return TCL_OK;
-}
+///
+int tf_set_params(int part_type, double prefactor, char * filename);
 
 MDINLINE double tf_profile(double x_com, int type, TF_parameters * tf_params){
   double phi, dindex, force, pol;

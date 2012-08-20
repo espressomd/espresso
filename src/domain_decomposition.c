@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -97,12 +97,11 @@ double max_skin   = 0.0;
 void dd_create_cell_grid()
 {
   int i,n_local_cells,new_cells,min_ind;
-  double cell_range[3], min_box_l, min_size, scale, volume;
+  double cell_range[3], min_size, scale, volume;
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",this_node,max_range));
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",this_node,my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]));
   
   /* initialize */
-  min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
   cell_range[0]=cell_range[1]=cell_range[2] = max_range;
 
   if (max_range < ROUND_ERROR_PREC*box_l[0]) {
@@ -123,7 +122,7 @@ void dd_create_cell_grid()
 	/* ok, too many cells for this direction, set to minimum */
 	dd.cell_grid[i] = (int)floor(local_box_l[i]/max_range);
 	if ( dd.cell_grid[i] < 1 ) {
-	  char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+	  char *error_msg = runtime_error(ES_INTEGER_SPACE + 2*ES_DOUBLE_SPACE + 128);
 	  ERROR_SPRINTF(error_msg, "{002 interaction range %g in direction %d is larger than the local box size %g} ",
 			max_range, i, local_box_l[i]);
 	  dd.cell_grid[i] = 1;
@@ -160,7 +159,7 @@ void dd_create_cell_grid()
 
     /* sanity check */
     if (n_local_cells < min_num_cells) {
-      char *error_msg = runtime_error(TCL_INTEGER_SPACE + 2*TCL_DOUBLE_SPACE + 128);
+      char *error_msg = runtime_error(ES_INTEGER_SPACE + 2*ES_DOUBLE_SPACE + 128);
       ERROR_SPRINTF(error_msg, "{001 number of cells %d is smaller than minimum %d (interaction range too large or min_num_cells too large)} ",
 		    n_local_cells, min_num_cells);
     }
@@ -537,7 +536,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = 1;
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos < -ROUND_ERROR_PREC*box_l[i]) {
-	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_DOUBLE_SPACE);
 	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
 #endif
@@ -546,7 +545,7 @@ Cell *dd_position_to_cell(double pos[3])
       cpos[i] = dd.cell_grid[i];
 #ifdef ADDITIONAL_CHECKS
       if (PERIODIC(i) && lpos > local_box_l[i] + ROUND_ERROR_PREC*box_l[i]) {
-	char *errtext = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtext = runtime_error(128 + 3*ES_DOUBLE_SPACE);
 	ERROR_SPRINTF(errtext, "{005 particle @ (%g, %g, %g) is outside of the allowed cell grid} ", pos[0], pos[1], pos[2]);
       }
 #endif
@@ -611,14 +610,14 @@ void dd_on_geometry_change(int flags) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
-      char *errtext = runtime_error(128 + TCL_INTEGER_SPACE);
+      char *errtext = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtext,"{013 box_l in direction %d is too small} ", i);
     }
 
   /* A full resorting is necessary if the grid has changed. We simply
      don't have anything fast for this case. Probably also not
      necessary. */
-  if (!(flags & CELL_FLAG_GRIDCHANGED)) {
+  if (flags & CELL_FLAG_GRIDCHANGED) {
     CELL_TRACE(fprintf(stderr,"%d: dd_on_geometry_change full redo\n",
 		       this_node));
     cells_re_init(CELL_STRUCTURE_CURRENT);
@@ -1017,10 +1016,10 @@ void calculate_link_cell_energies()
 #ifdef CONSTRAINTS
       add_constraints_energy(&p1[i]);
 #endif
-    }
 
-    if (rebuild_verletlist)
-      memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+      if (rebuild_verletlist)
+        memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+    }
 
     CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
     /* Loop cell neighbors */
@@ -1072,10 +1071,10 @@ void calculate_link_cell_virials(int v_comp)
 #ifdef BOND_ANGLE
       add_three_body_bonded_stress(&p1[i]);
 #endif
-    }
 
-    if (rebuild_verletlist)
-      memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+      if (rebuild_verletlist)
+        memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+    }
 
     CELL_TRACE(fprintf(stderr,"%d: cell %d with %d neighbors\n",this_node,c, dd.cell_inter[c].n_neighbors));
     /* Loop cell neighbors */

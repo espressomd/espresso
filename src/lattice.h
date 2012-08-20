@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -216,6 +217,52 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
   node_index[5] = node_index[4] + 1;
   node_index[6] = node_index[4] + lattice->halo_grid[0];
   node_index[7] = node_index[4] + lattice->halo_grid[0] + 1;
+
+}
+
+/** Map a spatial position to the surrounding lattice sites.
+ *
+ * This function takes a global spatial position and determines the
+ * surrounding elementary cell of the lattice for this position. 
+ * The distance fraction in each direction is also calculated.
+ * <br><em>Remarks:</em>
+ * <ul>
+ * <li>The spatial position is given in global coordinates.</li>
+ * <li>The lattice sites of the elementary cell are returned as local indices</li>
+ * </ul>
+ * \param pos        spatial position (Input)
+ * \param ind        global index of the lower left lattice site (Output)
+ * \param delta      distance fraction of pos from the surrounding
+ *                   elementary cell, 6 directions (Output)
+ * \param tmp_agrid  lattice mesh distance
+ */
+
+MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double delta[6], double tmp_agrid) {
+//not sure why I don't have access to agrid here so I make a temp var and pass it to this function
+  int i;
+  double rel[3];
+  // fold the position onto the local box, note here ind is used as a dummy variable
+	for (i=0;i<3;i++) {
+		pos[i] = pos[i]-0.5*tmp_agrid;
+	}
+	
+  fold_position (pos,ind);
+
+  // convert the position into lower left grid point
+	for (i=0;i<3;i++) {
+		rel[i] = (pos[i])/tmp_agrid;
+	}
+
+  // calculate the index of the position
+  for (i=0;i<3;i++) {
+    ind[i] = floor(rel[i]);
+  }
+
+  // calculate the linear interpolation weighting
+  for (i=0;i<3;i++) {
+    delta[3+i] = rel[i] - ind[i];
+    delta[i] = 1 - delta[3+i];
+  }
 
 }
 

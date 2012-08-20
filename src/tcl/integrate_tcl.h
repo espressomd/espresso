@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -20,9 +20,7 @@
 */
 #ifndef _INTEGRATE_TCL_H
 #define _INTEGRATE_TCL_H
-#include "config.h"
-#include <tcl.h>
-#include "integrate.h"
+#include "parser.h"
 
 /** \name Exported Functions */
 /************************************************************/
@@ -34,21 +32,16 @@
 int tclcommand_integrate(ClientData data, Tcl_Interp *interp,
 	      int argc, char **argv);
 
-/** Calculate maximal interaction range. 
-    Uses \ref calc_maximal_cutoff.
-    \ref max_range  = \ref max_cut + \ref #skin;
+/** Callback for the skin.
  */
 int tclcallback_skin(Tcl_Interp *interp, void *_data);
 
 /** Callback for integration time_step (0.0 <= time_step).
-    \return TCL status.
-*/
+ */
 int tclcallback_time_step(Tcl_Interp *interp, void *_data);
 
 /** Callback for current time in the integration.
-    If no value is set the integration starts at time = 0.0.
-    \return TCL status.
-*/
+ */
 int tclcallback_time(Tcl_Interp *interp, void *_data);
 
 /** Implements the tcl-command 'invalidate_system' which forces a system re-init. 

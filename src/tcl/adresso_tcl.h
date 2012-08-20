@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -31,15 +32,7 @@
     For more detail about the implementation here see:
     - C. Junghans and S. Poblete, Comp. Phys. Comm. 181, 1449, 2010.
 */
-#include "config.h"
-#include <tcl.h>
-#include "particle_data.h"
-
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-extern double adress_vars[7];
-/*@}*/
+#include "parser.h"
 
 /** \name Exported Functions */
 /************************************************************/
@@ -51,17 +44,16 @@ int tclcommand_adress(ClientData data, Tcl_Interp *interp, int argc, char **argv
 int tclcommand_update_adress_weights(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 
 #ifdef ADRESS
-// This code requires the "center of mass" implementation of virtual sites
-#ifndef VIRTUAL_SITES_COM
- #error Adress requires the "center of mass"-implementation  of virtual sites. Please activate it in myconfig.h
-#endif
+
 /* #ifdef THERMODYNAMIC_FORCE */
 int tclcommand_thermodynamic_force_parse_opt(Tcl_Interp * interp, int type, double prefactor, int argc, char ** argv);
 int tclcommand_thermodynamic_force(ClientData _data, Tcl_Interp * interp, int argc, char ** argv);
 /* #endif */
 
-/* #endif */
-
+///
+int adress_tab_parser(Tcl_Interp * interp,
+		      int part_type_a, int part_type_b,
+		      int argc, char ** argv);
 #endif
 /*@}*/
 #endif

@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -52,7 +52,7 @@ if {!$quiet} {
     puts "*                    ============                     *"
     puts "*        A Parallel Molecular Dynamics Program        *"
     puts "*                                                     *"
-    puts "* (c) 2010,2011                                       *"
+    puts "* (c) 2010,2011,2012                                  *"
     puts "* The ESPResSo project                                *"
     puts "*                                                     *"
     puts "* (c) 2002,2003,2004,2005,2006,2007,2008,2009,2010    *"
@@ -60,6 +60,8 @@ if {!$quiet} {
     puts "* Mainz, Germany                                      *"
     puts "*                                                     *"
     puts "*******************************************************"
+    puts ""
+    puts "This is [code_info version]."
     puts ""
     puts "ESPResSo is free software: you can redistribute it and/or modify"
     puts "it under the terms of the GNU General Public License as published by"
@@ -102,6 +104,8 @@ source polymer.tcl
 source statistics.tcl
 source ABHmath.tcl
 source vtf.tcl
+source vtk.tcl
+source dielectrics.tcl
 
 # make available readline if Espresso is interactive
 if {$tcl_interactive} {

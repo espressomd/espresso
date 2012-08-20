@@ -26,14 +26,13 @@
  *  Used for attractive tail/tail interactions in lipid bilayer calculations
  *  \ref forces.c
 */
-
-#include "utils.h"
+#include "ljcos2.h"
 
 #ifdef LJCOS2
 #include <math.h>
 
-#include "ljcos2.h"
-#include "parser.h"
+// we use lj's force capping
+#include "lj.h"
 #include "communication.h"
 
 int ljcos2_set_params(int part_type_a, int part_type_b,
@@ -42,7 +41,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data) return TCL_ERROR;
+  if (!data) return ES_ERROR;
 
   data->LJCOS2_eps    = eps;
   data->LJCOS2_sig    = sig;
@@ -59,7 +58,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
   if (lj_force_cap != -1.0)
     mpi_lj_cap_forces(lj_force_cap);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /** calculate ljcos2_capradius from ljcos2_force_cap */

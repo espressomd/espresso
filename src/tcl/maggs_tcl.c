@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2010,2011 Florian Fahrenberger
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
  
@@ -47,9 +47,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../interaction_data.h"
-#include "../maggs.h"
-#include "../parser.h"
+#include "interaction_data.h"
+#include "maggs.h"
+#include "parser.h"
 
 #ifdef ELECTROSTATICS
 
@@ -62,31 +62,70 @@
 */
 int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
 {
-  int mesh;
-  double f_mass;
+    int mesh;
+    double f_mass;
+    double epsilon = 1.0;
+    int finite_epsilon_flag = 1;
 	
+    if(argc < 2) {
+        Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
+        return TCL_ERROR;
+    }
 	
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
+    if(! ARG_IS_D(0, f_mass))
+        return TCL_ERROR;
 	
-  if(! ARG_IS_D(0, f_mass))
-    return TCL_ERROR;
+    if(! ARG_IS_I(1, mesh)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR;
+    }
 	
-  if(! ARG_IS_I(1, mesh)) {
-    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(argc > 2) {
-    Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
+    if(argc > 4) {
+        Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh> [epsilon <eps>]", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if(argc == 3) {
+        Tcl_AppendResult(interp, "Usage: inter coulomb memd <f_mass> <mesh> [epsilon <eps>]", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if(argc == 4) {
+        if (ARG_IS_S(2, "epsilon")) {
+            if(! (ARG_IS_D(3, epsilon) && epsilon > 0.0)) {
+                Tcl_AppendResult(interp, "epsilon expects a positive double",
+                             (char *) NULL);
+                return TCL_ERROR;
+            }
+        }
+    } else finite_epsilon_flag=0;
+
   coulomb.method = COULOMB_MAGGS;
 	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh);
+  int res = maggs_set_parameters(coulomb.bjerrum, f_mass, mesh,
+                                 finite_epsilon_flag, epsilon);
+  switch (res) {
+  case -1:
+    Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
+    return TCL_ERROR;
+  case -2:
+    Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
+    return TCL_ERROR;
+  case ES_OK:
+    return TCL_OK;
+  }
+  Tcl_AppendResult(interp, "unknown error", (char *) NULL);
+  return TCL_ERROR;
+}
+
+int tclprint_to_result_Maggs(Tcl_Interp *interp)
+{
+  char buffer[TCL_DOUBLE_SPACE];
+	
+  Tcl_PrintDouble(interp, maggs.f_mass, buffer);
+  Tcl_AppendResult(interp, "maggs ", buffer, " ", (char *) NULL);
+  sprintf(buffer,"%d",maggs.mesh);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
+	
+  return TCL_OK;
 }
 
 #endif // ELECTROSTATICS

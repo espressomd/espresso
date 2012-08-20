@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -110,7 +110,7 @@ void map_to_2dgrid() {
   for ( i = 0 ; i < 3 ; i++) {
     if ( mode_grid_3d[i] == 0 ) {
       if (zdir != -1 ) { /* grid normal must be unique */ 
-	char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt, "{029 fft_modes_init: grid dimensions are <%d,%d,%d>, but one and only one must be = 0} ",
 		mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
 	return;
@@ -119,7 +119,7 @@ void map_to_2dgrid() {
       }
     } 
     else if ( mode_grid_3d[i] < 0 ) {
-      char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt, "{030 fft_modes_init: grid dimensions are <%d,%d,%d>, but all must be >= 0} ",
 	      mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
       return;
@@ -131,7 +131,7 @@ void map_to_2dgrid() {
   }
   /* Check that grid normal was found */
   if ( zdir == -1 ) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{031 fft_modes_init: grid dimensions are <%d,%d,%d>, but one and only one must be = 0} ",
 	    mode_grid_3d[0],mode_grid_3d[1],mode_grid_3d[2]);
     return;
@@ -143,7 +143,7 @@ void map_to_2dgrid() {
 
   /* Now that we know the grid normal check that the other two dimensions are equal and multiples of 2 */
   if ( mode_grid_3d[xdir] != mode_grid_3d[ydir] ) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{032 fft_modes_init: grid dimensions are <%d,%d,%d>, but two must be equal and the other 0} ",
 	    mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
     return;
@@ -151,7 +151,7 @@ void map_to_2dgrid() {
 
   if ( (mode_grid_3d[xdir]/2.0 - floor(mode_grid_3d[xdir]/2.0) > MODES2D_NUM_TOL) 
        || (mode_grid_3d[ydir]/2.0 - floor(mode_grid_3d[ydir]/2.0) > MODES2D_NUM_TOL) ) {
-    char *errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+    char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtxt, "{033 fft_modes_init: grid dimensions are <%d,%d,%d>. All non zero values must be integer multiples of 2} ",
 	    mode_grid_3d[xdir],mode_grid_3d[ydir],mode_grid_3d[zdir]);
     return;
@@ -196,7 +196,7 @@ int orient_order(double* result, double* stored_dirs)
   if (!sortPartCfg()) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{035 could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   /* Calculate the reference z position as its mean.*/
@@ -256,7 +256,7 @@ int orient_order(double* result, double* stored_dirs)
   realloc_intlist(&l_orient, 0);
 
   *result = *result/(double)(bilayer_cnt);
-  return TCL_OK;
+  return ES_OK;
 }
 
 
@@ -277,7 +277,7 @@ int orient_order(double* result, double* stored_dirs)
     will not be returned as stray.
  */
 int lipid_orientation( int id, Particle* partCfg , double zref, double director[3], double refdir[3]) {
-  int mol_size, head_id, tail_id, mol_id, mol_type;
+  int mol_size, head_id, tail_id, mol_id;
   int i;
   int tmpxdir,tmpydir,tmpzdir;
   double distance;
@@ -297,13 +297,11 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
 
 
   /* check molecule information exists */
-  if ( n_molecules < 0 ) return (TCL_ERROR);
+  if ( n_molecules < 0 ) return ES_ERROR;
 
   /* Get basic molecule parameters */
   mol_id = partCfg[id].p.mol_id ;
   mol_size = topology[mol_id].part.n;
-  mol_type = topology[mol_id].type;
-
  
   /* If the head and tail id's were not found above then assume the
      head atom is the first and tail is the last in the molecule */
@@ -356,7 +354,7 @@ int get_lipid_orients(IntList* l_orient) {
   if ( xdir + ydir + zdir == -3 || mode_grid_3d[xdir] <= 0 || mode_grid_3d[ydir] <= 0 ) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{036 cannot calculate lipid orientations with uninitialized grid} ");
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   /* Allocate memory for height grid arrays and initialize these arrays */
@@ -421,9 +419,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   /** Output values for the fft */
   static  fftw_complex* result;
 
-  double zref;
-
-  
 /** 
     Every time a change is made to the grid calculate the fftw plan
     for the subsequent fft and destroy any existing plans
@@ -462,8 +457,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
     return -1;
   }
   
-  zref = calc_zref( zdir );
-
   if ( !calc_fluctuations(height_grid, switch_fluc)) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
@@ -723,7 +716,6 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   int* grid_parts;
   int* grid_parts_up;
   int* grid_parts_down;
-  int* number_grid_parts;
   double zreflocal, zref;
   int nup;
   int ndown;
@@ -762,7 +754,6 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   grid_parts_up = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   grid_parts_down = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   grid_parts = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
-  number_grid_parts = malloc(0); // will be redefined later.
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
       height_grid[j+i*mode_grid_3d[xdir]] = 0;

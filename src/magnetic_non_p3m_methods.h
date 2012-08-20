@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -29,8 +29,10 @@
  *  MDDS => Magnetic dipoles direct sum, compute the interactions via direct sum, 
  *
  */
+#include "utils.h"
 
 #ifdef DIPOLES
+#include "particle_data.h"
 
 // Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag);
@@ -40,9 +42,13 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag);
    =============================================================================
 */
 
-/* Core of the method: here you compute all the magnetic forces, torques and the magnetic energy for the whole system*/
+/** Core of the DAWAANR method: here you compute all the magnetic forces, torques and the magnetic energy for the whole system*/
 double dawaanr_calculations(int force_flag, int energy_flag) ;
 
+/** switch on DAWAANR magnetostatics.
+    @return ES_ERROR, if not on a single CPU
+ */
+int dawaanr_set_params();
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS               
@@ -55,6 +61,11 @@ int magnetic_dipolar_direct_sum_sanity_checks();
 /* Core of the method: here you compute all the magnetic forces,torques and the energy for the whole system using direct sum*/
 double  magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag);
 
+/** switch on direct sum magnetostatics.
+    @param n_cut cut off for the explicit summation
+    @return ES_ERROR, if not on a single CPU
+ */
+int mdds_set_params(int n_cut);
 
 #endif /*of ifdef DIPOLES  */
 #endif /* of ifndef  MAG_NON_P3M_H */

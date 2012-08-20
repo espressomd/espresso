@@ -268,18 +268,25 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
 
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. This version of the function
+ * can be called without the position needing to be on the local processor */
+int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
+
+
+/** Calculation of hydrodynamic modes.
+ *
+ *  @param index number of the node to calculate the modes for
+ *  @param mode output pointer to a double[19] 
+ */
+void lb_calc_modes(index_t index, double *mode);
 
 /** Calculate the local fluid density.
  * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param rho local fluid density
+ * @param index the local lattice site (Input).
+ * @param rho   local fluid density
  */
-
-/** Calculation of hydrodynamic modes */
-void lb_calc_modes(index_t index, double *mode);
-
-void lb_check_halo_regions();
-
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
   // unit conversion: mass density
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
@@ -346,9 +353,9 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
 #ifdef EXTERNAL_FORCES
   /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
 #endif
 
 }
@@ -532,9 +539,9 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 
 #ifdef EXTERNAL_FORCES
   /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0];
-  j[1] += 0.5*lbpar.ext_force[1];
-  j[2] += 0.5*lbpar.ext_force[2];
+  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
+  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
 #endif
 
 }

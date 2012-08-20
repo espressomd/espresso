@@ -1,12 +1,25 @@
-#include "particle_data.h"
-#include "interaction_data.h"
-#include "virtual_sites_relative.h"
+/*
+  Copyright (C) 2011,2012 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+
 #include "collision.h"
-#include "virtual_sites.h"
-#include "integrate.h"
 #include "cells.h"
 #include "communication.h" 
-#include "parser.h" 
 
 #ifdef COLLISION_DETECTION
 
@@ -53,6 +66,14 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   // Check if bonded ia exist
   if (((mode>0) && (bond_centers+1>n_bonded_ia)) || ((mode==2) && (bond_vs+1>n_bonded_ia))) 
     return 3;
+
+  if (bonded_ia_params[bond_centers].num != 1)
+    return 4;
+
+  if ((mode ==2) && (
+	bonded_ia_params[bond_vs].num != 1 &&
+	bonded_ia_params[bond_vs].num != 2))
+    return 5;
 
   // Set params
   collision_detection_mode=mode;
@@ -175,7 +196,7 @@ void handle_collisions ()
     {
 
       //	printf("number of collisions in handle collision are %d\n",number_of_collisions);  
-      int bondG[2], i;
+      int bondG[3], i;
 
       if (number_of_collisions > 0) {
 	// Go through the queue
@@ -208,10 +229,24 @@ void handle_collisions ()
 	  (local_particles[max_seen_particle])->p.isVirtual=1;
 	  (local_particles[max_seen_particle])->p.type=collision_vs_particle_type;
   
-	  // Create bond between the virtual particles
-	  bondG[0] =collision_detection_bond_vs;
-	  bondG[1] =max_seen_particle-1;
-	  local_change_bond(max_seen_particle, bondG, 0);
+          switch (bonded_ia_params[collision_detection_bond_vs].num) {
+	  case 1: {
+	    // Create bond between the virtual particles
+	    bondG[0] = collision_detection_bond_vs;
+	    bondG[1] = max_seen_particle-1;
+	    local_change_bond(max_seen_particle, bondG, 0);
+            break;
+          }
+	  case 2: {
+	    // Create 1st bond between the virtual particles
+	    bondG[0] = collision_detection_bond_vs;
+	    bondG[1] = collision_queue[i].pp1;
+	    bondG[2] = collision_queue[i].pp2;
+	    local_change_bond(max_seen_particle,   bondG, 0);
+	    local_change_bond(max_seen_particle-1, bondG, 0);
+	    break;
+          }
+          }
 	}
 
       }

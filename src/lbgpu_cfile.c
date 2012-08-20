@@ -1,18 +1,21 @@
-/* $Id: lbgpu_cfile.c $
- *
- * This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
- * It is therefore subject to the ESPResSo license agreement which you
- * accepted upon receiving the distribution and by which you are
- * legally bound while utilizing this file in any form or way.
- * There is NO WARRANTY, not even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * You should have received a copy of that license along with this
- * program; if not, refer to http://www.espresso.mpg.de/license.html
- * where its current version can be found, or write to
- * Max-Planck-Institute for Polymer Research, Theory Group,
- * PO Box 3148, 55021 Mainz, Germany.
- * Copyright (c) 2002-2007; all rights reserved unless otherwise stated.
- */
+/* 
+   Copyright (C) 2010,2011,2012 The ESPResSo project
+
+   This file is part of ESPResSo.
+  
+   ESPResSo is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
+   ESPResSo is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /** \file lbgpu_cfile.c
  *
@@ -27,7 +30,6 @@
 #include <string.h>
 #include "lbgpu.h"
 #include "utils.h"
-#include "parser.h"
 #include "communication.h"
 #include "thermostat.h"
 #include "grid.h"
@@ -451,97 +453,31 @@ static void mpi_send_forces_slave_lb(){
 }
 /*@}*/
 
-/***********************************************************************/
-/** \name TCL stuff */
-/***********************************************************************/
+int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
+{
+  if ( ind[0] < 0 || ind[0] >=  lbpar_gpu.dim_x ||
+       ind[1] < 0 || ind[1] >= lbpar_gpu.dim_y ||
+       ind[2] < 0 || ind[2] >= lbpar_gpu.dim_z )
+    return ES_ERROR;
 
-#endif /* LB_GPU */
+  unsigned int index =
+    ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
 
-#ifdef LB_GPU
-static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
-  unsigned int index;
-  double f[3];
-  size_t size_of_extforces;
-  int change = 0;
-
-  if ( ind[0] >=  lbpar_gpu.dim_x ||  ind[1] >= lbpar_gpu.dim_y ||  ind[2] >= lbpar_gpu.dim_z ) {
-    Tcl_AppendResult(interp, "position is not in the LB lattice", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  index = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-  while (argc > 0) {
-    if (change==1) {
-      Tcl_ResetResult(interp);
-      Tcl_AppendResult(interp, "Error in lbnode_extforce force. You can only change one field at the same time.", (char *)NULL);
-      return TCL_ERROR;
-    }
-  if(ARG0_IS_S("force")){
-    if (ARG1_IS_D(f[0])) {
-      argc--;
-      argv++;
-    } else return TCL_ERROR;
-    if (ARG1_IS_D(f[1])) { 
-      argc--;
-      argv++;
-    } else return TCL_ERROR;
-    if (ARG1_IS_D(f[2])) {
-      argc--;
-      argv++;
-    } else return TCL_ERROR;
-    change=1;
-  }
-  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
+  size_t  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
   host_extern_nodeforces = realloc(host_extern_nodeforces, size_of_extforces);
- 
+  
   host_extern_nodeforces[n_extern_nodeforces].force[0] = (float)f[0];
   host_extern_nodeforces[n_extern_nodeforces].force[1] = (float)f[1];
   host_extern_nodeforces[n_extern_nodeforces].force[2] = (float)f[2];
-
+  
   host_extern_nodeforces[n_extern_nodeforces].index = index;
   n_extern_nodeforces++;
   
   if(lbpar_gpu.external_force == 0)lbpar_gpu.external_force = 1;
 
-  --argc; ++argv;
-
   lb_init_extern_nodeforces_GPU(n_extern_nodeforces, host_extern_nodeforces, &lbpar_gpu);
-  }
 
-  return TCL_OK;
+  return ES_OK;
 }
 
-/** Parser for the \ref tclcommand_lbnode_extforce_gpu command. Can be used in future to set more values like rho,u e.g.
-*/
-int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-
-  int err=TCL_ERROR;
-  int coord[3];
-
-  --argc; ++argv;
-  
-  if (argc < 3) {
-    Tcl_AppendResult(interp, "too few arguments for lbnode_extforce", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (!ARG_IS_I(0,coord[0]) || !ARG_IS_I(1,coord[1]) || !ARG_IS_I(2,coord[2])) {
-    Tcl_AppendResult(interp, "wrong arguments for lbnode", (char *)NULL);
-    return TCL_ERROR;
-  } 
-  argc-=3; argv+=3;
-
-  if (argc == 0 ) { 
-    Tcl_AppendResult(interp, "lbnode_extforce syntax: lbnode_extforce X Y Z [ print | set ] [ F(X) | F(Y) | F(Z) ]", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if (ARG0_IS_S("set")) 
-    err = lbnode_parse_set(interp, argc-1, argv+1, coord);
-    else {
-    Tcl_AppendResult(interp, "unknown feature \"", argv[0], "\" of lbnode_extforce", (char *)NULL);
-    return  TCL_ERROR;
-    }     
-  return err;
-}
-#endif/* LB_GPU */
+#endif /* LB_GPU */

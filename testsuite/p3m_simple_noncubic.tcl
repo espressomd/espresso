@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -55,16 +55,23 @@ part 3 pos 16 5 5 q -1 v 0 0 0
 # in real space:
 # inter coulomb 1.0 p3m 3 32 5 0.001
 # in k-space:
-inter coulomb 1.0 p3m 0.0 64 5 1.0
-integrate 0
 
-puts [ part 0 print f ]
-set f2 [ lindex [part 0 print f] 0 ]
+if { [catch {
 
-if { abs( $f1 - $f2 )/$f1 < 1e-5 } {
-  puts OK
-} else {
-  error "P3M noncubic test failed"
+    inter coulomb 1.0 p3m 0.0 64 5 1.0
+    integrate 0
+
+    puts [ part 0 print f ]
+    set f2 [ lindex [part 0 print f] 0 ]
+    
+    if { abs( $f1 - $f2 )/$f1 < 1e-5 } {
+	puts OK
+    } else {
+	error "P3M noncubic test failed"
+    }
+
+} res ] } {
+    error_exit $res
 }
 
-integrate 0
+exit 0

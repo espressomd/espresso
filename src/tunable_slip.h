@@ -28,20 +28,14 @@
 */
 
 #include "utils.h"
-#include "particle_data.h"
 #include "interaction_data.h"
+#include "particle_data.h"
 
 #ifdef TUNABLE_SLIP
 
 int tunable_slip_set_params(int part_type_a, int part_type_b,
 			    double temp, double gamma, double r_cut,
 			    double time, double vx, double vy, double vz);
-
-int tclprint_to_result_tunable_slipIA(Tcl_Interp *interp, int i, int j);
-
-int tclcommand_inter_parse_tunable_slip(Tcl_Interp * interp,
-					int part_type_a, int part_type_b,
-					int argc, char ** argv);
 
 void add_tunable_slip_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params, double d[3], double dist, double force[3]);
 

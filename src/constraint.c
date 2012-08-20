@@ -31,7 +31,11 @@
 #define C_GAMMA   0.57721566490153286060651209008
 
 int reflection_happened;
+
 #ifdef CONSTRAINTS
+
+int n_constraints       = 0;
+Constraint *constraints = NULL;
 
 Constraint *generate_constraint()
 {
@@ -42,6 +46,16 @@ Constraint *generate_constraint()
   
   return &constraints[n_constraints-1];
 }
+
+void init_constraint_forces()
+{
+  int n, i;
+  
+  for (n = 0; n < n_constraints; n++)
+    for (i = 0; i < 3; i++)
+      constraints[n].part_rep.f.f[i] = 0;
+}
+
 
 static double sign(double x) {
   if (x > 0)
@@ -875,18 +889,14 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
   double e_z[3], e_r[3];    /* unit vectors in the cylindrical coordinate system */
   /* helper variables, for performance reasons should the be move the the
    * constraint struct*/
-     double slope, average_radius, z_left, z_right;
+     double slope, z_left, z_right;
   /* and another helper that is hopefully optmized out */
      double norm;
      double c1_r, c1_z, c2_r, c2_z;
      double cone_vector_r, cone_vector_z, p1_r, p1_z, dist_vector_z, dist_vector_r, temp;
 
      
-     c->smoothing_radius = 1.;
-
-      
-     slope = (c->rad_right - c->rad_left)/2./c->length;
-     average_radius = 0.5*(c->rad_left + c->rad_right);
+     slope = (c->rad_right - c->rad_left)/2./(c->length-c->smoothing_radius);
 
   /* compute the position relative to the center of the pore */
   for(i=0;i<3;i++) {
@@ -934,7 +944,8 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_left - c1_z ) );
   c2_r = c->rad_left + slope * ( z_right + c->length ) +
       sqrt( c->smoothing_radius * c->smoothing_radius  - SQR( z_right - c2_z ) );
-  slope=(c2_r-c1_r)/(c2_z-c1_z);
+  c1_r = c->rad_left+c->smoothing_radius;
+  c2_r = c->rad_right+c->smoothing_radius;
  
   /* Check if we are in the region of the left wall */
   if (( (r >= c1_r) && (z <= c1_z) ) || ( ( z <= 0 ) && (r>=max(c1_r, c2_r)))) {
@@ -1222,7 +1233,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.wal.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.wal.reflecting);
     } else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{061 wall constraint %d violated by particle %d} ", n, p1->p.identity);
     }
 	}
@@ -1248,7 +1259,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.sph.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.sph.reflecting);
     } else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{062 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
     }
 	}
@@ -1274,7 +1285,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.cyl.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.cyl.reflecting);
     } else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
     }
         }
@@ -1300,7 +1311,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.rhomboid.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.rhomboid.reflecting);
     } else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 rhomboid constraint %d violated by particle %d} ", n, p1->p.identity);
     }
         }
@@ -1323,7 +1334,7 @@ void add_constraints_forces(Particle *p1)
 	  }
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{064 maze constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1341,7 +1352,7 @@ void add_constraints_forces(Particle *p1)
     if(constraints[n].c.pore.reflecting){
       reflect_particle(p1, &(vec[0]), constraints[n].c.pore.reflecting);
     } else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 pore constraint %d violated by particle %d} ", n, p1->p.identity);
         }
       }
@@ -1375,7 +1386,7 @@ void add_constraints_forces(Particle *p1)
 #endif
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{063 plane constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1428,7 +1439,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{065 wall constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1448,7 +1459,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{066 sphere constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1469,7 +1480,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1490,7 +1501,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{067 cylinder constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1510,7 +1521,7 @@ double add_constraints_energy(Particle *p1)
 	  }
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{068 maze constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1525,7 +1536,7 @@ double add_constraints_energy(Particle *p1)
 
 	}
 	else {
-	  errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+	  errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
 	  ERROR_SPRINTF(errtxt, "{067 pore constraint %d violated by particle %d} ", n, p1->p.identity);
 	}
       }
@@ -1556,15 +1567,5 @@ double add_constraints_energy(Particle *p1)
   return 0.;
 }
 
-void init_constraint_forces()
-{
-  int n, i;
-  
-  for (n = 0; n < n_constraints; n++)
-    for (i = 0; i < 3; i++)
-      constraints[n].part_rep.f.f[i] = 0;
-}
 #endif
-
-
 

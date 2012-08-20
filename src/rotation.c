@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -211,33 +212,30 @@ void propagate_omega_quat_particle(Particle* p)
 {
   double lambda;
 
-
-
-	  double Qd[4], Qdd[4], S[3], Wd[3];
+  double Qd[4], Qdd[4], S[3], Wd[3];
 	  
-
-	  define_Qdd(p, Qd, Qdd, S, Wd);
-	  
-	  lambda = 1 - S[0]*time_step_squared_half - sqrt(1 - time_step_squared*(S[0] + time_step*(S[1] + time_step_half/2.*(S[2]-S[0]*S[0]))));
-
-	  for(int j=0; j < 3; j++){
-	    p->m.omega[j]+= time_step_half*Wd[j];
-	  }
-	  ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p[i].m.v[0],p[i].m.v[1],p[i].m.v[2]));
-
-	  p->r.quat[0]+= time_step*(Qd[0] + time_step_half*Qdd[0]) - lambda*p->r.quat[0];
-	  p->r.quat[1]+= time_step*(Qd[1] + time_step_half*Qdd[1]) - lambda*p->r.quat[1];
-	  p->r.quat[2]+= time_step*(Qd[2] + time_step_half*Qdd[2]) - lambda*p->r.quat[2];
-	  p->r.quat[3]+= time_step*(Qd[3] + time_step_half*Qdd[3]) - lambda*p->r.quat[3];
-	  // Update the director
-	  convert_quat_to_quatu(p->r.quat, p->r.quatu);
+  define_Qdd(p, Qd, Qdd, S, Wd);
+  
+  lambda = 1 - S[0]*time_step_squared_half - sqrt(1 - time_step_squared*(S[0] + time_step*(S[1] + time_step_half/2.*(S[2]-S[0]*S[0]))));
+  
+  for(int j=0; j < 3; j++){
+    p->m.omega[j]+= time_step_half*Wd[j];
+  }
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",this_node,p->m.v[0],p->m.v[1],p->m.v[2]));
+  
+  p->r.quat[0]+= time_step*(Qd[0] + time_step_half*Qdd[0]) - lambda*p->r.quat[0];
+  p->r.quat[1]+= time_step*(Qd[1] + time_step_half*Qdd[1]) - lambda*p->r.quat[1];
+  p->r.quat[2]+= time_step*(Qd[2] + time_step_half*Qdd[2]) - lambda*p->r.quat[2];
+  p->r.quat[3]+= time_step*(Qd[3] + time_step_half*Qdd[3]) - lambda*p->r.quat[3];
+  // Update the director
+  convert_quat_to_quatu(p->r.quat, p->r.quatu);
 #ifdef DIPOLES
-	  // When dipoles are enabled, update dipole moment
-	  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
+  // When dipoles are enabled, update dipole moment
+  convert_quatu_to_dip(p->r.quatu, p->p.dipm, p->r.dip);
 #endif
-	
-
-      ONEPART_TRACE(if(p[i].p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p[i].r.p[0],p[i].r.p[1],p[i].r.p[2]));
+  
+  
+  ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",this_node,p->r.p[0],p->r.p[1],p->r.p[2]));
 }
 
 /** convert the torques to the body-fixed frames and propagate angular velocities */

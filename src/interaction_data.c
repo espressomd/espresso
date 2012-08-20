@@ -45,13 +45,12 @@
 #include "hertzian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
-#include "tcl/tab_tcl.h"
+#include "hat.h"
 #include "tab.h"
 #include "overlap.h"
 #include "ljcos.h"
 #include "ljcos2.h"
 #include "gb.h"
-#include "parser.h"
 #include "cells.h"
 #include "comforce.h"
 #include "comfixed.h"
@@ -94,23 +93,14 @@ Reaction_field_params rf_params = { 0.0, 0.0 };
 int n_bonded_ia = 0;
 Bonded_ia_parameters *bonded_ia_params = NULL;
 
+double min_global_cut = 0.0;
+
 double max_cut;
 double max_cut_nonbonded;
 double max_cut_bonded;
 /** maximal cutoff of type-independent short range ia, mainly
     electrostatics and DPD*/
 double max_cut_global;
-
-double lj_force_cap = 0.0;
-double ljangle_force_cap = 0.0;
-double morse_force_cap = 0.0;
-double tab_force_cap = 0.0;
-double buck_force_cap = 0.0;
-
-#ifdef CONSTRAINTS
-int n_constraints       = 0;
-Constraint *constraints = NULL;
-#endif
 
 /** Array containing all tabulated forces*/
 DoubleList tabulated_forces;
@@ -180,17 +170,16 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef LENNARD_JONES
   params->LJ_eps =
     params->LJ_sig =
-    params->LJ_cut =
     params->LJ_shift =
     params->LJ_offset =
     params->LJ_capradius =
     params->LJ_min = 0.0;
+  params->LJ_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
   params->LJGEN_eps =
     params->LJGEN_sig =
-    params->LJGEN_cut =
     params->LJGEN_shift =
     params->LJGEN_offset =
     params->LJGEN_capradius =
@@ -198,36 +187,37 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
     params->LJGEN_b2 = 0.0;
+  params->LJGEN_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LJ_ANGLE
   params->LJANGLE_eps =
     params->LJANGLE_sig =
-    params->LJANGLE_cut =
     params->LJANGLE_bonded1type=
     params->LJANGLE_bonded1pos = 
     params->LJANGLE_bonded1neg = 
     params->LJANGLE_bonded2pos = 
     params->LJANGLE_bonded2neg = 
-    params->LJANGLE_capradius = 0;
-  params->LJANGLE_z0 = 0.;
-  params->LJANGLE_dz = -1.;
-  params->LJANGLE_kappa = 0.;
-  params->LJANGLE_epsprime = 0.;
+    params->LJANGLE_capradius =
+    params->LJANGLE_z0 =
+    params->LJANGLE_kappa =
+    params->LJANGLE_epsprime = 0.0;
+  params->LJANGLE_dz = -1.0;
+  params->LJANGLE_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef SMOOTH_STEP
   params->SmSt_eps =
     params->SmSt_sig =
-    params->SmSt_cut =
     params->SmSt_d =
     params->SmSt_n =
-    params->SmSt_k0 = 0;
+    params->SmSt_k0 = 0.0;
+  params->SmSt_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef HERTZIAN
-  params->Hertzian_eps =
-    params->Hertzian_sig = 0;
+  params->Hertzian_eps = 0.0;
+  params->Hertzian_sig = INACTIVE_CUTOFF;
 #endif
 
 #ifdef BMHTF_NACL
@@ -236,96 +226,87 @@ void initialize_ia_params(IA_parameters *params) {
     params->BMHTF_C =
     params->BMHTF_D =
     params->BMHTF_sig =
-    params->BMHTF_cut =
-    params->BMHTF_computed_shift = 0;
+    params->BMHTF_computed_shift = 0.0;
+  params->BMHTF_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef MORSE
   params->MORSE_eps = 
     params->MORSE_alpha =
     params->MORSE_rmin =
-    params->MORSE_cut = 
     params->MORSE_rest = 
     params->MORSE_capradius = 0;
+  params->MORSE_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef BUCKINGHAM
-    params->BUCK_A =
+  params->BUCK_A =
     params->BUCK_B =
     params->BUCK_C =
     params->BUCK_D =
-    params->BUCK_cut =
     params->BUCK_discont =
     params->BUCK_shift =
-    params->BUCK_capradius = 0;
-    params->BUCK_F1 = 0;
-    params->BUCK_F2 = 0;
+    params->BUCK_capradius =
+    params->BUCK_F1 =
+    params->BUCK_F2 = 0.0;
+  params->BUCK_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef SOFT_SPHERE
   params->soft_a =
     params->soft_n =
-    params->soft_cut =
-    params->soft_offset = 0;
+    params->soft_offset = 0.0;
+  params->soft_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef HAT
+  params->HAT_Fmax =
+    params->HAT_r = 0.0;
 #endif
 
 #ifdef LJCOS
   params->LJCOS_eps =
     params->LJCOS_sig =
-    params->LJCOS_cut =
     params->LJCOS_offset =
     params->LJCOS_alfa =
     params->LJCOS_beta =
-    params->LJCOS_rmin = 0 ;
+    params->LJCOS_rmin = 0.0;
+  params->LJCOS_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef LJCOS2
   params->LJCOS2_eps =
     params->LJCOS2_sig =
-    params->LJCOS2_cut =
     params->LJCOS2_offset =
     params->LJCOS2_w =
     params->LJCOS2_rchange = 
-    params->LJCOS2_capradius = 0 ;
+    params->LJCOS2_capradius = 0.0;
+  params->LJCOS2_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef GAY_BERNE
   params->GB_eps =
     params->GB_sig =
-    params->GB_cut =
     params->GB_k1 =
     params->GB_k2 =
     params->GB_mu =
     params->GB_nu =
     params->GB_chi1 =
-    params->GB_chi2 = 0 ;
+    params->GB_chi2 = 0.0;
+  params->GB_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef TABULATED
-  params->TAB_npoints = 0;
-  params->TAB_startindex = 0;
-  params->TAB_minval = 0.0;
-  params->TAB_minval2 = 0.0;
-  params->TAB_maxval = 0.0;
-  params->TAB_maxval2 = 0.0;
-  params->TAB_stepsize = 0.0;
+  params->TAB_npoints =
+    params->TAB_startindex = 0;
+  params->TAB_minval =
+    params->TAB_stepsize = 0.0;
   strcpy(params->TAB_filename,"");
-#endif
-
-#ifdef COMFORCE
-  params->COMFORCE_flag = 0;
-  params->COMFORCE_dir = 0;
-  params->COMFORCE_force = 0.;
-	params->COMFORCE_fratio = 0.;
-#endif
-
-#ifdef COMFIXED
-  params->COMFIXED_flag = 0;
+  params->TAB_maxval = INACTIVE_CUTOFF;
 #endif
 
 #ifdef INTER_DPD
   params->dpd_gamma = 0.0;
-  params->dpd_r_cut = 0.0;
   params->dpd_wf = 0;
   params->dpd_pref1 = 0.0;
   params->dpd_pref2 = 0.0;
@@ -334,6 +315,40 @@ void initialize_ia_params(IA_parameters *params) {
   params->dpd_wf = 0;
   params->dpd_pref3 = 0;
   params->dpd_pref4 = 0;
+  params->dpd_r_cut = INACTIVE_CUTOFF;
+#endif
+
+#ifdef TUNABLE_SLIP
+  params->TUNABLE_SLIP_temp  = 0.0;
+  params->TUNABLE_SLIP_gamma = 0.0;
+  params->TUNABLE_SLIP_time  = 0.0;
+  params->TUNABLE_SLIP_vx  = 0.0;
+  params->TUNABLE_SLIP_vy  = 0.0;
+  params->TUNABLE_SLIP_vz  = 0.0;
+  params->TUNABLE_SLIP_r_cut = INACTIVE_CUTOFF;
+#endif
+
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
+  //params->ADRESS_IC_npoints = 0;
+  params->ADRESS_TAB_npoints = 0;
+  params->ADRESS_TAB_startindex = 0;
+  params->ADRESS_TAB_minval = 0.0;
+  params->ADRESS_TAB_stepsize = 0.0;
+  strcpy(params->ADRESS_TAB_filename,"");
+  params->ADRESS_TAB_maxval = INACTIVE_CUTOFF;
+#endif
+
+  /* things that are not strictly speaking short-ranged interactions,
+     and do not have a cutoff */
+#ifdef COMFORCE
+  params->COMFORCE_flag = 0;
+  params->COMFORCE_dir = 0;
+  params->COMFORCE_force = 0.;
+  params->COMFORCE_fratio = 0.;
+#endif
+
+#ifdef COMFIXED
+  params->COMFIXED_flag = 0;
 #endif
 
 #ifdef INTER_RF
@@ -345,28 +360,8 @@ void initialize_ia_params(IA_parameters *params) {
   params->mol_cut_cutoff = 0.0;
 #endif
 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-  //params->ADRESS_IC_npoints = 0;
-  params->ADRESS_TAB_npoints = 0;
-  params->ADRESS_TAB_startindex = 0;
-  params->ADRESS_TAB_minval = 0.0;
-  params->ADRESS_TAB_minval2 = 0.0;
-  params->ADRESS_TAB_maxval = 0.0;
-  params->ADRESS_TAB_maxval2 = 0.0;
-  params->ADRESS_TAB_stepsize = 0.0;
-  strcpy(params->ADRESS_TAB_filename,"");
-#endif
-#endif
-
-#ifdef TUNABLE_SLIP
-  params->TUNABLE_SLIP_temp  = 0.0;
-  params->TUNABLE_SLIP_gamma = 0.0;
-  params->TUNABLE_SLIP_r_cut = 0.0;
-  params->TUNABLE_SLIP_time  = 0.0;
-  params->TUNABLE_SLIP_vx  = 0.0;
-  params->TUNABLE_SLIP_vy  = 0.0;
-  params->TUNABLE_SLIP_vz  = 0.0;
+#ifdef REACTIONS
+  params->REACTION_range = 0.0;
 #endif
 }
 
@@ -486,6 +481,12 @@ static void recalc_maximal_cutoff_bonded()
 
 static void recalc_global_maximal_nonbonded_cutoff()
 {
+  /* user defined minimal global cut. This makes sure that data of
+   pairs of particles with a distance smaller than this are always
+   available on the same node (through ghosts). Required for example
+   for the relative virtual sites algorithm. */
+  max_cut_global = min_global_cut;
+
 #ifdef ELECTROSTATICS
   /* Cutoff for the real space electrostatics.
      Note that the box length may have changed,
@@ -524,8 +525,11 @@ static void recalc_global_maximal_nonbonded_cutoff()
   }
 #endif /*ifdef ELECTROSTATICS */
   
-#ifdef DP3M
+#ifdef DIPOLES
   switch (coulomb.Dmethod) {
+#ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
     double r_cut = dp3m.params.r_cut_iL* box_l[0];
@@ -533,8 +537,9 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = r_cut;
     break;
   }
-  }       
 #endif /*ifdef DP3M */
+  }       
+#endif
 
 #ifdef DPD
   if (dpd_r_cut != 0) {
@@ -570,120 +575,110 @@ static void recalc_maximal_cutoff_nonbonded()
       IA_parameters *data = get_ia_param(i, j);
 
 #ifdef LENNARD_JONES
-      if (data->LJ_cut != 0) {
-	if(max_cut_current < (data->LJ_cut+data->LJ_offset) )
-	  max_cut_current = (data->LJ_cut+data->LJ_offset);
-      }
+      if(max_cut_current < (data->LJ_cut+data->LJ_offset))
+	max_cut_current = (data->LJ_cut+data->LJ_offset);
 #endif
 
 #ifdef INTER_DPD
-      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
+      {
 	double max_cut_tmp = (data->dpd_r_cut > data->dpd_tr_cut) ?
 	  data->dpd_r_cut : data->dpd_tr_cut;
-	if(max_cut_current <  max_cut_tmp)
+	if (max_cut_current <  max_cut_tmp)
 	  max_cut_current = max_cut_tmp;
       }
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-      if (data->LJGEN_cut != 0) {
-	if(max_cut_current < (data->LJGEN_cut+data->LJGEN_offset) )
-	  max_cut_current = (data->LJGEN_cut+data->LJGEN_offset);
-      }
+      if (max_cut_current < (data->LJGEN_cut+data->LJGEN_offset))
+	max_cut_current = (data->LJGEN_cut+data->LJGEN_offset);
 #endif
 
 #ifdef LJ_ANGLE
-      if (data->LJANGLE_cut != 0) {
-	if(max_cut_current < (data->LJANGLE_cut) )
-	  max_cut_current = (data->LJANGLE_cut);
-      }
+      if (max_cut_current < (data->LJANGLE_cut))
+	max_cut_current = (data->LJANGLE_cut);
 #endif
 
 #ifdef SMOOTH_STEP
-      if (data->SmSt_cut != 0) {
-	if(max_cut_current < data->SmSt_cut)
-	  max_cut_current = data->SmSt_cut;
-      }
+      if (max_cut_current < data->SmSt_cut)
+	max_cut_current = data->SmSt_cut;
 #endif
 
 #ifdef HERTZIAN
-      if (data->Hertzian_sig != 0) {
-	if(max_cut_current < data->Hertzian_sig)
-	  max_cut_current = data->Hertzian_sig;
-      }
+      if (max_cut_current < data->Hertzian_sig)
+	max_cut_current = data->Hertzian_sig;
 #endif
 
 #ifdef BMHTF_NACL
-      if (data->BMHTF_cut != 0) {
-	if(max_cut_current < data->BMHTF_cut)
-	  max_cut_current = data->BMHTF_cut;
-      }
+      if (max_cut_current < data->BMHTF_cut)
+	max_cut_current = data->BMHTF_cut;
 #endif
 
 #ifdef MORSE
-      if (data->MORSE_cut != 0) {
-	if(max_cut_current < data->MORSE_cut)
-	  max_cut_current = data->MORSE_cut;
-      }
+      if (max_cut_current < data->MORSE_cut)
+	max_cut_current = data->MORSE_cut;
 #endif
 
 #ifdef BUCKINGHAM
-      if (data->BUCK_cut != 0) {
-	if(max_cut_current < data->BUCK_cut)
-	  max_cut_current = data->BUCK_cut;
-      }
+      if (max_cut_current < data->BUCK_cut)
+	max_cut_current = data->BUCK_cut;
 #endif
 
 #ifdef SOFT_SPHERE
-      if (data->soft_cut != 0) {
-	if(max_cut_current < data->soft_cut)
-	  max_cut_current = data->soft_cut;
-      }
+      if (max_cut_current < data->soft_cut)
+	max_cut_current = data->soft_cut;
+#endif
+
+#ifdef HAT
+      if (max_cut_current < data->HAT_r)
+	max_cut_current = data->HAT_r;
 #endif
 
 #ifdef LJCOS
-      if (data->LJCOS_cut != 0) {
+      {
 	double max_cut_tmp = data->LJCOS_cut + data->LJCOS_offset;
-	if(max_cut_current < max_cut_tmp)
+	if (max_cut_current < max_cut_tmp)
 	  max_cut_current = max_cut_tmp;
       }
 #endif
 
 #ifdef LJCOS2
-      if (data->LJCOS2_cut != 0) {
+      {
 	double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
-	if(max_cut_current < max_cut_tmp)
+	if (max_cut_current < max_cut_tmp)
 	  max_cut_current = max_cut_tmp;
       }
 #endif
 
 #ifdef GAY_BERNE
-      if (data->GB_cut != 0) {
-	if(max_cut_current < data->GB_cut)
-	  max_cut_current = data->GB_cut;
-      }
+      if (max_cut_current < data->GB_cut)
+	max_cut_current = data->GB_cut;
 #endif
 
 #ifdef TABULATED
-      if (data->TAB_maxval != 0) {
-	if(max_cut_current < data->TAB_maxval)
-	  max_cut_current = data->TAB_maxval;
-      }
+      if (max_cut_current < data->TAB_maxval)
+	max_cut_current = data->TAB_maxval;
 #endif
 	 
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
-      if (data->ADRESS_TAB_maxval != 0) {
-	if(max_cut_current < data->ADRESS_TAB_maxval)
-	  max_cut_current = data->ADRESS_TAB_maxval;
-      }
-#endif
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
+      if (max_cut_current < data->ADRESS_TAB_maxval)
+	max_cut_current = data->ADRESS_TAB_maxval;
 #endif
 
 #ifdef TUNABLE_SLIP
-      if (data->TUNABLE_SLIP_r_cut != 0) {
-	if(max_cut_current < data->TUNABLE_SLIP_r_cut)
-	  max_cut_current = data->TUNABLE_SLIP_r_cut;
+      if (max_cut_current < data->TUNABLE_SLIP_r_cut)
+	max_cut_current = data->TUNABLE_SLIP_r_cut;
+#endif
+
+#ifdef REACTIONS
+      if (max_cut_current < data->REACTION_range)
+	max_cut_current = data->REACTION_range;
+#endif
+
+#ifdef MOL_CUT
+      if (data->mol_cut_type != 0) {
+	if (max_cut_current < data->mol_cut_cutoff)
+	  max_cut_current = data->mol_cut_cutoff;
+	max_cut_current += 2.0* max_cut_bonded;
       }
 #endif
 
@@ -697,10 +692,6 @@ static void recalc_maximal_cutoff_nonbonded()
       /* take into account any electrostatics */
       if (max_cut_global > max_cut_current)
 	max_cut_current = max_cut_global;
-
-#if defined(MOL_CUT) && !defined(ONE_PROC_ADRESS)
-      max_cut_current += 2.0* max_cut_bonded;
-#endif
 
       data_sym->max_cut =
 	data->max_cut = max_cut_current;
@@ -910,7 +901,7 @@ int check_obs_calc_initialized()
 int coulomb_set_bjerrum(double bjerrum)
 {
   if (bjerrum < 0.0)
-    return TCL_ERROR;
+    return ES_ERROR;
   
   coulomb.bjerrum = bjerrum;
 
@@ -949,7 +940,7 @@ int coulomb_set_bjerrum(double bjerrum)
 
   }
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 
@@ -963,7 +954,7 @@ int coulomb_set_bjerrum(double bjerrum)
 int dipolar_set_Dbjerrum(double bjerrum)
 {
   if (bjerrum < 0.0)
-    return TCL_ERROR;
+    return ES_ERROR;
   
   coulomb.Dbjerrum = bjerrum;
 
@@ -971,6 +962,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
+      // fall through
     case DIPOLAR_P3M:
       coulomb.Dbjerrum = bjerrum;
       dp3m_set_bjerrum();
@@ -984,7 +976,7 @@ int dipolar_set_Dbjerrum(double bjerrum)
 
   }
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif   /* ifdef  DIPOLES */
@@ -1010,7 +1002,7 @@ void recalc_coulomb_prefactor()
 int virtual_set_params(int bond_type)
 {
   if(bond_type < 0)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
@@ -1020,7 +1012,7 @@ int virtual_set_params(int bond_type)
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 #endif

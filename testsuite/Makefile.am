@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -27,8 +28,10 @@ tests = \
 	command_syntax.tcl \
 	constraints.tcl \
 	constraints_reflecting.tcl \
+	correlation.tcl \
 	constraints_rhomboid.tcl \
 	dh.tcl \
+	dielectric.tcl \
 	el2d.tcl \
 	el2d_die.tcl \
 	el2d_nonneutral.tcl \
@@ -36,6 +39,7 @@ tests = \
 	fene.tcl \
 	gb.tcl \
 	harm.tcl \
+	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
@@ -56,6 +60,7 @@ tests = \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	observable.tcl \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
@@ -72,6 +77,7 @@ deactivated_tests =
 
 # add data files for the tests here
 EXTRA_DIST = $(tests) $(deactivated_tests) \
+	configs \
 	tests_common.tcl \
 	analysis_system.data.00.gz analysis_system.data.01.gz \
 	analysis_system.data.02.gz analysis_system.data.03.gz \
@@ -98,7 +104,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	lb_system.data \
 	\
 	pe_micelle.tcl pe_micelle.data \
-	uwerr_test.tcl uwerr_test.data \
+	uwerr.tcl uwerr.data \
 	\
 	gen_fene.tcl gen_harm.tcl \
 	\
@@ -112,7 +118,8 @@ check-local: runtest.sh
 	  @builddir@/runtest.sh $(tests); \
 	fi
 
-CLEANFILES=runtest.log
+CLEANFILES = runtest.log
 
-DISTCLEANFILES=\
-	fftw3_1d_wisdom_*.file
+DISTCLEANFILES = \
+	fftw3_1d_wisdom_*.file \
+	dfftw3_1d_wisdom_*.file

@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -14,8 +15,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-BASENAME=01-lennard_jones
 
+BASENAME=01-lennard_jones
+EXTRA_DIST=$(BASENAME).pdf
+
+if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex
 
 tutorial_FIGURES = \
@@ -30,14 +34,10 @@ tutorial_FILES = \
 	$(tutorial_TEXFILES) \
 	$(tutorial_FIGURES)
 
-EXTRA_DIST = \
-	$(tutorial_FILES) \
-	$(BASENAME).pdf
-
 .PHONY: doc $(BASENAME).pdf
 
-doc: tutorial
-tutorial: $(BASENAME).pdf
+doc: tutorials
+tutorials: $(BASENAME).pdf
 $(BASENAME).pdf: $(tutorial_FILES) ../common/common.tex 
 if HAVE_LATEX
 	sh ../../latexit.sh $(srcdir):$(top_srcdir)/doc/tutorials/common $(BASENAME)
@@ -53,3 +53,4 @@ MOSTLYCLEANFILES = \
 	$(BASENAME).idx $(BASENAME).idx.bak $(BASENAME).ilg $(BASENAME).ind \
 	$(BASENAME).log $(BASENAME).out $(BASENAME).toc \
 	$(BASENAME).blg $(BASENAME).bbl
+endif

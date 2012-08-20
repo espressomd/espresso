@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -24,7 +24,7 @@ source "tests_common.tcl"
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
 require_feature "FFTW"
-require_feature "MOL_CUT" off
+require_feature "ADRESS" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -94,9 +94,9 @@ if { [catch {
 
     set rel_prs_error [expr abs(($curprs - $pressure)/$pressure)]
     puts "p3m-charges: relative pressure deviations: $rel_prs_error"
-#    if { $rel_prs_error > $epsilon } {
-#	error "p3m charges: relative pressure error too large"
-#    }
+    if { $rel_prs_error > $epsilon } {
+	error "p3m charges: relative pressure error too large"
+    }
 
 
     ############## end, here RMS force error for P3M
@@ -126,8 +126,8 @@ if { [catch {
    part deleteall
    inter coulomb 0.0
 
-        
 } res ] } {
     error_exit $res
 }
 
+exit 0

@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,72 +20,21 @@
 */
 #ifndef FENE_H
 #define FENE_H
-#include "errorhandling.h"
-
 /** \file fene.h
  *  Routines to calculate the FENE Energy or/and FENE force 
  *  for a particle pair.
  *  \ref forces.c
-*/
+ */
+
+#include "utils.h"
+#include "interaction_data.h"
+#include "particle_data.h"
+#include "random.h"
 
 /************************************************************/
 
 /// set the parameters for the fene potential
-MDINLINE int fene_set_params(int bond_type, double k, double drmax, double r0)
-{
-  if(bond_type < 0)
-    return TCL_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].p.fene.k = k;
-  bonded_ia_params[bond_type].p.fene.drmax = drmax;
-  bonded_ia_params[bond_type].p.fene.r0 = r0;
-
-  bonded_ia_params[bond_type].p.fene.drmax2 = SQR(bonded_ia_params[bond_type].p.fene.drmax);
-  bonded_ia_params[bond_type].p.fene.drmax2i = 1.0/bonded_ia_params[bond_type].p.fene.drmax2;
-
-  bonded_ia_params[bond_type].type = BONDED_IA_FENE;
-  bonded_ia_params[bond_type].num  = 1;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(bond_type, -1); 
-  
-  return TCL_OK;
-}
-
-/// parse parameters for the fene potential
-MDINLINE int tclcommand_inter_parse_fene(Tcl_Interp *interp, int bond_type, int argc, char **argv)
-{
-  double k, drmax, r0;
-
-  if (argc != 3 && argc != 4) {
-    Tcl_AppendResult(interp, "fene needs 2 or 3 parameters: "
-		     "<k> <drmax> [<r0>]", (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  if ((! ARG_IS_D(1, k)) || (! ARG_IS_D(2, drmax)))
-    {
-      Tcl_AppendResult(interp, "fene needs 2 or 3 DOUBLE parameters: "
-		       "<k> <drmax> [<r0>]", (char *) NULL);
-      return TCL_ERROR;
-    }
-
-  if (argc == 4) {
-    if (! ARG_IS_D(3, r0))
-      {
-	Tcl_AppendResult(interp, "fene needs 2 or 3 DOUBLE parameters: "
-			 "<k> <drmax> [<r0>]", (char *) NULL);
-	return TCL_ERROR;
-      }
-  } else {
-    /* default value for r0 is 0.0. */
-    r0 = 0.0;
-  }
-  
-  CHECK_VALUE(fene_set_params(bond_type, k, drmax, r0), "bond type must be nonnegative");
-}
+int fene_set_params(int bond_type, double k, double drmax, double r0);
 
 /** Computes the FENE pair force and adds this
     force to the particle forces (see \ref interaction_data.c). 
@@ -139,7 +89,7 @@ MDINLINE int fene_pair_energy(Particle *p1, Particle *p2, Bonded_ia_parameters *
 
   /* check bond stretching */
   if(dr >= iaparams->p.fene.drmax) {
-    char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+    char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
     ERROR_SPRINTF(errtext,"{077 FENE bond broken between particles %d and %d} ", p1->p.identity, p2->p.identity); 
     return 1;
   }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -31,6 +31,7 @@
 #include "statistics_molecule.h"
 #include "statistics_cluster_tcl.h"
 #include "statistics_fluid_tcl.h"
+#include "statistics_wallstuff_tcl.h"
 #include "energy.h"
 #include "modes.h"
 #include "pressure_tcl.h"
@@ -45,7 +46,12 @@
 #include "virtual_sites_com_tcl.h"
 #include "initialize.h"
 #include "statistics_chain_tcl.h"
-#include "topology_tcl.h"
+
+/** Set the topology. See \ref topology_tcl.c */
+int tclcommand_analyze_parse_set(Tcl_Interp *interp, int argc, char **argv);
+
+/** write out energy. See \ref energy_tcl.c */
+int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /** Variables for measuring the compressibility from volume fluctuations.
     Will be used by \ref parse_Vkappa exclusively. */
@@ -178,7 +184,6 @@ void tclcommand_analyze_print_vel_distr(Tcl_Interp *interp, int type,int bins,do
  *                                 basic observables parsing
  ****************************************************************************************/
 
-/* TODO: not used anywhere. To be removed? */
 static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[10 + 3*TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
@@ -266,11 +271,9 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
 static int tclcommand_analyze_parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  int i,change ;
+  int i;
   IntList l_orient;
   init_intlist(&l_orient);
-
-  change = 0;
 
   STAT_TRACE(fprintf(stderr,"%d,parsing get_lipid_orients \n",this_node));
   /* Check that the grid has been set */
@@ -302,11 +305,9 @@ static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char *
   STAT_TRACE(fprintf(stderr,"%d,parsing modes2d height grid \n",this_node);)
     /* 'analyze modes2d' */
     char buffer[TCL_DOUBLE_SPACE];
-  int i,j,change ;
+  int i,j;
   fftw_complex* result_ht;
   fftw_complex* result_th;
-
-  change = 0;
 
   /* Check that the grid has been set */
   if ( xdir + ydir + zdir == -3 ) {
@@ -410,11 +411,10 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
   IntList beadtypes;
   double rotation_axis[3];
   double rotation_center[3];
-  int xbins,ybins,thetabins,dobyangle;
+  int xbins,ybins,thetabins;
   double xrange,yrange;
   DoubleList *density_profile = NULL;
   DoubleList *density_map = NULL;
-  dobyangle = 0;
   thetabins = 0;
   init_intlist(&beadtypes);
   alloc_intlist(&beadtypes,1);
@@ -464,7 +464,6 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
       Tcl_AppendResult(interp,"thetabins usage:  analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins] ", (char *)NULL);
       return (TCL_ERROR);
     } else {
-      dobyangle = 1;
       argc -= 1;
       argv += 1;
     }
@@ -1130,7 +1129,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   /* 'analyze find_principal_axis [<type0>]' */
   double MofImatrix[9],eva[3],eve[3];
   char buffer[4*TCL_DOUBLE_SPACE+20];
-  int p1,i,j;
+  int p1,j;
 
   /* parse arguments */
   if (argc != 1) {
@@ -1145,12 +1144,12 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   }
 
   momentofinertiamatrix(p1, MofImatrix);
-  i=calc_eigenvalues_3x3(MofImatrix, eva);
+  calc_eigenvalues_3x3(MofImatrix, eva);
   
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {
-    i=calc_eigenvector_3x3(MofImatrix,eva[j],eve);
+    calc_eigenvector_3x3(MofImatrix,eva[j],eve);
     sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
@@ -1850,6 +1849,36 @@ static int tclcommand_analyze_parse_vanhove(Tcl_Interp *interp, int argc, char *
 
 }
 
+int tclcommand_analyze_current(Tcl_Interp *interp, int argc, char **argv)
+{
+  /* 'analyze current' */
+  /***************************************************************************/
+  char buffer[3*(TCL_DOUBLE_SPACE + 1) + 4];
+  double current[3];
+  for (int c = 0; c < 3; ++c) {
+    current[c] = 0;
+  }
+  
+#ifdef ELECTROSTATICS
+  updatePartCfg(WITHOUT_BONDS);
+  
+  for(int i=0; i<n_total_particles; i++) {
+    double q = partCfg[i].p.q/time_step;
+    
+    for (int c = 0; c < 3; ++c) {
+      current[c] += q*partCfg[i].m.v[c];
+    }
+  }
+  /* if charges are not compiled in, the
+     current is obviously zero */
+#endif
+
+  sprintf(buffer,"%f %f %f",
+	  current[0], current[1], current[2]);
+
+  Tcl_AppendResult(interp, buffer, (char *)NULL); 
+  return TCL_OK;
+}
 
 /****************************************************************************************
  *                                 parser for config storage stuff
@@ -2367,8 +2396,6 @@ static int tclcommand_analyze_parse_and_print_energy_kinetic(Tcl_Interp *interp,
  *                                 main parser for analyze
  ****************************************************************************************/
 
-#include "mystatistics.c"
-
 int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **argv)
 {
   int err = TCL_OK;
@@ -2398,12 +2425,8 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
   REGISTER_ANALYZE_OPTION("fluid", tclcommand_analyze_parse_fluid);
 #endif
   REGISTER_ANALYSIS("get_folded_positions", tclcommand_analyze_parse_get_folded_positions);
-
-  REGISTER_ANALYSIS("wallstuff", parse_wallstuff);
-  REGISTER_ANALYSIS("dipol", parse_dipol);
-  REGISTER_ANALYSIS("current", parse_current);
-  REGISTER_ANALYSIS("sqr", parse_sqr);
-
+  REGISTER_ANALYSIS("wallstuff", tclcommand_analyze_wallstuff);
+  REGISTER_ANALYSIS("current", tclcommand_analyze_current);
 #ifdef MODES
   REGISTER_ANALYZE_OPTION("set_bilayer", tclcommand_analyze_parse_bilayer_set);
   REGISTER_ANALYSIS("modes2d", tclcommand_analyze_parse_modes2d);
@@ -2495,5 +2518,5 @@ int tclcommand_analyze(ClientData data, Tcl_Interp *interp, int argc, char **arg
 		     "\" you requested is not implemented.", (char *)NULL);
     err = (TCL_ERROR);
   }
-  return mpi_gather_runtime_errors(interp, err);
+  return gather_runtime_errors(interp, err);
 }

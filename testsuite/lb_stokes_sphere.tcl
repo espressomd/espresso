@@ -1,4 +1,4 @@
-# Copyright (C) 2011 The ESPResSo project
+# Copyright (C) 2011,2012 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -64,4 +64,4 @@ if { $deviation > 0.2 } {
   error_exit "The deviation from Stokes law larger than expected"
 }
 
-
+exit 0

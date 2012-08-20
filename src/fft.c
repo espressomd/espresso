@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -148,9 +148,9 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     permute_ifield(fft.plan[i].start,3,-(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0]*fft.plan[i].new_mesh[1];
 
-    FFT_TRACE( printf("%d: comm_group_size %d. comm_group( ",this_node ));
-    FFT_TRACE( for(j=0; j< fft_plan[i].g_size; j++) printf("%d "));
-    FFT_TRACE( printf(")\n"));
+    /* FFT_TRACE( printf("%d: comm_group( ",this_node )); */
+    /* FFT_TRACE( for(j=0; j< fft.plan[i].g_size; j++) printf("%d ")); */
+    /* FFT_TRACE( printf(")\n")); */
 
     /* === send/recv block specifications === */
     for(j=0; j<fft.plan[i].g_size; j++) {
@@ -194,7 +194,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     /* DEBUG */
     for(j=0;j<n_nodes;j++) {
       /* MPI_Barrier(comm_cart); */
-      if(j==this_node) FFT_TRACE(fft_print_fft.plan(fft.plan[i]));
+      if(j==this_node) FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
     }
   }
 

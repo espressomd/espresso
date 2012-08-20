@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -18,16 +19,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 /** \file dpd.c
-    Implementation of \ref dpd.h "dpd.h"
+    Implementation of \ref dpd_tcl.h "dpd_tcl.h"
  */
-//#include "dpd_tcl.h"
-#include "dpd.h"
+#include "dpd_tcl.h"
 
 #include "utils.h"
+#include "parser.h"
 #include "thermostat.h"
 #include "interaction_data.h"
 #include "virtual_sites.h"
-
 
 int tclcommand_thermostat_parse_dpd(Tcl_Interp *interp, int argc, char **argv) 
 {
@@ -305,12 +305,12 @@ int tclcommand_inter_parse_inter_dpd(Tcl_Interp * interp,
     Tcl_AppendResult(interp, "inter_dpd needs 6 parameters: "
 		     "<gamma> <r_cut> <wf> <tgamma> <tr_cut> <twf> ",
 		     (char *) NULL);
-    return TCL_ERROR;
+    return 0;
   }
   change = 7;
 	
   if (inter_dpd_set_params(part_type_a, part_type_b,
-			       gamma,r_c,wf,tgamma,tr_c,twf) == TCL_ERROR) {
+			       gamma,r_c,wf,tgamma,tr_c,twf) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }

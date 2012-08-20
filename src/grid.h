@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -43,7 +43,6 @@
  *  For more information on the domain decomposition, see \ref grid.c "grid.c". 
 */
 #include "utils.h"
-#include <tcl.h>
 #include <limits.h>
 #include "communication.h"
 #include "errorhandling.h"
@@ -166,12 +165,6 @@ void calc_2d_grid(int n, int grid[3]);
 */ 
 int map_3don2d_grid(int g3d[3],int g2d[3], int mult[3]);
 
-/** datafield callback for \ref node_grid. */
-int tclcallback_node_grid(Tcl_Interp *interp, void *data);
-
-/** datafield callback for \ref box_l. Sets the box dimensions. */
-int tclcallback_box_l(Tcl_Interp *interp, void *_data);
-
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
@@ -213,7 +206,7 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
       if(pos[dir] < 0 || pos[dir] >= box_l[dir]) {
 	/* slow but safe */
 	if (fabs(pos[dir]*box_l_i[dir]) >= INT_MAX/2) {
-	  char *errtext = runtime_error(128 + TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE);
+	  char *errtext = runtime_error(128 + ES_INTEGER_SPACE + ES_DOUBLE_SPACE);
 	  ERROR_SPRINTF(errtext,"{086 particle coordinate out of range, pos = %g, image box = %d} ", pos[dir], image_box[dir]);
 	  image_box[dir] = 0;
 	  pos[dir] = 0;

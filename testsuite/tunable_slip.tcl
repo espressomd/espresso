@@ -1,6 +1,7 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-#   Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+#   
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -44,11 +45,8 @@ puts "----------------------------------------"
 
 # System parameters 
 set box_l                10.0
-
 set box_x                $box_l
-
 set box_y                $box_l
-
 set box_z                $box_l
 
 # skin depth, not used here
@@ -199,9 +197,7 @@ proc measure_kinetic_energy {} {
     set energy [analyze energy kinetic]
     set E_ref [expr $n_solvent*1.5]
     if {$energy <= $E_ref} {
-	puts "Tunable-slip layer does not work ..."
-	puts "Tunable slip boundaries fail!"
-	exit 1;
+	error "Tunable-slip layer does not work ..."
     }
 }
 
@@ -211,11 +207,17 @@ puts "cells = [setmd cell_grid]"
 puts "max_range = [setmd max_range]"
 puts "n_particles = [setmd n_part]"
 
-for {set step 0} {$step < $int_loops} {incr step} {
-    puts "step $step"
-    integrate $int_steps
+if { [catch {
+
+    for {set step 0} {$step < $int_loops} {incr step} {
+	puts "step $step"
+	integrate $int_steps
+    }
+
+    measure_kinetic_energy
+
+} res ] } {
+    error_exit $res
 }
 
-measure_kinetic_energy
-
-puts "Tunable-slip boundary conditions with constraints are ready..."
+exit 0

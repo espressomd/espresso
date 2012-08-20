@@ -21,8 +21,7 @@
 #ifndef CONSTRAINT_TCL_H
 #define CONSTRAINT_TCL_H
 
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 #ifdef CONSTRAINTS
 

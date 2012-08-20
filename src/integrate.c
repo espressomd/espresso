@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,6 +32,7 @@
 #include <math.h>
 #include "utils.h"
 #include "integrate.h"
+#include "reaction.h"
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "communication.h"
@@ -56,6 +57,7 @@
 #include "lb.h"
 #include "virtual_sites.h"
 #include "adresso.h"
+#include "statistics_correlation.h"
 
 /************************************************
  * DEFINES
@@ -159,6 +161,100 @@ void integrate_vv(int n_steps)
 {
   int i;
 
+#ifdef REACTIONS
+  int c, np, n;
+  Particle * p1, *p2, **pairs;
+  Cell * cell;
+  double dist2, vec21[3], rand;
+
+  if(reaction.rate > 0) {
+    int reactants = 0, products = 0;
+    int tot_reactants = 0, tot_products = 0;
+    double ratexp, back_ratexp;
+
+    ratexp = exp(-time_step*reaction.rate);
+    
+    on_observable_calc();
+
+    for (c = 0; c < local_cells.n; c++) {
+      /* Loop cell neighbors */
+      for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+        pairs = dd.cell_inter[c].nList[n].vList.pair;
+        np = dd.cell_inter[c].nList[n].vList.n;
+        
+        /* verlet list loop */
+        for(i = 0; i < 2 * np; i += 2) {
+          p1 = pairs[i];   //pointer to particle 1
+          p2 = pairs[i+1]; //pointer to particle 2
+          
+          if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
+            get_mi_vector(vec21, p1->r.p, p2->r.p);
+            dist2 = sqrlen(vec21);
+            
+            if(dist2 < reaction.range * reaction.range) {
+           	  rand =d_random();
+           	  
+           		if(rand > ratexp) {
+           		  if(p1->p.type==reaction.reactant_type) {
+						      p1->p.type = reaction.product_type;
+					      }
+					      else {
+						      p2->p.type = reaction.product_type;
+					      }
+              }
+           	}
+          }  
+        }
+      }
+    }
+
+    if (reaction.back_rate < 0) { // we have to determine it dynamically 
+      /* we count now how many reactants and products are in the sim box */
+      for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p1   = cell->part;
+        np  = cell->n;
+        
+        for(i = 0; i < np; i++) {
+          if(p1[i].p.type == reaction.reactant_type)
+            reactants++;
+          else if(p1[i].p.type == reaction.product_type)
+            products++;
+        }	
+      }
+      
+      MPI_Allreduce(&reactants, &tot_reactants, 1, MPI_INT, MPI_SUM, comm_cart);
+      MPI_Allreduce(&products, &tot_products, 1, MPI_INT, MPI_SUM, comm_cart);
+
+      back_ratexp = ratexp * tot_reactants / tot_products ; //with this the asymptotic ratio reactant/product becomes 1/1 and the catalyzer volume only determines the time that it takes to reach this
+    }
+    else { //use the back reaction rate supplied by the user
+  	  back_ratexp = exp(-time_step*reaction.back_rate);
+    }
+    
+    if(back_ratexp < 1 ) { 
+      for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p1   = cell->part;
+        np  = cell->n;
+        
+        for(i = 0; i < np; i++) {
+          if(p1[i].p.type == reaction.product_type) {
+            rand = d_random();
+            
+			      if(rand > back_ratexp) {
+			        p1[i].p.type=reaction.reactant_type;
+			      }
+          }
+        }
+      }
+    }
+
+    on_particle_change();
+
+  }
+#endif /* ifdef REACTIONS */
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -206,7 +302,7 @@ void integrate_vv(int n_steps)
    if (check_runtime_errors()) return;
 #endif
 
-ghost_communicator(&cell_structure.collect_ghost_force_comm);
+   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
 #ifdef ROTATION
     convert_initial_torques();
@@ -548,7 +644,7 @@ void propagate_press_box_pos_and_rescale_npt()
       scal[2] = SQR(box_l[nptiso.non_const_dim])/pow(nptiso.volume,2.0/nptiso.dimension);
       nptiso.volume += nptiso.inv_piston*nptiso.p_diff*0.5*time_step;
       if (nptiso.volume < 0.0) {
-	char *errtxt = runtime_error(128 + 3*TCL_DOUBLE_SPACE);
+	char *errtxt = runtime_error(128 + 3*ES_DOUBLE_SPACE);
         ERROR_SPRINTF(errtxt, "{015 your choice of piston=%g, dt=%g, p_diff=%g just caused the volume to become negative, decrease dt} ",
                 nptiso.piston,time_step,nptiso.p_diff);
 	nptiso.volume = box_l[0]*box_l[1]*box_l[2];

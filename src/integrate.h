@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -19,11 +20,11 @@
 */
 #ifndef INTEGRATE_H
 #define INTEGRATE_H
+
 /** \file integrate.h    Molecular dynamics integrator.
  *
  *  For more information see \ref integrate.c "integrate.c".
-*/   
-#include <tcl.h>
+*/
 
 #define INTEG_METHOD_NPT_ISO   0
 #define INTEG_METHOD_NVT       1
@@ -68,12 +69,6 @@ extern double verlet_reuse;
 /************************************************************/
 /*@{*/
 
-/** Calculate maximal interaction range. 
-    Uses \ref calc_maximal_cutoff.
-    \ref max_range  = \ref max_cut + \ref #skin;
- */
-void integrate_vv_recalc_maxrange();
-
 /** Initialize the used thermodynamic Ensemble (NVT or NPT) */
 void integrate_ensemble_init();
 
@@ -86,9 +81,6 @@ void integrate_vv(int n_steps);
     new time step. */
 void rescale_velocities(double scale); 
 
-/** Callback for setmd skin.
-    \return TCL status.
-*/
 /** local routine of \ref tclcommand_invalidate_system */
 void local_invalidate_system();
 

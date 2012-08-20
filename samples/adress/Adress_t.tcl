@@ -4,8 +4,9 @@
 #                                                                    #
 ######################################################################
 #
-# Copyright (C) 2010 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -22,8 +23,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
-
-
 puts " "
 puts "======================================================="
 puts "=              Script:  Adress_t.tcl                  ="
@@ -40,7 +39,7 @@ source tetrahedral.tcl
 set n_mol 2520
 # System identification: 
 set name  "mono"
-set ident "_adress_$n_mon"
+set ident "_adress_$n_mol"
 set sfx "8d"
 
 # vmd options
@@ -67,7 +66,7 @@ adress set topo $topo_kind width [expr $ex_width*0.5] $hyb_width center x $ex_ce
 #thermodynamic force
 puts "Setting up thermodynamic forces"
 set s_pref 0.0
-#thermodynamic_force 1 "thermo_force.tab" $s_pref
+thermodynamic_force 1 "thermo_force.tab" $s_pref
 puts "Done"
 
 #############################################################

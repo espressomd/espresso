@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -61,6 +61,7 @@
 #include "errorhandling.h"
 #include "molforces.h"
 #include "mdlc_correction.h"
+#include "reaction.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -399,6 +400,11 @@ void mpi_bcast_event_slave(int node, int event)
   case P3M_COUNT_DIPOLES:
     dp3m_count_magnetic_particles();
     break;
+#endif
+
+#ifdef REACTIONS
+  case REACTION:
+     setup_reaction();
 #endif
 
   default:;
@@ -1119,10 +1125,10 @@ void mpi_integrate_slave(int pnode, int task)
 /*************** REQ_BCAST_IA ************/
 void mpi_bcast_ia_params(int i, int j)
 {
-  int tablesize=0;
-
   mpi_call(mpi_bcast_ia_params_slave, i, j);
-  tablesize = tabulated_forces.max;
+#ifdef TABULATED
+  int tablesize = tabulated_forces.max;
+#endif
 #ifdef INTERFACE_CORRECTION
   int adress_tablesize = adress_tab_forces.max;
 #endif
@@ -2000,9 +2006,11 @@ void mpi_random_stat_slave(int pnode, int cnt) {
 /*************** REQ_BCAST_LJFORCECAP ************/
 void mpi_lj_cap_forces(double fc)
 {
+#ifdef LENNARD_JONES
   lj_force_cap = fc;
   mpi_call(mpi_lj_cap_forces_slave, 1, 0);
   mpi_lj_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_lj_cap_forces_slave(int node, int parm)
@@ -2023,9 +2031,11 @@ void mpi_lj_cap_forces_slave(int node, int parm)
 /*************** REQ_BCAST_LJANGLEFORCECAP ************/
 void mpi_ljangle_cap_forces(double fc)
 {
+#ifdef LJ_ANGLE
   ljangle_force_cap = fc;
   mpi_call(mpi_ljangle_cap_forces_slave, 1, 0);
   mpi_ljangle_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_ljangle_cap_forces_slave(int node, int parm)
@@ -2040,9 +2050,11 @@ void mpi_ljangle_cap_forces_slave(int node, int parm)
 /*************** REQ_BCAST_MORSEFORCECAP ************/
 void mpi_morse_cap_forces(double fc)
 {
+#ifdef MORSE
   morse_force_cap = fc;
   mpi_call(mpi_morse_cap_forces_slave, 1, 0);
   mpi_morse_cap_forces_slave(1, 0);
+#endif
 }
 
 void mpi_morse_cap_forces_slave(int node, int parm)
@@ -2334,65 +2346,38 @@ void mpi_bcast_lb_params_slave(int node, int field) {
 
 /******************* REQ_GET_ERRS ********************/
 
-int mpi_gather_runtime_errors(Tcl_Interp *interp, int error_code)
+int mpi_gather_runtime_errors(char **errors)
 {
-  char nr_buf[TCL_INTEGER_SPACE + 3];
-  char *other_error_msg;
-  int *errcnt;
-  int node, n_other_error_msg;
-  
   // Tell other processors to send their erros
   mpi_call(mpi_gather_runtime_errors_slave, -1, 0);
 
-  
-  // If no proessor encountered an error, return
+  // If no processor encountered an error, return
   if (!check_runtime_errors())
-    return error_code;
+    return ES_OK;
 
-  if (error_code != TCL_ERROR)
-    Tcl_ResetResult(interp);
-  else
-    Tcl_AppendResult(interp, " ", (char *) NULL);
-
-  Tcl_AppendResult(interp, "background_errors ", (char *) NULL);
-
-  /* gather the maximum length of the error messages, and allocate transfer space */
-  errcnt = malloc(n_nodes*sizeof(int));
+  // gather the maximum length of the error messages
+  int *errcnt = malloc(n_nodes*sizeof(int));
   MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
-  /* allocate transfer buffer for maximal error message length */
-  n_other_error_msg = n_error_msg;
-  for (node = 1; node < n_nodes; node++)
-    // Has this node error messages
-    if (errcnt[node] > n_other_error_msg)
-      n_other_error_msg = errcnt[node];
-      //  Allocate memory for the error messages
-  other_error_msg = malloc(n_other_error_msg);
 
-  /* first handle node master errors. */
-  if (n_error_msg > 0)
-    Tcl_AppendResult(interp, "0 ", error_msg, (char *) NULL);
-    
-  for (node = 1; node < n_nodes; node++) {
+  for (int node = 0; node < n_nodes; node++) {
     if (errcnt[node] > 0) {
-      MPI_Recv(other_error_msg, errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
-      sprintf(nr_buf, "%d ", node);
+      errors[node] = (char *)malloc(errcnt[node]);
 
-      /* check wether it's the same message as from the master, then just consent */
-      if (error_msg && strcmp(other_error_msg, error_msg) == 0) {
-	Tcl_AppendResult(interp, nr_buf, "<consent> ", (char *) NULL);
-      }
-      else {
-	Tcl_AppendResult(interp, nr_buf, other_error_msg, (char *) NULL);
-      }
+      if (node == 0)
+	strcpy(errors[node], error_msg);
+      else 
+	MPI_Recv(errors[node], errcnt[node], MPI_CHAR, node, 0, comm_cart, MPI_STATUS_IGNORE);
     }
+    else
+      errors[node] = NULL;
   }
 
   /* reset error message on master node */
   error_msg = realloc(error_msg, n_error_msg = 0);
-  free(other_error_msg);
+
   free(errcnt);
 
-  return TCL_ERROR;
+  return ES_ERROR;
 }
 
 void mpi_gather_runtime_errors_slave(int node, int parm)
@@ -2518,9 +2503,7 @@ int mpi_iccp3m_iteration(int dummy)
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
 
-  printf("(%d) performing ICC iteration \n", this_node );
   iccp3m_iteration();
-  printf("(%d) performed ICC iteration \n", this_node );
 
   COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", this_node, dummy));
 
@@ -2534,9 +2517,7 @@ int mpi_iccp3m_iteration(int dummy)
 void mpi_iccp3m_iteration_slave(int dummy, int dummy2)
 {
 #ifdef ELECTROSTATICS
-  printf("(%d) performing ICC iteration \n", this_node );
   iccp3m_iteration();
-  printf("(%d) performed ICC iteration \n", this_node );
   COMM_TRACE(fprintf(stderr, "%d: iccp3m iteration task %d done.\n", dummy, dummy2));
 
   check_runtime_errors();
@@ -2553,9 +2534,7 @@ int mpi_iccp3m_init(int n_induced_charges)
   
   mpi_call(mpi_iccp3m_init_slave, -1, n_induced_charges);
    
-  printf("(%d) broadcasting the ICC configuration\n", this_node);
   bcast_iccp3m_cfg();
-  printf("(%d) broadcasted ICC configuration\n", this_node);
 
   COMM_TRACE(fprintf(stderr, "%d: iccp3m init task %d done.\n", this_node, n_induced_charges));
 
@@ -2576,12 +2555,8 @@ void mpi_iccp3m_init_slave(int node, int dummy)
     iccp3m_initialized=1;
  }
 
-  printf("(%d) recieving the ICC configuration\n", this_node);
-  
   bcast_iccp3m_cfg();
   
-  printf("(%d) recieved ICC configuration\n", this_node);
-
   check_runtime_errors();
 #endif
 }
@@ -2630,33 +2605,36 @@ void mpi_send_fluid_populations_slave(int node, int index) {
 #endif
 }
 
-void mpi_bcast_max_mu_slave(int node, int dummy) {
-#ifdef DIPOLES
-  
-  get_mu_max();
- 
-#endif
-}
+/****************************************************/
 
 void mpi_bcast_max_mu() {
 #ifdef DIPOLES
   mpi_call(mpi_bcast_max_mu_slave, -1, 0);
   
-  get_mu_max();
+  calc_mu_max();
   
 #endif
 }
 
+void mpi_bcast_max_mu_slave(int node, int dummy) {
+#ifdef DIPOLES
+  
+  calc_mu_max();
+ 
+#endif
+}
+
 #ifdef LANGEVIN_PER_PARTICLE
+
 /******************** REQ_SEND_PARTICLE_T ********************/
 void mpi_set_particle_temperature(int pnode, int part, double _T)
 {
-  mpi_call(mpi_set_particle_temperature_slave, pnode, part); //TODO: really?
+  mpi_call(mpi_set_particle_temperature_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local node */
-    p->T = _T;
+    p->p.T = _T;
   }
   else {
     MPI_Send(&_T, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -2675,7 +2653,7 @@ void mpi_set_particle_temperature_slave(int pnode, int part)
     MPI_Status status;
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
-    p->T = s_buf;
+    p->p.T = s_buf;
   }
 
   on_particle_change();
@@ -2690,7 +2668,7 @@ void mpi_set_particle_gamma(int pnode, int part, double gamma)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
     /* here the setting actually happens, if the particle belongs to the local node */
-    p->gamma = gamma;
+    p->p.gamma = gamma;
   }
   else {
     MPI_Send(&gamma, 1, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
@@ -2709,7 +2687,7 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
     MPI_Status status;
     MPI_Recv(&s_buf, 1, MPI_DOUBLE, 0, SOME_TAG, comm_cart, &status);
     /* here the setting happens for nonlocal nodes */
-    p->gamma = s_buf;
+    p->p.gamma = s_buf;
   }
 
   on_particle_change();

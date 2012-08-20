@@ -1,15 +1,20 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-exec $ESPRESSO_SOURCE/Espresso $0 $*
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
-#  This file is part of the ESPResSo distribution (http://www.espresso.mpg.de).
-#  It is therefore subject to the ESPResSo license agreement which you accepted upon receiving the distribution
-#  and by which you are legally bound while utilizing this file in any form or way.
-#  There is NO WARRANTY, not even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-#  You should have received a copy of that license along with this program;
-#  if not, refer to http://www.espresso.mpg.de/license.html where its current version can be found, or
-#  write to Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany.
-#  Copyright (c) 2002-2006; all rights reserved unless otherwise stated.
 #
 #  Offline Analysis for Radial Distribution Function
 #

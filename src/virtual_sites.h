@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,7 +22,6 @@
 #define _VIRTUAL_SITES_H
 
 #include "particle_data.h"
-#include <tcl.h>
 
 /** \file virtual_sites.h
  *  This file contains routine to handle virtual sites

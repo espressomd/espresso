@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -33,6 +33,7 @@
 #include <string.h>
 #include "config.h"
 #include "debug.h"
+#include "errorhandling.h"
 
 /*************************************************************/
 /** \name Mathematical, physical and chemical constants.     */
@@ -46,6 +47,22 @@
 #define wupii  0.56418958354775627928034964498 
 /** Pi to the power 1/3. */
 #define driwu2 1.25992104989487316476721060728 
+
+/// error code if no error occured
+#define ES_OK    0
+/// error code if an error occured
+#define ES_ERROR 1
+
+/** space necessary for an (64-bit) integer with sprintf.
+    Analog to Tcl
+ */
+#define ES_INTEGER_SPACE 24
+/** space necessary for an double with sprintf. Precision
+    is 17 digits, plus sign, dot, e, sign of exponent and
+    3 digits exponent etc. Analog to Tcl
+*/
+#define ES_DOUBLE_SPACE 27
+
 /*@}*/
 
 /************************************************
@@ -75,15 +92,6 @@ typedef struct {
       in the routines specified in list operations ! */
   int max;
 } DoubleList;
-
-
-/*************************************************************/
-/** \name Error catching.                                    */
-/*************************************************************/
-/*@{*/
-/** exit ungracefully, core dump if switched on. Defined in main.c. */
-void errexit();
-/*@}*/
 
 /*************************************************************/
 /** \name Dynamic memory allocation.                         */
@@ -892,12 +900,25 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
 /*@}*/
 
 /*************************************************************/
-/** \name TCL-channel operations.  */
+/** \name String helper functions                            */
 /*************************************************************/
 /*@{*/
 
-/** replaces one of TCLs standart channels with a named pipe */
-int tclcommand_replacestdchannel(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+/** extend a string with another one. Like strcat, just automatically
+    increases the string space */
+MDINLINE char *strcat_alloc(char *left, char *right)
+{
+  if (!left) {
+    char *res = (char *)malloc(strlen(right) + 1);
+    strcpy(res, right);
+    return res;
+  }
+  else {
+    char *res = (char *)realloc(left, strlen(left) + strlen(right) + 1);
+    strcat(res, right);
+    return res;
+  }
+}
 
 /*@}*/
 

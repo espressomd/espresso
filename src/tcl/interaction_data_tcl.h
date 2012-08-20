@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -20,8 +20,7 @@
 */
 #ifndef IA_DATA_TCL_H
 #define IA_DATA_TCL_H
-#include "config.h"
-#include <tcl.h>
+#include "parser.h"
 
 /************************************************
  * exported functions
@@ -38,5 +37,8 @@ int tclcommand_inter(ClientData data, Tcl_Interp *interp,
  */
 int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
 	       int argc, char **argv);
+
+/** datafield callback for \ref min_global_cut. Sets the minimal cell size. */
+int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data);
 
 #endif

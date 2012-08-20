@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -61,41 +61,40 @@
 #include "domain_decomposition.h"
 #include "cells.h"
 #include "integrate.h"
-#include "communication.h"
 #include "verlet.h"
 #include "layered.h"
 #include "global.h"
-#include "communication.h"
 #include "ghosts.h"
 #include "nsquare.h"
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "topology.h"
-#include "forces.h"
 #include "ghosts.h"
 
 #if defined(ELECTROSTATICS)
 
 /* iccp3m data structures*/
 typedef struct {
-  int last_ind_id;                      /* Last induced id (can not be smaller then 2) */
+  int n_ic;                             /* Last induced id (can not be smaller then 2) */
   int num_iteration;                    /* Number of max iterations                    */
   double eout;                          /* Dielectric constant of the bulk             */
   double *areas;                        /* Array of area of the grid elements          */
   double *ein;                          /* Array of dielectric constants at each surface element */
+  double *sigma;                        /* Surface Charge density */
   double convergence;                   /* Convergence criterion                       */
   double *nvectorx,*nvectory,*nvectorz; /* Surface normal vectors                      */
-  double *extx,*exty,*extz;             /* External field                              */
-  int selection;                        /* by default it is not selected, WHO KNOWS WHAT THAT MEANS?*/
+  double extx,exty,extz;             /* External field                              */
   double relax;                         /* relaxation parameter for iterative                       */
-  int update;                           /* iccp3m update interval, currently not used */
-  double *fx,*fy,*fz;                   /* forces iccp3m will use*/ 
   int citeration ;                      /* current number of iterations*/
   int set_flag;                         /* flag that indicates if ICCP3M has been initialized properly */    
+  double *fx;
+  double *fy;
+  double *fz;
 } iccp3m_struct;
-
 extern iccp3m_struct iccp3m_cfg;        /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;
+#include "forces.h"
+
 int bcast_iccp3m_cfg(void);
 
 /** Calculation of the electrostatic forces between source charges (= real charges) and wall charges.
@@ -138,95 +137,45 @@ int iccp3m_iteration();
  */
 void iccp3m_init(void);
 
+/** check sanity of parameters for use with ICCP3M 
+ */
+int iccp3m_sanity_check();
 
-/** The short range part of the electrostatic interation between two particles.  
- *  The appropriate function from the underlying electrostatic method is called. */
+/** Variant of add_non_bonded_pair_force where only coulomb 
+ *  contributions are calculated   */
 MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2, 
 					double d[3], double dist, double dist2)
 {
   /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
   double force[3] = { 0, 0, 0 };
   int j;
-  char* errtxt;
 
   FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node, p1->p.identity, p2->p.identity, dist));
-
-  /***********************************************/
-  /* short range electrostatics                  */
-  /***********************************************/
-
-  if (coulomb.method == COULOMB_DH) {
-    errtxt = runtime_error(128);
-	  ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
-  }
-  if (coulomb.method == COULOMB_RF) {
-    errtxt = runtime_error(128);
-	  ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
-  }
-
-  /*********************************************************************/
-  /* everything before this contributes to the virial pressure in NpT, */
-  /* but nothing afterwards                                            */
-  /*********************************************************************/
-#ifdef NPT
-  for (j = 0; j < 3; j++)
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-  if (coulomb.method == COULOMB_RF) {
-    errtxt = runtime_error(128);
-	  ERROR_SPRINTF(errtxt, "ICCP3M does not work in the NPT ensemble");
-  }
-#endif
 
   /***********************************************/
   /* long range electrostatics                   */
   /***********************************************/
 
   /* real space coulomb */
+  double q1q2 = p1->p.q*p2->p.q;
   switch (coulomb.method) {
-
 #ifdef P3M
-  case COULOMB_ELC_P3M: {
-    p3m_add_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force); 
-    if (elc_params.dielectric_contrast_on) {
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{ICCP3M conflicts with ELC dielectric constrast");
-    }
+  case COULOMB_ELC_P3M:
+    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
     break;
-    
-  }
-    
-  case COULOMB_P3M: {
-    
-#ifdef NPT /* ICCP3M does not work in NPT ensemble */
-    if(integ_switch == INTEG_METHOD_NPT_ISO){
-      errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{ICCP3M cannot be used with pressure coupling} ");
-    }
-#endif
-    
-#ifdef DIPOLES /* ICCP3M still does not work with dipoles, so abort if compiled in */
-    errtxt = runtime_error(128);
-    ERROR_SPRINTF(errtxt, "{ICCP3M and dipoles not implemented yet} ");
-    
-#else        /* If it is just electrostatic P3M */
-    p3m_add_pair_force(p2->p.q* p1->p.q,d,dist2,dist,force);
-#endif  /* DIPOLES */
-    
+  case COULOMB_P3M:
+    if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force);
     break;
-    
-  }
 #endif /* P3M */
-
   case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(p1,p2,d,dist2,dist,force);
+    if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(p1->p.q*p2->p.q,d,dist2,dist,force);
+    if (q1q2) add_mmm2d_coulomb_pair_force(q1q2,d,dist2,dist,force);
     break;
   case COULOMB_NONE:
     break;
   }
-  
 
   /***********************************************/
   /* add total nonbonded forces to particle      */
@@ -234,8 +183,8 @@ MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
    for (j = 0; j < 3; j++) { 
       p1->f.f[j] += force[j];
       p2->f.f[j] -= force[j];
-     }
-    /***********************************************/
+   }
+   /***********************************************/
 }
 #endif /* ELECTROSTATICS */
 

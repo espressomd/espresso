@@ -21,34 +21,22 @@
 /** \file initialize.c
     Implementation of \ref initialize.h "initialize.h"
 */
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "utils.h"
 #include "initialize.h"
 #include "global.h"
-#include "tcl/global_tcl.h"
 #include "particle_data.h"
-#include "tcl/particle_data_tcl.h"
 #include "interaction_data.h"
-#include "tcl/interaction_data_tcl.h"
-#include "tcl/binary_file_tcl.h"
-#include "integrate.h"
+#include "reaction.h"
 #include "statistics.h"
 #include "energy.h"
 #include "pressure.h"
 #include "polymer.h"
 #include "imd.h"
-#include "tcl/imd_tcl.h"
 #include "random.h"
-#include "tcl/random_tcl.h"
 #include "communication.h"
 #include "cells.h"
 #include "grid.h"
-#include "tcl/grid_tcl.h"
 #include "thermostat.h"
-#include "tcl/thermostat_tcl.h"
 #include "rotation.h"
 #include "p3m.h"
 #include "p3m-dipolar.h"
@@ -62,37 +50,19 @@
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "forces.h"
-#include "tcl/uwerr_tcl.h"
 #include "nsquare.h"
 #include "nemd.h"
-#include "tcl/nemd_tcl.h"
 #include "domain_decomposition.h"
 #include "errorhandling.h"
 #include "rattle.h"
-#include "bin.h"
-#include "tcl/bin_tcl.h"
 #include "lattice.h"
 #include "iccp3m.h" /* -iccp3m- */
-#include "tcl/iccp3m_tcl.h" 
 #include "adresso.h"
-#include "tcl/adresso_tcl.h"
 #include "metadynamics.h"
-#include "tcl/integrate_tcl.h"
-#include "tcl/cells_tcl.h"
-#include "tcl/statistics_tcl.h"
-#include "tcl/blockfile_tcl.h"
-#include "tcl/iccp3m_tcl.h"
-#include "tcl/polymer_tcl.h"
-#include "tcl/lb-boundaries_tcl.h"
+#include "statistics_observable.h"
+#include "statistics_correlation.h"
 #include "lb-boundaries.h"
-#include "tcl/initialize_interpreter.h"
-
-#ifdef CUDA
-#include "tcl/cuda_init_tcl.h"
-#endif
-
-// import function from scriptsdir.c
-char *get_default_scriptsdir();
+#include "domain_decomposition.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -102,11 +72,26 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-static void init_tcl(Tcl_Interp *interp);
-
-int on_program_start(Tcl_Interp *interp)
+void on_program_start()
 {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
+
+  /* tell Electric fence that we do realloc(0) on purpose. */
+#ifdef EFENCE
+  extern int EF_ALLOW_MALLOC_0;
+  EF_ALLOW_MALLOC_0 = 1;
+#endif
+
+  register_sigint_handler();
+
+  if (this_node == 0) {
+    /* master node */
+#ifdef FORCE_CORE
+    /* core should be the last exit handler (process dies) */
+    atexit(core);
+#endif
+    atexit(mpi_stop);
+  }
 
   /*
     call the initialization of the modules here
@@ -148,17 +133,17 @@ int on_program_start(Tcl_Interp *interp)
   lb_pre_init();
 #endif
 
+#ifdef REACTIONS
+  reaction.back_rate=-1.0;
+#endif
+
   /*
     call all initializations to do only on the master node here.
   */
   if (this_node == 0) {
     /* interaction_data.c: make sure 0<->0 ia always exists */
     make_particle_type_exist(0);
-    
-    init_tcl(interp);
   }
-  return TCL_OK;
-
 }
 
 
@@ -283,6 +268,15 @@ if(this_node == 0){
   meta_init();
 #endif
 
+#ifdef REACTIONS
+if(reaction.rate != 0.0) {
+  if(max_cut < reaction.range) {
+    errtext = runtime_error(128);
+    ERROR_SPRINTF(errtext,"{105 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+  }
+}
+#endif
+
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
@@ -341,6 +335,7 @@ void on_observable_calc()
     switch (coulomb.Dmethod) {
 #ifdef DP3M
     case DIPOLAR_MDLC_P3M:
+      // fall through
     case DIPOLAR_P3M:
       dp3m_count_magnetic_particles();
       break;
@@ -500,7 +495,7 @@ void on_boxl_change() {
 #ifdef P3M
   case COULOMB_ELC_P3M:
     ELC_init();
-    break;
+    // fall through
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     break;
@@ -523,6 +518,8 @@ void on_boxl_change() {
 #ifdef DIPOLES
   switch(coulomb.Dmethod) {
 #ifdef DP3M
+  case DIPOLAR_MDLC_P3M:
+    // fall through
   case DIPOLAR_P3M:
     dp3m_scaleby_box_l();
     break;
@@ -629,6 +626,10 @@ void on_parameter_change(int field)
     recalc_maximal_cutoff();
     cells_on_geometry_change(0);
     break;
+  case FIELD_MIN_GLOBAL_CUT:
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    break;
   case FIELD_SKIN:
     cells_on_geometry_change(0);
   case FIELD_PERIODIC:
@@ -646,6 +647,18 @@ void on_parameter_change(int field)
     reinit_thermo = 1;
     break;
   case FIELD_TIMESTEP:
+#ifdef LB_GPU
+    if(this_node == 0) {
+      if (lattice_switch & LATTICE_LB_GPU) {
+        lb_reinit_parameters_gpu();
+      }
+    }  
+#endif    
+#ifdef LB
+    if (lattice_switch & LATTICE_LB) {
+      lb_reinit_parameters();
+    }
+#endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_DPD_TGAMMA:
   case FIELD_DPD_GAMMA:
@@ -748,39 +761,3 @@ void on_ghost_flags_change()
     cells_re_init(CELL_STRUCTURE_CURRENT);    
 }
 
-static void init_tcl(Tcl_Interp *interp)
-{
-  char cwd[1024];
-  char *scriptdir;
-
-  /*
-    installation of tcl commands
-  */
-  register_tcl_commands(interp);
-
-
-  /* evaluate the Tcl initialization script */
-  scriptdir = getenv("ESPRESSO_SCRIPTS");
-  if (!scriptdir)
-    scriptdir = get_default_scriptsdir();
-  
-  /*  fprintf(stderr,"Script directory: %s\n", scriptdir);*/
-
-  if ((getcwd(cwd, 1024) == NULL) || (chdir(scriptdir) != 0)) {
-    fprintf(stderr,
-	    "\n\ncould not change to script dir %s, please check ESPRESSO_SCRIPTS.\n\n\n",
-	    scriptdir);
-    exit(1);
-  }
-  if (Tcl_EvalFile(interp, "init.tcl") == TCL_ERROR) {
-    fprintf(stderr, "\n\nerror in initialization script: %s\n\n\n",
-	    Tcl_GetStringResult(interp));
-    exit(1);
-  }
-  if (chdir(cwd) != 0) {
-    fprintf(stderr,
-	    "\n\ncould not change back to execution dir %s ????\n\n\n",
-	    cwd);
-    exit(1);
-  }
-}

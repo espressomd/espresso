@@ -1,5 +1,6 @@
-# Copyright (C) 2010,2011 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+#   Max-Planck-Institute for Polymer Research, Theory Group
 #  
 # This file is part of ESPResSo.
 #  
@@ -22,6 +23,8 @@ puts "------------------------------------------------"
 puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 
+require_feature THERMOSTAT_IGNORE_NON_VIRTUAL off
+
 # we expect to stay in this confidence interval (times stddeviation)
 # 20 is a really small chance, but since we measure quite a lot,
 # that is still quite a small interval, and the test probably only
@@ -34,6 +37,8 @@ set intstep 100
 set epsilon 1e-5
 
 set tcl_precision 5
+
+
 
 proc read_data {file} {
     set f [open $file "r"]
@@ -114,8 +119,8 @@ if { [catch {
 	    for {set c 0} {$c < 3} {incr c} {
 		set vx [lindex $v $c]
 		set curvel1($c) [expr $curvel1($c) + $vx]
-		set curvel2($c) [expr $curvel2($c) + $vx**2]
-		set curvel4($c) [expr $curvel4($c) + $vx**4]
+		set curvel2($c) [expr $curvel2($c) + pow($vx, 2)]
+		set curvel4($c) [expr $curvel4($c) + pow($vx, 4)]
 	    }
 	}
     }
@@ -145,11 +150,11 @@ if { [catch {
 	set vel2 [expr $curvel2($c)/$maxstep/[setmd n_part]]
 	set vel4 [expr $curvel4($c)/$maxstep/[setmd n_part]]
 	puts "${c}:\t$vel1\t$vel2\t$vel4"
-	if {$vel1**2 > $accept1} {
-	    set err_in_mean [expr $vel1**2]
+	if {pow($vel1, 2) > $accept1} {
+	    set err_in_mean [expr pow($vel1, 2)]
 	}
-	if {($vel2 - 1)**2 > $accept2} {
-	    set err_in_var [expr ($vel2 - 1)**2]
+	if {pow($vel2 - 1, 2) > $accept2} {
+	    set err_in_var [expr pow($vel2 - 1, 2)]
 	}
     }
     if {$err_in_mean} {
@@ -174,12 +179,12 @@ if { [catch {
     puts "variance per DOF:             $var_dof"
     puts "expected deviations are below [expr sqrt($eps_var)]"
 
-    if {($mean - [setmd temp])**2 > $epsilon} {
+    if {pow($mean - [setmd temp], 2) > $epsilon} {
 	error "temperature deviates unusually strongly from [setmd temp]"
     }
   
     # factor 3 from 4th moment
-    if {($var_dof - 2.0)**2 > $eps_var} {
+    if {pow($var_dof - 2.0, 2) > $eps_var} {
 	error "temperature variance extremely large"
     }
     

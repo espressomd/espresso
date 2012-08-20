@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -20,45 +20,11 @@
 */
 #ifndef GLOBAL_H
 #define GLOBAL_H
-#include <tcl.h>
-/** \file global.h
-    This file contains the code for access to globally defined
-    variables using the script command setmd. \ref add_vars "Here"
-    you can find details on how to add new variables in the interpreter's
-    space.
-*/
-
-/** type int (SetCallback)(Tcl_Interp *interp, void *data)
-    Type for the write callback procedure of \ref Datafield */
-typedef int (SetCallback)(Tcl_Interp *interp, void *data);
-
-/** Type describing variables that are accessible via Tcl. */
-typedef struct {
-  /** Physical address of the variable. */
-  void        *data;
-  /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
-  int          type;
-  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
-  int          dimension;
-  /** Name used in the Tcl script. */
-  const char  *name;
-  /** changeproc is called with an array of type \ref Datafield#type
-      and dimension \ref Datafield#dimension every time a setmd is
-      done in Tcl script code.  The procedure is assumed to actually
-      set the value and return TCL_OK or not change the value and
-      return TCL_ERROR and an appropriate error message in the
-      interpreters result stack. 
-  */
-  SetCallback *changeproc;
-  /** Minimal number of characters needed for identification. */
-  int min_length;
-} Datafield;
-
-/** This array contains the description of all variables that can be
-    changed/adressed via the TCL command setmd. read the
-    documentation of \ref Datafield befor you add new features. */
-extern const Datafield fields[];
-
+/** \file global.h This file contains the code for access to globally
+    defined variables using the script command setmd. Please refer to
+    the Developer's guide, section "Adding global variables", for
+    details on how to add new variables in the interpreter's
+    space.  */
 
 /**********************************************
  * description of global variables
@@ -81,12 +47,32 @@ extern const Datafield fields[];
 /** Maximal size of an array in \ref Datafield. */
 #define MAX_DIMENSION 64
 
+/** Type describing global variables. These are accessible from the
+    front end, and are distributed to all compute nodes. */
+typedef struct {
+  /** Physical address of the variable. */
+  void        *data;
+  /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
+  int          type;
+  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
+  int          dimension;
+  /** Name of the variable, mainly used for the front end and debugging */
+  const char  *name;
+  /** Minimal number of characters needed for unique identification of the
+      variable. */
+  int min_length;
+} Datafield;
+
+/** This array contains the description of all global variables that
+    are synchronized across nodes and that can be changed/adressed via
+    the TCL command setmd. read the documentation of \ref Datafield
+    befor you add new features. */
+extern const Datafield fields[];
 
 /** \name Field Enumeration
     These numbers identify the variables given in
     \ref #fields for use with \ref mpi_bcast_parameter.
 */
-
 /*@{*/
 /** index of \ref box_l in \ref #fields */
 #define FIELD_BOXL                0  
@@ -178,6 +164,8 @@ extern const Datafield fields[];
 #define FIELD_MCUT_BONDED         43
 /** index of \ref transfer_rate in \ref #fields */
 #define FIELD_TRANSFER_RATE       44
+/** index of \ref min_global_cut in \ref #fields */
+#define FIELD_MIN_GLOBAL_CUT      45
 /*@}*/
 
 #endif
