@@ -106,6 +106,14 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
            Tcl_AppendResult(interp, "ICCP3M Usage: max_iterations <max_iterations>", (char *)NULL); 
            return (TCL_ERROR);
          }
+       } else if (ARG0_IS_S("first_id")) {
+         if (argc>1 && ARG1_IS_I(iccp3m_cfg.first_id)) {
+           argc-=2;
+           argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: first_id <first_id>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
        } else if (ARG0_IS_S("normals")) {
          if (argc>1) {
            if (tclcommand_iccp3m_parse_normals(interp, iccp3m_cfg.n_ic, argv[1]) != TCL_OK) {
