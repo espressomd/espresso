@@ -1,5 +1,5 @@
 if {1} {
-set box_l_x 30
+set box_l_x 20
 set box_l_y 4
 set box_l_z 30
 

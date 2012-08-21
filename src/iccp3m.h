@@ -90,6 +90,7 @@ typedef struct {
   double *fx;
   double *fy;
   double *fz;
+  int first_id;
 } iccp3m_struct;
 extern iccp3m_struct iccp3m_cfg;        /* global variable with ICCP3M configuration */
 extern int iccp3m_initialized;

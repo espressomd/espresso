@@ -85,6 +85,7 @@ void iccp3m_init(void){
    iccp3m_cfg.extx = 0;
    iccp3m_cfg.exty = 0;
    iccp3m_cfg.extz = 0;
+   iccp3m_cfg.first_id = 0;
 }
 
 
@@ -107,6 +108,7 @@ int bcast_iccp3m_cfg(void){
   }
 
   MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
+  MPI_Bcast((int*)&iccp3m_cfg.first_id, 1, MPI_INT, 0, comm_cart); 
   MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
@@ -160,7 +162,7 @@ int iccp3m_iteration() {
             part = cell->part;
             np   = cell->n;
             for(i=0 ; i < np; i++) {
-                id = part[i].p.identity ;
+                id = part[i].p.identity - iccp3m_cfg.first_id;
                 if( id < iccp3m_cfg.n_ic ) {
            /* the dielectric-related prefactor: */                     
                       del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
