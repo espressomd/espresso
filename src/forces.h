@@ -305,7 +305,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 
   /* real space coulomb */
   double q1q2 = p1->p.q*p2->p.q;
-  if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
     switch (coulomb.method) {
   #ifdef P3M
     case COULOMB_ELC_P3M: {
@@ -353,7 +352,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
     case COULOMB_NONE:
       break;
     }
-  }
 
 #endif /*ifdef ELECTROSTATICS */
 
