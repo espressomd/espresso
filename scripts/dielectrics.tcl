@@ -504,6 +504,7 @@ proc dielectric_pore { args } {
   set r2 0.
   set length 0.
   set res 0.
+  set pore_res 0.
   set type 0
   set eps 0.
   set sigma 0.
@@ -560,6 +561,12 @@ proc dielectric_pore { args } {
       incr argno
       continue
     }
+    if { [ lindex $args $argno ] == "pore_res" } {
+      incr argno
+      set pore_res [ expr 1.0* [ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
     if { [ lindex $args $argno ] == "eps" } {
       incr argno
       set eps [ expr 1.0*[ lindex $args $argno ] ]
@@ -579,6 +586,9 @@ proc dielectric_pore { args } {
       continue
     }
     error "did not understand arg [ lindex args $argno ]"
+  }
+  if { $pore_res == 0 } { 
+      set pore_res $res 
   }
   set pi 3.1415
   set particle_counter 0
@@ -651,14 +661,14 @@ proc dielectric_pore { args } {
   while { $z < $length } {
     if { $z < $z_left } {
       set radius [ expr $c1_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ) ] 
-      set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
+      set delta_b [ expr 2*$pi*$pore_res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c1_z)/$smoothing_radius ]
       set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
       set incr_z [ expr $c1_z + $smoothing_radius * $sinbnew - $z ]
       set slope_norm [ expr tan(asin($sinb)) ]
     } elseif  { $z > $z_right } {
       set radius [ expr $c2_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ) ] 
-      set delta_b [ expr 2*$pi*$res/2/$pi/$smoothing_radius ]
+      set delta_b [ expr 2*$pi*$pore_res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c2_z)/$smoothing_radius ]
       set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
       set incr_z [ expr $c2_z + $smoothing_radius * $sinbnew - $z ]
@@ -669,17 +679,17 @@ proc dielectric_pore { args } {
       }
     } else {
       set radius [ expr ($z-$c1_z)*$slope + $c1_r -$smoothing_radius/$cosa]  
-      set incr_z [expr $res / sqrt(1+$slope*$slope) ]
+      set incr_z [expr $pore_res / sqrt(1+$slope*$slope) ]
       set slope_norm $slope
     }
-    set n_circle [ expr round( 2*$pi*$radius/$res) ]
+    set n_circle [ expr round( 2*$pi*$radius/$pore_res) ]
     set incr_phi [ expr 2*$pi / $n_circle ]
     set phi 0
     for { set j 0 } { $j < $n_circle } { incr j} {
       set px [ expr $circle_center_x + $radius*cos($phi)*$e_1_x + $radius*sin($phi)*$e_2_x ]
       set py [ expr $circle_center_y + $radius*cos($phi)*$e_1_y + $radius*sin($phi)*$e_2_y ]
       set pz [ expr $circle_center_z + $radius*cos($phi)*$e_1_z + $radius*sin($phi)*$e_2_z ]
-      part $p_no pos $px $py $pz type $type q [ expr $sigma*$res*$res +0.1*([ t_random ]-0.5) ] fix 1 1 1
+      part $p_no pos $px $py $pz type $type q [ expr $sigma*$pore_res*$pore_res +0.1*([ t_random ]-0.5) ] fix 1 1 1
       set nx [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_x + sin($phi)*$e_2_x)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_x ]
       set ny [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_y + sin($phi)*$e_2_y)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_y ]
       set nz [ expr -1./sqrt(1+$slope_norm*$slope_norm)*(cos($phi)*$e_1_z + sin($phi)*$e_2_z)+$slope_norm/sqrt(1+$slope_norm*$slope_norm)*$axis_z ]
@@ -697,6 +707,7 @@ proc dielectric_pore { args } {
     set circle_center_z [ expr $circle_center_z + $incr_length_z ]
     set z [ expr $z + $incr_z ]
   }
+  set n_pore $particle_counter
   for { set radius [ expr $c1_r + $res ] } { $radius < $max_radius } { set radius [ expr $radius + $res ] } {
     set circle_center_x [ expr $center_x - $axis_x*$length ]
     set circle_center_y [ expr $center_y - $axis_y*$length ]
@@ -746,7 +757,11 @@ proc dielectric_pore { args } {
     }
   }
   for { set i 0 } { $i < $particle_counter } { incr i } {
-    lappend icc_areas [ expr $res*$res ]
+    if { $i < $n_pore } { 
+      lappend icc_areas [ expr $pore_res*$pore_res ]
+    } else {
+      lappend icc_areas [ expr $res*$res ]
+    }
     lappend icc_epsilons $eps
     lappend icc_sigmas $sigma 
   }
