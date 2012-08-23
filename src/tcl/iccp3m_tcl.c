@@ -42,12 +42,6 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
       iccp3m_initialized=1;
   }
 
-    iccp3m_cfg.num_iteration=30;
-  iccp3m_cfg.convergence=1e-2;
-  iccp3m_cfg.relax=0.7;
-  iccp3m_cfg.eout=1;
-
-
   if(argc < 2 ) { 
          Tcl_AppendResult(interp, "Usage of ICCP3M: RTFM", (char *)NULL); 
          return (TCL_ERROR); 
@@ -57,13 +51,17 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
            if (iccp3m_cfg.set_flag==0) {
                  Tcl_AppendResult(interp, "iccp3m parameters not set!", (char *)NULL);
                  return (TCL_ERROR);
-           }
-           else{ 
+           } else { 
               Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
               Tcl_AppendResult(interp, buffer, (char *) NULL);
               return TCL_OK;
-	   }
-      }
+           }
+	   } else if(ARG_IS_S(1,"no_iterations")) {
+            Tcl_PrintDouble(interp,iccp3m_cfg.citeration,buffer); 
+            Tcl_AppendResult(interp, buffer, (char *) NULL);
+            return TCL_OK;
+          
+       }
    }
    else {
      if(ARG_IS_I(1, iccp3m_cfg.n_ic)) {
