@@ -681,6 +681,7 @@ int observable_calc_stress_tensor_acf_obs(observable* self) {
 
 int observable_update_average(observable* self) {
     observable_average_container* data = (observable_average_container*) self->container;
+    data->n_sweeps++;
     int error = observable_calculate(data->reference_observable);
     if ( error != 0)
       return 1;
@@ -691,9 +692,16 @@ int observable_update_average(observable* self) {
     return 0;
 }
 
-int observable_calc_average(observable* self) {
+int observable_reset_average(observable* self) {
+    observable_average_container* data = (observable_average_container*) self->container;
+    data->n_sweeps=0;
+    int error = observable_calculate(data->reference_observable);
+    for (int i =0; i<self->n; i++) {
+      self->last_value[i] = 0;
+    }
     return 0;
 }
+
 
 int observable_calc_structure_factor(observable* self) {
   double* A = self->last_value;

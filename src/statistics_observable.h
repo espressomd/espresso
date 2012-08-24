@@ -67,10 +67,10 @@ int observable_calc_currents(observable* self);
 int observable_calc_dipole_moment(observable* self);
 #endif
 
-int observable_calc_average(observable* self);
+int observable_update_average(observable* self);
+int observable_reset_average(observable* self);
 typedef struct {
   observable* reference_observable;
-  double* last_value;
   unsigned int n_sweeps;
 } observable_average_container;
 

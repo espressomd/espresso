@@ -28,6 +28,7 @@
 /* forward declarations */
 int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values);
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
+int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list); 
   
@@ -752,7 +753,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
   *change+=temp;
   iw_params_p->ids2=ids2;
   if ( argc < 5 || !ARG_IS_D(5,cutoff)) {
-    Tcl_AppendResult(interp, "aUsage: analyze correlation ... interacts_with id_list1 id_list2 cutoff", (char *)NULL);
+    Tcl_AppendResult(interp, "Usage: analyze correlation ... interacts_with id_list1 id_list2 cutoff", (char *)NULL);
     free(ids1);
     free(ids2);
     free(iw_params_p);
@@ -766,6 +767,34 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
   return TCL_OK;
 }
 
+int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  int reference_observable;
+  if (argc < 2) {
+    Tcl_AppendResult(interp, "observable new average <reference_id>", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (!ARG_IS_I(1,reference_observable)) {
+    Tcl_AppendResult(interp, "observable new average <reference_id>", (char *)NULL);
+    return TCL_ERROR;
+  }
+  if (reference_observable >= n_observables) {
+    Tcl_AppendResult(interp, "The reference observable does not exist.", (char *)NULL);
+    return TCL_ERROR;
+  }
+  observable_average_container* container=malloc(sizeof(observable_average_container));
+  container->reference_observable = observables[reference_observable];
+  container->n_sweeps = 0;
+  obs->n = container->reference_observable->n;
+  obs->last_value=malloc(obs->n*sizeof(double));
+  for (int i=0; i<obs->n; i++) 
+    obs->last_value[i] = 0;
+
+  obs->container=container;
+  obs->update=&observable_update_average;
+  obs->calculate=0;
+
+  return TCL_OK;
+}
 
 
 
@@ -879,6 +908,7 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
+    REGISTER_OBSERVABLE(average, tclcommand_observable_average,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -892,6 +922,12 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     }
     if (argc > 2 && ARG_IS_S(2,"print")) {
       return tclcommand_observable_print(interp, argc-3, argv+3, &temp, observables[n]);
+    }
+    if (argc > 2 && ARG_IS_S(2,"update")) {
+      return tclcommand_observable_update(interp, argc-3, argv+3, &temp, observables[n]);
+    }
+    if (argc > 2 && ARG_IS_S(2,"reset") && observables[n]->update == observable_update_average) {
+      observable_reset_average(observables[n]);
     }
   }
   Tcl_AppendResult(interp, "Unknown observable ", argv[1] ,"\n", (char *)NULL);
@@ -1337,6 +1373,14 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 
 }
 
+int tclcommand_observable_update(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
+  char buffer[TCL_DOUBLE_SPACE];
+  if ( observable_update(obs) ) {
+    Tcl_AppendResult(interp, "\nFailed to update observable\n", (char *)NULL );
+    return TCL_ERROR;
+  }
+  return TCL_OK;
+}
 
 int sf_print_usage(Tcl_Interp* interp) {
   Tcl_AppendResult(interp, "\nusage: structure_factor order delta_t tau_max  tau_lin", (char *)NULL);
