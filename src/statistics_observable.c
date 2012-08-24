@@ -386,7 +386,7 @@ int observable_calc_lb_velocity_profile(observable* self) {
 
 
 #ifdef LB
-int observable_lb_calc_radial_velocity_profile(observable* self) {
+int observable_calc_lb_radial_velocity_profile(observable* self) {
   double* A = self->last_value;
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
