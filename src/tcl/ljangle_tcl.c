@@ -46,6 +46,7 @@
 #include "interaction_data.h"
 #include "parser.h"
 #include "communication.h"
+#include "forcecap_tcl.h"
 
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 {

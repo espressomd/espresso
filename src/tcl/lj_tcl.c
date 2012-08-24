@@ -26,6 +26,7 @@
 #include "parser.h"
 #include "mol_cut.h"
 #include "communication.h"
+#include "forcecap_tcl.h"
 
 int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 {

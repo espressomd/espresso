@@ -27,13 +27,6 @@
 #ifdef BUCKINGHAM
 #include "communication.h"
 
-int buckforcecap_set_params(double buckforcecap)
-{
-  mpi_cap_forces(force_cap);
-
-  return ES_OK;
-}
-
 int buckingham_set_params(int part_type_a, int part_type_b,
 			  double A, double B, double C, double D, double cut,
 			  double discont, double shift, double cap_radius,

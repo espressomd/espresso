@@ -35,17 +35,6 @@
 
 #ifdef MORSE
 
-/** For the warmup you can cap the singularity of the Morse
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-
-/** set the force cap for the Morse interaction.
-    @param force_cap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
-*/
-int morseforcecap_set_params(double morseforcecap);
-
-///
 int morse_set_params(int part_type_a, int part_type_b,
 		     double eps, double alpha,
 		     double rmin, double cut, double cap_radius);

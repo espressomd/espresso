@@ -34,16 +34,6 @@
 #include "forcecap.h"
 
 #ifdef LENNARD_JONES
-/** For the warmup you can cap the singularity of the Lennard-Jones
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-
-/** set the force cap for the LJ interaction.
-    @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
-*/
-int ljforcecap_set_params(double ljforcecap);
-
 int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double cut,
 				      double shift, double offset,

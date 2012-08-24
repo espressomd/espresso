@@ -27,13 +27,6 @@
 
 #ifdef MORSE
 
-int morseforcecap_set_params(double morseforcecap)
-{
-  mpi_cap_forces(morseforcecap);
-  
-  return ES_OK;
-}
-
 int morse_set_params(int part_type_a, int part_type_b,
 		     double eps, double alpha,
 		     double rmin, double cut, double cap_radius)

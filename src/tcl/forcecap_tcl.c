@@ -23,6 +23,7 @@
 #include "parser.h"
 #include "mol_cut.h"
 #include "communication.h"
+#include "forcecap_tcl.h"
 
 /// parser for the forcecap
 int tclcommand_inter_parse_forcecap(Tcl_Interp * interp, int argc, char ** argv)
@@ -59,6 +60,6 @@ int tclcommand_inter_parse_forcecap(Tcl_Interp * interp, int argc, char ** argv)
     return TCL_ERROR;
   }
 
-  CHECK_VALUE(ljforcecap_set_params(forcecap),
+  CHECK_VALUE(forcecap_set_params(forcecap),
 	      "If you can read this, you should change it. (Use the source Luke!)");
 }

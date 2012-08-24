@@ -24,6 +24,7 @@
  */
 #include "buckingham_tcl.h"
 #include "buckingham.h"
+#include "forcecap_tcl.h"
 
 #ifdef BUCKINGHAM
 
@@ -129,4 +130,3 @@ int tclcommand_inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** a
 }
 
 #endif
-

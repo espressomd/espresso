@@ -33,18 +33,10 @@
 
 #ifdef BUCKINGHAM
 
-/** For warm up integration, the maximum force between any two particles
-    interacting via Buckingham potential can be set and this magnitude of max
-    force is stored in force_cap */
-
-///
 int buckingham_set_params(int part_type_a, int part_type_b,
 			  double A, double B, double C, double D, double cut,
 			  double discont, double shift, double cap_radius,
 			  double F1, double F2);
-
-///
-int buckforcecap_set_params(double buckforcecap);
 
 /** calculate buck_capradius from buckingham force cap */
 void calc_buck_cap_radii(double force_cap);

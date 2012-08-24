@@ -27,13 +27,6 @@
 #ifdef TABULATED
 #include "communication.h"
 
-int tabforcecap_set_params(double tabforcecap)
-{
-  mpi_cap_forces(tabforcecap);
-  
-  return ES_OK;
-}
-
 int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
 {
   IA_parameters *data;

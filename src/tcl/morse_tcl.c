@@ -30,6 +30,7 @@
 #include "morse.h"
 #include "interaction_data.h"
 #include "parser.h"
+#include "forcecap_tcl.h"
 
 int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j)
 {

@@ -45,17 +45,6 @@
 #include "interaction_data.h"
 #include "communication.h"
 
-/** set the force cap for the directional LJ interaction.
-    @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
-*/
-int ljangleforcecap_set_params(double ljangleforcecap)
-{
-  mpi_cap_forces(ljangleforcecap);
-   
-  return ES_OK;
-}
-
 int ljangle_set_params(int part_type_a, int part_type_b,
 				double eps, double sig, double cut,
 				int b1p, int b1n, int b2p, int b2n,

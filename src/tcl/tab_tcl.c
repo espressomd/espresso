@@ -26,6 +26,7 @@
 #include "tab_tcl.h"
 #include "tab.h"
 #include "parser.h"
+#include "forcecap_tcl.h"
 
 /// parse parameters for the tabulated bonded potential
 int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
