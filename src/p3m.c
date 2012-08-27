@@ -1464,7 +1464,7 @@ static double p3m_m_time(char **log, int mesh[3],
 }
 
 int p3m_adaptive_tune(char **log) {
-  int  mesh[3] = {0, 0, 0}, tmp_mesh_points; 
+  int  mesh[3] = {0, 0, 0}; 
   int tmp_mesh[3];
   double r_cut_iL_min, r_cut_iL_max, r_cut_iL = -1, tmp_r_cut_iL=0.0;
   int    cao_min, cao_max,           cao      = -1, tmp_cao;
@@ -1496,7 +1496,6 @@ int p3m_adaptive_tune(char **log) {
   /* parameter ranges */
   /* if at least the number of meshpoints in one direction is not set, we have to tune it. */
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 || p3m.params.mesh[2] == 0) {
-    tmp_mesh_points = p3m.sum_qpart;
     mesh_density_min = pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]) , 1.0/3.0) - 0.1;
     mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
     /* this limits the tried meshes if the accuracy cannot
