@@ -464,14 +464,14 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
    } 
 
   if (lattice_switch & LATTICE_LB_GPU) {
-    if (coord[0]<0 || coord[0]>(box_l[0]-1)/lbpar_gpu.agrid || coord[1]<0 || coord[1]>(box_l[1]-1)/lbpar_gpu.agrid || coord[2]<0 || coord[2]>(box_l[2]-1)/lbpar_gpu.agrid) {
+    if (coord[0]<0 || coord[0]>(box_l[0])/lbpar_gpu.agrid-1 || coord[1]<0 || coord[1]>(box_l[1])/lbpar_gpu.agrid-1 || coord[2]<0 || coord[2]>(box_l[2])/lbpar_gpu.agrid-1) {
        Tcl_AppendResult(interp, "Coordinates do not correspond to a valid LB node index", (char *)NULL);
        return TCL_ERROR;
     } 
   } 
   else {
 #ifdef LB
-    if (coord[0]<0 || coord[0]>(box_l[0]-1)/lbpar.agrid || coord[1]<0 || coord[1]>(box_l[1]-1)/lbpar.agrid || coord[2]<0 || coord[2]>(box_l[2]-1)/lbpar.agrid) {
+    if (coord[0]<0 || coord[0]>(box_l[0])/lbpar.agrid-1 || coord[1]<0 || coord[1]>(box_l[1])/lbpar.agrid-1 || coord[2]<0 || coord[2]>(box_l[2])/lbpar.agrid-1) {
        Tcl_AppendResult(interp, "Coordinates do not correspond to a valid LB node index", (char *)NULL);
        return TCL_ERROR;
     } 
