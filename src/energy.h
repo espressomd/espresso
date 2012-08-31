@@ -399,14 +399,29 @@ MDINLINE void add_bonded_energy(Particle *p1)
       return;
     }
 
-    switch (n_partners) {
-    case 1:
-      if (bond_broken) {
+    if (bond_broken) {
+      switch (n_partners) {
+      case 1: {
 	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{076 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
-	continue;
+	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
+		      p1->p.identity, p2->p.identity); 
+	break;
       }
+      case 2: {
+	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
+		      p1->p.identity, p2->p.identity, p3->p.identity); 
+	break;
+      }
+      case 3: {
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
+		      p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+	break;
+      }
+      }
+      // bond broken, don't add whatever we find in the energy
+      continue;
     }
 
     *obsstat_bonded(&energy, type_num) += ret;
