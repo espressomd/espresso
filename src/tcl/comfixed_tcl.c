@@ -49,35 +49,34 @@ int tclcommand_inter_parse_comfixed(Tcl_Interp * interp,
   if (argc != 2) {
     Tcl_AppendResult(interp, "comfixed needs 1 parameters: "
 		     "<comfixed_flag> ", (char *) NULL);
-    return 1;
+    return 0;
   }
 	 
   if (part_type_a != part_type_b) {
     Tcl_AppendResult(interp, "comfixed must be among same type interactions", (char *) NULL);
-    return 1;
+    return 0;
   }
 
   /* copy comfixed parameters */
   if ((! ARG_IS_I(1, flagc)) ) {
     Tcl_AppendResult(interp, "comfixed needs 1 INTEGER parameter: "
 		     "<comfixed_flag>", (char *) NULL);
-    return 2;
+    return 0;
   }
 
   switch (comfixed_set_params(part_type_a, part_type_b, flagc)) {
   case 1:
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
-    return 2;
+    return 0;
   case 2:
     Tcl_AppendResult(interp, "works only with a single CPU", (char *) NULL);
-    return 2;
+    return 0;
   case 3:
     Tcl_AppendResult(interp, "works only with non periodic BC", (char *) NULL);
-    return 2;
+    return 0;
   }
 
-   
-   return 2;
+  return 2;
 }
 
 

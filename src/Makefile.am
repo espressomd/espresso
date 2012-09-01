@@ -25,6 +25,7 @@ noinst_LIBRARIES = libEspresso.a
 
 # List the sources of the Espresso binary here
 # config-features.c must be at the beginning so that it is compiled first
+nodist_libEspresso_a_SOURCES = 
 libEspresso_a_SOURCES = \
 	config-features.c \
 	adresso.c adresso.h \
@@ -81,6 +82,7 @@ libEspresso_a_SOURCES = \
 	statistics_fluid.c statistics_fluid.h \
 	statistics_molecule.c statistics_molecule.h \
 	statistics_observable.c statistics_observable.h \
+	statistics_wallstuff.c statistics_wallstuff.h \
 	thermostat.c thermostat.h \
 	topology.c topology.h \
 	tuning.c tuning.h \
@@ -178,6 +180,7 @@ libEspresso_a_SOURCES += \
 	tcl/statistics_correlation_tcl.c tcl/statistics_correlation_tcl.h \
 	tcl/statistics_fluid_tcl.c tcl/statistics_fluid_tcl.h \
 	tcl/statistics_observable_tcl.c tcl/statistics_observable_tcl.h \
+	tcl/statistics_wallstuff_tcl.c tcl/statistics_wallstuff_tcl.h \
 	tcl/statistics_tcl.c tcl/statistics_tcl.h \
 	tcl/thermostat_tcl.c tcl/thermostat_tcl.h \
 	tcl/topology_tcl.c \
@@ -266,7 +269,7 @@ endif
 #################################################################
 # Handling of myconfig.h
 #################################################################
-libEspresso_a_SOURCES += myconfig-final.h
+nodist_libEspresso_a_SOURCES += myconfig-final.h
 BUILT_SOURCES = myconfig-final.h
 CLEANFILES = myconfig-final.h
 

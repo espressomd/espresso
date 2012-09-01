@@ -17,8 +17,21 @@ New user-visible features
   the vincinity of a particle of the catalysator type, the reactant is
   transformed into a particle of the product type.
 
-ESPResSo 3.1
-============
+ESPResSo 3.1.1
+==============
+
+* Fixed bugs #36431.
+
+* Fixed generation of myconfig-sample.h.
+
+* Added new logo to ESPResSo.
+
+* The documentation sources are now left out of the distribution
+  package, only the PDF files are included. This fixes problems when
+  calling "make doc" in a distribution package.
+
+ESPResSo 3.1.0
+==============
 
 New user-visible features
 -------------------------
