@@ -103,7 +103,7 @@ set int_time    [expr 2000000*[setmd time_step]]
 
 set tcl_precision  6
 set random_seeds  { }
-set checkpoint    100000
+#set checkpoint    100000
 
 
 
@@ -169,13 +169,13 @@ foreach pack_i $packing {
 #  Warm-up Integration (with capped LJ-potential)           #
 #############################################################
 
-    if { [file exists "$name_i$ident.wrm" ] } {
-	set inp [open "$name_i$ident.wrm" r]
-	puts -nonewline "\nSkipping warm-up integration: Existing checkpoint found (currently reading it... "; flush stdout
-	while { [blockfile $inp read auto] != "eof" } {}
-	close $inp; puts "done) with [setmd n_part] particles ($N_T expected)."
-	if { $N_T != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
-    } else {
+#if { [file exists "$name_i$ident.wrm" ] } {
+#	set inp [open "$name_i$ident.wrm" r]
+#	puts -nonewline "\nSkipping warm-up integration: Existing checkpoint found (currently reading it... "; flush stdout
+#	while { [blockfile $inp read auto] != "eof" } {}
+#	close $inp; puts "done) with [setmd n_part] particles ($N_T expected)."
+#	if { $N_T != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
+#    } else {
 	puts -nonewline "\nStart warm-up integration (capped LJ-interactions) for maximal [expr $warm_step*$warm_loop] timesteps in $warm_loop loops; "
 	puts "stop if minimal distance is larger than $min_dist after at least [expr $warm_step*$min_loop] timesteps."
 	setmd time 0; set tmp_cap $warm_cap1; inter ljforcecap $tmp_cap; inter coulomb 0.0
@@ -196,50 +196,51 @@ foreach pack_i $packing {
 	    inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $warm_incr]
 	}
 	# write everything to disk (set checkpoint)
-	puts -nonewline "\n    Warm-up complete; saving checkpoint to '$name_i$ident.wrm'... ";flush stdout
-	polyBlockWriteAll "$name_i$ident.wrm" "-"; puts "Done."
+#	puts -nonewline "\n    Warm-up complete; saving checkpoint to '$name_i$ident.wrm'... ";flush stdout
+#	polyBlockWriteAll "$name_i$ident.wrm" "-"; puts "Done."
 	flush $obs_file; close $obs_file
-    }
+#    }
  
 
 #############################################################
 #      Integration                                          #
 #############################################################
 
-    if { [file exists "$name_i$ident.end" ] } {
-	set inp [open "$name_i$ident.end" r]
-	puts -nonewline "Skipping integration: Existing checkpoint found (currently reading it... "; flush stdout
-	while { [blockfile $inp read auto] != "eof" } {}
-	close $inp; puts "done) with [setmd n_part] particles ($N_T expected)."
-	if { $N_T != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
-    } else {
+#    if { [file exists "$name_i$ident.end" ] } {
+#	set inp [open "$name_i$ident.end" r]
+#	puts -nonewline "Skipping integration: Existing checkpoint found (currently reading it... "; flush stdout
+#	while { [blockfile $inp read auto] != "eof" } {}
+#	close $inp; puts "done) with [setmd n_part] particles ($N_T expected)."
+#	if { $N_T != [setmd n_part] } { puts "WARNING: Configuration does not correspond to current case $i!"; exit }
+#    } else {
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 	puts "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops). "
 	puts -nonewline "    Activating electrostatics... "; flush stdout
 	puts "Done.\n[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
 	puts -nonewline "Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
 	set sfx "[expr int(ceil(log10($int_loop*$int_step_i)))+1]d"
-	if { [file exists "$name_i$ident.chk" ] } {
-	    puts -nonewline "    Checkpoint found (currently reading it... "; flush stdout
-	    checkpoint_read "$name_i$ident"
-	    set tmp_start [expr int([setmd time]/[setmd time_step]/$int_step_i)]
-	    if { [expr $tmp_step/$int_step_i] != $tmp_start } { 
-		puts "failed: Checkpoint corrupt, time_step is wrong! Expected: $tmp_start, got: [expr $tmp_step/$int_step_i])"; exit 
-	    }
-	    puts "done) at time [setmd time]: Skipping ahead to timestep [expr int($tmp_step+1)] in loop $tmp_start!"
-	    set obs_file [open "$name_i$ident.obs2" "a"]; analyze set chains 8 $n_p_i $mpc_i
-	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
-	    puts -nonewline "    Analysis at t=[setmd time]: mindist=[analyze mindist], "
-	    puts "re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], T=[setmd temp], p=$p1."
-	} else {
+#	if { [file exists "$name_i$ident.chk" ] } {
+#	    puts -nonewline "    Checkpoint found (currently reading it... "; flush stdout
+#	    checkpoint_read "$name_i$ident"
+#	    set tmp_start [expr int([setmd time]/[setmd time_step]/$int_step_i)]
+#	    if { [expr $tmp_step/$int_step_i] != $tmp_start } { 
+#		puts "failed: Checkpoint corrupt, time_step is wrong! Expected: $tmp_start, got: [expr $tmp_step/$int_step_i])"; exit 
+#	    }
+#	    puts "done) at time [setmd time]: Skipping ahead to timestep [expr int($tmp_step+1)] in loop $tmp_start!"
+#	    set obs_file [open "$name_i$ident.obs2" "a"]; analyze set chains 8 $n_p_i $mpc_i
+#	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
+#	    puts -nonewline "    Analysis at t=[setmd time]: mindist=[analyze mindist], "
+#	    puts "re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], T=[setmd temp], p=$p1."
+#	} else {
 	    set tmp_start 0; set obs_file [open "$name_i$ident.obs2" "w"]
 	    set ptot [eval concat [eval concat [analyze pressure]]]; set p1 [lindex $ptot 0]
 	    puts $obs_file "t mindist re dre re2 dre2 rg drg rg2 drg2 rh drh Temp p p2 ideal pid FENE pf pf2 lj plj plj2 coulomb pc pc2"
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re 8 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp] $ptot"
 	    puts -nonewline "    Analysis at t=[setmd time]: mindist=[analyze mindist], "
 	    puts "re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], T=[setmd temp], p=$p1."
-	    analyze append; checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
-	}
+	    analyze append
+      #checkpoint_set "$name_i$ident.[eval format %0$sfx 0]" "all" "tmp_step"
+#	}
 	for { set j $tmp_start } { $j < $int_loop } { incr j } {
 	    integrate $int_step_i; set tmp_dist [analyze mindist]
 	    if { $vmd_output=="yes" } { imd positions }
@@ -250,30 +251,27 @@ foreach pack_i $packing {
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp $ptot"
 	    set tmp_conf [analyze append]; flush $obs_file
 	    # set partial checkpoint (will have previous 'configs' by [analyze append] => averages will be correct)
-	    if { [expr $tmp_step % $checkpoint]==0 } {
-		puts -nonewline "\r    \[$i\] Step $tmp_step: Checkpoint at time [setmd time]... "; flush stdout; flush $obs_file
-		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
-		puts -nonewline "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations"
-		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
-	    } else { 
+#	    if { [expr $tmp_step % $checkpoint]==0 } {
+#		puts -nonewline "\r    \[$i\] Step $tmp_step: Checkpoint at time [setmd time]... "; flush stdout; flush $obs_file
+#		checkpoint_set "$name_i$ident.[eval format %0$sfx $tmp_step]" [expr int($checkpoint/$int_step_i)] "tmp_step" "-"
+#		puts -nonewline "set (with <re>=[analyze <re>], <rg>=[analyze <rg>] averaged over $tmp_conf configurations"
+#		puts ", <p>=[lindex [nameObsAv $name_i$ident.obs2 p] 1])."
+#	    } else { 
 		puts -nonewline ", mindist=[analyze mindist], re=[lindex [analyze re] 0], "
 		puts -nonewline "rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0], p=$p1...\r"; flush stdout 
-	    }
+#	    }
 	}
-	# write everything to disk (set checkpoint)
-	# (the whole configs-array is not included here for space constraints (it may exceed 1700MB),
-	#  it is however stored fractionally in the partial checkpoints, so use 'checkpoint_read' to restore it)
 	puts -nonewline "\n    Integration complete; saving checkpoint to '$name_i$ident.end'... ";flush stdout
 	polyBlockWriteAll "$name_i$ident.end" "-" "-"; puts "Done."; close $obs_file
 
 	puts -nonewline "\nFinished with current system; "
 	# derive ensemble averages
 	if { $bjerrum > 0.0 } {
-	    set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 pc pc2 }]
+#	    set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 pc pc2 }]
 	    set pc1 [lindex $avg 10]; set pc2 [lindex $avg 11]
 	    set d_pc12 [expr sqrt(abs($pc2 - $pc1*$pc1)/([lindex $avg 0]-1))]
 	} else {
-	    set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 }]
+#	    set avg [nameObsAv $name_i$ident.obs2 { Temp mindist p p2 pid pf pf2 plj plj2 }]
 	}
 	set tmp_Temp [lindex $avg 1]; set tmp_min [lindex $avg 2]
 	set p1 [lindex $avg 3]; set p2 [lindex $avg 4]; set pid [lindex $avg 5]; set p_os [expr $p1/$pid]
@@ -310,7 +308,7 @@ foreach pack_i $packing {
 	plotObs $name_i$ident.g123 {1:2 1:3 1:4} titles {<g1> <g2> <g3>} labels [concat "time (tau)" "$name_i$ident.g123"] scale "logscale xy"
 	plotObs $name_i$ident.idf {1:2} titles {<internal_dist>} labels [concat "|i-j|" "$name_i$ident.idf"] scale "logscale xy"
 	puts "Done."
-    }
+#    }
     puts -nonewline "Cleaning up for next system... "; flush stdout; 
     part deleteall; analyze remove; setmd time 0; inter coulomb 0.0; incr i; puts "Done.\n"
 }
