@@ -42,9 +42,11 @@ static int number_of_collisions;
 Collision_parameters collision_params = { 0, };
 
 int collision_detection_set_params(int mode, double d, int bond_centers,
-				   int bond_vs, int t)
+				   int bond_vs, int t,int d2)
 {
-  if (mode & COLLISION_MODE_VS)
+  // The collision modes involving virutal istes also requires the creation of a bond between the colliding 
+  // particles, hence, we turn that on.
+  if ((mode & COLLISION_MODE_VS) ||(mode & COLLISION_MODE_GLUE_TO_SURF))
     mode |= COLLISION_MODE_BOND;
 
   // If we don't have virtual sites, virtual site binding isn't possible.
@@ -78,6 +80,7 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
   collision_params.bond_centers=bond_centers;
   collision_params.bond_vs=bond_vs;
   collision_params.distance=d;
+  collision_params.dist_glued_part_to_vs =d2;
   collision_params.vs_particle_type=t;
 
   make_particle_type_exist(t);
@@ -100,6 +103,24 @@ void detect_collision(Particle* p1, Particle* p2)
   dist_betw_part = distance2vec(p1->r.p, p2->r.p, vec21);
   if (dist_betw_part > collision_params.distance)
     return;
+
+  // If we are in the glue to surface mode, check that the particles
+  // are of the right type
+  if (collision_params.mode && COLLISION_MODE_GLUE_TO_SURF) {
+    if (
+       ((p1->p.type==collision_params.part_type_to_be_glued)
+       && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
+      ||
+       ((p2->p.type==collision_params.part_type_to_be_glued)
+       && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
+     ) { 
+       return;
+     }
+   }
+
+
+
+
 
   part1 = p1->p.identity;
   part2 = p2->p.identity;
@@ -178,12 +199,37 @@ void detect_collision(Particle* p1, Particle* p2)
     for (i=0;i<3;i++) {
       new_position[i] = p1->r.p[i] - vec21[i] * 0.50;
     }
-       
-    number_of_collisions++;
+  }
+  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+    /* If we also create virtual sites, we add the collision
+       to the queue to later add vs */
 
-    // Allocate mem for the new collision info
-    collision_queue = (collision_struct *) realloc (collision_queue, (number_of_collisions) * sizeof(collision_struct));
-      
+    
+    // Point of collision
+    double new_position[3];
+    // Find out, which is the particle to be glued.
+    if ((p1->p.type==collision_params.part_type_to_be_glued)
+       && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
+       { 
+         for (i=0;i<3;i++) {
+           new_position[i] = p1->r.p[i] - vec21[i]/dist_betw_part *collision_params.dist_glued_part_to_vs;
+         }
+    }
+    else if ((p2->p.type==collision_params.part_type_to_be_glued)
+          && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
+       { 
+         for (i=0;i<3;i++) {
+           new_position[i] = p2->r.p[i] + vec21[i]/dist_betw_part *collision_params.dist_glued_part_to_vs;
+         }
+       // In addition, we swap the particle ids so that the virtual site is always attached to p2
+       int tmp=part1;
+       part1=part2;
+       part2=tmp;
+
+    }
+  
+    //Get memory for the new entry in the collision queue
+    collision_queue = (collision_struct *) malloc (sizeof(collision_struct));
     // Save the collision      
     collision_queue[number_of_collisions-1].pp1 = part1;
     collision_queue[number_of_collisions-1].pp2 = part2;
@@ -191,14 +237,6 @@ void detect_collision(Particle* p1, Particle* p2)
       collision_queue[number_of_collisions-1].point_of_collision[i] = new_position[i]; 
     }
   }
-}
-
-void prepare_collision_queue()
-{
-  
-  number_of_collisions=0;
-
-  collision_queue = (collision_struct *) malloc (sizeof(collision_struct));
 
 }
 
@@ -208,8 +246,8 @@ void handle_collisions ()
   // If we don't have virtual_sites_relative, only bonds between centers of 
   // colliding particles are possible and nothing is to be done here
 #ifdef VIRTUAL_SITES_RELATIVE
-  // Does the user want bonds between virtual sites placed at the point of collision
-  if (collision_params.mode & COLLISION_MODE_VS) {
+  // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
+  if ((collision_params.mode & COLLISION_MODE_VS) && (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
 
     //	printf("number of collisions in handle collision are %d\n",number_of_collisions);  
     int bondG[3], i;
@@ -220,38 +258,45 @@ void handle_collisions ()
 	//  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
 	//  fflush(stdout);
    
-	// Create virtual sites and bind them together
-  
+	// Create virtual site(s) 
+	
+	// If we are in the two vs mode
 	// Virtual site related to first particle in the collision
-	place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
-	vs_relate_to(max_seen_particle,collision_queue[i].pp1);
-	(local_particles[max_seen_particle])->p.isVirtual=1;
-	(local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
-  
-	  // Virtual particle related to 2nd particle of the collision
+	if (collision_params.mode & COLLISION_MODE_VS)
+	{
+	  place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
+	  vs_relate_to(max_seen_particle,collision_queue[i].pp1);
+	  (local_particles[max_seen_particle])->p.isVirtual=1;
+	  (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+	}
+	// The virtual site related to p2 is needed independently on which of the vs-related modes is active
 	place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
 	vs_relate_to(max_seen_particle,collision_queue[i].pp2);
 	(local_particles[max_seen_particle])->p.isVirtual=1;
 	(local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
   
-	switch (bonded_ia_params[collision_params.bond_vs].num) {
-	case 1: {
-	  // Create bond between the virtual particles
-	  bondG[0] = collision_params.bond_vs;
-	  bondG[1] = max_seen_particle-1;
-	  local_change_bond(max_seen_particle, bondG, 0);
-	  break;
-	}
-	case 2: {
-	  // Create 1st bond between the virtual particles
-	  bondG[0] = collision_params.bond_vs;
-	  bondG[1] = collision_queue[i].pp1;
-	  bondG[2] = collision_queue[i].pp2;
-	  local_change_bond(max_seen_particle,   bondG, 0);
-	  local_change_bond(max_seen_particle-1, bondG, 0);
-	  break;
-	}
-	}
+	// If we are in the two vs mode, we need a bond between the virtual sites
+	if (collision_params.mode & COLLISION_MODE_VS)
+	{
+  	  switch (bonded_ia_params[collision_params.bond_vs].num) {
+  	  case 1: {
+  	    // Create bond between the virtual particles
+  	    bondG[0] = collision_params.bond_vs;
+  	    bondG[1] = max_seen_particle-1;
+  	    local_change_bond(max_seen_particle, bondG, 0);
+  	    break;
+  	  }
+  	  case 2: {
+  	    // Create 1st bond between the virtual particles
+  	    bondG[0] = collision_params.bond_vs;
+  	    bondG[1] = collision_queue[i].pp1;
+  	    bondG[2] = collision_queue[i].pp2;
+  	    local_change_bond(max_seen_particle,   bondG, 0);
+  	    local_change_bond(max_seen_particle-1, bondG, 0);
+  	    break;
+  	  }
+  	}
+       }
       }
     }
   }
