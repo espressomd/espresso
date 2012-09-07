@@ -91,8 +91,10 @@ void handle_collisions();
     if using noslip bonds
     @param t is the type of the virtual sites, if using noslip bonds
     @param d2 for the "glue to surface" mode is the distance between the particle to be glued and the new virtual site
+    @param tg for the "glue to surface" is the type of the particle being glued
+    @param tv for the "glue to surface" is the type of the particle to which the virtual site is attached
  */
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2);
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv);
 
 #endif
 

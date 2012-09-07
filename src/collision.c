@@ -42,7 +42,7 @@ static int number_of_collisions;
 Collision_parameters collision_params = { 0, };
 
 int collision_detection_set_params(int mode, double d, int bond_centers,
-				   int bond_vs, int t,int d2)
+				   int bond_vs, int t,int d2, int tg,int tv)
 {
   // The collision modes involving virutal istes also requires the creation of a bond between the colliding 
   // particles, hence, we turn that on.
@@ -51,11 +51,12 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
 
   // If we don't have virtual sites, virtual site binding isn't possible.
 #ifndef VIRTUAL_SITES_RELATIVE
-  if (mode & COLLISION_MODE_VS)
+  if ((mode & COLLISION_MODE_VS) || (mode & COLLISION_MODE_GLUE_TO_SURF))
     return 1;
 #endif
 
   // Binding so far only works on a single cpu
+  // If collision detection is not off and we run on more then 1 node, through error.
   if (mode && n_nodes != 1)
     return 2;
 
@@ -74,21 +75,37 @@ int collision_detection_set_params(int mode, double d, int bond_centers,
   if ((mode & COLLISION_MODE_VS) && !(bonded_ia_params[bond_vs].num == 1 ||
 				      bonded_ia_params[bond_vs].num == 2))
     return 5;
+  
 
   // Set params
   collision_params.mode=mode;
   collision_params.bond_centers=bond_centers;
   collision_params.bond_vs=bond_vs;
   collision_params.distance=d;
-  collision_params.dist_glued_part_to_vs =d2;
   collision_params.vs_particle_type=t;
-
+  collision_params.dist_glued_part_to_vs =d2;
+  collision_params.part_type_to_be_glued =tg;
+  collision_params.part_type_to_attach_vs_to =tv;
   make_particle_type_exist(t);
+
+
+
   
   recalc_forces = 1;
 
   return 0;
 }
+
+//* Allocate memory for the collision queue /
+void prepare_collision_queue()
+{
+  
+  number_of_collisions=0;
+
+  collision_queue = (collision_struct *) malloc (sizeof(collision_struct));
+
+}
+
 
 // Detect a collision between the given particles.
 // Add it to the queue in case virtual sites should be added at the point of collision
@@ -106,7 +123,7 @@ void detect_collision(Particle* p1, Particle* p2)
 
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
-  if (collision_params.mode && COLLISION_MODE_GLUE_TO_SURF) {
+  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
     if (
        ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
@@ -189,13 +206,14 @@ void detect_collision(Particle* p1, Particle* p2)
     bondG[1]=part2;
     local_change_bond(part1, bondG, 0);
   }
+  if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
 
-  if (collision_params.mode & COLLISION_MODE_VS) {
+    double new_position[3];
+   if (collision_params.mode & COLLISION_MODE_VS) {
     /* If we also create virtual sites, we add the collision
        to the queue to later add vs */
 
     // Point of collision
-    double new_position[3];
     for (i=0;i<3;i++) {
       new_position[i] = p1->r.p[i] - vec21[i] * 0.50;
     }
@@ -206,7 +224,6 @@ void detect_collision(Particle* p1, Particle* p2)
 
     
     // Point of collision
-    double new_position[3];
     // Find out, which is the particle to be glued.
     if ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
@@ -225,19 +242,20 @@ void detect_collision(Particle* p1, Particle* p2)
        int tmp=part1;
        part1=part2;
        part2=tmp;
-
+     }
     }
   
     //Get memory for the new entry in the collision queue
-    collision_queue = (collision_struct *) malloc (sizeof(collision_struct));
+    number_of_collisions++;
+    collision_queue = (collision_struct *) realloc (collision_queue,number_of_collisions*sizeof(collision_struct));
     // Save the collision      
     collision_queue[number_of_collisions-1].pp1 = part1;
     collision_queue[number_of_collisions-1].pp2 = part2;
     for (i=0;i<3;i++) {
       collision_queue[number_of_collisions-1].point_of_collision[i] = new_position[i]; 
     }
+  
   }
-
 }
 
 // Handle the collisions stored in the queue
@@ -247,7 +265,7 @@ void handle_collisions ()
   // colliding particles are possible and nothing is to be done here
 #ifdef VIRTUAL_SITES_RELATIVE
   // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
-  if ((collision_params.mode & COLLISION_MODE_VS) && (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
+  if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
 
     //	printf("number of collisions in handle collision are %d\n",number_of_collisions);  
     int bondG[3], i;
@@ -303,8 +321,9 @@ void handle_collisions ()
 #endif
 
   // Reset the collision queue	 
+  if (number_of_collisions)
+    free(collision_queue);
   number_of_collisions = 0;
-  free(collision_queue);
 }
 
 #endif
