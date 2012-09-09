@@ -117,19 +117,19 @@ void detect_collision(Particle* p1, Particle* p2)
   int part1, part2, size;
 
   // Obtain distance between particles
-  dist_betw_part = distance2vec(p1->r.p, p2->r.p, vec21);
+  dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
   if (dist_betw_part > collision_params.distance)
     return;
 
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
   if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-    if (
+    if (! (
        ((p1->p.type==collision_params.part_type_to_be_glued)
        && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
       ||
        ((p2->p.type==collision_params.part_type_to_be_glued)
-       && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
+       && (p1->p.type ==collision_params.part_type_to_attach_vs_to)))
      ) { 
        return;
      }
@@ -313,7 +313,16 @@ void handle_collisions ()
   	    local_change_bond(max_seen_particle-1, bondG, 0);
   	    break;
   	  }
-  	}
+  	 }
+        }
+	
+	// If we are in the "glue to surface mode", we need a bond between p1 and the vs
+	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+	{
+         // Create bond between the virtual particles
+         bondG[0] = collision_params.bond_vs;
+         bondG[1] = max_seen_particle;
+         local_change_bond(collision_queue[i].pp1, bondG, 0);
        }
       }
     }
