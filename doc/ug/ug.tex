@@ -40,9 +40,8 @@ index=totoc,                    % add the index to the TOC
 \usepackage{graphicx}           % handles graphics
 \usepackage{makeidx}            % creates the index
 \usepackage{color}              % use colors
-
+\usepackage{doc}
 \usepackage{amsmath}
-
 \usepackage{verbatim}           % required for \verbatim and \endverbatim
 \usepackage{fancyvrb}
 \usepackage{tocloft}            % required for the quickref
@@ -119,6 +118,25 @@ index=totoc,                    % add the index to the TOC
   \@afterheading}
 \makeatother
 
+%%%%%%%%%%%%%% Cite us %%%%%%%%%%%%%%%
+
+\newsavebox{\thecitebox}
+\newenvironment{citebox}{%
+  \par\noindent%
+  \begin{lrbox}{\thecitebox}%
+    \begin{minipage}{\linewidth-1em}%
+      \raggedright
+    }{%
+    \end{minipage}%
+  \end{lrbox}%
+  \begin{center}
+    \fbox{\usebox{\thecitebox}}
+  \end{center}
+}
+
+\newcommand{\citewbibkey}[1]{%
+  \cite{#1} (\BibTeX{}-key \texttt{#1} in file \texttt{doc/ug/citations.bib})}
+
 %%%%%%%%%%%%%% Syntax Description %%%%%%%%%%%%%%%
 
 %%%%%% SYNTAX DEFINITION LAYOUT
@@ -155,7 +173,7 @@ index=totoc,                    % add the index to the TOC
 \newcommand{\required}[2][]{%
   \ifthenelse{\equal{#1}{}}{#2}{%
     \mbox{\fmark{#1}\,\feature{#2}}%
-  }
+  4}
 }
 \newenvironment{features}{%
   \par\smallskip%
@@ -312,7 +330,7 @@ index=totoc,                    % add the index to the TOC
 \include{mmm}
 
 \bibliographystyle{plainnat}
-\bibliography{bibliography}
+\bibliography{otherrefs,citations}
 
 \printindex
 

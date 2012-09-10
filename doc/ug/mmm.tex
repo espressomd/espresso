@@ -163,7 +163,7 @@ and the near formula is
 As said before, the energy obtained from these potentials is equal to
 the electrostatic energy obtained by the spherical summation limit.
 The deeper reason for this is that in some sense the electrostatic sum
-is absolutely convergent \citep{arnold02a}.
+is absolutely convergent \citep{mmm2d}.
 
 The near formula is used for particles with a small distance along the
 z axis, for all other particles the far formula is used. Below is
@@ -279,7 +279,7 @@ In pseudo code, the far formula algorithm looks like:
 \end{enumerate}
 
 For further details, see
-\citet{arnold02a,arnold02b,arnold02c,arnold02d}.
+\citet{mmm2d,arnold02b,elc}.
 
 \subsection{Dielectric contrast}
 
@@ -302,7 +302,7 @@ lowest/topmost layer. This are all modifications necessary for the far
 formula part. In addition to the far formula part, there is an
 additional loop over the particles at the boundary to directly
 calculate their interactions with their images.  For details, refer to
-\citet{tyagi07a}.
+\citet{icmmm2d}.
 
 \section{MMM1D}
 
@@ -343,7 +343,7 @@ neither the near nor far formula allow a product decomposition or
 similar tricks. MMM1D has to be implemented as a simple NxN loop.
 However, the formulas can be evaluated efficiently, so that MMM1D can
 still be used reasonably for up to 400 particles on a single
-processor \citep{arnold05b}.
+processor \citep{mmm1d}.
 
 \section{ELC}
 
@@ -433,7 +433,7 @@ logarithmically with the accuracy. This is quite in contrast to the
 Ewald methods, for which decreasing the error bound can lead to
 excessive computation time. For example, P3M cannot reach precisions
 above $10^{-5}$ in general. The precise form of the error estimates is
-of little importance here, for details see \citet{arnold02c,arnold02d}.
+of little importance here, for details see \citet{elc}.
 
 One important aspect is that the error estimates are also exponential
 in the non-periodic coordinate. Since the number of closeby and far

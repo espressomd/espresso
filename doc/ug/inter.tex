@@ -1123,6 +1123,12 @@ For $\kappa = 0$, this corresponds to the plain coulomb potential.
 \index{MMM2D method|mainindex}
 \index{interactions!MMM2D|mainindex}
 
+\begin{citebox}
+  Please cite~\citewbibkey{mmm2d} when using MMM2D, and
+  \citewbibkey{icmmm2d} when using dielectric interfaces.
+\end{citebox}
+
+
 \begin{essyntax}
  inter coulomb \var{l_B} mmm2d \var{maximal\_pairwise\_error}
  \opt{\var{fixed\_far\_cutoff}}
@@ -1158,6 +1164,10 @@ metallic boundary conditions.
 \subsection{MMM1D}
 \index{MMM1D method|mainindex}
 \index{interactions!MMM1D|mainindex}
+
+\begin{citebox}
+  Please cite~\citewbibkey{mmm1d} when using MMM1D.
+\end{citebox}
 
 \begin{essyntax}
   \variant{1}
@@ -1273,6 +1283,11 @@ appendix~\vref{sec:MEMD} or the publications~\cite{maggs02a,
 \index{ELC method|mainindex}
 \index{interactions!ELC method|mainindex}
 
+\begin{citebox}
+  Please cite~\citewbibkey{elc} when using ELC, and in addition
+  \citewbibkey{icelc} if you use dielectric interfaces.
+\end{citebox}
+
 \begin{essyntax}
   inter coulomb elc \var{maximal\_pairwise\_error} \var{gap\_size}
   \opt{\var{far\_cutoff}}
@@ -1322,7 +1337,7 @@ disable the neutralization.
 The dielectric contrast features work exactly the same as for MMM2D,
 see the documentation above.
 
-Make sure that you read the papers on ELC (\cite{arnold02c, tyagi08a})
+Make sure that you read the papers on ELC (\cite{elc,icelc})
 before using it.
 
 \subsection{Dielectric interfaces with the ICC$\star$ algorithm}
@@ -1356,7 +1371,7 @@ As most of the times, ICC$\star$ will be used with P3M the
 corresponding command is called \keyword{iccp3m}.
 
 Please make sure to read the corresponding articles,
-mainly\cite{arnold12a, tyagi10a, kesselheim11a} before using it.
+mainly\cite{espresso2, tyagi10a, kesselheim11a} before using it.
 
 The particles with ids 0 to \var{n\_induced\_particles-1} are treated
 as iterated particles by ICC$\star$.  The constitute the dielectric
