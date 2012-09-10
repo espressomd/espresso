@@ -22,6 +22,7 @@ SUBDIRS = configs .
 tests = \
 	analysis.tcl \
 	collision-detection-centers.tcl \
+	collision-detection-glue.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
 	comfixed.tcl \
