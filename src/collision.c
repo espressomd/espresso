@@ -143,35 +143,20 @@ void detect_collision(Particle* p1, Particle* p2)
     i += size + 1;
   }
 
-  // If we're still here, there is no previous bond between the particles
+  /* If we're still here, there is no previous bond between the particles,
+     we have a new collision */
 
-  if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
-    // if desired, raise a runtime exception (background error) on collision
-    char *exceptiontxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-    int id1, id2;
-    if (p1->p.identity > p2->p.identity) {
-      id1 = p2->p.identity;
-      id2 = p1->p.identity;
-    }
-    else {
-      id1 = p1->p.identity;
-      id2 = p2->p.identity;
-    }
-    ERROR_SPRINTF(exceptiontxt, "{collision between particles %d and %d} ",
-		  id1, id2);
-  }
-
+  /* create marking bond between the colliding particles immediately */
   if (collision_params.mode & COLLISION_MODE_BOND) {
-    // Create the bond between the particles
     int bondG[2];
     bondG[0]=collision_params.bond_centers;
     bondG[1]=part2;
     local_change_bond(part1, bondG, 0);
   }
 
-  if (collision_params.mode & COLLISION_MODE_VS) {
-    /* If we also create virtual sites, we add the collision
-       to the queue to later add vs */
+  if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_EXCEPTION)) {
+    /* If we also create virtual sites or throw an exception, we add the collision
+       to the queue to process later */
 
     // Point of collision
     double new_position[3];
@@ -205,59 +190,72 @@ void prepare_collision_queue()
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-  // If we don't have virtual_sites_relative, only bonds between centers of 
-  // colliding particles are possible and nothing is to be done here
+  // printf("number of collisions in handle collision are %d\n",number_of_collisions);
+
+  for (int i = 0; i < number_of_collisions; i++) {
+    //  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
+    //  fflush(stdout);
+
+    if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
+
+      // if desired, raise a runtime exception (background error) on collision
+      char *exceptiontxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+      int id1, id2;
+      if (collision_queue[i].pp1 > collision_queue[i].pp2) {
+	id1 = collision_queue[i].pp2;
+	id2 = collision_queue[i].pp1;
+      }
+      else {
+	id1 = collision_queue[i].pp1;
+	id2 = collision_queue[i].pp2;
+      }
+      ERROR_SPRINTF(exceptiontxt, "{collision between particles %d and %d} ",
+		    id1, id2);
+    }
+
+    /* If we don't have virtual_sites_relative, only bonds between centers of 
+       colliding particles are possible and nothing is to be done here */
 #ifdef VIRTUAL_SITES_RELATIVE
-  // Does the user want bonds between virtual sites placed at the point of collision
-  if (collision_params.mode & COLLISION_MODE_VS) {
+    if (collision_params.mode & COLLISION_MODE_VS) {
 
-    //	printf("number of collisions in handle collision are %d\n",number_of_collisions);  
-    int bondG[3], i;
-
-    if (number_of_collisions > 0) {
-      // Go through the queue
-      for (i=0;i<number_of_collisions;i++) {
-	//  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
-	//  fflush(stdout);
-   
-	// Create virtual sites and bind them together
+      // add virtual sites placed at the point of collision and bind them
+      int bondG[3];
   
-	// Virtual site related to first particle in the collision
-	place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
-	vs_relate_to(max_seen_particle,collision_queue[i].pp1);
-	(local_particles[max_seen_particle])->p.isVirtual=1;
-	(local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+      // Virtual site related to first particle in the collision
+      place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
+      vs_relate_to(max_seen_particle,collision_queue[i].pp1);
+      (local_particles[max_seen_particle])->p.isVirtual=1;
+      (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
   
-	  // Virtual particle related to 2nd particle of the collision
-	place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
-	vs_relate_to(max_seen_particle,collision_queue[i].pp2);
-	(local_particles[max_seen_particle])->p.isVirtual=1;
-	(local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
+      // Virtual particle related to 2nd particle of the collision
+      place_particle(max_seen_particle+1,collision_queue[i].point_of_collision);
+      vs_relate_to(max_seen_particle,collision_queue[i].pp2);
+      (local_particles[max_seen_particle])->p.isVirtual=1;
+      (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
   
-	switch (bonded_ia_params[collision_params.bond_vs].num) {
-	case 1: {
-	  // Create bond between the virtual particles
-	  bondG[0] = collision_params.bond_vs;
-	  bondG[1] = max_seen_particle-1;
-	  local_change_bond(max_seen_particle, bondG, 0);
-	  break;
-	}
-	case 2: {
-	  // Create 1st bond between the virtual particles
-	  bondG[0] = collision_params.bond_vs;
-	  bondG[1] = collision_queue[i].pp1;
-	  bondG[2] = collision_queue[i].pp2;
-	  local_change_bond(max_seen_particle,   bondG, 0);
-	  local_change_bond(max_seen_particle-1, bondG, 0);
-	  break;
-	}
-	}
+      switch (bonded_ia_params[collision_params.bond_vs].num) {
+      case 1: {
+	// Create bond between the virtual particles
+	bondG[0] = collision_params.bond_vs;
+	bondG[1] = max_seen_particle-1;
+	local_change_bond(max_seen_particle, bondG, 0);
+	break;
+      }
+      case 2: {
+	// Create 1st bond between the virtual particles
+	bondG[0] = collision_params.bond_vs;
+	bondG[1] = collision_queue[i].pp1;
+	bondG[2] = collision_queue[i].pp2;
+	local_change_bond(max_seen_particle,   bondG, 0);
+	local_change_bond(max_seen_particle-1, bondG, 0);
+	break;
+      }
       }
     }
   }
 #endif
 
-  // Reset the collision queue	 
+  // Reset the collision queue
   number_of_collisions = 0;
   free(collision_queue);
 }

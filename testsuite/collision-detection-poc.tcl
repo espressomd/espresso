@@ -154,6 +154,11 @@ if {$bonds != "{1 2}"} {
     error_exit "exception bonds $bonds wrong"
 }
 
+# Check whether another two virtual sites have been created
+if {[setmd n_part] != 7} {
+    error_exit "Incorrect number of particles [setmd n_part] in the simulation. Too many or too few virtual sites were created."
+}
+
 # Check, whether the bonds are also correct
 set bonds [analyze_topology 2]
 if {$bonds != "{0 1} {1 2}"} {
