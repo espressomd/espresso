@@ -114,7 +114,7 @@ if {$bonds != "{0 1}"} {
 }
 
 # test exception, generating another collision
-part 2 pos 4 0 0
+part 2 pos 8 0 0
 on_collision exception bind_centers 2.0 3
 
 if {![catch {integrate 0} err]} {
@@ -130,7 +130,7 @@ foreach exception [lrange $err 2 end] {
 }
 set bonds [lsort $bonds]
 
-if {$bonds != "{0 1} {1 2}"} {
+if {$bonds != "{0 1} {0 2}"} {
     error_exit "exception bonds $bonds wrong"
 }
 
@@ -142,7 +142,7 @@ if {$bonds != "{0 1}"} {
 }
 
 set bonds [analyze_topology 3]
-if {$bonds != "{0 1} {1 2}"} {
+if {$bonds != "{0 1} {0 2}"} {
     error_exit "bonds not correctly created: bonds are $bonds"
 }
 
