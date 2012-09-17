@@ -36,12 +36,13 @@ setmd box_l 10 10 10
 
 thermostat off
 setmd time_step 0.01
-inter 3 harmonic 1 1
+inter 3 harmonic 2 2
+inter 0 0 lennard-jones 0.0001 2 2.1 auto
 inter 7 harmonic 1 1
 setmd skin 0
 part 0 pos 0 0 0 
-part 1 pos 1 0 0
-part 2 pos 3 0 0
+part 1 pos 2 0 0
+part 2 pos 5 0 0
 
 # analyze the bonding structure for pair bonds
 proc analyze_topology {bond_type {check_others 0}} {
@@ -86,16 +87,15 @@ if {$bonds != ""} {
 
 # Check setting of parameters
 setmd min_global_cut 1.0
-on_collision bind_centers 1.0 7
+on_collision bind_centers 2.0 7
 
 set res [on_collision]
-if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 7)) } {
+if { ! ( ([lindex $res 0] == "bind_centers") && (abs([lindex $res 1]-2) <1E-5) && ([lindex $res 2] == 7)) } {
     error_exit "Setting collision_detection parameters for bind_centers does not work"
 }
 
 # Check the actual collision detection
 integrate 0
-
 # Check, whether the bonds are correct
 set bonds [analyze_topology 7 1]
 if {$bonds != "{0 1}"} {
@@ -114,8 +114,8 @@ if {$bonds != "{0 1}"} {
 }
 
 # test exception, generating another collision
-part 2 pos 2 0 0
-on_collision exception bind_centers 1.0 3
+part 2 pos 8 0 0
+on_collision exception bind_centers 2.0 3
 
 if {![catch {integrate 0} err]} {
     error_exit "no exception was thrown at collision, although requested"
@@ -130,7 +130,7 @@ foreach exception [lrange $err 2 end] {
 }
 set bonds [lsort $bonds]
 
-if {$bonds != "{0 1} {1 2}"} {
+if {$bonds != "{0 1} {0 2}"} {
     error_exit "exception bonds $bonds wrong"
 }
 
@@ -142,7 +142,7 @@ if {$bonds != "{0 1}"} {
 }
 
 set bonds [analyze_topology 3]
-if {$bonds != "{0 1} {1 2}"} {
+if {$bonds != "{0 1} {0 2}"} {
     error_exit "bonds not correctly created: bonds are $bonds"
 }
 

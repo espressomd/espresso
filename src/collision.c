@@ -181,35 +181,19 @@ void detect_collision(Particle* p1, Particle* p2)
     i += size + 1;
   }
 
-  // If we're still here, there is no previous bond between the particles
+  /* If we're still here, there is no previous bond between the particles,
+     we have a new collision */
 
-  if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
-    // if desired, raise a runtime exception (background error) on collision
-    char *exceptiontxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-    int id1, id2;
-    if (p1->p.identity > p2->p.identity) {
-      id1 = p2->p.identity;
-      id2 = p1->p.identity;
-    }
-    else {
-      id1 = p1->p.identity;
-      id2 = p2->p.identity;
-    }
-    ERROR_SPRINTF(exceptiontxt, "{collision between particles %d and %d} ",
-		  id1, id2);
-  }
-
+  /* create marking bond between the colliding particles immediately */
   if (collision_params.mode & COLLISION_MODE_BOND) {
-    // Create the bond between the particles
     int bondG[2];
     bondG[0]=collision_params.bond_centers;
     bondG[1]=part2;
     local_change_bond(part1, bondG, 0);
   }
-  if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-
     double new_position[3];
-   if (collision_params.mode & COLLISION_MODE_VS) {
+    // The glue to surface mode requires a different point of collision calc than the other modes
+   if (! (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
     /* If we also create virtual sites, we add the collision
        to the queue to later add vs */
 
@@ -217,8 +201,8 @@ void detect_collision(Particle* p1, Particle* p2)
     for (i=0;i<3;i++) {
       new_position[i] = p1->r.p[i] - vec21[i] * 0.50;
     }
-  }
-  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+  } 
+  else{
     /* If we also create virtual sites, we add the collision
        to the queue to later add vs */
 
@@ -255,14 +239,31 @@ void detect_collision(Particle* p1, Particle* p2)
       collision_queue[number_of_collisions-1].point_of_collision[i] = new_position[i]; 
     }
   
-  }
 }
 
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-  // If we don't have virtual_sites_relative, only bonds between centers of 
-  // colliding particles are possible and nothing is to be done here
+for (int i=0;i<number_of_collisions;i++) {
+//  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
+
+    if (collision_params.mode & (COLLISION_MODE_EXCEPTION)) {
+
+      // if desired, raise a runtime exception (background error) on collision
+      char *exceptiontxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
+      int id1, id2;
+      if (collision_queue[i].pp1 > collision_queue[i].pp2) {
+	id1 = collision_queue[i].pp2;
+	id2 = collision_queue[i].pp1;
+      }
+      else {
+	id1 = collision_queue[i].pp1;
+	id2 = collision_queue[i].pp2;
+      }
+      ERROR_SPRINTF(exceptiontxt, "{collision between particles %d and %d} ",
+		    id1, id2);
+    }
+
 #ifdef VIRTUAL_SITES_RELATIVE
   // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
@@ -270,10 +271,7 @@ void handle_collisions ()
     //	printf("number of collisions in handle collision are %d\n",number_of_collisions);  
     int bondG[3], i;
 
-    if (number_of_collisions > 0) {
       // Go through the queue
-      for (i=0;i<number_of_collisions;i++) {
-	//  printf("Handling collision of particles %d %d\n", collision_queue[i].pp1, collision_queue[i].pp2);
 	//  fflush(stdout);
    
 	// Create virtual site(s) 
@@ -323,11 +321,11 @@ void handle_collisions ()
          bondG[0] = collision_params.bond_vs;
          bondG[1] = max_seen_particle;
          local_change_bond(collision_queue[i].pp1, bondG, 0);
+	 local_particles[collision_queue[i].pp1]->p.type=0;
        }
       }
-    }
-  }
 #endif
+    }
 
   // Reset the collision queue	 
   if (number_of_collisions)
