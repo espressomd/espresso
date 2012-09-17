@@ -21,7 +21,7 @@
 
 /** For the warmup you can cap the singularity of various
     potentials. Look into the warmup documentation for more
-        details (who wants to write that?).*/
+    details (who wants to write that?).*/
 extern double force_cap;
 
 int forcecap_set_params(double forcecap);
