@@ -245,9 +245,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   
 
 #ifdef COLLISION_DETECTION
-  if (collision_detection_mode > 0)
-     detect_collision(p1,p2);
-#endif 
+  if (collision_params.mode > 0)
+    detect_collision(p1,p2);
+#endif
 
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
