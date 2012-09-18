@@ -34,25 +34,11 @@
 #include "mol_cut.h"
 #include "dihedral.h"
 
+/* should be changed to file containing force caps */
+#include "forcecap.h"
+
+
 #ifdef TABULATED
-
-/** For the warmup you can cap any tabulated potential at the value
-    tab_force_cap.  This works for most common potentials where a
-    singularity in the force occurs at small separations.  If you have
-    more specific requirements calculate a separate lookup table for
-    each stage of the warm up.
-
-    \note If the maximum value of the tabulated force at small
-    separations is less than the force cap then a warning will be
-    issued since the user should provide tabulated values in the range
-    where particle interactions are expected.  Even so the program
-    will still run and a linear extrapolation will be used at small
-    separations until the force reaches the capped value or until zero
-    separation */
-extern double tab_force_cap;
-
-/// set parameters for the force capping of tabulated potentials
-int tabforcecap_set_params(double tabforcecap);
 
 /** Non-Bonded tabulated potentials:
     Reads tabulated parameters and force and energy tables from a file.
@@ -102,7 +88,7 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
   if (CUTOFF_CHECK(dist < ia_params->TAB_maxval)){ 
     double phi, dindex, fac;
     int tablepos, table_start,j;
-    double rescaled_force_cap = tab_force_cap/dist;
+    double rescaled_force_cap = force_cap/dist;
     
     fac = 0.0;
 
@@ -127,7 +113,7 @@ MDINLINE void add_tabulated_pair_force(Particle *p1, Particle *p2, IA_parameters
       }
     }
     
-    if ( rescaled_force_cap < fac && tab_force_cap > 0.0) {
+    if ( rescaled_force_cap < fac && force_cap > 0.0) {
       fac = rescaled_force_cap;
     }
 

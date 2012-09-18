@@ -31,17 +31,9 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 #include "mol_cut.h"
+#include "forcecap.h"
 
 #ifdef LENNARD_JONES
-/** For the warmup you can cap the singularity of the Lennard-Jones
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-extern double lj_force_cap;
-
-/** set the force cap for the LJ interaction.
-    @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
-*/
 int ljforcecap_set_params(double ljforcecap);
 
 int lennard_jones_set_params(int part_type_a, int part_type_b,
@@ -132,8 +124,8 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
   return 0.0;
 }
 
-/** calculate lj_capradius from lj_force_cap */
-void calc_lj_cap_radii(double force_cap);
+/** calculate lj_capradius from force_cap */
+void calc_lj_cap_radii();
 
 #endif /* ifdef LENNARD_JONES */
 #endif
