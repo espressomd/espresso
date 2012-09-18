@@ -299,8 +299,8 @@ set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 
   	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
   	set p_tot [analyze pressure ideal]; set p_tensor1 $p_tensorI; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
   	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_tensor1)"
-  	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" } } 
-  else { puts "ROTATION is compiled in so total and ideal components of pressure cannot be compared with stress_tensor" }
+  	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+  } else { puts "ROTATION is compiled in so total and ideal components of pressure cannot be compared with stress_tensor" }
   
   set p_tot [analyze pressure bonded 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
   puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure bonded 0': $rel_error  ($p_tot / $p_tensor1)"
@@ -332,49 +332,52 @@ set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 
 	  set rel_max 0; set abs_max 0; set absflag 0; set maxi "-"; set maxj "-"
   	foreach i $lst j [eval $get_lst] {
 	    if { [string first "analyze formfactor" "$get_lst"]==0 || [string first "analyze <formfactor>" "$get_lst"]==0 } { 
-	  	  if { [expr [lindex $i 0]-[lindex $j 0]] < $epsilon } { set i [lindex $i 1]; set j [lindex $j 1] }
-        else { 
-          error "different x-coordinates upon comparing '$get_lst'" }
+	  	  if { [expr [lindex $i 0]-[lindex $j 0]] < $epsilon } {
+          set i [lindex $i 1]; set j [lindex $j 1]
+        } else { 
+          error "different x-coordinates upon comparing '$get_lst'" 
+          }
 	    }
-	    if { $i!=0 && $j!=0 } { set rel_error [expr abs(($j - $i)/$i)] }
-      else { set rel_error -1; set absflag 1 
-      }
+	    if { $i!=0 && $j!=0 } {
+        set rel_error [expr abs(($j - $i)/$i)] 
+        } else { 
+          set rel_error -1; set absflag 1 
+        }
   	  set abs_error [expr abs($i-$j)]
 	    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon evaluating '$get_lst'  ($j / $i)" }
 	    if { $rel_error > $rel_max } { set rel_max $rel_error; set maxi $i; set maxj $j }
 	    if { $abs_error > $abs_max } { set abs_max $abs_error }
 	  }
   	puts -nonewline "maximum relative deviation upon evaluating '$get_lst': $rel_max  ($maxj / $maxi); maximum absolute deviation: $abs_max "
-  	if { $absflag==1 } { puts "(zero occured)" }
-    else { puts " "  }
+  	if { $absflag==1 } { puts "(zero occured)" } else { puts " "  }
   }
 
-    set maxdx 0
-    set maxpx 0
-    set maxdy 0
-    set maxpy 0
-    set maxdz 0
-    set maxpz 0
-    for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-	set resF [part $i pr f]
-	set tgtF $F($i)
-	set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
-	set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
-	set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
+  set maxdx 0
+  set maxpx 0
+  set maxdy 0
+  set maxpy 0
+  set maxdz 0
+  set maxpz 0
+  for { set i 0 } { $i <= [setmd max_part] } { incr i } {
+    set resF [part $i pr f]
+    set tgtF $F($i)
+    set dx [expr abs([lindex $resF 0] - [lindex $tgtF 0])]
+    set dy [expr abs([lindex $resF 1] - [lindex $tgtF 1])]
+    set dz [expr abs([lindex $resF 2] - [lindex $tgtF 2])]
 
-	if { $dx > $maxdx} {
-	    set maxdx $dx
-	    set maxpx $i
-	}
-	if { $dy > $maxdy} {
-	    set maxdy $dy
-	    set maxpy $i
-	}
-	if { $dz > $maxdz} {
-	    set maxdz $dz
-	    set maxpz $i
-	}
+    if { $dx > $maxdx} {
+        set maxdx $dx
+        set maxpx $i
     }
+    if { $dy > $maxdy} {
+        set maxdy $dy
+        set maxpy $i
+    }
+    if { $dz > $maxdz} {
+        set maxdz $dz
+        set maxpz $i
+    }
+  }
     puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
     if { $maxdx > $epsilon || $maxdy > $epsilon || $maxdz > $epsilon } {
 	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
