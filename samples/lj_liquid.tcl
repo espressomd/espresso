@@ -149,7 +149,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
     # Warmup criterion
     set act_min_dist [analyze mindist]
-    puts -nonewline "run $i at time=[setmd time] (LJ cap=$cap) min dist = $act_min_dist\r"
+    puts "run $i at time=[setmd time] (LJ cap=$cap) min dist = $act_min_dist\r"
     flush stdout
 
 #   write observables

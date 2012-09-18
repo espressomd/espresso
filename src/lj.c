@@ -65,13 +65,10 @@ int lennard_jones_set_params(int part_type_a, int part_type_b,
   return ES_OK;
 }
 
-/** Calculate lennard Jones force between particle p1 and p2 */
-
-
 /** calculate lj_capradius from force_cap */
-void calc_lj_cap_radii(double force_cap)
+void calc_lj_cap_radii()
 {
-  /* only compute cap radii if not set "individual" */
+  /* do not compute cap radii if force capping is "individual" */
   if( force_cap != -1.0 ){
     int i,j,cnt=0;
     IA_parameters *params;

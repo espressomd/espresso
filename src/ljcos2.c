@@ -61,10 +61,10 @@ int ljcos2_set_params(int part_type_a, int part_type_b,
 }
 
 /** calculate ljcos2_capradius from force_cap */
-void calc_ljcos2_cap_radii(double forcecap)
+void calc_ljcos2_cap_radii()
 {
-  /* only compute cap radii if not set "individual" */
-  if( forcecap != -1.0){
+  /* do not compute cap radii if force capping is "individual" */
+  if( force_cap != -1.0){
     int i,j,cnt=0;
     IA_parameters *params;
     double force=0.0, rad=0.0, step, frac2, frac6;
@@ -72,7 +72,7 @@ void calc_ljcos2_cap_radii(double forcecap)
     for(i=0; i<n_particle_types; i++) {
       for(j=0; j<n_particle_types; j++) {
         params = get_ia_param(i,j);
-        if(forcecap > 0.0 && params->LJCOS2_eps > 0.0) {
+        if(force_cap > 0.0 && params->LJCOS2_eps > 0.0) {
     /* I think we have to solve this numerically... and very crude as well */
     cnt=0;
     rad = params->LJCOS2_sig;
@@ -88,10 +88,10 @@ void calc_ljcos2_cap_radii(double forcecap)
             else {
         force = 0;
       }
-      if((step < 0 && forcecap < force) || (step > 0 && forcecap > force)) {
+      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
         step = - (step/2.0); 
       }
-      if(fabs(force-forcecap) < 1.0e-6) step=0;
+      if(fabs(force-force_cap) < 1.0e-6) step=0;
       rad += step; cnt++;
     } 
           params->LJCOS2_capradius = rad;

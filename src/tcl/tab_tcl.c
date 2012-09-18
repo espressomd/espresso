@@ -79,9 +79,9 @@ int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, i
 int tclcommand_inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   if(argc==1){
-  Tcl_AppendResult(interp, "warning: \"inter tabforcecap\" is deprecated "
-                           "and will be removed in some further version. "
-                           "Use \"inter forcecap\" instead.\n", (char *) NULL);
+    fprintf(stderr, "WARNING: \"inter tabforcecap\" is deprecated "
+                             "and will be removed in some further version. "
+                             "Use \"inter forcecap\" instead.\n", (char *) NULL);
   }
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }

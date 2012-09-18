@@ -2020,33 +2020,36 @@ void mpi_cap_forces_slave(int node, int parm)
 {
 #ifdef LENNARD_JONES
   MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_lj_cap_radii(force_cap);
+  calc_lj_cap_radii();
 #ifdef LENNARD_JONES_GENERIC
-  calc_ljgen_cap_radii(force_cap);
+  calc_ljgen_cap_radii();
 #endif
 #ifdef LJCOS2
-  calc_ljcos2_cap_radii(force_cap);
+  calc_ljcos2_cap_radii();
 #endif
   on_short_range_ia_change();
 #endif
 #ifdef LJ_ANGLE
   MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_ljangle_cap_radii(force_cap);
+  calc_ljangle_cap_radii();
   on_short_range_ia_change();
 #endif
 #ifdef MORSE
   MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_morse_cap_radii(force_cap);
+  calc_morse_cap_radii();
   on_short_range_ia_change();
 #endif
 #ifdef BUCKINGHAM
   MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
-  calc_buck_cap_radii(force_cap);
+  calc_buck_cap_radii();
   on_short_range_ia_change();
 #endif
 #ifdef TABULATED
   MPI_Bcast(&force_cap, 1, MPI_DOUBLE, 0, comm_cart);
+/* to do: check if "check_tab_forcecap" is still useful since force capping
+   is defined globally now -- the cap for other forces would be removed too! 
   check_tab_forcecap(force_cap);
+*/
   on_short_range_ia_change();
 #endif
 }

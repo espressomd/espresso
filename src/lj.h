@@ -34,6 +34,8 @@
 #include "forcecap.h"
 
 #ifdef LENNARD_JONES
+int ljforcecap_set_params(double ljforcecap);
+
 int lennard_jones_set_params(int part_type_a, int part_type_b,
 				      double eps, double sig, double cut,
 				      double shift, double offset,
@@ -123,7 +125,7 @@ MDINLINE double lj_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_par
 }
 
 /** calculate lj_capradius from force_cap */
-void calc_lj_cap_radii(double forcecap);
+void calc_lj_cap_radii();
 
 #endif /* ifdef LENNARD_JONES */
 #endif

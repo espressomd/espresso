@@ -38,8 +38,8 @@ int buckingham_set_params(int part_type_a, int part_type_b,
 			  double discont, double shift, double cap_radius,
 			  double F1, double F2);
 
-/** calculate buck_capradius from buckingham force cap */
-void calc_buck_cap_radii(double force_cap);
+/** calculate buck_capradius from force_cap */
+void calc_buck_cap_radii();
 
 /**Resultant Force due to a buckingham potential between two particles at interatomic separation r greater than or equal to discont*/
 MDINLINE double buck_force_r(double A, double B, double C, double D, double r )

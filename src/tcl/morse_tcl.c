@@ -34,7 +34,7 @@
 
 int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j)
 {
-  char buffer[TCL_DOUBLE_SPACE];
+    char buffer[TCL_DOUBLE_SPACE];
   IA_parameters *data = get_ia_param(i, j);
 
   Tcl_PrintDouble(interp, data->MORSE_eps, buffer);
@@ -55,9 +55,9 @@ int tclprint_to_result_morseIA(Tcl_Interp *interp, int i, int j)
 int tclcommand_inter_parse_morseforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   if(argc==1){
-  Tcl_AppendResult(interp, "warning: \"inter morseforcecap\" is deprecated "
-                           "and will be removed in some further version. "
-                           "Use \"inter forcecap\" instead.\n", (char *) NULL);
+    fprintf(stderr, "WARNING: \"inter morseforcecap\" is deprecated "
+                             "and will be removed in some further version. "
+                             "Use \"inter forcecap\" instead.\n", (char *) NULL);
   }
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }

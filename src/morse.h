@@ -40,7 +40,7 @@ int morse_set_params(int part_type_a, int part_type_b,
 		     double rmin, double cut, double cap_radius);
 
 /** calculate morse_capradius from force_cap */
-void calc_morse_cap_radii(double forcecap);
+void calc_morse_cap_radii();
 
 /** Calculate Morse force between particle p1 and p2 */
 MDINLINE void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,

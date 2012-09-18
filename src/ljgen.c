@@ -69,9 +69,9 @@ int ljgen_set_params(int part_type_a, int part_type_b,
 }
 
 /** calculate lj_capradius from force_cap */
-void calc_ljgen_cap_radii(double force_cap)
+void calc_ljgen_cap_radii()
 {
-  /* only compute cap radii if not set "individual" */
+  /* do not compute cap radii if force capping is "individual" */
   if( force_cap != -1.0){
     int i,j,cnt=0;
     IA_parameters *params;

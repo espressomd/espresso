@@ -94,7 +94,7 @@ int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   if(argc==1){
-  Tcl_AppendResult(interp, "warning: \"inter ljangleforcecap\" is deprecated "
+  Tcl_AppendResult(interp, "WARNING: \"inter ljangleforcecap\" is deprecated "
                            "and will be removed in some further version. "
                            "Use \"inter forcecap\" instead.\n", (char *) NULL);
   }

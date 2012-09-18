@@ -86,7 +86,7 @@ int ljangle_set_params(int part_type_a, int part_type_b,
 
 /** calculate ljangle_capradius from force_cap */
 /* This routine does not take the optional 2nd environment into account. */
-void calc_ljangle_cap_radii(double force_cap)
+void calc_ljangle_cap_radii()
 {
   if( force_cap != -1.0){
     int i,j,cnt=0;

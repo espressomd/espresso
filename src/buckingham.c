@@ -64,9 +64,10 @@ int buckingham_set_params(int part_type_a, int part_type_b,
   return ES_OK;
 }
 
-/** calculate buck_capradius from buckingham force cap */
-void calc_buck_cap_radii(double force_cap)
+/** calculate buck_capradius from force_cap */
+void calc_buck_cap_radii()
 {
+  /* do not compute cap radii if force capping is individual */
   if( force_cap != -1.0 ){
     int i,j,cnt=0;
     IA_parameters *params = NULL;

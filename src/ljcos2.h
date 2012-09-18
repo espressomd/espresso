@@ -132,7 +132,7 @@ MDINLINE double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia
 }
 
 /** calculate ljcos2_capradius from force_cap */
-void calc_ljcos2_cap_radii(double forcecap);
+void calc_ljcos2_cap_radii();
 
 #endif /* ifdef LJCOS2 */
 #endif
