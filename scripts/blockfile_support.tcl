@@ -98,7 +98,7 @@ proc blockfile_read_auto_particles {channel read auto} {
 		set f $idx; incr idx 3 }
 	    "^e"      { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
 		set ext_force $idx; incr idx 3 }
-	    default { error " $i is not a particle property" }
+	    default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
 	}
     }
     if {![info exists id] || ![info exists pos]} { error "the fields id and pos are mandatory" }
