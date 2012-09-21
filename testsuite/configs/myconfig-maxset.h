@@ -19,6 +19,7 @@
 
 #define NEMD
 #define NPT 
+#define GHMC
 
 #define LB
 #define LB_BOUNDARIES

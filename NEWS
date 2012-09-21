@@ -17,6 +17,9 @@ New user-visible features
   the vincinity of a particle of the catalysator type, the reactant is
   transformed into a particle of the product type.
 
+* The feature GHMC implements a generalized hybrid Monte-Carlo
+  thermostat.
+
 ESPResSo 3.1.1
 ==============
 
