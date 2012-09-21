@@ -45,20 +45,6 @@
 #include "interaction_data.h"
 #include "communication.h"
 
-double ljangle_force_cap = 0.0;
-
-/** set the force cap for the directional LJ interaction.
-    @param ljangleforcecap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
-*/
-int ljangleforcecap_set_params(double ljangleforcecap)
-{
-  if (ljangle_force_cap != -1.0)
-    mpi_ljangle_cap_forces(ljangle_force_cap);
-   
-  return ES_OK;
-}
-
 int ljangle_set_params(int part_type_a, int part_type_b,
 				double eps, double sig, double cut,
 				int b1p, int b1n, int b2p, int b2n,
@@ -93,47 +79,48 @@ int ljangle_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  if (ljangle_force_cap != -1.0)
-    mpi_ljangle_cap_forces(ljangle_force_cap);
+  mpi_cap_forces(force_cap);
     
   return ES_OK;
 }
 
-/** calculate ljangle_capradius from ljangle_force_cap */
+/** calculate ljangle_capradius from force_cap */
 /* This routine does not take the optional 2nd environment into account. */
-void calc_ljangle_cap_radii(double force_cap)
+void calc_ljangle_cap_radii()
 {
-  int i,j,cnt=0;
-  IA_parameters *params;
-  double force=0.0, rad=0.0, step, frac2, frac10;
+  if( force_cap != -1.0){
+    int i,j,cnt=0;
+    IA_parameters *params;
+    double force=0.0, rad=0.0, step, frac2, frac10;
 
-  for(i=0; i<n_particle_types; i++) {
-    for(j=0; j<n_particle_types; j++) {
-      params = get_ia_param(i,j);
-      if(force_cap > 0.0 && params->LJANGLE_eps > 0.0) {
-	/* I think we have to solve this numerically... and very crude as well */
-	cnt=0;
-	rad = params->LJANGLE_sig;
-	step = -0.1 * params->LJANGLE_sig;
-	force=0.0;
-	
-	while(step != 0) {
-	  frac2  = SQR(params->LJANGLE_sig/rad);
-	  frac10 = frac2*frac2*frac2*frac2*frac2;
-	  force = 60.0 * params->LJANGLE_eps * frac10*(frac2 - 1.0) / rad;
-	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-	    step = - (step/2.0); 
-	  }
-	  if(fabs(force-force_cap) < 1.0e-6) step=0;
-	  rad += step; cnt++;
-	} 
-	params->LJANGLE_capradius = rad;
+    for(i=0; i<n_particle_types; i++) {
+      for(j=0; j<n_particle_types; j++) {
+        params = get_ia_param(i,j);
+        if(force_cap > 0.0 && params->LJANGLE_eps > 0.0) {
+    /* I think we have to solve this numerically... and very crude as well */
+    cnt=0;
+    rad = params->LJANGLE_sig;
+    step = -0.1 * params->LJANGLE_sig;
+    force=0.0;
+    
+    while(step != 0) {
+      frac2  = SQR(params->LJANGLE_sig/rad);
+      frac10 = frac2*frac2*frac2*frac2*frac2;
+      force = 60.0 * params->LJANGLE_eps * frac10*(frac2 - 1.0) / rad;
+      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
+        step = - (step/2.0); 
       }
-      else {
-	params->LJANGLE_capradius = 0.0; 
+      if(fabs(force-force_cap) < 1.0e-6) step=0;
+      rad += step; cnt++;
+    } 
+    params->LJANGLE_capradius = rad;
+        }
+        else {
+    params->LJANGLE_capradius = 0.0; 
+        }
+        FORCE_TRACE(fprintf(stderr,"%d: LJANGLE Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
+          this_node,i,j,rad,force,cnt));
       }
-      FORCE_TRACE(fprintf(stderr,"%d: LJANGLE Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-			  this_node,i,j,rad,force,cnt));
     }
   }
 }

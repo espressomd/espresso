@@ -29,8 +29,8 @@
 
 # Deprecation warning
 proc warn_deprecated { fname version } {
-    puts "WARNING: The function $fname is deprecated since version $version"
-    puts "         and will be removed in some future version."
+    puts stderr "WARNING: The function $fname is deprecated since version $version"
+    puts stderr "         and will be removed in some future version."
 }
 
 

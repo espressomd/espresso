@@ -18,28 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IA_DATA_TCL_H
-#define IA_DATA_TCL_H
+#ifndef _FORCECAP_TCL_H
+#define _FORCECAP_TCL_H
+
 #include "parser.h"
-#include "forcecap_tcl.h"
 
-/************************************************
- * exported functions
- ************************************************/
-
-/** Implementation of the tcl command "inter". This function
-    allows the interaction parameters to be modified.
- */
-int tclcommand_inter(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implementation of the Tcl function constraint. This function
-    allows to set and delete constraints.
- */
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
-
-/** datafield callback for \ref min_global_cut. Sets the minimal cell size. */
-int tclcallback_min_global_cut(Tcl_Interp *interp, void *_data);
+/// parser for the forcecap
+int tclcommand_inter_parse_forcecap(Tcl_Interp * interp, int argc, char ** argv);
 
 #endif
+
