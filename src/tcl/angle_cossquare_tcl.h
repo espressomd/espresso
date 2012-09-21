@@ -18,30 +18,23 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/* This is the default myconfig.h-file. If no other myconfig-file is
-   found, this file is used.
-*/
-/* global features */
-#define PARTIAL_PERIODIC
-#define ELECTROSTATICS
-#define EXTERNAL_FORCES
-#define CONSTRAINTS
-#define MASS
-#define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
-#define NPT
+#ifndef ANGLE_TCL_H
+#define ANGLE_TCL_H
+/** \file angle__cossquare_tcl.h
+ * Tcl interface for \ref angle_cossquare.h
+ */
 
-/* potentials */
-#define TABULATED
-#define LENNARD_JONES
-#define LENNARD_JONES_GENERIC
-#define MORSE
-#define LJCOS
-#define LJCOS2
-#define BUCKINGHAM
-#define SOFT_SPHERE
-#define BOND_ANGLE
+#include "parser.h"
+#include "interaction_data.h"
 
-#define MPI_CORE
-#define FORCE_CORE
+#ifdef BOND_ANGLE
+/// parse parameters for the angle potential
+int tclcommand_inter_parse_angle_cossquare(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+
+///
+int tclprint_to_result_angle_cossquareIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+
+#endif
+
+#endif
+

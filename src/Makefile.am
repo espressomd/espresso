@@ -118,6 +118,9 @@ libEspresso_a_SOURCES += \
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
 	angle.c angle.h \
+	angle_harmonic.c angle_harmonic.h \
+	angle_cosine.c angle_cosine.h \
+	angle_cossquare.c angle_cossquare.h \
 	angledist.c angledist.h \
 	dihedral.c dihedral.h \
 	endangledist.c endangledist.h \
@@ -214,6 +217,9 @@ libEspresso_a_SOURCES += \
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
 	tcl/angle_tcl.c tcl/angle_tcl.h \
+	tcl/angle_harmonic_tcl.c tcl/angle_harmonic_tcl.h \
+	tcl/angle_cosine_tcl.c tcl/angle_cosine_tcl.h \
+	tcl/angle_cossquare_tcl.c tcl/angle_cossquare_tcl.h \
 	tcl/angledist_tcl.c tcl/angledist_tcl.h \
 	tcl/dihedral_tcl.c tcl/dihedral_tcl.h \
 	tcl/endangledist_tcl.c tcl/endangledist_tcl.h \

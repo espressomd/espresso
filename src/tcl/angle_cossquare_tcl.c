@@ -18,30 +18,31 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file angle_tcl.c
+/** \file angle_cossquare_tcl.c
  *
- *  Implementation of \ref angle_tcl.h
+ *  Implementation of \ref angle_cossquare_tcl.h
  */
-#include "angle_tcl.h"
+#include "angle_cossquare_tcl.h"
 
-#ifdef BOND_ANGLE_OLD
-#include "angle.h"
+#ifdef BOND_ANGLE
+#include "angle_cossquare.h"
+
 #include "communication.h"
 
-/// parse parameters for the angle potential
-int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv)
+/// parse parameters for the angle_cossquare potential
+int tclcommand_inter_parse_angle_cossquare(Tcl_Interp *interp, int bond_type, int argc, char **argv)
 {
   double bend, phi0;
 
   /* the optional parameter phi0 is due to backwards compatibility and is set to PI if not given */
   if (argc != 2 && argc != 3) {
-    Tcl_AppendResult(interp, "angle needs 1 or 2 parameters: "
+    Tcl_AppendResult(interp, "angle_cossquare needs 1 or 2 parameters: "
 		     "<bend> [<phi0>]", (char *) NULL);
     return (TCL_ERROR);
   }
 
   if (! ARG_IS_D(1, bend)) {
-    Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
+    Tcl_AppendResult(interp, "angle_cossquare needs a DOUBLE parameter: "
 		     "<bend> ", (char *) NULL);
     return TCL_ERROR;
   }
@@ -49,22 +50,22 @@ int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, ch
   /* special treatment of the optional parameter phi0 */
   if (argc == 3) {
     if (! ARG_IS_D(2, phi0)) {
-      Tcl_AppendResult(interp, "angle needs a DOUBLE parameter: "
+      Tcl_AppendResult(interp, "angle_cossquare needs a DOUBLE parameter: "
 		       "<phi0> ", (char *) NULL);
       return TCL_ERROR;
     }
   } else {
     phi0 = PI;
   }
-  CHECK_VALUE(angle_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
+  CHECK_VALUE(angle_cossquare_set_params(bond_type, bend, phi0), "bond type must be nonnegative");
 }
 
-int tclprint_to_result_angleIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
+int tclprint_to_result_angle_cossquareIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {
   char buffer[TCL_DOUBLE_SPACE];
-  Tcl_PrintDouble(interp, params->p.angle.bend, buffer);
-  Tcl_AppendResult(interp, "angle ", buffer," ", (char *) NULL);
-  Tcl_PrintDouble(interp, params->p.angle.phi0, buffer);
+  Tcl_PrintDouble(interp, params->p.angle_cossquare.bend, buffer);
+  Tcl_AppendResult(interp, "angle_cossquare ", buffer," ", (char *) NULL);
+  Tcl_PrintDouble(interp, params->p.angle_cossquare.phi0, buffer);
   Tcl_AppendResult(interp, buffer, (char *) NULL);
   return TCL_OK;
 }

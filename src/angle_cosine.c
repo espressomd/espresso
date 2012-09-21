@@ -18,13 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/** \file angle.c
+/** \file angle_cosine.c
  *
- *  Implementation of \ref angle.h
+ *  Implementation of \ref angle_cosine.h
  */
-#include "angle.h"
+#include "angle_cosine.h"
 
-#ifdef BOND_ANGLE_OLD
+#ifdef BOND_ANGLE
 #include "communication.h"
 
 /** set parameters for the angle potential.
@@ -32,25 +32,20 @@
     \todo The type of the angle potential
     is chosen via config.h and cannot be changed at runtime.
 */
-int angle_set_params(int bond_type, double bend, double phi0)
+int angle_cosine_set_params(int bond_type, double bend, double phi0)
 {
   if(bond_type < 0)
     return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].p.angle.bend = bend;
-  bonded_ia_params[bond_type].p.angle.phi0 = phi0;
-#ifdef BOND_ANGLE_COSINE
-  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
-  bonded_ia_params[bond_type].p.angle.sin_phi0 = sin(phi0);
-#endif
-#ifdef BOND_ANGLE_COSSQUARE
-  bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
-#endif
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_OLD;
+  bonded_ia_params[bond_type].p.angle_cosine.bend = bend;
+  bonded_ia_params[bond_type].p.angle_cosine.phi0 = phi0;
+  bonded_ia_params[bond_type].p.angle_cosine.cos_phi0 = cos(phi0);
+  bonded_ia_params[bond_type].p.angle_cosine.sin_phi0 = sin(phi0);
+  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_COSINE;
   bonded_ia_params[bond_type].num = 2;
- 
+
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1); 
 
