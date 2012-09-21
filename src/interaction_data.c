@@ -721,8 +721,14 @@ char *get_name_of_bonded_ia(int i) {
   switch (i) {
   case BONDED_IA_FENE:
     return "FENE";
-  case BONDED_IA_ANGLE:
+  case BONDED_IA_ANGLE_OLD:
     return "angle";
+  case BONDED_IA_ANGLE_HARMONIC:
+    return "angle_harmonic";
+  case BONDED_IA_ANGLE_COSINE:
+    return "angle_cosine";
+  case BONDED_IA_ANGLE_COSSQUARE:
+    return "angle_cossquare";
   case BONDED_IA_ANGLEDIST:
     return "angledist";
   case BONDED_IA_DIHEDRAL:

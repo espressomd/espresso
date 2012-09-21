@@ -18,30 +18,38 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-/* This is the default myconfig.h-file. If no other myconfig-file is
-   found, this file is used.
+/** \file angle_harmonic.c
+ *
+ *  Implementation of \ref angle.h
+ */
+#include "angle_harmonic.h"
+
+#ifdef BOND_ANGLE
+#include "communication.h"
+
+/** set parameters for the angle potential.
+
+    \todo The type of the angle potential
+    is chosen via config.h and cannot be changed at runtime.
 */
-/* global features */
-#define PARTIAL_PERIODIC
-#define ELECTROSTATICS
-#define EXTERNAL_FORCES
-#define CONSTRAINTS
-#define MASS
-#define EXCLUSIONS
-#define COMFORCE
-#define COMFIXED
-#define NPT
+int angle_harmonic_set_params(int bond_type, double bend, double phi0)
+{
+  if(bond_type < 0)
+    return ES_ERROR;
 
-/* potentials */
-#define TABULATED
-#define LENNARD_JONES
-#define LENNARD_JONES_GENERIC
-#define MORSE
-#define LJCOS
-#define LJCOS2
-#define BUCKINGHAM
-#define SOFT_SPHERE
-#define BOND_ANGLE
+  make_bond_type_exist(bond_type);
 
-#define MPI_CORE
-#define FORCE_CORE
+  bonded_ia_params[bond_type].p.angle_harmonic.bend = bend;
+  bonded_ia_params[bond_type].p.angle_harmonic.phi0 = phi0;
+
+  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_HARMONIC;
+  bonded_ia_params[bond_type].num = 2;
+ 
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return ES_OK;
+}
+
+#endif
+

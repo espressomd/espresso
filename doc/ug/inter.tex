@@ -802,11 +802,11 @@ should be displayed in VMD.
 \label{sec:angle}
 
 \begin{essyntax}
-  inter \var{bondid}
-  angle \var{K} \opt{\var{\phi_0}}
+  \variant{1} inter \var{bondid} angle\_harmonic \var{K} \opt{\var{\phi_0}}
+  \variant{2} inter \var{bondid} angle\_cosine \var{K} \opt{\var{\phi_0}}
+  \variant{3} inter \var{bondid} angle\_cossquare \var{K} \opt{\var{\phi_0}}
   \begin{features}
-    \required{BOND_ANGLE_HARMONIC}, \required{BOND_ANGLE_COSINE} or
-    \required{BOND_ANGLE_COSSQUARE}
+    \required{BOND_ANGLE}
   \end{features}
 \end{essyntax}
 
@@ -815,7 +815,7 @@ with an angle dependent potential. This potential is defined between
 three particles. The particle for which the bond is created, is the
 central particle, and the angle $\phi$ between the vectors from this
 particle to the two others determines the interaction.  \var{K} is the
-bending constant, and the optional parameter \var{phi_0} is the
+bending constant, and the optional parameter $\var{\phi_0}$ is the
 equilibirum bond angle in radian ranging from 0 to $\pi$.  If this
 parameter is not given, it defaults to $\var{\phi_0} = \pi$, which
 corresponds to a stretched configuration. For example, for a bond
@@ -846,15 +846,14 @@ the minimal energy configurations are the following:
     \put(7021,-5191){\makebox(0,0)[b]{$p_1$}}
     \put(8371,-3751){\makebox(0,0)[b]{$p_3$}}
     \put(7921,-5191){\makebox(0,0)[b]{$p_2$}}
-    \put(7921,-2941){\makebox(0,0)[b]{\keyword{inter 4 angle 1.0 [expr [PI]/2]}}}
-    \put(3601,-2941){\makebox(0,0)[b]{\keyword{inter 4 angle 1.0 [PI]}}}
+    \put(8371,-2941){\makebox(0,0)[b]{\keyword{inter 4 angle\var{\_type} 1.0 [expr [PI]/2]}}}
+    \put(3601,-2941){\makebox(0,0)[b]{\keyword{inter 4 angle\var{\_type} 1.0 [PI]}}}
   \end{picture}%
 \end{center}
 
-For the potential acting between the three particles, different choices are
-possible, which have to be activated in \texttt{myconfig.h}
+For the potential acting between the three particles three variants are possible
 \begin{itemize}
-\item Harmonic bond angle potential (requires feature BOND_ANGLE_HARMONIC):\\
+\item Harmonic bond angle potential \variant{1}:\\
   A classical harmonic potential,
   \begin{equation}
     V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
@@ -862,15 +861,14 @@ possible, which have to be activated in \texttt{myconfig.h}
   Unlike the two following variants, this potential has a kink at
   $\phi=\phi_0+\pi$ and accordingly a discontinuity in the force, and should
   therefore be used with caution.
-\item Cosine bond angle potential (requires feature BOND_ANGLE_COSINE):\\
+\item Cosine bond angle potential \variant{2}:\\
   \begin{equation}
     V(\alpha) = K \left[1 - \cos(\phi - \phi0)\right]
   \end{equation}
   Around $\phi_0$, this potenial is close to a harmonic one (both are
   $1/2(\phi-\phi_0)^2$ in leading order), but it is periodic and smooth for all
   angles $\phi$.
-\item Cosine square bond angle potential (requires feature
-  BOND_ANGLE_COSSQUARE):\\
+\item Cosine square bond angle potential \variant{3}:\\
   \begin{equation}
     V(\alpha) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
   \end{equation}

@@ -60,6 +60,9 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angle_harmonic.h"
+#include "angle_cosine.h"
+#include "angle_cossquare.h"
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
@@ -485,9 +488,21 @@ MDINLINE void add_bonded_force(Particle *p1)
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+	/* the first case is not needed and should not be called */ 
+    case BONDED_IA_ANGLE_OLD:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
+      break;
+#endif
+#ifdef BOND_ANGLE
+    case BONDED_IA_ANGLE_HARMONIC:
+      bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_ANGLE_COSINE:
+      bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_ANGLE_COSSQUARE:
+      bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
 #ifdef BOND_ANGLEDIST
