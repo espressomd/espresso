@@ -23,6 +23,12 @@ New user-visible features
 User-visible changes
 --------------------
 
+* Bond angle potentials are now defined on the Tcl-level instead of on
+  the feature-level, i.e. to choose the type of the bond-angle
+  potential, you should use the corresponding Tcl command instead of a
+  feature. To allow for any bond angle potential, activate the feature
+  BOND_ANGLE.
+
 * We have removed the forcecaps for the different interaction
   types. Instead, there is now a single global forcecap, plus it is
   possible to define individual forcecaps on a particle pair level.
