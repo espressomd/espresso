@@ -25,6 +25,7 @@
 #include "communication.h"
 #include "lattice.h"
 #include "npt.h"
+#include "ghmc.h"
 
 /* thermostat switch */
 int thermo_switch = THERMO_OFF;
@@ -42,6 +43,12 @@ double langevin_gamma_rotation;
 double nptiso_gamma0 = 0.0;
 // INSERT COMMENT
 double nptiso_gammav = 0.0;
+
+/* GHMC THERMOSTAT */
+// Number of NVE-MD steps in each GHMC cycle
+int ghmc_nmd = 1;
+// phi parameter for partial momentum update step in GHMC
+double ghmc_phi = 0;
 
 double langevin_pref1, langevin_pref2, langevin_pref2_rotation;
 /** buffers for the work around for the correlated random values which cool the system,
@@ -100,6 +107,9 @@ void thermo_init()
 #endif
 #ifdef NPT
   if(thermo_switch & THERMO_NPT_ISO)   thermo_init_npt_isotropic();
+#endif
+#ifdef GHMC
+  if(thermo_switch & THERMO_GHMC) thermo_init_ghmc();
 #endif
 }
 

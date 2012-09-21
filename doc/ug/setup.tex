@@ -196,6 +196,38 @@ a friction coefficient for every particle individually. Consult the
 \texttt{part} commands reference (chapter \ref{chap:part}) for
 information on how to achieve this.
 
+\subsection{GHMC thermostat}
+
+\begin{essyntax}
+  thermostat ghmc \var{temperature} \var{n\_md} \var{phi} \opt{-no_flip | -flip
+| -random_flip} \opt{-no_scale | -scale}
+\end{essyntax}
+
+\es implements Generalized Hybrid Monte Carlo (GHMC) as a thermostat. GHMC is a
+simulation method for sampling the canonical ensemble \cite{mehlig92}. The
+method consists of MC cycles that combine a few constant energy MD steps,
+specified by \var{n\_md}, followed by a Metropolis criterion for their
+acceptance. Prior to integration, the particles momenta are mixed with momenta
+sampled from the appropriate Boltzmann distribution. 
+
+Given the particles momenta $\mathbf{p}^j$ from the last $j^{th}$
+GHMC cycle the new momenta are generated
+by: $\mathbf{p}^{j+1}=\cos(\phi)\mathbf{p}^j+\sin(\phi)\pmb{\xi}$, where
+$\pmb{\xi}$ is a noise vector of random Gaussian variables with zero mean
+and variance $1/\var{temperature}$ (see 
+\cite{horowitz91} for more details). The
+momenta mixing parameter $\cos(\phi)$ corresponds to \var{phi} in the
+implementation.
+
+In case the MD step is rejected, the particles momenta may be
+flipped. This is specified by setting the \keyword{-no_flip} /
+\keyword{-flip} option, for the \keyword{-random_flip} option half of the
+rejected MD steps randomly result in momenta flip. The default for momenta
+flip is \keyword{-no_flip}. The $\pmb{\xi}$ noise vector's variance van be
+tuned to exactly $1/\var{temperature}$ by specifying the \keyword{-scale}
+option. The default for temperature scaling is \keyword{-no_scale}.
+
+
 \subsection{Dissipative Particle Dynamics (DPD) } \label{sec:DPD}
 \index{DPD|mainindex}
 

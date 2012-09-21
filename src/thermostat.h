@@ -45,6 +45,7 @@
 #define THERMO_NPT_ISO    4
 #define THERMO_LB         8
 #define THERMO_INTER_DPD  16
+#define THERMO_GHMC       32
 
 /*@}*/
 
@@ -69,6 +70,11 @@ extern double langevin_gamma;
 extern double nptiso_gamma0;
 /** Friction coefficient for nptiso-thermostat's inline-function friction_thermV_nptiso */
 extern double nptiso_gammav;
+
+/** Number of NVE-MD steps in GHMC Cycle*/
+extern int ghmc_nmd;
+/** Phi parameter for GHMC partial momenum update step */
+extern double ghmc_phi;
 
 /************************************************
  * functions
