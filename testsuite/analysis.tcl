@@ -61,65 +61,18 @@ proc read_data { fname } {
     close $chk; puts " Done."
 }
 
-# Not working properly
-proc rewrite {in out} {
-    global observables listables
-
-    puts -nonewline "Importing checkpoints from '$in' and re-writing them to '$out'... "; flush stdout
-    if { [file exists "$in.chk"] } { set chk [open "$in.chk" "r"] 
-    } elseif { [file exists "$in"] } { set chk [open "$in" "r"] 
-    } else { puts "ERROR: Could not find checkpoint-list $in!\nAborting..."; exit }
-    set i 0; set sys_obs [list box_l gamma periodicity skin temperature time time_step]
-    while { [eof $chk]==0 } { if { [gets $chk source] > 0 } {
-	if { [string compare [lindex [split $source "."] end] "gz"]==0 } { set f [open "|gzip -cd $source" r]
-	} else { set f [open "$source" "r"] }
-	while { [blockfile $f read auto] != "eof" } {}
-	puts -nonewline "."; flush stdout;  if { [catch { close $f } fid] } { puts "Error while closing $f caught: $fid." }
-
-	analyze set chains 0 20 30; set observables ""; set listables ""
-	set mindist1 [analyze mindist]; set mindist2 [analyze mindist 0 0]; lappend observables $mindist1 $mindist2
-	set nbhood [lsort -integer [analyze nbhood 13 2.5]]; lappend listables $nbhood
-	set distto [analyze distto 13]; lappend observables $distto
-	set energy [analyze energy total]; lappend observables $energy
-	set pressure [analyze pressure total]; lappend observables $pressure
-	set re [analyze re]; set re_av [analyze <re>]; lappend listables $re $re_av
-	set rg [analyze rg]; set rg_av [analyze <rg>]; lappend listables $rg $rg_av
-	set rh [analyze rh]; set rh_av [analyze <rh>]; lappend listables $rh $rh_av
-	set idf [analyze internal_dist]; set idf_av [analyze <internal_dist>]; lappend listables $idf $idf_av
-	set bdf [analyze bond_dist index 13]; set bdf_av [analyze <bond_dist> index 13]; lappend listables $bdf $bdf_av
-	set bondl [analyze bond_l]; set bondl_av [analyze <bond_l>]; lappend listables $bondl $bondl_av
-	set gff [analyze formfactor 1 10 10]; set gff_av [analyze <formfactor> 1 10 10]; lappend listables $gff $gff_av
-	set g1v [analyze <g1>]; set g2v [analyze <g2>]; set g3v [analyze <g3>]; lappend listables $g1v $g2v $g3v
-	set f [open "|gzip - > $out.[eval format %02d $i].gz" w]
-	blockfile $f write variable $sys_obs
-	blockfile $f write tclvariable observables
-	blockfile $f write tclvariable listables
-	blockfile $f write interactions
-	blockfile $f write integrate
-	blockfile $f write thermostat
-	blockfile $f write particles "id pos type v f"
-	blockfile $f write bonds
-	blockfile $f write configs 1
-	close $f
-	incr i
-    } }
-    close $chk; puts " Done."
-}
+###################################################################################
 
 set epsilon  1e-4
 thermostat off
 #set tcl_precision  6
 set slow     0
 
-# rewrite analysis_system.data analysis_system.data2; exit 0
-
 test_catch {
-  puts -nonewline "Reading the checkpoint... "; flush stdout
-#  checkpoint_read analysis_system.data; puts " Done."
+  puts -nonewline "Reading checkpoint... "; flush stdout
 
   set in "analysis_system.data"
 #  set out "analysis_system_1.data"
-#  rewrite $in $out
   read_data $in
 
 # doing analysis
@@ -299,7 +252,7 @@ set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 
   	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
   	set p_tot [analyze pressure ideal]; set p_tensor1 $p_tensorI; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
   	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure ideal': $rel_error  ($p_tot / $p_tensor1)"
-  	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" }
+  	if { $rel_error > $epsilon } { error "relative error $rel_error too large upon comparing the pressures" } 
   } else { puts "ROTATION is compiled in so total and ideal components of pressure cannot be compared with stress_tensor" }
   
   set p_tot [analyze pressure bonded 0]; set p_tensor1 $p_tensorF; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
@@ -316,9 +269,9 @@ set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 
 
   set p_tot [analyze pressure tot_nb_inter]; 
   if { $p_tot > 0} {
-	set p_tensor1 $p_tensorJTINTER; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
-	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_inter': $rel_error  ($p_tot / $p_tensor1)"
-	if { $rel_error > $epsilon } {
+  	set p_tensor1 $p_tensorJTINTER; set rel_error [expr abs(($p_tensor1 - $p_tot)/$p_tot)]
+  	puts "relative deviations upon comparing trace of 'analyze stress_tensor' to 'analyze pressure tot_nonbonded_inter': $rel_error  ($p_tot / $p_tensor1)"
+   	if { $rel_error > $epsilon } {
     error "relative error $rel_error too large upon comparing the pressures" }
   }
   
@@ -332,17 +285,12 @@ set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 
 	  set rel_max 0; set abs_max 0; set absflag 0; set maxi "-"; set maxj "-"
   	foreach i $lst j [eval $get_lst] {
 	    if { [string first "analyze formfactor" "$get_lst"]==0 || [string first "analyze <formfactor>" "$get_lst"]==0 } { 
-	  	  if { [expr [lindex $i 0]-[lindex $j 0]] < $epsilon } {
-          set i [lindex $i 1]; set j [lindex $j 1]
+	  	  if { [expr [lindex $i 0]-[lindex $j 0]] < $epsilon } { 
+          set i [lindex $i 1]; set j [lindex $j 1] 
         } else { 
-          error "different x-coordinates upon comparing '$get_lst'" 
-          }
+          error "different x-coordinates upon comparing '$get_lst'" }
 	    }
-	    if { $i!=0 && $j!=0 } {
-        set rel_error [expr abs(($j - $i)/$i)] 
-        } else { 
-          set rel_error -1; set absflag 1 
-        }
+	    if { $i!=0 && $j!=0 } { set rel_error [expr abs(($j - $i)/$i)] } else { set rel_error -1; set absflag 1 }
   	  set abs_error [expr abs($i-$j)]
 	    if { $rel_error > $epsilon } { error "relative error $rel_error too large upon evaluating '$get_lst'  ($j / $i)" }
 	    if { $rel_error > $rel_max } { set rel_max $rel_error; set maxi $i; set maxj $j }
@@ -378,13 +326,13 @@ set local_p_tensor_sum4 [expr $local_p_tensor_sum4+([lindex $local_p_tensor4 $i 
         set maxpz $i
     }
   }
-    puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
+  puts "maximal force deviation in x $maxdx for particle $maxpx, in y $maxdy for particle $maxpy, in z $maxdz for particle $maxpz"
     if { $maxdx > $epsilon || $maxdy > $epsilon || $maxdz > $epsilon } {
-	if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
-	if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
-	if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
-	error "force error too large"
-    }
+    if { $maxdx > $epsilon} {puts "force of particle $maxpx: [part $maxpx pr f] != $F($maxpx)"}
+    if { $maxdy > $epsilon} {puts "force of particle $maxpy: [part $maxpy pr f] != $F($maxpy)"}
+    if { $maxdz > $epsilon} {puts "force of particle $maxpz: [part $maxpz pr f] != $F($maxpz)"}
+    error "force error too large"
+  }
 }
 
 exit 0
