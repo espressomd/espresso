@@ -20,6 +20,13 @@ New user-visible features
 * The feature GHMC implements a generalized hybrid Monte-Carlo
   thermostat.
 
+User-visible changes
+--------------------
+
+* We have removed the forcecaps for the different interaction
+  types. Instead, there is now a single global forcecap, plus it is
+  possible to define individual forcecaps on a particle pair level.
+
 ESPResSo 3.1.1
 ==============
 
