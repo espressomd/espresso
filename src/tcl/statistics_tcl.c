@@ -1249,8 +1249,6 @@ static int tclcommand_analyze_parse_distto(Tcl_Interp *interp, int argc, char **
     return TCL_ERROR;
   }
 
-  updatePartCfg(WITHOUT_BONDS);
-
   result = distto(pos, p);
 
   Tcl_PrintDouble(interp, result, buffer);
