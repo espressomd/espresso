@@ -39,7 +39,7 @@ endif
 # Sample myconfig generation
 myconfig-sample.h: 
 	./config.status myconfig-sample.h
-CLEANFILES = myconfig-sample.h
+CLEANFILES += myconfig-sample.h
 # config.status deps in configure.ac
 
 # Handle version
