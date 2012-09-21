@@ -97,7 +97,7 @@ void detect_collision(Particle* p1, Particle* p2)
   int part1, part2, size;
 
   // Obtain distance between particles
-  dist_betw_part = distance2vec(p1->r.p, p2->r.p, vec21);
+  dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
   if (dist_betw_part > collision_distance)
     return;
 
