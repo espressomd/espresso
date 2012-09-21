@@ -5,7 +5,7 @@
 ESPResSo 3.1.1
 ==============
 
-* Fixed bugs #36431, #37120, #37214.
+* Fixed bugs #36431, #37120, #37214, #37374, #37306, #35767.
 
 * Fixed generation of myconfig-sample.h.
 
