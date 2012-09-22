@@ -252,8 +252,8 @@ void handle_collisions ()
       }
       }
     }
-  }
 #endif
+  }
 
   // Reset the collision queue
   number_of_collisions = 0;
