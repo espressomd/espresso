@@ -61,10 +61,10 @@ int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 /// parser for the forcecap
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
-  if(argc==1){
+  if (argc==1) {
     fprintf(stderr, "WARNING: \"inter ljforcecap\" is deprecated "
-                             "and will be removed in some further version. "
-                             "Use \"inter forcecap\" instead.\n", (char *) NULL);
+	    "and will be removed in some further version. "
+	    "Use \"inter forcecap\" instead.\n");
   }
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }

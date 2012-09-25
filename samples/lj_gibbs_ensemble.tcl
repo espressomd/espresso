@@ -49,13 +49,13 @@ proc init {id param} {
   # do the warm up
   puts "\ndoing the warmup..."
   while {$min_dist < $warmup_min_dist} {  
-    inter ljforcecap $warmup_lj_cap
+    inter forcecap $warmup_lj_cap
     integrate $int_step_warmup
     set min_dist [analyze mindist] 
   }
   puts "minimanl distance is $min_dist"
   # disable force cap   
-  inter ljforcecap 0
+  inter forcecap 0
   # disable langevin thermostat
   thermostat off
 

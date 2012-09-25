@@ -121,11 +121,11 @@ int tclcommand_inter_parse_buckingham(Tcl_Interp * interp,
 
   int tclcommand_inter_parse_buckforcecap(Tcl_Interp * interp, int argc, char ** argv)
   {
-    if(argc==1){
+    if (argc==1) {
       fprintf(stderr, "WARNING: \"inter buckforcecap\" is deprecated "
-                             "and will be removed in some further version. "
-                             "Use \"inter forcecap\" instead.\n", (char *) NULL);
-  }
+	      "and will be removed in some further version. "
+	      "Use \"inter forcecap\" instead.\n");
+    }
   return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }
 
