@@ -194,7 +194,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 20
-inter ljforcecap $cap 
+inter forcecap $cap 
 set i 0
 while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     set time [format "%8f" [setmd time]]
@@ -211,7 +211,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     flush stdout
 #   Increase LJ cap
     set cap [expr $cap+10]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
@@ -223,7 +223,7 @@ puts "Verlet reuses: [setmd verlet_reuse]"
 #############################################################
 
 puts "Prepare integration: (tune parameters - wait...)"
-inter ljforcecap 0
+inter forcecap 0
 setmd time 0.0
 # Set attractive LJ for monomer interactions (types 0 and 1
 for {set ia1 0} { $ia1 < 2 } { incr ia1 } {

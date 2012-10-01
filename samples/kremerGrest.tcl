@@ -183,7 +183,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
     } else {
 	puts -nonewline "\nStart warm-up integration (capped LJ-interactions) for maximal [expr $warm_step*$warm_loop] timesteps in $warm_loop loops; "
 	puts "stop if minimal distance is larger than $min_dist."
-	setmd time 0; set tmp_cap $warm_cap1; inter ljforcecap $tmp_cap
+	setmd time 0; set tmp_cap $warm_cap1; inter forcecap $tmp_cap
 	set obs_file [open "$name_i$ident.obs1" "w"]
 	puts $obs_file "t mindist re rg rh Temp"
 	puts $obs_file "[setmd time] [analyze mindist] [analyze re 0 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp]"
@@ -196,7 +196,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	    puts $obs_file "[setmd time] [analyze mindist] [analyze re] [analyze rg] [analyze rh] $tmp_Temp"
 	    puts -nonewline ", mindist=[analyze mindist], re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[analyze rh]...\r"; flush stdout
 	    if { $tmp_dist >= $min_dist } { break }
-	    inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $warm_incr]
+	    inter forcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $warm_incr]
 	}
 	# write everything to disk (set checkpoint)
 	puts -nonewline "\n    Warm-up complete; saving checkpoint to '$name_i$ident.wrm'... ";flush stdout
@@ -219,7 +219,7 @@ foreach n_p_i $N_P  mpc_i $MPC  box_l_i $box_l  int_time_i $int_time  rg2_i $rg2
 	setmd time 0; set int_loop [expr int($int_time_i/([setmd time_step]*$int_step_i)+0.56)]; set tmp_step 0
 	puts -nonewline "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops); "
 	puts "aiming for re^2 = [lindex $re2 [expr $i-1]], rg^2 = [lindex $rg2 [expr $i-1]], and p = $pKG_i."
-	puts -nonewline "    Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
+	puts -nonewline "    Remove capping of LJ-interactions... "; flush stdout; inter forcecap 0; puts "Done."
 	set sfx "[expr int(ceil(log10($int_loop*$int_step_i)))+1]d"
 	if { [file exists "$name_i$ident.chk" ] } {
 	    puts -nonewline "    Checkpoint found (currently reading it... "; flush stdout

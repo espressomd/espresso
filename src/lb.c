@@ -768,8 +768,8 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
  */
 
 int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
-  double local_v[3] = {0, 0, 0},delta[6]; //velocity field, relative positions to surrounding nodes
-  int 	 ind[3], tmpind[3]; //node indices
+  double local_v[3] = {0, 0, 0}, delta[6]; //velocity field, relative positions to surrounding nodes
+  int 	 ind[3] = {0,0,0}, tmpind[3]; //node indices
   int		 x, y, z; //counters
 
   // convert the position into lower left grid point

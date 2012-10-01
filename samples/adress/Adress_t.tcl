@@ -221,7 +221,7 @@ if { [file exists "$name$ident.wrm" ] } {
     
     # set LJ cap
     set cap 10
-    inter ljforcecap $cap
+    inter forcecap $cap
     puts "Interactions:\n[inter]"
     # Warmup Integration Loop
     set i 0
@@ -241,7 +241,7 @@ if { [file exists "$name$ident.wrm" ] } {
 	
 	#   Increase LJ cap
 	set cap [expr $cap+10]
-	inter ljforcecap $cap
+	inter forcecap $cap
 	incr i
     }
     
@@ -252,9 +252,9 @@ if { [file exists "$name$ident.wrm" ] } {
 }
 
 puts ""
-puts -nonewline "Remove capping of LJ interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
+puts -nonewline "Remove capping of LJ interactions... "; flush stdout; inter forcecap 0; puts "Done."
 
-puts -nonewline "Switch on capping of LJ interactions... "; flush stdout; inter ljforcecap 1000000000; puts "Done."
+puts -nonewline "Switch on capping of LJ interactions... "; flush stdout; inter forcecap 1000000000; puts "Done."
 
 # Just to see what else we may get from the c code
 puts "\nro variables:"
