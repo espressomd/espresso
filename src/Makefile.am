@@ -43,6 +43,7 @@ libEspresso_a_SOURCES = \
 	fft.c fft.h \
 	fft-common.c fft-common.h \
 	fft-dipolar.c fft-dipolar.h \
+	forcecap.c forcecap.h \
 	forces.c forces.h \
 	ghosts.c ghosts.h \
 	global.c global.h \
@@ -92,7 +93,8 @@ libEspresso_a_SOURCES = \
 	virtual_sites.c virtual_sites.h \
 	virtual_sites_com.c virtual_sites_com.h \
 	virtual_sites_relative.c virtual_sites_relative.h \
-	vmdsock.c vmdsock.h
+	vmdsock.c vmdsock.h \
+	ghmc.c ghmc.h
 
 # nonbonded potentials and forces
 libEspresso_a_SOURCES += \
@@ -116,6 +118,9 @@ libEspresso_a_SOURCES += \
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
 	angle.c angle.h \
+	angle_harmonic.c angle_harmonic.h \
+	angle_cosine.c angle_cosine.h \
+	angle_cossquare.c angle_cossquare.h \
 	angledist.c angledist.h \
 	dihedral.c dihedral.h \
 	endangledist.c endangledist.h \
@@ -186,13 +191,15 @@ libEspresso_a_SOURCES += \
 	tcl/topology_tcl.c \
 	tcl/tuning_tcl.c \
 	tcl/uwerr_tcl.c \
-	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h
+	tcl/virtual_sites_com_tcl.c tcl/virtual_sites_com_tcl.h \
+	tcl/ghmc_tcl.c tcl/ghmc_tcl.h
 
 # nonbonded potentials and forces
 libEspresso_a_SOURCES += \
 	tcl/bmhtf-nacl_tcl.c tcl/bmhtf-nacl_tcl.h \
 	tcl/buckingham_tcl.c tcl/buckingham_tcl.h \
 	tcl/dpd_tcl.c tcl/dpd_tcl.h \
+	tcl/forcecap_tcl.c tcl/forcecap_tcl.h \
 	tcl/gb_tcl.c tcl/gb_tcl.h \
 	tcl/hat_tcl.c tcl/hat_tcl.h \
 	tcl/hertzian_tcl.c tcl/hertzian_tcl.h \
@@ -210,6 +217,9 @@ libEspresso_a_SOURCES += \
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
 	tcl/angle_tcl.c tcl/angle_tcl.h \
+	tcl/angle_harmonic_tcl.c tcl/angle_harmonic_tcl.h \
+	tcl/angle_cosine_tcl.c tcl/angle_cosine_tcl.h \
+	tcl/angle_cossquare_tcl.c tcl/angle_cossquare_tcl.h \
 	tcl/angledist_tcl.c tcl/angledist_tcl.h \
 	tcl/dihedral_tcl.c tcl/dihedral_tcl.h \
 	tcl/endangledist_tcl.c tcl/endangledist_tcl.h \

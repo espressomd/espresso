@@ -21,6 +21,7 @@ SUBDIRS = configs .
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
+	angle.tcl \
 	collision-detection-centers.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
@@ -38,11 +39,13 @@ tests = \
 	exclusions.tcl \
 	fene.tcl \
 	gb.tcl \
+	ghmc.tcl \
 	harm.tcl \
 	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
+	langevin.tcl \
 	layered.tcl \
 	lb.tcl \
 	lb_stokes_sphere.tcl \
@@ -68,7 +71,6 @@ tests = \
 	p3m_wall.tcl \
 	rotation.tcl \
 	tabulated.tcl \
-	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 # please keep the alphabetic ordering of the above list!

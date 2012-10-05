@@ -79,6 +79,8 @@ proc blockfile_read_auto_particles {channel read auto} {
                 set mass $idx; incr idx }
             "^vi"     { if {![regexp "^$i" "virtual"]} { error " $i is not a particle property" }
                 set virtual $idx; incr idx }
+            "^vs"     { if {![regexp "^$i" "vs_relative"]} { error " $i is not a particle property" }
+                set vs_relative $idx; incr idx 2 }
 	    "^q$"     { set q $idx; incr idx }
 	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
 		set v $idx; incr idx 3 }
@@ -96,7 +98,7 @@ proc blockfile_read_auto_particles {channel read auto} {
 		set f $idx; incr idx 3 }
 	    "^e"      { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
 		set ext_force $idx; incr idx 3 }
-	    default { error " $i is not a particle property" }
+	    default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
 	}
     }
     if {![info exists id] || ![info exists pos]} { error "the fields id and pos are mandatory" }
@@ -115,6 +117,8 @@ proc blockfile_read_auto_particles {channel read auto} {
              mass \[lindex \$line $mass\]" }
     if {[info exists virtual]} { set cmd "$cmd \
              virtual \[lindex \$line $virtual\]" }
+    if {[info exists vs_relative]} { set cmd "$cmd \
+             vs_relative \[lindex \$line $vs_relative\] \[lindex \$line [expr $vs_relative +1]\]" }
     if {[info exists v]} { set cmd "$cmd \
              v  \[lindex \$line $v\] \[lindex \$line [expr $v + 1]\] \[lindex \$line [expr $v + 2]\]"
     }

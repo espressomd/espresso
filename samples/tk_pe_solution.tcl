@@ -178,7 +178,7 @@ mdparam lj1_epsilon 0.5 2 1.0 "epsilon for LJ" {setup_ia lj1_epsilon}
 # LJ force capping
 proc setup_force_cap {lfc} {
     if {$lfc == 200} { set lfc 0 }
-    inter ljforcecap $lfc
+    inter forcecap $lfc
 }
 mdparam lj_force_cap 20 200 20 "LJ force cap" setup_force_cap
 

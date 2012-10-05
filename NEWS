@@ -17,18 +17,36 @@ New user-visible features
   the vincinity of a particle of the catalysator type, the reactant is
   transformed into a particle of the product type.
 
+* The feature GHMC implements a generalized hybrid Monte-Carlo
+  thermostat.
+
+User-visible changes
+--------------------
+
+* Bond angle potentials are now defined on the Tcl-level instead of on
+  the feature-level, i.e. to choose the type of the bond-angle
+  potential, you should use the corresponding Tcl command instead of a
+  feature. To allow for any bond angle potential, activate the feature
+  BOND_ANGLE.
+
+* We have removed the forcecaps for the different interaction
+  types. Instead, there is now a single global forcecap, plus it is
+  possible to define individual forcecaps on a particle pair level.
+
 ESPResSo 3.1.1
 ==============
 
-* Fixed bugs #36431.
+* Fixed bugs #36431, #37120, #37214, #37374, #37306, #35767.
 
 * Fixed generation of myconfig-sample.h.
 
-* Added new logo to ESPResSo.
+* Fixed AdResS example.
+
+* Added new logo.
 
 * The documentation sources are now left out of the distribution
   package, only the PDF files are included. This fixes problems when
-  calling "make doc" in a distribution package.
+  calling "make doc" in a distribution package (#35958).
 
 ESPResSo 3.1.0
 ==============

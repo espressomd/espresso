@@ -155,7 +155,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 20
-inter ljforcecap $cap
+inter forcecap $cap
 
 set i 0
 while { $i < $warm_n_times && $act_min_dist < $min_dist } {
@@ -171,7 +171,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     puts $obs_file "{ time [setmd time] } [analyze energy]"
 #   Increase LJ cap
     set cap [expr $cap+10]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
@@ -200,7 +200,7 @@ polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
 #      Integration                                          #
 #############################################################
 
-inter ljforcecap 0
+inter forcecap 0
 
 puts "\nStart integration: run $int_n_times times $int_steps steps"
 

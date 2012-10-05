@@ -25,6 +25,7 @@ source "tests_common.tcl"
 
 require_feature "VIRTUAL_SITES_RELATIVE"
 require_feature "COLLISION_DETECTION"
+require_feature "ADRESS" off
 require_max_nodes_per_side {1 1 1}
 
 puts "---------------------------------------------------------------"
@@ -36,84 +37,132 @@ setmd box_l 10 10 10
 
 thermostat off
 setmd time_step 0.01
-inter 0 harmonic 1 1
-inter 1 harmonic 1 0.0001
+inter 2 harmonic 1 1
+inter 3 harmonic 1 0.0001
 setmd skin 0
 part 0 pos 0 0 0 
-part 1 pos 0.999 0 0
-
+part 1 pos 1 0 0
 part 2 pos 3 0 0
-integrate 0
+
+# analyze the bonding structure for pair bonds
+proc analyze_topology {bond_type {check_others 0}} {
+    set bonded ""
+    for {set i 0} {$i <= [setmd max_part]} {incr i} {
+	foreach bond [lindex [part $i pr bond] 0] {
+	    if {[lindex $bond 0] == $bond_type} {
+		set j [lindex $bond 1]
+		if {$i < $j} {
+		    lappend bonded "$i $j"
+		} {
+		    lappend bonded "$j $i"
+		}
+	    } {
+		if {$check_others} {
+		    error_exit "bond $bond at particle $i of unexpected type found"
+		}
+	    }
+	}
+    }
+    return [lsort $bonded]
+}
 
 # Test default setting
 if { "[on_collision]" != "off" } {
-  error_exit "Collision detection should be off by default."
+    error_exit "Collision detection should be off by default."
 }
 
 # Test switching it off
 on_collision off
 if { "[on_collision]" != "off" } {
-  error_exit "Disabling collision_detection does not work"
+    error_exit "Disabling collision_detection does not work"
 }
 
 # Make sure, it doesn't do anything when turned off
-integrate 1
-if {! ([part 0 print bond]== "{ } " && [part 1 print bond] == "{ } ") } {
-  error_exit "Bonds were created when collision detection was off." 
+integrate 0
+
+set bonds [analyze_topology "" 1]
+if {$bonds != ""} {
+    error_exit "Bonds were created when collision detection was off." 
 }
 
 # Check setting of parameters
-on_collision bind_at_point_of_collision 1.0 0 1 1
 setmd min_global_cut 1.0
+on_collision bind_at_point_of_collision 1.0 2 3 1
+
 set res [on_collision]
-if { ! ( ([lindex $res 0] == "bind_at_point_of_collision") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 0) && ([lindex $res 3] == 1) && ([lindex $res 4] == 1)) } {
-  error_exit "Setting collision_detection parameters for bind_centers does not work"
+if { ! ( ([lindex $res 0] == "bind_at_point_of_collision") && (abs([lindex $res 1]-1) <1E-5) && ([lindex $res 2] == 2) && ([lindex $res 3] == 3) && ([lindex $res 4] == 1)) } {
+    error_exit "Setting collision_detection parameters for bind_centers does not work"
 }
 
 # Check the actual collision detection
-integrate 1 
+integrate 0
 
-# Get bond info
-set bond1 [part 0 print bond]
-set bond2 [part 1 print bond]
-set bond3 [part 2 print bond]
-
-
-# Check that the single particle did not get a bond
-if {$bond3 != "{ } "} {
- error_exit "3rd particle should not get a bond."
-}
-
-# Check, whether the bonds are correct
-if {!((($bond1=="{ {0 1} } ") && ($bond2=="{ } ")) || (($bond2=="{ {0 0} } ") && ($bond1=="{ } "))) } {
- error_exit "Bond between first 2 particles incorrect: $bond1, $bond2."
+# Check, whether the bonds are correct. No strict checking, there are also the
+# virtual particles
+set bonds [analyze_topology 2]
+if {$bonds != "{0 1}"} {
+    error_exit "bond not created as it should: bonds are $bonds"
 }
 
 # Integrate again and make sure, no extra bonds are added
-integrate 1
+# enforce force recalculation
+invalidate_system
+integrate 0
 
-
-# Check, whether the bonds are correct
-if {!((($bond1=="{ {0 1} } ") && ($bond2=="{ } ")) || (($bond2=="{ {0 0} } ") && ($bond1=="{ } "))) } {
- error_exit "Bond between first 2 particles incorrect."
+# Check, whether the bonds are still correct, not doubled
+set bonds [analyze_topology 2]
+if {$bonds != "{0 1}"} {
+    error_exit "bond not created as it should or doubled: bonds are $bonds"
 }
 
 # Check whether two virtual sites have been created
-if {[setmd n_part] !=5} {
- error_exit "Incorrect number of particles in the simulation. Too many or too few virtual sites were created."
+if {[setmd n_part] != 5} {
+    error_exit "Incorrect number of particles [setmd n_part] in the simulation. Too many or too few virtual sites were created."
 }
 
 # Check the bonds between virtual sites
 set bond1 [part 3 print bonds]
 set bond2 [part 4 print bonds]
 
-if {!((($bond1=="{ {1 4} } ") && ($bond2=="{ } ")) || (($bond2=="{ {1 3} } ") && ($bond1=="{ } "))) } { 
- error_exit "Bonds between the virtual sites are incorrect."
+if {!((($bond1=="{ {3 4} } ") && ($bond2=="{ } ")) || (($bond2=="{ {3 3} } ") && ($bond1=="{ } "))) } { 
+    error_exit "Bonds between the virtual sites are incorrect."
 }
 
 # Check the particle type of the virtual sites
 if { (! ([part 3 print type]==1 && [part 4 print type]==1))} {
- error_exit "
+    error_exit "type of virtual sites is incorrect."
+}
+
+# test exception, generating another collision
+part 2 pos 2 0 0
+on_collision exception bind_at_point_of_collision 1.0 2 3 1
+
+if {![catch {integrate 0} err]} {
+    error_exit "no exception was thrown at collision, although requested"
+}
+
+set bonds ""
+foreach exception [lrange $err 2 end] {
+    if {[lrange $exception 0 2] != "collision between particles"} {
+	error_exit "unexpected exception $exception"
+    }
+    lappend bonds "[lindex $exception 3] [lindex $exception 5]"
+}
+set bonds [lsort $bonds]
+
+if {$bonds != "{1 2}"} {
+    error_exit "exception bonds $bonds wrong"
+}
+
+# Check whether another two virtual sites have been created
+if {[setmd n_part] != 7} {
+    error_exit "Incorrect number of particles [setmd n_part] in the simulation. Too many or too few virtual sites were created."
+}
+
+# Check, whether the bonds are also correct
+set bonds [analyze_topology 2]
+if {$bonds != "{0 1} {1 2}"} {
+    error_exit "bonds not correctly created: bonds are $bonds"
 }
 
 exit 0

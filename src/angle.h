@@ -30,7 +30,7 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
 #include "grid.h"
 
 /** set parameters for the angle potential.
@@ -239,5 +239,5 @@ MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   return 0;
 }
 
-#endif /* BOND_ANGLE */
+#endif /* BOND_ANGLE_OLD */
 #endif /* ANGLE_H */

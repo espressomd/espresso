@@ -102,7 +102,7 @@ setmd max_num_cells 2744
 
 # set LJ cap
 set cap 20
-inter ljforcecap $cap
+inter forcecap $cap
 
 # Warmup Integration Loop
 set i 0
@@ -115,13 +115,13 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
 #   Increase LJ cap
     set cap [expr $cap+10]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
 #############################################################
 #      Integration                                          #
 #############################################################
-inter ljforcecap 0
+inter forcecap 0
 integrate 80000
 

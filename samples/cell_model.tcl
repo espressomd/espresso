@@ -231,7 +231,7 @@ puts "\nStart warmup integration: max $warm_n_times times $warm_steps steps"
 integrate 0
 set act_min_dist [analyze mindist]
 set cap 20  
-inter ljforcecap $cap
+inter forcecap $cap
 # fix backbone monomers
 for {set i 0} { $i < $warm_n_times  && $act_min_dist < $min_dist } { incr i} {
     puts -nonewline "Run $i at time=[setmd time] min_dist=$act_min_dist\r"
@@ -240,7 +240,7 @@ for {set i 0} { $i < $warm_n_times  && $act_min_dist < $min_dist } { incr i} {
     if { $vmd_output=="yes" } { imd positions }
     set act_min_dist [analyze mindist]
     set cap [expr $cap+10]
-    inter ljforcecap $cap  
+    inter forcecap $cap  
 }
 
 puts "Warmup done: Minimal distance [analyze mindist]"
@@ -252,7 +252,7 @@ for {set i 0} { $i < $n_mono } {incr i} { part $i fix }
 
 puts "\nStart Counterion Equilibration: $ci_n_times times $ci_steps steps"
 # remove LJ cap
-inter ljforcecap 0
+inter forcecap 0
 # Start Coulomb interaction
 inter coulomb $bjerrum dh 0.0 [expr 2.0*$sphere_rad]
 

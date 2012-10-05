@@ -136,7 +136,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 20
-inter ljforcecap $cap
+inter forcecap $cap
 
 # Warmup Integration Loop
 set i 0
@@ -149,7 +149,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
     # Warmup criterion
     set act_min_dist [analyze mindist]
-    puts -nonewline "run $i at time=[setmd time] (LJ cap=$cap) min dist = $act_min_dist\r"
+    puts "run $i at time=[setmd time] (LJ cap=$cap) min dist = $act_min_dist\r"
     flush stdout
 
 #   write observables
@@ -157,7 +157,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
 #   Increase LJ cap
     set cap [expr $cap+10]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
@@ -185,7 +185,7 @@ polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
 #############################################################
 puts "\nStart integration: run $int_n_times times $int_steps steps"
 
-inter ljforcecap 0
+inter forcecap 0
 
 puts [analyze energy]
 

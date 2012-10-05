@@ -496,7 +496,7 @@ if { $warmup == 1 } {
     setmd time_step $ljcp_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Capping all LJ-interactions... "; flush stdout
-    set tmp_cap $ljcp_cap1; inter ljforcecap $tmp_cap; puts "Done (cap initially at $tmp_cap)."
+    set tmp_cap $ljcp_cap1; inter forcecap $tmp_cap; puts "Done (cap initially at $tmp_cap)."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     puts "    Preparation completed."
@@ -518,7 +518,7 @@ if { $warmup == 1 } {
 	if { $vmd_output=="yes" } { imd positions }
 
 	if { $tmp_dist >= $ljcp_dist } { break }
-	inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $ljcp_incr]
+	inter forcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $ljcp_incr]
     }
     puts -nonewline "\n    Initial relaxation completed"
     if { [expr $i % $write_loop_ljcp != 0] || ($tmp_dist >= $ljcp_dist) } {
@@ -544,7 +544,7 @@ if { $equl_loop > 0 } {
     setmd time_step $equl_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Remove capping of LJ-interactions... "; flush stdout
-    inter ljforcecap 0; puts "Done ([inter ljforcecap])."
+    inter forcecap 0; puts "Done ([inter ljforcecap])."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     if { $equl_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }
@@ -604,7 +604,7 @@ if { $main_loop > 0 } {
     setmd time_step $main_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... Done."
     puts -nonewline "        Making sure that capping of the LJ-interactions is removed... "; flush stdout; 
-    inter ljforcecap 0; puts "Done ([inter ljforcecap])."
+    inter forcecap 0; puts "Done ([inter ljforcecap])."
     if { $bjerrum > 0 } {
 	puts -nonewline "        Activating p3m-subsystem & enabling full electrostatics... "; flush stdout
 	inter coulomb $bjerrum p3m $p3m_r_cut $p3m_mesh $p3m_cao $p3m_alpha; inter coulomb epsilon $p3m_epsilon

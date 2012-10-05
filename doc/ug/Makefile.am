@@ -60,7 +60,8 @@ ug_FIGURES = \
 ug_FILES = \
 	$(ug_TEXFILES) \
 	$(ug_FIGURES) \
-	bibliography.bib \
+	citations.bib \
+	otherrefs.bib \
 	todonotes.sty
 
 .PHONY: doc ug FORCE

@@ -21,6 +21,7 @@
 #ifndef IA_DATA_TCL_H
 #define IA_DATA_TCL_H
 #include "parser.h"
+#include "forcecap_tcl.h"
 
 /************************************************
  * exported functions

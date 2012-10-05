@@ -71,7 +71,7 @@ if { [regexp "ROTATION" [code_info]] } {
     set deg_free 3
 }
 
-inter ljforcecap individual
+inter forcecap individual
 set integ_steps 200
 for {set cap 1} {$cap < 10} {incr cap} {
     set rad [expr 1.0 - 0.5*$cap/10.0]
@@ -84,7 +84,7 @@ for {set cap 1} {$cap < 10} {incr cap} {
     puts "t=[setmd time] T=$temp E=[analyze energy total]"
     integrate $integ_steps
 }
-inter ljforcecap 0
+inter forcecap 0
 inter coulomb 1.0 mmm2d 1e-4
 
 for {set i 0} { $i < 100 } { incr i} {

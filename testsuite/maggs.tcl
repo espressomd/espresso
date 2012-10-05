@@ -111,16 +111,16 @@ if { [catch {
     set act_min_dist [analyze mindist]
 
     set cap 20
-    inter ljforcecap $cap
+    inter forcecap $cap
     set i 0
     while { $i < $warm_n_times && ( $act_min_dist < $min_dist || $i < $warm_n_min ) } {
 	integrate $warm_steps
 	set act_min_dist [analyze mindist]
 	set cap [expr $cap+10]
-	inter ljforcecap $cap
+	inter forcecap $cap
 	incr i
     }
-    inter ljforcecap 0
+    inter forcecap 0
 
     # memd requires domain decompostion with no verlet lists
     cellsystem domain_decomposition -no_verlet_list

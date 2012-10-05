@@ -866,16 +866,21 @@ given by \var{rmin} and \var{rmax} and it is divided into
 \end{essyntax}
 
 Variant \variant{1} returns 
-\todo{What's the difference between g2 and g3???}
 \begin{itemize}
 \item the mean-square displacement of the beads in the
   chain (\lit{<g1>})
-\item the mean-square displacement of the beads in the center of
+\item the mean-square displacement of the beads relative
+  to the center of
   mass of the chain (\lit{<g2>})
 \item or the motion of the center of mass (\lit{<g3>})
 \end{itemize}
 averaged over all stored configurations (see section
-\vref{sec:stored-configs}).
+\vref{sec:stored-configs}). At short time scales, \lit{g1} and
+\lit{g2} coincide, since the motion of the center of mass is much
+slower.  At large timescales \lit{g1} and \lit{g3} coincide and
+correspond to the center of mass motion, while \lit{g2} levels
+off. \lit{g2} and \lit{g3} together correspond to \lit{g1}. For
+details, see \citet{grest86a}.
 
 Variant \variant{2} returns all of these observables for the current
 configuration, as compared to the reference configuration. The

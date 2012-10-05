@@ -56,10 +56,10 @@ if { [regexp "ROTATION" [code_info]] } {
 set integ_steps 200
 for {set cap 20} {$cap < 200} {incr cap 20} {
   puts "t=[setmd time] E=[analyze energy total]"
-  inter ljforcecap $cap
+  inter forcecap $cap
   integrate $integ_steps
 }
-inter ljforcecap 0
+inter forcecap 0
 
 for {set i 0} { $i < 20 } { incr i} {
     set temp [expr [analyze energy kinetic]/(($deg_free/2.0)*$n_part)]

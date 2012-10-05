@@ -60,6 +60,9 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angle_harmonic.h"
+#include "angle_cosine.h"
+#include "angle_cossquare.h"
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
@@ -112,6 +115,7 @@ void init_forces_ghosts();
 /** Check if forces are NAN 
 */
 void check_forces();
+
 
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
@@ -245,9 +249,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   
 
 #ifdef COLLISION_DETECTION
-  if (collision_detection_mode > 0)
-     detect_collision(p1,p2);
-#endif 
+  if (collision_params.mode > 0)
+    detect_collision(p1,p2);
+#endif
 
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
@@ -484,9 +488,21 @@ MDINLINE void add_bonded_force(Particle *p1)
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+	/* the first case is not needed and should not be called */ 
+    case BONDED_IA_ANGLE_OLD:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
+      break;
+#endif
+#ifdef BOND_ANGLE
+    case BONDED_IA_ANGLE_HARMONIC:
+      bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_ANGLE_COSINE:
+      bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_ANGLE_COSSQUARE:
+      bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
 #ifdef BOND_ANGLEDIST

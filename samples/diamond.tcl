@@ -178,7 +178,7 @@ foreach pack_i $packing {
     } else {
 	puts -nonewline "\nStart warm-up integration (capped LJ-interactions) for maximal [expr $warm_step*$warm_loop] timesteps in $warm_loop loops; "
 	puts "stop if minimal distance is larger than $min_dist after at least [expr $warm_step*$min_loop] timesteps."
-	setmd time 0; set tmp_cap $warm_cap1; inter ljforcecap $tmp_cap; inter coulomb 0.0
+	setmd time 0; set tmp_cap $warm_cap1; inter forcecap $tmp_cap; inter coulomb 0.0
 	set obs_file [open "$name_i$ident.obs1" "w"]
 	puts $obs_file "t mindist re rg rh Temp"
 	puts $obs_file "[setmd time] [analyze mindist] [analyze re 8 $n_p_i $mpc_i] [analyze rg] [analyze rh] [setmd temp]"
@@ -193,7 +193,7 @@ foreach pack_i $packing {
 	    puts -nonewline ", mindist=[analyze mindist], re=[lindex [analyze re] 0], rg=[lindex [analyze rg] 0], rh=[lindex [analyze rh] 0]...\r"
 	    flush stdout
 	    if { ($tmp_dist >= $min_dist) && ($j > $min_loop) } { break }
-	    inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $warm_incr]
+	    inter forcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $warm_incr]
 	}
 	# write everything to disk (set checkpoint)
 	puts -nonewline "\n    Warm-up complete; saving checkpoint to '$name_i$ident.wrm'... ";flush stdout
@@ -217,7 +217,7 @@ foreach pack_i $packing {
 	puts "\nStart integration (full interactions) with timestep [setmd time_step] until time t>=$int_time_i (-> $int_loop loops). "
 	puts -nonewline "    Activating electrostatics... "; flush stdout
 	puts "Done.\n[inter coulomb $bjerrum p3m tune accuracy $accuracy]"
-	puts -nonewline "Remove capping of LJ-interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
+	puts -nonewline "Remove capping of LJ-interactions... "; flush stdout; inter forcecap 0; puts "Done."
 	set sfx "[expr int(ceil(log10($int_loop*$int_step_i)))+1]d"
 	if { [file exists "$name_i$ident.chk" ] } {
 	    puts -nonewline "    Checkpoint found (currently reading it... "; flush stdout

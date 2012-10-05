@@ -24,7 +24,7 @@
  */
 #include "angle_tcl.h"
 
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
 #include "angle.h"
 #include "communication.h"
 

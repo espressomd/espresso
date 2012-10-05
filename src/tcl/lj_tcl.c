@@ -26,6 +26,7 @@
 #include "parser.h"
 #include "mol_cut.h"
 #include "communication.h"
+#include "forcecap_tcl.h"
 
 int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 {
@@ -60,35 +61,12 @@ int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 /// parser for the forcecap
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
-  char buffer[TCL_DOUBLE_SPACE];
-
-  if (argc == 0) {
-    if (lj_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, lj_force_cap, buffer);
-      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
+  if (argc==1) {
+    fprintf(stderr, "WARNING: \"inter ljforcecap\" is deprecated "
+	    "and will be removed in some further version. "
+	    "Use \"inter forcecap\" instead.\n");
   }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter ljforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual"))
-      lj_force_cap = -1.0;
-  else if (! ARG0_IS_D(lj_force_cap) || lj_force_cap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-
-  CHECK_VALUE(ljforcecap_set_params(lj_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
+  return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }
 
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,
