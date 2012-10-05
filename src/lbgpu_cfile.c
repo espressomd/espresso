@@ -183,6 +183,9 @@ void lb_release_gpu(){
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
 
+  lbpar_gpu.dim_x = (unsigned int)floor(box_l[0]/lbpar_gpu.agrid);
+  lbpar_gpu.dim_y = (unsigned int)floor(box_l[1]/lbpar_gpu.agrid);
+  lbpar_gpu.dim_z = (unsigned int)floor(box_l[2]/lbpar_gpu.agrid);
   lbpar_gpu.mu = 0.0;
   lbpar_gpu.time_step = (float)time_step;
 
