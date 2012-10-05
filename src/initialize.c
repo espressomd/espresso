@@ -530,6 +530,9 @@ void on_boxl_change() {
   if(this_node == 0) {
     if(lattice_switch & LATTICE_LB_GPU) {
       lb_init_gpu();
+#ifdef LB_BOUNDARIES_GPU
+    lb_init_boundaries();
+#endif
     }
   }
 #endif
