@@ -516,6 +516,9 @@ void on_boxl_change() {
 #ifdef LB
   if(lattice_switch & LATTICE_LB) {
     lb_init();
+#ifdef LB_BOUNDARIES
+    lb_init_boundaries();
+#endif
   }
 #endif
 }
