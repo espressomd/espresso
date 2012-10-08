@@ -88,7 +88,6 @@ void integrate_reaction() {
            	  rand = d_random();
            	  
            		if(rand > ratexp) {
-printf("DEBUG: integrate_reaction; react\n"); //TODO delete
            		  if(p1->p.type == reaction.reactant_type) {
 						      p1->p.type = reaction.product_type;
 					      }
