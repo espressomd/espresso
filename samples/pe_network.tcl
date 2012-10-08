@@ -544,7 +544,7 @@ if { $equl_loop > 0 } {
     setmd time_step $equl_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Remove capping of LJ-interactions... "; flush stdout
-    inter forcecap 0; puts "Done ([inter ljforcecap])."
+    inter forcecap 0; puts "Done ([inter forcecap])."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     if { $equl_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }
@@ -604,7 +604,7 @@ if { $main_loop > 0 } {
     setmd time_step $main_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... Done."
     puts -nonewline "        Making sure that capping of the LJ-interactions is removed... "; flush stdout; 
-    inter forcecap 0; puts "Done ([inter ljforcecap])."
+    inter forcecap 0; puts "Done ([inter forcecap])."
     if { $bjerrum > 0 } {
 	puts -nonewline "        Activating p3m-subsystem & enabling full electrostatics... "; flush stdout
 	inter coulomb $bjerrum p3m $p3m_r_cut $p3m_mesh $p3m_cao $p3m_alpha; inter coulomb epsilon $p3m_epsilon
