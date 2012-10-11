@@ -1479,6 +1479,14 @@ int p3m_adaptive_tune(char **log) {
     return ES_ERROR;
   }
 
+  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+    if( !((box_l[0] == box_l[1]) &&
+	  (box_l[1] == box_l[2]))) {
+      *log = strcat_alloc(*log, "{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+      return ES_ERROR;
+    }
+  }
+
   /* preparation */
   mpi_bcast_event(P3M_COUNT_CHARGES);
   /* Print Status */
@@ -1861,6 +1869,16 @@ int p3m_sanity_checks()
     ERROR_SPRINTF(errtxt,"{048a P3M_init: node grid must be sorted, largest first} ");
     ret = 1;
   }
+  
+  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+    if( !((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
+	  (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+	  errtxt = runtime_error(128);
+	  ERROR_SPRINTF(errtxt,"{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
+	  ret = 1;
+	}
+  }
+  
 
   return ret;
 }
