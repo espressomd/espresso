@@ -472,6 +472,38 @@ The potential has no singularity and is defined everywhere; the
 potential has nondifferentiable maximum at $r=0$, where the force is
 undefined.
 
+\subsection{Gaussian}
+\index{Gaussian interaction|mainindex}
+\index{interactions!gaussian|mainindex}
+
+\begin{essyntax}
+  inter \var{type1} \var{type2}
+  gaussian \var{\sigma} \var{\epsilon} \var{r_\mathrm{cut}}
+  \begin{features}
+    \required{GAUSSIAN}
+  \end{features}
+\end{essyntax}
+This defines an interaction according to the Gaussian potential 
+between particles of the typers \var{type1} and \var{type2}.  The
+Gaussian potential is defined by
+\begin{equation}
+  V(r) = 
+  \begin{cases} \epsilon\,e^{-\frac{1}{2}\left(\frac{r}{\sigma}\right)^{2}}
+    & r < \var{r_\mathrm{cut}}\\
+  0 & r \ge \var{r_\mathrm{cut}}
+  \end{cases}
+\end{equation}
+The Gaussian potential is smooth except at the cutoff, and has a
+finite overlap energy of $\epsilon$. It can be used to model \eg{}
+overlapping polymer coils. 
+
+Currently, there is no shift implemented, which means that the potential 
+is discontinuous at $r=\var{r_\mathrm{cut}}$.  Therefore use caution when 
+performing energy calculations. However, you can often choose the
+cutoff such that the energy difference at the cutoff is less than a
+desired accuracy, since the potential decays very
+rapidly.
+
 \section{Anisotropic non-bonded interactions}
 \label{inter-anisotropic}
 \index{Anisotropic interactions}

@@ -45,6 +45,7 @@
 #include "ljgen.h"
 #include "steppot.h"
 #include "hertzian.h"
+#include "gaussian.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -143,6 +144,10 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
   /* Hertzian force */
 #ifdef HERTZIAN
   add_hertzian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
+  /* Gaussian force */
+#ifdef GAUSSIAN
+  add_gaussian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
 #endif
   /* BMHTF NaCl */
 #ifdef BMHTF_NACL

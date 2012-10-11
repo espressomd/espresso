@@ -269,6 +269,15 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef GAUSSIAN
+  /** \name Gaussian potential */
+  /*@{*/
+  double Gaussian_eps;
+  double Gaussian_sig;
+  double Gaussian_cut;
+  /*@}*/
+#endif
+
 #ifdef BMHTF_NACL
   /** \name BMHTF NaCl potential */
   /*@{*/

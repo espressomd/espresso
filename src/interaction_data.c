@@ -43,6 +43,7 @@
 #include "ljangle.h"
 #include "steppot.h"
 #include "hertzian.h"
+#include "gaussian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "hat.h"
@@ -218,6 +219,12 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef HERTZIAN
   params->Hertzian_eps = 0.0;
   params->Hertzian_sig = INACTIVE_CUTOFF;
+#endif
+
+#ifdef GAUSSIAN
+  params->Gaussian_eps = 0.0;
+  params->Gaussian_sig = 1.0;
+  params->Gaussian_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef BMHTF_NACL
@@ -606,6 +613,11 @@ static void recalc_maximal_cutoff_nonbonded()
 #ifdef HERTZIAN
       if (max_cut_current < data->Hertzian_sig)
 	max_cut_current = data->Hertzian_sig;
+#endif
+
+#ifdef GAUSSIAN
+      if (max_cut_current < data->Gaussian_cut)
+	max_cut_current = data->Gaussian_cut;
 #endif
 
 #ifdef BMHTF_NACL
