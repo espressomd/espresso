@@ -101,6 +101,7 @@ libEspresso_a_SOURCES += \
 	bmhtf-nacl.c bmhtf-nacl.h \
 	buckingham.c buckingham.h \
 	dpd.c dpd.h \
+	gaussian.c gaussian.h \
 	gb.c gb.h \
 	hat.c hat.h \
 	hertzian.c hertzian.h \
@@ -200,6 +201,7 @@ libEspresso_a_SOURCES += \
 	tcl/buckingham_tcl.c tcl/buckingham_tcl.h \
 	tcl/dpd_tcl.c tcl/dpd_tcl.h \
 	tcl/forcecap_tcl.c tcl/forcecap_tcl.h \
+	tcl/gaussian_tcl.c tcl/gaussian_tcl.h \
 	tcl/gb_tcl.c tcl/gb_tcl.h \
 	tcl/hat_tcl.c tcl/hat_tcl.h \
 	tcl/hertzian_tcl.c tcl/hertzian_tcl.h \

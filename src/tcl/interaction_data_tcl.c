@@ -43,6 +43,8 @@
 #include "bmhtf-nacl_tcl.h"
 #include "buckingham_tcl.h"
 #include "gb_tcl.h"
+#include "gaussian_tcl.h"
+#include "hat_tcl.h"
 #include "lj_tcl.h"
 #include "ljangle_tcl.h"
 #include "ljcos_tcl.h"
@@ -52,7 +54,6 @@
 #include "morse_tcl.h"
 #include "dpd_tcl.h"
 #include "soft_sphere_tcl.h"
-#include "hat_tcl.h"
 #include "steppot_tcl.h"
 #include "tab_tcl.h"
 #include "tunable_slip_tcl.h"
@@ -404,6 +405,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 
 #ifdef HERTZIAN
   if (data->Hertzian_sig > 0.0) tclprint_to_result_HertzianIA(interp,i,j);
+#endif
+
+#ifdef GAUSSIAN
+  if (data->Gaussian_cut > 0.0) tclprint_to_result_GaussianIA(interp,i,j);
 #endif
 
 #ifdef BMHTF_NACL
@@ -812,6 +817,10 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef HERTZIAN
     REGISTER_NONBONDED("hertzian", tclcommand_inter_parse_hertzian);
+#endif
+
+#ifdef GAUSSIAN
+    REGISTER_NONBONDED("gaussian", tclcommand_inter_parse_gaussian);
 #endif
 
 #ifdef BMHTF_NACL

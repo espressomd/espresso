@@ -18,32 +18,22 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.h
- *
+#ifndef GAUSSIAN_TCL_H
+#define GAUSSIAN_TCL_H
+/** \file gaussian_tcl.h
+ * Tcl interface for \ref gaussian.h
  */
- 
-#include "utils.h"
-#include "particle_data.h"
 
-typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double rate;
-	double back_rate;
-}  reaction_struct;
+#include "parser.h"
 
-reaction_struct reaction;
+#ifdef GAUSSIAN
 
-#ifdef REACTIONS
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
-**/
-void setup_reaction();
-void integrate_reaction();
+int tclprint_to_result_GaussianIA(Tcl_Interp *interp, int i, int j);
+
+int tclcommand_inter_parse_gaussian(Tcl_Interp * interp,
+				    int part_type_a, int part_type_b,
+				    int argc, char ** argv);
+
 #endif
 
-#endif /* ifdef REACTION_H */
+#endif

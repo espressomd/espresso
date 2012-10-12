@@ -32,7 +32,7 @@
 #ifdef REACTIONS
 int tcl_command_reaction_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: reaction [off | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> rate <k> [back_rate]]\n");
+  sprintf(buffer, "Usage: reaction [off | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> rate <k> [back_rate <br>]]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }

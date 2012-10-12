@@ -18,32 +18,30 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.h
+/** \file gaussian.c
  *
+ *  Implementation of \ref gaussian.h
  */
- 
-#include "utils.h"
-#include "particle_data.h"
+#include "gaussian.h"
+#include "communication.h"
 
-typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double rate;
-	double back_rate;
-}  reaction_struct;
+#ifdef GAUSSIAN
 
-reaction_struct reaction;
+int gaussian_set_params(int part_type_a, int part_type_b,
+			double eps, double sig, double cut)
+{
+  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+  
+  if (!data) return ES_ERROR;
+  
+  data->Gaussian_eps = eps;
+  data->Gaussian_sig = sig;
+  data->Gaussian_cut = cut;
 
-#ifdef REACTIONS
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
-**/
-void setup_reaction();
-void integrate_reaction();
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(part_type_a, part_type_b);
+
+  return ES_OK;
+}
+
 #endif
-
-#endif /* ifdef REACTION_H */

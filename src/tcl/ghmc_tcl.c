@@ -66,15 +66,18 @@ int tclcommand_ghmc(ClientData data, Tcl_Interp *interp, int argc, char **argv)
     status = tclcommand_ghmc_print_statistics(interp);
   }  
   else {
-    Tcl_AppendResult(interp, "Unkwnown keyword: \n", (char *)NULL);
-    return tclcommand_ghmc_print_usage(interp);
+    Tcl_AppendResult(interp, "Unknown keyword: \n", (char *)NULL);
+    status = tclcommand_ghmc_print_usage(interp);
   }
 
-  return TCL_OK;
+  return status;
 
-#endif
+#else
+
   INTEG_TRACE(fprintf(stderr,"%d: call to ghmc but not compiled in!\n",this_node));
   return tclcommand_ghmc_print_usage(interp);
+
+#endif
 }
 
 int tclcommand_save_state(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
@@ -84,13 +87,16 @@ int tclcommand_save_state(ClientData data, Tcl_Interp *interp, int argc, char **
   Tcl_ResetResult(interp);
 
   /* save system state */
-	save_last_state();
+  save_last_state();
 
-	return TCL_OK;
+  return TCL_OK;
 
-#endif
+#else
+
   INTEG_TRACE(fprintf(stderr,"%d: call to ghmc but not compiled in!\n",this_node));
   return tclcommand_ghmc_print_usage(interp);
+
+#endif
 }
 
 int tclcommand_load_state(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
@@ -100,15 +106,18 @@ int tclcommand_load_state(ClientData data, Tcl_Interp *interp, int argc, char **
   Tcl_ResetResult(interp);
 
   /* load last saved system state */
-	load_last_state();
-	cells_resort_particles(CELL_GLOBAL_EXCHANGE);
-	invalidate_obs();
+  load_last_state();
+  cells_resort_particles(CELL_GLOBAL_EXCHANGE);
+  invalidate_obs();
 
-	return TCL_OK;
+  return TCL_OK;
 
-#endif
+#else
+
   INTEG_TRACE(fprintf(stderr,"%d: call to ghmc but not compiled in!\n",this_node));
   return tclcommand_ghmc_print_usage(interp);
+
+#endif
 }
 
 /************************************************************/
@@ -123,10 +132,10 @@ int tclcommand_ghmc_print_usage(Tcl_Interp *interp)
   Tcl_AppendResult(interp, "Usage of tcl command ghmc:\n", (char *)NULL);
   Tcl_AppendResult(interp, "\"ghmc\" for returning the status or \n", (char *)NULL);
   Tcl_AppendResult(interp, "\"ghmc statistics\" for returning the monte carlo statistics \n", (char *)NULL);
-  return (TCL_ERROR);
+  return TCL_ERROR;
 #else
   Tcl_AppendResult(interp, "ghmc not compiled in!", (char *)NULL);
-  return (TCL_ERROR);
+  return TCL_ERROR;
 #endif
 }
 
@@ -141,13 +150,12 @@ int tclcommand_ghmc_print_status(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "mc moves attempted ",buffer, (char *)NULL);
 		sprintf(buffer, "%d", ghmcdata.acc);
     Tcl_AppendResult(interp, ", mc moves accepted ",buffer, (char *)NULL);
-    return (TCL_OK);
-	}
+    return TCL_OK;
+  }
   else {
-		Tcl_AppendResult(interp, "off", (char *)NULL);
-    return (TCL_OK);
-	}
-  return (TCL_ERROR);
+    Tcl_AppendResult(interp, "off", (char *)NULL);
+    return TCL_OK;
+  }
 }
 
 /** Hand over ghmc statistics information to tcl interpreter. */
@@ -161,13 +169,12 @@ int tclcommand_ghmc_print_statistics(Tcl_Interp *interp)
     Tcl_AppendResult(interp, " ",buffer, (char *)NULL);
 		sprintf(buffer, "%f", ghmc_acc == 0 ? 0.0 : (double) ghmc_acc/ghmc_att);
     Tcl_AppendResult(interp," ",buffer, (char *)NULL);
-    return (TCL_OK);
-	}
+    return TCL_OK;
+  }
   else {
-		Tcl_AppendResult(interp, "{0 0 0}", (char *)NULL);
-    return (TCL_OK);
-	}
-  return (TCL_ERROR);
+    Tcl_AppendResult(interp, "{0 0 0}", (char *)NULL);
+    return TCL_OK;
+  }
 }
 
 /*@}*/
