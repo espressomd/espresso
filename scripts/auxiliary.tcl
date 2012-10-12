@@ -595,10 +595,9 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
   }
   
   set HOSTNAME [exec hostname]
-  set vmdout_file [open "vmd_start.script" "w"]
+  set vmdout_file [open "${filename}.vmd_start.script" "w"]
   
   puts $vmdout_file "mol load psf $filename.psf pdb $filename.pdb"
-  puts $vmdout_file "logfile vmd.log"
   puts $vmdout_file "rotate stop"
   puts $vmdout_file "logfile off"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
