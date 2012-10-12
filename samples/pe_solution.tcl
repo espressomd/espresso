@@ -107,7 +107,7 @@ set cm_valency    1.0
 set ci_valency    -1.0
 
 puts "Simulate the following polyelectrolyte solution:"
-puts "number of Polymers       : $n_polymers"
+puts "number of polymers       : $n_polymers"
 set n_monomers [expr ($n_polymers*$l_polymers)]
 puts "number of monomers       : $n_monomers"
 set polymer_charge [expr (($l_polymers+$cm_distance-1)/$cm_distance)]
@@ -141,7 +141,7 @@ for {set ia1 0} { $ia1 < $n_part_types } { incr ia1 } {
 
 puts "Setup Particles (wait...)"
 # polymers
-polymer $n_polymers $l_polymers $bond_length mode SAW charge $cm_valency distance $cm_distance types 0 1 FENE 0
+polymer $n_polymers $l_polymers $bond_length mode PSAW charge $cm_valency distance $cm_distance types 0 1 FENE 0
 # counterions
 counterions $n_counterions charge $ci_valency type 2
 #puts "[part]"
