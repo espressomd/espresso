@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Lennard Jones Liquid                                     #
@@ -90,7 +87,7 @@ set tcl_precision 6
 
 setmd box_l $box_l $box_l $box_l
 
-inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut
+inter 0 0 lennard-jones $lj1_eps $lj1_sig $lj1_cut auto
 
 # Particle setup
 #############################################################
@@ -128,7 +125,8 @@ if { $vmd_output=="yes" } {
 #open Observable file
 set obs_file [open "$name$ident.obs" "w"]
 puts $obs_file "\# System: $name$ident"
-puts $obs_file "\# Time\tE_tot\tE_kin\t..."
+puts $obs_file "\# Time\tE_tot\tE_kin\tE_LJ"
+flush $obs_file
 
 puts "\nStart warmup integration:"
 puts "At maximum $warm_n_times times $warm_steps steps"
@@ -153,7 +151,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     flush stdout
 
 #   write observables
-    puts $obs_file "{ time [setmd time] } [analyze energy]"
+    puts $obs_file "[setmd time] [analyze energy total] [analyze energy kinetic] [analyze energy nonbonded 0 0]"
 
 #   Increase LJ cap
     set cap [expr $cap+10]
@@ -177,8 +175,14 @@ puts "periodicity   [setmd periodicity]"
 puts "transfer_rate [setmd transfer_rate]" 
 puts "verlet_reuse  [setmd verlet_reuse]" 
 
-# write parameter file
-polyBlockWrite "$name$ident.set" {box_l time_step skin} "" 
+# write configurations file
+set trajectory [open "$name$ident.config" "w"]
+
+blockfile $trajectory write variable {box_l time_step skin}
+blockfile $trajectory write interactions
+blockfile $trajectory write integrate
+blockfile $trajectory write thermostat
+flush $trajectory
 
 #############################################################
 #      Integration                                          #
@@ -191,27 +195,29 @@ puts [analyze energy]
 
 set j 0
 for {set i 0} { $i < $int_n_times } { incr i} {
-
-
     puts -nonewline "run $i at time=[setmd time] "
 
     integrate $int_steps
     if { $vmd_output=="yes" } { imd positions }
 #   write observables
     set energies [analyze energy]
-    puts $obs_file "{ time [setmd time] } $energies"
+    puts $obs_file "[setmd time] [analyze energy total] [analyze energy kinetic] [analyze energy nonbonded 0 0]"
+    flush $obs_file
     puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
     flush stdout
 
 #   write intermediate configuration
     if { $i%10==0 } {
-	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
+	blockfile $trajectory write particles
+	flush $trajectory
 	incr j
     }
 }
 
 # write end configuration
-polyBlockWrite "$name$ident.end" {time box_l} {id pos type}
+blockfile $trajectory write particles
+blockfile $trajectory write variable { time }
+close $trajectory
 
 close $obs_file
 

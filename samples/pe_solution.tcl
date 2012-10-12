@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Polyelectrolyte Solution                                 #
@@ -236,8 +233,13 @@ puts "Interactions are now: {[inter]}"
 
 #      Write blockfiles for restart
 #############################################################
-polyBlockWrite "$name$ident.set"   {box_l time_step skin}
-polyBlockWrite "$name$ident.start" {time} {id pos type}
+set trajectory [open "$name$ident.config" "w"]
+
+blockfile $trajectory write variable {box_l time_step skin}
+blockfile $trajectory write interactions
+blockfile $trajectory write integrate
+blockfile $trajectory write thermostat
+flush $trajectory
 
 # prepare observable output
 set obs_file [open "$name$ident.obs" "w"]
@@ -272,7 +274,8 @@ for {set i 0} { $i <= $int_n_times } { incr i} {
     if { $vmd_output=="yes" } { imd positions }
     #   write intermediate configuration
     if { $i%50==0 } {
-	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l time_step skin} {id pos type}
+	blockfile $trajectory write particles
+	flush $trajectory
 	incr j
     }
 }
