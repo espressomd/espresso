@@ -602,8 +602,6 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
   }
 #endif
 
-#ifdef LENNARD_JONES
-
   if(force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     
@@ -614,95 +612,13 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
     else
       Tcl_AppendResult(interp, " {", (char *)NULL);
     if (force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljforcecap individual", (char *)NULL);
+      Tcl_AppendResult(interp, "forcecap individual", (char *)NULL);
     else {
       Tcl_PrintDouble(interp, force_cap, buffer);
-      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+      Tcl_AppendResult(interp, "forcecap ", buffer, (char *) NULL);
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
-
-#endif
-
-#ifdef LJ_ANGLE
-  if(force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-    
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljangleforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, force_cap, buffer);
-      Tcl_AppendResult(interp, "ljangleforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
-
-#ifdef MORSE
-if(force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (force_cap == -1.0)
-      Tcl_AppendResult(interp, "morseforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, force_cap, buffer);
-      Tcl_AppendResult(interp, "morseforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
-
-#ifdef BUCKINGHAM 
-  if(force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-    
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-
-    if (force_cap == -1.0)
-      Tcl_AppendResult(interp, "buckforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, force_cap, buffer);
-      Tcl_AppendResult(interp, "buckforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
-
-#ifdef TABULATED
-  if(force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (force_cap == -1.0)
-      Tcl_AppendResult(interp, "tabforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, force_cap, buffer);
-      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
 
   return (TCL_OK);
 }
