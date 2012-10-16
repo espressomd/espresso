@@ -174,13 +174,6 @@ extern int check_id;
 #define MDLC_TRACE(cmd)
 #endif
 
-#ifdef EWALD_DEBUG
-#define EWALD_TRACE(cmd) { cmd;  }
-#else
-/** Equals { cmd } if EWALD_DEBUG is set. */
-#define EWALD_TRACE(cmd)
-#endif
-
 #ifdef MAGGS_DEBUG
 #define MAGGS_TRACE(cmd) { cmd;  }
 #else

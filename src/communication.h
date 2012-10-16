@@ -529,7 +529,6 @@ int mpi_gather_runtime_errors(char **errors);
 #define INVALIDATE_SYSTEM 1
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
-#define EWALD_COUNT_CHARGES 4
 #define P3M_COUNT_DIPOLES   5
 /*@}*/
 

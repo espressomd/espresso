@@ -160,14 +160,6 @@ void calc_long_range_forces()
         p3m_calc_kspace_forces(1,0);
       break;
   #endif
-    case COULOMB_EWALD:
-  #ifdef NPT
-      if(integ_switch == INTEG_METHOD_NPT_ISO)
-        nptiso.p_vir[0] += EWALD_calc_kspace_forces(1,1);
-      else
-  #endif
-        EWALD_calc_kspace_forces(1,0);
-      break;
     case COULOMB_MAGGS:
       maggs_calc_forces();
       break;

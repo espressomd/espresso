@@ -126,7 +126,6 @@ libEspresso_a_SOURCES += \
 libEspresso_a_SOURCES += \
 	debye_hueckel.c debye_hueckel.h \
 	elc.c elc.h \
-	ewald.c ewald.h \
 	magnetic_non_p3m_methods.c magnetic_non_p3m_methods.h \
 	mdlc_correction.c  mdlc_correction.h \
 	maggs.c maggs.h \
@@ -217,7 +216,6 @@ libEspresso_a_SOURCES += \
 libEspresso_a_SOURCES += \
 	tcl/debye_hueckel_tcl.c tcl/debye_hueckel_tcl.h \
 	tcl/elc_tcl.c tcl/elc_tcl.h \
-	tcl/ewald_tcl.c tcl/ewald_tcl.h \
 	tcl/magnetic_non_p3m_methods_tcl.c tcl/magnetic_non_p3m_methods_tcl.h \
 	tcl/maggs_tcl.c tcl/maggs_tcl.h \
 	tcl/mmm1d_tcl.c tcl/mmm1d_tcl.h \
