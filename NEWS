@@ -5,6 +5,8 @@
 ESPResSo 3.1.2
 ==============
 
+* Added Tcl-scripts of the tutorials to the distribution.
+
 * Added forgotten part of the UG on the correlators.
 
 * Removed buggy readline code tclline.tcl. Fixes #36432.
