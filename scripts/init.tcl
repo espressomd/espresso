@@ -105,8 +105,3 @@ source statistics.tcl
 source ABHmath.tcl
 source vtf.tcl
 source dielectrics.tcl
-
-# make available readline if Espresso is interactive
-if {$tcl_interactive} {
-	source tclline.tcl
-}

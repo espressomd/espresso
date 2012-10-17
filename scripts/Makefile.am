@@ -31,7 +31,6 @@ ESSCRIPTS = \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
-	tclline.tcl \
 	parallel_tempering.tcl
 
 EXTRA_DIST=$(ESSCRIPTS)
