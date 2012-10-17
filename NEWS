@@ -2,6 +2,16 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 3.1.2
+==============
+
+* Added forgotten part of the UG on the correlators.
+
+* Removed buggy readline code tclline.tcl. Fixes #36432.
+
+* Removed Ewald code from ESPResSo that never worked and was never
+  documented.
+
 ESPResSo 3.1.1
 ==============
 
