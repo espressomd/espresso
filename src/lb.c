@@ -612,7 +612,7 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
     float* host_checkpoint_force = malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
     lb_print_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
     for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
-							fprintf(cpfile, "%f \n", host_checkpoint_vd[n]); 
+							fprintf(cpfile, "%.8f \n", host_checkpoint_vd[n]); 
 						}
     for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
 							fprintf(cpfile, "%u \n", host_checkpoint_seed[n]); 
@@ -621,7 +621,7 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 							fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]); 
 						}
 				for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
-							fprintf(cpfile, "%f \n", host_checkpoint_force[n]); 
+							fprintf(cpfile, "%.8f \n", host_checkpoint_force[n]); 
 						}
     fclose(cpfile);
     free(host_checkpoint_vd);
@@ -675,6 +675,7 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   return ES_ERROR;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
+  if(lattice_switch & LATTICE_LB) {
 #ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
@@ -715,10 +716,44 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
 //  mpi_bcast_lb_params(0);
   return ES_OK;
 #endif
-  if(!(lattice_switch & LATTICE_LB_GPU)) {
-    fprintf(stderr, "Not implemented\n");
+  } else {
+    //fprintf(stderr, "Not implemented\n");
+#ifdef LB_GPU
+  FILE* cpfile;
+  cpfile=fopen(filename, "r");
+  if (!cpfile) {
     return ES_ERROR;
   }
+    float* host_checkpoint_vd = malloc(size_of_nodes_gpu);
+    unsigned int* host_checkpoint_seed = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+    unsigned int* host_checkpoint_boundary = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+    float* host_checkpoint_force = malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+    //return ES_ERROR;
+    if (!binary) {
+        for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
+							fscanf(cpfile, "%f", &host_checkpoint_vd[n]); 
+						}
+        for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+							fscanf(cpfile, "%u", &host_checkpoint_seed[n]); 
+						}
+				for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+							fscanf(cpfile, "%u", &host_checkpoint_boundary[n]); 
+						}
+				for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
+							fscanf(cpfile, "%f", &host_checkpoint_force[n]); 
+        }
+    
+
+        lb_set_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
+    }
+    fclose(cpfile);
+    free(host_checkpoint_vd);
+    free(host_checkpoint_seed);
+    free(host_checkpoint_boundary);
+    free(host_checkpoint_force);
+    return ES_OK; 
+  }
+#endif  
   return ES_ERROR;
 }
 
