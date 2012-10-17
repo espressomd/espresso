@@ -19,6 +19,7 @@
 # All Tcl-scripts in the scripts-directory should be listed here
 
 # make a copy of all script files
+# PLEASE KEEP ALPHABETIC ORDER
 ESSCRIPTS = \
 	init.tcl \
 	ABHmath.tcl \
@@ -27,15 +28,13 @@ ESSCRIPTS = \
 	bundle.tcl \
 	countBonds.tcl \
 	dielectrics.tcl \
+	gibbs_ghmc.tcl \
+	parallel_tempering.tcl \
 	pdb.tcl \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
-	vtk.tcl \
-	tclline.tcl \
-	parallel_tempering.tcl \
-	gibbs_ghmc.tcl
-
+	vtk.tcl
 
 EXTRA_DIST=$(ESSCRIPTS)
 

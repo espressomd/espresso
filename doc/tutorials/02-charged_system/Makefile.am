@@ -16,7 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 BASENAME=02-charged_system
-EXTRA_DIST=$(BASENAME).pdf
+EXTRA_DIST=$(BASENAME).pdf \
+	scripts/analyze.tcl \
+	scripts/analyze_rho.tcl \
+	scripts/replay.tcl \
+	scripts/sim.tcl \
+	scripts/sim_charged_walls.tcl \
+	scripts/sim_walls.tcl
 
 if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex

@@ -34,7 +34,6 @@
 #include "forces.h"
 #include "rotation.h"
 #include "p3m.h"
-#include "ewald.h"
 #include "statistics.h"
 #include "energy.h"
 #include "pressure.h"
@@ -381,9 +380,6 @@ void mpi_bcast_event_slave(int node, int event)
     p3m_count_charged_particles();
     break;
 #endif
-  case EWALD_COUNT_CHARGES:
-    EWALD_count_charged_particles();
-    break; 
   case MAGGS_COUNT_CHARGES:
     maggs_count_charged_particles();
     break; 
@@ -1747,9 +1743,6 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
     break;  
   case COULOMB_MAGGS:
     MPI_Bcast(&maggs, sizeof(MAGGS_struct), MPI_BYTE, 0, comm_cart); 
-    break;
-  case COULOMB_EWALD:
-    MPI_Bcast(&ewald, sizeof(ewald_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_RF:
   case COULOMB_INTER_RF:
