@@ -31,7 +31,6 @@
 #include "grid.h"
 #include "pressure.h"
 #include "p3m.h"
-#include "ewald.h"
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "mmm1d.h"
@@ -513,13 +512,6 @@ static void recalc_global_maximal_nonbonded_cutoff()
     break;
   }
 #endif
-  case COULOMB_EWALD: {
-    /* do not use precalculated r_cut here, might not be set yet */
-    double r_cut  = ewald.r_cut_iL* box_l[0];
-    if (max_cut_global < r_cut)
-      max_cut_global = r_cut;
-    break;
-  }
   case COULOMB_DH:
     if (max_cut_global < dh_params.r_cut)
       max_cut_global = dh_params.r_cut;
@@ -891,7 +883,6 @@ int check_obs_calc_initialized()
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
-  case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   }
 #endif /* ifdef ELECTROSTATICS */
 
@@ -931,12 +922,6 @@ int coulomb_set_bjerrum(double bjerrum)
       p3m_set_bjerrum();
       break;
 #endif
-    case COULOMB_EWALD:
-      ewald.alpha    = 0.0;
-      ewald.alpha_L  = 0.0;
-      ewald.r_cut    = 0.0;
-      ewald.r_cut_iL = 0.0;
-      break;
     case COULOMB_DH:
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;

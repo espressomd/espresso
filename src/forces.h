@@ -40,7 +40,6 @@
 /* include the force files */
 #include "p3m.h"
 #include "p3m-dipolar.h"
-#include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
@@ -341,18 +340,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
       break;
     }
   #endif
-    case COULOMB_EWALD: {
-  #ifdef NPT
-      if (q1q2) {
-        double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-        if(integ_switch == INTEG_METHOD_NPT_ISO)
-  	nptiso.p_vir[0] += eng;
-      }
-  #else
-      if (q1q2) add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-  #endif
-      break;
-    }
     case COULOMB_MMM1D:
       if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
       break;

@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec ~/progs/Espresso/Espresso $0 $*
 #############################################################
 #
 # Hybrid MD/MC:

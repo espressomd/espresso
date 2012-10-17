@@ -447,6 +447,7 @@ timesteps. This is a restriction of VMD itself, not of the format.
   \opt{\alt{short \asep verbose}}
   \opt{radius \alt{\var{radii} \asep auto}} 
   \opt{typedesc \var{typedesc}}
+  \opt{ignore_charges}
 \end{essyntax}
 Writes a structure block describing the system's structure to the
 channel given by \var{channelId}. \var{channelId} must be an
@@ -479,6 +480,12 @@ contains a trajectory of a whole simulation.
   is an atom name and \textit{type} is the type id.
   \minisec{Example} 
   \verb!writevsf $file typedesc {0 "name colloid" 1 "name pe"}!
+\item[\opt{ignore_charges}]
+  this is a temporary workaround for a bug in the VTF reader of VMD,
+  which cannot handle multiple atom sections for the same
+  atom. However, charges are written out per-atom, so that VMD forgets
+  about atom types and radii. If you don't need the charges, you can
+  switch them off by this flat, making the other settings work again.
 \end{arguments}
 
 \subsection{\texttt{writevcf}: Writing  the coordinates}
@@ -700,24 +707,29 @@ the VMD Quick Help.
 
 \begin{essyntax}
 prepare_vmd_connection 
-\opt{\var{filename} \opt{\var{wait} \opt{\var{start}}}}
+\opt{\var{filename} \opt{\var{wait} \opt{\var{start}}} \opt{\var{constraints}}}
 \end{essyntax}
 
 To reduce the effort involved in setting up the IMD connection,
 starting VMD and loading the structure file, \es provides the command
 \lit{prepare_vmd_connection}.  It writes out the required
-PSF/PDB-files to \var{filename}.psf and \var{filename}.pdb (default
+vsf structure description file to \var{filename}.vsf (default
 for \var{filename} is \lit{vmd}), doing some nice stuff such as
 coloring the molecules, bonds and counterions appropriately, rotating
 your viewpoint, and connecting your system to the visualization
-server. When \var{wait} is provided, \es will wait for \var{wait}
-seconds before it continues, giving VMD some time to start up and
-connect.
+server.
 
-If \var{start} is 1 (the default), it will automatically try to start
-VMD and connect to the \es simulation, otherwise it writes a
-corresponding script to the file \lit{vmd_start.script}, that can be
-executed via VMD, either from the command line
+If \var{constraints} is not 0, then the command will create graphics
+primitives in VMD that represent some of the spatial constraints
+(sphere, rhomboid and cylinder at present).
+
+When \var{wait} is provided, \es will wait for \var{wait} seconds for
+VMD to connect, and only continue after this time has passed or VMD
+has connected. If \var{start} is 1 (the default), it will
+automatically try to start VMD and connect to the \es simulation,
+otherwise it writes a corresponding script to the file
+\lit{\var{filename}.vmd_start.script}, that can be executed via VMD,
+either from the command line
 \begin{code}
   vmd -e vmd_start.script
 \end{code}
@@ -725,7 +737,6 @@ or from the Tcl console of VMD with the command
 \begin{code}
   play "vmd\_start.script"
 \end{code}
-
 
 \section{Errorhandling}
 Errors in the parameters are detected as early as possible, and

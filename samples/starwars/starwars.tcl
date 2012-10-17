@@ -251,7 +251,6 @@ proc CreateSystem {} {
     #        for {set i 0} { $i < $part_id} {incr i} {
     #   	puts [part $i]
     #      }
-    polyBlockWrite "$name.start" 
 
     # Window appearance
     frame .star.create -relief raised -border 1

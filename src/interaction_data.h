@@ -107,8 +107,6 @@
   #define COULOMB_MMM2D   5
   /** Coulomb method is "Maggs" */
   #define COULOMB_MAGGS   6
-  /** Coulomb method is standard Ewald */
-  #define COULOMB_EWALD   7
   /** Coulomb method is P3M plus ELC. */
   #define COULOMB_ELC_P3M 8
   /** Coulomb method is Reaction-Field. */
