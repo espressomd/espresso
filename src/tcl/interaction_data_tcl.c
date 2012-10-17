@@ -61,7 +61,6 @@
 // Coulomb
 #include "debye_hueckel_tcl.h"
 #include "elc_tcl.h"
-#include "ewald_tcl.h"
 #include "maggs_tcl.h"
 #include "mmm1d_tcl.h"
 #include "mmm2d_tcl.h"
@@ -157,8 +156,6 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 #ifdef P3M
   REGISTER_COULOMB("p3m", tclcommand_inter_coulomb_parse_p3m);
 #endif
-
-  REGISTER_COULOMB("ewald", tclcommand_inter_coulomb_parse_ewald); 
 
   REGISTER_COULOMB("dh", tclcommand_inter_coulomb_parse_dh);    
 
@@ -498,7 +495,6 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
     break;
   case COULOMB_P3M: tclprint_to_result_p3m(interp); break;
 #endif
-  case COULOMB_EWALD: tclprint_to_result_EWALD(interp); break;
   case COULOMB_DH: tclprint_to_result_dh(interp); break;
   case COULOMB_RF: tclprint_to_result_rf(interp,"rf"); break;
   case COULOMB_INTER_RF: tclprint_to_result_rf(interp,"inter_rf"); break;
