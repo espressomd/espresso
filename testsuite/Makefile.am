@@ -86,7 +86,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.04.gz analysis_system.data.05.gz \
 	analysis_system.data.06.gz analysis_system.data.07.gz \
 	analysis_system.data.08.gz analysis_system.data.09.gz \
-	analysis_system.data.10.gz analysis_system.data.chk \
+	analysis_system.data.10.gz \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
         p3m_magnetostatics.data \

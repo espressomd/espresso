@@ -26,6 +26,11 @@ src/libEspresso.a
 Espresso
 Espresso.install
 
+# Espresso output
+*.end
+*.obs*
+*.chk
+
 # doxygen
 doc/dg/html/
 doc/dg/background_errors.doc
