@@ -1,0 +1,21 @@
+reset
+set terminal postscript portrait size 12.0cm,8.0cm enhanced color dashed lw 1 "Helvetica" 10
+set output "rdf.eps"
+set encoding iso
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset title                            # remove title
+unset xlabel                           # remove xlabel
+unset ylabel                           # remove ylabel
+unset key                              # remove any key position
+unset label                            # remove any previous labels
+set ytics auto                         # set ytics automatically
+unset format                           # remove format
+set xtics auto                         # set xtics automatically
+set xlabel "r"
+set ylabel "g(r)"
+set xr [0:2.6]
+set yr [0:3]
+plot  "rdf.dat" using 1:2 title "" with line lt 1 lw 2 lc rgb "black", \
+      "rdf.dat" using 1:2 title "" with points pt 7 lw 2 lc rgb "red"
+set output
