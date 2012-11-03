@@ -1,0 +1,22 @@
+reset
+set terminal postscript portrait size 16.0cm,8.0cm enhanced color dashed lw 1 "Helvetica" 10
+set output "equilibration.eps"
+set encoding iso
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset title                            # remove title
+unset xlabel                           # remove xlabel
+unset ylabel                           # remove ylabel
+unset key                              # remove any key position
+unset label                            # remove any previous labels
+set ytics auto                         # set ytics automatically
+unset format                           # remove format
+set xtics auto                         # set xtics automatically
+set xlabel "t"
+set ylabel "T_{K}"
+set xr [15:420]
+set yr [0.75:1.25]
+set key top right
+plot  "equilibration.dat" using 1:3 title "" with line lt 1 lw 2 lc rgb "black", \
+      1.0 title "" with line lt 1 lw 2 lc rgb "red"
+set output

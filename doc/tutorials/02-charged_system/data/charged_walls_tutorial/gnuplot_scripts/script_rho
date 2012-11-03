@@ -1,0 +1,24 @@
+reset
+set terminal postscript portrait size 12.0cm,8.0cm enhanced color dashed lw 1 "Helvetica" 10
+set output "rho.eps"
+set encoding iso
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset title                            # remove title
+unset xlabel                           # remove xlabel
+unset ylabel                           # remove ylabel
+unset key                              # remove any key position
+unset label                            # remove any previous labels
+set ytics auto                         # set ytics automatically
+unset format                           # remove format
+set xtics auto                         # set xtics automatically
+set xlabel "z"
+set ylabel "reduced units"
+set xr [-.5:4.793]
+set yr [0.0:0.12]
+set key top right
+set arrow from 0.0,0.0 to 0.0,0.12 nohead lt 2 lw 6 lc rgb "blue"
+set arrow from 4.293,0.0 to 4.293,0.10 nohead lt 2 lw 6 lc rgb "blue"
+plot  "rho.dat" using 1:2 title "{/Symbol r}_{+}(z)" with line lt 1 lw 2 lc rgb "red", \
+      "rho.dat" using 1:3 title "{/Symbol r}_{-}(z)" with line lt 1 lw 2 lc rgb "blue"
+set output

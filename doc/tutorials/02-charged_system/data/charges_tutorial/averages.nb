@@ -1,0 +1,118 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      3331,        109]
+NotebookOptionsPosition[      2983,         93]
+NotebookOutlinePosition[      3322,        108]
+CellTagsIndexPosition[      3279,        105]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"data", "=", 
+   RowBox[{"Drop", "[", 
+    RowBox[{
+     RowBox[{"Import", "[", 
+      RowBox[{
+      "\"\</auto.anoa/home/jgraaf/FILES/ESPRESSO/NRE/data/production.dat\>\"",
+        ",", "\"\<Table\>\""}], "]"}], ",", "1"}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.560505819873641*^9, 3.560505846612157*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Total", " ", "Energy"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"dat", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"data", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "2"}], "]"}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "1", ",", 
+         RowBox[{"Length", "[", "data", "]"}]}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"Mean", "[", "dat", "]"}], "\[IndentingNewLine]", 
+   RowBox[{"StandardDeviation", "[", "dat", "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.560506902382421*^9, 3.560506914691265*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Kinetic", " ", "Temperature"}], " ", "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"dat", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"data", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "3"}], "]"}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "1", ",", 
+         RowBox[{"Length", "[", "data", "]"}]}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"Mean", "[", "dat", "]"}], "\[IndentingNewLine]", 
+   RowBox[{"StandardDeviation", "[", "dat", "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.560505848114566*^9, 3.560505881542935*^9}, {
+  3.560506919350317*^9, 3.560506930826243*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", "Pressure", " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"dat", "=", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"data", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "4"}], "]"}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "1", ",", 
+         RowBox[{"Length", "[", "data", "]"}]}], "}"}]}], "]"}]}], ";"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"Mean", "[", "dat", "]"}], "\[IndentingNewLine]", 
+   RowBox[{"StandardDeviation", "[", "dat", "]"}]}]}]], "Input",
+ CellChangeTimes->{
+  3.560505891844098*^9, {3.560506932817646*^9, 3.560506939974966*^9}}]
+},
+WindowSize->{740, 850},
+WindowMargins->{{Automatic, -45}, {-212, Automatic}},
+FrontEndVersion->"8.0 for Linux x86 (64-bit) (October 10, 2011)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[557, 20, 351, 9, 88, "Input"],
+Cell[911, 31, 668, 18, 88, "Input"],
+Cell[1582, 51, 727, 20, 88, "Input"],
+Cell[2312, 73, 667, 18, 88, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)
