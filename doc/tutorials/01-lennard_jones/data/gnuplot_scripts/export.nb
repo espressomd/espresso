@@ -1,0 +1,187 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      5705,        178]
+NotebookOptionsPosition[      5207,        158]
+NotebookOutlinePosition[      5543,        173]
+CellTagsIndexPosition[      5500,        170]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{
+  "Determines", " ", "the", " ", "mean", " ", "and", " ", "standard", " ", 
+   "deviation", " ", "from", " ", "the", " ", "correlation", " ", "data"}], 
+  " ", "*)"}]], "Input",
+ CellChangeTimes->{{3.559998849842772*^9, 3.559998882139701*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"data", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{
+    "\"\</auto.anoa/home/jgraaf/FILES/ESPRESSO/NRE/data/msd_internal.dat\>\"",
+      ",", "\"\<Table\>\""}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.559913702117297*^9, 3.5599137545814*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"dat", "=", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"data", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "1"}], "]"}], "]"}], ",", 
+       RowBox[{"data", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "2"}], "]"}], "]"}], ",", 
+       RowBox[{"3", "*", 
+        RowBox[{"Mean", "[", 
+         RowBox[{"Take", "[", 
+          RowBox[{
+           RowBox[{"data", "[", 
+            RowBox[{"[", "i", "]"}], "]"}], ",", 
+           RowBox[{
+            RowBox[{"-", "3"}], "*", "108"}]}], "]"}], "]"}]}], ",", 
+       RowBox[{"3", "*", 
+        RowBox[{
+         RowBox[{"StandardDeviation", "[", 
+          RowBox[{"Take", "[", 
+           RowBox[{
+            RowBox[{"data", "[", 
+             RowBox[{"[", "i", "]"}], "]"}], ",", 
+            RowBox[{
+             RowBox[{"-", "3"}], "*", "108"}]}], "]"}], "]"}], "/", 
+         RowBox[{"Sqrt", "[", 
+          RowBox[{"3", "*", "108"}], "]"}]}]}]}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"i", ",", "1", ",", 
+       RowBox[{"Length", "[", "data", "]"}]}], "}"}]}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.559913757213822*^9, 3.559913848765956*^9}, {
+  3.559914145815982*^9, 3.559914166207515*^9}, {3.5599980486741858`*^9, 
+  3.559998055092821*^9}, {3.559998222295154*^9, 3.559998228399974*^9}}],
+
+Cell[BoxData[
+ RowBox[{"Export", "[", 
+  RowBox[{
+  "\"\</auto.anoa/home/jgraaf/FILES/ESPRESSO/NRE/data/msd_internal_av.dat\>\"\
+", ",", "dat", ",", "\"\<Table\>\""}], "]"}]], "Input",
+ CellChangeTimes->{{3.559913849911578*^9, 3.559913867314237*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{"Determines", " ", "the", " ", "diffusion", " ", "coefficient"}], 
+  " ", "*)"}]], "Input",
+ CellChangeTimes->{{3.559998918754043*^9, 3.559998919025674*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"vak", "=", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"dat", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "1"}], "]"}], "]"}], ",", 
+       RowBox[{
+        RowBox[{"dat", "[", 
+         RowBox[{"[", 
+          RowBox[{"i", ",", "3"}], "]"}], "]"}], "/", 
+        RowBox[{"(", 
+         RowBox[{"6", "*", 
+          RowBox[{"dat", "[", 
+           RowBox[{"[", 
+            RowBox[{"i", ",", "1"}], "]"}], "]"}]}], ")"}]}]}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"i", ",", "101", ",", 
+       RowBox[{"Length", "[", "dat", "]"}]}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Mean", "[", "vak", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"StandardDeviation", "[", "vak", "]"}]}], "Input",
+ CellChangeTimes->{{3.559914531790861*^9, 3.5599146173775377`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{
+  "Determines", " ", "the", " ", "diffusion", " ", "coefficient", " ", "for", 
+   " ", "the", " ", "regular", " ", "MSD", " ", "data"}], " ", 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.5599988857347507`*^9, 3.559998907922884*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"dat", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{
+    "\"\</auto.anoa/home/jgraaf/FILES/ESPRESSO/NRE/data/msd.dat\>\"", ",", 
+     "\"\<Table\>\""}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"vak", "=", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"dat", "[", 
+        RowBox[{"[", 
+         RowBox[{"i", ",", "1"}], "]"}], "]"}], ",", 
+       RowBox[{
+        RowBox[{"dat", "[", 
+         RowBox[{"[", 
+          RowBox[{"i", ",", "2"}], "]"}], "]"}], "/", 
+        RowBox[{"(", 
+         RowBox[{"6", "*", 
+          RowBox[{"dat", "[", 
+           RowBox[{"[", 
+            RowBox[{"i", ",", "1"}], "]"}], "]"}]}], ")"}]}]}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"i", ",", "101", ",", 
+       RowBox[{"Length", "[", "dat", "]"}]}], "}"}]}], "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Mean", "[", "vak", "]"}], "\[IndentingNewLine]", 
+ RowBox[{"StandardDeviation", "[", "vak", "]"}]}], "Input",
+ CellChangeTimes->{{3.559998523237624*^9, 3.559998563410054*^9}}]
+},
+WindowSize->{740, 850},
+WindowMargins->{{Automatic, 209}, {0, Automatic}},
+FrontEndVersion->"8.0 for Linux x86 (64-bit) (October 10, 2011)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[557, 20, 289, 6, 50, "Input"],
+Cell[849, 28, 286, 7, 69, "Input"],
+Cell[1138, 37, 1367, 38, 69, "Input"],
+Cell[2508, 77, 250, 5, 50, "Input"],
+Cell[2761, 84, 202, 4, 30, "Input"],
+Cell[2966, 90, 872, 25, 88, "Input"],
+Cell[3841, 117, 276, 6, 30, "Input"],
+Cell[4120, 125, 1083, 31, 107, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)

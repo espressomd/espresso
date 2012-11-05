@@ -17,20 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 BASENAME=01-lennard_jones
-EXTRA_DIST=$(BASENAME).pdf \
-	scripts/blockfile_read.tcl \
-	scripts/lj_functions.tcl \
-	scripts/msd.tcl \
-	scripts/rdf.tcl \
-	scripts/vacf.tcl \
-	scripts/lj_tutorial.tcl \
-	solutions/blockfile_read.tcl \
-	solutions/lj_functions.tcl \
-	solutions/msd.tcl \
-	solutions/rdf.tcl \
-	solutions/vacf.tcl \
-	solutions/vacf_vec.tcl \
-	solutions/lj_tutorial.tcl
+EXTRA_DIST=$(BASENAME).pdf
 
 if DEVEL_SRC
 tutorial_TEXFILES=$(BASENAME).tex

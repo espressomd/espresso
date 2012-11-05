@@ -1,0 +1,47 @@
+reset
+set terminal postscript portrait size 12.0cm,8.0cm enhanced color dashed lw 1 "Helvetica" 10
+set output "msd.eps"
+set encoding iso
+set multiplot
+# FIRST PLOT
+set size 1.0, 1.0
+set origin 0.0, 0.0
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset title                            # remove title
+unset xlabel                           # remove xlabel
+unset ylabel                           # remove ylabel
+unset key                              # remove any key position
+unset label                            # remove any previous labels
+set ytics auto                         # set ytics automatically
+unset format                           # remove format
+set xtics auto                         # set xtics automatically
+set xlabel "t"
+set ylabel "<{/Symbol D}r^{2}(t)>"
+set xr [0.0:100.0]
+set yr [0.0:40.0]
+plot  "msd.dat" using 1:2 title "" with line lt 1 lw 2 lc rgb "red"
+# SECOND PLOT
+set size 0.45, 0.45
+set origin 0.15, 0.50
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset title                            # remove title
+unset xlabel                           # remove xlabel
+unset ylabel                           # remove ylabel
+unset key                              # remove any key position
+unset label                            # remove any previous labels
+set ytics 100                         # set ytics automatically
+unset format                           # remove format
+set xtics 100                         # set xtics automatically
+set log x
+set log y
+set xr [0.001:1000.0]
+set yr [0.00001:1000.0]
+set format x "10^{%L}"
+set format y "10^{%L}"
+plot  "msd.dat" using 1:2 title "" with line lt 1 lw 2 lc rgb "red", \
+      ((x>0.12)&&(x<100)?0.75*x:1/0.) title "" with line lt 1 lw 2 lc rgb "blue", \
+      ((x>0.01)&&(x<0.08)?7.5*x*x:1/0.) title "" with line lt 1 lw 2 lc rgb "green"
+unset multiplot
+set output

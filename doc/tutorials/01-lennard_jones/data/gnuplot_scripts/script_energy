@@ -1,0 +1,25 @@
+reset
+set terminal postscript portrait size 16.0cm,8.0cm enhanced color dashed lw 1 "Helvetica" 10
+set output "energy.eps"
+set encoding iso
+set   autoscale                        # scale axes automatically
+unset log                              # remove any log-scaling
+unset title                            # remove title
+unset xlabel                           # remove xlabel
+unset ylabel                           # remove ylabel
+unset key                              # remove any key position
+unset label                            # remove any previous labels
+set ytics auto                         # set ytics automatically
+unset format                           # remove format
+set xtics auto                         # set xtics automatically
+set xlabel "N"
+set ylabel "reduced units"
+set xr [0:1000]
+set yr [-6:5]
+set key top right
+plot  "energy.dat" using 1:2 title "pressure" with line lt 1 lw 2 lc rgb "black", \
+      "energy.dat" using 1:3 title "kinetic energy" with line lt 1 lw 2 lc rgb "red", \
+      "energy.dat" using 1:4 title "potential energy" with line lt 1 lw 2 lc rgb "blue", \
+      "energy.dat" using 1:5 title "temperature" with line lt 1 lw 2 lc rgb "green", \
+      "energy.dat" using 1:6 title "total energy" with line lt 1 lw 2 lc rgb "purple"
+set output
