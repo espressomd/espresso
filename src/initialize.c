@@ -123,16 +123,9 @@ void on_program_start()
 #ifdef DP3M
   dp3m_pre_init();
 #endif
-
-#ifdef LB_GPU
-  if(this_node == 0){
-    //lb_pre_init_gpu();
-  }
-#endif
 #ifdef LB
   lb_pre_init();
 #endif
-
 #ifdef REACTIONS
   reaction.back_rate=-1.0;
 #endif
@@ -255,8 +248,8 @@ if(this_node == 0){
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
     if (lb_reinit_particles_gpu) {
-	lb_realloc_particles_gpu();
-	lb_reinit_particles_gpu = 0;
+	    lb_realloc_particles_gpu();
+	    lb_reinit_particles_gpu = 0;
     }
   }
 }
@@ -520,6 +513,16 @@ void on_boxl_change() {
 #ifdef LB_BOUNDARIES
     lb_init_boundaries();
 #endif
+  }
+#endif
+#ifdef LB_GPU
+  if(this_node == 0) {
+    if(lattice_switch & LATTICE_LB_GPU) {
+      lb_init_gpu();
+#ifdef LB_BOUNDARIES_GPU
+    lb_init_boundaries();
+#endif
+    }
   }
 #endif
 }
