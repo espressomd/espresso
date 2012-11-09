@@ -548,11 +548,12 @@ proc galileiTransformParticles { } {
 #
 #############################################################
 
-proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_constraints "0"} } {
+proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {scale 1} {draw_constraints "0"} } {	# NEW
   global vmd_show_constraints_flag
   
   writepsf "$filename.psf"
-  writepdb "$filename.pdb"
+    # NEW
+  writepdb "$filename.pdb" $scale	
   
   for {set port 10000} { $port < 65000 } { incr port } {
 	  catch {imd connect $port} res

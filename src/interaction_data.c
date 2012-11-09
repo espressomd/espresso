@@ -697,6 +697,16 @@ char *get_name_of_bonded_ia(int i) {
   switch (i) {
   case BONDED_IA_FENE:
     return "FENE";
+  case BONDED_IA_STRETCHING_FORCE:		//NEW
+    return "STRETCHING_FORCE";
+  case BONDED_IA_AREA_FORCE_LOCAL:		//NEW
+    return "AREA_FORCE_LOCAL";
+  case BONDED_IA_AREA_FORCE_GLOBAL:		//NEW
+    return "AREA_FORCE_GLOBAL";
+  case BONDED_IA_BENDING_FORCE:		//NEW
+    return "BENDING_FORCE";
+  case BONDED_IA_VOLUME_FORCE:		//NEW
+    return "VOLUME_FORCE";
   case BONDED_IA_ANGLE:
     return "angle";
   case BONDED_IA_ANGLEDIST:

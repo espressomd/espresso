@@ -60,6 +60,16 @@
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
 #define BONDED_IA_OVERLAPPED 10 
+/** Type of bonded interaction is a stretching force. */			//NEW
+#define BONDED_IA_STRETCHING_FORCE 11 
+/** Type of bonded interaction is a local area force. */			//NEW
+#define BONDED_IA_AREA_FORCE_LOCAL 12 
+/** Type of bonded interaction is a bending force. */			//NEW
+#define BONDED_IA_BENDING_FORCE 13 
+/** Type of bonded interaction is a bending force. */			//NEW
+#define BONDED_IA_VOLUME_FORCE 14 
+/** Type of bonded interaction is a global area force. */			//NEW
+#define BONDED_IA_AREA_FORCE_GLOBAL 15 
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -506,6 +516,31 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
+    /** Parameters for stretching_force */				//NEW
+    struct {
+	  double r0;
+      double ks;
+    } stretching_force;
+    /** Parameters for area_force_local */				//NEW
+    struct {
+	  double A0_l;
+      double ka_l;
+    } area_force_local;
+    /** Parameters for area_force_global */				//NEW
+    struct {
+	  double A0_g;
+      double ka_g;
+    } area_force_global;
+    /** Parameters for bending_force */				//NEW
+    struct {
+	  double phi0;
+      double kb;
+    } bending_force;
+    /** Parameters for volume_force */				//NEW
+    struct {
+	  double V0;
+      double kv;
+    } volume_force;
     /** Parameters for harmonic bond Potential */
     struct {
       double k;

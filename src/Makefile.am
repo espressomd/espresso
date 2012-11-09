@@ -108,7 +108,9 @@ libEspresso_a_SOURCES += \
 	soft_sphere.c soft_sphere.h \
 	steppot.c steppot.h \
 	tab.c tab.h \
-	tunable_slip.c tunable_slip.h
+	tunable_slip.c tunable_slip.h \	        
+	extra/mathtools.c extra/mathtools.h
+# NEW
 
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
@@ -119,8 +121,14 @@ libEspresso_a_SOURCES += \
 	fene.c fene.h \
 	harmonic.c harmonic.h \
 	overlap.c overlap.h \
-	subt_lj.c subt_lj.h
-
+	subt_lj.c subt_lj.h \
+	extra/area_force_local.c extra/area_force_local.h \
+	extra/area_force_global.c extra/area_force_global.h \
+	extra/bending_force.c extra/bending_force.h \
+	extra/stretching_force.c extra/stretching_force.h \
+	extra/volume_force.c extra/volume_force.h
+# NEW
+	
 # Coulomb methods
 libEspresso_a_SOURCES += \
 	debye_hueckel.c debye_hueckel.h \
@@ -210,7 +218,13 @@ libEspresso_a_SOURCES += \
 	tcl/fene_tcl.c tcl/fene_tcl.h \
 	tcl/harmonic_tcl.c tcl/harmonic_tcl.h \
 	tcl/overlap_tcl.c tcl/overlap_tcl.h \
-	tcl/subt_lj_tcl.c tcl/subt_lj_tcl.h
+	tcl/subt_lj_tcl.c tcl/subt_lj_tcl.h \
+	extra/tcl/area_force_local_tcl.c extra/tcl/area_force_local_tcl.h \
+	extra/tcl/area_force_global_tcl.c extra/tcl/area_force_global_tcl.h \
+	extra/tcl/bending_force_tcl.c extra/tcl/bending_force_tcl.h \
+	extra/tcl/stretching_force_tcl.c extra/tcl/stretching_force_tcl.h \
+	extra/tcl/volume_force_tcl.c extra/tcl/volume_force_tcl.h
+# NEW
 
 # Coulomb methods
 libEspresso_a_SOURCES += \

@@ -116,7 +116,8 @@ proc writepsf { file {N_P -1} {MPC -1} {N_CI -1} {N_pS -1} {N_nS -1} } {
     close $f
 }
 
-proc writepdb {args} {
+# NEW
+proc writepdb {args {scale 1}} {
     set file [lindex $args 0]
     set de "pos"
     set mode "w"
@@ -170,8 +171,11 @@ proc writepdb {args} {
 	       #names longer than 4 chars will destroy pdb
 	       set name [string range $name 0 3]
 	    }
+	    #NEW
 	    puts $f [format "ATOM %6d%4s  UNX F%4d    %8.3f%8.3f%8.3f  0.00  0.00      T%03d" \
-			 $cnt $name [expr $p % 10000] [lindex $pos 0] [lindex $pos 1] [lindex $pos 2] $tp]
+			 $cnt $name [expr $p % 10000] [expr [lindex $pos 0]*$scale] [expr [lindex $pos 1]*$scale] [expr [lindex $pos 2]*$scale] $tp]
+			 #$cnt $name [expr $p % 10000] [lindex $pos 0] [lindex $pos 1] [lindex $pos 2] $tp]
+			 
 	    incr cnt
 	}
     }

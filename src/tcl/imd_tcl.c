@@ -172,6 +172,8 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 {
   enum flag {NONE, UNFOLDED, FOLD_CHAINS};
   double shift[3] = {0.0,0.0,0.0};
+  double upscale=1.0; 									// NEW
+  double part_selected=n_total_particles;
 
   float *coord;
   int flag = NONE;
@@ -189,10 +191,14 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 	  {flag = UNFOLDED;}
 	else if (ARG_IS_S(2,"-fold_chains"))
 	  {flag = FOLD_CHAINS;}
+	else if (ARG_IS_D(2,upscale))								// NEW
+	{ }
 	else{
 	  Tcl_AppendResult(interp, "wrong flag to",argv[0],
 			   " positions: should be \" -fold_chains or -unfolded \"",
 			   (char *) NULL);
+	  Tcl_AppendResult(interp, " OR <upscale> should be a double", // NEW
+		       (char *) NULL);	
 	  return (TCL_ERROR);
 	}
       }
@@ -256,9 +262,12 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
       fold_position(tmpCoord, dummy);
     }
     j = 3*partCfg[i].p.identity;
-    coord[j    ] = tmpCoord[0];
-    coord[j + 1] = tmpCoord[1];
-    coord[j + 2] = tmpCoord[2];
+    //coord[j    ] = tmpCoord[0];
+    //coord[j + 1] = tmpCoord[1];
+    //coord[j + 2] = tmpCoord[2];
+    coord[j    ] = tmpCoord[0] * upscale;		// NEW upscale for viewing!!!!!!!!!!!!!!
+    coord[j + 1] = tmpCoord[1] * upscale;
+    coord[j + 2] = tmpCoord[2] * upscale;
   }
 
 

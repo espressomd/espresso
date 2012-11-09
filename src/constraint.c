@@ -80,6 +80,7 @@ void calculate_wall_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
 }
 
 
+
 void calculate_sphere_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint_sphere *c, double *dist, double *vec)
 {
   int i;
