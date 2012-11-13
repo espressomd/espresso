@@ -683,7 +683,7 @@ void maggs_setup_local_lattice()
 
     lattice[linearindex].charge = 0.;
 		
-    /* Here, we need a function to set PERMITTIVITY!!!!! */
+    /* set relative permittivity to 1 for all sites (default) */
     FOR3D(i) lattice[linearindex].permittivity[i] = 1.;
   }
 	
@@ -772,6 +772,31 @@ void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, M
   MPI_Type_commit(xz);
 }
 
+/** get lattice size in one dimension
+ @return mesh in 1D
+ */
+int maggs_get_mesh_1D()
+{
+    return maggs.mesh;
+}
+
+/** set permittivity for single lattice links
+ @param node_x              index of the node in x direction
+ @param node_y              index of the node in y direction
+ @param node_z              index of the node in z direction
+ @param direction           direction in which the link points from the node. 0 is for x, 1 is for y, 2 is for z
+ @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
+ */
+double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon)
+{
+    int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
+    /* save and return old epsilon for information purposes */
+    double epsilon_before = lattice[node_index].permittivity[direction];
+    /* set relative epsilon */
+    lattice[node_index].permittivity[direction] = relative_epsilon;
+
+    return epsilon_before;
+}
 
 
 
