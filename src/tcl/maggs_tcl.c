@@ -81,7 +81,9 @@ int tclcommand_localeps(Tcl_Interp* interp, int argc, char** argv)
         return TCL_ERROR; }
     /* check if mesh position is in range */
     if ( (node_x < 0) || (node_y < 0) || (node_z < 0) || (node_x > mesh) || (node_y > mesh) || (node_z > mesh) ) {
-        Tcl_AppendResult(interp, "epsilon position out of mesh range", (char *) NULL);
+        char* buffer;
+        sprintf(buffer, "%d", mesh);
+        Tcl_AppendResult(interp, "epsilon position out of mesh range. Mesh in each dimension is ", buffer, ".", (char *) NULL);
         return TCL_ERROR;
     }
     
