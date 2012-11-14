@@ -2355,12 +2355,8 @@ void maggs_init()
 		
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
-<<<<<<< HEAD
-    //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
-    maggs_calc_self_energy_coeffs();
-=======
     //    if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
->>>>>>> d4fdbc1065000fc97384873af3d323fb59587da6
+    maggs_calc_self_energy_coeffs();
 }
 
 /** Frees the dynamically allocated memory
