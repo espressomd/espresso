@@ -1,4 +1,5 @@
 #
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -57,8 +58,8 @@ proc writevsf { file args } {
 		    set r [expr 0.5*($lj_sigma+$lj_offset)]
 		    lset list $type $r
 		} else {
-		    # default radius is 1.0
-		    lset list $type 1.0
+		    # default radius is 0.5
+		    lset list $type 0.5
 		}
 	    }
 	}
@@ -97,6 +98,7 @@ proc writevsf { file args } {
     set typedesc {}
     set radius {}
     set short 0
+    set no_charges 0
 
     # Parse options
     for { set argnum 0 } { $argnum < [llength $args] } { incr argnum } {
@@ -110,6 +112,9 @@ proc writevsf { file args } {
 	    "radius" { 
 		set radius $val
 		incr argnum 
+	    }
+	    "ignore_charges" {
+		set no_charges 1
 	    }
 	    "verbose" { set short 0 }
 	    "short" { set short 1 }
@@ -170,7 +175,7 @@ proc writevsf { file args } {
     }
     puts $file [get_atom_record $from $to $prev_type]
 
-    if { [has_feature "ELECTROSTATICS"] } {
+    if { [has_feature "ELECTROSTATICS"] && !$no_charges} {
     # Output the charge
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
 	    if { [part $pid] != "na" } then {

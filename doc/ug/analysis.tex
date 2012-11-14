@@ -1,5 +1,6 @@
-% Copyright (C) 2010 The ESPResSo project
-% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+%    Max-Planck-Institute for Polymer Research, Theory Group
 %  
 % This file is part of ESPResSo.
 %   
@@ -16,25 +17,41 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
-\chapter{Analysis}
+\chapter{Analysis in Tcl}
 \label{chap:analysis}
 \index{analysis}
 \newescommand{analyze}
 
-\es provides some tools for online (during the simulation run) and
-offline (on stored data) analysis of your simulation. The
-\keyword{analyze} command can hereby has into two main uses:
-Calculation of observables (\keyword{analyze \var{observable}}) and
-definition and analysis of topologies in the system (\keyword{analyze
-  \var{topology command}}).
+\es has two fundamentally different classes of observables for
+analyzing the systems.  On the one hand, some observables are
+computed from the Tcl level. In that case, the observable is measured
+in the moment that the corresponding Tcl function is called, and the
+results are returned to the Tcl script. In general, observables in
+this class should only be computed after a large number of timesteps,
+as switching forth and back between the C- and the Tcl-level is
+costly. This chapter describes all observables in this class.
 
-In addition, \es offers the command \keyword{uwerr} (see section
-\ref{sec:uwerr} for computing statistical errors in time series.
+On the other hand, some observables are computed and stored in the
+C-core of \es during a call to the function \keyword{integrate}, while
+they are set up and their results are collected from the Tcl level.
+These observables are more complex to implement and offer less
+flexibility, while the are significantly faster and more memory
+efficient, and they can be set up to be computed every few
+timesteps. The observables in this class are described in chapter
+\ref{chap:analysis-core}.
 
-\section{Measuring observables}
+The class of Tcl-level analysis functions is mainly controlled via the
+\keyword{analyze} command. It has two main uses: Calculation of
+observables (\keyword{analyze \var{observable}}) and definition and
+analysis of topologies in the system (\keyword{analyze \var{topology
+    command}}).  In addition, \es offers the command \keyword{uwerr}
+(see section \ref{sec:uwerr} for computing statistical errors in time
+series.
 
-The \keyword{analyze}-command provides online-calculation of local and
-global observables.
+\section{Available observables}
+
+The command \keyword{analyze} provides online-calculation of local and
+global observables. 
 
 \subsection{Minimal distances between particles}
 \label{analyze:mindist}
@@ -354,7 +371,7 @@ particles.
 Algorithm for identifying pearl necklace structures for
 polyelectrolytes in poor solvent \citep{limbach03a}. The first three
 parameters are tuning parameters for the algorithm:
-\var{pearl\_treshold} is the minimal number of monomers in a pearl.
+\var{pearl\_threshold} is the minimal number of monomers in a pearl.
 \var{back\_dist} is the number of monomers along the chain backbone
 which are excluded from the space distance criterion to form clusters.
 \var{space\_dist} is the distance between two monomers up to which
@@ -539,7 +556,7 @@ convention follows that of a pressure tensor.
 
 \warning{Stress tensor works only with certain interactions and features. 
 Same restrictions as in the case of Pressure are applicable 
-(see scetion~\ref{analyze:pressure}).}
+(see section~\ref{analyze:pressure}).}
 
 The stress tensor is calculated by 
 \begin{equation}
@@ -591,8 +608,9 @@ tensor is calculated using the Irving Kirkwood method.  That is, a given interac
 towards the stress tensor in a bin proportional to the fraction of the line connecting the two
 particles that is within the bin.
 
-If the P3M and MMM1D electrostatic methods are used, these interactions are not included in the
-local stress tensor.  The DH and RF methods, in contrast, are included. Concerning bonded interactions
+If the P3M and MMM1D electrostatic methods are used, these
+interactions are not included in the local stress tensor.  The DH and
+RF methods, in contrast, are included. Concerning bonded interactions 
 only two body interactions (FENE, Harmonic) are included (angular and dihedral are not).
 For all electrostatic interactions only the real space part is included.
 
@@ -611,12 +629,11 @@ The command is implemented in parallel.
 \end{code}
 specifying the local pressure tensor in each bin.
 
-\section{Analyze groups of particles (molecules)}
+\section{Analyzing groups of particles (molecules)}
 \analyzeindex{topologies}
 \label{analyze:set}
 
-The following set of functions is designed to facilitate analysis 
-of molecules. Molecules are expected to be a group of particles
+The following set of functions is designed to facilitate analysis of molecules. Molecules are expected to be a group of particles
 comprising a contiguous range of particle IDs. Each molecule
 is a set of consecutively numbered particles and all molecules
 are supposed to consist of the same number of particles.
@@ -849,16 +866,21 @@ given by \var{rmin} and \var{rmax} and it is divided into
 \end{essyntax}
 
 Variant \variant{1} returns 
-\todo{What's the difference between g2 and g3???}
 \begin{itemize}
 \item the mean-square displacement of the beads in the
   chain (\lit{<g1>})
-\item the mean-square displacement of the beads in the center of
+\item the mean-square displacement of the beads relative
+  to the center of
   mass of the chain (\lit{<g2>})
 \item or the motion of the center of mass (\lit{<g3>})
 \end{itemize}
 averaged over all stored configurations (see section
-\vref{sec:stored-configs}).
+\vref{sec:stored-configs}). At short time scales, \lit{g1} and
+\lit{g2} coincide, since the motion of the center of mass is much
+slower.  At large timescales \lit{g1} and \lit{g3} coincide and
+correspond to the center of mass motion, while \lit{g2} levels
+off. \lit{g2} and \lit{g3} together correspond to \lit{g1}. For
+details, see \citet{grest86a}.
 
 Variant \variant{2} returns all of these observables for the current
 configuration, as compared to the reference configuration. The
@@ -948,101 +970,6 @@ Variant \variant{1} returns all stored configurations, while variant
   \vdots
 \}
 \end{code}
-
-\section{Computing averages and errors (deprecated)}
-
-\warning{The functions in this section are deprecated and will be removed in
-  a future version of \es.}
-
-\begin{essyntax}
-  \variant{1} calcObAv \var{file} \var{index} \opt{\var{start}}
-  \variant{2} calcObErr \var{file} \var{index} \opt{\var{start}}
-  \variant{3} calcObsAv \var{file} \{ \var{i1} \var{i2} \dots \} \opt{\var{start}}
-  \variant{4} nameObsAv \var{file} \{ \var{name1} \var{name2} \dots \} \opt{\var{start}}
-  \variant{5} findObsAv \var{val} \var{what}
-\end{essyntax}
-
-These commands will compute mean values or errors of the data in file
-\var{file}. The data in \var{file} should be stored column-wise. If
-\var{start} is specified, the first \var{start} lines will be ignored.
-
-Variant \variant{1} returns the mean value of the column with index
-\var{index} in \var{file}, variant \variant{2} returns the error of
-its mean value. Variant \variant{3} computes mean values and errors of
-the observables with index $\var{i1}, \var{i2}, \dots$ in
-\var{file}. It expects the first line of \var{file} to contain the
-names of the columns, which it will also return.
-
-In variant \variant{4}, the names used in the first line of \var{file}
-can be used to specify which column is to be used.  The mean value and
-its error are computed for each of the columns.
-
-\todo{????}  Variant \variant{5} extracts the values whose names are
-given in the tcl-list \var{val} at their respective positions in
-\var{what}, where \var{what} has the list-format as returned by
-variant \variant{3}, returning just these values as tiny tcl-list.
-
-\minisec{Output format (variant \variant{3})}
-
-\begin{code}
-\{
-  \var{#samples} 
-  \{ \var{name1} \var{name2} \dots \}
-  \{ \var{mean1} \var{mean2} \dots \} 
-  \{ \var{error1} \var{error2} \dots \}
-\}
-\end{code}
-
-\minisec{Output format (variant \variant{4})}
-
-\begin{code}
-\{
-  \var{#samples} 
-  \var{mean1} \var{mean2} \dots
-  \var{error1} \var{error2} \dots
-\}
-\end{code}
-
-\subsection{Plotting observables (deprecated)}
-
-\begin{essyntax}
-  plotObs \var{file} \{ \var{x1}:\var{y1} \var{x2}:\var{y2} \dots \}
-  \opt{titles \{ \var{title1} \var{title2} \dots \}}
-  \opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}} 
-  \opt{scale \var{gnuplot-scale}}
-  \opt{cmd \var{gnuplot-command}}
-  \opt{out \var{filebase}}
-\end{essyntax}
-Uses \textsc{gnuplot} to create plots of the data in \var{file} and
-writes it to the file \var{filebase}\lit{.ps} (default:
-\var{file}\lit{.ps}). The data in \var{file} should be stored
-column-wise. $\var{x1}, \var{x2} \dots$ and $\var{y1}, \var{y2} \dots$
-denote the columns used for the data of the x- and y-axis,
-respectively.
-
-\begin{arguments}
-\item[\opt{titles \{ \var{title1} \var{title2} \dots \}}] can be used
-  to specify the titles of the different plots
-\item[\opt{labels \{ \var{xlabel} \opt{\var{ylabel}} \}}] will define the
-  labels of the axis. If \var{ylabel} is omitted, the filename
-  \var{file} is used as label for the y-axis.
-\item[\opt{scale \var{gnuplot-scale}}] will define the scaling of the
-  axis (\eg \lit{scale logscale xy}) (default: \lit{nologscale xy})
-\item[\opt{cmd \var{gnuplot-command}}] allows to pass any other
-  commands to gnuplot. For example, use
-  \codebox{plotObs \dots cmd "set key left"} to adjust the titles on
-  the left side.
-\item[\opt{out \var{filebase}}] can be used to change the output
-  file. By default, the plot will be written to \var{file}\lit{.ps}.
-\end{arguments}
-
-\subsection{Joining plots (deprecated)}
-\begin{essyntax}
-  plotJoin \{ \var{source1} \var{source2} \dots \} \var{final}
-\end{essyntax}
-Joins the plot files $\var{source1}, \var{source2}, \dots$ into a
-single file \var{final}, while placing any two files on one page.
-Note that the resulting files may be huge and therefore hard to print!
 
 
 \section{\lit{uwerr}: Computing statistical errors in time series}

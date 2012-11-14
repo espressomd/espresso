@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011 The ESPResSo project
+% Copyright (C) 2010,2011,2012 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -34,15 +34,14 @@ index=totoc,                    % add the index to the TOC
 ]{scrreprt}
 
 \usepackage[draft]{varioref}    % defines \vref
-\usepackage{hyperref}           % automatically creates links when
+\usepackage[backref]{hyperref}  % automatically creates links when
                                 % using pdflatex, defines \url
 \usepackage{ifpdf}              % defines \ifpdf
 \usepackage{graphicx}           % handles graphics
 \usepackage{makeidx}            % creates the index
 \usepackage{color}              % use colors
-
+\usepackage{doc}
 \usepackage{amsmath}
-
 \usepackage{verbatim}           % required for \verbatim and \endverbatim
 \usepackage{fancyvrb}
 \usepackage{tocloft}            % required for the quickref
@@ -53,8 +52,13 @@ index=totoc,                    % add the index to the TOC
 \usepackage[numbers]{natbib}
 
 % For building the distribution docs, disable todo boxes.
-\usepackage[enable]{todonotes}
-%\usepackage{todonotes}
+\ifdefined\todosoff
+\usepackage[disable]{todonotes}
+\message{ToDo-Notes turned OFF}
+\else
+\usepackage{todonotes}
+\message{ToDo-Notes turned ON}
+\fi
 
 % Make '_' a normal character
 \usepackage[strings]{underscore}
@@ -114,6 +118,25 @@ index=totoc,                    % add the index to the TOC
   \@afterheading}
 \makeatother
 
+%%%%%%%%%%%%%% Cite us %%%%%%%%%%%%%%%
+
+\newsavebox{\thecitebox}
+\newenvironment{citebox}{%
+  \par\noindent%
+  \begin{lrbox}{\thecitebox}%
+    \begin{minipage}{\linewidth-1em}%
+      \raggedright
+    }{%
+    \end{minipage}%
+  \end{lrbox}%
+  \begin{center}
+    \fbox{\usebox{\thecitebox}}
+  \end{center}
+}
+
+\newcommand{\citewbibkey}[1]{%
+  \cite{#1} (\BibTeX{}-key \texttt{#1} in file \texttt{doc/ug/citations.bib})}
+
 %%%%%%%%%%%%%% Syntax Description %%%%%%%%%%%%%%%
 
 %%%%%% SYNTAX DEFINITION LAYOUT
@@ -150,7 +173,7 @@ index=totoc,                    % add the index to the TOC
 \newcommand{\required}[2][]{%
   \ifthenelse{\equal{#1}{}}{#2}{%
     \mbox{\fmark{#1}\,\feature{#2}}%
-  }
+  4}
 }
 \newenvironment{features}{%
   \par\smallskip%
@@ -257,17 +280,22 @@ index=totoc,                    % add the index to the TOC
 \begin{document}
 \titlehead{
   \begin{center}
-    \includegraphics[width=5cm]{logo/transparentbg}
+    \includegraphics[width=5cm]{logo/logo.pdf}
   \end{center}
 }
-%\subject{}
+\subject{}
 \title{\es User's Guide}
-%\author{}
-%\date{\today}
+\ifdefined\esversion%
+\author{for version \esversion}
+\fi
+\date{\today}
 \maketitle
 
+\ifdefined\todosoff
+\else
 \listoftodos
 \cleardoublepage
+\fi
 
 \pdfbookmark{Contents}{toc}
 \setcounter{tocdepth}{1}
@@ -283,6 +311,7 @@ index=totoc,                    % add the index to the TOC
 \include{setup}
 \include{run}
 \include{analysis}
+\include{analysis-core}
 \include{io}
 \include{aux}
 \include{lb}
@@ -301,7 +330,7 @@ index=totoc,                    % add the index to the TOC
 \include{mmm}
 
 \bibliographystyle{plainnat}
-\bibliography{bibliography}
+\bibliography{otherrefs,citations}
 
 \printindex
 

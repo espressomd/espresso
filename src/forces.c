@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -50,6 +50,7 @@
 #include "virtual_sites.h"
 #include "constraint.h"
 #include "lbgpu.h"
+#include "iccp3m.h"
 
 /************************************************************/
 /* local prototypes                                         */
@@ -71,8 +72,13 @@ void force_calc()
   if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
 #endif
 
-   init_forces();
-  
+#ifdef ELECTROSTATICS
+  if (iccp3m_initialized && iccp3m_cfg.set_flag)
+    iccp3m_iteration();
+  else
+#endif
+    init_forces();
+
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
     layered_calculate_ia();
@@ -115,7 +121,6 @@ void force_calc()
 #ifdef COMFIXED
   calc_comfixed();
 #endif
-  check_forces();
 
 }
 
@@ -125,49 +130,43 @@ void calc_long_range_forces()
 {
 #ifdef ELECTROSTATICS  
   /* calculate k-space part of electrostatic interaction. */
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (elc_params.dielectric_contrast_on) {
-      ELC_P3M_modify_p3m_sums_both();
-      ELC_p3m_charge_assign_both();
-      ELC_P3M_self_forces();
-    }
-    else
-      p3m_charge_assign();
-
-    p3m_calc_kspace_forces(1,0);
-
-    if (elc_params.dielectric_contrast_on)
-      ELC_P3M_restore_p3m_sums();
- 
-    ELC_add_force(); 
-
-    break;
-  case COULOMB_P3M:
-    p3m_charge_assign();
-#ifdef NPT
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
-    else
-#endif
+  if (!(iccp3m_initialized && iccp3m_cfg.set_flag)) {
+    switch (coulomb.method) {
+  #ifdef P3M
+    case COULOMB_ELC_P3M:
+      if (elc_params.dielectric_contrast_on) {
+        ELC_P3M_modify_p3m_sums_both();
+        ELC_p3m_charge_assign_both();
+        ELC_P3M_self_forces();
+      }
+      else
+        p3m_charge_assign();
+  
       p3m_calc_kspace_forces(1,0);
-    break;
-#endif
-  case COULOMB_EWALD:
-#ifdef NPT
-    if(integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += EWALD_calc_kspace_forces(1,1);
-    else
-#endif
-      EWALD_calc_kspace_forces(1,0);
-    break;
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force();
-    MMM2D_dielectric_layers_force_contribution();
+  
+      if (elc_params.dielectric_contrast_on)
+        ELC_P3M_restore_p3m_sums();
+   
+      ELC_add_force(); 
+  
+      break;
+    case COULOMB_P3M:
+      p3m_charge_assign();
+  #ifdef NPT
+      if(integ_switch == INTEG_METHOD_NPT_ISO)
+        nptiso.p_vir[0] += p3m_calc_kspace_forces(1,1);
+      else
+  #endif
+        p3m_calc_kspace_forces(1,0);
+      break;
+  #endif
+    case COULOMB_MAGGS:
+      maggs_calc_forces();
+      break;
+    case COULOMB_MMM2D:
+      MMM2D_add_far_force();
+      MMM2D_dielectric_layers_force_contribution();
+    }
   }
 #endif  /*ifdef ELECTROSTATICS */
 
@@ -176,7 +175,7 @@ void calc_long_range_forces()
   switch (coulomb.Dmethod) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
-     add_mdlc_force_corrections();
+    add_mdlc_force_corrections();
     //fall through 
   case DIPOLAR_P3M:
     dp3m_dipole_assign();
@@ -187,19 +186,18 @@ void calc_long_range_forces()
     } else
 #endif
       dp3m_calc_kspace_forces(1,0);
-
-      break;
+    
+    break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA: 
-      dawaanr_calculations(1,0);
-      break;
+    dawaanr_calculations(1,0);
+    break;
   case DIPOLAR_MDLC_DS:
-     add_mdlc_force_corrections();
+    add_mdlc_force_corrections();
     //fall through 
   case DIPOLAR_DS: 
-        magnetic_dipolar_direct_sum_calculations(1,0);
-      break;
-
+    magnetic_dipolar_direct_sum_calculations(1,0);
+    break;
   }
 #endif  /*ifdef DIPOLES */
 }
@@ -392,27 +390,9 @@ void init_forces()
 #endif
 }
 
-MDINLINE void check_particle_force(Particle *part)
-{
-  
-  int i;
-  for (i=0; i< 3; i++) {
-    if isnan(part->f.f[i]) {
-      char **errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
-    }
-  }
 
-#ifdef ROTATION
-  for (i=0; i< 3; i++) {
-    if isnan(part->f.torque[i]) {
-      char **errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{999 force on particle was NAN.} ");
-    }
-  }
-#endif
-}
-
+// This function is no longer called from force_calc().
+// The check was moved to rescale_fores() to avoid an additional iteration over all particles
 void check_forces()
 {
   Cell *cell;

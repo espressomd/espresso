@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -246,7 +247,7 @@ void distribute(int size)
 {
   double send_buf[8];
   copy_vec(send_buf, gblcblk, size);
-  MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
 #ifdef CHECKPOINTS
@@ -383,14 +384,6 @@ static double dipole_energy()
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
   double shift = 0.5*box_l[2];
-
-  double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1; 
-
-  if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
-  }
 
   gblcblk[0] = 0;gblcblk[1]=0;
   for (c = 0; c < local_cells.n; c++) {
@@ -564,7 +557,7 @@ static double z_energy()
 /*****************************************************************/
 static void add_z_force() 
 {
-  int np, c, i, ic;
+  int np, c, i;
   Particle *part;
   double pref = coulomb.prefactor*2*M_PI*ux*uy;
   int size = 2;
@@ -576,7 +569,6 @@ static void add_z_force()
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
 
     clear_vec(gblcblk, size);
-    ic = 0;
     for (c = 0; c < local_cells.n; c++) {
       np   = local_cells.cell[c]->n;
       part = local_cells.cell[c]->part;
@@ -844,7 +836,6 @@ static void add_P_force()
 static double P_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   int size = 4;
   double eng = 0;
   double pref = 1/omega;
@@ -852,7 +843,6 @@ static double P_energy(double omega)
   ic = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + POQECM]*gblcblk[POQECP] + partblk[size*ic + POQESM]*gblcblk[POQESP] +
 		   partblk[size*ic + POQECP]*gblcblk[POQECM] + partblk[size*ic + POQESP]*gblcblk[POQESM]);
@@ -887,7 +877,6 @@ static void add_Q_force()
 static double Q_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   int size = 4;
   double eng = 0;
   double pref = 1/omega;
@@ -895,7 +884,6 @@ static double Q_energy(double omega)
   ic = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + POQECM]*gblcblk[POQECP] + partblk[size*ic + POQESM]*gblcblk[POQESP] +
 		   partblk[size*ic + POQECP]*gblcblk[POQECM] + partblk[size*ic + POQESP]*gblcblk[POQESM]);
@@ -1063,7 +1051,6 @@ static void add_PQ_force(int p, int q, double omega)
 static double PQ_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   int size = 8;
   double eng = 0;
   double pref = 1/omega;
@@ -1071,7 +1058,6 @@ static double PQ_energy(double omega)
   ic = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + PQECCM]*gblcblk[PQECCP] + partblk[size*ic + PQECSM]*gblcblk[PQECSP] +
 		   partblk[size*ic + PQESCM]*gblcblk[PQESCP] + partblk[size*ic + PQESSM]*gblcblk[PQESSP] +
@@ -1186,7 +1172,7 @@ int ELC_tune(double error)
   }
 
   if (h < 0)
-    return TCL_ERROR;
+    return ES_ERROR;
 
   elc_params.far_cut = min_inv_boxl;
   do {
@@ -1201,98 +1187,16 @@ int ELC_tune(double error)
   }
   while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
   if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
-    return TCL_ERROR;
+    return ES_ERROR;
   elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = SQR(elc_params.far_cut);
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 /****************************************
  * COMMON PARTS
  ****************************************/
-
-int tclprint_to_result_ELC(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-
-  Tcl_PrintDouble(interp, elc_params.maxPWerror, buffer);
-  Tcl_AppendResult(interp, "} {coulomb elc ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, elc_params.gap_size, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  Tcl_PrintDouble(interp, elc_params.far_cut, buffer);
-  Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  if (!elc_params.neutralize)
-    Tcl_AppendResult(interp, " noneutralization", (char *) NULL);
-  if (elc_params.dielectric_contrast_on) {
-    Tcl_PrintDouble(interp, elc_params.di_top, buffer);
-    Tcl_AppendResult(interp, " dielectric ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.di_mid, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.di_bot, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-    Tcl_PrintDouble(interp, elc_params.space_layer, buffer);
-    Tcl_AppendResult(interp, " ", buffer, (char *) NULL);
-  }
-  return TCL_OK;
-}
-
-int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, char ** argv)
-{
-  double pwerror;
-  double gap_size;
-  double far_cut = -1;
-  double top = 1, mid = 1, bot = 1;
-  int neutralize = 1;
-
-  if (argc < 2) {
-    Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
-		     argv[0], "\"", (char *)NULL);
-    return TCL_ERROR;
-  }
-  if (!ARG0_IS_D(pwerror))
-    return TCL_ERROR;
-  if (!ARG1_IS_D(gap_size))
-    return TCL_ERROR;
-
-  argc -= 2; argv += 2;
-
-  if (argc > 0) {
-    // if there, parse away manual cutoff
-    if(ARG0_IS_D(far_cut)) {
-      argc--; argv++;
-    }
-    else
-      Tcl_ResetResult(interp);
-
-    while (argc > 0) {
-      if (ARG0_IS_S("noneutralization") || ARG0_IS_S("-noneutralization")) {
-	neutralize = 0;
-	argc--; argv++;
-      }
-      else if (argc >= 4 && ARG0_IS_S("dielectric")) {
-	// just a dummy, not used, as it is only printed for information
-	// purposes. We need to calculate it
-	double space_layer_dummy;
-
-	if (!ARG_IS_D(1,top) || !ARG_IS_D(2,mid) || !ARG_IS_D(3,bot))
-	  return TCL_ERROR;
-	argc -= 4; argv += 4;
-
-	if (argc > 0 && ARG_IS_D(4, space_layer_dummy)) {
-	  argc--; argv++;
-	}
-      }
-      else {
-	Tcl_AppendResult(interp, "either nothing or elc <pwerror> <minimal layer distance> {<cutoff>}  {dielectric <di_top> <di_mid> <di_bottom>} {noneutralization} expected, not \"",
-			 argv[0], "\"", (char *)NULL);
-	return TCL_ERROR;
-      }
-    }
-  }
-  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, top, mid, bot),
-	      "choose a 3d electrostatics method prior to ELC");
-}
 
 int ELC_sanity_checks()
 {
@@ -1339,7 +1243,7 @@ void ELC_init()
 
   if (elc_params.far_calculated &&
       (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on)) {
-    if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
+    if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{008 ELC auto-retuning failed, gap size too small} ");
     }
@@ -1359,11 +1263,6 @@ void ELC_on_resort_particles()
   scycache = realloc(scycache, n_scycache*n_localpart*sizeof(SCCache));
     
   partblk   = realloc(partblk,  n_localpart*8*sizeof(double));
-}
-
-/* TODO: This function is not used anywhere :) To be removed?  */
-void ELC_on_coulomb_change()
-{
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutralize,
@@ -1410,7 +1309,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
     coulomb.method = COULOMB_ELC_P3M;
     break;
   default:
-    return TCL_ERROR;
+    return ES_ERROR;
   }
 
   elc_params.far_cut = far_cut;
@@ -1420,14 +1319,14 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   }
   else {
     elc_params.far_calculated = 1;
-    if (ELC_tune(elc_params.maxPWerror) == TCL_ERROR) {
+    if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       char *errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{009 ELC tuning failed, gap size too small} ");
     }
   }
   mpi_bcast_coulomb_params();
 
-  return TCL_OK;
+  return ES_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -1718,7 +1617,7 @@ void  ELC_P3M_modify_p3m_sums_both()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
   p3m.sum_qpart    += (int)(tot_sums[0]+0.1);
   p3m.sum_q2       += tot_sums[1];
   p3m.square_sum_q += SQR(tot_sums[2]);
@@ -1759,7 +1658,8 @@ void  ELC_P3M_modify_p3m_sums_image()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
+
   p3m.sum_qpart    = (int)(tot_sums[0]+0.1);
   p3m.sum_q2       = tot_sums[1];
   p3m.square_sum_q = SQR(tot_sums[2]);
@@ -1801,7 +1701,8 @@ void  ELC_P3M_restore_p3m_sums()
     }
   }
   
-  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
+
   p3m.sum_qpart    -= (int)(tot_sums[0]+0.1);
   p3m.sum_q2       -= tot_sums[1];
   p3m.square_sum_q -= SQR(tot_sums[2]);

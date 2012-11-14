@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -57,10 +57,12 @@ void fft_pre_init();
 /** Initialize everything connected to the 3D-FFT.
 
  * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
- * \param data           Pointer Pounter to data array.
- * \param ca_mesh_dim    Pointer to CA mesh dimensions.
- * \param ca_mesh_margin Pointer to CA mesh margins.
- * \param ks_pnum        Pointer to number of permutations in k-space.
+ * \param data            Pointer Pounter to data array.
+ * \param ca_mesh_dim     Pointer to local CA mesh dimensions.
+ * \param ca_mesh_margin  Pointer to local CA mesh margins.
+ * \param global_mesh_dim Pointer to global CA mesh dimensions.
+ * \param global_mesh_off Pointer to global CA mesh offset.
+ * \param ks_pnum         Pointer to number of permutations in k-space.
  */
 int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
 	     int* global_mesh_dim, double *global_mesh_off,

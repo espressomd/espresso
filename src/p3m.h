@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -47,6 +47,8 @@
  *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx ,(2008).
  *  </ul>
  */
+
+#include "utils.h"
 
 #include "p3m-common.h"
 #include "interaction_data.h"
@@ -110,7 +112,7 @@ typedef struct {
   double *send_grid; 
   /** Field to store grid points to recv */
   double *recv_grid;
-  } p3m_data_struct;
+} p3m_data_struct;
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;
@@ -119,22 +121,19 @@ extern p3m_data_struct p3m;
 /************************************************************/
 /*@{*/
 
-/// parse the basic p3m parameters
-int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** argv);
-
-/// parse the optimization parameters of p3m and the tuner
-int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
-
 void p3m_pre_init(void);
 
 void p3m_set_bjerrum(void);
+
+int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for charge-charge interactions.
  */
 void p3m_init(void);
 
-/** Updates \ref p3m_struct::alpha and \ref p3m_struct::r_cut if \ref box_l changed. */
+/** Updates \ref p3m_parameter_struct::alpha and
+    \ref p3m_parameter_struct::r_cut if \ref box_l changed. */
 void p3m_scaleby_box_l();
 
 /** compute the k-space part of forces and energies for the charge-charge interaction  **/
@@ -173,15 +172,15 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
     distributed particles in a cubic box.
     For the real space error the estimate of Kolafa/Perram is used. 
 
-    Parameter range if not given explicit values: For \ref p3m_struct::r_cut_iL
+    Parameter range if not given explicit values: For \ref p3m_parameter_struct::r_cut_iL
     the function uses the values (\ref min_local_box_l -\ref #skin) /
     (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_struct::r_cut_iL is the largest cutoff in the system!). For \ref
-    p3m_struct::mesh the function uses the two values which matches best the
+    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For \ref
+    p3m_parameter_struct::mesh the function uses the two values which matches best the
     equation: number of mesh point = number of charged particles. For
-    \ref p3m_struct::cao the function considers all possible values.
+    \ref p3m_parameter_struct::cao the function considers all possible values.
 
-    For each setting \ref p3m_struct::alpha_L is calculated assuming that the
+    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming that the
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the
@@ -192,7 +191,6 @@ enum P3M_TUNE_ERROR { P3M_TUNE_FAIL = 1, P3M_TUNE_NOCUTOFF = 2, P3M_TUNE_CAOTOLA
 
     The function is based on routines of the program HE_Q.c written by M. Deserno.
  */
-int tclcommand_inter_coulomb_p3m_print_tune_parameters(Tcl_Interp *interp);
 
 /** assign the physical charges using the tabulated charge assignment function.
     If store_ca_frac is true, then the charge fractions are buffered in cur_ca_fmp and
@@ -239,6 +237,19 @@ MDINLINE double p3m_add_pair_force(double chgfac, double *d,double dist2,double 
   return 0.0;
 }
 
+void p3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy, int n_interpol);
+
+int p3m_set_params(double r_cut, int *mesh, int cao,
+		   double alpha, double accuracy);
+
+int p3m_set_mesh_offset(double x, double y, double z);
+
+int p3m_set_eps(double eps);
+
+int p3m_set_ninterpol(int n);
+
+
 /** Calculate real space contribution of coulomb pair energy. */
 MDINLINE double p3m_pair_energy(double chgfac, double *d,double dist2,double dist)
 {
@@ -256,9 +267,6 @@ MDINLINE double p3m_pair_energy(double chgfac, double *d,double dist2,double dis
   }
   return 0.0;
 }
-
-/// print the p3m parameters to the interpreters result
-int tclprint_to_result_p3m(Tcl_Interp *interp);
 
 /** Clean up P3M memory allocations. */
 void p3m_free();

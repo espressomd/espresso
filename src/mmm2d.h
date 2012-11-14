@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -30,8 +31,11 @@
  */
 #ifndef MMM2D_H
 #define MMM2D_H
-
+#include "utils.h"
 #ifdef ELECTROSTATICS
+
+/** error messages, see above */
+extern char const *mmm2d_errors[];
 
 /** parameters for the MMM2D method for electrostatics. */
 typedef struct {
@@ -50,12 +54,6 @@ typedef struct {
   double delta_mid_top, delta_mid_bot, delta_mult;
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
-
-/// print the mmm2d parameters to the interpreters result
-int tclprint_to_result_MMM2D(Tcl_Interp *interp);
-
-/// parse the mmm2d parameters
-int tclcommand_inter_coulomb_parse_mmm2d(Tcl_Interp * interp, int argc, char ** argv);
 
 /** set parameters for MMM2D. This assumes that the particles do NOT leave the box.
     For the near formula (nsquared cell structure), precision might be lost, while

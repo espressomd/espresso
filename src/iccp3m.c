@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -39,11 +39,10 @@
 #include "communication.h"
 
 #include "utils.h"
-#include "tcl.h"
-#include "parser.h"
 #include "verlet.h"
 #include "cells.h"
 #include "particle_data.h"
+#include "interaction_data.h"
 #include "domain_decomposition.h"
 #include "verlet.h"
 #include "forces.h"
@@ -52,7 +51,6 @@
 
 #ifdef ELECTROSTATICS
 
-enum { ICCP3M_AREA , ICCP3M_EPSILON, ICCP3M_NORMAL, ICCP3M_EXTFIELD } ;
 iccp3m_struct iccp3m_cfg;
 
 int iccp3m_initialized = 0;
@@ -70,7 +68,6 @@ Cell *local_icc;
 CellPList me_do_ghosts_icc;
 
 /* other icc*  functions */
-static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag);
 int imod(int x,int y);
 void iccp3m_revive_forces();
 void iccp3m_store_forces();
@@ -85,184 +82,66 @@ void iccp3m_init(void){
    iccp3m_cfg.nvectorx = NULL;
    iccp3m_cfg.nvectory = NULL;
    iccp3m_cfg.nvectorz = NULL;
-   iccp3m_cfg.extx = NULL;
-   iccp3m_cfg.exty = NULL;
-   iccp3m_cfg.extz = NULL;
-   iccp3m_cfg.fx = NULL;
-   iccp3m_cfg.fy = NULL;
-   iccp3m_cfg.fz = NULL;
+   iccp3m_cfg.extx = 0;
+   iccp3m_cfg.exty = 0;
+   iccp3m_cfg.extz = 0;
 }
 
-/** Parses the ICCP3M command.
- */
-int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
-  int last_ind_id,num_iteration,normal_args,area_args;
-  char buffer[TCL_DOUBLE_SPACE];
-  double e1,convergence,relax;
-
-  Tcl_AppendResult(interp, "The ICCP3M algorithm is still experimental. Function can not be guaranteed, therefore it is still disabled.\n", (char *)NULL);
-  return (TCL_ERROR);
-
-  if(iccp3m_initialized==0){
-      iccp3m_init();
-      iccp3m_initialized=1;
-  }
-
-  if(argc != 9 && argc != 2 && argc != 10) { 
-         Tcl_AppendResult(interp, "Wrong # of args! Usage: iccp3m { iterate | <last_ind_id> <e1> <num_iteration> <convergence> <relaxation> <area> <normal_components> <e_in/e_out>  [<ext_field>] }", (char *)NULL); 
-         return (TCL_ERROR); 
-   }
-   if (argc == 2 ){
-      if(ARG_IS_S(1,"iterate")) { 
-           if (iccp3m_cfg.set_flag==0) {
-                 Tcl_AppendResult(interp, "iccp3m parameters not set!", (char *)NULL);
-                 return (TCL_ERROR);
-           }
-           else{ 
-              Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
-              Tcl_AppendResult(interp, buffer, (char *) NULL);
-              return TCL_OK;
-	   }
-      }
-   }
-   else {
-      if(!ARG_IS_I(1, last_ind_id)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Last induced id must be integer (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
-          } else if(last_ind_id < 2) { 
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Last induced id can not be smaller then 2 (got: ", argv[1],")!", (char *)NULL); return (TCL_ERROR);
-       }
-       if(!ARG_IS_D(2, e1)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Dielectric constant e1(inner) must be double(got: ", argv[2],")!", (char *)NULL); return (TCL_ERROR);
-       }
-       if(!ARG_IS_I(3, num_iteration)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Number of maximum iterations must be integer (got: ", argv[4],")!", (char *)NULL); return (TCL_ERROR);
-       }
-       if(!ARG_IS_D(4, convergence)) {
-          Tcl_ResetResult(interp);
-          Tcl_AppendResult(interp, "Convergence criterion must be double (got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
-          } else if( (convergence < 1e-10) || (convergence > 1e-1) ) { 
-            Tcl_ResetResult(interp);
-            Tcl_AppendResult(interp, "Convergence criterion can not be smaller then 1e-10 and greater then 1e-2(got: ", argv[5],")!", (char *)NULL); return (TCL_ERROR);
-         }
-          if(!ARG_IS_D(5, relax)) {
-             Tcl_ResetResult(interp);
-             Tcl_AppendResult(interp, "Relaxation parameter must be double (got: ", argv[6],")!", (char *)NULL); return (TCL_ERROR);
-       }
-   
-       iccp3m_cfg.last_ind_id = last_ind_id;      /* Assign needed options */
-       iccp3m_cfg.num_iteration = num_iteration; /* maximum number of iterations to go */
-       iccp3m_cfg.eout = e1;
-       iccp3m_cfg.convergence = convergence;
-       iccp3m_cfg.relax = relax;
-       iccp3m_cfg.update = 0;
-       iccp3m_cfg.set_flag = 1;
-       
-       normal_args = (iccp3m_cfg.last_ind_id+1)*3;
-       /* Now get Normal Vectors components consecutively */
-       
-       if( tclcommand_iccp3m_parse_params(interp,normal_args,argv[7],ICCP3M_NORMAL) == 1) { 
-              Tcl_ResetResult(interp);
-              Tcl_AppendResult(interp, "ICCP3M: Error in following normal vectors\n", argv[7],"\nICCP3M: Error in previous normal vectors\n", (char *)NULL); 
-              return (TCL_ERROR);
-       }      
-
-       area_args=(iccp3m_cfg.last_ind_id+1);
-       /* Now get area of the boundary elements */
-       
-       if ( tclcommand_iccp3m_parse_params(interp,area_args,argv[6],ICCP3M_AREA) == 1 ){
-             Tcl_ResetResult(interp);
-             Tcl_AppendResult(interp, "ICCP3M: Error in following areas\n", argv[6],"\nICCP3M: Error in previous areas\n", (char *)NULL); return (TCL_ERROR);
-       }
-       /* Now get the ration ein/eout for each element. 
-          It's the user's duty to make sure that only disconnected 
-          regions have different ratios */
-      if ( tclcommand_iccp3m_parse_params(interp,area_args,argv[8],ICCP3M_EPSILON) == 1 ) {
-             Tcl_ResetResult(interp);
-             Tcl_AppendResult(interp, "ICCP3M: Error in following dielectric constants\n", argv[8],"\nICCP3M:  Error in previous dielectric constants\n", (char *)NULL); return (TCL_ERROR);
-       } 
-
-       if( argc == 10 ) {
-         if( tclcommand_iccp3m_parse_params(interp,normal_args,argv[9],ICCP3M_EXTFIELD) == 1) { 
-              Tcl_ResetResult(interp);
-              Tcl_AppendResult(interp, "ICCP3M: Error in following external field vectors\n", argv[9],"\nICCP3M: Error in previous external field vectors\n", (char *)NULL); return (TCL_ERROR);
-         }      
-       }
-       else {
-         printf("allocating zeroes for external field \n");
-         iccp3m_cfg.extx = (double*)calloc((last_ind_id +1), sizeof(double));
-         iccp3m_cfg.exty = (double*)calloc((last_ind_id +1), sizeof(double));
-         iccp3m_cfg.extz = (double*)calloc((last_ind_id +1), sizeof(double));
-       }
-      
-       mpi_iccp3m_init(0);
-       Tcl_PrintDouble(interp,mpi_iccp3m_iteration(0),buffer); 
-       Tcl_AppendResult(interp, buffer, (char *) NULL);
-       return TCL_OK;
-   } /* else (argc==10) */
-   return TCL_OK;
-}
 
 
 int bcast_iccp3m_cfg(void){
   int i;
 
 
-  MPI_Bcast((int*)&iccp3m_cfg.last_ind_id, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+  MPI_Bcast((int*)&iccp3m_cfg.n_ic, 1, MPI_INT, 0, comm_cart); 
 
   /* allocates Memory on slave nodes 
    * Master node allocates the memory when parsing tcl arguments
    * */
   if (this_node != 0) {
-    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.extx       = (double*) realloc (iccp3m_cfg.extx      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.exty       = (double*) realloc (iccp3m_cfg.exty      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
-    iccp3m_cfg.extz       = (double*) realloc (iccp3m_cfg.extz      ,(iccp3m_cfg.last_ind_id+1) * sizeof(double));
+    iccp3m_cfg.areas      = (double*) realloc (iccp3m_cfg.areas     ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.ein        = (double*) realloc (iccp3m_cfg.ein       ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
   }
 
-
-  MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, MPI_COMM_WORLD); 
-  MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast((int*)&iccp3m_cfg.update, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
+  MPI_Bcast((double*)&iccp3m_cfg.convergence, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.eout, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.relax, 1, MPI_DOUBLE, 0, comm_cart);
   
   /* broadcast the vectors element by element. This is slow
    * but safe and only performed at the beginning of each simulation*/
-  for ( i = 0; i < iccp3m_cfg.last_ind_id +1; i++) {
-    MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.extx[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.exty[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast((double*)&iccp3m_cfg.extz[i], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  for ( i = 0; i < iccp3m_cfg.n_ic; i++) {
+    MPI_Bcast((double*)&iccp3m_cfg.areas[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.ein[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
   }
+  MPI_Bcast((double*)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast((double*)&iccp3m_cfg.extz, 1, MPI_DOUBLE, 0, comm_cart);
 
-  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&iccp3m_cfg.citeration, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&iccp3m_cfg.set_flag, 1, MPI_DOUBLE, 0, comm_cart);
 
-  printf("node %d: no iterations: %d\n", this_node, iccp3m_cfg.num_iteration);
   return 0 ;
     
 }
 
 int iccp3m_iteration() {
-   double fdot,hold,hnew,hmax,del_eps,diff=0.0,difftemp=0.0,qold, ex, ey, ez, l_b;
+   double fdot,hold,hnew,hmax,del_eps,diff=0.0,difftemp=0.0, ex, ey, ez, l_b;
    Cell *cell;
    int c,np;
    Particle *part;
    int i, j,id;
    char* errtxt;
    double globalmax;
+   double f1, f2 = 0;
+
+   iccp3m_sanity_check();
 
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
@@ -282,7 +161,7 @@ int iccp3m_iteration() {
             np   = cell->n;
             for(i=0 ; i < np; i++) {
                 id = part[i].p.identity ;
-                if( id <= iccp3m_cfg.last_ind_id) {
+                if( id < iccp3m_cfg.n_ic ) {
            /* the dielectric-related prefactor: */                     
                       del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
            /* calculate the electric field at the certain position */
@@ -291,9 +170,9 @@ int iccp3m_iteration() {
                       ez=part[i].f.f[2]/part[i].p.q;
 
           /* let's add the contribution coming from the external field */
-                      ex += iccp3m_cfg.extx[id]; 
-                      ey += iccp3m_cfg.exty[id]; 
-                      ez += iccp3m_cfg.extz[id];
+                      ex += iccp3m_cfg.extx; 
+                      ey += iccp3m_cfg.exty; 
+                      ez += iccp3m_cfg.extz;
                       
                       if (ex == 0 && ey == 0 && ez == 0) {
                         	errtxt = runtime_error(128);
@@ -306,15 +185,18 @@ int iccp3m_iteration() {
 
            /* recalculate the old charge density */
                       hold=part[i].p.q/iccp3m_cfg.areas[id];
-                      qold=part[i].p.q;
           /* determine if it is higher than the previously highest charge density */            
                       if(hold>fabs(hmax))hmax=fabs(hold); 
+                      f1 =  (+del_eps*fdot/l_b);
+//                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
+                      if (iccp3m_cfg.sigma!=0) {
+                        f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
+                      } 
 
-                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*del_eps*fdot/l_b;
+                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
                       difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
                                                                               an estimator which can be negative
                                                                               here */
-//                      printf("(%d) difftemp = %f diff = %f\n",this_node,difftemp,diff);
                       if(difftemp > diff && part[i].p.q > 1e-5)
                       {
 //                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
@@ -335,7 +217,7 @@ int iccp3m_iteration() {
            // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
        } /* local cells */
        iccp3m_cfg.citeration++;
-       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
 
        if (globalmax < iccp3m_cfg.convergence) 
          break; 
@@ -343,8 +225,8 @@ int iccp3m_iteration() {
          return iccp3m_cfg.citeration++;
 
   } /* iteration */
+  //on_particle_change();
 
-  on_particle_change();
   return iccp3m_cfg.citeration++;
 }
 
@@ -415,9 +297,7 @@ void layered_calculate_ia_iccp3m()
         if (do_nonbonded(p1, &pl[j])) {
 #endif
           /* avoid source-source computation */
-         if(!(p1->p.identity > iccp3m_cfg.last_ind_id && pl[j].p.identity >iccp3m_cfg.last_ind_id)) {
            add_non_bonded_pair_force_iccp3m(p1, &pl[j], d, sqrt(dist2), dist2);
-          }
 #ifdef EXCLUSIONS  
          }
 #endif
@@ -431,9 +311,7 @@ void layered_calculate_ia_iccp3m()
         if (do_nonbonded(p1, &pl[j])) {
 #endif
              /* avoid source-source computation */
-         if(!(p1->p.identity > iccp3m_cfg.last_ind_id && pb[j].p.identity >iccp3m_cfg.last_ind_id)) {
            add_non_bonded_pair_force_iccp3m(p1, &pb[j], d, sqrt(dist2), dist2);
-          }
 #ifdef EXCLUSIONS
          }
 #endif
@@ -451,12 +329,12 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
   Particle *p1, *p2;
   PairList *pl;
   double dist2, vec21[3];
- 
+
 #ifdef VERLET_DEBUG 
   int estimate, sum=0;
   fprintf(stderr,"%d: build_verlet_list_and_calc_verlet_ia:\n",this_node);
   /* estimate number of interactions: (0.5*n_part*ia_volume*density)/n_nodes */
-  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_range_non_bonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
+  estimate = 0.5*n_total_particles*(4.0/3.0*PI*pow(max_cut_nonbonded,3.0))*(n_total_particles/(box_l[0]*box_l[1]*box_l[2]))/n_nodes;
 
   if (!dd.use_vList) { fprintf(stderr, "%d: build_verlet_lists, but use_vList == 0\n", this_node); errexit(); }
 #endif
@@ -494,19 +372,13 @@ void build_verlet_lists_and_calc_verlet_ia_iccp3m()
 	  dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
 
 	  VERLET_TRACE(fprintf(stderr,"%d: pair %d %d has distance %f\n",this_node,p1[i].p.identity,p2[j].p.identity,sqrt(dist2)));
-	  if(dist2 <= max_range_non_bonded2) {
+	  if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
 	    ONEPART_TRACE(if(p1[i].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d,%d %d,%d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,i,n,j,sqrt(dist2)));
 	    ONEPART_TRACE(if(p2[j].p.identity==check_id) fprintf(stderr,"%d: OPT: Verlet Pair %d %d (Cells %d %d dist %f)\n",this_node,p1[i].p.identity,p2[j].p.identity,c,n,sqrt(dist2)));
 
 	    add_pair_iccp3m(pl, &p1[i], &p2[j]);
 	    /* calc non bonded interactions */ 
-           if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) {
 	       add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                } 
-/*           else {
-             printf("Ever here \n");
-             }*/
-             /* avoid source-source computation */ 
 	  }
 	 }
 	}
@@ -543,8 +415,7 @@ void calculate_verlet_ia_iccp3m()
 	      p1 = pairs[i];                    /* pointer to particle 1 */
 	      p2 = pairs[i+1];                  /* pointer to particle 2 */
 	      dist2 = distance2vec(p1->r.p, p2->r.p, vec21); 
-          if(!(p1->p.identity > iccp3m_cfg.last_ind_id && p2->p.identity >iccp3m_cfg.last_ind_id))  /* avoid source-source computation */
-	          add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
+	      add_non_bonded_pair_force_iccp3m(p1, p2, vec21, sqrt(dist2), dist2);
       }
     }
   }
@@ -574,23 +445,25 @@ void calc_link_cell_iccp3m()
         j_start = 0;
         /* Tasks within cell: bonded forces */
         if(n == 0) {
+	  if (rebuild_verletlist)
+	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
+
           j_start = i+1;
         }
 	/* Loop neighbor cell particles */
 	for(j = j_start; j < np2; j++) {
 	    {
 	      dist2 = distance2vec(p1[i].r.p, p2[j].r.p, vec21);
-	      if(dist2 <= max_range_non_bonded2) {
+	      if(dist2 <= SQR(get_ia_param(p1[i].p.type, p2[j].p.type)->max_cut + skin)) {
 		/* calc non bonded interactions */
-                if(!(p1[i].p.identity > iccp3m_cfg.last_ind_id && p2[j].p.identity >iccp3m_cfg.last_ind_id)) 
 		add_non_bonded_pair_force_iccp3m(&(p1[i]), &(p2[j]), vec21, sqrt(dist2), dist2);
-                 /* avoid source-source computation */
 	      }
 	    }
 	}
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
 void nsq_calculate_ia_iccp3m()
@@ -606,15 +479,17 @@ void nsq_calculate_ia_iccp3m()
   /* calculate bonded interactions and non bonded node-node */
   for (p = 0; p < npl; p++) {
     pt1 = &partl[p];
+
+    if (rebuild_verletlist)
+      memcpy(pt1->l.p_old, pt1->r.p, 3*sizeof(double));
+
     /* other particles, same node */
     for (p2 = p + 1; p2 < npl; p2++) {
       pt2 = &partl[p2];
       get_mi_vector(d, pt1->r.p, pt2->r.p);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-          /* avoid source-source computation */
-         if(!(pt1->p.identity > iccp3m_cfg.last_ind_id && pt2->p.identity >iccp3m_cfg.last_ind_id))
-	 add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
+	    add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
     }
 
     /* calculate with my ghosts */
@@ -623,16 +498,15 @@ void nsq_calculate_ia_iccp3m()
       partg = me_do_ghosts_icc.cell[c]->part;
 
       for (p2 = 0; p2 < npg; p2++) {
-	pt2 = &partg[p2];
-	get_mi_vector(d, pt1->r.p, pt2->r.p);
-	dist2 = sqrlen(d);
-	dist = sqrt(dist2);
-           /* avoid source-source computation */
-        if(!(pt1->p.identity > iccp3m_cfg.last_ind_id && pt2->p.identity >iccp3m_cfg.last_ind_id))
-	add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
+	      pt2 = &partg[p2];
+	      get_mi_vector(d, pt1->r.p, pt2->r.p);
+	      dist2 = sqrlen(d);
+	      dist = sqrt(dist2);
+	      add_non_bonded_pair_force_iccp3m(pt1, pt2, d, dist, dist2);
       }
     }
   }
+  rebuild_verletlist = 0;
 }
 
 
@@ -705,17 +579,13 @@ void calc_long_range_forces_iccp3m()
     break;
 
     case COULOMB_P3M:
-         p3m_charge_assign();
-
-#ifdef NPT
-        if(integ_switch == INTEG_METHOD_NPT_ISO) exit(0);
-#endif
-        p3m_calc_kspace_forces(1,0);
+       p3m_charge_assign();
+       p3m_calc_kspace_forces(1,0);
     break;
 #endif
     case COULOMB_MMM2D:
-        MMM2D_add_far_force();
-        MMM2D_dielectric_layers_force_contribution();
+       MMM2D_add_far_force();
+       MMM2D_dielectric_layers_force_contribution();
   }
 
 #endif
@@ -758,11 +628,16 @@ void resize_verlet_list_iccp3m(PairList *pl)
 /** initialize the forces for a real particle */
 MDINLINE void init_local_particle_force_iccp3m(Particle *part)
 {
-
     part->f.f[0] = 0.0; /* no need to friction_thermo_langevin function */
     part->f.f[1] = 0.0;
     part->f.f[2] = 0.0;
 
+#ifdef ROTATION
+    /* set torque to zero */
+    part->f.torque[0] = 0;
+    part->f.torque[1] = 0;
+    part->f.torque[2] = 0;
+#endif
 }
 
 /** initialize the forces for a ghost particle */
@@ -771,6 +646,13 @@ MDINLINE void init_ghost_force_iccp3m(Particle *part)
   part->f.f[0] = 0.0;
   part->f.f[1] = 0.0;
   part->f.f[2] = 0.0;
+
+#ifdef ROTATION
+  /* set torque to zero */
+  part->f.torque[0] = 0;
+  part->f.torque[1] = 0;
+  part->f.torque[2] = 0;
+#endif
 }
 
 /* integer mod*/
@@ -781,74 +663,6 @@ int imod(int x,int y) {
    m=fmod(p,q);
    z=m;
   return z;
-}
-
-static int tclcommand_iccp3m_parse_params(Tcl_Interp *interp,int normal_args, char *string, int flag) {
-  /* This function parses a vector give as C-String */
-  /* It currently is not too elegant. But works. */
-  int size,i,k=0;
-  int scan_succes;
-  static double *numbers=NULL;
-  const char delimiters[] = " ";
-  char *token,*cp;
-  float temp;
-
-  size= normal_args;
-  numbers = malloc((size)*sizeof(double));
-
-  cp = strdup(string);                /* Make writable copy.  */
-  token = strtok (cp, delimiters);
-  scan_succes = sscanf(token,"%f",&temp);
-  if (scan_succes < 1) 
-    return 1;
-
-  numbers[0]=temp;
-    
-  for(i=1;i<size;i++) {
-    token = strtok (NULL, delimiters);
-    if(token == NULL)
-      return 1;
-    scan_succes = sscanf(token,"%lf",&(numbers[i]));
-    if (scan_succes < 1 ) 
-      return 1;
-  }
-
-  switch(flag) {
-    case ICCP3M_AREA: 
-      iccp3m_cfg.areas = (double*) realloc(iccp3m_cfg.areas, (size+1)*sizeof(double)); 
-      for( i = 0 ; i < size ; i++ )  
-        iccp3m_cfg.areas[i]=numbers[i];
-      break;
-    case ICCP3M_EPSILON:
-      iccp3m_cfg.ein = (double*) realloc(iccp3m_cfg.ein,(size+1)*sizeof(double));
-      for( i = 0 ; i < size; i++)  
-        iccp3m_cfg.ein[i]=numbers[i];
-    break;
-    case ICCP3M_NORMAL:
-      iccp3m_cfg.nvectorx = (double*) realloc(iccp3m_cfg.nvectorx,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.nvectory = (double*) realloc(iccp3m_cfg.nvectory,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.nvectorz = (double*) realloc(iccp3m_cfg.nvectorz,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      for(i=0;i<size;i++) {
-        if( i%3 == 0 ) { iccp3m_cfg.nvectorx[k] = numbers[i]; } 
-        if( i%3 == 1 ) { iccp3m_cfg.nvectory[k] = numbers[i]; }
-        if( i%3 == 2 ) { iccp3m_cfg.nvectorz[k] = numbers[i];  k++; } 
-       }
-    break;
-
-    case ICCP3M_EXTFIELD:
-      iccp3m_cfg.extx = (double*) realloc(iccp3m_cfg.extx,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.exty = (double*) realloc(iccp3m_cfg.exty,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      iccp3m_cfg.extz = (double*) realloc(iccp3m_cfg.extz,sizeof(double)*(iccp3m_cfg.last_ind_id+1));
-      for(i=0;i<size;i++) {
-        if( i%3 == 0 ) { iccp3m_cfg.extx[k] = numbers[i]; } 
-        if( i%3 == 1 ) { iccp3m_cfg.exty[k] = numbers[i]; }
-        if( i%3 == 2 ) { iccp3m_cfg.extz[k] = numbers[i];  k++; } 
-      }
-    break;
-  }
-
-  free(numbers);
-  return (0);
 }
 
 
@@ -897,6 +711,42 @@ void iccp3m_store_forces() {
        iccp3m_cfg.fz[part[i].p.identity]=part[i].f.f[2];
      }
    }
+}
+
+int iccp3m_sanity_check()
+{
+  switch (coulomb.method) {
+#ifdef P3M
+    case COULOMB_ELC_P3M: {
+      if (elc_params.dielectric_contrast_on) {
+	char *errtxt = runtime_error(128);
+	ERROR_SPRINTF(errtxt, "ICCP3M conflicts with ELC dielectric constrast");
+	return 1;
+      }
+      break;
+    }
+#endif
+    case COULOMB_DH: {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "ICCP3M does not work with Debye-Hueckel iccp3m.h");
+      return 1;
+    }
+    case COULOMB_RF: {
+      char *errtxt = runtime_error(128);
+      ERROR_SPRINTF(errtxt, "ICCP3M does not work with COULOMB_RF iccp3m.h");
+      return 1;
+    }
+  }
+  
+#ifdef NPT
+  if(integ_switch == INTEG_METHOD_NPT_ISO) {
+    char *errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "ICCP3M does not work in the NPT ensemble");
+    return 1;
+  }
+#endif
+
+  return 0;
 }
 
 #endif

@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -15,47 +16,70 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-SUBDIRS = src . scripts tools testsuite doc
+SUBDIRS = config src . scripts tools testsuite doc
 
 ACLOCAL_AMFLAGS = -I config
+AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz
 
 # List files that should go into the distribution but are not required
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
-#################################################################
-# Installation of the main program
-#################################################################
-# Two binaries are generated: Espresso for the build dir,
-# Espresso.install for the installation dir. 
-# The ".install" suffix is removed upon installation.
+all-local: Espresso
+CLEANFILES = Espresso 
 
-noinst_PROGRAMS = Espresso
-Espresso_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(buildscriptsdir)"'
-Espresso_SOURCES = src/scriptsdir.c src/main.c
-Espresso_LDADD = src/libEspresso.a
+if !DEVEL_SRC
+Espresso: FORCE
+	test -e Espresso || $(LN_S) src/Espresso .
+else
+Espresso: version.txt
+	test -e Espresso || $(LN_S) src/Espresso .
+endif
 
-bin_PROGRAMS = Espresso.install
-Espresso_install_CPPFLAGS = -D 'ESPRESSO_SCRIPTS_DEFAULT="$(scriptsdir)"'
-Espresso_install_SOURCES = src/scriptsdir.c src/main.c
-Espresso_install_LDADD = src/libEspresso.a
+# Sample myconfig generation
+myconfig-sample.h: 
+	./config.status myconfig-sample.h
+CLEANFILES += myconfig-sample.h
+# config.status deps in configure.ac
 
-ESPRESSO = `echo Espresso | sed '$(transform)'`$(EXEEXT)
-ESPRESSO_INSTALL = `echo Espresso.install | sed '$(transform)'`$(EXEEXT)
-# rename Espresso after installation
-install-exec-hook:
-	$(am__mv) \
-		$(DESTDIR)$(bindir)/$(ESPRESSO_INSTALL) \
-		$(DESTDIR)$(bindir)/$(ESPRESSO)
+# Handle version
+EXTRA_DIST += version.txt
 
-uninstall-local:
-	-rm -f $(DESTDIR)$(bindir)/$(ESPRESSO)
+if DEVEL_SRC
+MOSTLYCLEANFILES = version.txt
+version.txt: FORCE
+	cd $(top_srcdir); sh config/genversion.sh -rd > $(abs_top_builddir)/version.txt
 
+dist-hook:
+	@VERSION=`cd $(top_srcdir); sh config/genversion.sh -rd`; \
+	if test "$$VERSION" != "$(PACKAGE_VERSION)"; then \
+		echo "***************************************************************************"; \
+		echo "ERROR: Package version is not up-to-date."; \
+		echo "ERROR: $$VERSION (current) != $(PACKAGE_VERSION) (configure)"; \
+		echo "ERROR: Please run autoreconf -vf"; \
+		echo "ERROR: before running 'make dist' again."; \
+		echo "***************************************************************************"; \
+		exit 1; \
+	fi;
+endif
 
 #################################################################
 # Documentation
 #################################################################
-.PHONY: FORCE doc doxygen ug dg tutorials
-doc doxygen ug dg tutorials: FORCE
+if DEVEL_SRC
+
+.PHONY: FORCE doc ug dg tutorials doxygen 
+ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
+
+else
+
+.PHONY: FORCE doc doxygen 
+
+endif
+
+doc doxygen: FORCE
+	cd src; $(MAKE) --print-directory $@
+	cd doc; $(MAKE) --print-directory $@
+
 FORCE:

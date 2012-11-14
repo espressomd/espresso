@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -24,6 +25,8 @@
 
     A random generator
 */
+
+#include "utils.h"
 
 /*----------------------------------------------------------*/
 
@@ -163,11 +166,6 @@ MDINLINE double gaussian_random(void) {
 
 }
 
-/**  Implementation of the tcl command \ref tclcommand_t_random. Access to the
-     parallel random number generator.
-*/
-int tclcommand_t_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
-
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/
 /*----------------------------------------------------------*/
@@ -185,10 +183,6 @@ void   init_bit_random_stat(BitRandomStatus my_stat);
 int    print_bit_random_seed(void);
 BitRandomStatus print_bit_random_stat(void);
 
-/**  Implementation of the tcl command \ref tclcommand_bit_random. 
-     Access to the parallel bit random number generator.
-*/
-int tclcommand_bit_random(ClientData data, Tcl_Interp *interp, int argc, char **argv);
 
 /*----------------------------------------------------------*/
 

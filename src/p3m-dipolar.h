@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -20,7 +20,7 @@
 */
 #ifndef _P3M_MAGNETOSTATICS_H
 #define _P3M_MAGNETOSTATICS_H
-/** \file p3m-magnetostatics.h P3M algorithm for long range magnetic dipole-dipole interaction.
+/** \file p3m-dipolar.h P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
@@ -90,12 +90,6 @@ typedef struct {
 
   /* Stores the value of the energy correction due to MS effects */
   double  energy_correction;
-
-  /** Flag to know if we should calculate the constants for the energy 
-      (If you neither compute the energy, is a waste of time
-      spendig circa 3 or 4 min computing such constants) **/
-  int flag_constants_energy_dipolar;
-
 } dp3m_data_struct;
 
 /** dipolar P3M parameters. */
@@ -104,23 +98,29 @@ extern dp3m_data_struct dp3m;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-/** dipolar p3m parser */
-int tclcommand_inter_magnetic_parse_dp3m(Tcl_Interp * interp, int argc, char ** argv);
-
-/** dipolar p3m parser, optional parameters */
-int tclcommand_inter_magnetic_parse_dp3m_opt_params(Tcl_Interp * interp, int argc, char ** argv);
-
-/** print the p3m parameters to the interpreters result */
-int tclprint_to_result_dp3m(Tcl_Interp *interp);
 
 void dp3m_pre_init();
+
+void dp3m_set_tune_params(double r_cut, int mesh, int cao,
+			 double alpha, double accuracy, int n_interpol);
+
+int dp3m_set_params(double r_cut, int mesh, int cao,
+		   double alpha, double accuracy);
+
+int dp3m_set_ninterpol(int n);
+
+int dp3m_set_mesh_offset(double x, double y, double z);
+
+int dp3m_set_eps(double eps);
 
 /** Initialize all structures, parameters and arrays needed for the 
  *  P3M algorithm for dipole-dipole interactions.
  */
-void  dp3m_init(void);
+void dp3m_init(void);
 
-/** Updates \ref dp3m_struct::alpha and \ref dp3m_struct::r_cut if \ref box_l changed. */
+void dp3m_set_bjerrum(void);
+
+/** Updates \ref p3m_parameter_struct::alpha and \ref p3m_parameter_struct::r_cut if \ref box_l changed. */
 void dp3m_scaleby_box_l();
 
 /// sanity checks
@@ -131,6 +131,10 @@ int dp3m_sanity_checks();
     Dcur_ca_frac. */
 void dp3m_dipole_assign(void);
 
+/** set bjerrum length for dipolar p3m */
+void dp3m_set_bjerrum(void);
+
+int dp3m_adaptive_tune(char **log);
 
 /** compute the k-space part of forces and energies for the magnetic dipole-dipole interaction  */
 double dp3m_calc_kspace_forces(int force_flag, int energy_flag);

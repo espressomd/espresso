@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -16,9 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 dist_tools_DATA =\
-        set_features \
 	vmd_plg.tcl \
-	uwerr.tcl \
+	uwerr.tcl
+dist_tools_SCRIPTS = \
+        set_features \
 	trace_memory.py \
 	trace_memory.tcl 
 noinst_SCRIPTS = \

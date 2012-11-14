@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -23,23 +23,27 @@
 /** \file particle_data.h
     For more information on particle_data,
     see \ref particle_data.c "particle_data.c"
+*/
 
- */
 
-#include <tcl.h>
 #include "utils.h"
-#include "grid.h"
 #include "global.h"
 
 /************************************************
  * defines
  ************************************************/
 
+/// ok code for \ref place_particle
+#define ES_PART_OK 0
+/// error code for \ref place_particle
+#define ES_PART_ERROR -1
+/// ok code for \ref place_particle, particle is new
+#define ES_PART_CREATED 1
+
 /**  bonds_flag "bonds_flag" value for updating particle config without bonding information */
 #define WITHOUT_BONDS 0
 /**  bonds_flag "bonds_flag" value for updating particle config with bonding information */
 #define WITH_BONDS 1
-
 
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external force. */
@@ -114,6 +118,11 @@ typedef struct {
 #ifdef ADRESS
   /** particles adress weight */
   double adress_weight;
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+  double T;
+  double gamma;
 #endif
 } ParticleProperties;
 
@@ -194,6 +203,13 @@ typedef struct {
   /** check whether a particle is a ghost or not */
   int ghost;
 #endif
+
+#ifdef GHMC
+  /** Data for the ghmc thermostat, last saved 
+      position and monentum of particle */
+  ParticlePosition r_ls;
+  ParticleMomentum m_ls;
+#endif
 } ParticleLocal;
 
 #ifdef LB
@@ -229,6 +245,7 @@ typedef struct {
   /** list of particles, with which this particle has no nonbonded interactions */
   IntList el;
 #endif
+
 } Particle;
 
 /** List of particles. The particle array is resized using a sophisticated
@@ -285,10 +302,6 @@ extern int *partBondPartners;
  * Functions
  ************************************************/
 
-/** Implementation of the tcl command \ref tclcommand_part. This command allows to
-    modify particle data. */
-int tclcommand_part(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
 
 /*       Functions acting on Particles          */
 /************************************************/
@@ -394,7 +407,7 @@ void realloc_local_particles();
     allocated so that you are responsible to free it later.
     @param part the identity of the particle to fetch
     @param data where to store its contents.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int get_particle_data(int part, Particle *data);
 
@@ -403,29 +416,29 @@ int get_particle_data(int part, Particle *data);
     If it does not exist, it is created.
     @param part the identity of the particle to move
     @param p    its new position
-    @return TCL_OK if particle existed, TCL_CONTINUE
-    if created and TCL_ERROR if id is illegal
+    @return ES_PART_OK if particle existed, ES_PART_CREATED
+    if created and ES_PART_ERROR if id is illegal
 */
 int place_particle(int part, double p[3]);
 
 /** Call only on the master node: set particle velocity.
     @param part the particle.
     @param v its new velocity.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_v(int part, double v[3]);
 
 /** Call only on the master node: set particle force.
     @param part the particle.
     @param F its new force.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_f(int part, double F[3]);
 
 /** Call only on the master node: set particle mass.
     @param part the particle.
     @param mass its new mass.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_mass(int part, double mass);
 
@@ -433,7 +446,7 @@ int set_particle_mass(int part, double mass);
 /** Call only on the master node: set particle rotational inertia.
     @param part the particle.
     @param rinertia its new inertia.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
@@ -441,28 +454,28 @@ int set_particle_rotational_inertia(int part, double rinertia[3]);
 /** Call only on the master node: set particle charge.
     @param part the particle.
     @param q its new charge.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_q(int part, double q);
 
 /** Call only on the master node: set particle electrophoretic mobility.
     @param part the particle.
     @param mu_E its new mobility.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_mu_E(int part, double mu_E[3]);
 
 /** Call only on the master node: set particle type.
     @param part the particle.
     @param type its new type.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_type(int part, int type);
 
 /** Call only on the master node: set particle's molecule id.
     @param part the particle.
     @param mid  its new mol id.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_mol_id(int part, int mid);
 
@@ -470,21 +483,21 @@ int set_particle_mol_id(int part, int mid);
 /** Call only on the master node: set particle orientation using quaternions.
     @param part the particle.
     @param quat its new value for quaternions.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_quat(int part, double quat[4]);
 
 /** Call only on the master node: set particle angular velocity.
     @param part the particle.
     @param omega its new angular velocity.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_omega(int part, double omega[3]);
 
 /** Call only on the master node: set particle torque.
     @param part the particle.
     @param torque its new torque.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_torque(int part, double torque[3]);
 #endif
@@ -493,14 +506,14 @@ int set_particle_torque(int part, double torque[3]);
 /** Call only on the master node: set particle dipole orientation.
     @param part the particle.
     @param dip its new dipole orientation.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_dip(int part, double dip[3]);
 
 /** Call only on the master node: set particle dipole moment (absolut value).
     @param part the particle.
     @param dipm its new dipole moment.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_dipm(int part, double dipm);
 #endif
@@ -509,9 +522,25 @@ int set_particle_dipm(int part, double dipm);
 /** Call only on the master node: set particle dipole moment (absolut value).
     @param part the particle.
     @param isVirtual its new dipole moment.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_virtual(int part,int isVirtual);
+#endif
+
+#ifdef LANGEVIN_PER_PARTICLE
+/** Call only on the master node: set particle temperature.
+    @param part the particle.
+    @param T its new temperature.
+    @return ES_OK if particle existed
+*/
+int set_particle_temperature(int part, double T);
+
+/** Call only on the master node: set particle frictional coefficient.
+    @param part the particle.
+    @param gamma its new frictional coefficient.
+    @return ES_OK if particle existed
+*/
+int set_particle_gamma(int part, double gamma);
 #endif
 
 #ifdef EXTERNAL_FORCES
@@ -519,13 +548,13 @@ int set_particle_virtual(int part,int isVirtual);
     @param part  the particle.
     @param flag  new value for ext_flag.
     @param force new value for ext_force.
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_ext(int part, int flag, double force[3]);
 /** Call only on the master node: set coordinate axes for which the particles motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed
-    @return TCL_OK if particle existed
+    @return ES_OK if particle existed
 */
 int set_particle_fix(int part,  int flag);
 #endif
@@ -535,7 +564,7 @@ int set_particle_fix(int part,  int flag);
     @param bond     field containing the bond type number and the
     identity of all bond partners (secundary atoms of the bond). If NULL, delete all bonds.
     @param delete   if true, do not add the bond, rather delete it if found
-    @return TCL_OK on success or TCL_ERROR if no success
+    @return ES_OK on success or ES_ERROR if no success
     (e. g. particle or bond to delete does not exist)
 */
 int change_particle_bond(int part, int *bond, int delete);
@@ -545,7 +574,7 @@ int change_particle_bond(int part, int *bond, int delete);
     @param part     identity of particle for which the exclusion is set.
     @param part2    identity of particle for which the exclusion is set. If -1, delete all exclusions.
     @param delete   if true, do not add the exclusion, rather delete it if found
-    @return TCL_OK on success or TCL_ERROR if no success
+    @return ES_OK on success or ES_ERROR if no success
     (e. g. particles do not exist / did not have exclusion set)
 */
 int change_exclusion(int part, int part2, int delete);
@@ -556,7 +585,7 @@ void remove_all_exclusions();
 
 /** remove particle with a given identity. Also removes all bonds to the particle.
     @param part     identity of the particle to remove
-    @return TCL_OK on success or TCL_ERROR if particle does not exist
+    @return ES_OK on success or ES_ERROR if particle does not exist
 */
 int remove_particle(int part);
 
@@ -615,7 +644,7 @@ void added_particle(int part);
     @param part the identity of the particle to change
     @param bond the bond to do
     @param delete if true, delete the bond instead of add
-    @return TCL_OK for add or successful delete, TCL_ERROR else
+    @return ES_OK for add or successful delete, ES_ERROR else
 */
 int local_change_bond(int part, int *bond, int delete);
 
@@ -657,18 +686,36 @@ void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determines if the non bonded interactions between p1 and p2 should be calculated */
-int do_nonbonded(Particle *p1, Particle *p2);
+MDINLINE int do_nonbonded(Particle *p1, Particle *p2)
+{
+  int i, i2;
+  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
+     symmetric, so this is sufficient. */
+  i2  = p2->p.identity;
+  for (i = 0; i < p1->el.n; i++)
+    if (i2 == p1->el.e[i]) return 0;
+  return 1;
+}
 #endif
 
-/*TODO: this function is not used anywhere. To be removed? */
-/** Complain about a missing bond partner. Just for convenience, replaces the old checked_particle_ptr.
-    @param id particle identity.
- */
-MDINLINE void complain_on_particle(int id)
-{
-  char *errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
-  ERROR_SPRINTF(errtxt,"{087 bond broken (particle %d has a bond to particle not stored on this node)} ", id); 
-}
+/** Remove bond from particle if possible */
+int try_delete_bond(Particle *part, int *bond);
 
+/** Remove exclusion from particle if possible */
+void try_delete_exclusion(Particle *part, int part2);
+
+/** Insert an exclusion if not already set */
+void try_add_exclusion(Particle *part, int part2);
+
+/** Automatically add the next \<distance\> neighbors in each molecule to the exclusion list.
+ This uses the bond topology obtained directly from the particles, since only this contains
+ the full topology, in contrast to \ref topology::topology. To easily setup the bonds, all data
+ should be on a single node, therefore the \ref partCfg array is used. With large amounts
+ of particles, you should avoid this function and setup exclusions manually. */
+void auto_exclusion(int distance);
+
+/* keep a unique list for particle i. Particle j is only added if it is not i
+ and not already in the list. */
+void add_partner(IntList *il, int i, int j, int distance);
 
 #endif

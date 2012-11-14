@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -26,10 +27,8 @@
     the file \ref topology.h.
 */
 
-#endif
-#include "statistics.h"
 #include "utils.h"
-#include "parser.h"
+#include "statistics.h"
 #include "topology.h"
 
 /** Using the topology information stored in \ref topology::topology
@@ -52,4 +51,4 @@ void calc_mol_center_of_mass(Molecule mol, double com[3]);
 /* calculate the center of mass of a molecule as above but uses mass of the particles*/
 void mol_center_of_mass_(Molecule mol, double com[3]);
 
-
+#endif

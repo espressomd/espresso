@@ -7,7 +7,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -29,8 +29,8 @@
 
 # Deprecation warning
 proc warn_deprecated { fname version } {
-    puts "WARNING: The function $fname is deprecated since version $version"
-    puts "         and will be removed in some future version."
+    puts stderr "WARNING: The function $fname is deprecated since version $version"
+    puts stderr "         and will be removed in some future version."
 }
 
 
@@ -467,25 +467,41 @@ proc stopParticles { } {
 # center of mass
 # --------------
 #
-# Calculate the center of mass motion of the system stored in Espresso
+# Calculate the center of mass of the system stored in Espresso
 #
 #############################################################
 proc system_com { } {
-   set npart [setmd n_part]
+  set npart [setmd n_part]
     
-    # calculate center of mass motion
-    set com { 0 0 0 }
-    set part_cnt 0
-    set i 0
-    while { $part_cnt < $npart } {
-	if { [part $i] != "na" } {
-	    set pos [part $i print p] 
-	    set com [vecadd $com $pos]
-	    incr part_cnt
-	}
-	incr i
+  #calculate center of mass
+  set com {0 0 0}
+  set part_cnt 0
+  
+  if {[has_feature MASS]} {
+    set net_mass 0
+    
+    for {set i 0} {$part_cnt < $npart} {incr i} {
+      if {[part $i] != "na"} {
+        set pos [part $i print p]
+        set mass [part $i print mass]
+        set com [vecadd $com [vecscale $mass $pos]]
+        set net_mass [expr $net_mass + $mass]
+        incr part_cnt
+      }
     }
+    
+    return [vecscale [expr 1.0/$net_mass] $com]
+  } else {
+    for {set i 0} {$part_cnt < $npart} {incr i} {
+      if {[part $i] != "na"} {
+        set pos [part $i print p]
+        set com [vecadd $com $pos]
+        incr part_cnt
+      }
+    }
+    
     return [vecscale [expr 1.0/$npart] $com]
+  }
 }
 
 
@@ -493,25 +509,41 @@ proc system_com { } {
 # center of mass motion
 # ---------------------
 #
-# Calculate the center of mass motion of the system stored in Espresso
+# Calculate the center of mass velocity of the system stored in Espresso
 #
 #############################################################
-proc system_com_vel { } {
-   set npart [setmd n_part]
+proc system_com_vel {} {
+  set npart [setmd n_part]
     
-    # calculate center of mass motion
-    set com_vel { 0 0 0 }
-    set part_cnt 0
-    set i 0
-    while { $part_cnt < $npart } {
-	if { [part $i] != "na" } {
-	    set part_vel [part $i print v] 
-	    set com_vel  [vecadd $com_vel $part_vel]
-	    incr part_cnt
-	}
-	incr i
+  # calculate center of mass motion
+  set com_vel {0 0 0}
+  set part_cnt 0
+  
+  if {[has_feature MASS]} {
+    set net_mass 0
+    
+    for {set i 0} {$part_cnt < $npart } {incr i} {
+      if { [part $i] != "na" } {
+        set part_vel [part $i print v]
+        set part_mass [part $i print mass]
+        set com_vel [vecadd $com_vel [vecscale $part_mass $part_vel]]
+        set net_mass [expr $net_mass + $part_mass]
+        incr part_cnt
+      }
     }
+      
+    return [vecscale [expr 1.0/$net_mass] $com_vel]
+  } else {
+    for {set i 0} {$part_cnt < $npart } {incr i} {
+      if { [part $i] != "na" } {
+        set part_vel [part $i print v] 
+        set com_vel [vecadd $com_vel $part_vel]
+        incr part_cnt
+      }
+    }
+    
     return [vecscale [expr 1.0/$npart] $com_vel]
+  }
 }
 
 #
@@ -521,24 +553,25 @@ proc system_com_vel { } {
 # Perform a Galilei Transformation on all Particles stored 
 # in Espresso such that the center of mass motion of the 
 # system is zero. Returns old center of mass motion.
-# Assumes particles of equal mass!
 #
 #############################################################
 
-proc galileiTransformParticles { } {
-    set com_vel [system_com_vel]
+proc galileiTransformParticles {} {
+  set com_vel [system_com_vel]
     
-    # subtract center of mass motion from particle velocities
-    set npart [setmd n_part]; set part_cnt 0; set i 0
-    while { $part_cnt < $npart } {
-	if { [part $i] != "na" } {
-	    set part_vel [vecsub [part $i print v] $com_vel]
-	    part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
-	    incr part_cnt
-	}
-	incr i
+  #subtract center of mass motion from particle velocities
+  set npart [setmd n_part];
+  set part_cnt 0;
+  
+  for {set i 0} { $part_cnt < $npart } {incr i} {
+    if {[part $i] != "na"} {
+      set part_vel [vecsub [part $i print v] $com_vel]
+      part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
+      incr part_cnt
     }
-    return $com_vel
+  }
+  
+  return $com_vel
 }
 
 #
@@ -548,32 +581,106 @@ proc galileiTransformParticles { } {
 #
 #############################################################
 
-proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } } {
-    writepsf "$filename.psf"
-    writepdb "$filename.pdb"
-    for {set port 10000} { $port < 65000 } { incr port } {
-	catch {imd connect $port} res
-	if {$res == ""} break
+proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_constraints "0"} } {
+  global vmd_show_constraints_flag
+
+  # structure information only
+  set f [open "$filename.vsf" "w"]
+  writevsf $f
+  close $f
+  
+  for {set port 10000} { $port < 65000 } { incr port } {
+	  catch {imd connect $port} res
+	    if {$res == ""} {
+	      break
+	    }
+  }
+  
+  set HOSTNAME [exec hostname]
+  set vmdout_file [open "${filename}.vmd_start.script" "w"]
+  
+  puts $vmdout_file "logfile off"
+  puts $vmdout_file "mol load vsf $filename.vsf"
+  puts $vmdout_file "rotate stop"
+  puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
+  puts $vmdout_file "mol modcolor 0 0 SegName"
+  puts $vmdout_file "imd connect $HOSTNAME $port"
+  puts $vmdout_file "imd transfer 1"
+  puts $vmdout_file "imd keep 1"
+  puts $vmdout_file "proc pbcsetup {} {pbc set \"[setmd box_l]\" -all}"
+  
+  #draw constraints  
+  if {$draw_constraints != "0"} {
+    foreach c [ constraint ] {
+      set id [ lindex $c 0 ]
+      set type [ lindex $c 1 ]
+      
+      puts $vmdout_file "draw color gray"
+      
+      if {$type == "sphere"} {
+        set centerx [ lindex $c 3 ]
+        set centery [ lindex $c 4 ]
+        set centerz [ lindex $c 5 ]
+        set radius [ lindex $c 7 ]
+        
+        puts $vmdout_file "draw sphere \{ $centerx $centery $centerz \} radius $radius"
+      } elseif {$type == "rhomboid"} {
+        set p_x [lindex $c 3]
+        set p_y [lindex $c 4]
+        set p_z [lindex $c 5]
+        
+        set a_x [lindex $c 7]
+        set a_y [lindex $c 8]
+        set a_z [lindex $c 9]
+        
+        set b_x [lindex $c 11]
+        set b_y [lindex $c 12]
+        set b_z [lindex $c 13]
+        
+        set c_x [lindex $c 15]
+        set c_y [lindex $c 16]
+        set c_z [lindex $c 17]
+        
+        puts $vmdout_file "draw triangle \{$p_x $p_y $p_z\} \{[expr $p_x+$a_x] [expr $p_y+$a_y] [expr $p_z+$a_z]\} \{[expr $p_x+$b_x] [expr $p_y+$b_y] [expr $p_z+$b_z]\}"
+        puts $vmdout_file "draw triangle \{$p_x $p_y $p_z\} \{[expr $p_x+$b_x] [expr $p_y+$b_y] [expr $p_z+$b_z]\} \{[expr $p_x+$c_x] [expr $p_y+$c_y] [expr $p_z+$c_z]\}"
+        puts $vmdout_file "draw triangle \{$p_x $p_y $p_z\} \{[expr $p_x+$a_x] [expr $p_y+$a_y] [expr $p_z+$a_z]\} \{[expr $p_x+$c_x] [expr $p_y+$c_y] [expr $p_z+$c_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$a_x+$b_x+$c_x] [expr $p_y+$a_y+$b_y+$c_y] [expr $p_z+$a_z+$b_z+$c_z]\} \{[expr $p_x+$a_x+$c_x] [expr $p_y+$a_y+$c_y] [expr $p_z+$a_z+$c_z]\} \{[expr $p_x+$b_x+$c_x] [expr $p_y+$b_y+$c_y] [expr $p_z+$b_z+$c_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$a_x+$b_x+$c_x] [expr $p_y+$a_y+$b_y+$c_y] [expr $p_z+$a_z+$b_z+$c_z]\} \{[expr $p_x+$a_x+$c_x] [expr $p_y+$a_y+$c_y] [expr $p_z+$a_z+$c_z]\} \{[expr $p_x+$a_x+$b_x] [expr $p_y+$a_y+$b_y] [expr $p_z+$a_z+$b_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$a_x+$b_x+$c_x] [expr $p_y+$a_y+$b_y+$c_y] [expr $p_z+$a_z+$b_z+$c_z]\} \{[expr $p_x+$b_x+$c_x] [expr $p_y+$b_y+$c_y] [expr $p_z+$b_z+$c_z]\} \{[expr $p_x+$a_x+$b_x] [expr $p_y+$a_y+$b_y] [expr $p_z+$a_z+$b_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$c_x] [expr $p_y+$c_y] [expr $p_z+$c_z]\} \{[expr $p_x+$a_x+$c_x] [expr $p_y+$a_y+$c_y] [expr $p_z+$a_z+$c_z]\} \{[expr $p_x+$a_x] [expr $p_y+$a_y] [expr $p_z+$a_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$c_x] [expr $p_y+$c_y] [expr $p_z+$c_z]\} \{[expr $p_x+$a_x+$c_x] [expr $p_y+$a_y+$c_y] [expr $p_z+$a_z+$c_z]\} \{[expr $p_x+$b_x+$c_x] [expr $p_y+$b_y+$c_y] [expr $p_z+$b_z+$c_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$a_x] [expr $p_y+$a_y] [expr $p_z+$a_z]\} \{[expr $p_x+$b_x] [expr $p_y+$b_y] [expr $p_z+$b_z]\} \{[expr $p_x+$a_x+$b_x] [expr $p_y+$a_y+$b_y] [expr $p_z+$a_z+$b_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$b_x+$c_x] [expr $p_y+$b_y+$c_y] [expr $p_z+$b_z+$c_z]\} \{[expr $p_x+$b_x] [expr $p_y+$b_y] [expr $p_z+$b_z]\} \{[expr $p_x+$a_x+$b_x] [expr $p_y+$a_y+$b_y] [expr $p_z+$a_z+$b_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$a_x] [expr $p_y+$a_y] [expr $p_z+$a_z]\} \{[expr $p_x+$a_x+$b_x] [expr $p_y+$a_y+$b_y] [expr $p_z+$a_z+$b_z]\} \{[expr $p_x+$a_x+$c_x] [expr $p_y+$a_y+$c_y] [expr $p_z+$a_z+$c_z]\}"
+        puts $vmdout_file "draw triangle \{[expr $p_x+$b_x] [expr $p_y+$b_y] [expr $p_z+$b_z]\} \{[expr $p_x+$c_x] [expr $p_y+$c_y] [expr $p_z+$c_z]\} \{[expr $p_x+$b_x+$c_x] [expr $p_y+$b_y+$c_y] [expr $p_z+$b_z+$c_z]\}"
+      } elseif {$type == "cylinder"} {
+        set c_x [lindex $c 3]
+        set c_y [lindex $c 4]
+        set c_z [lindex $c 5]
+        
+        set a_x [lindex $c 7]
+        set a_y [lindex $c 8]
+        set a_z [lindex $c 9]
+        
+        set r [lindex $c 11]
+        
+        set l [lindex $c 13]
+        
+        puts $vmdout_file "draw cylinder \{[expr $l*($c_x-$a_x)] [expr $l*($c_y-$a_y)] [expr $l*($c_z-$a_z)]\} \{[expr $l*($c_x+$a_x)] [expr $l*($c_y+$a_y)] [expr $l*($c_z+$a_z)]\} radius $r resolution 36"
+      }
     }
-    set HOSTNAME [exec hostname]
-    set vmdout_file [open "vmd_start.script" "w"]
-    puts $vmdout_file "mol load psf $filename.psf pdb $filename.pdb"
-    puts $vmdout_file "logfile vmd.log"
-    puts $vmdout_file "rotate stop"
-    puts $vmdout_file "logfile off"
-    puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
-    puts $vmdout_file "mol modcolor 0 0 SegName"
-    puts $vmdout_file "imd connect $HOSTNAME $port"
-    puts $vmdout_file "imd transfer 1"
-    puts $vmdout_file "imd keep 1"
-     close $vmdout_file
-    if { $start == 0 } {
-	puts "Start VMD in the same directory on the machine you with :"
-	puts "vmd -e vmd_start.script &"
-    } else {
-	exec vmd -e vmd_start.script &
-    }
-    imd listen $wait
+  }
+ 
+  close $vmdout_file
+ 
+  if { $start == 0 } {
+	  puts "Start VMD in the same directory on the machine you with :"
+	  puts "vmd -e ${filename}.vmd_start.script &"
+  } else {
+	  exec vmd -e "${filename}.vmd_start.script" &
+  }
+  
+  imd listen $wait
 }
 
 #

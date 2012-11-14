@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -56,6 +56,7 @@
 #include "particle_data.h"
 #include "random.h"
 #include "topology.h"
+#include <mpi.h>
 
 /**************************************************
  * exported variables
@@ -68,6 +69,7 @@ extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 /*@}*/
+extern MPI_Comm comm_cart;
 
 /**************************************************
  * for every procedure requesting a MPI negotiation
@@ -267,6 +269,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete);
 */
 void mpi_send_exclusion(int part, int part2, int delete);
 
+
 /** Issue REQ_REM_PART: remove a particle.
     Also calls \ref on_particle_change.
     \param id   the particle to remove.
@@ -384,6 +387,14 @@ void mpi_bcast_coulomb_params();
 /** Issue REQ_SEND_EXT: send nex external flag and external force. */
 void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
 
+#ifdef LANGEVIN_PER_PARTICLE
+/** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */
+void mpi_set_particle_temperature(int pnode, int part, double _T);
+
+/** Issue REQ_SEND_PARTICLE_T: send particle type specific frictional coefficient. */
+void mpi_set_particle_gamma(int pnode, int part, double gamma);
+#endif
+
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_constraint(int del_num);
 
@@ -399,16 +410,16 @@ void mpi_random_seed(int cnt, long *seed);
 void mpi_random_stat(int cnt, RandomStatus *stat);
 
 /** Issue REQ_BCAST_LJFORCECAP: initialize LJ force capping. */
-void mpi_lj_cap_forces(double force_cap);
+void mpi_cap_forces(double force_cap);
 
 /** Issue REQ_BCAST_MORSEFORCECAP: initialize Morse force capping. */
-void mpi_morse_cap_forces(double force_cap);
+//void mpi_morse_cap_forces(double force_cap);
 
 /** Issue REQ_BCAST_BUCKFORCECAP: initialize Buckingham force capping. */
-void mpi_buck_cap_forces(double force_cap);
+//void mpi_buck_cap_forces(double force_cap);
 
 /** Issue REQ_BCAST_TABFORCECAP: initialize tabulated force capping. */
-void mpi_tab_cap_forces(double force_cap);
+//void mpi_tab_cap_forces(double force_cap);
 
 /** Issue REQ_GET_CONSFOR: get force acting on constraint */
 void mpi_get_constraint_force(int constraint, double force[3]);
@@ -429,7 +440,7 @@ void mpi_bcast_cell_structure(int cs);
 void mpi_bcast_nptiso_geom(void);
 
 /** Issue REQ_BCAST_LJANGLEFORCECAP: initialize LJANGLE force capping. */
-void mpi_ljangle_cap_forces(double force_cap);
+//void mpi_ljangle_cap_forces(double force_cap);
 
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
@@ -464,12 +475,12 @@ void mpi_send_fluid(int node, int index, double rho, double *j, double *pi);
  */
 void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
 
-/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary flag from a processor.
  * @param node     processor to send to
  * @param index    index of the lattice site
- * @param boundary local border flag
+ * @param boundary local boundary flag
  */
-void mpi_recv_fluid_border_flag(int node, int index, int *boundary);
+void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
     @return nonzero on error
@@ -481,27 +492,31 @@ int mpi_iccp3m_iteration(int dummy);
 */
 int mpi_iccp3m_init(int dummy);
 
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
  * @param node  processor to send to
  * @param index index of the lattice site
  * @param pop   local fluid population
  */
 void mpi_recv_fluid_populations(int node, int index, double *pop);
 
+/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
+ * @param node  processor to send to
+ * @param index index of the lattice site
+ * @param pop   local fluid population
+ */
+void mpi_send_fluid_populations(int node, int index, double *pop);
+
 /** Part of MDLC
  */
 void mpi_bcast_max_mu();
 
-/** Issue REQ_GET_ERRS: gather all error messages from all nodes and set the interpreter result
-    to these error messages. This called only on the master node.
-    The errors are append to the result, if ret_state == TCL_ERROR, otherwise the result is overwritten.
-    Therefore you should end any Tcl command handler by return gather_runtime_errors(<return_value>).
-    This code uses asynchronous communication.
-    @param ret_state return value of the procedure
-    @param interp where to put the errors
-    @return new return value after the background errors, if any, have been handled
+/** Issue REQ_GET_ERRS: gather all error messages from all nodes and return them
+
+    @param errors contains the errors from all nodes. This has to point to an array
+    of character pointers, one for each node.
+    @return \ref ES_OK if no error occured, otherwise \ref ES_ERROR
 */
-int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
+int mpi_gather_runtime_errors(char **errors);
 
 /*@}*/
 
@@ -514,8 +529,8 @@ int mpi_gather_runtime_errors(Tcl_Interp *interp, int ret_state);
 #define INVALIDATE_SYSTEM 1
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
-#define EWALD_COUNT_CHARGES 4
 #define P3M_COUNT_DIPOLES   5
+#define REACTION 6
 /*@}*/
 
 #endif

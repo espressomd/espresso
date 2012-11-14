@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -27,14 +28,7 @@
     system.
  */
 
-#include <tcl.h>
-#include <mpi.h>
-#include <stdio.h>
 #include "particle_data.h"
-#include "grid.h"
-#include "global.h"
-#include "parser.h"
-
 
 #define NEMD_METHOD_OFF       0
 #define NEMD_METHOD_EXCHANGE  1
@@ -124,14 +118,12 @@ extern int nemd_method;
 /************************************************************/
 /*@{*/
 
-/** tcl procedure for nemd steering.
-    USAGE: nemd \<n_slabs\> \<n_exchange\>   
-    see also \ref tclcommand_nemd
-*/
-int tclcommand_nemd(ClientData data, Tcl_Interp *interp,
-	 int argc, char **argv);
-
 #ifdef NEMD 
+
+int nemd_free(void);
+
+void nemd_init(int n_slabs, int n_exchange, double shear_rate);
+
 
 /** Change momentum in top an middle slab. How this is done depends on
     nemd method. */

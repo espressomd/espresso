@@ -1,6 +1,7 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
   
   This file is part of ESPResSo.
   
@@ -78,15 +79,6 @@ int update_mol_pos_cfg(){
   }
   return 1;
 }
-
-// Now, load the rules deciding, how to place virtual particles
-// and transfer back forces to the real particles
-#ifdef VIRTUAL_SITES_COM
- #include "virtual_sites_com.c"
-#endif
-#ifdef VIRTUAL_SITES_RELATIVE
- #include "virtual_sites_relative.c"
-#endif
 
 #endif 
 

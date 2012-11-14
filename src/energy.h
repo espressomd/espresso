@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,7 +27,6 @@
 #include "integrate.h"
 #include "statistics.h"
 #include "thermostat.h"
-#include "communication.h"
 
 /* include the energy files */
 #include "p3m.h"
@@ -36,9 +35,11 @@
 #include "ljgen.h"
 #include "steppot.h"
 #include "hertzian.h"
+#include "gaussian.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
+#include "hat.h"
 #include "ljcos.h"
 #include "ljcos2.h"
 #include "ljangle.h"
@@ -49,6 +50,9 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angle_harmonic.h"
+#include "angle_cosine.h"
+#include "angle_cossquare.h"
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
@@ -58,7 +62,6 @@
 #include "mmm2d.h"
 #include "maggs.h"
 #include "morse.h"
-#include "ewald.h"
 #include "elc.h"
 #include "mdlc_correction.h"
 
@@ -72,6 +75,12 @@ extern Observable_stat energy, total_energy;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
+
+/** allocate energy arrays and initialize with zero */
+void init_energies(Observable_stat *stat);
+
+/** on the master node: calc energies only if necessary */
+void master_energy_calc();
 
 /** parallel energy calculation.
     @param result non-zero only on master node; will contain the cumulative over all nodes. */
@@ -126,6 +135,11 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
   ret += hertzian_pair_energy(p1,p2,ia_params,d,dist,dist2);
 #endif
 
+#ifdef GAUSSIAN
+  /* Gaussian potential */
+  ret += gaussian_pair_energy(p1,p2,ia_params,d,dist,dist2);
+#endif
+
 #ifdef BMHTF_NACL
   /* BMHTF NaCl */
   ret += BMHTF_pair_energy(p1,p2,ia_params,d,dist,dist2);
@@ -144,6 +158,11 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef SOFT_SPHERE
   /* soft-sphere */
   ret  += soft_pair_energy(p1,p2,ia_params,d,dist);
+#endif
+
+#ifdef HAT
+  /* hat */
+  ret  += hat_pair_energy(p1,p2,ia_params,d,dist);
 #endif
 
 #ifdef LJCOS2
@@ -205,9 +224,6 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
     break;
 #endif
-    case COULOMB_EWALD:
-      ret = ewald_coulomb_pair_energy(p1,p2,d,dist2,dist);
-      break;
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
       break;
@@ -270,7 +286,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
-      errtxt = runtime_error(128 + 2*TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{069 bond broken between particles %d and %d (particles not stored on the same node)} ",
 	      p1->p.identity, p1->bl.e[i-1]);
       return;
@@ -280,7 +296,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     if (n_partners >= 2) {
       p3 = local_particles[p1->bl.e[i++]];
       if (!p3) {
-	errtxt = runtime_error(128 + 3*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{070 bond broken between particles %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -291,7 +307,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
     if (n_partners >= 3) {
       p4 = local_particles[p1->bl.e[i++]];
       if (!p4) {
-	errtxt = runtime_error(128 + 4*TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + 4*ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{071 bond broken between particles %d, %d, %d and %d (particles not stored on the same node)} ",
 		p1->p.identity, p1->bl.e[i-3], p1->bl.e[i-2], p1->bl.e[i-1]);
 	return;
@@ -314,9 +330,21 @@ MDINLINE void add_bonded_energy(Particle *p1)
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+    /* the first case is not needed and should not be called */ 
+    case BONDED_IA_ANGLE_OLD:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
+      break; 
+#endif
+#ifdef BOND_ANGLE
+    case BONDED_IA_ANGLE_HARMONIC:
+      bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_ANGLE_COSINE:
+      bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_ANGLE_COSSQUARE:
+      bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLEDIST
@@ -351,7 +379,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
 	bond_broken = tab_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
 	break;
       default :
-	errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+	errtxt = runtime_error(128 + ES_INTEGER_SPACE);
 	ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: tabulated bond type of atom %d unknown\n", p1->p.identity);
 	return;
       }
@@ -370,7 +398,7 @@ MDINLINE void add_bonded_energy(Particle *p1)
         bond_broken = overlap_dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
       default :
-        errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+        errtxt = runtime_error(128 + ES_INTEGER_SPACE);
         ERROR_SPRINTF(errtxt,"{072 add_bonded_energy: overlapped bond type of atom %d unknown\n", p1->p.identity);
         return;
       }
@@ -383,35 +411,34 @@ MDINLINE void add_bonded_energy(Particle *p1)
       break;
 #endif
     default :
-      errtxt = runtime_error(128 + TCL_INTEGER_SPACE);
+      errtxt = runtime_error(128 + ES_INTEGER_SPACE);
       ERROR_SPRINTF(errtxt,"{073 add_bonded_energy: bond type of atom %d unknown\n", p1->p.identity);
       return;
     }
 
-    switch (n_partners) {
-    case 1:
-      if (bond_broken) {
-	char *errtext = runtime_error(128 + 2*TCL_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{074 bond broken between particles %d and %d} ",
-		p1->p.identity, p2->p.identity);
-	continue;
+    if (bond_broken) {
+      switch (n_partners) {
+      case 1: {
+	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
+		      p1->p.identity, p2->p.identity); 
+	break;
       }
-      break;
-    case 2:
-      if (bond_broken) {
-	char *errtext = runtime_error(128 + 3*TCL_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{075 bond broken between particles %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity); 
-	continue;
+      case 2: {
+	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
+		      p1->p.identity, p2->p.identity, p3->p.identity); 
+	break;
       }
-      break;
-    case 3:
-      if (bond_broken) {
-	char *errtext = runtime_error(128 + 4*TCL_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{076 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
-	continue;
+      case 3: {
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
+		      p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+	break;
       }
+      }
+      // bond broken, don't add whatever we find in the energy
+      continue;
     }
 
     *obsstat_bonded(&energy, type_num) += ret;
@@ -445,9 +472,6 @@ MDINLINE void add_kinetic_energy(Particle *p1)
 #endif
 #endif	
 }
-
-/** implementation of analyze energy */
-int tclcommand_analyze_parse_and_print_energy(Tcl_Interp *interp, int argc, char **argv);
 
 /*@}*/
 

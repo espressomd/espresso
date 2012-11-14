@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -22,15 +22,8 @@
 #define IA_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
-
-    interaction_data.h contains the parser \ref tclcommand_inter for the
-    Tcl command "inter". Therefore the parsing of bonded and nonbonded
-    interaction definition commands both is done here. It also contains
-    procedures for low-level interactions setup and some helper functions.
-    Moreover it contains code for the treatments of constraints.
 */
 
-#include <tcl.h>
 #include "utils.h"
 #include "particle_data.h" /* needed for constraints */
 
@@ -48,7 +41,7 @@
 /** Type of bonded interaction is a HARMONIC potential. */
 #define BONDED_IA_HARMONIC  1
 /** Type of bonded interaction is a bond angle potential. */
-#define BONDED_IA_ANGLE     2
+#define BONDED_IA_ANGLE_OLD     2
 /** Type of bonded interaction is a dihedral potential. */
 #define BONDED_IA_DIHEDRAL  3
 /** Type of tabulated bonded interaction potential, 
@@ -66,19 +59,29 @@
 #define BONDED_IA_ENDANGLEDIST    9
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
-#define BONDED_IA_OVERLAPPED 10 
+#define BONDED_IA_OVERLAPPED 10
+/** Type of bonded interaction is a bond angle cosine potential. */ 
+#define BONDED_IA_ANGLE_HARMONIC 11
+/** Type of bonded interaction is a bond angle cosine potential. */ 
+#define BONDED_IA_ANGLE_COSINE 12
+/** Type of bonded interaction is a bond angle cosine potential. */ 
+#define BONDED_IA_ANGLE_COSSQUARE 13
 
-/* Specify tabulated bonded interactions  */
+/** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
 #define TAB_BOND_LENGTH      1
 #define TAB_BOND_ANGLE       2
 #define TAB_BOND_DIHEDRAL    3
 
-/* Specify overlapped bonded interactions  */
+/** Specify overlapped bonded interactions  */
 #define OVERLAP_UNKNOWN          0
 #define OVERLAP_BOND_LENGTH      1
 #define OVERLAP_BOND_ANGLE       2
 #define OVERLAP_BOND_DIHEDRAL    3
+
+/** cutoff for deactivated interactions. Below 0, so that even particles on
+    top of each other don't interact by chance. */
+#define INACTIVE_CUTOFF -1.0
 
 /*@}*/
 
@@ -104,8 +107,6 @@
   #define COULOMB_MMM2D   5
   /** Coulomb method is "Maggs" */
   #define COULOMB_MAGGS   6
-  /** Coulomb method is standard Ewald */
-  #define COULOMB_EWALD   7
   /** Coulomb method is P3M plus ELC. */
   #define COULOMB_ELC_P3M 8
   /** Coulomb method is Reaction-Field. */
@@ -170,6 +171,8 @@
 //end ER
 /** Constraint for tunable-lsip boundary conditions */
 #define CONSTRAINT_PLANE 9
+/** Constraint for tunable-lsip boundary conditions */
+#define CONSTRAINT_RHOMBOID 10
 /*@}*/
 
 /* Data Types */
@@ -179,16 +182,30 @@
  *  nonbonded interactions. Access via
  * get_ia_param(i, j), i,j < n_particle_types */
 typedef struct {
+
+  /** flag that tells whether there is any short-ranged interaction,
+   i.e. one that contributes to the "nonbonded" section of the
+   energy/pressure. Note that even if there is no short-ranged
+   interaction present, the \ref max_cut can be non-zero due to
+   e.g. electrostatics. */
+  int particlesInteract;
+
+  /** maximal cutoff for this pair of particle types. This contains
+      contributions from the short-ranged interactions, plus any
+      cutoffs from global interactions like electrostatics.
+  */
+  double max_cut;
+
 #ifdef LENNARD_JONES
-	/** \name Lennard-Jones with shift */
-	/*@{*/
-	double LJ_eps;
-	double LJ_sig;
-	double LJ_cut;
-	double LJ_shift;
-	double LJ_offset;
-	double LJ_capradius;
-	double LJ_min;
+  /** \name Lennard-Jones with shift */
+  /*@{*/
+  double LJ_eps;
+  double LJ_sig;
+  double LJ_cut;
+  double LJ_shift;
+  double LJ_offset;
+  double LJ_capradius;
+  double LJ_min;
   /*@}*/
 #endif
 
@@ -250,6 +267,15 @@ typedef struct {
   /*@}*/
 #endif
 
+#ifdef GAUSSIAN
+  /** \name Gaussian potential */
+  /*@{*/
+  double Gaussian_eps;
+  double Gaussian_sig;
+  double Gaussian_cut;
+  /*@}*/
+#endif
+
 #ifdef BMHTF_NACL
   /** \name BMHTF NaCl potential */
   /*@{*/
@@ -298,6 +324,14 @@ typedef struct {
   double soft_n;
   double soft_cut;
   double soft_offset;
+  /*@}*/
+#endif
+
+#ifdef HAT
+  /** \name hat potential */
+  /*@{*/
+  double HAT_Fmax;
+  double HAT_r;
   /*@}*/
 #endif
 
@@ -350,7 +384,6 @@ typedef struct {
   double TAB_minval;
   double TAB_minval2;
   double TAB_maxval;
-  double TAB_maxval2;
   double TAB_stepsize;
   /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_TABFILE_NAME 256
@@ -400,22 +433,18 @@ typedef struct {
   double mol_cut_cutoff;
 #endif
   
-#ifdef ADRESS
-#ifdef INTERFACE_CORRECTION
+#if defined(ADRESS) && defined(INTERFACE_CORRECTION)
   /** \name Tabulated potential */
   /*@{*/
   int ADRESS_TAB_npoints;
   int ADRESS_TAB_startindex;
   double ADRESS_TAB_minval;
-  double ADRESS_TAB_minval2;
   double ADRESS_TAB_maxval;
-  double ADRESS_TAB_maxval2;
   double ADRESS_TAB_stepsize;
   /** The maximum allowable filename length for a tabulated potential file*/
 #define MAXLENGTH_ADRESSTABFILE_NAME 256
   char ADRESS_TAB_filename[MAXLENGTH_ADRESSTABFILE_NAME];
   /*@}*/    
-#endif
 #endif
 
 #ifdef TUNABLE_SLIP
@@ -426,6 +455,10 @@ typedef struct {
   double TUNABLE_SLIP_vx;
   double TUNABLE_SLIP_vy;
   double TUNABLE_SLIP_vz;
+#endif
+
+#ifdef REACTIONS
+  double REACTION_range;
 #endif
 
 } IA_parameters;
@@ -448,8 +481,6 @@ typedef struct{
 } TF_parameters;
 /* #endif */
 #endif
-
-
 
 /** \name Compounds for Coulomb interactions */
 /*@{*/
@@ -522,7 +553,31 @@ typedef struct {
       double cos_phi0;
 #endif
     } angle;
-    /** Parameters for four body angular potential (dihedral-angle potentials). */
+    /** Parameters for three body angular potential (bond_angle_harmonic). 
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
+    struct {
+      double bend;
+      double phi0;
+    } angle_harmonic;
+    /** Parameters for three body angular potential (bond_angle_cosine). 
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
+    struct {
+      double bend;
+      double phi0;
+      double cos_phi0;
+      double sin_phi0;
+    } angle_cosine;
+    /** Parameters for three body angular potential (bond_angle_cossquare). 
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
+    struct {
+      double bend;
+      double phi0;
+      double cos_phi0;
+    } angle_cossquare;
+   /** Parameters for four body angular potential (dihedral-angle potentials). */
     struct {
       double mult;
       double bend;
@@ -648,6 +703,21 @@ typedef struct {
   int reflecting;
 } Constraint_cylinder;
 
+/** Parameters for a RHOMBOID constraint. */
+typedef struct {
+  /** corner of the rhomboid */
+  double pos[3];
+  /** edges adjacent to the corner */
+  double a[3];
+  double b[3];
+  double c[3];
+  /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
+  double direction;
+  /** whether the constraint is penetrable 1 or not 0*/
+  int penetrable; 
+  int reflecting;
+} Constraint_rhomboid;
+
 /** Parameters for a PORE constraint. */
 typedef struct {
   /** center of the cylinder. */
@@ -718,6 +788,7 @@ typedef struct {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
+    Constraint_rhomboid rhomboid;
     Constraint_rod rod;
     Constraint_plate plate;
     Constraint_maze maze;
@@ -775,50 +846,15 @@ extern DoubleList thermodynamic_f_energies;
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions). */
-extern double max_cut_non_bonded;
+extern double max_cut_nonbonded;
+/** Maximal interaction cutoff (real space/short range bonded interactions). */
+extern double max_cut_bonded;
+/** Minimal global interaction cutoff. Particles with a distance
+    smaller than this are guaranteed to be available on the same node
+    (through ghosts).  */
+extern double min_global_cut;
 
-/** For the warmup you can cap the singularity of the Lennard-Jones
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-extern double lj_force_cap;
-
-/** For the warmup you can cap the singularity of the directionnal LJ
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to write that?).*/
-extern double ljangle_force_cap;
-
-/** For the warmup you can cap the singularity of the Morse
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-extern double morse_force_cap;
-
-/** For warm up integration, the maximum force between any two particles
-    interacting via Buckingham potential can be set and this magnitude of max
-    force is stored in buck_force_cap*/
-extern double buck_force_cap;
-
-/** For the warmup you can cap any tabulated potential at the value
-    tab_force_cap.  This works for most common potentials where a
-    singularity in the force occurs at small separations.  If you have
-    more specific requirements calculate a separate lookup table for
-    each stage of the warm up.
-
-    \note If the maximum value of the tabulated force at small
-    separations is less than the force cap then a warning will be
-    issued since the user should provide tabulated values in the range
-    where particle interactions are expected.  Even so the program
-    will still run and a linear extrapolation will be used at small
-    separations until the force reaches the capped value or until zero
-    separation */
-extern double tab_force_cap;
-
-#ifdef CONSTRAINTS
-/** numnber of constraints. */
-extern int n_constraints;
-/** field containing constraints. */
-extern Constraint *constraints;
-#endif
-/**Switch for nonbonded interaction exclusion*/
+/** Switch for nonbonded interaction exclusion */
 extern int ia_excl;
 
 /************************************************
@@ -826,6 +862,14 @@ extern int ia_excl;
  ************************************************/
 /** Function for initializing force and energy tables */
 void force_and_energy_tables_init();
+
+#ifdef ELECTROSTATICS
+int coulomb_set_bjerrum(double bjerrum);
+#endif
+
+#ifdef DIPOLES
+int dipolar_set_Dbjerrum(double bjerrum);
+#endif
 
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
@@ -838,17 +882,8 @@ void tf_tables_init();
 
 #endif
 
-/** Implementation of the tcl command "inter". This function
-    allows the interaction parameters to be modified.
- */
-int tclcommand_inter(ClientData data, Tcl_Interp *interp,
-	  int argc, char **argv);
-
-/** Implementation of the Tcl function constraint. This function
-    allows to set and delete constraints.
- */
-int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
-	       int argc, char **argv);
+/** copy a set of interaction parameters. */
+void copy_ia_params(IA_parameters *dst, IA_parameters *src);
 
 /** get interaction parameters between particle sorts i and j */
 MDINLINE IA_parameters *get_ia_param(int i, int j) {
@@ -856,6 +891,11 @@ MDINLINE IA_parameters *get_ia_param(int i, int j) {
   extern int n_particle_types;
   return &ia_params[i*n_particle_types + j];
 }
+
+/** get interaction parameters between particle sorts i and j.
+    Slower than @ref get_ia_param, but can also be used on not
+    yet present particle types*/
+IA_parameters *get_ia_param_safe(int i, int j);
 
 #ifdef ADRESS 
 MDINLINE TF_parameters *get_tf_param(int i) {
@@ -892,13 +932,18 @@ void realloc_tf_params(int nsize);
     electrostatic interactions is stored in max_cut_non_bonded. This
     value is used in the verlet pair list algorithm (see \ref
     verlet.h). */
-void calc_maximal_cutoff();
+void recalc_maximal_cutoff();
+
+/** call when the temperature changes, for Bjerrum length adjusting. */
+void recalc_coulomb_prefactor();
 
 /** check whether all force calculation routines are properly initialized. */
 int check_obs_calc_initialized();
 
 /**  check if a non bonded interaction is defined */
-int checkIfInteraction(IA_parameters *data);
+MDINLINE int checkIfInteraction(IA_parameters *data) {
+  return data->particlesInteract;
+}
 
 /** check if the types of particles i and j have any non bonded
     interaction defined. */
@@ -906,9 +951,15 @@ MDINLINE int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
+///
+char *get_name_of_bonded_ia(int i);
+
 #ifdef ADRESS
 int checkIfTF(TF_parameters *data);
 #endif
 
-char *get_name_of_bonded_ia(int i);
+#ifdef BOND_VIRTUAL
+int virtual_set_params(int bond_type);
+#endif
+
 #endif

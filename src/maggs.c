@@ -1,6 +1,6 @@
 /*
   Copyright (C) 2010,2011 Florian Fahrenberger
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
  
@@ -154,7 +154,7 @@ typedef struct {
 /*******************************/
 
 /* create system structure with all zeros. Filled in maggs_set_parameters(); */
-MAGGS_struct maggs = { 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
+MAGGS_struct maggs = { 1, 1.0, 0. , 0. , 0. , 0. , 0. , 0 , 0. , 0. , {{0.},{0.}}};
 
 /* local mesh. */
 static lattice_parameters lparams;
@@ -195,8 +195,7 @@ static t_dirs* neighbor;
 // void maggs_update_plaquette(int mue, int nue, int* Neighbor, int index, double delta); /* update fields on plaquette */
 
 /****** setup everything: ******/
-// int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh); /* set the system parameters */
-// int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv) /* parse tcl command */
+// int maggs_set_parameters(double bjerrum, double f_mass, int mesh); /* set the system parameters */
 // void maggs_setup_neighbors(); /* setup the site neighbors */
 // void maggs_setup_local_lattice(); /* set lattice parameters */
 // void maggs_calc_surface_patches(t_surf_patch* surface_patch); /* prepare for communication */
@@ -236,7 +235,6 @@ static t_dirs* neighbor;
 /****** get energy and print out stuff ******/
 // double maggs_electric_energy(); /* calculate electric (E-field) energy */
 // double maggs_magnetic_energy(); /* calculate magnetic (B-field) energy */
-// int tclprint_to_result_Maggs(Tcl_Interp *interp) /* print result for TCL interface */
 
 /****** init and exit ******/
 // maggs_init(); /* initialize: check parameters, assign memory, calculate initial field */
@@ -289,7 +287,7 @@ int maggs_count_charged_particles()
       if( part[i].p.q != 0.0 ) node_sum += 1.0;
   }
 	
-  MPI_Reduce(&node_sum, &tot_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&node_sum, &tot_sum, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 	
   return tot_sum;
 }
@@ -478,6 +476,50 @@ int maggs_sanity_checks()
   return ret;
 }
 
+void maggs_compute_dipole_correction()
+{
+/*
+maggs.prefactor  = sqrt(4. * M_PI * maggs.bjerrum * temperature);
+                 = sqrt(1/epsilon)
+maggs.pref2      = maggs.bjerrum * temperature;
+                 = 1/4*pi*epsilon
+*/
+ 
+    /* Local dipole moment */
+    double local_dipole_moment[3] = {0.0, 0.0, 0.0};
+    /* Global dipole moment */
+    double dipole_moment[3];
+    
+    int dim,c,np,i;
+    Particle* p;
+    Cell* cell;
+
+    /* Compute the global dipole moment */
+    for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p  = cell->part;
+        np = cell->n;
+        for(i=0; i<np; i++)
+            for (dim=0;dim<3;dim++)
+                 local_dipole_moment[dim] += p[i].r.p[dim] * p[i].p.q;
+    }
+
+    MPI_Allreduce(local_dipole_moment, dipole_moment, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
+    
+    double volume = box_l[0] * box_l[1] * box_l[2];
+    double dipole_prefactor = 4.0*M_PI / (2.0*volume*(maggs.epsilon_infty + 1.0));
+
+    /* apply correction to all particles: */
+    for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p  = cell->part;
+        np = cell->n;
+        for(i=0; i<np; i++)
+            for (dim=0;dim<3;dim++)
+                p[i].f.f[dim] += p[i].p.q * dipole_prefactor * dipole_moment[dim];
+    }
+}
+
 
 
 
@@ -486,68 +528,25 @@ int maggs_sanity_checks()
 /****** setup everything: ******/
 /*******************************/
 
-/** set and calculate the system wide parameters
-    @return zero if successful
-    @param interp    TCL interpreter handle
-    @param bjerrum   Bjerrum length to set
-    @param f_mass    \f$1/c^2\f$ to set
-    @param mesh      Mesh size in 1D of the system
-*/
-int maggs_set_parameters(Tcl_Interp *interp, double bjerrum, double f_mass, int mesh)
+int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty)
 {
   if (f_mass <=0.) {
-    Tcl_AppendResult(interp, "mass of the field is negative", (char *)NULL);
-    return TCL_ERROR;
+    return -1;
   } 
   if(mesh<0) {
-    Tcl_AppendResult(interp, "mesh must be positive", (char *) NULL);
-    return TCL_ERROR;
+    return -2;
   }
 	
-  maggs.mesh           = mesh; 
+  maggs.mesh           = mesh;
+  maggs.finite_epsilon_flag  = finite_epsilon_flag;
+  maggs.epsilon_infty  = epsilon_infty;
   maggs.bjerrum        = bjerrum;
   maggs.f_mass         = f_mass; 
   maggs.invsqrt_f_mass = 1./sqrt(f_mass); 	
 	
   mpi_bcast_coulomb_params();
 	
-  return TCL_OK;
-}
-
-/** parse TCL command.
-    number of parameters is checked and maggs_set_parameters function is called.
-    @return zero if successful
-    @param interp  TCL interpreter handle
-    @param argc    number of arguments given
-    @param argv    array of arguments given
-*/
-int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** argv)
-{
-  int mesh;
-  double f_mass;
-	
-	
-  if(argc < 2) {
-    Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(! ARG_IS_D(0, f_mass))
-    return TCL_ERROR;
-	
-  if(! ARG_IS_I(1, mesh)) {
-    Tcl_AppendResult(interp, "integer expected", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  if(argc > 2) {
-    Tcl_AppendResult(interp, "Too many parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
-    return TCL_ERROR;
-  }
-	
-  coulomb.method = COULOMB_MAGGS;
-	
-  return maggs_set_parameters(interp, coulomb.bjerrum, f_mass, mesh);
+  return ES_OK;
 }
 
 
@@ -684,7 +683,7 @@ void maggs_setup_local_lattice()
 
     lattice[linearindex].charge = 0.;
 		
-    /* Here, we need a function to set PERMITTIVITY!!!!! */
+    /* set relative permittivity to 1 for all sites (default) */
     FOR3D(i) lattice[linearindex].permittivity[i] = 1.;
   }
 	
@@ -773,6 +772,31 @@ void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, M
   MPI_Type_commit(xz);
 }
 
+/** get lattice size in one dimension
+ @return mesh in 1D
+ */
+int maggs_get_mesh_1D()
+{
+    return maggs.mesh;
+}
+
+/** set permittivity for single lattice links
+ @param node_x              index of the node in x direction
+ @param node_y              index of the node in y direction
+ @param node_z              index of the node in z direction
+ @param direction           direction in which the link points from the node. 0 is for x, 1 is for y, 2 is for z
+ @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
+ */
+double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon)
+{
+    int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
+    /* save and return old epsilon for information purposes */
+    double epsilon_before = lattice[node_index].permittivity[direction];
+    /* set relative epsilon */
+    lattice[node_index].permittivity[direction] = relative_epsilon;
+
+    return epsilon_before;
+}
 
 
 
@@ -841,12 +865,12 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       case 0 :
       case 1 :
 	if(e_equil || dim == 1) {
-	  MPI_Irecv (&field[doffset],1,yzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,yzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,yzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,yzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	else {
-	  MPI_Irecv (&field[doffset+1],1,yzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset+1],1,yzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset+1],1,yzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset+1],1,yzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}	  
 					
 	MPI_Waitall(2,request,status);
@@ -854,24 +878,24 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       case 2 :
       case 3 :
 	if(e_equil || dim == 1) {
-	  MPI_Irecv (&field[doffset],1,xzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	else {
-	  MPI_Irecv (&field[doffset],1,xzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xzPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xzPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}	  
 	MPI_Waitall(2,request,status);
 	break;
       case 4 :
       case 5 : 
 	if(e_equil || dim == 1) {
-	  MPI_Irecv (&field[doffset],1,xyPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xyPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xyPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xyPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	else {
-	  MPI_Irecv (&field[doffset],1,xyPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[0]);
-	  MPI_Isend(&field[offset],1,xyPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,MPI_COMM_WORLD,&request[1]);
+	  MPI_Irecv (&field[doffset],1,xyPlane2D,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
+	  MPI_Isend(&field[offset],1,xyPlane2D,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
 	MPI_Waitall(2,request,status);
 	break;
@@ -1217,7 +1241,7 @@ double maggs_check_curl_E()
     curl *= maggs.inva;
     if(fabs(curl)>maxcurl) maxcurl = fabs(curl);
   }
-  MPI_Allreduce(&maxcurl,&gmaxcurl,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);  
+  MPI_Allreduce(&maxcurl,&gmaxcurl,1,MPI_DOUBLE,MPI_MAX,comm_cart);  
   return gmaxcurl;
 }
 
@@ -1324,13 +1348,15 @@ void maggs_minimize_transverse_field()
     energy minimization takes up lots of time. */
 void maggs_calc_init_e_field()
 {
-  int xsizeplus, ysizeplus;
   double localqy, localqz;
   double qplane, qline;
   int    i, k, ix, iy, iz;
   int index = 0;
   double invasq, tmp_field=0.0;
-  double sqrE, gsqrE, goldE, gavgEx, gavgEy, gavgEz;
+  double sqrE, gsqrE, gavgEx, gavgEy, gavgEz;
+#ifdef MAGGS_DEBUG
+  double goldE;
+#endif
   double qz, qy, qx, avgEx, avgEy, avgEz;
   double Eall[SPACE_DIM], gEall[SPACE_DIM];
   double maxcurl;
@@ -1342,9 +1368,6 @@ void maggs_calc_init_e_field()
 	
   invasq = maggs.inva*maggs.inva;
 	
-  xsizeplus = lparams.dim[0];
-  ysizeplus = lparams.dim[1];
-	
   /* sort particles for the calculation of initial charge distribution */
   MAGGS_TRACE(fprintf(stderr,"%d:Sorting particles...\n",this_node));
 	
@@ -1353,10 +1376,10 @@ void maggs_calc_init_e_field()
   maggs_distribute_particle_charges();
 	
   dim = node_grid[1]*node_grid[0];
-  color = this_node/dim;
+  color = node_pos[2];
   rank  = this_node%dim;
-  MPI_Comm_split(MPI_COMM_WORLD, color, rank, &zplane);
-  color = rank/node_grid[0];
+  MPI_Comm_split(comm_cart, color, rank, &zplane);
+  color = node_pos[1];
   rank  = rank%node_grid[0];
   MPI_Comm_split(zplane, color, rank, &yline);
 	
@@ -1368,7 +1391,7 @@ void maggs_calc_init_e_field()
 	
   /* get process coordinates */
   if(node_pos[2]!= 0) {
-    MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[4], REQ_MAGGS_EQUIL, MPI_COMM_WORLD, &status);
+    MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[4], REQ_MAGGS_EQUIL, comm_cart, &status);
     for(iy=lparams.inner_left_down[1];iy<lparams.inner_up_right[1];iy++) {
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
 	index = maggs_get_linear_index(ix, iy, lparams.inner_left_down[2], lparams.dim);
@@ -1387,7 +1410,7 @@ void maggs_calc_init_e_field()
 	localqz += lattice[index].charge / lattice[index].permittivity[2];
       }
     } 
-		
+
     MPI_Allreduce(&localqz, &qz, 1, MPI_DOUBLE, MPI_SUM, zplane);
     qz = qz/(maggs.mesh*maggs.mesh);
     qplane = qz*maggs.prefactor*invasq;
@@ -1403,7 +1426,7 @@ void maggs_calc_init_e_field()
     if(iz>=lparams.inner_up_right[2]-1) {
       if (node_pos[2]<node_grid[2]-1) {
 	if(node_grid[2]>1) {
-	  MPI_Send(&Dfield[3*index+ZPLUS], 1, MPI_DOUBLE, node_neighbors[5], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
+	  MPI_Send(&Dfield[3*index+ZPLUS], 1, MPI_DOUBLE, node_neighbors[5], REQ_MAGGS_EQUIL, comm_cart); 
 	}
       }
       else 
@@ -1414,9 +1437,9 @@ void maggs_calc_init_e_field()
 	  fflush(stderr);
 	}
     }
-		
+
     if(node_pos[1]!= 0) {
-      MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[2], REQ_MAGGS_EQUIL, MPI_COMM_WORLD, &status);
+      MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[2], REQ_MAGGS_EQUIL, comm_cart, &status);
       for(ix=lparams.inner_left_down[0];ix<lparams.inner_up_right[0];ix++) {  
 	index = maggs_get_linear_index(ix, lparams.inner_left_down[1], iz, lparams.dim);
 	Dfield[3*neighbor[index][YMINUS]+YPLUS] = tmp_field;
@@ -1429,7 +1452,7 @@ void maggs_calc_init_e_field()
 	index = maggs_get_linear_index(ix, iy, iz, lparams.dim);
 	localqy += lattice[index].charge / lattice[index].permittivity[1];
       }
-			
+
       MPI_Allreduce(&localqy, &qy, 1, MPI_DOUBLE, MPI_SUM, yline);
 			
       qy = qy/maggs.mesh;
@@ -1445,7 +1468,7 @@ void maggs_calc_init_e_field()
       if(iy>=lparams.inner_up_right[1]-1) {
 	if(node_pos[1] < node_grid[1]-1) {
 	  if (node_grid[1]>1)
-	    MPI_Send(&Dfield[3*index+YPLUS], 1, MPI_DOUBLE, node_neighbors[3], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
+	    MPI_Send(&Dfield[3*index+YPLUS], 1, MPI_DOUBLE, node_neighbors[3], REQ_MAGGS_EQUIL, comm_cart); 
 	}
 	else
 	  if (fabs(Dfield[3*index+YPLUS]) > 100.*ROUND_ERROR_PREC)
@@ -1455,7 +1478,7 @@ void maggs_calc_init_e_field()
       }
 			
       if(node_pos[0]!= 0) {
-	MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[0], REQ_MAGGS_EQUIL, MPI_COMM_WORLD, &status);
+	MPI_Recv(&tmp_field, 1, MPI_DOUBLE, node_neighbors[0], REQ_MAGGS_EQUIL, comm_cart, &status);
 	index = maggs_get_linear_index(lparams.inner_left_down[0], iy, iz, lparams.dim);
 	Dfield[3*neighbor[index][XMINUS]+XPLUS] = tmp_field;
       }
@@ -1470,7 +1493,7 @@ void maggs_calc_init_e_field()
       if(ix>=lparams.inner_up_right[0]-1) {
 	if(node_pos[0] < node_grid[0]-1) {
 	  if(node_grid[0]>1)
-	    MPI_Send(&Dfield[3*index+XPLUS], 1, MPI_DOUBLE, node_neighbors[1], REQ_MAGGS_EQUIL, MPI_COMM_WORLD); 
+	    MPI_Send(&Dfield[3*index+XPLUS], 1, MPI_DOUBLE, node_neighbors[1], REQ_MAGGS_EQUIL, comm_cart); 
 	}
 	else
 	  if (fabs(Dfield[3*index+XPLUS]) > 100.*ROUND_ERROR_PREC)
@@ -1491,8 +1514,8 @@ void maggs_calc_init_e_field()
   }
 	
 	
-  /*  MPI_Barrier(MPI_COMM_WORLD); */
-  MPI_Allreduce(&avgEz,&gavgEz,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  /*  MPI_Barrier(comm_cart); */
+  MPI_Allreduce(&avgEz,&gavgEz,1,MPI_DOUBLE,MPI_SUM,comm_cart);
   gavgEz = gavgEz/(maggs.mesh*node_grid[0]*node_grid[1]);
 	
   FORALL_INNER_SITES(ix, iy,iz) {
@@ -1551,12 +1574,17 @@ void maggs_calc_init_e_field()
     FOR3D(k) sqrE += SQR(Dfield[3*i+k]);
   }
 
-  MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD); 
+  MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
   gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
 
-  MAGGS_TRACE( if(!this_node) iteration = 0;);
+#ifdef MAGGS_DEBUG
+  int iteration; 
+  if(!this_node) iteration = 0;
+#endif
   do {
+#ifdef MAGGS_DEBUG
     goldE = gsqrE;
+#endif
     sqrE = 0.;
     maggs_minimize_transverse_field();
 		
@@ -1564,20 +1592,20 @@ void maggs_calc_init_e_field()
       i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
       FOR3D(k) sqrE += SQR(Dfield[3*i+k]);
     }
-    MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD); 
+    MPI_Allreduce(&sqrE,&gsqrE,1,MPI_DOUBLE,MPI_SUM,comm_cart); 
     gsqrE = gsqrE/(SPACE_DIM*maggs.mesh*maggs.mesh*maggs.mesh);  
     maxcurl = maggs_check_curl_E();
 		
-    MAGGS_TRACE(
-		if(!this_node) {
-		  iteration++;
-		  if(iteration%1==0) {
-		    fprintf(stderr, "# iteration for field equilibration %d, diff=%9.4e, curlE=%9.4e\n", 
-			    iteration, fabs(gsqrE-goldE),maxcurl);
-		    fflush(stderr);    
-		  }
-		}
-		);
+#ifdef MAGGS_DEBUG
+    if(!this_node) {
+      iteration++;
+      if(iteration%1==0) {
+	fprintf(stderr, "# iteration for field equilibration %d, diff=%9.4e, curlE=%9.4e\n", 
+		iteration, fabs(gsqrE-goldE),maxcurl);
+	fflush(stderr);    
+      }
+    }
+#endif
 		
   } while(fabs(maxcurl)>1000000.*ROUND_ERROR_PREC);
 	
@@ -1599,9 +1627,9 @@ void maggs_calc_init_e_field()
     }
   }
 	
-  MPI_Allreduce(Eall,gEall,3,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(Eall,gEall,3,MPI_DOUBLE,MPI_SUM,comm_cart);
 	
-  FOR3D(k) gEall[k] /= (node_grid[0]*node_grid[1]*node_grid[2]*lparams.size[0]*lparams.size[1]*lparams.size[2]);
+  FOR3D(k) gEall[k] /= (n_nodes*lparams.size[0]*lparams.size[1]*lparams.size[2]);
 	
   FORALL_INNER_SITES(ix, iy, iz) {
     i = maggs_get_linear_index(ix, iy, iz, lparams.dim);
@@ -1758,14 +1786,11 @@ void maggs_add_current_on_segment(Particle *p, int ghost_cell)
   int first[SPACE_DIM];
   int f_crossing, flag_update_flux;
   t_dvector r_temp; 
-  double inva_half;
   double delta;
   double flux[4], v;
   double v_inva[SPACE_DIM], v_invasq[SPACE_DIM];
   double pos[SPACE_DIM], help[3];
   double t_step;
-	
-  inva_half = 0.5*maggs.inva;
 	
   FOR3D(d) {
     pos[d]   = (p->r.p[d] - lparams.left_down_position[d])* maggs.inva;
@@ -2243,6 +2268,9 @@ void maggs_calc_forces()
       }
     }
   }
+
+  if (maggs.finite_epsilon_flag) maggs_compute_dipole_correction();
+
 }
 
 
@@ -2273,7 +2301,7 @@ double maggs_electric_energy()
     }
   }
   localresult *= 0.5*maggs.a;
-  MPI_Allreduce(&localresult,&globalresult,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);  
+  MPI_Allreduce(&localresult,&globalresult,1,MPI_DOUBLE,MPI_SUM,comm_cart);  
   return globalresult;
 }
 
@@ -2297,30 +2325,6 @@ double maggs_magnetic_energy()
   result *= 0.5*maggs.a;
   return result;
 }
-
-/** print out current setup of maggs method
-    @return 0 if successful
-    @param interp TCL interpreter handle
-*/
-int tclprint_to_result_Maggs(Tcl_Interp *interp)
-{
-  char buffer[TCL_DOUBLE_SPACE];
-	
-  Tcl_PrintDouble(interp, maggs.f_mass, buffer);
-  Tcl_AppendResult(interp, "maggs ", buffer, " ", (char *) NULL);
-  sprintf(buffer,"%d",maggs.mesh);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL); 
-	
-  return TCL_OK;
-}
-
-
-
-
-
-
-
-
 
 /***************************/
 /****** init and exit ******/
@@ -2349,13 +2353,14 @@ void maggs_init()
     		
     maggs_setup_local_lattice();
 		
-    /* update max_cut */
-    integrate_vv_recalc_maxrange();
-    on_parameter_change(FIELD_MAXRANGE);
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
+<<<<<<< HEAD
     //if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
     maggs_calc_self_energy_coeffs();
+=======
+    //    if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
+>>>>>>> d4fdbc1065000fc97384873af3d323fb59587da6
 }
 
 /** Frees the dynamically allocated memory

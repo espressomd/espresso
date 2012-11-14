@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -21,10 +21,6 @@ source "tests_common.tcl"
 
 require_feature "ADRESS" off
 require_feature "LENNARD_JONES"
-
-if {[setmd n_nodes] > 1} {
-    require_feature "MOL_CUT" off
-}
 
 puts "----------------------------------------"
 puts "- Testcase nsquare.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -95,17 +91,17 @@ if { [catch {
     set toteng [analyze energy total]
     set totprs [analyze pressure total]
 
-#     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
-#     puts "relative energy deviations: $rel_eng_error  ($toteng / $energy)"
-#     if { $rel_eng_error > $epsilon } {
-# 	error "relative energy error too large"
-#     }
+     set rel_eng_error [expr abs(($toteng - $energy)/$energy)]
+     puts "relative energy deviations: $rel_eng_error  ($toteng / $energy)"
+     if { $rel_eng_error > $epsilon } {
+	 error "relative energy error too large"
+     }
 
-#     set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
-#     puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
-#     if { $rel_prs_error > $epsilon } {
-# 	error "relative pressure error too large"
-#     }
+    set rel_prs_error [expr abs(($totprs - $pressure)/$pressure)]
+    puts "relative pressure deviations: $rel_prs_error  ($totprs / $pressure)"
+    if { $rel_prs_error > $epsilon } {
+	error "relative pressure error too large"
+    }
 
     set maxdx 0
     set maxpx 0
@@ -143,3 +139,5 @@ if { [catch {
 } res ] } {
     error_exit $res
 }
+
+exit 0

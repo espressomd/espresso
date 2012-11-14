@@ -1,3 +1,4 @@
+# Copyright (C) 2012 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -18,6 +19,7 @@
 # All Tcl-scripts in the scripts-directory should be listed here
 
 # make a copy of all script files
+# PLEASE KEEP ALPHABETIC ORDER
 ESSCRIPTS = \
 	init.tcl \
 	ABHmath.tcl \
@@ -25,23 +27,30 @@ ESSCRIPTS = \
 	blockfile_support.tcl \
 	bundle.tcl \
 	countBonds.tcl \
+	dielectrics.tcl \
+	gibbs_ghmc.tcl \
+	parallel_tempering.tcl \
 	pdb.tcl \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
-	tclline.tcl \
-	parallel_tempering.tcl
+	vtk.tcl
 
 EXTRA_DIST=$(ESSCRIPTS)
 
 # copy the scripts files from the source dir to the obj dir if they are different
 # using INSTALL_DATA here as the scripts should not be executable
-all:
+.PHONY: copy-scripts
+FORCE:
+copy-scripts: FORCE
 	for file in $(ESSCRIPTS); do \
 	  if test ! -e $$file || test ! $$file -ef $(abs_srcdir)/$$file; then \
 	    $(INSTALL_DATA) $(abs_srcdir)/$$file $(abs_builddir); \
 	  fi; \
 	done
+
+all-local: copy-scripts
+check-local: copy-scripts
 
 clean-local:
 	for file in $(ESSCRIPTS); do \
