@@ -1,0 +1,20 @@
+Issues:
+
+- same in imd, should go out
+
+- the documentation is currently only a PDF, we need the sources.
+  That can be part of the UG, as it is short enough, or we could
+  move all to the tutorials directory. Anyways, all new Tcl
+  commands / interaction need to be documented in the UG.
+
+- too much hard-coded in the samples, fix the scripts
+
+Currently resolved:
+
+- prepare_vmd_connection/writepdb were changed. That has nothing to do
+  with FSI, so why is it there? Also, the code is actually wrong,
+  and breaks e.g. being able to fold coordinates. So, I took it out.
+
+- removed files like vmd.log, backup files etc that should not go to trunk.
+
+- renamed directories to better fit Espresso.

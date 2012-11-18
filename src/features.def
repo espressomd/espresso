@@ -97,6 +97,13 @@ HAT
 GAY_BERNE		implies ROTATION
 OVERLAPPED
 
+/* NEW Interactions */
+AREA_FORCE_LOCAL
+AREA_FORCE_GLOBAL
+STRETCHING_FORCE
+BENDING_FORCE
+VOLUME_FORCE
+
 /* Bond angle */
 /* Note: Activate ONLY ONE bonded angle potential out of the following! */
 BOND_ANGLE_HARMONIC	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
