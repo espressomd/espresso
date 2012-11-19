@@ -62,6 +62,7 @@
 #include "molforces.h"
 #include "mdlc_correction.h"
 #include "reaction.h"
+#include "external_potential.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -137,6 +138,9 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_recv_fluid_boundary_flag_slave) \
   CB(mpi_set_particle_temperature_slave) \
   CB(mpi_set_particle_gamma_slave) \
+  CB(mpi_external_potential_broadcast_slave) \
+  CB(mpi_external_potential_tabulated_read_potential_file_slave) \
+
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -2712,6 +2716,32 @@ void mpi_loop()
     slave_callbacks[request[0]](request[1], request[2]);
     COMM_TRACE(fprintf(stderr, "%d: finished %s %d %d\n", this_node,
 		       names[request[0]], request[1], request[2]));
+  
   }
 }
 
+void mpi_external_potential_broadcast(int number) {
+  ExternalPotentialTabulated *e = &(external_potentials[number].e.tabulated);
+  mpi_call(mpi_external_potential_broadcast_slave, 0, number);
+  MPI_Bcast(&external_potentials[number], sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
+  MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);
+}
+
+void mpi_external_potential_broadcast_slave(int node, int number) {
+  ExternalPotential E;
+  MPI_Bcast(&E, sizeof(ExternalPotential), MPI_BYTE, 0, comm_cart);
+  ExternalPotential* new;
+  generate_external_potential(&new);
+  external_potentials[number] = E;
+  external_potentials[number].scale=malloc(external_potentials[number].n_particle_types);
+  MPI_Bcast(external_potentials[number].scale, external_potentials[number].n_particle_types, MPI_DOUBLE, 0, comm_cart);
+}
+
+void mpi_external_potential_tabulated_read_potential_file(int number) {
+  mpi_call(mpi_external_potential_tabulated_read_potential_file_slave, 0, number);
+  external_potential_tabulated_read_potential_file(number);
+}
+
+void mpi_external_potential_tabulated_read_potential_file_slave(int node, int number) {
+  external_potential_tabulated_read_potential_file(number);
+}
