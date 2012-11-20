@@ -10,7 +10,7 @@
 #define EXTERNAL_POTENTIAL_TYPE_ROD 1
 
 
-void preinit_external_potentials();
+void external_potential_pre_init();
 
 typedef struct {
   char filename[MAX_FILENAME_SIZE];
@@ -40,6 +40,10 @@ int external_potential_init(int number, char* filename, int n_particle_types, do
 int external_potential_tabulated_read_potential_file(int number);
 
 void add_external_potential_forces(Particle* p);
+void add_external_potential_energy(Particle* p);
+
+int write_local_lattice_to_file(char* filename_prefix, Lattice* lattice); 
+
 
 #endif
 

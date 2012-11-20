@@ -56,15 +56,11 @@ int init_lattice(Lattice *lattice, double *agrid, double* offset, int halo_size,
     lattice->global_grid[d] = (int)floor(box_l[d]/agrid[d]+ROUND_ERROR_PREC);
     lattice->offset[d]=offset[d];
     lattice->local_index_offset[d]=(int) ceil((my_left[d]-lattice->offset[d])/lattice->agrid[d]);
-    printf("aasdfasdfasdfasdf %d\n", lattice->local_index_offset[d]);
     lattice->local_offset[d] = lattice->offset[d] +
       lattice->local_index_offset[d]*lattice->agrid[d];
     lattice->grid[d] = (int) ceil ( ( my_right[d] - lattice->local_offset[d]-ROUND_ERROR_PREC )
       / lattice->agrid[d]);
   }
-
-  printf("initializing lattice with %f %f %f\n", agrid[0], agrid[1], agrid[2]);
-  printf("grid is %d %d %d\n", lattice->grid[0],  lattice->grid[1],  lattice->grid[2]); 
 
   /* sanity checks */
   for (dir=0;dir<3;dir++) {
@@ -213,7 +209,6 @@ void lattice_interpolate_linear_gradient(Lattice* lattice, double* pos, double* 
      value[3*i+2]+= ( +d[0])*( +d[1])*(  +1  ) * local_value[i] / lattice->agrid[2];
    }
 
-   printf("pos %f %f %f res %f %f %f\n", pos[0], pos[1], pos[2], value[0], value[1], value[2]);
 }
 
 
@@ -225,7 +220,6 @@ void lattice_interpolate_linear(Lattice* lattice, double* pos, double* value) {
      ERROR_SPRINTF(c, "Error in lattice_interpolate_linear: halo size is 0");
      return;
    }
-   printf("pos %f %f %f\n", pos[0], pos[1], pos[2]);
    for (int dim = 0; dim<3; dim++) {
      left_halo_index[dim]=(int) floor((pos[dim]-my_left[dim]-lattice->offset[dim])/lattice->agrid[dim]) + lattice->halo_size;
      d[dim]=((pos[dim]-my_left[dim]-lattice->offset[dim])/lattice->agrid[dim] - floor((pos[dim]-my_left[dim])/lattice->agrid[dim]));
@@ -262,15 +256,11 @@ void lattice_interpolate_linear(Lattice* lattice, double* pos, double* value) {
 
    double* local_value;
    for (int i=0; i<8; i++) {
-     printf("w %f", w[i]);
      lattice_get_data_for_linear_index(lattice, index[i], (void**) &local_value);
      for (int j = 0; j<lattice->dim; j++) {
-       printf("l %f ", local_value[j]);
        value[j]+=w[i]*local_value[j];
      }
-     printf("\n");
    }
-   printf("res %f %f %f\n", value[0], value[1], value[2]);
 }
 
 void lattice_set_data_for_global_position_with_periodic_image(Lattice* lattice, double* pos, void* data) {
@@ -283,7 +273,6 @@ void lattice_set_data_for_global_position_with_periodic_image(Lattice* lattice, 
   for (int i = 0; i<3; i++) {
     global_index[i] = (int) floor((pos[i]-lattice->offset[i])/lattice->agrid[i]+ROUND_ERROR_PREC);
   }
-  printf("check2! %f %f %f %ld %ld %ld\n", pos[0], pos[1], pos[2], global_index[0], global_index[1], global_index[2]);
 
   for (int i=-2; i<=2; i++) {
     for (int j=-2; j<=2; j++) {

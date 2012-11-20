@@ -74,6 +74,7 @@
 #include "elc.h"
 #include "iccp3m.h"
 #include "collision.h" 
+#include "external_potential.h"
 /* end of force files */
 
 /** \name Exported Functions */

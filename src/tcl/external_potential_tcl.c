@@ -62,8 +62,6 @@ int tclcommand_external_potential_tabulated(Tcl_Interp* interp, int argc, char *
     Tcl_AppendResult(interp, "No filename given to external_potential tabulated\n" , (char *)NULL);
     return TCL_ERROR;
   }
-  printf("We have %d external potentials\n", n_external_potentials);
-  printf("scallist.n %d\n", scalelist.n);
   if (external_potential_tabulated_init(n_external_potentials-1, filename, scalelist.n, scalelist.e)==ES_ERROR) {
     Tcl_AppendResult(interp, "Error creating external potential\n" , (char *)NULL);
     return TCL_ERROR;

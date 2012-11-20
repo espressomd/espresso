@@ -140,6 +140,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_set_particle_gamma_slave) \
   CB(mpi_external_potential_broadcast_slave) \
   CB(mpi_external_potential_tabulated_read_potential_file_slave) \
+  CB(mpi_external_potential_sum_energies_slave) \
 
 
 // create the forward declarations
@@ -2744,4 +2745,29 @@ void mpi_external_potential_tabulated_read_potential_file(int number) {
 
 void mpi_external_potential_tabulated_read_potential_file_slave(int node, int number) {
   external_potential_tabulated_read_potential_file(number);
+}
+
+void mpi_external_potential_sum_energies() {
+  mpi_call(mpi_external_potential_sum_energies_slave, 0, 0);
+  double* energies = malloc(n_external_potentials);
+  for (int i=0; i<n_external_potentials; i++) {
+    energies[i]=external_potentials[i].energy;
+  }
+  double* energies_sum =  malloc(n_external_potentials); 
+  MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
+  for (int i=0; i<n_external_potentials; i++) {
+    external_potentials[i].energy=energies_sum[i];
+  }
+  free(energies);
+  free(energies_sum);
+}
+
+
+void mpi_external_potential_sum_energies_slave() {
+  double* energies = malloc(n_external_potentials);
+  for (int i=0; i<n_external_potentials; i++) {
+    energies[i]=external_potentials[i].energy;
+  }
+  MPI_Reduce(energies, 0, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
+  free(energies);
 }

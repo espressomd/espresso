@@ -63,6 +63,7 @@
 #include "statistics_correlation.h"
 #include "lb-boundaries.h"
 #include "domain_decomposition.h"
+#include "external_potential.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;

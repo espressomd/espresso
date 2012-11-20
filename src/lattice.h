@@ -231,7 +231,6 @@ MDINLINE int map_global_index_to_halo_index(Lattice* lattice, index_t* global_in
     if (halo_index[d] < 0 || halo_index[d] >= lattice->halo_grid[d])
       out=1;
   }
-  printf("check! %d %d %d %ld %ld %ld\n", global_index[0], global_index[1], global_index[2], halo_index[0], halo_index[1], halo_index[2]);
 
   if (out) {
     return 0;
@@ -392,7 +391,6 @@ MDINLINE int lattice_global_pos_to_lattice_halo_index(Lattice* lattice, double* 
     if (ind[i] < 0 || ind[i] >= lattice->halo_grid[i])
       return 0;
   }
-  printf("check! %f %f %f %ld %ld %ld\n", pos[0], pos[1], pos[2], ind[0], ind[1], ind[2]);
   return 1;
 }
 
