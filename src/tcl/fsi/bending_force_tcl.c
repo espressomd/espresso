@@ -23,8 +23,8 @@
 */
 
 #include "../../tcl/parser.h"
-#include "extra/bending_force.h"
-#include "extra/tcl/bending_force_tcl.h"
+#include "fsi/bending_force.h"
+#include "tcl/fsi/bending_force_tcl.h"
 #include "interaction_data.h"
 
 

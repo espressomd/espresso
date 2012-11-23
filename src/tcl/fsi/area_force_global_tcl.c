@@ -26,8 +26,8 @@
 
 #include "utils.h"
 #include "tcl/parser.h"
-#include "extra/tcl/area_force_global_tcl.h"
-#include "extra/area_force_global.h"
+#include "tcl/fsi/area_force_global_tcl.h"
+#include "fsi/area_force_global.h"
 
 int tclprint_to_result_areaforceglobalIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {

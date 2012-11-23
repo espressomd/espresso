@@ -57,11 +57,11 @@
 #include "ljangle.h"
 #include "gb.h"
 #include "fene.h"
-#include "extra/stretching_force.h"  //NEW
-#include "extra/area_force_local.h"  //NEW
-#include "extra/area_force_global.h"  //NEW
-#include "extra/bending_force.h"  //NEW
-#include "extra/volume_force.h"  //NEW
+#include "fsi/stretching_force.h"  //NEW
+#include "fsi/area_force_local.h"  //NEW
+#include "fsi/area_force_global.h"  //NEW
+#include "fsi/bending_force.h"  //NEW
+#include "fsi/volume_force.h"  //NEW
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"

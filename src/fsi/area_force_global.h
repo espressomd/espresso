@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "extra/mathtools.h"
+#include "fsi/mathtools.h"
 #include "cells.h"
 #include "lb.h"
 #include "grid.h"
@@ -66,7 +66,7 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 	int type_num, type, n_partners,id;
 	char *errtxt;
 
-	EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
+	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
 	
 	
 	int test=0;
@@ -229,7 +229,7 @@ MDINLINE void add_area_global_force(double area, int molType){  //first-fold-the
 	int type_num, type, n_partners,id;
 	char *errtxt;
 
-	EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
+	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
 	
 	
 	int test=0;

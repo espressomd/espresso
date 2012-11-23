@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "extra/mathtools.h"
+#include "fsi/mathtools.h"
 #include "cells.h"
 #include "lb.h"
 #include "grid.h"
@@ -64,7 +64,7 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 	int type_num, type, n_partners, id;
 	char *errtxt;
 
-	EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
+	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
 	
 	
 	//int test=0;
@@ -231,7 +231,7 @@ MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-t
 	int type_num, type, n_partners, id;
 	char *errtxt;
 
-	EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
+	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
 	
 	
 	int test=0;
