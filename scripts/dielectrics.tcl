@@ -34,7 +34,7 @@ proc dielectric_wall { args } {
   set sigma 0
   set type 0 
   set eps 0.
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "dist" } {
       incr argno
       set dist [ expr 1.0 * [ lindex $args $argno ] ]
@@ -160,7 +160,7 @@ proc dielectric_sphere { args } {
   set res 0
   set sigma 0
   set type 0 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "radius" } {
       incr argno
       set radius [ expr 1.* [ lindex $args $argno ] ]
@@ -269,7 +269,7 @@ proc dielectric_cylinder { args } {
   set direction 1
   set sigma 0
   set type 0
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ lindex $args $argno ] 
@@ -513,7 +513,7 @@ proc dielectric_pore { args } {
   set box_l_z [ lindex [ setmd box_l ] 2 ]
   set max_radius [ expr sqrt($box_l_x*$box_l_x+ $box_l_y*$box_l_y + $box_l_z*$box_l_z) ]
 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "center" } {
       incr argno
       set center_x [ expr 1.0*[ lindex $args $argno ] ]
@@ -816,7 +816,7 @@ proc dielectric_slitpore { args } {
   set sigma 0.
 
 
-  for { set argno 0 } { $argno < [ llength $args ] } { incr argo } {
+  for { set argno 0 } { $argno < [ llength $args ] } {  } {
     if { [ lindex $args $argno ] == "pore_mouth" } {
       incr argno
       set pore_mouth [ expr 1.0 * [ lindex $args $argno ] ]
