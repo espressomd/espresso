@@ -192,17 +192,17 @@ void integrate_vv(int n_steps)
             dist2 = sqrlen(vec21);
             
             if(dist2 < reaction.range * reaction.range) {
-           	  rand =d_random();
-           	  
-           		if(rand > ratexp) {
-           		  if(p1->p.type==reaction.reactant_type) {
-						      p1->p.type = reaction.product_type;
-					      }
-					      else {
-						      p2->p.type = reaction.product_type;
-					      }
+	      rand =d_random();
+	      
+	      if(rand > ratexp) {
+		if(p1->p.type==reaction.reactant_type) {
+		  p1->p.type = reaction.product_type;
+		}
+		else {
+		  p2->p.type = reaction.product_type;
+		}
               }
-           	}
+	    }
           }  
         }
       }

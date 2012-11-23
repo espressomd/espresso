@@ -44,8 +44,6 @@ extern int lattice_switch;
 /** Lattice off */
 #define LATTICE_OFF  0
 
-#ifdef LATTICE
-
 /** Lattice Boltzmann */
 //#define LATTICE_LB   1
 
@@ -58,6 +56,8 @@ extern int lattice_switch;
  *  So far, only \ref LATTICE_OFF and \ref LATTICE_LB exist.
  */
 
+enum { LATTICE_ANISOTROPIC = 1, LATTICE_X_NOTEXT = 2, LATTICE_Y_NOTEXT = 4, LATTICE_Z_NOTEXT = 8 };
+
 /** Data structure describing a lattice.
  *  Contains the lattice layout and pointers to the data fields.
  *  For parallelization purposes, it is assumed that a halo region
@@ -69,6 +69,8 @@ typedef struct _Lattice {
   int grid[3] ;
   /** number of lattice sites in each direction including halo */
   int halo_grid[3] ;
+  /** halo size in all directions */
+  int halo_size;
 
   /** total number (volume) of local lattice sites (excluding halo) */
   index_t grid_volume;
@@ -81,27 +83,21 @@ typedef struct _Lattice {
   index_t halo_offset;
 
   /** lattice constant */
-  double agrid ;
-  /** time step of lattice dynamics */
-  double tau ;
+  double agrid[3];
 
-  /** pointer to the fields living on the lattice.
-   *  For complex lattice data, this can be a struct holding
-   *  pointers to the actual data. */
-  void *fields;
   /** pointer to the actual lattice data.
    *  This can be a contiguous field of arbitrary data. */
-  void *data;
+  void *_data;
 
   /** particle representation of this lattice. This is needed to
    *  specify interactions between particles and the lattice.
    *  Actually used are only the identity and the type. */
   Particle part_rep;
 
-  /** datatypes that describe the data layout of the lattice. */
-  MPI_Datatype datatype;
-  struct _Fieldtype *fieldtype;
+  char flags;
 
+  /** Size of each element in size units (=bytes) */
+  size_t element_size;
 } Lattice;
 
 /** Initialize lattice.
@@ -111,9 +107,11 @@ typedef struct _Lattice {
  *
  * \param lattice pointer to the lattice
  * \param agrid   lattice spacing
- * \param tau     time step for lattice dynamics
  */
-void init_lattice(Lattice *lattice, double agrid, double tau);
+int init_lattice(Lattice *lattice, double* agrid, int halo_size, char flags, size_t element_size);
+
+
+void lattice_allocate_memory(Lattice *lattice, size_t element_size);
 
 /** Map a global lattice site to the node grid.
  *
@@ -129,16 +127,16 @@ void init_lattice(Lattice *lattice, double agrid, double tau);
 MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
   
   /* determine coordinates in node_grid */
-  grid[0] = (int)floor(ind[0]*lattice->agrid*box_l_i[0]*node_grid[0]);
-  grid[1] = (int)floor(ind[1]*lattice->agrid*box_l_i[1]*node_grid[1]);
-  grid[2] = (int)floor(ind[2]*lattice->agrid*box_l_i[2]*node_grid[2]);
+  grid[0] = (int)floor(ind[0]*lattice->agrid[0]*box_l_i[0]*node_grid[0]);
+  grid[1] = (int)floor(ind[1]*lattice->agrid[1]*box_l_i[1]*node_grid[1]);
+  grid[2] = (int)floor(ind[2]*lattice->agrid[2]*box_l_i[2]*node_grid[2]);
 
   //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,grid[0],grid[1],grid[2]);
 
   /* change from global to local lattice coordinates (+1 is for halo) */
-  ind[0] = ind[0] - grid[0]*lattice->grid[0] + 1;
-  ind[1] = ind[1] - grid[1]*lattice->grid[1] + 1;
-  ind[2] = ind[2] - grid[2]*lattice->grid[2] + 1;
+  ind[0] = ind[0] - grid[0]*lattice->grid[0] + lattice->halo_size;
+  ind[1] = ind[1] - grid[1]*lattice->grid[1] + lattice->halo_size;
+  ind[2] = ind[2] - grid[2]*lattice->grid[2] + lattice->halo_size;
 
   /* return linear index into node array */
   return map_array_node(grid);
@@ -156,8 +154,17 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
  * \param  grid    local coordinates of the lattice site (Output)
  * \return         index of the node for the lattice site
  */
+/* @TODO: Implement! */
 MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
   return 0;
+}
+
+MDINLINE void map_local_lattice_index_to_global_pos(Lattice* lattice, index_t ind, double* pos) {
+  int index_in_halogrid[3];
+  get_grid_pos(ind, &index_in_halogrid[0], &index_in_halogrid[1], &index_in_halogrid[2], lattice->halo_grid);
+  pos[0] = my_left[0] + (index_in_halogrid[0] - lattice->halo_size)*lattice->agrid[0];
+  pos[1] = my_left[1] + (index_in_halogrid[1] - lattice->halo_size)*lattice->agrid[1];
+  pos[2] = my_left[2] + (index_in_halogrid[2] - lattice->halo_size)*lattice->agrid[2];
 }
 
 /** Map a spatial position to the surrounding lattice sites.
@@ -184,8 +191,8 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */ 
   for (dir=0;dir<3;dir++) {
-
-    rel = (lpos = pos[dir] - my_left[dir])/lattice->agrid + 0.5; // +1 for halo offset
+    lpos = pos[dir] - my_left[dir];
+    rel = lpos/lattice->agrid[dir] + 0.5; // +1 for halo offset
     ind[dir] = (int)floor(rel);
     
     /* surrounding elementary cell is not completely inside this box,
@@ -206,7 +213,6 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
 
     delta[3+dir] = rel - ind[dir]; // delta_x/a
     delta[dir]   = 1.0 - delta[3+dir];   
-
   }
 
   node_index[0] = get_linear_index(ind[0],ind[1],ind[2],lattice->halo_grid);
@@ -217,7 +223,6 @@ MDINLINE void map_position_to_lattice(Lattice *lattice, const double pos[3], ind
   node_index[5] = node_index[4] + 1;
   node_index[6] = node_index[4] + lattice->halo_grid[0];
   node_index[7] = node_index[4] + lattice->halo_grid[0] + 1;
-
 }
 
 /** Map a spatial position to the surrounding lattice sites.
@@ -266,6 +271,30 @@ MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double 
 
 }
 
-#endif /* LATTICE */
+typedef struct {
+  Lattice* lattice;
+  char flags;
+  unsigned int max_number_indices;
+  index_t* indices;
+  double* weights;
+} Interpolation;
+
+Interpolation *interpolation_init(Lattice* lattice);
+
+int interpolation_calc_weights_and_indices(Interpolation* self, double* pos);
+
+MDINLINE void lattice_get_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void** data) {
+  (*data) = ((char*)lattice->_data) + get_linear_index(ind[0], ind[1], ind[2], lattice->halo_grid)*lattice->element_size;
+}
+
+MDINLINE void lattice_set_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void* data) {
+  memcpy(((char*)lattice->_data) + get_linear_index(ind[0], ind[1], ind[2],  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
+}
+
+MDINLINE void lattice_set_data_for_local_grid_index(Lattice* lattice, index_t* ind, void* data) {
+  memcpy(((char*)lattice->_data) + get_linear_index(ind[0]+lattice->halo_size, ind[1]+lattice->halo_size, ind[2]+lattice->halo_size,  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
+}
+
+
 
 #endif /* LATTICE_H */

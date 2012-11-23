@@ -35,8 +35,6 @@
  */
 int lattice_switch = LATTICE_OFF ;
 
-#ifdef LATTICE
-
 /** Initialize lattice.
  *
  * This function initializes the variables describing the lattice
@@ -46,41 +44,69 @@ int lattice_switch = LATTICE_OFF ;
  * \param agrid   lattice spacing
  * \param tau     time step for lattice dynamics
  */
-void init_lattice(Lattice *lattice, double agrid, double tau) {
-
+void _lattice_allocate_memory(Lattice *lattice); 
+int init_lattice(Lattice *lattice, double *agrid, int halo_size, char flags, size_t element_size) {
   int dir;
 
-  /* determine the number of local lattice nodes */
-  lattice->grid[0] = local_box_l[0]/agrid;
-  lattice->grid[1] = local_box_l[1]/agrid;
-  lattice->grid[2] = local_box_l[2]/agrid;
+ /* determine the number of local lattice nodes */
+  lattice->grid[0] = local_box_l[0]/agrid[0];
+  lattice->grid[1] = local_box_l[1]/agrid[1];
+  lattice->grid[2] = local_box_l[2]/agrid[2];
+
+  printf("initializing lattice with %f %f %f\n", agrid[0], agrid[1], agrid[2]);
+  printf("grid is %d %d %d\n", lattice->grid[0],  lattice->grid[1],  lattice->grid[2]); 
 
   /* sanity checks */
   for (dir=0;dir<3;dir++) {
     /* check if local_box_l is compatible with lattice spacing */
-    if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid) > ROUND_ERROR_PREC*box_l[dir]) {
+    if (fabs(local_box_l[dir]-lattice->grid[dir]*agrid[dir]) > ROUND_ERROR_PREC*box_l[dir]) {
       char *errtxt = runtime_error(128);
-      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",agrid,dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid);
-      return;
+      ERROR_SPRINTF(errtxt, "{097 Lattice spacing agrid[%d]=%f is incompatible with local_box_l[%d]=%f (box_l[%d]=%f node_grid[%d]=%d) %f} ",dir,agrid[dir],dir,local_box_l[dir],dir,box_l[dir],dir,node_grid[dir],local_box_l[dir]-lattice->grid[dir]*agrid[dir]);
+      return ES_ERROR;
     }
+  /* set the lattice spacing */
+  lattice->agrid[dir] = agrid[dir];
   }
 
-  /* set the lattice spacing */
-  lattice->agrid = agrid ;
-  lattice->tau = tau ;
+  lattice->element_size = element_size;
 
   LATTICE_TRACE(fprintf(stderr,"%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) node_neighbors (%d,%d,%d,%d,%d,%d)\n",this_node,local_box_l[0],local_box_l[1],local_box_l[2],lattice->grid[0],lattice->grid[1],lattice->grid[2],node_neighbors[0],node_neighbors[1],node_neighbors[2],node_neighbors[3],node_neighbors[4],node_neighbors[5]));
 
+  lattice->halo_size = halo_size;
   /* determine the number of total nodes including halo */
-  lattice->halo_grid[0] = lattice->grid[0] + 2 ;
-  lattice->halo_grid[1] = lattice->grid[1] + 2 ;
-  lattice->halo_grid[2] = lattice->grid[2] + 2 ;
+  lattice->halo_grid[0] = lattice->grid[0] + 2*halo_size ;
+  lattice->halo_grid[1] = lattice->grid[1] + 2*halo_size ;
+  lattice->halo_grid[2] = lattice->grid[2] + 2*halo_size ;
 
   lattice->grid_volume = lattice->grid[0]*lattice->grid[1]*lattice->grid[2] ;
   lattice->halo_grid_volume = lattice->halo_grid[0]*lattice->halo_grid[1]*lattice->halo_grid[2] ;
   lattice->halo_grid_surface = lattice->halo_grid_volume - lattice->grid_volume ;
-  lattice->halo_offset = get_linear_index(1,1,1,lattice->halo_grid) ;
+  lattice->halo_offset = get_linear_index(halo_size,halo_size,halo_size,lattice->halo_grid) ;
+  
+  _lattice_allocate_memory(lattice);
 
 }
 
-#endif /* LATTICE */
+void _lattice_allocate_memory(Lattice *lattice) {
+
+  lattice->_data = malloc(lattice->element_size*lattice->halo_grid_volume);
+  memset(lattice->_data, 0, lattice->element_size*lattice->halo_grid_volume);
+
+}
+
+
+Interpolation *interpolation_init(Lattice* lattice) {
+  Interpolation *self = malloc(sizeof(Interpolation));
+
+  self->max_number_indices = 1;
+  if (!(lattice->flags | LATTICE_X_NOTEXT))
+    self->max_number_indices*=2;
+  if (!(lattice->flags | LATTICE_Y_NOTEXT))
+    self->max_number_indices*=2;
+  if (!(lattice->flags | LATTICE_Z_NOTEXT))
+    self->max_number_indices*=2;
+
+  self->indices = malloc(self->max_number_indices*sizeof(index_t));
+  self->weights = malloc(self->max_number_indices*sizeof(double));
+}
+
