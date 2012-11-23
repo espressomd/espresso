@@ -25,11 +25,24 @@
 observable** observables = 0;
 int n_observables = 0; 
 
-int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
+int observable_calculate(observable* self) {
+  if (self->calculate != 0) 
+    return (self->calculate)(self);
+  return 0;
+}
+
+int observable_update(observable* self) {
+  if (self->update!=0)
+    return (self->update)(self);
+  return 0;
+}
+
+int observable_calc_particle_velocities(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -41,12 +54,13 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
 }
 
 #ifdef ELECTROSTATICS
-int observable_particle_currents(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_particle_currents(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   double charge;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -58,13 +72,14 @@ int observable_particle_currents(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_currents(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_currents(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_total_particles)
       return 1;
@@ -79,13 +94,14 @@ int observable_currents(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_dipole_moment(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_total_particles)
       return 1;
@@ -101,13 +117,14 @@ int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
 }
 #endif
 
-int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_com_velocity(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   double v_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -122,7 +139,8 @@ int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_blocked_com_velocity(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
@@ -131,8 +149,8 @@ int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
   double total_mass = 0;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
-  n_blocks=n_A/3; 
+  ids=(IntList*) self->container;
+  n_blocks=self->n/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
     total_mass = 0;
@@ -152,7 +170,8 @@ int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_blocked_com_position(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
@@ -161,8 +180,8 @@ int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
   double total_mass = 0;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
-  n_blocks=n_A/3; 
+  ids=(IntList*) self->container;
+  n_blocks=self->n/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
     total_mass = 0;
@@ -182,13 +201,14 @@ int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_com_position(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_com_position(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   double p_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -204,12 +224,13 @@ int observable_com_position(void* idlist, double* A, unsigned int n_A) {
 }
 
 
-int observable_com_force(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_com_force(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -224,7 +245,8 @@ int observable_com_force(void* idlist, double* A, unsigned int n_A) {
 }
 
 
-int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_blocked_com_force(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   unsigned int block;
   unsigned int n_blocks;
@@ -232,8 +254,8 @@ int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
   unsigned int id;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
-  n_blocks=n_A/3; 
+  ids=(IntList*) self->container;
+  n_blocks=self->n/3; 
   blocksize=ids->n/n_blocks;
   for ( block = 0; block < n_blocks; block++ ) {
     for ( i = 0; i < blocksize; i++ ) {
@@ -249,7 +271,8 @@ int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
 }
 
 
-int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
+int observable_calc_density_profile(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   int binx, biny, binz;
   double ppos[3];
@@ -257,11 +280,11 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   IntList* ids;
   profile_data* pdata;
   sortPartCfg();
-  pdata=(profile_data*) pdata_;
+  pdata=(profile_data*) self->container;
   ids=pdata->id_list;
   double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
     
-  for ( i = 0; i<n_A; i++ ) {
+  for ( i = 0; i<self->n; i++ ) {
     A[i]=0;
   }
   for ( i = 0; i<ids->n; i++ ) {
@@ -282,18 +305,19 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
 }
 
 #ifdef LB
-int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+int observable_calc_lb_velocity_profile(observable* self) {
+  double* A = self->last_value;
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
   double xoffset, yoffset, zoffset;
   double x_incr, y_incr, z_incr;
   double p[3], v[3];
   profile_data* pdata;
-  pdata=(profile_data*) pdata_;
+  pdata=(profile_data*) self->container;
   int linear_index;
 
     
-  for ( i = 0; i<n_A; i++ ) {
+  for ( i = 0; i<self->n; i++ ) {
     A[i]=0;
   }
   double normalization_factor = 1.;
@@ -351,7 +375,7 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
     }
   }
   
-  for ( i = 0; i<n_A; i++ ) {
+  for ( i = 0; i<self->n; i++ ) {
     A[i]*=normalization_factor;
   }
 
@@ -362,7 +386,8 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
 
 
 #ifdef LB
-int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+int observable_calc_lb_radial_velocity_profile(observable* self) {
+  double* A = self->last_value;
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
   double roffset, phioffset, zoffset;
@@ -371,11 +396,11 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
   double p[3], v[3];
   double v_r, v_phi, v_z;
   radial_profile_data* pdata;
-  pdata=(radial_profile_data*) pdata_;
+  pdata=(radial_profile_data*) self->container;
   int linear_index;
 
     
-  for ( i = 0; i<n_A; i++ ) {
+  for ( i = 0; i<self->n; i++ ) {
     A[i]=0;
   }
   double normalization_factor = 1.;
@@ -441,7 +466,7 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
     }
   }
   
-  for ( i = 0; i<n_A; i++ ) {
+  for ( i = 0; i<self->n; i++ ) {
     A[i]*=normalization_factor;
   }
 
@@ -455,7 +480,8 @@ void transform_to_cylinder_coordinates(double x, double y, double z_, double* r,
   *phi = atan2(y,x);
 }
 
-int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A) {
+int observable_calc_radial_density_profile(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
@@ -465,13 +491,13 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
   IntList* ids;
   sortPartCfg();
   radial_profile_data* pdata;
-  pdata=(radial_profile_data*) pdata_;
+  pdata=(radial_profile_data*) self->container;
   ids=pdata->id_list;
   double rbinsize=(pdata->maxr - pdata->minr)/pdata->rbins;
   double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
   double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
     
-  for ( i = 0; i< n_A; i++ ) {
+  for ( i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
   for ( i = 0; i<ids->n; i++ ) {
@@ -495,7 +521,8 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
   return 0;
 }
 
-int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
+int observable_calc_radial_flux_density_profile(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
@@ -505,7 +532,7 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
   IntList* ids;
   sortPartCfg();
   radial_profile_data* pdata;
-  pdata=(radial_profile_data*) pdata_;
+  pdata=(radial_profile_data*) self->container;
   ids=pdata->id_list;
   double rbinsize=(pdata->maxr - pdata->minr)/pdata->rbins;
   double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
@@ -513,7 +540,7 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
   double v[3];
   double v_r, v_phi, v_z;
     
-  for ( i = 0; i< n_A; i++ ) {
+  for ( i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
   for ( i = 0; i<ids->n; i++ ) {
@@ -544,7 +571,8 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
   return 0;
 }
 
-int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
+int observable_calc_flux_density_profile(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   int binx, biny, binz;
   double ppos[3];
@@ -554,7 +582,7 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
   IntList* ids;
   sortPartCfg();
   profile_data* pdata;
-  pdata=(profile_data*) pdata_;
+  pdata=(profile_data*) self->container;
   ids=pdata->id_list;
   double xbinsize=(pdata->maxx - pdata->minx)/pdata->xbins;
   double ybinsize=(pdata->maxy - pdata->miny)/pdata->ybins;
@@ -562,7 +590,7 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
   double v[3];
   double v_x, v_y, v_z;
     
-  for ( i = 0; i< n_A; i++ ) {
+  for ( i = 0; i< self->n; i++ ) {
     A[i]=0;
   }
   for ( i = 0; i<ids->n; i++ ) {
@@ -596,11 +624,12 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_particle_positions(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -611,11 +640,12 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
   return 0;
 }
 
-int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
+int observable_calc_particle_forces(observable* self) {
+  double* A = self->last_value;
   unsigned int i;
   IntList* ids;
   sortPartCfg();
-  ids=(IntList*) idlist;
+  ids=(IntList*) self->container;
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
@@ -627,14 +657,16 @@ int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
 }
 
 
-int observable_stress_tensor(void* params_p, double* A, unsigned int n_A) {
+int observable_calc_stress_tensor(observable* self) {
+  double* A = self->last_value;
   sortPartCfg();
-  observable_compute_stress_tensor(1,A,n_A);
+  observable_compute_stress_tensor(1, A, self->n);
   return 0;
 }
 
 
-int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A) {
+int observable_calc_stress_tensor_acf_obs(observable* self) {
+  double* A = self->last_value;
   double stress_tensor[9];
   sortPartCfg();
   observable_compute_stress_tensor(1,stress_tensor,9);
@@ -647,14 +679,39 @@ int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A
   return 0;
 }
 
-int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
+int observable_update_average(observable* self) {
+    observable_average_container* data = (observable_average_container*) self->container;
+    data->n_sweeps++;
+    int error = observable_calculate(data->reference_observable);
+    if ( error != 0)
+      return 1;
+    double factor = 1 / (double) data->n_sweeps;
+    for (int i =0; i<self->n; i++) {
+      self->last_value[i] = (1-factor)*self->last_value[i] + factor*data->reference_observable->last_value[i];
+    }
+    return 0;
+}
+
+int observable_reset_average(observable* self) {
+    observable_average_container* data = (observable_average_container*) self->container;
+    data->n_sweeps=0;
+    int error = observable_calculate(data->reference_observable);
+    for (int i =0; i<self->n; i++) {
+      self->last_value[i] = 0;
+    }
+    return 0;
+}
+
+
+int observable_calc_structure_factor(observable* self) {
+  double* A = self->last_value;
   // FIXME Currently scattering length is hardcoded as 1.0
   int i,j,k,l,p;
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr; 
 //  DoubleList *scattering_length;
   observable_sf_params* params;
-  params = (observable_sf_params*)params_p;
+  params = (observable_sf_params*) self->container;
 //  scattering_length = params->scattering_length;
   const double scattering_length=1.0;
   order = params->order;
@@ -663,12 +720,12 @@ int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
   
   sortPartCfg();
 
-    for(p=0; p<n_A; p++) {
+    for(p=0; p<self->n; p++) {
        A[p]   = 0.0;
     }
 
     l=0;
-    //printf("n_A: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
+    //printf("self->n: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
     for(i=-order; i<=order; i++) {
       for(j=-order; j<=order; j++) {
         for(k=-order; k<=order; k++) {
@@ -692,8 +749,9 @@ int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
     return 0;
 }
 
-int observable_interacts_with (void* params_p, double* A, unsigned int n_A) {
-  iw_params *params=(iw_params*)params_p;
+int observable_calc_interacts_with (observable* self) {
+  double* A = self->last_value;
+  iw_params *params=(iw_params*) self->container;
   IntList* ids1;
   IntList* ids2;
   int i,j;
