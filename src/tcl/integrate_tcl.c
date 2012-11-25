@@ -33,6 +33,7 @@
 #include "communication.h"
 #include "parser.h"
 #include "statistics_correlation.h"
+#include "statistics_observable.h"
 
 int tclcommand_invalidate_system(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
   mpi_bcast_event(INVALIDATE_SYSTEM);
@@ -222,13 +223,14 @@ int tclcommand_integrate(ClientData data, Tcl_Interp *interp, int argc, char **a
     return tclcommand_integrate_print_usage(interp);;
   }
   /* perform integration */
-  if (!correlations_autoupdate) {
+  if (!correlations_autoupdate && !observables_autoupdate) {
     if (mpi_integrate(n_steps))
       return gather_runtime_errors(interp, TCL_OK);
   } else  {
     for (i=0; i<n_steps; i++) {
       if (mpi_integrate(1))
         return gather_runtime_errors(interp, TCL_OK);
+      autoupdate_observables();
       autoupdate_correlations();
     }
   }

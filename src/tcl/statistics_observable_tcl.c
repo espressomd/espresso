@@ -840,6 +840,7 @@ int tclcommand_observable_average(Tcl_Interp* interp, int argc, char** argv, int
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
     observables[id]=malloc(sizeof(observable)); \
+    observable_init(observables[id]); \
     if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) ==TCL_OK) { \
       n_observables++; \
       argc-=1+temp; \
@@ -886,6 +887,8 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     if (id==n_observables) 
       observables=(observable**) realloc(observables, (n_observables+1)*sizeof(observable*)); 
 
+
+    REGISTER_OBSERVABLE(average, tclcommand_observable_average,id);
     REGISTER_OBSERVABLE(particle_velocities, tclcommand_observable_particle_velocities,id);
     REGISTER_OBSERVABLE(particle_forces, tclcommand_observable_particle_forces,id);
     REGISTER_OBSERVABLE(com_velocity, tclcommand_observable_com_velocity,id);
@@ -908,7 +911,6 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     REGISTER_OBSERVABLE(flux_density_profile, tclcommand_observable_flux_density_profile,id);
     REGISTER_OBSERVABLE(lb_radial_velocity_profile, tclcommand_observable_lb_radial_velocity_profile,id);
     REGISTER_OBSERVABLE(tclcommand, tclcommand_observable_tclcommand,id);
-    REGISTER_OBSERVABLE(average, tclcommand_observable_average,id);
     Tcl_AppendResult(interp, "Unknown observable ", argv[2] ,"\n", (char *)NULL);
     return TCL_ERROR;
   }
@@ -928,6 +930,22 @@ int tclcommand_observable(ClientData data, Tcl_Interp *interp, int argc, char **
     }
     if (argc > 2 && ARG_IS_S(2,"reset") && observables[n]->update == observable_update_average) {
       observable_reset_average(observables[n]);
+      return TCL_OK;
+    }
+    if (argc > 2 && ARG_IS_S(2,"autoupdate") ) {
+      if (argc > 3 && ARG_IS_D(3, observables[n]->autoupdate_dt) ) {
+        if (observables[n]->autoupdate_dt < 1e-5) {
+          observables[n]->autoupdate=0;
+        } else {
+          observables[n]->autoupdate=1;
+          observables_autoupdate = 1;
+        }
+        return TCL_OK;
+      } else {
+        Tcl_AppendResult(interp, "Usage observable <id> autoupdate <dt>\n", (char *)NULL);
+        return TCL_ERROR;
+      }
+
     }
   }
   Tcl_AppendResult(interp, "Unknown observable ", argv[1] ,"\n", (char *)NULL);
@@ -1349,6 +1367,10 @@ int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* 
 }
 
 int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs, double* values) {
+
+  if (obs->update == (&observable_update_average)) 
+      obs = ((observable_average_container*)obs->container)->reference_observable;
+
   if (0) {
 #ifdef LB
   } else if (obs->calculate == (&observable_calc_lb_velocity_profile)) {

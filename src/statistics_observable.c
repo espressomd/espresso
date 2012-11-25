@@ -24,6 +24,13 @@
 
 observable** observables = 0;
 int n_observables = 0; 
+int observables_autoupdate = 0;
+
+void observable_init(observable* self) {
+  self->last_update = 0;
+  self->autoupdate = 0;
+  self->autoupdate_dt = 0;
+}
 
 int observable_calculate(observable* self) {
   if (self->calculate != 0) 
@@ -789,6 +796,18 @@ int observable_calc_interacts_with (observable* self) {
   return 0;
 }
 
+
+void autoupdate_observables() {
+  int i;
+  for (i=0; i<n_observables; i++) {
+    printf("checking observable %d autoupdate is %d \n", i, observables[i]->autoupdate);
+    if (observables[i]->autoupdate && sim_time-observables[i]->last_update>observables[i]->autoupdate_dt*0.99999) {
+      printf("updating %d\n", i);
+      observables[i]->last_update=sim_time;
+      observable_update(observables[i]);
+    }
+  }
+}
 
 
 

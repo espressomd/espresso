@@ -35,12 +35,17 @@ struct s_observable {
   int (*calculate) ( struct s_observable* obs );
   double* last_value;
   int last_update;
+  int autoupdate;
+  double autoupdate_dt;
 };
 
 typedef struct s_observable observable;
 
 extern observable** observables;
 extern int n_observables; 
+
+// flag if autoupdates are necessary.
+extern int observables_autoupdate;
 
 int observable_calculate(observable* self);
 int observable_update(observable* self);
