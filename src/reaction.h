@@ -34,6 +34,7 @@ typedef struct {
 	double range;
 	double rate;
 	double back_rate;
+  int sing_mult;
 }  reaction_struct;
 
 reaction_struct reaction;

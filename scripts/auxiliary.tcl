@@ -474,13 +474,13 @@ proc system_com { } {
   set npart [setmd n_part]
     
   #calculate center of mass
-  set com {0 0 0}
+  set com {0.0 0.0 0.0}
   set part_cnt 0
   
   if {[has_feature MASS]} {
     set net_mass 0
     
-    for {set i 0} {$part_cnt < $npart} {incr i} {
+    for {set i 0} {$i < $npart} {incr i} {
       if {[part $i] != "na"} {
         set pos [part $i print p]
         set mass [part $i print mass]
@@ -489,10 +489,10 @@ proc system_com { } {
         incr part_cnt
       }
     }
-    
+
     return [vecscale [expr 1.0/$net_mass] $com]
   } else {
-    for {set i 0} {$part_cnt < $npart} {incr i} {
+    for {set i 0} {$i < $npart} {incr i} {
       if {[part $i] != "na"} {
         set pos [part $i print p]
         set com [vecadd $com $pos]
@@ -522,7 +522,7 @@ proc system_com_vel {} {
   if {[has_feature MASS]} {
     set net_mass 0
     
-    for {set i 0} {$part_cnt < $npart } {incr i} {
+    for {set i 0} {$i < $npart} {incr i} {
       if { [part $i] != "na" } {
         set part_vel [part $i print v]
         set part_mass [part $i print mass]
@@ -532,9 +532,9 @@ proc system_com_vel {} {
       }
     }
       
-    return [vecscale [expr 1.0/$net_mass] $com_vel]
+    return "[vecscale [expr 1.0/$net_mass] $com_vel]"
   } else {
-    for {set i 0} {$part_cnt < $npart } {incr i} {
+    for {set i 0} {$i < $npart} {incr i} {
       if { [part $i] != "na" } {
         set part_vel [part $i print v] 
         set com_vel [vecadd $com_vel $part_vel]

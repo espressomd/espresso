@@ -120,6 +120,10 @@ void init_particle(Particle *part)
   part->p.mu_E[2]   = 0.0;
 #endif
 
+#ifdef REACTIONS
+  part->p.reacted = 0;
+#endif
+
   /* ParticlePosition */
   part->r.p[0]     = 0.0;
   part->r.p[1]     = 0.0;

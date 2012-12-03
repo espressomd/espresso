@@ -135,6 +135,7 @@ void on_program_start()
 
 #ifdef REACTIONS
   reaction.back_rate=-1.0;
+  reaction.sing_mult=0;
 #endif
 
   /*
