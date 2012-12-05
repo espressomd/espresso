@@ -1,20 +1,50 @@
 Issues:
 
-- same in imd, should go out
+- as I understand, STRETCHING_FORCE, BENDING_FORCE and VOLUME_FORCE are
+  only bonded interactions, and do not cost anything to be permanently
+  compiled in. Maybe, we can remove the #ifdef-guards?
+
+- the contents of mathtools.c/h is general, and should be merged into
+  utils.h; also check which functionality already exists.
+  - some don't make sense, e.g. double2double should better be done
+    by a simple memcpy.
+
+- hard-coded constant, e.g. "for (int i=0;i<100000;i++)"
+  in forces.c. Make the limit configurable, at least as a C constant
+  in config.h (compare SHAKE_MAX_ITERATIONS)
+
+- we don't need guards for bonded forces, as they only act
+- ESPResSo has global variables this_node and n_nodes, no need for
+  Comm_rank etc.
+
+- there is a lot of commmented out code, can we just remove it?
+  Commented out test printfs is ok, but not whole functions.
+
+- too much hard-coded PATHS etc in the samples, fix the scripts
+
+- we need a test case. Should run a couple of secs and check that no
+  future changes to the code break the computations. Normally,
+  checking that the forces in a given setup are correctly calculated
+  is sufficient.
+
+Currently resolved issues, please check my changes!
+
+- removed warnings:
+  - changed img data type to correct data type int, to prevent warnings.
+  - removed unused variables
+
+- prepare_vmd_connection/writepdb were changed. That has nothing to do
+  with FSI, so why is it there? Also, the code is actually wrong,
+  and breaks e.g. being able to fold coordinates. So, I took it out.
+
+- same in imd, taken out
+
+- removed files like vmd.log, backup files etc that should not go to trunk.
+
+- renamed directories to better fit Espresso.
 
 - the documentation is currently only a PDF, we need the sources.
   That can be part of the UG, as it is short enough, or we could
   move all to the tutorials directory. Anyways, all new Tcl
   commands / interaction need to be documented in the UG.
 
-- too much hard-coded in the samples, fix the scripts
-
-Currently resolved:
-
-- prepare_vmd_connection/writepdb were changed. That has nothing to do
-  with FSI, so why is it there? Also, the code is actually wrong,
-  and breaks e.g. being able to fold coordinates. So, I took it out.
-
-- removed files like vmd.log, backup files etc that should not go to trunk.
-
-- renamed directories to better fit Espresso.

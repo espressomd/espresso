@@ -51,8 +51,6 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 	double partArea=0.,norm[3],dn;
 	int rank, num_proc;
 	
-	//int s=0;
-	//MPI_Status stat;
 	MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
@@ -60,8 +58,8 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 	int c, np, i ,j;
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
-	double p11[3],p22[3],p33[3], rnd;
-	double img[3];
+	double p11[3],p22[3],p33[3];
+	int img[3];
 	Bonded_ia_parameters *iaparams;
 	int type_num, type, n_partners,id;
 	char *errtxt;
@@ -215,15 +213,13 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 MDINLINE void add_area_global_force(double area, int molType){  //first-fold-then-the-same approach
 	double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
 	int k;
-	//MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
-	//MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
 	/** loop over particles */
 	int c, np, i ,j;
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
-	double p11[3],p22[3],p33[3], rnd;
-	double img[3];
+	double p11[3],p22[3],p33[3];
+	int img[3];
 
 	Bonded_ia_parameters *iaparams;
 	int type_num, type, n_partners,id;

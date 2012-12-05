@@ -97,7 +97,7 @@ HAT
 GAY_BERNE		implies ROTATION
 OVERLAPPED
 
-/* NEW Interactions */
+/* Fluid-Structure Interactions (object in fluid) */
 AREA_FORCE_LOCAL
 AREA_FORCE_GLOBAL
 STRETCHING_FORCE

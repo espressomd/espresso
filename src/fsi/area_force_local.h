@@ -51,7 +51,8 @@ MDINLINE int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 {
 	int k;	
 	double A, aa, h[3], rh[3], hn;
-	double p11[3],p22[3],p33[3],img[3];
+	double p11[3],p22[3],p33[3];
+	int img[3];
 	
 	memcpy(p11, p1->r.p, 3*sizeof(double));
 	memcpy(img, p1->l.i, 3*sizeof(int));

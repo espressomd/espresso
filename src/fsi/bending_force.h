@@ -49,7 +49,9 @@ MDINLINE int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Partic
 {		
 	double n1[3],n2[3],dn1,dn2,phi,aa,fac,penal;
 	int k;
-	double img[3],fp1[3],fp2[3],fp3[3],fp4[3];
+	double fp1[3],fp2[3],fp3[3],fp4[3];
+	int img[3];
+
 	memcpy(fp1, p1->r.p, 3*sizeof(double));
 	memcpy(img, p1->l.i, 3*sizeof(int));
 	fold_position(fp1, img);
