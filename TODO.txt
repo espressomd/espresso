@@ -1,5 +1,8 @@
 Issues:
 
+- we should get out all the comments "new code", as this won't be new soon,
+  and for checking, diff is also a better tool.
+
 - as I understand, STRETCHING_FORCE, BENDING_FORCE and VOLUME_FORCE are
   only bonded interactions, and do not cost anything to be permanently
   compiled in. Maybe, we can remove the #ifdef-guards?
