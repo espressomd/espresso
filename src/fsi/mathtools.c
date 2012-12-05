@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "fsi/mathtools.h"
+#include "mathtools.h"
 
 void double2double(int n, double* d, double* f) {
 	int i;

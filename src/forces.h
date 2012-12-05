@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2010,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
@@ -57,11 +58,11 @@
 #include "ljangle.h"
 #include "gb.h"
 #include "fene.h"
-#include "fsi/stretching_force.h"  //NEW
-#include "fsi/area_force_local.h"  //NEW
-#include "fsi/area_force_global.h"  //NEW
-#include "fsi/bending_force.h"  //NEW
-#include "fsi/volume_force.h"  //NEW
+#include "fsi/stretching_force.h"
+#include "fsi/area_force_local.h"
+#include "fsi/area_force_global.h"
+#include "fsi/bending_force.h"
+#include "fsi/volume_force.h"
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"

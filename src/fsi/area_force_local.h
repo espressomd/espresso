@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "fsi/mathtools.h"
+#include "mathtools.h"
 #include "grid.h"
 
 /************************************************************/
