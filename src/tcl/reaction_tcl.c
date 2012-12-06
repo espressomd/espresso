@@ -70,7 +70,7 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
            return tcl_command_reaction_print(interp);
      }
   }
-  if( argc!=11 && argc!=13 && argc!=15) {
+  if( argc!=11 && argc!=13 && argc!=15 && argc!=3) {
      return tcl_command_reaction_print_usage(interp);
   }
      
@@ -92,38 +92,38 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
 	    argv+=2;
-    } else 
-    if (ARG_IS_S(0,"reactant_type")) {
+    } 
+    else if (ARG_IS_S(0,"reactant_type")) {
       if (!ARG_IS_I(1,reaction.reactant_type)) 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
 	    argv+=2;
-    } else 
-    if (ARG_IS_S(0,"catalyzer_type")) {
+    } 
+    else if (ARG_IS_S(0,"catalyzer_type")) {
       if (!ARG_IS_I(1,reaction.catalyzer_type)) 
         return tcl_command_reaction_print_usage(interp);
     argc-=2;
 	  argv+=2;
-    } else 
-    if (ARG_IS_S_EXACT(0,"range")) {
+    } 
+    else if (ARG_IS_S_EXACT(0,"range")) {
       if (!ARG_IS_D(1,reaction.range)) 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
       argv+=2;
-    } else
-    if (ARG_IS_S_EXACT(0,"rate")) {
+    }
+    else if (ARG_IS_S_EXACT(0,"rate")) {
       if (!ARG_IS_D(1,reaction.rate)) 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
       argv+=2;
-    } else
-    if (ARG_IS_S_EXACT(0,"back_rate")) {
+    } 
+    else if (ARG_IS_S_EXACT(0,"back_rate")) {
       if (!ARG_IS_D(1,reaction.back_rate)) 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
 	    argv+=2;
-    } else
-    if (ARG_IS_S_EXACT(0,"react_once")) {
+    } 
+    else if (ARG_IS_S_EXACT(0,"react_once")) {
       if (!ARG_IS_S(1,"on")&&!ARG_IS_S(1,"off")) {
         return tcl_command_reaction_print_usage(interp);}
       if (ARG_IS_S(1,"on")) reaction.sing_mult = 1;

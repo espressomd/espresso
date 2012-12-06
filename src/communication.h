@@ -518,6 +518,14 @@ void mpi_bcast_max_mu();
 */
 int mpi_gather_runtime_errors(char **errors);
 
+/** Issue REQ_GALILEI: set all particle velocities and rotational inertias to zero. 
+                       set all forces and torques on the particles to zero */
+void mpi_kill_particle_motion();
+void mpi_kill_particle_forces();
+void mpi_system_CMS();
+void mpi_system_CMS_velocity();
+void mpi_galilei_transform();
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event
