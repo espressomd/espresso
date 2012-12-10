@@ -18,7 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//#ifdef STRETCHING_FORCE
 #include "utils.h"
 #include "../../tcl/parser.h"
 #include "tcl/fsi/stretching_force_tcl.h"

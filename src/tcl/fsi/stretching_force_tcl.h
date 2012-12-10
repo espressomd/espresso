@@ -23,7 +23,6 @@
 
 #include "../../tcl/parser.h"
 #include "interaction_data.h"
-//#ifdef STRETCHING_FORCE
 
 /************************************************************/
 /// parse parameters for the stretching_force potential

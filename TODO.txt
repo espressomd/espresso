@@ -1,15 +1,11 @@
 Issues:
 - are there any more hard-coded constants? I have removed the one from the forces.c
 
-- as I understand, STRETCHING_FORCE, BENDING_FORCE and AREA_FORCE_LOCAL are
-  only bonded interactions, and do not cost anything to be permanently
-  compiled in. Maybe, we can remove the #ifdef-guards?
 
 - we don't need guards for bonded forces, as they only act
 - ESPResSo has global variables this_node and n_nodes, no need for
   Comm_rank etc.
 
-- too much hard-coded PATHS etc in the samples, fix the scripts
 
 - we need a test case. Should run a couple of secs and check that no
   future changes to the code break the computations. Normally,
@@ -17,6 +13,12 @@ Issues:
   is sufficient.
 
 Currently resolved issues, please check my changes!
+- too much hard-coded PATHS etc in the samples, fix the scripts
+
+- as I understand, STRETCHING_FORCE, BENDING_FORCE and AREA_FORCE_LOCAL are
+  only bonded interactions, and do not cost anything to be permanently
+  compiled in. Maybe, we can remove the #ifdef-guards?
+
 - the contents of mathtools.c/h is general, and should be merged into
   utils.h; also check which functionality already exists.
   - some don't make sense, e.g. double2double should better be done

@@ -293,21 +293,15 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   switch (params->type) {
   case BONDED_IA_FENE:
     return tclprint_to_result_feneIA(interp, params);
-#ifdef STRETCHING_FORCE
   case BONDED_IA_STRETCHING_FORCE:						
     return tclprint_to_result_stretchingforceIA(interp, params);
-#endif
-#ifdef AREA_FORCE_LOCAL
   case BONDED_IA_AREA_FORCE_LOCAL:					
 	return tclprint_to_result_areaforcelocalIA(interp, params);
-#endif
+  case BONDED_IA_BENDING_FORCE:						
+	return tclprint_to_result_bendingforceIA(interp, params);
 #ifdef AREA_FORCE_GLOBAL
   case BONDED_IA_AREA_FORCE_GLOBAL:						
 	return tclprint_to_result_areaforceglobalIA(interp, params);
-#endif
-#ifdef BENDING_FORCE
-  case BONDED_IA_BENDING_FORCE:						
-	return tclprint_to_result_bendingforceIA(interp, params);
 #endif
 #ifdef VOLUME_FORCE
   case BONDED_IA_VOLUME_FORCE:						
@@ -890,17 +884,11 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   if (ARG0_IS_S(name)) return parser(interp, bond_type, argc, argv);
   
   REGISTER_BONDED("fene", tclcommand_inter_parse_fene);
-#ifdef STRETCHING_FORCE
   REGISTER_BONDED("stretching_force", tclcommand_inter_parse_stretching_force);
-#endif
-#ifdef AREA_FORCE_LOCAL
   REGISTER_BONDED("area_force_local", tclcommand_inter_parse_area_force_local);
-#endif
+  REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
 #ifdef AREA_FORCE_GLOBAL
   REGISTER_BONDED("area_force_global", tclcommand_inter_parse_area_force_global);
-#endif
-#ifdef BENDING_FORCE
-  REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
 #endif
 #ifdef VOLUME_FORCE
   REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);

@@ -44,21 +44,7 @@ double angle_btw_triangles(double *P1, double *P2, double *P3, double *P4) {
 	double phi;
 	double u[3],v[3];
 	double normal1[3],normal2[3]; //auxiliary variables
-	//u[0] = P1[0] - P2[0]; // u = P2P1
-	//u[1] = P1[1] - P2[1]; 
-	//u[2] = P1[2] - P2[2]; 
-	//v[0] = P3[0] - P2[0]; // v = P2P3
-	//v[1] = P3[1] - P2[1]; 
-	//v[2] = P3[2] - P2[2]; 
-	//CrossProduct(u,v,normal1); 
 	get_n_triangle(P1,P2,P3,normal1);
-	//u[0] = P3[0] - P2[0]; // u = P2P3
-	//u[1] = P3[1] - P2[1]; 
-	//u[2] = P3[2] - P2[2]; 
-	//v[0] = P4[0] - P2[0]; // v = P2P4
-	//v[1] = P4[1] - P2[1]; 
-	//v[2] = P4[2] - P2[2]; 
-	//CrossProduct(u,v,normal2); 
 	get_n_triangle(P3,P2,P4,normal2);
 
 	double tmp11;
@@ -122,11 +108,25 @@ int main(int argc, char *argv[]){
 		for (int i=0;i<argc;i++)printf("i:%d %s\n", i, argv[i]);
 		return -1;
 	}
+	
+	int MESH_MAX_NODES = 10000;         // Maximum number of nodes
+	int MESH_MAX_EDGES = 10000;         // Maximum number of edges
+	int MESH_MAX_TRIANGLES = 10000;     // Maximum number of triangles
+
 	// input mesh
 	char *filenamenodes = argv[1];
 	char *filenametriangles = argv[2];
 	int mesh_nnodes = (int)strtod(argv[3],NULL);
+	if (mesh_nnodes > MESH_MAX_NODES) {
+			printf("There are more nodes than the allocated memory. Please increase the MESH_MAX_NODES constant.");
+			return 0;
+	}
+
 	int mesh_ntriangles = (int)strtod(argv[4],NULL);
+	if (mesh_ntriangles > MESH_MAX_TRIANGLES) {
+			printf("There are more triangles than the allocated memory. Please increase the MESH_MAX_TRIANGLES constant.");
+			return 0;
+	}
 	
 	// pos, ori, size
 	double rotate_X = strtod(argv[5], NULL);
@@ -187,9 +187,6 @@ int main(int argc, char *argv[]){
 	int n_VolumeBond = 0;		// will be defined later
 	
 	
-	int MESH_MAX_NODES = 2000;         // Maximum number of nodes
-	int MESH_MAX_EDGES = 2000;         // Maximum number of edges
-	int MESH_MAX_TRIANGLES = 2000;     // Maximum number of triangles
 
 	int mesh_nedges = 0;               // GID did not produce the list of edges. So we need to create one.
 
@@ -326,6 +323,10 @@ int main(int argc, char *argv[]){
 		  mesh_nedges++;
 		}
 	}    
+	if (mesh_nedges > MESH_MAX_EDGES) {
+			printf("There are more edges than the allocated memory. Please increase the MESH_MAX_EDGES constant.");
+			return 0;
+	}
 	printf("Edges have been created. Total %d edges\n\n",mesh_nedges);
 
 /////////// Generate createPart

@@ -25,9 +25,6 @@
 #include "communication.h"
 #include "bending_force.h"
 
-//#ifdef BENDING_FORCE
-
-
 /// set bending_force parameters
 int bending_force_set_params(int bond_type, double phi0, double kb)
 {
