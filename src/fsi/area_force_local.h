@@ -28,7 +28,6 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "mathtools.h"
 #include "grid.h"
 
 /************************************************************/
@@ -71,20 +70,23 @@ MDINLINE int calc_area_force_local(Particle *p1, Particle *p2, Particle *p3,
 	A=area_triangle(p11,p22,p33);
 	aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
 	
-	aminusb(3,h,p11,rh);				// area_forces for each triangle node
-	hn=normr(3,rh);
+	//aminusb(3,h,p11,rh);				// area_forces for each triangle node
+	vecsub(h,p11,rh);				// area_forces for each triangle node
+	hn=normr(rh);
 	for(k=0;k<3;k++) {
 		force1[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
 		//(&part1)->f.f[k]+=force[k];
 	}
-	aminusb(3,h,p22,rh);				// area_forces for each triangle node
-	hn=normr(3,rh);
+	//aminusb(3,h,p22,rh);				// area_forces for each triangle node
+	vecsub(h,p22,rh);				// area_forces for each triangle node
+	hn=normr(rh);
 	for(k=0;k<3;k++) {
 		force2[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
 		//(&part2)->f.f[k]+=force[k];
 	}
-	aminusb(3,h,p33,rh);				// area_forces for each triangle node
-	hn=normr(3,rh);
+	//aminusb(3,h,p33,rh);				// area_forces for each triangle node
+	vecsub(h,p33,rh);				// area_forces for each triangle node
+	hn=normr(rh);
 	for(k=0;k<3;k++) {
 		force3[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
 		//(&part3)->f.f[k]+=force[k];
@@ -111,15 +113,15 @@ MDINLINE int calc_area_force_local_complicated(Particle *p1, Particle *p2, Parti
  //printf("area %e uu %e %e %e vv %e %e %e\n", A, uu[0], uu[1], uu[2], vv[0], vv[1], vv[2]);
  aa=(A - iaparams->p.area_force_local.A0_l)/iaparams->p.area_force_local.A0_l;
 
- hn=normr(3,rh);
+ hn=normr(rh);
  for(k=0;k<3;k++) {
   force1[k] =  iaparams->p.area_force_local.ka_l * aa * rh[k]/hn;
  }
- hn=normr(3,uh);
+ hn=normr(uh);
  for(k=0;k<3;k++) {
   force2[k] =  iaparams->p.area_force_local.ka_l * aa * uh[k]/hn;
  }
- hn=normr(3,vh);
+ hn=normr(vh);
  for(k=0;k<3;k++) {
   force3[k] =  iaparams->p.area_force_local.ka_l * aa * vh[k]/hn;
  }

@@ -1,22 +1,13 @@
 Issues:
 - are there any more hard-coded constants? I have removed the one from the forces.c
 
-- as I understand, STRETCHING_FORCE, BENDING_FORCE and VOLUME_FORCE are
+- as I understand, STRETCHING_FORCE, BENDING_FORCE and AREA_FORCE_LOCAL are
   only bonded interactions, and do not cost anything to be permanently
   compiled in. Maybe, we can remove the #ifdef-guards?
-
-- the contents of mathtools.c/h is general, and should be merged into
-  utils.h; also check which functionality already exists.
-  - some don't make sense, e.g. double2double should better be done
-    by a simple memcpy.
-    -- I removed the unnecessary functions. The remaining functions should be moved to 
-    utils.h
-
 
 - we don't need guards for bonded forces, as they only act
 - ESPResSo has global variables this_node and n_nodes, no need for
   Comm_rank etc.
-
 
 - too much hard-coded PATHS etc in the samples, fix the scripts
 
@@ -26,6 +17,10 @@ Issues:
   is sufficient.
 
 Currently resolved issues, please check my changes!
+- the contents of mathtools.c/h is general, and should be merged into
+  utils.h; also check which functionality already exists.
+  - some don't make sense, e.g. double2double should better be done
+    by a simple memcpy.
 
 - there is a lot of commmented out code, can we just remove it?
   Commented out test printfs is ok, but not whole functions.
@@ -39,8 +34,6 @@ Currently resolved issues, please check my changes!
 - we should get out all the comments "new code", as this won't be new soon,
   and for checking, diff is also a better tool.
 
----- down, check it!
-
 - removed warnings:
   - changed img data type to correct data type int, to prevent warnings.
   - removed unused variables
@@ -50,10 +43,6 @@ Currently resolved issues, please check my changes!
   and breaks e.g. being able to fold coordinates. So, I took it out.
 
 - same in imd, taken out
-
-- removed files like vmd.log, backup files etc that should not go to trunk.
-
-- renamed directories to better fit Espresso.
 
 - the documentation is currently only a PDF, we need the sources.
   That can be part of the UG, as it is short enough, or we could

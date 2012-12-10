@@ -28,7 +28,6 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "mathtools.h"
 #include "cells.h"
 #include "lb.h"
 #include "grid.h"
@@ -115,7 +114,7 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 					fold_position(p33, img);
 				
 					get_n_triangle(p11,p22,p33,norm);
-					dn=normr(3,norm);
+					dn=normr(norm);
 					A=area_triangle(p11,p22,p33);
 					hz=1.0/3.0 *(p11[2]+p22[2]+p33[2]);
 					partVol += A * -1*norm[2]/dn * hz;	
@@ -201,7 +200,7 @@ MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-t
 
 					
 					get_n_triangle(p11,p22,p33,norm);
-					dn=normr(3,norm);
+					dn=normr(norm);
 					A=area_triangle(p11,p22,p33);
 					{
 				}

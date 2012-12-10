@@ -28,7 +28,6 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "mathtools.h"
 #include "cells.h"
 #include "lb.h"
 #include "grid.h"
@@ -120,7 +119,7 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 				
 					
 					get_n_triangle(p11,p22,p33,norm);
-					dn=normr(3,norm);
+					dn=normr(norm);
 					partArea += area_triangle(p11,p22,p33);
 				}
 				else{
@@ -213,20 +212,23 @@ MDINLINE void add_area_global_force(double area, int molType){  //first-fold-the
 					
 					aa=( area - iaparams->p.area_force_global.A0_g) / iaparams->p.area_force_global.A0_g;
 
-					aminusb(3,h,p11,rh);				// area_forces for each triangle node
-					hn=normr(3,rh);
+					//aminusb(3,h,p11,rh);				// area_forces for each triangle node
+					vecsub(h,p11,rh);				// area_forces for each triangle node
+					hn=normr(rh);
 					for(k=0;k<3;k++) {
 						force1[k] =  iaparams->p.area_force_global.ka_g * aa * rh[k]/hn;
 						//(&part1)->f.f[k]+=force[k];
 					}
-					aminusb(3,h,p22,rh);				// area_forces for each triangle node
-					hn=normr(3,rh);
+					//aminusb(3,h,p22,rh);				// area_forces for each triangle node
+					vecsub(h,p22,rh);				// area_forces for each triangle node
+					hn=normr(rh);
 					for(k=0;k<3;k++) {
 						force2[k] =  iaparams->p.area_force_global.ka_g * aa * rh[k]/hn;
 						//(&part2)->f.f[k]+=force[k];
 					}
-					aminusb(3,h,p33,rh);				// area_forces for each triangle node
-					hn=normr(3,rh);
+					//aminusb(3,h,p33,rh);				// area_forces for each triangle node
+					vecsub(h,p33,rh);				// area_forces for each triangle node
+					hn=normr(rh);
 					for(k=0;k<3;k++) {
 						force3[k] =  iaparams->p.area_force_global.ka_g * aa * rh[k]/hn;
 						//(&part3)->f.f[k]+=force[k];

@@ -26,7 +26,6 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "fsi/mathtools.h"
 #include "grid.h"
 
 /// set bending_force parameters
@@ -69,9 +68,9 @@ MDINLINE int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Partic
 	fold_position(fp4, img);
 	
 	get_n_triangle(fp2,fp1,fp3,n1);
-	dn1=normr(3,n1);
+	dn1=normr(n1);
 	get_n_triangle(fp2,fp3,fp4,n2);
-	dn2=normr(3,n2);
+	dn2=normr(n2);
 	phi = angle_btw_triangles(fp1,fp2,fp3,fp4);		
 	
 	if (iaparams->p.bending_force.phi0 < 0.001 || iaparams->p.bending_force.phi0 > 2*M_PI - 0.001) 
