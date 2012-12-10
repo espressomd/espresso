@@ -63,6 +63,7 @@
 #include "statistics_correlation.h"
 #include "lb-boundaries.h"
 #include "domain_decomposition.h"
+#include "external_potential.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -123,6 +124,7 @@ void on_program_start()
 #ifdef DP3M
   dp3m_pre_init();
 #endif
+  external_potential_pre_init();
 
 #ifdef LB_GPU
   if(this_node == 0){

@@ -29,6 +29,9 @@
 /** Lattice Boltzmann */
 #define LATTICE_LB_GPU   2
 
+
+#define INTERPOLATION_LINEAR 1
+
 #ifndef LATTICE_H
 #define LATTICE_H
 
@@ -72,6 +75,8 @@ typedef struct _Lattice {
   /** halo size in all directions */
   int halo_size;
 
+  int global_grid[3];
+
   /** total number (volume) of local lattice sites (excluding halo) */
   index_t grid_volume;
   /** total number (volume) of lattice sites (including halo) */
@@ -82,8 +87,15 @@ typedef struct _Lattice {
       lattice sites */
   index_t halo_offset;
 
+  unsigned int dim;
+
   /** lattice constant */
   double agrid[3];
+ 
+  /** global offset */
+  double offset[3];
+  double local_offset[3];
+  int local_index_offset[3];
 
   /** pointer to the actual lattice data.
    *  This can be a contiguous field of arbitrary data. */
@@ -98,6 +110,11 @@ typedef struct _Lattice {
 
   /** Size of each element in size units (=bytes) */
   size_t element_size;
+
+  /** Dimension of the field, assuming entries are arrays */
+  size_t lattice_dim;
+
+  unsigned int interpolation_type;
 } Lattice;
 
 /** Initialize lattice.
@@ -108,7 +125,7 @@ typedef struct _Lattice {
  * \param lattice pointer to the lattice
  * \param agrid   lattice spacing
  */
-int init_lattice(Lattice *lattice, double* agrid, int halo_size, char flags, size_t element_size);
+int init_lattice(Lattice *lattice, double* agrid, double* offset, int halo_size, size_t element_size);
 
 
 void lattice_allocate_memory(Lattice *lattice, size_t element_size);
@@ -133,7 +150,7 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
 
   //fprintf(stderr,"%d: (%d,%d,%d)\n",this_node,grid[0],grid[1],grid[2]);
 
-  /* change from global to local lattice coordinates (+1 is for halo) */
+  /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0]*lattice->grid[0] + lattice->halo_size;
   ind[1] = ind[1] - grid[1]*lattice->grid[1] + lattice->halo_size;
   ind[2] = ind[2] - grid[2]*lattice->grid[2] + lattice->halo_size;
@@ -141,6 +158,40 @@ MDINLINE int map_lattice_to_node(Lattice *lattice, int *ind, int *grid) {
   /* return linear index into node array */
   return map_array_node(grid);
 }
+
+MDINLINE int lattice_global_pos_in_local_box(Lattice* lattice, double pos[3]) {
+  if (!(pos[0]>my_left[0] > 0 &&  pos[0]<my_right[0] ))
+    return 0;
+  if (!(pos[1]>my_left[1] > 0 &&  pos[1]<my_right[1] ))
+    return 0;
+  if (!(pos[2]>my_left[2] > 0 &&  pos[2]<my_right[2] ))
+    return 0;
+  return 1;
+}
+
+MDINLINE int lattice_global_pos_in_local_halobox(Lattice* lattice, double pos[3]) {
+  for (int i =0; i<lattice->dim; i++) {
+    if (!(pos[i]>lattice->local_offset[i]-lattice->halo_size*lattice->agrid[i] > 0 &&  
+          pos[i]<lattice->local_offset[i]+lattice->halo_grid[i]*lattice->agrid[i] ))
+      return 0;
+  }
+  return 1;
+}
+
+MDINLINE int lattice_global_pos_to_lattice_index_checked(Lattice* lattice, double pos[3], int* index) {
+  int i;
+  for (i=0; i<3; i++)
+    if (abs(fmod(pos[i]-lattice->offset[i],lattice->agrid[i])) > ROUND_ERROR_PREC)
+      return ES_ERROR;
+  int ind[3];
+  for (i=0; i<3; i++)
+    ind[i] = (int) round((pos[i]-lattice->offset[i])/lattice->agrid[i]);
+  *index = get_linear_index(lattice->halo_size + index[0], lattice->halo_size + index[1], lattice->halo_size + index[2], lattice->halo_grid);
+  return ES_OK;
+  
+}
+
+
 
 /** Map a local lattice site to the global position.
  *
@@ -159,13 +210,43 @@ MDINLINE int map_lattice_to_position(Lattice *lattice, int *ind, int *grid) {
   return 0;
 }
 
-MDINLINE void map_local_lattice_index_to_global_pos(Lattice* lattice, index_t ind, double* pos) {
+MDINLINE void map_linear_index_to_global_pos(Lattice* lattice, index_t ind, double* pos) {
   int index_in_halogrid[3];
   get_grid_pos(ind, &index_in_halogrid[0], &index_in_halogrid[1], &index_in_halogrid[2], lattice->halo_grid);
-  pos[0] = my_left[0] + (index_in_halogrid[0] - lattice->halo_size)*lattice->agrid[0];
-  pos[1] = my_left[1] + (index_in_halogrid[1] - lattice->halo_size)*lattice->agrid[1];
-  pos[2] = my_left[2] + (index_in_halogrid[2] - lattice->halo_size)*lattice->agrid[2];
+  pos[0] = lattice->local_offset[0] + (index_in_halogrid[0] - lattice->halo_size)*lattice->agrid[0];
+  pos[1] = lattice->local_offset[1] + (index_in_halogrid[1] - lattice->halo_size)*lattice->agrid[1];
+  pos[2] = lattice->local_offset[2] + (index_in_halogrid[2] - lattice->halo_size)*lattice->agrid[2];
 }
+
+MDINLINE void map_local_index_to_pos(Lattice* lattice, index_t* index, double* pos) {
+  pos[0] = lattice->local_offset[0] + (index[0])*lattice->agrid[0];
+  pos[1] = lattice->local_offset[1] + (index[1])*lattice->agrid[1];
+  pos[2] = lattice->local_offset[2] + (index[2])*lattice->agrid[2];
+}
+
+MDINLINE int map_global_index_to_halo_index(Lattice* lattice, index_t* global_index, index_t* halo_index) {
+  int out=0;
+  for (int d=0; d<3; d++) {
+    halo_index[d] = global_index[d]-lattice->local_index_offset[d] +lattice->halo_size;
+    if (halo_index[d] < 0 || halo_index[d] >= lattice->halo_grid[d])
+      out=1;
+  }
+
+  if (out) {
+    return 0;
+  }
+  return 1;
+
+}
+
+
+
+MDINLINE void map_halo_index_to_pos(Lattice* lattice, index_t* index_in_halogrid, double* pos) {
+  pos[0] = lattice->local_offset[0] + (index_in_halogrid[0] - lattice->halo_size)*lattice->agrid[0];
+  pos[1] = lattice->local_offset[1] + (index_in_halogrid[1] - lattice->halo_size)*lattice->agrid[1];
+  pos[2] = lattice->local_offset[2] + (index_in_halogrid[2] - lattice->halo_size)*lattice->agrid[2];
+}
+
 
 /** Map a spatial position to the surrounding lattice sites.
  *
@@ -271,30 +352,49 @@ MDINLINE void map_position_to_lattice_global (double pos[3], int ind[3], double 
 
 }
 
-typedef struct {
-  Lattice* lattice;
-  char flags;
-  unsigned int max_number_indices;
-  index_t* indices;
-  double* weights;
-} Interpolation;
 
-Interpolation *interpolation_init(Lattice* lattice);
+void lattice_interpolate(Lattice* lattice, double* pos, double* value);
+void lattice_interpolate_gradient(Lattice* lattice, double* pos, double* value);
+void lattice_interpolate_linear(Lattice* lattice, double* pos, double* value);
 
-int interpolation_calc_weights_and_indices(Interpolation* self, double* pos);
-
-MDINLINE void lattice_get_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void** data) {
+MDINLINE void lattice_get_data_for_halo_index(Lattice* lattice, index_t* ind, void** data) {
   (*data) = ((char*)lattice->_data) + get_linear_index(ind[0], ind[1], ind[2], lattice->halo_grid)*lattice->element_size;
+
+
+}
+
+MDINLINE void lattice_get_data_for_linear_index(Lattice* lattice, index_t ind, void** data) {
+  (*data) = ((char*)lattice->_data) + ind*lattice->element_size;
+  double* values=*data;
+}
+
+MDINLINE void lattice_get_data_for_local_index(Lattice* lattice, index_t* ind, void** data) {
+  index_t index_in_halogrid[3];
+  index_in_halogrid[0] = ind[0]+lattice->halo_size;
+  index_in_halogrid[1] = ind[1]+lattice->halo_size;
+  index_in_halogrid[2] = ind[2]+lattice->halo_size;
+  (*data) = ((char*)lattice->_data) + get_linear_index(index_in_halogrid[0], index_in_halogrid[1], index_in_halogrid[2], lattice->halo_grid)*lattice->element_size;
 }
 
 MDINLINE void lattice_set_data_for_local_halo_grid_index(Lattice* lattice, index_t* ind, void* data) {
   memcpy(((char*)lattice->_data) + get_linear_index(ind[0], ind[1], ind[2],  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
+
 }
 
 MDINLINE void lattice_set_data_for_local_grid_index(Lattice* lattice, index_t* ind, void* data) {
   memcpy(((char*)lattice->_data) + get_linear_index(ind[0]+lattice->halo_size, ind[1]+lattice->halo_size, ind[2]+lattice->halo_size,  lattice->halo_grid)*lattice->element_size, data, lattice->element_size);
 }
 
+MDINLINE int lattice_global_pos_to_lattice_halo_index(Lattice* lattice, double* pos, index_t*  ind) {
+  for (int i = 0; i<3; i++) {
+    ind[i] = (int) floor((pos[i]-lattice->local_offset[i])/lattice->agrid[i]+ROUND_ERROR_PREC)+lattice->halo_size;
+    if (ind[i] < 0 || ind[i] >= lattice->halo_grid[i])
+      return 0;
+  }
+  return 1;
+}
 
+
+void lattice_set_data_for_global_position_with_periodic_image(Lattice* lattice, double* pos, void* data); 
 
 #endif /* LATTICE_H */
