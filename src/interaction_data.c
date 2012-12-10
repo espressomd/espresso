@@ -751,6 +751,16 @@ char *get_name_of_bonded_ia(int i) {
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
     return "VIRTUAL_BOND";
+  case BONDED_IA_STRETCHING_FORCE:
+    return "STRETCHING_FORCE";
+  case BONDED_IA_AREA_FORCE_LOCAL:
+    return "AREA_FORCE_LOCAL";
+  case BONDED_IA_AREA_FORCE_GLOBAL:
+    return "AREA_FORCE_GLOBAL";
+  case BONDED_IA_BENDING_FORCE:
+    return "BENDING_FORCE";
+  case BONDED_IA_VOLUME_FORCE:
+    return "VOLUME_FORCE";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);

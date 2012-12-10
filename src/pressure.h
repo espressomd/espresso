@@ -408,6 +408,21 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
     else if(type == BONDED_IA_FENE) {
       i = i + 2;
     }
+    else if(type == BONDED_IA_STRETCHING_FORCE) {
+      i = i + 2;
+    }
+    else if(type == BONDED_IA_AREA_FORCE_LOCAL) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_AREA_FORCE_GLOBAL) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_BENDING_FORCE) {
+      i = i + 4;
+    }
+    else if(type == BONDED_IA_VOLUME_FORCE) {
+      i = i + 3;
+    }
     else if(type == BONDED_IA_HARMONIC) {
       i = i + 2;
     }

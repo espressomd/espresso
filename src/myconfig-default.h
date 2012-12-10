@@ -43,5 +43,78 @@
 #define SOFT_SPHERE
 #define BOND_ANGLE
 
-#define MPI_CORE
-#define FORCE_CORE
+/* Lattice-Boltzmann features */
+#define LB
+//#define LB_GPU
+#define LB_BOUNDARIES
+//#define LB_BOUNDARIES_GPU
+//#define LB_ELECTROHYDRODYNAMICS
+
+
+#define AREA_FORCE_LOCAL
+#define AREA_FORCE_GLOBAL   
+//#define STRETCHING_FORCE
+//#define BENDING_FORCE
+#define VOLUME_FORCE	
+
+/* Bond angle */
+/* Note: Activate ONLY ONE bonded angle potential out of the following! */
+//#define BOND_ANGLE_HARMONIC
+//#define BOND_ANGLE_COSINE
+//#define BOND_ANGLE_COSSQUARE
+
+//#define BOND_ANGLEDIST
+//#define BOND_ANGLEDIST_HARMONIC
+
+//#define BOND_ENDANGLEDIST
+//#define BOND_ENDANGLEDIST_HARMONIC
+
+/* Strange features. Use only if you know what you are doing! */
+/* activate the old dihedral form */
+//#define OLD_DIHEDRAL
+/* turn off nonbonded interactions within molecules */
+//#define NO_INTRA_NB
+
+/* Debugging */
+//#define ADDITIONAL_CHECKS
+//#define ASYNC_BARRIER
+
+//#define COMM_DEBUG
+//#define EVENT_DEBUG
+//#define INTEG_DEBUG
+//#define CELL_DEBUG
+//#define GHOST_DEBUG
+//#define LATTICE_DEBUG
+//#define HALO_DEBUG
+//#define GRID_DEBUG
+//#define VERLET_DEBUG
+//#define PARTICLE_DEBUG
+//#define P3M_DEBUG
+//#define EWALD_DEBUG
+//#define FFT_DEBUG
+//#define RANDOM_DEBUG
+//#define FORCE_DEBUG
+//#define THERMO_DEBUG
+//#define LJ_DEBUG
+//#define MORSE_DEBUG
+//#define ESR_DEBUG
+//#define ESK_DEBUG
+//#define FENE_DEBUG
+//#define GHOST_FORCE_DEBUG
+//#define STAT_DEBUG
+//#define POLY_DEBUG
+//#define MOLFORCES_DEBUG
+//#define PTENSOR_DEBUG
+//#define MEM_DEBUG
+//#define MAGGS_DEBUG
+//#define LB_DEBUG
+//#define VIRTUAL_SITES_DEBUG
+
+//#define MPI_CORE
+//#define FORCE_CORE
+
+/* Single particle debugging */
+//#define ONEPART_DEBUG
+// which particle id to debug
+//#define ONEPART_DEBUG_ID 3149
+
