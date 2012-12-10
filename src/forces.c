@@ -98,20 +98,20 @@ void force_calc()
     
   }
 
-#ifdef VOLUME_FORCE		// NEW			MOL TYPE STARTING FROM 0 !!!
+#ifdef VOLUME_FORCE
 	double volume=0.;
 	
-	for (int i=0;i<100000;i++){
+	for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
 		calc_volume(&volume,i);
 		if (volume<1e-100) break;
 		add_volume_force(volume,i);	
 	}
 #endif	
 
-#ifdef AREA_FORCE_GLOBAL		// NEW		MOL TYPE STARTING FROM 0 !!!
+#ifdef AREA_FORCE_GLOBAL
 	double area=0.;
 
-	for (int i=0;i<100000;i++){
+	for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
 		calc_area_global(&area,i);
 		if (area<1e-100) break;
 		add_area_global_force(area,i);

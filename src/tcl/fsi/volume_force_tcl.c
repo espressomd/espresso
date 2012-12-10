@@ -33,7 +33,7 @@
 /************************************************************/
 
 int tclprint_to_result_volumeforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params){
-	char buffer[TCL_DOUBLE_SPACE];						//NEW
+	char buffer[TCL_DOUBLE_SPACE];
 	Tcl_PrintDouble(interp, params->p.volume_force.V0, buffer);
     Tcl_AppendResult(interp, "VOLUME_FORCE ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.volume_force.kv, buffer);

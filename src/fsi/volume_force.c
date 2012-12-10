@@ -27,13 +27,6 @@
 #include "volume_force.h"
 #include "communication.h"
 
-
-//#ifdef VOLUME_FORCE
-//#include "utils.h"
-
-
-
-
 /** set parameters for the VOLUME_FORCE potential. 
 */
 int volume_force_set_params(int bond_type, double V0, double kv)

@@ -51,40 +51,6 @@ MDINLINE double KS(double lambda){ // Defined by (19) from Dupin2007
 	return res;
 }
 
-//MDINLINE int calc_stretching_force_pair_force_folded(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3]) // first-fold-then-the-same approach, gives the same results as the classical one, so it is commented
-//{
-  //int i;
-  //double fac, dr, len2, len;
-  //double lambda;
-  //double fp1[3],fp2[3],img[3];
-
-  //memcpy(fp1, p1->r.p, 3*sizeof(double));
-  //memcpy(img, p1->l.i, 3*sizeof(int));
-  //fold_position(fp1, img);
-			
-  //memcpy(fp2, p2->r.p, 3*sizeof(double));
-  //memcpy(img, p2->l.i, 3*sizeof(int));
-  //fold_position(fp2, img);
-
-  //for (i = 0; i < 3; i++) dx[i] = fp1[i] - fp2[i];
-  //len2 = sqrlen(dx);
-
-  //len = sqrt(len2);
-  //dr = len - iaparams->p.stretching_force.r0;
-
-  //lambda = 1.0*len/iaparams->p.stretching_force.r0;
-  //fac = -iaparams->p.stretching_force.ks * KS(lambda) * dr / iaparams->p.stretching_force.r0;
-  
-  //FENE_TRACE(if(fac > 50) fprintf(stderr,"WARNING: FENE force factor between Pair (%d,%d) large: %f at distance %f\n", p1->p.identity,p2->p.identity,fac,sqrt(len2)) );
-
-  //for(i=0;i<3;i++)
-    //force[i] = fac*dx[i]/len;
-
-  //ONEPART_TRACE(if(p1->p.identity==check_id) fprintf(stderr,"%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p1->f.f[0],p1->f.f[1],p1->f.f[2],p2->p.identity,sqrt(len2),fac));
-  //ONEPART_TRACE(if(p2->p.identity==check_id) fprintf(stderr,"%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part id=%d at dist %f fac %.3e\n",this_node,p2->f.f[0],p2->f.f[1],p2->f.f[2],p1->p.identity,sqrt(len2),fac));
-  
-  //return 0;
-//}
 
 MDINLINE int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {

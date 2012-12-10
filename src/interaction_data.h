@@ -541,27 +541,27 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
-    /** Parameters for stretching_force */				//NEW
+    /** Parameters for stretching_force */
     struct {
 	  double r0;
       double ks;
     } stretching_force;
-    /** Parameters for area_force_local */				//NEW
+    /** Parameters for area_force_local */
     struct {
 	  double A0_l;
       double ka_l;
     } area_force_local;
-    /** Parameters for area_force_global */				//NEW
+    /** Parameters for area_force_global */
     struct {
 	  double A0_g;
       double ka_g;
     } area_force_global;
-    /** Parameters for bending_force */				//NEW
+    /** Parameters for bending_force */
     struct {
 	  double phi0;
       double kb;
     } bending_force;
-    /** Parameters for volume_force */				//NEW
+    /** Parameters for volume_force */
     struct {
 	  double V0;
       double kv;

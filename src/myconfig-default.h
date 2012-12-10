@@ -50,7 +50,7 @@
 //#define LB_BOUNDARIES_GPU
 //#define LB_ELECTROHYDRODYNAMICS
 
-/* NEW Interactions */
+
 #define AREA_FORCE_LOCAL
 #define AREA_FORCE_GLOBAL   
 #define STRETCHING_FORCE

@@ -93,52 +93,5 @@ MDINLINE int calc_bending_force(Particle *p2, Particle *p1, Particle *p3, Partic
   return 0;
 }
 
-//MDINLINE int calc_bending_force_complicated(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
-				 //Bonded_ia_parameters *iaparams, double force1[3],
-				 //double force2[2])// more complicated approach, gives worse results
-//{		
-	//double n1[3],n2[3],dn1,dn2,phi,aa,fac,penal;
-	//double uu[3],vv[3],ww[3],xx[3];
-	//int k;
-	
-	//get_mi_vector(uu, p1->r.p, p2->r.p);
-	//get_mi_vector(vv, p3->r.p, p2->r.p);
-	//cisaxb(uu,vv,n1); 
-	//dn1=normr(3,n1);
-	
-	//get_mi_vector(uu, p3->r.p, p2->r.p);
-	//get_mi_vector(vv, p4->r.p, p2->r.p);
-	//cisaxb(uu,vv,n2); 
-	//dn2=normr(3,n2);
-	
-	//get_mi_vector(uu, p1->r.p, p2->r.p);
-	//get_mi_vector(vv, p3->r.p, p2->r.p);
-
-	//get_mi_vector(ww, p3->r.p, p2->r.p);
-	//get_mi_vector(xx, p4->r.p, p2->r.p);
-
-	//phi = angle_btw_triangles_new(uu,vv,ww,xx);		
-	
-	//if (iaparams->p.bending_force.phi0 < 0.001 || iaparams->p.bending_force.phi0 > 2*M_PI - 0.001) 
-		//printf("bending_force.h, calc_bending_force: Resting angle is close to zero!!!\n");
-
-	//aa = (phi-iaparams->p.bending_force.phi0)/iaparams->p.bending_force.phi0;
-	
-	
-	//fac = iaparams->p.bending_force.kb * aa;
-
-    //penal = (1+1/pow(10*(2*M_PI-phi),2) + 1/pow(10*(phi),2));
-	//if (penal > 5.) penal = 5.;
-
-////	fac = fac*penal; // This is to penalize the angles smaller than some threshold tr and also it penalizes angles greater than 2*Pi - tr. It prevents the objects to have negative angles.
-	//if (phi < 0.001 || phi > 2*M_PI - 0.001) printf("bending_force.h, calc_bending_force: Angle approaches 0 or 2*Pi\n");
-	
-	//for(k=0;k<3;k++) {
-		//force1[k]=fac * n1[k]/dn1;
-		//force2[k]=fac * n2[k]/dn2;
-	//}	
-  //return 0;
-//}
-
 #endif
 

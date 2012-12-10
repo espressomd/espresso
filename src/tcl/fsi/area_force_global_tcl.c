@@ -31,7 +31,7 @@
 
 int tclprint_to_result_areaforceglobalIA(Tcl_Interp *interp, Bonded_ia_parameters *params)
 {
-  char buffer[TCL_DOUBLE_SPACE];						//NEW
+  char buffer[TCL_DOUBLE_SPACE];
     Tcl_PrintDouble(interp, params->p.area_force_global.A0_g, buffer);
     Tcl_AppendResult(interp, "AREA_FORCE_GLOBAL ", buffer, " ", (char *) NULL);
     Tcl_PrintDouble(interp, params->p.area_force_global.ka_g, buffer);

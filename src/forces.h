@@ -481,27 +481,27 @@ MDINLINE void add_bonded_force(Particle *p1)
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
-#ifdef STRETCHING_FORCE						// NEW
+#ifdef STRETCHING_FORCE
     case BONDED_IA_STRETCHING_FORCE:
       bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef AREA_FORCE_LOCAL						// NEW
+#ifdef AREA_FORCE_LOCAL
     case BONDED_IA_AREA_FORCE_LOCAL:
       bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
       break;
 #endif
-#ifdef AREA_FORCE_GLOBAL						// NEW
+#ifdef AREA_FORCE_GLOBAL
     case BONDED_IA_AREA_FORCE_GLOBAL:
       bond_broken = 0;
       break;
 #endif
-#ifdef BENDING_FORCE						// NEW
+#ifdef BENDING_FORCE
     case BONDED_IA_BENDING_FORCE:
       bond_broken = calc_bending_force(p1, p2, p3, p4, iaparams, force, force2);
       break;
 #endif
-#ifdef VOLUME_FORCE						// NEW
+#ifdef VOLUME_FORCE
     case BONDED_IA_VOLUME_FORCE:
       bond_broken = 0;
       break;
@@ -659,21 +659,21 @@ MDINLINE void add_bonded_force(Particle *p1)
 	p3->f.f[j] -= force_weight*(force[j] + force2[j]);
 #else
 switch (type) {
-#ifdef AREA_FORCE_LOCAL					//NEW
+#ifdef AREA_FORCE_LOCAL
 	case BONDED_IA_AREA_FORCE_LOCAL:
 		p1->f.f[j] += force[j];
 		p2->f.f[j] += force2[j];
 		p3->f.f[j] += force3[j];
 		break;
-#endif // AREA_FORCE_LOCAL	
-#ifdef AREA_FORCE_GLOBAL					//NEW
+#endif
+#ifdef AREA_FORCE_GLOBAL
 	case BONDED_IA_AREA_FORCE_GLOBAL:
 		break;
-#endif // AREA_FORCE_GLOBAL	
-#ifdef VOLUME_FORCE					//NEW
+#endif
+#ifdef VOLUME_FORCE
 	case BONDED_IA_VOLUME_FORCE:
 		break;
-#endif // VOLUME_FORCE
+#endif
 	default:
 		p1->f.f[j] += force[j];
 		p2->f.f[j] += force2[j];
@@ -700,23 +700,21 @@ switch (type) {
 	p4->f.f[j] -= force_weight*(force[j] + force2[j] + force3[j]);
 #else
 	
-// Added from here	
 	switch (type) {
-#ifdef BENDING_FORCE		//NEW
+#ifdef BENDING_FORCE
 	case BONDED_IA_BENDING_FORCE:
 		p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 		p2->f.f[j] += force[j];
 		p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
 		p4->f.f[j] += force2[j];
 		break;
-#endif // BENDING_FORCE
+#endif
 	default:
 		p1->f.f[j] += force[j];
 		p2->f.f[j] += force2[j];
 		p3->f.f[j] += force3[j];
 		p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
 	}
-// to here	
 	
 #endif
       }
