@@ -26,8 +26,8 @@
 
 #include "utils.h"
 #include "tcl/parser.h"
-#include "extra/tcl/area_force_local_tcl.h"
-#include "extra/area_force_local.h"
+#include "tcl/fsi/area_force_local_tcl.h"
+#include "fsi/area_force_local.h"
 
 /************************************************************/
 

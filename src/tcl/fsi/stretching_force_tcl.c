@@ -21,8 +21,8 @@
 //#ifdef STRETCHING_FORCE
 #include "utils.h"
 #include "../../tcl/parser.h"
-#include "extra/tcl/stretching_force_tcl.h"
-#include "extra/stretching_force.h"
+#include "tcl/fsi/stretching_force_tcl.h"
+#include "fsi/stretching_force.h"
 
 /** \file stretching_force.h
  *  Routines to calculate the STRETCHING_FORCE Energy or/and STRETCHING_FORCE force 

@@ -27,8 +27,8 @@
 
 #include "utils.h"
 #include "../../tcl/parser.h"
-#include "extra/tcl/volume_force_tcl.h"
-#include "extra/volume_force.h"
+#include "tcl/fsi/volume_force_tcl.h"
+#include "fsi/volume_force.h"
 
 /************************************************************/
 

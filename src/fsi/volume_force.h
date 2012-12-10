@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
-#include "extra/mathtools.h"
+#include "mathtools.h"
 #include "cells.h"
 #include "lb.h"
 #include "grid.h"
@@ -50,21 +50,20 @@ int volume_force_set_params(int bond_type, double V0, double kv);
  */  
 
 MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-same approach
-	double partVol=0.,A,norm[3],dn,hz,hztemp; //sendVol=0.
+	double partVol=0.,A,norm[3],dn,hz;
 	
 	/** loop over particles */
 	int c, np, i ,j;
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
-	double p11[3],p22[3],p33[3], rnd;
-	
-	double img[3];
+	double p11[3],p22[3],p33[3];
+	int img[3];
 	
 	Bonded_ia_parameters *iaparams;
 	int type_num, type, n_partners, id;
 	char *errtxt;
 
-	EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
+	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
 	
 	
 	//int test=0;
@@ -214,24 +213,21 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 
 MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-the-same approach
 	double A,norm[3],dn; //partVol=0.
-	//int rank, num_proc;
 
-	double vv, force[3], rh[3], hn, h[3];
+	double vv, force[3];
 	int k;
-	double img[3];
-	//MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
-	//MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	int img[3];
 	
 	/** loop over particles */
 	int c, np, i ,j;
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
-	double p11[3],p22[3],p33[3], rnd;
+	double p11[3],p22[3],p33[3];
 	Bonded_ia_parameters *iaparams;
 	int type_num, type, n_partners, id;
 	char *errtxt;
 
-	EWALD_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
+	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
 	
 	
 	int test=0;

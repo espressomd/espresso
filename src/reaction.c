@@ -136,7 +136,6 @@ void integrate_reaction() {
             rand = d_random();
             
 			      if(rand > back_ratexp) {
-printf("DEBUG: integrate_reaction; back_react\n"); //TODO delete
 			        p1[i].p.type=reaction.reactant_type;
 			      }
           }

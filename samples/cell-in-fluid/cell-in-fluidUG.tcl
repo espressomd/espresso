@@ -1,8 +1,8 @@
 # the filenames must be set
 
 set createPart TMP/createPart;
-set fileNodes  INPUT/CELLmesh-nodes.dat;
-set fileTriangles INPUT/CELLmesh-triangles.dat;
+set fileNodes  INPUT/TETRAmesh-nodes.dat;
+set fileTriangles INPUT/TETRAmesh-triangles.dat;
                      # for example with an red blood cell
                      # use CELLmesh-nodes.dat 
                      # and CELLmesh-triangles.dat 
@@ -39,11 +39,11 @@ set kv 10.;           # volume preservation
 
 set massPart 1.0;     # setting the mass of praticles
 
-set nnode 400;          # number of IB points on the surface
+set nnode 4;          # number of IB points on the surface
                       # of the immersed object
                       # for example with an red blood cell
                       # set 400
-set ntriangle 796;      # number of triangles at the surface
+set ntriangle 4;      # number of triangles at the surface
                       # of the immersed object
                       # for example with an red blood cell
                       # set 796
@@ -99,15 +99,13 @@ source $bondV$molPart;
 source $partV$molPart;
 
 cellsystem domain_decomposition -no_verlet_list;      
-lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5;
-                           
-set upscale 20.;      # for scaling in the visualization
+lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5;                       
 
 if { $vmd == "y" } {
-    prepare_vmd_connection simEspresso 3000 1 $upscale;
+    prepare_vmd_connection simEspresso 3000 1;
                      #visualization
     exec sleep 2   
-    imd positions $upscale
+    imd positions
 }
 
 
@@ -116,7 +114,7 @@ if { $vmd == "y" } {
 set cycle 0 
 while { $cycle<1000 } {
 	puts "$cycle";
-    if { $vmd == "y"} { imd positions $upscale; };
+    if { $vmd == "y"} { imd positions };
 
 
   # setting the constant velocity

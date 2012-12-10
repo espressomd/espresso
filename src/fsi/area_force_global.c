@@ -24,7 +24,7 @@
  *  \ref forces.c
 */
 
-#include "extra/area_force_global.h"
+#include "fsi/area_force_global.h"
 #include "communication.h"
 
 
