@@ -2763,7 +2763,7 @@ void mpi_external_potential_sum_energies() {
 }
 
 
-void mpi_external_potential_sum_energies_slave() {
+void mpi_external_potential_sum_energies_slave(int dummy1, int dummy2) {
   double* energies = malloc(n_external_potentials);
   for (int i=0; i<n_external_potentials; i++) {
     energies[i]=external_potentials[i].energy;
