@@ -521,6 +521,8 @@ int mpi_gather_runtime_errors(char **errors);
 void mpi_external_potential_broadcast(int number);
 void mpi_external_potential_broadcast_slave(int node, int number);
 void mpi_external_potential_tabulated_read_potential_file(int number);
+void mpi_external_potential_sum_energies(); 
+void mpi_external_potential_sum_energies_slave(); 
 
 /*@}*/
 
