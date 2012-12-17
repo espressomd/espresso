@@ -26,6 +26,10 @@ int generate_external_potential(ExternalPotential** e) {
 }     
 
 int external_potential_tabulated_init(int number, char* filename, int n_particle_types, double* scale) {
+  for (int i =0; i<n_particle_types; i++) {
+    printf("%f ", scale[i]);
+  }
+  printf("scale\n");
 
   ExternalPotentialTabulated* e = &external_potentials[number].e.tabulated;
 
@@ -40,7 +44,7 @@ int external_potential_tabulated_init(int number, char* filename, int n_particle
   }
   mpi_external_potential_broadcast(number);
   mpi_external_potential_tabulated_read_potential_file(number);
-  return ES_OK;
+
 }
 
 
@@ -143,12 +147,14 @@ int external_potential_tabulated_read_potential_file(int number) {
   int i;
   
   while (fgets(line, 200, infile)) {
+    if (strlen(line)<2)
+      continue;
     token = strtok(line, " \t");
     if (!token) { fprintf(stderr, "Could not read pos[0]\n"); return ES_ERROR; }
     pos[0] = atof(token);
 
     token = strtok(NULL, " \t");
-    if (!token) { fprintf(stderr, "Could not read pos[1]\n"); return ES_ERROR; }
+    if (!token) { fprintf(stderr, "Could not read pos[1] in line:\n%s\n", line); return ES_ERROR; }
     pos[1] = atof(token);
     
     token = strtok(NULL, " \t");
@@ -231,6 +237,7 @@ MDINLINE void add_external_potential_tabulated_forces(ExternalPotential* e, Part
   p->f.f[0]-=e->scale[p->p.type]*field[0];
   p->f.f[1]-=e->scale[p->p.type]*field[1];
   p->f.f[2]-=e->scale[p->p.type]*field[2];
+//  printf("%d %f force: %f %f %f\n", p->p.type, e->scale[p->p.type], e->scale[p->p.type]*field[0], e->scale[p->p.type]*field[1], e->scale[p->p.type]*field[2]);
 }
 
 void add_external_potential_forces(Particle* p) {

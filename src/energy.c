@@ -78,17 +78,19 @@ void energy_calc(double *result)
   /* gather data */
   MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
-  double* energies = malloc(n_external_potentials);
-  for (int i=0; i<n_external_potentials; i++) {
-    energies[i]=external_potentials[i].energy;
+  if (n_external_potentials > 0) {
+    double* energies = malloc(n_external_potentials);
+    for (int i=0; i<n_external_potentials; i++) {
+      energies[i]=external_potentials[i].energy;
+    }
+    double* energies_sum =  malloc(n_external_potentials); 
+    MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
+    for (int i=0; i<n_external_potentials; i++) {
+      external_potentials[i].energy=energies_sum[i];
+    }
+    free(energies);
+    free(energies_sum);
   }
-  double* energies_sum =  malloc(n_external_potentials); 
-  MPI_Reduce(energies, energies_sum, n_external_potentials, MPI_DOUBLE, MPI_SUM, 0, comm_cart); 
-  for (int i=0; i<n_external_potentials; i++) {
-    external_potentials[i].energy=energies_sum[i];
-  }
-  free(energies);
-  free(energies_sum);
 
 }
 
