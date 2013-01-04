@@ -40,6 +40,18 @@
 #include "global.h"
 #include "lb-boundaries.h"
 #ifdef LB_GPU
+#ifdef SHANCHEN
+#if (SHANCHEN == 1 ) 
+#    define  SC0 {0.0}
+#    define  SC1 {1.0}
+#    define  SCM1 {-1.0}
+#endif 
+#if (SHANCHEN == 2 ) 
+#    define  SC0 { 0.0 , 0.0 } 
+#    define  SC1 { 1.0 , 1.0 } 
+#    define  SCM1 { -1.0, -1.0 } 
+#endif 
+#endif //SHANCHEN
 
 /** Action number for \ref mpi_get_particles. */
 #define REQ_GETPARTS  16
@@ -48,7 +60,19 @@
 #endif
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345, 0};
+#ifndef SHANCHEN
+LB_parameters_gpu lbpar_gpu = { .rho=0.0, .mu=0.0, .viscosity=0.0, .gamma_shear=0.0, .gamma_bulk=0.0, .gamma_odd=0.0, 
+                                .gamma_even=0.0, .agrid=0.0, .tau=-1.0, .friction=0.0, .time_step=0.0, .lb_coupl_pref=1.0 ,
+                                .lb_coupl_pref2=0.0, .bulk_viscosity=-1.0, .dim_x=0, .dim_y=0, .dim_z=0, .number_of_nodes=0, 
+                                .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
+                                .your_seed=12345, .reinit=0};
+#else //SHANCHEN
+LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=SC0, .gamma_bulk=SC0, .gamma_odd=SC0, 
+                                .gamma_even=SC0, .agrid=0.0, .tau=-1.0, .friction=SC0, .time_step=0.0, .lb_coupl_pref=SC1 ,
+                                .lb_coupl_pref2=SC0, .bulk_viscosity=SCM1, .dim_x=0, .dim_y=0, .dim_z=0, .number_of_nodes=0, 
+                                .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
+                                .your_seed=12345, .reinit=0};
+#endif
 LB_values_gpu *host_values = NULL;
 LB_nodes_gpu *host_nodes = NULL;
 LB_particle_force_gpu *host_forces = NULL;
@@ -102,7 +126,6 @@ void lattice_boltzmann_update_gpu() {
 /** Calculate particle lattice interactions called from forces.c
 */
 void lb_calc_particle_lattice_ia_gpu() {
-
   if (transfer_momentum_gpu) {
     mpi_get_particles_lb(host_data);
 
@@ -181,6 +204,7 @@ void lb_release_gpu(){
   free(host_data);
 }
 /** (Re-)initializes the fluid. */
+#ifndef SHANCHEN
 void lb_reinit_parameters_gpu() {
 
   lbpar_gpu.mu = 0.0;
@@ -226,6 +250,55 @@ void lb_reinit_parameters_gpu() {
 
   reinit_parameters_GPU(&lbpar_gpu);
 }
+#else //SHANCHEN
+void lb_reinit_parameters_gpu() {
+int ii;
+for(ii=0;ii<SHANCHEN;++ii){
+  lbpar_gpu.mu[ii] = 0.0;
+  lbpar_gpu.time_step = (float)time_step;
+
+  if (lbpar_gpu.viscosity[ii] > 0.0) {
+    /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar_gpu.gamma_shear[ii] = 1. - 2./(6.*lbpar_gpu.viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);   
+  }
+
+  if (lbpar_gpu.bulk_viscosity[ii] > 0.0) {
+    /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
+    lbpar_gpu.gamma_bulk[ii] = 1. - 2./(9.*lbpar_gpu.bulk_viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
+  }
+
+  if (temperature > 0.0) {  /* fluctuating hydrodynamics ? */
+
+    lbpar_gpu.fluct = 1;
+	LB_TRACE (fprintf(stderr, "fluct on \n"));
+    /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
+    /* Note that the modes are not normalized as in the paper here! */
+
+    lbpar_gpu.mu[ii] = (float)temperature/c_sound_sq*lbpar_gpu.tau*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid); // TODO: check how to change mu
+    //lbpar_gpu->mu *= agrid*agrid*agrid;  // Marcello's conjecture
+
+    /* lb_coupl_pref is stored in MD units (force)
+     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+     * The factor 12 comes from the fact that we use random numbers
+     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+     * time_step comes from the discretization.
+     */
+
+    lbpar_gpu.lb_coupl_pref[ii] = sqrt(12.f*2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+    lbpar_gpu.lb_coupl_pref2[ii] = sqrt(2.f*lbpar_gpu.friction[ii]*(float)temperature/lbpar_gpu.time_step);
+
+  } else {
+    /* no fluctuations at zero temperature */
+    lbpar_gpu.fluct = 0;
+    lbpar_gpu.lb_coupl_pref[ii] = 0.0;
+    lbpar_gpu.lb_coupl_pref2[ii] = 0.0;
+  }
+	LB_TRACE (fprintf(stderr,"lb_reinit_prarameters_gpu \n"));
+
+  reinit_parameters_GPU(&lbpar_gpu);
+}
+}
+#endif
 
 /** Performs a full initialization of
  *  the Lattice Boltzmann system. All derived parameters

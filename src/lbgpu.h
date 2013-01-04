@@ -34,6 +34,7 @@
  * explicitly. This saves a lot of multiplications with 1's and 0's
  * thus making the code more efficient. */
 #define D3Q19
+#define LBQ 19
 
 /** \name Parameter fields for Lattice Boltzmann
  * The numbers are referenced in \ref mpi_bcast_lb_params
@@ -55,16 +56,13 @@
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
-
+#ifndef SHANCHEN
   /** number density (LJ units) */
   float rho;
-
   /** mu (LJ units) */
   float mu;
-
   /*viscosity (LJ) units */
   float viscosity;
-
   /** relaxation rate of shear modes */
   float gamma_shear;
   /** relaxation rate of bulk modes */
@@ -72,7 +70,38 @@ typedef struct {
   /**      */
   float gamma_odd;
   float gamma_even;
+  /** friction coefficient for viscous coupling (LJ units)
+   * Note that the friction coefficient is quite high and may
+   * lead to numerical artifacts with low order integrators */
+  float friction;
+  /** amplitude of the fluctuations in the viscous coupling */
+  float lb_coupl_pref;
+  float lb_coupl_pref2;
+  float bulk_viscosity;
+#else //SHANCHEN
+  /** number density (LJ units) */
+  float rho[SHANCHEN];
+  /** mu (LJ units) */
+  float mu[SHANCHEN];
+  /*viscosity (LJ) units */
+  float viscosity[SHANCHEN];
+  /** relaxation rate of shear modes */
+  float gamma_shear[SHANCHEN];
+  /** relaxation rate of bulk modes */
+  float gamma_bulk[SHANCHEN];
+  /**      */
+  float gamma_odd[SHANCHEN];
+  float gamma_even[SHANCHEN];
+  /** friction coefficient for viscous coupling (LJ units)
+   * Note that the friction coefficient is quite high and may
+   * lead to numerical artifacts with low order integrators */
+  float friction[SHANCHEN];
+  /** amplitude of the fluctuations in the viscous coupling */
+  float lb_coupl_pref[SHANCHEN];
+  float lb_coupl_pref2[SHANCHEN];
+  float bulk_viscosity[SHANCHEN];
 
+#endif //SHANCHEN
   /** lattice spacing (LJ units) */
   float agrid;
 
@@ -80,18 +109,8 @@ typedef struct {
    *  Note: Has to be larger than MD time step! */
   float tau;
 
-  /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
-  float friction;
   /** MD tiemstep */
   float time_step;
-  /** amplitude of the fluctuations in the viscous coupling */
-  float lb_coupl_pref;
-
-  float lb_coupl_pref2;
-
-  float bulk_viscosity;
 
   unsigned int dim_x;
   unsigned int dim_y;
@@ -117,8 +136,12 @@ typedef struct {
 /** Data structure holding the phys. values for the Lattice Boltzmann system. */
 typedef struct {
 
+#ifndef SHANCHEN
   /** velocitydensity of the node */
   float rho;
+#else // SHANCHEN
+  float rho[SHANCHEN];
+#endif // SHANCHEN
 
   /** veolcity of the node */
   float v[3];

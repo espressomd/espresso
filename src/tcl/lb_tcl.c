@@ -139,6 +139,9 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 #ifdef EXTERNAL_FORCES
   double vectarg[3];
 #endif
+#ifdef SHANCHEN
+  double shanchenarg[SHANCHEN];
+#endif
 
   if (argc < 1) {
     lbfluid_tcl_print_usage(interp);
@@ -171,22 +174,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
         Tcl_AppendResult(interp, "LB is not compiled in!", NULL);
         return TCL_ERROR;
 #endif
-      }
-      else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
-        if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
-	        Tcl_AppendResult(interp, "dens requires 1 argument", (char *)NULL);
-          return TCL_ERROR;
-        } else if (floatarg <= 0) {
-	        Tcl_AppendResult(interp, "dens must be positive", (char *)NULL);
-          return TCL_ERROR;
-        } else {
-          if ( lb_lbfluid_set_density(floatarg) == 0 ) {
-            argc-=2; argv+=2;
-          } else {
-	          Tcl_AppendResult(interp, "Unknown Error setting dens", (char *)NULL);
-            return TCL_ERROR;
-          }
-        }
       }
       else if (ARG0_IS_S("grid") || ARG0_IS_S("agrid")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
@@ -226,6 +213,24 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
           }
         }
       }
+#ifndef SHANCHEN
+      else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
+        if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
+	        Tcl_AppendResult(interp, "dens requires 1 argument", (char *)NULL);
+          return TCL_ERROR;
+        } else if (floatarg <= 0) {
+	        Tcl_AppendResult(interp, "dens must be positive", (char *)NULL);
+          return TCL_ERROR;
+        } else {
+          if ( lb_lbfluid_set_density(floatarg) == 0 ) {
+            argc-=2; argv+=2;
+          } else {
+	          Tcl_AppendResult(interp, "Unknown Error setting dens", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+      }
+
       else if (ARG0_IS_S("viscosity") || ARG0_IS_S("visc")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
 	        Tcl_AppendResult(interp, "visc requires 1 argument", (char *)NULL);
@@ -274,22 +279,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
           }
         }
       }
-      else if (ARG0_IS_S("ext_force")) {
-#ifdef EXTERNAL_FORCES
-        if ( argc < 4 || !ARG_IS_D(1, vectarg[0]) || !ARG_IS_D(2, vectarg[1]) ||  !ARG_IS_D(3, vectarg[2]) ) {
-	        Tcl_AppendResult(interp, "friction requires 1 argument", (char *)NULL);
-          return TCL_ERROR;
-        } else if (lb_lbfluid_set_ext_force(vectarg[0], vectarg[1], vectarg[2]) == 0) {
-          argc-=4; argv+=4;
-        } else {
-	        Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
-          return TCL_ERROR;
-        }
-      #else
-        Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
-         return TCL_ERROR;
-      #endif
-      }
       else if (ARG0_IS_S("gamma_odd")) {
         if ( argc < 2 || !ARG1_IS_D(floatarg) ) {
 	        Tcl_AppendResult(interp, "gamma_odd requires 1 argument", (char *)NULL);
@@ -321,6 +310,166 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
             return TCL_ERROR;
           }
         }
+      }
+#else //SHANCHEN
+      else if (ARG0_IS_S("density") || ARG0_IS_S("dens")) {
+        if ( argc < SHANCHEN + 1 ) {
+	        Tcl_AppendResult(interp, "dens requires arguments", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else {      
+               int i;
+               for(i=0;i<SHANCHEN;i++){
+                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+	                  Tcl_AppendResult(interp, "dens requires real numbers as arguments", (char *)NULL); // TODO: fix this and similar ones...
+          		  return TCL_ERROR;
+                   }  else if (shanchenarg[i]<=0) { 
+	        	  Tcl_AppendResult(interp, "dens must be positive", (char *)NULL);
+          	          return TCL_ERROR;
+                   }
+               } // for
+               if ( lb_lbfluid_set_density(shanchenarg) == 0 ) {
+                 argc-=(1+SHANCHEN); argv+=(1+SHANCHEN);
+               } else {
+	               Tcl_AppendResult(interp, "Unknown Error setting dens", (char *)NULL);
+                 return TCL_ERROR;
+               }
+
+        } 
+      }
+      else if (ARG0_IS_S("viscosity") || ARG0_IS_S("visc")) {
+        if ( argc < (1+SHANCHEN)  ) {
+	        Tcl_AppendResult(interp, "visc requires 1 argument", (char *)NULL);
+          return TCL_ERROR;
+        } else {  
+              int i;
+              for(i=0;i<SHANCHEN;i++){
+                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+	                  Tcl_AppendResult(interp, "visc requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          		  return TCL_ERROR;
+                   } else if (shanchenarg[i]<=0){ 
+	        	  Tcl_AppendResult(interp, "visc must be positive", (char *)NULL);
+          	          return TCL_ERROR;
+                   }
+              } // for
+              if ( lb_lbfluid_set_visc(shanchenarg) == 0 ) {
+                  argc-=(1+SHANCHEN); argv+=(1+SHANCHEN);
+                } else {
+      	          Tcl_AppendResult(interp, "Unknown Error setting viscosity", (char *)NULL);
+                  	  return TCL_ERROR;
+               }
+        }
+      } 
+      else if (ARG0_IS_S("bulk_viscosity")) {
+        if ( argc < (SHANCHEN+1) ){ 
+	        Tcl_AppendResult(interp, "bulk_viscosity requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          return TCL_ERROR;
+        } else  {
+              int i;
+              for(i=0;i<SHANCHEN;i++){
+                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+	                  Tcl_AppendResult(interp, "bulk_viscosity requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          		  return TCL_ERROR;
+                   } else if (shanchenarg[i]<=0){ 
+	        	  Tcl_AppendResult(interp, "bulk_viscosity must be positive", (char *)NULL);
+          	          return TCL_ERROR;
+                   }
+              } // for
+              if ( lb_lbfluid_set_bulk_visc(shanchenarg) == 0 ) {
+                  argc-=(1+SHANCHEN); argv+=(1+SHANCHEN) ; 
+                } else {
+      	          Tcl_AppendResult(interp, "Unknown Error setting bulk_viscosity", (char *)NULL);
+                        return TCL_ERROR;
+              }
+        }     
+      } 
+      else if (ARG0_IS_S("friction") ) {
+        if ( argc < (SHANCHEN+1) ){ 
+	        Tcl_AppendResult(interp, "friction requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          return TCL_ERROR;
+        } else  {
+              int i;
+              for(i=0;i<SHANCHEN;i++){
+                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+	                  Tcl_AppendResult(interp, "friction requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          		  return TCL_ERROR;
+                   } else if (shanchenarg[i]<=0){ 
+	        	  Tcl_AppendResult(interp, "friction must be positive", (char *)NULL);
+          	          return TCL_ERROR;
+                   }
+              } // for
+              if ( lb_lbfluid_set_friction(shanchenarg) == 0 ) {
+                  argc-=(1+SHANCHEN); argv+=(1+SHANCHEN) ; 
+                } else {
+      	          Tcl_AppendResult(interp, "Unknown Error setting friction", (char *)NULL);
+                        return TCL_ERROR;
+              }
+        } 
+      }    
+      else if (ARG0_IS_S("gamma_odd") ) {
+        if ( argc < (SHANCHEN+1) ){ 
+	        Tcl_AppendResult(interp, "gamma_odd requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          return TCL_ERROR;
+        } else  {
+              int i;
+              for(i=0;i<SHANCHEN;i++){
+                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+	                  Tcl_AppendResult(interp, "gamma_odd requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          		  return TCL_ERROR;
+                   } else if (shanchenarg[i] >= 1){ 
+	        	  Tcl_AppendResult(interp, "gamma_odd must be < 1", (char *)NULL);
+          	          return TCL_ERROR;
+                   }
+              } // for
+              if ( lb_lbfluid_set_gamma_odd(shanchenarg) == 0 ) {
+                  argc-=(1+SHANCHEN); argv+=(1+SHANCHEN) ; 
+                } else {
+      	          Tcl_AppendResult(interp, "Unknown Error setting gamma_odd", (char *)NULL);
+                        return TCL_ERROR;
+              }
+        }     
+      } 
+      else if (ARG0_IS_S("gamma_even") ) {
+        if ( argc < (SHANCHEN+1) ){ 
+	        Tcl_AppendResult(interp, "gamma_even requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          return TCL_ERROR;
+        } else  {
+              int i;
+              for(i=0;i<SHANCHEN;i++){
+                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+	                  Tcl_AppendResult(interp, "gamma_even requires arguments", (char *)NULL); // TODO: fix this and similar ones...
+          		  return TCL_ERROR;
+                   } else if (shanchenarg[i] >= 1){ 
+	        	  Tcl_AppendResult(interp, "gamma_even must be < 1 ", (char *)NULL);
+          	          return TCL_ERROR;
+                   }
+              } // for
+             if ( lb_lbfluid_set_bulk_visc(shanchenarg) == 0 ) {
+                 argc-=(1+SHANCHEN); argv+=(1+SHANCHEN) ; 
+               } else {
+     	          Tcl_AppendResult(interp, "Unknown Error setting dens", (char *)NULL);
+                       return TCL_ERROR;
+             }
+        }     
+      } 
+#endif //SHANCHEN
+
+
+      else if (ARG0_IS_S("ext_force")) {
+#ifdef EXTERNAL_FORCES
+        if ( argc < 4 || !ARG_IS_D(1, vectarg[0]) || !ARG_IS_D(2, vectarg[1]) ||  !ARG_IS_D(3, vectarg[2]) ) {
+	        Tcl_AppendResult(interp, "friction requires 1 argument", (char *)NULL);
+          return TCL_ERROR;
+        } else if (lb_lbfluid_set_ext_force(vectarg[0], vectarg[1], vectarg[2]) == 0) {
+          argc-=4; argv+=4;
+        } else {
+	        Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
+          return TCL_ERROR;
+        }
+      #else
+        Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
+         return TCL_ERROR;
+      #endif
       }
       else if (ARG0_IS_S("print")) {
         if ( argc < 3 || (ARG1_IS_S("vtk") && argc < 4) ) {
@@ -496,6 +645,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        }
        else if (ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity")) {
          lb_lbnode_get_u(coord, double_return);
+//         printf("-          %g %g %g\n",double_return[0],double_return[1],double_return[2]);//SAW
          for (counter = 0; counter < 3; counter++) {
            Tcl_PrintDouble(interp, double_return[counter], double_buffer);
            Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
