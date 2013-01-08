@@ -29,7 +29,7 @@
 
 
 #ifdef REACTIONS
-void setup_reaction() {
+void local_setup_reaction() {
   MPI_Bcast(&reaction.reactant_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.product_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.catalyzer_type, 1, MPI_INT, 0, comm_cart);
@@ -105,28 +105,28 @@ void integrate_reaction() {
               {
              		if(p1->p.type == reaction.reactant_type) {
 						      react = p1->p.reacted;
+                  p1->p.reacted = 1;
+
+                  if(react == 0) {
+                 
+                 	  rand = d_random();
+                 		if(rand > ratexp) {
+						          p1->p.type = reaction.product_type;
+                    }
+                  }
 					      }
 					      else {
 						      react = p2->p.reacted;
-					      }
+                  p2->p.reacted = 1;
 
-                if(react == 0) {
-               
-               	  rand = d_random();
-               	  
-               		if(p1->p.type == reaction.reactant_type) {
-               		  if(rand > ratexp) {
-						          p1->p.type = reaction.product_type;
-                      p1->p.reacted = 1;
-                    }
-					        }
-					        else {
-               		  if(rand > ratexp) {
+                  if(react == 0) {
+                 
+                 	  rand = d_random();
+                 		if(rand > ratexp) {
 						          p2->p.type = reaction.product_type;
-                      p2->p.reacted = 1;
                     }
-					        }
-                }
+                  }
+					      }
               }
            	}
           }  
@@ -142,7 +142,7 @@ void integrate_reaction() {
         np  = cell->n;
         
         for(i = 0; i < np; i++) {
-          if(p1[i].p.type == reaction.product_type) p1[i].p.reacted = 0;
+          if(p1[i].p.type == reaction.reactant_type || p1[i].p.type == reaction.product_type ) p1[i].p.reacted = 0;
         }
       }
     }
@@ -192,4 +192,4 @@ void integrate_reaction() {
     on_particle_change();
   }
 }
-#endif /* ifdef REACTIONS */
+#endif

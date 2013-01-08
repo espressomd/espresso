@@ -63,7 +63,7 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
   if (argc == 2 ) { 
      if (ARG1_IS_S("off")) {
            reaction.rate=0.0;
-           mpi_bcast_event(REACTION); 
+           mpi_setup_reaction();
            return TCL_OK;
      }
      if (ARG1_IS_S("print")) {
@@ -134,7 +134,7 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
       return tcl_command_reaction_print_usage(interp);
     }
   }
-  mpi_bcast_event(REACTION);
+  mpi_setup_reaction();
   return TCL_OK;
 #else
   Tcl_AppendResult(interp, "REACTIONS not compiled in!" ,(char *) NULL);
