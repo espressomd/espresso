@@ -43,11 +43,13 @@
 #ifdef SHANCHEN
 #if (SHANCHEN == 1 ) 
 #    define  SC0 {0.0}
+#    define  SC20 {0.0, 0.0}
 #    define  SC1 {1.0}
 #    define  SCM1 {-1.0}
 #endif 
 #if (SHANCHEN == 2 ) 
 #    define  SC0 { 0.0 , 0.0 } 
+#    define  SC20 {0.0, 0.0, 0.0, 0.0}
 #    define  SC1 { 1.0 , 1.0 } 
 #    define  SCM1 { -1.0, -1.0 } 
 #endif 
@@ -71,7 +73,7 @@ LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=
                                 .gamma_even=SC0, .agrid=0.0, .tau=-1.0, .friction=SC0, .time_step=0.0, .lb_coupl_pref=SC1 ,
                                 .lb_coupl_pref2=SC0, .bulk_viscosity=SCM1, .dim_x=0, .dim_y=0, .dim_z=0, .number_of_nodes=0, 
                                 .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
-                                .your_seed=12345, .reinit=0};
+                                .your_seed=12345, .reinit=0, .coupling=SC20};
 #endif
 LB_values_gpu *host_values = NULL;
 LB_nodes_gpu *host_nodes = NULL;
@@ -143,6 +145,7 @@ void lb_calc_particle_lattice_ia_gpu() {
     }
   }
 }
+
 
 /**copy forces from gpu to cpu and call mpi routines to add forces to particles
 */
@@ -228,7 +231,6 @@ void lb_reinit_parameters_gpu() {
     /* Note that the modes are not normalized as in the paper here! */
 
     lbpar_gpu.mu = (float)temperature/c_sound_sq*lbpar_gpu.tau*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid);
-    //lbpar_gpu->mu *= agrid*agrid*agrid;  // Marcello's conjecture
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).

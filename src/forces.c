@@ -69,8 +69,13 @@ void force_calc()
 {
 
 #ifdef LB_GPU
+#ifdef SHANCHEN
+   // SAW TODO check this switches
+  if (lattice_switch & LATTICE_LB_GPU) lb_calc_shanchen_gpu();
+#endif // SHANCHEN
+
   if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
-#endif
+#endif // LB_GPU
 
 #ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)

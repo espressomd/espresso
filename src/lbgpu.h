@@ -51,6 +51,9 @@
 #ifdef CONSTRAINTS
 #define LBPAR_BOUNDARY  7 /**< boundary parameters */
 #endif
+#ifdef SHANCHEN
+#define LBPAR_COUPLING 8
+#endif
 /*@}*/
 
 /**-------------------------------------------------------------------------*/
@@ -81,6 +84,11 @@ typedef struct {
 #else //SHANCHEN
   /** number density (LJ units) */
   float rho[SHANCHEN];
+#if ( SHANCHEN == 1 )
+  float coupling[2];
+#else  // SHANCHEN == 1 
+  float coupling[SHANCHEN*SHANCHEN];
+#endif   // SHANCHEN == 1 
   /** mu (LJ units) */
   float mu[SHANCHEN];
   /*viscosity (LJ) units */
@@ -139,12 +147,13 @@ typedef struct {
 #ifndef SHANCHEN
   /** velocitydensity of the node */
   float rho;
-#else // SHANCHEN
-  float rho[SHANCHEN];
-#endif // SHANCHEN
-
   /** veolcity of the node */
   float v[3];
+#else // SHANCHEN
+  float rho[SHANCHEN];
+  float v[3*SHANCHEN];
+#endif // SHANCHEN
+
 
   /** stresstensor of the node */
   /** use this value only (due to memory saving) if you want to print out the value (used in calc_values)*/
@@ -274,6 +283,9 @@ void lb_realloc_particles_gpu();
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 void lb_particle_GPU(LB_particle_gpu *host_data);
+#ifdef SHANCHEN
+void lb_calc_shanchen_gpu();
+#endif
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
@@ -294,6 +306,7 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag);
 void lb_get_boundary_flags_GPU(unsigned int* host_bound_array);
 
 void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity);
+void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho);
 
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
