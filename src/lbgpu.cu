@@ -36,6 +36,14 @@ extern "C" {
 #define GAUSSRANDOM
 #endif
 
+/** measures the MD time since the last fluid update 
+    This is duplicated from lbgpu_cfile.c because of SHANCHEN force
+    update is different from LB, and we need to avoid calculating/adding
+    forces on the fluid when only those on particle matter. Maybe
+    one can find a better solution.
+**/ 
+static int fluidstep = 0;
+
 /**defining structures residing in global memory */
 /** struct for phys. values */
 static LB_values_gpu *device_values = NULL;
@@ -790,7 +798,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
   delta_j[1] = - particle_force[part_index].f[1]*para.time_step*para.tau/para.agrid;
   delta_j[2] = - particle_force[part_index].f[2]*para.time_step*para.tau/para.agrid;  	
-															  																	  
+
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
@@ -1740,15 +1748,16 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
   return; 
 }
 //SAW TODO: comment
-void lb_calc_shanchen_gpu(){
+void lb_calc_shanchen_GPU(){
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-  KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,(*current_nodes, node_f));
-  cuda_safe_mem(cudaMemcpy(host_f, node_f.force, 3*lbpar_gpu.number_of_nodes*SHANCHEN*sizeof(float), cudaMemcpyDeviceToHost));
-  printf("FORCE: %f %f\n",host_f[0],host_f[3*lbpar_gpu.number_of_nodes]);
+
+   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,(*current_nodes, node_f));
+//SAW  cuda_safe_mem(cudaMemcpy(host_f, node_f.force, 3*lbpar_gpu.number_of_nodes*SHANCHEN*sizeof(float), cudaMemcpyDeviceToHost));
+//SAW   printf("FORCE: %f %f\n",host_f[0],host_f[3*lbpar_gpu.number_of_nodes]);
 
 }
 
@@ -1821,11 +1830,17 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
  float mode[4];
  int my_left[3];
  float interpolated_u1, interpolated_u2, interpolated_u3;
+ float gradrho1, gradrho2, gradrho3;
  float Rho;
-
  float temp_delta[6];
  float temp_delta_half[6];
-
+ float value;
+ #pragma unroll
+ for(int ii=0; ii<SHANCHEN; ++ii){ 
+    delta_j[0+ii*3]=0.f;
+    delta_j[1+ii*3]=0.f;
+    delta_j[2+ii*3]=0.f;
+ }
  /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
  #pragma unroll
  for(int i=0; i<3; ++i){
@@ -1862,54 +1877,131 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
  node_index[6] = x%para.dim_x     + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
  node_index[7] = (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);
 															  																	  
+
  particle_force[part_index].f[0] = 0.f;
  particle_force[part_index].f[1] = 0.f;
  particle_force[part_index].f[2] = 0.f;
  #pragma unroll
  for(int ii=0; ii<SHANCHEN; ++ii){ 
+  float tmpforce[3]={0.f,0.f,0.f};
+   
   interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.f;
-  #pragma unroll
-  for(int i=0; i<8; ++i){
-    calc_mode(mode, n_a, node_index[i],ii);
-    Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
-    interpolated_u1 += delta[i]*mode[1]/(Rho);
-    interpolated_u2 += delta[i]*mode[2]/(Rho);
-    interpolated_u3 += delta[i]*mode[3]/(Rho);
-  }
+  gradrho1 = gradrho2 = gradrho3 = 0.f;
+ // SAW TODO: introduce the density dependence in friction
+  /*  manually unrolled because of gradient calculation */
+//SAW  TODO comment on the gradient calculation...
+  /* Idea for a different evaluation of the gradient: we could
+     compute the gradients not at the vertices, but
+     halfway between pairs, so that we can use the more accurate
+     centered difference. Then we could use them to make a linear
+     interpolation...
+   */
+  calc_mode(mode, n_a, node_index[0],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
+  interpolated_u1 += delta[0]*mode[1]/(Rho);  interpolated_u2 += delta[0]*mode[2]/(Rho);
+  interpolated_u3 += delta[0]*mode[3]/(Rho);
+  // SAW TODO check the weighted grad coefficients...
+  gradrho1 -=(delta[0] + delta[1]) * Rho; 
+  gradrho2 -=(delta[0] + delta[2]) * Rho; 
+  gradrho3 -=(delta[0] + delta[4]) * Rho; 
+
+  calc_mode(mode, n_a, node_index[1],ii); Rho = mode[0] +
+  para.rho[ii]*para.agrid*para.agrid*para.agrid; 
+  interpolated_u1+= delta[1]*mode[1]/(Rho);  interpolated_u2 += delta[1]*mode[2]/(Rho); interpolated_u3 += delta[1]*mode[3]/(Rho);
+  gradrho1 +=(delta[1] + delta[0]) * Rho; 
+  gradrho2 -=(delta[1] + delta[3]) * Rho; 
+  gradrho3 -=(delta[1] + delta[5]) * Rho; 
+  /* Thank you Eric Merlin Foard! */
+  calc_mode(mode, n_a, node_index[2],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
+  interpolated_u1 += delta[2]*mode[1]/(Rho);  interpolated_u2 += delta[2]*mode[2]/(Rho); interpolated_u3 += delta[2]*mode[3]/(Rho);
+  gradrho1 -=(delta[2] + delta[3]) * Rho; 
+  gradrho2 +=(delta[2] + delta[0]) * Rho; 
+  gradrho3 -=(delta[2] + delta[6]) * Rho; 
+
+  calc_mode(mode, n_a, node_index[3],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
+  interpolated_u1 += delta[3]*mode[1]/(Rho);  interpolated_u2 += delta[3]*mode[2]/(Rho); interpolated_u3 += delta[3]*mode[3]/(Rho);
+  gradrho1 +=(delta[3] + delta[2]) * Rho; 
+  gradrho2 +=(delta[3] + delta[1]) * Rho; 
+  gradrho3 -=(delta[3] + delta[7]) * Rho; 
+
+  calc_mode(mode, n_a, node_index[4],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
+  interpolated_u1 += delta[4]*mode[1]/(Rho);  interpolated_u2 += delta[4]*mode[2]/(Rho); interpolated_u3 += delta[4]*mode[3]/(Rho);
+  gradrho1 -=(delta[4] + delta[5]) * Rho; 
+  gradrho2 -=(delta[4] + delta[6]) * Rho; 
+  gradrho3 +=(delta[4] + delta[0]) * Rho; 
+
+  calc_mode(mode, n_a, node_index[5],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
+  interpolated_u1 += delta[5]*mode[1]/(Rho);  interpolated_u2 += delta[5]*mode[2]/(Rho); interpolated_u3 += delta[5]*mode[3]/(Rho);
+  gradrho1 +=(delta[5] + delta[4]) * Rho; 
+  gradrho2 -=(delta[5] + delta[7]) * Rho; 
+  gradrho3 +=(delta[5] + delta[1]) * Rho; 
+
+  calc_mode(mode, n_a, node_index[6],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
+  interpolated_u1 += delta[6]*mode[1]/(Rho);  interpolated_u2 += delta[6]*mode[2]/(Rho); interpolated_u3 += delta[6]*mode[3]/(Rho);
+  gradrho1 -=(delta[6] + delta[7]) * Rho; 
+  gradrho2 +=(delta[6] + delta[4]) * Rho; 
+  gradrho3 +=(delta[6] + delta[2]) * Rho; 
+
+  calc_mode(mode, n_a, node_index[7],ii);
+  Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
+  interpolated_u1 += delta[7]*mode[1]/(Rho);  interpolated_u2 += delta[7]*mode[2]/(Rho); interpolated_u3 += delta[7]*mode[3]/(Rho);
+  gradrho1 +=(delta[7] + delta[6]) * Rho; 
+  gradrho2 +=(delta[7] + delta[5]) * Rho; 
+  gradrho3 +=(delta[7] + delta[3]) * Rho; 
+
+  /* normalize the gradient to md units TODO: is that correct?*/
+  gradrho1 *= para.agrid; 
+  gradrho2 *= para.agrid; 
+  gradrho3 *= para.agrid; 
+
+
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   
 #ifdef LB_ELECTROHYDRODYNAMICS
-  particle_force[part_index].f[0] += - para.friction[ii] * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
-  particle_force[part_index].f[1] += - para.friction[ii] * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
-  particle_force[part_index].f[2] += - para.friction[ii] * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau - particle_data[part_index].mu_E[2]);
+  tmpforce[0] += - para.friction[ii] * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
+  tmpforce[1] += - para.friction[ii] * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
+  tmpforce[2] += - para.friction[ii] * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau - particle_data[part_index].mu_E[2]);
 #else
-  particle_force[part_index].f[0] += - para.friction[ii] * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau);
-  particle_force[part_index].f[1] += - para.friction[ii] * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau);
-  particle_force[part_index].f[2] += - para.friction[ii] * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau);
+  tmpforce[0] += - para.friction[ii] * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau);
+  tmpforce[1] += - para.friction[ii] * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau);
+  tmpforce[2] += - para.friction[ii] * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau);
 #endif
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
+ // SAW TODO: can we improve performance by doing first all f[0]s, then all f[1]s, ... ? 
+  tmpforce[0] += particle_data[part_index].solvation[ii]  * gradrho1 ;
+  tmpforce[1] += particle_data[part_index].solvation[ii]  * gradrho2 ;
+  tmpforce[2] += particle_data[part_index].solvation[ii]  * gradrho3 ;
 #ifdef GAUSSRANDOM
   gaussian_random(rn_part);
-  particle_force[part_index].f[0] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
-  particle_force[part_index].f[1] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
+  tmpforce[0] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+  tmpforce[1] += para.lb_coupl_pref2[ii]*rn_part->randomnr[1];
   gaussian_random(rn_part);
-  particle_force[part_index].f[2] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
+  tmpforce[2] += para.lb_coupl_pref2[ii]*rn_part->randomnr[0];
 #else
   random_01(rn_part);
-  particle_force[part_index].f[0] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
-  particle_force[part_index].f[1] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
+  tmpforce[0] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+  tmpforce[1] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
   random_01(rn_part);
-  particle_force[part_index].f[2] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
+  tmpforce[2] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
 #endif	  
+  particle_force[part_index].f[0] += tmpforce[0];
+  particle_force[part_index].f[1] += tmpforce[1];
+  particle_force[part_index].f[2] += tmpforce[2];
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  delta_j[0] = - particle_force[part_index].f[0]*para.time_step*para.tau/para.agrid;
-  delta_j[1] = - particle_force[part_index].f[1]*para.time_step*para.tau/para.agrid;
-  delta_j[2] = - particle_force[part_index].f[2]*para.time_step*para.tau/para.agrid;  	
+  delta_j[0+3*ii] -=  tmpforce[0]*para.time_step*para.tau/para.agrid;
+  delta_j[1+3*ii] -=  tmpforce[1]*para.time_step*para.tau/para.agrid;
+  delta_j[2+3*ii] -=  tmpforce[2]*para.time_step*para.tau/para.agrid;  	
  }
 }
+
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
 	(Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
@@ -1922,37 +2014,37 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
 /* SAW TODO: should the drag depend on the density?? */
  #pragma unroll
  for(int ii=0; ii < SHANCHEN ; ++ii) { 
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[2]));
-
-  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0]));
-  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1]));
-  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2]));
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[0]]), (delta[0]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[1]]), (delta[1]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[2]]), (delta[2]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[3]]), (delta[3]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[4]]), (delta[4]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[5]]), (delta[5]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[6]]), (delta[6]*delta_j[2+ii*3]));
+                                                                                                    
+  atomicadd(&(node_f.force[(0+ii*3)*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[0+ii*3]));
+  atomicadd(&(node_f.force[(1+ii*3)*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[1+ii*3]));
+  atomicadd(&(node_f.force[(2+ii*3)*para.number_of_nodes + node_index[7]]), (delta[7]*delta_j[2+ii*3]));
  }
 }
 /*********************************************************/
@@ -2382,14 +2474,18 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *partic
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
   float delta[8];
+#ifndef SHANCHEN
   float delta_j[3]; 
+#else // SHANCHEN
+  float delta_j[3*SHANCHEN]; 
+#endif //SHANCHEN
   LB_randomnr_gpu rng_part;
   if(part_index<para.number_of_particles){
 
     rng_part.seed = part[part_index].seed;
-    /**calc of the force which act on the particle */
+    /**force acting on the particle. delta_j will be used later to compute the force that acts back onto the fluid. */
     calc_viscous_force(n_a, delta, particle_data, particle_force, part_index, &rng_part, delta_j, node_index);
-    /**calc of the force which acts back to the fluid node */
+    /**force which acts back to the fluid node */
     calc_node_force(delta, delta_j, node_index, node_f); 
     part[part_index].seed = rng_part.seed;		
   }
@@ -2796,7 +2892,7 @@ void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
   /** reset part forces with zero*/
   KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force));
 	
-  cudaThreadSynchronize();
+  cudaThreadSynchronize(); 
 }
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes

@@ -317,7 +317,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       }
 #else //SHANCHEN
       else if (ARG0_IS_S("sc_coupling") ) {
-        /* when SHANCEHN==1 we allow liquid/gas phase transitions and require a second parameter (rho_0) besides the coupling */
+        /* when SHANCHEN==1 we allow liquid/gas phase transitions and require a second parameter (rho_0) besides the coupling */
         int nargs=( (SHANCHEN==1) ? 2 : (SHANCHEN*(SHANCHEN+1))/2) ;
         if ( argc < 1+nargs ) {
                 char str[1024];
@@ -631,6 +631,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   return TCL_ERROR;
 #endif
 }
+
 /** Parser for the \ref tclcommand_lbnode command. */
 int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 

@@ -194,6 +194,9 @@ typedef struct {
   float p[3];
   /** particle momentum struct velocity p.m->v*/
   float v[3];
+#ifdef SHANCHEN
+  float solvation[SHANCHEN];
+#endif 
 #ifdef LB_ELECTROHYDRODYNAMICS
   float mu_E[3];
 #endif
@@ -284,7 +287,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 void lb_particle_GPU(LB_particle_gpu *host_data);
 #ifdef SHANCHEN
-void lb_calc_shanchen_gpu();
+void lb_calc_shanchen_GPU();
 #endif
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);

@@ -112,6 +112,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_update_mol_ids_slave) \
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
+  CB(mpi_send_solvation_slave) \
 /*  CB(mpi_buck_cap_forces_slave) */\
   CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
@@ -571,6 +572,39 @@ void mpi_send_mu_E_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
         MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_SOLV ********/
+void mpi_send_solvation(int pnode, int part, double* solvation)
+{
+#ifdef SHANCHEN
+  int ii;
+  mpi_call(mpi_send_solvation_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    for(ii=0;ii<SHANCHEN;ii++)
+       p->p.solvation[ii]= solvation[ii];
+  }
+  else {
+    MPI_Send(&solvation, SHANCHEN, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_solvation_slave(int pnode, int part)
+{
+#ifdef SHANCHEN
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(&p->p.solvation, SHANCHEN, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
   }
 

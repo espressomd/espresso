@@ -237,6 +237,8 @@ int lb_lbfluid_set_friction(double p_friction){
 }
 
 #else //SHANCHEN
+
+
 int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
 #ifdef LB_GPU
   int ii,jj,n=0;
@@ -408,9 +410,9 @@ int lb_lbfluid_set_agrid(double p_agrid){
 #ifdef LB_GPU
     lbpar_gpu.agrid = (float)p_agrid;
 
-    lbpar_gpu.dim_x = (unsigned int)floor(box_l[0]/p_agrid);
-    lbpar_gpu.dim_y = (unsigned int)floor(box_l[1]/p_agrid);
-    lbpar_gpu.dim_z = (unsigned int)floor(box_l[2]/p_agrid);
+    lbpar_gpu.dim_x = (unsigned int)rint(box_l[0]/p_agrid);
+    lbpar_gpu.dim_y = (unsigned int)rint(box_l[1]/p_agrid);
+    lbpar_gpu.dim_z = (unsigned int)rint(box_l[2]/p_agrid);
     unsigned int tmp[3];
     tmp[0] = lbpar_gpu.dim_x;
     tmp[1] = lbpar_gpu.dim_y;
@@ -421,7 +423,7 @@ int lb_lbfluid_set_agrid(double p_agrid){
     /* check if box_l is compatible with lattice spacing */
       if (fabs(box_l[dir]-tmp[dir]*p_agrid) > ROUND_ERROR_PREC) {
         char *errtxt = runtime_error(128);
-        ERROR_SPRINTF(errtxt, "{097 Lattice spacing p_agrid=%f is incompatible with box_l[%i]=%f} ",p_agrid,dir,box_l[dir]);
+        ERROR_SPRINTF(errtxt, "{097 Lattice spacing p_agrid=%f is incompatible with box_l[%i]=%f, factor=%d err= %g} ",p_agrid,dir,box_l[dir],tmp[dir],fabs(box_l[dir]-tmp[dir]*p_agrid));
       }
     }
     lbpar_gpu.number_of_nodes = lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;

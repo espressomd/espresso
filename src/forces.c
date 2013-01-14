@@ -70,8 +70,8 @@ void force_calc()
 
 #ifdef LB_GPU
 #ifdef SHANCHEN
-   // SAW TODO check this switches
-  if (lattice_switch & LATTICE_LB_GPU) lb_calc_shanchen_gpu();
+   // SAW TODO check these switches
+  if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_calc_shanchen_gpu();
 #endif // SHANCHEN
 
   if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();

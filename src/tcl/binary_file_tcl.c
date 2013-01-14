@@ -205,6 +205,9 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
 #ifdef MASS
     av_mass=0,
 #endif
+#ifdef SHANCHEN
+    av_solvation=0,
+#endif
     av_f = 0,
 #ifdef ELECTROSTATICS
     av_q = 0,
@@ -263,6 +266,9 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
     case   FZ:   f_row[2] = i; break;
 #ifdef MASS
     case MASSES: av_mass  = 1; break;
+#endif
+#ifdef SHANCHEN
+    case SOLVATION: av_solvation = 1; break;
 #endif
 #ifdef ELECTROSTATICS
     case    Q:   av_q     = 1; break;
@@ -353,6 +359,10 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
 #ifdef MASS
     if (av_mass)
       set_particle_mass(data.p.identity, data.p.mass);
+#endif
+#ifdef SHANCHEN
+    if (av_solvation)
+      set_particle_solvation(data.p.identity, data.p.solvation);
 #endif
 #ifdef ELECTROSTATICS
     if (av_q)

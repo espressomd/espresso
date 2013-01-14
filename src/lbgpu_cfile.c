@@ -107,16 +107,35 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */
 /*-----------------------------------------------------------*/
+
+/* called from forces.c. This is at the beginning of the force
+   calculation loop, so we increment the fluidstep counter here,
+   and we reset it only when the last call to a LB function
+   [lattice_boltzmann_update_gpu()] is performed within integrate_vv()
+ */
+void lattice_boltzmann_calc_shanchen_gpu(void){
+
+  int factor = (int)round(lbpar_gpu.tau/time_step);
+
+  fluidstep+=1;
+  if (fluidstep>=factor) { 
+     lb_calc_shanchen_GPU();
+  }
+
+}
+
+
 /** lattice boltzmann update gpu called from integrate.c
 */
+
 void lattice_boltzmann_update_gpu() {
 
   int factor = (int)round(lbpar_gpu.tau/time_step);
 
-  fluidstep += 1;
+//  fluidstep += 1; old code. fluidstep is now incremented before, when the LB forces are evaluated 
 
   if (fluidstep>=factor) {
-    fluidstep=0;
+    fluidstep=0; 
 
     lb_integrate_GPU();
 
@@ -125,25 +144,27 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
+
+
 /** Calculate particle lattice interactions called from forces.c
 */
 void lb_calc_particle_lattice_ia_gpu() {
-  if (transfer_momentum_gpu) {
-    mpi_get_particles_lb(host_data);
 
-    if(this_node == 0){
+     if (transfer_momentum_gpu) {
+       mpi_get_particles_lb(host_data);
+   
+       if(this_node == 0){
 #if 0
-      for (i=0;i<n_total_particles;i++) {
-        fprintf(stderr, "%i particle posi: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
-      }
-#endif
-
-    if(lbpar_gpu.number_of_particles) lb_particle_GPU(host_data);
-
-    LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
-
-    }
-  }
+         for (i=0;i<n_total_particles;i++) {
+           fprintf(stderr, "%i particle pos: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
+         }
+   #endif
+         if(lbpar_gpu.number_of_particles) lb_particle_GPU(host_data);
+   
+       LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
+   
+       }
+     }
 }
 
 
@@ -277,7 +298,6 @@ for(ii=0;ii<SHANCHEN;++ii){
     /* Note that the modes are not normalized as in the paper here! */
 
     lbpar_gpu.mu[ii] = (float)temperature/c_sound_sq*lbpar_gpu.tau*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid); // TODO: check how to change mu
-    //lbpar_gpu->mu *= agrid*agrid*agrid;  // Marcello's conjecture
 
     /* lb_coupl_pref is stored in MD units (force)
      * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -306,7 +326,6 @@ for(ii=0;ii<SHANCHEN;++ii){
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init_gpu() {
-
   LB_TRACE(printf("Begin initialzing fluid on GPU\n"));
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
@@ -371,6 +390,13 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
               host_data[i+g].v[0] = (float)part[i].m.v[0];
               host_data[i+g].v[1] = (float)part[i].m.v[1];
               host_data[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef SHANCHEN
+              // SAW TODO: does this really need to be copied every time?
+              int ii;
+              for(ii=0;ii<SHANCHEN;ii++){
+                 host_data[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
+              }
+#endif
 #ifdef LB_ELECTROHYDRODYNAMICS
               host_data[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
               host_data[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
@@ -430,6 +456,14 @@ static void mpi_get_particles_slave_lb(){
         host_data_sl[i+g].v[0] = (float)part[i].m.v[0];
         host_data_sl[i+g].v[1] = (float)part[i].m.v[1];
         host_data_sl[i+g].v[2] = (float)part[i].m.v[2];
+#ifdef SHANCHEN
+        // SAW TODO: does this really need to be copied every time?
+        int ii;
+        for(ii=0;ii<SHANCHEN;ii++){
+           host_data_sl[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
+        }
+#endif
+
 #ifdef LB_ELECTROHYDRODYNAMICS
         host_data_sl[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
         host_data_sl[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
