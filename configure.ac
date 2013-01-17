@@ -59,8 +59,8 @@ m4_define([_AC_PROG_CC_G],[])
 # Check for --with-mpi
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
     [compile with MPI (parallelization) support. If none is found, the
-     fake implementation for only one processor is used. Default: auto])
-],,[with_mpi=auto])
+     fake implementation for only one processor is used. @<:@guess@:>@])
+],,[with_mpi=guess])
 
 AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
@@ -381,7 +381,8 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],
+                       [specify whether or not to use FFTW3 [guess]]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -407,13 +408,12 @@ AS_IF([test x$fftw_found = xyes],[
 AC_MSG_CHECKING([whether to use CUDA])
 
 AC_ARG_WITH([cuda],
-	AS_HELP_STRING([--with-cuda[=CUDAINSTALLDIR]],[specify where CUDA is installed.
-	    Defaults to /usr/local/cuda.
-		The cuda compiler can also be specified by setting the NVCC
-		environment variable. The CUDA library and header can be
-		manually specified by using CPPFLAGS, LDFLAGS and LIBS.]),
-	, with_cuda=guess)
-AC_MSG_RESULT($with_cuda)
+	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
+	where CUDA is installed.  The cuda compiler can also be
+	specified by setting the NVCC environment variable. The CUDA
+	library and header can be manually specified by using
+	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
+	with_cuda=guess) AC_MSG_RESULT($with_cuda)
 
 if test x$with_cuda = xguess -o x$with_cuda = xyes; then
    cuda_path=/usr/local/cuda
@@ -528,7 +528,8 @@ AC_MSG_RESULT($with_efence)
 ##################################
 # Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [myconfig.h]]),
+  AS_HELP_STRING([--with-myconfig=FILE],
+                 [default name of the local config file [FILE=myconfig.h]]),
 [ test .$with_myconfig = .no && with_myconfig=myconfig.h ],
 [ with_myconfig=myconfig.h ])
 AC_MSG_CHECKING([the name of the configuration header])
