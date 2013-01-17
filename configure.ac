@@ -412,10 +412,10 @@ AC_ARG_WITH([cuda],
 	where CUDA is installed.  The cuda compiler can also be
 	specified by setting the NVCC environment variable. The CUDA
 	library and header can be manually specified by using
-	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
-	with_cuda=guess) AC_MSG_RESULT($with_cuda)
+	CPPFLAGS, LDFLAGS and LIBS. [no]]), ,
+	with_cuda=no) AC_MSG_RESULT($with_cuda)
 
-if test x$with_cuda = xguess -o x$with_cuda = xyes; then
+if test x$with_cuda = xguess || test x$with_cuda = xyes; then
    cuda_path=/usr/local/cuda
 elif test x$with_cuda != xno; then
    cuda_path=$with_cuda
