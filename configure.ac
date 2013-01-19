@@ -426,6 +426,7 @@ cuda_ok=no
 
 AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
+    save_LIBS=$LIBS
     
     AS_IF([test x$NVCC = x],[
         NVCC=$cuda_path/bin/nvcc
@@ -517,6 +518,10 @@ AS_IF([test x$with_cuda != xno],[
     
     CC=$save_CC
     CFLAGS=$save_CFLAGS
+    
+    AS_IF([test x$cuda_ok != xyes], [
+        LIBS=$save_LIBS
+    ])
     
     AC_DEFINE(CUDA,[],[Whether CUDA is available])
 ])
