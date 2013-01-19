@@ -519,11 +519,11 @@ AS_IF([test x$with_cuda != xno],[
     CC=$save_CC
     CFLAGS=$save_CFLAGS
     
-    AS_IF([test x$cuda_ok != xyes], [
+    AS_IF([test x$cuda_ok == xyes], [
+        AC_DEFINE(CUDA,[],[Whether CUDA is available])
+    ],[
         LIBS=$save_LIBS
     ])
-    
-    AC_DEFINE(CUDA,[],[Whether CUDA is available])
 ])
 
 AM_CONDITIONAL(CUDA, [test x$with_cuda != xno])
