@@ -526,7 +526,7 @@ AS_IF([test x$with_cuda != xno],[
     ])
 ])
 
-AM_CONDITIONAL(CUDA, [test x$with_cuda != xno])
+AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 
 cat <<EOF
 ****************************************************************

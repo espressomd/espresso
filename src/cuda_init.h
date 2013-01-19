@@ -22,7 +22,6 @@
 #include "config.h"
 
 #ifdef CUDA
-#warning cuda ist an //TODO delete
 
 /** get the number of CUDA devices.
 

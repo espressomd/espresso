@@ -65,7 +65,6 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "Feature CUDA required!", (char *)NULL);
     return TCL_ERROR;
 #else
-#warning cuda ist an //TODO delete
   if (argc <= 1) {
     Tcl_AppendResult(interp, "too few arguments to the cuda command", (char *)NULL);
     return TCL_ERROR;
