@@ -439,6 +439,7 @@ AS_IF([test x$with_cuda != xno],[
     ])
 
     NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
+    CFLAGS="$CFLAGS -I$cuda_path/include"
 
     # NVCC
     AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
