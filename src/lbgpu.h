@@ -53,6 +53,7 @@
 #endif
 #ifdef SHANCHEN
 #define LBPAR_COUPLING 8
+#define LBPAR_MOBILITY 9
 #endif
 /*@}*/
 
@@ -84,6 +85,9 @@ typedef struct {
 #else //SHANCHEN
   /** number density (LJ units) */
   float rho[SHANCHEN];
+  /** mobility. They are actually SHANCHEN-1 in number, we leave SHANCHEN here for practical reasons*/
+  float gamma_mobility[SHANCHEN];
+  float mobility[SHANCHEN];
 #if ( SHANCHEN == 1 )
   float coupling[2];
 #else  // SHANCHEN == 1 
@@ -145,14 +149,13 @@ typedef struct {
 typedef struct {
 
 #ifndef SHANCHEN
-  /** velocitydensity of the node */
+  /** density of the node */
   float rho;
-  /** veolcity of the node */
-  float v[3];
 #else // SHANCHEN
   float rho[SHANCHEN];
-  float v[3*SHANCHEN];
 #endif // SHANCHEN
+  /** veolcity of the node */
+  float v[3];
 
 
   /** stresstensor of the node */

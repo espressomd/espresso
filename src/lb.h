@@ -50,6 +50,7 @@
 #define LBPAR_FRICTION  4 /**< friction coefficient for viscous coupling between particles and fluid */
 #define LBPAR_EXTFORCE  5 /**< external force acting on the fluid */
 #define LBPAR_BULKVISC  6 /**< fluid bulk viscosity */
+#define LBPAR_BULKVISC  7 /**< fluid mobility */
 
 /*@}*/
   /** Some general remarks:
@@ -585,6 +586,7 @@ int lb_lbfluid_set_gamma_even(double p_gamma_even);
 int lb_lbfluid_set_friction(double p_friction);
 #else // SHANCHEN
 int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
+int lb_lbfluid_set_mobility(double * p_mobility);
 int lb_lbfluid_set_density(double * p_dens);
 int lb_lbfluid_set_visc(double * p_visc);
 int lb_lbfluid_set_bulk_visc(double * p_bulk_visc);
@@ -598,10 +600,8 @@ int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
 int lb_lbfluid_set_tau(double p_tau);
 
 int lb_lbfluid_print_vtk_boundary(char* filename);
-#ifndef SHANCHEN
 int lb_lbfluid_print_vtk_velocity(char* filename);
-#else // SHANCHEN
-int lb_lbfluid_print_vtk_velocity(char** filename);
+#ifdef SHANCHEN
 int lb_lbfluid_print_vtk_density(char** filename);
 #endif // SHANCHEN
 int lb_lbfluid_print_boundary(char* filename);

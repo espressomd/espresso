@@ -69,8 +69,8 @@ LB_parameters_gpu lbpar_gpu = { .rho=0.0, .mu=0.0, .viscosity=0.0, .gamma_shear=
                                 .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
                                 .your_seed=12345, .reinit=0};
 #else //SHANCHEN
-LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=SC0, .gamma_bulk=SC0, .gamma_odd=SC0, 
-                                .gamma_even=SC0, .agrid=0.0, .tau=-1.0, .friction=SC0, .time_step=0.0, .lb_coupl_pref=SC1 ,
+LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=SC0, .gamma_bulk=SC0, .gamma_mobility=SC0, 
+                                .gamma_odd=SC0,.gamma_even=SC0, .agrid=0.0, .tau=-1.0, .friction=SC0, .time_step=0.0, .lb_coupl_pref=SC1 ,
                                 .lb_coupl_pref2=SC0, .bulk_viscosity=SCM1, .dim_x=0, .dim_y=0, .dim_z=0, .number_of_nodes=0, 
                                 .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
                                 .your_seed=12345, .reinit=0, .coupling=SC20};
@@ -235,6 +235,7 @@ void lb_reinit_parameters_gpu() {
   lbpar_gpu.time_step = (float)time_step;
 
   if (lbpar_gpu.viscosity > 0.0) {
+    /* NOTE: here and below cs^2 = 3 */
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     lbpar_gpu.gamma_shear = 1. - 2./(6.*lbpar_gpu.viscosity*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);   
   }
@@ -288,6 +289,12 @@ for(ii=0;ii<SHANCHEN;++ii){
   if (lbpar_gpu.bulk_viscosity[ii] > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     lbpar_gpu.gamma_bulk[ii] = 1. - 2./(9.*lbpar_gpu.bulk_viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
+  }
+
+  if (lbpar_gpu.mobility[ii] > 0.0) {
+ // SAW TODO: fix units !
+    lbpar_gpu.gamma_mobility[ii] = 1. - 2./(6.*lbpar_gpu.mobility[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
+printf("gamma_mobility=%f\n",lbpar_gpu.gamma_mobility[ii]);
   }
 
   if (temperature > 0.0) {  /* fluctuating hydrodynamics ? */

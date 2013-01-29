@@ -266,6 +266,25 @@ int lb_lbfluid_set_shanchen_coupling(double *p_coupling) {
   return 0;
 }
 
+int lb_lbfluid_set_mobility(double *p_mobility) {
+  int ii;
+  for(ii=0;ii<SHANCHEN-1;ii++){
+  if ( p_mobility[ii] <= 0 ) {
+    return -1;
+  }
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    lbpar_gpu.mobility[ii] = (float)p_mobility[ii];
+    on_lb_params_change_gpu(LBPAR_MOBILITY);
+#endif
+  } else {
+#ifdef LB
+    #error not implemented
+#endif
+    }
+  }
+  return 0;
+}
 
 int lb_lbfluid_set_density(double *p_dens) {
 int ii;
@@ -652,7 +671,10 @@ int lb_lbfluid_print_vtk_density(char** filename) {
 int ii;
 for(ii=0;ii<SHANCHEN;++ii){ 
   FILE* fp = fopen(filename[ii], "w");
-  if(fp == NULL) return 1;
+  if(fp == NULL){
+	 perror("lb_lbfluid_print_vtk_density");
+	 return 1;
+  }
 
   if (lattice_switch & LATTICE_LB_GPU) {
      int j;	
@@ -664,7 +686,7 @@ for(ii=0;ii<SHANCHEN;++ii){
              lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, 
              lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
      for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
-         /** print of the calculated phys values */
+         /** print the calculated phys values */
          fprintf(fp, "%f\n", host_values[j].rho[ii]);
      }
      free(host_values);
@@ -681,9 +703,8 @@ for(ii=0;ii<SHANCHEN;++ii){
 #endif // SHANCHEN
 
 
-
+// SAW TODO: check all functions wich are getting/setting single node values
 #ifdef LB_GPU
-#ifndef SHANCHEN
 int lb_lbfluid_print_vtk_velocity(char* filename) {
   if (lattice_switch & LATTICE_LB_GPU) {
      FILE* fp = fopen(filename, "w");
@@ -702,37 +723,10 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
        fprintf(fp, "%f %f %f\n", host_values[j].v[0], host_values[j].v[1], host_values[j].v[2]);
      }
      free(host_values);
+     fclose(fp);
      return 0;
   }
 }
-#else // SHANCHEN
-int lb_lbfluid_print_vtk_velocity(char** filename) {
-  int ii;
-  if (lattice_switch & LATTICE_LB_GPU) {
-
-   for(ii=0;ii<SHANCHEN;++ii){
-     FILE* fp = fopen(filename[ii], "w");
-     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
-     if(fp == NULL)  
-       return 1;
-     host_values = (LB_values_gpu*)malloc(size_of_values);
-     lb_get_values_GPU(host_values);
-     fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", 
-                 lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, 
-                 lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, 
-                 lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
-     int j;	
-     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
-       /** print of the calculated phys values */
-       fprintf(fp, "%f %f %f\n", host_values[j].v[0+3*ii], host_values[j].v[1+3*ii], host_values[j].v[2+3*ii]);
-     }
-     free(host_values);
-     fclose(fp);
-   } // for
-   return 0;
-  }
-}
-#endif // SHANCHEN
 #endif // LB_GPU
 
 #ifdef LB
@@ -1018,10 +1012,11 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
 #else // SHANCHEN
     {
       int i ;
-      for(i=0;i<SHANCHEN;i++)
-      p_u[0+3*i] = (double)(host_print_values[0].v[0+3*i]);
-      p_u[1+3*i] = (double)(host_print_values[0].v[1+3*i]);
-      p_u[2+3*i] = (double)(host_print_values[0].v[2+3*i]);
+      for(i=0;i<SHANCHEN;i++){ 
+         p_u[0+3*i] = (double)(host_print_values[0].v[0+3*i]);
+         p_u[1+3*i] = (double)(host_print_values[0].v[1+3*i]);
+         p_u[2+3*i] = (double)(host_print_values[0].v[2+3*i]);
+      }
     }
 #endif // SHANCHEN
 		free (host_print_values);
