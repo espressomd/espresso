@@ -1279,16 +1279,17 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
   float Rho;
   float sqrt12=sqrtf(12.f);
 
-  LB_randomnr_gpu rngarray[18];
+  LB_randomnr_gpu rngarray[9];
+  #pragma unroll
   for(int ii=0; ii< 9 ; ++ii) { 
 #ifdef GAUSSRANDOM
-	gaussian_random(&rngarray[2*ii]);
+	gaussian_random(&rngarray[ii]);
 #else
-        random_01(&rngarray[2*ii]);
-	rngarray[2*ii].randomnr[0]-=0.5f;
-	rngarray[2*ii].randomnr[0]*=sqrt12;
-	rngarray[2*ii].randomnr[1]-=0.5f;
-	rngarray[2*ii].randomnr[1]*=sqrt12;
+        random_01(&rngarray[ii]);
+	rngarray[ii].randomnr[0]-=0.5f;
+	rngarray[ii].randomnr[0]*=sqrt12;
+	rngarray[ii].randomnr[1]-=0.5f;
+	rngarray[ii].randomnr[1]*=sqrt12;
 #endif
   }
   #pragma unroll

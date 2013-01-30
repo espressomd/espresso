@@ -347,13 +347,14 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
       }
 #if ( SHANCHEN > 1 )
       else if (ARG0_IS_S("mobility")) {
-        if ( argc < SHANCHEN ) {
-	        Tcl_AppendResult(interp, "mobility requires\"", SHANCHEN - 1 ,"\" argument(s)", (char *)NULL);
+        argc--; argv++;
+        if ( argc < SHANCHEN -1 ) {
+	        Tcl_AppendResult(interp, "mobility requires argument(s)", (char *)NULL);
           return TCL_ERROR;
         } else { 
                int i;
                for(i=0;i<SHANCHEN-1;i++){
-                   if(!ARG_IS_D(i+1,shanchenarg[i]) ) {
+                   if(!ARG_IS_D(i,shanchenarg[i]) ) {
 	                  Tcl_AppendResult(interp, "mobility requires real numbers as arguments", (char *)NULL); // TODO: fix this and similar ones...
           		  return TCL_ERROR;
                    }  else if (shanchenarg[i]<=0) { 
@@ -362,7 +363,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
                    }
                } // for 
                if ( lb_lbfluid_set_mobility(shanchenarg) == 0 ) {
-                 argc-=(SHANCHEN); argv+=(SHANCHEN);
+                 argc-=(SHANCHEN-1); argv+=(SHANCHEN-1);
                } else {
 	               Tcl_AppendResult(interp, "Unknown Error setting mobility", (char *)NULL);
                  return TCL_ERROR;

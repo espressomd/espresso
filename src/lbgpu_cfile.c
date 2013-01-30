@@ -291,10 +291,9 @@ for(ii=0;ii<SHANCHEN;++ii){
     lbpar_gpu.gamma_bulk[ii] = 1. - 2./(9.*lbpar_gpu.bulk_viscosity[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
   }
 
-  if (lbpar_gpu.mobility[ii] > 0.0) {
- // SAW TODO: fix units !
-    lbpar_gpu.gamma_mobility[ii] = 1. - 2./(6.*lbpar_gpu.mobility[ii]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
-printf("gamma_mobility=%f\n",lbpar_gpu.gamma_mobility[ii]);
+  if (lbpar_gpu.mobility[0] > 0.0) {
+ // SAW TODO: fix units ! TODO: this works only for SHANCHEN==2 !
+    lbpar_gpu.gamma_mobility[0] = 1. - 2./(6.*lbpar_gpu.mobility[0]*lbpar_gpu.tau/(lbpar_gpu.agrid*lbpar_gpu.agrid) + 1.);
   }
 
   if (temperature > 0.0) {  /* fluctuating hydrodynamics ? */
