@@ -67,7 +67,7 @@ LB_Model lbmodel = { 19, d3q19_lattice, d3q19_coefficients, d3q19_w, NULL, 1./3.
 #define GAUSSRANDOM
 #endif
 /** The underlying lattice structure */
-Lattice lblattice = { {0,0,0}, {0,0,0}, 0, 0, 0, 0, 0, { -1., -1., -1.}, -1.0, NULL, NULL };
+Lattice lblattice;
 
 /** Pointer to the velocity populations of the fluid nodes */
 double **lbfluid[2] = { NULL, NULL };
@@ -1567,12 +1567,16 @@ void lb_init() {
 
   if (lb_sanity_checks()) return;
 
-  double temp[3];
-  for (int i =0; i<3; i++)
-    temp[i]=lbpar.agrid;
+  double temp_agrid[3];
+  double temp_offset[3];
+  for (int i =0; i<3; i++) {
+    temp_agrid[i]=lbpar.agrid;
+    temp_offset[i]=0.5;
+  }
 
   /* initialize the local lattice domain */
-  init_lattice(&lblattice, temp, lbpar.tau, 1, 0);  
+  init_lattice(&lblattice, temp_agrid, temp_offset, 1, 0);  
+//  int init_lattice(Lattice *lattice, double* agrid, double* offset, int halo_size, size_t element_size);
 
   if (check_runtime_errors()) return;
 

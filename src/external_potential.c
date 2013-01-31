@@ -206,7 +206,6 @@ int write_local_lattice_to_file(char* filename_prefix, Lattice* lattice) {
 
 
   fprintf(outfile, "element_size %ld\n", l->element_size);
-  fprintf(outfile, "lattice_dim %ld\n", l->lattice_dim);
 
   
   for (i=0; i<lattice->halo_grid[0]; i++) 
