@@ -696,7 +696,6 @@ void on_lb_params_change(int field) {
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid();
   }
-
   lb_reinit_parameters();
 
 }

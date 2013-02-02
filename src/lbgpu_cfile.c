@@ -337,7 +337,6 @@ void lb_init_gpu() {
   lb_reinit_parameters_gpu();
 
   lb_realloc_particles_gpu();
-	
   lb_init_GPU(&lbpar_gpu);
 
   LB_TRACE(printf("Initialzing fluid on GPU successful\n"));
