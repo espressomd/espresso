@@ -174,3 +174,4 @@ if { ![ veccompare [ observable $tclcommand print ] { 1 2 3 } ] } {
   error "tclcommand is not working"
 }
 
+exit 0

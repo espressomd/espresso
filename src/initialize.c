@@ -40,7 +40,6 @@
 #include "rotation.h"
 #include "p3m.h"
 #include "p3m-dipolar.h"
-#include "ewald.h"
 #include "mmm1d.h"
 #include "mmm2d.h"
 #include "maggs.h"
@@ -62,6 +61,7 @@
 #include "statistics_observable.h"
 #include "statistics_correlation.h"
 #include "lb-boundaries.h"
+#include "ghmc.h"
 #include "domain_decomposition.h"
 
 /** whether the thermostat has to be reinitialized before integration */
@@ -186,10 +186,9 @@ void on_integration_start()
 #ifdef P3M
     case COULOMB_P3M:   break;
 #endif /*P3M*/
-    case COULOMB_EWALD: break;
     default: {
       char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt only works with Ewald sum or P3M} ");
+      ERROR_SPRINTF(errtext,"{014 npt only works with P3M} ");
     }
     }
 #endif /*ELECTROSTATICS*/
@@ -317,9 +316,6 @@ void on_observable_calc()
       p3m_count_charged_particles();
       break;
 #endif
-    case COULOMB_EWALD:
-      EWALD_count_charged_particles();
-      break;
     case COULOMB_MAGGS: 
       maggs_init(); 
       break;
@@ -383,9 +379,6 @@ void on_coulomb_change()
     p3m_init();
     break;
 #endif
-  case COULOMB_EWALD:
-    EWALD_init();
-    break;
   case COULOMB_MMM1D:
     MMM1D_init();
     break;
@@ -474,9 +467,6 @@ void on_resort_particles()
   case COULOMB_MMM2D:
     MMM2D_on_resort_particles();
     break;
-  case COULOMB_EWALD:
-    EWALD_on_resort_particles();
-    break;
   default: break;
   }
 #endif /* ifdef ELECTROSTATICS */
@@ -500,9 +490,6 @@ void on_boxl_change() {
     p3m_scaleby_box_l();
     break;
 #endif
-  case COULOMB_EWALD:
-    EWALD_scaleby_box_l();
-    break;
   case COULOMB_MMM1D:
     MMM1D_init();
     break;
@@ -530,6 +517,9 @@ void on_boxl_change() {
 #ifdef LB
   if(lattice_switch & LATTICE_LB) {
     lb_init();
+#ifdef LB_BOUNDARIES
+    lb_init_boundaries();
+#endif
   }
 #endif
 }
@@ -555,9 +545,6 @@ void on_cell_structure_change()
     p3m_init();
     break;
 #endif
-  case COULOMB_EWALD:
-    EWALD_init();
-    break;
   case COULOMB_MMM1D:
     MMM1D_init();
     break;

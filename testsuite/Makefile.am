@@ -21,6 +21,7 @@ SUBDIRS = configs .
 # alphabetically sorted list of test scripts
 tests = \
 	analysis.tcl \
+	angle.tcl \
 	collision-detection-centers.tcl \
 	collision-detection-poc.tcl \
 	comforce.tcl \
@@ -38,11 +39,13 @@ tests = \
 	exclusions.tcl \
 	fene.tcl \
 	gb.tcl \
+	ghmc.tcl \
 	harm.tcl \
 	iccp3m.tcl \
 	intpbc.tcl \
 	intppbc.tcl \
 	kinetic.tcl \
+	langevin.tcl \
 	layered.tcl \
 	lb.tcl \
 	lb_stokes_sphere.tcl \
@@ -68,7 +71,6 @@ tests = \
 	p3m_wall.tcl \
 	rotation.tcl \
 	tabulated.tcl \
-	thermostat.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
 # please keep the alphabetic ordering of the above list!
@@ -84,7 +86,7 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	analysis_system.data.04.gz analysis_system.data.05.gz \
 	analysis_system.data.06.gz analysis_system.data.07.gz \
 	analysis_system.data.08.gz analysis_system.data.09.gz \
-	analysis_system.data.10.gz analysis_system.data.chk \
+	analysis_system.data.10.gz \
 	comforce_system.data comfixed_system.data \
 	constraints_system.data \
         p3m_magnetostatics.data \

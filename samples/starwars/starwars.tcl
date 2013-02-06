@@ -251,7 +251,6 @@ proc CreateSystem {} {
     #        for {set i 0} { $i < $part_id} {incr i} {
     #   	puts [part $i]
     #      }
-    polyBlockWrite "$name.start" 
 
     # Window appearance
     frame .star.create -relief raised -border 1
@@ -429,7 +428,7 @@ proc simulation {} {
 	set_bjerrum 0
 	set_lj_eps 1.0
 	set_lj_cut 1.12246
-	inter ljforcecap $cap
+	inter forcecap $cap
     }
     while { $act_min_dist < $warmup_dist } {
 	integrate 20
@@ -440,13 +439,13 @@ proc simulation {} {
 	.star.sim.warmup.time conf -text "time:  : $time"
 	update
 	set cap [expr $cap+5]
-	inter ljforcecap $cap  
+	inter forcecap $cap  
     }
     if { $cap > 20 } {
 	set_bjerrum $tmp_bjerrum
 	set_lj_eps $tmp_lj_eps
 	set_lj_cut $tmp_lj_cut
-	inter ljforcecap 0
+	inter forcecap 0
     }
 
  

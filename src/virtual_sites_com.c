@@ -263,7 +263,7 @@ Particle *get_mol_com_particle(Particle *calling_p){
 
    if (mol_id < 0) {
      char *errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-     ERROR_SPRINTF(errtxt,"Partice does not have a mol id! pnr=%i\n",
+     ERROR_SPRINTF(errtxt,"Particle does not have a mol id! pnr=%i\n",
 		   calling_p->p.identity);
      return NULL;
    }

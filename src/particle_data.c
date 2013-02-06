@@ -177,6 +177,49 @@ void init_particle(Particle *part)
   part->l.i[1]       = 0;
   part->l.i[2]       = 0;
 
+  #ifdef GHMC
+
+    /* Last Saved ParticlePosition */
+    part->l.r_ls.p[0]     = 0.0;
+    part->l.r_ls.p[1]     = 0.0;
+    part->l.r_ls.p[2]     = 0.0;
+
+  #ifdef BOND_CONSTRAINT
+    part->l.r_ls.p_old[0] = 0.0;
+    part->l.r_ls.p_old[1] = 0.0;
+    part->l.r_ls.p_old[2] = 0.0;
+  #endif
+
+  #ifdef ROTATION
+    part->l.r_ls.quat[0]  = 1.0;
+    part->l.r_ls.quat[1]  = 0.0;
+    part->l.r_ls.quat[2]  = 0.0;
+    part->l.r_ls.quat[3]  = 0.0;
+
+    part->l.r_ls.quatu[0]  = 0.0;
+    part->l.r_ls.quatu[1]  = 0.0;
+    part->l.r_ls.quatu[2]  = 1.0;
+  #endif
+
+  #ifdef DIPOLES
+    part->l.r_ls.dip[0]    = 0.0;
+    part->l.r_ls.dip[1]    = 0.0;
+    part->l.r_ls.dip[2]    = 0.0;
+    //part->l.p_ls.dipm      = 0.0;
+  #endif
+
+    /* Last Saved ParticleMomentum */
+    part->l.m_ls.v[0]     = 0.0;
+    part->l.m_ls.v[1]     = 0.0;
+    part->l.m_ls.v[2]     = 0.0;
+  #ifdef ROTATION
+    part->l.m_ls.omega[0] = 0.0;
+    part->l.m_ls.omega[1] = 0.0;
+    part->l.m_ls.omega[2] = 0.0;
+  #endif
+
+#endif
+
 #ifdef EXTERNAL_FORCES
   part->l.ext_flag   = 0;
   part->l.ext_force[0] = 0.0;

@@ -24,7 +24,7 @@
  */
 #include "angle.h"
 
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
 #include "communication.h"
 
 /** set parameters for the angle potential.
@@ -48,7 +48,7 @@ int angle_set_params(int bond_type, double bend, double phi0)
 #ifdef BOND_ANGLE_COSSQUARE
   bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
 #endif
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
+  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_OLD;
   bonded_ia_params[bond_type].num = 2;
  
   /* broadcast interaction parameters */

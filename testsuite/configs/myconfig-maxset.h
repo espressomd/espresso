@@ -19,6 +19,7 @@
 
 #define NEMD
 #define NPT 
+#define GHMC
 
 #define LB
 #define LB_BOUNDARIES
@@ -29,6 +30,7 @@
 #define LENNARD_JONES_GENERIC
 #define LJCOS
 #define LJCOS2
+#define GAUSSIAN
 #define HAT
 #define LJ_ANGLE
 #define GAY_BERNE

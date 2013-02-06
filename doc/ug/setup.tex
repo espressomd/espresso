@@ -62,9 +62,12 @@ set:
 \todo{Which commands can be used to set the \emph{read-only}
   variables?}
 \begin{globvar}
-\item[box_l] (double[3]) Simulation box length.
-  \todo{document what happens to the particles when \keyword{box_l} is
-    changed!}
+\item[box_l] (double[3]) Simulation box length. Note that
+  if you change the box length during the simulation, the folded
+  particle coordinates will remain the same, i.e., the particle stay
+  in the same image box, but at the same relative position in their
+  image box. If you want to scale the positions, use the
+  \lit{change_volume} command.
 \item[cell_grid] (int[3], \ro) Dimension of the inner
   cell grid.
 \item[cell_size] (double[3], \ro) Box-length of a cell.
@@ -192,6 +195,38 @@ Using the Langevin thermostat, it is posible to set a temperature and
 a friction coefficient for every particle individually. Consult the
 \texttt{part} commands reference (chapter \ref{chap:part}) for
 information on how to achieve this.
+
+\subsection{GHMC thermostat}
+
+\begin{essyntax}
+  thermostat ghmc \var{temperature} \var{n\_md} \var{phi} \opt{-no_flip | -flip
+| -random_flip} \opt{-no_scale | -scale}
+\end{essyntax}
+
+\es implements Generalized Hybrid Monte Carlo (GHMC) as a thermostat. GHMC is a
+simulation method for sampling the canonical ensemble \cite{mehlig92}. The
+method consists of MC cycles that combine a few constant energy MD steps,
+specified by \var{n\_md}, followed by a Metropolis criterion for their
+acceptance. Prior to integration, the particles momenta are mixed with momenta
+sampled from the appropriate Boltzmann distribution. 
+
+Given the particles momenta $\mathbf{p}^j$ from the last $j^{th}$
+GHMC cycle the new momenta are generated
+by: $\mathbf{p}^{j+1}=\cos(\phi)\mathbf{p}^j+\sin(\phi)\pmb{\xi}$, where
+$\pmb{\xi}$ is a noise vector of random Gaussian variables with zero mean
+and variance $1/\var{temperature}$ (see 
+\cite{horowitz91} for more details). The
+momenta mixing parameter $\cos(\phi)$ corresponds to \var{phi} in the
+implementation.
+
+In case the MD step is rejected, the particles momenta may be
+flipped. This is specified by setting the \keyword{-no_flip} /
+\keyword{-flip} option, for the \keyword{-random_flip} option half of the
+rejected MD steps randomly result in momenta flip. The default for momenta
+flip is \keyword{-no_flip}. The $\pmb{\xi}$ noise vector's variance van be
+tuned to exactly $1/\var{temperature}$ by specifying the \keyword{-scale}
+option. The default for temperature scaling is \keyword{-no_scale}.
+
 
 \subsection{Dissipative Particle Dynamics (DPD) } \label{sec:DPD}
 \index{DPD|mainindex}
@@ -504,6 +539,11 @@ there are no processor boundaries, the implementation is basically
 just a stripped down version of the domain decomposition cellsystem.
 
 \section{AdResS}
+
+\begin{citebox}
+  Please cite~\citewbibkey{adress} when using AdResS.
+\end{citebox}
+
 \begin{essyntax}
 adress set topo \var{kind} width \var{width} \var{hybrid\_width} center x \var{R\_x} wf \var{wf}
 \begin{features}
@@ -525,7 +565,7 @@ where \var{kind} determines the type of AdResS simulation:\newline
 \end{tabular}\newline
 \var{width} and \var{hybrid\_width} are the widths of the explicit and hybrid regions respectively and \var{R\_x} is the $x$ position of the center of the explicit zone.
 For more details on the method itself see \cite{praprotnik05,praprotnik08,poblete10}.
-And for further information about the technical implementation see \cite{junghans10}.
+And for further information about the technical implementation see \cite{adress}.
 
 \section{CUDA}
 \label{sec:cuda}
@@ -551,29 +591,80 @@ finally gives the id of the currently active GPU.
 
 \section{Creating bonds when particles collide}
 
-With the help of the feature \feature{COLLISION_DETECTION}, bonds between
-particles can be created automatically during the simulation, every time
-two particles collide. This is useful for simulations of chemical reactions
-and irreversible adhesion processes.
+\begin{citebox}
+  Please cite~\citewbibkey{espresso2} when using dynamic bonding.
+\end{citebox}
+
+
+\begin{essyntax}
+\variant{1} collision_detection
+\variant{2} collision_detection off
+\variant{4} collision_detection \opt{exception} bind_centers \var{d} \var{bond1}
+\variant{5} collision_detection \opt{exception} bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
+\end{essyntax}
+
+With the help of the feature \feature{COLLISION_DETECTION}, bonds
+between particles can be created automatically during the simulation,
+every time two particles collide. This is useful for simulations of
+chemical reactions and irreversible adhesion processes.
 
 Two methods of binding are available:
-In the ``bind centers`` method, a bonded interaction is added between the
-colliding particles. This leads to the distance between the particles being
-fixed, the particles can, however still slide around each other. The second
-method, called ``bind at point of collision``, aims to prevent this sliding
-at the the contact. This is achieved by creating two virtual sites at the
-point of collision. They are rigidly connectd to the colliding particles,
-respectively. A bond is then created between the virtual sites, or an angular
-bond between the two real particles and the virtual particles. In the latter
-case, the virtual particles are the centers of the angle potentials (particle
-2 in the description of the angle potential, see \ref{sec:angle}). Due to the
-rigid connection between each of the particles in the collision and its
-respective virtual site, a sliding at the contact point is no longer possible.
-See the documentation on rigid bodies for details. In addition to the bond
-between the virtual sites, the bond between the colliding particles is also
-created. You can either use a real bonded interaction to prevent wobbling
-around the point of contact or you can use a virtual bond to prevent
-additional force contributions, at the expensive of RATTLE, see \ref{sec:rattle}.
+\begin{itemize}
+\item \lit{bind_centers} adds a bonded interaction between the
+  colliding particles at the first collision. This leads to the
+  distance between the particles being fixed, the particles can,
+  however still slide around each other.
+
+  The parameters are as follows: \var{d} is the distance at which the
+  bond is created. \var{bond1} denotes a pair bond and is the type of
+  the bond created between the colliding particles. Particles that are
+  already bound by a bond of this type do not get a new bond, in order
+  to avoid creating multiple bonds.
+
+\item \lit{bind_at_point_of_collision} prevents sliding of the
+  particles at the contact. This is achieved by creating two virtual
+  sites at the point of collision. They are rigidly connectd to the
+  colliding particles, respectively. A bond is then created between
+  the virtual sites, or an angular bond between the two real particles
+  and the virtual particles. In the latter case, the virtual particles
+  are the centers of the angle potentials (particle 2 in the
+  description of the angle potential, see \ref{sec:angle}). Due to the
+  rigid connection between each of the particles in the collision and
+  its respective virtual site, a sliding at the contact point is no
+  longer possible.  See the documentation on rigid bodies for
+  details. In addition to the bond between the virtual sites, the bond
+  between the colliding particles is also created. You can either use
+  a real bonded interaction to prevent wobbling around the point of
+  contact or you can use a virtual bond to prevent additional force
+  contributions, at the expense of RATTLE, see \ref{sec:rattle}.
+
+  The parameters \var{d} and \var{bond1} are the same as for the
+  \lit{bind_centers} method. \var{bond2} determines the type of the
+  bond created between the virtual sites (if applicable), and can be
+  either a pair or a triple (angle) bond. If it is a pair bond, it
+  connects the two virtual particles, otherwise it constraints the
+  angle between the two real particles around the virtual
+  ones. \var{type} denotes the particle type of the virtual sites
+  created at the point of collision (if applicable). Be sure not to
+  define a short-ranged interaction for this particle type, as two
+  particles will be generated in the same place.
+\end{itemize}
+
+The code can throw an exception (background error) in case two
+particles collide for the first time, if the \lit{exception} keyword
+is added to the invocation. In conjunction with the \lit{catch}
+command of Tcl, this can be used to intercept the collision:
+\begin{tclcode}
+if {[catch {integrate 0} err]} {
+  foreach exception [lrange $err 2 end] {
+    if {[lrange $exception 0 2] == "collision between particles"} {
+      set i [lindex $exception 3]
+      set j [lindex $exception 5]
+      puts "particles $i and $j collided"
+    }
+  }
+}
+\end{tclcode}
 
 The following limitations currently apply for the collision detection:
 \begin{itemize}
@@ -584,26 +675,6 @@ The following limitations currently apply for the collision detection:
 \item The ``bind at point of collision'' approach cannot handle
   collisions between virtual sites
 \end{itemize}
-
-
-\begin{essyntax}
-\variant{1} collision_detection
-\variant{1} collision_detection off
-\variant{2} collision_detection bind_centers \var{d} \var{bond1}
-\variant{3} collision_detection bind_at_point_of_collision \var{d} \var{bond1} \var{bond2} \var{type}
-\end{essyntax}
-
-Here, \var{d} is the distance at which the bond is created, \var{bond1} denotes
-the type of the bond created between the colliding partecles, and \var{bond2}
-determines the type of the bond created between the virtual sites (if applicable).
-\var{bond1} needs to denote a pair bond, like FENE or harmonic, \var{bond2} can
-be either a pair or a triple (angle) bond. If it is a pair bond, it connects the
-two virtual particles, otherwise it constraints the angle between the two real
-particles around the virtual ones. \var{Type} denotes the particle type of the
-virtual sites created at the point of collision (if applicable). Be sure not to
-define a Lennard-Jones interaction for this particle type, as two particles will
-be generated in the same place.
-
 
 \section{Reactions}
 \label{sec:Reactions}

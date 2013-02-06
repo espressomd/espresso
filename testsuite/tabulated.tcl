@@ -63,7 +63,7 @@ if { [catch {
     inter 1 1 tabulated "lj2.tab"
     inter 0 1 tabulated "lj3.tab"
 
-    inter tabforcecap 1000000000
+    inter forcecap 1000000000
 
 # ------------------------------------------------#
 # These are the lennard jones potentials that are 

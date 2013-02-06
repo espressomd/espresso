@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+if DEVEL_SRC
+
 ug_TEXFILES = \
 	ug-dist.tex \
 	ug.tex \
@@ -58,13 +60,9 @@ ug_FIGURES = \
 ug_FILES = \
 	$(ug_TEXFILES) \
 	$(ug_FIGURES) \
-	bibliography.bib \
+	citations.bib \
+	otherrefs.bib \
 	todonotes.sty
-
-EXTRA_DIST = \
-	$(ug_FILES) \
-	check_consistency.sh assemble_quickref.awk \
-	latexmk latexmk.1 latexmkrc
 
 .PHONY: doc ug FORCE
 
@@ -109,3 +107,8 @@ MOSTLYCLEANFILES = \
 	*.brf *.bbl *.blg \
 	*.idx *.idx.bak *.ilg *.ind\
 	*.log *.out *.toc *.tdo
+else
+
+EXTRA_DIST=ug.pdf
+
+endif

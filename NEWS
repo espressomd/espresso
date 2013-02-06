@@ -8,17 +8,70 @@ ESPResSo 3.2
 New user-visible features
 -------------------------
 
-* The feature HAT introduces a short-ranged nonbonded interaction
-  "hat", the classical conservative DPD interaction, a simple force
-  ramp.
+* The script tools/blockfile2vtf.tcl can be used to convert ESPResSo
+  blockfiles into VTF files.
+
+* Two new short-ranged nonbonded potentials have been added:
+
+  * HAT: the classical conservative DPD interaction, a simple force
+    ramp.
+
+  * GAUSSIAN: A Gaussian potential.
 
 * The feature REACTIONS and the command "reaction" model a simple
   chemical reaction: when a particle of the reactant type comes into
   the vincinity of a particle of the catalysator type, the reactant is
   transformed into a particle of the product type.
 
-ESPResSo 3.1
-============
+* The feature GHMC implements a generalized hybrid Monte-Carlo
+  thermostat.
+
+User-visible changes
+--------------------
+
+* Removed non-working tools and samples.
+
+* Bond angle potentials are now defined on the Tcl-level instead of on
+  the feature-level, i.e. to choose the type of the bond-angle
+  potential, you should use the corresponding Tcl command instead of a
+  feature. To allow for any bond angle potential, activate the feature
+  BOND_ANGLE.
+
+* We have removed the forcecaps for the different interaction
+  types. Instead, there is now a single global forcecap, plus it is
+  possible to define individual forcecaps on a particle pair level.
+
+ESPResSo 3.1.2
+==============
+
+* Added Tcl-scripts of the tutorials to the distribution.
+
+* Added forgotten part of the UG on the correlators.
+
+* Removed buggy readline code tclline.tcl. Fixes #36432.
+
+* Removed Ewald code from ESPResSo that never worked and was never
+  documented.
+
+ESPResSo 3.1.1
+==============
+
+* The Espresso binary now outputs the header to STDERR instead of STDOUT.
+
+* Fixed bugs #36431, #37120, #37214, #37374, #37306, #35767.
+
+* Fixed generation of myconfig-sample.h.
+
+* Fixed AdResS example.
+
+* Added new logo.
+
+* The documentation sources are now left out of the distribution
+  package, only the PDF files are included. This fixes problems when
+  calling "make doc" in a distribution package (#35958).
+
+ESPResSo 3.1.0
+==============
 
 New user-visible features
 -------------------------

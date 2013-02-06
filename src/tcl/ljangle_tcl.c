@@ -46,6 +46,7 @@
 #include "interaction_data.h"
 #include "parser.h"
 #include "communication.h"
+#include "forcecap_tcl.h"
 
 int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 {
@@ -92,31 +93,12 @@ int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
 /// parser for the forcecap
 int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
-  char buffer[TCL_DOUBLE_SPACE];
-  if (argc == 0) {
-    if (ljangle_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljangleforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, ljangle_force_cap, buffer);
-      Tcl_AppendResult(interp, "ljangleforcecap ", buffer, (char *) NULL); 
-    }
-    return TCL_OK;
+  if (argc==1) {
+    fprintf(stderr, "WARNING: \"inter ljangleforcecap\" is deprecated "
+	    "and will be removed in some further version. "
+	    "Use \"inter forcecap\" instead.\n");
   }
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter ljangleforcecap takes at most 1 parameter",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  if (ARG0_IS_S("individual"))
-    ljangle_force_cap = -1.0;
-  else if (! ARG0_IS_D(ljangle_force_cap) || ljangle_force_cap < 0) {
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-		     (char *) NULL);
-    return TCL_ERROR;
-  }
-  CHECK_VALUE(ljangleforcecap_set_params(ljangle_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
+  return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }
 
 

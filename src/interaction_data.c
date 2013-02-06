@@ -31,7 +31,6 @@
 #include "grid.h"
 #include "pressure.h"
 #include "p3m.h"
-#include "ewald.h"
 #include "debye_hueckel.h"
 #include "reaction_field.h"
 #include "mmm1d.h"
@@ -43,6 +42,7 @@
 #include "ljangle.h"
 #include "steppot.h"
 #include "hertzian.h"
+#include "gaussian.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
 #include "hat.h"
@@ -218,6 +218,12 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef HERTZIAN
   params->Hertzian_eps = 0.0;
   params->Hertzian_sig = INACTIVE_CUTOFF;
+#endif
+
+#ifdef GAUSSIAN
+  params->Gaussian_eps = 0.0;
+  params->Gaussian_sig = 1.0;
+  params->Gaussian_cut = INACTIVE_CUTOFF;
 #endif
 
 #ifdef BMHTF_NACL
@@ -506,13 +512,6 @@ static void recalc_global_maximal_nonbonded_cutoff()
     break;
   }
 #endif
-  case COULOMB_EWALD: {
-    /* do not use precalculated r_cut here, might not be set yet */
-    double r_cut  = ewald.r_cut_iL* box_l[0];
-    if (max_cut_global < r_cut)
-      max_cut_global = r_cut;
-    break;
-  }
   case COULOMB_DH:
     if (max_cut_global < dh_params.r_cut)
       max_cut_global = dh_params.r_cut;
@@ -606,6 +605,11 @@ static void recalc_maximal_cutoff_nonbonded()
 #ifdef HERTZIAN
       if (max_cut_current < data->Hertzian_sig)
 	max_cut_current = data->Hertzian_sig;
+#endif
+
+#ifdef GAUSSIAN
+      if (max_cut_current < data->Gaussian_cut)
+	max_cut_current = data->Gaussian_cut;
 #endif
 
 #ifdef BMHTF_NACL
@@ -721,8 +725,14 @@ char *get_name_of_bonded_ia(int i) {
   switch (i) {
   case BONDED_IA_FENE:
     return "FENE";
-  case BONDED_IA_ANGLE:
+  case BONDED_IA_ANGLE_OLD:
     return "angle";
+  case BONDED_IA_ANGLE_HARMONIC:
+    return "angle_harmonic";
+  case BONDED_IA_ANGLE_COSINE:
+    return "angle_cosine";
+  case BONDED_IA_ANGLE_COSSQUARE:
+    return "angle_cossquare";
   case BONDED_IA_ANGLEDIST:
     return "angledist";
   case BONDED_IA_DIHEDRAL:
@@ -873,7 +883,6 @@ int check_obs_calc_initialized()
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
-  case COULOMB_EWALD: if (EWALD_sanity_checks()) state = 0; break;
   }
 #endif /* ifdef ELECTROSTATICS */
 
@@ -913,12 +922,6 @@ int coulomb_set_bjerrum(double bjerrum)
       p3m_set_bjerrum();
       break;
 #endif
-    case COULOMB_EWALD:
-      ewald.alpha    = 0.0;
-      ewald.alpha_L  = 0.0;
-      ewald.r_cut    = 0.0;
-      ewald.r_cut_iL = 0.0;
-      break;
     case COULOMB_DH:
       dh_params.r_cut   = 0.0;
       dh_params.kappa   = 0.0;

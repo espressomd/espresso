@@ -40,11 +40,11 @@
 /* include the force files */
 #include "p3m.h"
 #include "p3m-dipolar.h"
-#include "ewald.h"
 #include "lj.h"
 #include "ljgen.h"
 #include "steppot.h"
 #include "hertzian.h"
+#include "gaussian.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -60,6 +60,9 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angle_harmonic.h"
+#include "angle_cosine.h"
+#include "angle_cossquare.h"
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
@@ -113,6 +116,7 @@ void init_forces_ghosts();
 */
 void check_forces();
 
+
 MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_parameters *ia_params,double d[3],
 					 double dist, double dist2, double force[3],double torgue1[3],double torgue2[3])
 {
@@ -139,6 +143,10 @@ MDINLINE void calc_non_bonded_pair_force_parts(Particle *p1, Particle *p2, IA_pa
   /* Hertzian force */
 #ifdef HERTZIAN
   add_hertzian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
+#endif
+  /* Gaussian force */
+#ifdef GAUSSIAN
+  add_gaussian_pair_force(p1,p2,ia_params,d,dist,dist2, force);
 #endif
   /* BMHTF NaCl */
 #ifdef BMHTF_NACL
@@ -245,9 +253,9 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
   
 
 #ifdef COLLISION_DETECTION
-  if (collision_detection_mode > 0)
-     detect_collision(p1,p2);
-#endif 
+  if (collision_params.mode > 0)
+    detect_collision(p1,p2);
+#endif
 
 #ifdef ADRESS
   double tmp,force_weight=adress_non_bonded_force_weight(p1,p2);
@@ -332,18 +340,6 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
       break;
     }
   #endif
-    case COULOMB_EWALD: {
-  #ifdef NPT
-      if (q1q2) {
-        double eng = add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-        if(integ_switch == INTEG_METHOD_NPT_ISO)
-  	nptiso.p_vir[0] += eng;
-      }
-  #else
-      if (q1q2) add_ewald_coulomb_pair_force(p1,p2,d,dist2,dist,force);
-  #endif
-      break;
-    }
     case COULOMB_MMM1D:
       if (q1q2) add_mmm1d_coulomb_pair_force(q1q2,d,dist2,dist,force);
       break;
@@ -484,9 +480,21 @@ MDINLINE void add_bonded_force(Particle *p1)
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+	/* the first case is not needed and should not be called */ 
+    case BONDED_IA_ANGLE_OLD:
       bond_broken = calc_angle_force(p1, p2, p3, iaparams, force, force2);
+      break;
+#endif
+#ifdef BOND_ANGLE
+    case BONDED_IA_ANGLE_HARMONIC:
+      bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_ANGLE_COSINE:
+      bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+      break;
+    case BONDED_IA_ANGLE_COSSQUARE:
+      bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
       break;
 #endif
 #ifdef BOND_ANGLEDIST
