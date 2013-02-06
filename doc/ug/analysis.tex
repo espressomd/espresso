@@ -209,7 +209,13 @@ be used to shift the not separated molecules if needed.
   analyze Vkappa \opt{\alt{ reset \asep read \asep set \var{V_{\kappa, 1}} \var{V_{\kappa, 2}} \var{avk} } }
 \end{essyntax}
 
-\todo{Document the usage and what it is!}
+Calculates the compressibility $V \times \kappa_T$ through the Volume fluctuations
+$V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)$ \cite{kolb99a}.
+Given no arguments this function calculates and returns the current value of the
+running average for the volume fluctuations.  
+The argument \keyword{reset} clears the currently stored values. With \keyword{read}
+the cumulative mean volume, cumulative mean squared volume and how many samples were
+used can be retrieved. Likewise the option \keyword{set} enables you to set those. 
 
 \subsection{Radial distribution function}
 \label{analyze:rdf}
