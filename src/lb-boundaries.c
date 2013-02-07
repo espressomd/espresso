@@ -88,8 +88,10 @@ void lb_init_boundaries() {
   if (lattice_switch & LATTICE_LB_GPU) {
 #if defined (LB_GPU) && defined (LB_BOUNDARIES_GPU)
     int number_of_boundnodes = 0;
-    int *host_boundindex = (int*)malloc(sizeof(int));
+    int *host_boundary_node_list= (int*)malloc(sizeof(int));
+    int *host_boundary_index_list= (int*)malloc(sizeof(int));
     size_t size_of_index;
+    int boundary_number; // the number the boundary will actually belong to.
 
     for(z=0; z<lbpar_gpu.dim_z; z++) {
       for(y=0; y<lbpar_gpu.dim_y; y++) {
@@ -129,13 +131,16 @@ void lb_init_boundaries() {
             
             if (dist > dist_tmp || n == 0) {
               dist = dist_tmp;
+              boundary_number = n;
             }
           }
           
         	if (dist <= 0 && n_lb_boundaries > 0) {
          	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
-            host_boundindex = realloc(host_boundindex, size_of_index);
-            host_boundindex[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
+            host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
+            host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
+            host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
+            host_boundary_index_list[number_of_boundnodes] = boundary_number; 
             //printf("boundindex %i: \n", host_boundindex[number_of_boundnodes]);  
             number_of_boundnodes++;  
           }
@@ -144,8 +149,17 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    lb_init_boundaries_GPU(number_of_boundnodes, host_boundindex);
-    free(host_boundindex);
+    float* boundary_velocity = malloc(3*n_lb_boundaries*sizeof(float));
+    for (n=0; n<n_lb_boundaries; n++) {
+      boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
+      boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
+      boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
+    }
+    if (n_lb_boundaries)
+      lb_init_boundaries_GPU(n_lb_boundaries, number_of_boundnodes, host_boundary_node_list, host_boundary_index_list, boundary_velocity);
+    free(boundary_velocity);
+    free(host_boundary_node_list);
+    free(host_boundary_index_list);
 #endif
   } else {
 #if defined (LB) && defined (LB_BOUNDARIES)   
@@ -222,9 +236,18 @@ void lb_init_boundaries() {
 
 int lbboundary_get_force(int no, double* f) {
 #ifdef LB_BOUNDARIES
+
   double* forces=malloc(3*n_lb_boundaries*sizeof(double));
   
-  mpi_gather_stats(8, forces, NULL, NULL, NULL);
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_BOUNDARIES_GPU
+    lb_gpu_get_boundary_forces(forces);
+#else 
+    return ES_ERROR;
+#endif
+  } else { 
+    mpi_gather_stats(8, forces, NULL, NULL, NULL);
+  }
   
   f[0]=forces[3*no+0]/lbpar.tau/lbpar.tau*lbpar.agrid;
   f[1]=forces[3*no+1]/lbpar.tau/lbpar.tau*lbpar.agrid;

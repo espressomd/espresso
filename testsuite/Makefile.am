@@ -49,6 +49,7 @@ tests = \
 	layered.tcl \
 	lb.tcl \
 	lb_stokes_sphere.tcl \
+	lb_stokes_sphere_gpu.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
