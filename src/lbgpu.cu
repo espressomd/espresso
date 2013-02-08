@@ -1898,9 +1898,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
    }
    #pragma unroll
    for(int jj=0; jj<8; ++jj){ 
-    partgrad1[jj+ii*3]=0.;
-    partgrad2[jj+ii*3]=0.;
-    partgrad3[jj+ii*3]=0.;
+    partgrad1[jj+ii*8]=0.;
+    partgrad2[jj+ii*8]=0.;
+    partgrad3[jj+ii*8]=0.;
    }
  }
  /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
@@ -2100,9 +2100,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   particle_force[part_index].f[1] += viscforce[1+ii*3];
   particle_force[part_index].f[2] += viscforce[2+ii*3];
 
-  delta_j[0+3*ii] -=  viscforce[0]*para.time_step*para.tau/para.agrid;
-  delta_j[1+3*ii] -=  viscforce[1]*para.time_step*para.tau/para.agrid;
-  delta_j[2+3*ii] -=  viscforce[2]*para.time_step*para.tau/para.agrid;  	
+  delta_j[0+3*ii] -=  viscforce[0+ii*3]*para.time_step*para.tau/para.agrid;
+  delta_j[1+3*ii] -=  viscforce[1+ii*3]*para.time_step*para.tau/para.agrid;
+  delta_j[2+3*ii] -=  viscforce[2+ii*3]*para.time_step*para.tau/para.agrid;  	
  }
 }
 
