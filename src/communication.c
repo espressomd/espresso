@@ -588,7 +588,7 @@ void mpi_send_solvation(int pnode, int part, double* solvation)
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-    for(ii=0;ii<SHANCHEN;ii++)
+    for(ii=0;ii<2*SHANCHEN;ii++)
        p->p.solvation[ii]= solvation[ii];
   }
   else {
@@ -604,7 +604,7 @@ void mpi_send_solvation_slave(int pnode, int part)
 #ifdef SHANCHEN
   if (pnode == this_node) {
     Particle *p = local_particles[part];
-        MPI_Recv(&p->p.solvation, SHANCHEN, MPI_DOUBLE, 0, SOME_TAG,
+        MPI_Recv(&p->p.solvation, 2*SHANCHEN, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
   }
 

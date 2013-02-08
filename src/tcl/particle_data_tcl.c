@@ -725,16 +725,17 @@ int tclcommand_part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
 int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
-    double solvation[SHANCHEN];
+    /* For each fluid component we need 2 constants, one for particle-fluid and one for fluid-particl interaction */
+    double solvation[2*SHANCHEN];
     int ii;
-    *change = SHANCHEN;
-    if (argc < SHANCHEN) {
-      Tcl_AppendResult(interp, "solvation requires \"", SHANCHEN, "\"  arguments", (char *) NULL);
+    *change = 2*SHANCHEN;
+    if (argc < 2*SHANCHEN) {
+      Tcl_AppendResult(interp, "solvation requires \"", 2*SHANCHEN, "\"  arguments", (char *) NULL);
       return TCL_ERROR;
     }
 
     /* set mass */
-    for(ii=0;ii<SHANCHEN;++ii){
+    for(ii=0;ii<2*SHANCHEN;++ii){
        if (! ARG_IS_D(ii,solvation[ii]))
          return TCL_ERROR;
     }
