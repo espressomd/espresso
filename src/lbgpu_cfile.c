@@ -398,7 +398,7 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
 #ifdef SHANCHEN
               // SAW TODO: does this really need to be copied every time?
               int ii;
-              for(ii=0;ii<SHANCHEN;ii++){
+              for(ii=0;ii<2*SHANCHEN;ii++){
                  host_data[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
               }
 #endif
@@ -464,7 +464,7 @@ static void mpi_get_particles_slave_lb(){
 #ifdef SHANCHEN
         // SAW TODO: does this really need to be copied every time?
         int ii;
-        for(ii=0;ii<SHANCHEN;ii++){
+        for(ii=0;ii<2*SHANCHEN;ii++){
            host_data_sl[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
         }
 #endif
