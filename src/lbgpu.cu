@@ -1951,8 +1951,10 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   interpolated_u3 += delta[i]*d_v[node_index[i]].v[2];
  }
  /* Shan-Chen-like part */
+
  #pragma unroll
  for(int ii=0; ii<SHANCHEN; ++ii){ 
+  float solvation2 = particle_data[part_index].solvation[2*ii + 1] ; 
    
   interpolated_rho[ii]  = 0.f;
   gradrho1 = gradrho2 = gradrho3 = 0.f;
@@ -1962,9 +1964,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[0],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
   interpolated_rho[ii] += delta[0] * Rho; 
-  partgrad1[ii*8 + 0] += Rho;
-  partgrad2[ii*8 + 0] += Rho;
-  partgrad3[ii*8 + 0] += Rho;
+  partgrad1[ii*8 + 0] += Rho * solvation2;
+  partgrad2[ii*8 + 0] += Rho * solvation2;
+  partgrad3[ii*8 + 0] += Rho * solvation2;
   // SAW TODO check the weighted grad coefficients...
   gradrho1 -=(delta[0] + delta[1]) * Rho; 
   gradrho2 -=(delta[0] + delta[2]) * Rho; 
@@ -1973,9 +1975,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[1],ii); 
   Rho = mode[0] +  para.rho[ii]*para.agrid*para.agrid*para.agrid; 
   interpolated_rho[ii] += delta[1] * Rho; 
-  partgrad1[ii*8 + 1] -= Rho;
-  partgrad2[ii*8 + 1] += Rho;
-  partgrad3[ii*8 + 1] += Rho;
+  partgrad1[ii*8 + 1] -= Rho * solvation2;
+  partgrad2[ii*8 + 1] += Rho * solvation2;
+  partgrad3[ii*8 + 1] += Rho * solvation2;
   gradrho1 +=(delta[1] + delta[0]) * Rho; 
   gradrho2 -=(delta[1] + delta[3]) * Rho; 
   gradrho3 -=(delta[1] + delta[5]) * Rho; 
@@ -1983,9 +1985,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[2],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
   interpolated_rho[ii] += delta[2] * Rho; 
-  partgrad1[ii*8 + 2] += Rho;
-  partgrad2[ii*8 + 2] -= Rho;
-  partgrad3[ii*8 + 2] += Rho;
+  partgrad1[ii*8 + 2] += Rho * solvation2;
+  partgrad2[ii*8 + 2] -= Rho * solvation2;
+  partgrad3[ii*8 + 2] += Rho * solvation2;
   gradrho1 -=(delta[2] + delta[3]) * Rho; 
   gradrho2 +=(delta[2] + delta[0]) * Rho; 
   gradrho3 -=(delta[2] + delta[6]) * Rho; 
@@ -1993,9 +1995,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[3],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
   interpolated_rho[ii] += delta[3] * Rho; 
-  partgrad1[ii*8 + 3] -= Rho;
-  partgrad2[ii*8 + 3] -= Rho;
-  partgrad3[ii*8 + 3] += Rho;
+  partgrad1[ii*8 + 3] -= Rho * solvation2;
+  partgrad2[ii*8 + 3] -= Rho * solvation2;
+  partgrad3[ii*8 + 3] += Rho * solvation2;
   gradrho1 +=(delta[3] + delta[2]) * Rho; 
   gradrho2 +=(delta[3] + delta[1]) * Rho; 
   gradrho3 -=(delta[3] + delta[7]) * Rho; 
@@ -2003,9 +2005,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[4],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
   interpolated_rho[ii] += delta[4] * Rho; 
-  partgrad1[ii*8 + 4] += Rho;
-  partgrad2[ii*8 + 4] += Rho;
-  partgrad3[ii*8 + 4] -= Rho;
+  partgrad1[ii*8 + 4] += Rho * solvation2;
+  partgrad2[ii*8 + 4] += Rho * solvation2;
+  partgrad3[ii*8 + 4] -= Rho * solvation2;
   gradrho1 -=(delta[4] + delta[5]) * Rho; 
   gradrho2 -=(delta[4] + delta[6]) * Rho; 
   gradrho3 +=(delta[4] + delta[0]) * Rho; 
@@ -2013,9 +2015,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[5],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
   interpolated_rho[ii] += delta[5] * Rho; 
-  partgrad1[ii*8 + 5] -= Rho;
-  partgrad2[ii*8 + 5] += Rho;
-  partgrad3[ii*8 + 5] -= Rho;
+  partgrad1[ii*8 + 5] -= Rho * solvation2;
+  partgrad2[ii*8 + 5] += Rho * solvation2;
+  partgrad3[ii*8 + 5] -= Rho * solvation2;
   gradrho1 +=(delta[5] + delta[4]) * Rho; 
   gradrho2 -=(delta[5] + delta[7]) * Rho; 
   gradrho3 +=(delta[5] + delta[1]) * Rho; 
@@ -2023,9 +2025,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[6],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
   interpolated_rho[ii] += delta[6] * Rho; 
-  partgrad1[ii*8 + 6] += Rho;
-  partgrad2[ii*8 + 6] -= Rho;
-  partgrad3[ii*8 + 6] -= Rho;
+  partgrad1[ii*8 + 6] += Rho * solvation2;
+  partgrad2[ii*8 + 6] -= Rho * solvation2;
+  partgrad3[ii*8 + 6] -= Rho * solvation2;
   gradrho1 -=(delta[6] + delta[7]) * Rho; 
   gradrho2 +=(delta[6] + delta[4]) * Rho; 
   gradrho3 +=(delta[6] + delta[2]) * Rho; 
@@ -2033,9 +2035,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   calc_mode(mode, n_a, node_index[7],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;	
   interpolated_rho[ii] += delta[7] * Rho; 
-  partgrad1[ii*8 + 7] -= Rho;
-  partgrad2[ii*8 + 7] -= Rho;
-  partgrad3[ii*8 + 7] -= Rho;
+  partgrad1[ii*8 + 7] -= Rho * solvation2;
+  partgrad2[ii*8 + 7] -= Rho * solvation2;
+  partgrad3[ii*8 + 7] -= Rho * solvation2;
   gradrho1 +=(delta[7] + delta[6]) * Rho; 
   gradrho2 +=(delta[7] + delta[5]) * Rho; 
   gradrho3 +=(delta[7] + delta[3]) * Rho; 
@@ -2045,9 +2047,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   gradrho2 *= para.agrid; 
   gradrho3 *= para.agrid; 
 
-  tmpforce[0+ii*3] += particle_data[part_index].solvation[ii] * gradrho1 ; 
-  tmpforce[1+ii*3] += particle_data[part_index].solvation[ii] * gradrho2 ;
-  tmpforce[2+ii*3] += particle_data[part_index].solvation[ii] * gradrho3 ;
+  tmpforce[0+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho1 ; 
+  tmpforce[1+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho2 ;
+  tmpforce[2+ii*3] += particle_data[part_index].solvation[2*ii] * gradrho3 ;
 
   particle_force[part_index].f[0] += tmpforce[0+ii*3];
   particle_force[part_index].f[1] += tmpforce[1+ii*3];
@@ -2112,7 +2114,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  * @param node_index		node index around (8) particle (Input)
  * @param node_f    		Pointer to the node force (Output).
 */
-__device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1, float * partgrad2, float * pargrad3,  unsigned int *node_index, LB_node_force_gpu node_f){
+__device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1, float * partgrad2, float * partgrad3,  unsigned int *node_index, LB_node_force_gpu node_f){
 /* SAW TODO: should the drag depend on the density?? */
  #pragma unroll
  for(int ii=0; ii < SHANCHEN ; ++ii) { 
