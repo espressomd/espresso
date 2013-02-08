@@ -1950,8 +1950,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   interpolated_u2 += delta[i]*d_v[node_index[i]].v[1];
   interpolated_u3 += delta[i]*d_v[node_index[i]].v[2];
  }
- /* Shan-Chen-like part */
 
+ /* Shan-Chen-like part */
  #pragma unroll
  for(int ii=0; ii<SHANCHEN; ++ii){ 
   float solvation2 = particle_data[part_index].solvation[2*ii + 1] ; 
