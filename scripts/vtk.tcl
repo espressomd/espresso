@@ -51,3 +51,46 @@ proc writevtk {filename {type "all"}} {
 
 	close $fp
 }
+
+#dumps particle positions into a file so that paraview can visualize them
+proc writevectorvtk {filename {type "all"}} {
+	set max_pid [setmd max_part]
+	set n 0
+	set fp [open $filename "w"]
+
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+			incr n
+		}
+	}
+
+	puts $fp "# vtk DataFile Version 2.0\nparticles\nASCII\nDATASET POLYDATA\nPOINTS $n floats"
+
+        set nobj 0
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+			set xpos [expr [lindex [part $pid print folded_pos] 0]]
+			set ypos [expr [lindex [part $pid print folded_pos] 1]]
+			set zpos [expr [lindex [part $pid print folded_pos] 2]]
+			puts $fp "$xpos $ypos $zpos"
+                        incr nobj
+		}
+	}
+        puts $fp "\nVERTICES $nobj [expr int(2*$nobj)]"
+	for { set n 0 } { $n < $nobj } { incr n } {  
+			puts $fp "1 $n"
+        } 
+        puts $fp "\nPOINT_DATA $nobj"
+        puts $fp "VECTORS vector float"
+
+	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
+		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
+			set xv [expr [lindex [part $pid print dip] 0]]
+			set yv [expr [lindex [part $pid print dip] 1]]
+			set zv [expr [lindex [part $pid print dip] 2]]
+			puts $fp "$xv $yv $zv"
+		}
+	}
+
+	close $fp
+}
