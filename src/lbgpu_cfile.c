@@ -107,7 +107,7 @@ LB_extern_nodeforce_gpu *host_extern_nodeforces = NULL;
 /*-----------------------------------------------------------*/
 /** main of lb_gpu_programm */
 /*-----------------------------------------------------------*/
-
+#ifdef SHANCHEN
 /* called from forces.c. This is at the beginning of the force
    calculation loop, so we increment the fluidstep counter here,
    and we reset it only when the last call to a LB function
@@ -123,7 +123,7 @@ void lattice_boltzmann_calc_shanchen_gpu(void){
   }
 
 }
-
+#endif //SHANCHEN
 
 /** lattice boltzmann update gpu called from integrate.c
 */

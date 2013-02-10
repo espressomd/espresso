@@ -1021,27 +1021,6 @@ __global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *
     n_a.vd[18*para.number_of_nodes + single_nodeindex] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
 
   }
-  if(n_a.boundary[single_nodeindex] != 1){
-    float Rho;
-    #pragma unroll
-    for(int ii=0;ii<SHANCHEN;++ii) { 
-       Rho = mode[0+4*ii] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
-       d_v[single_nodeindex].rho[ii]   = Rho;
-       d_v[single_nodeindex].v[0+ii*3] = mode[1+4*ii]/Rho/para.agrid/para.tau;
-       d_v[single_nodeindex].v[1+ii*3] = mode[2+4*ii]/Rho/para.agrid/para.tau;
-       d_v[single_nodeindex].v[2+ii*3] = mode[3+4*ii]/Rho/para.agrid/para.tau;
-    }
-  } else { 
-    #pragma unroll
-    for(int ii=0;ii<SHANCHEN;++ii) { 
-       d_v[single_nodeindex].rho[ii]   = 1.;
-       d_v[single_nodeindex].v[0+ii*3] = 0.;
-       d_v[single_nodeindex].v[1+ii*3] = 0.; 
-       d_v[single_nodeindex].v[2+ii*3] = 0.; 
-    }
-  }   
-
-
 
 }
 /**calculate mass of the hole fluid kernel
@@ -1798,6 +1777,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
 #endif // SHANCHEN == 1   // SAW TODO: finish implementing
   return; 
 }
+
 //SAW TODO: comment
 void lb_calc_shanchen_GPU(){
   /** values for the kernel call */
@@ -1809,7 +1789,6 @@ void lb_calc_shanchen_GPU(){
   KERNELCALL(lb_shanchen_GPU, dim_grid, threads_per_block,(*current_nodes, node_f));
 
 }
-
 
 
 /** 
@@ -3194,7 +3173,7 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
 }
 
 
-
+#ifdef SHANCHEN
 /** set the density at a single node
  *  @param single_nodeindex the node to set the velocity for 
  *  @param host_velocity the velocity to set
@@ -3212,6 +3191,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho){
   cudaFree(device_rho);
 
 }
+#endif // SHANCHEN
 /** set the net velocity at a single node
  *  @param single_nodeindex the node to set the velocity for 
  *  @param host_velocity the velocity to set
