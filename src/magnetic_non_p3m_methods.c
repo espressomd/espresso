@@ -64,7 +64,7 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
   pe4=3.0/r5;
 
   // Energy, if requested
-  u= pe1/r3 - pe4*pe2*pe3;
+  u= coulomb.Dprefactor* ( pe1/r3 - pe4*pe2*pe3);
 
   // Force, if requested
   if(force_flag) { 
@@ -79,12 +79,12 @@ double calc_dipole_dipole_ia(Particle* p1, Particle *p2, int force_flag)
     ffy=ab*dr[1]+cc*p1->r.dip[1]+d*p2->r.dip[1];
     ffz=ab*dr[2]+cc*p1->r.dip[2]+d*p2->r.dip[2];
     // Add the force to the particles
-    p1->f.f[0] +=ffx;
-    p1->f.f[1] +=ffy;
-    p1->f.f[2] +=ffz;
-    p2->f.f[0] -=ffx;
-    p2->f.f[1] -=ffy;
-    p2->f.f[2] -=ffz;
+    p1->f.f[0] +=coulomb.Dprefactor*ffx;
+    p1->f.f[1] +=coulomb.Dprefactor*ffy;
+    p1->f.f[2] +=coulomb.Dprefactor*ffz;
+    p2->f.f[0] -=coulomb.Dprefactor*ffx;
+    p2->f.f[1] -=coulomb.Dprefactor*ffy;
+    p2->f.f[2] -=coulomb.Dprefactor*ffz;
 
     // Torques
 #ifdef ROTATION
