@@ -48,9 +48,16 @@ int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n
   for ( i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
-    A[3*i + 0] = partCfg[ids->e[i]].m.omega[0];
-    A[3*i + 1] = partCfg[ids->e[i]].m.omega[1];
-    A[3*i + 2] = partCfg[ids->e[i]].m.omega[2];
+
+    #ifdef ROTATION
+      A[3*i + 0] = partCfg[ids->e[i]].m.omega[0];
+      A[3*i + 1] = partCfg[ids->e[i]].m.omega[1];
+      A[3*i + 2] = partCfg[ids->e[i]].m.omega[2];
+    #else
+      A[3*i + 0] = 0.0;
+      A[3*i + 1] = 0.0;
+      A[3*i + 2] = 0.0;
+    #endif
   }
   return 0;
 }
