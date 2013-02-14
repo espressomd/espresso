@@ -48,6 +48,7 @@ tests = \
 	langevin.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_planar.tcl \
 	lb_stokes_sphere.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
