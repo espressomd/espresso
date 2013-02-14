@@ -91,7 +91,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_set_time_step_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
-  CB(mpi_send_ext_slave) \
+  CB(mpi_send_ext_force_slave) \
+  CB(mpi_send_ext_torque_slave) \
   CB(mpi_place_new_particle_slave) \
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
@@ -1786,11 +1787,63 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 }
 
 /****************** REQ_SET_EXT ************/
-void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
+
+void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[3])
+{
+#ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+    int s_buf[2];
+    mpi_call(mpi_send_ext_torque_slave, pnode, part);
+
+    if (pnode == this_node) {
+      Particle *p = local_particles[part];
+      /* mask out old flags */
+      p->l.ext_flag &= ~mask;
+      /* set new values */
+      p->l.ext_flag |= flag;
+
+      if (mask & PARTICLE_EXT_TORQUE) 
+        memcpy(p->l.ext_torque, torque, 3*sizeof(double));
+    }
+    else {
+      s_buf[0] = flag; s_buf[1] = mask;
+      MPI_Send(s_buf, 2, MPI_INT, pnode, SOME_TAG, comm_cart);
+      if (mask & PARTICLE_EXT_TORQUE)
+        MPI_Send(torque, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    }
+
+    on_particle_change();
+  #endif
+#endif
+}
+
+void mpi_send_ext_torque_slave(int pnode, int part)
+{
+#ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+    int s_buf[2]={0,0};
+    if (pnode == this_node) {
+      Particle *p = local_particles[part];
+          MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+      /* mask out old flags */
+      p->l.ext_flag &= ~s_buf[1];
+      /* set new values */
+      p->l.ext_flag |= s_buf[0];
+      
+      if (s_buf[1] & PARTICLE_EXT_TORQUE)
+        MPI_Recv(p->l.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    }
+
+    on_particle_change();
+  #endif
+#endif
+}
+
+void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3])
 {
 #ifdef EXTERNAL_FORCES
   int s_buf[2];
-  mpi_call(mpi_send_ext_slave, pnode, part);
+  mpi_call(mpi_send_ext_force_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
@@ -1812,7 +1865,7 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
 #endif
 }
 
-void mpi_send_ext_slave(int pnode, int part)
+void mpi_send_ext_force_slave(int pnode, int part)
 {
 #ifdef EXTERNAL_FORCES
   int s_buf[2]={0,0};

@@ -384,8 +384,11 @@ void mpi_set_time_step(double time_step);
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Issue REQ_SEND_EXT: send nex external flag and external force. */
-void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
+/** Issue REQ_SEND_EXT_FORCE: send nex external flag and external force. */
+void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]);
+
+/** Issue REQ_SEND_EXT_TORQUE: send nex external flag and external torque. */
+void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[3]);
 
 #ifdef LANGEVIN_PER_PARTICLE
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */

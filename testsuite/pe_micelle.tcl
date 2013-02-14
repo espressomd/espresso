@@ -18,6 +18,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 # 
 
+require_feature "GALILEI"
+
 #############################################################
 #  calculate square of a vector                             #
 #############################################################
@@ -476,7 +478,7 @@ inter 1 4 lennard-jones 0.0 1.0 0.0 0.25 0 0
 
 
 #reset the forces and velovities for all the particles.
-stop_particles
+kill_particle_motion
 
 analyze set chains 0 $n_poly $p_length
 #puts "Interactions:\n [inter]"
