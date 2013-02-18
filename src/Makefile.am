@@ -114,9 +114,8 @@ libEspresso_a_SOURCES += \
 	soft_sphere.c soft_sphere.h \
 	steppot.c steppot.h \
 	tab.c tab.h \
-	tunable_slip.c tunable_slip.h \	        
-	fsi/mathtools.c fsi/mathtools.h
-
+	tunable_slip.c tunable_slip.h 
+	
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
 	angle.c angle.h \
