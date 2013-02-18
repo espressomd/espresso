@@ -124,8 +124,7 @@ typedef struct {
   float v[3];
 
   /** stresstensor of the node */
-  /** use this value only (due to memory saving) if you want to print out the value (used in calc_values)*/
-  //float pi[6];
+  float pi[6];
 
 } LB_values_gpu;
 

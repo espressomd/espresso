@@ -567,50 +567,74 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
  * @param n_a		Pointer to local node residing in array a for boundary flag(Input)
  * @param *d_v		Pointer to local device values (Input/Output)
  * @param singlenode	Flag, if there is only one node
+ * This function is a clone of lb_calc_local_fields and
+ * additionally performs unit conversions.
 */
 __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, unsigned int index, unsigned int singlenode){
 
-  float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
+  float rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 	
-  /**implemented due to the problem of division via zero*/
-  if(n_a.boundary[index] == 1){
-    Rho = 1.0f;
-    mode[1] = 0.f;
-    mode[2] = 0.f;
-    mode[3] = 0.f;
+  float *v, *pi;
+  if(singlenode == 1){ 
+    v=&(d_v[0].v[0]);
+    pi=&(d_v[0].pi[0]);
+    d_v[0].rho = rho;
+  } else {
+    v=&(d_v[index].v[0]);
+    pi=&(d_v[index].pi[0]);
+    d_v[index].rho = rho;
+  }
+  float j[3]; float pi_eq[6];
+  
+  j[0] = mode[1];
+  j[1] = mode[2];
+  j[2] = mode[3];
+
+// To Do: Here half the forces have to go in!
+//  j[0] += 0.5*lbfields[index].force[0];
+//  j[1] += 0.5*lbfields[index].force[1];
+//  j[2] += 0.5*lbfields[index].force[2];
+
+  v[0]=j[0]/rho;
+  v[1]=j[1]/rho;
+  v[2]=j[2]/rho;
+
+  /* equilibrium part of the stress modes */
+  pi_eq[0] = (j[0]*j[0]+j[1]*j[1]+j[2]*j[2])/ rho;
+  pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/ rho;
+  pi_eq[2] = (j[0]*j[0]+j[1]*j[1]+j[2]*j[2] - 3.0*j[2]*j[2])/ rho;
+  pi_eq[3] = j[0]*j[1]/ rho;
+  pi_eq[4] = j[0]*j[2]/ rho;
+  pi_eq[5] = j[1]*j[2]/ rho;
+
+  /* Now we must predict the outcome of the next collision */
+  /* We immediately average pre- and post-collision. */
+  mode[4] = pi_eq[0] + (0.5+0.5*para.gamma_bulk )*(mode[4] - pi_eq[0]);
+  mode[5] = pi_eq[1] + (0.5+0.5*para.gamma_shear)*(mode[5] - pi_eq[1]);
+  mode[6] = pi_eq[2] + (0.5+0.5*para.gamma_shear)*(mode[6] - pi_eq[2]);
+  mode[7] = pi_eq[3] + (0.5+0.5*para.gamma_shear)*(mode[7] - pi_eq[3]);
+  mode[8] = pi_eq[4] + (0.5+0.5*para.gamma_shear)*(mode[8] - pi_eq[4]);
+  mode[9] = pi_eq[5] + (0.5+0.5*para.gamma_shear)*(mode[9] - pi_eq[5]);
+
+  /* Now we have to transform to the "usual" stress tensor components */
+  /* We use eq. 116ff in Duenweg Ladd for that. */
+  pi[0]=(mode[0]+mode[4]+mode[5])/3.;
+  pi[2]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
+  pi[5]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
+  pi[1]=mode[7];
+  pi[3]=mode[8];
+  pi[4]=mode[9];
+
+  /* Finally some unit conversions */
+  rho*=1./para.agrid/para.agrid/para.agrid;
+  v[0]*=1./para.tau/para.agrid;
+  v[1]*=1./para.tau/para.agrid;
+  v[2]*=1./para.tau/para.agrid;
+
+  for (int i =0; i<6; i++) {
+    pi[i]*=1./para.tau/para.tau/para.agrid/para.agrid/para.agrid;
   }
 
-  if(singlenode == 1){
-    d_v[0].rho = Rho;
-    d_v[0].v[0] = mode[1]/Rho/para.agrid/para.tau;
-    d_v[0].v[1] = mode[2]/Rho/para.agrid/para.tau;
-    d_v[0].v[2] = mode[3]/Rho/para.agrid/para.tau;
-  }
-  else{
-    d_v[index].rho = Rho;
-    d_v[index].v[0] = mode[1]/Rho/para.agrid/para.tau;
-    d_v[index].v[1] = mode[2]/Rho/para.agrid/para.tau;
-    d_v[index].v[2] = mode[3]/Rho/para.agrid/para.tau;
-  }
-#if 0
-  if(singlenode == 1){
-    /** equilibrium part of the stress modes */
-    /**to print out the stress tensor entries, ensure that in lbgpu.h struct the values are available*/
-    d_v[0].pi[0] = ((mode[1]*mode[1]) + (mode[2]*mode[2]) + (mode[3]*mode[3]))/para.rho;
-    d_v[0].pi[1] = ((mode[1]*mode[1]) - (mode[2]*mode[2]))/para.rho;
-    d_v[0].pi[2] = ((mode[1]*mode[1]) + (mode[2]*mode[2])  + (mode[3]*mode[3])) - 3.0f*(mode[3]*mode[3]))/para.rho;
-    d_v[0].pi[3] = mode[1]*mode[2]/para.rho;
-    d_v[0].pi[4] = mode[1]*mode[3]/para.rho;
-    d_v[0].pi[5] = mode[2]*mode[3]/para.rho;
-  else{
-    d_v[index].pi[0] = ((mode[1]*mode[1]) + (mode[2]*mode[2]) + (mode[3]*mode[3]))/para.rho;
-    d_v[index].pi[1] = ((mode[1]*mode[1]) - (mode[2]*mode[2]))/para.rho;
-    d_v[index].pi[2] = ((mode[1]*mode[1]) + (mode[2]*mode[2])  + (mode[3]*mode[3])) - 3.0f*(mode[3]*mode[3]))/para.rho;
-    d_v[index].pi[3] = mode[1]*mode[2]/para.rho;
-    d_v[index].pi[4] = mode[1]*mode[3]/para.rho;
-    d_v[index].pi[5] = mode[2]*mode[3]/para.rho;
-  }
-#endif
 }
 /** 
  * @param node_index	node index around (8) particle (Input)

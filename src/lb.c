@@ -839,6 +839,20 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
 }
 
 int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
+
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    LB_values_gpu *host_print_values;
+    host_print_values = malloc(sizeof(LB_values_gpu));	
+    
+    int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
+    lb_print_node_GPU(single_nodeindex, host_print_values);
+    for (int i = 0; i<6; i++) {
+      p_pi[i]=host_print_values->pi[i];
+    }
+		free (host_print_values);
+#endif
+  } else {  
   
     index_t index;
     int node, grid[3], ind_shifted[3];
@@ -857,7 +871,8 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     p_pi[4] = pi[4]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
     p_pi[5] = pi[5]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
 
-  return 0;
+    return 0;
+  }
 }
 
 int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
