@@ -50,6 +50,7 @@ tests = \
 	lb.tcl \
 	lb_planar.tcl \
 	lb_stokes_sphere.tcl \
+	lb_stokes_sphere_gpu.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
