@@ -59,8 +59,8 @@ m4_define([_AC_PROG_CC_G],[])
 # Check for --with-mpi
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
     [compile with MPI (parallelization) support. If none is found, the
-     fake implementation for only one processor is used. Default: auto])
-],,[with_mpi=auto])
+     fake implementation for only one processor is used. @<:@guess@:>@])
+],,[with_mpi=guess])
 
 AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
@@ -381,7 +381,8 @@ fi
 # not given	  try to find a working FFTW, continue if not found
 AC_MSG_CHECKING([whether to use FFTW])
 AC_ARG_WITH([fftw],
-	AS_HELP_STRING([--with-fftw],[specify whether or not to use FFTW3]),
+	AS_HELP_STRING([--with-fftw],
+                       [specify whether or not to use FFTW3 [guess]]),
 	, with_fftw=guess)
 AC_MSG_RESULT($with_fftw)
 
@@ -405,61 +406,104 @@ AS_IF([test x$fftw_found = xyes],[
 ##################################
 # check for CUDA
 AC_MSG_CHECKING([whether to use CUDA])
+
 AC_ARG_WITH([cuda],
-	AS_HELP_STRING([--with-cuda=CUDAINSTALLDIR],[specify where CUDA is installed.
-		The cuda compiler can also be specified by setting the NVCC
-		environment variable. The CUDA library and header can be
-		manually specified by using CPPFLAGS, LDFLAGS and LIBS.]),
-	, with_cuda=no)
-AC_MSG_RESULT($with_cuda)
+	AS_HELP_STRING([--with-cuda@<:@=DIR@:>@], [specify
+	where CUDA is installed.  The cuda compiler can also be
+	specified by setting the NVCC environment variable. The CUDA
+	library and header can be manually specified by using
+	CPPFLAGS, LDFLAGS and LIBS. [no]]), ,
+	with_cuda=no) AC_MSG_RESULT($with_cuda)
+
+if test x$with_cuda = xguess || test x$with_cuda = xyes; then
+   cuda_path=/usr/local/cuda
+elif test x$with_cuda != xno; then
+   cuda_path=$with_cuda
+   with_cuda=yes
+fi
+
+cuda_ok=no
 
 if test x$with_cuda != xno; then
-   # if installation dir is given, set the paths
-   if test x$with_cuda != xyes; then
-       if test x$NVCC = x; then
-	   NVCC=$with_cuda/bin/nvcc
-       fi
-       if test -d $with_cuda/lib64; then
-           LDFLAGS="$LDFLAGS -L$with_cuda/lib64"
-       else
-	   LDFLAGS="$LDFLAGS -L$with_cuda/lib"
-       fi
-       NVCCFLAGS="$NVCCFLAGS -I$with_cuda/include"
-   fi
+    cuda_ok=yes
+    
+    if test x$NVCC = x; then
+        NVCC=$cuda_path/bin/nvcc
+    fi
 
-   # NVCC
-   AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
-   AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
-   AC_PATH_PROG(NVCC, nvcc, no)
-   if test x$NVCC = xno; then
-       AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
-   fi
+    if test -d $cuda_path/lib64; then
+        LDFLAGS="$LDFLAGS -L$cuda_path/lib64"
+    else
+        LDFLAGS="$LDFLAGS -L$cuda_path/lib"
+    fi
 
-   # runtime library
-   AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [AC_MSG_FAILURE([could not find cuda runtime library (cudart), specify location using LDFLAGS])])
+    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
 
-   # NVCC compile check
-   AC_MSG_CHECKING([whether CUDA works])
-   # if no other compute capability is defined by the user, we need at least 1.1
-   case "$NVCCFLAGS" in
+    # NVCC
+    AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
+    AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
+    AC_PATH_PROG(NVCC, nvcc, no)
+
+    if test x$NVCC = xno; then
+        AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
+    fi
+
+    # libraries
+    AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda runtime library (cudart), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda runtime library (cudart). Some features will not be available!])
+        ])
+    ])
+
+    AC_CHECK_LIB(cufft, cufftPlan3d, [LIBS="$LIBS -lcufft"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find cuda FFT library (cufft), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find cuda FFT library (cufft). Some features will not be available!])
+        ])
+    ])
+
+    # NVCC compile check
+    AC_MSG_CHECKING([whether CUDA works])
+    
+    # if no other compute capability is defined by the user, we require at least 1.1
+    case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode  arch=compute_20,code=compute_20"
-   esac
-   # use nvcc
-   save_CC=$CC
-   save_CFLAGS=$CFLAGS
-   # autoconf currently doesn't allow to define new languages like cuda, so try to work around it
-   CC=$NVCC
-   CFLAGS="$NVCCFLAGS"
-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-	#include <cuda.h>
-   ],[
-	cudaGetDevice(0);
-   ])], [AC_MSG_RESULT(yes)], [AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])])
-   CC=$save_CC
-   CFLAGS=$save_CFLAGS
-   AC_DEFINE(CUDA,[],[Whether CUDA is available])
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_11,code=compute_11 -gencode arch=compute_20,code=compute_20"
+    esac
+    
+    # use nvcc
+    save_CC=$CC
+    save_CFLAGS=$CFLAGS
+    
+    # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
+    CC=$NVCC
+    CFLAGS="$NVCCFLAGS"
+    
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
+        AC_MSG_RESULT(yes)
+    ],[
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])
+        ],[
+            AC_MSG_WARN([cannot compile CUDA code. Some features will not be available!])
+        ])
+    ])
+    
+    CC=$save_CC
+    CFLAGS=$save_CFLAGS
+    
+    AC_DEFINE(CUDA,[],[Whether CUDA is available])
 fi
+
 AM_CONDITIONAL(CUDA, [test x$with_cuda != xno])
 
 cat <<EOF
@@ -484,7 +528,8 @@ AC_MSG_RESULT($with_efence)
 ##################################
 # Handling the myconfig-header
 AC_ARG_WITH(myconfig, 
-  AS_HELP_STRING([--with-myconfig=FILE],[default name of the local config file [myconfig.h]]),
+  AS_HELP_STRING([--with-myconfig=FILE],
+                 [default name of the local config file [FILE=myconfig.h]]),
 [ test .$with_myconfig = .no && with_myconfig=myconfig.h ],
 [ with_myconfig=myconfig.h ])
 AC_MSG_CHECKING([the name of the configuration header])
@@ -593,7 +638,7 @@ dot			= $DOT
 python			= $PYTHON
 EOF
 
-if test x$with_cuda != xno; then
+if test x$cuda_ok = xyes; then
 cat <<EOF
 CUDA compiler		= $NVCC
 CUDA flags		= $NVCCFLAGS
