@@ -1277,7 +1277,7 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
-    calc_mode(mode, n_a, index);
+    calc_m_from_n(n_a, index, mode);
     calc_values(n_a, mode, d_v, index, singlenode);
   }
 }
@@ -1323,7 +1323,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index == 0){
-    calc_mode(mode, n_a, single_nodeindex);
+    calc_m_from_n(n_a, single_nodeindex, mode);
     calc_values(n_a, mode, d_p_v, single_nodeindex, singlenode);
   }	
 }
