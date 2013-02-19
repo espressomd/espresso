@@ -63,47 +63,49 @@ int ljgen_set_params(int part_type_a, int part_type_b,
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  if (lj_force_cap != -1.0)
-    mpi_lj_cap_forces(lj_force_cap);
+  mpi_cap_forces(force_cap);
 
   return ES_OK;
 }
 
-/** calculate lj_capradius from lj_force_cap */
-void calc_ljgen_cap_radii(double force_cap)
+/** calculate lj_capradius from force_cap */
+void calc_ljgen_cap_radii()
 {
-  int i,j,cnt=0;
-  IA_parameters *params;
-  double force=0.0, rad=0.0, step, frac;
+  /* do not compute cap radii if force capping is "individual" */
+  if( force_cap != -1.0){
+    int i,j,cnt=0;
+    IA_parameters *params;
+    double force=0.0, rad=0.0, step, frac;
 
-  for(i=0; i<n_particle_types; i++) {
-    for(j=0; j<n_particle_types; j++) {
-      params = get_ia_param(i,j);
-      if(force_cap > 0.0 && params->LJGEN_eps > 0.0) {
-	/* I think we have to solve this numerically... and very crude as well */
-	cnt=0;
-	rad = params->LJGEN_sig;
-	step = -0.1 * params->LJGEN_sig;
-	force=0.0;
-	
-	while(step != 0) {
-	  frac = params->LJGEN_sig/rad;
-	  force =  params->LJGEN_eps 
-	    * (params->LJGEN_b1 * params->LJGEN_a1 * pow(frac, params->LJGEN_a1) 
-	       - params->LJGEN_b2 * params->LJGEN_a2 * pow(frac, params->LJGEN_a2))/rad;
-	  if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
-	    step = - (step/2.0); 
-	  }
-	  if(fabs(force-force_cap) < 1.0e-6) step=0;
-	  rad += step; cnt++;
-	} 
-      	params->LJGEN_capradius = rad;
+    for(i=0; i<n_particle_types; i++) {
+      for(j=0; j<n_particle_types; j++) {
+        params = get_ia_param(i,j);
+        if(force_cap > 0.0 && params->LJGEN_eps > 0.0) {
+    /* I think we have to solve this numerically... and very crude as well */
+    cnt=0;
+    rad = params->LJGEN_sig;
+    step = -0.1 * params->LJGEN_sig;
+    force=0.0;
+    
+    while(step != 0) {
+      frac = params->LJGEN_sig/rad;
+      force =  params->LJGEN_eps 
+        * (params->LJGEN_b1 * params->LJGEN_a1 * pow(frac, params->LJGEN_a1) 
+           - params->LJGEN_b2 * params->LJGEN_a2 * pow(frac, params->LJGEN_a2))/rad;
+      if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {
+        step = - (step/2.0); 
       }
-      else {
-	params->LJGEN_capradius = 0.0; 
+      if(fabs(force-force_cap) < 1.0e-6) step=0;
+      rad += step; cnt++;
+    } 
+          params->LJGEN_capradius = rad;
+        }
+        else {
+    params->LJGEN_capradius = 0.0; 
+        }
+        FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
+          this_node,i,j,rad,force,cnt));
       }
-      FORCE_TRACE(fprintf(stderr,"%d: Ptypes %d-%d have cap_radius %f and cap_force %f (iterations: %d)\n",
-			  this_node,i,j,rad,force,cnt));
     }
   }
 }

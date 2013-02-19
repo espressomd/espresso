@@ -648,7 +648,7 @@ int tclcommand_crosslink (ClientData data, Tcl_Interp *interp, int argc, char **
     /* [bond <type_bond>] */
     else if (ARG_IS_S(i, "bond") || ARG_IS_S(i, "FENE")) {
       if(i+1 < argc) {
-	if (ARG_IS_I(i+1, type_bond)) { 
+	if (!ARG_IS_I(i+1, type_bond)) { 
 	  Tcl_AppendResult(interp, "The type-# of the bind-interaction must be integer (got: ",
 			   argv[i+1],")!", (char *)NULL); 
 	  return (TCL_ERROR); 

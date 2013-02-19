@@ -214,9 +214,9 @@ equilibration loop:
 \begin{tclcode}
 for {set cap 20} {$cap < 200} {incr cap 20} {
   puts "t=[setmd time] E=[analyze energy total]"
-  inter ljforcecap $cap; integrate $integ_steps 
+  inter forcecap $cap; integrate $integ_steps 
 }
-inter ljforcecap 0
+inter forcecap 0
 \end{tclcode}
 This loop integrates the system with a force cap of initially 20 and finally
 200.  The last command switches the force cap off again. With this

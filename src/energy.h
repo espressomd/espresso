@@ -35,6 +35,7 @@
 #include "ljgen.h"
 #include "steppot.h"
 #include "hertzian.h"
+#include "gaussian.h"
 #include "bmhtf-nacl.h"
 #include "buckingham.h"
 #include "soft_sphere.h"
@@ -49,6 +50,9 @@
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
+#include "angle_harmonic.h"
+#include "angle_cosine.h"
+#include "angle_cossquare.h"
 #include "angledist.h"
 #include "dihedral.h"
 #include "debye_hueckel.h"
@@ -58,7 +62,6 @@
 #include "mmm2d.h"
 #include "maggs.h"
 #include "morse.h"
-#include "ewald.h"
 #include "elc.h"
 #include "mdlc_correction.h"
 
@@ -130,6 +133,11 @@ MDINLINE double calc_non_bonded_pair_energy(Particle *p1, Particle *p2,
 #ifdef HERTZIAN
   /* Hertzian potential */
   ret += hertzian_pair_energy(p1,p2,ia_params,d,dist,dist2);
+#endif
+
+#ifdef GAUSSIAN
+  /* Gaussian potential */
+  ret += gaussian_pair_energy(p1,p2,ia_params,d,dist,dist2);
 #endif
 
 #ifdef BMHTF_NACL
@@ -216,9 +224,6 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
       ret += 0.5*ELC_P3M_dielectric_layers_energy_contribution(p1,p2);
     break;
 #endif
-    case COULOMB_EWALD:
-      ret = ewald_coulomb_pair_energy(p1,p2,d,dist2,dist);
-      break;
     case COULOMB_DH:
       ret = dh_coulomb_pair_energy(p1,p2,dist);
       break;
@@ -325,9 +330,21 @@ MDINLINE void add_bonded_energy(Particle *p1)
       bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
       break;
 #endif
-#ifdef BOND_ANGLE
-    case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+    /* the first case is not needed and should not be called */ 
+    case BONDED_IA_ANGLE_OLD:
       bond_broken = angle_energy(p1, p2, p3, iaparams, &ret);
+      break; 
+#endif
+#ifdef BOND_ANGLE
+    case BONDED_IA_ANGLE_HARMONIC:
+      bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_ANGLE_COSINE:
+      bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
+      break;
+    case BONDED_IA_ANGLE_COSSQUARE:
+      bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
       break;
 #endif
 #ifdef BOND_ANGLEDIST
@@ -399,14 +416,29 @@ MDINLINE void add_bonded_energy(Particle *p1)
       return;
     }
 
-    switch (n_partners) {
-    case 1:
-      if (bond_broken) {
+    if (bond_broken) {
+      switch (n_partners) {
+      case 1: {
 	char *errtext = runtime_error(128 + 2*ES_INTEGER_SPACE);
-	ERROR_SPRINTF(errtext,"{076 bond broken between particles %d, %d, %d and %d} ",
-		p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
-	continue;
+	ERROR_SPRINTF(errtext,"{083 bond broken between particles %d and %d} ",
+		      p1->p.identity, p2->p.identity); 
+	break;
       }
+      case 2: {
+	char *errtext = runtime_error(128 + 3*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{084 bond broken between particles %d, %d and %d} ",
+		      p1->p.identity, p2->p.identity, p3->p.identity); 
+	break;
+      }
+      case 3: {
+	char *errtext = runtime_error(128 + 4*ES_INTEGER_SPACE);
+	ERROR_SPRINTF(errtext,"{085 bond broken between particles %d, %d, %d and %d} ",
+		      p1->p.identity, p2->p.identity, p3->p.identity, p4->p.identity); 
+	break;
+      }
+      }
+      // bond broken, don't add whatever we find in the energy
+      continue;
     }
 
     *obsstat_bonded(&energy, type_num) += ret;

@@ -43,6 +43,8 @@
 #include "bmhtf-nacl_tcl.h"
 #include "buckingham_tcl.h"
 #include "gb_tcl.h"
+#include "gaussian_tcl.h"
+#include "hat_tcl.h"
 #include "lj_tcl.h"
 #include "ljangle_tcl.h"
 #include "ljcos_tcl.h"
@@ -52,7 +54,6 @@
 #include "morse_tcl.h"
 #include "dpd_tcl.h"
 #include "soft_sphere_tcl.h"
-#include "hat_tcl.h"
 #include "steppot_tcl.h"
 #include "tab_tcl.h"
 #include "tunable_slip_tcl.h"
@@ -60,7 +61,6 @@
 // Coulomb
 #include "debye_hueckel_tcl.h"
 #include "elc_tcl.h"
-#include "ewald_tcl.h"
 #include "maggs_tcl.h"
 #include "mmm1d_tcl.h"
 #include "mmm2d_tcl.h"
@@ -74,6 +74,9 @@
 
 // bonded
 #include "angle_tcl.h"
+#include "angle_harmonic_tcl.h"
+#include "angle_cosine_tcl.h"
+#include "angle_cossquare_tcl.h"
 #include "angledist_tcl.h"
 #include "dihedral_tcl.h"
 #include "endangledist_tcl.h"
@@ -153,8 +156,6 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
 #ifdef P3M
   REGISTER_COULOMB("p3m", tclcommand_inter_coulomb_parse_p3m);
 #endif
-
-  REGISTER_COULOMB("ewald", tclcommand_inter_coulomb_parse_ewald); 
 
   REGISTER_COULOMB("dh", tclcommand_inter_coulomb_parse_dh);    
 
@@ -289,9 +290,17 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
     return tclprint_to_result_feneIA(interp, params);
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
-#ifdef BOND_ANGLE
-  case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+  case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
+#endif
+#ifdef BOND_ANGLE_
+  case BONDED_IA_ANGLE_HARMONIC:
+    return tclprint_to_result_angle_harmonicIA(interp, params);
+  case BONDED_IA_ANGLE_COSINE:
+    return tclprint_to_result_angle_cosineIA(interp, params);
+  case BONDED_IA_ANGLE_COSSQUARE:
+    return tclprint_to_result_angle_cossquareIA(interp, params);
 #endif
 #ifdef BOND_ANGLEDIST
   case BONDED_IA_ANGLEDIST:
@@ -395,6 +404,10 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
   if (data->Hertzian_sig > 0.0) tclprint_to_result_HertzianIA(interp,i,j);
 #endif
 
+#ifdef GAUSSIAN
+  if (data->Gaussian_cut > 0.0) tclprint_to_result_GaussianIA(interp,i,j);
+#endif
+
 #ifdef BMHTF_NACL
   if (data->BMHTF_cut > 0.0) tclprint_to_result_BMHTFIA(interp,i,j);
 #endif
@@ -482,7 +495,6 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
     break;
   case COULOMB_P3M: tclprint_to_result_p3m(interp); break;
 #endif
-  case COULOMB_EWALD: tclprint_to_result_EWALD(interp); break;
   case COULOMB_DH: tclprint_to_result_dh(interp); break;
   case COULOMB_RF: tclprint_to_result_rf(interp,"rf"); break;
   case COULOMB_INTER_RF: tclprint_to_result_rf(interp,"inter_rf"); break;
@@ -586,9 +598,7 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
   }
 #endif
 
-#ifdef LENNARD_JONES
-
-  if(lj_force_cap != 0.0) {
+  if(force_cap != 0.0) {
     char buffer[TCL_DOUBLE_SPACE];
     
     if (start) {
@@ -597,96 +607,14 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
     }
     else
       Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (lj_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljforcecap individual", (char *)NULL);
+    if (force_cap == -1.0)
+      Tcl_AppendResult(interp, "forcecap individual", (char *)NULL);
     else {
-      Tcl_PrintDouble(interp, lj_force_cap, buffer);
-      Tcl_AppendResult(interp, "ljforcecap ", buffer, (char *) NULL);
+      Tcl_PrintDouble(interp, force_cap, buffer);
+      Tcl_AppendResult(interp, "forcecap ", buffer, (char *) NULL);
     }
     Tcl_AppendResult(interp, "}", (char *)NULL);
   }
-
-#endif
-
-#ifdef LJ_ANGLE
-  if(ljangle_force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-    
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (ljangle_force_cap == -1.0)
-      Tcl_AppendResult(interp, "ljangleforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, ljangle_force_cap, buffer);
-      Tcl_AppendResult(interp, "ljangleforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
-
-#ifdef MORSE
-if(morse_force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (morse_force_cap == -1.0)
-      Tcl_AppendResult(interp, "morseforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, morse_force_cap, buffer);
-      Tcl_AppendResult(interp, "morseforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
-
-#ifdef BUCKINGHAM 
-  if(buck_force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-    
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-
-    if (lj_force_cap == -1.0)
-      Tcl_AppendResult(interp, "buckforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, buck_force_cap, buffer);
-      Tcl_AppendResult(interp, "buckforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
-
-#ifdef TABULATED
-  if(tab_force_cap != 0.0) {
-    char buffer[TCL_DOUBLE_SPACE];
-    if (start) {
-      Tcl_AppendResult(interp, "{", (char *)NULL);
-      start = 0;
-    }
-    else
-      Tcl_AppendResult(interp, " {", (char *)NULL);
-    if (tab_force_cap == -1.0)
-      Tcl_AppendResult(interp, "tabforcecap individual", (char *)NULL);
-    else {
-      Tcl_PrintDouble(interp, tab_force_cap, buffer);
-      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
-    }
-    Tcl_AppendResult(interp, "}", (char *)NULL);
-  }
-#endif
 
   return (TCL_OK);
 }
@@ -801,6 +729,10 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 
 #ifdef HERTZIAN
     REGISTER_NONBONDED("hertzian", tclcommand_inter_parse_hertzian);
+#endif
+
+#ifdef GAUSSIAN
+    REGISTER_NONBONDED("gaussian", tclcommand_inter_parse_gaussian);
 #endif
 
 #ifdef BMHTF_NACL
@@ -937,8 +869,13 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);
 #endif
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
   REGISTER_BONDED("angle", tclcommand_inter_parse_angle);
+#endif
+#ifdef BOND_ANGLE
+  REGISTER_BONDED("angle_harmonic", tclcommand_inter_parse_angle_harmonic);
+  REGISTER_BONDED("angle_cosine", tclcommand_inter_parse_angle_cosine);
+  REGISTER_BONDED("angle_cossquare", tclcommand_inter_parse_angle_cossquare);
 #endif
 #ifdef BOND_ANGLEDIST
   REGISTER_BONDED("angledist", tclcommand_inter_parse_angledist);
@@ -966,6 +903,9 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
 
 int tclcommand_inter_parse_rest(Tcl_Interp * interp, int argc, char ** argv)
 {
+  if(ARG0_IS_S("forcecap"))
+    return tclcommand_inter_parse_forcecap(interp,argc-1, argv+1);
+
 #if defined(LENNARD_JONES) || defined(LENNARD_JONES_GENERIC)
   if(ARG0_IS_S("ljforcecap"))
     return tclcommand_inter_parse_ljforcecap(interp, argc-1, argv+1);

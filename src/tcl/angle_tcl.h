@@ -27,7 +27,7 @@
 #include "parser.h"
 #include "interaction_data.h"
 
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
 
 /// parse parameters for the angle potential
 int tclcommand_inter_parse_angle(Tcl_Interp *interp, int bond_type, int argc, char **argv);

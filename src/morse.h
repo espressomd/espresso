@@ -31,27 +31,16 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "mol_cut.h"
+#include "forcecap.h"
 
 #ifdef MORSE
 
-/** For the warmup you can cap the singularity of the Morse
-    potential at r=0. look into the warmup documentation for more
-    details (who wants to wite that?).*/
-extern double morse_force_cap;
-
-/** set the force cap for the Morse interaction.
-    @param morseforcecap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
-*/
-int morseforcecap_set_params(double morseforcecap);
-
-///
 int morse_set_params(int part_type_a, int part_type_b,
 		     double eps, double alpha,
 		     double rmin, double cut, double cap_radius);
 
-/** calculate morse_capradius from morse_force_cap */
-void calc_morse_cap_radii(double force_cap);
+/** calculate morse_capradius from force_cap */
+void calc_morse_cap_radii();
 
 /** Calculate Morse force between particle p1 and p2 */
 MDINLINE void add_morse_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,

@@ -690,6 +690,9 @@ void layered_calculate_virials(int v_comp)
       add_kinetic_virials(p1,v_comp);
 
       add_bonded_virials(p1);
+#ifdef BOND_ANGLE_OLD
+      add_three_body_bonded_stress(p1);
+#endif
 #ifdef BOND_ANGLE
       add_three_body_bonded_stress(p1);
 #endif

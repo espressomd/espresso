@@ -178,7 +178,11 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
       break;
 #endif
       /* since it is not clear at the moment how to handle a many body interaction here, I skip it */
-    case BONDED_IA_ANGLE:
+    case BONDED_IA_ANGLE_HARMONIC:
+      (*i)++; force[0] = force[1] = force[2] = 0; break;
+    case BONDED_IA_ANGLE_COSINE:
+      (*i)++; force[0] = force[1] = force[2] = 0; break;
+    case BONDED_IA_ANGLE_COSSQUARE:
       (*i)++; force[0] = force[1] = force[2] = 0; break;
     case BONDED_IA_ANGLEDIST:
       (*i)++; force[0] = force[1] = force[2] = 0; break;
@@ -255,10 +259,24 @@ MDINLINE void calc_three_body_bonded_forces(Particle *p1, Particle *p2, Particle
 #endif
 
   switch(iaparams->type) {
-#ifdef BOND_ANGLE
-  case BONDED_IA_ANGLE:
+#ifdef BOND_ANGLE_OLD
+  case BONDED_IA_ANGLE_OLD:
     // p1 is *p_mid, p2 is *p_left, p3 is *p_right
     calc_angle_3body_forces(p1, p2, p3, iaparams, force1, force2, force3);
+    break;
+#endif
+#ifdef BOND_ANGLE
+  case BONDED_IA_ANGLE_HARMONIC:
+    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
+    calc_angle_harmonic_3body_forces(p1, p2, p3, iaparams, force1, force2, force3);
+    break;
+ case BONDED_IA_ANGLE_COSINE:
+    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
+    calc_angle_cosine_3body_forces(p1, p2, p3, iaparams, force1, force2, force3);
+    break;
+  case BONDED_IA_ANGLE_COSSQUARE:
+    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
+    calc_angle_cossquare_3body_forces(p1, p2, p3, iaparams, force1, force2, force3);
     break;
 #endif
 #ifdef TABULATED
@@ -357,7 +375,7 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
     iaparams = &bonded_ia_params[type_num];
     type = iaparams->type;
 
-    if(type == BONDED_IA_ANGLE) {
+    if(type == BONDED_IA_ANGLE_HARMONIC || type == BONDED_IA_ANGLE_COSINE || type == BONDED_IA_ANGLE_COSSQUARE){
       p2 = local_particles[p1->bl.e[++i]];
       p3 = local_particles[p1->bl.e[++i]];
 
