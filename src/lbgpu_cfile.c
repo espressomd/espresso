@@ -154,11 +154,6 @@ void lb_calc_particle_lattice_ia_gpu() {
        mpi_get_particles_lb(host_data);
    
        if(this_node == 0){
-#if 0
-         for (i=0;i<n_total_particles;i++) {
-           fprintf(stderr, "%i particle pos: , %f %f %f\n", i, host_data[i].p[0], host_data[i].p[1], host_data[i].p[2]);
-         }
-   #endif
          if(lbpar_gpu.number_of_particles) lb_particle_GPU(host_data);
    
        LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));

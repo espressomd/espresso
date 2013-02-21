@@ -143,3 +143,68 @@ void thermo_cool_down()
 #endif
 }
 
+#ifdef ROTATION
+/* Workaround for thermostatting the rotational degrees of freedom
+   in LB. Needs to be updated with a real coupling [ to curl(v) ? ]
+   with density dependence (for SHANCHEN)
+*/ 
+void friction_thermo_lb_rotation(Particle *p)
+{
+#ifdef LB_GPU
+  extern LB_parameters_gpu lbpar_gpu ;
+  double friction,coupl_pref2;
+  int j,ii;
+#ifndef SHANCHEN
+  friction = lbpar_gpu.friction; 
+  coupl_pref2 = lbpar_gpu.lb_coupl_pref2 ;
+#else  // SHANCHEN
+  /* workaround: we just use the larger translational friction for the 
+     rotational degrees of freedom. */
+  friction = lbpar_gpu.friction[0];
+  coupl_pref2 = lbpar_gpu.lb_coupl_pref2[0] ;
+
+  for (ii=1;ii<SHANCHEN;ii++) { 
+	if(lbpar_gpu.friction[ii] > friction ) { 
+                friction = lbpar_gpu.friction[ii];
+  		coupl_pref2 = lbpar_gpu.lb_coupl_pref2[ii] ;
+         }
+  } 
+#endif // SHANCHEN
+
+#ifdef VIRTUAL_SITES
+ #ifndef VIRTUAL_SITES_THERMOSTAT
+    if (ifParticleIsVirtual(p))
+    {
+     for (j=0;j<3;j++)
+      p->f.torque[j]=0;
+    return;
+   }
+ #endif // VIRTUAL_SITES_THERMOSTAT
+
+ #ifdef THERMOSTAT_IGNORE_NON_VIRTUAL
+    if (!ifParticleIsVirtual(p))
+    {
+     for (j=0;j<3;j++)
+      p->f.torque[j]=0;
+    return;
+   }
+ #endif   // THERMOSTAT_IGNORE_NON_VIRTUAL
+#endif	   // VIRTUAL_SITES
+      for ( j = 0 ; j < 3 ; j++) 
+      {
+        #ifdef ROTATIONAL_INERTIA
+	 p->f.torque[j] = -friction*p->m.omega[j] *p->p.rinertia[j] + coupl_pref2*sqrt(p->p.rinertia[j]) * (d_random()-0.5);
+      	#else
+	 p->f.torque[j] = -friction*p->m.omega[j] + coupl_pref2*(d_random()-0.5);
+	#endif  // ROTATIONAL_INERTIA
+      }
+}
+#else // LB_GPU
+ // not implemented for CPU LB
+#endif // LB_GPU
+
+#endif // ROTATION
+
+
+
+
