@@ -50,8 +50,8 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 	double partArea=0.,norm[3],dn;
 	int rank, num_proc;
 	
-	MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
-	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	//MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
+	//MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
 	/** loop over particles */
 	int c, np, i ,j;

@@ -53,8 +53,6 @@
 
 #define AREA_FORCE_LOCAL
 #define AREA_FORCE_GLOBAL   
-//#define STRETCHING_FORCE
-//#define BENDING_FORCE
 #define VOLUME_FORCE	
 
 /* Bond angle */
