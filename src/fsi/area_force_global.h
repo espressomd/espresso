@@ -47,8 +47,8 @@ int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
  */  
 
 MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
-	double partArea=0.,norm[3],dn;
-	int rank, num_proc;
+	double partArea=0.,norm[3];//, dn;
+	//int rank, num_proc;
 	
 	//MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
 	//MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -119,7 +119,7 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 				
 					
 					get_n_triangle(p11,p22,p33,norm);
-					dn=normr(norm);
+					//dn=normr(norm);
 					partArea += area_triangle(p11,p22,p33);
 				}
 				else{

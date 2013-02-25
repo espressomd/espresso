@@ -51,7 +51,6 @@
 //#define LB_ELECTROHYDRODYNAMICS
 
 
-#define AREA_FORCE_LOCAL
 #define AREA_FORCE_GLOBAL   
 #define VOLUME_FORCE	
 
