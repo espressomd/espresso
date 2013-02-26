@@ -229,7 +229,7 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
     ERROR_SPRINTF(errtxt, "{058 could not sort partCfg, particles have to start at 0 and have consecutive identities} ");
     return TCL_ERROR;
   }
-  coord = malloc(n_total_particles*3*sizeof(float));
+  coord = (float*)malloc(n_total_particles*3*sizeof(float));
   /* Construct the array coord*/
   for (i = 0; i < n_total_particles; i++) {
     int dummy[3] = {0,0,0};
@@ -1401,7 +1401,7 @@ static int tclcommand_analyze_parse_distribution(Tcl_Interp *interp, int argc, c
   if(r_max <= r_min) return TCL_ERROR;
   if(r_bins < 1) return TCL_ERROR;
   /* calculate distribution */
-  distribution = malloc(r_bins*sizeof(double));
+  distribution = (double*)malloc(r_bins*sizeof(double));
   updatePartCfg(WITHOUT_BONDS);
   calc_part_distribution(p1.e, p1.max, p2.e, p2.max, r_min, r_max, r_bins, log_flag,&low,distribution);
   if(int_flag==1) {
@@ -1563,7 +1563,7 @@ static int tclcommand_analyze_parse_rdf(Tcl_Interp *interp, int average, int arg
   }
   else
     Tcl_AppendResult(interp, " }", (char *)NULL);
-  rdf = malloc(r_bins*sizeof(double));
+  rdf = (double*)malloc(r_bins*sizeof(double));
 
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
 
@@ -1676,7 +1676,7 @@ static int tclcommand_analyze_parse_density_profile_av(Tcl_Interp *interp, int a
     return (TCL_ERROR);
   }
   
-  rho_ave = malloc(n_bin*sizeof(double));
+  rho_ave = (double*)malloc(n_bin*sizeof(double));
   for(i=0;i<n_bin;i++)
     rho_ave[i]=0.0;
 
@@ -1738,7 +1738,7 @@ static int tclcommand_analyze_parse_diffusion_profile(Tcl_Interp *interp, int ar
   
   if (!sortPartCfg()) { Tcl_AppendResult(interp, "for analyze, store particles consecutively starting with 0.",(char *) NULL); return (TCL_ERROR); }
   
-  bins = malloc(nbins*sizeof(double));
+  bins = (double*)malloc(nbins*sizeof(double));
   for (i =0; i<nbins;i++) { bins[i]=0; }
   
   calc_diffusion_profile(dir, xmin, xmax, nbins, n_part, n_conf, time, type, bins);
@@ -2025,7 +2025,7 @@ static int tclcommand_analyze_parse_configs(Tcl_Interp *interp, int argc, char *
     else if (argc != 3*n_part_conf) {
       sprintf(buffer,"Wrong # of args(%d)! Usage: analyze configs [x0 y0 z0 ... x%d y%d z%d]",argc,n_part_conf,n_part_conf,n_part_conf);
       Tcl_AppendResult(interp,buffer,(char *)NULL); return TCL_ERROR; }
-    tmp_config = malloc(3*n_part_conf*sizeof(double));
+    tmp_config = (double*)malloc(3*n_part_conf*sizeof(double));
     for(j=0; j < argc; j++)
       if (!ARG_IS_D(j, tmp_config[j])) return (TCL_ERROR);
     analyze_configs(tmp_config, n_part_conf); free(tmp_config);

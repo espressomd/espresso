@@ -257,7 +257,7 @@ void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Inter
 
   /* setup bond partners and distance list. Since we need to identify particles via their identity,
      we use a full sized array */
-  partners    = malloc((max_seen_particle + 1)*sizeof(IntList));
+  partners    = (IntList*)malloc((max_seen_particle + 1)*sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++) init_intlist(&partners[p]);
   updatePartCfg(WITH_BONDS);
 
@@ -279,7 +279,7 @@ void tclcommand_part_print_bond_partners(Particle *part, char *buffer, Tcl_Inter
 
   /* Create links to particle */
   distance++;
-  links    = malloc((distance+1)*sizeof(IntList));
+  links    = (IntList*)malloc((distance+1)*sizeof(IntList));
   for( c = 0; c <= distance; c++)  init_intlist(&links[c]);
 
   p1 = part->p.identity;
@@ -1349,9 +1349,9 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
 
 
 int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
-		    int part_num, int * change)
+		    int part_num, int *change)
 {
-  int delete = 0;
+  bool deleteIt = false;
   int type_num;
   int n_partners;
   /* Bond type number and the bond partner atoms are stored in this field. */
@@ -1369,7 +1369,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 
   /* parse away delete eventually */
   if (ARG0_IS_S("delete")) {
-    delete = 1;
+    deleteIt = true;
     argc--;
     argv++;
     *change += 1;
@@ -1431,7 +1431,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 	j++;
       }
       /* set/delete bond */
-      if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
+      if (change_particle_bond(part_num, bond, deleteIt) != TCL_OK) {
 	Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
 	free(bond);
 	return TCL_ERROR;
@@ -1445,8 +1445,8 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
     return TCL_OK;
   }
   /* check for the old, multiple numbers format */
-  if (argc == 0) {
-    if (delete == 0) {
+  if (argc <= 0) {
+    if (!deleteIt) {
       Tcl_AppendResult(interp, "usage: part <p> bond <type> <partner>+\n", (char *) NULL);
       return TCL_ERROR;
     }
@@ -1501,7 +1501,7 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
     }
   }
   /* set/delete bond */
-  if (change_particle_bond(part_num, bond, delete) != TCL_OK) {
+  if (change_particle_bond(part_num, bond, deleteIt) != TCL_OK) {
     Tcl_AppendResult(interp, "bond to delete did not exist", (char *)NULL);
     free(bond);
     return TCL_ERROR;
@@ -1517,7 +1517,8 @@ int tclcommand_part_parse_bond(Tcl_Interp *interp, int argc, char **argv,
 int tclcommand_part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
 {
-  int delete = 0, partner;
+  bool deleteIt = false;
+  int partner;
 
   *change = 0;
 
@@ -1530,7 +1531,7 @@ int tclcommand_part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
 
   /* parse away delete eventually */
   if (ARG0_IS_S("delete")) {
-    delete = 1;
+    deleteIt = true;
     argc--;
     argv++;
     (*change)++;
@@ -1554,8 +1555,8 @@ int tclcommand_part_parse_exclusion(Tcl_Interp *interp, int argc, char **argv,
     }
 
     /* set/delete exclusion */
-    if (change_exclusion(part_num, partner, delete) != TCL_OK) {
-      if (delete)
+    if (change_exclusion(part_num, partner, deleteIt) != TCL_OK) {
+      if (deleteIt)
 	Tcl_AppendResult(interp, "exclusion to delete did not exist", (char *)NULL);
       else
 	Tcl_AppendResult(interp, "particle to exclude from interaction does not exist or is the same", (char *)NULL);	

@@ -274,7 +274,7 @@ void updatePartCfg(int bonds_flag)
   if(partCfg)
     return;
 
-  partCfg = malloc(n_total_particles*sizeof(Particle));
+  partCfg = (Particle*)malloc(n_total_particles*sizeof(Particle));
   if (bonds_flag != WITH_BONDS)
     mpi_get_particles(partCfg, NULL);
   else
@@ -304,7 +304,7 @@ int sortPartCfg()
   if (n_total_particles != max_seen_particle + 1)
     return 0;
 
-  sorted = malloc(n_total_particles*sizeof(Particle));
+  sorted = (Particle*)malloc(n_total_particles*sizeof(Particle));
   for(i = 0; i < n_total_particles; i++)
     memcpy(&sorted[partCfg[i].p.identity], &partCfg[i], sizeof(Particle));
   free(partCfg);
@@ -506,7 +506,7 @@ int get_particle_data(int part, Particle *data)
 
 int place_particle(int part, double p[3])
 {
-  int new, i;
+  int i;
   int pnode, retcode = ES_PART_OK;
 
   if (part < 0)
@@ -516,8 +516,7 @@ int place_particle(int part, double p[3])
     build_particle_node();
 
   pnode = (part <= max_seen_particle) ? particle_node[part] : -1;
-  new = (pnode == -1);
-  if (new) {
+  if (pnode == -1) {
     /* new particle, node by spatial position */
     pnode = cell_structure.position_to_node(p);
 
@@ -877,7 +876,7 @@ int set_particle_fix(int part,  int flag)
 
 #endif
 
-int change_particle_bond(int part, int *bond, int delete)
+int change_particle_bond(int part, int *bond, int deleteIt)
 {
   int pnode;
   if (!particle_node)
@@ -889,8 +888,8 @@ int change_particle_bond(int part, int *bond, int delete)
 
   if (pnode == -1)
     return ES_ERROR;
-  if(delete != 0 || bond == NULL)
-    delete = 1;
+  if(deleteIt != 0 || bond == NULL)
+    deleteIt = 1;
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
@@ -899,7 +898,7 @@ int change_particle_bond(int part, int *bond, int delete)
       return ES_ERROR;
     }
   }
-  return mpi_send_bond(pnode, part, bond, delete);
+  return mpi_send_bond(pnode, part, bond, deleteIt);
 }
 
 void remove_all_particles()
@@ -973,7 +972,7 @@ void local_remove_particle(int part)
   pl->n--;
 }
 
-void local_place_particle(int part, double p[3], int new)
+void local_place_particle(int part, double p[3], int createNew)
 {
   Cell *cell;
   double pp[3];
@@ -988,7 +987,7 @@ void local_place_particle(int part, double p[3], int new)
   pp[2] = p[2];
   fold_position(pp, i);
   
-  if (new) {
+  if (createNew) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
@@ -1074,7 +1073,7 @@ void added_particle(int part)
   }
 }
 
-int local_change_bond(int part, int *bond, int delete)
+int local_change_bond(int part, int *bond, int deleteIt)
 {
   IntList *bl;
   Particle *p;
@@ -1082,7 +1081,7 @@ int local_change_bond(int part, int *bond, int delete)
   int i;
 
   p = local_particles[part];
-  if (delete)
+  if (deleteIt)
     return try_delete_bond(p, bond);
 
   bond_size = bonded_ia_params[bond[0]].num + 1;
@@ -1164,7 +1163,7 @@ void remove_all_bonds_to(int identity)
 }
 
 #ifdef EXCLUSIONS
-void local_change_exclusion(int part1, int part2, int delete)
+void local_change_exclusion(int part1, int part2, int deleteIt)
 {
   Cell *cell;
   int p, np, c;
@@ -1185,7 +1184,7 @@ void local_change_exclusion(int part1, int part2, int delete)
   /* part1, if here */
   part = local_particles[part1];
   if (part) {
-    if (delete)
+    if (deleteIt)
       try_delete_exclusion(part, part2);
     else
       try_add_exclusion(part, part2);
@@ -1194,7 +1193,7 @@ void local_change_exclusion(int part1, int part2, int delete)
   /* part2, if here */
   part = local_particles[part2];
   if (part) {
-    if (delete)
+    if (deleteIt)
       try_delete_exclusion(part, part1);
     else
       try_add_exclusion(part, part1);
@@ -1352,7 +1351,7 @@ void add_partner(IntList *il, int i, int j, int distance)
 
 #ifdef EXCLUSIONS
 
-int change_exclusion(int part1, int part2, int delete)
+int change_exclusion(int part1, int part2, int deleteIt)
 {
   if (!particle_node)
     build_particle_node();
@@ -1364,7 +1363,7 @@ int change_exclusion(int part1, int part2, int delete)
       particle_node[part2] == -1)
     return ES_ERROR;
 
-  mpi_send_exclusion(part1, part2, delete);
+  mpi_send_exclusion(part1, part2, deleteIt);
   return ES_OK;
 }
 
@@ -1387,7 +1386,7 @@ void auto_exclusion(int distance)
 
   /* setup bond partners and distance list. Since we need to identify particles via their identity,
      we use a full sized array */
-  partners    = malloc((max_seen_particle + 1)*sizeof(IntList));
+  partners    = (IntList*)malloc((max_seen_particle + 1)*sizeof(IntList));
   for (p = 0; p <= max_seen_particle; p++)
     init_intlist(&partners[p]);
 

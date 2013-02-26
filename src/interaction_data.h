@@ -952,7 +952,7 @@ MDINLINE int checkIfParticlesInteract(int i, int j) {
 }
 
 ///
-char *get_name_of_bonded_ia(int i);
+const char *get_name_of_bonded_ia(int i);
 
 #ifdef ADRESS
 int checkIfTF(TF_parameters *data);

@@ -1019,7 +1019,7 @@ void p3m_calc_differential_operator()
   int i,j;
 
   for(i=0;i<3;i++) {
-    p3m.d_op[i] = realloc(p3m.d_op[i], p3m.params.mesh[i]*sizeof(double));
+    p3m.d_op[i] = (double*)realloc(p3m.d_op[i], p3m.params.mesh[i]*sizeof(double));
     p3m.d_op[i][0] = 0;
     p3m.d_op[i][p3m.params.mesh[i]/2] = 0.0;
 
@@ -1989,8 +1989,8 @@ void p3m_calc_kspace_stress (double* stress) {
         int jx, jy, jz, i, ind = 0;
         // ordering after fourier transform
         const int x = 2, y = 0, z = 1;
-        node_k_space_stress = malloc(9*sizeof(double));
-        k_space_stress = malloc(9*sizeof(double));
+        node_k_space_stress = (double*)malloc(9*sizeof(double));
+        k_space_stress = (double*)malloc(9*sizeof(double));
 
         for (i = 0; i < 9; i++) {
             node_k_space_stress[i] = 0.0;

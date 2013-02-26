@@ -282,7 +282,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    comm->comm[cnt].type          = GHOST_LOCL;
 	    comm->comm[cnt].node          = this_node;
 	    /* Buffer has to contain Send and Recv cells -> factor 2 */
-	    comm->comm[cnt].part_lists    = malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
+	    comm->comm[cnt].part_lists    = (ParticleList**)malloc(2*n_comm_cells[dir]*sizeof(ParticleList *));
 	    comm->comm[cnt].n_part_lists  = 2*n_comm_cells[dir];
 	    /* prepare folding of ghost positions */
 	    if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
@@ -309,7 +309,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    if((node_pos[dir]+i)%2==0) {
 	      comm->comm[cnt].type          = GHOST_SEND;
 	      comm->comm[cnt].node          = node_neighbors[2*dir+lr];
-	      comm->comm[cnt].part_lists    = malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+	      comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
 	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
 	      /* prepare folding of ghost positions */
 	      if((data_parts & GHOSTTRANS_POSSHFTD) && boundary[2*dir+lr] != 0) 
@@ -328,7 +328,7 @@ void  dd_prepare_comm(GhostCommunicator *comm, int data_parts)
 	    if((node_pos[dir]+(1-i))%2==0) {
 	      comm->comm[cnt].type          = GHOST_RECV;
 	      comm->comm[cnt].node          = node_neighbors[2*dir+(1-lr)];
-	      comm->comm[cnt].part_lists    = malloc(n_comm_cells[dir]*sizeof(ParticleList *));
+	      comm->comm[cnt].part_lists    = (ParticleList**)malloc(n_comm_cells[dir]*sizeof(ParticleList *));
 	      comm->comm[cnt].n_part_lists  = n_comm_cells[dir];
 	      
 	      lc[(dir+0)%3] = hc[(dir+0)%3] = 0+(1-lr)*(dd.cell_grid[(dir+0)%3]+1);

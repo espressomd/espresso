@@ -113,8 +113,7 @@ typedef struct {
 
 /** used instead of realloc.
     Makes sure that resizing to zero FREEs pointer */
-MDINLINE void *prealloc(void *old, int size)
-{
+MDINLINE void *prealloc(void *old, int size) {
   void *p;
   if (size <= 0) {
     free(old);
@@ -906,7 +905,7 @@ MDINLINE double unfolded_distance(double pos1[3], int image_box1[3],
 
 /** extend a string with another one. Like strcat, just automatically
     increases the string space */
-MDINLINE char *strcat_alloc(char *left, char *right)
+MDINLINE char *strcat_alloc(char *left, const char *right)
 {
   if (!left) {
     char *res = (char *)malloc(strlen(right) + 1);

@@ -61,7 +61,7 @@ char * UWerr_err_to_str(struct UWerr_t s) {
 */
 
 
-double gammaln(double a)
+static double gammaln(double a)
 {
     int j;
     double x, y, tmp, ser;
@@ -82,7 +82,7 @@ double gammaln(double a)
     return -tmp+log(2.5066282746310005*ser/x);
 }
 
-void gammaser(double * gser, double a, double x)
+static void gammaser(double * gser, double a, double x)
 {
     int n, ITMAX = 100;
     double sum, del, ap, gln, eps = DBL_EPSILON;
@@ -111,7 +111,7 @@ void gammaser(double * gser, double a, double x)
 }
 
 
-void gammacf(double * gcf, double a, double x)
+static void gammacf(double * gcf, double a, double x)
 {
     int i, ITMAX = 100;
     double an, b, c, d, del, h, gln, eps = DBL_EPSILON, FPMIN = DBL_MIN;

@@ -28,13 +28,12 @@
 #include <string.h>
 #include <errno.h>
 #include "utils.h"
-#include "vmdsock.h"
 #include "imd.h"
 #include "communication.h"
 #include "particle_data.h"
 #include "statistics_chain.h"
 #include "statistics_molecule.h"
-
+#include "vmdsock.h"
 #include <inttypes.h>
 
 typedef struct {
@@ -205,7 +204,7 @@ int imd_trate(void *s, int32_t rate) {
 
 int imd_send_mdcomm(void *s,int32_t n,const int32_t *indices,const float *forces) {
   int32_t size = HEADERSIZE+16*n;
-  char *buf = malloc(sizeof(char)*size);
+  char *buf = (char*)malloc(sizeof(char)*size);
   int rc;
 
   fill_header((IMDheader *)buf, IMD_MDCOMM, n);
@@ -218,7 +217,7 @@ int imd_send_mdcomm(void *s,int32_t n,const int32_t *indices,const float *forces
 
 int imd_send_energies(void *s, const IMDEnergies *energies) {
   int32_t size = HEADERSIZE+sizeof(IMDEnergies);
-  char *buf = malloc(sizeof(char)*size);
+  char *buf = (char*)malloc(sizeof(char)*size);
   int rc;
 
   fill_header((IMDheader *)buf, IMD_ENERGIES, 1);
@@ -230,7 +229,7 @@ int imd_send_energies(void *s, const IMDEnergies *energies) {
 
 int imd_send_fcoords(void *s, int32_t n, const float *coords) {
   int32_t size = HEADERSIZE+12*n;
-  char *buf = malloc(sizeof(char)*size);
+  char *buf = (char*)malloc(sizeof(char)*size);
   int rc;
 
   fill_header((IMDheader *)buf, IMD_FCOORDS, n);

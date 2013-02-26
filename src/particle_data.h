@@ -567,7 +567,7 @@ int set_particle_fix(int part,  int flag);
     @return ES_OK on success or ES_ERROR if no success
     (e. g. particle or bond to delete does not exist)
 */
-int change_particle_bond(int part, int *bond, int delete);
+int change_particle_bond(int part, int *bond, int deleteIt);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
@@ -577,7 +577,7 @@ int change_particle_bond(int part, int *bond, int delete);
     @return ES_OK on success or ES_ERROR if no success
     (e. g. particles do not exist / did not have exclusion set)
 */
-int change_exclusion(int part, int part2, int delete);
+int change_exclusion(int part, int part2, int deleteIt);
 
 /** remove all exclusions. */
 void remove_all_exclusions();
@@ -631,7 +631,7 @@ int sortPartCfg();
     @param p    its new position
     @param new  if true, the particle is allocated, else has to exists already
 */
-void local_place_particle(int part, double p[3], int new);
+void local_place_particle(int part, double p[3], int createNew);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.
@@ -646,15 +646,15 @@ void added_particle(int part);
     @param delete if true, delete the bond instead of add
     @return ES_OK for add or successful delete, ES_ERROR else
 */
-int local_change_bond(int part, int *bond, int delete);
+int local_change_bond(int part, int *bond, int deleteIt);
 
 /** Used for example by \ref mpi_send_exclusion.
     Locally add a exclusion to a particle.
     @param part1 the identity of the first exclusion partner
     @param part2 the identity of the second exclusion partner
-    @param delete if true, delete the exclusion instead of add
+    @param deleteIt if true, delete the exclusion instead of add
 */
-void local_change_exclusion(int part1, int part2, int delete);
+void local_change_exclusion(int part1, int part2, int deleteIt);
 
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
     Remove a particle on this node.

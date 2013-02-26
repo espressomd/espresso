@@ -36,7 +36,7 @@ typedef struct {
 	double back_rate;
 }  reaction_struct;
 
-reaction_struct reaction;
+extern reaction_struct reaction;
 
 #ifdef REACTIONS
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so

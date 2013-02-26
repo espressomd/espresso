@@ -27,6 +27,7 @@
 #include "initialize.h"
 #include "forces.h"
 
+reaction_struct reaction;
 
 #ifdef REACTIONS
 void setup_reaction() {

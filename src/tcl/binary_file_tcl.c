@@ -77,7 +77,7 @@ int tclcommand_writemd(ClientData data, Tcl_Interp *interp,
   /* assemble rows */
   argc -= 2;
   argv += 2;
-  row = malloc(sizeof(char)*argc);
+  row = (char*)malloc(sizeof(char)*argc);
   for (i = 0; i < argc; i++) {
     if (!strncmp(*argv, "posx", strlen(*argv))) {
       row[i] = POSX;
@@ -243,7 +243,7 @@ int tclcommand_readmd(ClientData dummy, Tcl_Interp *interp,
     build_particle_node();
 
   /* parse rows */
-  row = malloc(header.n_rows*sizeof(char));
+  row = (char*)malloc(header.n_rows*sizeof(char));
   for (i = 0; i < header.n_rows; i++) {
     Tcl_Read(channel, (char *)&row[i], sizeof(char));
     switch (row[i]) {

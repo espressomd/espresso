@@ -26,11 +26,10 @@ observable** observables = 0;
 int n_observables = 0; 
 
 int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
     A[3*i + 0] = partCfg[ids->e[i]].m.v[0]/time_step;
@@ -42,12 +41,11 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
 
 #ifdef ELECTROSTATICS
 int observable_particle_currents(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   double charge;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
@@ -59,13 +57,12 @@ int observable_particle_currents(void* idlist, double* A, unsigned int n_A) {
 }
 
 int observable_currents(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_total_particles)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
@@ -80,13 +77,12 @@ int observable_currents(void* idlist, double* A, unsigned int n_A) {
 }
 
 int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   double charge;
   double j[3] = {0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] > n_total_particles)
       return 1;
     charge = partCfg[ids->e[i]].p.q;
@@ -102,13 +98,12 @@ int observable_dipole_moment(void* idlist, double* A, unsigned int n_A) {
 #endif
 
 int observable_com_velocity(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   double v_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
     v_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].m.v[0]/time_step;
@@ -183,13 +178,12 @@ int observable_blocked_com_position(void* idlist, double* A, unsigned int n_A) {
 }
 
 int observable_com_position(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   double p_com[3] = { 0. , 0., 0. } ;
   double total_mass = 0;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
     p_com[0] += PMASS(partCfg[ids->e[i]])*partCfg[ids->e[i]].r.p[0];
@@ -205,12 +199,11 @@ int observable_com_position(void* idlist, double* A, unsigned int n_A) {
 
 
 int observable_com_force(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   double f_com[3] = { 0. , 0., 0. } ;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
     f_com[0] += partCfg[ids->e[i]].f.f[0]/time_step/time_step*2;
@@ -250,7 +243,6 @@ int observable_blocked_com_force(void* idlist, double* A, unsigned int n_A) {
 
 
 int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
-  unsigned int i;
   int binx, biny, binz;
   double ppos[3];
   int img[3];
@@ -261,10 +253,10 @@ int observable_density_profile(void* pdata_, double* A, unsigned int n_A) {
   ids=pdata->id_list;
   double bin_volume=(pdata->maxx-pdata->minx)*(pdata->maxy-pdata->miny)*(pdata->maxz-pdata->minz)/pdata->xbins/pdata->ybins/pdata->zbins;
     
-  for ( i = 0; i<n_A; i++ ) {
+  for (unsigned i = 0; i<n_A; i++ ) {
     A[i]=0;
   }
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
 /* We use folded coordinates here */
@@ -456,7 +448,6 @@ void transform_to_cylinder_coordinates(double x, double y, double z_, double* r,
 }
 
 int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A) {
-  unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
   double r, phi, z;
@@ -471,10 +462,10 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
   double phibinsize=(pdata->maxphi - pdata->minphi)/pdata->phibins;
   double zbinsize=(pdata->maxz - pdata->minz)/pdata->zbins;
     
-  for ( i = 0; i< n_A; i++ ) {
+  for (unsigned i = 0; i< n_A; i++ ) {
     A[i]=0;
   }
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
 /* We use folded coordinates here */
@@ -496,7 +487,6 @@ int observable_radial_density_profile(void* pdata_, double* A, unsigned int n_A)
 }
 
 int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
-  unsigned int i;
   int binr, binphi, binz;
   double ppos[3];
   double r, phi, z;
@@ -513,10 +503,10 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
   double v[3];
   double v_r, v_phi, v_z;
     
-  for ( i = 0; i< n_A; i++ ) {
+  for (unsigned i = 0; i< n_A; i++ ) {
     A[i]=0;
   }
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
 /* We use folded coordinates here */
@@ -545,7 +535,6 @@ int observable_radial_flux_density_profile(void* pdata_, double* A, unsigned int
 }
 
 int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
-  unsigned int i;
   int binx, biny, binz;
   double ppos[3];
   double x, y, z;
@@ -562,10 +551,10 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
   double v[3];
   double v_x, v_y, v_z;
     
-  for ( i = 0; i< n_A; i++ ) {
+  for (unsigned i = 0; i< n_A; i++ ) {
     A[i]=0;
   }
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
 /* We use folded coordinates here */
@@ -597,11 +586,10 @@ int observable_flux_density_profile(void* pdata_, double* A, unsigned int n_A) {
 }
 
 int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
       A[3*i + 0] = partCfg[ids->e[i]].r.p[0];
@@ -612,11 +600,10 @@ int observable_particle_positions(void* idlist, double* A, unsigned int n_A) {
 }
 
 int observable_particle_forces(void* idlist, double* A, unsigned int n_A) {
-  unsigned int i;
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
-  for ( i = 0; i<ids->n; i++ ) {
+  for (int i = 0; i<ids->n; i++ ) {
     if (ids->e[i] >= n_total_particles)
       return 1;
       A[3*i + 0] = partCfg[ids->e[i]].f.f[0]/time_step/time_step*2;
@@ -649,7 +636,7 @@ int observable_stress_tensor_acf_obs(void* params_p, double* A, unsigned int n_A
 
 int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
   // FIXME Currently scattering length is hardcoded as 1.0
-  int i,j,k,l,p;
+  int l;
   int order, order2, n;
   double twoPI_L, C_sum, S_sum, qr; 
 //  DoubleList *scattering_length;
@@ -663,20 +650,20 @@ int observable_structure_factor(void* params_p, double* A, unsigned int n_A) {
   
   sortPartCfg();
 
-    for(p=0; p<n_A; p++) {
+    for(unsigned int p=0; p<n_A; p++) {
        A[p]   = 0.0;
     }
 
     l=0;
     //printf("n_A: %d, dim_sf: %d\n",n_A, params.dim_sf); fflush(stdout);
-    for(i=-order; i<=order; i++) {
-      for(j=-order; j<=order; j++) {
-        for(k=-order; k<=order; k++) {
+    for (int i=-order; i<=order; i++) {
+      for (int j=-order; j<=order; j++) {
+        for (int k=-order; k<=order; k++) {
 	  n = i*i + j*j + k*k;
 	  if ((n<=order2) && (n>=1)) {
 	    C_sum = S_sum = 0.0;
             //printf("l: %d, n: %d %d %d\n",l,i,j,k); fflush(stdout);
-	    for(p=0; p<n_total_particles; p++) {
+	    for(int p=0; p<n_total_particles; p++) {
 	      qr = twoPI_L * ( i*partCfg[p].r.p[0] + j*partCfg[p].r.p[1] + k*partCfg[p].r.p[2] );
 	      C_sum+= scattering_length * cos(qr);
 	      S_sum-= scattering_length * sin(qr);

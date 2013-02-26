@@ -563,8 +563,8 @@ int UWerr(Tcl_Interp * interp,
 	  double s_tau, int plot)
 {
   Tcl_CmdInfo cmdInfo;
-  char * argv[2];
-  char * name = "UWerrInternalFunction";
+  char* argv[2];
+  char* name = "UWerrInternalFunction";
   int res;
   
   argv[0] = name;

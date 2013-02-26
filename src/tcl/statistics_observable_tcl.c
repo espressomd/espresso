@@ -30,13 +30,14 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs);
 
 static int convert_types_to_ids(IntList * type_list, IntList * id_list); 
+static int observable_tclcommand(void* _container, double* A, unsigned int n_A);
   
 int parse_id_list(Tcl_Interp* interp, int argc, char** argv, int* change, IntList** ids ) {
   int i,ret;
 //  char** temp_argv; int temp_argc;
 //  int temp;
-  IntList* input=malloc(sizeof(IntList));
-  IntList* output=malloc(sizeof(IntList));
+  IntList* input=(IntList*)malloc(sizeof(IntList));
+  IntList* output=(IntList*)malloc(sizeof(IntList));
   init_intlist(input);
   alloc_intlist(input,1);
   init_intlist(output);
@@ -766,7 +767,7 @@ int tclcommand_observable_interacts_with(Tcl_Interp* interp, int argc, char** ar
 
 #define REGISTER_OBSERVABLE(name,parser,id) \
   if (ARG_IS_S(2,#name)) { \
-    observables[id]=malloc(sizeof(observable)); \
+    observables[id]=(observable*)malloc(sizeof(observable));            \
     if (parser(interp, argc-2, argv+2, &temp, observables[n_observables]) ==TCL_OK) { \
       n_observables++; \
       argc-=1+temp; \
@@ -1250,7 +1251,7 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
 
 int tclcommand_observable_print(Tcl_Interp* interp, int argc, char** argv, int* change, observable* obs) {
   char buffer[TCL_DOUBLE_SPACE];
-  double* values=malloc(obs->n*sizeof(double));
+  double* values=(double*)malloc(obs->n*sizeof(double));
   if ( (*obs->fun)(obs->args, values, obs->n) ) {
     Tcl_AppendResult(interp, "\nFailed to compute observable tclcommand\n", (char *)NULL );
     return TCL_ERROR;
@@ -1301,7 +1302,7 @@ int sf_print_usage(Tcl_Interp* interp) {
   return TCL_ERROR;
 }
 
-int observable_tclcommand(void* _container, double* A, unsigned int n_A) {
+static int observable_tclcommand(void* _container, double* A, unsigned int n_A) {
   Observable_Tclcommand_Arg_Container* container = (Observable_Tclcommand_Arg_Container*) _container;
   Tcl_Interp* interp = (Tcl_Interp*) container->interp;
   int error = Tcl_Eval(interp, container->command);
@@ -1310,9 +1311,9 @@ int observable_tclcommand(void* _container, double* A, unsigned int n_A) {
   }
   char* result = Tcl_GetStringResult(interp);
   char* token;
-  int counter=0;
+  unsigned counter=0;
   token = strtok(result, " ");
-  while ( token != NULL && counter < n_A ) {
+  while (token != NULL && counter < n_A) {
     A[counter] = atof(token);
     token = strtok(NULL, " ");
     counter++;

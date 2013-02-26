@@ -259,15 +259,15 @@ void mpi_send_mol_id(int node, int part, int mid);
     \param delete   if true, do not add the bond, rather delete it if found
     \return 1 on success or 0 if not (e. g. bond to delete does not exist)
 */
-int mpi_send_bond(int pnode, int part, int *bond, int delete);
+int mpi_send_bond(int pnode, int part, int *bond, int deleteIt);
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.
     Also calls \ref on_particle_change.
     \param part     identity of first particle of the exclusion.
     \param part2    identity of secnd particle of the exclusion.
-    \param delete   if true, do not add the exclusion, rather delete it if found
+    \param deleteIt   if true, do not add the exclusion, rather delete it if found
 */
-void mpi_send_exclusion(int part, int part2, int delete);
+void mpi_send_exclusion(int part, int part2, int deleteIt);
 
 
 /** Issue REQ_REM_PART: remove a particle.

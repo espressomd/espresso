@@ -27,7 +27,7 @@
 #ifdef ELECTROSTATICS
 #include "reaction_field.h"
 
-int tclprint_to_result_rf(Tcl_Interp *interp,char *name)
+int tclprint_to_result_rf(Tcl_Interp *interp, const char *name)
 {
   char buffer[TCL_DOUBLE_SPACE];
   sprintf(buffer,"%s",name);

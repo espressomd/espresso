@@ -22,7 +22,6 @@
 #define _UWERR_H
 /** \file uwerr.h
  *
- *  PLEASE INSERT DOCUMENTATION
 */
 double UWerr_dsum_double(double * v, double * w, int len);
 double UWerr_dsum_int(int * v, double * w, int len);

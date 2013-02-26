@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLE_TCL_H
-#define ANGLE_TCL_H
+#ifndef _ANGLE_COSINE_TCL_H
+#define _ANGLE_COSINE_TCL_H
 /** \file angle_cosine_tcl.h
  * Tcl interface for \ref angle_cosine.h
  */

@@ -92,21 +92,19 @@ int correlation_update_from_file(unsigned int no) {
 
 
 int correlation_get_correlation_time(double_correlation* self, double* correlation_time) {
-  int j, k;
-
-// We calculate the correlation time for each dim_corr by normalizing the correlation,
-// integrating it and finding out where C(tau)=tau;
+  // We calculate the correlation time for each dim_corr by normalizing the correlation,
+  // integrating it and finding out where C(tau)=tau;
   double C_tau;
   int ok_flag;
-  for (j=0; j<self->dim_corr; j++) {
+  for (unsigned j=0; j<self->dim_corr; j++) {
     correlation_time[j] = 0.; 
   }
 
   // here we still have to fix the stuff a bit!
-  for (j=0; j<self->dim_corr; j++) {
+  for (unsigned j=0; j<self->dim_corr; j++) {
     C_tau=1*self->dt;
     ok_flag=0;
-    for (k=1; k<self->n_result-1; k++) {
+    for (unsigned k=1; k<self->n_result-1; k++) {
       if (self->n_sweeps[k]==0)
         break;
       C_tau+=(self->result[k][j]/ (double) self->n_sweeps[k] - self->A_accumulated_average[j]*self->B_accumulated_average[j]/self->n_data/self->n_data)/(self->result[0][j]/self->n_sweeps[0])*self->dt*(self->tau[k]-self->tau[k-1]);
@@ -374,7 +372,7 @@ int double_correlation_get_data( double_correlation* self ) {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
-  int i,j,k;
+  int i,j;
   int highest_level_to_compress;
   unsigned int index_new, index_old, index_res;
   int error;
@@ -424,19 +422,19 @@ int double_correlation_get_data( double_correlation* self ) {
 
   // Now we update the cumulated averages and variances of A and B
   self->n_data++;
-  for (k=0; k<self->dim_A; k++) {
+  for (unsigned k=0; k<self->dim_A; k++) {
     self->A_accumulated_average[k]+=self->A[0][self->newest[0]][k];
     self->A_accumulated_variance[k]+=self->A[0][self->newest[0]][k]*self->A[0][self->newest[0]][k];
   }
   // Here we check if it is an autocorrelation
   if (!self->autocorrelation) {
-    for (k=0; k<self->dim_B; k++) {
+    for (unsigned k=0; k<self->dim_B; k++) {
       self->B_accumulated_average[k]+=self->B[0][self->newest[0]][k];
       self->B_accumulated_variance[k]+=self->B[0][self->newest[0]][k]*self->B[0][self->newest[0]][k];
     }
   } 
 
-  double* temp = malloc(self->dim_corr*sizeof(double));
+  double* temp = (double*)malloc(self->dim_corr*sizeof(double));
   if (!temp)
     return 4;
 // Now update the lowest level correlation estimates
@@ -448,13 +446,13 @@ int double_correlation_get_data( double_correlation* self ) {
     if ( error != 0)
       return error;
     self->n_sweeps[j]++;
-    for (k = 0; k < self->dim_corr; k++) {
+    for (unsigned k = 0; k < self->dim_corr; k++) {
       self->result[j][k] += temp[k];
     }
   }
 // Now for the higher ones
-  for ( i = 1; i < highest_level_to_compress+2; i++) {
-    for ( j = (self->tau_lin+1)/2+1; j < MIN(self->tau_lin+1, self->n_vals[i]); j++) {
+  for ( int i = 1; i < highest_level_to_compress+2; i++) {
+    for ( unsigned j = (self->tau_lin+1)/2+1; j < MIN(self->tau_lin+1, self->n_vals[i]); j++) {
       index_new = self->newest[i];
       index_old = (self->newest[i] - j + self->tau_lin + 1) % (self->tau_lin + 1);
       index_res = self->tau_lin + (i-1)*self->tau_lin/2 + (j - self->tau_lin/2+1) -1;
@@ -462,7 +460,7 @@ int double_correlation_get_data( double_correlation* self ) {
       if ( error != 0)
         return error;
       self->n_sweeps[index_res]++;
-      for (k = 0; k < self->dim_corr; k++) {
+      for (unsigned k = 0; k < self->dim_corr; k++) {
         self->result[index_res][k] += temp[k];
       }
     }
@@ -475,17 +473,17 @@ int double_correlation_finalize( double_correlation* self ) {
   // We must now go through the hierarchy and make sure there is space for the new 
   // datapoint. For every hierarchy level we have to decide if it necessary to move 
   // something
-  int i,j,k;
+  int i,j;
   int ll=0; // current lowest level
   int vals_ll=0; // number of values remaining in the lowest level
   int highest_level_to_compress;
   unsigned int index_new, index_old, index_res;
   int error;
   //int compress;
-  int tau_lin=self->tau_lin;
+  unsigned tau_lin=self->tau_lin;
   int hierarchy_depth=self->hierarchy_depth;
 
-  double* temp = malloc(self->dim_corr*sizeof(double));
+  double* temp = (double*)malloc(self->dim_corr*sizeof(double));
 
   // make a flag that the correlation is finalized
   self->finalized=1;
@@ -495,13 +493,13 @@ int double_correlation_finalize( double_correlation* self ) {
   //printf ("tau_lin:%d, hierarchy_depth: %d\n",tau_lin,hierarchy_depth); 
   //for(ll=0;ll<hierarchy_depth;ll++) printf("n_vals[l=%d]=%d\n",ll, self->n_vals[ll]);
   for(ll=0;ll<hierarchy_depth-1;ll++) {
-    if(self->n_vals[ll] > tau_lin+1 ) vals_ll = tau_lin + self->n_vals[ll]%2;
+    if (self->n_vals[ll] > tau_lin+1 ) vals_ll = tau_lin + self->n_vals[ll]%2;
     else vals_ll=self->n_vals[ll];
     //printf("\nfinalizing level %d with %d vals initially\n",ll,vals_ll);
     
-    while(vals_ll) {
+    while (vals_ll) {
       // Check, if we will want to push the value from the lowest level
-      if(vals_ll % 2)  {
+      if (vals_ll % 2)  {
         highest_level_to_compress=ll; 
       } else {
         highest_level_to_compress=-1;
@@ -516,7 +514,7 @@ int double_correlation_finalize( double_correlation* self ) {
       while (highest_level_to_compress>-1) { 
         //printf("test level %d for compression, n_vals=%d ... ",i,self->n_vals[i]);
         if ( self->n_vals[i]%2 ) { 
-	  if ( i < (hierarchy_depth - 1) && self->n_vals[i]> tau_lin) { 
+	  if ( i < (hierarchy_depth-1) && self->n_vals[i]> tau_lin) { 
             //printf("YES\n");
   	    highest_level_to_compress+=1; 
   	    i++; 
@@ -559,7 +557,7 @@ int double_correlation_finalize( double_correlation* self ) {
           if ( error != 0)
             return error;
           self->n_sweeps[index_res]++;
-          for (k = 0; k < self->dim_corr; k++) {
+          for (unsigned k = 0; k < self->dim_corr; k++) {
             self->result[index_res][k] += temp[k];
           }
         }
@@ -577,11 +575,10 @@ int double_correlation_finalize( double_correlation* self ) {
 
 
 int identity ( double* input, unsigned int n_input, double* A, unsigned int dim_A) {
-  int i; 
   if ( n_input != dim_A ) {
     return 5;
   }
-  for ( i = 0; i < dim_A; i++ ) {
+  for (unsigned i = 0; i < dim_A; i++ ) {
     A[i] = input[i];
   }
   return 0;
@@ -676,7 +673,6 @@ int square_distance_componentwise ( double* A, unsigned int dim_A, double* B, un
 
 int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, double* C, unsigned int dim_corr, void *args ) {
   DoubleList *wsquare = (DoubleList*)args;
-  int i;
   if (args == NULL )
     return 1;
   if (!(dim_A == dim_B )) {
@@ -685,20 +681,19 @@ int fcs_acf ( double* A, unsigned int dim_A, double* B, unsigned int dim_B, doub
   if ( dim_A / dim_corr != 3) {
     return 6; 
   }
-  for ( i = 0; i < dim_corr; i++ ) 
+  for (unsigned i = 0; i < dim_corr; i++ ) 
     C[i] = 0;
-  for ( i = 0; i < dim_A; i++ ) {
+  for (unsigned i = 0; i < dim_A; i++ ) {
     C [i/3] -= ( (A[i]-B[i])*(A[i]-B[i]) ) / wsquare->e[i%3];
   }
-  for ( i = 0; i < dim_corr; i++ ) 
+  for (unsigned i = 0; i < dim_corr; i++ ) 
     C[i] = exp(C[i]);
   return 0;
 }
 
 
 void autoupdate_correlations() {
-  int i;
-  for (i=0; i<n_correlations; i++) {
+  for (unsigned i=0; i<n_correlations; i++) {
 //    printf("checking correlation %d autoupdate is %d \n", i, correlations[i].autoupdate);
     if (correlations[i].autoupdate && sim_time-correlations[i].last_update>correlations[i].dt*0.99999) {
       //printf("updating %d\n", i);

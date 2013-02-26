@@ -42,7 +42,7 @@ char *runtime_error(int errlen)
   int curend = error_msg ? strlen(error_msg) : 0;
   n_error_msg = curend + errlen + 1;
  
-  error_msg = realloc(error_msg, n_error_msg);
+  error_msg = (char*)realloc(error_msg, n_error_msg);
   return error_msg + curend;
 }
 

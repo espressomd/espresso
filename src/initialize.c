@@ -72,8 +72,7 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-void on_program_start()
-{
+void on_program_start() {
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
   /* tell Electric fence that we do realloc(0) on purpose. */

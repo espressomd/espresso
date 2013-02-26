@@ -155,7 +155,7 @@ const int N_CALLBACKS = sizeof(slave_callbacks)/sizeof(SlaveCallback*);
 #undef CB
 #define CB(name) #name,
 
-char *names[] = {
+const char *names[] = {
   CALLBACK_LIST
 };
 
@@ -299,7 +299,7 @@ void mpi_bcast_parameter_slave(int node, int i)
 void mpi_who_has()
 {
   Cell *cell;
-  int *sizes = malloc(sizeof(int)*n_nodes);
+  int *sizes = (int*)malloc(sizeof(int)*n_nodes);
   int *pdata = NULL;
   int pdata_s = 0, i, c;
   int pnode;
@@ -353,7 +353,7 @@ void mpi_who_has_slave(int node, int param)
   if (n_part == 0)
     return;
 
-  sendbuf = malloc(sizeof(int)*n_part);
+  sendbuf = (int*)malloc(sizeof(int)*n_part);
   npart = 0;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -964,7 +964,7 @@ void mpi_send_vs_relative_slave(int pnode, int part)
 /********************* REQ_SET_BOND ********/
 
 
-int mpi_send_bond(int pnode, int part, int *bond, int delete)
+int mpi_send_bond(int pnode, int part, int *bond, int deleteIt)
 {
   int bond_size, stat=0;
   
@@ -973,7 +973,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
   bond_size = (bond) ? bonded_ia_params[bond[0]].num + 1 : 0;
 
   if (pnode == this_node) {
-    stat = local_change_bond(part, bond, delete);
+    stat = local_change_bond(part, bond, deleteIt);
     on_particle_change();
     return stat;
   }
@@ -981,7 +981,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
   MPI_Send(&bond_size, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
   if (bond_size)
     MPI_Send(bond, bond_size, MPI_INT, pnode, SOME_TAG, comm_cart);
-  MPI_Send(&delete, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
+  MPI_Send(&deleteIt, 1, MPI_INT, pnode, SOME_TAG, comm_cart);
   MPI_Recv(&stat, 1, MPI_INT, pnode, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
   on_particle_change();
   return stat;
@@ -989,7 +989,7 @@ int mpi_send_bond(int pnode, int part, int *bond, int delete)
 
 void mpi_send_bond_slave(int pnode, int part)
 {
-  int bond_size=0, *bond, delete=0, stat;
+  int bond_size=0, *bond, deleteIt=0, stat;
   
   if (pnode == this_node) {
     MPI_Recv(&bond_size, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
@@ -999,8 +999,8 @@ void mpi_send_bond_slave(int pnode, int part)
     }
     else
       bond = NULL;
-    MPI_Recv(&delete, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    stat = local_change_bond(part, bond, delete);
+    MPI_Recv(&deleteIt, 1, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    stat = local_change_bond(part, bond, deleteIt);
     if (bond)
       free(bond);
     MPI_Send(&stat, 1, MPI_INT, 0, SOME_TAG, comm_cart);
@@ -1338,38 +1338,41 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb, vo
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc(result);
+    energy_calc((double*)result);
     break;
   case 2:
-    /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze stress_tensor'*/
+    /* calculate and reduce (sum up) virials for 'analyze pressure' or
+       'analyze stress_tensor' */
     mpi_call(mpi_gather_stats_slave, -1, 2);
-    pressure_calc(result,result_t,result_nb,result_t_nb,0);
+    pressure_calc((double*)result, (double*)result_t,
+                  (double*)result_nb, (double*)result_t_nb,0);
     break;
   case 3:
     mpi_call(mpi_gather_stats_slave, -1, 3);
-    pressure_calc(result,result_t,result_nb,result_t_nb,1);
+    pressure_calc((double*)result, (double*)result_t, 
+                  (double*)result_nb, (double*)result_t_nb,1);
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles(result);
+    predict_momentum_particles((double*)result);
     break;
 #ifdef LB
   case 5:
     mpi_call(mpi_gather_stats_slave, -1, 5);
-    lb_calc_fluid_mass(result);
+    lb_calc_fluid_mass((double*)result);
     break;
   case 6: 
     mpi_call(mpi_gather_stats_slave, -1, 6);
-    lb_calc_fluid_momentum(result);
+    lb_calc_fluid_momentum((double*)result);
     break;
   case 7:
     mpi_call(mpi_gather_stats_slave, -1, 7);
-    lb_calc_fluid_temp(result);
+    lb_calc_fluid_temp((double*)result);
     break;
 #ifdef LB_BOUNDARIES
   case 8:
     mpi_call(mpi_gather_stats_slave, -1, 8);
-    lb_collect_boundary_forces(result);
+    lb_collect_boundary_forces((double*)result);
     break;
 #endif
 #endif
@@ -1429,7 +1432,7 @@ void mpi_local_stress_tensor(DoubleList *TensorInBin, int bins[3], int periodic[
 
   mpi_call(mpi_local_stress_tensor_slave,-1,0);
 
-  TensorInBin_ = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  TensorInBin_ = (DoubleList*)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
     init_doublelist(&TensorInBin_[i]);
     alloc_doublelist(&TensorInBin_[i],9);
@@ -1467,7 +1470,7 @@ void mpi_local_stress_tensor_slave(int ana_num, int job) {
   MPI_Bcast(range_start, 3, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(range, 3, MPI_DOUBLE, 0, comm_cart);
   
-  TensorInBin = malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
+  TensorInBin = (DoubleList*)malloc(bins[0]*bins[1]*bins[2]*sizeof(DoubleList));
   for ( i = 0 ; i < bins[0]*bins[1]*bins[2]; i++ ) {
     init_doublelist(&TensorInBin[i]);
     alloc_doublelist(&TensorInBin[i],9);
@@ -1505,7 +1508,7 @@ void mpi_get_particles(Particle *result, IntList *bi)
   
   mpi_call(mpi_get_particles_slave, -1, bi != NULL);
 
-  sizes = malloc(sizeof(int)*n_nodes);
+  sizes = (int*)malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
 
   /* first collect number of particles on each node */
@@ -1629,7 +1632,7 @@ void mpi_get_particles_slave(int pnode, int bi)
 
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
-    result = malloc(n_part*sizeof(Particle));
+    result = (Particle*)malloc(n_part*sizeof(Particle));
 
     init_intlist(&local_bi);
     
@@ -1843,12 +1846,12 @@ void mpi_bcast_constraint(int del_num)
   else if (del_num == -2) {
     /* delete all constraints */
     n_constraints = 0;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
     memcpy(&constraints[del_num],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
 
   on_constraint_change();
@@ -1860,18 +1863,18 @@ void mpi_bcast_constraint_slave(int node, int parm)
 #ifdef CONSTRAINTS
   if(parm == -1) {
     n_constraints++;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
     MPI_Bcast(&constraints[n_constraints-1], sizeof(Constraint), MPI_BYTE, 0, comm_cart);
   }
   else if (parm == -2) {
     /* delete all constraints */
     n_constraints = 0;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));
+    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));
   }
   else {
     memcpy(&constraints[parm],&constraints[n_constraints-1],sizeof(Constraint));
     n_constraints--;
-    constraints = realloc(constraints,n_constraints*sizeof(Constraint));    
+    constraints = (Constraint*)realloc(constraints,n_constraints*sizeof(Constraint));    
   }
 
   on_constraint_change();
@@ -2299,7 +2302,7 @@ int mpi_gather_runtime_errors(char **errors)
     return ES_OK;
 
   // gather the maximum length of the error messages
-  int *errcnt = malloc(n_nodes*sizeof(int));
+  int *errcnt = (int*)malloc(n_nodes*sizeof(int));
   MPI_Gather(&n_error_msg, 1, MPI_INT, errcnt, 1, MPI_INT, 0, comm_cart);
 
   for (int node = 0; node < n_nodes; node++) {
@@ -2316,7 +2319,7 @@ int mpi_gather_runtime_errors(char **errors)
   }
 
   /* reset error message on master node */
-  error_msg = realloc(error_msg, n_error_msg = 0);
+  error_msg = (char*)realloc(error_msg, n_error_msg = 0);
 
   free(errcnt);
 
@@ -2332,18 +2335,18 @@ void mpi_gather_runtime_errors_slave(int node, int parm)
   if (n_error_msg > 0) {
     MPI_Send(error_msg, n_error_msg, MPI_CHAR, 0, 0, comm_cart);
     /* reset error message on slave node */
-    error_msg = realloc(error_msg, n_error_msg = 0);
+    error_msg = (char*)realloc(error_msg, n_error_msg = 0);
   }
 }
 
 /********************* REQ_SET_EXCL ********/
-void mpi_send_exclusion(int part1, int part2, int delete)
+void mpi_send_exclusion(int part1, int part2, int deleteIt)
 {
 #ifdef EXCLUSIONS
   mpi_call(mpi_send_exclusion_slave, part1, part2);
 
-  MPI_Bcast(&delete, 1, MPI_INT, 0, comm_cart);
-  local_change_exclusion(part1, part2, delete);
+  MPI_Bcast(&deleteIt, 1, MPI_INT, 0, comm_cart);
+  local_change_exclusion(part1, part2, deleteIt);
   on_particle_change();
 #endif
 }
@@ -2351,9 +2354,9 @@ void mpi_send_exclusion(int part1, int part2, int delete)
 void mpi_send_exclusion_slave(int part1, int part2)
 {
 #ifdef EXCLUSIONS
-  int delete=0;
-  MPI_Bcast(&delete, 1, MPI_INT, 0, comm_cart);  
-  local_change_exclusion(part1, part2, delete);
+  int deleteIt=0;
+  MPI_Bcast(&deleteIt, 1, MPI_INT, 0, comm_cart);  
+  local_change_exclusion(part1, part2, deleteIt);
   on_particle_change();
 #endif
 }

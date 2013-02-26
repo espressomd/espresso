@@ -162,7 +162,7 @@ AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
 
 ##################################
 # miscellaneous
-AC_PROG_CC_STDC
+#AC_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_C_CONST
 AC_HEADER_TIME

@@ -69,7 +69,7 @@ static int readchar(Tcl_Channel f)
   return c;
 }
 
-static int writestring(Tcl_Channel f, char *s)
+static int writestring(Tcl_Channel f, const char *s)
 {
   int l = strlen(s);
   return (Tcl_Write(f, s, l) == l);
@@ -356,7 +356,7 @@ int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
       /* -------------- read unknown field ---------------------------- */
       len = 21; /* blockfile_read_auto_ + \0 */
       len += strlen(title);
-      name = malloc(len);
+      name = (char*)malloc(len);
       strcpy(name, "blockfile_read_auto_");
       strcat(name, title);
       exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
@@ -411,7 +411,7 @@ int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
     else {
       len = 21; /* blockfile_read_auto_ + \0 */
       len += strlen(argv[3]);
-      name = malloc(len);
+      name = (char*)malloc(len);
       strcpy(name, "blockfile_read_auto_");
       strcat(name, argv[3]);
       exists = Tcl_GetCommandInfo(interp, name, &cmdInfo);
@@ -434,7 +434,7 @@ int tclcommand_blockfile(ClientData data, Tcl_Interp *interp,
   /* not a native action, try script support */
   len = 12; /* blockfile_ + _ + \0 */
   len += strlen(argv[2]) + strlen(argv[3]);
-  name = malloc(len);
+  name = (char*)malloc(len);
   strcpy(name, "blockfile_");
   strcat(name, argv[2]);
   strcat(name, "_");

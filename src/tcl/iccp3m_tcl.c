@@ -237,7 +237,7 @@ int tclcommand_iccp3m_parse_double_list(Tcl_Interp *interp, int n_ic, char *stri
   float temp;
 
   size= n_ic;
-  numbers = malloc((size)*sizeof(double));
+  numbers = (double*)malloc((size)*sizeof(double));
 
   cp = strdup(string);                /* Make writable copy.  */
   token = strtok (cp, delimiters);

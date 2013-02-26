@@ -80,7 +80,7 @@ int tclcallback_periodicity(Tcl_Interp *interp, void *_data)
 
 int tclcallback_box_l(Tcl_Interp *interp, void *_data)
 {
-  double *data = _data;
+  double *data = (double*)_data;
 
   if ((data[0] <= 0) || (data[1] <= 0) || (data[2] <= 0)) {
     Tcl_AppendResult(interp, "illegal value", (char *) NULL);

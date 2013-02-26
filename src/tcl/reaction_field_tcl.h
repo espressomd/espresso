@@ -29,7 +29,7 @@
 #ifdef ELECTROSTATICS
 
 ///
-int tclprint_to_result_rf(Tcl_Interp *interp,char *name);
+int tclprint_to_result_rf(Tcl_Interp *interp, const char *name);
 
 ///
 int tclcommand_inter_coulomb_parse_rf(Tcl_Interp * interp,

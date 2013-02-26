@@ -99,10 +99,9 @@ int correlation_print_parameters(double_correlation* self, Tcl_Interp* interp) {
 }
 
 int correlation_print_parameters_all(Tcl_Interp* interp) {
-  int i;
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE + 4];
   Tcl_AppendResult(interp, " { ", (char *)NULL);
-  for (i=0; i< n_correlations; i++) {
+  for (unsigned i=0; i< n_correlations; i++) {
     sprintf(buffer, " %d ", i);
     Tcl_AppendResult(interp, "\n{ correlation ", buffer, (char *)NULL);
     if ( correlations+i == NULL ) {
@@ -116,7 +115,6 @@ int correlation_print_parameters_all(Tcl_Interp* interp) {
 }
 
 int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int argc, char** argv) {
-  int i;
   char buffer[TCL_DOUBLE_SPACE];
   int err;
   if (self->n_data < 1) {
@@ -124,14 +122,14 @@ int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int
     return TCL_ERROR;
   }
   if (argc == 0) {
-    for (i=0; i< self->dim_A; i++) {
+    for (unsigned i=0; i< self->dim_A; i++) {
       Tcl_PrintDouble(interp, self->A_accumulated_average[i]/self->n_data, buffer);
       Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
     }
   return TCL_OK;
   } else if (ARG0_IS_S("formatted")) {
     double* values = (double*) malloc(self->dim_A*sizeof(double));
-    for (i=0; i< self->dim_A; i++) {
+    for (unsigned i=0; i< self->dim_A; i++) {
       values[i]=self->A_accumulated_average[i]/self->n_data;
     }
     int change=0;
@@ -145,13 +143,12 @@ int correlation_print_average1(double_correlation* self, Tcl_Interp* interp, int
 }
 
 int correlation_print_variance1(double_correlation* self, Tcl_Interp* interp) {
-  int i;
   char buffer[TCL_DOUBLE_SPACE];
   if (self->n_data < 1) {
     Tcl_AppendResult(interp, buffer, "Error in print variance: No input data available", (char *)NULL);
     return TCL_ERROR;
   }
-  for (i=0; i< self->dim_A; i++) {
+  for (unsigned i=0; i< self->dim_A; i++) {
     Tcl_PrintDouble(interp, 
         self->A_accumulated_variance[i]/self->n_data
         - (self->A_accumulated_average[i]/self->n_data)*(self->A_accumulated_average[i]/self->n_data), buffer);
@@ -163,7 +160,6 @@ int correlation_print_variance1(double_correlation* self, Tcl_Interp* interp) {
 int tclcommand_print_correlation_time(double_correlation* self, Tcl_Interp* interp) {
   char buffer[TCL_DOUBLE_SPACE];
   double* correlation_time;
-  int j;
   if (self->dim_A != self->dim_corr) {
     Tcl_AppendResult(interp, buffer, "Error in print correlation_time: Only makes sense when the dimensions of  \
         the observables and correlation match (Isn't it?) ", (char *)NULL);
@@ -176,7 +172,7 @@ int tclcommand_print_correlation_time(double_correlation* self, Tcl_Interp* inte
   correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
   correlation_get_correlation_time(self, correlation_time);
   
-  for (j=0; j<self->dim_corr; j++) {
+  for (unsigned j=0; j<self->dim_corr; j++) {
      Tcl_PrintDouble(interp, correlation_time[j], buffer);
      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
   }
@@ -190,7 +186,6 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
   double* correlation_time;
   double variance;
   double errorbar;
-  int j;
   if (self->dim_A != self->dim_corr) {
     Tcl_AppendResult(interp, buffer, "Error in print average_errorbars: Only makes sense when the dimensions of  \
         the observables and correlation match (Isn't it?) ", (char *)NULL);
@@ -203,7 +198,7 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
   correlation_time = (double*) malloc(self->dim_corr*sizeof(double));
   correlation_get_correlation_time(self, correlation_time);
   
-  for (j=0; j<self->dim_corr; j++) {
+  for (unsigned j=0; j<self->dim_corr; j++) {
     variance=(self->A_accumulated_variance[j]/self->n_data - self->A_accumulated_average[j]*self->A_accumulated_average[j]/self->n_data/self->n_data);
     errorbar=sqrt(variance*(correlation_time[j]/self->dt / self->n_data));
     Tcl_PrintDouble(interp, errorbar, buffer);
@@ -219,7 +214,6 @@ int tclcommand_print_average_errorbars(double_correlation* self, Tcl_Interp* int
 *  identified by their ids.
 */
 int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char** argv) {
-  int i;
   int no;
   char buffer[TCL_INTEGER_SPACE];
   argc-=1;
@@ -232,6 +226,7 @@ int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char**
     return TCL_OK;
   }
   if (ARG0_IS_S("new")) {
+    unsigned i;
     for (i=0;i<n_correlations;i++) 
       if ( correlations+i == 0 ) break; 
     argc-=1;
@@ -253,7 +248,6 @@ int tclcommand_correlation(ClientData data, Tcl_Interp* interp, int argc, char**
 }
 
 int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc, char** argv) {
-  int i;
   if (argc > 0 ) {
     if (ARG0_IS_S("start")) {
 //      if(correlations[no].A_fun==&tcl_input || correlations[no].is_from_file) {
@@ -272,7 +266,7 @@ int tclcommand_correlation_parse_autoupdate(Tcl_Interp* interp, int no, int argc
     } else if (ARG0_IS_S("stop")) {
       correlations_autoupdate=0;
       correlations[no].autoupdate=0;
-      for (i=0; i<n_correlations; i++) {
+      for (unsigned i=0; i<n_correlations; i++) {
         if (correlations[i].autoupdate)
           correlations_autoupdate=1;
       }
@@ -312,7 +306,7 @@ int tclcommand_correlation_parse_print(Tcl_Interp* interp, int no, int argc, cha
 int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char** argv) {
 //  int(*compressA)  ( double* A1, double*A2, double* A_compressed, unsigned int dim_A ) = 0;
  // int(*compressB)  ( double* B1, double*B2, double* B_compressed, unsigned int dim_B ) = 0;
-  void **args = malloc(sizeof(void*)); // arguments to be passed to the correlation
+  void **args = (void**)malloc(sizeof(void*)); // arguments to be passed to the correlation
   char *compressA_name=NULL;
   char *compressB_name=NULL;
   char *corr_operation_name=NULL;
@@ -339,7 +333,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
     Tcl_AppendResult(interp, "Correlation IDs must be positive", (char *)NULL);
     return TCL_ERROR;
   }
-  if ( no < n_correlations && correlations+no != 0 ) {
+  if ( (unsigned)no < n_correlations && correlations+no != 0 ) {
     if (argc > 0) {
       if (ARG0_IS_S("print")) {
           return tclcommand_correlation_parse_print(interp, no, argc-1, argv+1); 
@@ -427,7 +421,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
       return TCL_ERROR;
     }
 
-  } else if ( no == n_correlations || correlations+no == 0) {  
+  } else if ( (unsigned)no == n_correlations || correlations+no == 0) {  
   
     //Tcl_AppendResult(interp, "Setting up a new correlation\n", (char *)NULL);
     // Else we must parse the other arguments and see if we can construct a fully
@@ -560,7 +554,7 @@ int tclcommand_correlation_parse_corr(Tcl_Interp* interp, int no, int argc, char
   error_msg = (char *)init_errors[error]; 
   if ( error == 0 ) {
   //printf("Set up correlation %d, autoupdate: %d\n",n_correlations,correlations[n_correlations].autoupdate);
-    if ( no == n_correlations ) n_correlations++;
+    if ( (unsigned)no == n_correlations ) n_correlations++;
     sprintf(buffer,"%d",no);
     Tcl_AppendResult(interp,buffer,(char *)NULL);
     return TCL_OK;
@@ -614,18 +608,17 @@ int parse_corr_operation(Tcl_Interp* interp, int argc, char** argv, int* change,
 
 
 int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* interp) {
-  int j, k;
   double dt=self->dt;
   char buffer[TCL_DOUBLE_SPACE];
 //  char ibuffer[TCL_INTEGER_SPACE+2];
 
-  for (j=0; j<self->n_result; j++) {
+  for (unsigned j=0; j<self->n_result; j++) {
      Tcl_AppendResult(interp, " { ", (char *)NULL);
      Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
      sprintf(buffer, "%d ", self->n_sweeps[j]);
      Tcl_AppendResult(interp, buffer, " ",(char *)NULL);
-     for (k=0; k< self->dim_corr; k++) {
+     for (unsigned k=0; k< self->dim_corr; k++) {
      if (self->n_sweeps[j] == 0 ) {
        Tcl_PrintDouble(interp, 0., buffer);
        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
@@ -643,7 +636,6 @@ int double_correlation_print_correlation( double_correlation* self, Tcl_Interp* 
 
 int double_correlation_print_spherically_averaged_sf(double_correlation* self, Tcl_Interp* interp) {
 
-  int j,k;
   int qi,qj,qk,qn, dim_sf, order2;
   double dt=self->dt;
   observable_sf_params* params=(observable_sf_params*)self->A_obs->args;
@@ -662,10 +654,10 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
   av_sf_Im=(double*)malloc(order2*sizeof(double));
 
   // compute spherically averaged sf
-  for (j=0; j<self->n_result; j++) {
+  for (unsigned j=0; j<self->n_result; j++) {
     // compute the spherically averaged sf for current dt
-    for(k=0;k<order2;k++) av_sf_Re[k]=av_sf_Im[k]=0.0;
-    for(k=0;k<dim_sf;k++) {
+    for (int k=0;k<order2;k++) av_sf_Re[k]=av_sf_Im[k]=0.0;
+    for (int k=0;k<dim_sf;k++) {
       qi=q_vals[3*k  ];
       qj=q_vals[3*k+1];
       qk=q_vals[3*k+2];
@@ -673,15 +665,15 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
       av_sf_Re[qn-1]+=self->result[j][2*k  ];
       av_sf_Im[qn-1]+=self->result[j][2*k+1];
     }
-    for(k=0;k<order2;k++) { 
-      if(q_density[k]>0.0) {
+    for (int k=0;k<order2;k++) { 
+      if (q_density[k]>0.0) {
         av_sf_Re[k]/=q_density[k];
         av_sf_Im[k]/=q_density[k];
       }
       // note: if q_density[k]==0, we did not add anything to av_sf_Xx[k], so it is 0.0
     }
     // now print what we obtained
-    for(k=0;k<order2;k++) { 
+    for (int k=0;k<order2;k++) { 
       Tcl_AppendResult(interp, " { ", (char *)NULL);
       Tcl_PrintDouble(interp, self->tau[j]*dt, buffer);
       Tcl_AppendResult(interp, buffer, " } { ",(char *)NULL);
@@ -709,15 +701,14 @@ int double_correlation_print_spherically_averaged_sf(double_correlation* self, T
 
 int double_correlation_write_to_file( double_correlation* self, char* filename) {
   FILE* file=0;
-  int j, k;
   double dt=self->dt;
   file=fopen(filename, "w");
   if (!file) {
     return 1;
   }
-  for (j=0; j<self->n_result; j++) {
+  for (unsigned j=0; j<self->n_result; j++) {
     fprintf(file, "%.6g %d ", self->tau[j]*dt, self->n_sweeps[j]);
-    for (k=0; k< self->dim_corr; k++) {
+    for (unsigned k=0; k< self->dim_corr; k++) {
       if (self->n_sweeps[j] == 0 )
         fprintf(file, "%.6g ", 0.);
       else 

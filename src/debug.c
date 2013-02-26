@@ -198,8 +198,8 @@ void check_particles()
   /* check the consistency of particle_nodes */
   /* to this aim the array is broadcasted temporarily */
   if (this_node != 0)
-    particle_node = malloc((max_seen_particle + 1)*sizeof(int));
-  is_here = malloc((max_seen_particle + 1)*sizeof(int));
+    particle_node = (int*)malloc((max_seen_particle + 1)*sizeof(int));
+  is_here = (int*)malloc((max_seen_particle + 1)*sizeof(int));
   memset(is_here, 0, (max_seen_particle + 1)*sizeof(int));
 
   MPI_Bcast(particle_node, max_seen_particle + 1, MPI_INT, 0, comm_cart);

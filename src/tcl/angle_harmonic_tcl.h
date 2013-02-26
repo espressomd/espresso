@@ -18,18 +18,20 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLE_TCL_H
-#define ANGLE_TCL_H
+#ifndef _ANGLE_HARMONIC_TCL_H
+#define _ANGLE_HARMONIC_TCL_H
 /** \file angle_harmonic_tcl.h
  * Tcl interface for \ref angle_harmonic.h
  */
 
+#include <config.h>
 #include "parser.h"
 #include "interaction_data.h"
 
 #ifdef BOND_ANGLE
 /// parse parameters for the angle potential
-int tclcommand_inter_parse_angle_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int tclcommand_inter_parse_angle_harmonic(Tcl_Interp *interp, int bond_type, 
+                                          int argc, char **argv);
 
 ///
 int tclprint_to_result_angle_harmonicIA(Tcl_Interp *interp, Bonded_ia_parameters *params);

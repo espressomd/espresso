@@ -59,7 +59,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     }
   }
   else if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 't_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
-    long *seed = malloc(n_nodes*sizeof(long));
+    long *seed = (long*)malloc(n_nodes*sizeof(long));
     if (argc <= 1) {
       mpi_random_seed(0,seed);
       for (i=0; i < n_nodes; i++) { 
@@ -78,7 +78,7 @@ int tclcommand_t_random (ClientData data, Tcl_Interp *interp, int argc, char **a
     return(TCL_OK);
   }
   else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 't_random stat [status-list]' */
-    RandomStatus *stat = malloc(n_nodes*sizeof(RandomStatus));
+    RandomStatus *stat = (RandomStatus*)malloc(n_nodes*sizeof(RandomStatus));
     if (argc <= 1) {
       mpi_random_stat(0,stat);
       for (i=0; i < n_nodes; i++) { 
@@ -132,7 +132,7 @@ int tclcommand_bit_random (ClientData data, Tcl_Interp *interp, int argc, char *
   /* argc > 1 */
   argc--; argv++;
   if (!strncmp(argv[0], "seed", strlen(argv[0]))) {  /* 'bit_random seed [<seed(0)> ... <seed(n_nodes-1)>]' */
-    int *seed = malloc(n_nodes*sizeof(int));
+    int *seed = (int*)malloc(n_nodes*sizeof(int));
     if (argc <= 1) {
       mpi_bit_random_seed(0,seed);
       for (i=0; i < n_nodes; i++) { 
@@ -151,7 +151,7 @@ int tclcommand_bit_random (ClientData data, Tcl_Interp *interp, int argc, char *
     return(TCL_OK);
   }
   else if (!strncmp(argv[0], "stat", strlen(argv[0]))) {  /* 'bit_random stat [status-list]' */
-    BitRandomStatus *stat = malloc(n_nodes*sizeof(BitRandomStatus));
+    BitRandomStatus *stat = (BitRandomStatus*)malloc(n_nodes*sizeof(BitRandomStatus));
     if (argc <= 1) {
       mpi_bit_random_stat(0,stat);
       for (i=0; i < n_nodes; i++) { 

@@ -721,7 +721,7 @@ void recalc_maximal_cutoff()
     max_cut = max_cut_bonded;
 }
 
-char *get_name_of_bonded_ia(int i) {
+const char *get_name_of_bonded_ia(int i) {
   switch (i) {
   case BONDED_IA_FENE:
     return "FENE";

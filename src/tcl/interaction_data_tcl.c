@@ -72,7 +72,7 @@
 #include "p3m-dipolar_tcl.h"
 #include "magnetic_non_p3m_methods_tcl.h"
 
-// bonded
+// Bonded
 #include "angle_tcl.h"
 #include "angle_harmonic_tcl.h"
 #include "angle_cosine_tcl.h"

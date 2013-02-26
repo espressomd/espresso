@@ -22,6 +22,7 @@
 #define _FFT_COMMON_H
 
 #include <config.h>
+#include <fftw3.h>
 
 #if defined(P3M) || defined(DP3M)
 
@@ -44,9 +45,9 @@ typedef struct {
   /** number of 1D FFTs. */ 
   int n_ffts;
   /** plan for fft. */
-  void *fftw_plan;
+  fftw_plan our_fftw_plan;
   /** function for fft. */
-  void (*fft_function)();
+  void (*fft_function)(fftw_plan);
 
   /** size of local mesh before communication. */
   int old_mesh[3];
@@ -63,7 +64,7 @@ typedef struct {
   int *group;
 
   /** packing function for send blocks. */
-  void (*pack_function)();
+  void (*pack_function)(double*, double*, int*, int*, int*, int);
   /** Send block specification. 6 integers for each node: start[3], size[3]. */ 
   int *send_block;
   /** Send block communication sizes. */ 
@@ -81,12 +82,12 @@ typedef struct {
   /** plan direction. (e.g. fftw makro)*/
   int dir;
   /** plan for fft. */
-  void *fftw_plan;
+  fftw_plan our_fftw_plan;
   /** function for fft. */
-  void (*fft_function)();
+  void (*fft_function)(fftw_plan);
 
   /** packing function for send blocks. */
-  void (*pack_function)(); 
+  void (*pack_function)(double*, double*, int*, int*, int*, int);
 } fft_back_plan;
 
 typedef struct {
