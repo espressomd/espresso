@@ -5,6 +5,9 @@
 ESPResSo 3.1.2
 ==============
 
+* Added workaround for bug in VTF reader plugin of VMD 1.9.1 that made
+  all particles look the same when ELECTROSTATICS is turned on.
+
 * Added Tcl-scripts of the tutorials to the distribution.
 
 * Added forgotten part of the UG on the correlators.
