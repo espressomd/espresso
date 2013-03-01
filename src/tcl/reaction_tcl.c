@@ -32,7 +32,7 @@
 #ifdef REACTIONS
 int tcl_command_reaction_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: reaction [off | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> rate <k> [back_rate <br>]]\n");
+  sprintf(buffer, "Usage: reaction [off | print | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> rate <k> [back_rate <br>] [react_once <on|off>]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
@@ -40,33 +40,39 @@ int tcl_command_reaction_print_usage(Tcl_Interp * interp){
 int tcl_command_reaction_print(Tcl_Interp * interp){
   char buffer[512];
   sprintf(buffer, "{reactant_type %d} {catalyzer_type %d} {product_type %d} {range %f} {rate %f} {back_rate %f}\n",
-			reaction.reactant_type,
-			reaction.catalyzer_type,
-			reaction.product_type,
-			reaction.range,
-			reaction.rate,
-			reaction.back_rate);
+    reaction.reactant_type,
+    reaction.catalyzer_type,
+    reaction.product_type,
+    reaction.range,
+    reaction.rate,
+    reaction.back_rate);
+  if ( reaction.sing_mult == 0 ) {
+    sprintf(buffer + strlen(buffer)," {react_once off}\n");
+  } else {
+    sprintf(buffer + strlen(buffer)," {react_once on}\n");
+  }
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_OK;
 }
-#endif /* ifdef REACTIONS */
+#endif
 
-#define ARG_IS_S_EXACT(no, str) !strcmp(argv[(no)], (str))
 int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
 #ifdef REACTIONS
+
   if (argc == 1  ) return tcl_command_reaction_print_usage(interp);
   if (argc == 2 ) { 
      if (ARG1_IS_S("off")) {
            reaction.rate=0.0;
-           mpi_bcast_event(REACTION); 
+           mpi_setup_reaction();
            return TCL_OK;
      }
      if (ARG1_IS_S("print")) {
            return tcl_command_reaction_print(interp);
      }
   }
-  if( argc!=11 && argc!=13) 
+  if( argc!=11 && argc!=13 && argc!=15 && argc!=3) {
      return tcl_command_reaction_print_usage(interp);
+  }
      
   if(reaction.rate != 0.0) {
     Tcl_AppendResult(interp, "Currently a simulation can only contain a single reaction!", (char *) NULL);
@@ -81,49 +87,57 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
   argc--;
   argv++;
   while (argc>0){
-      if (ARG_IS_S(0,"product_type")) {
-          if (!ARG_IS_I(1,reaction.product_type)) 
-            return tcl_command_reaction_print_usage(interp);
-          argc-=2;
+    if (ARG_IS_S(0,"product_type")) {
+      if (!ARG_IS_I(1,reaction.product_type)) 
+        return tcl_command_reaction_print_usage(interp);
+      argc-=2;
+	    argv+=2;
+    } 
+    else if (ARG_IS_S(0,"reactant_type")) {
+      if (!ARG_IS_I(1,reaction.reactant_type)) 
+        return tcl_command_reaction_print_usage(interp);
+      argc-=2;
+	    argv+=2;
+    } 
+    else if (ARG_IS_S(0,"catalyzer_type")) {
+      if (!ARG_IS_I(1,reaction.catalyzer_type)) 
+        return tcl_command_reaction_print_usage(interp);
+    argc-=2;
 	  argv+=2;
-      } else 
-      if (ARG_IS_S(0,"reactant_type")) {
-          if (!ARG_IS_I(1,reaction.reactant_type)) 
-            return tcl_command_reaction_print_usage(interp);
-          argc-=2;
+    } 
+    else if (ARG_IS_S_EXACT(0,"range")) {
+      if (!ARG_IS_D(1,reaction.range)) 
+        return tcl_command_reaction_print_usage(interp);
+      argc-=2;
+      argv+=2;
+    }
+    else if (ARG_IS_S_EXACT(0,"rate")) {
+      if (!ARG_IS_D(1,reaction.rate)) 
+        return tcl_command_reaction_print_usage(interp);
+      argc-=2;
+      argv+=2;
+    } 
+    else if (ARG_IS_S_EXACT(0,"back_rate")) {
+      if (!ARG_IS_D(1,reaction.back_rate)) 
+        return tcl_command_reaction_print_usage(interp);
+      argc-=2;
+	    argv+=2;
+    } 
+    else if (ARG_IS_S_EXACT(0,"react_once")) {
+      if (!ARG_IS_S(1,"on")&&!ARG_IS_S(1,"off")) {
+        return tcl_command_reaction_print_usage(interp);}
+      if (ARG_IS_S(1,"on")) reaction.sing_mult = 1;
+      if (ARG_IS_S(1,"off")) reaction.sing_mult = 0;
+    argc-=2;
 	  argv+=2;
-      } else 
-      if (ARG_IS_S(0,"catalyzer_type")) {
-          if (!ARG_IS_I(1,reaction.catalyzer_type)) 
-            return tcl_command_reaction_print_usage(interp);
-          argc-=2;
-	  argv+=2;
-      } else 
-      if (ARG_IS_S_EXACT(0,"range")) {
-          if (!ARG_IS_D(1,reaction.range)) 
-            return tcl_command_reaction_print_usage(interp);
-          argc-=2;
-	  argv+=2;
-      } else
-      if (ARG_IS_S_EXACT(0,"rate")) {
-          if (!ARG_IS_D(1,reaction.rate)) 
-            return tcl_command_reaction_print_usage(interp);
-          argc-=2;
-	  argv+=2;
-      } else
-      if (ARG_IS_S_EXACT(0,"back_rate")) {
-          if (!ARG_IS_D(1,reaction.back_rate)) 
-            return tcl_command_reaction_print_usage(interp);
-          argc-=2;
-	  argv+=2;
-      } else {
-            return tcl_command_reaction_print_usage(interp);
-      }
-   }
-   mpi_bcast_event(REACTION);
-   return TCL_OK;
-#else /* ifdef REACTIONS */
+    } else {
+      return tcl_command_reaction_print_usage(interp);
+    }
+  }
+  mpi_setup_reaction();
+  return TCL_OK;
+#else
   Tcl_AppendResult(interp, "REACTIONS not compiled in!" ,(char *) NULL);
   return (TCL_ERROR);
-#endif /* ifdef REACTIONS */
+#endif
 }

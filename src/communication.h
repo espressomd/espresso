@@ -518,6 +518,22 @@ void mpi_bcast_max_mu();
 */
 int mpi_gather_runtime_errors(char **errors);
 
+/** Issue REQ_GALILEI: set all particle velocities and rotational inertias to zero. 
+                       set all forces and torques on the particles to zero 
+                       calculate the centre of mass (CMS) 
+                       calculate the velocity of the CMS
+                       remove the CMS velocity from the system
+ */
+void mpi_kill_particle_motion();
+void mpi_kill_particle_forces();
+void mpi_system_CMS();
+void mpi_system_CMS_velocity();
+void mpi_galilei_transform();
+
+/** Issue REQ_REACTIONS: notify the system of changes to the reaction parameters
+ */
+void mpi_setup_reaction();
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event
@@ -530,7 +546,7 @@ int mpi_gather_runtime_errors(char **errors);
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES   5
-#define REACTION 6
+//#define REACTION 6
 /*@}*/
 
 #endif

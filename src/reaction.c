@@ -29,13 +29,14 @@
 
 
 #ifdef REACTIONS
-void setup_reaction() {
+void local_setup_reaction() {
   MPI_Bcast(&reaction.reactant_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.product_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.catalyzer_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.range, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&reaction.rate, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&reaction.back_rate, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&reaction.sing_mult, 1, MPI_INT, 0, comm_cart);
     
   make_particle_type_exist(reaction.catalyzer_type);
   make_particle_type_exist(reaction.product_type);
@@ -47,7 +48,7 @@ void setup_reaction() {
 	  char *error_msg = runtime_error(128);
 	  ERROR_SPRINTF(error_msg, "{106 interaction parameters for reaction could not be set} ");
   }
-  
+
   data->REACTION_range = reaction.range;
 
   /* broadcast interaction parameters */
@@ -55,9 +56,9 @@ void setup_reaction() {
 }
 
 void integrate_reaction() {
-  int c, np, n, i;
-  Particle * p1, *p2, **pairs;
-  Cell * cell;
+  int c, np, n, i, react;
+  Particle *p1, *p2, **pairs;
+  Cell *cell;
   double dist2, vec21[3], rand;
 
   if(reaction.rate > 0) {
@@ -85,18 +86,63 @@ void integrate_reaction() {
             dist2 = sqrlen(vec21);
             
             if(dist2 < reaction.range * reaction.range) {
-           	  rand = d_random();
-           	  
-           		if(rand > ratexp) {
-           		  if(p1->p.type == reaction.reactant_type) {
-						      p1->p.type = reaction.product_type;
+
+              /* Each reactant can react with multiple (neighbouring) catalysts */
+              if( reaction.sing_mult == 0 ) 
+              {
+             	  rand = d_random();
+
+             		if(rand > ratexp) {
+             		  if(p1->p.type == reaction.reactant_type) {
+						        p1->p.type = reaction.product_type;
+					        }
+					        else {
+						        p2->p.type = reaction.product_type;
+					        }
+                }
+              }
+              else /* We only consider each reactant once */
+              {
+             		if(p1->p.type == reaction.reactant_type) {
+						      react = p1->p.reacted;
+                  p1->p.reacted = 1;
+
+                  if(react == 0) {
+                 
+                 	  rand = d_random();
+                 		if(rand > ratexp) {
+						          p1->p.type = reaction.product_type;
+                    }
+                  }
 					      }
 					      else {
-						      p2->p.type = reaction.product_type;
+						      react = p2->p.reacted;
+                  p2->p.reacted = 1;
+
+                  if(react == 0) {
+                 
+                 	  rand = d_random();
+                 		if(rand > ratexp) {
+						          p2->p.type = reaction.product_type;
+                    }
+                  }
 					      }
               }
            	}
           }  
+        }
+      }
+    }
+
+    /* Clean up the reactants for the next time step */
+    if( reaction.sing_mult != 0 ) {
+      for (c = 0; c < local_cells.n; c++) {
+        cell = local_cells.cell[c];
+        p1   = cell->part;
+        np  = cell->n;
+        
+        for(i = 0; i < np; i++) {
+          if(p1[i].p.type == reaction.reactant_type || p1[i].p.type == reaction.product_type ) p1[i].p.reacted = 0;
         }
       }
     }
@@ -146,4 +192,4 @@ void integrate_reaction() {
     on_particle_change();
   }
 }
-#endif /* ifdef REACTIONS */
+#endif

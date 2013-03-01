@@ -45,6 +45,7 @@ libEspresso_a_SOURCES = \
 	fft-dipolar.c fft-dipolar.h \
 	forcecap.c forcecap.h \
 	forces.c forces.h \
+	galilei.c galilei.h \
 	ghosts.c ghosts.h \
 	global.c global.h \
 	grid.c grid.h \
@@ -161,6 +162,7 @@ libEspresso_a_SOURCES += \
 	tcl/constraint_tcl.c tcl/constraint_tcl.h \
 	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
 	tcl/energy_tcl.c \
+	tcl/galilei_tcl.c tcl/galilei_tcl.h \
 	tcl/global_tcl.c tcl/global_tcl.h \
 	tcl/grid_tcl.c tcl/grid_tcl.h \
 	tcl/iccp3m_tcl.c tcl/iccp3m_tcl.h \

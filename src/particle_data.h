@@ -124,6 +124,10 @@ typedef struct {
   double T;
   double gamma;
 #endif
+
+#ifdef REACTIONS
+  int reacted;
+#endif
 } ParticleProperties;
 
 /** Positional information on a particle. Information that is
