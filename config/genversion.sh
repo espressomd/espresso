@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright (C) 2013 The ESPResSo project
 # Copyright (C) 2011,2012 Olaf Lenz
 #
 # This program is free software: you can redistribute it and/or modify

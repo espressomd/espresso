@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2011 Olaf Lenz
 # Copyright 2008 Marcus D. Hanwell <marcus@cryos.org>
 #
