@@ -20,7 +20,6 @@
 #include "statistics_wallstuff.h"
 
 #include "utils.h"
-#include "statistics.h"
 #include "grid.h"
 
 // list of the currently specified box boundaries
