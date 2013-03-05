@@ -427,7 +427,10 @@ cuda_ok=no
 AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
     save_LIBS=$LIBS
-    
+    save_LDFLAGS=$LDFLAGS
+    save_CC=$CC
+    save_CFLAGS=$CFLAGS
+
     AS_IF([test x$NVCC = x],[
         NVCC=$cuda_path/bin/nvcc
     ])
@@ -481,8 +484,6 @@ AS_IF([test x$with_cuda != xno],[
     esac
     
     # use nvcc
-    save_CC=$CC
-    save_CFLAGS=$CFLAGS
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
     CC=$NVCC
@@ -492,7 +493,7 @@ AS_IF([test x$with_cuda != xno],[
         AC_MSG_RESULT(yes)
     ],[
         cuda_ok=no
-        
+        AC_MSG_RESULT(no)
         AS_IF([test x$with_cuda = xyes],[
             AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])
         ],[
@@ -503,11 +504,11 @@ AS_IF([test x$with_cuda != xno],[
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA runs])
     
-    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
         AC_MSG_RESULT(yes)
     ],[
         cuda_ok=no
-        
+        AC_MSG_RESULT(no)
         AS_IF([test x$with_cuda = xyes],[
             AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
         ],[
@@ -524,6 +525,7 @@ AS_IF([test x$with_cuda != xno],[
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         LIBS=$save_LIBS
+        LDFLAGS=$save_LDFLAGS
     ])
 ])
 

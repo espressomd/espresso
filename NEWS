@@ -41,6 +41,9 @@ User-visible changes
   types. Instead, there is now a single global forcecap, plus it is
   possible to define individual forcecaps on a particle pair level.
 
+* By default, CUDA is now automatically detected and actiavted when it
+  is there and usable.
+
 ESPResSo 3.1.2
 ==============
 
