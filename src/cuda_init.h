@@ -19,6 +19,10 @@
 #ifndef CUDA_INIT_H
 #define CUDA_INIT_H
 
+#include "config.h"
+
+#ifdef CUDA
+
 /** get the number of CUDA devices.
 
     @return the number of GPUs, or -1 if CUDA could not be
@@ -62,5 +66,7 @@ int cuda_get_device();
 
 /** current error message of CUDA. */
 extern const char *cuda_error;
+
+#endif /* defined(CUDA) */
 
 #endif
