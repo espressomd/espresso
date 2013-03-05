@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -717,5 +717,94 @@ void auto_exclusion(int distance);
 /* keep a unique list for particle i. Particle j is only added if it is not i
  and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance);
+
+#ifdef GRANDCANONICAL
+//value that is returned in the case there was no error, but the type was not yet indexed
+#define NOT_INDEXED -3
+//struct that associates the index used for the type_list and the real particle type
+typedef struct {
+	int max_entry;
+	int * type;
+} IndexOfType;
+
+//and the other way round
+typedef struct {
+	int max_entry;
+	int * index;
+} TypeOfIndex;
+
+TypeOfIndex Type; 
+//index.max_entry=0;
+//index->type = (int *) 0;
+
+IndexOfType Index; 
+//tindex.max_entry=0;
+//tindex->type = (int *) 0;
+
+
+typedef struct {
+	int max_entry;
+	int cur_size;
+	int *id_list;
+} TypeList;
+
+//undefined array size
+TypeList *type_array;
+int number_of_type_lists;
+
+// flag indicating init_gc was called 
+int GC_init;
+
+// flag that indicates that the function init_type_array was called already
+int Type_array_init;
+
+/** linked list for particles of a given type */
+//typedef struct {
+//	int identifier;
+//	struct type_list_item *next;
+//} type_list item;
+//
+//typedef struct {
+//	struct type_list_item *list;
+//	int type;
+//	int max;
+//} type_list
+
+/** vars and fields */
+
+int init_gc(void);
+
+/** init particle lists		*/
+int init_type_array(int type);
+
+/** resize the array for the list of ids for a certain type */
+int reallocate_type_array(int type);
+
+/** make more type_arrays available */
+int reallocate_global_type_list(int size);
+
+/** free particle lists		*/
+int free_particle_lists(void);
+
+//update particle list
+int update_particle_array(int type);
+
+/* find a particle of given type and return its id */
+int find_particle_type(int type, int *id);
+/** return an array with real particle id and the corresponding index of typelist */
+//static int *find_particle_type(int type);
+
+int find_particle_type_id(int type, int *id, int *in_id );
+
+/** delete one randomly chosen particle of given type 
+ * returns ES_OK if succesful or else ES_ERROR		*/
+int delete_particle_of_type(int type);
+
+int remove_id_type_array(int part_id, int type);
+int add_particle_to_list(int part_id, int type);
+// print out a list of currently indexed ids
+int gc_status(int type);
+int number_of_particles_with_type(int type, int *number);
+#endif
 
 #endif
