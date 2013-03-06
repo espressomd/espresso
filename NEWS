@@ -45,8 +45,14 @@ User-visible changes
   types. Instead, there is now a single global forcecap, plus it is
   possible to define individual forcecaps on a particle pair level.
 
+* By default, CUDA is now automatically detected and actiavted when it
+  is there and usable.
+
 ESPResSo 3.1.2
 ==============
+
+* Added workaround for bug in VTF reader plugin of VMD 1.9.1 that made
+  all particles look the same when ELECTROSTATICS is turned on.
 
 * Added Tcl-scripts of the tutorials to the distribution.
 
@@ -346,7 +352,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011,2012 The ESPResSo project
+Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
