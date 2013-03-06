@@ -42,7 +42,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
   IA_parameters *data;
   FILE* fp;
   int npoints;
-  double minval,minval2, maxval, maxval2;
+  double minval, maxval;
   int i, newsize;
   int token;
   double dummr;
@@ -96,8 +96,6 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
   strcpy(data->TAB_filename,filename);
 
   /* Calculate dependent parameters */
-  maxval2 = maxval*maxval;
-  minval2 = minval*minval;
   data->TAB_stepsize = (maxval-minval)/(double)(data->TAB_npoints - 1);
 
   /* Allocate space for new data */

@@ -357,12 +357,10 @@ void calc_gyration_tensor(int type, double **_gt)
   double com[3];
   double eva[3],eve0[3],eve1[3],eve2[3];
   double *gt=NULL, tmp;
-  double M;
   double Smatrix[9],p1[3];
 
   for (i=0; i<9; i++) Smatrix[i] = 0;
   *_gt = gt = realloc(gt,16*sizeof(double)); /* 3*ev, rg, b, c, kappa, eve0[3], eve1[3], eve2[3]*/
-  M=0.0;
 
   updatePartCfg(WITHOUT_BONDS);
 
@@ -420,7 +418,7 @@ void calc_gyration_tensor(int type, double **_gt)
 
 void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
 {
-  double d[3],dsize;
+  double d[3];
   int i,j;
   double r2;
 
@@ -435,7 +433,6 @@ void nbhood(double pt[3], double r, IntList *il, int planedims[3] )
       get_mi_vector(d, pt, partCfg[i].r.p);
     } else {
       /* Calculate the in plane distance */
-      dsize = 0.0;
       for ( j= 0 ; j < 3 ; j++ ) {
 	d[j] = planedims[j]*(partCfg[i].r.p[j]-pt[j]);
       }

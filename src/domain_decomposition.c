@@ -97,12 +97,11 @@ double max_skin   = 0.0;
 void dd_create_cell_grid()
 {
   int i,n_local_cells,new_cells,min_ind;
-  double cell_range[3], min_box_l, min_size, scale, volume;
+  double cell_range[3], min_size, scale, volume;
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",this_node,max_range));
   CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",this_node,my_left[0],my_right[0],my_left[1],my_right[1],my_left[2],my_right[2]));
   
   /* initialize */
-  min_box_l = dmin(dmin(local_box_l[0],local_box_l[1]),local_box_l[2]);
   cell_range[0]=cell_range[1]=cell_range[2] = max_range;
 
   if (max_range < ROUND_ERROR_PREC*box_l[0]) {

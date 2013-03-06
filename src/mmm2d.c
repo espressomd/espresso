@@ -938,7 +938,6 @@ static void add_P_force()
 static double P_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   double *othcblk;
   int size = 4;
   double eng = 0;
@@ -947,7 +946,6 @@ static double P_energy(double omega)
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
-    part = cells[c].part;
     othcblk = block(gblcblk, c - 1, size);
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + POQECM]*othcblk[POQECP] + partblk[size*ic + POQESM]*othcblk[POQESP] +
@@ -990,7 +988,6 @@ static void add_Q_force()
 static double Q_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   double *othcblk;
   int size = 4;
   double eng = 0;
@@ -999,7 +996,6 @@ static double Q_energy(double omega)
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np   = cells[c].n;
-    part = cells[c].part;
     othcblk = block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
@@ -1170,20 +1166,16 @@ static void add_PQ_force(int p, int q, double omega)
 
 static double PQ_energy(double omega)
 {
-  int np, c, i, ic;
-  Particle *part;
-  double *othcblk;
   int size = 8;
   double eng = 0;
   double pref = 1/omega;
 
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np   = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+  int ic = 0;
+  for (int c = 1; c <= n_layers; c++) {
+    int np   = cells[c].n;
+    double *othcblk = block(gblcblk, c - 1, size);
 
-    for (i = 0; i < np; i++) {
+    for (int i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + PQECCM]*othcblk[PQECCP] + partblk[size*ic + PQECSM]*othcblk[PQECSP] +
 		   partblk[size*ic + PQESCM]*othcblk[PQESCP] + partblk[size*ic + PQESSM]*othcblk[PQESSP] +
 		   partblk[size*ic + PQECCP]*othcblk[PQECCM] + partblk[size*ic + PQECSP]*othcblk[PQECSM] +

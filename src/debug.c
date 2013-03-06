@@ -99,7 +99,7 @@ void check_particle_consistency()
 {
   Particle *part;
   Cell *cell;
-  int n, np, dir, c, p;
+  int n, dir, c, p;
   int cell_part_cnt=0, ghost_part_cnt=0, local_part_cnt=0;
   int cell_err_cnt=0;
 
@@ -108,7 +108,6 @@ void check_particle_consistency()
     cell = local_cells.cell[c];
     cell_part_cnt += cell->n;
     part = cell->part;
-    np   = cell->n;
     for(n=0; n<cell->n ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: check_particle_consistency: ERROR: Cell %d Part %d has corrupted id=%d\n",
@@ -188,7 +187,7 @@ void check_particles()
   Particle *part;
   int *is_here;
   Cell *cell;
-  int n, np, dir, c, p;
+  int n, dir, c, p;
   int cell_part_cnt=0, local_part_cnt=0;
   int cell_err_cnt=0;
   double skin2 = (skin != -1) ? skin/2 : 0;
@@ -209,7 +208,6 @@ void check_particles()
     cell = local_cells.cell[c];
     cell_part_cnt += cell->n;
     part = cell->part;
-    np   = cell->n;
     for(n=0; n<cell->n ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: check_particles: ERROR: Cell %d Part %d has corrupted id=%d\n",

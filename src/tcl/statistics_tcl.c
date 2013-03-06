@@ -271,11 +271,9 @@ static int tclcommand_analyze_parse_get_folded_positions(Tcl_Interp *interp, int
 static int tclcommand_analyze_parse_get_lipid_orients(Tcl_Interp *interp, int argc, char **argv)
 {
   char buffer[TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
-  int i,change ;
+  int i;
   IntList l_orient;
   init_intlist(&l_orient);
-
-  change = 0;
 
   STAT_TRACE(fprintf(stderr,"%d,parsing get_lipid_orients \n",this_node));
   /* Check that the grid has been set */
@@ -307,11 +305,9 @@ static int tclcommand_analyze_parse_modes2d(Tcl_Interp *interp, int argc, char *
   STAT_TRACE(fprintf(stderr,"%d,parsing modes2d height grid \n",this_node);)
     /* 'analyze modes2d' */
     char buffer[TCL_DOUBLE_SPACE];
-  int i,j,change ;
+  int i,j;
   fftw_complex* result_ht;
   fftw_complex* result_th;
-
-  change = 0;
 
   /* Check that the grid has been set */
   if ( xdir + ydir + zdir == -3 ) {
@@ -415,11 +411,10 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
   IntList beadtypes;
   double rotation_axis[3];
   double rotation_center[3];
-  int xbins,ybins,thetabins,dobyangle;
+  int xbins,ybins,thetabins;
   double xrange,yrange;
   DoubleList *density_profile = NULL;
   DoubleList *density_map = NULL;
-  dobyangle = 0;
   thetabins = 0;
   init_intlist(&beadtypes);
   alloc_intlist(&beadtypes,1);
@@ -469,7 +464,6 @@ static int tclcommand_analyze_parse_radial_density_map(Tcl_Interp *interp, int a
       Tcl_AppendResult(interp,"thetabins usage:  analyze radial_density_map <xbins> <ybins> <xrange> <yrange> {<axisofrotation>} {<centerofrotation>} { { <beadtypelist> } [thetabins] ", (char *)NULL);
       return (TCL_ERROR);
     } else {
-      dobyangle = 1;
       argc -= 1;
       argv += 1;
     }
@@ -1135,7 +1129,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   /* 'analyze find_principal_axis [<type0>]' */
   double MofImatrix[9],eva[3],eve[3];
   char buffer[4*TCL_DOUBLE_SPACE+20];
-  int p1,i,j;
+  int p1,j;
 
   /* parse arguments */
   if (argc != 1) {
@@ -1150,12 +1144,11 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   }
 
   momentofinertiamatrix(p1, MofImatrix);
-  i=calc_eigenvalues_3x3(MofImatrix, eva);
   
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {
-    i=calc_eigenvector_3x3(MofImatrix,eva[j],eve);
+    calc_eigenvector_3x3(MofImatrix,eva[j],eve);
     sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
