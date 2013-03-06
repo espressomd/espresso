@@ -19,6 +19,7 @@
 #include "statistics_correlation.h"
 #include "particle_data.h"
 #include "integrate.h"
+#include <string.h>
 
 /* global variables */
 double_correlation* correlations=0;
