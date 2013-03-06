@@ -636,7 +636,7 @@ typedef struct {
       double v_tol;
     } rigid_bond;
 
-#ifdef BOND_ANGLE_OLD
+#ifdef BOND_ANGLEDIST
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
