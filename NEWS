@@ -26,6 +26,10 @@ New user-visible features
 * The feature GHMC implements a generalized hybrid Monte-Carlo
   thermostat.
 
+* The feature GRANDCANONICAL provided functions to simplify grandcanonical
+  simulations in espresso. To that end it provides functions to find and
+  delete random particles of a certain type.
+
 User-visible changes
 --------------------
 
