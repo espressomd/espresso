@@ -18,12 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLE_TCL_H
-#define ANGLE_TCL_H
+#ifndef _ANGLE_HARMONIC_TCL_H
+#define _ANGLE_HARMONIC_TCL_H
 /** \file angle_harmonic_tcl.h
  * Tcl interface for \ref angle_harmonic.h
  */
 
+#include "config.h"
 #include "parser.h"
 #include "interaction_data.h"
 
