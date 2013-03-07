@@ -956,7 +956,11 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
    
     if(this_node==0) {
       /* self energy correction */
-      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",this_node, dp3m.energy_correction));
+      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",\
+                        this_node, dp3m.energy_correction));
+#ifdef P3M_DEBUG
+      double a = k_space_energy_dip;
+#endif
       k_space_energy_dip -= coulomb.Dprefactor*(dp3m.sum_mu2*2*pow(dp3m.params.alpha_L*box_l_i[0],3) * wupii/3.0);
 
       double volume=box_l[0]*box_l[1]*box_l[2];

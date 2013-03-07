@@ -37,9 +37,9 @@
  *  The chosen mesh should roughly be of the size of the particles.
  *
  *  Further reading on the algorithm:
- *  <ul>
- *  <li> I. Pasichnyk and B. Dunweg, Coulomb interaction via local dynamics: a molecular-dynamics algorithm. J. Phys: Condens. Matter, 16 ,p. 1399-4020, (2004).
- *  </ul>
+ *  I. Pasichnyk and B. Dunweg, Coulomb interaction via local
+ *  dynamics: a molecular-dynamics algorithm. J. Phys:
+ *  Condens. Matter, 16 ,p. 1399-4020, (2004).
  *  
  */
 
@@ -1554,6 +1554,9 @@ void maggs_calc_init_e_field()
   if(!this_node) iteration = 0;
 #endif
   do {
+#ifdef MAGGS_DEBUG
+    double goldE = gsqrE;
+#endif
     sqrE = 0.;
     maggs_minimize_transverse_field();
 		
