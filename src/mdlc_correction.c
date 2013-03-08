@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -175,8 +175,6 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 
   for(ix=-kcut;ix<=+kcut;ix++){
     for(iy=-kcut;iy<=+kcut;iy++){
-
-		
       if(!(ix==0 && iy==0)){  
 	gx=(double)ix*facux;
 	gy=(double)iy*facuy;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -531,12 +531,15 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
+
     /** Parameters for harmonic bond Potential */
     struct {
       double k;
       double r;
       double r_cut;
     } harmonic;
+
+#ifdef BOND_ANGLE_OLD
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.h !
@@ -553,6 +556,9 @@ typedef struct {
       double cos_phi0;
 #endif
     } angle;
+#endif
+
+#ifdef BOND_ANGLE
     /** Parameters for three body angular potential (bond_angle_harmonic). 
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
@@ -560,6 +566,7 @@ typedef struct {
       double bend;
       double phi0;
     } angle_harmonic;
+
     /** Parameters for three body angular potential (bond_angle_cosine). 
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
@@ -569,6 +576,7 @@ typedef struct {
       double cos_phi0;
       double sin_phi0;
     } angle_cosine;
+
     /** Parameters for three body angular potential (bond_angle_cossquare). 
 	bend - bending constant.
 	phi0 - equilibrium angle (default is 180 degrees / Pi) */
@@ -577,6 +585,8 @@ typedef struct {
       double phi0;
       double cos_phi0;
     } angle_cossquare;
+#endif
+
    /** Parameters for four body angular potential (dihedral-angle potentials). */
     struct {
       double mult;
@@ -625,6 +635,8 @@ typedef struct {
       /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
       double v_tol;
     } rigid_bond;
+
+#ifdef BOND_ANGLEDIST
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
@@ -646,6 +658,8 @@ typedef struct {
       double cos_phi0;
 #endif
     } angledist;
+#endif
+
 #ifdef BONDED_IA_ENDANGLEDIST
     /** Parameters for chainend angular potential with wall  */
     struct {
