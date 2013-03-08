@@ -1,8 +1,8 @@
 /*
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2010,2011 Florian Fahrenberger
-  Copyright (C) 2010,2011,2012 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-  Max-Planck-Institute for Polymer Research, Theory Group
+  Copyright (C) 2007,2008,2009,2010 
+    Max-Planck-Institute for Polymer Research, Theory Group
  
   This file is part of ESPResSo.
  
@@ -1330,13 +1330,15 @@ void maggs_minimize_transverse_field()
     energy minimization takes up lots of time. */
 void maggs_calc_init_e_field()
 {
-  int xsizeplus, ysizeplus;
   double localqy, localqz;
   double qplane, qline;
   int    i, k, ix, iy, iz;
   int index = 0;
   double invasq, tmp_field=0.0;
-  double sqrE, gsqrE, goldE, gavgEx, gavgEy, gavgEz;
+  double sqrE, gsqrE, gavgEx, gavgEy, gavgEz;
+#ifdef MAGGS_DEBUG
+  double goldE;
+#endif
   double qz, qy, qx, avgEx, avgEy, avgEz;
   double Eall[SPACE_DIM], gEall[SPACE_DIM];
   double maxcurl;
@@ -1347,9 +1349,6 @@ void maggs_calc_init_e_field()
   MAGGS_TRACE(fprintf(stderr,"%d:Initialize field\n",this_node));
 	
   invasq = maggs.inva*maggs.inva;
-	
-  xsizeplus = lparams.dim[0];
-  ysizeplus = lparams.dim[1];
 	
   /* sort particles for the calculation of initial charge distribution */
   MAGGS_TRACE(fprintf(stderr,"%d:Sorting particles...\n",this_node));
@@ -1565,7 +1564,9 @@ void maggs_calc_init_e_field()
   if(!this_node) iteration = 0;
 #endif
   do {
+#ifdef MAGGS_DEBUG
     goldE = gsqrE;
+#endif
     sqrE = 0.;
     maggs_minimize_transverse_field();
 		
@@ -1767,14 +1768,11 @@ void maggs_add_current_on_segment(Particle *p, int ghost_cell)
   int first[SPACE_DIM];
   int f_crossing, flag_update_flux;
   t_dvector r_temp; 
-  double inva_half;
   double delta;
   double flux[4], v;
   double v_inva[SPACE_DIM], v_invasq[SPACE_DIM];
   double pos[SPACE_DIM], help[3];
   double t_step;
-	
-  inva_half = 0.5*maggs.inva;
 	
   FOR3D(d) {
     pos[d]   = (p->r.p[d] - lparams.left_down_position[d])* maggs.inva;

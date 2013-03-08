@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -95,8 +95,7 @@ proc ::mbtools::utils::warmup { steps times args } {
 
 	# Set the new forcecap into espresso and integrate
 	# catch tabulated force cap error in case tabulated option is not turned on
-	catch {inter tabforcecap $cap}
-	inter ljforcecap $cap
+	inter forcecap $cap
 	integrate $steps
 	set cap [expr $cap + $capincr ]
 	::mmsg::send [namespace current]  "run $i of $times at time=[setmd time] (cap=$cap) " 
@@ -107,8 +106,7 @@ proc ::mbtools::utils::warmup { steps times args } {
     
     # Turn off all forcecapping
     ::mmsg::send [namespace current] "uncapping forces"
-    catch {inter tabforcecap 0}
-    inter ljforcecap 0
+    inter forcecap 0
  }
 
 

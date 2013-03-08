@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,6 +32,7 @@
 #include "adresso.h"
 #include "rattle.h"
 #include "imd.h"
+#include "ghmc.h"
 
 /** This array contains the description of all global variables.
 
@@ -84,5 +85,10 @@ const Datafield fields[] = {
   {&max_cut_bonded,  TYPE_DOUBLE, 1, "max_cut_bonded",    9 },         /* 43 from interaction_data.c */
   {&transfer_rate,      TYPE_INT, 1, "vmd_transfer_rate", 5 },         /* 44 from imd_tcl.c */
   {&min_global_cut,  TYPE_DOUBLE, 1, "min_global_cut",    5 },         /* 45 from interaction_data.c */
+  {&ghmc_nmd,           TYPE_INT, 1, "ghmc_nmd",          6 },         /* 46 from thermostat.c */
+  {&ghmc_phi,        TYPE_DOUBLE, 1, "ghmc_phi",          6 },         /* 47 from thermostat.c */
+  {&ghmc_mc_res,     TYPE_INT,    1, "ghmc_mc_res",       7 },         /* 48 from ghmc.c */
+  {&ghmc_mflip,      TYPE_INT,    1, "ghmc_mflip",        7 },         /* 49 from ghmc.c */
+  {&ghmc_tscale,     TYPE_INT,    1, "ghmc_tscale",       6 },         /* 50 from ghmc.c */
   { NULL, 0, 0, NULL, 0 }
 };

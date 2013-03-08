@@ -1,5 +1,5 @@
-\/*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+/*
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -16,7 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#include <cuda.h>
+
+
 // CUDA code is always interpreted as C++, so we need the extern C interface
 extern "C" {
 
@@ -24,6 +25,10 @@ extern "C" {
 #include "cuda_init.h"
 
 }
+
+#ifdef CUDA
+
+#include <cuda.h>
 
 /** \name minimally required compute capability. */
 /*@{*/
@@ -87,7 +92,6 @@ int cuda_set_device(int dev)
 }
 /**wrapper for cython interface call of cuda functions*/
 
-/* <<<<<<< HEAD */
 /* int setdevice(int dev){ */
   
 /*   cudaError_t error; */
@@ -137,7 +141,7 @@ int cuda_set_device(int dev)
 /*     printf("cuda getdevice error: %s\n", cudaGetErrorString(error)); */
 /*     return 1; */
 /*   } */
-/* ======= */
+
 int cuda_get_device()
 {
   int dev;
@@ -149,3 +153,5 @@ int cuda_get_device()
   else
     return dev;
 }
+
+#endif /* defined(CUDA) */

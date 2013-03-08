@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -24,7 +24,7 @@
  */
 #include "angle.h"
 
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
 #include "communication.h"
 
 /** set parameters for the angle potential.
@@ -48,7 +48,7 @@ int angle_set_params(int bond_type, double bend, double phi0)
 #ifdef BOND_ANGLE_COSSQUARE
   bonded_ia_params[bond_type].p.angle.cos_phi0 = cos(phi0);
 #endif
-  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE;
+  bonded_ia_params[bond_type].type = BONDED_IA_ANGLE_OLD;
   bonded_ia_params[bond_type].num = 2;
  
   /* broadcast interaction parameters */

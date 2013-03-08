@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -59,12 +59,10 @@ int endangledist_set_params(int bond_type, double bend, double phi0 ,double dist
 static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clconstr)
 {
   int j,k,img[3];
-  double distwallmin=0.0, distmx=0.0, normal=0.0;
+  double distwallmin=0.0, normal=0.0;
   double folded_pos_p1[3];
   double pwdist[n_constraints];
   Constraint_wall wall;
-
-  distmx = iaparams->p.endangledist.distmax;
 
   /*fprintf(stdout,"  Entering calc_pwdist:\n");*/
 
@@ -111,7 +109,7 @@ static double calc_pwdist(Particle *p1, Bonded_ia_parameters *iaparams, int *clc
     }
   }
   /*
-  if (distwallmin <= distmx) {
+    if (distwallmin <= iaparams->p.endangledist.distmax) {
     fprintf(stdout,"  clconstr=%d  distwallmin=%f  distmx=%f\n",*clconstr,distwallmin,distmx);
   }
   */

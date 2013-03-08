@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -151,7 +151,7 @@ configure --help
 \item[\texttt{--with-cuda=path} / \texttt{--without-cuda}] This switch
   enables CUDA support. \texttt{path} should be the path to the CUDA
   directory, which can be omitted if it is the NVIDIA default path,
-  i.e. \texttt{/usr/local/cuda}. The variable \texttt{NVCCFLAGS} can
+  \ie \texttt{/usr/local/cuda}. The variable \texttt{NVCCFLAGS} can
   be used to define compiler flags for the NVIDIA CUDA-compiler
   \texttt{nvcc}. For example, \texttt{NVCCFLAGS = "{}-gencode
     arch=compute_20,code=sm_20"{}} will compile code only for Fermi
@@ -215,12 +215,16 @@ following targets are available:
   were installed during \texttt{make install}. The variables are
   identical to the variables of the \texttt{install}-target.
 \item[\texttt{ug\ \ }] Creates the User guide in the \texttt{doc/ug}
-  subdirectory.
-\item[\texttt{dg\ \ }] Creates the Developers' guide in the \texttt{doc/dg}
-  subdirectory.
-\item[\texttt{doc\ }] Creates both the whole documentation, \ie both the
-  User guide and the Developers' guide. Both can be found in the \texttt{doc/}
-  subdirecotry.
+  subdirectory (only when using the development sources).
+\item[\texttt{dg\ \ }] Creates the Developers' guide in the
+  \texttt{doc/dg} subdirectory (only when using the development
+  sources).
+\item[\texttt{doxygen\ \ }] Creates the Doxygen code documentation in the
+  \texttt{doc/doxygen} subdirectory.
+\item[\texttt{tutorials\ \ }] Creates the \es tutorials in the
+  \texttt{doc/tutorials} subdirectory.
+\item[\texttt{doc\ }] Creates all documentation in the \texttt{doc}
+  subdirectory (only when using the development sources).
 \end{description}
 
 A number of options are available when calling \texttt{make}.  The
@@ -254,19 +258,19 @@ the command line.
 \index{features} \index{myconfig.h} \index{configuration header} \es
 has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
-features, as this will slow down \es significantly.  Instead,
-compile in only the features that are actually required. 
-A strong gain in speed can be achieved, by disabling all non-bonded interactions except for a single one, e.g., LENNARD_JONES.
-For the
-developers, it is also possible to turn on or off a number of
-debugging messages.  The features and debug messages can be controlled
-via a configuration header file that contains C-preprocessor
-declarations. Appendix \vref{chap:features} lists and describes all
-available features.  When no configuration header is provided by the
-user, a default header, found in src/myconfig-default.h, will be used that turns on the default
-features.  The file \texttt{myconfig-sample.h} in the source directory
-contains a list of all possible features that can be copied into your
-own configuration file.
+features, as this will slow down \es significantly.  Instead, compile
+in only the features that are actually required.  A strong gain in
+speed can be achieved, by disabling all non-bonded interactions except
+for a single one, e.g. \feature{LENNARD_JONES}.  For the developers,
+it is also possible to turn on or off a number of debugging messages.
+The features and debug messages can be controlled via a configuration
+header file that contains C-preprocessor declarations. Appendix
+\vref{chap:features} lists and describes all available features.  When
+no configuration header is provided by the user, a default header,
+found in src/myconfig-default.h, will be used that turns on the
+default features.  The file \texttt{myconfig-sample.h} in the source
+directory contains a list of all possible features that can be copied
+into your own configuration file.
 
 When you distinguish between the build and the source directory, the
 configuration header can be put in either of these. Note, however,

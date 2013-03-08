@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -25,6 +25,7 @@
  */
  
 #include "utils.h"
+#include "particle_data.h"
 
 typedef struct {
 	int reactant_type;
@@ -42,6 +43,7 @@ reaction_struct reaction;
     that the verlet radius is equal or bigger than the reaction range.
 **/
 void setup_reaction();
+void integrate_reaction();
 #endif
 
 #endif /* ifdef REACTION_H */

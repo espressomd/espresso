@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -39,7 +39,7 @@ Observable_stat total_energy = {0, {NULL,0,0}, 0,0,0};
 /* local prototypes                                         */
 /************************************************************/
 
-/** Calculate long range energies (P3M, EWALD, MMM2d...). */
+/** Calculate long range energies (P3M, MMM2d...). */
 void calc_long_range_energies();
 
 /************************************************************/
@@ -115,9 +115,6 @@ void calc_long_range_energies()
     energy.coulomb[2] = ELC_energy();
     break;
 #endif
-  case COULOMB_EWALD:
-    energy.coulomb[1] = EWALD_calc_kspace_forces(0,1);
-    break;
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
@@ -175,7 +172,6 @@ void init_energies(Observable_stat *stat)
   case COULOMB_ELC_P3M: n_coulomb = 3; break;
   case COULOMB_P3M:   n_coulomb = 2; break;
 #endif
-  case COULOMB_EWALD: n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
 #endif

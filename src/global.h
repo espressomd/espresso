@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -166,6 +166,16 @@ extern const Datafield fields[];
 #define FIELD_TRANSFER_RATE       44
 /** index of \ref min_global_cut in \ref #fields */
 #define FIELD_MIN_GLOBAL_CUT      45
+/** index of \ref ghmc_nmd in \ref #fields */
+#define FIELD_GHMC_NMD            46
+/** index of \ref ghmc_phi in \ref #fields */
+#define FIELD_GHMC_PHI            47
+/** index of \ref ghmc_phi in \ref #fields */
+#define FIELD_GHMC_RES            48 
+/** index of \ref ghmc_phi in \ref #fields */
+#define FIELD_GHMC_FLIP           49
+/** index of \ref ghmc_phi in \ref #fields */
+#define FIELD_GHMC_SCALE          50 
 /*@}*/
 
 #endif

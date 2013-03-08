@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -58,6 +58,7 @@
 #include "virtual_sites.h"
 #include "adresso.h"
 #include "statistics_correlation.h"
+#include "ghmc.h"
 
 /************************************************
  * DEFINES
@@ -162,98 +163,8 @@ void integrate_vv(int n_steps)
   int i;
 
 #ifdef REACTIONS
-  int c, np, n;
-  Particle * p1, *p2, **pairs;
-  Cell * cell;
-  double dist2, vec21[3], rand;
-
-  if(reaction.rate > 0) {
-    int reactants = 0, products = 0;
-    int tot_reactants = 0, tot_products = 0;
-    double ratexp, back_ratexp;
-
-    ratexp = exp(-time_step*reaction.rate);
-    
-    on_observable_calc();
-
-    for (c = 0; c < local_cells.n; c++) {
-      /* Loop cell neighbors */
-      for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-        pairs = dd.cell_inter[c].nList[n].vList.pair;
-        np = dd.cell_inter[c].nList[n].vList.n;
-        
-        /* verlet list loop */
-        for(i = 0; i < 2 * np; i += 2) {
-          p1 = pairs[i];   //pointer to particle 1
-          p2 = pairs[i+1]; //pointer to particle 2
-          
-          if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
-            get_mi_vector(vec21, p1->r.p, p2->r.p);
-            dist2 = sqrlen(vec21);
-            
-            if(dist2 < reaction.range * reaction.range) {
-           	  rand =d_random();
-           	  
-           		if(rand > ratexp) {
-           		  if(p1->p.type==reaction.reactant_type) {
-						      p1->p.type = reaction.product_type;
-					      }
-					      else {
-						      p2->p.type = reaction.product_type;
-					      }
-              }
-           	}
-          }  
-        }
-      }
-    }
-
-    if (reaction.back_rate < 0) { // we have to determine it dynamically 
-      /* we count now how many reactants and products are in the sim box */
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np  = cell->n;
-        
-        for(i = 0; i < np; i++) {
-          if(p1[i].p.type == reaction.reactant_type)
-            reactants++;
-          else if(p1[i].p.type == reaction.product_type)
-            products++;
-        }	
-      }
-      
-      MPI_Allreduce(&reactants, &tot_reactants, 1, MPI_INT, MPI_SUM, comm_cart);
-      MPI_Allreduce(&products, &tot_products, 1, MPI_INT, MPI_SUM, comm_cart);
-
-      back_ratexp = ratexp * tot_reactants / tot_products ; //with this the asymptotic ratio reactant/product becomes 1/1 and the catalyzer volume only determines the time that it takes to reach this
-    }
-    else { //use the back reaction rate supplied by the user
-  	  back_ratexp = exp(-time_step*reaction.back_rate);
-    }
-    
-    if(back_ratexp < 1 ) { 
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np  = cell->n;
-        
-        for(i = 0; i < np; i++) {
-          if(p1[i].p.type == reaction.product_type) {
-            rand = d_random();
-            
-			      if(rand > back_ratexp) {
-			        p1[i].p.type=reaction.reactant_type;
-			      }
-          }
-        }
-      }
-    }
-
-    on_particle_change();
-
-  }
-#endif /* ifdef REACTIONS */
+  integrate_reaction();
+#endif
 
   /* Prepare the Integrator */
   on_integration_start();
@@ -326,6 +237,11 @@ void integrate_vv(int n_steps)
 #endif
   }
 
+#ifdef GHMC
+    if(thermo_switch & THERMO_GHMC)
+      ghmc_init();
+#endif
+
   if (check_runtime_errors())
     return;
 
@@ -337,6 +253,13 @@ void integrate_vv(int n_steps)
 
 #ifdef BOND_CONSTRAINT
     save_old_pos();
+#endif
+
+#ifdef GHMC
+    if(thermo_switch & THERMO_GHMC) {
+      if ((int) fmod(i,ghmc_nmd) == 0)
+        ghmc_momentum_update();
+    }
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
@@ -474,6 +397,13 @@ void integrate_vv(int n_steps)
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
+#ifdef GHMC
+    if(thermo_switch & THERMO_GHMC) {
+      if ((int) fmod(i,ghmc_nmd) == ghmc_nmd-1)
+        ghmc_mc();
+    }
+#endif
+
     /* Propagate time: t = t+dt */
     sim_time += time_step;
   }
@@ -491,6 +421,11 @@ void integrate_vv(int n_steps)
     if(this_node==0) nptiso.p_inst_av /= 1.0*n_steps;
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
+#endif
+
+#ifdef GHMC
+  if(thermo_switch & THERMO_GHMC)
+    ghmc_close();
 #endif
 
 }

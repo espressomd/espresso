@@ -1,13 +1,10 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  ESPResSo Tutorial                                        #
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -230,7 +227,7 @@ if { $vmd == "yes" } {
 # of the Lennard-Jones interaction.                         #
 #                                                           #
 # To avoid this singularity ESPResSo offers the             #
-# possibility to cap potentials. Look at the 'ljforcecap'   #
+# possibility to cap potentials. Look at the 'forcecap'     #
 # option of the 'inter' command. We start with a value of   #
 # 10 for the cap and increase it step wise.                 #
 #                                                           #
@@ -251,8 +248,8 @@ if { $vmd == "yes" } {
 set min 0
 set cap 10
 while { $min < 0.8 } {
-    # set ljforcecap
-    inter ljforcecap $cap
+    # set forcecap
+    inter forcecap $cap
     # integrate a number of steps, e.g. 20
     integrate 20
     # check the status of the sytem
@@ -261,9 +258,9 @@ while { $min < 0.8 } {
     incr cap 10
 }
 puts "Warmup finished. Minimal distance now $min"
-# turn off the ljforcecap, which is done by setting the 
+# turn off the forcecap, which is done by setting the 
 # force cap value to zero:
-inter ljforcecap 0
+inter forcecap 0
 
 
 #############################################################

@@ -7,7 +7,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -29,8 +29,8 @@
 
 # Deprecation warning
 proc warn_deprecated { fname version } {
-    puts "WARNING: The function $fname is deprecated since version $version"
-    puts "         and will be removed in some future version."
+    puts stderr "WARNING: The function $fname is deprecated since version $version"
+    puts stderr "         and will be removed in some future version."
 }
 
 
@@ -583,9 +583,11 @@ proc galileiTransformParticles {} {
 
 proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_constraints "0"} } {
   global vmd_show_constraints_flag
-  
-  writepsf "$filename.psf"
-  writepdb "$filename.pdb"
+
+  # structure information only
+  set f [open "$filename.vsf" "w"]
+  writevsf $f
+  close $f
   
   for {set port 10000} { $port < 65000 } { incr port } {
 	  catch {imd connect $port} res
@@ -595,17 +597,17 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
   }
   
   set HOSTNAME [exec hostname]
-  set vmdout_file [open "vmd_start.script" "w"]
+  set vmdout_file [open "${filename}.vmd_start.script" "w"]
   
-  puts $vmdout_file "mol load psf $filename.psf pdb $filename.pdb"
   puts $vmdout_file "logfile vmd.log"
+  puts $vmdout_file "mol load vsf $filename.vsf"
   puts $vmdout_file "rotate stop"
-  puts $vmdout_file "logfile off"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"
   puts $vmdout_file "mol modcolor 0 0 SegName"
   puts $vmdout_file "imd connect $HOSTNAME $port"
   puts $vmdout_file "imd transfer 1"
   puts $vmdout_file "imd keep 1"
+  puts $vmdout_file "proc pbcsetup {} {pbc set \"[setmd box_l]\" -all}"
   
   #draw constraints  
   if {$draw_constraints != "0"} {
@@ -673,9 +675,9 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
  
   if { $start == 0 } {
 	  puts "Start VMD in the same directory on the machine you with :"
-	  puts "vmd -e vmd_start.script &"
+	  puts "vmd -e ${filename}.vmd_start.script &"
   } else {
-	  exec vmd -e vmd_start.script &
+	  exec vmd -e "${filename}.vmd_start.script" &
   }
   
   imd listen $wait

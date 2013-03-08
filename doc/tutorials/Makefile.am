@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -15,8 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-EXTRA_DIST=common/common.tex
+
 SUBDIRS=01-lennard_jones 02-charged_system
+
+if DEVEL_SRC
 
 .PHONY: FORCE doc tutorials $(SUBDIRS)
 doc: tutorials
@@ -26,3 +28,4 @@ tutorials: FORCE
 	done
 FORCE:
 
+endif

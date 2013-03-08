@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -25,19 +25,28 @@ AUTOMAKE_OPTIONS = gnu subdir-objects dist-xz
 # by any other means
 EXTRA_DIST = bootstrap.sh samples packages $(extra)
 
-all-local: Espresso myconfig-sample.h
-CLEANFILES = Espesso myconfig-sample.h 
+all-local: Espresso
+CLEANFILES = Espresso 
 
+if !DEVEL_SRC
+Espresso: FORCE
+	test -e Espresso || $(LN_S) src/Espresso .
+else
 Espresso: version.txt
 	test -e Espresso || $(LN_S) src/Espresso .
+endif
 
-myconfig-sample.h: config/myconfig-sample-header.h config/myconfig-sample-body.h
-	cat config/myconfig-sample-header.h > myconfig-sample.h
-	cat config/myconfig-sample-body.h >> myconfig-sample.h
+# Sample myconfig generation
+myconfig-sample.h: 
+	./config.status myconfig-sample.h
+CLEANFILES += myconfig-sample.h
+# config.status deps in configure.ac
 
 # Handle version
-MOSTLYCLEANFILES = version.txt
 EXTRA_DIST += version.txt
+
+if DEVEL_SRC
+MOSTLYCLEANFILES = version.txt
 version.txt: FORCE
 	cd $(top_srcdir); sh config/genversion.sh -rd > $(abs_top_builddir)/version.txt
 
@@ -52,14 +61,25 @@ dist-hook:
 		echo "***************************************************************************"; \
 		exit 1; \
 	fi;
+endif
 
 #################################################################
 # Documentation
 #################################################################
+if DEVEL_SRC
+
 .PHONY: FORCE doc ug dg tutorials doxygen 
 ug dg tutorials: FORCE
 	cd doc; $(MAKE) --print-directory $@
+
+else
+
+.PHONY: FORCE doc doxygen 
+
+endif
+
 doc doxygen: FORCE
 	cd src; $(MAKE) --print-directory $@
 	cd doc; $(MAKE) --print-directory $@
+
 FORCE:

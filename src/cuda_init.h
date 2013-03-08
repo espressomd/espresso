@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -16,10 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef CUDA_INIT_H
-#define CUDA_INIT_H
+#ifndef _CUDA_INIT_H
+#define _CUDA_INIT_H
 
-/* <<<<<<< HEAD */
 /* /\** external functions called by the Tcl-command to set the CUDA device to use or retrieve information */
 /*     available devices. *\/ */
 /* int check_gpu(int dev); */
@@ -27,7 +26,10 @@
 /* int setdevice(int dev); */
 /* int getdevice(int* dev); */
 /* int getdevicelist(int* devl, char* devname); */
-/* ======= */
+#include "config.h"
+
+#ifdef CUDA
+
 /** get the number of CUDA devices.
 
     @return the number of GPUs, or -1 if CUDA could not be
@@ -71,5 +73,7 @@ int cuda_get_device();
 
 /** current error message of CUDA. */
 extern const char *cuda_error;
+
+#endif /* defined(CUDA) */
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -29,25 +29,17 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "mol_cut.h"
+#include "forcecap.h"
 
 #ifdef BUCKINGHAM
 
-/** For warm up integration, the maximum force between any two particles
-    interacting via Buckingham potential can be set and this magnitude of max
-    force is stored in buck_force_cap*/
-extern double buck_force_cap;
-
-///
 int buckingham_set_params(int part_type_a, int part_type_b,
 			  double A, double B, double C, double D, double cut,
 			  double discont, double shift, double cap_radius,
 			  double F1, double F2);
 
-///
-int buckforcecap_set_params(double buckforcecap);
-
-/** calculate buck_capradius from buckingham force cap */
-void calc_buck_cap_radii(double force_cap);
+/** calculate buck_capradius from force_cap */
+void calc_buck_cap_radii();
 
 /**Resultant Force due to a buckingham potential between two particles at interatomic separation r greater than or equal to discont*/
 MDINLINE double buck_force_r(double A, double B, double C, double D, double r )

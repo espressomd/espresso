@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -139,7 +139,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 1.0
-inter ljforcecap $cap
+inter forcecap $cap
 
 # Warmup Integration Loop
 set i 0
@@ -156,11 +156,11 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
 
 #   Increase LJ cap
     set cap [expr $cap+1.0]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
-inter ljforcecap 0;
+inter forcecap 0
 
 # 
 puts "\n Warm up finished \n"

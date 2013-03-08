@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,6 +26,7 @@
 #include "tab_tcl.h"
 #include "tab.h"
 #include "parser.h"
+#include "forcecap_tcl.h"
 
 /// parse parameters for the tabulated bonded potential
 int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, int argc, char **argv)
@@ -77,36 +78,12 @@ int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, i
 /// parser for the force cap
 int tclcommand_inter_parse_tabforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
-  char buffer[TCL_DOUBLE_SPACE];
-
-
-  if (argc == 0) {
-    if (tab_force_cap == -1.0)
-      Tcl_AppendResult(interp, "tabforcecap individual", (char *) NULL);
-    else {
-      Tcl_PrintDouble(interp, tab_force_cap, buffer);
-      Tcl_AppendResult(interp, "tabforcecap ", buffer, (char *) NULL);
-    }
-    return TCL_OK;
+  if (argc==1) {
+    fprintf(stderr, "WARNING: \"inter tabforcecap\" is deprecated "
+	    "and will be removed in some further version. "
+	    "Use \"inter forcecap\" instead.\n");
   }
-
-  if (argc > 1) {
-    Tcl_AppendResult(interp, "inter tabforcecap takes at most 1 parameter",
-		     (char *) NULL);      
-    return TCL_ERROR;
-  }
-  
-  if (ARG0_IS_S("individual"))
-      tab_force_cap = -1.0;
-else if (! ARG0_IS_D(tab_force_cap) || tab_force_cap < 0) {
-Tcl_ResetResult(interp);
-Tcl_AppendResult(interp, "force cap must be a nonnegative double value or \"individual\"",
-	     (char *) NULL);
-return TCL_ERROR;
-}
-
-  CHECK_VALUE(tabforcecap_set_params(tab_force_cap),
-	      "If you can read this, you should change it. (Use the source Luke!)");
+  return tclcommand_inter_parse_forcecap(interp, argc, argv);
 }
 
 int tclcommand_inter_parse_tab(Tcl_Interp * interp,

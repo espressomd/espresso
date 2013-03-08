@@ -66,21 +66,14 @@ would ask you to acknowledge the usage of ESPResSo by referencing
       Soft Matter Systems". 
       Comput. Phys. Commun. 174(9) (704-727), 2006.
 
-BibTeX record:
+For a BibTeX record, please refer to the key "espresso" in
+doc/ug/citations.bib.
 
-@ARTICLE{espresso,
-  author = {Hans-J{\"o}rg Limbach and Axel Arnold and Bernward A. Mann
-            and Christian Holm},
-  title = {{ESPResSo} -- An Extensible Simulation Package for Research
-	   on Soft Matter Systems},
-  journal = {Comput. Phys. Commun.},
-  year = {2006},
-  volume = {174},
-  pages = {704--727},
-  number = {9},
-  month = may,
-  doi = {10.1016/j.cpc.2005.10.005},
-}
+A number of algorithms in ESPResSo are fairly advanced and unique to
+ESPResSo. The authors of these contributions kindly ask you to cite the
+relevant publications, as indicated in the ESPResSo User's Guide
+(see http://espressomd.org or doc/ug/ug.pdf). For your convenience, the
+BibTeX records are compiled in doc/ug/citations.bib.
 
 LICENSE
 -------
@@ -177,7 +170,7 @@ testsuite/Makefile.am
 testsuite/p3m-magnetostatics-t1.data
 testsuite/pe_micelle.data
 
-"Copyright (C) 2010,2011,2012 The ESPResSo project
+"Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
   Max-Planck-Institute for Polymer Research, Theory Group
   

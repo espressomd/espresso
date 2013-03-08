@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -394,7 +394,7 @@ if { $vmd_output=="yes" } {
 #puts "\nStart warmup integration: max $warm_n_times times $warm_steps steps\n"
 set act_min_dist [analyze mindist]
 set cap 20  
-inter ljforcecap $cap
+inter forcecap $cap
 
 for {set xi 0} { $xi < $warm_n_times  && $act_min_dist < $min_dist } { incr xi} {
     puts -nonewline "Run $xi at time=[setmd time] min_dist=$act_min_dist\r"
@@ -403,7 +403,7 @@ for {set xi 0} { $xi < $warm_n_times  && $act_min_dist < $min_dist } { incr xi} 
     if { $vmd_output=="yes" } {catch { imd positions }}
     set act_min_dist [analyze mindist]
     set cap [expr $cap+10]
-    inter ljforcecap $cap  
+    inter forcecap $cap  
 }
 
 #puts "Warmup done: Minimal distance [analyze mindist]\n"
@@ -414,7 +414,7 @@ for {set xi 0} { $xi < $warm_n_times  && $act_min_dist < $min_dist } { incr xi} 
 
 #puts "Start Counterion Equilibration: $ci_n_times times $ci_steps steps\n"
 # remove LJ cap
-inter ljforcecap 0
+inter forcecap 0
 # Start Coulomb interaction
 inter coulomb $bjerrum dh 0.0 [expr 2.0*$sphere_rad]
 

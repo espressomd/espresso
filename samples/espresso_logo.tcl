@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  System: ESPRESSO LOGO                                    #
@@ -9,7 +6,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -45,9 +42,6 @@ require_feature "LENNARD_JONES" "EXTERNAL_FORCES" "ELECTROSTATICS"
 # System identification: 
 set name  "espresso"
 set ident "_s5"
-
-# Data output
-set write_blocks "no"
 
 # Visualisation: online (imd), or offline (vtf-file)
 set vmd_online "no"
@@ -347,14 +341,9 @@ if { $vmd_offline == "yes" } then {
 puts "\nStart integration with fixed cup:"
 puts "Run $fixed_n_times times $fixed_steps steps"
 
-set j 0
 for {set i 0} { $i < $fixed_n_times } { incr i} {
     puts -nonewline "run $i at time=[setmd time]\r"
     integrate $fixed_steps
-    if { $write_blocks=="yes" } then { 
-	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type} 
-	incr j
-    }
     if { $vmd_online=="yes" } { imd positions }
     if { $vmd_offline=="yes" } then { writevcf $vtf_file }
     flush stdout
@@ -370,10 +359,6 @@ for {set i 0} { $i < $int_n_times } { incr i} {
     flush stdout
 
     integrate $int_steps
-    if { $write_blocks=="yes" } then { 
-	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-	incr j
-    }
 
     if { $vmd_online=="yes" } { imd positions }
     if { $vmd_offline=="yes" } then { writevcf $vtf_file }

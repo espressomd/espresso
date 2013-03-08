@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 # pe_network.tcl                                            #
@@ -12,7 +9,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -108,25 +105,14 @@ set distChain $MPC
 set LJ_eps       1.0
 set LJ_sigma     1.0
 set LJ_cut       1.122462048
-set LJ_shift     [calc_lj_shift $lj1_sig $lj1_cut]
+set LJ_shift     "auto"
 set LJ_offset    0
 
 set fene_k       7.0
 set fene_r       2.0
 
 set bjerrum      1.0
-set p3m_r_cut    7.75
-set p3m_mesh     8
-set p3m_cao      5
-set p3m_alpha    0.1138
-# set p3m_mesh_off { 0.5 0.5 0.5 }
-set p3m_epsilon  0.1
-   # parameters for 'inter coulomb $bjerrum p3m <r_cut> <mesh> <cao> [alpha] [accuracy]'
-   # p3m_r_cut 15.0              --> r-space cutoff for electrostatics; r_cut+skin = max. real-space interaction must be < 0.5*min(box_l[0,1,2])
-   # p3m_mesh 8                  --> was 3D, now will be automatically expanded to x=y=z by Espresso; must be positive (>0)
-   # p3m_cao 5 (was: 3 5000)     --> charge assigment order for p3m-particle mesh interaction (p3m_cao in [0,7] and < p3m_mesh)   [EXPERIMENTAL]
-   # p3m_mesh_offset 0.5 0.5 0.5 --> offset of the first mesh point from the origin in mesh coordinates (all values between 0.0 and 1.0)
-   # p3m_epsilon 0.1             --> dielectric constant at infinity (boundary condition for Ewald sumation)
+set p3m_accuracy 1e-3
 
 
 # Integration parameters
@@ -275,6 +261,25 @@ puts "Done."
 
 puts "    Preparing environement... "
 
+# Check in/out directories
+#############################################################
+
+proc makedirexist {path} {
+    if { ![file exists $path] } {
+	file mkdir $path
+    } {
+	if { ![file isdir $path]} {
+	    puts "$path has to be a directory. Remove it or change the path setup"
+	    exit
+	}
+    }
+}
+
+makedirexist $output_path
+makedirexist $movie_path
+makedirexist $vmd_path
+
+
 # Clean up fragments of previous runs
 #############################################################
 
@@ -362,17 +367,7 @@ set tmp_chk 0
 if { [expr $N_CPP % $val_CI]!=0 } {
     puts "Failed.\n    The number of charges on a chain ($N_CPP) has to be a multiple of the counterions' valency ($val_CI)!\nAborting...\n"
     exit }
-if { [expr $p3m_r_cut < $LJ_cut] } {
-    puts "Failed.\n    Real-space cutoff ($p3m_r_cut) is smaller than LJ-cutoff ($LJ_cut)!\nAborting...\n"
-    exit }
-if { [expr $p3m_r_cut + [setmd skin] > 0.5*$box_l] } {
-    puts "Failed.\n    Maximal real space interaction [expr $p3m_r_cut + [setmd skin] is larger than half of the minimal box dimension $box_l!"
-    puts "    Try reducing p3m_r_cut ($p3m_r_cut) or the skin ([setmd skin]), or make the box bigger!\nAborting...\n"; exit }
-# if { [lindex [setmd local_box_l] 0] < [expr $p3m_r_cut + [setmd skin]] } {
-#     puts -nonewline "Failed.\n    Range of strongest real-space interaction ([setmd max_range]) exceeds diameter of "
-#     puts "[expr $box_l/[lindex [setmd local_box_l] 0]] subboxes ([lindex [setmd local_box_l] 0])!\nAborting...\n"; exit }
 puts "Passed."
-
 
 # Random number generator setup
 #############################################################
@@ -496,7 +491,7 @@ if { $warmup == 1 } {
     setmd time_step $ljcp_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Capping all LJ-interactions... "; flush stdout
-    set tmp_cap $ljcp_cap1; inter ljforcecap $tmp_cap; puts "Done (cap initially at $tmp_cap)."
+    set tmp_cap $ljcp_cap1; inter forcecap $tmp_cap; puts "Done (cap initially at $tmp_cap)."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     puts "    Preparation completed."
@@ -518,7 +513,7 @@ if { $warmup == 1 } {
 	if { $vmd_output=="yes" } { imd positions }
 
 	if { $tmp_dist >= $ljcp_dist } { break }
-	inter ljforcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $ljcp_incr]
+	inter forcecap $tmp_cap; set tmp_cap [expr $tmp_cap + $ljcp_incr]
     }
     puts -nonewline "\n    Initial relaxation completed"
     if { [expr $i % $write_loop_ljcp != 0] || ($tmp_dist >= $ljcp_dist) } {
@@ -544,7 +539,7 @@ if { $equl_loop > 0 } {
     setmd time_step $equl_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... "
     puts -nonewline "        Remove capping of LJ-interactions... "; flush stdout
-    inter ljforcecap 0; puts "Done ([inter ljforcecap])."
+    inter forcecap 0; puts "Done ([inter forcecap])."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
     if { $equl_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }
@@ -604,10 +599,10 @@ if { $main_loop > 0 } {
     setmd time_step $main_dt; puts -nonewline "dt=[setmd time_step]"; flush stdout
     puts ")... Done."
     puts -nonewline "        Making sure that capping of the LJ-interactions is removed... "; flush stdout; 
-    inter ljforcecap 0; puts "Done ([inter ljforcecap])."
+    inter forcecap 0; puts "Done ([inter forcecap])."
     if { $bjerrum > 0 } {
 	puts -nonewline "        Activating p3m-subsystem & enabling full electrostatics... "; flush stdout
-	inter coulomb $bjerrum p3m $p3m_r_cut $p3m_mesh $p3m_cao $p3m_alpha; inter coulomb epsilon $p3m_epsilon
+	inter coulomb $bjerrum p3m accuracy $p3m_accuracy; inter coulomb epsilon $p3m_epsilon
 	puts "Done ([inter coulomb])."
     } else { inter coulomb $bjerrum; puts "        As requested, electrostatics have been disabled ([inter coulomb])!" }
     if { $main_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }

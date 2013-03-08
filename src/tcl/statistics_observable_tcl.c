@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -978,7 +978,7 @@ int tclcommand_parse_profile(Tcl_Interp* interp, int argc, char** argv, int* cha
   pdata->maxz=box_l[2];
   pdata->zbins=1;
   while (argc>0) {
-    if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
+    if (ARG0_IS_S("ids") || ARG0_IS_S("types") || ARG0_IS_S("all")) {
       if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
         Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
         return TCL_ERROR;
@@ -1113,7 +1113,7 @@ int tclcommand_parse_radial_profile(Tcl_Interp* interp, int argc, char** argv, i
     return TCL_ERROR;
   }
   while (argc>0) {
-    if (ARG0_IS_S("id") || ARG0_IS_S("type") || ARG0_IS_S("all")) {
+    if (ARG0_IS_S("ids") || ARG0_IS_S("types") || ARG0_IS_S("all")) {
       if (!parse_id_list(interp, argc, argv, &temp, &pdata->id_list )==TCL_OK) {
         Tcl_AppendResult(interp, "Error reading profile: Error parsing particle id information\n" , (char *)NULL);
         return TCL_ERROR;

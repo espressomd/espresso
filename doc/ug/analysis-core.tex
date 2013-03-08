@@ -1,4 +1,4 @@
-% Copyright (C) 2012 The ESPResSo project
+% Copyright (C) 2012,2013 The ESPResSo project
 %  
 % This file is part of ESPResSo.
 %   
@@ -368,6 +368,23 @@ Its further arguments are described below.
     Example: when $A$ is \lit{particle_positions}, it produces the mean square displacement
     (for each component separately).
     \item \lit{complex_conjugate_product}
+    \item \lit{fcs_acf} \var{w_x}\var{w_y} \var{w_z} \\
+    Fluorescence Correlation Spectroscopy (FCS) autocorrelation function, \ie
+    \begin{equation}
+    G_i(\tau) = \frac{1}{N} \Bigl< \exp \Bigl( - \frac{\Delta x_i^2(\tau) }{w_x^2} - \frac{\Delta y_i^2(\tau)}{w_y^2} - \frac{\Delta z_i^2(\tau)}{w_z^2} \Bigr) \Bigr>\,,
+    \label{eq:Gtau}
+    \end{equation}
+    where $\Delta x_i^2(\tau) = \bigl(x_i(0) - x_i(\tau) \bigr)^2$ is the square discplacement 
+    of particle $i$ in the $x$ direction, and $w_x$ is the beam waist of the intensity profile 
+    of the exciting laser beam,
+    \begin{equation}
+    W(x,y,z) = I_0 \exp \Bigl( - \frac{2x^2}{w_x^2} - \frac{2y^2}{w_y^2} - \frac{2z^2}{w_z^2} \Bigr)\,.
+    \end{equation}
+    Equation~\ref{eq:Gtau} is a generalization of the formula presented by 
+    H\"ofling \etal~\cite{hofling11a}. For more information, see references therein.
+    Per each 3 dimensions of the observable, one dimension of the correlation output
+    is produced. If \lit{fcs_acf} is used with other observables than 
+    \lit{particle_positions}, the physical meaning of the result is unclear.
     %\item List them here! \todo{write the list}
   \end{itemize}
 \item \lit{dt} \\

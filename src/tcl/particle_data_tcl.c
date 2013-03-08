@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -152,7 +152,7 @@ void tclcommand_part_print_dip(Particle *part, char *buffer, Tcl_Interp *interp)
 void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   sprintf(buffer,"%i", part->p.isVirtual);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 #endif
 
@@ -349,11 +349,11 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
 {
   if(part->l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_PrintDouble(interp, part->l.ext_force[0], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part->l.ext_force[1], buffer);
-	  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-	  Tcl_PrintDouble(interp, part->l.ext_force[2], buffer);
-	  Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->l.ext_force[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->l.ext_force[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
   }
   else {
     Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
@@ -366,7 +366,9 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
     @param interp   the Tcl interpreter to which result to add to */
 int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 {
-  char buffer[50 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
+  /* print to the buffer AT MOST a double or an integer, plus
+     at most 8 letters (like "{ ")  */
+  char buffer[8 + TCL_DOUBLE_SPACE + TCL_INTEGER_SPACE];
   Particle part;
 
   if (get_particle_data(part_num, &part) == TCL_ERROR)
@@ -376,25 +378,26 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   Tcl_AppendResult(interp, " pos ", (char *)NULL);
   tclcommand_part_print_position(&part, buffer, interp);
-  Tcl_AppendResult(interp, " type ", (char *)NULL);
   sprintf(buffer, "%d", part.p.type);
+  Tcl_AppendResult(interp, " type ", buffer, (char *)NULL);
+
   if (part.p.mol_id > -1) {
-	Tcl_AppendResult(interp, buffer, " molecule ", (char *)NULL);
-  	sprintf(buffer, "%d", part.p.mol_id);
+    sprintf(buffer, "%d", part.p.mol_id);
+    Tcl_AppendResult(interp, " molecule ", buffer, (char *)NULL);
   }
 #ifdef MASS
-  Tcl_AppendResult(interp, buffer, " mass ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.mass, buffer);
+  Tcl_AppendResult(interp, " mass ", buffer, (char *)NULL);
 #endif
 #ifdef ELECTROSTATICS
-  Tcl_AppendResult(interp, buffer, " q ", (char *)NULL);
   Tcl_PrintDouble(interp, part.p.q, buffer);
+  Tcl_AppendResult(interp, " q ", buffer, (char *)NULL);
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-  Tcl_AppendResult(interp, buffer, " mu_E ", (char *)NULL);
+  Tcl_AppendResult(interp, " mu_E ", (char *)NULL);
   tclcommand_part_print_mu_E(&part, buffer, interp);
 #endif
-  Tcl_AppendResult(interp, buffer, " v ", (char *)NULL);
+  Tcl_AppendResult(interp, " v ", (char *)NULL);
   tclcommand_part_print_v(&part, buffer, interp);
   Tcl_AppendResult(interp, " f ", (char *)NULL);
   tclcommand_part_print_f(&part, buffer, interp);
@@ -418,9 +421,18 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #endif
 
 #ifdef DIPOLES
-  /* print information about dipoles */
+#ifndef ROTATION
+  /* print full information about dipoles, no quaternions to keep
+     the rest */
   Tcl_AppendResult(interp, " dip ", (char *)NULL);
   tclcommand_part_print_dip(&part, buffer, interp);
+#else
+  /* quaternions are set, just put the scalar dipole moment, otherwise
+     reading back fails. */
+  Tcl_PrintDouble(interp, part.p.dipm, buffer);
+  Tcl_AppendResult(interp, " dipm ", buffer, (char *)NULL);
+#endif
+
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -575,8 +587,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #ifdef DIPOLES
     else if (ARG0_IS_S("dip"))
       tclcommand_part_print_dip(&part, buffer, interp);
-    else if (ARG0_IS_S("dipm"))
+    else if (ARG0_IS_S("dipm")) {
       Tcl_PrintDouble(interp, part.p.dipm, buffer);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+    }
 #endif
 
 #ifdef VIRTUAL_SITES
@@ -1052,6 +1066,14 @@ int tclcommand_part_parse_type(Tcl_Interp *interp, int argc, char **argv,
 
     return TCL_ERROR;
   }
+//#ifdef GRANDCANONICAL
+//  if ( Type_array_init ) { 
+//	  if ( add_particle_to_list(part_num) ==  ES_ERROR ){
+//		  Tcl_AppendResult(interp, "gc particle add failed", (char *) NULL);
+//		  return TCL_ERROR;
+//	  }
+//  }
+//#endif
 
   return TCL_OK;
 }
@@ -1330,6 +1352,132 @@ int part_parse_gamma(Tcl_Interp *interp, int argc, char **argv,
   }
 
   return TCL_OK;
+}
+
+#endif
+
+#ifdef GRANDCANONICAL
+int part_parse_gc(Tcl_Interp *interp, int argc, char **argv){
+	if (argc < 1) {
+	  Tcl_AppendResult(interp, "gc requires at least particle type as argument\nUsage: part gc {<part_type> | {find | delete} <part_type> }\nThe call with only a part_type will init the array lists for the given type\nfind will return a randomly chosen particle id that has the given type\ndelete consequently removes a random particle of given type", (char *) NULL);
+	  return TCL_ERROR;
+	} else if (ARG0_IS_S("delete")) {
+		//delete particle of certain type
+		argc--;
+		argv++;
+		if ( argc < 1 ){
+		  Tcl_AppendResult(interp, "gc delete needs particle type as argument", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		int type = atoi (argv[0]);
+		if (type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		if ( Type_array_init ) {
+			if (delete_particle_of_type(type) == ES_ERROR ) {
+			  Tcl_AppendResult(interp, "no particles with type left", (char *) NULL);
+			  return TCL_ERROR;
+			}
+		} else {
+			Tcl_AppendResult(interp, "particle lists not initialized", (char *) NULL);
+			return TCL_ERROR;
+		}
+	} else if (ARG0_IS_S("find")) {
+		argc--;
+		argv++;
+		if ( argc < 1 ){ 
+		  Tcl_AppendResult(interp, "gc find needs a particle type as argument", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		int type = atoi (argv[0]);
+		if (type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		int id;
+		if (find_particle_type(type, &id) == ES_ERROR ){
+			//char buffer[TCL_INTEGER_SPACE + 32];
+			//sprintf(buffer, "no particle of type %d found", type);
+			Tcl_AppendResult(interp, "-1", (char *) NULL);
+			return TCL_OK;
+		}
+		char buffer[32+TCL_INTEGER_SPACE];
+		sprintf(buffer, "%d", id);
+		Tcl_AppendResult(interp, buffer, (char *) NULL);
+	
+	} else if ( ARG0_IS_S("status") ) {
+		argc--;
+		argv++;
+		if ( argc < 1 ) {
+			Tcl_AppendResult(interp, "gc status need type as argument", (char *) NULL);
+			return TCL_ERROR;
+		}
+		int type = atoi( argv[0] );
+		if ( type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		//if ( gc_status(type) == ES_ERROR ) {
+		if ( type_array!=(TypeList *) 0 && type_array[Index.type[type]].max_entry!= 0 ) {
+			int indexed=0;
+			for ( int i=0; i<Type.max_entry; i++) {
+				if (type==Type.index[i]) {
+					indexed=1;
+					break;
+				}
+			}
+			if ( indexed ) {
+				char buffer[32 + TCL_INTEGER_SPACE];
+				Tcl_AppendResult(interp, "{ ", (char *) NULL);
+				for (int i=0; i<type_array[Index.type[type]].max_entry; i++ ) {
+					sprintf(buffer, "%d ", type_array[Index.type[type]].id_list[i]);
+					Tcl_AppendResult(interp, buffer, (char *) NULL);
+				}
+				Tcl_AppendResult(interp, " }", (char *) NULL);
+				//free(buffer);
+			}
+		}
+		else {
+			Tcl_AppendResult(interp, "no list for particle", (char *) NULL);
+			return TCL_ERROR;
+		}
+		return TCL_OK;
+	} else if ( ARG0_IS_S("number") ) {
+		argc--;
+		argv++;
+		if ( argc < 1 ) {
+			Tcl_AppendResult(interp, "number expects type as argument", (char *) NULL);
+			return TCL_ERROR;
+		}
+		int type = atoi( argv[0] );
+		int number;
+		if ( type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		if ( number_of_particles_with_type(type, &number) == NOT_INDEXED ) {
+			Tcl_AppendResult(interp, "no list for particle", (char *) NULL);
+			return TCL_OK;
+		}
+		char buffer[32 + TCL_INTEGER_SPACE];
+		sprintf(buffer, "%d", number);
+		Tcl_AppendResult(interp, buffer, (char *) NULL);
+		return TCL_OK;
+	} else if ( argc == 1 ) {
+		// initialize particle array for given type
+		int type = atoi(argv[0]);
+		if (type < 0 ) {
+		  Tcl_AppendResult(interp, "no negative types", (char *) NULL);
+		  return TCL_ERROR;
+		}
+		if (init_type_array(type) == ES_ERROR ) {
+			Tcl_AppendResult(interp, "gc init failed", (char *) NULL);
+			return TCL_ERROR;
+		}
+
+	}
+	return TCL_OK;
 }
 #endif
 
@@ -1696,6 +1844,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 	else if (ARG0_IS_S("gamma"))
 	  err = part_parse_gamma(interp, argc-1, argv+1, part_num, &change);
 #endif
+#ifdef GRANDCANONICAL
+	else if (ARG0_IS_S("gc")) { 
+	  argc--;
+	  argv++;
+	  err = part_parse_gc(interp, argc, argv);
+	}
+#endif
 
     else {
       Tcl_AppendResult(interp, "unknown particle parameter \"",
@@ -1757,6 +1912,17 @@ int tclcommand_part(ClientData data, Tcl_Interp *interp,
     return TCL_OK;
   }
 #endif
+
+#ifdef GRANDCANONICAL
+  else if ( ARG1_IS_S("gc")) {
+	 argc-=2;
+	 argv+=2;
+	 if (part_parse_gc(interp, argc, argv) == TCL_ERROR)
+		 return TCL_ERROR;
+	 return TCL_OK;
+  }
+#endif
+  
 
   /* only one argument is given */
   if (argc == 2) {

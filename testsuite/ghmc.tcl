@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -24,6 +24,7 @@ puts "- Testcase thermostat.tcl running on [format %02d [setmd n_nodes]] nodes: 
 puts "------------------------------------------------"
 
 require_feature THERMOSTAT_IGNORE_NON_VIRTUAL off
+require_feature "GHMC"
 
 # we expect to stay in this confidence interval (times stddeviation)
 # 20 is a really small chance, but since we measure quite a lot,
@@ -80,7 +81,7 @@ if { [catch {
     eval $cmd
 
 
-    thermostat langevin 1.0 1.0
+    thermostat ghmc 1.0 10 0.0
     setmd time_step 0.01
     setmd skin 0.5
 
@@ -136,8 +137,6 @@ if { [catch {
     puts "checking velocity distribution"
     puts "output is coordinate: moments 1, 2 and 4"
     puts "expected values are close to 0, 1 and 3"
-    puts "due to the memory of the Langevin thermostat,"
-    puts "actual values are slightly lower"
     set accept1 [expr $confidence*2.*1/$maxstep/[setmd n_part]]
     set accept2 [expr $confidence*2.*30/$maxstep/[setmd n_part]]
     puts "maximally accepted 1st moment deviation [expr sqrt($accept1)]"

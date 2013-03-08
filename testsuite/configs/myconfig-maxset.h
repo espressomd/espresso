@@ -16,9 +16,11 @@
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
 #define REACTIONS
+#define GRANDCANONCIAL
 
 #define NEMD
 #define NPT 
+#define GHMC
 
 #define LB
 #define LB_BOUNDARIES
@@ -29,6 +31,7 @@
 #define LENNARD_JONES_GENERIC
 #define LJCOS
 #define LJCOS2
+#define GAUSSIAN
 #define HAT
 #define LJ_ANGLE
 #define GAY_BERNE
@@ -41,7 +44,7 @@
 #define INTER_RF
 #define OVERLAPPED
 
-#define BOND_ANGLE_COSINE
+#define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC
 #define BOND_ENDANGLEDIST

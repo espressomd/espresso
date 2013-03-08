@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #    Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -87,17 +87,17 @@ proc setup_system {file new} {
     if { $new ==1 } {
 	# equilibrate system with lj-cap potential
 	set cap 100
-	inter ljforcecap $cap
+	inter forcecap $cap
 	setmd time_step 0.0001
 	for { set i 0 } { $i < 100 } { incr i } {
 	    integrate 100
 	    puts -nonewline "warmup $i from 1000; energy [lindex [lindex [analyze energy] 0] 1]\r"
 	    flush stdout
 	    set cap [expr $cap+10]
-	    inter ljforcecap $cap
+	    inter forcecap $cap
 	}
 	# turn of capping and write data
-	inter ljforcecap 0
+	inter forcecap 0
 	integrate 0
 	puts "\nintegration done."
 	set energy [analyze energy]

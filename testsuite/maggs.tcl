@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -111,16 +111,16 @@ if { [catch {
     set act_min_dist [analyze mindist]
 
     set cap 20
-    inter ljforcecap $cap
+    inter forcecap $cap
     set i 0
     while { $i < $warm_n_times && ( $act_min_dist < $min_dist || $i < $warm_n_min ) } {
 	integrate $warm_steps
 	set act_min_dist [analyze mindist]
 	set cap [expr $cap+10]
-	inter ljforcecap $cap
+	inter forcecap $cap
 	incr i
     }
-    inter ljforcecap 0
+    inter forcecap 0
 
     # memd requires domain decompostion with no verlet lists
     cellsystem domain_decomposition -no_verlet_list

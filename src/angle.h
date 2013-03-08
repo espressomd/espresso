@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -30,7 +30,7 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 
-#ifdef BOND_ANGLE
+#ifdef BOND_ANGLE_OLD
 #include "grid.h"
 
 /** set parameters for the angle potential.
@@ -239,5 +239,5 @@ MDINLINE int angle_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   return 0;
 }
 
-#endif /* BOND_ANGLE */
+#endif /* BOND_ANGLE_OLD */
 #endif /* ANGLE_H */

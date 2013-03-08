@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec ~/progs/Espresso/Espresso $0 $*
 #############################################################
 #
 # Hybrid MD/MC:
@@ -14,7 +11,7 @@
 #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -282,7 +279,7 @@ inter 0 0 lennard-jones $lj_eps $lj_sigma $lj_cut $lj_shift 0
 set cap 5
 for {set cycle 0} {$cycle < $warm_cycles} {incr cycle} {
     set cap [expr $cap + 5]
-    inter ljforcecap $cap
+    inter forcecap $cap
 
     puts -nonewline "\r[setmd time] T=[current_temperature] E_pot=[potential_energy [setmd n_part]]"
     flush stdout
@@ -290,7 +287,7 @@ for {set cycle 0} {$cycle < $warm_cycles} {incr cycle} {
     integrate $warm_steps
 }
 
-inter ljforcecap 0
+inter forcecap 0
 
 puts "\n warmup done"
 

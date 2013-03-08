@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #    Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -63,7 +63,7 @@ if { [catch {
     inter 1 1 tabulated "lj2.tab"
     inter 0 1 tabulated "lj3.tab"
 
-    inter tabforcecap 1000000000
+    inter forcecap 1000000000
 
 # ------------------------------------------------#
 # These are the lennard jones potentials that are 

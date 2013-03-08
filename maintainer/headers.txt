@@ -1,7 +1,7 @@
 For long files, use:
 
-# Copyright (C) 2012 The ESPResSo project
-# Copyright (C) 2012 Olaf Lenz
+# Copyright (C) 2013 The ESPResSo project
+# Copyright (C) 2013 Olaf Lenz
 #  
 # This file is part of ESPResSo.
 #  

@@ -1,6 +1,3 @@
-#!/bin/sh
-# tricking... the line after a these comments are interpreted as standard shell script \
-    exec $ESPRESSO_SOURCE/Espresso $0 $*
 #############################################################
 #                                                           #
 #  Polyelectrolyte Solution                                 #
@@ -8,7 +5,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -110,7 +107,7 @@ set cm_valency    1.0
 set ci_valency    -1.0
 
 puts "Simulate the following polyelectrolyte solution:"
-puts "number of Polymers       : $n_polymers"
+puts "number of polymers       : $n_polymers"
 set n_monomers [expr ($n_polymers*$l_polymers)]
 puts "number of monomers       : $n_monomers"
 set polymer_charge [expr (($l_polymers+$cm_distance-1)/$cm_distance)]
@@ -144,7 +141,7 @@ for {set ia1 0} { $ia1 < $n_part_types } { incr ia1 } {
 
 puts "Setup Particles (wait...)"
 # polymers
-polymer $n_polymers $l_polymers $bond_length mode SAW charge $cm_valency distance $cm_distance types 0 1 FENE 0
+polymer $n_polymers $l_polymers $bond_length mode PSAW charge $cm_valency distance $cm_distance types 0 1 FENE 0
 # counterions
 counterions $n_counterions charge $ci_valency type 2
 #puts "[part]"
@@ -194,7 +191,7 @@ puts "Stop if minimal distance is larger than $min_dist"
 
 # set LJ cap
 set cap 20
-inter ljforcecap $cap 
+inter forcecap $cap 
 set i 0
 while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     set time [format "%8f" [setmd time]]
@@ -211,7 +208,7 @@ while { $i < $warm_n_times && $act_min_dist < $min_dist } {
     flush stdout
 #   Increase LJ cap
     set cap [expr $cap+10]
-    inter ljforcecap $cap
+    inter forcecap $cap
     incr i
 }
 
@@ -223,7 +220,7 @@ puts "Verlet reuses: [setmd verlet_reuse]"
 #############################################################
 
 puts "Prepare integration: (tune parameters - wait...)"
-inter ljforcecap 0
+inter forcecap 0
 setmd time 0.0
 # Set attractive LJ for monomer interactions (types 0 and 1
 for {set ia1 0} { $ia1 < 2 } { incr ia1 } {
@@ -236,8 +233,13 @@ puts "Interactions are now: {[inter]}"
 
 #      Write blockfiles for restart
 #############################################################
-polyBlockWrite "$name$ident.set"   {box_l time_step skin}
-polyBlockWrite "$name$ident.start" {time} {id pos type}
+set trajectory [open "$name$ident.config" "w"]
+
+blockfile $trajectory write variable {box_l time_step skin}
+blockfile $trajectory write interactions
+blockfile $trajectory write integrate
+blockfile $trajectory write thermostat
+flush $trajectory
 
 # prepare observable output
 set obs_file [open "$name$ident.obs" "w"]
@@ -272,7 +274,8 @@ for {set i 0} { $i <= $int_n_times } { incr i} {
     if { $vmd_output=="yes" } { imd positions }
     #   write intermediate configuration
     if { $i%50==0 } {
-	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l time_step skin} {id pos type}
+	blockfile $trajectory write particles
+	flush $trajectory
 	incr j
     }
 }

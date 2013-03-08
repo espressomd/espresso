@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -277,7 +277,7 @@ int orient_order(double* result, double* stored_dirs)
     will not be returned as stray.
  */
 int lipid_orientation( int id, Particle* partCfg , double zref, double director[3], double refdir[3]) {
-  int mol_size, head_id, tail_id, mol_id, mol_type;
+  int mol_size, head_id, tail_id, mol_id;
   int i;
   int tmpxdir,tmpydir,tmpzdir;
   double distance;
@@ -302,8 +302,6 @@ int lipid_orientation( int id, Particle* partCfg , double zref, double director[
   /* Get basic molecule parameters */
   mol_id = partCfg[id].p.mol_id ;
   mol_size = topology[mol_id].part.n;
-  mol_type = topology[mol_id].type;
-
  
   /* If the head and tail id's were not found above then assume the
      head atom is the first and tail is the last in the molecule */
@@ -421,9 +419,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
   /** Output values for the fft */
   static  fftw_complex* result;
 
-  double zref;
-
-  
 /** 
     Every time a change is made to the grid calculate the fftw plan
     for the subsequent fft and destroy any existing plans
@@ -462,8 +457,6 @@ int modes2d(fftw_complex* modes, int switch_fluc) {
     return -1;
   }
   
-  zref = calc_zref( zdir );
-
   if ( !calc_fluctuations(height_grid, switch_fluc)) {
     char *errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt,"{034 calculation of height grid failed } ");
@@ -723,7 +716,6 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   int* grid_parts;
   int* grid_parts_up;
   int* grid_parts_down;
-  int* number_grid_parts;
   double zreflocal, zref;
   int nup;
   int ndown;
@@ -762,7 +754,6 @@ int calc_fluctuations ( double* height_grid, int switch_fluc ) {
   grid_parts_up = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   grid_parts_down = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
   grid_parts = malloc((mode_grid_3d[xdir])*sizeof(int)*mode_grid_3d[ydir]);
-  number_grid_parts = malloc(0); // will be redefined later.
   for ( i = 0 ; i < mode_grid_3d[xdir] ; i++) {
     for ( j = 0 ; j < mode_grid_3d[ydir] ; j++) {
       height_grid[j+i*mode_grid_3d[xdir]] = 0;

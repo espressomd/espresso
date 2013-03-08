@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -800,8 +800,8 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
  */
 
 int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
-  double local_v[3] = {0, 0, 0},delta[6]; //velocity field, relative positions to surrounding nodes
-  int 	 ind[3], tmpind[3]; //node indices
+  double local_v[3] = {0, 0, 0}, delta[6]; //velocity field, relative positions to surrounding nodes
+  int 	 ind[3] = {0,0,0}, tmpind[3]; //node indices
   int		 x, y, z; //counters
 
   // convert the position into lower left grid point
@@ -2491,7 +2491,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x,y,z;
-  LB_FluidNode *local_node;
 
   double lbboundary_mindist, distvec[3];
   double pos[3];
@@ -2539,8 +2538,6 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
         	
         index = node_index[(z*2+y)*2+x];
         
-        local_node = &lbfields[index];
-
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;

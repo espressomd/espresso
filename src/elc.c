@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -385,14 +385,6 @@ static double dipole_energy()
      (rsp. for this shift, the DM of the background is zero) */
   double shift = 0.5*box_l[2];
 
-  double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1; 
-
-  if(elc_params.dielectric_contrast_on) {
-    fac_delta_mid_bot=elc_params.di_mid_bot/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta_mid_top=elc_params.di_mid_top/(1-elc_params.di_mid_top*elc_params.di_mid_bot); 
-    fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
-  }
-
   gblcblk[0] = 0;gblcblk[1]=0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
@@ -565,7 +557,7 @@ static double z_energy()
 /*****************************************************************/
 static void add_z_force() 
 {
-  int np, c, i, ic;
+  int np, c, i;
   Particle *part;
   double pref = coulomb.prefactor*2*M_PI*ux*uy;
   int size = 2;
@@ -577,7 +569,6 @@ static void add_z_force()
     fac_delta=fac_delta_mid_bot*elc_params.di_mid_top;
 
     clear_vec(gblcblk, size);
-    ic = 0;
     for (c = 0; c < local_cells.n; c++) {
       np   = local_cells.cell[c]->n;
       part = local_cells.cell[c]->part;
@@ -845,7 +836,6 @@ static void add_P_force()
 static double P_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   int size = 4;
   double eng = 0;
   double pref = 1/omega;
@@ -853,7 +843,6 @@ static double P_energy(double omega)
   ic = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + POQECM]*gblcblk[POQECP] + partblk[size*ic + POQESM]*gblcblk[POQESP] +
 		   partblk[size*ic + POQECP]*gblcblk[POQECM] + partblk[size*ic + POQESP]*gblcblk[POQESM]);
@@ -888,7 +877,6 @@ static void add_Q_force()
 static double Q_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   int size = 4;
   double eng = 0;
   double pref = 1/omega;
@@ -896,7 +884,6 @@ static double Q_energy(double omega)
   ic = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + POQECM]*gblcblk[POQECP] + partblk[size*ic + POQESM]*gblcblk[POQESP] +
 		   partblk[size*ic + POQECP]*gblcblk[POQECM] + partblk[size*ic + POQESP]*gblcblk[POQESM]);
@@ -1064,7 +1051,6 @@ static void add_PQ_force(int p, int q, double omega)
 static double PQ_energy(double omega)
 {
   int np, c, i, ic;
-  Particle *part;
   int size = 8;
   double eng = 0;
   double pref = 1/omega;
@@ -1072,7 +1058,6 @@ static double PQ_energy(double omega)
   ic = 0;
   for (c = 0; c < local_cells.n; c++) {
     np   = local_cells.cell[c]->n;
-    part = local_cells.cell[c]->part;
     for (i = 0; i < np; i++) {
       eng += pref*(partblk[size*ic + PQECCM]*gblcblk[PQECCP] + partblk[size*ic + PQECSM]*gblcblk[PQECSP] +
 		   partblk[size*ic + PQESCM]*gblcblk[PQESCP] + partblk[size*ic + PQESSM]*gblcblk[PQESSP] +

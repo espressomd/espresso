@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,6 +27,7 @@
 #include "communication.h"
 #include "lattice.h"
 #include "npt.h"
+#include "ghmc.h"
 
 #include "particle_data.h"
 #include "parser.h"
@@ -62,6 +63,17 @@ int tclcommand_thermostat_parse_off(Tcl_Interp *interp, int argc, char **argv)
   mpi_bcast_parameter(FIELD_NPTISO_G0);
   nptiso_gammav = 0;
   mpi_bcast_parameter(FIELD_NPTISO_GV);
+#endif
+#ifdef GHMC
+  /* ghmc thermostat */
+  ghmc_nmd = 1;
+  mpi_bcast_parameter(FIELD_GHMC_NMD);
+  ghmc_phi = 1;
+  mpi_bcast_parameter(FIELD_GHMC_PHI);
+  ghmc_mflip = GHMC_MFLIP_OFF;
+  mpi_bcast_parameter(FIELD_GHMC_FLIP);
+  ghmc_tscale = GHMC_TSCALE_OFF;
+  mpi_bcast_parameter(FIELD_GHMC_SCALE);
 #endif
   /* switch thermostat off */
   thermo_switch = THERMO_OFF;
@@ -130,6 +142,76 @@ int tclcommand_thermostat_parse_npt_isotropic(Tcl_Interp *interp, int argc, char
 }
 #endif
 
+#ifdef GHMC
+int tclcommand_thermostat_parse_ghmc(Tcl_Interp *interp, int argc, char **argv) 
+{
+  double temp, phi;
+	int n_md_steps;
+
+  /* check number of arguments */
+  if (argc < 5) {
+    Tcl_AppendResult(interp, "wrong # args:  should be \n\"",
+		     argv[0]," ",argv[1]," <temp> <md_steps> <phi> {flip|no_flip|random_flip}\"", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  /* check argument types */
+  if ( !ARG_IS_D(2, temp) || !ARG_IS_I(3, n_md_steps) || !ARG_IS_D(4, phi) ) {
+    Tcl_AppendResult(interp, argv[2]," ",argv[3]," needs two DOUBLES and one INTEGER", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  if (temp < 0 || n_md_steps <= 0) {
+    Tcl_AppendResult(interp, "temperature and number of MD steps must be positive", (char *)NULL);
+    return (TCL_ERROR);
+  }
+
+  if (phi < 0 || phi > 1) {
+    Tcl_AppendResult(interp, "the parameter phi must be between zero and one", (char *)NULL);
+    return (TCL_ERROR);
+  }
+  
+  if(argc > 5) {
+    if (ARG_IS_S(5,"-flip")) {
+      ghmc_mflip = GHMC_MFLIP_ON;
+      
+    } 
+    else if (ARG_IS_S(5,"-no_flip")) {
+      ghmc_mflip = GHMC_MFLIP_OFF;
+    } 
+    else if (ARG_IS_S(5,"-random_flip")) {
+      ghmc_mflip = GHMC_MFLIP_RAND;
+    } 
+  } else {
+    ghmc_mflip = GHMC_MFLIP_OFF;
+  }
+  
+	if(argc > 6) {
+    if (ARG_IS_S(6,"-scale")) {
+      ghmc_tscale = GHMC_TSCALE_ON;
+    } 
+    else if (ARG_IS_S(6,"-no_scale")) {
+      ghmc_tscale = GHMC_TSCALE_OFF;
+    } 
+  } else {
+    ghmc_tscale = GHMC_TSCALE_OFF;
+  }
+  
+  /* broadcast parameters */
+  temperature = temp;
+  ghmc_nmd = n_md_steps;
+  ghmc_phi = phi;
+
+  thermo_switch = ( thermo_switch | THERMO_GHMC );
+  mpi_bcast_parameter(FIELD_THERMO_SWITCH);
+  mpi_bcast_parameter(FIELD_TEMPERATURE);
+  mpi_bcast_parameter(FIELD_GHMC_NMD);
+  mpi_bcast_parameter(FIELD_GHMC_PHI);
+  mpi_bcast_parameter(FIELD_GHMC_FLIP);
+  mpi_bcast_parameter(FIELD_GHMC_SCALE);
+  return (TCL_OK);
+}
+#endif
+
 int tclcommand_thermostat_print_all(Tcl_Interp *interp)
 {
   char buffer[TCL_DOUBLE_SPACE];
@@ -168,6 +250,33 @@ int tclcommand_thermostat_print_all(Tcl_Interp *interp)
     Tcl_PrintDouble(interp, nptiso_gammav, buffer);
     Tcl_AppendResult(interp," ",buffer, " } ", (char *)NULL);
   }
+#endif
+
+#ifdef GHMC
+  /* ghmc */
+  if(thermo_switch & THERMO_GHMC) {
+    Tcl_PrintDouble(interp, temperature, buffer);
+    Tcl_AppendResult(interp,"{ ghmc ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, ghmc_nmd, buffer);
+    Tcl_AppendResult(interp," ",buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, ghmc_phi, buffer);
+    Tcl_AppendResult(interp," ",buffer, " ", (char *)NULL);
+    switch (ghmc_mflip) {
+      case GHMC_MFLIP_OFF:
+        Tcl_AppendResult(interp, "-no_flip ", (char *)NULL);
+				break;
+      case GHMC_MFLIP_ON:
+        Tcl_AppendResult(interp, "-flip ", (char *)NULL);
+				break;
+      case GHMC_MFLIP_RAND:
+        Tcl_AppendResult(interp, "-random_flip ", (char *)NULL);
+				break;
+    }
+    if (ghmc_tscale == GHMC_TSCALE_ON)
+			Tcl_AppendResult(interp, "-scale }", (char *)NULL);
+		else
+			Tcl_AppendResult(interp, "-no_scale }", (char *)NULL);
+	}
 #endif
 
 #if defined(LB) || defined(LB_GPU)
@@ -245,6 +354,10 @@ int tclcommand_thermostat(ClientData data, Tcl_Interp *interp, int argc, char **
 #if defined(LB) || defined(LB_GPU)
   else if ( ARG1_IS_S("lb"))
     err = tclcommand_thermostat_parse_lb(interp, argc-1, argv+1);
+#endif
+#ifdef GHMC
+  else if ( ARG1_IS_S("ghmc") )
+    err = tclcommand_thermostat_parse_ghmc(interp, argc, argv);
 #endif
   else {
     Tcl_AppendResult(interp, "Unknown thermostat ", argv[1], "\n", (char *)NULL);

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -41,7 +41,7 @@
 /** Type of bonded interaction is a HARMONIC potential. */
 #define BONDED_IA_HARMONIC  1
 /** Type of bonded interaction is a bond angle potential. */
-#define BONDED_IA_ANGLE     2
+#define BONDED_IA_ANGLE_OLD     2
 /** Type of bonded interaction is a dihedral potential. */
 #define BONDED_IA_DIHEDRAL  3
 /** Type of tabulated bonded interaction potential, 
@@ -59,7 +59,13 @@
 #define BONDED_IA_ENDANGLEDIST    9
 /** Type of overlapped bonded interaction potential, 
     may be of bond length, of bond angle or of dihedral type. */
-#define BONDED_IA_OVERLAPPED 10 
+#define BONDED_IA_OVERLAPPED 10
+/** Type of bonded interaction is a bond angle cosine potential. */ 
+#define BONDED_IA_ANGLE_HARMONIC 11
+/** Type of bonded interaction is a bond angle cosine potential. */ 
+#define BONDED_IA_ANGLE_COSINE 12
+/** Type of bonded interaction is a bond angle cosine potential. */ 
+#define BONDED_IA_ANGLE_COSSQUARE 13
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -101,8 +107,6 @@
   #define COULOMB_MMM2D   5
   /** Coulomb method is "Maggs" */
   #define COULOMB_MAGGS   6
-  /** Coulomb method is standard Ewald */
-  #define COULOMB_EWALD   7
   /** Coulomb method is P3M plus ELC. */
   #define COULOMB_ELC_P3M 8
   /** Coulomb method is Reaction-Field. */
@@ -260,6 +264,15 @@ typedef struct {
   /*@{*/
   double Hertzian_eps;
   double Hertzian_sig;
+  /*@}*/
+#endif
+
+#ifdef GAUSSIAN
+  /** \name Gaussian potential */
+  /*@{*/
+  double Gaussian_eps;
+  double Gaussian_sig;
+  double Gaussian_cut;
   /*@}*/
 #endif
 
@@ -518,12 +531,15 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
+
     /** Parameters for harmonic bond Potential */
     struct {
       double k;
       double r;
       double r_cut;
     } harmonic;
+
+#ifdef BOND_ANGLE_OLD
     /** Parameters for three body angular potential (bond-angle potentials). 
 	ATTENTION: Note that there are different implementations of the bond angle
 	potential which you may chose with a compiler flag in the file \ref config.h !
@@ -540,7 +556,38 @@ typedef struct {
       double cos_phi0;
 #endif
     } angle;
-    /** Parameters for four body angular potential (dihedral-angle potentials). */
+#endif
+
+#ifdef BOND_ANGLE
+    /** Parameters for three body angular potential (bond_angle_harmonic). 
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
+    struct {
+      double bend;
+      double phi0;
+    } angle_harmonic;
+
+    /** Parameters for three body angular potential (bond_angle_cosine). 
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
+    struct {
+      double bend;
+      double phi0;
+      double cos_phi0;
+      double sin_phi0;
+    } angle_cosine;
+
+    /** Parameters for three body angular potential (bond_angle_cossquare). 
+	bend - bending constant.
+	phi0 - equilibrium angle (default is 180 degrees / Pi) */
+    struct {
+      double bend;
+      double phi0;
+      double cos_phi0;
+    } angle_cossquare;
+#endif
+
+   /** Parameters for four body angular potential (dihedral-angle potentials). */
     struct {
       double mult;
       double bend;
@@ -588,6 +635,8 @@ typedef struct {
       /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
       double v_tol;
     } rigid_bond;
+
+#ifdef BOND_ANGLEDIST
     /** Parameters for three body angular potential (bond-angle potentials) that 
         depends on distance to wall constraint.
 	ATTENTION: Note that there are different implementations of the bond angle
@@ -609,6 +658,8 @@ typedef struct {
       double cos_phi0;
 #endif
     } angledist;
+#endif
+
 #ifdef BONDED_IA_ENDANGLEDIST
     /** Parameters for chainend angular potential with wall  */
     struct {

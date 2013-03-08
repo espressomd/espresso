@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,6 +27,7 @@
 #include "thermostat.h"
 #include "lb_tcl.h"
 #include "lb.h"
+#include "lbgpu.h"
 #include "parser.h"
 
 #ifdef LB_GPU
@@ -461,10 +462,25 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
      Tcl_AppendResult(interp, "Coordinates are not integer.", (char *)NULL);
      return TCL_ERROR;
    } 
-   if (coord[0]<0 || coord[0]>box_l[0] || coord[1]<0 || coord[1]>box_l[1] || coord[2]<0 || coord[2]>box_l[2]) {
-     Tcl_AppendResult(interp, "Coordinates is not a valid LB node index", (char *)NULL);
-     return TCL_ERROR;
-   } 
+
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    if (coord[0]<0 || coord[0]>(box_l[0])/lbpar_gpu.agrid-1 || coord[1]<0 || coord[1]>(box_l[1])/lbpar_gpu.agrid-1 || coord[2]<0 || coord[2]>(box_l[2])/lbpar_gpu.agrid-1) {
+       Tcl_AppendResult(interp, "Coordinates do not correspond to a valid LB node index", (char *)NULL);
+       return TCL_ERROR;
+    }
+#endif
+  } 
+  else {
+#ifdef LB
+    if (coord[0]<0 || coord[0]>(box_l[0])/lbpar.agrid-1 || coord[1]<0 || coord[1]>(box_l[1])/lbpar.agrid-1 || coord[2]<0 || coord[2]>(box_l[2])/lbpar.agrid-1) {
+       Tcl_AppendResult(interp, "Coordinates do not correspond to a valid LB node index", (char *)NULL);
+       return TCL_ERROR;
+    } 
+#endif
+  }
+
+
    argc-=3; argv+=3;
 
    if (ARG0_IS_S("print")) {

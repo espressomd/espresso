@@ -4,7 +4,7 @@
 #                                                                    #
 ######################################################################
 #
-# Copyright (C) 2010,2012 The ESPResSo project
+# Copyright (C) 2010,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -39,7 +39,7 @@ source tetrahedral.tcl
 set n_mol 2520
 # System identification: 
 set name  "mono"
-set ident "_adress_$n_mon"
+set ident "_adress_$n_mol"
 set sfx "8d"
 
 # vmd options
@@ -66,7 +66,7 @@ adress set topo $topo_kind width [expr $ex_width*0.5] $hyb_width center x $ex_ce
 #thermodynamic force
 puts "Setting up thermodynamic forces"
 set s_pref 0.0
-#thermodynamic_force 1 "thermo_force.tab" $s_pref
+thermodynamic_force 1 "thermo_force.tab" $s_pref
 puts "Done"
 
 #############################################################
@@ -221,7 +221,7 @@ if { [file exists "$name$ident.wrm" ] } {
     
     # set LJ cap
     set cap 10
-    inter ljforcecap $cap
+    inter forcecap $cap
     puts "Interactions:\n[inter]"
     # Warmup Integration Loop
     set i 0
@@ -241,7 +241,7 @@ if { [file exists "$name$ident.wrm" ] } {
 	
 	#   Increase LJ cap
 	set cap [expr $cap+10]
-	inter ljforcecap $cap
+	inter forcecap $cap
 	incr i
     }
     
@@ -252,9 +252,9 @@ if { [file exists "$name$ident.wrm" ] } {
 }
 
 puts ""
-puts -nonewline "Remove capping of LJ interactions... "; flush stdout; inter ljforcecap 0; puts "Done."
+puts -nonewline "Remove capping of LJ interactions... "; flush stdout; inter forcecap 0; puts "Done."
 
-puts -nonewline "Switch on capping of LJ interactions... "; flush stdout; inter ljforcecap 1000000000; puts "Done."
+puts -nonewline "Switch on capping of LJ interactions... "; flush stdout; inter forcecap 1000000000; puts "Done."
 
 # Just to see what else we may get from the c code
 puts "\nro variables:"

@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,29 +20,4 @@ EXTRA_DIST = \
 	gen_doxyconfig.py \
 	gen_sampleconfig.py \
 	featuredefs.py \
-	myconfig-sample-body.h \
 	genversion.sh
-
-CLEANFILES = myconfig-sample-body.h
-
-all-local: myconfig-sample-body.h
-
-if HAVE_PYTHON
-myconfig-sample-body.h: FORCE
-	$(PYTHON) $(srcdir)/gen_sampleconfig.py $(top_srcdir)/src/features.def myconfig-sample-body.h
-else
-myconfig-sample-body.h: FORCE
-	if test -e $(srcdir)/myconfig-sample-body.h; then \
-		if ! test -e myconfig-sample-body.h; then \
-			$(LN_S) $(srcdir)/myconfig-sample-body.h .; \
-	else \
-		echo "ERROR: Python was not found in your PATH."; \
-		echo "ERROR: When compiling development code or changing the set of features, you need Python!"; \
-		echo "ERROR: Install it and rerun configure."; \
-		exit 1; \
-		fi; \
-	fi
-endif
-
-.PHONY: FORCE
-FORCE:

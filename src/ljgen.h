@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -134,8 +134,8 @@ MDINLINE double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
   return 0.0;
 }
 
-/** calculate lj_capradius from lj_force_cap */
-void calc_ljgen_cap_radii(double force_cap);
+/** calculate lj_capradius from force_cap */
+void calc_ljgen_cap_radii();
 
 #endif
 

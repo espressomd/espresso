@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,22 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef EWALD_TCL_H
-#define EWALD_TCL_H
-/** \file ewald_tcl.h
- * Tcl interface for \ref ewald.h
- */
+#ifndef _FORCECAP_TCL_H
+#define _FORCECAP_TCL_H
 
 #include "parser.h"
 
-#ifdef ELECTROSTATICS
-
-/// print the ewald parameters to the interpreters result
-int tclprint_to_result_EWALD(Tcl_Interp *interp);
-
-/// parse the ewald parameters
-int tclcommand_inter_coulomb_parse_ewald(Tcl_Interp * interp, int argc, char ** argv);
+/// parser for the forcecap
+int tclcommand_inter_parse_forcecap(Tcl_Interp * interp, int argc, char ** argv);
 
 #endif
 
-#endif

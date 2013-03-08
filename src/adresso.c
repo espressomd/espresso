@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -234,8 +234,8 @@ int adress_tab_set_params(int part_type_a, int part_type_b, char* filename)
     mpi_bcast_ia_params(part_type_a, part_type_b);
     
     //no force cap for the moment!
-    //if (tab_force_cap != -1.0) {
-    //  mpi_tab_cap_forces(tab_force_cap);}
+    //if (force_cap != -1.0) {
+    //  mpi_cap_forces(force_cap);}
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -32,6 +32,7 @@
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "mol_cut.h"
+#include "forcecap.h"
 
 #ifdef LJCOS2
 #include <math.h>
@@ -130,8 +131,8 @@ MDINLINE double ljcos2_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia
   return 0.0;
 }
 
-/** calculate ljcos2_capradius from ljcos2_force_cap */
-void calc_ljcos2_cap_radii(double force_cap);
+/** calculate ljcos2_capradius from force_cap */
+void calc_ljcos2_cap_radii();
 
 #endif /* ifdef LJCOS2 */
 #endif

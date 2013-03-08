@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012 The ESPResSo project
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -51,9 +51,8 @@
 #include "statistics_tcl.h"
 #include "thermostat_tcl.h"
 #include "virtual_sites_com_tcl.h"
-#ifdef CUDA
-#include "cuda_init_tcl.h"
-#endif
+#include "ghmc_tcl.h"
+//#include "cuda_init_tcl.h"
 
 #ifdef TK
 #include <tk.h>
@@ -162,6 +161,10 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("thermostat", tclcommand_thermostat);
   /* in bin.c */
   REGISTER_COMMAND("bin", tclcommand_bin);
+  /* in ghmc.c */
+  REGISTER_COMMAND("ghmc", tclcommand_ghmc);
+  REGISTER_COMMAND("save_state", tclcommand_save_state);
+  REGISTER_COMMAND("load_state", tclcommand_load_state);
   /* in lb.c */
 
   REGISTER_COMMAND("lbfluid", tclcommand_lbfluid);

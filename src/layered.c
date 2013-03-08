@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -690,6 +690,9 @@ void layered_calculate_virials(int v_comp)
       add_kinetic_virials(p1,v_comp);
 
       add_bonded_virials(p1);
+#ifdef BOND_ANGLE_OLD
+      add_three_body_bonded_stress(p1);
+#endif
 #ifdef BOND_ANGLE
       add_three_body_bonded_stress(p1);
 #endif

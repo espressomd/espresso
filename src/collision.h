@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2011,2012 The ESPResSo project
+  Copyright (C) 2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -27,40 +27,40 @@
 
 #ifdef COLLISION_DETECTION
 
-/// Data type holding the info about a single collision
-typedef struct {
-  int pp1; // 1st particle id
-  int pp2; // 2nd particle id
-  double point_of_collision[3]; 
-} collision_struct;
-
-/// Bond type used between centers of colliding particles
-extern int collision_detection_bond_centers;
-
-/// bond type used between virtual sites 
-extern int collision_detection_bond_vs;
-
-/// Particle type for virtual sites created on collision
-extern int collision_vs_particle_type;
-
-/** Bonding mode: 
-    0 = off
-    1 = only create bond between centers of colliiding particles
-    2 = also create two virtual sites at the point o collision and bind the 
-    together. This prevents the particles from sliding against each other. 
-    (Requires VIRTUAL_SITES_RELATIVE) */
-extern int collision_detection_mode;
-
-/// Distance at which particles are bound
-extern double collision_distance;
-
-/** Collision detection mod
-    0=off
-    1=bind centers
-    2=bind at point of collision
-    Never write to this variable. Use collision_detection_set_params()
+/** \name bits of possible modes for collision handling.
+    To be used with \ref collision_detection_set_params.
+    The modes can be combined by or-ing together. Not all combinations are possible.
+    COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
 */
-extern int collision_detection_mode;
+/*@{*/
+/** raise a background error on collision, to allow further processing in Tcl.
+    Can be combined with a bonding mode, if desired
+ */
+#define COLLISION_MODE_EXCEPTION 1
+/// just create bond between centers of colliding particles
+#define COLLISION_MODE_BOND  2
+/** create a bond between the centers of the colloiding particles,
+    plus two virtual sites at the point of collision and bind them
+    together. This prevents the particles from sliding against each
+    other. Requires VIRTUAL_SITES_RELATIVE and COLLISION_MODE_BOND*/
+#define COLLISION_MODE_VS    4
+/*@}*/
+
+typedef struct {
+  /// bond type used between centers of colliding particles
+  int bond_centers;
+  /// bond type used between virtual sites 
+  int bond_vs;
+  /// particle type for virtual sites created on collision
+  int vs_particle_type;
+  /// collision handling mode, a combination of constants COLLISION_MODE_*
+  int mode;
+  /// distance at which particles are bound
+  double distance;
+} Collision_parameters;
+
+/// Parameters for collision detection
+extern Collision_parameters collision_params;
 
 /** Detect a collision between two particles. In case of collision,
     a bond between the particles is added as marker and the collision is
@@ -74,7 +74,7 @@ void prepare_collision_queue();
 void handle_collisions();
 
 /** set the parameters for the collision detection
-    @param mode is 0, 1 or 2 for off, simple bond or noslip
+    @param mode is a bitset out of the COLLISION_MODE_* bits
     @param d is the collision distance, below that a bond is generated
     @param bond_centers is the type of the bond between the real particles
     @param bond_vs is the type of the bond between the virtual particles,
