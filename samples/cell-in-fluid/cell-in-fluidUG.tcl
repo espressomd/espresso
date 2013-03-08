@@ -97,16 +97,18 @@ proc getnlines {file} {
     set lines 0
     while {![eof $f]} { gets $f; incr lines }
     close $f
+    incr lines -1
     return $lines
 }
 
 # number of IB points on the surface
 # of the immersed object
-set nnode [getnlines $fileTriangles]
+set nnode [getnlines $fileNodes]
 # number of triangles at the surface
 # of the immersed object
-set ntriangle 4
+set ntriangle [getnlines $fileTriangles]
 
+puts "nnode $nnode ntriangle $ntriangle"
 file mkdir $tmpdir
 
 # the following script generates the source files
