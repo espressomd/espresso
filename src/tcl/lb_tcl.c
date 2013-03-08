@@ -119,7 +119,6 @@ void lbnode_tcl_print_usage(Tcl_Interp *interp) {
 
 /** TCL Interface: The \ref lbfluid command. */
 #endif
-
 #if defined (LB) || defined (LB_GPU)
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 #endif
