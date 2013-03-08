@@ -51,6 +51,8 @@ User-visible changes
 ESPResSo 3.1.2
 ==============
 
+* Fixed bugs #38475, #37725, #36434.
+
 * Added workaround for bug in VTF reader plugin of VMD 1.9.1 that made
   all particles look the same when ELECTROSTATICS is turned on.
 
