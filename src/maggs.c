@@ -865,6 +865,19 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       case 0 :
       case 1 :
 	if(e_equil || dim == 1) {
+/* MPI_Sendrecv( sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, status )
+ 
+ if (rank%2) {
+ MPI_Send(&data, 1, MPI_INT, next, 42, comm);
+ MPI_Recv(&data, 1, MPI_INT, prev, 42, comm, 0);
+ } else {
+ MPI_Recv(&data, 1, MPI_INT, prev, 42, comm, 0);
+ MPI_Send(&data, 1, MPI_INT, next, 42, comm);
+ }
+ 
+ MPI_Sendrecv(&send_data, 1, MPI_FLOAT, next, 42, &recv_data, 1, MPI_FLOAT, prev, 42, comm, 0);
+ MPI_Sendrecv_replace(&data, 1, MPI_FLOAT, next, 42, prev, 42, comm, 0);
+ */
 	  MPI_Irecv (&field[doffset],1,yzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
 	  MPI_Isend(&field[offset],1,yzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
