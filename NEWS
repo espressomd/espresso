@@ -30,6 +30,9 @@ New user-visible features
   simulations in espresso. To that end it provides functions to find and
   delete random particles of a certain type.
 
+* Added new feature ROTATION_PER_PARTICLE that allow to choose whether
+  a particle has rotational degrees of freedom or not. 
+
 User-visible changes
 --------------------
 
@@ -103,8 +106,6 @@ New user-visible features
 * Added new feature LANGEVIN_PER_PARTICLE that allows to set the
   Langevin parameters temperature and gamma per particle.
 
-* Added new feature ROTATION_PER_PARTICLE that allow to choose whether
-  a particle has rotational degrees of freedom or not. 
 
 * Added new constraint and LB boundary condition "rhomboid".
 
