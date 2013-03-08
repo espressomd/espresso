@@ -203,15 +203,12 @@ MDINLINE void fold_coordinate(double pos[3], int image_box[3], int dir)
     {
       image_box[dir] += (tmp = (int)floor(pos[dir]*box_l_i[dir]));
       pos[dir]        = pos[dir] - tmp*box_l[dir];    
-      if(pos[dir] < 0 || pos[dir] >= box_l[dir]) {
-	/* slow but safe */
-	if (fabs(pos[dir]*box_l_i[dir]) >= INT_MAX/2) {
-	  char *errtext = runtime_error(128 + ES_INTEGER_SPACE + ES_DOUBLE_SPACE);
-	  ERROR_SPRINTF(errtext,"{086 particle coordinate out of range, pos = %g, image box = %d} ", pos[dir], image_box[dir]);
-	  image_box[dir] = 0;
-	  pos[dir] = 0;
-	  return;
-	}
+      if(pos[dir]*box_l_i[dir] < -ROUND_ERROR_PREC || pos[dir]*box_l_i[dir] >= 1 + ROUND_ERROR_PREC) {
+        char *errtext = runtime_error(128 + ES_INTEGER_SPACE + ES_DOUBLE_SPACE);
+        ERROR_SPRINTF(errtext,"{086 particle coordinate out of range, pos = %g, image box = %d} ", pos[dir], image_box[dir]);
+        image_box[dir] = 0;
+        pos[dir] = 0;
+        return;
       }
     }
 }
