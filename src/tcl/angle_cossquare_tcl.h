@@ -20,7 +20,7 @@
 */
 #ifndef _ANGLE_COSSQUARE_TCL_H
 #define _ANGLE_COSSQUARE_TCL_H
-/** \file angle__cossquare_tcl.h
+/** \file angle_cossquare_tcl.h
  * Tcl interface for \ref angle_cossquare.h
  */
 

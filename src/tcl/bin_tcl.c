@@ -20,6 +20,7 @@
 */
 #include "utils.h"
 #include "parser.h"
+#include <strings.h>
 
 static void setup_linear_bins(DoubleList *dl, double min_bin, double max_bin, int bins)
 {

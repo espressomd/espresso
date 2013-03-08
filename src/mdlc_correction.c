@@ -175,8 +175,6 @@ double get_DLC_dipolar(int kcut,double *fx, double *fy, double *fz, double *tx, 
 
   for(ix=-kcut;ix<=+kcut;ix++){
     for(iy=-kcut;iy<=+kcut;iy++){
-
-		
       if(!(ix==0 && iy==0)){  
 	gx=(double)ix*facux;
 	gy=(double)iy*facuy;

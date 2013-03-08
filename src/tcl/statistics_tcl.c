@@ -1145,7 +1145,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
 
   momentofinertiamatrix(p1, MofImatrix);
   calc_eigenvalues_3x3(MofImatrix, eva);
-  
+
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {
