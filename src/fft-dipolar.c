@@ -88,8 +88,8 @@ int dfft_init(double **data,
 
   dfft.max_comm_size=0; dfft.max_mesh_size=0;
   for(i=0;i<4;i++) {
-    n_id[i]  = malloc(1*n_nodes*sizeof(int));
-    n_pos[i] = malloc(3*n_nodes*sizeof(int));
+    n_id[i]  = (int *) malloc(1*n_nodes*sizeof(int));
+    n_pos[i] = (int *) malloc(3*n_nodes*sizeof(int));
   }
 
   /* === node grids === */
@@ -245,9 +245,9 @@ int dfft_init(double **data,
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }
-    if(dfft.init_tag==1) fftw_destroy_plan(dfft.plan[i].fftw_plan);
+    if(dfft.init_tag==1) fftw_destroy_plan(dfft.plan[i].our_fftw_plan);
 //printf("dfft.plan[%d].n_ffts=%d\n",i,dfft.plan[i].n_ffts);
-    dfft.plan[i].fftw_plan =
+    dfft.plan[i].our_fftw_plan =
       fftw_plan_many_dft(1,&dfft.plan[i].new_mesh[2],dfft.plan[i].n_ffts,
                          c_data,NULL,1,dfft.plan[i].new_mesh[2],
                          c_data,NULL,1,dfft.plan[i].new_mesh[2],
@@ -271,8 +271,8 @@ int dfft_init(double **data,
       wisdom_status = fftw_import_wisdom_from_file(wisdom_file);
       fclose(wisdom_file);
     }    
-    if(dfft.init_tag==1) fftw_destroy_plan(dfft.back[i].fftw_plan);
-    dfft.back[i].fftw_plan =
+    if(dfft.init_tag==1) fftw_destroy_plan(dfft.back[i].our_fftw_plan);
+    dfft.back[i].our_fftw_plan =
       fftw_plan_many_dft(1,&dfft.plan[i].new_mesh[2],dfft.plan[i].n_ffts,
                          c_data,NULL,1,dfft.plan[i].new_mesh[2],
                          c_data,NULL,1,dfft.plan[i].new_mesh[2],
@@ -335,19 +335,19 @@ void dfft_perform_forw(double *data)
     data[(2*i)+1] = 0;       /* complex value */
   }
   /* perform FFT (in/out is data)*/
-  fftw_execute_dft(dfft.plan[1].fftw_plan,c_data,c_data);
+  fftw_execute_dft(dfft.plan[1].our_fftw_plan,c_data,c_data);
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_forw: dir 2:\n",this_node));
   /* communication to current dir row format (in is data) */
   dfft_forw_grid_comm(dfft.plan[2], data, dfft.data_buf);
   /* perform FFT (in/out is data_buf)*/
-  fftw_execute_dft(dfft.plan[2].fftw_plan,c_data_buf,c_data_buf);
+  fftw_execute_dft(dfft.plan[2].our_fftw_plan,c_data_buf,c_data_buf);
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_forw: dir 3:\n",this_node));
   /* communication to current dir row format (in is data_buf) */
   dfft_forw_grid_comm(dfft.plan[3], dfft.data_buf, data);
   /* perform FFT (in/out is data)*/
-  fftw_execute_dft(dfft.plan[3].fftw_plan,c_data,c_data);
+  fftw_execute_dft(dfft.plan[3].our_fftw_plan,c_data,c_data);
   //fft_print_global_fft_mesh(dfft.plan[3],data,1,0);
 
   /* REMARK: Result has to be in data. */
@@ -366,21 +366,21 @@ void dfft_perform_back(double *data)
 
 
   /* perform FFT (in is data) */
-  fftw_execute_dft(dfft.back[3].fftw_plan,c_data,c_data);
+  fftw_execute_dft(dfft.back[3].our_fftw_plan,c_data,c_data);
   /* communicate (in is data)*/
   dfft_back_grid_comm(dfft.plan[3],dfft.back[3],data,dfft.data_buf);
  
   /* ===== second direction ===== */
   FFT_TRACE(fprintf(stderr,"%d: dipolar fft_perform_back: dir 2:\n",this_node));
   /* perform FFT (in is data_buf) */
-  fftw_execute_dft(dfft.back[2].fftw_plan,c_data_buf,c_data_buf);
+  fftw_execute_dft(dfft.back[2].our_fftw_plan,c_data_buf,c_data_buf);
   /* communicate (in is data_buf) */
   dfft_back_grid_comm(dfft.plan[2],dfft.back[2],dfft.data_buf,data);
 
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr,"%d: fft_perform_back: dir 1:\n",this_node));
   /* perform FFT (in is data) */
-  fftw_execute_dft(dfft.back[1].fftw_plan,c_data,c_data);
+  fftw_execute_dft(dfft.back[1].our_fftw_plan,c_data,c_data);
   /* throw away the (hopefully) empty complex component (in is data)*/
   for(i=0;i<dfft.plan[1].new_size;i++) {
     dfft.data_buf[i] = data[2*i]; /* real value */
