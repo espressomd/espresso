@@ -398,7 +398,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
           return lb_lbfluid_load_checkpoint(argv[1], 1);
         }
       }  
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
 			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
 				return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
 			}
