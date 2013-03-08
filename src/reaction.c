@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -136,7 +136,6 @@ void integrate_reaction() {
             rand = d_random();
             
 			      if(rand > back_ratexp) {
-printf("DEBUG: integrate_reaction; back_react\n"); //TODO delete
 			        p1[i].p.type=reaction.reactant_type;
 			      }
           }
