@@ -32,9 +32,9 @@ extern "C" {
 }
 
 #ifdef LB_GPU
-#ifndef GAUSSRANDOM
-#define GAUSSRANDOM
-#endif
+//#ifndef GAUSSRANDOM
+//#define GAUSSRANDOM
+//#endif
 
 /**defining structures residing in global memory */
 /** struct for phys. values */
