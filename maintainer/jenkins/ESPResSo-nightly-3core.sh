@@ -4,7 +4,7 @@ source maintainer/jenkins/common.sh
 bootstrap
 
 start "CONFIGURE"
-./configure --with-mpi COUNT_CPU="3"
+./configure --with-mpi CPU_COUNT="3"
 end "CONFIGURE"
 
 # copy config file
