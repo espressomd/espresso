@@ -1005,21 +1005,10 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
      
-#ifndef SHANCHEN
     p_u[0] = (double)(host_print_values[0].v[0]);
     p_u[1] = (double)(host_print_values[0].v[1]);
     p_u[2] = (double)(host_print_values[0].v[2]);
-#else // SHANCHEN
-    {
-      int i ;
-      for(i=0;i<SHANCHEN;i++){ 
-         p_u[0+3*i] = (double)(host_print_values[0].v[0+3*i]);
-         p_u[1+3*i] = (double)(host_print_values[0].v[1+3*i]);
-         p_u[2+3*i] = (double)(host_print_values[0].v[2+3*i]);
-      }
-    }
-#endif // SHANCHEN
-		free (host_print_values);
+    free (host_print_values);
 #endif
   } else {  
 #ifdef LB

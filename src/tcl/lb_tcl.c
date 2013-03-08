@@ -730,11 +730,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        }
        else if (ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity")) {
          lb_lbnode_get_u(coord, double_return);
-#ifndef SHANCHEN
          for (counter = 0; counter < 3; counter++) {
-#else // SHANCHEN
-         for (counter = 0; counter < 3*SHANCHEN; counter++) {
-#endif // SHANCHEN
            Tcl_PrintDouble(interp, double_return[counter], double_buffer);
            Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
          }
