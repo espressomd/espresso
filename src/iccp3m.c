@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -142,92 +142,92 @@ int iccp3m_iteration() {
    double f1, f2 = 0;
 
    iccp3m_sanity_check();
-
+   
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
-     	errtxt = runtime_error(128);
-	    ERROR_SPRINTF(errtxt, "ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n");
+     errtxt = runtime_error(128);
+     ERROR_SPRINTF(errtxt, "ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n");
    }
-
+   
    
    iccp3m_cfg.citeration=0;
    for(j=0;j<iccp3m_cfg.num_iteration;j++) {
-       hmax=0.;
-       force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding source source interaction*/
-       diff=0;
-       for(c = 0; c < local_cells.n; c++) {
-            cell = local_cells.cell[c];
-            part = cell->part;
-            np   = cell->n;
-            for(i=0 ; i < np; i++) {
-                id = part[i].p.identity ;
-                if( id < iccp3m_cfg.n_ic ) {
+     hmax=0.;
+     force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding source source interaction*/
+     diff=0;
+     for(c = 0; c < local_cells.n; c++) {
+       cell = local_cells.cell[c];
+       part = cell->part;
+       np   = cell->n;
+       for(i=0 ; i < np; i++) {
+         id = part[i].p.identity ;
+         if( id < iccp3m_cfg.n_ic ) {
            /* the dielectric-related prefactor: */                     
-                      del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
+           del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
            /* calculate the electric field at the certain position */
-                      ex=part[i].f.f[0]/part[i].p.q;
-                      ey=part[i].f.f[1]/part[i].p.q;
-                      ez=part[i].f.f[2]/part[i].p.q;
-
-          /* let's add the contribution coming from the external field */
-                      ex += iccp3m_cfg.extx; 
-                      ey += iccp3m_cfg.exty; 
-                      ez += iccp3m_cfg.extz;
-                      
-                      if (ex == 0 && ey == 0 && ez == 0) {
-                        	errtxt = runtime_error(128);
-                        	ERROR_SPRINTF(errtxt, "ICCP3M found zero electric field on a charge. This must never happen");
-                      }
+           ex=part[i].f.f[0]/part[i].p.q;
+           ey=part[i].f.f[1]/part[i].p.q;
+           ez=part[i].f.f[2]/part[i].p.q;
+           
+           /* let's add the contribution coming from the external field */
+           ex += iccp3m_cfg.extx; 
+           ey += iccp3m_cfg.exty; 
+           ez += iccp3m_cfg.extz;
+           
+           if (ex == 0 && ey == 0 && ez == 0) {
+             errtxt = runtime_error(128);
+             ERROR_SPRINTF(errtxt, "ICCP3M found zero electric field on a charge. This must never happen");
+           }
            /* the dot product   */
-                      fdot = ex*iccp3m_cfg.nvectorx[id]+
-                             ey*iccp3m_cfg.nvectory[id]+
-                             ez*iccp3m_cfg.nvectorz[id];
-
+           fdot = ex*iccp3m_cfg.nvectorx[id]+
+             ey*iccp3m_cfg.nvectory[id]+
+             ez*iccp3m_cfg.nvectorz[id];
+           
            /* recalculate the old charge density */
-                      hold=part[i].p.q/iccp3m_cfg.areas[id];
-          /* determine if it is higher than the previously highest charge density */            
-                      if(hold>fabs(hmax))hmax=fabs(hold); 
-                      f1 =  (+del_eps*fdot/l_b);
-//                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
-                      if (iccp3m_cfg.sigma!=0) {
-                        f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
-                      } 
-
-                      hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
-                      difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
-                                                                              an estimator which can be negative
-                                                                              here */
-                      if(difftemp > diff && part[i].p.q > 1e-5)
-                      {
-//                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
-                        diff=difftemp;  /* Take the largest error to check for convergence */
-                      }
-                      part[i].p.q = hnew * iccp3m_cfg.areas[id];
-         /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
-         /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
-                      if(fabs(part[i].p.q) > 1e6) { 
-                        errtxt = runtime_error(128);
-            	          ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >1e6 , \
+           hold=part[i].p.q/iccp3m_cfg.areas[id];
+           /* determine if it is higher than the previously highest charge density */            
+           if(hold>fabs(hmax))hmax=fabs(hold); 
+           f1 =  (+del_eps*fdot/l_b);
+           //                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
+           if (iccp3m_cfg.sigma!=0) {
+             f2 = (2*iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] )*(iccp3m_cfg.sigma[id]);
+           } 
+           
+           hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
+           difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
+                                                             an estimator which can be negative
+                                                             here */
+           if(difftemp > diff && part[i].p.q > 1e-5)
+             {
+               //                          if (fabs(difftemp - 1./(1./iccp3m_cfg.relax - 1.)) > 1e-10) 
+               diff=difftemp;  /* Take the largest error to check for convergence */
+             }
+           part[i].p.q = hnew * iccp3m_cfg.areas[id];
+           /* check if the charge now is more than 1e6, to determine if ICC still leads to reasonable results */
+           /* this is kind a arbitrary measure but, does a good job spotting divergence !*/
+           if(fabs(part[i].p.q) > 1e6) { 
+             errtxt = runtime_error(128);
+             ERROR_SPRINTF(errtxt, "{error occured 990 : too big charge assignment in iccp3m! q >1e6 , \
                                assigned charge= %f } \n",part[i].p.q);
-                        diff = 1e90; /* A very high value is used as error code */
-                        break;
-                      }
-                 }
-             }  /* cell particles */
-           // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
-       } /* local cells */
-       iccp3m_cfg.citeration++;
-       MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
-
-       if (globalmax < iccp3m_cfg.convergence) 
-         break; 
-       if ( diff > 1e89 ) /* Error happened */
-         return iccp3m_cfg.citeration++;
-
-  } /* iteration */
-  //on_particle_change();
-
-  return iccp3m_cfg.citeration++;
+             diff = 1e90; /* A very high value is used as error code */
+             break;
+           }
+         }
+       }  /* cell particles */
+       // printf("cell %d w %d particles over (node %d)\n",c,np,this_node); fflush(stdout);
+     } /* local cells */
+     iccp3m_cfg.citeration++;
+     MPI_Allreduce(&diff, &globalmax, 1,MPI_DOUBLE, MPI_MAX, comm_cart);
+     
+     if (globalmax < iccp3m_cfg.convergence) 
+       break; 
+     if ( diff > 1e89 ) /* Error happened */
+       return iccp3m_cfg.citeration++;
+     
+   } /* iteration */
+   //on_particle_change();
+   
+   return iccp3m_cfg.citeration++;
 }
 
 void force_calc_iccp3m() {
