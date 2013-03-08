@@ -75,7 +75,7 @@ static void check_cells_consistency()
   memset(used.e, 0, n_cells*sizeof(int));
   
   for (c = 0; c < local_cells.n; c++) {
-    index = (void *)local_cells.cell[c] - (void *)cells;
+    index = (char *)local_cells.cell[c] - (char *)cells;
     if ((index % sizeof(Cell)) != 0) {
       fprintf(stderr, "%d: local cell pointer not even aligned, certainly wrong (local_cell[%d], index=%d).\n", this_node, c, index);
       errexit();
@@ -93,7 +93,7 @@ static void check_cells_consistency()
   }
 
   for (c = 0; c < ghost_cells.n; c++) {
-    index = (void *)ghost_cells.cell[c] - (void *)cells;
+    index = (char *)ghost_cells.cell[c] - (char *)cells;
     if ((index % sizeof(Cell)) != 0) {
       fprintf(stderr, "%d: ghost cell pointer not even aligned, certainly wrong (ghost_cell[%d], index=%d).\n", this_node, c, index);
       errexit();

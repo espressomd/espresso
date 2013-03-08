@@ -51,7 +51,7 @@ int check_id =  ONEPART_DEBUG_ID ;
 #undef malloc
 #undef free
 
-void *__realloc(void *old, unsigned int size, char *where, int line)
+void *__realloc(void *old, unsigned int size, const char *where, int line)
 {
   void *ret;
   if (size == 0) {
@@ -65,7 +65,7 @@ void *__realloc(void *old, unsigned int size, char *where, int line)
   return ret;
 }
 
-void *__malloc(unsigned int size, char *where, int line)
+void *__malloc(unsigned int size, const char *where, int line)
 {
   void *ret;
   if (size > 0)
@@ -76,7 +76,7 @@ void *__malloc(unsigned int size, char *where, int line)
   return ret;
 }
 
-void __free(void *p, char *where, int line)
+void __free(void *p, const char *where, int line)
 {
   fprintf(stderr, "%d: free %p at %s:%d\n", this_node, p, where, line);
   free(p);
