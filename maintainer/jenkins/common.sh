@@ -1,3 +1,5 @@
+renice 10 -u jenkins
+
 function start() {
     echo "START $1"
 }
