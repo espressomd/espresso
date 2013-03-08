@@ -956,7 +956,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
    
     if(this_node==0) {
       /* self energy correction */
-      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",this_node, dp3m.energy_correction));
+      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",\
+                        this_node, dp3m.energy_correction));
 #ifdef P3M_DEBUG
       double a = k_space_energy_dip;
 #endif
