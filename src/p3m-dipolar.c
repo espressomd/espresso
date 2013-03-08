@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -956,7 +956,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag)
    
     if(this_node==0) {
       /* self energy correction */
-      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",this_node, dp3m.energy_correction));
+      P3M_TRACE(fprintf(stderr,"%d: *dp3m.energy_correction=%20.15lf\n",\
+                        this_node, dp3m.energy_correction));
 #ifdef P3M_DEBUG
       double a = k_space_energy_dip;
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -18,6 +18,10 @@
 */
 #ifndef CUDA_INIT_H
 #define CUDA_INIT_H
+
+#include "config.h"
+
+#ifdef CUDA
 
 /** get the number of CUDA devices.
 
@@ -62,5 +66,7 @@ int cuda_get_device();
 
 /** current error message of CUDA. */
 extern const char *cuda_error;
+
+#endif /* defined(CUDA) */
 
 #endif

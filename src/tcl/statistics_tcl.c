@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1145,7 +1145,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
 
   momentofinertiamatrix(p1, MofImatrix);
   calc_eigenvalues_3x3(MofImatrix, eva);
-  
+
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   for (j= 0; j < 3; j++) {

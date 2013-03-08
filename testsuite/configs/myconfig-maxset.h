@@ -16,6 +16,7 @@
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
 #define REACTIONS
+#define GRANDCANONCIAL
 
 #define NEMD
 #define NPT 
@@ -43,7 +44,7 @@
 #define INTER_RF
 #define OVERLAPPED
 
-#define BOND_ANGLE_COSINE
+#define BOND_ANGLE
 #define BOND_ANGLEDIST
 #define BOND_ANGLEDIST_HARMONIC
 #define BOND_ENDANGLEDIST

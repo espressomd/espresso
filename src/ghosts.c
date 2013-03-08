@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -184,7 +184,9 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts)
   }
 #ifdef ADDITIONAL_CHECKS
   if (insert - s_buffer != n_s_buffer) {
-    fprintf(stderr, "%d: INTERNAL ERROR: send buffer size %d differs from what I put in %d\n", this_node, n_s_buffer, insert - s_buffer);
+    fprintf(stderr, "%d: INTERNAL ERROR: send buffer size %d "
+            "differs from what I put in %ld\n", 
+            this_node, n_s_buffer, insert - s_buffer);
     errexit();
   }
 #endif
@@ -268,7 +270,9 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts)
   }
 #ifdef ADDITIONAL_CHECKS
   if (retrieve - r_buffer != n_r_buffer) {
-    fprintf(stderr, "%d: recv buffer size %d differs from what I put in %d\n", this_node, n_r_buffer, retrieve - r_buffer);
+    fprintf(stderr, "%d: recv buffer size %d differs "
+            "from what I put in %ld\n", 
+            this_node, n_r_buffer, retrieve - r_buffer);
     errexit();
   }
 #endif
@@ -293,7 +297,9 @@ void add_forces_from_recv_buffer(GhostCommunication *gc)
   }
 #ifdef ADDITIONAL_CHECKS
   if (retrieve - r_buffer != n_r_buffer) {
-    fprintf(stderr, "%d: recv buffer size %d differs from what I put in %d\n", this_node, n_r_buffer, retrieve - r_buffer);
+    fprintf(stderr, "%d: recv buffer size %d differs "
+            "from what I put in %ld\n", 
+            this_node, n_r_buffer, retrieve - r_buffer);
     errexit();
   }
 #endif

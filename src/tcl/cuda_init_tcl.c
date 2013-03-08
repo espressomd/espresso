@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -20,6 +20,8 @@
 #include "utils.h"
 #include "parser.h"
 #include "cuda_init.h"
+
+#ifdef CUDA
 
 /** prints a list of the available GPUs to the result of the Tcl interpreter.
     Only devices with compute capability of 1.1 or higher are listed, since
@@ -50,6 +52,7 @@ static int list_gpus(Tcl_Interp *interp)
 
   return TCL_OK;
 }
+#endif /* defined(CUDA) */
 
 /** returns 1 if and only if the GPU with the given id is usable for
     CUDA computations.  Only devices with compute capability of 1.1 or
@@ -58,6 +61,10 @@ static int list_gpus(Tcl_Interp *interp)
 int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
 		    int argc, char **argv)
 {
+#ifndef CUDA
+    Tcl_AppendResult(interp, "Feature CUDA required!", (char *)NULL);
+    return TCL_ERROR;
+#else
   if (argc <= 1) {
     Tcl_AppendResult(interp, "too few arguments to the cuda command", (char *)NULL);
     return TCL_ERROR;
@@ -110,4 +117,5 @@ int tclcommand_cuda(ClientData data, Tcl_Interp *interp,
     Tcl_AppendResult(interp, "unknown subcommand \"", argv[0], "\"", (char *)NULL);
     return TCL_ERROR;
   }
+#endif /* defined(CUDA) */
 }
