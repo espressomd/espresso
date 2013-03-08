@@ -10,5 +10,5 @@ end "CONFIGURE"
 use_myconfig compileonly
 
 start "BUILD"
-make -j 2
+make -j 4
 end "BUILD"
