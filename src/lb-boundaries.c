@@ -134,7 +134,7 @@ void lb_init_boundaries() {
           
         	if (dist <= 0 && n_lb_boundaries > 0) {
          	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
-            host_boundindex = realloc(host_boundindex, size_of_index);
+		  host_boundindex = (int*) realloc(host_boundindex, size_of_index);
             host_boundindex[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
             //printf("boundindex %i: \n", host_boundindex[number_of_boundnodes]);  
             number_of_boundnodes++;  

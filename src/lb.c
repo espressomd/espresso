@@ -417,7 +417,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
   if (lattice_switch & LATTICE_LB_GPU) {	
 #ifdef LB_GPU
     unsigned int* bound_array;
-    bound_array = malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
+    bound_array = (unsigned int*) malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
     lb_get_boundary_flags_GPU(bound_array);
   
     int j;	
@@ -510,7 +510,7 @@ int lb_lbfluid_print_boundary(char* filename) {
   if (lattice_switch & LATTICE_LB_GPU) {	
 #ifdef LB_GPU
     unsigned int* bound_array; 
-    bound_array = malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
+    bound_array = (unsigned int*) malloc(lbpar_gpu.number_of_nodes*sizeof(unsigned int));
     lb_get_boundary_flags_GPU(bound_array);
 
     int xyz[3];
@@ -698,7 +698,7 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     LB_values_gpu *host_print_values;
-    host_print_values = malloc(sizeof(LB_values_gpu));	
+    host_print_values = (LB_values_gpu*) malloc(sizeof(LB_values_gpu));	
     double rho;
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
@@ -729,7 +729,7 @@ int lb_lbnode_get_u(int* ind, double* p_u) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     LB_values_gpu *host_print_values;
-    host_print_values = malloc(sizeof(LB_values_gpu));	
+    host_print_values = (LB_values_gpu*) malloc(sizeof(LB_values_gpu));	
     
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
