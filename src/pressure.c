@@ -114,15 +114,11 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     nsq_calculate_virials(v_comp);
   }
   /* rescale kinetic energy (=ideal contribution) */
-#ifdef ROTATION
 #ifdef ROTATION_PER_PARTICLE
     fprintf(stderr, "Switching rotation per particle (#define ROTATION_PER_PARTICLE) and pressure calculation are incompatible.\n");
 #endif
   
-  virials.data.e[0] /= (6.0*volume*time_step*time_step);
-#else
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
-#endif
 
   calc_long_range_virials();
 
