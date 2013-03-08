@@ -98,9 +98,13 @@ New user-visible features
 * The new feature COLLISION_DETECTION allows to dynamically add new
   bonds between colliding particles.
 
-* Added new constraint and LB boundary condition "rhomboid" that
-  allows to create arbitrary rhomboids. When combining several
-  rhomboids, almost any shape of a constraint is doable.
+* Added new feature LANGEVIN_PER_PARTICLE that allows to set the
+  Langevin parameters temperature and gamma per particle.
+
+* Added new feature ROTATION_PER_PARTICLE that allow to choose whether
+  a particle has rotational degrees of freedom or not. 
+
+* Added new constraint and LB boundary condition "rhomboid".
 
 * Lattice-Boltzmann:
 

@@ -109,6 +109,10 @@ void init_particle(Particle *part)
   part->p.rinertia[1] = 1.0;
   part->p.rinertia[2] = 1.0;
 #endif
+#ifdef ROTATION_PER_PARTICLE
+  part->p.rotation =0;
+#endif
+
 
 #ifdef ELECTROSTATICS
   part->p.q        = 0.0;
@@ -613,6 +617,25 @@ int set_particle_rotational_inertia(int part, double rinertia[3])
   if (pnode == -1)
     return ES_ERROR;
   mpi_send_rotational_inertia(pnode, part, rinertia);
+  return ES_OK;
+}
+#endif
+
+
+#ifdef ROTATION_PER_PARTICLE
+int set_particle_rotation(int part, int rot)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_rotation(pnode, part, rot);
   return ES_OK;
 }
 #endif

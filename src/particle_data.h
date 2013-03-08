@@ -83,6 +83,12 @@ typedef struct {
   double rinertia[3];
 #endif
 
+#ifdef ROTATION_PER_PARTICLE
+  // Determines, wether a particle's rotational degrees of freedom are
+  // integrated
+  int rotation;
+#endif
+
 #ifdef ELECTROSTATICS
   /** charge. */
   double q;
