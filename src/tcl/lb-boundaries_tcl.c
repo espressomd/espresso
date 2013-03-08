@@ -190,7 +190,7 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 LB_Boundary *generate_lbboundary()
 {
   n_lb_boundaries++;
-  lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
   lb_boundaries[n_lb_boundaries-1].velocity[0]=
   lb_boundaries[n_lb_boundaries-1].velocity[1]=

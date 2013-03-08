@@ -1041,8 +1041,8 @@ static void halo_push_communication() {
    * X direction *
    ***************/
   count = 5*lblattice.halo_grid[1]*lblattice.halo_grid[2];
-  sbuf = malloc(count*sizeof(double));
-  rbuf = malloc(count*sizeof(double));
+  sbuf = (double*) malloc(count*sizeof(double));
+  rbuf = (double*) malloc(count*sizeof(double));
 
   /* send to right, recv from left i = 1, 7, 9, 11, 13 */
   snode = node_neighbors[1];
@@ -1136,8 +1136,8 @@ static void halo_push_communication() {
    * Y direction *
    ***************/
   count = 5*lblattice.halo_grid[0]*lblattice.halo_grid[2];
-  sbuf = realloc(sbuf, count*sizeof(double));
-  rbuf = realloc(rbuf, count*sizeof(double));
+  sbuf = (double*) realloc(sbuf, count*sizeof(double));
+  rbuf = (double*) realloc(rbuf, count*sizeof(double));
 
   /* send to right, recv from left i = 3, 7, 10, 15, 17 */
   snode = node_neighbors[3];
@@ -1235,8 +1235,8 @@ static void halo_push_communication() {
    * Z direction *
    ***************/
   count = 5*lblattice.halo_grid[0]*lblattice.halo_grid[1];
-  sbuf = realloc(sbuf, count*sizeof(double));
-  rbuf = realloc(rbuf, count*sizeof(double));
+  sbuf = (double*) realloc(sbuf, count*sizeof(double));
+  rbuf = (double*) realloc(rbuf, count*sizeof(double));
   
   /* send to right, recv from left i = 5, 11, 14, 15, 18 */
   snode = node_neighbors[5];
@@ -1365,8 +1365,8 @@ int lb_sanity_checks() {
 /** (Pre-)allocate memory for data structures */
 void lb_pre_init() {
   n_veloc = lbmodel.n_veloc;
-  lbfluid[0]    = malloc(2*lbmodel.n_veloc*sizeof(double *));
-  lbfluid[0][0] = malloc(2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+  lbfluid[0]    = (double**) malloc(2*lbmodel.n_veloc*sizeof(double *));
+  lbfluid[0][0] = (double*) malloc(2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
 }
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
@@ -1375,8 +1375,8 @@ static void lb_realloc_fluid() {
 
   LB_TRACE(printf("reallocating fluid\n"));
 
-  lbfluid[0]    = realloc(*lbfluid,2*lbmodel.n_veloc*sizeof(double *));
-  lbfluid[0][0] = realloc(**lbfluid,2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
+  lbfluid[0]    = (double**) realloc(*lbfluid,2*lbmodel.n_veloc*sizeof(double *));
+  lbfluid[0][0] = (double*) realloc(**lbfluid,2*lblattice.halo_grid_volume*lbmodel.n_veloc*sizeof(double));
   lbfluid[1]    = (double **)lbfluid[0] + lbmodel.n_veloc;
   lbfluid[1][0] = (double *)lbfluid[0][0] + lblattice.halo_grid_volume*lbmodel.n_veloc;
 
@@ -1385,7 +1385,7 @@ static void lb_realloc_fluid() {
     lbfluid[1][i] = lbfluid[1][0] + i*lblattice.halo_grid_volume;
   }
 
-  lbfields = realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
+  lbfields = (LB_FluidNode*) realloc(lbfields,lblattice.halo_grid_volume*sizeof(*lbfields));
 
 }
 
@@ -1406,7 +1406,7 @@ static void lb_prepare_communication() {
     prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE);
 
     update_halo_comm.num = comm.num;
-    update_halo_comm.halo_info = realloc(update_halo_comm.halo_info,comm.num*sizeof(HaloInfo));
+    update_halo_comm.halo_info = (HaloInfo*) realloc(update_halo_comm.halo_info,comm.num*sizeof(HaloInfo));
 
     /* replicate the halo structure */
     for (i=0; i<comm.num; i++) {
@@ -2753,8 +2753,8 @@ static void lb_check_halo_regions()
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
 
-  r_buffer = malloc(count*sizeof(double));
-  s_buffer = malloc(count*sizeof(double));
+  r_buffer = (double*) malloc(count*sizeof(double));
+  s_buffer = (double*) malloc(count*sizeof(double));
 
   if (PERIODIC(0)) {
     for (z=0;z<lblattice.halo_grid[2];++z) {

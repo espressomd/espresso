@@ -72,7 +72,7 @@
 /** Description of the LB Model in terms of the unit vectors of the 
  *  velocity sub-lattice and the corresponding coefficients 
  *  of the pseudo-equilibrium distribution */
-typedef const struct {
+typedef struct {
 
   /** number of velocities */
   int n_veloc ;

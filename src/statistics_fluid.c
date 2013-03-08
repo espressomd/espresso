@@ -116,7 +116,7 @@ void lb_calc_fluid_temp(double *result) {
 
 void lb_collect_boundary_forces(double *result) {
 #ifdef LB_BOUNDARIES
-  double* boundary_forces=malloc(3*n_lb_boundaries*sizeof(double));
+  double* boundary_forces = (double*) malloc(3*n_lb_boundaries*sizeof(double));
 
   for (int i = 0; i < n_lb_boundaries; i++) 
     for (int j = 0; j < 3; j++)
@@ -137,7 +137,7 @@ void lb_calc_densprof(double *result, int *params) {
   MPI_Comm slice_comm;
   MPI_Status status;
 
-  if (this_node !=0) params = malloc(3*sizeof(int));
+  if (this_node !=0) params = (int*) malloc(3*sizeof(int));
 
   MPI_Bcast(params, 3, MPI_INT, 0, comm_cart);
 
@@ -161,11 +161,11 @@ void lb_calc_densprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot)
-    result = realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
+    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
 
   if (involved) {
 
-    profile = malloc(lblattice.grid[pdir]*sizeof(double));
+    profile = (double*) malloc(lblattice.grid[pdir]*sizeof(double));
       
     //dir[(pdir+1)%3] += 1;
     //dir[(pdir+2)%3] += 1;
@@ -218,7 +218,7 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm slice_comm;
   MPI_Status status;
 
-  if (this_node != 0) params = malloc(4*sizeof(int));
+  if (this_node != 0) params = (int*) malloc(4*sizeof(int));
 
   MPI_Bcast(params, 4, MPI_INT, 0, comm_cart);
 
@@ -247,13 +247,13 @@ void lb_calc_velprof(double *result, int *params) {
   MPI_Comm_rank(slice_comm, &subrank);
 
   if (this_node == newroot) 
-    result = realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
+    result = (double*) realloc(result,box_l[pdir]/lblattice.agrid*sizeof(double));
 
   //fprintf(stderr,"%d (%d,%d): result=%p vcomp=%d pdir=%d x1=%d x2=%d involved=%d\n",this_node,subrank,newroot,result,vcomp,pdir,x1,x2,involved);
 
   if (involved) {
 
-    velprof = malloc(lblattice.grid[pdir]*sizeof(double));
+    velprof = (double*) malloc(lblattice.grid[pdir]*sizeof(double));
 
     //dir[(pdir+1)%3] += 1;
     //dir[(pdir+2)%3] += 1;

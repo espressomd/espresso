@@ -222,7 +222,7 @@ void lb_init_boundaries() {
 
 int lbboundary_get_force(int no, double* f) {
 #ifdef LB_BOUNDARIES
-  double* forces=malloc(3*n_lb_boundaries*sizeof(double));
+  double* forces = (double*) malloc(3*n_lb_boundaries*sizeof(double));
   
   mpi_gather_stats(8, forces, NULL, NULL, NULL);
   
