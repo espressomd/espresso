@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLE_TCL_H
-#define ANGLE_TCL_H
-/** \file angle__cossquare_tcl.h
+#ifndef _ANGLE_COSSQUARE_TCL_H
+#define _ANGLE_COSSQUARE_TCL_H
+/** \file angle_cossquare_tcl.h
  * Tcl interface for \ref angle_cossquare.h
  */
 

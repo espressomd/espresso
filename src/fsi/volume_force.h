@@ -62,9 +62,6 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 	int type_num, type, n_partners, id;
 	char *errtxt;
 
-	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
-	
-	
 	//int test=0;
 	//printf("rank%d, molType2: %d\n", rank,molType);
 	/* Loop local cells */
@@ -144,9 +141,6 @@ MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-t
 	int type_num, type, n_partners, id;
 	char *errtxt;
 
-	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
-	
-	
 	int test=0;
 	
 	/* Loop local cells */

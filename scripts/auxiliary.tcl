@@ -7,7 +7,7 @@
 #                                                           #
 #############################################################
 #
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -599,7 +599,7 @@ proc prepare_vmd_connection { {filename "vmd"} {wait "0"} {start "1" } {draw_con
   set HOSTNAME [exec hostname]
   set vmdout_file [open "${filename}.vmd_start.script" "w"]
   
-  puts $vmdout_file "logfile off"
+  puts $vmdout_file "logfile vmd.log"
   puts $vmdout_file "mol load vsf $filename.vsf"
   puts $vmdout_file "rotate stop"
   puts $vmdout_file "mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000"

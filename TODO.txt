@@ -1,12 +1,4 @@
 Issues:
-- are there any more hard-coded constants? I have removed the one from the forces.c
-
-
-- we don't need guards for bonded forces, as they only act
-- ESPResSo has global variables this_node and n_nodes, no need for
-  Comm_rank etc.
-
-
 - we need a test case. Should run a couple of secs and check that no
   future changes to the code break the computations. Normally,
   checking that the forces in a given setup are correctly calculated

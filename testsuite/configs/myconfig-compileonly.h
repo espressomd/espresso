@@ -16,6 +16,7 @@
 #define MODES
 #define BOND_VIRTUAL
 #define COLLISION_DETECTION
+#define GRANDCANONICAL
 
 #define NEMD
 #define NPT 
@@ -39,7 +40,7 @@
 #define SOFT_SPHERE
 #define INTER_RF
 
-#define BOND_ANGLE_COSINE
+#define BOND_ANGLE
 #define BOND_ANGLEDIST
 
 #define VIRTUAL_SITES_RELATIVE

@@ -47,12 +47,8 @@ int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
  */  
 
 MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
-	double partArea=0.,norm[3];//, dn;
-	//int rank, num_proc;
-	
-	//MPI_Comm_size(MPI_COMM_WORLD,&num_proc);
-	//MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-	
+	double partArea=0.,norm[3];
+
 	/** loop over particles */
 	int c, np, i ,j;
 	Cell *cell;
@@ -63,9 +59,6 @@ MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the
 	int type_num, type, n_partners,id;
 	char *errtxt;
 
-	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
-	
-	
 	int test=0;
 
 	/* Loop local cells */
@@ -148,9 +141,6 @@ MDINLINE void add_area_global_force(double area, int molType){  //first-fold-the
 	int type_num, type, n_partners,id;
 	char *errtxt;
 
-	FENE_TRACE(fprintf(stderr,"%d: EWALD: calc_link_cell\n",this_node));
-	
-	
 	int test=0;
 	
 	/* Loop local cells */

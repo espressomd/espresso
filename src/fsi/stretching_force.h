@@ -66,8 +66,6 @@ MDINLINE int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded
   lambda = 1.0*len/iaparams->p.stretching_force.r0;
   fac = -iaparams->p.stretching_force.ks * KS(lambda) * dr / iaparams->p.stretching_force.r0;
   
-  FENE_TRACE(if(fac > 50) fprintf(stderr,"WARNING: FENE force factor between Pair (%d,%d) large: %f at distance %f\n", p1->p.identity,p2->p.identity,fac,sqrt(len2)) );
-
   for(i=0;i<3;i++)
     force[i] = fac*dx[i]/len;
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2006,2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 # Copyright (C) 2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
@@ -412,41 +412,46 @@ AC_ARG_WITH([cuda],
 	where CUDA is installed.  The cuda compiler can also be
 	specified by setting the NVCC environment variable. The CUDA
 	library and header can be manually specified by using
-	CPPFLAGS, LDFLAGS and LIBS. [no]]), ,
-	with_cuda=no) AC_MSG_RESULT($with_cuda)
+	CPPFLAGS, LDFLAGS and LIBS. [guess]]), ,
+	with_cuda=guess) AC_MSG_RESULT($with_cuda)
 
-if test x$with_cuda = xguess || test x$with_cuda = xyes; then
+AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
    cuda_path=/usr/local/cuda
-elif test x$with_cuda != xno; then
+],[test x$with_cuda != xno],[
    cuda_path=$with_cuda
    with_cuda=yes
-fi
+])
 
 cuda_ok=no
 
-if test x$with_cuda != xno; then
+AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
-    
-    if test x$NVCC = x; then
-        NVCC=$cuda_path/bin/nvcc
-    fi
+    save_LIBS=$LIBS
+    save_LDFLAGS=$LDFLAGS
+    save_CC=$CC
+    save_CFLAGS=$CFLAGS
 
-    if test -d $cuda_path/lib64; then
+    AS_IF([test x$NVCC = x],[
+        NVCC=$cuda_path/bin/nvcc
+    ])
+
+    AS_IF([test -d $cuda_path/lib64],[
         LDFLAGS="$LDFLAGS -L$cuda_path/lib64"
-    else
+    ],[
         LDFLAGS="$LDFLAGS -L$cuda_path/lib"
-    fi
+    ])
 
     NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
+    CFLAGS="$CFLAGS -I$cuda_path/include"
 
     # NVCC
     AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
     AC_ARG_VAR(NVCCFLAGS,[special compiler flags for the NVIDIA CUDA compiler])
     AC_PATH_PROG(NVCC, nvcc, no)
 
-    if test x$NVCC = xno; then
+    AS_IF([test x$NVCC = xno],[
         AC_MSG_FAILURE([CUDA compiler nvcc was not found, specify location using the NVCC variable])
-    fi
+    ])
 
     # libraries
     AC_CHECK_LIB(cudart, cudaGetDevice, [LIBS="$LIBS -lcudart"], [
@@ -470,7 +475,7 @@ if test x$with_cuda != xno; then
     ])
 
     # NVCC compile check
-    AC_MSG_CHECKING([whether CUDA works])
+    AC_MSG_CHECKING([whether CUDA compiles])
     
     # if no other compute capability is defined by the user, we require at least 1.1
     case "$NVCCFLAGS" in
@@ -479,8 +484,6 @@ if test x$with_cuda != xno; then
     esac
     
     # use nvcc
-    save_CC=$CC
-    save_CFLAGS=$CFLAGS
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
     CC=$NVCC
@@ -490,21 +493,43 @@ if test x$with_cuda != xno; then
         AC_MSG_RESULT(yes)
     ],[
         cuda_ok=no
-        
+        AC_MSG_RESULT(no)
         AS_IF([test x$with_cuda = xyes],[
             AC_MSG_FAILURE([cannot compile CUDA code. Look at config.log for more details.])
         ],[
             AC_MSG_WARN([cannot compile CUDA code. Some features will not be available!])
         ])
     ])
+
+    # NVCC compile check
+    AC_MSG_CHECKING([whether CUDA runs])
+    
+    AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[int no; cudaGetDeviceCount(&no);])], [
+        AC_MSG_RESULT(yes)
+    ],[
+        cuda_ok=no
+        AC_MSG_RESULT(no)
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([cannot run CUDA code. Look at config.log for more details.])
+        ],[
+            AC_MSG_WARN([cannot run CUDA code. Some features will not be available!])
+        ])
+    ],[
+        AC_MSG_RESULT([unknown (cross-compiling)])
+    ])
     
     CC=$save_CC
     CFLAGS=$save_CFLAGS
     
-    AC_DEFINE(CUDA,[],[Whether CUDA is available])
-fi
+    AS_IF([test x$cuda_ok == xyes], [
+        AC_DEFINE(CUDA,[],[Whether CUDA is available])
+    ],[
+        LIBS=$save_LIBS
+        LDFLAGS=$save_LDFLAGS
+    ])
+])
 
-AM_CONDITIONAL(CUDA, [test x$with_cuda != xno])
+AM_CONDITIONAL(CUDA, [test x$cuda_ok == xyes])
 
 cat <<EOF
 ****************************************************************
