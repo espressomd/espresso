@@ -118,7 +118,7 @@ void lbnode_tcl_print_usage(Tcl_Interp *interp) {
 
 /** TCL Interface: The \ref lbfluid command. */
 #endif
-#ifdef defined (LB) || defined (LB_GPU)
+#if defined (LB) || defined (LB_GPU)
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 #endif
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -584,7 +584,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 }
 
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
-#ifdef defined (LB) || defined (LB_GPU)
+#if defined (LB) || defined (LB_GPU)
   double p[3], v[3];
   char buffer[3*TCL_DOUBLE_SPACE+3];
   if (argc!=3) {
