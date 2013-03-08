@@ -1894,7 +1894,7 @@ void mpi_bcast_lbboundary(int del_num)
   else if (del_num == -2) {
     /* delete all boundaries */
     n_lb_boundaries = 0;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (del_num == -3) {
@@ -1904,7 +1904,7 @@ void mpi_bcast_lbboundary(int del_num)
   else {
     memcpy(&lb_boundaries[del_num],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 
   on_lbboundary_change();
@@ -1918,13 +1918,13 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
 #if defined(LB_BOUNDARIES)
   if(parm == -1) {
     n_lb_boundaries++;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
     MPI_Bcast(&lb_boundaries[n_lb_boundaries-1], sizeof(LB_Boundary), MPI_BYTE, 0, comm_cart);
   }
   else if (parm == -2) {
     /* delete all boundaries */
     n_lb_boundaries = 0;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (parm == -3) {
@@ -1934,7 +1934,7 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
   else {
     memcpy(&lb_boundaries[parm],&lb_boundaries[n_lb_boundaries-1],sizeof(LB_Boundary));
     n_lb_boundaries--;
-    lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
+    lb_boundaries = (LB_Boundary*) realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));    
   }
 #endif
 

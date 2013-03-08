@@ -209,6 +209,7 @@ MDINLINE void calc_bonded_force(Particle *p1, Particle *p2, Bonded_ia_parameters
 #ifdef OVERLAPPED
     case BONDED_IA_OVERLAPPED:
       // printf("BONDED OVERLAP, Particle: %d, P2: %d TYPE_OVERLAP: %d\n",p1->p.identity,p2->p.identity,iparams->p.tab.type);
+      char *errtxt;
       switch(iaparams->p.overlap.type) {
         case OVERLAP_BOND_LENGTH:
           calc_overlap_bond_force(p1, p2, iaparams, dx, force); break;

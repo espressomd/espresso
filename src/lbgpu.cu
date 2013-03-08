@@ -27,9 +27,8 @@
 #include <cuda.h>
 #include <stdlib.h>
 
-extern "C" {
 #include "lbgpu.h"
-}
+#include "config.h"
 
 #ifdef LB_GPU
 #ifndef GAUSSRANDOM
@@ -78,6 +77,8 @@ cudaStream_t stream[1];
 
 cudaError_t err;
 cudaError_t _err;
+int initflag = 0;
+int partinitflag = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device funktions called by kernel funktions */
@@ -1309,6 +1310,17 @@ if (_err!=cudaSuccess){ \
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
+  if(initflag){
+    cudaFree(device_values);
+    cudaFree(nodes_a.vd);
+    cudaFree(nodes_b.vd);
+    cudaFree(nodes_a.seed);
+    cudaFree(nodes_b.seed);
+    cudaFree(nodes_a.boundary);
+    cudaFree(nodes_b.boundary);
+    cudaFree(node_f.force);
+    cudaFree(gpu_check);
+  }
   /** Allocate structs in device memory*/
   size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
@@ -1337,6 +1349,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
   /**check flag if lb gpu init works*/
   cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
+  initflag = 1;
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
@@ -1399,9 +1412,9 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
   size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-
-  cudaFreeHost(*host_data);
-
+  if(partinitflag){
+     cudaFreeHost(*host_data);
+  }
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
   /**pinned memory mode - use special function to get OS-pinned memory*/
   cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
@@ -1409,16 +1422,17 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   cudaMallocHost((void**)host_data, size_of_positions);
 #endif
 
-  cudaFree(particle_force);
-  cudaFree(particle_data);
-  cudaFree(part);
+  if(partinitflag){
+    cudaFree(particle_force);
+    cudaFree(particle_data);
+    cudaFree(part);
+  }
+  //cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
- 
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
-
+  partinitflag  = 1;
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
   int blocks_per_grid_particles_y = 4;
@@ -1433,6 +1447,10 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
  * @param number_of_boundnodes	number of boundnodes
 */
 void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
+
+  if (initflag!=0)
+    cudaFree(boundindex);
+
 
   size_of_boundindex = number_of_boundnodes*sizeof(int);
   cuda_safe_mem(cudaMalloc((void**)&boundindex, size_of_boundindex));
@@ -1492,7 +1510,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
   cuda_safe_mem(cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces));
   cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
 
-  if(para.external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
+  if(lbpar_gpu->external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
   int threads_per_block_exf = 64;
   int blocks_per_grid_exf_y = 4;

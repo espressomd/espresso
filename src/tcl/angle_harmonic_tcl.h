@@ -24,14 +24,13 @@
  * Tcl interface for \ref angle_harmonic.h
  */
 
-#include <config.h>
+#include "config.h"
 #include "parser.h"
 #include "interaction_data.h"
 
 #ifdef BOND_ANGLE
 /// parse parameters for the angle potential
-int tclcommand_inter_parse_angle_harmonic(Tcl_Interp *interp, int bond_type, 
-                                          int argc, char **argv);
+int tclcommand_inter_parse_angle_harmonic(Tcl_Interp *interp, int bond_type, int argc, char **argv);
 
 ///
 int tclprint_to_result_angle_harmonicIA(Tcl_Interp *interp, Bonded_ia_parameters *params);

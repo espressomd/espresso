@@ -198,9 +198,7 @@ void on_lb_params_change_gpu(int field);
 
 /** 
  */
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_values_gpu *host_values;
@@ -208,9 +206,6 @@ extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
 
-#ifdef __cplusplus
-}
-#endif
 
 
 /*@}*/
@@ -220,9 +215,6 @@ extern int n_lb_boundaries;
 /************************************************************/
 /*@{*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void lattice_boltzmann_update_gpu();
 
@@ -276,10 +268,6 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_GPU(int ind[3], double f[3]);
-
-#ifdef __cplusplus
-}
-#endif
 
 /*@{*/
 

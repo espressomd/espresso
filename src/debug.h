@@ -42,13 +42,13 @@
 #endif
 
 /** memory allocation test routine */
-void *__realloc(void *old, unsigned int size, char *where, int line);
+void *__realloc(void *old, unsigned int size, const char *where, int line);
 
 /** memory allocation test routine */
-void *__malloc(unsigned int size, char *where, int line);
+void *__malloc(unsigned int size, const char *where, int line);
 
 /** memory allocation test routine */
-void __free(void *p, char *where, int line);
+void __free(void *p, const char *where, int line);
 
 #endif
 

@@ -151,7 +151,7 @@ void lb_realloc_particles_gpu(){
   /**-----------------------------------------------------*/
   /**Allocate struct for particle forces */
   size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
-  host_forces = realloc(host_forces, size_of_forces);
+  host_forces = (LB_particle_force_gpu*) realloc(host_forces, size_of_forces);
 
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
@@ -260,7 +260,7 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
 
   int i;	
   int *sizes;
-  sizes = malloc(sizeof(int)*n_nodes);
+  sizes = (int*) malloc(sizeof(int)*n_nodes);
 
   n_part = cells_get_n_particles();
 
@@ -332,7 +332,7 @@ static void mpi_get_particles_slave_lb(){
   if (n_part > 0) {
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
-    host_data_sl = malloc(n_part*sizeof(LB_particle_gpu));
+    host_data_sl = (LB_particle_gpu*) malloc(n_part*sizeof(LB_particle_gpu));
     
     g = 0;
     for (c = 0; c < local_cells.n; c++) {
@@ -377,7 +377,7 @@ static void mpi_send_forces_lb(LB_particle_force_gpu *host_forces){
   int c;
   int i;	
   int *sizes;
-  sizes = malloc(sizeof(int)*n_nodes);
+  sizes = (int*) malloc(sizeof(int)*n_nodes);
   n_part = cells_get_n_particles();
   /* first collect number of particles on each node */
   MPI_Gather(&n_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
@@ -434,7 +434,7 @@ static void mpi_send_forces_slave_lb(){
     int g = 0;
     /* get (unsorted) particle informations as an array of type 'particle' */
     /* then get the particle information */
-    host_forces_sl = malloc(n_part*sizeof(LB_particle_force_gpu));
+    host_forces_sl = (LB_particle_force_gpu*) malloc(n_part*sizeof(LB_particle_force_gpu));
     MPI_Recv(host_forces_sl, n_part*sizeof(LB_particle_force_gpu), MPI_BYTE, 0, REQ_GETPARTS,
     comm_cart, &status);
     for (c = 0; c < local_cells.n; c++) {
@@ -464,7 +464,7 @@ int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
     ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
 
   size_t  size_of_extforces = (n_extern_nodeforces+1)*sizeof(LB_extern_nodeforce_gpu);
-  host_extern_nodeforces = realloc(host_extern_nodeforces, size_of_extforces);
+  host_extern_nodeforces = (LB_extern_nodeforce_gpu*) realloc(host_extern_nodeforces, size_of_extforces);
   
   host_extern_nodeforces[n_extern_nodeforces].force[0] = (float)f[0];
   host_extern_nodeforces[n_extern_nodeforces].force[1] = (float)f[1];
