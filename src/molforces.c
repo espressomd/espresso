@@ -242,7 +242,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   int *local_mols;
   MPI_Status status;
 
-  n_local_mols = malloc(n_nodes*sizeof(int));
+  n_local_mols = (int *) malloc(n_nodes*sizeof(int));
   sum_n_local_mols = 0;
 
   /* Everyone tells me how many trapped molecules are on their node */
@@ -253,7 +253,7 @@ void mpi_comm_mol_info(IntList *local_trapped_mols) {
   for (i=1; i <n_nodes; i++) {
     sum_n_local_mols += n_local_mols[i];
   }
-  local_mols = malloc(sum_n_local_mols*sizeof(int));
+  local_mols = (int *) malloc(sum_n_local_mols*sizeof(int));
 
   /* Everyone tells me which trapped molecules are on their node */
   count = 0;
