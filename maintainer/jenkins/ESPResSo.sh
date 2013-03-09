@@ -1,7 +1,7 @@
 #!/bin/bash --login -e
 source maintainer/jenkins/common.sh
 
-renice_this
+#renice_this
 bootstrap
 
 start "CONFIGURE"
