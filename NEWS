@@ -30,8 +30,8 @@ New user-visible features
   simulations in espresso. To that end it provides functions to find and
   delete random particles of a certain type.
 
-* Added new feature ROTATION_PER_PARTICLE that allow to choose whether
-  a particle has rotational degrees of freedom or not. 
+* Added new feature ROTATION_PER_PARTICLE that allows to choose
+  whether a particle has rotational degrees of freedom or not.
 
 User-visible changes
 --------------------
@@ -48,7 +48,7 @@ User-visible changes
   types. Instead, there is now a single global forcecap, plus it is
   possible to define individual forcecaps on a particle pair level.
 
-* By default, CUDA is now automatically detected and actiavted when it
+* By default, CUDA is now automatically detected and activated when it
   is there and usable.
 
 ESPResSo 3.1.2
