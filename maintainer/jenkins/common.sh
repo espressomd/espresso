@@ -1,4 +1,4 @@
-function renice() {
+function renice_this() {
     renice -n 5 $$
 }
 
