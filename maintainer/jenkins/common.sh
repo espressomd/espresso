@@ -1,3 +1,5 @@
+renice 5 $$
+
 function start() {
     echo "START $1"
 }
