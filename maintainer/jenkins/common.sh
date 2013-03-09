@@ -1,6 +1,6 @@
-function renice_this() {
+if ((`ps -o nice= $$` < 5)); then 
     renice -n 5 $$
-}
+fi
 
 function start() {
     echo "START $1"
