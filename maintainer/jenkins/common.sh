@@ -1,4 +1,4 @@
-renice 5 $$
+renice 5 $BASHPID
 
 function start() {
     echo "START $1"
