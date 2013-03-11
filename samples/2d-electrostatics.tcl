@@ -39,37 +39,57 @@ set box_l_z 9
 setmd box_l $box_l $box_l $box_l
 
 #    create particles in a slab
-#########################################
+#
+# Keeps a distance of 1 to both walls, to
+# avoid collisions with the wall during warmup.
+# Due to the LJ potential, the particle centers will
+# maintain this typical distance also during the
+# actual run.
+####################################################
 
 for {set p 0} {$p < $n_pairs} {incr p} {
-    part $p pos [expr $box_l*rand()] [expr $box_l*rand()] [expr 1 + ($box_l_z - 1)*rand()] q +1
-    part [expr $p + $n_pairs] pos [expr $box_l*rand()] [expr $box_l*rand()] [expr 1 + ($box_l_z - 1)*rand()] q -1
+    part $p pos [expr $box_l*rand()] [expr $box_l*rand()] [expr 1 + ($box_l_z - 2)*rand()] q +1
+    part [expr $p + $n_pairs] pos [expr $box_l*rand()] [expr $box_l*rand()] [expr 1 + ($box_l_z - 2)*rand()] q -1
 }
 
 #    confining wall
 #########################################
 
-constraint wall normal  0  0  1 dist 0 type 0
-constraint wall normal  0  0 -1 dist [expr -$box_l_z] type 0
+constraint wall normal  0  0  1 dist 0 type 1
+constraint wall normal  0  0 -1 dist [expr -$box_l_z] type 1
 
-#    excluded volume interactions
+#    wall excluded volume interaction
 #########################################
 
-inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
+inter 0 1 lennard-jones 1.0 1.0 1.12246 auto 0.0
 
 #    warmup
-#########################################
+#
+# In order to avoid overlaps, gradually make the
+# potential steeper. But only particle-particle, not
+# particle-wall.
+####################################################
 
-set forcecap 1
+set capradius 1.123
 
-while {$forcecap < 1000} {
-    if {$forcecap % 10 == 0} {
-	puts "forcecap = $forcecap"
+inter forcecap individual
+
+set cnt 0
+while {$capradius > 0.9} {
+    if {$cnt % 10 == 0} {
+	puts "capradius = $capradius"
     }
-    incr forcecap
-    inter forcecap $forcecap
+    incr cnt
+    set capradius [expr $capradius*0.99]
+    inter 0 0 lennard-jones 1.0 1.0 1.12246 auto 0.0 $capradius
+    
     integrate 10
 }
+
+# turn force capping off
+inter forcecap 0
+inter 0 0 lennard-jones 1.0 1.0 1.12246 0.25 0.0
+
 #    Coulomb interactions
 #########################################
 
