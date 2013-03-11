@@ -156,6 +156,14 @@ void tclcommand_part_print_virtual(Particle *part, char *buffer, Tcl_Interp *int
 }
 #endif
 
+#ifdef ROTATION_PER_PARTICLE
+void tclcommand_part_print_rotation(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  sprintf(buffer,"%i", part->p.rotation);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
+#endif
+
 void tclcommand_part_print_v(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale velocities ! */
@@ -414,6 +422,11 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   tclcommand_part_print_torque(&part, buffer, interp);
 #endif
 
+#ifdef ROTATION_PER_PARTICLE
+  Tcl_AppendResult(interp, " rotation ", (char *)NULL);
+  tclcommand_part_print_rotation(&part, buffer, interp);
+#endif
+
 #ifdef ROTATIONAL_INERTIA
   /* print information about rotational inertia */
   Tcl_AppendResult(interp, " rinertia ", (char *)NULL);
@@ -578,6 +591,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("tbf"))
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
+#ifdef ROTATION_PER_PARTICLE
+    else if (ARG0_IS_S("rotation"))
+      tclcommand_part_print_rotation(&part, buffer, interp);
+#endif
 
 #ifdef ROTATIONAL_INERTIA
     else if (ARG0_IS_S("rinertia"))
@@ -724,6 +741,34 @@ int tclcommand_part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
     return TCL_OK;
 }
 #endif
+
+#ifdef ROTATION_PER_PARTICLE
+int tclcommand_part_parse_rotation(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    int rot;
+
+    *change = 1;
+
+    if (argc < 1) {
+      Tcl_AppendResult(interp, "rotation requires 1 argument", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set rotation flag */
+    if (! ARG0_IS_I(rot))
+      return TCL_ERROR;
+
+    if (set_particle_rotation(part_num, rot) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+#endif
+
 
 #ifdef  ROTATIONAL_INERTIA
 int tclcommand_part_parse_rotational_inertia(Tcl_Interp *interp, int argc, char **argv,
@@ -1763,8 +1808,13 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       err = tclcommand_part_parse_rotational_inertia(interp, argc-1, argv+1, part_num, &change);
 #endif
 
-#ifdef DIPOLES
+#ifdef ROTATION_PER_PARTICLE
+    else if (ARG0_IS_S("rotation"))
+      err = tclcommand_part_parse_rotation(interp, argc-1, argv+1, part_num, &change);
+#endif
 
+
+#ifdef DIPOLES
     else if (ARG0_IS_S("dip")) {
       if (quat_set) {
 	      Tcl_AppendResult(interp, "(vector) dipole and orientation can not be set at the same time", (char *)NULL);	

@@ -70,6 +70,7 @@ tests = \
 	p3m_simple_noncubic.tcl \
 	p3m_wall.tcl \
 	rotation.tcl \
+	rotation_per_particle.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl

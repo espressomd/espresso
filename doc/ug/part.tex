@@ -34,8 +34,6 @@
   \opt{v \var{vx} \var{vy} \var{vz}}
   \opt{f \var{fx} \var{fy} \var{fz}}
   \opt{bond \var{bondid} \var{pid2} \dots}
-  \require{9}{\opt{temp \var{T}}}
-  \require{9}{\opt{gamma \var{g}}}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
@@ -51,6 +49,9 @@
   \require{7,8}{\opt{virtual \var{v}}}
   \require{8}{\opt{vs\_relative \var{pid} \par{distance}}}
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
+  \require{9}{\opt{temp \var{T}}}
+  \require{9}{\opt{gamma \var{g}}}
+  \require{10}{\opt{rotation \var{rot}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -61,6 +62,7 @@
     \required[7]{VIRTUAL\_SITES\_COM}
     \required[8]{VIRTUAL\_SITES\_RELATIVE}
     \required[9]{LANGEVIN\_PER\_PARTICLE}
+    \required[10]{ROTATION\_PER\_PARTICLE}
   \end{features}
 \end{essyntax}
 
@@ -88,21 +90,29 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   be an existing particle.  The \var{bondid} is used for
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
-\item[\opt{temp \var{T}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the temperature \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles of different temperatures. Caution: this has no influence on any other thermostat then the Langevin thermostat.
-\item[\opt{gamma \var{g}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the frictional coefficient \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles with different diffusion constants. Caution: this has no influence on any other thermostat then the Langevin thermostat.
 \item[\opt{q \var{charge}}] Sets the charge of this particle to $q$.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
   particle.
-\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational velocity of this particle in the particle's co-rotating frame.
-\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force of this particle, in global frame.
-  When printing the values using {\em part id_particle print}, there is an alternative named
-  \opt{tbf} which gives you the values of the torque in the body frame.  Be aware: the values obtained when printing using \opt{torque}
-  are computed in the frame laboratory and are the ones one should usually look at. Nonetheless,  in case you 
-  introduce torques using \opt{torque} option, espresso will assume they are given in the body-frame. Thus \opt{tbf} is useful
-  to know which should be the numerical values you should reintroduce in order to have exactly the same conformation.
+\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational
+  velocity of this particle in the particle's co-rotating frame.
+\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force
+  of this particle, in global frame.  When printing the values using
+  {\em part id_particle print}, there is an alternative named
+  \opt{tbf} which gives you the values of the torque in the body
+  frame.  Be aware: the values obtained when printing using
+  \opt{torque} are computed in the frame laboratory and are the ones
+  one should usually look at. Nonetheless, in case you introduce
+  torques using \opt{torque} option, espresso will assume they are
+  given in the body-frame. Thus \opt{tbf} is useful to know which
+  should be the numerical values you should reintroduce in order to
+  have exactly the same conformation.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
-    elements of this particles rotational inertia tensor. These correspond with the inertial moments along the coordinate axes in the particle's co-rotating coordinate system. When the particle's quaternions are set to 1 0 0 0, the co-rotating and the fixed (lab) frame are co-aligned.
+  elements of this particles rotational inertia tensor. These
+  correspond with the inertial moments along the coordinate axes in
+  the particle's co-rotating coordinate system. When the particle's
+  quaternions are set to 1 0 0 0, the co-rotating and the fixed (lab)
+  frame are co-aligned.
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For
@@ -120,11 +130,11 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
 \item[\opt{exclude delete \var{pid2}\dots}] Searches for the
   given exclusion and deletes it. Again deletes the exclusion with
   both partners.
-  \item[\opt{mass \var{mass}}] Sets the mass of this particle to $mass$. If not
+\item[\opt{mass \var{mass}}] Sets the mass of this particle to $mass$. If not
   set, all particles have a mass of 1 in reduced units.
-  \item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
-  \item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
-  dipol axis to $(dx,dy,dz)$.
+\item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
+\item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
+  dipole axis to $(dx,dy,dz)$.
 \item[\opt{virtual \var{v}}] Declares the particles as virtual (1) or
   non-virtual (0, default). Please read chapter \ref{sec:virtual}
   before using virtual sites.
@@ -137,7 +147,23 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   implementation. \var{pid} denotes the id of the particle to which
   this virtual site is related and \var{distance} the distance between
   non-virtual and virtual particle.
-   \end{arguments}
+\item[\opt{temp \var{T}}] If used in combination with the Langevin
+  thermostat (as documented in section \ref{sec:thermostat}), sets the
+  temperature \var{T} individually for the particle with id
+  \var{pid}. This allows to simulate systems containing particles of
+  different temperatures. Caution: this has no influence on any other
+  thermostat then the Langevin thermostat.
+\item[\opt{gamma \var{g}}] If used in combination with the Langevin
+  thermostat (as documented in section \ref{sec:thermostat}), sets the
+  frictional coefficient \var{T} individually for the particle with id
+  \var{pid}. This allows to simulate systems containing particles with
+  different diffusion constants. Caution: this has no influence on any
+  other thermostat then the Langevin thermostat.
+\item[\opt{rotation \var{rot}}] Specifies whether a particle's
+  rotational degrees of freedom are integrated (value of 1) or not
+  (0). If set to zero, the content of the torque and omega variables
+  are meaningless. The default is 1.
+\end{arguments}
 
 \subsection{Getting particle properties}
 

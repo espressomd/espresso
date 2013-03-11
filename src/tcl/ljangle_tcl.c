@@ -90,7 +90,6 @@ int tclprint_to_result_ljangleIA(Tcl_Interp *interp, int i, int j)
     for each of the interactions.
 */
 
-/// parser for the forcecap
 int tclcommand_inter_parse_ljangleforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   if (argc==1) {
