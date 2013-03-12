@@ -31,7 +31,6 @@
 # of fluid flow", Europ. Phys. J. E 26, 115 (2008)          #
 #                                                           #
 #############################################################
-require_feature "GALILEI"
 
 source "tests_common.tcl"
 
@@ -40,6 +39,7 @@ require_feature "DPD"
 require_feature "CONSTRAINTS"
 require_feature "EXTERNAL_FORCES"
 require_feature "LENNARD_JONES"
+require_feature "GALILEI"
 
 puts "----------------------------------------"
 puts "- Testcase tunable_slip.tcl running on [format %02d [setmd n_nodes]] nodes  -"
