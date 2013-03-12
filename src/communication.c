@@ -145,6 +145,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_system_CMS_velocity_slave) \
   CB(mpi_galilei_transform_slave) \
   CB(mpi_setup_reaction_slave) \
+  CB(mpi_send_rotation_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -958,6 +959,39 @@ void mpi_send_vs_relative_slave(int pnode, int part)
 	     comm_cart, MPI_STATUS_IGNORE);
     MPI_Recv(&p->p.vs_relative_distance, 1, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
+
+// ********************************
+
+void mpi_send_rotation(int pnode, int part, int rot)
+{
+#ifdef ROTATION_PER_PARTICLE
+  mpi_call(mpi_send_rotation_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    p->p.rotation = rot;
+  }
+  else {
+    MPI_Send(&rot, 1, MPI_INT, pnode, SOME_TAG, MPI_COMM_WORLD);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_rotation_slave(int pnode, int part)
+{
+#ifdef ROTATION_PER_PARTICLE
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    MPI_Status status;
+    MPI_Recv(&p->p.rotation, 1, MPI_INT, 0, SOME_TAG,
+	     MPI_COMM_WORLD, &status);
   }
 
   on_particle_change();
