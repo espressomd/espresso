@@ -56,13 +56,14 @@ void local_setup_reaction() {
 }
 
 void integrate_reaction() {
-  int c, np, n, i, react;
+  int c, np, n, i;
   Particle *p1, *p2, **pairs;
   Cell *cell;
-  double dist2, vec21[3], rand;
+  double dist2, vec21[3], rand, bernoulli;
 
   if(reaction.rate > 0) {
     int reactants = 0, products = 0;
+    int check_catalyzer;
     int tot_reactants = 0, tot_products = 0;
     double ratexp, back_ratexp;
 
@@ -71,78 +72,104 @@ void integrate_reaction() {
     on_observable_calc();
 
     for (c = 0; c < local_cells.n; c++) {
-      /* Loop cell neighbors */
-      for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-        pairs = dd.cell_inter[c].nList[n].vList.pair;
-        np = dd.cell_inter[c].nList[n].vList.n;
-        
-        /* verlet list loop */
-        for(i = 0; i < 2 * np; i += 2) {
-          p1 = pairs[i];   //pointer to particle 1
-          p2 = pairs[i+1]; //pointer to particle 2
+
+      /* Take into account only those cell neighbourhoods for which
+         the central cell contains a catalyzer particle */
+
+      check_catalyzer = 0;
+
+      cell = local_cells.cell[c];
+      p1   = cell->part;
+      np  = cell->n;
+       
+      for(i = 0; i < np; i++) {
+        if(p1[i].p.type == reaction.catalyzer_type) {
+          check_catalyzer = 1;
+          break;
+        }
+      }	
+
+      /* If the central cell contains a catalyzer particle, ...*/
+      if ( check_catalyzer != 0 ) {
+
+        /* Loop cell neighbors */
+        for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+          pairs = dd.cell_inter[c].nList[n].vList.pair;
+          np = dd.cell_inter[c].nList[n].vList.n;
           
-          if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
-            get_mi_vector(vec21, p1->r.p, p2->r.p);
-            dist2 = sqrlen(vec21);
+          /* Verlet list loop */
+          for(i = 0; i < 2 * np; i += 2) {
+            p1 = pairs[i];   //pointer to particle 1
+            p2 = pairs[i+1]; //pointer to particle 2
             
-            if(dist2 < reaction.range * reaction.range) {
+            if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
+              get_mi_vector(vec21, p1->r.p, p2->r.p);
+              dist2 = sqrlen(vec21);
+              
 
-              /* Each reactant can react with multiple (neighbouring) catalysts */
-              if( reaction.sing_mult == 0 ) 
-              {
-             	  rand = d_random();
-
-             		if(rand > ratexp) {
-             		  if(p1->p.type == reaction.reactant_type) {
-						        p1->p.type = reaction.product_type;
-					        }
-					        else {
-						        p2->p.type = reaction.product_type;
-					        }
-                }
-              }
-              else /* We only consider each reactant once */
-              {
-             		if(p1->p.type == reaction.reactant_type) {
-						      react = p1->p.reacted;
-                  p1->p.reacted = 1;
-
-                  if(react == 0) {
-                 
-                 	  rand = d_random();
-                 		if(rand > ratexp) {
-						          p1->p.type = reaction.product_type;
-                    }
-                  }
+              /* Count the number of times a reactant particle is
+                 checked against a catalyst */
+              if(dist2 < reaction.range * reaction.range) {
+               
+                if(p1->p.type == reaction.reactant_type) {
+						       p1->p.catalyzer_count++;
 					      }
 					      else {
-						      react = p2->p.reacted;
-                  p2->p.reacted = 1;
-
-                  if(react == 0) {
-                 
-                 	  rand = d_random();
-                 		if(rand > ratexp) {
-						          p2->p.type = reaction.product_type;
-                    }
-                  }
+						       p2->p.catalyzer_count++;
 					      }
-              }
-           	}
-          }  
+             	}
+            }  
+          }
         }
       }
     }
 
-    /* Clean up the reactants for the next time step */
-    if( reaction.sing_mult != 0 ) {
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np  = cell->n;
+    /* Now carry out the reaction on the particles which are tagged */
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p1   = cell->part;
+      np  = cell->n;
         
-        for(i = 0; i < np; i++) {
-          if(p1[i].p.type == reaction.reactant_type || p1[i].p.type == reaction.product_type ) p1[i].p.reacted = 0;
+      for(i = 0; i < np; i++) {
+        if(p1[i].p.type == reaction.reactant_type){
+
+          if(p1[i].p.catalyzer_count > 0 ){
+
+            if( reaction.sing_mult == 0 ) 
+            {
+              rand = d_random();
+
+              bernoulli = pow((1.0 - ratexp), p1[i].p.catalyzer_count);
+
+              if(rand > bernoulli) {
+                p1[i].p.type = reaction.product_type;
+                products++;
+              }
+              else
+              {
+                reactants++;
+              }
+            }
+            else /* We only consider each reactant once */
+            {
+              rand = d_random();
+
+              if(rand > ratexp) {
+                p1[i].p.type = reaction.product_type;
+                products++;
+              }
+              else
+              {
+                reactants++;
+              }
+            }
+            
+            p1[i].p.catalyzer_count = 0;
+          }
+        }
+        else if (p1[i].p.type == reaction.product_type)
+        {
+          products++;
         }
       }
     }

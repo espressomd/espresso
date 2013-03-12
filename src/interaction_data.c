@@ -553,6 +553,7 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = dpd_tr_cut;
   }
 #endif
+
 }
 
 static void recalc_maximal_cutoff_nonbonded()

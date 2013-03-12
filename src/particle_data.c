@@ -121,7 +121,7 @@ void init_particle(Particle *part)
 #endif
 
 #ifdef REACTIONS
-  part->p.reacted = 0;
+  part->p.catalyzer_count = 0;
 #endif
 
   /* ParticlePosition */

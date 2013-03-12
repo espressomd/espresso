@@ -132,7 +132,7 @@ typedef struct {
 #endif
 
 #ifdef REACTIONS
-  int reacted;
+  int catalyzer_count;
 #endif
 } ParticleProperties;
 
