@@ -64,6 +64,7 @@ tests = \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	object_in_fluid.tcl \
 	observable.tcl \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \

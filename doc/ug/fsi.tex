@@ -93,23 +93,24 @@ in \cite{dao03} specifically for red blood cells. However, the proper calibratio
 fit the experimental data has been performed in \cite{cimrak}.
 
 \section{Geometry}
-The membrane of the immersed object is triangulated. In samples/cell-in-fluid you can 
+The membrane of the immersed object is triangulated. In samples/object-in-fluid you can 
 find an example using deformable objects in the fluid.
 \begin{center}
   \includegraphics[width=3cm]{figures/fsi.png}
 \end{center}
-Triangulation can be obtained using various software tools. Two files must be put in 
-a directory INPUT: \verb mesh-nodes.dat \ and \verb mesh-triangles.dat . The parameters 
+Triangulation can be obtained using various software tools. For mesh input two files are needed:
+ \verb mesh-nodes.dat \ and \verb mesh-triangles.dat . The parameters 
 of the mesh are the number of particles on the surface of the immersed object, denoted 
-by \verb nnode , and the number of triangular faces in the triangulation, denoted by 
-\verb ntriangle . 
+by \verb mesh_nnode , and the number of triangular faces in the triangulation, denoted by 
+\verb mesh_ntriangle . However, these parameters are obained automatically from 
+ \verb mesh-nodes.dat \ and \verb mesh-triangles.dat by counting the number of line in respective files. 
 
-The \verb mesh-nodes.dat \ contains \verb nnode \ lines with three real numbers separated 
+The \verb mesh-nodes.dat \ thus contains \verb mesh_nnode \ lines with three real numbers separated 
 by blank space, representing three coordinates of the corresponding particle. The membrane 
-is thus discretized into \verb nnode \ particles with IDs starting from 0 to \verb nnode-1 . 
+is thus discretized into \verb mesh_nnode \ particles with IDs starting from 0 to \verb mesh_nnode-1 . 
 The IDs are assigned in the same order as in the \verb mesh-nodes.dat \ file. 
 
-The \verb mesh-triangles.dat \ contains \verb ntriangle \ lines with three nonnegative 
+The \verb mesh-triangles.dat \ contains \verb mesh_ntriangle \ lines with three nonnegative 
 integers separated by blank space. Each line represents one triangle in the triangulation. 
 For algorithmic purposes it is crucial to have defined a correct orientation of the triangle.
 The orientation is defined using the normal vector associated with the triangle. The important
@@ -134,38 +135,22 @@ position of the particles, edges, lengths of the edges,  triangles, areas of tri
 angles between two triangles sharing a common edge, surface of the immersed object, 
 volume of the immersed object. All these geometrical entities can be computed using the 
 information from the files \verb mesh-nodes.dat \ and \verb mesh-triangles.dat \ and the 
-computation is done in the script \verb bondGenerator .
+computation is done in the script \verb scripts/object_in_fluid.tcl .
 
-The script \verb bondGenerator \ compiled from the C source \verb bondGenerator.c \ reads 
+The script \verb scripts/object_in_fluid.tcl \  reads 
 both mesh files, generates list of edges, and computes all geometrical entities needed for 
-definition of bonded interactions. It writes three types of files into directory \verb TMP . 
-First it writes file \verb createPart , containing \verb nnode \ lines with \verb part \ commands. 
-An example is as follows:
+definition of bonded interactions. It then executes commands creating the particles, interactions and bonds.
+An example of \verb part \ command is as follows:
 \begin{verbatim} part 0 pos 3.0 3.0 6.0 type 1 mol 1 mass 1 \end{verbatim}
 
 Note, that there is feature \verb mol \ used for the particles. With this feature we distinguish between different 
 objects. The limit for the number of objects is 10000. However it can be increased by changing the 
 \verb MAX_OBJECTS_IN_FLUID \ constant. 
 
-Next it writes files
-\verb bondsStretching , \verb bondsBending , \verb bondsAreaLocal ,\newline \verb bondsAreaGlobal , 
-\verb bondsVolume . 
-Each of these files contains information about interactions defining one of five elastic moduli. 
-For example, in the file \verb bondsStretching \ are as many lines as there are the edges 
-in the triangulation. Each line defines one interaction with its own interaction ID, identificator 
-of the interaction type and parameters defining the properties of this interaction, e.g.  
+Next example shows an interaction.   
 \begin{verbatim} inter 106 stretching_force 4.6 5.0 \end{verbatim}
-Detailed description of the available types of interactions is presented in Section 
+By this command (btw, this command is "invisible for the user, it is execute inside the \verb scripts/object_in_fluid.tcl \ script) an interaction for stretching is created with ID 106. Detailed description of the available types of interactions is presented in Section 
 \ref{sec:inter-bonded-fsi}.
-
-Further, \verb bondGenerator \ writes files \verb partStretching , \verb partBending , \newline 
-\verb partAreaLocal , \verb partAreaGlobal , \verb partVolume . 
-In these files, the bonds between particles are defined. Each of these files contains lines with 
-one bond definition, e.g.
-\begin{verbatim} part 313 bond 10006 293 \end{verbatim}
-
-Previousle described files generated by  \verb bondGenerator \  are directly included in the 
-\es tcl script (samples/cell-in-fluid).
 
 
 %%% Local Variables:
