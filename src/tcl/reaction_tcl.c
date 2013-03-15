@@ -32,20 +32,20 @@
 #ifdef REACTIONS
 int tcl_command_reaction_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: reaction [off | print | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> rate <k> [back_rate <br>] [react_once <on|off>]\n");
+  sprintf(buffer, "Usage: reaction [off | print | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> ct_rate <k_ct> [eq_rate <k_eq>] [react_once <on|off>]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
 
 int tcl_command_reaction_print(Tcl_Interp * interp){
   char buffer[512];
-  sprintf(buffer, "{reactant_type %d} {catalyzer_type %d} {product_type %d} {range %f} {rate %f} {back_rate %f}\n",
+  sprintf(buffer, "{reactant_type %d} {catalyzer_type %d} {product_type %d} {range %f} {catalyzer rate %f} {equilibrium rate %f}\n",
     reaction.reactant_type,
     reaction.catalyzer_type,
     reaction.product_type,
     reaction.range,
-    reaction.rate,
-    reaction.back_rate);
+    reaction.ct_rate,
+    reaction.eq_rate);
   if ( reaction.sing_mult == 0 ) {
     sprintf(buffer + strlen(buffer)," {react_once off}\n");
   } else {
@@ -60,21 +60,29 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
 #ifdef REACTIONS
 
   if (argc == 1  ) return tcl_command_reaction_print_usage(interp);
+
   if (argc == 2 ) { 
      if (ARG1_IS_S("off")) {
-           reaction.rate=0.0;
+           reaction.ct_rate=0.0;
+           reaction.eq_rate=0.0;
            mpi_setup_reaction();
            return TCL_OK;
+
+// I REALLY DON'T THINK THIS IS CORRECT ANYMORE !!!!!
      }
      if (ARG1_IS_S("print")) {
            return tcl_command_reaction_print(interp);
      }
   }
+
   if( argc!=11 && argc!=13 && argc!=15 && argc!=3) {
      return tcl_command_reaction_print_usage(interp);
   }
      
   if(reaction.rate != 0.0) {
+
+// STORE OLD VALUES AND COMPARE FOR LATER !!!!!!
+
     Tcl_AppendResult(interp, "Currently a simulation can only contain a single reaction!", (char *) NULL);
     return (TCL_ERROR);
   }
@@ -111,14 +119,14 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
       argc-=2;
       argv+=2;
     }
-    else if (ARG_IS_S_EXACT(0,"rate")) {
-      if (!ARG_IS_D(1,reaction.rate)) 
+    else if (ARG_IS_S_EXACT(0,"ct_rate")) {
+      if (!ARG_IS_D(1,reaction.ct_rate)) 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
       argv+=2;
     } 
-    else if (ARG_IS_S_EXACT(0,"back_rate")) {
-      if (!ARG_IS_D(1,reaction.back_rate)) 
+    else if (ARG_IS_S_EXACT(0,"eq_rate")) {
+      if (!ARG_IS_D(1,reaction.eq_rate)) 
         return tcl_command_reaction_print_usage(interp);
       argc-=2;
 	    argv+=2;
@@ -134,6 +142,22 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
       return tcl_command_reaction_print_usage(interp);
     }
   }
+
+  if( reaction.ct_rate <= 0.0 ) {
+    Tcl_AppendResult(interp, "Negative or zero catalytic reaction rate constant is not allowed!", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if( reaction.eq_rate < 0.0 && fabs(reaction.eq_rate + 1.0) > 0.001 ) {
+    Tcl_AppendResult(interp, "Negative equilibrium reaction rate contstant is not allowed!", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
+  if( (reaction.product_type == reaction.reactant_type) || (reaction.product_type == reaction.catalyzer_type) || (reaction.catalyzer_type == reaction.reactant_type) ) {
+    Tcl_AppendResult(interp, "One particle type cannot be a part more than one reaction species!", (char *) NULL);
+    return (TCL_ERROR);
+  }
+
   mpi_setup_reaction();
   return TCL_OK;
 #else

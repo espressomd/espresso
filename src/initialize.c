@@ -134,7 +134,7 @@ void on_program_start()
 #endif
 
 #ifdef REACTIONS
-  reaction.back_rate=-1.0;
+  reaction.eq_rate=-1.0;
   reaction.sing_mult=0;
 #endif
 
@@ -274,7 +274,7 @@ if( dd.use_vList == 0 || cell_structure.type == CELL_STRUCTURE_NSQUARE ) {
   ERROR_SPRINTF(errtext,"{105 The REACTIONS feature requires verlet and cell lists} ");
 }
 
-if(reaction.rate != 0.0) {
+if(reaction.ct_rate != 0.0) {
   if(max_cut < reaction.range) {
     errtext = runtime_error(128);
     ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);

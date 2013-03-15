@@ -30,18 +30,22 @@
 
 #ifdef REACTIONS
 void local_setup_reaction() {
+  
+  /* Make available the various reaction parameters */
   MPI_Bcast(&reaction.reactant_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.product_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.catalyzer_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.range, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&reaction.rate, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&reaction.back_rate, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&reaction.ct_rate, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&reaction.eq_rate, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&reaction.sing_mult, 1, MPI_INT, 0, comm_cart);
-    
+
+  /* Create the various reaction related types (categories) */
   make_particle_type_exist(reaction.catalyzer_type);
   make_particle_type_exist(reaction.product_type);
   make_particle_type_exist(reaction.reactant_type);
 
+  /* Make ESPResSo aware that reactants and catalyst are interacting species */
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
   if(!data) {    
@@ -49,25 +53,26 @@ void local_setup_reaction() {
 	  ERROR_SPRINTF(error_msg, "{106 interaction parameters for reaction could not be set} ");
   }
 
+  /* Used for the range of the verlet lists */
   data->REACTION_range = reaction.range;
 
-  /* broadcast interaction parameters */
+  /* Broadcast interaction parameters */
   mpi_bcast_ia_params(reaction.reactant_type, reaction.catalyzer_type);
 }
 
 void integrate_reaction() {
-  int c, np, n, i;
+  int c, np, n, i,
+      check_catalyzer;
   Particle *p1, *p2, **pairs;
   Cell *cell;
-  double dist2, vec21[3], rand, bernoulli;
+  double dist2, vec21[3],
+         ct_ratexp, eq_ratexp,
+         rand, bernoulli;
 
-  if(reaction.rate > 0) {
-    int reactants = 0, products = 0;
-    int check_catalyzer;
-    int tot_reactants = 0, tot_products = 0;
-    double ratexp, back_ratexp;
+  if(reaction.ct_rate > 0) {
 
-    ratexp = exp(-time_step*reaction.rate);
+    /* Determine the reaction rate */
+    ct_ratexp = exp(-time_step*reaction.ct_rate);
     
     on_observable_calc();
 
@@ -139,79 +144,56 @@ void integrate_reaction() {
             {
               rand = d_random();
 
-              bernoulli = pow((1.0 - ratexp), p1[i].p.catalyzer_count);
+              bernoulli = pow((1.0 - ct_ratexp), p1[i].p.catalyzer_count);
 
               if(rand > bernoulli) {
-                p1[i].p.type = reaction.product_type;
-                products++;
-              }
-              else
-              {
-                reactants++;
-              }
+                p1[i].p.type = reaction.product_type; }
+            
             }
             else /* We only consider each reactant once */
             {
               rand = d_random();
 
-              if(rand > ratexp) {
-                p1[i].p.type = reaction.product_type;
-                products++;
-              }
-              else
-              {
-                reactants++;
-              }
+              if(rand > ct_ratexp) {
+                p1[i].p.type = reaction.product_type; }
             }
             
             p1[i].p.catalyzer_count = 0;
           }
         }
-        else if (p1[i].p.type == reaction.product_type)
-        {
-          products++;
-        }
       }
     }
 
-    if (reaction.back_rate < 0) { // we have to determine it dynamically 
-      /* we count now how many reactants and products are in the sim box */
+    /* We only need to do something when the equilibrium 
+       reaction rate constant is nonzero */
+    if (reaction.eq_rate > 0.0) { 
+
+  	  eq_ratexp = exp(-time_step*reaction.eq_rate);
+
       for (c = 0; c < local_cells.n; c++) {
         cell = local_cells.cell[c];
         p1   = cell->part;
         np  = cell->n;
-        
-        for(i = 0; i < np; i++) {
-          if(p1[i].p.type == reaction.reactant_type)
-            reactants++;
-          else if(p1[i].p.type == reaction.product_type)
-            products++;
-        }	
-      }
-      
-      MPI_Allreduce(&reactants, &tot_reactants, 1, MPI_INT, MPI_SUM, comm_cart);
-      MPI_Allreduce(&products, &tot_products, 1, MPI_INT, MPI_SUM, comm_cart);
-
-      back_ratexp = ratexp * tot_reactants / tot_products ; //with this the asymptotic ratio reactant/product becomes 1/1 and the catalyzer volume only determines the time that it takes to reach this
-    }
-    else { //use the back reaction rate supplied by the user
-  	  back_ratexp = exp(-time_step*reaction.back_rate);
-    }
     
-    if(back_ratexp < 1 ) {
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np  = cell->n;
-        
+        /* Convert products into reactants and vice versa
+           according to the specified rate constant */
         for(i = 0; i < np; i++) {
+
           if(p1[i].p.type == reaction.product_type) {
             rand = d_random();
             
-			      if(rand > back_ratexp) {
-			        p1[i].p.type=reaction.reactant_type;
-			      }
+  	        if(rand > eq_ratexp) {
+  	          p1[i].p.type=reaction.reactant_type;
+  	        }
           }
+          else if(p1[i].p.type == reaction.reactant_type) {
+            rand = d_random();
+            
+  	        if(rand > eq_ratexp) {
+  	          p1[i].p.type=reaction.product_type;
+  	        }
+          }
+
         }
       }
     }

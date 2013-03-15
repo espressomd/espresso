@@ -32,8 +32,8 @@ typedef struct {
 	int product_type;
 	int catalyzer_type;
 	double range;
-	double rate;
-	double back_rate;
+	double ct_rate;
+	double eq_rate;
   int sing_mult;
 }  reaction_struct;
 
