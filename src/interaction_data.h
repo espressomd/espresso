@@ -457,7 +457,7 @@ typedef struct {
   double TUNABLE_SLIP_vz;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   double REACTION_range;
 #endif
 

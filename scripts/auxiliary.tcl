@@ -445,24 +445,24 @@ proc tune_cells { { int_steps 1000 } { min_cells 1 } { max_cells 30 } { tol_cell
 # stored in Espresso to zero.
 #
 #############################################################
-
-proc stop_particles { } { 
-    for { set i 0} { $i < [setmd n_part] } {incr i} {
-	part $i v 0 0 0
-	part $i f 0 0 0
-    }
-}
-proc stopParticles { } {
-    puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
-    set old_i 0; set old_e [setmd n_part]; set old [expr 10*$old_e]
-    for { set i 0} { $i < $old_e } {incr i} {
-	if { [expr $old_i*100]>=$old } { set old [expr $old + 10*$old_e]; puts -nonewline ".,."; flush stdout }; incr old_i
-	part $i v 0 0 0
-	part $i f 0 0 0
-    }
-    puts ".,. Done (stopped $old_e particles and as many forces)."
-}
-
+#
+#proc stop_particles { } { 
+#    for { set i 0} { $i < [setmd n_part] } {incr i} {
+#	part $i v 0 0 0
+#	part $i f 0 0 0
+#    }
+#}
+#proc stopParticles { } {
+#    puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
+#    set old_i 0; set old_e [setmd n_part]; set old [expr 10*$old_e]
+#    for { set i 0} { $i < $old_e } {incr i} {
+#	if { [expr $old_i*100]>=$old } { set old [expr $old + 10*$old_e]; puts -nonewline ".,."; flush stdout }; incr old_i
+#	part $i v 0 0 0
+#	part $i f 0 0 0
+#    }
+#    puts ".,. Done (stopped $old_e particles and as many forces)."
+#}
+#
 #
 # center of mass
 # --------------
@@ -470,41 +470,37 @@ proc stopParticles { } {
 # Calculate the center of mass of the system stored in Espresso
 #
 #############################################################
-proc system_com { } {
-  set npart [setmd n_part]
-    
-  #calculate center of mass
-  set com {0 0 0}
-  set part_cnt 0
-  
-  if {[has_feature MASS]} {
-    set net_mass 0
-    
-    for {set i 0} {$part_cnt < $npart} {incr i} {
-      if {[part $i] != "na"} {
-        set pos [part $i print p]
-        set mass [part $i print mass]
-        set com [vecadd $com [vecscale $mass $pos]]
-        set net_mass [expr $net_mass + $mass]
-        incr part_cnt
-      }
-    }
-    
-    return [vecscale [expr 1.0/$net_mass] $com]
-  } else {
-    for {set i 0} {$part_cnt < $npart} {incr i} {
-      if {[part $i] != "na"} {
-        set pos [part $i print p]
-        set com [vecadd $com $pos]
-        incr part_cnt
-      }
-    }
-    
-    return [vecscale [expr 1.0/$npart] $com]
-  }
-}
-
-
+#proc system_com { } {
+#  set npart [setmd n_part]
+#    
+#  #calculate center of mass
+#  set com {0.0 0.0 0.0}
+#  set part_cnt 0
+#  
+#  if {[has_feature MASS]} {
+#    set net_mass 0
+#    
+#    for {set i 0} {$i < $npart} {incr i} {
+#        set pos [part $i print p]
+#        set mass [part $i print mass]
+#        set com [vecadd $com [vecscale $mass $pos]]
+#        set net_mass [expr $net_mass + $mass]
+#        incr part_cnt
+#    }
+#
+#    return [vecscale [expr 1.0/$net_mass] $com]
+#  } else {
+#    for {set i 0} {$i < $npart} {incr i} {
+#        set pos [part $i print p]
+#        set com [vecadd $com $pos]
+#        incr part_cnt
+#    }
+#
+#    return [vecscale [expr 1.0/$npart] $com]
+#  }
+#}
+#
+#
 #
 # center of mass motion
 # ---------------------
@@ -512,40 +508,40 @@ proc system_com { } {
 # Calculate the center of mass velocity of the system stored in Espresso
 #
 #############################################################
-proc system_com_vel {} {
-  set npart [setmd n_part]
-    
-  # calculate center of mass motion
-  set com_vel {0 0 0}
-  set part_cnt 0
-  
-  if {[has_feature MASS]} {
-    set net_mass 0
-    
-    for {set i 0} {$part_cnt < $npart } {incr i} {
-      if { [part $i] != "na" } {
-        set part_vel [part $i print v]
-        set part_mass [part $i print mass]
-        set com_vel [vecadd $com_vel [vecscale $part_mass $part_vel]]
-        set net_mass [expr $net_mass + $part_mass]
-        incr part_cnt
-      }
-    }
-      
-    return [vecscale [expr 1.0/$net_mass] $com_vel]
-  } else {
-    for {set i 0} {$part_cnt < $npart } {incr i} {
-      if { [part $i] != "na" } {
-        set part_vel [part $i print v] 
-        set com_vel [vecadd $com_vel $part_vel]
-        incr part_cnt
-      }
-    }
-    
-    return [vecscale [expr 1.0/$npart] $com_vel]
-  }
-}
-
+#proc system_com_vel {} {
+#  set npart [setmd n_part]
+#    
+#  # calculate center of mass motion
+#  set com_vel {0 0 0}
+#  set part_cnt 0
+#  
+#  if {[has_feature MASS]} {
+#    set net_mass 0
+#    
+#    for {set i 0} {$i < $npart} {incr i} {
+#      if { [part $i] != "na" } {
+#        set part_vel [part $i print v]
+#        set part_mass [part $i print mass]
+#        set com_vel [vecadd $com_vel [vecscale $part_mass $part_vel]]
+#        set net_mass [expr $net_mass + $part_mass]
+#        incr part_cnt
+#      }
+#    }
+#      
+#    return "[vecscale [expr 1.0/$net_mass] $com_vel]"
+#  } else {
+#    for {set i 0} {$i < $npart} {incr i} {
+#      if { [part $i] != "na" } {
+#        set part_vel [part $i print v] 
+#        set com_vel [vecadd $com_vel $part_vel]
+#        incr part_cnt
+#      }
+#    }
+#    
+#    return [vecscale [expr 1.0/$npart] $com_vel]
+#  }
+#}
+#
 #
 # galileiTransformParticles 
 # -------------------------
@@ -555,25 +551,25 @@ proc system_com_vel {} {
 # system is zero. Returns old center of mass motion.
 #
 #############################################################
-
-proc galileiTransformParticles {} {
-  set com_vel [system_com_vel]
-    
-  #subtract center of mass motion from particle velocities
-  set npart [setmd n_part];
-  set part_cnt 0;
-  
-  for {set i 0} { $part_cnt < $npart } {incr i} {
-    if {[part $i] != "na"} {
-      set part_vel [vecsub [part $i print v] $com_vel]
-      part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
-      incr part_cnt
-    }
-  }
-  
-  return $com_vel
-}
-
+#
+#proc galileiTransformParticles {} {
+#  set com_vel [system_com_vel]
+#    
+#  #subtract center of mass motion from particle velocities
+#  set npart [setmd n_part];
+#  set part_cnt 0;
+#  
+#  for {set i 0} { $part_cnt < $npart } {incr i} {
+#    if {[part $i] != "na"} {
+#      set part_vel [vecsub [part $i print v] $com_vel]
+#      part $i v [lindex $part_vel 0] [lindex $part_vel 1] [lindex $part_vel 2]
+#      incr part_cnt
+#    }
+#  }
+#  
+#  return $com_vel
+#}
+#
 #
 # Prepare Connection to VMD
 # -------------------------

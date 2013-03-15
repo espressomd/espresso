@@ -61,6 +61,7 @@
 #include "molforces.h"
 #include "mdlc_correction.h"
 #include "reaction.h"
+#include "galilei.h"
 
 int this_node = -1;
 int n_nodes = -1;
@@ -90,7 +91,8 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_set_time_step_slave) \
   CB(mpi_get_particles_slave) \
   CB(mpi_bcast_coulomb_params_slave) \
-  CB(mpi_send_ext_slave) \
+  CB(mpi_send_ext_force_slave) \
+  CB(mpi_send_ext_torque_slave) \
   CB(mpi_place_new_particle_slave) \
   CB(mpi_remove_particle_slave) \
   CB(mpi_bcast_constraint_slave) \
@@ -137,6 +139,12 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_recv_fluid_boundary_flag_slave) \
   CB(mpi_set_particle_temperature_slave) \
   CB(mpi_set_particle_gamma_slave) \
+  CB(mpi_kill_particle_motion_slave) \
+  CB(mpi_kill_particle_forces_slave) \
+  CB(mpi_system_CMS_slave) \
+  CB(mpi_system_CMS_velocity_slave) \
+  CB(mpi_galilei_transform_slave) \
+  CB(mpi_setup_reaction_slave) \
   CB(mpi_send_rotation_slave) \
 
 // create the forward declarations
@@ -398,11 +406,6 @@ void mpi_bcast_event_slave(int node, int event)
   case P3M_COUNT_DIPOLES:
     dp3m_count_magnetic_particles();
     break;
-#endif
-
-#ifdef REACTIONS
-  case REACTION:
-     setup_reaction();
 #endif
 
   default:;
@@ -1818,11 +1821,63 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
 }
 
 /****************** REQ_SET_EXT ************/
-void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
+
+void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[3])
+{
+#ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+    int s_buf[2];
+    mpi_call(mpi_send_ext_torque_slave, pnode, part);
+
+    if (pnode == this_node) {
+      Particle *p = local_particles[part];
+      /* mask out old flags */
+      p->l.ext_flag &= ~mask;
+      /* set new values */
+      p->l.ext_flag |= flag;
+
+      if (mask & PARTICLE_EXT_TORQUE) 
+        memcpy(p->l.ext_torque, torque, 3*sizeof(double));
+    }
+    else {
+      s_buf[0] = flag; s_buf[1] = mask;
+      MPI_Send(s_buf, 2, MPI_INT, pnode, SOME_TAG, comm_cart);
+      if (mask & PARTICLE_EXT_TORQUE)
+        MPI_Send(torque, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    }
+
+    on_particle_change();
+  #endif
+#endif
+}
+
+void mpi_send_ext_torque_slave(int pnode, int part)
+{
+#ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+    int s_buf[2]={0,0};
+    if (pnode == this_node) {
+      Particle *p = local_particles[part];
+          MPI_Recv(s_buf, 2, MPI_INT, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+      /* mask out old flags */
+      p->l.ext_flag &= ~s_buf[1];
+      /* set new values */
+      p->l.ext_flag |= s_buf[0];
+      
+      if (s_buf[1] & PARTICLE_EXT_TORQUE)
+        MPI_Recv(p->l.ext_torque, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    }
+
+    on_particle_change();
+  #endif
+#endif
+}
+
+void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3])
 {
 #ifdef EXTERNAL_FORCES
   int s_buf[2];
-  mpi_call(mpi_send_ext_slave, pnode, part);
+  mpi_call(mpi_send_ext_force_slave, pnode, part);
 
   if (pnode == this_node) {
     Particle *p = local_particles[part];
@@ -1844,7 +1899,7 @@ void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3])
 #endif
 }
 
-void mpi_send_ext_slave(int pnode, int part)
+void mpi_send_ext_force_slave(int pnode, int part)
 {
 #ifdef EXTERNAL_FORCES
   int s_buf[2]={0,0};
@@ -2668,6 +2723,177 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
   }
 
   on_particle_change();
+#endif
+}
+
+/******************** REQ_GALILEI ********************/
+
+void mpi_kill_particle_motion()
+{
+#ifdef GALILEI
+  mpi_call(mpi_kill_particle_motion_slave, -1, 0);
+  local_kill_particle_motion();
+  on_particle_change();
+#endif
+}
+
+void mpi_kill_particle_motion_slave(int pnode, int i)
+{
+#ifdef GALILEI
+  local_kill_particle_motion();
+  on_particle_change();
+#endif
+}
+
+void mpi_kill_particle_forces()
+{
+#ifdef GALILEI
+  mpi_call(mpi_kill_particle_forces_slave, -1, 0);
+  local_kill_particle_forces();
+  on_particle_change();
+#endif
+}
+
+void mpi_kill_particle_forces_slave(int pnode, int i)
+{
+#ifdef GALILEI
+  local_kill_particle_forces();
+  on_particle_change();
+#endif
+}
+
+void mpi_system_CMS() {
+#ifdef GALILEI
+  int pnode;
+  double data[4];
+  double rdata[4];
+  double *pdata = rdata;
+
+  data[0] = 0.0; 
+  data[1] = 0.0;
+  data[2] = 0.0;
+  data[3] = 0.0;
+
+  mpi_call(mpi_system_CMS_slave, -1, 0);
+
+  for (pnode = 0; pnode < n_nodes; pnode++) {
+    if (pnode==this_node) {
+      local_system_CMS( pdata );
+      data[0] += rdata[0];
+      data[1] += rdata[1];
+      data[2] += rdata[2];
+      data[3] += rdata[3];
+    } else {
+      MPI_Recv(rdata, 4, MPI_DOUBLE, MPI_ANY_SOURCE, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+      data[0] += rdata[0];
+      data[1] += rdata[1];
+      data[2] += rdata[2];
+      data[3] += rdata[3];
+    }
+  }
+
+  gal.cms[0] = data[0]/data[3];
+  gal.cms[1] = data[1]/data[3];
+  gal.cms[2] = data[2]/data[3];
+#endif
+}
+
+void mpi_system_CMS_slave(int node, int index) {
+#ifdef GALILEI
+  double rdata[4];
+  double *pdata = rdata;
+  local_system_CMS( pdata );
+  MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+#endif
+}
+
+void mpi_system_CMS_velocity() {
+#ifdef GALILEI
+  int pnode;
+  double data[4];
+  double rdata[4];
+  double *pdata = rdata;
+
+  data[0] = 0.0; 
+  data[1] = 0.0;
+  data[2] = 0.0;
+  data[3] = 0.0;
+
+  mpi_call(mpi_system_CMS_velocity_slave, -1, 0);
+
+  for (pnode = 0; pnode < n_nodes; pnode++) {
+    if (pnode==this_node) {
+      local_system_CMS_velocity( pdata );
+      data[0] += rdata[0];
+      data[1] += rdata[1];
+      data[2] += rdata[2];
+      data[3] += rdata[3];
+    } else {
+      MPI_Recv(rdata, 4, MPI_DOUBLE, MPI_ANY_SOURCE, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+      data[0] += rdata[0];
+      data[1] += rdata[1];
+      data[2] += rdata[2];
+      data[3] += rdata[3];
+    }
+  }
+
+  gal.cms_vel[0] = data[0]/data[3];
+  gal.cms_vel[1] = data[1]/data[3];
+  gal.cms_vel[2] = data[2]/data[3];
+#endif
+}
+
+void mpi_system_CMS_velocity_slave(int node, int index) {
+#ifdef GALILEI
+  double rdata[4];
+  double *pdata = rdata;
+  local_system_CMS_velocity( pdata );
+  MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+#endif
+}
+
+void mpi_galilei_transform()
+{
+#ifdef GALILEI
+  double cmsvel[3];
+
+  mpi_system_CMS_velocity();
+  memcpy(cmsvel, gal.cms_vel, 3*sizeof(double));
+
+  mpi_call(mpi_galilei_transform_slave, -1, 0);
+  MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
+
+  local_galilei_transform( cmsvel );
+
+  on_particle_change();
+#endif
+}
+
+void mpi_galilei_transform_slave(int pnode, int i)
+{
+#ifdef GALILEI
+  double cmsvel[3];
+  MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
+
+  local_galilei_transform( cmsvel );
+  on_particle_change();
+#endif
+}
+
+/******************** REQ_CATALYTIC_REACTIONS ********************/
+
+void mpi_setup_reaction()
+{
+#ifdef CATALYTIC_REACTIONS
+  mpi_call(mpi_setup_reaction_slave, -1, 0);
+  local_setup_reaction();
+#endif
+}
+
+void mpi_setup_reaction_slave(int pnode, int i)
+{
+#ifdef CATALYTIC_REACTIONS
+  local_setup_reaction();
 #endif
 }
 

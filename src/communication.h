@@ -395,8 +395,11 @@ void mpi_set_time_step(double time_step);
 /** Issue REQ_BCAST_COULOMB: send new coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Issue REQ_SEND_EXT: send nex external flag and external force. */
-void mpi_send_ext(int pnode, int part, int flag, int mask, double force[3]);
+/** Issue REQ_SEND_EXT_FORCE: send nex external flag and external force. */
+void mpi_send_ext_force(int pnode, int part, int flag, int mask, double force[3]);
+
+/** Issue REQ_SEND_EXT_TORQUE: send nex external flag and external torque. */
+void mpi_send_ext_torque(int pnode, int part, int flag, int mask, double torque[3]);
 
 #ifdef LANGEVIN_PER_PARTICLE
 /** Issue REQ_SEND_PARTICLE_T: send particle type specific temperature. */
@@ -529,6 +532,22 @@ void mpi_bcast_max_mu();
 */
 int mpi_gather_runtime_errors(char **errors);
 
+/** Issue REQ_GALILEI: set all particle velocities and rotational inertias to zero. 
+                       set all forces and torques on the particles to zero 
+                       calculate the centre of mass (CMS) 
+                       calculate the velocity of the CMS
+                       remove the CMS velocity from the system
+ */
+void mpi_kill_particle_motion();
+void mpi_kill_particle_forces();
+void mpi_system_CMS();
+void mpi_system_CMS_velocity();
+void mpi_galilei_transform();
+
+/** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction parameters
+ */
+void mpi_setup_reaction();
+
 /*@}*/
 
 /** \name Event codes for \ref mpi_bcast_event
@@ -541,7 +560,6 @@ int mpi_gather_runtime_errors(char **errors);
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES   5
-#define REACTION 6
 /*@}*/
 
 #endif

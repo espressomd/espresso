@@ -107,15 +107,14 @@ Features can be activated in the configuration header
 \item \newfeature{LANGEVIN_PER_PARTICLE} Allows to define the temperature and
   friction coefficient for individual particles. See 
   \ref{ssec:particleproperties} for details.
-\item \newfeature{REACTIONS} Allows to define three particle types to be
-  reactant, catalyzer and product. The reaction reactant to product 
-  stochastically happens in a radius around the catalyzer, the back reaction
-  everywhere. See section \ref{sec:Reactions} for details.
+\item \newfeature{CATALYTIC_REACTIONS} Allows the user to define three particle types to be
+  reactant, catalyzer, and product. Reactants get converted into products in the vicinity of a catalyst according to a used-defined reaction rate constant. It is also possible to set up a chemical equilibrium reaction between the reactants and products, with another rate constant. See section \ref{sec:Reactions} for details.
 \item \newfeature{OVERLAPPED}
 \item \newfeature{COLLISION\_DETECTION} Allows particles to be bound oo collision. See section \ref{sec:collision}
 \item \newfeature{OLD\_RW\_VERSION} This switches back to the old,
   \emph{wrong} random walk code of the polymer. Only use this if you
   rely on the old behaviour and \emph{know what you are doing}.
+\item \newfeature{GALILEI} Allows for a global Galilei transform of the system. It also holds routines to determine the system's center of mass and it's velocity, as well as routines to stop the particles from moving and set the forces on all particles to zero.
 \end{itemize}
 
 In addition, there are switches that enable additional features in the

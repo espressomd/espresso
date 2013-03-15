@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,33 +18,28 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.h
- *
- */
- 
-#include "utils.h"
-#include "particle_data.h"
+#ifndef _GALILEI_TCL_H
+#define _GALILEI_TCL_H
+#include "parser.h"
 
-typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double ct_rate;
-	double eq_rate;
-  int sing_mult;
-}  reaction_struct;
+/** \name Exported Functions */
+/************************************************************/
+/*@{*/
 
-reaction_struct reaction;
+/** tcl procedure to set up reactions
+*/
 
-#ifdef CATALYTIC_REACTIONS
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
-**/
-void local_setup_reaction();
-void integrate_reaction();
+int tclcommand_kill_particle_motion(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+int tclcommand_kill_particle_forces(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+int tclcommand_system_CMS(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+int tclcommand_system_CMS_velocity(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+int tclcommand_galilei_transform(ClientData data, Tcl_Interp *interp,
+	      int argc, char **argv);
+
+/*@}*/
+
 #endif
-
-#endif /* ifdef REACTION_H */

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+  Copyright (C) 2010,2011,2012 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,33 +18,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef REACTION_H
-#define REACTION_H
-/** \file reaction.h
+#ifndef GALILEI_H
+#define GALILEI_H
+/** \file galilei.h
  *
  */
- 
+
 #include "utils.h"
 #include "particle_data.h"
 
-typedef struct {
-	int reactant_type;
-	int product_type;
-	int catalyzer_type;
-	double range;
-	double ct_rate;
-	double eq_rate;
-  int sing_mult;
-}  reaction_struct;
-
-reaction_struct reaction;
-
-#ifdef CATALYTIC_REACTIONS
+#ifdef GALILEI
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
     that the verlet radius is equal or bigger than the reaction range.
 **/
-void local_setup_reaction();
-void integrate_reaction();
+void local_kill_particle_motion();
+void local_kill_particle_forces();
+void local_system_CMS( double * );
+void local_system_CMS_velocity( double * );
+void local_galilei_transform( double * );
+
+typedef struct {
+
+  double cms[3];
+  double cms_vel[3];
+
+} galilei_struct;
+
+/** Galilei parameters. */
+extern galilei_struct gal;
+
 #endif
 
-#endif /* ifdef REACTION_H */
+#endif

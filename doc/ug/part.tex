@@ -41,6 +41,7 @@
   \require{2}{\opt{rinertia \var{x} \var{y} \var{z}}}
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
   \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
+  \require{2,3}{\opt{ext_torque \var{x} \var{y} \var{z}}}
   \require{4}{\opt{exclude \var{pid2}\dots}}
   \require{4}{\opt{exclude delete \var{pid2}\dots}}
   \require{5}{\opt{mass \var{mass}}}
@@ -116,11 +117,13 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For
-  example \var{fix 0 0 1} will fix motion only in z. Note that
-  \var{fix} without arguments is equivalent to \var{fix 1 1 1}.
+  example \var{fix} 0 0 1 will fix motion only in z. Note that
+  \var{fix} without arguments is equivalent to \var{fix} 1 1 1.
+\item[\opt{unfix}] Release any external influence from the particle.
 \item[\opt{ext_force \var{x} \var{y} \var{z}}]
   An additional external force is applied to the particle.
-\item[\opt{unfix}] Release any external influence from the particle.
+\item[\opt{ext_torque \var{x} \var{y} \var{z}}]
+  An additional external torque is applied to the particle.
 \item[\opt{exclude \var{pid2}\dots+}] Restrictions:
   \var{pid2} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
@@ -171,7 +174,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   \variant{1}
   part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
-      q \asep v \asep f \asep fix \asep ext_force \asep bond \asep
+      q \asep v \asep f \asep fix \asep ext_force \asep ext_torque \asep bond \asep
       \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}

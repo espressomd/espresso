@@ -29,6 +29,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #  
 
+require_feature "GALILEI"
+
 puts " "
 puts " "
 puts "============================================================="
@@ -542,7 +544,13 @@ if { $equl_loop > 0 } {
     inter forcecap 0; puts "Done ([inter forcecap])."
     puts -nonewline "        Making sure that electrostatics are disabled... "; flush stdout
     inter coulomb 0; puts "Done ([inter coulomb])."
-    if { $equl_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }
+
+    if { $equl_zero==1 } {
+      kill_particle_motion
+      kill_particle_forces
+    } else { 
+      puts "        As requested, all particles' velocities and forces remain at their current values!"
+    }
     
     # Attempt to crosslink the polymers (if requested)
     set tmp_cl1 0; set tmp_cl2 [expr 2*$N_P]
@@ -605,7 +613,14 @@ if { $main_loop > 0 } {
 	inter coulomb $bjerrum p3m accuracy $p3m_accuracy; inter coulomb epsilon $p3m_epsilon
 	puts "Done ([inter coulomb])."
     } else { inter coulomb $bjerrum; puts "        As requested, electrostatics have been disabled ([inter coulomb])!" }
-    if { $main_zero==1 } { stopParticles } else { puts "        As requested, all particles' velocities and forces remain at their current values!" }
+
+    if { $main_zero==1 } {
+      kill_particle_motion
+      kill_particle_forces
+    } else { 
+      puts "        As requested, all particles' velocities and forces remain at their current values!"
+    }
+
     puts "    Preparation completed."
     
     polyConfMovWriteInit $write "3-MAIN" $polyConfAuxL

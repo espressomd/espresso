@@ -367,6 +367,23 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
     Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
   }
 }
+
+  #ifdef ROTATION
+    void tclcommand_part_print_ext_torque(Particle *part, char *buffer, Tcl_Interp *interp)
+    {
+      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
+        Tcl_PrintDouble(interp, part->l.ext_torque[0], buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+        Tcl_PrintDouble(interp, part->l.ext_torque[1], buffer);
+        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+        Tcl_PrintDouble(interp, part->l.ext_torque[2], buffer);
+        Tcl_AppendResult(interp, buffer, (char *)NULL);
+      }
+      else {
+        Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
+      }
+    }
+  #endif
 #endif
 
 /** append particle data in ASCII form to the Tcl result.
@@ -469,6 +486,13 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #endif
 
 #ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+    if (part.l.ext_flag & PARTICLE_EXT_TORQUE) {
+      Tcl_AppendResult(interp, " ext_torque ", (char *)NULL);
+      tclcommand_part_print_ext_torque(&part, buffer, interp);
+    }
+  #endif
+
   /* print external force information. */
   if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
     Tcl_AppendResult(interp, " ext_force ", (char *)NULL);
@@ -622,6 +646,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+      else if (ARG0_IS_S("ext_torque"))
+        tclcommand_part_print_ext_torque(&part,buffer,interp);
+  #endif
+
     else if (ARG0_IS_S("ext_force"))
       tclcommand_part_print_ext_force(&part,buffer,interp);
     else if (ARG0_IS_S("fix"))
@@ -1260,6 +1289,42 @@ int tclcommand_part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef EXTERNAL_FORCES
+  #ifdef ROTATION
+    int tclcommand_part_parse_ext_torque(Tcl_Interp *interp, int argc, char **argv,
+			     int part_num, int * change)
+    {
+      double ext_t[3];
+      int ext_flag;
+
+      *change = 3;
+
+      if (argc < 3) {
+        Tcl_AppendResult(interp, "ext_torque requires 3 arguments", (char *) NULL);
+        return TCL_ERROR;
+      }
+      /* set external torque */
+      if (! ARG_IS_D(0, ext_t[0]))
+        return TCL_ERROR;
+
+      if (! ARG_IS_D(1, ext_t[1]))
+        return TCL_ERROR;
+
+      if (! ARG_IS_D(2, ext_t[2]))
+        return TCL_ERROR;
+
+      if (ext_t[0] == 0 && ext_t[1] == 0 && ext_t[2] == 0)
+        ext_flag = 0;
+      else
+        ext_flag = PARTICLE_EXT_TORQUE;
+
+      if (set_particle_ext_torque(part_num, ext_flag, ext_t) == TCL_ERROR) {
+        Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+        return TCL_ERROR;
+      }
+
+      return TCL_OK;
+    }
+  #endif
 
 int tclcommand_part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
@@ -1288,7 +1353,7 @@ int tclcommand_part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
   else
     ext_flag = PARTICLE_EXT_FORCE;
 
-  if (set_particle_ext(part_num, ext_flag, ext_f) == TCL_ERROR) {
+  if (set_particle_ext_force(part_num, ext_flag, ext_f) == TCL_ERROR) {
     Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
     return TCL_ERROR;
   }
@@ -1878,6 +1943,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("ext_force"))
       err = tclcommand_part_parse_ext_force(interp, argc-1, argv+1, part_num, &change);
 
+  #ifdef ROTATION
+    else if (ARG0_IS_S("ext_torque"))
+      err = tclcommand_part_parse_ext_torque(interp, argc-1, argv+1, part_num, &change);
+  #endif
 #endif
 
     else if (ARG0_IS_S("bond"))

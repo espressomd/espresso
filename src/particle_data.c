@@ -124,6 +124,10 @@ void init_particle(Particle *part)
   part->p.mu_E[2]   = 0.0;
 #endif
 
+#ifdef CATALYTIC_REACTIONS
+  part->p.catalyzer_count = 0;
+#endif
+
   /* ParticlePosition */
   part->r.p[0]     = 0.0;
   part->r.p[1]     = 0.0;
@@ -229,6 +233,11 @@ void init_particle(Particle *part)
   part->l.ext_force[0] = 0.0;
   part->l.ext_force[1] = 0.0;
   part->l.ext_force[2] = 0.0;
+  #ifdef ROTATION
+    part->l.ext_torque[0] = 0.0;
+    part->l.ext_torque[1] = 0.0;
+    part->l.ext_torque[2] = 0.0;
+  #endif
 #endif
 
   init_intlist(&(part->bl));
@@ -906,7 +915,26 @@ int set_particle_gamma(int part, double gamma)
 #endif
 
 #ifdef EXTERNAL_FORCES
-int set_particle_ext(int part, int flag, double force[3])
+  #ifdef ROTATION
+    int set_particle_ext_torque(int part, int flag, double torque[3])
+    {
+      int pnode;
+      if (!particle_node)
+        build_particle_node();
+
+      if (part < 0 || part > max_seen_particle)
+        return ES_ERROR;
+      pnode = particle_node[part];
+
+      if (pnode == -1)
+        return ES_ERROR;
+
+      mpi_send_ext_torque(pnode, part, flag, PARTICLE_EXT_TORQUE, torque);
+        return ES_OK;
+    }
+  #endif
+
+int set_particle_ext_force(int part, int flag, double force[3])
 {
   int pnode;
   if (!particle_node)
@@ -918,8 +946,9 @@ int set_particle_ext(int part, int flag, double force[3])
 
   if (pnode == -1)
     return ES_ERROR;
-  mpi_send_ext(pnode, part, flag, PARTICLE_EXT_FORCE, force);
-  return ES_OK;
+
+  mpi_send_ext_force(pnode, part, flag, PARTICLE_EXT_FORCE, force);
+    return ES_OK;
 }
 
 int set_particle_fix(int part,  int flag)
@@ -934,7 +963,7 @@ int set_particle_fix(int part,  int flag)
 
   if (pnode == -1)
     return ES_ERROR;
-  mpi_send_ext(pnode, part, flag, COORDS_FIX_MASK, NULL);
+  mpi_send_ext_force(pnode, part, flag, COORDS_FIX_MASK, NULL);
   return ES_OK;
 }
 
