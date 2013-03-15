@@ -63,12 +63,11 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
 
   if (argc == 2 ) { 
      if (ARG1_IS_S("off")) {
-           reaction.ct_rate=0.0;
-           reaction.eq_rate=0.0;
-           mpi_setup_reaction();
-           return TCL_OK;
-
-// I REALLY DON'T THINK THIS IS CORRECT ANYMORE !!!!!
+       /* We only need to set ct_rate to zero and we
+          do not enter the reaction integration loop */
+       reaction.ct_rate=0.0;
+       mpi_setup_reaction();
+       return TCL_OK;
      }
      if (ARG1_IS_S("print")) {
            return tcl_command_reaction_print(interp);
@@ -79,7 +78,7 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
      return tcl_command_reaction_print_usage(interp);
   }
      
-  if(reaction.rate != 0.0) {
+  if(reaction.ct_rate != 0.0) {
 
 // STORE OLD VALUES AND COMPARE FOR LATER !!!!!!
 

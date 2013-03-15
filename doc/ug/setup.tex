@@ -676,10 +676,10 @@ The following limitations currently apply for the collision detection:
   collisions between virtual sites
 \end{itemize}
 
-\section{Reactions}
+\section{Catalytic Reactions}
 \label{sec:Reactions}
 
-With the help of the feature \feature{REACTIONS}, one can define three particle types to act as reactant, catalyzer, and product. Using these reaction categories, we model the following chemical reaction system:
+With the help of the feature \feature{CATALYTIC_REACTIONS}, one can define three particle types to act as reactant, catalyzer, and product. Using these reaction categories, we model the following chemical reaction system:
 \begin{eqnarray}
 rt & \rightleftharpoons & pr ; \\
 rt & \xrightarrow{ct} & pr,
@@ -690,8 +690,9 @@ K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
 \end{equation}
 with $[rt]$ and $[pr]$ the reactant and product concentration and $k_{\text{eq,$\pm$}}$ the forward and backward reaction rate constants, respectively. The rate constants that specify the change in concentration for the equilibrium and catalytic reaction are given by 
 \begin{eqnarray}
-k_{\text{eq,$\pm$}} & = & \pm \frac{d[pr]}{dt} \;\: = \;\: \mp \frac{d[rt]}{dt} ; \\
-k_{\text{ct}} & = & -\frac{d[rt]}{dt} \;\: = \;\: \frac{d[pt]}{dt} ,
+\frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
+\frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
+-\frac{d[rt]}{dt} \;\: = \;\: \frac{d[pt]}{dt} & = & k_{\text{ct}}[rt] ,
 \end{eqnarray}
 respectively.
 
@@ -708,17 +709,17 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}
-  \required{REACTIONS}
+  \required{CATALYTIC_REACTIONS}
 \end{features}
 \end{essyntax}
 
 \begin{itemize}
-\item Variant \variant{0} defines a reaction with particles of type number \var{rt} as reactant, type \var{ct} as catalyzer and type \var{pt} as product\footnote{Only one type of particle can be assigned to each of these three reaction species and no particle type may be assigned to multiple species. That is, \es currently does not support particles of type 1 and 2 both to be reactants, nor can particles of type 1 be a reactant as well as a catalyst. Moreover, only one of these reactions can be implemented in a single Tcl script. If, for instance, there is a reaction involving particle types 1, 2, and 4, there cannot be a second reaction involving particles of type 5, 6, and 8.}. The catalytic reaction rate constant is given by \var{k\_ct}\footnote{Currently only strictly positive values of the catalytic conversion rate constant are allowed.} and to override the default rate constant for the equilibrium reaction (\var{k\_eq} = 0), one can specify it by \var{k\_eq}. By default each reactant particle is checked against each catalyst particle (\texttt{react\_once} \emph{off}). However, when creating smooth surfaces using many catalyst particles, it can be desirable to let the reaction rate be independent of the surface density of these particles. That is, each particle has a likelihood of reacting in the vicinity of the surface (distance is less than $r$) as specified by the rate constant, i.e., \emph{not} according to $P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t  \right)$, with $n$ the number of local catalysts. To accomplish this, each reactant is considered only once each time step by using the option \texttt{react\_once} \emph{on}. The reaction command is set up such that the different properties may be influenced individually.
+\item Variant \variant{0} defines a reaction with particles of type number \var{rt} as reactant, type \var{ct} as catalyzer and type \var{pt} as product\footnote{Only one type of particle can be assigned to each of these three reaction species and no particle type may be assigned to multiple species. That is, \es currently does not support particles of type 1 and 2 both to be reactants, nor can particles of type 1 be a reactant as well as a catalyst. Moreover, only one of these reactions can be implemented in a single Tcl script. If, for instance, there is a reaction involving particle types 1, 2, and 4, there cannot be a second reaction involving particles of type 5, 6, and 8. It is however possible to modify the reaction properties for a given set of types during the simulation.}. The catalytic reaction rate constant is given by \var{k\_ct}\footnote{Currently only strictly positive values of the catalytic conversion rate constant are allowed.} and to override the default rate constant for the equilibrium reaction (\var{k\_eq} = 0), one can specify it by \var{k\_eq}. By default each reactant particle is checked against each catalyst particle (\texttt{react\_once} \emph{off}). However, when creating smooth surfaces using many catalyst particles, it can be desirable to let the reaction rate be independent of the surface density of these particles. That is, each particle has a likelihood of reacting in the vicinity of the surface (distance is less than $r$) as specified by the rate constant, i.e., \emph{not} according to $P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t  \right)$, with $n$ the number of local catalysts. To accomplish this, each reactant is considered only once each time step by using the option \texttt{react\_once} \emph{on}. The reaction command is set up such that the different properties may be influenced individually.
 \item Variant \variant{1} disables the reaction. Note that at the moment, there can only be one reaction in the simulation.
 \item Variant \variant{2} returns the current reaction parameters.
 \end{itemize}
 
-In future versions of \es the capabilities of the \feature{REACTIONS} feature may be generalized to handle multiple reactant, catalyzer, and product types, as well as more general reaction schemes. Other changes may involve merging the current implementation with the \feature{COLLISION_DETECTION} feature.
+In future versions of \es the capabilities of the \feature{CATALYTIC_REACTIONS} feature may be generalized to handle multiple reactant, catalyzer, and product types, as well as more general reaction schemes. Other changes may involve merging the current implementation with the \feature{COLLISION_DETECTION} feature.
 
 \section{Galilei}
 \label{sec:Galilei}
