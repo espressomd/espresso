@@ -335,7 +335,7 @@ void integrate_vv(int n_steps)
     if (check_runtime_errors()) break;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   integrate_reaction();
 #endif
 

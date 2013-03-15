@@ -205,7 +205,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif
 #ifdef GALILEI

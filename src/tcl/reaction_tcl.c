@@ -29,7 +29,7 @@
 #include "communication.h"
 #include "integrate.h"
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
 int tcl_command_reaction_print_usage(Tcl_Interp * interp){
   char buffer[256];
   sprintf(buffer, "Usage: reaction [off | print | reactant_type <rt> catalyzer_type <ct> product_type <pt> range <r> ct_rate <k_ct> [eq_rate <k_eq>] [react_once <on|off>]\n");
@@ -57,7 +57,15 @@ int tcl_command_reaction_print(Tcl_Interp * interp){
 #endif
 
 int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
+
+  /* Determine the currently set types, to block the user from 
+     trying to set up multiple reactions */
+
+  int react_type, prdct_type, catal_type;
+  react_type = reaction.reactant_type;
+  prdct_type = reaction.product_type;
+  catal_type = reaction.catalyzer_type;
 
   if (argc == 1  ) return tcl_command_reaction_print_usage(interp);
 
@@ -77,14 +85,7 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
   if( argc!=11 && argc!=13 && argc!=15 && argc!=3) {
      return tcl_command_reaction_print_usage(interp);
   }
-     
-  if(reaction.ct_rate != 0.0) {
 
-// STORE OLD VALUES AND COMPARE FOR LATER !!!!!!
-
-    Tcl_AppendResult(interp, "Currently a simulation can only contain a single reaction!", (char *) NULL);
-    return (TCL_ERROR);
-  }
      
   if(time_step < 0.0) {
     Tcl_AppendResult(interp, "Time step needs to be set before setting up a reaction!", (char *) NULL);
@@ -142,8 +143,8 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
     }
   }
 
-  if( reaction.ct_rate <= 0.0 ) {
-    Tcl_AppendResult(interp, "Negative or zero catalytic reaction rate constant is not allowed!", (char *) NULL);
+  if( reaction.ct_rate < 0.0 ) {
+    Tcl_AppendResult(interp, "Negative catalytic reaction rate constant is not allowed!", (char *) NULL);
     return (TCL_ERROR);
   }
 
@@ -157,10 +158,15 @@ int tclcommand_reaction(ClientData data, Tcl_Interp * interp, int argc, char ** 
     return (TCL_ERROR);
   }
 
+  if ( ((react_type != reaction.reactant_type) || (prdct_type != reaction.product_type) || (catal_type != reaction.catalyzer_type)) && (react_type != prdct_type) ) {
+    Tcl_AppendResult(interp, "A simulation can only contain a single reaction!", (char *) NULL);
+    return (TCL_ERROR); 
+  }
+
   mpi_setup_reaction();
   return TCL_OK;
 #else
-  Tcl_AppendResult(interp, "REACTIONS not compiled in!" ,(char *) NULL);
+  Tcl_AppendResult(interp, "CATALYTIC_REACTIONS not compiled in!" ,(char *) NULL);
   return (TCL_ERROR);
 #endif
 }

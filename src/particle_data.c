@@ -124,7 +124,7 @@ void init_particle(Particle *part)
   part->p.mu_E[2]   = 0.0;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   part->p.catalyzer_count = 0;
 #endif
 

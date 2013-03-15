@@ -544,7 +544,7 @@ void mpi_system_CMS();
 void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 
-/** Issue REQ_REACTIONS: notify the system of changes to the reaction parameters
+/** Issue REQ_CATALYTIC_REACTIONS: notify the system of changes to the reaction parameters
  */
 void mpi_setup_reaction();
 
@@ -560,7 +560,6 @@ void mpi_setup_reaction();
 #define CHECK_PARTICLES   2
 #define MAGGS_COUNT_CHARGES 3
 #define P3M_COUNT_DIPOLES   5
-//#define REACTION 6
 /*@}*/
 
 #endif

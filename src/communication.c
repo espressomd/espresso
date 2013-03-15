@@ -2880,11 +2880,11 @@ void mpi_galilei_transform_slave(int pnode, int i)
 #endif
 }
 
-/******************** REQ_REACTIONS ********************/
+/******************** REQ_CATALYTIC_REACTIONS ********************/
 
 void mpi_setup_reaction()
 {
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   mpi_call(mpi_setup_reaction_slave, -1, 0);
   local_setup_reaction();
 #endif
@@ -2892,7 +2892,7 @@ void mpi_setup_reaction()
 
 void mpi_setup_reaction_slave(int pnode, int i)
 {
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   local_setup_reaction();
 #endif
 }

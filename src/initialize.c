@@ -133,8 +133,8 @@ void on_program_start()
   lb_pre_init();
 #endif
 
-#ifdef REACTIONS
-  reaction.eq_rate=-1.0;
+#ifdef CATALYTIC_REACTIONS
+  reaction.eq_rate=0.0;
   reaction.sing_mult=0;
 #endif
 
@@ -268,10 +268,10 @@ if(this_node == 0){
   meta_init();
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
 if( dd.use_vList == 0 || cell_structure.type == CELL_STRUCTURE_NSQUARE ) {
   errtext = runtime_error(128);
-  ERROR_SPRINTF(errtext,"{105 The REACTIONS feature requires verlet and cell lists} ");
+  ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet and cell lists} ");
 }
 
 if(reaction.ct_rate != 0.0) {

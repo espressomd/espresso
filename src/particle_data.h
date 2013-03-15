@@ -137,7 +137,7 @@ typedef struct {
   double gamma;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   int catalyzer_count;
 #endif
 } ParticleProperties;

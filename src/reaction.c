@@ -27,8 +27,7 @@
 #include "initialize.h"
 #include "forces.h"
 
-
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
 void local_setup_reaction() {
   
   /* Make available the various reaction parameters */
@@ -69,7 +68,7 @@ void integrate_reaction() {
          ct_ratexp, eq_ratexp,
          rand, bernoulli;
 
-  if(reaction.ct_rate > 0) {
+  if(reaction.ct_rate > 0.0) {
 
     /* Determine the reaction rate */
     ct_ratexp = exp(-time_step*reaction.ct_rate);
@@ -144,7 +143,7 @@ void integrate_reaction() {
             {
               rand = d_random();
 
-              bernoulli = pow((1.0 - ct_ratexp), p1[i].p.catalyzer_count);
+              bernoulli = pow(ct_ratexp, p1[i].p.catalyzer_count);
 
               if(rand > bernoulli) {
                 p1[i].p.type = reaction.product_type; }
