@@ -1,0 +1,5 @@
+~/testgit/testwork/./Espresso test-cpu.tcl > test-cpu_system.data0
+
+mpirun -np 1 ~/testgit/testwork/./Espresso test-cpu.tcl > test-cpu_system.data1
+mpirun -np 2 ~/testgit/testwork/./Espresso test-cpu.tcl > test-cpu_system.data2
+mpirun -np 4 ~/testgit/testwork/./Espresso test-cpu.tcl > test-cpu_system.data4	

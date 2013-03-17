@@ -147,6 +147,23 @@ proc discard_epsilon {x} {
 }
 
 proc add_oif_object { args } {
+
+set createPart TMP/noGcreatePart;
+
+set bondS TMP/noGbondsStretching
+set bondB TMP/noGbondsBending
+set bondAlocal TMP/noGbondsAreaLocal
+set bondAglobal TMP/noGbondsAreaGlobal
+set bondV TMP/noGbondsVolume
+set bondVA TMP/noGbondsVolumeAreaGlobal
+set partS TMP/noGpartStretching
+set partB TMP/noGpartBending
+set partAlocal TMP/noGpartAreaLocal
+set partAglobal TMP/noGpartAreaGlobal
+set partV TMP/noGpartVolume
+set partVA TMP/noGpartVolumeAreaGlobal
+
+
 	# acces global variables defined in init_objects_in_fluid.tcl:
 	global oif_n_objects
 	global oif_nnode
@@ -175,11 +192,11 @@ proc add_oif_object { args } {
 	set stretch_Z 1.0
 	set filenamenodes ""
 	set filenametriangles ""
-	set ks 0.5
-	set kb 3
-	set kal 0
-	set kag 0
-	set kv 0
+	set ks 0.0
+	set kb 0.0
+	set kal 0.0
+	set kag 0.0
+	set kv 0.0
 	set part_type -1
 	set part_mol -1
 	set part_mass 1
@@ -515,16 +532,25 @@ proc add_oif_object { args } {
 #	
 # 	
 
+
+
 # generating particles:
+	set f [open $createPart "w"]
 	set i $oif_firstPartId
 	for {set i $oif_firstPartId} {$i < [expr $mesh_nnodes + $oif_firstPartId]} {incr i} {
-		part $i pos [expr $mesh_nodes([expr $i - $oif_firstPartId],0)] [expr $mesh_nodes([expr $i - $oif_firstPartId],1)] [expr $mesh_nodes([expr $i - $oif_firstPartId],2)] type $part_type mol $part_mol mass $part_mass
+		part $i pos [format %e [expr $mesh_nodes([expr $i - $oif_firstPartId],0)]] [format %e [expr $mesh_nodes([expr $i - $oif_firstPartId],1)]] [format %e [expr $mesh_nodes([expr $i - $oif_firstPartId],2)]] type $part_type mol $part_mol mass $part_mass
+		puts $f [format "part $i pos %e %e %e type $part_type mol $part_mol mass $part_mass" [expr $mesh_nodes([expr $i - $oif_firstPartId],0)] [expr $mesh_nodes([expr $i - $oif_firstPartId],1)] [expr $mesh_nodes([expr $i - $oif_firstPartId],2)]]
 		}  
 	set oif_firstPartId [expr $oif_firstPartId + $mesh_nnodes]
+	close $f
+
 		
 # generation of stretching force bonds
 	# implemented by Iveta
-	if { $ks != 0} {
+	if { $ks != 0.0} {
+		set fbond [open $bondS "w"]
+		set fpart [open $partS "w"]
+
 		puts "generating stretching force bonds"
 		set firstID_StrBond $oif_firstBondId
 		# Stretching is coupled to the edges   
@@ -540,14 +566,22 @@ proc add_oif_object { args } {
 		    # We need to compute the distance btw the vertices
 		    set dist [expr sqrt(($p1(0)-$p2(0))*($p1(0)-$p2(0)) + ($p1(1)-$p2(1))*($p1(1)-$p2(1)) + ($p1(2)-$p2(2))*($p1(2)-$p2(2)))] 
 		    set firstPartId [expr $oif_firstPartId - $mesh_nnodes]
-		    inter [expr $firstID_StrBond + $i] stretching_force [expr $dist] [expr $ks]
+		    inter [expr $firstID_StrBond + $i] stretching_force [format %e $dist] [format %e $ks]
+		    #inter [expr $firstID_StrBond + $i] stretching_force [expr $dist] [expr $ks]
 		    part [expr $mesh_edges($i,0)+$firstPartId] bond [expr $firstID_StrBond + $i] [expr $mesh_edges($i,1) + $firstPartId]
+		    puts $fbond [format "inter [expr $firstID_StrBond + $i] stretching_force %e %e" [expr $dist] [expr $ks]]
+		    puts $fpart "part [expr $mesh_edges($i,0)+$firstPartId] bond [expr $firstID_StrBond + $i] [expr $mesh_edges($i,1) + $firstPartId]"
 		}
+		close $fpart
+		close $fbond
+		
 	}
 
 # generation of bending force bonds
 	# implemented by Cimo
-	if { $kb != 0} {
+	if { $kb != 0.0} {
+		set fbond [open $bondB "w"]
+		set fpart [open $partB "w"]
 		puts "generating bending force bonds"
 		set firstID_BenBond $oif_firstBondId
 		set n_BenBond $mesh_nedges
@@ -671,15 +705,22 @@ proc add_oif_object { args } {
 			set P3 [lreplace $P3 0 2]
 			set P4 [lreplace $P4 0 2]
 
-			inter [expr $firstID_BenBond + $i] bending_force $phi $kb
+			inter [expr $firstID_BenBond + $i] bending_force [format %e $phi] [format %e $kb]
 			set firstPartId [expr $oif_firstPartId - $mesh_nnodes]
 			part [expr $p2id + $firstPartId] bond [expr $firstID_BenBond + $i] [expr $p1id + $firstPartId] [expr $p3id + $firstPartId] [expr $p4id + $firstPartId]
+
+			puts $fbond [format "inter [expr $firstID_BenBond + $i] bending_force %e %e" $phi $kb]
+			puts $fpart "part [expr $p2id + $firstPartId] bond [expr $firstID_BenBond + $i] [expr $p1id + $firstPartId] [expr $p3id + $firstPartId] [expr $p4id + $firstPartId]"
 		}
+		close $fpart
+		close $fbond
 	}
 
 # generation of local area force bonds
 	# implemented by Cimo
-	if {$kal != 0} {
+	if {$kal != 0.0} {
+		set fbond [open $bondAlocal "w"]
+		set fpart [open $partAlocal "w"]
 		puts "generating local area force bonds"
 		set firstID_localAreaBond $oif_firstBondId
 		set n_localAreaBond $mesh_ntriangles
@@ -701,18 +742,23 @@ proc add_oif_object { args } {
 			set P1 [lreplace $P1 0 2]
 			set P2 [lreplace $P2 0 2]
 			set P3 [lreplace $P3 0 2]
-			set P4 [lreplace $P4 0 2]
 			
 			set firstPartId [expr $oif_firstPartId - $mesh_nnodes]
 			inter [expr $firstID_localAreaBond + $i] area_force_local $area $kal
 			part [expr $mesh_triangles($i,0) + $firstPartId] bond [expr $firstID_localAreaBond + $i] [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]
+			puts $fbond "inter [expr $firstID_localAreaBond + $i] area_force_local $area $kal"
+			puts $fpart "part [expr $mesh_triangles($i,0) + $firstPartId] bond [expr $firstID_localAreaBond + $i] [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]"
 		}
+		close $fbond
+		close $fpart
 	}
 
 
 # generation of global area force bonds
 	# implemented by Cimo
-	if {$kag != 0} {
+	if {$kag != 0.0} {
+		set fbond [open $bondAglobal "w"]
+		set fpart [open $partAglobal "w"]
 		puts "generating global area force bonds"
 		set firstID_globalAreaBond $oif_firstBondId
 		set n_globalAreaBond 1
@@ -735,21 +781,25 @@ proc add_oif_object { args } {
 			set P1 [lreplace $P1 0 2]
 			set P2 [lreplace $P2 0 2]
 			set P3 [lreplace $P3 0 2]
-			set P4 [lreplace $P4 0 2]
 
 			set gl_area [expr $gl_area + $area]
 		}
 		inter $firstID_globalAreaBond area_force_global $gl_area $kag
+		puts $fbond "inter $firstID_globalAreaBond area_force_global $gl_area $kag"
 			# First we need to set up the interaction and only afterward we can create the bonds
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 			set firstPartId [expr $oif_firstPartId - $mesh_nnodes]
-			part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_globalAreaBond [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]
+			puts $fpart "part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_globalAreaBond [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) + $firstPartId]"
 		}
+	close $fpart
+	close $fbond
 	}
 	
 # generation of volume force bonds
 	# implemented by Cimo
-	if {$kag != 0} {
+	if {$kv != 0.0} {
+		set fbond [open $bondV "w"]
+		set fpart [open $partV "w"]
 		puts "generating volume force bonds"
 		set firstID_VolumeBond $oif_firstBondId
 		set n_VolumeBond 1
@@ -801,15 +851,16 @@ proc add_oif_object { args } {
 			set P1 [lreplace $P1 0 2]
 			set P2 [lreplace $P2 0 2]
 			set P3 [lreplace $P3 0 2]
-			set P4 [lreplace $P4 0 2]
-
 		}
 		inter $firstID_VolumeBond volume_force $volume $kv
+		puts $fbond "inter $firstID_VolumeBond volume_force $volume $kv"
 			# First we need to set up the interaction and only afterward we can create the bonds
 		for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 			set firstPartId [expr $oif_firstPartId - $mesh_nnodes]
-			part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_VolumeBond [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) +$firstPartId]
+			puts $fpart "part [expr $mesh_triangles($i,0) + $firstPartId] bond $firstID_VolumeBond [expr $mesh_triangles($i,1) + $firstPartId] [expr $mesh_triangles($i,2) +$firstPartId]"
 		}
+		close $fpart
+		close $fbond
 }
 	
 	
