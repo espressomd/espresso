@@ -43,7 +43,7 @@ int tcl_command_kill_particle_motion_print_usage(Tcl_Interp * interp){
 /* Set the forces on the particles to zero */
 int tcl_command_kill_particle_forces_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: kill_particle_forces [torque]\n");
+  sprintf(buffer, "Usage: kill_particle_forces [torques]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
@@ -104,7 +104,7 @@ int tclcommand_kill_particle_forces(ClientData data, Tcl_Interp * interp, int ar
   } else {
     if (ARG_IS_S_EXACT(0,"kill_particle_forces")) {
       if ( argc == 2 ) {
-        if (ARG_IS_S_EXACT(1,"torque")) {
+        if (ARG_IS_S_EXACT(1,"torques")) {
           mpi_kill_particle_forces( 1 );
           return TCL_OK;
         } else {

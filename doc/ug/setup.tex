@@ -709,7 +709,7 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}
-  \required{CATALYTIC_REACTIONS}
+  \required{CATALYTIC_REACTIONS\footnote{The current implementation also requires the use of verlet lists and domain decomposition.}}
 \end{features}
 \end{essyntax}
 
@@ -739,12 +739,12 @@ This command halts all particles in the current simulation, setting their veloci
 \subsection{Forces and torques acting on the particles}
 
 \begin{essyntax}
-  kill_particle_forces \require{1}{\opt{torque}}
+  kill_particle_forces \require{1}{\opt{torques}}
   \begin{features}
     \required[1]{ROTATION}
   \end{features}
 \end{essyntax}
-This command sets all forces on the particles to zero, as well as all torques if the option \texttt{torque} is specified and  the feature ROTATION has been compiled in.
+This command sets all forces on the particles to zero, as well as all torques if the option \texttt{torque} is specified and the feature ROTATION has been compiled in. The Tcl-command \texttt{stopParticles} now also makes use of the C-level functions, but otherwise has the same functionality.
 
 \subsection{The centre of mass of the system}
 
