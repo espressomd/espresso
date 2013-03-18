@@ -788,11 +788,6 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
       return (TCL_ERROR);
     }
 
-    if (lattice_switch & LATTICE_LB_GPU) {
-      Tcl_AppendResult(interp, "Error in lbboundary force: cannot read out forces from the GPU code" ,(char *) NULL);
-      return (TCL_ERROR);	
-    }
-
 #ifdef LB
     char buffer[3*TCL_DOUBLE_SPACE+3];
     double force[3];

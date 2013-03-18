@@ -84,9 +84,9 @@ HaloCommunicator update_halo_comm = { 0, NULL };
 static int fluct;
 
 /** relaxation rate of shear modes */
-static double gamma_shear = 0.0;
+double gamma_shear = 0.0;
 /** relaxation rate of bulk modes */
-static double gamma_bulk = 0.0;
+double gamma_bulk = 0.0;
 /** relaxation of the odd kinetic modes */
 static double gamma_odd  = 0.0;
 /** relaxation of the even kinetic modes */
@@ -828,28 +828,32 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 
 
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
+   
+    lb_lbnode_get_pi_neq(ind, p_pi);
+  
+    double p0 = lbpar.rho*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
+    p_pi[0] += p0;
+    p_pi[2] += p0;
+    p_pi[5] += p0;
+  return 0;
+}
+
+int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
+
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-#if 0
     LB_values_gpu *host_print_values;
     host_print_values = malloc(sizeof(LB_values_gpu));	
-    double pi[6];
+    
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
-
-    p_pi[0] = (double)host_print_values[0].pi[0];
-    p_pi[1] = (double)host_print_values[0].pi[1];
-    p_pi[2] = (double)host_print_values[0].pi[2];
-    p_pi[3] = (double)host_print_values[0].pi[3];
-    p_pi[4] = (double)host_print_values[0].pi[4];
-    p_pi[5] = (double)host_print_values[0].pi[5];
+    for (int i = 0; i<6; i++) {
+      p_pi[i]=host_print_values->pi[i];
+    }
 		free (host_print_values);
-
 #endif
-#endif
-  printf("single node stress tensor values not available due to memory consumption!\n But can be made available hardcoded in lb.c and lbgpu.h!\n");
-  } else {   
-#ifdef LB
+  } else {  
+  
     index_t index;
     int node, grid[3], ind_shifted[3];
     double rho; double j[3]; double pi[6];
@@ -860,34 +864,15 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
   
     mpi_recv_fluid(node,index,&rho,j,pi);
     // unit conversion // TODO: Check Unit Conversion!
-    p_pi[0] = pi[0]*tau*lbpar.agrid*lbpar.agrid;
-    p_pi[1] = pi[1]*tau*lbpar.agrid*lbpar.agrid;
-    p_pi[2] = pi[2]*tau*lbpar.agrid*lbpar.agrid;
-    p_pi[3] = pi[3]*tau*lbpar.agrid*lbpar.agrid;
-    p_pi[4] = pi[4]*tau*lbpar.agrid*lbpar.agrid;
-    p_pi[5] = pi[5]*tau*lbpar.agrid*lbpar.agrid;
-#endif
-    }
-  return 0;
-}
+    p_pi[0] = pi[0]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+    p_pi[1] = pi[1]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+    p_pi[2] = pi[2]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+    p_pi[3] = pi[3]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+    p_pi[4] = pi[4]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
+    p_pi[5] = pi[5]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
 
-int lb_lbnode_get_pi_neq(int* ind, double* p_pi_neq) {
-  
-//  double rho; double[3] j; double[6] pi;
-//
-//  node = map_lattice_to_node(&lblattice,ind,grid);
-//  index = get_linear_index(ind[0],ind[1],ind[2],lblattice.halo_grid);
-//  
-//  mpi_recv_fluid(node,index,&rho,j,pi);
-//  // unit conversion // TODO: Check Unit Conversion! And do the thing right!
-//  *p_pi_neq[0] = pi[0]/rho*tau/time_step*lbpar.agrid;
-//  *p_pi_neq[1] = pi[1]/rho*tau/time_step*lbpar.agrid;
-//  *p_pi_neq[2] = pi[2]/rho*tau/time_step*lbpar.agrid;
-//  *p_pi_neq[3] = pi[3]/rho*tau/time_step*lbpar.agrid;
-//  *p_pi_neq[4] = pi[4]/rho*tau/time_step*lbpar.agrid;
-//  *p_pi_neq[5] = pi[5]/rho*tau/time_step*lbpar.agrid;
-
-  return -100;
+    return 0;
+  }
 }
 
 int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
