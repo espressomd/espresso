@@ -61,8 +61,6 @@ void local_setup_reaction() {
 }
 
 void integrate_reaction() {
-
-  char *errtext;
   int c, np, n, i,
       check_catalyzer;
   Particle *p1, *p2, **pairs;
