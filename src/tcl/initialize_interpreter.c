@@ -208,13 +208,11 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif
-#ifdef GALILEI
   REGISTER_COMMAND("kill_particle_motion", tclcommand_kill_particle_motion);
   REGISTER_COMMAND("kill_particle_forces", tclcommand_kill_particle_forces);
   REGISTER_COMMAND("system_CMS", tclcommand_system_CMS);
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
-#endif
 }
 
 static void register_global_variables(Tcl_Interp *interp)

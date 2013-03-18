@@ -532,14 +532,14 @@ void mpi_bcast_max_mu();
 */
 int mpi_gather_runtime_errors(char **errors);
 
-/** Issue REQ_GALILEI: set all particle velocities and rotational inertias to zero. 
+/** Galilei and other: set all particle velocities and rotational inertias to zero. 
                        set all forces and torques on the particles to zero 
                        calculate the centre of mass (CMS) 
                        calculate the velocity of the CMS
                        remove the CMS velocity from the system
  */
-void mpi_kill_particle_motion();
-void mpi_kill_particle_forces();
+void mpi_kill_particle_motion( int rotation );
+void mpi_kill_particle_forces( int torque );
 void mpi_system_CMS();
 void mpi_system_CMS_velocity();
 void mpi_galilei_transform();

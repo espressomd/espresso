@@ -2726,44 +2726,35 @@ void mpi_set_particle_gamma_slave(int pnode, int part)
 #endif
 }
 
-/******************** REQ_GALILEI ********************/
+/***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 
-void mpi_kill_particle_motion()
+void mpi_kill_particle_motion( int rotation )
 {
-#ifdef GALILEI
-  mpi_call(mpi_kill_particle_motion_slave, -1, 0);
-  local_kill_particle_motion();
+  mpi_call(mpi_kill_particle_motion_slave, -1, rotation );
+  local_kill_particle_motion( rotation );
   on_particle_change();
-#endif
 }
 
-void mpi_kill_particle_motion_slave(int pnode, int i)
+void mpi_kill_particle_motion_slave(int pnode, int rotation )
 {
-#ifdef GALILEI
-  local_kill_particle_motion();
+  local_kill_particle_motion( rotation );
   on_particle_change();
-#endif
 }
 
-void mpi_kill_particle_forces()
+void mpi_kill_particle_forces( int torque )
 {
-#ifdef GALILEI
-  mpi_call(mpi_kill_particle_forces_slave, -1, 0);
-  local_kill_particle_forces();
+  mpi_call(mpi_kill_particle_forces_slave, -1, torque );
+  local_kill_particle_forces( torque );
   on_particle_change();
-#endif
 }
 
-void mpi_kill_particle_forces_slave(int pnode, int i)
+void mpi_kill_particle_forces_slave(int pnode, int torque)
 {
-#ifdef GALILEI
-  local_kill_particle_forces();
+  local_kill_particle_forces( torque );
   on_particle_change();
-#endif
 }
 
 void mpi_system_CMS() {
-#ifdef GALILEI
   int pnode;
   double data[4];
   double rdata[4];
@@ -2795,20 +2786,16 @@ void mpi_system_CMS() {
   gal.cms[0] = data[0]/data[3];
   gal.cms[1] = data[1]/data[3];
   gal.cms[2] = data[2]/data[3];
-#endif
 }
 
 void mpi_system_CMS_slave(int node, int index) {
-#ifdef GALILEI
   double rdata[4];
   double *pdata = rdata;
   local_system_CMS( pdata );
   MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-#endif
 }
 
 void mpi_system_CMS_velocity() {
-#ifdef GALILEI
   int pnode;
   double data[4];
   double rdata[4];
@@ -2840,21 +2827,17 @@ void mpi_system_CMS_velocity() {
   gal.cms_vel[0] = data[0]/data[3];
   gal.cms_vel[1] = data[1]/data[3];
   gal.cms_vel[2] = data[2]/data[3];
-#endif
 }
 
 void mpi_system_CMS_velocity_slave(int node, int index) {
-#ifdef GALILEI
   double rdata[4];
   double *pdata = rdata;
   local_system_CMS_velocity( pdata );
   MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-#endif
 }
 
 void mpi_galilei_transform()
 {
-#ifdef GALILEI
   double cmsvel[3];
 
   mpi_system_CMS_velocity();
@@ -2866,18 +2849,15 @@ void mpi_galilei_transform()
   local_galilei_transform( cmsvel );
 
   on_particle_change();
-#endif
 }
 
 void mpi_galilei_transform_slave(int pnode, int i)
 {
-#ifdef GALILEI
   double cmsvel[3];
   MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
 
   local_galilei_transform( cmsvel );
   on_particle_change();
-#endif
 }
 
 /******************** REQ_CATALYTIC_REACTIONS ********************/

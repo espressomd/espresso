@@ -27,12 +27,11 @@
 #include "utils.h"
 #include "particle_data.h"
 
-#ifdef GALILEI
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
     that the verlet radius is equal or bigger than the reaction range.
 **/
-void local_kill_particle_motion();
-void local_kill_particle_forces();
+void local_kill_particle_motion( int );
+void local_kill_particle_forces( int );
 void local_system_CMS( double * );
 void local_system_CMS_velocity( double * );
 void local_galilei_transform( double * );
@@ -46,7 +45,5 @@ typedef struct {
 
 /** Galilei parameters. */
 extern galilei_struct gal;
-
-#endif
 
 #endif

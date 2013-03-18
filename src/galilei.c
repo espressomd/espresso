@@ -27,13 +27,11 @@
 #include "initialize.h"
 #include "forces.h"
 
-#ifdef GALILEI
-
 galilei_struct gal;
 
 /* Stop the particle motion by setting the 
    velocity of each particle to zero */
-void local_kill_particle_motion() {
+void local_kill_particle_motion( int omega ) {
   int c, np, i;
   Particle *part;
   Cell *cell;
@@ -48,18 +46,20 @@ void local_kill_particle_motion() {
       part[i].m.v[1] = 0.0;
       part[i].m.v[2] = 0.0;
 
+      if( omega != 0 ) { 
 #ifdef ROTATION
       part[i].m.omega[0] = 0.0;
       part[i].m.omega[1] = 0.0;
       part[i].m.omega[2] = 0.0;
 #endif
+      }
     }
   }
 }
 
 /* Set all the forces acting on the particles
    to zero */
-void local_kill_particle_forces() {
+void local_kill_particle_forces( int torque ) {
   int c, np, i;
   Particle *part;
   Cell *cell;
@@ -74,11 +74,13 @@ void local_kill_particle_forces() {
       part[i].f.f[1] = 0.0;
       part[i].f.f[2] = 0.0;
 
+      if( torque != 0 ) { 
 #ifdef ROTATION
       part[i].f.torque[0] = 0.0;
       part[i].f.torque[1] = 0.0;
       part[i].f.torque[2] = 0.0;
 #endif
+      }
     }
   }
 }
@@ -231,5 +233,3 @@ void local_galilei_transform( double *sdata ) {
     }
   }
 }
-
-#endif
