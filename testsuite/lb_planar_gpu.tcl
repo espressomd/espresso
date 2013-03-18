@@ -15,8 +15,8 @@
 
 source "tests_common.tcl"
 
-require_feature "LB"
-require_feature "LB_BOUNDARIES"
+require_feature "LB_GPU"
+require_feature "LB_BOUNDARIES_GPU"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase lb_planar.tcl running on [format %02d [setmd n_nodes]] nodes"
