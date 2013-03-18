@@ -115,7 +115,7 @@ typedef struct {
   /** flag indicating whether a force is acting on the node */
   int has_force;
 
-  /** local force density TODO: FORCE DENSITY or  FORCE?*/
+  /** local force density */
   double force[3];
 
 #ifdef LB_BOUNDARIES
@@ -189,6 +189,9 @@ extern double lblambda;
 extern double lblambda_bulk;
 
 extern int resend_halo;
+
+extern double gamma_shear;
+extern double gamma_bulk;
 
 /************************************************************/
 /** \name Exported Functions */
@@ -275,6 +278,9 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v);
 int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
 
 
+MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi); 
+
+
 /** Calculation of hydrodynamic modes.
  *
  *  @param index number of the node to calculate the modes for
@@ -288,10 +294,21 @@ void lb_calc_modes(index_t index, double *mode);
  * @param rho   local fluid density
  */
 MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
+
+#ifndef D3Q19
+#error Only D3Q19 is implemened!
+#endif
+
   // unit conversion: mass density
+  if (!(lattice_switch & LATTICE_LB)) {
+    ERROR_SPRINTF(runtime_error(128), 
+        "{ Error in lb_calc_local_rho in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+    *rho =0;
+    return;
+  }
+
   double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
-#ifdef D3Q19
   *rho =   avg_rho
          + lbfluid[0][0][index]
          + lbfluid[0][1][index]  + lbfluid[0][2][index]
@@ -303,13 +320,6 @@ MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
 	 + lbfluid[0][13][index] + lbfluid[0][14][index] 
          + lbfluid[0][15][index] + lbfluid[0][16][index] 
 	 + lbfluid[0][17][index] + lbfluid[0][18][index];
-#else
-  int i;
-  *rho = avg_rho;
-  for (i=0;i<lbmodel.n_veloc;i++) {
-    *rho += lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
-  }
-#endif
 
 }
 
@@ -320,7 +330,16 @@ MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
  */
 MDINLINE void lb_calc_local_j(index_t index, double *j) {
 
-#ifdef D3Q19
+#ifndef D3Q19
+#error Only D3Q19 is implemened!
+#endif
+  if (!(lattice_switch & LATTICE_LB)) {
+    ERROR_SPRINTF(runtime_error(128), 
+        "{ Error in lb_calc_local_j in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+    j[0]=j[1]=j[2]=0;
+    return;
+  }
+
   j[0] =   lbfluid[0][1][index]  - lbfluid[0][2][index]
          + lbfluid[0][7][index]  - lbfluid[0][8][index]  
          + lbfluid[0][9][index]  - lbfluid[0][10][index] 
@@ -336,31 +355,9 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
          - lbfluid[0][13][index] + lbfluid[0][14][index]
          + lbfluid[0][15][index] - lbfluid[0][16][index] 
          - lbfluid[0][17][index] + lbfluid[0][18][index];
-#else
-  int i;
-  double tmp;
-  //double avg_rho = lbpar.rho/(lbpar.agrid*lbpar.agrid*lbpar.agrid);
-  j[0] = 0.0;
-  j[1] = 0.0;
-  j[2] = 0.0;
-  for (i=0;i<lbmodel.n_veloc;i++) {
-    tmp = lbfluid[0][i][index];// + lbmodel.coeff[i][0]*avg_rho;
-    j[0] += lbmodel.c[i][0] * tmp;
-    j[1] += lbmodel.c[i][1] * tmp;
-    j[2] += lbmodel.c[i][2] * tmp;
-  }
-#endif
-
-#ifdef EXTERNAL_FORCES
-  /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
-  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
-  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
-#endif
 
 }
 
-/* TODO: This function is not used anywhere. To be removed?  */
 /** Calculate the local fluid stress.
  * The calculation is implemented explicitly for the special case of D3Q19.
  * @param index The local lattice site (Input).
@@ -368,60 +365,21 @@ MDINLINE void lb_calc_local_j(index_t index, double *j) {
  */
 MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
 
-  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-    
-#ifdef D3Q19
-  pi[0] =   avg_rho/3.0
-          + lbfluid[0][1][index]  + lbfluid[0][2][index]  
-          + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-          + lbfluid[0][9][index]  + lbfluid[0][10][index] 
-          + lbfluid[0][11][index] + lbfluid[0][12][index] 
-          + lbfluid[0][13][index] + lbfluid[0][14][index];
-  pi[2] =   avg_rho/3.0
-          + lbfluid[0][3][index]  + lbfluid[0][4][index]  
-          + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-          + lbfluid[0][9][index]  + lbfluid[0][10][index]
-          + lbfluid[0][15][index] + lbfluid[0][16][index] 
-          + lbfluid[0][17][index] + lbfluid[0][18][index];
-  pi[5] =   avg_rho/3.0
-          + lbfluid[0][5][index]  + lbfluid[0][6][index]  
-          + lbfluid[0][11][index] + lbfluid[0][12][index] 
-          + lbfluid[0][13][index] + lbfluid[0][14][index] 
-          + lbfluid[0][15][index] + lbfluid[0][16][index] 
-          + lbfluid[0][17][index] + lbfluid[0][18][index];
-  pi[1] =   lbfluid[0][7][index]  + lbfluid[0][8][index]  
-          - lbfluid[0][9][index]  - lbfluid[0][10][index];
-  pi[3] =   lbfluid[0][11][index] + lbfluid[0][12][index] 
-          - lbfluid[0][13][index] - lbfluid[0][14][index];
-  pi[4] =   lbfluid[0][15][index] + lbfluid[0][16][index] 
-          - lbfluid[0][17][index] - lbfluid[0][18][index];
-#else
-  int i;
-  double tmp;
-  double (*c)[3] = lbmodel.c;
-  pi[0] = 0.0;
-  pi[1] = 0.0;
-  pi[2] = 0.0;
-  pi[3] = 0.0;
-  pi[4] = 0.0;
-  pi[5] = 0.0;
-  for (i=0;i<lbmodel.n_veloc;i++) {
-    tmp = lbfluid[0][i][index] + lbmodel.coeff[i][0]*avg_rho;
-    pi[0] += c[i][0] * c[i][0] * tmp;
-    pi[1] += c[i][0] * c[i][1] * tmp;
-    pi[2] += c[i][1] * c[i][1] * tmp;
-    pi[3] += c[i][0] * c[i][2] * tmp;
-    pi[4] += c[i][1] * c[i][2] * tmp;
-    pi[5] += c[i][2] * c[i][2] * tmp;
+  double rho;
+  double j[3];
+  
+  if (!(lattice_switch & LATTICE_LB)) {
+    ERROR_SPRINTF(runtime_error(128), 
+        "{ Error in lb_calc_local_pi in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+    j[0] = j[1] = j[2] = 0;
+    return;
   }
-#endif
-
+  
+  lb_calc_local_fields(index, &rho, j, pi);
 }
 
 /** Calculate the local fluid fields.
  * The calculation is implemented explicitly for the special case of D3Q19.
- *
- * Original Author: Ahlrichs 06/11/97, 29/03/98
  *
  * @param index   Index of the local lattice site.
  * @param rho     local fluid density
@@ -429,125 +387,92 @@ MDINLINE void lb_calc_local_pi(index_t index, double *pi) {
  * @param pi      local fluid pressure
  */
 MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi) {
+  
+  if (!(lattice_switch & LATTICE_LB)) {
+    ERROR_SPRINTF(runtime_error(128), 
+        "{ Error in lb_calc_local_fields in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+    *rho=0; j[0]=j[1]=j[2]=0; pi[0]=pi[1]=pi[2]=pi[3]=pi[4]=pi[5]=0;
+    return;
+  }
 
-  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+#ifndef D3Q19
+#error Only D3Q19 is implemened!
+#endif
+  
+  if (!(lattice_switch & LATTICE_LB)) {
+    ERROR_SPRINTF(runtime_error(128), 
+        "{ Error in lb_calc_local_pi in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+    j[0] = j[1] = j[2] = 0;
+    return;
+  }
 
-#ifdef D3Q19
 #ifdef LB_BOUNDARIES
   if ( lbfields[index].boundary ) {
-    *rho = avg_rho;
+    *rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
     j[0] = 0.; j[1] = 0.;  j[2] = 0.;
     if (pi) {pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;}
     return;
   }
 #endif
-  *rho =   avg_rho
-         + lbfluid[0][0][index]  
-         + lbfluid[0][1][index]  + lbfluid[0][2][index]  
-         + lbfluid[0][3][index]  + lbfluid[0][4][index] 
-         + lbfluid[0][5][index]  + lbfluid[0][6][index]  
-         + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-         + lbfluid[0][9][index]  + lbfluid[0][10][index] 
-         + lbfluid[0][11][index] + lbfluid[0][12][index] 
-         + lbfluid[0][13][index] + lbfluid[0][14][index]
-         + lbfluid[0][15][index] + lbfluid[0][16][index] 
-         + lbfluid[0][17][index] + lbfluid[0][18][index];
+  double mode[19];
+  double pi_eq[6];
+  lb_calc_modes(index, mode);
 
-  j[0] =   lbfluid[0][1][index]  - lbfluid[0][2][index]
-         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
-         + lbfluid[0][9][index]  - lbfluid[0][10][index]
-         + lbfluid[0][11][index] - lbfluid[0][12][index] 
-         + lbfluid[0][13][index] - lbfluid[0][14][index];
-  j[1] =   lbfluid[0][3][index]  - lbfluid[0][4][index]
-         + lbfluid[0][7][index]  - lbfluid[0][8][index]  
-         - lbfluid[0][9][index]  + lbfluid[0][10][index]
-         + lbfluid[0][15][index] - lbfluid[0][16][index] 
-         + lbfluid[0][17][index] - lbfluid[0][18][index]; 
-  j[2] =   lbfluid[0][5][index]  - lbfluid[0][6][index]
-         + lbfluid[0][11][index] - lbfluid[0][12][index] 
-         - lbfluid[0][13][index] + lbfluid[0][14][index]
-         + lbfluid[0][15][index] - lbfluid[0][16][index] 
-         - lbfluid[0][17][index] + lbfluid[0][18][index];
+  *rho = mode[0] + lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+
+  j[0] = mode[1];
+  j[1] = mode[2];
+  j[2] = mode[3];
+
+#ifndef EXTERNAL_FORCES
+  if (lbfields[index].has_force) 
+#endif
+  {
+    j[0] += 0.5*lbfields[index].force[0];
+    j[1] += 0.5*lbfields[index].force[1];
+    j[2] += 0.5*lbfields[index].force[2];
+  }
+  if (!pi)
+    return;
+
+  /* equilibrium part of the stress modes */
+  pi_eq[0] = scalar(j,j)/ *rho;
+  pi_eq[1] = (SQR(j[0])-SQR(j[1]))/ *rho;
+  pi_eq[2] = (scalar(j,j) - 3.0*SQR(j[2]))/ *rho;
+  pi_eq[3] = j[0]*j[1]/ *rho;
+  pi_eq[4] = j[0]*j[2]/ *rho;
+  pi_eq[5] = j[1]*j[2]/ *rho;
   
-  if (pi) {
-    pi[0] =   avg_rho/3.0
-            + lbfluid[0][1][index]  + lbfluid[0][2][index]  
-            + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-            + lbfluid[0][9][index]  + lbfluid[0][10][index]
-            + lbfluid[0][11][index] + lbfluid[0][12][index] 
-            + lbfluid[0][13][index] + lbfluid[0][14][index];
-    pi[2] =   avg_rho/3.0
-            + lbfluid[0][3][index]  + lbfluid[0][4][index]
-            + lbfluid[0][7][index]  + lbfluid[0][8][index]  
-            + lbfluid[0][9][index]  + lbfluid[0][10][index]
-            + lbfluid[0][15][index] + lbfluid[0][16][index] 
-            + lbfluid[0][17][index] + lbfluid[0][18][index];
-    pi[5] =   avg_rho/3.0
-            + lbfluid[0][5][index]  + lbfluid[0][6][index]
-            + lbfluid[0][11][index] + lbfluid[0][12][index] 
-            + lbfluid[0][13][index] + lbfluid[0][14][index]
-            + lbfluid[0][15][index] + lbfluid[0][16][index] 
-            + lbfluid[0][17][index] + lbfluid[0][18][index];
-    pi[1] =   lbfluid[0][7][index]  - lbfluid[0][9][index] 
-            + lbfluid[0][8][index]  - lbfluid[0][10][index];
-    pi[3] =   lbfluid[0][11][index] + lbfluid[0][12][index] 
-            - lbfluid[0][13][index] - lbfluid[0][14][index];
-    pi[4] =   lbfluid[0][15][index] + lbfluid[0][16][index]
-            - lbfluid[0][17][index] - lbfluid[0][18][index];
+  /* Now we must predict the outcome of the next collision */
+  /* We immediately average pre- and post-collision. */
+  mode[4] = pi_eq[0] + (0.5+0.5*gamma_bulk )*(mode[4] - pi_eq[0]);
+  mode[5] = pi_eq[1] + (0.5+0.5*gamma_shear)*(mode[5] - pi_eq[1]);
+  mode[6] = pi_eq[2] + (0.5+0.5*gamma_shear)*(mode[6] - pi_eq[2]);
+  mode[7] = pi_eq[3] + (0.5+0.5*gamma_shear)*(mode[7] - pi_eq[3]);
+  mode[8] = pi_eq[4] + (0.5+0.5*gamma_shear)*(mode[8] - pi_eq[4]);
+  mode[9] = pi_eq[5] + (0.5+0.5*gamma_shear)*(mode[9] - pi_eq[5]);
 
-  }
-#else /* if not D3Q19 */
-  int i;
-  double tmp;
-  double (*c)[3] = lbmodel.c;
-
-  *rho = 0.0;
-
-  j[0] = 0.0;
-  j[1] = 0.0;
-  j[2] = 0.0;
-
-  if (calc_pi_flag) {
-    pi[0] = 0.0;
-    pi[1] = 0.0;
-    pi[2] = 0.0;
-    pi[3] = 0.0;
-    pi[4] = 0.0;
-    pi[5] = 0.0;
-  }
-
-  for (i=0;i<lbmodel.n_veloc;i++) {
-    tmp = lbfluid[0][i][index] + lbmodel.coeff[i][0]*avg_rho;
-    
-    *rho += tmp;
-
-    j[0] += c[i][0] * tmp;
-    j[1] += c[i][1] * tmp;
-    j[2] += c[i][2] * tmp;
-
-    if (calc_pi_flag) {
-      pi[0] += c[i][0] * c[i][0] * tmp;
-      pi[1] += c[i][0] * c[i][1] * tmp;
-      pi[2] += c[i][1] * c[i][1] * tmp;
-      pi[3] += c[i][0] * c[i][2] * tmp;
-      pi[4] += c[i][1] * c[i][2] * tmp;
-      pi[5] += c[i][2] * c[i][2] * tmp;
-    }
-
-  }
-#endif
-
-#ifdef EXTERNAL_FORCES
-  /* the coupling forces are not yet included self-consistently */
-  j[0] += 0.5*lbpar.ext_force[0]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
-  j[1] += 0.5*lbpar.ext_force[1]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
-  j[2] += 0.5*lbpar.ext_force[2]*pow(lbpar.agrid,4)*pow(lbpar.tau,2);
-#endif
+  /* Now we have to transform to the "usual" stress tensor components */
+  /* We use eq. 116ff in Duenweg Ladd for that. */
+  pi[0]=(mode[0]+mode[4]+mode[5])/3.;
+  pi[2]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
+  pi[5]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
+  pi[1]=mode[7];
+  pi[3]=mode[8];
+  pi[4]=mode[9];
 
 }
 
 #ifdef LB_BOUNDARIES
 MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
+  
+  if (!(lattice_switch & LATTICE_LB)) {
+    ERROR_SPRINTF(runtime_error(128), 
+        "{ Error in lb_local_fields_get_boundary_flag in %s %d: CPU LB not switched on. } ", __FILE__, __LINE__);
+    *boundary = 0;
+    return;
+  }
+
   *boundary = lbfields[index].boundary;
 }
 #endif
