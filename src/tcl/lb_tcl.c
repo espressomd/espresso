@@ -712,7 +712,6 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 
 
    argc-=3; argv+=3;
-
    if (ARG0_IS_S("print")) {
      argc--; argv++;
      while (argc > 0) {

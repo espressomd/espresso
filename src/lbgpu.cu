@@ -1925,15 +1925,17 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.f;
  #pragma unroll
  for(int i=0; i<8; ++i){ 
-  interpolated_u1 += delta[i]*d_v[node_index[i]].v[0];  
-  interpolated_u2 += delta[i]*d_v[node_index[i]].v[1];
-  interpolated_u3 += delta[i]*d_v[node_index[i]].v[2];
+  interpolated_u1 += d_v[node_index[i]].v[0]/8.;  
+  interpolated_u2 += d_v[node_index[i]].v[1]/8.;
+  interpolated_u3 += d_v[node_index[i]].v[2]/8.;
  }
 
  /* Shan-Chen-like part */
  #pragma unroll
  for(int ii=0; ii<SHANCHEN; ++ii){ 
-  float solvation2 = particle_data[part_index].solvation[2*ii + 1] ; 
+  float solvation2 = particle_data[part_index].solvation[2*ii + 1];
+                    // delta[0]*delta[1]*delta[2]*delta[3]*delta[4]*delta[5]*
+                    // delta[6]*delta[7]*particle_data[part_index].solvation[2*ii + 1]*256.f ; 
    
   interpolated_rho[ii]  = 0.f;
   gradrho1 = gradrho2 = gradrho3 = 0.f;
@@ -2079,9 +2081,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   particle_force[part_index].f[1] += viscforce[1+ii*3];
   particle_force[part_index].f[2] += viscforce[2+ii*3];
 
-  delta_j[0+3*ii] -=  viscforce[0+ii*3]*para.time_step*para.tau/para.agrid;
-  delta_j[1+3*ii] -=  viscforce[1+ii*3]*para.time_step*para.tau/para.agrid;
-  delta_j[2+3*ii] -=  viscforce[2+ii*3]*para.time_step*para.tau/para.agrid;  	
+  delta_j[0+3*ii] -=  (tmpforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
+  delta_j[1+3*ii] -=  (tmpforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
+  delta_j[2+3*ii] -=  (tmpforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;  	
  }
 }
 
