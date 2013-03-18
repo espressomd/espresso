@@ -709,7 +709,7 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}
-  \required{CATALYTIC_REACTIONS}
+  \required{CATALYTIC_REACTIONS\footnote{The current implementation also requires the use of verlet lists and domain decomposition.}}
 \end{features}
 \end{essyntax}
 
@@ -721,60 +721,53 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
 
 In future versions of \es the capabilities of the \feature{CATALYTIC_REACTIONS} feature may be generalized to handle multiple reactant, catalyzer, and product types, as well as more general reaction schemes. Other changes may involve merging the current implementation with the \feature{COLLISION_DETECTION} feature.
 
-\section{Galilei}
+\section{Galilei Transform and Particle Velocity Manipulation}
 \label{sec:Galilei}
 
-The GALILEI feature holds several commands which may be useful in effecting the velocity of the system.
+The following commands\footnote{N.B. Several Tcl commands that were present in previous versions of \es now wrap C-level equivalents, which have new (more appropriate) names.} may be useful in effecting the velocity of the system.
 
 \subsection{Particle motion and rotation}
 
 \begin{essyntax}
-  kill_particle_motion
-\begin{features}
-  \required{GALILEI}
-\end{features}
+  kill_particle_motion \require{1}{\opt{rotation}}
+  \begin{features}
+    \required[1]{ROTATION}
+  \end{features}
 \end{essyntax}
-This command halts all particles in the current simulation, setting their velocities to zero, as well as their angular momentum if the feature ROTATION has been compiled in. 
+This command halts all particles in the current simulation, setting their velocities to zero, as well as their angular momentum if the option \texttt{rotation} is specified and the feature ROTATION has been compiled in. The command without the \texttt{rotation} option has the same functionality as the old Tcl-command \texttt{stop_particles}, which now wraps it.
 
 \subsection{Forces and torques acting on the particles}
 
 \begin{essyntax}
-  kill_particle_forces
-\begin{features}
-  \required{GALILEI}
-\end{features}
+  kill_particle_forces \require{1}{\opt{torques}}
+  \begin{features}
+    \required[1]{ROTATION}
+  \end{features}
 \end{essyntax}
-This command sets all forces on the particles to zero, as well as all torques if the feature ROTATION has been compiled in.
+This command sets all forces on the particles to zero, as well as all torques if the option \texttt{torque} is specified and the feature ROTATION has been compiled in. The Tcl-command \texttt{stopParticles} now also makes use of the C-level functions, but otherwise has the same functionality.
 
 \subsection{The centre of mass of the system}
 
 \begin{essyntax}
   system_CMS
-\begin{features}
-  \required{GALILEI}
-\end{features}
 \end{essyntax}
-Returns the center of mass of the whole system. It currently does not factor in the density fluctuations of the Lattice-Boltzman fluid.
+Returns the center of mass of the whole system. It currently does not factor in the density fluctuations of the Lattice-Boltzman fluid. This command has the same functionality as the old Tcl-command \texttt{system_com}, which now wraps it.
 
 \subsection{The centre-of-mass velocity}
 
 \begin{essyntax}
   system_CMS_velocity
-\begin{features}
-  \required{GALILEI}
-\end{features}
 \end{essyntax}
-Returns the velocity of the center of mass of the whole system.
+Returns the velocity of the center of mass of the whole system. This command has the same functionality as the old Tcl-command \texttt{system_com_vel}, which now wraps it.
 
 \subsection{The Galilei transform}
 
 \begin{essyntax}
   galilei_transform
-\begin{features}
-  \required{GALILEI}
-\end{features}
 \end{essyntax}
-Substracts the velocity of the center of mass of the whole system from every particle's velocity, thereby performing a Galilei transform into the reference frame of the center of mass of the system. This transformation is useful for example in combination with the DPD thermostat, since there, a drift in the velocity of the whole system leads to an offset in the reported temperature.
+Substracts the velocity of the center of mass of the whole system from every particle's velocity, thereby performing a Galilei transform into the reference frame of the center of mass of the system. This transformation is useful for example in combination with the DPD thermostat, since there, a drift in the velocity of the whole system leads to an offset in the reported temperature. 
+
+The C-level \texttt{galilei_transform} command performs the exact same function as the old Tcl-command \texttt{galileiTransformParticles}, with the exception that the old CMS velocity is not returned. The Tcl command still exists and now wraps the new C-level functions.
 
 %%% Local Variables: 
 %%% mode: latex

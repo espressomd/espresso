@@ -32,11 +32,10 @@
 
 /* ############### */
 
-#ifdef GALILEI
 /* Stop motion of the particles */
 int tcl_command_kill_particle_motion_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: kill_particle_motion\n");
+  sprintf(buffer, "Usage: kill_particle_motion [rotation]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
@@ -44,7 +43,7 @@ int tcl_command_kill_particle_motion_print_usage(Tcl_Interp * interp){
 /* Set the forces on the particles to zero */
 int tcl_command_kill_particle_forces_print_usage(Tcl_Interp * interp){
   char buffer[256];
-  sprintf(buffer, "Usage: kill_particle_forces\n");
+  sprintf(buffer, "Usage: kill_particle_forces [torques]\n");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
@@ -72,51 +71,57 @@ int tcl_command_galilei_transform_print_usage(Tcl_Interp * interp){
   Tcl_AppendResult(interp, buffer, (char *)NULL);
   return TCL_ERROR;
 }
-#endif
 
 /* ############### */
 
 /* Stop motion of the particles */
 int tclcommand_kill_particle_motion(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
-#ifdef GALILEI
-  if (argc != 1  ) { 
+  if (argc != 1 && argc != 2 ) { 
     return tcl_command_kill_particle_motion_print_usage(interp);
   } else {
     if (ARG_IS_S_EXACT(0,"kill_particle_motion")) {
-        mpi_kill_particle_motion();
+      if ( argc == 2 ) {
+        if (ARG_IS_S_EXACT(1,"rotation")) {
+          mpi_kill_particle_motion( 1 );
+          return TCL_OK;
+        } else {
+          return tcl_command_kill_particle_motion_print_usage(interp);
+        }
+      } else {
+        mpi_kill_particle_motion( 0 );
         return TCL_OK;
+      }
     } else {
       return tcl_command_kill_particle_motion_print_usage(interp);
     }
   }
-#else
-  Tcl_AppendResult(interp, "GALILEI not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif
 }
 
 /* Set the forces on the particles to zero */
 int tclcommand_kill_particle_forces(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
-#ifdef GALILEI
-  if (argc != 1  ) { 
+  if (argc != 1 && argc != 2 ) { 
     return tcl_command_kill_particle_forces_print_usage(interp);
   } else {
     if (ARG_IS_S_EXACT(0,"kill_particle_forces")) {
-        mpi_kill_particle_forces();
+      if ( argc == 2 ) {
+        if (ARG_IS_S_EXACT(1,"torques")) {
+          mpi_kill_particle_forces( 1 );
+          return TCL_OK;
+        } else {
+          return tcl_command_kill_particle_forces_print_usage(interp);
+        }
+      } else {
+        mpi_kill_particle_forces( 0 );
         return TCL_OK;
+      }
     } else {
       return tcl_command_kill_particle_forces_print_usage(interp);
     }
   }
-#else
-  Tcl_AppendResult(interp, "GALILEI not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif
 }
 
 /* Calculate the CMS of the system */
 int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
-#ifdef GALILEI
   char buffer[256];
   double cmspos[3];
   int box[3];
@@ -161,15 +166,10 @@ int tclcommand_system_CMS(ClientData data, Tcl_Interp * interp, int argc, char *
       return tcl_command_system_CMS_print_usage(interp);
     }
   }
-#else
-  Tcl_AppendResult(interp, "GALILEI not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif
 }
 
 /* Calculate the CMS velocity of the system */
 int tclcommand_system_CMS_velocity(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
-#ifdef GALILEI
   char buffer[256];
 
   if (argc != 1  ) { 
@@ -190,15 +190,10 @@ int tclcommand_system_CMS_velocity(ClientData data, Tcl_Interp * interp, int arg
       return tcl_command_system_CMS_velocity_print_usage(interp);
     }
   }
-#else
-  Tcl_AppendResult(interp, "GALILEI not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif
 }
 
 /* Remove the CMS velocity of the system */
 int tclcommand_galilei_transform(ClientData data, Tcl_Interp * interp, int argc, char ** argv){
-#ifdef GALILEI
   if (argc != 1  ) { 
     return tcl_command_galilei_transform_print_usage(interp);
   } else {
@@ -209,8 +204,4 @@ int tclcommand_galilei_transform(ClientData data, Tcl_Interp * interp, int argc,
       return tcl_command_galilei_transform_print_usage(interp);
     }
   }
-#else
-  Tcl_AppendResult(interp, "GALILEI not compiled in!" ,(char *) NULL);
-  return (TCL_ERROR);
-#endif
 }

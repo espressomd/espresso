@@ -26,6 +26,7 @@
 #include "reaction.h"
 #include "initialize.h"
 #include "forces.h"
+#include "errorhandling.h"
 
 #ifdef CATALYTIC_REACTIONS
 void local_setup_reaction() {
@@ -85,7 +86,7 @@ void integrate_reaction() {
       cell = local_cells.cell[c];
       p1   = cell->part;
       np  = cell->n;
-       
+      
       for(i = 0; i < np; i++) {
         if(p1[i].p.type == reaction.catalyzer_type) {
           check_catalyzer = 1;
@@ -100,21 +101,20 @@ void integrate_reaction() {
         for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
           pairs = dd.cell_inter[c].nList[n].vList.pair;
           np = dd.cell_inter[c].nList[n].vList.n;
-          
+
           /* Verlet list loop */
           for(i = 0; i < 2 * np; i += 2) {
             p1 = pairs[i];   //pointer to particle 1
             p2 = pairs[i+1]; //pointer to particle 2
-            
+
             if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
               get_mi_vector(vec21, p1->r.p, p2->r.p);
               dist2 = sqrlen(vec21);
               
-
               /* Count the number of times a reactant particle is
                  checked against a catalyst */
               if(dist2 < reaction.range * reaction.range) {
-               
+
                 if(p1->p.type == reaction.reactant_type) {
 						       p1->p.catalyzer_count++;
 					      }

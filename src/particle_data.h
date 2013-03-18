@@ -474,6 +474,18 @@ int set_particle_mass(int part, double mass);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
+#ifdef ROTATION_PER_PARTICLE
+/** Call only on the master node: Specifies whether a particle's rotational
+    degrees of freedom are integrated or not. If set to zero, the content of
+    the torque and omega variables are meaningless
+    @param part the particle.
+    @param rot the degrees of freedom flag.
+    @return ES_OK if particle existed
+*/
+int set_particle_rotation(int part, int rot);
+#endif
+
+
 /** Call only on the master node: set particle charge.
     @param part the particle.
     @param q its new charge.
