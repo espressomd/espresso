@@ -446,6 +446,8 @@ proc tune_cells { { int_steps 1000 } { min_cells 1 } { max_cells 30 } { tol_cell
 #############################################################
 
 proc stop_particles { } { 
+  warn_deprecated stop_particles 3.1.2
+  puts stderr "         Use the function kill_particle_motion instead."
   kill_particle_motion
 }
 
@@ -461,6 +463,8 @@ proc stop_particles { } {
 
 
 proc stopParticles { } {
+  warn_deprecated stopParticles 3.1.2
+  puts stderr "         Use the function kill_particle_motion and kill_particle_forces instead."
   puts -nonewline "        Setting all particles' velocities and forces to zero... "; flush stdout
   kill_particle_motion
   kill_particle_forces
@@ -476,6 +480,7 @@ proc stopParticles { } {
 #############################################################
 
 proc system_com { } {
+  puts stderr "         Use the function system_CMS instead."
   return [system_CMS]
 }
 
@@ -488,6 +493,7 @@ proc system_com { } {
 #############################################################
 
 proc system_com_vel {} {
+  puts stderr "         Use the function system_CMS_velocity instead."
   return [system_CMS_velocity]
 }
 
@@ -502,6 +508,7 @@ proc system_com_vel {} {
 #############################################################
 
 proc galileiTransformParticles {} {
+  puts stderr "         Use the function galilei_transform instead."
   set com_vel [system_CMS_velocity]
   
   galilei_transform
