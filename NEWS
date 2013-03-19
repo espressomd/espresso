@@ -18,10 +18,10 @@ New user-visible features
 
   * GAUSSIAN: A Gaussian potential.
 
-* The feature REACTIONS and the command "reaction" model a simple
-  chemical reaction: when a particle of the reactant type comes into
-  the vincinity of a particle of the catalysator type, the reactant is
-  transformed into a particle of the product type.
+* The feature CATALYTIC_REACTIONS and the command "reaction" model a
+  simple chemical reaction: when a particle of the reactant type comes
+  into the vincinity of a particle of the catalysator type, the
+  reactant is transformed into a particle of the product type.
 
 * The feature GHMC implements a generalized hybrid Monte-Carlo
   thermostat.
@@ -32,6 +32,9 @@ New user-visible features
 
 * Added new feature ROTATION_PER_PARTICLE that allows to choose
   whether a particle has rotational degrees of freedom or not.
+
+* The functions for galilei transformations have been overhauled and
+  renamed. The old functions are deprecated.
 
 User-visible changes
 --------------------
