@@ -679,16 +679,28 @@ The following limitations currently apply for the collision detection:
 \section{Catalytic Reactions}
 \label{sec:Reactions}
 
-With the help of the feature \feature{CATALYTIC_REACTIONS}, one can define three particle types to act as reactant, catalyzer, and product. Using these reaction categories, we model the following chemical reaction system:
+With the help of the feature \feature{CATALYTIC_REACTIONS}, one can
+define three particle types to act as reactant, catalyzer, and
+product. Using these reaction categories, we model the following
+chemical reaction system:
 \begin{eqnarray}
 rt & \rightleftharpoons & pr ; \\
 rt & \xrightarrow{ct} & pr,
 \end{eqnarray}
-where the first line indicates that there is a reversible chemical reaction that converts the reactant particles (\var{rt}) into product (\var{pr}) particles, leading to an equilibrium state. The second line indicates that in the presence of a catalyst (\var{ct}) the forward reaction pathway is favored, i.e., conversion of reactants into products. The equilibrium reaction is described by the equilibrium constant
+where the first line indicates that there is a reversible chemical
+reaction that converts the reactant particles (\var{rt}) into product
+(\var{pr}) particles, leading to an equilibrium state. The second line
+indicates that in the presence of a catalyst (\var{ct}) the forward
+reaction pathway is favored, i.e., conversion of reactants into
+products. The equilibrium reaction is described by the equilibrium
+constant
 \begin{equation}
 K_{\text{eq}} = \frac{k_{\text{eq,+}}}{k_{\text{eq,-}}} = \frac{[pr]}{[rt]},
 \end{equation}
-with $[rt]$ and $[pr]$ the reactant and product concentration and $k_{\text{eq,$\pm$}}$ the forward and backward reaction rate constants, respectively. The rate constants that specify the change in concentration for the equilibrium and catalytic reaction are given by 
+with $[rt]$ and $[pr]$ the reactant and product concentration and
+$k_{\text{eq,$\pm$}}$ the forward and backward reaction rate
+constants, respectively. The rate constants that specify the change in
+concentration for the equilibrium and catalytic reaction are given by
 \begin{eqnarray}
 \frac{d[rt]}{dt} & = & k_{\text{eq,-}}[pr] - k_{\text{eq,+}}[rt] ; \\
 \frac{d[pr]}{dt} & = & k_{\text{eq,+}}[rt] - k_{\text{eq,-}}[pr] ; \\
@@ -696,11 +708,23 @@ with $[rt]$ and $[pr]$ the reactant and product concentration and $k_{\text{eq,$
 \end{eqnarray}
 respectively.
 
-In the current \es implementation we assume $k_{\text{eq,+}} = k_{\text{eq,-}} \equiv k\_eq$ and therefore $K_{\text{eq}}=1$. The user can specify $k\_eq \ge 0$ and $k\_ct \equiv k_{\text{ct}} > 0$. The former rate constant is applied to all reactant and product particles in the system, whereas the latter is applied only to the reactant particles in the vicinity of a catalyst particle. Reactant particles that have a distance of \var{r} or less to at least one catalyzer particle are therefore converted into product particles with rate constant $k\_eq + k\_ct$. The conversion of particles is done stochastically on the basis of the relevant rate constant (\var{k} $\ge$ 0):
+In the current \es implementation we assume $k_{\text{eq,+}} =
+k_{\text{eq,-}} \equiv k\_eq$ and therefore $K_{\text{eq}}=1$. The
+user can specify $k\_eq \ge 0$ and $k\_ct \equiv k_{\text{ct}} >
+0$. The former rate constant is applied to all reactant and product
+particles in the system, whereas the latter is applied only to the
+reactant particles in the vicinity of a catalyst particle. Reactant
+particles that have a distance of \var{r} or less to at least one
+catalyzer particle are therefore converted into product particles with
+rate constant $k\_eq + k\_ct$. The conversion of particles is done
+stochastically on the basis of the relevant rate constant (\var{k}
+$\ge$ 0):
 \begin{equation}
 \label{eq:rate} P_{\text{cvt}} = 1 - \exp \left( - k  \Delta t  \right) ,
 \end{equation}
-with $P_{\text{cvt}}$ the probability of the conversion and $\Delta t$ the integration time step. If the equilibrium rate constant is not specified it is assumed that \var{k\_eq} = 0.
+with $P_{\text{cvt}}$ the probability of the conversion and $\Delta t$
+the integration time step. If the equilibrium rate constant is not
+specified it is assumed that \var{k\_eq} = 0.
 
 \begin{essyntax}
 \variant{0} reaction reactant_type \var{rt} catalyzer_type \var{ct} 
@@ -709,22 +733,59 @@ product_type \var{pt} range \var{r} ct_rate \var{k\_ct}
 \variant{1} reaction off
 \variant{2} reaction print
 \begin{features}
-  \required{CATALYTIC_REACTIONS\footnote{The current implementation also requires the use of verlet lists and domain decomposition.}}
+  \required{CATALYTIC_REACTIONS\footnote{The current implementation
+      also requires the use of verlet lists and domain
+      decomposition.}}
 \end{features}
 \end{essyntax}
 
 \begin{itemize}
-\item Variant \variant{0} defines a reaction with particles of type number \var{rt} as reactant, type \var{ct} as catalyzer and type \var{pt} as product\footnote{Only one type of particle can be assigned to each of these three reaction species and no particle type may be assigned to multiple species. That is, \es currently does not support particles of type 1 and 2 both to be reactants, nor can particles of type 1 be a reactant as well as a catalyst. Moreover, only one of these reactions can be implemented in a single Tcl script. If, for instance, there is a reaction involving particle types 1, 2, and 4, there cannot be a second reaction involving particles of type 5, 6, and 8. It is however possible to modify the reaction properties for a given set of types during the simulation.}. The catalytic reaction rate constant is given by \var{k\_ct}\footnote{Currently only strictly positive values of the catalytic conversion rate constant are allowed. Setting the value to zero is equivalent to \texttt{reaction off}.} and to override the default rate constant for the equilibrium reaction (\var{k\_eq} = 0), one can specify it by \var{k\_eq}. By default each reactant particle is checked against each catalyst particle (\texttt{react\_once} \emph{off}). However, when creating smooth surfaces using many catalyst particles, it can be desirable to let the reaction rate be independent of the surface density of these particles. That is, each particle has a likelihood of reacting in the vicinity of the surface (distance is less than $r$) as specified by the rate constant, i.e., \emph{not} according to $P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t  \right)$, with $n$ the number of local catalysts. To accomplish this, each reactant is considered only once each time step by using the option \texttt{react\_once} \emph{on}. The reaction command is set up such that the different properties may be influenced individually.
-\item Variant \variant{1} disables the reaction. Note that at the moment, there can only be one reaction in the simulation.
+\item Variant \variant{0} defines a reaction with particles of type
+  number \var{rt} as reactant, type \var{ct} as catalyzer and type
+  \var{pt} as product\footnote{Only one type of particle can be
+    assigned to each of these three reaction species and no particle
+    type may be assigned to multiple species. That is, \es currently
+    does not support particles of type 1 and 2 both to be reactants,
+    nor can particles of type 1 be a reactant as well as a
+    catalyst. Moreover, only one of these reactions can be implemented
+    in a single Tcl script. If, for instance, there is a reaction
+    involving particle types 1, 2, and 4, there cannot be a second
+    reaction involving particles of type 5, 6, and 8. It is however
+    possible to modify the reaction properties for a given set of
+    types during the simulation.}. The catalytic reaction rate
+  constant is given by \var{k\_ct}\footnote{Currently only strictly
+    positive values of the catalytic conversion rate constant are
+    allowed. Setting the value to zero is equivalent to
+    \texttt{reaction off}.} and to override the default rate constant
+  for the equilibrium reaction (\var{k\_eq} = 0), one can specify it
+  by \var{k\_eq}. By default each reactant particle is checked against
+  each catalyst particle (\texttt{react\_once} \emph{off}). However,
+  when creating smooth surfaces using many catalyst particles, it can
+  be desirable to let the reaction rate be independent of the surface
+  density of these particles. That is, each particle has a likelihood
+  of reacting in the vicinity of the surface (distance is less than
+  $r$) as specified by the rate constant, i.e., \emph{not} according
+  to $P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t \right)$, with
+  $n$ the number of local catalysts. To accomplish this, each reactant
+  is considered only once each time step by using the option
+  \texttt{react\_once} \emph{on}. The reaction command is set up such
+  that the different properties may be influenced individually.
+\item Variant \variant{1} disables the reaction. Note that at the
+  moment, there can only be one reaction in the simulation.
 \item Variant \variant{2} returns the current reaction parameters.
 \end{itemize}
 
-In future versions of \es the capabilities of the \feature{CATALYTIC_REACTIONS} feature may be generalized to handle multiple reactant, catalyzer, and product types, as well as more general reaction schemes. Other changes may involve merging the current implementation with the \feature{COLLISION_DETECTION} feature.
+In future versions of \es the capabilities of the
+\feature{CATALYTIC_REACTIONS} feature may be generalized to handle
+multiple reactant, catalyzer, and product types, as well as more
+general reaction schemes. Other changes may involve merging the
+current implementation with the \feature{COLLISION_DETECTION} feature.
 
 \section{Galilei Transform and Particle Velocity Manipulation}
 \label{sec:Galilei}
 
-The following commands\footnote{N.B. Several Tcl commands that were present in previous versions of \es now wrap C-level equivalents, which have new (more appropriate) names.} may be useful in effecting the velocity of the system.
+The following commands may be useful in effecting the velocity of the
+system.
 
 \subsection{Particle motion and rotation}
 
@@ -734,7 +795,10 @@ The following commands\footnote{N.B. Several Tcl commands that were present in p
     \required[1]{ROTATION}
   \end{features}
 \end{essyntax}
-This command halts all particles in the current simulation, setting their velocities to zero, as well as their angular momentum if the option \texttt{rotation} is specified and the feature ROTATION has been compiled in. The command without the \texttt{rotation} option has the same functionality as the old Tcl-command \texttt{stop_particles}, which now wraps it.
+This command halts all particles in the current simulation, setting
+their velocities to zero, as well as their angular momentum if the
+option \texttt{rotation} is specified and the feature ROTATION has
+been compiled in.
 
 \subsection{Forces and torques acting on the particles}
 
@@ -744,30 +808,36 @@ This command halts all particles in the current simulation, setting their veloci
     \required[1]{ROTATION}
   \end{features}
 \end{essyntax}
-This command sets all forces on the particles to zero, as well as all torques if the option \texttt{torque} is specified and the feature ROTATION has been compiled in. The Tcl-command \texttt{stopParticles} now also makes use of the C-level functions, but otherwise has the same functionality.
+This command sets all forces on the particles to zero, as well as all
+torques if the option \texttt{torque} is specified and the feature
+ROTATION has been compiled in. 
 
 \subsection{The centre of mass of the system}
 
 \begin{essyntax}
   system_CMS
 \end{essyntax}
-Returns the center of mass of the whole system. It currently does not factor in the density fluctuations of the Lattice-Boltzman fluid. This command has the same functionality as the old Tcl-command \texttt{system_com}, which now wraps it.
+Returns the center of mass of the whole system. It currently does not
+factor in the density fluctuations of the Lattice-Boltzman fluid.
 
 \subsection{The centre-of-mass velocity}
 
 \begin{essyntax}
   system_CMS_velocity
 \end{essyntax}
-Returns the velocity of the center of mass of the whole system. This command has the same functionality as the old Tcl-command \texttt{system_com_vel}, which now wraps it.
+Returns the velocity of the center of mass of the whole system.
 
 \subsection{The Galilei transform}
 
 \begin{essyntax}
   galilei_transform
 \end{essyntax}
-Substracts the velocity of the center of mass of the whole system from every particle's velocity, thereby performing a Galilei transform into the reference frame of the center of mass of the system. This transformation is useful for example in combination with the DPD thermostat, since there, a drift in the velocity of the whole system leads to an offset in the reported temperature. 
-
-The C-level \texttt{galilei_transform} command performs the exact same function as the old Tcl-command \texttt{galileiTransformParticles}, with the exception that the old CMS velocity is not returned. The Tcl command still exists and now wraps the new C-level functions.
+Substracts the velocity of the center of mass of the whole system from
+every particle's velocity, thereby performing a Galilei transform into
+the reference frame of the center of mass of the system. This
+transformation is useful for example in combination with the DPD
+thermostat, since there, a drift in the velocity of the whole system
+leads to an offset in the reported temperature.
 
 %%% Local Variables: 
 %%% mode: latex
