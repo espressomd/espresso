@@ -1,11 +1,11 @@
 #!/bin/bash --login -e
-source maintainer/jenkins/common.sh
+BUILDDIR="$(pwd)"
+SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../.."
+source $SRCDIR/maintainer/jenkins/common.sh
 
 bootstrap
 
-start "CONFIGURE"
-./configure CPU_COUNT=4
-end "CONFIGURE"
+configure CPU_COUNT=4
 
 use_myconfig maxset
 

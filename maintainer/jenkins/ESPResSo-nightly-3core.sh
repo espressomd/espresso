@@ -1,11 +1,11 @@
 #!/bin/bash --login -e
-source maintainer/jenkins/common.sh
+BUILDDIR="$(pwd)"
+SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../.."
+source $SRCDIR/maintainer/jenkins/common.sh
 
 bootstrap
 
-start "CONFIGURE"
-./configure --with-mpi CPU_COUNT="3"
-end "CONFIGURE"
+configure --with-mpi CPU_COUNT="3"
 
 # copy config file
 if [ "$myconfig" != default ]; then

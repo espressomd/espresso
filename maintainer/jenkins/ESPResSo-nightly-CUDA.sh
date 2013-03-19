@@ -1,8 +1,11 @@
 #!/bin/bash --login -e
-source maintainer/jenkins/common.sh
+BUILDDIR="$(pwd)"
+SOURCEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../.."
+source $SOURCEDIR/maintainer/jenkins/common.sh
 
-bootstrap
+cd $SOURCEDIR; bootstrap
 
+cd $BUILDDIR
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 
 start "CONFIGURE"

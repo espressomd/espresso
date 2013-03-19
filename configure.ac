@@ -25,7 +25,7 @@ AC_INIT([ESPResSo],[ESPRESSO_VERSION],[espressomd-users@nongnu.org])
 
 AC_PREREQ([2.59])
 
-AC_CONFIG_SRCDIR([src/initialize.c])
+AC_CONFIG_SRCDIR([src/initialize.cpp])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 AC_PREFIX_DEFAULT($HOME/Espresso)
@@ -50,8 +50,9 @@ cat <<EOF
 *      Checking compiler characteristics and MPI support       *
 ****************************************************************
 EOF
+
 dnl overwrite _AC_PROC_CC_G to avoid check for -g and -O2 flags
-m4_define([_AC_PROG_CC_G],[])
+m4_define([_AC_PROG_CXX_G],[])
 
 #############
 #### MPI ####
@@ -62,7 +63,7 @@ AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
      fake implementation for only one processor is used. @<:@guess@:>@])
 ],,[with_mpi=guess])
 
-AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
+AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
   if test xyes = x"$with_mpi"; then
     AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
   else
@@ -70,6 +71,9 @@ AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
     use_mpi_fake="yes"
   fi
 ])
+
+# we use C++ as main code language
+AC_LANG([C++])
 
 # if requested, use the fake implementation
 AM_CONDITIONAL(MPI_FAKE, [test x"$use_mpi_fake" = xyes])
@@ -113,27 +117,27 @@ AC_SUBST(ESPRESSO_MPIEXEC)
 ##################################
 #### COMPILER CHARACTERISTICS ####
 ##################################
-# never overwrite users CFLAGS
-if test "${CFLAGS+set}" != set; then
+# never overwrite users CXXFLAGS
+if test "${CXXFLAGS+set}" != set; then
   # test for -O5
   AC_MSG_CHECKING([whether the compiler accepts -O5])
-  saved_CFLAGS=$CFLAGS
-  CFLAGS="-O5 $CFLAGS"
+  saved_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="-O5 $CXXFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
     AC_MSG_RESULT(yes);try_add_flag_res=yes
   ],[
-    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+    AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
   
   ##################################
   # test for -Wall
   AC_MSG_CHECKING([whether the compiler accepts -Wall])
-  saved_CFLAGS=$CFLAGS
-  CFLAGS="-Wall $CFLAGS"
+  saved_CXXFLAGS=$CXXFLAGS
+  CXXFLAGS="-Wall $CXXFLAGS"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],[
     AC_MSG_RESULT(yes);try_add_flag_res=yes
   ],[
-    AC_MSG_RESULT(no); CFLAGS=$saved_CFLAGS; try_add_flag_res=no
+    AC_MSG_RESULT(no); CXXFLAGS=$saved_CXXFLAGS; try_add_flag_res=no
   ])
 fi
 
@@ -162,10 +166,7 @@ AC_DEFINE_UNQUOTED(MDINLINE,$mdinline,[How to inline functions])
 
 ##################################
 # miscellaneous
-#AC_PROG_CC_STDC
-AM_PROG_CC_C_O
-AC_C_CONST
-AC_HEADER_TIME
+AC_PROG_CXX_C_O
 
 cat <<EOF
 ****************************************************************
@@ -326,7 +327,7 @@ if test .$with_tk != .no; then
 	saved_CPPFLAGS=$CPPFLAGS
 	saved_LDFLAGS=$LDFLAGS
 	saved_LIBS=$LIBS
-	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+	CPPFLAGS="$CPPFLAGS $X_CXXFLAGS"
 	LDFLAGS="$LDFLAGS $X_LIBS"
 	LIBS="$LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
 	AC_LINK_IFELSE([AC_LANG_CALL([],[XOpenDisplay])],[x11_works=yes],[x11_works=no])
@@ -428,8 +429,8 @@ AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
     save_LIBS=$LIBS
     save_LDFLAGS=$LDFLAGS
-    save_CC=$CC
-    save_CFLAGS=$CFLAGS
+    save_CXX=$CXX
+    save_CXXFLAGS=$CXXFLAGS
 
     AS_IF([test x$NVCC = x],[
         NVCC=$cuda_path/bin/nvcc
@@ -442,7 +443,7 @@ AS_IF([test x$with_cuda != xno],[
     ])
 
     NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
-    CFLAGS="$CFLAGS -I$cuda_path/include"
+    CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
 
     # NVCC
     AC_ARG_VAR(NVCC,[NVIDIA CUDA compiler command])
@@ -486,8 +487,8 @@ AS_IF([test x$with_cuda != xno],[
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
-    CC=$NVCC
-    CFLAGS="$NVCCFLAGS"
+    CXX=$NVCC
+    CXXFLAGS="$NVCCFLAGS"
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)
@@ -518,8 +519,8 @@ AS_IF([test x$with_cuda != xno],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
     
-    CC=$save_CC
-    CFLAGS=$save_CFLAGS
+    CXX=$save_CXX
+    CXXFLAGS=$save_CXXFLAGS
     
     AS_IF([test x$cuda_ok == xyes], [
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
@@ -584,11 +585,11 @@ cat <<EOF
 ****************************************************************
 EOF
 # Creating the output
-AC_CONFIG_HEADERS([src/acconfig.h])
+AC_CONFIG_HEADERS([src/acconfig.hpp])
 AC_CONFIG_FILES([
 	Makefile
 	config/Makefile
-	config/myconfig-sample-header.h
+	config/myconfig-sample-header.hpp
 	src/Makefile
 	tools/Makefile
 	scripts/Makefile 
@@ -610,10 +611,10 @@ AC_CONFIG_FILES([tools/es_mpiexec],
 	[chmod 755 tools/es_mpiexec])
 
 AC_SUBST([CONFIG_STATUS_DEPENDENCIES], ['$(top_srcdir)/src/features.def $(top_srcdir)/config/gen_sampleconfig.py'])
-AC_CONFIG_COMMANDS([myconfig-sample.h],
+AC_CONFIG_COMMANDS([myconfig-sample.hpp],
         [if test x"$PYTHON" != xno; then \
-            cat config/myconfig-sample-header.h > myconfig-sample.h; \
-            $PYTHON $srcdir/config/gen_sampleconfig.py $srcdir/src/features.def >> myconfig-sample.h;\
+            cat config/myconfig-sample-header.hpp > myconfig-sample.hpp; \
+            $PYTHON $srcdir/config/gen_sampleconfig.py $srcdir/src/features.def >> myconfig-sample.hpp;\
         else echo "Python is not available, not (re)creating sample config."; \
         fi
         ], [PYTHON="$PYTHON"])
@@ -631,10 +632,10 @@ development sources     = $devel_src
 
 Compiler
 --------
-compiler		= $CC
+compiler		= $CXX
 linker			= $LD
-c compiler flags	= $CFLAGS
-c preprocessor flags	= $CPPFLAGS
+c++ compiler flags	= $CXXFLAGS
+c++ preprocessor flags	= $CPPFLAGS
 linker flags		= $LDFLAGS
 libraries		= $LIBS
 using debug flags	= $enable_debug

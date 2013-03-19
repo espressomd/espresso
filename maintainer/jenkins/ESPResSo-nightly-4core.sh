@@ -1,8 +1,11 @@
 #!/bin/bash --login -e
-source maintainer/jenkins/common.sh
+BUILDDIR="$(pwd)"
+SOURCEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../.."
+source $SOURCEDIR/maintainer/jenkins/common.sh
 
-bootstrap
+cd $SOURCEDIR; bootstrap
 
+cd $BUILDDIR
 start "CONFIGURE"
 ./configure --with-mpi CPU_COUNT="4"
 end "CONFIGURE"

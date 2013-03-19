@@ -1,11 +1,12 @@
 #!/bin/bash --login -e
-source maintainer/jenkins/common.sh
+BUILDDIR="$(pwd)"
+SOURCEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../.."
+source $SOURCEDIR/maintainer/jenkins/common.sh
 
-bootstrap
+cd $SOURCEDIR; bootstrap
 
-start "CONFIGURE"
-./configure
-end "CONFIGURE"
+cd $BUILDDIR
+
 
 use_myconfig compileonly
 
