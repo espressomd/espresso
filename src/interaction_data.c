@@ -366,7 +366,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->mol_cut_cutoff = 0.0;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   params->REACTION_range = 0.0;
 #endif
 }
@@ -553,6 +553,7 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = dpd_tr_cut;
   }
 #endif
+
 }
 
 static void recalc_maximal_cutoff_nonbonded()
@@ -673,7 +674,7 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->TUNABLE_SLIP_r_cut;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
       if (max_cut_current < data->REACTION_range)
 	max_cut_current = data->REACTION_range;
 #endif

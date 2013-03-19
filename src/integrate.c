@@ -162,10 +162,6 @@ void integrate_vv(int n_steps)
 {
   int i;
 
-#ifdef REACTIONS
-  integrate_reaction();
-#endif
-
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -337,6 +333,10 @@ void integrate_vv(int n_steps)
     init_forces_ghosts();
     distribute_mol_force();
     if (check_runtime_errors()) break;
+#endif
+
+#ifdef CATALYTIC_REACTIONS
+  integrate_reaction();
 #endif
 
     /* Communication step: ghost forces */

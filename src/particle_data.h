@@ -52,6 +52,12 @@
 #define COORD_FIXED(coord) (2L << coord)
 /** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
 #define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+
+#ifdef ROTATION
+/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external torque. */
+#define PARTICLE_EXT_TORQUE 16
+#endif
+
 #endif
 
 
@@ -81,6 +87,12 @@ typedef struct {
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   double rinertia[3];
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+  // Determines, wether a particle's rotational degrees of freedom are
+  // integrated
+  int rotation;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -123,6 +135,10 @@ typedef struct {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+#endif
+
+#ifdef CATALYTIC_REACTIONS
+  int catalyzer_count;
 #endif
 } ParticleProperties;
 
@@ -192,11 +208,18 @@ typedef struct {
       <ul> <li> 0 no external influence
            <li> 1 apply external force \ref ParticleLocal::ext_force
            <li> 2,3,4 fix particle coordinate 0,1,2
+           <li> 5 apply external torque \ref ParticleLocal::ext_torque
       </ul>
   */
   int ext_flag;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
+
+  #ifdef ROTATION
+  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  double ext_torque[3];
+  #endif
+
 #endif
 
 #ifdef GHOST_FLAG
@@ -451,6 +474,18 @@ int set_particle_mass(int part, double mass);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
+#ifdef ROTATION_PER_PARTICLE
+/** Call only on the master node: Specifies whether a particle's rotational
+    degrees of freedom are integrated or not. If set to zero, the content of
+    the torque and omega variables are meaningless
+    @param part the particle.
+    @param rot the degrees of freedom flag.
+    @return ES_OK if particle existed
+*/
+int set_particle_rotation(int part, int rot);
+#endif
+
+
 /** Call only on the master node: set particle charge.
     @param part the particle.
     @param q its new charge.
@@ -544,13 +579,22 @@ int set_particle_gamma(int part, double gamma);
 #endif
 
 #ifdef EXTERNAL_FORCES
-/** Call only on the master node: set particle external forced.
+  #ifdef ROTATION
+    /** Call only on the master node: set particle external torque.
+        @param part  the particle.
+        @param flag  new value for ext_flag.
+        @param force new value for ext_torque.
+        @return ES_OK if particle existed
+    */
+    int set_particle_ext_torque(int part, int flag, double torque[3]);
+  #endif
+/** Call only on the master node: set particle external force.
     @param part  the particle.
     @param flag  new value for ext_flag.
     @param force new value for ext_force.
     @return ES_OK if particle existed
 */
-int set_particle_ext(int part, int flag, double force[3]);
+int set_particle_ext_force(int part, int flag, double force[3]);
 /** Call only on the master node: set coordinate axes for which the particles motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed

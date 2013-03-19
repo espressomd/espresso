@@ -18,10 +18,10 @@ New user-visible features
 
   * GAUSSIAN: A Gaussian potential.
 
-* The feature REACTIONS and the command "reaction" model a simple
-  chemical reaction: when a particle of the reactant type comes into
-  the vincinity of a particle of the catalysator type, the reactant is
-  transformed into a particle of the product type.
+* The feature CATALYTIC_REACTIONS and the command "reaction" model a
+  simple chemical reaction: when a particle of the reactant type comes
+  into the vincinity of a particle of the catalysator type, the
+  reactant is transformed into a particle of the product type.
 
 * The feature GHMC implements a generalized hybrid Monte-Carlo
   thermostat.
@@ -29,6 +29,12 @@ New user-visible features
 * The feature GRANDCANONICAL provided functions to simplify grandcanonical
   simulations in espresso. To that end it provides functions to find and
   delete random particles of a certain type.
+
+* Added new feature ROTATION_PER_PARTICLE that allows to choose
+  whether a particle has rotational degrees of freedom or not.
+
+* The functions for galilei transformations have been overhauled and
+  renamed. The old functions are deprecated.
 
 User-visible changes
 --------------------
@@ -45,11 +51,13 @@ User-visible changes
   types. Instead, there is now a single global forcecap, plus it is
   possible to define individual forcecaps on a particle pair level.
 
-* By default, CUDA is now automatically detected and actiavted when it
+* By default, CUDA is now automatically detected and activated when it
   is there and usable.
 
 ESPResSo 3.1.2
 ==============
+
+* Fixed bugs #38475, #37725, #36434.
 
 * Added workaround for bug in VTF reader plugin of VMD 1.9.1 that made
   all particles look the same when ELECTROSTATICS is turned on.
@@ -98,9 +106,11 @@ New user-visible features
 * The new feature COLLISION_DETECTION allows to dynamically add new
   bonds between colliding particles.
 
-* Added new constraint and LB boundary condition "rhomboid" that
-  allows to create arbitrary rhomboids. When combining several
-  rhomboids, almost any shape of a constraint is doable.
+* Added new feature LANGEVIN_PER_PARTICLE that allows to set the
+  Langevin parameters temperature and gamma per particle.
+
+
+* Added new constraint and LB boundary condition "rhomboid".
 
 * Lattice-Boltzmann:
 
