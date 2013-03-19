@@ -101,6 +101,8 @@ int mpifake_sendrecv(void *s, int scount, MPI_Datatype sdtype,
 
 #define MPI_REQUEST_NULL NULL
 
+#define MPI_ANY_SOURCE 0
+
 #define MPI_IN_PLACE (void*)0x1
 
 extern struct mpifake_dtype mpifake_dtype_int;
