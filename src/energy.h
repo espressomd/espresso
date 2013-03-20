@@ -463,6 +463,10 @@ MDINLINE void add_kinetic_energy(Particle *p1)
   energy.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
 
 #ifdef ROTATION
+#ifdef ROTATION_PER_PARTICLE
+if (p1->p.rotation)
+#endif
+{
 #ifdef ROTATIONAL_INERTIA
   /* the rotational part is added to the total kinetic energy;
      Here we use the rotational inertia  */
@@ -475,6 +479,7 @@ MDINLINE void add_kinetic_energy(Particle *p1)
      at the moment, we assume unit inertia tensor I=(1,1,1)  */
   energy.data.e[0] += (SQR(p1->m.omega[0]) + SQR(p1->m.omega[1]) + SQR(p1->m.omega[2]))*time_step*time_step;
 #endif
+}
 #endif	
 }
 

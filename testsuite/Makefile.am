@@ -49,7 +49,9 @@ tests = \
 	layered.tcl \
 	lb.tcl \
 	lb_planar.tcl \
+	lb_planar_gpu.tcl \
 	lb_stokes_sphere.tcl \
+	lb_stokes_sphere_gpu.tcl \
 	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
@@ -72,6 +74,7 @@ tests = \
 	p3m_simple_noncubic.tcl \
 	p3m_wall.tcl \
 	rotation.tcl \
+	rotation_per_particle.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl

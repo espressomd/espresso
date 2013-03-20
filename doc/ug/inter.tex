@@ -421,32 +421,31 @@ used with great caution.
 
 \begin{essyntax}
   inter \var{type1} \var{type2}
-  hat \var{F_\text{max}} \var{r}
+  hat \var{F_\text{max}} \var{r_c}
   \begin{features}
     \required{HAT}
   \end{features}
 \end{essyntax}
 This defines a simple force ramp between particles of the types \var{type1} and
  \var{type2}. The maximal force \var{F_\text{max}} acts at zero distance and 
-zero force is applied at distances r and bigger. For distances smaller than 
-\var{r}, the force is given by
+zero force is applied at distances $r_c$ and bigger. For distances smaller than 
+\var{r_c}, the force is given by
 \begin{equation}
-  F(d)=F_{\text{max}} \cdot \left( 1 - \frac{d}{r} \right),
+  F(r)=F_{\text{max}} \cdot \left( 1 - \frac{r}{r_c} \right),
 \end{equation}
-for distances exceeding \var{r}, the force is zero.
+for distances exceeding \var{r_c}, the force is zero.
 
 The potential energy is given by
 \begin{equation}
-  V(d)=F_{\text{max}} \cdot (d-r) \cdot \left( \frac{d+r}{2r} - 1 \right),
+  V(r)=F_{\text{max}} \cdot (r-r_c) \cdot \left( \frac{r+r_c}{2r_c} - 1 \right),
 \end{equation}
-which is zero for distances bigger than \var{r} and continuous at distance 
-\var{r}.
+which is zero for distances bigger than \var{r_c} and continuous at distance 
+\var{r_c}.
 
 This is the standard conservative DPD potential and can be used in combination 
-with \lit{inter DPD} \ref{sec:DPDinter}. Also it is useful for live 
-demonstrations, where you might want to use a big time step to make it look 
-interesting on a weak machine but do not want it to crash and the physics don't 
-matter.
+with \lit{inter DPD} \ref{sec:DPDinter}. The potential is also useful for live 
+demonstrations, where a big time step may be employed to obtain quick results
+on a weak machine, for which the physics do not need to be entirely correct.  
 
 \subsection{Hertzian interaction}
 \index{Hertzian interaction|mainindex}

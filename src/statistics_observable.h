@@ -42,6 +42,7 @@ int* observable_calc(observable* self, double* A);
 
 /* Here we have the particular observables listed */
 int observable_particle_velocities(void* idlist, double* A, unsigned int n_A);
+int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n_A);
 int observable_com_velocity(void* idlist, double* A, unsigned int n_A); 
 int observable_blocked_com_velocity(void* idlist, double* A, unsigned int n_A); 
 /** Obtain the particle positions.

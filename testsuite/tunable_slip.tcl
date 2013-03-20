@@ -31,6 +31,7 @@
 # of fluid flow", Europ. Phys. J. E 26, 115 (2008)          #
 #                                                           #
 #############################################################
+
 source "tests_common.tcl"
 
 require_feature "TUNABLE_SLIP"
@@ -175,7 +176,7 @@ for {set i 0} { $i < $n_solvent} { incr i } {
     
     part $i pos $posx $posy $posz type $solvent_id v $vx $vy $vz ext_force $f_x $f_y $f_z
 }
-galileiTransformParticles
+galilei_transform
 
 # Interactions 
 inter $wall_right_id $solvent_id lennard-jones $lj_eps $lj_sig $lj_cut $lj_shift $lj_off 

@@ -32,17 +32,18 @@ typedef struct {
 	int product_type;
 	int catalyzer_type;
 	double range;
-	double rate;
-	double back_rate;
+	double ct_rate;
+	double eq_rate;
+  int sing_mult;
 }  reaction_struct;
 
 reaction_struct reaction;
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
     that the verlet radius is equal or bigger than the reaction range.
 **/
-void setup_reaction();
+void local_setup_reaction();
 void integrate_reaction();
 #endif
 
