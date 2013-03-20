@@ -54,9 +54,9 @@ static LB_particle_seed_gpu *part = NULL;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
 
+#ifdef LB_BOUNDARIES_GPU
 static float* LB_boundary_force = NULL;
 static float* LB_boundary_velocity = NULL;
-#ifdef LB_BOUNDARIES_GPU
 /** pointer for bound index array*/
 static int *boundary_node_list;
 static int *boundary_index_list;
@@ -1560,7 +1560,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
     cudaFree(particle_data);
     cudaFree(part);
   }
-  //cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
@@ -1868,9 +1868,6 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
   
-  if (n_lb_boundaries>0)
-    cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));	
-
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -1883,6 +1880,8 @@ void lb_integrate_GPU(){
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
     if (n_lb_boundaries > 0) {
+      cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
+
       KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
 //      KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
     }
@@ -1903,12 +1902,14 @@ void lb_integrate_GPU(){
 }
 
 void lb_gpu_get_boundary_forces(double* forces) {
+#ifdef LB_BOUNDARIES_GPU
   float* temp = (float*) malloc(3*n_lb_boundaries*sizeof(float));
   cuda_safe_mem(cudaMemcpy(temp, LB_boundary_force, 3*n_lb_boundaries*sizeof(float), cudaMemcpyDeviceToHost));
   for (int i =0; i<3*n_lb_boundaries; i++) {
     forces[i]=(double)temp[i];
   }
   free(temp);
+#endif
 }
 
 /** free gpu memory kernel called from the host (not used anymore) */

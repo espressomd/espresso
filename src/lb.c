@@ -783,7 +783,6 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 #endif
   }
 
-
   //set the initial velocity to zero in all directions
   v[0] = 0;
   v[1] = 0;
@@ -826,15 +825,26 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   return 0;
 }
 
-
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
-   
-    lb_lbnode_get_pi_neq(ind, p_pi);
-  
-    double p0 = lbpar.rho*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
-    p_pi[0] += p0;
-    p_pi[2] += p0;
-    p_pi[5] += p0;
+
+  double p0 = 0;
+
+  lb_lbnode_get_pi_neq(ind, p_pi);
+
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    p0 = lbpar_gpu.rho*lbpar_gpu.agrid*lbpar_gpu.agrid/lbpar_gpu.tau/lbpar_gpu.tau/3.;
+#endif
+  } else {  
+#ifdef LB
+    p0 = lbpar.rho*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
+#endif
+  }
+
+  p_pi[0] += p0;
+  p_pi[2] += p0;
+  p_pi[5] += p0;
+
   return 0;
 }
 
@@ -853,7 +863,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
 		free (host_print_values);
 #endif
   } else {  
-  
+#ifdef LB
     index_t index;
     int node, grid[3], ind_shifted[3];
     double rho; double j[3]; double pi[6];
@@ -870,9 +880,9 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     p_pi[3] = pi[3]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
     p_pi[4] = pi[4]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
     p_pi[5] = pi[5]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-
-    return 0;
+#endif
   }
+  return 0;
 }
 
 int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
@@ -2444,11 +2454,10 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x,y,z;
-
-  double lbboundary_mindist, distvec[3];
   double pos[3];
 
 #ifdef LB_BOUNDARIES
+  double lbboundary_mindist, distvec[3];
   int boundary_no;
   int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
 
