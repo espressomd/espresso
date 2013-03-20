@@ -1011,13 +1011,21 @@ MDINLINE double angle_btw_triangles(double *P1, double *P2, double *P3, double *
 	//tmp11 = dot(3,normal1,normal2);         // tmp11 = n1.n2
 	tmp11 = scalar(normal1,normal2);         // tmp11 = n1.n2
 	
+	/*	
 	tmp22 = normr(normal1);
 	tmp33 = normr(normal2);
 	tmp11 /= (tmp22*tmp33);  // tmp11 = n1.n2/(|n1||n2|)
+*/
+	tmp11 *= fabs(tmp11); // tmp11 = (n1.n2)^2
+	tmp22 = sqrlen(normal1);  //tmp22 = |n1|^2
+	tmp33 = sqrlen(normal2);  //tmp33 = |n1|^2
+	tmp11 /= (tmp22*tmp33);  // tmp11 = (n1.n2/(|n1||n2|))^2
+	tmp11 = sqrt(tmp11);
+
 	//if(tmp11<=-1. || tmp11>=1.)printf("x %e acos(x) %e dn1 %e dn2 %e ",tmp11,acos(tmp11),tmp22,tmp33);
 	
-	if(tmp11>=1.)tmp11=0.0;
-	else if(tmp11<=-1.)tmp11=M_PI;
+	if(tmp11>=1.) { printf("Entering"); tmp11=0.0;}
+	else if(tmp11<=-1.) { printf("Entering"); tmp11=M_PI;}
 	phi = M_PI - acos(tmp11); 	// The angle between the faces (not considering the orientation, always less or equal to Pi) is
 								// equal to Pi minus angle between the normals
 	

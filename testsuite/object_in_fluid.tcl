@@ -79,13 +79,13 @@ if { [catch {
 	# 	Here you can write new initial configuration - by changing generate_new_data from 0 to 1
 	# 	For this, you need to supply the meshfiles: one for nodes and one for triangles
 	
-	set generate_new_data 0	
+	set generate_new_data 0
 	if { $generate_new_data == 1} {
 		set fileNodes object_in_fluid_system.data.nodes
 		set fileTriangles object_in_fluid_system.data.triangles
 		setmd box_l 100 20 20
 		init_objects_in_fluid	
-		add_oif_object origin 10.1 10.1 10.1 nodesfile $fileNodes trianglesfile $fileTriangles kb 0.1 type 0 mol 0
+		add_oif_object origin 10.1 10.1 10.1 nodesfile $fileNodes trianglesfile $fileTriangles ks 0.2 kb 0.4 kal 0.2 kag 0.7 kv 1.0 type 0 mol 0
 		write_data_init "object_in_fluid_system.data.init"
 	} else {
 		read_data "object_in_fluid_system.data.init"
@@ -120,7 +120,9 @@ if { [catch {
 	      }
 	    }
 	  }
+
 	  integrate 1;
+
 	  incr cycle;
 	}
 	
@@ -180,13 +182,21 @@ if { [catch {
 		set diffFOR [expr $diffFOR + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
 	
 	}
-	if { $diffPOS > 0.0 || $diffPOS > 0.0 || $diffPOS > 0.0 } {
+	if { $diffPOS > 0.0 || $diffVEL > 0.0 || $diffFOR > 0.0 } {
 		puts "A difference occured between the reference configuration and the computed configuration: "
 		puts "		positions: $diffPOS"
 		puts "		velocities: $diffVEL"
 		puts "		forces: $diffFOR"
-		error "A difference occured between the reference configuration and the computed configuration"
+		if { [expr $diffPOS + $diffVEL + $diffFOR <= 5.0e-9] } { 
+			puts "However, it is caused by rounding errors (e.g. during the mpi communication)"
+			puts "No error message sent"
+		}
     }
+   	if { [expr $diffPOS + $diffVEL + $diffFOR > 5.0e-9] } { 
+		puts "Sending an error message ...."
+		error "A difference occured between the reference configuration and the computed configuration"
+	}
+
 } res ] } {
     error_exit $res
 }
