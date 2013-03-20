@@ -827,7 +827,7 @@ with $q \in \{\var{qmin},\dots,\var{qmax}\}$.
 
 \begin{essyntax}
  analyze rdfchain \var{rmin} \var{rmax} \var{rbins} 
- \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+ \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 Returns three radial distribution functions (rdf) for the chains. The
 first rdf is calculated for monomers belonging to different chains,
@@ -853,9 +853,9 @@ given by \var{rmin} and \var{rmax} and it is divided into
 
 \begin{essyntax}
   \variant{1} analyze \alt{<g1>\asep<g2>\asep<g3>} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
   \variant{2} analyze g123 \opt{-init} 
-  \opt{\var{chain_start} \var{n_chains} \var{chain_length}}
+  \opt{\var{chain\_start} \var{n\_chains} \var{chain\_length}}
 \end{essyntax}
 
 Variant \variant{1} returns 
