@@ -1,9 +1,0 @@
-logfile vmd.log
-mol load vsf simEspresso.vsf
-rotate stop
-mol modstyle 0 0 CPK 1.800000 0.300000 8.000000 6.000000
-mol modcolor 0 0 SegName
-imd connect jane 10000
-imd transfer 1
-imd keep 1
-proc pbcsetup {} {pbc set "100.0 20.0 20.0" -all}

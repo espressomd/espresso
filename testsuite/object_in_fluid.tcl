@@ -42,12 +42,14 @@ require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
 require_feature "LB"
 
-
 puts "------------------------------------------------"
 puts "- Testcase object_in_fluid.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 
 set vmd "n"
+
+set tcl_precision 15
+set tolerance 1e-7
 
 setmd time_step 0.1
 setmd skin 0.2
@@ -81,21 +83,19 @@ if { [catch {
 	
 	set generate_new_data 0
 	if { $generate_new_data == 1} {
-		set fileNodes object_in_fluid_system.data.nodes
-		set fileTriangles object_in_fluid_system.data.triangles
-		setmd box_l 100 20 20
-		init_objects_in_fluid	
-		add_oif_object origin 10.1 10.1 10.1 nodesfile $fileNodes trianglesfile $fileTriangles ks 0.2 kb 0.4 kal 0.2 kag 0.7 kv 1.0 type 0 mol 0
-		write_data_init "object_in_fluid_system.data.init"
+	    set fileNodes "object_in_fluid_system.data.nodes"
+	    set fileTriangles "object_in_fluid_system.data.triangles"
+	    setmd box_l 100 20 20
+	    init_objects_in_fluid	
+	    add_oif_object origin 10.1 10.1 10.1 nodesfile $fileNodes trianglesfile $fileTriangles ks 0.2 kb 0.4 kal 0.2 kag 0.7 kv 1.0 type 0 mol 0
+	    write_data_init "object_in_fluid_system.data.init"
 	} else {
-		read_data "object_in_fluid_system.data.init"
-		invalidate_system
+	    read_data "object_in_fluid_system.data.init"
+	    invalidate_system
 	}
 	
-	cellsystem domain_decomposition -no_verlet_list 
-	lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5	
-	
-	                           
+	lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
+		                           
 	if { $vmd == "y" } {
 	    prepare_vmd_connection simEspresso 3000 1 
 	    exec sleep 2   
@@ -106,38 +106,38 @@ if { [catch {
 	# main iteration loop
 	
 	set cycle 0 
-	while { $cycle<100 } {
-		puts "$cycle";
+	while { $cycle < 20 } {
+	    puts -nonewline "time step $cycle/20\r"; flush stdout
 	    if { $vmd == "y"} { imd positions};
 	
 	
-	  # set the constant velocity
-	  # of the fluid on the left side of the md_box
-	  for { set i 0 } { $i < 1} { incr i } {
-	    for { set j 0 } { $j < 20 } { incr j } {
-	      for { set k 0 } { $k < 20 } { incr k } {
-	        lbnode $i $j $k set u 0.5 0.0 0.0;
-	      }
+	    # set the constant velocity
+	    # of the fluid on the left side of the md_box
+	    for { set i 0 } { $i < 1} { incr i } {
+		for { set j 0 } { $j < 20 } { incr j } {
+		    for { set k 0 } { $k < 20 } { incr k } {
+			lbnode $i $j $k set u 0.5 0.0 0.0;
+		    }
+		}
 	    }
-	  }
 
-	  integrate 1;
+	    integrate 1;
 
-	  incr cycle;
+	    incr cycle;
 	}
 	
 	# Here, you write new reference configuration in case you have chosen to generate new data
 	#
 	if { $generate_new_data == 1} {
-		write_data_final "object_in_fluid_system.data.final"
-		exit
+	    write_data_final "object_in_fluid_system.data.final"
+	    exit
 	}
 	
 	# store computed values for velocities, positions and forces
 	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-		set POS($i) [part $i pr pos]
-		set VEL($i) [part $i pr v]
-		set FOR($i) [part $i pr f]
+	    set POS($i) [part $i pr pos]
+	    set VEL($i) [part $i pr v]
+	    set FOR($i) [part $i pr f]
 	}
 	
 	# load reference configuration
@@ -148,56 +148,48 @@ if { [catch {
 	set diffFOR 0.0
 	
 	for { set i 0 } { $i <= [setmd max_part] } { incr i } {
-		set tmp [part $i pr pos]
-		set Ax [lindex $tmp 0]
-		set Ay [lindex $tmp 1]
-		set Az [lindex $tmp 2]
-			# stores the vector of the reference position for $i-th particle
-		set Bx [lindex $POS($i) 0]
-		set By [lindex $POS($i) 1]
-		set Bz [lindex $POS($i) 2]
-			# stores the vector of the computed position for $i-th particle
-		set diffPOS [expr $diffPOS + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
+	    set tmp [part $i pr pos]
+	    set Ax [lindex $tmp 0]
+	    set Ay [lindex $tmp 1]
+	    set Az [lindex $tmp 2]
+	    # stores the vector of the reference position for $i-th particle
+	    set Bx [lindex $POS($i) 0]
+	    set By [lindex $POS($i) 1]
+	    set Bz [lindex $POS($i) 2]
+	    # stores the vector of the computed position for $i-th particle
+	    set diffPOS [expr $diffPOS + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
 	
-		set tmp [part $i pr v]
-		set Ax [lindex $tmp 0]
-		set Ay [lindex $tmp 1]
-		set Az [lindex $tmp 2]
-			# stores the vector of the reference velocity for $i-th particle
-		set Bx [lindex $VEL($i) 0]
-		set By [lindex $VEL($i) 1]
-		set Bz [lindex $VEL($i) 2]
-			# stores the vector of the computed velocity for $i-th particle
-		set diffVEL [expr $diffVEL + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
+	    set tmp [part $i pr v]
+	    set Ax [lindex $tmp 0]
+	    set Ay [lindex $tmp 1]
+	    set Az [lindex $tmp 2]
+	    # stores the vector of the reference velocity for $i-th particle
+	    set Bx [lindex $VEL($i) 0]
+	    set By [lindex $VEL($i) 1]
+	    set Bz [lindex $VEL($i) 2]
+	    # stores the vector of the computed velocity for $i-th particle
+	    set diffVEL [expr $diffVEL + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
 	
-		set tmp [part $i pr f]
-		set Ax [lindex $tmp 0]
-		set Ay [lindex $tmp 1]
-		set Az [lindex $tmp 2]
-			# stores the vector of the reference force for $i-th particle
-		set Bx [lindex $FOR($i) 0]
-		set By [lindex $FOR($i) 1]
-		set Bz [lindex $FOR($i) 2]
-			# stores the vector of the computed force for $i-th particle
-		set diffFOR [expr $diffFOR + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
-	
-	}
-	if { $diffPOS > 0.0 || $diffVEL > 0.0 || $diffFOR > 0.0 } {
-		puts "A difference occured between the reference configuration and the computed configuration: "
-		puts "		positions: $diffPOS"
-		puts "		velocities: $diffVEL"
-		puts "		forces: $diffFOR"
-		if { [expr $diffPOS + $diffVEL + $diffFOR <= 5.0e-9] } { 
-			puts "However, it is caused by rounding errors (e.g. during the mpi communication)"
-			puts "No error message sent"
-		}
-    }
-   	if { [expr $diffPOS + $diffVEL + $diffFOR > 5.0e-9] } { 
-		puts "Sending an error message ...."
-		error "A difference occured between the reference configuration and the computed configuration"
+	    set tmp [part $i pr f]
+	    set Ax [lindex $tmp 0]
+	    set Ay [lindex $tmp 1]
+	    set Az [lindex $tmp 2]
+	    # stores the vector of the reference force for $i-th particle
+	    set Bx [lindex $FOR($i) 0]
+	    set By [lindex $FOR($i) 1]
+	    set Bz [lindex $FOR($i) 2]
+	    # stores the vector of the computed force for $i-th particle
+	    set diffFOR [expr $diffFOR + sqrt(($Ax-$Bx)*($Ax-$Bx) + ($Ay-$By)*($Ay-$By) + ($Az-$Bz)*($Az-$Bz))]
 	}
 
-} res ] } {
+	puts "difference between the reference configuration and the computed configuration: "
+	puts "		positions: $diffPOS"
+	puts "		velocities: $diffVEL"
+	puts "		forces: $diffFOR"
+	if { $diffPOS > $tolerance || $diffVEL > $tolerance || $diffFOR > $tolerance } {
+	    error "A difference occured between the reference configuration and the computed configuration"
+	}
+    } res ] } {
     error_exit $res
 }
 

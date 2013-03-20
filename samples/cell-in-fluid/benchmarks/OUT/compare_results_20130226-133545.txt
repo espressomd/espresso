@@ -1,9 +1,0 @@
-benchmarks1:
-./b_results/tetra1b.txt and ./OUT/tetra1.txt are the same
-./b_results/tetra2b.txt and ./OUT/tetra2.txt are the same
-./b_results/tetra3b.txt and ./OUT/tetra3.txt are the same
-./b_results/tetra4b.txt and ./OUT/tetra4.txt are the same
-./b_results/tetra5b.txt and ./OUT/tetra5.txt are the same
-./b_results/tetra6b.txt and ./OUT/tetra6.txt are the same
-benchmarks2:
-./b_results/sphere1b.txt and ./OUT/sphere1.txt are the same
