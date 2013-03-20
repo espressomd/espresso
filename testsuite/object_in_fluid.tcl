@@ -49,7 +49,7 @@ puts "------------------------------------------------"
 set vmd "n"
 
 set tcl_precision 15
-set tolerance 1e-7
+set tolerance 1e-5
 
 setmd time_step 0.1
 setmd skin 0.2
