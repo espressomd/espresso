@@ -153,7 +153,8 @@ void lb_realloc_particles_gpu(){
   size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
   host_forces = realloc(host_forces, size_of_forces);
 
-  lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
+printf("%d %d \n", idum, (unsigned int)i_random(max_ran) );
+  lbpar_gpu.your_seed = (idum > 0 ? idum : (unsigned int)i_random(max_ran));
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
   lb_realloc_particle_GPU(&lbpar_gpu, &host_data);
