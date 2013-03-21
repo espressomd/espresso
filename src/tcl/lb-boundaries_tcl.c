@@ -788,7 +788,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
       return (TCL_ERROR);
     }
 
-#ifdef LB
+#if defined (LB) || defined (LB_GPU)
     char buffer[3*TCL_DOUBLE_SPACE+3];
     double force[3];
 

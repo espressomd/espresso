@@ -17,6 +17,7 @@ source "tests_common.tcl"
 
 require_feature "LB_GPU"
 require_feature "LB_BOUNDARIES_GPU"
+require_feature "EXTERNAL_FORCES"
 
 puts "---------------------------------------------------------------"
 puts "- Testcase lb_planar.tcl running on [format %02d [setmd n_nodes]] nodes"

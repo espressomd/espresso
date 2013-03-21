@@ -472,27 +472,28 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
-// CPU analog of shift:
-//    lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]
+    shift = 0; // TODO I DON'T KNOW IF IT IS CORRECT, BUT SOMETHING MUST BE DONE HERE...
+
+/* CPU analog of shift:
+   lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l] */
   
     /** store vd temporary in second lattice to avoid race conditions */
 #define BOUNCEBACK  \
-      shift=+ para.agrid*para.agrid*para.agrid*para.agrid*para.rho*2.*3.*weight *para.tau\
-      * (v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
-      pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
-  to_index_x=(x+c[0]+para.dim_x)%para.dim_x; \
-  to_index_y=(y+c[1]+para.dim_y)%para.dim_y; \
-  to_index_z=(z+c[2]+para.dim_z)%para.dim_z; \
-     to_index=to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z; \
-      if (n_b.boundary[to_index] == 0) { \
-        boundary_force[0]+=(2*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
-        boundary_force[1]+=(2*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
-        boundary_force[2]+=(2*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
-      n_b.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
-      }
-//        printf("boundary %d population %d creates force  %f %f %f\n", boundary_index-1, population, 1000*pop_to_bounce_back*c[0],  1000*pop_to_bounce_back*c[1],  1000*pop_to_bounce_back*c[2]);\
-      }
-
+  shift -= para.agrid*para.agrid*para.agrid*para.agrid*para.rho*2.*3.*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+  pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
+  to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
+  to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
+  to_index_z = (z+c[2]+para.dim_z)%para.dim_z; \
+  to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z; \
+  if (n_b.boundary[to_index] == 0) \
+  { \
+    boundary_force[0] += (2*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
+    boundary_force[1] += (2*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
+    boundary_force[2] += (2*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
+    n_b.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
+  }
+/*        printf("boundary %d population %d creates force  %f %f %f\n", boundary_index-1, population, 1000*pop_to_bounce_back*c[0],  1000*pop_to_bounce_back*c[1],  1000*pop_to_bounce_back*c[2]);\
+      } */
 
     // the resting population does nothing.
     c[0]=1;c[1]=0;c[2]=0; weight=1./18.; population=2; inverse=1; 
@@ -1130,7 +1131,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
-#ifdef EXTERNAL_FORCE
+#ifdef EXTERNAL_FORCES
     if(para.external_force){
       node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*powf(para.agrid,4)*para.tau*para.tau;
       node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*powf(para.agrid,4)*para.tau*para.tau;
