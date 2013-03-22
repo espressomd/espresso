@@ -422,10 +422,10 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
   
     int j;	
          /** print of the calculated phys values */
-      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
         for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
         /** print of the calculated phys values */
-        fprintf(fp, " %u \n", bound_array[j]);
+        fprintf(fp, "%d \n", bound_array[j]);
       }     
     free(bound_array);
 #endif
@@ -445,9 +445,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
 			   for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
 				    lb_lbnode_get_boundary(pos, &boundary);
-				    if (boundary) 
-				      boundary = 1;
-				    fprintf(fp, "%d ", boundary);
+				    fprintf(fp, "%d \n", boundary);
 			   }
 #endif
 				}
@@ -467,7 +465,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
     host_values = (LB_values_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
-		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       /** print of the calculated phys values */

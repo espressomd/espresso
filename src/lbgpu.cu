@@ -467,19 +467,19 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     v[0]=LB_boundary_velocity[3*(boundary_index-1)+0];
     v[1]=LB_boundary_velocity[3*(boundary_index-1)+1];
     v[2]=LB_boundary_velocity[3*(boundary_index-1)+2];
+
     index_to_xyz(index, xyz);
+
     unsigned int x = xyz[0];
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
-
-    shift = 0; // TODO I DON'T KNOW IF IT IS CORRECT, BUT SOMETHING MUST BE DONE HERE...
 
 /* CPU analog of shift:
    lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l] */
   
     /** store vd temporary in second lattice to avoid race conditions */
 #define BOUNCEBACK  \
-  shift -= para.agrid*para.agrid*para.agrid*para.agrid*para.rho*2.*3.*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+  shift = para.agrid*para.agrid*para.agrid*para.agrid*para.rho*2.*3.*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
   pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
   to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
   to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
@@ -492,85 +492,91 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     boundary_force[2] += (2*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
     n_b.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
   }
+
+// ***** SHOULDN'T THERE BE AN ELSE STATMENT IN "BOUNCEBACK"?
+// ***** THERE IS AN ODD FACTOR OF 2 THAT YOU INCUR IN THE FORCES FOR THE "lb_stokes_sphere_gpu.tcl" TEST CASE
+
 /*        printf("boundary %d population %d creates force  %f %f %f\n", boundary_index-1, population, 1000*pop_to_bounce_back*c[0],  1000*pop_to_bounce_back*c[1],  1000*pop_to_bounce_back*c[2]);\
       } */
 
+// ***** WHAT DO THE "to_index" STATMENTS? THEY GET WRITTEN OVER BY "BOUNCEBACK" ANYWAY? I THINK THESE CAN BE REMOVED, COMMENTING THEM OUT DID NOT SEEM TO EFFECT ANYTHING.
+
     // the resting population does nothing.
     c[0]=1;c[1]=0;c[2]=0; weight=1./18.; population=2; inverse=1; 
-    to_index=(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;  
+//    to_index=(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=-1;c[1]=0;c[2]=0; weight=1./18.; population=1; inverse=2; 
-    to_index=(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;  
+//    to_index=(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=0;c[1]=1;c[2]=0;  weight=1./18.; population=4; inverse=3; 
-    to_index= x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
+ //   to_index= x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
 
     c[0]=0;c[1]=-1;c[2]=0; weight=1./18.; population=3; inverse=4; 
-    to_index=x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
+//    to_index=x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=0;c[1]=0;c[2]=1; weight=1./18.; population=6; inverse=5; 
-    to_index=x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
+//    to_index=x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
 
     c[0]=0;c[1]=0;c[2]=-1; weight=1./18.; population=5; inverse=6; 
-    to_index=x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
+ //   to_index=x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK 
     
     c[0]=1;c[1]=1;c[2]=0; weight=1./36.; population=8; inverse=7; 
-    to_index=+(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
+//    to_index=+(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=-1;c[1]=-1;c[2]=0; weight=1./36.; population=7; inverse=8; 
-    to_index= (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
+//    to_index= (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=1;c[1]=-1;c[2]=0; weight=1./36.; population=10; inverse=9; 
-    to_index= (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
+//    to_index= (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
 
     c[0]=-1;c[1]=+1;c[2]=0; weight=1./36.; population=9; inverse=10; 
-    to_index= + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
+//    to_index= + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=1;c[1]=0;c[2]=1; weight=1./36.; population=12; inverse=11; 
-    to_index= + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
+//    to_index= + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=-1;c[1]=0;c[2]=-1; weight=1./36.; population=11; inverse=12; 
-    to_index= + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
+ //   to_index= + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK
 
     c[0]=1;c[1]=0;c[2]=-1; weight=1./36.; population=14; inverse=13; 
-    to_index= + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
+ //   to_index= + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=-1;c[1]=0;c[2]=1; weight=1./36.; population=13; inverse=14; 
-    to_index=(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
+  //  to_index=(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
 
     c[0]=0;c[1]=1;c[2]=1; weight=1./36.; population=16; inverse=15; 
-    to_index= + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
+ //   to_index= + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=0;c[1]=-1;c[2]=-1; weight=1./36.; population=15; inverse=16; 
-    to_index=+ x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
+//    to_index=+ x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=0;c[1]=1;c[2]=-1; weight=1./36.; population=18; inverse=17; 
-    to_index=+ x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z); 
+ //   to_index=+ x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z); 
     BOUNCEBACK
     
     c[0]=0;c[1]=-1;c[2]=1; weight=1./36.; population=17; inverse=18; 
-    to_index= + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
+//    to_index= + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK  
     
-  atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+0], boundary_force[0]);
-  atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+1], boundary_force[1]);
-  atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+2], boundary_force[2]);
+    atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+0], boundary_force[0]);
+    atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+1], boundary_force[1]);
+    atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+2], boundary_force[2]);
   }
 }
 /**bounce back read kernel needed to avoid raceconditions
@@ -1161,8 +1167,8 @@ __global__ void init_boundaries(int *boundary_node_list, int *boundary_index_lis
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<number_of_boundnodes){
-    n_a.boundary[boundary_node_list[index]] = boundary_index_list[index]+1;
-    n_b.boundary[boundary_node_list[index]] = boundary_index_list[index]+1;
+    n_a.boundary[boundary_node_list[index]] = boundary_index_list[index];
+    n_b.boundary[boundary_node_list[index]] = boundary_index_list[index];
   }	
 }
 
@@ -1721,7 +1727,7 @@ void lb_get_boundary_flags_GPU(unsigned int* host_bound_array){
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block, (*current_nodes, device_bound_array));
