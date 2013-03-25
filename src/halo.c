@@ -145,9 +145,8 @@ void halo_free_fieldtype(Fieldtype *ftype) {
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
-MDINLINE void halo_dtset(void *dest, int value, Fieldtype type) {
-  int i, j, k;
-  void *s;
+void halo_dtset(char *dest, int value, Fieldtype type) {
+  char *s;
 
   int vblocks = type->vblocks;
   int vstride = type->vstride;
@@ -157,21 +156,23 @@ MDINLINE void halo_dtset(void *dest, int value, Fieldtype type) {
   int *disps  = type->disps;
   int extent  = type->extent;
 
-  for (i=0; i<vblocks; i++, dest+=vskip*extent) {
-    for (j=0, s=dest; j<vstride; j++, s+=extent) {
-      for (k=0; k<count; k++) {
+  for (int i=0; i<vblocks; i++) {
+    for (int j = 0; j<vstride; j++) {
+      s = dest;
+      for (int k=0; k<count; k++) 
 	memset(s+disps[k],value,lens[k]);
-      }
+      s += extent;
     }
+    dest += vskip*extent;
   }
-
 }
 
-MDINLINE void halo_dtcopy(void *r_buffer, void *s_buffer, int count, Fieldtype type);
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type);
 
-MDINLINE void halo_copy_vector(void *r_buffer, void *s_buffer, int count, Fieldtype type, int vflag) {
+void halo_copy_vector(char *r_buffer, char *s_buffer, int count, 
+                      Fieldtype type, int vflag) {
   int i, j;
-  void *dest, *src;
+  char *dest, *src;
 
   int vblocks = type->vblocks;
   int vstride = type->vstride;
@@ -184,8 +185,8 @@ MDINLINE void halo_copy_vector(void *r_buffer, void *s_buffer, int count, Fieldt
     vskip *= type->subtype->extent;
   }  
 
-  for (i=0; i<count; i++, s_buffer+=extent, r_buffer+=extent) {
-    for (j=0, dest=r_buffer, src=s_buffer; j<vblocks; j++, dest+=vskip, src+=vskip) {
+  for (i = 0; i < count; i++, s_buffer += extent, r_buffer += extent) {
+    for (j = 0, dest = r_buffer, src = s_buffer; j<vblocks; j++, dest += vskip, src += vskip) {
       halo_dtcopy(dest,src,vstride,type->subtype);
     }
   }
@@ -198,7 +199,7 @@ MDINLINE void halo_copy_vector(void *r_buffer, void *s_buffer, int count, Fieldt
  * @param count    amount of data to copy
  * @param type     field layout type
  */
-MDINLINE void halo_dtcopy(void *r_buffer, void *s_buffer, int count, Fieldtype type) { 
+void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) { 
     int i, j;
 
     HALO_TRACE(fprintf(stderr, "%d: halo_dtcopy r_buffer=%p s_buffer=%p blocks=%d stride=%d skip=%d\n",this_node,r_buffer,s_buffer,type->vblocks,type->vstride,type->vskip));
@@ -343,9 +344,9 @@ void release_halo_communication(HaloCommunicator *hc) {
  * @param hc halo communicator describing the parallelization scheme
  * @param base base plane of local node
  */
-void halo_communication(HaloCommunicator *hc, void *base) {
+void halo_communication(HaloCommunicator *hc, char *base) {
   int n, comm_type, s_node, r_node;
-  void *s_buffer, *r_buffer ;
+  char *s_buffer, *r_buffer ;
 
   Fieldtype fieldtype;
   MPI_Datatype datatype;
