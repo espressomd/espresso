@@ -8,6 +8,8 @@ ESPResSo 3.2
 New user-visible features
 -------------------------
 
+* added the immersed boundary object-in-fluid code
+
 * The script tools/blockfile2vtf.tcl can be used to convert ESPResSo
   blockfiles into VTF files.
 
