@@ -135,8 +135,8 @@ void lb_init_boundaries() {
             }
           }
           
-        	if (dist <= 0 && n_lb_boundaries > 0) {
-         	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
+          if (dist <= 0 && boundary_number > 0 && n_lb_boundaries > 0) {
+            size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;

@@ -98,6 +98,11 @@ SOFT_SPHERE
 HAT
 GAY_BERNE		implies ROTATION
 OVERLAPPED
+
+/* Fluid-Structure Interactions (object in fluid) */
+AREA_FORCE_GLOBAL
+VOLUME_FORCE
+
 BOND_ANGLE		requires not BOND_ANGLE_OLD
 
 BOND_ANGLEDIST
