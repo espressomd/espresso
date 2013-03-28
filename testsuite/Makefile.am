@@ -109,6 +109,8 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	thermostat.data thermostat_rot.data \
 	mass_system.data \
 	lb_system.data \
+        object_in_fluid_system.data.final object_in_fluid_system.data.init \
+        object_in_fluid_system.data.nodes object_in_fluid_system.data.triangles \
 	\
 	pe_micelle.tcl pe_micelle.data \
 	uwerr.tcl uwerr.data \
