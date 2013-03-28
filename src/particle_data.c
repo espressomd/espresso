@@ -1822,7 +1822,7 @@ int add_particle_to_list(int part_id, int type){
 //	int type = cur_par->p.type;
 	int l_err=1;
 	int already_in = 0;
-	int already_in_other_list = 0;
+//	int already_in_other_list = 0;
 	// type i not indexed, so no list for this particle exists
 	for (int i = 0; i<Type.max_entry; i++){
 		if ( Type.index[i] == type ){

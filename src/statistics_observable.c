@@ -382,7 +382,6 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
 }
 #endif
 
-
 #ifdef LB
 int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i, j, k;
@@ -471,6 +470,7 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
   return 0;
 }
 #endif
+
 void transform_to_cylinder_coordinates(double x, double y, double z_, double* r, double* phi, double* z) {
   *z =  z_;
   *r =  sqrt(x*x+y*y);

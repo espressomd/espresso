@@ -422,10 +422,10 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
   
     int j;	
          /** print of the calculated phys values */
-      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbboundaries\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
         for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
         /** print of the calculated phys values */
-        fprintf(fp, " %u \n", bound_array[j]);
+        fprintf(fp, "%d \n", bound_array[j]);
       }     
     free(bound_array);
 #endif
@@ -445,9 +445,7 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 		   for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
 			   for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
 				    lb_lbnode_get_boundary(pos, &boundary);
-				    if (boundary) 
-				      boundary = 1;
-				    fprintf(fp, "%d ", boundary);
+				    fprintf(fp, "%d \n", boundary);
 			   }
 #endif
 				}
@@ -467,7 +465,7 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
     host_values = (LB_values_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
-		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       /** print of the calculated phys values */
@@ -783,7 +781,6 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
 #endif
   }
 
-
   //set the initial velocity to zero in all directions
   v[0] = 0;
   v[1] = 0;
@@ -826,15 +823,26 @@ int lb_lbfluid_get_interpolated_velocity_global (double* p, double* v) {
   return 0;
 }
 
-
 int lb_lbnode_get_pi(int* ind, double* p_pi) {
-   
-    lb_lbnode_get_pi_neq(ind, p_pi);
-  
-    double p0 = lbpar.rho*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
-    p_pi[0] += p0;
-    p_pi[2] += p0;
-    p_pi[5] += p0;
+
+  double p0 = 0;
+
+  lb_lbnode_get_pi_neq(ind, p_pi);
+
+  if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    p0 = lbpar_gpu.rho*lbpar_gpu.agrid*lbpar_gpu.agrid/lbpar_gpu.tau/lbpar_gpu.tau/3.;
+#endif
+  } else {  
+#ifdef LB
+    p0 = lbpar.rho*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
+#endif
+  }
+
+  p_pi[0] += p0;
+  p_pi[2] += p0;
+  p_pi[5] += p0;
+
   return 0;
 }
 
@@ -854,7 +862,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     return 0;
 #endif
   } else {  
-  
+#ifdef LB
     index_t index;
     int node, grid[3], ind_shifted[3];
     double rho; double j[3]; double pi[6];
@@ -871,9 +879,9 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     p_pi[3] = pi[3]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
     p_pi[4] = pi[4]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
     p_pi[5] = pi[5]/tau/tau/lbpar.agrid/lbpar.agrid/lbpar.agrid;
-
-    return 0;
+#endif
   }
+  return 0;
 }
 
 int lb_lbnode_get_boundary(int* ind, int* p_boundary) {
@@ -2445,11 +2453,10 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x,y,z;
-
-  double lbboundary_mindist, distvec[3];
   double pos[3];
 
 #ifdef LB_BOUNDARIES
+  double lbboundary_mindist, distvec[3];
   int boundary_no;
   int boundary_flag=-1; // 0 if more than agrid/2 away from the boundary, 1 if 0<dist<agrid/2, 2 if dist <0 
 

@@ -271,13 +271,6 @@ void calc_particle_lattice_ia();
  * position is not within the local lattice. */
 int lb_lbfluid_get_interpolated_velocity(double* p, double* v); 
 
-/** calculates the fluid velocity at a given position of the 
- * lattice. Note that it can lead to undefined behaviour if the
- * position is not within the local lattice. This version of the function
- * can be called without the position needing to be on the local processor */
-int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
-
-
 MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double *pi); 
 
 
@@ -541,6 +534,13 @@ int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_set_pop(int* ind, double* pop);
+
+/** calculates the fluid velocity at a given position of the 
+ * lattice. Note that it can lead to undefined behaviour if the
+ * position is not within the local lattice. This version of the function
+ * can be called without the position needing to be on the local processor */
+int lb_lbfluid_get_interpolated_velocity_global(double* p, double* v); 
+
 #endif
 
 #endif /* _LB_H */
