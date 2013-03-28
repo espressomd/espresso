@@ -1548,13 +1548,16 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
 */
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
 
+  if(partinitflag){
+    cudaFreeHost(*host_data);
+    cudaFree(particle_force);
+    cudaFree(particle_data);
+    cudaFree(part);
+  }
   /** Allocate struct for particle positions */
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
   size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-  if(partinitflag){
-     cudaFreeHost(*host_data);
-  }
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
   /**pinned memory mode - use special function to get OS-pinned memory*/
   cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
@@ -1562,16 +1565,12 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   cudaMallocHost((void**)host_data, size_of_positions);
 #endif
 
-  if(partinitflag){
-    cudaFree(particle_force);
-    cudaFree(particle_data);
-    cudaFree(part);
-  }
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
-
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
+  //copy parameters, especially number of parts to gpu mem
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  //mem init of particles ok
   partinitflag  = 1;
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
