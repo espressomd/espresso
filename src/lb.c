@@ -850,7 +850,8 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     for (int i = 0; i<6; i++) {
       p_pi[i]=host_print_values->pi[i];
     }
-		free (host_print_values);
+    free (host_print_values);
+    return 0;
 #endif
   } else {  
   
