@@ -191,4 +191,4 @@ for {set i 0} {$i<10000} {incr i } {
 puts "OK: Handling of periodic boundaries"
 puts "OK: Velocities of outer particles add up to velocity of center of mass"
 
-exit  0
+exit 0

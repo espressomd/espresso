@@ -224,3 +224,4 @@ if { $poisseuille_p_accuracy > 1e-2 } {
   error_exit "Poisseuille pressure accuracy not achieved"
 }
 
+exit 0
