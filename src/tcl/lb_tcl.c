@@ -543,9 +543,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        argc--; argv++;
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          argc--; argv++;
+         if (argc!=1) {
+           Tcl_AppendResult(interp, "LB node set density requires a double.", (char *)NULL);
+           return TCL_ERROR;
+         }
          for (counter = 0; counter < 1; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
-             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;
            }
            argc--; argv++;
@@ -557,6 +561,10 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        }
        else if (ARG0_IS_S("u") || ARG0_IS_S("v") || ARG0_IS_S("velocity")) {
          argc--; argv++;
+         if (argc!=3) {
+           Tcl_AppendResult(interp, "LB node set velocity requires three doubles (vx vy vz)", (char *)NULL);
+           return TCL_ERROR;
+         }
          for (counter = 0; counter < 3; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
              Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
@@ -571,9 +579,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        }
        else if (ARG0_IS_S("pop") || ARG0_IS_S("populations") ) {
          argc--; argv++;
+         if (argc!=19) {
+           Tcl_AppendResult(interp, "LB node set populations requires 19 doubles.", (char *)NULL);
+           return TCL_ERROR;
+         }
          for (counter = 0; counter < 19; counter++) {
            if (!ARG0_IS_D(double_return[counter])) {
-             Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
+             Tcl_AppendResult(interp, "received not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;
            }
            argc--; argv++;
