@@ -36,12 +36,12 @@
 
 #ifndef LB_BOUNDARIES_H
 #define LB_BOUNDARIES_H
-#include "utils.h"
+
 #include "halo.h"
+#include "utils.h"
 #include "constraint.h"
 #include "config.h"
 #include "lb.h"
-
 
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
@@ -74,6 +74,9 @@ typedef struct {
   } c;
   double force[3];
   double velocity[3];
+#ifdef EK_BOUNDARIES
+  float charge_density;
+#endif
 } LB_Boundary;
 
 extern int n_lb_boundaries;
@@ -175,8 +178,6 @@ MDINLINE void lb_bounce_back() {
 #error Bounce back boundary conditions are only implemented for D3Q19!
 #endif
 }
-
-
 
 #endif /* LB_BOUNDARIES */
 

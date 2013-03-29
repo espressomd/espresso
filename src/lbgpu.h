@@ -27,6 +27,8 @@
 #define LB_GPU_H
 
 #include "utils.h"
+#include "electrokinetics.h"
+
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -120,10 +122,11 @@ typedef struct {
   /** velocitydensity of the node */
   float rho;
 
-  /** veolcity of the node */
+  /** velocity of the node */
   float v[3];
 
   /** stresstensor of the node */
+  /** use this value only (due to memory saving) if you want to print out the value (used in calc_values)*/
   float pi[6];
 
 } LB_values_gpu;
@@ -206,6 +209,9 @@ extern LB_values_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
+#ifdef ELECTROKINETICS
+extern LB_node_force_gpu node_f;
+#endif
 
 #ifdef __cplusplus
 }
@@ -222,6 +228,9 @@ extern int n_lb_boundaries;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
+void lb_set_ek_pointer(EK_parameters* pointeradress);
 
 void lattice_boltzmann_update_gpu();
 

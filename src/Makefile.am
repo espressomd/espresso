@@ -166,6 +166,7 @@ libEspresso_a_SOURCES += \
 	tcl/config_tcl.c \
 	tcl/constraint_tcl.c tcl/constraint_tcl.h \
 	tcl/domain_decomposition_tcl.c tcl/domain_decomposition_tcl.h \
+	tcl/electrokinetics_tcl.c tcl/electrokinetics_tcl.h \
 	tcl/energy_tcl.c \
 	tcl/galilei_tcl.c tcl/galilei_tcl.h \
 	tcl/global_tcl.c tcl/global_tcl.h \
@@ -387,7 +388,12 @@ SUFFIXES=.cu
 
 CUDA_SOURCES = \
 	cuda_init.cu cuda_init.h \
+	electrokinetics.cu electrokinetics.h \
 	lbgpu.cu lbgpu.h
+	
+cuda_init.o: cuda_init.h
+electrokinetics.o: electrokinetics.h
+lbgpu.o: lbgpu.h
 
 if TCL
 
