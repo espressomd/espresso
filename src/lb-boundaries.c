@@ -91,7 +91,7 @@ void lb_init_boundaries() {
     int *host_boundary_node_list= (int*)malloc(sizeof(int));
     int *host_boundary_index_list= (int*)malloc(sizeof(int));
     size_t size_of_index;
-    int boundary_number = -1; // the number the boundary will actually belong to.
+    int boundary_number = 0; // the number the boundary will actually belong to.
 
     for(z=0; z<lbpar_gpu.dim_z; z++) {
       for(y=0; y<lbpar_gpu.dim_y; y++) {
@@ -140,7 +140,7 @@ void lb_init_boundaries() {
             host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
-            host_boundary_index_list[number_of_boundnodes] = boundary_number; 
+            host_boundary_index_list[number_of_boundnodes] = boundary_number + 1; 
             //printf("boundindex %i: \n", host_boundindex[number_of_boundnodes]);  
             number_of_boundnodes++;  
           }
@@ -150,13 +150,16 @@ void lb_init_boundaries() {
 
     /**call of cuda fkt*/
     float* boundary_velocity = malloc(3*n_lb_boundaries*sizeof(float));
+
     for (n=0; n<n_lb_boundaries; n++) {
       boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
       boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
       boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
     }
+
     if (n_lb_boundaries)
       lb_init_boundaries_GPU(n_lb_boundaries, number_of_boundnodes, host_boundary_node_list, host_boundary_index_list, boundary_velocity);
+
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
@@ -235,23 +238,33 @@ void lb_init_boundaries() {
 }
 
 int lbboundary_get_force(int no, double* f) {
-#ifdef LB_BOUNDARIES
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
   double* forces=malloc(3*n_lb_boundaries*sizeof(double));
   
   if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_BOUNDARIES_GPU
+#if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
     lb_gpu_get_boundary_forces(forces);
+
+// ***** I THINK BECAUSE OF THE WAY YOU DEFINE THE FORCES YOU WANT TO PRINT THE NEGATIVE
+
+    f[0]=-forces[3*no+0];
+    f[1]=-forces[3*no+1];
+    f[2]=-forces[3*no+2];
 #else 
     return ES_ERROR;
 #endif
   } else { 
+#if defined (LB_BOUNDARIES) && defined (LB)
     mpi_gather_stats(8, forces, NULL, NULL, NULL);
-  }
   
-  f[0]=forces[3*no+0]/lbpar.tau/lbpar.tau*lbpar.agrid;
-  f[1]=forces[3*no+1]/lbpar.tau/lbpar.tau*lbpar.agrid;
-  f[2]=forces[3*no+2]/lbpar.tau/lbpar.tau*lbpar.agrid;
+    f[0]=forces[3*no+0]*lbpar.agrid/lbpar.tau/lbpar.tau;
+    f[1]=forces[3*no+1]*lbpar.agrid/lbpar.tau/lbpar.tau;
+    f[2]=forces[3*no+2]*lbpar.agrid/lbpar.tau/lbpar.tau;
+#else 
+    return ES_ERROR;
+#endif
+  }
   
   free(forces);
 #endif
