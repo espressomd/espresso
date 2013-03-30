@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
-//#include "lb-boundaries.h"
+//#include "lb-boundaries.h" //TODO oh god, fix this
 #include "config.h"
 #include "electrokinetics.h"
 #include "lbgpu.h"

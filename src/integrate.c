@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "integrate.h"
 #include "reaction.h"
+#include "electrokinetics.h"
 #include "interaction_data.h"
 #include "particle_data.h"
 #include "communication.h"
@@ -356,13 +357,21 @@ void integrate_vv(int n_steps)
     recalc_forces = 0;
     
 #ifdef LB
-    if (lattice_switch & LATTICE_LB) lattice_boltzmann_update();
-    if (check_runtime_errors()) break;
+    if (lattice_switch & LATTICE_LB)
+      lattice_boltzmann_update();
+      
+    if (check_runtime_errors())
+      break;
 #endif
 
 #ifdef LB_GPU
     if(this_node == 0){
-      if (lattice_switch & LATTICE_LB_GPU) lattice_boltzmann_update_gpu();
+#ifdef ELECTROKINETICS
+      ek_integrate();
+#else
+      if (lattice_switch & LATTICE_LB_GPU)
+        lattice_boltzmann_update_gpu();
+#endif
     }
 #endif
 

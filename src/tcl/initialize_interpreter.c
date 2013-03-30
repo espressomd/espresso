@@ -53,6 +53,7 @@
 #include "thermostat_tcl.h"
 #include "virtual_sites_com_tcl.h"
 #include "ghmc_tcl.h"
+#include "electrokinetics_tcl.h"
 
 #ifdef TK
 #include <tk.h>
@@ -213,6 +214,7 @@ static void register_tcl_commands(Tcl_Interp* interp) {
   REGISTER_COMMAND("system_CMS", tclcommand_system_CMS);
   REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
   REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
+  REGISTER_COMMAND("electrokinetics", tclcommand_electrokinetics);
 }
 
 static void register_global_variables(Tcl_Interp *interp)

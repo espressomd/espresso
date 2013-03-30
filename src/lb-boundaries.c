@@ -95,27 +95,27 @@ void lb_init_boundaries() {
     int boundary_number = 0; // the number the boundary will actually belong to.
   
 #ifdef EK_BOUNDARIES
-  float *host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
-  float node_wallcharge;
-  int wallcharge_species = -1, charged_boundaries = 0;
-  int node_charged;
-  
-  for(n = 0; n < n_lb_boundaries; n++)
-    if(lb_boundaries[n].charge_density != 0.0) {
-      charged_boundaries = 1;
-      break;
-    }
+    float *host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
+    float node_wallcharge;
+    int wallcharge_species = -1, charged_boundaries = 0;
+    int node_charged;
     
-  for(n = 0; n < ek_parameters.number_of_species; n++)
-    if(ek_parameters.valency[n] != 0.0) {
-      wallcharge_species = n;
-      break;
+    for(n = 0; n < n_lb_boundaries; n++)
+      if(lb_boundaries[n].charge_density != 0.0) {
+        charged_boundaries = 1;
+        break;
+      }
+      
+    for(n = 0; n < ek_parameters.number_of_species; n++)
+      if(ek_parameters.valency[n] != 0.0) {
+        wallcharge_species = n;
+        break;
+      }
+    
+    if(wallcharge_species == -1 && charged_boundaries) {
+      errtxt = runtime_error(9999); //TODO make right
+      ERROR_SPRINTF(errtxt, "{9999 no charged species available to create wall charge\n");
     }
-  
-  if(wallcharge_species == -1 && charged_boundaries) {
-    errtxt = runtime_error(9999); //TODO make right
-    ERROR_SPRINTF(errtxt, "{9999 no charged species available to create wall charge\n");
-  }
 #endif
 
     for(z=0; z<lbpar_gpu.dim_z; z++) {
@@ -127,10 +127,11 @@ void lb_init_boundaries() {
         
           dist = 1e99;
         
-        host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = 0.0f;
-        
-        node_charged = 0;
-        node_wallcharge = 0.0f;
+#ifdef EK_BOUNDARIES
+          host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = 0.0f;
+          node_charged = 0;
+          node_wallcharge = 0.0f;
+#endif
 
           for (n=0; n < n_lb_boundaries; n++) {
             switch (lb_boundaries[n].type) {
@@ -164,10 +165,12 @@ void lb_init_boundaries() {
               boundary_number = n;
             }
           
+#ifdef EK_BOUNDARIES
             if(dist_tmp <= 0 && lb_boundaries[n].charge_density != 0.0f) {
               node_charged = 1;
               node_wallcharge += lb_boundaries[n].charge_density * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
             }
+#endif
           }
           
           if (dist <= 0 && boundary_number > 0 && n_lb_boundaries > 0) {
@@ -180,6 +183,7 @@ void lb_init_boundaries() {
             number_of_boundnodes++;  
           }
         
+#ifdef EK_BOUNDARIES
           if(wallcharge_species != -1) {
             if(node_charged)
               host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = node_wallcharge / ek_parameters.valency[wallcharge_species];
@@ -188,6 +192,7 @@ void lb_init_boundaries() {
             else
               host_wallcharge_species_density[ek_parameters.dim_y*ek_parameters.dim_x*z + ek_parameters.dim_x*y + x] = ek_parameters.density[wallcharge_species] * ek_parameters.agrid*ek_parameters.agrid*ek_parameters.agrid;
           }
+#endif
         }
       }
     }

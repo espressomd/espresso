@@ -33,14 +33,6 @@
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
-// TCL Parser functions
-int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
-int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
-
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {
   LB_Boundary *lbb = &lb_boundaries[i];
