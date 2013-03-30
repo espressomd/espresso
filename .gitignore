@@ -1,7 +1,6 @@
 # build system
 Makefile.in
 Makefile
-configure
 config.log
 config.status
 src/acconfig.h.in
