@@ -11,6 +11,7 @@ autoreconf -iv -Wall
 autoreconf -fv -Wall
 
 popd
+echo "./configure $@"
 
 $0 $@
 
