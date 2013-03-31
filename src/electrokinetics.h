@@ -121,14 +121,12 @@ int ek_set_gamma_even(double gamma_even);
 int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
+int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
 
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
 #endif
 
-#ifdef EXTERNAL_FORCES
-int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
-#endif
 
 #endif /* ELECTROKINETICS */
 

@@ -95,10 +95,8 @@ int lbboundary_get_force(int no, double* f);
 
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 
+
 #ifdef LB_BOUNDARIES
-
-void lb_init_boundaries();
-
 
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node

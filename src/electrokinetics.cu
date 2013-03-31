@@ -56,11 +56,13 @@ typedef struct {
 
 extern int n_lb_boundaries;
 extern LB_Boundary *lb_boundaries;
+extern int lattice_switch;
+#define LATTICE_LB_GPU   2
 
 #ifdef LB_BOUNDARIES_GPU
 void lb_init_boundaries();
 #endif
-//TODO oh god, fix this
+//TODO oh god, fix this ends here
 
 /**erroroutput for memory allocation and memory copy 
  * @param err cuda error code
@@ -654,7 +656,8 @@ int ek_init() {
     
     for(int i = 0; i < MAX_NUMBER_OF_SPECIES; i++)
       ek_parameters.species_index[i] = -1;
-
+      
+    lattice_switch = LATTICE_LB_GPU;
     lbpar_gpu.agrid = ek_parameters.agrid;
     lbpar_gpu.viscosity = ek_parameters.viscosity;
     lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity;
@@ -1020,7 +1023,6 @@ int ek_set_valency(int species, double valency) {
   return 0;
 }
 
-#ifdef EXTERNAL_FORCES
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z) {
   ek_init_species(species);
   ek_parameters.ext_force[0][ek_parameters.species_index[species]] = ext_force_x;
@@ -1028,7 +1030,6 @@ int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double
   ek_parameters.ext_force[2][ek_parameters.species_index[species]] = ext_force_z;
   return 0;
 }
-#endif
 
 #ifdef __cplusplus
 }
