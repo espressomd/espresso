@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 
-#ifdef ELECTROKINETICS
+//#ifdef ELECTROKINETICS
 
 #define MAX_NUMBER_OF_SPECIES 10
 
@@ -128,7 +128,7 @@ void ek_init_species_density_wallcharge(float* wallcharge_species_density, int w
 #endif
 
 
-#endif /* ELECTROKINETICS */
+//#endif /* ELECTROKINETICS */
 
 #ifdef __cplusplus
 }
