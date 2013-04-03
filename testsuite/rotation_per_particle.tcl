@@ -63,3 +63,5 @@ if {[veclen [vecsub $quat $quatN]] >$epsilon} {
 if {[veclen [vecsub $omega $omegaN]] > $epsilon} {
  error "omegaernions changed even when rotation is off"
 }
+
+exit 0
