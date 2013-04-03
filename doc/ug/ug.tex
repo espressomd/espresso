@@ -49,7 +49,8 @@ index=totoc,                    % add the index to the TOC
 \usepackage{xspace}
 \usepackage{units}
 \usepackage[numbers]{natbib}
-\usepackage{showframe}
+%\usepackage{showframe}          % Turn this on when debugging the
+                                % margin etc.
 
 % For building the distribution docs, disable todo boxes.
 \ifdefined\todosoff
@@ -316,6 +317,7 @@ index=totoc,                    % add the index to the TOC
 \include{io}
 \include{aux}
 \include{lb}
+\include{fsi}
 \include{mbtools}
 
 \include{internal}

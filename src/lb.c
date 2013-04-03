@@ -705,8 +705,8 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
     free(host_checkpoint_boundary);
     free(host_checkpoint_force);
     return ES_OK; 
-  }
 #endif
+  }
   else if(lattice_switch & LATTICE_LB) {
 #ifdef LB
   FILE* cpfile;
@@ -917,7 +917,8 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
     for (int i = 0; i<6; i++) {
       p_pi[i]=host_print_values->pi[i];
     }
-		free (host_print_values);
+    free (host_print_values);
+    return 0;
 #endif
   } else {  
 #ifdef LB

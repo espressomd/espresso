@@ -1310,7 +1310,7 @@ int tclcommand_observable_print_formatted(Tcl_Interp* interp, int argc, char** a
 
 
 int sf_print_usage(Tcl_Interp* interp) {
-  Tcl_AppendResult(interp, "\nusage: structure_factor order delta_t tau_max  tau_lin", (char *)NULL);
+  Tcl_AppendResult(interp, "\nusage: structure_factor order delta_t tau_max tau_lin", (char *)NULL);
   return TCL_ERROR;
 }
 

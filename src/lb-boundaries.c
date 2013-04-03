@@ -91,7 +91,7 @@ void lb_init_boundaries() {
     int *host_boundary_node_list= (int*)malloc(sizeof(int));
     int *host_boundary_index_list= (int*)malloc(sizeof(int));
     size_t size_of_index;
-    int boundary_number = 0; // the number the boundary will actually belong to.
+    int boundary_number = -1; // the number the boundary will actually belong to.
 
     for(z=0; z<lbpar_gpu.dim_z; z++) {
       for(y=0; y<lbpar_gpu.dim_y; y++) {
@@ -135,8 +135,8 @@ void lb_init_boundaries() {
             }
           }
           
-        	if (dist <= 0 && n_lb_boundaries > 0) {
-         	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
+          if (dist <= 0 && boundary_number > 0 && n_lb_boundaries > 0) {
+            size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
