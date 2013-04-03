@@ -1984,7 +1984,7 @@ void mpi_bcast_lbboundary(int del_num)
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (del_num == -3) {
-  //nothing, GPU code just requires to call on_boundary_change()
+  //nothing, GPU code just requires to call on_lbboundary_change()
   }
 #endif
   else {
@@ -2014,7 +2014,7 @@ void mpi_bcast_lbboundary_slave(int node, int parm)
   }
 #if defined(LB_BOUNDARIES_GPU)
   else if (parm == -3) {
-  //nothing, GPU code just requires to call on_boundary_change()
+  //nothing, GPU code just requires to call on_lbboundary_change()
   }
 #endif
   else {
