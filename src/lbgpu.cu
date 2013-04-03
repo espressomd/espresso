@@ -496,82 +496,59 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
 // ***** SHOULDN'T THERE BE AN ELSE STATMENT IN "BOUNCEBACK"?
 // ***** THERE IS AN ODD FACTOR OF 2 THAT YOU INCUR IN THE FORCES FOR THE "lb_stokes_sphere_gpu.tcl" TEST CASE
 
-/*        printf("boundary %d population %d creates force  %f %f %f\n", boundary_index-1, population, 1000*pop_to_bounce_back*c[0],  1000*pop_to_bounce_back*c[1],  1000*pop_to_bounce_back*c[2]);\
-      } */
-
-// ***** WHAT DO THE "to_index" STATMENTS? THEY GET WRITTEN OVER BY "BOUNCEBACK" ANYWAY? I THINK THESE CAN BE REMOVED, COMMENTING THEM OUT DID NOT SEEM TO EFFECT ANYTHING.
-
     // the resting population does nothing.
     c[0]=1;c[1]=0;c[2]=0; weight=1./18.; population=2; inverse=1; 
-//    to_index=(x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=-1;c[1]=0;c[2]=0; weight=1./18.; population=1; inverse=2; 
-//    to_index=(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=0;c[1]=1;c[2]=0;  weight=1./18.; population=4; inverse=3; 
- //   to_index= x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
 
     c[0]=0;c[1]=-1;c[2]=0; weight=1./18.; population=3; inverse=4; 
-//    to_index=x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=0;c[1]=0;c[2]=1; weight=1./18.; population=6; inverse=5; 
-//    to_index=x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
 
     c[0]=0;c[1]=0;c[2]=-1; weight=1./18.; population=5; inverse=6; 
- //   to_index=x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK 
     
     c[0]=1;c[1]=1;c[2]=0; weight=1./36.; population=8; inverse=7; 
-//    to_index=+(x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=-1;c[1]=-1;c[2]=0; weight=1./36.; population=7; inverse=8; 
-//    to_index= (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=1;c[1]=-1;c[2]=0; weight=1./36.; population=10; inverse=9; 
-//    to_index= (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
 
     c[0]=-1;c[1]=+1;c[2]=0; weight=1./36.; population=9; inverse=10; 
-//    to_index= + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z;  
     BOUNCEBACK
     
     c[0]=1;c[1]=0;c[2]=1; weight=1./36.; population=12; inverse=11; 
-//    to_index= + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=-1;c[1]=0;c[2]=-1; weight=1./36.; population=11; inverse=12; 
- //   to_index= + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK
 
     c[0]=1;c[1]=0;c[2]=-1; weight=1./36.; population=14; inverse=13; 
- //   to_index= + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=-1;c[1]=0;c[2]=1; weight=1./36.; population=13; inverse=14; 
-  //  to_index=(para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
 
     c[0]=0;c[1]=1;c[2]=1; weight=1./36.; population=16; inverse=15; 
- //   to_index= + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=0;c[1]=-1;c[2]=-1; weight=1./36.; population=15; inverse=16; 
-//    to_index=+ x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z);  
     BOUNCEBACK
     
     c[0]=0;c[1]=1;c[2]=-1; weight=1./36.; population=18; inverse=17; 
- //   to_index=+ x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z); 
     BOUNCEBACK
     
     c[0]=0;c[1]=-1;c[2]=1; weight=1./36.; population=17; inverse=18; 
-//    to_index= + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z);  
     BOUNCEBACK  
     
     atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+0], boundary_force[0]);

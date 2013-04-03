@@ -28,7 +28,7 @@ require_feature "LB_GPU"
 require_feature "LB_BOUNDARIES_GPU"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase lb_stokes_sphere.tcl running on [format %02d [setmd n_nodes]] nodes"
+puts "- Testcase lb_stokes_sphere_gpu.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 set w 16
