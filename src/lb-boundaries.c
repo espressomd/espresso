@@ -218,13 +218,13 @@ void lb_init_boundaries() {
                 ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
             }
             
-            if (dist_tmp<dist) {
+            if (dist_tmp<dist || n == 0) {
               dist = dist_tmp;
               the_boundary = n;
             }
           }       
           
-    	    if (dist <= 0 && n_lb_boundaries > 0) {
+    	    if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
      	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
      	      //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));   
           }
