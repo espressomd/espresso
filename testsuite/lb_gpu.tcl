@@ -33,7 +33,7 @@ require_feature "LENNARD_JONES"
 require_feature "ADRESS" off
 
 puts "----------------------------------------"
-puts "- Testcase lbgpu.tcl running on [format %02d [setmd n_nodes]] nodes  -"
+puts "- Testcase lb_gpu.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "----------------------------------------"
 
 #############################################################

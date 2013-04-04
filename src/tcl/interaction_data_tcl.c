@@ -313,7 +313,7 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
 #endif
-#ifdef BOND_ANGLE_
+#ifdef BOND_ANGLE
   case BONDED_IA_ANGLE_HARMONIC:
     return tclprint_to_result_angle_harmonicIA(interp, params);
   case BONDED_IA_ANGLE_COSINE:
@@ -576,7 +576,9 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
       else
 	Tcl_AppendResult(interp, " {", (char *)NULL);
 
-      tclprint_to_result_BondedIA(interp, i);
+      if (tclprint_to_result_BondedIA(interp, i) == TCL_ERROR) {
+        return TCL_ERROR;
+      }
       Tcl_AppendResult(interp, "}", (char *)NULL);
     }
   }
@@ -589,7 +591,9 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
 	}
 	else
 	  Tcl_AppendResult(interp, " {", (char *)NULL);
-	tclprint_to_result_NonbondedIA(interp, i, j);
+	if (tclprint_to_result_NonbondedIA(interp, i, j) == TCL_ERROR) {
+          return TCL_ERROR;
+        }
 	Tcl_AppendResult(interp, "}", (char *)NULL);
       }
     }

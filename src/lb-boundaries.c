@@ -27,6 +27,7 @@
 #include "utils.h"
 #include "constraint.h"
 #include "lb-boundaries.h"
+#include "lbgpu.h"
 #include "lb.h"
 #include "electrokinetics.h"
 #include "interaction_data.h"
@@ -68,7 +69,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
         break;
     }
     
-    if (dist<*mindist) {
+    if (dist<*mindist || n == 0) {
       *no=n;
       *mindist=dist;
       distvec[0] = vec[0];
@@ -92,7 +93,7 @@ void lb_init_boundaries() {
     int *host_boundary_node_list= (int*)malloc(sizeof(int));
     int *host_boundary_index_list= (int*)malloc(sizeof(int));
     size_t size_of_index;
-    int boundary_number = 0; // the number the boundary will actually belong to.
+    int boundary_number = -1; // the number the boundary will actually belong to.
   
 #ifdef EK_BOUNDARIES
     float *host_wallcharge_species_density = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
@@ -173,14 +174,14 @@ void lb_init_boundaries() {
 #endif
           }
           
-          if (dist <= 0 && boundary_number > 0 && n_lb_boundaries > 0) {
+          if (dist <= 0 && boundary_number >= 0 && n_lb_boundaries > 0) {
             size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
             host_boundary_index_list[number_of_boundnodes] = boundary_number + 1; 
-            //printf("boundindex %i: \n", host_boundindex[number_of_boundnodes]);  
             number_of_boundnodes++;  
+            // printf("boundindex %i: \n", number_of_boundnodes);  
           }
         
 #ifdef EK_BOUNDARIES
@@ -270,13 +271,13 @@ printf("lb_init_boundaries: n_lb_boundaries=%d\n", n_lb_boundaries); //TODO dele
                 ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
             }
             
-            if (dist_tmp<dist) {
+            if (dist_tmp<dist || n == 0) {
               dist = dist_tmp;
               the_boundary = n;
             }
           }       
           
-    	    if (dist <= 0 && n_lb_boundaries > 0) {
+    	    if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
      	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
      	      //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));   
           }

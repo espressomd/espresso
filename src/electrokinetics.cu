@@ -1417,14 +1417,14 @@ void ek_init_species( int species ) {
     ek_safe_mem( cudaMalloc( (void**) &ek_parameters.rho[ ek_parameters.species_index[ species ] ],
                              ek_parameters.number_of_nodes * sizeof( float )                        ) );
     
-    ek_parameters.density[ ek_parameters.species_index[ species ] ] = 0.0;
-    ek_parameters.D[       ek_parameters.species_index[ species ] ] = 0.0;
-    ek_parameters.valency[ ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.density[      ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.D[            ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.valency[      ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.ext_force[0][ ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.ext_force[1][ ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.ext_force[2][ ek_parameters.species_index[ species ] ] = 0.0;
-    ek_parameters.d[       ek_parameters.species_index[ species ] ] =
-      ek_parameters.D[     ek_parameters.species_index[ species ] ] / ( 1.0 + 2.0 * sqrt( 2.0 ) );
+    ek_parameters.d[            ek_parameters.species_index[ species ] ] =
+      ek_parameters.D[          ek_parameters.species_index[ species ] ] / ( 1.0 + 2.0 * sqrt( 2.0 ) );
   }
 }
 

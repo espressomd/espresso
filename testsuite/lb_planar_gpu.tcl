@@ -20,7 +20,7 @@ require_feature "LB_BOUNDARIES_GPU"
 require_feature "EXTERNAL_FORCES"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase lb_planar.tcl running on [format %02d [setmd n_nodes]] nodes"
+puts "- Testcase lb_planar_gpu.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 # Here we test different features of the LB subsytem in a planar slit geometry.
@@ -224,3 +224,4 @@ if { $poisseuille_p_accuracy > 1e-2 } {
   error_exit "Poisseuille pressure accuracy not achieved"
 }
 
+exit 0
