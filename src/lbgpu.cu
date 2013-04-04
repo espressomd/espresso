@@ -1513,7 +1513,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
-printf("%d, %p %p\n", lbpar_gpu->number_of_nodes, nodes_a.vd, nodes_b.vd); //TODO delete
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
@@ -1607,8 +1606,6 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, 
   cuda_safe_mem(cudaMalloc((void**)&LB_boundary_velocity, 3*host_n_lb_boundaries*sizeof(float)));
   cuda_safe_mem(cudaMemcpy(LB_boundary_velocity, host_LB_Boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpyToSymbol(n_lb_boundaries_gpu, &temp, sizeof(int)));
-
-printf("LB_boundary_force=%p, host_n_lb_boundaries=%d\n", LB_boundary_force, host_n_lb_boundaries); //TODO delete
   
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -1898,7 +1895,6 @@ void lb_integrate_GPU() {
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
     if (n_lb_boundaries > 0) {
-printf("LB_boundary_force=%p\n", LB_boundary_force); //TODO delete
       cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
 
       KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
