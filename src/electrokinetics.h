@@ -23,14 +23,16 @@
 #include <cufft.h>
 #include "config.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 //#ifdef ELECTROKINETICS
 
 #define MAX_NUMBER_OF_SPECIES 10
+
+//TODO update
 
 /* Constants enumerating the links of a node in the link flux system EK_LINK_xyz
    is the number of the link in direction (x, y, z), where x, y and z can be 0, 
@@ -40,7 +42,8 @@ extern "C" {
    the odd LB velocities and the last nine represent the even LB velocities 
    (without the 0). In between there are the links connecting the corners, which
    represent the 3rd shell not used in the LB but in the advection. The 
-   following 13 constants are only defined for the sake of completeness.*/ //TODO update
+   following 13 constants are only defined for the sake of completeness.*/
+   
 #define EK_LINK_U00 0
 #define EK_LINK_0U0 1
 #define EK_LINK_00U 2
@@ -72,6 +75,7 @@ extern "C" {
 #define EK_LINK_DUU 25
 
 /* Data structure holding parameters and memory pointers for the link flux system. */
+
 typedef struct {
   float agrid;
   float time_step; //MD time step

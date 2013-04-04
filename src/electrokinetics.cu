@@ -77,6 +77,7 @@ extern "C" {
   #endif
   /* end of code duplication */
 
+
   /* get rid of this code duplication by moving this from lbgpu.cu to lbgpu.h */
   #define ek_safe_mem(a) _ek_safe_mem((a), __FILE__, __LINE__)
   
@@ -93,6 +94,7 @@ extern "C" {
   extern cudaStream_t stream[1];
   extern cudaError_t _err;
 
+
   void _ek_safe_mem( cudaError_t err,
                       char *file,
                       unsigned int line
@@ -105,6 +107,7 @@ extern "C" {
       }
   }
   /* end of code duplication */
+
 
   #define PI_FLOAT 3.14159265358979323846f
 
@@ -133,8 +136,7 @@ extern "C" {
 }
 #endif
 
-/** atomic add function for several cuda architectures 
-*/
+
 __device__ inline void atomicadd( float* address,
                                    float value
                                 ) {
@@ -156,6 +158,7 @@ __device__ inline void atomicadd( float* address,
 #endif
 }
 
+
 __device__ unsigned int getThreadIndex() {
 
   return blockIdx.y * gridDim.x * blockDim.x +
@@ -163,8 +166,9 @@ __device__ unsigned int getThreadIndex() {
          threadIdx.x;
 }
 
+
 __device__ void rhoindex_linear2cartesian( unsigned int index,
-                                            unsigned int * coord
+                                           unsigned int * coord
                                          ) {
 
   coord[0]  = index % ek_parameters_gpu.dim_x;
@@ -173,9 +177,10 @@ __device__ void rhoindex_linear2cartesian( unsigned int index,
   coord[2]  = index / ek_parameters_gpu.dim_y;
 }
 
+
 __device__ unsigned int rhoindex_cartesian2linear( unsigned int x,
-                                                    unsigned int y,
-                                                    unsigned int z
+                                                   unsigned int y,
+                                                   unsigned int z
                                                  ) {
 
   return z * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_x +
@@ -183,9 +188,10 @@ __device__ unsigned int rhoindex_cartesian2linear( unsigned int x,
          x;
 }
 
+
 __device__ void jindex_linear2cartesian( unsigned int index,
-                                          unsigned int * coord,
-                                          unsigned int * c
+                                         unsigned int * coord,
+                                         unsigned int * c
                                        ) {
 
   coord[0]  = index % ek_parameters_gpu.dim_x;
@@ -196,10 +202,11 @@ __device__ void jindex_linear2cartesian( unsigned int index,
   *c        = index / ek_parameters_gpu.dim_z;
 }
 
+
 __device__ unsigned int jindex_cartesian2linear( unsigned int x,
-                                                  unsigned int y,
-                                                  unsigned int z,
-                                                  unsigned int c
+                                                 unsigned int y,
+                                                 unsigned int z,
+                                                 unsigned int c
                                                ) {
                                                  
   return c * ek_parameters_gpu.number_of_nodes + 
@@ -207,6 +214,7 @@ __device__ unsigned int jindex_cartesian2linear( unsigned int x,
          y * ek_parameters_gpu.dim_x +
          x;
 }
+
 
 //TODO fluxindex fastest running might improve caching
 __device__ unsigned int jindex_getByRhoLinear( unsigned int rho_index,
@@ -216,6 +224,7 @@ __device__ unsigned int jindex_getByRhoLinear( unsigned int rho_index,
   return c * ek_parameters_gpu.number_of_nodes +
          rho_index;
 }
+
 
 __device__ void ek_displacement( float * dx,
                                   LB_nodes_gpu n,
@@ -286,10 +295,11 @@ __device__ void ek_displacement( float * dx,
   dx[2] *= 1.0f / rho;
 }
 
+
 __global__ void ek_calculate_quantities( unsigned int species_index,
-                                          LB_nodes_gpu lb_node,
-                                          LB_node_force_gpu node_f,
-                                          LB_parameters_gpu *ek_lbparameters_gpu
+                                         LB_nodes_gpu lb_node,
+                                         LB_node_force_gpu node_f,
+                                         LB_parameters_gpu *ek_lbparameters_gpu
                                        ) {
                                        
   unsigned int index = getThreadIndex ();
@@ -834,11 +844,16 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
         (coord[2] + (1 - di[0]) * (2*di[2] - 1) + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z
       );
       
-    atomicadd( &ek_parameters_gpu.j[jindex_getByRhoLinear( node, (1 - di[0]) * (EK_LINK_UUU + 2*di[1] + di[2]) + di[0] * (EK_LINK_UDD - 2*di[1] - di[2]) )],
+    atomicadd( &ek_parameters_gpu.j[
+                jindex_getByRhoLinear( node, (1 - di[0]) *
+                                             (EK_LINK_UUU + 2*di[1] + di[2]) +
+                                             di[0] * (EK_LINK_UDD - 2*di[1] - di[2])
+                                     ) ],
                (2 * di[0] - 1) * ek_parameters_gpu.rho[species_index][index] *
                dx[0] * dx[1] * dx[2] );
   }
 }
+
 
 __global__ void ek_propagate_densities( unsigned int species_index
                                       ) {
@@ -1015,6 +1030,7 @@ __global__ void ek_propagate_densities( unsigned int species_index
   }
 }
 
+
 __global__ void ek_apply_boundaries( unsigned int species_index,
                                      LB_nodes_gpu lbnode,
                                      LB_node_force_gpu node_f
@@ -1123,8 +1139,10 @@ __global__ void ek_apply_boundaries( unsigned int species_index,
         );
       
       /* Clear fluxes on links connecting a boundary node */
-      for( int i = 0; i < 13; i++ )
+      for( int i = 0; i < 13; i++ ) {
+      
         ek_parameters_gpu.j[jindex_getByRhoLinear(index, i)] = 0.0f;
+      }
         
       ek_parameters_gpu.j[ jindex_getByRhoLinear( neighborindex[ EK_LINK_D00-13 ], EK_LINK_U00 ) ] = 0.0f;
       ek_parameters_gpu.j[ jindex_getByRhoLinear( neighborindex[ EK_LINK_0D0-13 ], EK_LINK_0U0 ) ] = 0.0f;
@@ -1143,179 +1161,283 @@ __global__ void ek_apply_boundaries( unsigned int species_index,
   }
 }
 
-__global__ void ek_clear_fluxes() { //TODO maybe make this obsolete by a multiplication in the advective fluxes, just as it's done for the diffusive ones
+
+//TODO maybe make this obsolete by a multiplication in the advective fluxes, just as it's done for the diffusive ones
+__global__ void ek_clear_fluxes() {
+
   unsigned int index = getThreadIndex();
 
-  if(index < ek_parameters_gpu.number_of_nodes)
-    for(int i = 0; i < 13; i++)
-      ek_parameters_gpu.j[jindex_getByRhoLinear(index, i)] = 0.0f;
+  if( index < ek_parameters_gpu.number_of_nodes ) {
+  
+    for( int i = 0; i < 13; i++ ) {
+    
+      ek_parameters_gpu.j[ jindex_getByRhoLinear( index, i ) ] = 0.0f;
+    }
+  }
 }
+
 
 __global__ void ek_init_species_density_homogeneous() {
+
   unsigned int index = getThreadIndex();
-  
-//  unsigned int coord[3]; //TODO delete
-//  rhoindex_linear2cartesian(index, coord);
 
   if(index < ek_parameters_gpu.number_of_nodes) {
+  
     for(int i = 0; i < ek_parameters_gpu.number_of_species; i++) {
-      ek_parameters_gpu.rho[i][index] = ek_parameters_gpu.density[i] * ek_parameters_gpu.agrid*ek_parameters_gpu.agrid*ek_parameters_gpu.agrid;
-      
-//      if(coord[2] < ek_parameters_gpu.dim_z / 2) //TODO delete
-//        ek_parameters_gpu.rho[i][index] *= 1.1;
-//      else
-//        ek_parameters_gpu.rho[i][index] *= 0.9;
+    
+      ek_parameters_gpu.rho[ i ][ index ] = ek_parameters_gpu.density[ i ] *
+                                            ek_parameters_gpu.agrid *
+                                            ek_parameters_gpu.agrid *
+                                            ek_parameters_gpu.agrid;
     }
   }
 }
+
 
 __global__ void ek_multiply_greensfcn() {
+
   unsigned int index = getThreadIndex();
   
-  if(index < ek_parameters_gpu.dim_z * ek_parameters_gpu.dim_y * (ek_parameters_gpu.dim_x / 2 + 1)) {
-    ek_parameters_gpu.charge_potential[index].x *= ek_parameters_gpu.greensfcn[index];
-    ek_parameters_gpu.charge_potential[index].y *= ek_parameters_gpu.greensfcn[index];
+  if( index < ek_parameters_gpu.dim_z *
+              ek_parameters_gpu.dim_y *
+              (ek_parameters_gpu.dim_x / 2 + 1) ) {
+  
+    ek_parameters_gpu.charge_potential[ index ].x *= ek_parameters_gpu.greensfcn[ index ];
+    ek_parameters_gpu.charge_potential[ index ].y *= ek_parameters_gpu.greensfcn[ index ];
   }
 }
 
+
 __global__ void ek_gather_charge_density() {
+
   unsigned int index = getThreadIndex();
 
-  if(index < ek_parameters_gpu.number_of_nodes) {
-    ((cufftReal*) ek_parameters_gpu.charge_potential)[index] = 0.0f;
+  if( index < ek_parameters_gpu.number_of_nodes ) {
+    ((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] = 0.0f;
     
-    for(int i = 0; i < ek_parameters_gpu.number_of_species; i++) {
-      ((cufftReal*) ek_parameters_gpu.charge_potential)[index] += ek_parameters_gpu.valency[i] * ek_parameters_gpu.rho[i][index] / powf(ek_parameters_gpu.agrid, 3);
+    for( int i = 0; i < ek_parameters_gpu.number_of_species; i++ ) {
+    
+      ((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] +=
+        ek_parameters_gpu.valency[ i ] * ek_parameters_gpu.rho[ i ][ index ] /
+        powf( ek_parameters_gpu.agrid, 3 );
     }
   }
 }
 
+
 __global__ void ek_create_greensfcn() {
+
   unsigned int index = getThreadIndex();
   unsigned int tmp;
   unsigned int coord[3];
   
-  coord[0] = index % (ek_parameters_gpu.dim_x/2+1);
-  tmp = index / (ek_parameters_gpu.dim_x/2+1);
+  coord[0] = index % ( ek_parameters_gpu.dim_x / 2 + 1 );
+  tmp      = index / ( ek_parameters_gpu.dim_x / 2 + 1 );
   coord[1] = tmp % ek_parameters_gpu.dim_y;
   coord[2] = tmp / ek_parameters_gpu.dim_y;
   
-  if(index < ek_parameters_gpu.dim_z*ek_parameters_gpu.dim_y*(ek_parameters_gpu.dim_x/2+1))
-    if(index == 0)
-      ek_parameters_gpu.greensfcn[index] = 0.0f; //setting 0th fourier mode to 0 enforces charge neutrality
-    else
-      ek_parameters_gpu.greensfcn[index] = -4.0f * PI_FLOAT * ek_parameters_gpu.bjerrumlength * ek_parameters_gpu.T * ek_parameters_gpu.agrid * ek_parameters_gpu.agrid * 0.5f / (cos(2.0f*PI_FLOAT*coord[0]/(cufftReal)ek_parameters_gpu.dim_x) + cos(2.0f*PI_FLOAT*coord[1]/(cufftReal)ek_parameters_gpu.dim_y) + cos(2.0f*PI_FLOAT*coord[2]/(cufftReal)ek_parameters_gpu.dim_z) - 3.0f) / (ek_parameters_gpu.dim_x * ek_parameters_gpu.dim_y * ek_parameters_gpu.dim_z);
-}
-
-__global__ void ek_clear_boundary_densities(LB_nodes_gpu lbnode) {
-  unsigned int index = getThreadIndex();
-
-  if(index < ek_parameters_gpu.number_of_nodes)
-    if(lbnode.boundary[index])
-      for(int i = 0; i < ek_parameters_gpu.number_of_species; i++)
-        ek_parameters_gpu.rho[i][index] = 0.0f;
-}
-
-__global__ void ek_clear_node_force(LB_node_force_gpu node_f) { //TODO delete
-  unsigned int index = getThreadIndex();
-
-  if(index < ek_parameters_gpu.number_of_nodes) {
-    node_f.force[index] = 0.0f;
-    node_f.force[ek_parameters_gpu.number_of_nodes + index] = 0.0f;
-    node_f.force[2 * ek_parameters_gpu.number_of_nodes + index] = 0.0f;
+  if( index < ek_parameters_gpu.dim_z *
+              ek_parameters_gpu.dim_y *
+              ( ek_parameters_gpu.dim_x / 2 + 1 ) ) {
+              
+    if( index == 0 ) {
+    
+      //setting 0th fourier mode to 0 enforces charge neutrality
+      ek_parameters_gpu.greensfcn[index] = 0.0f;
+    }
+    else {
+    
+      ek_parameters_gpu.greensfcn[ index ] =
+        -4.0f * PI_FLOAT * ek_parameters_gpu.bjerrumlength *
+        ek_parameters_gpu.T * ek_parameters_gpu.agrid * ek_parameters_gpu.agrid *
+        0.5f /
+        ( cos( 2.0f * PI_FLOAT * coord[0] / (cufftReal) ek_parameters_gpu.dim_x ) +
+          cos( 2.0f * PI_FLOAT * coord[1] / (cufftReal) ek_parameters_gpu.dim_y ) +
+          cos( 2.0f * PI_FLOAT * coord[2] / (cufftReal) ek_parameters_gpu.dim_z ) -
+          3.0f
+        ) /
+        ( ek_parameters_gpu.dim_x *
+          ek_parameters_gpu.dim_y *
+          ek_parameters_gpu.dim_z
+        );
+    }
   }
 }
+
+
+__global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
+
+  unsigned int index = getThreadIndex();
+
+  if( index < ek_parameters_gpu.number_of_nodes ) {
+  
+    if( lbnode.boundary[ index ] ) {
+    
+      for( int i = 0; i < ek_parameters_gpu.number_of_species; i++ ) {
+      
+        ek_parameters_gpu.rho[ i ][ index ] = 0.0f;
+      }
+    }
+  }
+}
+
+
+//TODO delete
+__global__ void ek_clear_node_force(LB_node_force_gpu node_f) {
+
+  unsigned int index = getThreadIndex();
+
+  if( index < ek_parameters_gpu.number_of_nodes ) {
+  
+    node_f.force[ index ]                                         = 0.0f;
+    node_f.force[ ek_parameters_gpu.number_of_nodes + index ]     = 0.0f;
+    node_f.force[ 2 * ek_parameters_gpu.number_of_nodes + index ] = 0.0f;
+  }
+}
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void ek_integrate_electrostatics() {
+
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
+    ( threads_per_block * blocks_per_grid_y );
+  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
-  KERNELCALL(ek_gather_charge_density, dim_grid, threads_per_block, ());  
+  KERNELCALL( ek_gather_charge_density, dim_grid, threads_per_block, () );  
     
-  if(cufftExecR2C(plan_fft, (cufftReal*) ek_parameters.charge_potential, ek_parameters.charge_potential) != CUFFT_SUCCESS)
+  if( cufftExecR2C( plan_fft,
+                    (cufftReal*) ek_parameters.charge_potential,
+                    ek_parameters.charge_potential               ) != CUFFT_SUCCESS ) {
+                    
     fprintf(stderr, "ERROR: Unable to execute FFT plan\n");
+  }
   
-  blocks_per_grid_x = (ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  blocks_per_grid_x =
+    ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) +
+      threads_per_block * blocks_per_grid_y - 1
+    ) / (threads_per_block * blocks_per_grid_y);
+  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
-  KERNELCALL(ek_multiply_greensfcn, dim_grid, threads_per_block, ());
+  KERNELCALL( ek_multiply_greensfcn, dim_grid, threads_per_block, () );
     
-  if(cufftExecC2R(plan_ifft, ek_parameters.charge_potential, (cufftReal*) ek_parameters.charge_potential) != CUFFT_SUCCESS)
+  if( cufftExecC2R( plan_ifft,
+                    ek_parameters.charge_potential,
+                    (cufftReal*) ek_parameters.charge_potential ) != CUFFT_SUCCESS ) {
+                    
     fprintf(stderr, "ERROR: Unable to execute iFFT plan\n");
+  }
 }
 
+
 void ek_integrate() {
+
   /** values for the kernel call */
+  
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
+    / (threads_per_block * blocks_per_grid_y );
+  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
-  KERNELCALL(ek_clear_node_force, dim_grid, threads_per_block, (node_f)); //TODO delete
+  //TODO delete
+  KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
   
   /* Integrate diffusion-advection */
-  for(int i = 0; i < ek_parameters.number_of_species; i++) {
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block, ());
-    KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block, (i, *current_nodes, node_f, ek_lbparameters_gpu));
+  
+  for( int i = 0; i < ek_parameters.number_of_species; i++ ) {
+  
+    KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
+    KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
+                ( i, *current_nodes, node_f, ek_lbparameters_gpu )    );
+              
 #ifdef EK_BOUNDARIES
-    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block, (i, *current_nodes, node_f));
+    KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
+                ( i, *current_nodes, node_f )                     );
 #endif
-    KERNELCALL(ek_propagate_densities, dim_grid, threads_per_block, (i));
+
+    KERNELCALL( ek_propagate_densities, dim_grid, threads_per_block, ( i ) );
   }
   
   /* Integrate electrostatics */
+  
   ek_integrate_electrostatics();
   
   /* Integrate Navier-Stokes */
+  
   lb_integrate_GPU();
   
-  cudaDeviceSynchronize(); //TODO delete - needed for printfs
+  //TODO delete - needed for printfs
+  cudaDeviceSynchronize();
 }
 
+
 #ifdef EK_BOUNDARIES
-void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species) {
+void ek_init_species_density_wallcharge( float* wallcharge_species_density,
+                                         int wallcharge_species             ) {
+                                         
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
+    / ( threads_per_block * blocks_per_grid_y );
+  dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
-  KERNELCALL(ek_init_species_density_homogeneous, dim_grid, threads_per_block, ());
-  KERNELCALL(ek_clear_boundary_densities, dim_grid, threads_per_block, (*current_nodes));
+  KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
+  KERNELCALL( ek_clear_boundary_densities, dim_grid, threads_per_block, ( *current_nodes ) );
   
-  if(wallcharge_species != -1)
-    cudaMemcpy(ek_parameters.rho[wallcharge_species], wallcharge_species_density, ek_parameters.number_of_nodes * sizeof(float), cudaMemcpyHostToDevice);
+  if( wallcharge_species != -1 ) {
+  
+    cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
+                ek_parameters.number_of_nodes * sizeof( float ),
+                cudaMemcpyHostToDevice                                             );
+  }
 }
 #endif
   
-void ek_init_species(int species) {
-  if(!initialized)
-    ek_init();
   
-  if(ek_parameters.species_index[species] == -1) {
-    ek_parameters.species_index[species] = ek_parameters.number_of_species;
+void ek_init_species( int species ) {
+
+  if( !initialized ) {
+  
+    ek_init();
+  }
+  
+  if( ek_parameters.species_index[ species ] == -1 ) {
+  
+    ek_parameters.species_index[ species ] = ek_parameters.number_of_species;
     ek_parameters.number_of_species++;
     
-    ek_safe_mem(cudaMalloc((void**) &ek_parameters.rho[ek_parameters.species_index[species]], ek_parameters.number_of_nodes * sizeof(float)));
+    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.rho[ ek_parameters.species_index[ species ] ],
+                             ek_parameters.number_of_nodes * sizeof( float )                        ) );
     
-    ek_parameters.density[ek_parameters.species_index[species]] = 0.0;
-    ek_parameters.D[ek_parameters.species_index[species]] = 0.0;
-    ek_parameters.d[ek_parameters.species_index[species]] = ek_parameters.D[ek_parameters.species_index[species]] / (1.0 + 2.0 * sqrt(2.0));
-    ek_parameters.valency[ek_parameters.species_index[species]] = 0.0;
-    ek_parameters.ext_force[0][ek_parameters.species_index[species]] = 0.0;
-    ek_parameters.ext_force[1][ek_parameters.species_index[species]] = 0.0;
-    ek_parameters.ext_force[2][ek_parameters.species_index[species]] = 0.0;
+    ek_parameters.density[ ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.D[       ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.valency[ ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.ext_force[0][ ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.ext_force[1][ ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.ext_force[2][ ek_parameters.species_index[ species ] ] = 0.0;
+    ek_parameters.d[       ek_parameters.species_index[ species ] ] =
+      ek_parameters.D[     ek_parameters.species_index[ species ] ] / ( 1.0 + 2.0 * sqrt( 2.0 ) );
   }
 }
 
+
 int ek_init() {
-  if(ek_parameters.agrid < 0.0 || ek_parameters.viscosity < 0.0 || ek_parameters.T < 0.0 || ek_parameters.bjerrumlength < 0.0) {
-    fprintf(stderr, "ERROR: invalid agrid, viscosity, T or bjerrum_length\n");
+
+  if( ek_parameters.agrid < 0.0 ||
+      ek_parameters.viscosity < 0.0 ||
+      ek_parameters.T < 0.0 ||
+      ek_parameters.bjerrumlength < 0.0 ) {
+      
+    fprintf( stderr, "ERROR: invalid agrid, viscosity, T or bjerrum_length\n" );
+    
     return 1;
   }
     
@@ -1325,13 +1447,18 @@ int ek_init() {
   dim3 dim_grid;
   
   if(!initialized) {
-    if(cudaGetSymbolAddress((void**) &ek_parameters_gpu_pointer, ek_parameters_gpu) != cudaSuccess) {
-      fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
+  
+    if( cudaGetSymbolAddress( (void**) &ek_parameters_gpu_pointer, ek_parameters_gpu) != cudaSuccess) {
+    
+      fprintf( stderr, "ERROR: Fetching constant memory pointer\n" );
+      
       return 1;
     }
     
-    for(int i = 0; i < MAX_NUMBER_OF_SPECIES; i++)
+    for( int i = 0; i < MAX_NUMBER_OF_SPECIES; i++ ) {
+    
       ek_parameters.species_index[i] = -1;
+    }
       
     lattice_switch = LATTICE_LB_GPU;
     lbpar_gpu.agrid = ek_parameters.agrid;
@@ -1353,65 +1480,97 @@ int ek_init() {
     ek_parameters.time_step = lbpar_gpu.time_step;
     ek_parameters.number_of_nodes = ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
-    ek_safe_mem(cudaMalloc((void**) &ek_parameters.j, ek_parameters.number_of_nodes * 13 * sizeof(float)));
-    ek_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters, sizeof(EK_parameters)));
+    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.j, ek_parameters.number_of_nodes *
+                                                        13 * sizeof( float )            ) );
+    ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
-    lb_get_para_pointer(&ek_lbparameters_gpu);
-    lb_set_ek_pointer(ek_parameters_gpu_pointer);
+    lb_get_para_pointer( &ek_lbparameters_gpu );
+    lb_set_ek_pointer( ek_parameters_gpu_pointer );
     
-    cudaMalloc((void**) &ek_parameters.charge_potential, sizeof(cufftComplex)*ek_parameters.dim_z*ek_parameters.dim_y*(ek_parameters.dim_x/2+1));
+    cudaMalloc( (void**) &ek_parameters.charge_potential,
+                sizeof( cufftComplex ) *
+                ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) );
     
-    if(cudaGetLastError() != cudaSuccess) {
+    if( cudaGetLastError() != cudaSuccess ) {
+    
         fprintf(stderr, "ERROR: Failed to allocate\n");
+        
         return 1;
     }
     
-    cudaMalloc((void**) &ek_parameters.greensfcn, sizeof(cufftReal)*ek_parameters.dim_z*ek_parameters.dim_y*(ek_parameters.dim_x/2+1));
+    cudaMalloc( (void**) &ek_parameters.greensfcn,
+                sizeof( cufftReal ) * 
+                ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) );
     
-    if(cudaGetLastError() != cudaSuccess) {
+    if( cudaGetLastError() != cudaSuccess ) {
+    
         fprintf(stderr, "ERROR: Failed to allocate\n");
+        
         return 1;
     }
     
-    cudaMallocHost((void**) &greensfcn_host, sizeof(cufftReal)*ek_parameters.dim_z*ek_parameters.dim_y*(ek_parameters.dim_x/2+1));
+    cudaMallocHost( (void**) &greensfcn_host,
+                    sizeof( cufftReal ) *
+                    ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) );
     
-    if(cudaGetLastError() != cudaSuccess) {
-        fprintf(stderr, "ERROR: Failed to allocate\n");
+    if( cudaGetLastError() != cudaSuccess ) {
+    
+        fprintf( stderr, "ERROR: Failed to allocate\n" );
+        
         return 1;
     }
     
-    cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters, sizeof(EK_parameters));
-    blocks_per_grid_x = (ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-    dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-    KERNELCALL(ek_create_greensfcn, dim_grid, threads_per_block, ());
+    cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) );
+    
+    blocks_per_grid_x =
+      ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) +
+        threads_per_block * blocks_per_grid_y - 1
+      ) / ( threads_per_block * blocks_per_grid_y );
+    dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+    KERNELCALL( ek_create_greensfcn, dim_grid, threads_per_block, () );
 
     /* create 3D FFT plans */
-    if(cufftPlan3d(&plan_fft, ek_parameters.dim_z, ek_parameters.dim_y, ek_parameters.dim_x, CUFFT_R2C) != CUFFT_SUCCESS) {
+    
+    if( cufftPlan3d( &plan_fft,
+                     ek_parameters.dim_z,
+                     ek_parameters.dim_y,
+                     ek_parameters.dim_x,
+                     CUFFT_R2C            ) != CUFFT_SUCCESS ) {
+    
         fprintf(stderr, "ERROR: Unable to create fft plan\n");
         return 1;
     }
     
-    if(cufftSetCompatibilityMode(plan_fft, CUFFT_COMPATIBILITY_NATIVE) != CUFFT_SUCCESS) {
+    if( cufftSetCompatibilityMode( plan_fft, CUFFT_COMPATIBILITY_NATIVE ) != CUFFT_SUCCESS ) {
+    
         fprintf(stderr, "ERROR: Unable to set fft compatibility mode to native\n");
         return 1;
     }
     
-    if(cufftSetStream(plan_fft, stream[0]) != CUFFT_SUCCESS) {
+    if( cufftSetStream( plan_fft, stream[0]) != CUFFT_SUCCESS ) {
+    
         fprintf(stderr, "ERROR: Unable to assign FFT to cuda stream\n");
         return 1;
     }
 
-    if(cufftPlan3d(&plan_ifft, ek_parameters.dim_z, ek_parameters.dim_y, ek_parameters.dim_x, CUFFT_C2R) != CUFFT_SUCCESS) {
+    if( cufftPlan3d( &plan_ifft,
+                     ek_parameters.dim_z,
+                     ek_parameters.dim_y,
+                     ek_parameters.dim_x,
+                     CUFFT_C2R            ) != CUFFT_SUCCESS ) {
+    
         fprintf(stderr, "ERROR: Unable to create ifft plan\n");
         return 1;
     }
     
-    if(cufftSetCompatibilityMode(plan_ifft, CUFFT_COMPATIBILITY_NATIVE) != CUFFT_SUCCESS) {
+    if( cufftSetCompatibilityMode( plan_ifft, CUFFT_COMPATIBILITY_NATIVE ) != CUFFT_SUCCESS) {
+    
         fprintf(stderr, "ERROR: Unable to set ifft compatibility mode to native\n");
         return 1;
     }
     
-    if(cufftSetStream(plan_ifft, stream[0]) != CUFFT_SUCCESS) {
+    if( cufftSetStream( plan_ifft, stream[0] ) != CUFFT_SUCCESS ) {
+    
         fprintf(stderr, "ERROR: Unable to assign FFT to cuda stream\n");
         return 1;
     }
@@ -1419,14 +1578,17 @@ int ek_init() {
     initialized = true;
   }
   
-  ek_safe_mem(cudaMemcpyToSymbol(ek_parameters_gpu, &ek_parameters, sizeof(EK_parameters)));
+  ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
   
 #ifdef EK_BOUNDARIES
   lb_init_boundaries();
 #else
-  blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
-  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-  KERNELCALL(ek_init_species_density_homogeneous, dim_grid, threads_per_block, ());
+  blocks_per_grid_x =
+    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
+    / (threads_per_block * blocks_per_grid_y );
+  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+  
+  KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
 #endif
 
   ek_integrate_electrostatics();
@@ -1434,19 +1596,42 @@ int ek_init() {
   return 0;
 }
 
-int ek_lb_print_vtk_velocity(char* filename) {
-  FILE* fp = fopen(filename, "w");
-	
-  if(fp == NULL)
-  	return 1;
-  
-  LB_values_gpu *host_values = (LB_values_gpu*) malloc(lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu));
-  lb_get_values_GPU(host_values);
-  
-  fprintf(fp, "# vtk DataFile Version 2.0\nvelocity\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS velocity float 3\nLOOKUP_TABLE default\n",  lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
 
-  for(int i = 0; i < lbpar_gpu.number_of_nodes; i++)
-    fprintf(fp, "%f %f %f ", host_values[i].v[0], host_values[i].v[1], host_values[i].v[2]);
+int ek_lb_print_vtk_velocity( char* filename ) {
+  FILE* fp = fopen( filename, "w" );
+	
+  if( fp == NULL ) {
+  
+  	return 1;
+	}
+  
+  LB_values_gpu *host_values = (LB_values_gpu*) malloc( lbpar_gpu.number_of_nodes *
+                                                        sizeof( LB_values_gpu )     );
+  lb_get_values_GPU( host_values );
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+velocity\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\nPOINT_DATA %u\n\
+SCALARS velocity float 3\n\
+LOOKUP_TABLE default\n",
+           lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+           lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2,
+           lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
+           lbpar_gpu.number_of_nodes                                      );
+
+  for( int i = 0; i < lbpar_gpu.number_of_nodes; i++ ) {
+  
+    fprintf( fp, "%f %f %f ", host_values[ i ].v[0],
+                              host_values[ i ].v[1],
+                              host_values[ i ].v[2]  );
+  }
     
   fprintf(fp, "\n");
   
@@ -1456,254 +1641,449 @@ int ek_lb_print_vtk_velocity(char* filename) {
 	return 0;
 }
 
-int ek_lb_print_vtk_density(char* filename) {
-  FILE* fp = fopen(filename, "w");
-	
-  if(fp == NULL)
-  	return 1;
-  
-  LB_values_gpu *host_values = (LB_values_gpu*) malloc(lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu));
-  lb_get_values_GPU(host_values);
-  
-  fprintf(fp, "# vtk DataFile Version 2.0\ndensity_lb\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS density_lb float 1\nLOOKUP_TABLE default\n",  lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
 
-  for(int i = 0; i < lbpar_gpu.number_of_nodes; i++)
-    fprintf(fp, "%f ", host_values[i].rho);
-    
-  fprintf(fp, "\n");
+int ek_lb_print_vtk_density( char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+	
+  if( fp == NULL ) {
   
-  free(host_values);	
-  fclose(fp);
+  	return 1;
+	}
+  
+  LB_values_gpu *host_values = (LB_values_gpu*) malloc( lbpar_gpu.number_of_nodes *
+                                                        sizeof( LB_values_gpu )     );
+  lb_get_values_GPU( host_values );
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+density_lb\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS density_lb float 1\n\
+LOOKUP_TABLE default\n",
+           lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z,
+           lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2, lbpar_gpu.agrid / 2,
+           lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
+           lbpar_gpu.number_of_nodes                                      );
+
+  for( int i = 0; i < lbpar_gpu.number_of_nodes; i++ ) {
+  
+    fprintf( fp, "%f ", host_values[ i ].rho );
+  }
+    
+  fprintf( fp, "\n" );
+  
+  free( host_values );	
+  fclose( fp );
   
 	return 0;
 }
 
-int ek_print_vtk_density(int species, char* filename) {
-  FILE* fp = fopen(filename, "w");
+
+int ek_print_vtk_density( int species, char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
 	
-  if(fp == NULL)
+  if( fp == NULL )
   	return 1;
   	
-  float* densities = (float*) malloc(ek_parameters.number_of_nodes * sizeof(float));
+  float* densities = (float*) malloc( ek_parameters.number_of_nodes *
+                                      sizeof( float )                 );
   
-  if(ek_parameters.species_index[species] != -1) {
-    cudaMemcpy(densities, ek_parameters.rho[ek_parameters.species_index[species]], ek_parameters.number_of_nodes * sizeof(float), cudaMemcpyDeviceToHost);
+  if( ek_parameters.species_index[ species ] != -1 ) {
+  
+    cudaMemcpy( densities, ek_parameters.rho[ ek_parameters.species_index[ species ] ],
+                ek_parameters.number_of_nodes * sizeof( float ),
+                cudaMemcpyDeviceToHost                                                  );
   }
   else
     return 1;
   
-  fprintf(fp, "# vtk DataFile Version 2.0\ndensity_%d\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS density_%d float 1\nLOOKUP_TABLE default\n", species,  ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z, ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid, ek_parameters.number_of_nodes, species);
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+density_%d\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS density_%d float 1\n\
+LOOKUP_TABLE default\n",
+           species,
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes,
+           species                                                                    );
 
-  for(int i = 0; i < ek_parameters.number_of_nodes; i++)
-    fprintf(fp, "%f ", densities[i]);
-    
-  fprintf(fp, "\n");
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-  free(densities);	
-  fclose(fp);
+    fprintf( fp, "%f ", densities[ i ] );
+  }
+    
+  fprintf( fp, "\n" );
+  
+  free( densities );
+  fclose( fp );
   
 	return 0;
 }
 
-int ek_print_vtk_potential(char* filename) {
-  FILE* fp = fopen(filename, "w");
+
+int ek_print_vtk_potential( char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
 	
-  if(fp == NULL)
+  if( fp == NULL ) {
+  
   	return 1;
+	}
   	
-  float* potential = (float*) malloc(ek_parameters.number_of_nodes * sizeof(cufftReal));
+  float* potential = (float*) malloc( ek_parameters.number_of_nodes * sizeof( cufftReal ) );
   
-  cudaMemcpy(potential, ek_parameters.charge_potential, ek_parameters.number_of_nodes * sizeof(cufftReal), cudaMemcpyDeviceToHost);
+  cudaMemcpy( potential, ek_parameters.charge_potential,
+              ek_parameters.number_of_nodes * sizeof( cufftReal ),
+              cudaMemcpyDeviceToHost                               );
   
-  fprintf(fp, "# vtk DataFile Version 2.0\npotential\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS potential float 1\nLOOKUP_TABLE default\n", ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z, ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid, ek_parameters.number_of_nodes);
+  fprintf(fp, "\
+# vtk DataFile Version 2.0\n\
+potential\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS potential float 1\n\
+LOOKUP_TABLE default\n",
+          ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+          ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+          ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+          ek_parameters.number_of_nodes                                              );
 
-  for(int i = 0; i < ek_parameters.number_of_nodes; i++)
-    fprintf(fp, "%f ", potential[i]);
-    
-  fprintf(fp, "\n");
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-  free(potential);	
-  fclose(fp);
+    fprintf( fp, "%f ", potential[ i ] );
+  }
+    
+  fprintf( fp, "\n" );
+  
+  free( potential );	
+  fclose( fp );
   
 	return 0;
 }
 
-int ek_print_vtk_lbforce(char* filename) {
-  FILE* fp = fopen(filename, "w");
+
+int ek_print_vtk_lbforce( char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
 	
-  if(fp == NULL)
+  if( fp == NULL ) {
+  
   	return 1;
+	}
   	
-  float* lbforce = (float*) malloc(ek_parameters.number_of_nodes * 3 *sizeof(float));
+  float* lbforce = (float*) malloc( ek_parameters.number_of_nodes * 3 *sizeof( float ) );
   
-  cudaMemcpy(lbforce, node_f.force, ek_parameters.number_of_nodes * 3 * sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy( lbforce, node_f.force,
+              ek_parameters.number_of_nodes * 3 * sizeof( float ),
+              cudaMemcpyDeviceToHost                               );
   
-  fprintf(fp, "# vtk DataFile Version 2.0\nlbforce\nASCII\n\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\n\nPOINT_DATA %u\nSCALARS lbforce float 3\nLOOKUP_TABLE default\n", ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z, ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid, ek_parameters.number_of_nodes);
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+lbforce\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS lbforce float 3\n\
+LOOKUP_TABLE default\n",
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes                                              );
 
-  for(int i = 0; i < ek_parameters.number_of_nodes; i++)
-    fprintf(fp, "%f %f %f ", lbforce[i], lbforce[ek_parameters.number_of_nodes + i], lbforce[2 * ek_parameters.number_of_nodes + i]);
-    
-  fprintf(fp, "\n");
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-  free(lbforce);
-  fclose(fp);
+    fprintf( fp, "%f %f %f ", lbforce[ i ],
+                              lbforce[ i + ek_parameters.number_of_nodes ],
+                              lbforce[ i + 2 * ek_parameters.number_of_nodes ] );
+  }
+  
+  fprintf( fp, "\n" );
+  
+  free( lbforce );
+  fclose( fp );
   
 	return 0;
 }
+
 
 void ek_print_parameters() {
-  printf("ek_parameters {\n");
-  printf("  float agrid = %f;\n", ek_parameters.agrid);
-  printf("  float time_step = %f;\n", ek_parameters.time_step);
-  printf("  unsigned int dim_x = %d;\n", ek_parameters.dim_x);
-  printf("  unsigned int dim_y = %d;\n", ek_parameters.dim_y);
-  printf("  unsigned int dim_z = %d;\n", ek_parameters.dim_z);
-  printf("  unsigned int number_of_nodes = %d;\n", ek_parameters.number_of_nodes);
-  printf("  float viscosity = %f;\n", ek_parameters.viscosity);
-  printf("  float bulk_viscosity = %f;\n", ek_parameters.bulk_viscosity);
-  printf("  float gamma_odd = %f;\n", ek_parameters.gamma_odd);
-  printf("  float gamma_even = %f;\n", ek_parameters.gamma_even);
-  printf("  float friction = %f;\n", ek_parameters.friction);
-  printf("  float T = %f;\n", ek_parameters.T);
-  printf("  float bjerrumlength = %f;\n", ek_parameters.bjerrumlength);
-  printf("  unsigned int number_of_species = %d;\n", ek_parameters.number_of_species);  
-  printf("  float* j = %p;\n", ek_parameters.j);
+
+  printf( "ek_parameters {\n" );
   
-  printf("  float* rho[] = {%p, %p, %p, %p, %p, %p, %p, %p, %p, %p};\n", ek_parameters.rho[0], ek_parameters.rho[1], ek_parameters.rho[2], ek_parameters.rho[3], ek_parameters.rho[4], ek_parameters.rho[5], ek_parameters.rho[6], ek_parameters.rho[7], ek_parameters.rho[8], ek_parameters.rho[9]);
+  printf( "  float agrid = %f;\n",                    ek_parameters.agrid );
+  printf( "  float time_step = %f;\n",                ek_parameters.time_step );
+  printf( "  unsigned int dim_x = %d;\n",             ek_parameters.dim_x );
+  printf( "  unsigned int dim_y = %d;\n",             ek_parameters.dim_y );
+  printf( "  unsigned int dim_z = %d;\n",             ek_parameters.dim_z );
+  printf( "  unsigned int number_of_nodes = %d;\n",   ek_parameters.number_of_nodes );
+  printf( "  float viscosity = %f;\n",                ek_parameters.viscosity );
+  printf( "  float bulk_viscosity = %f;\n",           ek_parameters.bulk_viscosity );
+  printf( "  float gamma_odd = %f;\n",                ek_parameters.gamma_odd );
+  printf( "  float gamma_even = %f;\n",               ek_parameters.gamma_even );
+  printf( "  float friction = %f;\n",                 ek_parameters.friction );
+  printf( "  float T = %f;\n",                        ek_parameters.T );
+  printf( "  float bjerrumlength = %f;\n",            ek_parameters.bjerrumlength );
+  printf( "  unsigned int number_of_species = %d;\n", ek_parameters.number_of_species);  
+  printf( "  float* j = %p;\n",                       ek_parameters.j );
   
-  printf("  int species_index[] = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d};\n", ek_parameters.species_index[0], ek_parameters.species_index[1], ek_parameters.species_index[2], ek_parameters.species_index[3], ek_parameters.species_index[4], ek_parameters.species_index[5], ek_parameters.species_index[6], ek_parameters.species_index[7], ek_parameters.species_index[8], ek_parameters.species_index[9]);
+  printf( "  float* rho[] = {%p, %p, %p, %p, %p, %p, %p, %p, %p, %p};\n",
+          ek_parameters.rho[0], ek_parameters.rho[1], ek_parameters.rho[2],
+          ek_parameters.rho[3], ek_parameters.rho[4], ek_parameters.rho[5],
+          ek_parameters.rho[6], ek_parameters.rho[7], ek_parameters.rho[8],
+          ek_parameters.rho[9]                                              );
   
-  printf("  float density = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.density[0], ek_parameters.density[1], ek_parameters.density[2], ek_parameters.density[3], ek_parameters.density[4], ek_parameters.density[5], ek_parameters.density[6], ek_parameters.density[7], ek_parameters.density[8], ek_parameters.density[9]);
+  printf( "  int species_index[] = {%d, %d, %d, %d, %d, %d, %d, %d, %d, %d};\n",
+          ek_parameters.species_index[0], ek_parameters.species_index[1],
+          ek_parameters.species_index[2], ek_parameters.species_index[3],
+          ek_parameters.species_index[4], ek_parameters.species_index[5],
+          ek_parameters.species_index[6], ek_parameters.species_index[7],
+          ek_parameters.species_index[8], ek_parameters.species_index[9]         );
   
-  printf("  float D[] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.D[0], ek_parameters.D[1], ek_parameters.D[2], ek_parameters.D[3], ek_parameters.D[4], ek_parameters.D[5], ek_parameters.D[6], ek_parameters.D[7], ek_parameters.D[8], ek_parameters.D[9]);
+  printf( "  float density = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.density[0], ek_parameters.density[1],
+          ek_parameters.density[2], ek_parameters.density[3],
+          ek_parameters.density[4], ek_parameters.density[5],
+          ek_parameters.density[6], ek_parameters.density[7],
+          ek_parameters.density[8], ek_parameters.density[9]                );
   
-  printf("  float d[] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.d[0], ek_parameters.d[1], ek_parameters.d[2], ek_parameters.d[3], ek_parameters.d[4], ek_parameters.d[5], ek_parameters.d[6], ek_parameters.d[7], ek_parameters.d[8], ek_parameters.d[9]);
+  printf( "  float D[] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.D[0], ek_parameters.D[1], ek_parameters.D[2],
+          ek_parameters.D[3], ek_parameters.D[4], ek_parameters.D[5],
+          ek_parameters.D[6], ek_parameters.D[7], ek_parameters.D[8],
+          ek_parameters.D[9]                                           );
   
-  printf("  float valency[] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.valency[0], ek_parameters.valency[1], ek_parameters.valency[2], ek_parameters.valency[3], ek_parameters.valency[4], ek_parameters.valency[5], ek_parameters.valency[6], ek_parameters.valency[7], ek_parameters.valency[8], ek_parameters.valency[9]);
+  printf( "  float d[] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.d[0], ek_parameters.d[1], ek_parameters.d[2],
+          ek_parameters.d[3], ek_parameters.d[4], ek_parameters.d[5],
+          ek_parameters.d[6], ek_parameters.d[7], ek_parameters.d[8],
+          ek_parameters.d[9]                                                   );
   
-  printf("  float ext_force[0][] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.ext_force[0][0], ek_parameters.ext_force[0][1], ek_parameters.ext_force[0][2], ek_parameters.ext_force[0][3], ek_parameters.ext_force[0][4], ek_parameters.ext_force[0][5], ek_parameters.ext_force[0][6], ek_parameters.ext_force[0][7], ek_parameters.ext_force[0][8], ek_parameters.ext_force[0][9]);
+  printf( "  float valency[] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.valency[0], ek_parameters.valency[1], ek_parameters.valency[2],
+          ek_parameters.valency[3], ek_parameters.valency[4], ek_parameters.valency[5],
+          ek_parameters.valency[6], ek_parameters.valency[7], ek_parameters.valency[8],
+          ek_parameters.valency[9]                                                      );
   
-  printf("  float ext_force[1][] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.ext_force[1][0], ek_parameters.ext_force[1][1], ek_parameters.ext_force[1][2], ek_parameters.ext_force[1][3], ek_parameters.ext_force[1][4], ek_parameters.ext_force[1][5], ek_parameters.ext_force[1][6], ek_parameters.ext_force[1][7], ek_parameters.ext_force[1][8], ek_parameters.ext_force[1][9]);
+  printf( "  float ext_force[0][] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.ext_force[0][0], ek_parameters.ext_force[0][1], ek_parameters.ext_force[0][2],
+          ek_parameters.ext_force[0][3], ek_parameters.ext_force[0][4], ek_parameters.ext_force[0][5],
+          ek_parameters.ext_force[0][6], ek_parameters.ext_force[0][7], ek_parameters.ext_force[0][8],
+          ek_parameters.ext_force[0][9]                                                                );
   
-  printf("  float ext_force[2][] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n", ek_parameters.ext_force[2][0], ek_parameters.ext_force[2][1], ek_parameters.ext_force[2][2], ek_parameters.ext_force[2][3], ek_parameters.ext_force[2][4], ek_parameters.ext_force[2][5], ek_parameters.ext_force[2][6], ek_parameters.ext_force[2][7], ek_parameters.ext_force[2][8], ek_parameters.ext_force[2][9]);
+  printf( "  float ext_force[1][] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.ext_force[1][0], ek_parameters.ext_force[1][1], ek_parameters.ext_force[1][2],
+          ek_parameters.ext_force[1][3], ek_parameters.ext_force[1][4], ek_parameters.ext_force[1][5],
+          ek_parameters.ext_force[1][6], ek_parameters.ext_force[1][7], ek_parameters.ext_force[1][8],
+          ek_parameters.ext_force[1][9]                                                                );
   
-  printf("}\n");
+  printf( "  float ext_force[2][] = {%f, %f, %f, %f, %f, %f, %f, %f, %f, %f};\n",
+          ek_parameters.ext_force[2][0], ek_parameters.ext_force[2][1], ek_parameters.ext_force[2][2],
+          ek_parameters.ext_force[2][3], ek_parameters.ext_force[2][4], ek_parameters.ext_force[2][5],
+          ek_parameters.ext_force[2][6], ek_parameters.ext_force[2][7], ek_parameters.ext_force[2][8],
+          ek_parameters.ext_force[2][9]                                                                );
+  
+  printf( "}\n" );
 }
+
 
 void ek_print_lbpar() {
+
   printf("lbpar_gpu {\n");
-  printf("    float rho = %f;\n", lbpar_gpu.rho);
-  printf("    float mu = %f;\n", lbpar_gpu.mu);
-  printf("    float viscosity = %f;\n", lbpar_gpu.viscosity);
-  printf("    float gamma_shear = %f;\n", lbpar_gpu.gamma_shear);
-  printf("    float gamma_bulk = %f;\n", lbpar_gpu.gamma_bulk);
-  printf("    float gamma_odd = %f;\n", lbpar_gpu.gamma_odd);
-  printf("    float gamma_even = %f;\n", lbpar_gpu.gamma_even);
-  printf("    float agrid = %f;\n", lbpar_gpu.agrid);
-  printf("    float tau = %f;\n", lbpar_gpu.tau);
-  printf("    float friction = %f;\n", lbpar_gpu.friction);
-  printf("    float time_step = %f;\n", lbpar_gpu.time_step);
-  printf("    float lb_coupl_pref = %f;\n", lbpar_gpu.lb_coupl_pref);
-  printf("    float lb_coupl_pref2 = %f;\n", lbpar_gpu.lb_coupl_pref2);
-  printf("    float bulk_viscosity = %f;\n", lbpar_gpu.bulk_viscosity);
-  printf("    unsigned int dim_x = %d;\n", lbpar_gpu.dim_x);
-  printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim_y);
-  printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim_z);
-  printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
-  printf("    unsigned int number_of_particles = %d;\n", lbpar_gpu.number_of_particles);
-  printf("    int fluct = %d;\n", lbpar_gpu.fluct);
-  printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
-  printf("    int external_force = %d;\n", lbpar_gpu.external_force);
-  printf("    float ext_force[3] = {%f, %f, %f};\n", lbpar_gpu.ext_force[0], lbpar_gpu.ext_force[1], lbpar_gpu.ext_force[2]);
-  printf("    unsigned int your_seed = %d;\n", lbpar_gpu.your_seed);
-  printf("    unsigned int reinit = %d;\n", lbpar_gpu.reinit);
+  
+  printf("    float rho = %f;\n",                        lbpar_gpu.rho );
+  printf("    float mu = %f;\n",                         lbpar_gpu.mu );
+  printf("    float viscosity = %f;\n",                  lbpar_gpu.viscosity );
+  printf("    float gamma_shear = %f;\n",                lbpar_gpu.gamma_shear );
+  printf("    float gamma_bulk = %f;\n",                 lbpar_gpu.gamma_bulk );
+  printf("    float gamma_odd = %f;\n",                  lbpar_gpu.gamma_odd );
+  printf("    float gamma_even = %f;\n",                 lbpar_gpu.gamma_even );
+  printf("    float agrid = %f;\n",                      lbpar_gpu.agrid );
+  printf("    float tau = %f;\n",                        lbpar_gpu.tau );
+  printf("    float friction = %f;\n",                   lbpar_gpu.friction );
+  printf("    float time_step = %f;\n",                  lbpar_gpu.time_step );
+  printf("    float lb_coupl_pref = %f;\n",              lbpar_gpu.lb_coupl_pref );
+  printf("    float lb_coupl_pref2 = %f;\n",             lbpar_gpu.lb_coupl_pref2 );
+  printf("    float bulk_viscosity = %f;\n",             lbpar_gpu.bulk_viscosity );
+  printf("    unsigned int dim_x = %d;\n",               lbpar_gpu.dim_x );
+  printf("    unsigned int dim_y = %d;\n",               lbpar_gpu.dim_y );
+  printf("    unsigned int dim_z = %d;\n",               lbpar_gpu.dim_z );
+  printf("    unsigned int number_of_nodes = %d;\n",     lbpar_gpu.number_of_nodes );
+  printf("    unsigned int number_of_particles = %d;\n", lbpar_gpu.number_of_particles );
+  printf("    int fluct = %d;\n",                        lbpar_gpu.fluct );
+  printf("    int calc_val = %d;\n",                     lbpar_gpu.calc_val );
+  printf("    int external_force = %d;\n",               lbpar_gpu.external_force );
+  printf("    float ext_force[3] = {%f, %f, %f};\n",     lbpar_gpu.ext_force[0],
+                                                         lbpar_gpu.ext_force[1],
+                                                         lbpar_gpu.ext_force[2] );
+  printf("    unsigned int your_seed = %d;\n",           lbpar_gpu.your_seed );
+  printf("    unsigned int reinit = %d;\n",              lbpar_gpu.reinit );
+  
   printf("}\n");
 }
 
-int ek_set_agrid(double agrid) {  
-  if(ek_parameters.agrid < 0.0) {
+
+int ek_set_agrid( double agrid ) {  
+
+  if( ek_parameters.agrid < 0.0 ) {
+  
     ek_parameters.agrid = agrid;
+    
     return 0;
   }
   else {
+  
     printf("ERROR: electrokinetics agrid can not be changed\n");
+    
     return 1;
   }
 }
 
-int ek_set_bjerrumlength(double bjerrumlength) { 
-  if(ek_parameters.bjerrumlength < 0.0) {
+
+int ek_set_bjerrumlength( double bjerrumlength ) {
+
+  if( ek_parameters.bjerrumlength < 0.0 ) {
+  
     ek_parameters.bjerrumlength = bjerrumlength;
+    
     return 0;
   }
   else {
+  
     printf("ERROR: electrokinetics bjerrum_length can not be changed\n");
+    
     return 1;
   }
 }
 
-int ek_set_viscosity(double viscosity) {
+
+int ek_set_viscosity( double viscosity ) {
+
   ek_parameters.viscosity = viscosity;
+  
   return 0;
 }
 
-int ek_set_friction(double friction) {
+
+int ek_set_friction( double friction ) {
+
   ek_parameters.friction = friction;
+  
   return 0;
 }
 
-int ek_set_bulk_viscosity(double bulk_viscosity) {
+
+int ek_set_bulk_viscosity( double bulk_viscosity ) {
+
   ek_parameters.bulk_viscosity = bulk_viscosity;
+  
   return 0;
 }
 
-int ek_set_gamma_odd(double gamma_odd) {
+
+int ek_set_gamma_odd( double gamma_odd ) {
+
   ek_parameters.gamma_odd = gamma_odd;
+  
   return 0;
 }
 
-int ek_set_gamma_even(double gamma_even) {
+
+int ek_set_gamma_even( double gamma_even ) {
+
   ek_parameters.gamma_even = gamma_even;
+  
   return 0;
 }
 
-int ek_set_density(int species, double density) {
-  ek_init_species(species);
-  ek_parameters.density[ek_parameters.species_index[species]] = density;
+
+int ek_set_density( int species, double density ) {
+
+  ek_init_species( species );
+  ek_parameters.density[ ek_parameters.species_index[ species ] ] = density;
   
   lbpar_gpu.rho = 0.0;
   
-  for(int i = 0; i < MAX_NUMBER_OF_SPECIES; i++)
+  for( int i = 0; i < MAX_NUMBER_OF_SPECIES; i++ ) {
+  
     lbpar_gpu.rho += ek_parameters.density[i];
+  }
   
   lb_reinit_parameters_gpu();
   
   return 0;
 }
 
-int ek_set_D(int species, double D) {
-  ek_init_species(species);
-  ek_parameters.D[ek_parameters.species_index[species]] = D;
-  ek_parameters.d[ek_parameters.species_index[species]] = D / (1.0 + 2.0 * sqrt(2.0));
+
+int ek_set_D( int species, double D ) {
+
+  ek_init_species( species );
+  
+  ek_parameters.D[ ek_parameters.species_index[ species ] ] = D;
+  ek_parameters.d[ ek_parameters.species_index[ species ] ] = D / ( 1.0 + 2.0 * sqrt(2.0)) ;
+  
   return 0;
 }
 
 int ek_set_T(double T) {
+
   ek_parameters.T = T;
+  
   return 0;
 }
 
-int ek_set_valency(int species, double valency) {
-  ek_init_species(species);
-  ek_parameters.valency[ek_parameters.species_index[species]] = valency;
+
+int ek_set_valency( int species, double valency ) {
+
+  ek_init_species( species );
+  
+  ek_parameters.valency[ ek_parameters.species_index[ species ] ] = valency;
+  
   return 0;
 }
 
-int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z) {
-  ek_init_species(species);
-  ek_parameters.ext_force[0][ek_parameters.species_index[species]] = ext_force_x;
-  ek_parameters.ext_force[1][ek_parameters.species_index[species]] = ext_force_y;
-  ek_parameters.ext_force[2][ek_parameters.species_index[species]] = ext_force_z;
+
+int ek_set_ext_force( int species,
+                      double ext_force_x,
+                      double ext_force_y,
+                      double ext_force_z
+                    ) {
+                    
+  ek_init_species( species );
+  
+  ek_parameters.ext_force[0][ ek_parameters.species_index[ species ] ] = ext_force_x;
+  ek_parameters.ext_force[1][ ek_parameters.species_index[ species ] ] = ext_force_y;
+  ek_parameters.ext_force[2][ ek_parameters.species_index[ species ] ] = ext_force_z;
+  
   return 0;
 }
 
