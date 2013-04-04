@@ -207,9 +207,6 @@ void lb_init_boundaries() {
       boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
     }
 
-#warning IM HERE ALRIGHT
-printf("lb_init_boundaries: n_lb_boundaries=%d\n", n_lb_boundaries); //TODO delete
-
     if (n_lb_boundaries)
       lb_init_boundaries_GPU(n_lb_boundaries, number_of_boundnodes, host_boundary_node_list, host_boundary_index_list, boundary_velocity);
 

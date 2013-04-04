@@ -44,6 +44,12 @@ extern "C" {
 
   /* TODO: get rid of this code duplication with lb-boundaries.h by solving the
            cuda-mpi incompatibility */
+           
+#define LATTICE_LB_GPU   2
+extern int lattice_switch;
+           
+#ifdef EK_BOUNDARIES
+
   typedef struct {
 
     int type;
@@ -68,13 +74,10 @@ extern "C" {
 
   extern int n_lb_boundaries;
   extern LB_Boundary *lb_boundaries;
-  extern int lattice_switch;
 
-  #define LATTICE_LB_GPU   2
-
-  #ifdef LB_BOUNDARIES_GPU
   void lb_init_boundaries();
-  #endif
+  
+#endif
   /* end of code duplication */
 
 
@@ -124,7 +127,6 @@ extern "C" {
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
-  cufftReal* greensfcn_host;
   
   bool initialized = false;
   
@@ -1505,17 +1507,6 @@ int ek_init() {
     if( cudaGetLastError() != cudaSuccess ) {
     
         fprintf(stderr, "ERROR: Failed to allocate\n");
-        
-        return 1;
-    }
-    
-    cudaMallocHost( (void**) &greensfcn_host,
-                    sizeof( cufftReal ) *
-                    ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) );
-    
-    if( cudaGetLastError() != cudaSuccess ) {
-    
-        fprintf( stderr, "ERROR: Failed to allocate\n" );
         
         return 1;
     }

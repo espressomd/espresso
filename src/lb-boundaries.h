@@ -177,6 +177,6 @@ MDINLINE void lb_bounce_back() {
 #endif
 }
 
-#endif /* LB_BOUNDARIES */
+#endif /* LB_BOUNDARIES || LB_BOUNDARIES_GPU */
 
 #endif /* LB_BOUNDARIES_H */
