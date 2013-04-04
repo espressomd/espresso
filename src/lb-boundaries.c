@@ -68,7 +68,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
         break;
     }
     
-    if (dist<*mindist) {
+    if (dist<*mindist || n == 0) {
       *no=n;
       *mindist=dist;
       distvec[0] = vec[0];
@@ -130,13 +130,13 @@ void lb_init_boundaries() {
                 ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
             }
             
-            if (dist > dist_tmp) {
+            if (dist > dist_tmp || n == 0) {
               dist = dist_tmp;
               boundary_number = n;
             }
           }
           
-          if (dist <= 0 && n_lb_boundaries > 0) {
+          if (dist <= 0 && boundary_number >= 0 && n_lb_boundaries > 0) {
             size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
