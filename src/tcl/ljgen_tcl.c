@@ -123,6 +123,8 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
   if (argc >= 11 && ARG_IS_D(10, cap_radius))
     change++;
 #ifdef LJGEN_SOFTCORE
+  lambda = 1.0;
+  softrad = 1.0;
   if (argc >= 12 && ARG_IS_D(11, lambda))
     change++;
   else
