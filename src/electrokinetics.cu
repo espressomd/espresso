@@ -123,7 +123,8 @@ extern int lattice_switch;
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
   EK_parameters *ek_parameters_gpu_pointer;
-  LB_parameters_gpu* ek_lbparameters_gpu;
+  LB_parameters_gpu *ek_lbparameters_gpu;
+  LB_particle_gpu *particle_data_gpu;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -140,7 +141,7 @@ extern int lattice_switch;
 
 
 __device__ inline void atomicadd( float* address,
-                                   float value
+                                  float value
                                 ) {
 
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
@@ -754,7 +755,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
     
     /* advective contribution to flux */
     
-    ek_displacement(dx, lb_node, index, ek_lbparameters_gpu);
+    ek_displacement( dx, lb_node, index, ek_lbparameters_gpu );
     
     di[0] = 1 - signbit(dx[0]);
     di[1] = 1 - signbit(dx[1]);
@@ -1210,7 +1211,7 @@ __global__ void ek_multiply_greensfcn() {
 }
 
 
-__global__ void ek_gather_charge_density() {
+__global__ void ek_gather_species_charge_density() {
 
   unsigned int index = getThreadIndex();
 
@@ -1223,6 +1224,19 @@ __global__ void ek_gather_charge_density() {
         ek_parameters_gpu.valency[ i ] * ek_parameters_gpu.rho[ i ][ index ] /
         powf( ek_parameters_gpu.agrid, 3 );
     }
+  }
+}
+
+
+__global__ void ek_gather_particle_charge_density( LB_particle_gpu * particle_data,
+                                                   LB_parameters_gpu * ek_lbparameters_gpu
+                                                 ) {
+
+  unsigned int index = getThreadIndex();
+
+  if( index < ek_lbparameters_gpu->number_of_particles ) {
+    //((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] = 0.0f;
+    printf("particle %d (%d) charge %f pos %f %f %f \n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2]); //TODO delete
   }
 }
 
@@ -1285,7 +1299,7 @@ __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 
 
 //TODO delete
-__global__ void ek_clear_node_force(LB_node_force_gpu node_f) {
+__global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 
   unsigned int index = getThreadIndex();
 
@@ -1307,11 +1321,22 @@ void ek_integrate_electrostatics() {
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x =
-    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
+    ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 ) /
     ( threads_per_block * blocks_per_grid_y );
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
-  KERNELCALL( ek_gather_charge_density, dim_grid, threads_per_block, () );  
+  KERNELCALL( ek_gather_species_charge_density, dim_grid, threads_per_block, () );
+  
+  blocks_per_grid_x =
+    ( lbpar_gpu.number_of_particles + threads_per_block * blocks_per_grid_y - 1 ) /
+    ( threads_per_block * blocks_per_grid_y );
+  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+  
+  lb_get_particle_pointer( &particle_data_gpu );
+  
+  KERNELCALL( ek_gather_particle_charge_density,
+              dim_grid, threads_per_block,
+              ( particle_data_gpu, ek_lbparameters_gpu ) );
     
   if( cufftExecR2C( plan_fft,
                     (cufftReal*) ek_parameters.charge_potential,
@@ -1321,9 +1346,9 @@ void ek_integrate_electrostatics() {
   }
   
   blocks_per_grid_x =
-    ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) +
-      threads_per_block * blocks_per_grid_y - 1
-    ) / (threads_per_block * blocks_per_grid_y);
+    ( ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) +
+      threads_per_block * blocks_per_grid_y - 1) / 
+    ( threads_per_block * blocks_per_grid_y );
   dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
   KERNELCALL( ek_multiply_greensfcn, dim_grid, threads_per_block, () );
@@ -1583,6 +1608,8 @@ int ek_init() {
 #endif
 
   ek_integrate_electrostatics();
+  
+  //ek_print_parameters(); //TODO delete
 
   return 0;
 }
@@ -1623,8 +1650,6 @@ LOOKUP_TABLE default\n",
                               host_values[ i ].v[1],
                               host_values[ i ].v[2]  );
   }
-    
-  fprintf(fp, "\n");
   
   free(host_values);	
   fclose(fp);
@@ -1668,8 +1693,6 @@ LOOKUP_TABLE default\n",
   
     fprintf( fp, "%f ", host_values[ i ].rho );
   }
-    
-  fprintf( fp, "\n" );
   
   free( host_values );	
   fclose( fp );
@@ -1719,10 +1742,8 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f ", densities[ i ] );
+    fprintf( fp, "%f\n", densities[ i ] );
   }
-    
-  fprintf( fp, "\n" );
   
   free( densities );
   fclose( fp );
@@ -1766,10 +1787,8 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f ", potential[ i ] );
+    fprintf( fp, "%f\n", potential[ i ] );
   }
-    
-  fprintf( fp, "\n" );
   
   free( potential );	
   fclose( fp );
@@ -1813,12 +1832,10 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f %f %f ", lbforce[ i ],
+    fprintf( fp, "%f %f %f\n", lbforce[ i ],
                               lbforce[ i + ek_parameters.number_of_nodes ],
                               lbforce[ i + 2 * ek_parameters.number_of_nodes ] );
   }
-  
-  fprintf( fp, "\n" );
   
   free( lbforce );
   fclose( fp );

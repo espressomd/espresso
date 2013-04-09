@@ -1449,6 +1449,10 @@ void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
   }
 }
 
+void lb_get_particle_pointer(LB_particle_gpu** pointeradress) {
+  *pointeradress = particle_data;
+}
+
 void lb_set_ek_pointer(EK_parameters* pointeradress) {
   ek_parameters_gpu = pointeradress;
 }

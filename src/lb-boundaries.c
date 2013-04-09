@@ -101,11 +101,13 @@ void lb_init_boundaries() {
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged;
     
-    for(n = 0; n < n_lb_boundaries; n++)
+    for(n = 0; n < n_lb_boundaries; n++) {
+printf("lb_boundaries[%d].charge_density = %f\n", n, lb_boundaries[n].charge_density); //TODO delete
       if(lb_boundaries[n].charge_density != 0.0) {
         charged_boundaries = 1;
         break;
       }
+    }
       
     for(n = 0; n < ek_parameters.number_of_species; n++)
       if(ek_parameters.valency[n] != 0.0) {
@@ -213,7 +215,13 @@ void lb_init_boundaries() {
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
+    
+#ifdef EK_BOUNDARIES
+    ek_init_species_density_wallcharge(host_wallcharge_species_density, wallcharge_species);
+    free(host_wallcharge_species_density);
 #endif
+
+#endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   }
   else {
 #if defined (LB) && defined (LB_BOUNDARIES)   

@@ -167,6 +167,9 @@ typedef struct {
 #ifdef LB_ELECTROHYDRODYNAMICS
   float mu_E[3];
 #endif
+#ifdef ELECTROKINETICS
+  float q;
+#endif
   unsigned int fixed;
 
 } LB_particle_gpu;
@@ -230,6 +233,7 @@ extern "C" {
 #endif
 
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
+void lb_get_particle_pointer(LB_particle_gpu** pointeradress);
 void lb_set_ek_pointer(EK_parameters* pointeradress);
 
 void lattice_boltzmann_update_gpu();
