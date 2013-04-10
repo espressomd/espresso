@@ -34,12 +34,12 @@ init_objects_in_fluid
 
 # adding one object in fluid - oif. Some parameters are self-explanatory, some not:
 ############################################################################
-add_oif_object origin 10 10 10 nodesfile $fileNodes trianglesfile $fileTriangles stretch 1.0 1.0 1.0 ks 0.05 kb 0.01 kal 0.01 kag 0.01 kv 10.0 type 0 mol 0 rotate 0.0 0.0 0.0
+add_oif_object origin 10 10 10 nodesfile $fileNodes trianglesfile $fileTriangles stretch 1.0 1.0 1.0 ks 0.05 kb 0.01 kal 0.01 kag 0.01 kv 10.0 type 0 mol 0 rotate 0.0 0.0 0.0 mass 1.3
 
 
 # origin 			sets the coordinates of the center of the object
 # stretch 			the immersed object will be scaled 
-# 					by these factors in correspomding directions
+# 					by these factors in the corresponding directions
 # nodesfile 		meshfile for vertices
 # trianglesfile 	meshfile for triangles
 #

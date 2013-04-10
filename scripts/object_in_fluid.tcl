@@ -118,13 +118,21 @@ proc angle_btw_triangles {P1 P2 P3 P4 phi} {
 	set n2z [lindex $n2 2]
 	
 	set tmp11 [expr $n1x*$n2x + $n1y*$n2y + $n1z*$n2z];
-	set tmp11 [expr $tmp11 / sqrt($n1x*$n1x + $n1y*$n1y + $n1z*$n1z)];
-	set tmp11 [expr $tmp11 / sqrt($n2x*$n2x + $n2y*$n2y + $n2z*$n2z)];
-	
-	if {$tmp11 >= 1.} { set tmp11 0.0 } elseif {$tmp11<=-1.} { set tmp11 $pi }
+	set tmp11 [expr $tmp11*abs($tmp11)]
+	set tmp22 [expr $n1x*$n1x + $n1y*$n1y + $n1z*$n1z]
+	set tmp33 [expr $n2x*$n2x + $n2y*$n2y + $n2z*$n2z]
+	set tmp11 [expr $tmp11/($tmp22*$tmp33)] 
+
+	if { $tmp11 > 0 } {
+		set tmp11 [expr sqrt($tmp11)]
+		} else {
+		set tmp11 [expr - sqrt(- $tmp11)]
+	}		
+
+	if {$tmp11 >= 1.} { set tmp11 0.0 } elseif { $tmp11 <= -1.} { set tmp11 $pi }
 	
 	set gphi [expr $pi - acos($tmp11)]
-	
+
 	set P1x [lindex $gP1 0]
 	set P1y [lindex $gP1 1]
 	set P1z [lindex $gP1 2]
