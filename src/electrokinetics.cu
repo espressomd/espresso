@@ -1233,10 +1233,98 @@ __global__ void ek_gather_particle_charge_density( LB_particle_gpu * particle_da
                                                  ) {
 
   unsigned int index = getThreadIndex();
+  unsigned int lowernode[3];
+  float cellpos[3];
+  float gridpos;
 
   if( index < ek_lbparameters_gpu->number_of_particles ) {
+  
+    gridpos      = particle_data[ index ].p[0] / ek_parameters_gpu.agrid - 0.5f;
+    lowernode[0] = (int) floorf( gridpos );
+    cellpos[0]   = gridpos - lowernode[0];
+  
+    gridpos      = particle_data[ index ].p[1] / ek_parameters_gpu.agrid - 0.5f;
+    lowernode[1] = (int) floorf( gridpos );
+    cellpos[1]   = gridpos - lowernode[1];
+  
+    gridpos      = particle_data[ index ].p[2] / ek_parameters_gpu.agrid - 0.5f;
+    lowernode[2] = (int) floorf( gridpos );
+    cellpos[2]   = gridpos - lowernode[2];
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( lowernode[0],
+                                            lowernode[1],
+                                            lowernode[2]  )
+               ],
+               particle_data[ index ].q *
+               ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] )
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters_gpu.dim_x,
+                                            lowernode[1],
+                                            lowernode[2]                                    )
+               ],
+               particle_data[ index ].q *
+               cellpos[0] * ( 1 - cellpos[1] ) * ( 1 - cellpos[2] )
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( lowernode[0],
+                                            ( lowernode[1] + 1 ) % ek_parameters_gpu.dim_y,
+                                            lowernode[2]                                    )
+               ],
+               particle_data[ index ].q *
+               ( 1 - cellpos[0] ) * cellpos[1] * ( 1 - cellpos[2] )
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( lowernode[0],
+                                            lowernode[1],
+                                            ( lowernode[2] + 1 ) % ek_parameters_gpu.dim_z  )
+               ],
+               particle_data[ index ].q *
+               ( 1 - cellpos[0] ) * ( 1 - cellpos[1] ) * cellpos[2]
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters_gpu.dim_x,
+                                            ( lowernode[1] + 1 ) % ek_parameters_gpu.dim_y,
+                                            lowernode[2]                                    )
+               ],
+               particle_data[ index ].q *
+               cellpos[0] * cellpos[1] * ( 1 - cellpos[2] )
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters_gpu.dim_x,
+                                            lowernode[1],
+                                            ( lowernode[2] + 1 ) % ek_parameters_gpu.dim_z  )
+               ],
+               particle_data[ index ].q *
+               cellpos[0] * ( 1 - cellpos[1] ) * cellpos[2]
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( lowernode[0],
+                                            ( lowernode[1] + 1 ) % ek_parameters_gpu.dim_y,
+                                            ( lowernode[2] + 1 ) % ek_parameters_gpu.dim_z  )
+               ],
+               particle_data[ index ].q *
+               ( 1 - cellpos[0] ) * cellpos[1] * cellpos[2]
+    );
+    
+    atomicadd( &((cufftReal*) ek_parameters_gpu.charge_potential)[
+                 rhoindex_cartesian2linear( ( lowernode[0] + 1 ) % ek_parameters_gpu.dim_x,
+                                            ( lowernode[1] + 1 ) % ek_parameters_gpu.dim_y,
+                                            ( lowernode[2] + 1 ) % ek_parameters_gpu.dim_z  )
+               ],
+               particle_data[ index ].q *
+               cellpos[0] * cellpos[1] * cellpos[2]
+    );
+    
     //((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] = 0.0f;
-    printf("particle %d (%d) charge %f pos %f %f %f \n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2]); //TODO delete
+    printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d %d\n  cellpos %f %f %f\n\n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2], cellpos[0], cellpos[1], cellpos[2]); //TODO delete
   }
 }
 
@@ -1408,7 +1496,7 @@ void ek_integrate() {
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge( float* wallcharge_species_density,
                                          int wallcharge_species             ) {
-                                         
+  
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x =
@@ -1421,14 +1509,14 @@ void ek_init_species_density_wallcharge( float* wallcharge_species_density,
   
   if( wallcharge_species != -1 ) {
   
-    cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
-                ek_parameters.number_of_nodes * sizeof( float ),
-                cudaMemcpyHostToDevice                                             );
+    ek_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
+                             ek_parameters.number_of_nodes * sizeof( float ),
+                             cudaMemcpyHostToDevice                                             ) );
   }
 }
 #endif
-  
-  
+
+
 void ek_init_species( int species ) {
 
   if( !initialized ) {
@@ -1475,7 +1563,7 @@ int ek_init() {
   
   if(!initialized) {
   
-    if( cudaGetSymbolAddress( (void**) &ek_parameters_gpu_pointer, ek_parameters_gpu) != cudaSuccess) {
+    if( cudaGetSymbolAddress( (void**) &ek_parameters_gpu_pointer, ek_parameters_gpu ) != cudaSuccess) {
     
       fprintf( stderr, "ERROR: Fetching constant memory pointer\n" );
       
@@ -1507,16 +1595,16 @@ int ek_init() {
     ek_parameters.time_step = lbpar_gpu.time_step;
     ek_parameters.number_of_nodes = ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
-    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.j, ek_parameters.number_of_nodes *
-                                                        13 * sizeof( float )            ) );
+    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.j,
+                             ek_parameters.number_of_nodes * 13 * sizeof( float ) ) );
     ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
     lb_get_para_pointer( &ek_lbparameters_gpu );
     lb_set_ek_pointer( ek_parameters_gpu_pointer );
     
-    cudaMalloc( (void**) &ek_parameters.charge_potential,
-                sizeof( cufftComplex ) *
-                ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) );
+    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential,
+                             sizeof( cufftComplex ) *
+                             ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
     
     if( cudaGetLastError() != cudaSuccess ) {
     
@@ -1525,9 +1613,9 @@ int ek_init() {
         return 1;
     }
     
-    cudaMalloc( (void**) &ek_parameters.greensfcn,
-                sizeof( cufftReal ) * 
-                ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) );
+    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.greensfcn,
+                             sizeof( cufftReal ) * 
+                ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
     
     if( cudaGetLastError() != cudaSuccess ) {
     
@@ -1536,7 +1624,7 @@ int ek_init() {
         return 1;
     }
     
-    cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) );
+    ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
     blocks_per_grid_x =
       ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) +
