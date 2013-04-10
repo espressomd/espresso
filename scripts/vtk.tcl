@@ -55,41 +55,71 @@ proc writevtk {filename {type "all"}} {
 #dumps particle positions into a file so that paraview can visualize them
 proc writevectorvtk {filename {type "all"}} {
 	set max_pid [setmd max_part]
-	set n 0
+	set nobj 0
+	set nbonds 0
 	set fp [open $filename "w"]
-
+	set hash {}
+## the hash table is structured as follows
+## <hash_id> <pid> <x> <y> <z> <has_id of the bonded particle>
+##
+        set boxhx [expr [lindex [setmd box_l] 0 ] /2.] 
+        set boxhy [expr [lindex [setmd box_l] 1 ] /2.] 
+        set boxhz [expr [lindex [setmd box_l] 2 ] /2.] 
 	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
 		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			incr n
+                   set bondid -1
+		   set xpos [expr [lindex [part $pid print folded_pos] 0]]
+		   set ypos [expr [lindex [part $pid print folded_pos] 1]]
+		   set zpos [expr [lindex [part $pid print folded_pos] 2]]
+		   if { [llength [lindex [part $pid print bond ] 0 ] ] > 0  } { 
+		       # i.e. there is a bond
+                       set bondpid [lindex [lindex [part $pid print bond] 0 0] 1 ]
+		       set x2pos [expr [lindex [part $bondpid  print folded_pos] 0]]
+		       set y2pos [expr [lindex [part $bondpid  print folded_pos] 1]]
+		       set z2pos [expr [lindex [part $bondpid  print folded_pos] 2]]
+		       if  { [expr abs($xpos - $x2pos) ] < $boxhx && [expr abs($ypos - $y2pos) ] < $boxhy && [expr abs($zpos - $z2pos) ] < $boxhz } { 
+                       # i.e. it doesn't cross pbc, then we represent it
+		          	incr nbonds
+                          	foreach element $hash  { 
+		          		if { [lindex $element 1] == $bondpid } { 
+		          			set bondid [lindex $element 0]
+		          			break
+                                  	}
+                       	        }
+		       }
+		   }
+                   lappend hash [list $nobj $pid $bondid ] ; #here $bondid==-1 if there's no bonded particle 
+		   incr nobj
 		}
 	}
 
-	puts $fp "# vtk DataFile Version 2.0\nparticles\nASCII\nDATASET POLYDATA\nPOINTS $n floats"
+	puts $fp "# vtk DataFile Version 2.0\nparticles\nASCII\nDATASET POLYDATA\nPOINTS $nobj floats"
 
-        set nobj 0
-	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			set xpos [expr [lindex [part $pid print folded_pos] 0]]
-			set ypos [expr [lindex [part $pid print folded_pos] 1]]
-			set zpos [expr [lindex [part $pid print folded_pos] 2]]
+        foreach element $hash { 
+			set xpos [expr [lindex [part [lindex $element 1 ] print folded_pos] 0]]
+			set ypos [expr [lindex [part [lindex $element 1 ] print folded_pos] 1]]
+			set zpos [expr [lindex [part [lindex $element 1 ] print folded_pos] 2]]
 			puts $fp "$xpos $ypos $zpos"
-                        incr nobj
-		}
-	}
+        }
         puts $fp "\nVERTICES $nobj [expr int(2*$nobj)]"
-	for { set n 0 } { $n < $nobj } { incr n } {  
-			puts $fp "1 $n"
+	for { set id 0 } { $id < $nobj } { incr id } {  
+			puts $fp "1 $id"
         } 
+        if { $nbonds > 0 } { 
+		puts $fp "\nLINES $nbonds [expr int(3*$nbonds)]"
+                foreach element $hash { 
+			if { [lindex $element 2] >= 0 } { 
+			         puts $fp "2 [lindex $element 0 ] [lindex $element 2 ]"
+                        }
+                }
+	}
         puts $fp "\nPOINT_DATA $nobj"
         puts $fp "VECTORS vector float"
-
-	for { set pid 0 } { $pid <= $max_pid } { incr pid } {
-		if {[part $pid print type] == $type || ([part $pid print type] != "na" && $type == "all")} then {
-			set xv [expr [lindex [part $pid print dip] 0]]
-			set yv [expr [lindex [part $pid print dip] 1]]
-			set zv [expr [lindex [part $pid print dip] 2]]
-			puts $fp "$xv $yv $zv"
-		}
+	foreach element $hash { 
+		set xv [expr [lindex [part [lindex $element  1 ] print dip] 0]]
+		set yv [expr [lindex [part [lindex $element  1 ] print dip] 1]]
+		set zv [expr [lindex [part [lindex $element  1 ] print dip] 2]]
+		puts $fp "$xv $yv $zv"
 	}
 
 	close $fp
