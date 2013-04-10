@@ -1024,8 +1024,8 @@ MDINLINE double angle_btw_triangles(double *P1, double *P2, double *P3, double *
 
 	//if(tmp11<=-1. || tmp11>=1.)printf("x %e acos(x) %e dn1 %e dn2 %e ",tmp11,acos(tmp11),tmp22,tmp33);
 	
-	if(tmp11>=1.) { printf("Entering"); tmp11=0.0;}
-	else if(tmp11<=-1.) { printf("Entering"); tmp11=M_PI;}
+	if(tmp11>=1.) { tmp11=0.0;}
+	else if(tmp11<=-1.) { tmp11=M_PI;}
 	phi = M_PI - acos(tmp11); 	// The angle between the faces (not considering the orientation, always less or equal to Pi) is
 								// equal to Pi minus angle between the normals
 	
