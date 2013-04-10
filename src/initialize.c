@@ -656,8 +656,16 @@ void on_parameter_change(int field)
     }
 #endif
   case FIELD_LANGEVIN_GAMMA:
-  case FIELD_DPD_TGAMMA:
   case FIELD_DPD_GAMMA:
+  case FIELD_DPD_RCUT:
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    break;
+  case FIELD_DPD_TGAMMA:
+  case FIELD_DPD_TRCUT:
+    //recalc_maximal_cutoff();
+    //cells_on_geometry_change(0);
+    //break;
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
