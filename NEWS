@@ -38,6 +38,9 @@ New user-visible features
 * The functions for galilei transformations have been overhauled and
   renamed. The old functions are deprecated.
 
+* DPD (as thermostat) now works without any other interaction, so a pure
+  DPD fluid is possible.
+
 User-visible changes
 --------------------
 
