@@ -104,7 +104,7 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   init_intlist(&il);
 
   if (argc < 1) {
-    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
+    Tcl_AppendResult(interp, "expected: inter coulomb <bjerrum> p3m tune | [gpu] <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
 		     (char *) NULL);
     return TCL_ERROR;  
   }
@@ -114,14 +114,21 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
 
   if (ARG0_IS_S("tunev2"))
     return tclcommand_inter_coulomb_parse_p3m_tune(interp, argc-1, argv+1, 1);
+
+  if (ARG0_IS_S("gpu")) {
+    coulomb.method = COULOMB_P3M_GPU;
+    
+    argc--;
+    argv++;
+  }
       
   if(! ARG0_IS_D(r_cut))
     return TCL_ERROR;  
 
   if(argc < 3 || argc > 5) {
-    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb <bjerrum> p3m <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
+    Tcl_AppendResult(interp, "wrong # arguments: inter coulomb <bjerrum> p3m [gpu] <r_cut> { <mesh> | \\{ <mesh_x> <mesh_y> <mesh_z> \\} } <cao> [<alpha> [<accuracy>]]",
 		     (char *) NULL);
-    return TCL_ERROR;  
+    return TCL_ERROR;
   }
 
   if(! ARG_IS_I(1, mesh[0])) {
@@ -292,7 +299,14 @@ int tclprint_to_result_p3m(Tcl_Interp *interp)
   char buffer[TCL_DOUBLE_SPACE];
 
   Tcl_PrintDouble(interp, p3m.params.r_cut, buffer);
-  Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
+  
+  if(coulomb.method == COULOMB_P3M_GPU) {
+    Tcl_AppendResult(interp, "p3m gpu ", buffer, " ", (char *) NULL);
+  }
+  else {
+    Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
+  }
+  
   sprintf(buffer,"%d",p3m.params.mesh[0]);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   sprintf(buffer,"%d",p3m.params.cao);

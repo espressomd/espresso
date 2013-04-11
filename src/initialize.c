@@ -320,6 +320,7 @@ void on_observable_calc()
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       p3m_count_charged_particles();
       break;
@@ -383,6 +384,7 @@ void on_coulomb_change()
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_init();
     break;
@@ -495,6 +497,7 @@ void on_boxl_change() {
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     break;
@@ -550,6 +553,7 @@ void on_cell_structure_change()
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_init();
     break;

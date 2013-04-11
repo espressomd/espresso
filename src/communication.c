@@ -1764,6 +1764,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_ELC_P3M:
     MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, comm_cart);
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     MPI_Bcast(&p3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0, comm_cart);
     break;

@@ -170,6 +170,13 @@ void calc_long_range_forces()
       ELC_add_force(); 
   
       break;
+    case COULOMB_P3M_GPU:
+      //TODO call calculation
+  #ifdef NPT
+      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO make right
+      exit(1);
+  #endif
+      break;
     case COULOMB_P3M:
       p3m_charge_assign();
   #ifdef NPT
