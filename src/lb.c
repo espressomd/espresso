@@ -2692,6 +2692,7 @@ void lb_calc_average_rho() {
   double rho, local_rho, sum_rho;
 
   rho = 0.0;
+  local_rho = 0.0;
   index = 0;
   for (z=1; z<=lblattice.grid[2]; z++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
