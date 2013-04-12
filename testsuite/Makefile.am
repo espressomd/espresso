@@ -48,11 +48,13 @@ tests = \
 	langevin.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_fluid_coupling.tcl \
+	lb_fluid_coupling_gpu.tcl \
+	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
-	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
