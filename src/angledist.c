@@ -228,7 +228,6 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   cosine = scalar(vec1, vec2);
   if ( cosine >  TINY_COS_VALUE)  cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
 
 #ifdef BOND_ANGLEDIST_HARMONIC
   {
