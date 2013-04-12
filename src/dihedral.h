@@ -29,6 +29,7 @@
 #include "utils.h"
 #include "interaction_data.h"
 #include "communication.h"
+#include "grid.h"
 
 #define ANGLE_NOT_DEFINED -100
 
