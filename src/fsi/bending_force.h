@@ -32,11 +32,11 @@
 int bending_force_set_params(int bond_type, double phi0, double kb);
 
 /** Computes the bending force (Dupin2007 eqn. 20 and 21) and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p1,p2,p3     Pointers to particles of triangle 1.
     @param p2,p3,p4     Pointers to particles of triangle 2.
     (triangles have particles p2 and p3 in common)
-    @param iaparams  bending stiffness kb, initial rest angle phi0 (see \ref #inter).
+    @param iaparams  bending stiffness kb, initial rest angle phi0 (see \ref tclcommand_inter).
     @param force1 returns force on particles of triangle 1
     @param force2 returns force on particles of triangle 2
     (p1 += force1; p2 += 0.5*force1+0.5*force2; p3 += 0.5*force1+0.5*force2; p4 += force2;
