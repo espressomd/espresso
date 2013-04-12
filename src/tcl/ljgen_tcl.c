@@ -87,11 +87,12 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
   /* get lennard-jones interaction type */
   if (argc < 10) {
     Tcl_AppendResult(interp, "lj-gen needs 9 parameters: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>"
+		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2> "
+         "[<lj_cap> "
 #ifdef LJGEN_SOFTCORE
-         "[<lj_cap> [<lambda> <softrad>]]"
+         "[<lambda> <softrad>]"
 #endif
-         ,
+         "]",
 		     (char *) NULL);
     return 0;
   }
@@ -107,8 +108,8 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
       (! ARG_IS_D(8, b1))     ||
       (! ARG_IS_D(9, b2))) {
     Tcl_AppendResult(interp, "lj-gen needs 7 DOUBLE and 2 INT parameers: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>"
-         "[<lj_cap>"
+		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2> "
+         "[<lj_cap> "
 #ifdef LJGEN_SOFTCORE
           "[<lambda> <softrad>]"
 #endif
