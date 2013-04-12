@@ -2378,9 +2378,6 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   index_t node_index[8];
   double delta[6];
   double *local_f, interpolated_u[3],delta_j[3];
-#ifdef ADDITIONAL_CHECKS
-  double old_rho[8];
-#endif
 
 #if 0 // I have no idea what this should be for!
   if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
@@ -2910,6 +2907,14 @@ static void lb_check_halo_regions()
 }
 #endif /* ADDITIONAL_CHECKS */
 
+#if 0 /* These debug functions are used nowhere. If you need it, here they are.
+        Remove this comment line and the matching #endif.
+        The functions in question are:
+            lb_lattice_sum
+            lb_check_mode_transformation
+            lb_init_mode_transformation
+            lb_check_negative_n
+        */
 #ifdef ADDITIONAL_CHECKS
 static void lb_lattice_sum() {
 
@@ -3009,7 +3014,7 @@ static void lb_lattice_sum() {
     fprintf(stderr,"%d non-null entries\n",count);
 
 }
-#endif
+#endif /* #ifdef ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_mode_transformation(index_t index, double *mode) {
@@ -3294,5 +3299,7 @@ static int lb_check_negative_n(index_t index)
   return localfails;
 }
 #endif /* ADDITIONAL_CHECKS */
+#endif /* #if 0 */
+/* Here, the unused "ADDITIONAL_CHECKS functions end. */
 
 #endif
