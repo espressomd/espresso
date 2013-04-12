@@ -1858,7 +1858,7 @@ void lb_integrate_GPU(){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  if (n_lb_boundaries > 0) {
+  if (n_lb_boundaries > 0) 
     cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
 
   /**call of fluid step*/
@@ -1867,9 +1867,10 @@ void lb_integrate_GPU(){
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
 
-      KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
-//      KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
-    }
+    if (n_lb_boundaries > 0) {
+        KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
+  //      KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
+      }
 #endif
     intflag = 0;
   }
