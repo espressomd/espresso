@@ -37,9 +37,9 @@
 int area_force_local_set_params(int bond_type, double A0_l, double ka_l);
 
 /** Computes the local area force (Dupin2007 eqn. 15) and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p1,p2,p3     Pointers to triangle particles.
-    @param iaparams  elastic area modulus ka, initial area A0 (see \ref #inter).
+    @param iaparams  elastic area modulus ka, initial area A0 (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @param force3 returns force of particle 3

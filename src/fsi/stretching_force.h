@@ -36,22 +36,21 @@
 int stretching_force_set_params(int bond_type, double r0, double ks);
 
 
-/** Computes the STRETCHING_FORCE pair force and adds this
-    force to the particle forces (see \ref #inter). 
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second particle.
-    @param iaparams  spring stiffness ks, initial distance between particles (see \ref #inter).
-    @param dx        particle distance vector
-    @param force     returns force of particle 1
-    @return true if the bond is broken
-*/
 MDINLINE double KS(double lambda){ // Defined by (19) from Dupin2007
 	double res;
 	res = (pow(lambda,0.5) + pow(lambda,-2.5))/(lambda + pow(lambda,-3.));
 	return res;
 }
 
-
+/** Computes the STRETCHING_FORCE pair force and adds this
+ force to the particle forces (see \ref tclcommand_inter).
+ @param p1        Pointer to first particle.
+ @param p2        Pointer to second particle.
+ @param iaparams  spring stiffness ks, initial distance between particles (see \ref tclcommand_inter).
+ @param dx        particle distance vector
+ @param force     returns force of particle 1
+ @return true if the bond is broken
+ */
 MDINLINE int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
