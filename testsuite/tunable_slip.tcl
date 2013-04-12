@@ -138,7 +138,7 @@ set timestep                    0.01
 set int_steps                   100
 
 # Length of integration run
-set int_loops                   5
+set int_loops                   3
 
 # precision of data output
 set tcl_precision     6
@@ -160,7 +160,7 @@ set wall_right_id 2
 constraint plane cell -10.0 -10.0 0.0 type $wall_left_id
 constraint plane cell -10.0 -10.0 10.0 type $wall_right_id
 
-#DPD-Thermostat
+# DPD-Thermostat
 thermostat dpd $dpd_temperature $dpd_gamma $dpd_r_cut
 
 # Solvent particles
