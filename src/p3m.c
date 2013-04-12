@@ -1303,8 +1303,6 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
   if (coulomb.method == COULOMB_ELC_P3M && elc_params.gap_size <= 1.1*r_cut_iL*box_l[0]) {
     P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f reject r_cut %f > gap %f\n", mesh[0],mesh[1],mesh[2], cao, r_cut_iL,
                      2*r_cut_iL*box_l[0], elc_params.gap_size));
-    P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f reject r_cut %f > gap %f\n", mesh, cao, r_cut_iL,
-		      2*r_cut_iL*box_l[0], elc_params.gap_size));
     /* print result */
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e conflict with ELC\n",
 	    mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err);
@@ -1332,7 +1330,6 @@ static double p3m_mc_time(char **log, int mesh[3], int cao,
   *_accuracy = p3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
 
   P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh (%d, %d, %d) cao %d r_cut %f time %f\n", mesh[0], mesh[1], mesh[2], cao, r_cut_iL, int_time));
-  P3M_TRACE(fprintf(stderr, "p3m_mc_time: mesh %d cao %d r_cut %f time %f\n", mesh, cao, r_cut_iL, int_time));
   /* print result */
   sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n",
 	  mesh[0], cao, r_cut_iL, *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);

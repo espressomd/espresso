@@ -61,9 +61,10 @@ double my_right[3]    = {1, 1, 1};
 
 /************************************************************/
 
-void setup_node_grid()
+void init_node_grid()
 {
-  mpi_bcast_parameter(FIELD_NODEGRID);
+  grid_changed_n_nodes();
+  cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
 int node_grid_is_set()

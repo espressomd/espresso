@@ -33,7 +33,7 @@ setmd box_l $l $l $l
 setmd time_step 0.01
 thermostat lb 0
 
-set agrid 0.75
+set agrid 1.00
 set visc 7.
 set rho 2.
 set tau 0.04
