@@ -99,7 +99,7 @@ void on_program_start()
   init_random();
   init_bit_random();
 
-  setup_node_grid();
+  init_node_grid();
   /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
