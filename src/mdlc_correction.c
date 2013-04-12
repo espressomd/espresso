@@ -543,9 +543,9 @@ void    add_mdlc_force_corrections(){
 	p[i].f.f[2] += coulomb.Dprefactor*dip_DLC_f_z[ip]; //SDC correction term is zero for the forces
    
 #if defined(ROTATION) && defined(DP3M)
+    double correc= 4.*M_PI/volume;
 	//in the Next lines: the second term (correc*...)is the SDC correction for the torques
 	if(dp3m.params.epsilon == P3M_EPSILON_METALLIC) {	
-      double correc= 4.*M_PI/volume;
 
 	  dx=0.0;
 	  dy=0.0;
