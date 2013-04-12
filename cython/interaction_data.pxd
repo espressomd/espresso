@@ -15,6 +15,8 @@ cdef extern from "../src/interaction_data.h":
     double LJ_min
 
   cdef IA_parameters *get_ia_param(int i, int j)
+
+cdef extern from "../src/lj.h":
   cdef int lennard_jones_set_params(int part_type_a, int part_type_b,
                                         double eps, double sig, double cut,
                                         double shift, double offset,
