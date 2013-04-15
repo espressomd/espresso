@@ -296,10 +296,17 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
               host_data[i+g].v[0] = (float)part[i].m.v[0];
               host_data[i+g].v[1] = (float)part[i].m.v[1];
               host_data[i+g].v[2] = (float)part[i].m.v[2];
+              
 #ifdef LB_ELECTROHYDRODYNAMICS
               host_data[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
               host_data[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
               host_data[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
+#endif
+
+#ifdef ELECTROSTATICS
+              if (coulomb.method == COULOMB_P3M_GPU) {
+                host_data_sl[i+g].q = (float)part[i].p.q;
+              }
 #endif
             }  
             g += npart;
@@ -355,10 +362,17 @@ static void mpi_get_particles_slave_lb(){
         host_data_sl[i+g].v[0] = (float)part[i].m.v[0];
         host_data_sl[i+g].v[1] = (float)part[i].m.v[1];
         host_data_sl[i+g].v[2] = (float)part[i].m.v[2];
+        
 #ifdef LB_ELECTROHYDRODYNAMICS
         host_data_sl[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
         host_data_sl[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
         host_data_sl[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
+#endif
+
+#ifdef ELECTROSTATICS
+        if (coulomb.method == COULOMB_P3M_GPU) {
+          host_data_sl[i+g].q = (float)part[i].p.q;
+        }
 #endif
       }
       g+=npart;

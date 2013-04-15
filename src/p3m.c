@@ -1231,6 +1231,7 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L
   /* broadcast p3m parameters for test run */
   if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M && coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
+    
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];

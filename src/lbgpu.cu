@@ -1422,6 +1422,10 @@ if (_err!=cudaSuccess){ \
 /* Host funktions to setup and call kernels*/
 /**********************************************************************/
 
+void lb_get_particle_pointer(LB_particle_gpu** pointeradress) {
+  *pointeradress = particle_data;
+}
+
 /**initialization for the lb gpu fluid called from host
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 */
