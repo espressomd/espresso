@@ -191,7 +191,7 @@ void mpi_send_quat(int node, int part, double quat[4]);
 /** Issue REQ_SET_ROTATION: send particle rotation flag
     Also calls \ref on_particle_change.
     \param part the particle.
-    \param node the node it is attached to.
+    \param pnode the node it is attached to.
     \param rot the rotation flag
 */
 void mpi_send_rotation(int pnode, int part, int rot);

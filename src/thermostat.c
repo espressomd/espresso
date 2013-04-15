@@ -71,7 +71,7 @@ void thermo_init_langevin()
 #ifdef ROTATION 
   langevin_gamma_rotation = langevin_gamma/3;
   langevin_pref2_rotation = sqrt(24.0*temperature*langevin_gamma_rotation/time_step);
-  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_gamma_rotation=%f, langevin_pref2_rotation=%f",langevin_gamma_rotation,langevin_pref2_rotation));
+  THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_gamma_rotation=%f, langevin_pref2_rotation=%f",this_node, langevin_gamma_rotation,langevin_pref2_rotation));
 #endif
   THERMO_TRACE(fprintf(stderr,"%d: thermo_init_langevin: langevin_pref1=%f, langevin_pref2=%f",this_node,langevin_pref1,langevin_pref2));  
 }

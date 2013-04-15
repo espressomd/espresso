@@ -1415,17 +1415,20 @@ void ek_integrate_electrostatics() {
   
   KERNELCALL( ek_gather_species_charge_density, dim_grid, threads_per_block, () );
   
-  blocks_per_grid_x =
-    ( lbpar_gpu.number_of_particles + threads_per_block * blocks_per_grid_y - 1 ) /
-    ( threads_per_block * blocks_per_grid_y );
-  dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
+  if ( lbpar_gpu.number_of_particles != 0 ) { //TODO make it an if number_of_charged_particles != 0
   
-  lb_get_particle_pointer( &particle_data_gpu );
-  
-  KERNELCALL( ek_gather_particle_charge_density,
-              dim_grid, threads_per_block,
-              ( particle_data_gpu, ek_lbparameters_gpu ) );
+    blocks_per_grid_x =
+      ( lbpar_gpu.number_of_particles + threads_per_block * blocks_per_grid_y - 1 ) /
+      ( threads_per_block * blocks_per_grid_y );
+    dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
     
+    lb_get_particle_pointer( &particle_data_gpu );
+    
+    KERNELCALL( ek_gather_particle_charge_density,
+                dim_grid, threads_per_block,
+                ( particle_data_gpu, ek_lbparameters_gpu ) );
+  }
+  
   if( cufftExecR2C( plan_fft,
                     (cufftReal*) ek_parameters.charge_potential,
                     ek_parameters.charge_potential               ) != CUFFT_SUCCESS ) {

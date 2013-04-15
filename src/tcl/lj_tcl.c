@@ -53,12 +53,11 @@ int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j)
 }
 
 /** set the force cap for the LJ interaction.
-    @param ljforcecap the maximal force, 0 to disable, -1 for individual cutoff
-    for each of the interactions.
+  @param interp tcl interpreter handle
+  @param argc number of arguments
+  @param argv arguments 
 */
 
-
-/// parser for the forcecap
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv)
 {
   if (argc==1) {

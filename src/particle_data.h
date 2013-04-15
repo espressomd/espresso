@@ -583,7 +583,7 @@ int set_particle_gamma(int part, double gamma);
     /** Call only on the master node: set particle external torque.
         @param part  the particle.
         @param flag  new value for ext_flag.
-        @param force new value for ext_torque.
+        @param torque new value for ext_torque.
         @return ES_OK if particle existed
     */
     int set_particle_ext_torque(int part, int flag, double torque[3]);

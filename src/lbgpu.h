@@ -28,6 +28,8 @@
 
 #include "utils.h"
 #include "electrokinetics.h"
+#include "config.h"
+
 
 #ifdef LB_GPU
 
