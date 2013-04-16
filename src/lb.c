@@ -626,7 +626,6 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
      free(host_checkpoint_boundary);
      free(host_checkpoint_force);
      //fprintf(stderr, "LB checkpointing not implemented for GPU\n");
-     return ES_OK;
 #endif
   }
   else if(lattice_switch & LATTICE_LB) {
@@ -665,11 +664,9 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 			}
 		}
 		fclose(cpfile);
-		return ES_OK;
 #endif
 	}
-
-  return ES_ERROR;
+  return ES_OK;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   if(lattice_switch & LATTICE_LB_GPU) {
@@ -704,7 +701,6 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
     free(host_checkpoint_seed);
     free(host_checkpoint_boundary);
     free(host_checkpoint_force);
-    return ES_OK; 
 #endif
   }
   else if(lattice_switch & LATTICE_LB) {
@@ -746,9 +742,9 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   fclose(cpfile);
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
-  return ES_OK;
 #endif
   }
+  return ES_OK;
 }
 
 int lb_lbnode_get_rho(int* ind, double* p_rho){
