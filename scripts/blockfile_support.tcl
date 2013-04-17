@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
+# Copyright (C) 2010,2011,2012 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #  Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -75,12 +75,12 @@ proc blockfile_read_auto_particles {channel read auto} {
 		set type $idx; incr idx }
 	    "^mo"     { if {![regexp "^$i" "molecule_id"]} { error " $i is not a particle property" }
 		set mol $idx; incr idx }
-            "^ma"     { if {![regexp "^$i" "mass"]} { error " $i is not a particle property" }
-                set mass $idx; incr idx }
-            "^vi"     { if {![regexp "^$i" "virtual"]} { error " $i is not a particle property" }
-                set virtual $idx; incr idx }
-            "^vs"     { if {![regexp "^$i" "vs_relative"]} { error " $i is not a particle property" }
-                set vs_relative $idx; incr idx 2 }
+      "^ma"     { if {![regexp "^$i" "mass"]} { error " $i is not a particle property" }
+    set mass $idx; incr idx }
+      "^vi"     { if {![regexp "^$i" "virtual"]} { error " $i is not a particle property" }
+    set virtual $idx; incr idx }
+      "^vs"     { if {![regexp "^$i" "vs_relative"]} { error " $i is not a particle property" }
+    set vs_relative $idx; incr idx 2 }
 	    "^q$"     { set q $idx; incr idx }
 	    "^v"      { if {![regexp "^$i" "v"]} { error " $i is not a particle property" }
 		set v $idx; incr idx 3 }
