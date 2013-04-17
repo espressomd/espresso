@@ -226,7 +226,10 @@ extern int n_lb_boundaries;
 extern "C" {
 #endif
 
+void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
+void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_particle_pointer(LB_particle_gpu** pointeradress);
+void lb_get_particle_force_pointer(LB_particle_force_gpu** pointeradress);
 
 void lattice_boltzmann_update_gpu();
 

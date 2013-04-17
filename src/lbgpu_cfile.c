@@ -305,7 +305,7 @@ static void mpi_get_particles_lb(LB_particle_gpu *host_data)
 
 #ifdef ELECTROSTATICS
               if (coulomb.method == COULOMB_P3M_GPU) {
-                host_data_sl[i+g].q = (float)part[i].p.q;
+                host_data[i+g].q = (float)part[i].p.q;
               }
 #endif
             }  

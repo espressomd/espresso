@@ -387,7 +387,8 @@ SUFFIXES=.cu
 
 CUDA_SOURCES = \
 	cuda_init.cu cuda_init.h \
-	lbgpu.cu lbgpu.h
+	lbgpu.cu lbgpu.h \
+	p3m_gpu.cu p3m_gpu.h
 
 if TCL
 

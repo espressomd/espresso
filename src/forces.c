@@ -50,6 +50,7 @@
 #include "virtual_sites.h"
 #include "constraint.h"
 #include "lbgpu.h"
+#include "p3m_gpu.h"
 #include "iccp3m.h"
 
 /************************************************************/
@@ -172,9 +173,10 @@ void calc_long_range_forces()
       break;
     case COULOMB_P3M_GPU:
       //TODO call calculation
+      p3m_gpu_add_farfield_force();
   #ifdef NPT
       printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO make right
-      exit(1);
+      exit(1); //TODO CHECK IF BAROSTAT IS ACTUALLY ON
   #endif
       break;
     case COULOMB_P3M:

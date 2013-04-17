@@ -1422,8 +1422,23 @@ if (_err!=cudaSuccess){ \
 /* Host funktions to setup and call kernels*/
 /**********************************************************************/
 
+void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
+  if(cudaGetSymbolAddress((void**) pointeradress, para) != cudaSuccess) {
+    printf("oh noo\n"); //TODO error
+    exit(1);
+  }
+}
+
+void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
+  *pointeradress = &lbpar_gpu;
+}
+
 void lb_get_particle_pointer(LB_particle_gpu** pointeradress) {
   *pointeradress = particle_data;
+}
+
+void lb_get_particle_force_pointer(LB_particle_force_gpu** pointeradress) {
+  *pointeradress = particle_force;
 }
 
 /**initialization for the lb gpu fluid called from host
