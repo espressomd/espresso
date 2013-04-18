@@ -53,7 +53,7 @@ LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.
 LB_values_gpu *host_values = NULL;
 LB_nodes_gpu *host_nodes = NULL;
 LB_particle_force_gpu *host_forces = NULL;
-LB_particle_gpu *host_data = NULL;
+
 
 /** Flag indicating momentum exchange between particles and fluid */
 int transfer_momentum_gpu = 0;
@@ -101,7 +101,6 @@ void lattice_boltzmann_update_gpu() {
 void lb_calc_particle_lattice_ia_gpu() {
 
   if (transfer_momentum_gpu) {
-    mpi_get_particles_lb(host_data);
 
     if(this_node == 0){
 #if 0
@@ -110,9 +109,9 @@ void lb_calc_particle_lattice_ia_gpu() {
       }
 #endif
 
-    if(lbpar_gpu.number_of_particles) lb_particle_GPU(host_data);
+      if(lbpar_gpu.number_of_particles) lb_particle_GPU();
 
-    LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
+      LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
 
     }
   }
@@ -153,7 +152,8 @@ void lb_realloc_particles_gpu(){
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
-  lb_realloc_particle_GPU(&lbpar_gpu, &host_data);
+  gpu_init_particle_comm(&host_data);
+  lb_realloc_particle_GPU_leftovers(&lbpar_gpu, &host_data);
 }
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {

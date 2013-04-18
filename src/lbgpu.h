@@ -166,11 +166,6 @@ typedef struct {
 
 } LB_extern_nodeforce_gpu;
 
-typedef struct {
-
-  unsigned int seed;
-
-} LB_particle_seed_gpu;
 
 void on_lb_params_change_gpu(int field);
 
@@ -236,10 +231,9 @@ void lb_realloc_particles_gpu(); //TODO probably move to cuda_common.cu
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-void lb_particle_GPU(LB_particle_gpu *host_data);
+void lb_particle_GPU();
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
-void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
 void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);

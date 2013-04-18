@@ -44,14 +44,8 @@ static LB_values_gpu *device_values = NULL;
 /** structs for velocity densities */
 static LB_nodes_gpu nodes_a;
 static LB_nodes_gpu nodes_b;
-/** struct for particle force */
-static LB_particle_force_gpu *particle_force = NULL;
-/** struct for particle position and veloctiy */
-static LB_particle_gpu *particle_data = NULL;
 /** struct for node force */
 static LB_node_force_gpu node_f;
-/** struct for storing particle rn seed */
-static LB_particle_seed_gpu *part = NULL;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
 
@@ -80,11 +74,8 @@ static size_t size_of_extern_nodeforces;
 /**parameters residing in constant memory */
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
-/**cudasteams for parallel computing on cpu and gpu */
-cudaStream_t stream[1];
 
-cudaError_t err;
-cudaError_t _err;
+
 int initflag = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
@@ -1361,35 +1352,7 @@ __global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_
     device_flag[0] = n_a.boundary[single_nodeindex];
   }	
 }
-/**erroroutput for memory allocation and memory copy 
- * @param err cuda error code
- * @param *file .cu file were the error took place
- * @param line line of the file were the error took place
-*/
-void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
-    if( cudaSuccess != err) {                                             
-      fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(err));
-      exit(EXIT_FAILURE);
-    } else {
-      _err=cudaGetLastError(); \
-      if (_err != cudaSuccess) {
-        fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
-        printf("CUDA error: %s\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-      }
-    }
-}
-#define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
 
-#define KERNELCALL(_f, _a, _b, _params) \
-_f<<<_a, _b, 0, stream[0]>>>_params; \
-_err=cudaGetLastError(); \
-if (_err!=cudaSuccess){ \
-  printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
-  fprintf(stderr, "error calling %s with dim %d %d %d #thpb %d in %s:%u\n", #_f, _a.x, _a.y, _a.z, _b, __FILE__, __LINE__); \
-  exit(EXIT_FAILURE); \
-}
 /*********************************************************/
 /** \name Host functions to setup and call kernels */
 /*********************************************************/
@@ -1607,7 +1570,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 /**setup and call particle kernel from the host
  * @param **host_data		Pointer to the host particle positions and velocities
 */
-void lb_particle_GPU(LB_particle_gpu *host_data){
+void lb_particle_GPU(){
 //  TODO CALL OUR NEW FUNCTION TO TRANSFER PART DATA BEFORE THIS HAPPENS
   /** call of the particle kernel */
   /** values for the particle kernel */
