@@ -28,6 +28,8 @@
 
 #include "utils.h"
 #include "config.h"
+#include "cuda_common.h"
+
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -85,7 +87,7 @@ typedef struct {
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */
   float friction;
-  /** MD tiemstep */
+  /** MD timestep */
   float time_step;
   /** amplitude of the fluctuations in the viscous coupling */
   float lb_coupl_pref;
@@ -99,7 +101,7 @@ typedef struct {
   unsigned int dim_z;
 
   unsigned int number_of_nodes;
-  unsigned int number_of_particles;
+  unsigned int number_of_particles; //TODO this should be moved to CUDA common
   /** Flag indicating whether fluctuations are present. */
   int fluct;
   /**to calc and print out phys values */
@@ -118,21 +120,21 @@ typedef struct {
 /** Data structure holding the phys. values for the Lattice Boltzmann system. */
 typedef struct {
 
-  /** velocitydensity of the node */
+  /** velocity density of the node */
   float rho;
 
   /** veolcity of the node */
   float v[3];
 
-  /** stresstensor of the node */
+  /** stress tensor of the node */
   float pi[6];
 
 } LB_values_gpu;
 
-/** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
+/** Data structure holding the velocity densities for the Lattice Boltzmann system. */
 typedef struct {
 
-  /** velocitydensity of the node */
+  /** velocity density of the node */
   float *vd;
   /** seed for the random gen */
   unsigned int *seed;
@@ -140,7 +142,6 @@ typedef struct {
   unsigned int *boundary;
 
 } LB_nodes_gpu;
-
 
 /** Data structure for the randomnr and the seed. */
 typedef struct {
@@ -150,27 +151,6 @@ typedef struct {
   unsigned int seed;
 
 } LB_randomnr_gpu;
-
-typedef struct {
-  /** force on the particle given to md part */
-  float f[3];
-
-} LB_particle_force_gpu;
-
-typedef struct {
-  /** particle position given from md part*/
-  float p[3];
-  /** particle momentum struct velocity p.m->v*/
-  float v[3];
-#ifdef LB_ELECTROHYDRODYNAMICS
-  float mu_E[3];
-#endif
-#ifdef ELECTROSTATICS
-  float q;
-#endif
-  unsigned int fixed;
-
-} LB_particle_gpu;
 
 typedef struct {
 
@@ -229,8 +209,6 @@ extern "C" {
 
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
-void lb_get_particle_pointer(LB_particle_gpu** pointeradress);
-void lb_get_particle_force_pointer(LB_particle_force_gpu** pointeradress);
 
 void lattice_boltzmann_update_gpu();
 
@@ -254,7 +232,7 @@ void lb_reinit_fluid_gpu();
 //void lb_reinit_forces();
 
 /** (Re-)initializes the particle array*/
-void lb_realloc_particles_gpu();
+void lb_realloc_particles_gpu(); //TODO probably move to cuda_common.cu
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
@@ -262,7 +240,6 @@ void lb_particle_GPU(LB_particle_gpu *host_data);
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
-void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
 void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);

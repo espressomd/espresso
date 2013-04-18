@@ -30,6 +30,7 @@
 extern "C" {
 #include "lbgpu.h"
 #include "config.h"
+#include "cuda_common.h"
 }
 
 #ifdef LB_GPU
@@ -85,7 +86,6 @@ cudaStream_t stream[1];
 cudaError_t err;
 cudaError_t _err;
 int initflag = 0;
-int partinitflag = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device funktions called by kernel funktions */
@@ -1076,37 +1076,7 @@ __global__ void set_u_equilibrium(LB_nodes_gpu n_a, int single_nodeindex,float *
 
   }
 }
-/** kernel for the initalisation of the particle force array
- * @param *particle_force	Pointer to local particle force (Output)
- * @param *part			Pointer to the particle rn seed storearray (Output)
-*/
-__global__ void init_particle_force(LB_particle_force_gpu *particle_force, LB_particle_seed_gpu *part){
-	
-  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-	
-  if(part_index<para.number_of_particles){
-    particle_force[part_index].f[0] = 0.0f;
-    particle_force[part_index].f[1] = 0.0f;
-    particle_force[part_index].f[2] = 0.0f;
-	
-    part[part_index].seed = para.your_seed + part_index;
-  }
-			
-}
 
-/** kernel for the initalisation of the partikel force array
- * @param *particle_force	pointer to local particle force (Input)
-*/
-__global__ void reset_particle_force(LB_particle_force_gpu *particle_force){
-	
-  unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-	
-  if(part_index<para.number_of_particles){
-    particle_force[part_index].f[0] = 0.0f;
-    particle_force[part_index].f[1] = 0.0f;
-    particle_force[part_index].f[2] = 0.0f;
-  }			
-}
 
 /** (re-)initialization of the node force / set up of external force in lb units
  * @param node_f		Pointer to local node force (Input)
@@ -1438,14 +1408,6 @@ void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
   *pointeradress = &lbpar_gpu;
 }
 
-void lb_get_particle_pointer(LB_particle_gpu** pointeradress) {
-  *pointeradress = particle_data;
-}
-
-void lb_get_particle_force_pointer(LB_particle_force_gpu** pointeradress) {
-  *pointeradress = particle_force;
-}
-
 /**initialization for the lb gpu fluid called from host
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 */
@@ -1509,9 +1471,11 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));	
-  /** init part forces with zero*/
-  if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
+  
+  /** make sure particle data is communicated to the GPU */
+  cuda_enable_particle_communication();
+  
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
   intflag = 1;
@@ -1547,40 +1511,12 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
  * @param **host_data	Pointer to host information data
 */
-void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
+void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
 
-  if(partinitflag){
-    cudaFreeHost(*host_data);
-    cudaFree(particle_force);
-    cudaFree(particle_data);
-    cudaFree(part);
-  }
-  /** Allocate struct for particle positions */
-  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
-  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
-  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
-  /**pinned memory mode - use special function to get OS-pinned memory*/
-  cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
-#else
-  cudaMallocHost((void**)host_data, size_of_positions);
-#endif
-
-  cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
-  cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
-  cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
   //copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
-  //mem init of particles ok
-  partinitflag  = 1;
-  /** values for the particle kernel */
-  int threads_per_block_particles = 64;
-  int blocks_per_grid_particles_y = 4;
-  int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-  if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
+
 #ifdef LB_BOUNDARIES_GPU
 /** setup and call boundaries from the host
  * @param host_n_lb_boundaries number of LB boundaries
@@ -1672,9 +1608,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
  * @param **host_data		Pointer to the host particle positions and velocities
 */
 void lb_particle_GPU(LB_particle_gpu *host_data){
-  
-  /** get espresso md particle values*/
-  cudaMemcpyAsync(particle_data, host_data, size_of_positions, cudaMemcpyHostToDevice, stream[0]);
+//  TODO CALL OUR NEW FUNCTION TO TRANSFER PART DATA BEFORE THIS HAPPENS
   /** call of the particle kernel */
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
@@ -1683,25 +1617,6 @@ void lb_particle_GPU(LB_particle_gpu *host_data){
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
   KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
-}
-/** setup and call kernel to copy particle forces to host
- * @param *host_forces contains the particle force computed on the GPU
-*/
-void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
-
-  /** Copy result from device memory to host memory*/
-  cudaMemcpy(host_forces, particle_force, size_of_forces, cudaMemcpyDeviceToHost);
-
-    /** values for the particle kernel */
-  int threads_per_block_particles = 64;
-  int blocks_per_grid_particles_y = 4;
-  int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-  /** reset part forces with zero*/
-  KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force));
-	
-  cudaThreadSynchronize();
 }
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes
