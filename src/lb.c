@@ -597,11 +597,38 @@ int lb_lbfluid_print_velocity(char* filename) {
 
 int lb_lbfluid_save_checkpoint(char* filename, int binary) {
   if(lattice_switch & LATTICE_LB_GPU) {
-    fprintf(stderr, "LB checkpointing not implemented for GPU\n");
-    return ES_ERROR;
+#ifdef LB_GPU
+     FILE* cpfile;
+     cpfile=fopen(filename, "w");
+     if (!cpfile) {
+        return ES_ERROR;
+     }
+     float* host_checkpoint_vd = malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
+     unsigned int* host_checkpoint_seed = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+     unsigned int* host_checkpoint_boundary = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+     float* host_checkpoint_force = malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+     lb_save_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
+     for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
+         fprintf(cpfile, "%.8f \n", host_checkpoint_vd[n]); 
+     }
+     for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+         fprintf(cpfile, "%u \n", host_checkpoint_seed[n]); 
+     }
+     for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+         fprintf(cpfile, "%u \n", host_checkpoint_boundary[n]); 
+     }
+     for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
+         fprintf(cpfile, "%.8f \n", host_checkpoint_force[n]); 
+     }
+     fclose(cpfile);
+     free(host_checkpoint_vd);
+     free(host_checkpoint_seed);
+     free(host_checkpoint_boundary);
+     free(host_checkpoint_force);
+     //fprintf(stderr, "LB checkpointing not implemented for GPU\n");
+#endif
   }
-  else
-	if(lattice_switch & LATTICE_LB) {
+  else if(lattice_switch & LATTICE_LB) {
 #ifdef LB
 		FILE* cpfile;
 		cpfile=fopen(filename, "w");
@@ -637,13 +664,46 @@ int lb_lbfluid_save_checkpoint(char* filename, int binary) {
 			}
 		}
 		fclose(cpfile);
-		return ES_OK;
 #endif
 	}
-
-  return ES_ERROR;
+  return ES_OK;
 }
 int lb_lbfluid_load_checkpoint(char* filename, int binary) {
+  if(lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    FILE* cpfile;
+    cpfile=fopen(filename, "r");
+    if (!cpfile) {
+      return ES_ERROR;
+    }
+    float* host_checkpoint_vd = malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
+    unsigned int* host_checkpoint_seed = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+    unsigned int* host_checkpoint_boundary = malloc(lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+    float* host_checkpoint_force = malloc(lbpar_gpu.number_of_nodes * 3 * sizeof(float));
+
+    if (!binary) {
+      for (int n=0; n<(19*lbpar_gpu.number_of_nodes); n++) {
+          fscanf(cpfile, "%f", &host_checkpoint_vd[n]); 
+      }
+      for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+          fscanf(cpfile, "%u", &host_checkpoint_seed[n]); 
+      }
+      for (int n=0; n<lbpar_gpu.number_of_nodes; n++) {
+          fscanf(cpfile, "%u", &host_checkpoint_boundary[n]); 
+      }
+      for (int n=0; n<(3*lbpar_gpu.number_of_nodes); n++) {
+         fscanf(cpfile, "%f", &host_checkpoint_force[n]); 
+      }
+     lb_load_checkpoint_GPU(host_checkpoint_vd, host_checkpoint_seed, host_checkpoint_boundary, host_checkpoint_force);
+    }
+    fclose(cpfile);
+    free(host_checkpoint_vd);
+    free(host_checkpoint_seed);
+    free(host_checkpoint_boundary);
+    free(host_checkpoint_force);
+#endif
+  }
+  else if(lattice_switch & LATTICE_LB) {
 #ifdef LB
   FILE* cpfile;
   cpfile=fopen(filename, "r");
@@ -682,15 +742,10 @@ int lb_lbfluid_load_checkpoint(char* filename, int binary) {
   fclose(cpfile);
 //  lbpar.resend_halo=1;
 //  mpi_bcast_lb_params(0);
-  return ES_OK;
 #endif
-  if(!(lattice_switch & LATTICE_LB_GPU)) {
-    fprintf(stderr, "Not implemented\n");
-    return ES_ERROR;
   }
-  return ES_ERROR;
+  return ES_OK;
 }
-
 
 int lb_lbnode_get_rho(int* ind, double* p_rho){
   if (lattice_switch & LATTICE_LB_GPU) {
@@ -2378,9 +2433,6 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
   index_t node_index[8];
   double delta[6];
   double *local_f, interpolated_u[3],delta_j[3];
-#ifdef ADDITIONAL_CHECKS
-  double old_rho[8];
-#endif
 
 #if 0 // I have no idea what this should be for!
   if(!(p->l.ext_flag & COORD_FIXED(0)) && !(p->l.ext_flag & COORD_FIXED(1)) && !(p->l.ext_flag & COORD_FIXED(2)))
@@ -2695,6 +2747,7 @@ void lb_calc_average_rho() {
   double rho, local_rho, sum_rho;
 
   rho = 0.0;
+  local_rho = 0.0;
   index = 0;
   for (z=1; z<=lblattice.grid[2]; z++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
@@ -2910,6 +2963,14 @@ static void lb_check_halo_regions()
 }
 #endif /* ADDITIONAL_CHECKS */
 
+#if 0 /* These debug functions are used nowhere. If you need it, here they are.
+        Remove this comment line and the matching #endif.
+        The functions in question are:
+            lb_lattice_sum
+            lb_check_mode_transformation
+            lb_init_mode_transformation
+            lb_check_negative_n
+        */
 #ifdef ADDITIONAL_CHECKS
 static void lb_lattice_sum() {
 
@@ -3009,7 +3070,7 @@ static void lb_lattice_sum() {
     fprintf(stderr,"%d non-null entries\n",count);
 
 }
-#endif
+#endif /* #ifdef ADDITIONAL_CHECKS */
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_mode_transformation(index_t index, double *mode) {
@@ -3294,5 +3355,7 @@ static int lb_check_negative_n(index_t index)
   return localfails;
 }
 #endif /* ADDITIONAL_CHECKS */
+#endif /* #if 0 */
+/* Here, the unused "ADDITIONAL_CHECKS functions end. */
 
 #endif

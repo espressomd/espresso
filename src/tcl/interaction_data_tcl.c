@@ -698,12 +698,12 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
 /* TODO: This function is not used anywhere. To be removed?  */
 int tf_print(Tcl_Interp * interp, int part_type)
 {
-  TF_parameters *data;
+  //TF_parameters *data;
   Tcl_ResetResult(interp);
     
     make_particle_type_exist(part_type);
     
-    data = get_tf_param(part_type);
+    //data = get_tf_param(part_type);
     
     return tclprint_to_result_TF(interp, part_type);
 }

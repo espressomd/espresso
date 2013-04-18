@@ -447,6 +447,8 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
  * @param index			node index / thread index (Input)
  * @param n_b			Pointer to local node residing in array b (Input)
  * @param n_a			Pointer to local node residing in array a (Output) (temp stored in buffer a)
+ * @param LB_boundary_velocity 			The constant velocity at the boundary, set by the user (Input)
+ * @param LB_boundary_force 			The force on the boundary nodes (Output)
 */
 __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index, \
     float* LB_boundary_velocity, float* LB_boundary_force){
@@ -1134,7 +1136,8 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 }
 
 /**set the boundary flag for all boundary nodes
- * @param *boundindex	     	Pointer to the 1d index of the boundnode (Input)
+ * @param boundary_node_list    The indices of the boundary nodes
+ * @param boundary_index_list   The flag representing the corresponding boundary
  * @param number_of_boundnodes	The number of boundary nodes
  * @param n_a			Pointer to local node residing in array a (Input)
  * @param n_b			Pointer to local node residing in array b (Input)
@@ -1230,6 +1233,8 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *partic
 /**Bounce back boundary read kernel
  * @param n_a					Pointer to local node residing in array a (Input)
  * @param n_b					Pointer to local node residing in array b (Input)
+ * @param LB_boundary_velocity 			The constant velocity at the boundary, set by the user (Input)
+ * @param LB_boundary_force 			The force on the boundary nodes (Output)
 */
 __global__ void bb_read(LB_nodes_gpu n_a, LB_nodes_gpu n_b, float* LB_boundary_velocity, float* LB_boundary_force){
 
@@ -1544,13 +1549,16 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
 */
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
 
+  if(partinitflag){
+    cudaFreeHost(*host_data);
+    cudaFree(particle_force);
+    cudaFree(particle_data);
+    cudaFree(part);
+  }
   /** Allocate struct for particle positions */
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
   size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-  if(partinitflag){
-     cudaFreeHost(*host_data);
-  }
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
   /**pinned memory mode - use special function to get OS-pinned memory*/
   cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
@@ -1558,16 +1566,12 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   cudaMallocHost((void**)host_data, size_of_positions);
 #endif
 
-  if(partinitflag){
-    cudaFree(particle_force);
-    cudaFree(particle_data);
-    cudaFree(part);
-  }
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
-
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
+  //copy parameters, especially number of parts to gpu mem
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  //mem init of particles ok
   partinitflag  = 1;
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
@@ -1578,9 +1582,12 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
 #ifdef LB_BOUNDARIES_GPU
-/**setup and call boundaries from the host
- * @param *host_boundindex		Pointer to the host bound index
+/** setup and call boundaries from the host
+ * @param host_n_lb_boundaries number of LB boundaries
  * @param number_of_boundnodes	number of boundnodes
+ * @param host_boundary_node_list    The indices of the boundary nodes
+ * @param host_boundary_index_list   The flag representing the corresponding boundary
+ * @param host_LB_Boundary_velocity 			The constant velocity at the boundary, set by the user (Input)
 */
 void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_LB_Boundary_velocity){
   int temp = host_n_lb_boundaries;
@@ -1820,6 +1827,29 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
   host_temp[0] = (double)(host_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
+/** setup and call kernel for getting macroscopic fluid values of all nodes
+ * @param *host_values struct to save the gpu values
+*/
+void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
+
+  cudaMemcpy(host_checkpoint_vd, current_nodes->vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_checkpoint_seed, current_nodes->seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_checkpoint_force, node_f.force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyDeviceToHost);
+
+}
+/** setup and call kernel for setting macroscopic fluid values of all nodes
+ * @param *host_values struct to set stored values
+*/
+void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
+
+  cudaMemcpy(current_nodes->vd, host_checkpoint_vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyHostToDevice);
+  intflag = 1;
+  cudaMemcpy(current_nodes->seed, host_checkpoint_seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice);
+  cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice);
+  cudaMemcpy(node_f.force, host_checkpoint_force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyHostToDevice);
+
+}
 
 /** setup and call kernel to get the boundary flag of a single node
  *  @param single_nodeindex number of the node to get the flag for
@@ -1877,17 +1907,21 @@ void lb_integrate_GPU(){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
+#ifdef LB_BOUNDARIES_GPU
+  if (n_lb_boundaries > 0) 
+    cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
+#endif
+
   /**call of fluid step*/
   if (intflag == 1){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
-    if (n_lb_boundaries > 0) {
-      cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
 
-      KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
-//      KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
-    }
+    if (n_lb_boundaries > 0) {
+        KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
+  //      KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
+      }
 #endif
     intflag = 0;
   }
@@ -1895,6 +1929,7 @@ void lb_integrate_GPU(){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_values, node_f));
     current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU		
+
     if (n_lb_boundaries > 0) {
       KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a, LB_boundary_velocity, LB_boundary_force));
  //     KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));

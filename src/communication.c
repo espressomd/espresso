@@ -99,8 +99,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_random_seed_slave) \
   CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
-/*  CB(mpi_lj_cap_forces_slave) */ \
-/*  CB(mpi_tab_cap_forces_slave) */ \
   CB(mpi_bit_random_seed_slave) \
   CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
@@ -114,17 +112,14 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_update_mol_ids_slave) \
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
-/*  CB(mpi_buck_cap_forces_slave) */\
   CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
-/*  CB(mpi_morse_cap_forces_slave) */ \
   CB(mpi_bcast_lb_params_slave) \
   CB(mpi_send_dip_slave) \
   CB(mpi_send_dipm_slave) \
   CB(mpi_send_fluid_slave) \
   CB(mpi_recv_fluid_slave) \
   CB(mpi_local_stress_tensor_slave) \
-/*  CB(mpi_ljangle_cap_forces_slave)*/ \
   CB(mpi_send_virtual_slave) \
   CB(mpi_bcast_tf_params_slave) \
   CB(mpi_iccp3m_iteration_slave) \
@@ -231,12 +226,13 @@ static void mpi_call(SlaveCallback cb, int node, int param) {
   request[1] = node;
   request[2] = param;
 
-  COMM_TRACE(fprintf(stderr, "0: issuing %s %d %d\n",
-		     names[reqcode], node, param));
+  COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
+		     this_node, names[reqcode], node, param));
 #ifdef ASYNC_BARRIER
   MPI_Barrier(comm_cart);
 #endif
   MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
+  COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
 
 /**************** REQ_TERM ************/
@@ -2887,8 +2883,8 @@ void mpi_loop()
     MPI_Barrier(comm_cart);
 #endif
     MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
-		       names[request[0]], request[1]));
+    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
+		       names[request[0]], request[1], request[2]));
     if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();
