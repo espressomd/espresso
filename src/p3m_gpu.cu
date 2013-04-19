@@ -381,6 +381,7 @@ extern "C" {
   }
 
 void p3m_gpu_add_farfield_force() {
+
   
   LB_parameters_gpu* lb_parameters;
   LB_parameters_gpu* lb_parameters_gpu;
@@ -399,7 +400,10 @@ void p3m_gpu_add_farfield_force() {
 
   p3m_gpu_data.npart = lb_parameters->number_of_particles;
 
-  // printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao);
+  if(p3m_gpu_data.npart == 0)
+    return;
+
+  printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao);
 
   dim3 gridAssignment(p3m_gpu_data.npart,1,1);
   dim3 threadsAssignment(cao,cao,cao);
