@@ -26,7 +26,7 @@ puts "---------------------------------------------------------------"
 
 setmd box_l 10 10 10
 
-lbfluid gpu dens 1.0 visc 1.0 agrid 1 friction 5.0 tau 0.01
+lbfluid gpu dens 1.0 visc 1.0 agrid 1 friction 0.01 tau 0.01
 setmd skin 0.5
 setmd time_step 0.01
 thermostat off
@@ -36,47 +36,22 @@ part 1 pos 6 5 5 q -1 v 0 0 0
 # in real space:
 # inter coulomb 1.0 p3m gpu 3 32 5 0.001
 # in k-space:
-inter coulomb 1.0 p3m gpu 0.0 32 5 1.0
+inter coulomb 1.0 p3m gpu 3.0 32 5 1.0
 
 integrate 0
 puts "after integ 0 forces are:"
 puts [ part 0 print f ]
 puts [ part 1 print f ]
-integrate 1
+integrate 1000
 puts "after integ 1 forces are:"
 puts [ part 0 print f ]
 puts [ part 1 print f ]
 
 set f1 [ lindex [part 0 print f] 0 ]
 
-setmd box_l 20 10 10
-
 invalidate_system 
 
 part 0 pos 4 5 5 q +1 v 0 0 0
 part 1 pos 6 5 5 q -1 v 0 0 0
-part 2 pos 14 5 5 q +1 v 0 0 0
-part 3 pos 16 5 5 q -1 v 0 0 0
-# in real space:
-# inter coulomb 1.0 p3m 3 32 5 0.001
-# in k-space:
-
-if { [catch {
-
-    inter coulomb 1.0 p3m 0.0 64 5 1.0
-    integrate 0
-
-    puts [ part 0 print f ]
-    set f2 [ lindex [part 0 print f] 0 ]
-    
-    if { abs( $f1 - $f2 )/1 < 1e-5 } {
-	puts OK
-    } else {
-	puts "P3M noncubic test failed"
-    }
-
-} res ] } {
-    error_exit $res
-}
 
 exit 0
