@@ -42,8 +42,7 @@
 #include "cuda_common.h"
 #ifdef LB_GPU
 
-/** Action number for \ref mpi_get_particles. */
-#define REQ_GETPARTS  16
+
 #ifndef D3Q19
 #error The implementation only works for D3Q19 so far!
 #endif
@@ -89,6 +88,7 @@ void lattice_boltzmann_update_gpu() {
   if (fluidstep>=factor) {
     fluidstep=0;
 
+    copy_part_data_to_gpu(); //TODO delete or move to sync with p3m?
     lb_integrate_GPU();
 
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
@@ -123,6 +123,7 @@ void lb_send_forces_gpu(){
 
   if (transfer_momentum_gpu) {
     if(this_node == 0){
+      printf ("%d particles...\n", lbpar_gpu.number_of_particles);
       if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
 
       LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
@@ -132,7 +133,7 @@ void lb_send_forces_gpu(){
         }
 #endif
     }
-    mpi_send_forces_lb(host_forces);
+    
   }
 }
 
@@ -152,8 +153,8 @@ void lb_realloc_particles_gpu(){
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
-  gpu_init_particle_comm(&host_data);
-  lb_realloc_particle_GPU_leftovers(&lbpar_gpu, &host_data);
+  gpu_init_particle_comm();
+  lb_realloc_particle_GPU_leftovers(&lbpar_gpu);
 }
 /** (Re-)initializes the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
@@ -175,7 +176,6 @@ void lb_release_gpu(){
   free(host_nodes);
   free(host_values);
   free(host_forces);
-  free(host_data);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {

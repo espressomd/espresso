@@ -30,7 +30,7 @@
 extern "C" {
 #include "lbgpu.h"
 #include "config.h"
-#include "cuda_common.h"
+//#include "cuda_common.h"
 }
 
 #ifdef LB_GPU
@@ -75,6 +75,11 @@ static size_t size_of_extern_nodeforces;
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
 
+/**cuda streams for parallel computing on cpu and gpu */
+//extern cudaStream_t stream[1];
+
+//extern cudaError_t err;
+//extern cudaError_t _err;
 
 int initflag = 0;
 /*-------------------------------------------------------*/
@@ -811,6 +816,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+printf ("HERE WE ARE!!!\n"); //TODO delete
+printf ("pos %E %E %E !!\n", particle_data[0].p[0], particle_data[0].p[1], particle_data[0].p[2]); //TODO delete
 #ifdef LB_ELECTROHYDRODYNAMICS
   particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
   particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
@@ -840,6 +847,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   delta_j[1] = - particle_force[part_index].f[1]*para.time_step*para.tau/para.agrid;
   delta_j[2] = - particle_force[part_index].f[2]*para.time_step*para.tau/para.agrid;  	
 															  																	  
+printf ("pos %E %E %E !!\n", particle_force[0].f[0], particle_force[0].f[1], particle_force[0].f[2]); //TODO delete
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
@@ -1406,10 +1414,8 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));
 //maybe coalesced alloc  
-  cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
-  cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
-	
-  cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
+  gpu_init_particle_comm();
+
 	
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
@@ -1437,7 +1443,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
   
   /** make sure particle data is communicated to the GPU */
-  cuda_enable_particle_communication();
+  gpu_init_particle_comm();
   
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
@@ -1474,7 +1480,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
  * @param **host_data	Pointer to host information data
 */
-void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
+void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
   //copy parameters, especially number of parts to gpu mem
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
@@ -1579,7 +1585,9 @@ void lb_particle_GPU(){
   int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
-  KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, particle_data, particle_force, node_f, part));
+
+
+  KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer()));
 }
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes
@@ -1835,10 +1843,7 @@ void lb_free_GPU(){
   cudaFree(&para);
   cudaFree(&nodes_a);
   cudaFree(&nodes_b);
-  cudaFree(particle_force);
-  cudaFree(particle_data);
   cudaFree(&node_f);
-  cudaFree(part);
   cudaStreamDestroy(stream[0]);
 }
 #endif /* LB_GPU */

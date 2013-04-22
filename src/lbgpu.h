@@ -228,6 +228,7 @@ void lb_reinit_fluid_gpu();
 
 /** (Re-)initializes the particle array*/
 void lb_realloc_particles_gpu(); //TODO probably move to cuda_common.cu
+void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
