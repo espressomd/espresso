@@ -490,7 +490,7 @@ AS_IF([test x$with_cuda != xno],[
     # if no other compute capability is defined by the user, we require at least 1.1
     case "$NVCCFLAGS" in
        *-arch=*) ;;
-       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -gencode arch=compute_20,code=compute_20"
+       *) NVCCFLAGS="$NVCCFLAGS --ptxas-options=-v -arch=sm_30"
     esac
     
     # use nvcc

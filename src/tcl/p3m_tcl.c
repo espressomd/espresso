@@ -109,18 +109,18 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
     return TCL_ERROR;  
   }
 
-  if (ARG0_IS_S("tune"))
-    return tclcommand_inter_coulomb_parse_p3m_tune(interp, argc-1, argv+1, 0);
-
-  if (ARG0_IS_S("tunev2"))
-    return tclcommand_inter_coulomb_parse_p3m_tune(interp, argc-1, argv+1, 1);
-
   if (ARG0_IS_S("gpu")) {
     coulomb.method = COULOMB_P3M_GPU;
     
     argc--;
     argv++;
   }
+
+  if (ARG0_IS_S("tune"))
+    return tclcommand_inter_coulomb_parse_p3m_tune(interp, argc-1, argv+1, 0);
+
+  if (ARG0_IS_S("tunev2"))
+    return tclcommand_inter_coulomb_parse_p3m_tune(interp, argc-1, argv+1, 1);
       
   if(! ARG0_IS_D(r_cut))
     return TCL_ERROR;  

@@ -63,6 +63,7 @@
 #include "lb-boundaries.h"
 #include "ghmc.h"
 #include "domain_decomposition.h"
+#include "p3m_gpu.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -385,6 +386,8 @@ void on_coulomb_change()
     ELC_init();
     // fall through
   case COULOMB_P3M_GPU:
+    // @TODO: Split initialization in short and longrange part.
+    p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
   case COULOMB_P3M:
     p3m_init();
     break;
