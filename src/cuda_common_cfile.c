@@ -9,11 +9,11 @@
 #include "interaction_data.h"
 
 
-  static void mpi_get_particles_slave_lb();
-  static void mpi_send_forces_slave_lb();
+  static void cuda_mpi_get_particles_slave();
+  static void cuda_mpi_send_forces_slave();
 
   /*************** REQ_GETPARTS ************/
-  void mpi_get_particles_lb(LB_particle_gpu *host_data)
+  void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
   {
     int n_part;
     int g, pnode;
@@ -33,7 +33,7 @@
     /* just check if the number of particles is correct */
     if(this_node > 0){
       /* call slave functions to provide the slave datas */
-      mpi_get_particles_slave_lb();
+      cuda_mpi_get_particles_slave();
     }
     else {
       /* master: fetch particle informations into 'result' */
@@ -52,23 +52,23 @@
               for (i=0;i<npart;i++) {
                 memcpy(pos, part[i].r.p, 3*sizeof(double));
                 fold_position(pos, dummy);
-                host_data[i+g].p[0] = (float)pos[0];
-                host_data[i+g].p[1] = (float)pos[1];
-                host_data[i+g].p[2] = (float)pos[2];
+                particle_data_host[i+g].p[0] = (float)pos[0];
+                particle_data_host[i+g].p[1] = (float)pos[1];
+                particle_data_host[i+g].p[2] = (float)pos[2];
                 
-                host_data[i+g].v[0] = (float)part[i].m.v[0];
-                host_data[i+g].v[1] = (float)part[i].m.v[1];
-                host_data[i+g].v[2] = (float)part[i].m.v[2];
+                particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
+                particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
+                particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
                 
   #ifdef LB_ELECTROHYDRODYNAMICS
-                host_data[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
-                host_data[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
-                host_data[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
+                particle_data_host[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
+                particle_data_host[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
+                particle_data_host[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
   #endif
 
   #ifdef ELECTROSTATICS
                 if (coulomb.method == COULOMB_P3M_GPU) {
-                  host_data[i+g].q = (float)part[i].p.q;
+                  particle_data_host[i+g].q = (float)part[i].p.q;
                 }
   #endif
               }  
@@ -76,7 +76,7 @@
             }  
           }
           else {
-            MPI_Recv(&host_data[g], sizes[pnode]*sizeof(LB_particle_gpu), MPI_BYTE, pnode, REQ_GETPARTS,
+            MPI_Recv(&particle_data_host[g], sizes[pnode]*sizeof(CUDA_particle_data), MPI_BYTE, pnode, REQ_GETPARTS,
             comm_cart, &status);
             g += sizes[pnode];
           }
@@ -87,11 +87,11 @@
     free(sizes);
   }
 
-  static void mpi_get_particles_slave_lb(){
+  static void cuda_mpi_get_particles_slave(){
    
     int n_part;
     int g;
-    LB_particle_gpu *host_data_sl;
+    CUDA_particle_data *particle_data_host_sl;
     Cell *cell;
     int c, i;
 
@@ -102,7 +102,7 @@
     if (n_part > 0) {
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
-      host_data_sl = (LB_particle_gpu*) malloc(n_part*sizeof(LB_particle_gpu));
+      particle_data_host_sl = (CUDA_particle_data*) malloc(n_part*sizeof(CUDA_particle_data));
       
       g = 0;
       for (c = 0; c < local_cells.n; c++) {
@@ -118,35 +118,35 @@
           memcpy(pos, part[i].r.p, 3*sizeof(double));
           fold_position(pos, dummy);  
       
-          host_data_sl[i+g].p[0] = (float)pos[0];
-          host_data_sl[i+g].p[1] = (float)pos[1];
-          host_data_sl[i+g].p[2] = (float)pos[2];
+          particle_data_host_sl[i+g].p[0] = (float)pos[0];
+          particle_data_host_sl[i+g].p[1] = (float)pos[1];
+          particle_data_host_sl[i+g].p[2] = (float)pos[2];
 
-          host_data_sl[i+g].v[0] = (float)part[i].m.v[0];
-          host_data_sl[i+g].v[1] = (float)part[i].m.v[1];
-          host_data_sl[i+g].v[2] = (float)part[i].m.v[2];
+          particle_data_host_sl[i+g].v[0] = (float)part[i].m.v[0];
+          particle_data_host_sl[i+g].v[1] = (float)part[i].m.v[1];
+          particle_data_host_sl[i+g].v[2] = (float)part[i].m.v[2];
           
   #ifdef LB_ELECTROHYDRODYNAMICS
-          host_data_sl[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
-          host_data_sl[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
-          host_data_sl[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
+          particle_data_host_sl[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
+          particle_data_host_sl[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
+          particle_data_host_sl[i+g].mu_E[2] = (float)part[i].p.mu_E[2];
   #endif
 
   #ifdef ELECTROSTATICS
           if (coulomb.method == COULOMB_P3M_GPU) {
-            host_data_sl[i+g].q = (float)part[i].p.q;
+            particle_data_host_sl[i+g].q = (float)part[i].p.q;
           }
   #endif
         }
         g+=npart;
       }
       /* and send it back to the master node */
-      MPI_Send(host_data_sl, n_part*sizeof(LB_particle_gpu), MPI_BYTE, 0, REQ_GETPARTS, comm_cart);
-      free(host_data_sl);
+      MPI_Send(particle_data_host_sl, n_part*sizeof(CUDA_particle_data), MPI_BYTE, 0, REQ_GETPARTS, comm_cart);
+      free(particle_data_host_sl);
     }  
   }
 
-  void mpi_send_forces_lb(LB_particle_force_gpu *host_forces){
+  void cuda_mpi_send_forces(CUDA_particle_force *host_forces){
   
     int n_part;
     int g, pnode;
@@ -161,7 +161,7 @@
 
     /* call slave functions to provide the slave datas */
     if(this_node > 0) {
-      mpi_send_forces_slave_lb();
+      cuda_mpi_send_forces_slave();
     }
     else{
     /* fetch particle informations into 'result' */
@@ -183,7 +183,7 @@
           }
           else {
           /* and send it back to the slave node */
-          MPI_Send(&host_forces[g], sizes[pnode]*sizeof(LB_particle_force_gpu), MPI_BYTE, pnode, REQ_GETPARTS, comm_cart);      
+          MPI_Send(&host_forces[g], sizes[pnode]*sizeof(CUDA_particle_force), MPI_BYTE, pnode, REQ_GETPARTS, comm_cart);      
           g += sizes[pnode];
           }
         }
@@ -194,10 +194,10 @@
     free(sizes);
   }
 
-  static void mpi_send_forces_slave_lb(){
+  static void cuda_mpi_send_forces_slave(){
 
     int n_part;
-    LB_particle_force_gpu *host_forces_sl;
+    CUDA_particle_force *host_forces_sl;
     Cell *cell;
     int c, i;
     MPI_Status status;
@@ -211,8 +211,8 @@
       int g = 0;
       /* get (unsorted) particle informations as an array of type 'particle' */
       /* then get the particle information */
-      host_forces_sl = (LB_particle_force_gpu *) malloc(n_part*sizeof(LB_particle_force_gpu));
-      MPI_Recv(host_forces_sl, n_part*sizeof(LB_particle_force_gpu), MPI_BYTE, 0, REQ_GETPARTS,
+      host_forces_sl = (CUDA_particle_force *) malloc(n_part*sizeof(CUDA_particle_force));
+      MPI_Recv(host_forces_sl, n_part*sizeof(CUDA_particle_force), MPI_BYTE, 0, REQ_GETPARTS,
       comm_cart, &status);
       for (c = 0; c < local_cells.n; c++) {
         int npart;  

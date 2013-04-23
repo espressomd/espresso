@@ -156,8 +156,8 @@ __device__ unsigned int getThreadIndexP3M() { //rename is dumb but can't import 
 
 
 // __global__ void add_p3m_farfield_force_gpu( LB_parameters_gpu* lb_parameters_gpu,
-//                                             LB_particle_gpu* lb_particle_gpu,
-//                                             LB_particle_force_gpu* lb_particle_force_gpu
+//                                             CUDA_particle_data* lb_particle_gpu,
+//                                             CUDA_particle_force* lb_particle_force_gpu
 //                                           ) {
 
 //   unsigned int index = getThreadIndex();
@@ -280,7 +280,7 @@ __global__ void apply_influence_function( cufftDoubleComplex *mesh, int mesh_siz
   mesh[linear_index].y *= G_hat[linear_index];
 }
 
-__global__ void assign_charges(const LB_particle_gpu * const pdata,
+__global__ void assign_charges(const CUDA_particle_data * const pdata,
 cufftDoubleComplex *mesh, const int m_size, const int cao, const double pos_shift, const
 double hi) {
       /** id of the particle **/
@@ -290,7 +290,7 @@ double hi) {
       /** index of the nearest mesh point **/
       int nmp_x, nmp_y, nmp_z;      
       
-      LB_particle_gpu p = pdata[id];
+      CUDA_particle_data p = pdata[id];
 
       m_pos[0] = p.p[0] * hi - pos_shift;
       m_pos[1] = p.p[1] * hi - pos_shift;
@@ -311,8 +311,8 @@ double hi) {
       atomicAdd( &(mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x), caf(threadIdx.x, m_pos[0], cao)*caf(threadIdx.y, m_pos[1], cao)*caf(threadIdx.z, m_pos[2], cao)*p.q);
 }
 
-__global__ void assign_forces(const LB_particle_gpu * const pdata, cufftDoubleComplex *mesh, const int m_size, const int cao, const double pos_shift, const
-			      double hi, LB_particle_force_gpu * lb_particle_force_gpu, double prefactor, int dim) {
+__global__ void assign_forces(const CUDA_particle_data * const pdata, cufftDoubleComplex *mesh, const int m_size, const int cao, const double pos_shift, const
+			      double hi, CUDA_particle_force * lb_particle_force_gpu, double prefactor, int dim) {
       /** id of the particle **/
       int id = blockIdx.x;
       /** position relative to the closest gird point **/
@@ -320,7 +320,7 @@ __global__ void assign_forces(const LB_particle_gpu * const pdata, cufftDoubleCo
       /** index of the nearest mesh point **/
       int nmp_x, nmp_y, nmp_z;      
 
-      LB_particle_gpu p = pdata[id];
+      CUDA_particle_data p = pdata[id];
 
       m_pos[0] = p.p[0] * hi - pos_shift;
       m_pos[1] = p.p[1] * hi - pos_shift;
@@ -376,8 +376,8 @@ extern "C" {
 
 void p3m_gpu_add_farfield_force() {
 
-  LB_particle_gpu* lb_particle_gpu;
-  LB_particle_force_gpu* lb_particle_force_gpu;
+  CUDA_particle_data* lb_particle_gpu;
+  CUDA_particle_force* lb_particle_force_gpu;
   
   int mesh = p3m_gpu_data.mesh;
   int mesh3 = mesh*mesh*mesh;

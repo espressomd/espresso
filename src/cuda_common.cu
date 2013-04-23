@@ -29,18 +29,18 @@ extern "C" {
 #include "interaction_data.h"
   
   static int max_ran = 1000000;
-  static GPU_global_part_vars global_part_vars = {0,0,0};
-  static __device__ __constant__ GPU_global_part_vars global_part_vars_gpu;
+  static CUDA_global_part_vars global_part_vars = {0,0,0};
+  static __device__ __constant__ CUDA_global_part_vars global_part_vars_gpu;
   
   /** struct for particle force */
-  static LB_particle_force_gpu *particle_force = NULL;
+  static CUDA_particle_force *particle_force = NULL;
   /** struct for particle position and veloctiy */
-  static LB_particle_gpu *particle_data = NULL;
+  static CUDA_particle_data *particle_data = NULL;
   /** struct for storing particle rn seed */
-  static LB_particle_seed_gpu *part = NULL;
+  static CUDA_particle_seed *part = NULL;
 
-  LB_particle_gpu *host_data = NULL;
-  LB_particle_force_gpu *host_forces = NULL;
+  CUDA_particle_data *particle_data_host = NULL;
+  CUDA_particle_force *host_forces = NULL;
 
   /**cuda streams for parallel computing on cpu and gpu */
   cudaStream_t stream[1];
@@ -64,7 +64,7 @@ __device__ unsigned int getThreadIndex() {
  * @param *particle_force	Pointer to local particle force (Output)
  * @param *part			Pointer to the particle rn seed storearray (Output)
 */
-__global__ void init_particle_force(LB_particle_force_gpu *particle_force, LB_particle_seed_gpu *part){
+__global__ void init_particle_force(CUDA_particle_force *particle_force, CUDA_particle_seed *part){
 
   unsigned int part_index = getThreadIndex();
 
@@ -82,7 +82,7 @@ __global__ void init_particle_force(LB_particle_force_gpu *particle_force, LB_pa
 /** kernel for the initalisation of the partikel force array
  * @param *particle_force	pointer to local particle force (Input)
 */
-__global__ void reset_particle_force(LB_particle_force_gpu *particle_force){
+__global__ void reset_particle_force(CUDA_particle_force *particle_force){
 	
   unsigned int part_index = getThreadIndex();
 	
@@ -98,7 +98,7 @@ extern "C" {
 
   /**setup and call particle reallocation from the host
    * @param *lbpar_gpu	Pointer to parameters to setup the lb field
-   * @param **host_data	Pointer to host information data
+   * @param **particle_data_host	Pointer to host information data
   */
   void gpu_init_particle_comm() {
     
@@ -109,10 +109,10 @@ extern "C" {
       global_part_vars.number_of_particles = n_total_particles;
       global_part_vars.communication_enabled = 0; //assume no particles to begin with
 
-      cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_gpu, &global_part_vars, sizeof(GPU_global_part_vars)));
+      cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_gpu, &global_part_vars, sizeof(CUDA_global_part_vars)));
 
       if ( host_forces )    cudaFreeHost(host_forces); //if the arrays exists free them to prevent memory leaks
-      if ( host_data )      cudaFreeHost(host_data);
+      if ( particle_data_host )      cudaFreeHost(particle_data_host);
       if ( particle_force ) cudaFree(particle_force);
       if ( particle_data )  cudaFree(particle_data);
       if ( part )           cudaFree(part);
@@ -123,16 +123,16 @@ extern "C" {
         
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
         /**pinned memory mode - use special function to get OS-pinned memory*/
-        cudaHostAlloc((void**)&host_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu), cudaHostAllocWriteCombined);
-        cudaHostAlloc((void**)&host_forces, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu), cudaHostAllocWriteCombined);
+        cudaHostAlloc((void**)&particle_data_host, global_part_vars.number_of_particles * sizeof(CUDA_particle_data), cudaHostAllocWriteCombined);
+        cudaHostAlloc((void**)&host_forces, global_part_vars.number_of_particles * sizeof(CUDA_particle_force), cudaHostAllocWriteCombined);
     #else
-        cudaMallocHost((void**)&host_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu));
-        cudaMallocHost((void**)&host_forces, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu));
+        cudaMallocHost((void**)&particle_data_host, global_part_vars.number_of_particles * sizeof(CUDA_particle_data));
+        cudaMallocHost((void**)&host_forces, global_part_vars.number_of_particles * sizeof(CUDA_particle_force));
     #endif
 
-        cuda_safe_mem(cudaMalloc((void**)&particle_force, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu)));
-        cuda_safe_mem(cudaMalloc((void**)&particle_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu)));
-        cuda_safe_mem(cudaMalloc((void**)&part, global_part_vars.number_of_particles * sizeof(LB_particle_seed_gpu)));
+        cuda_safe_mem(cudaMalloc((void**)&particle_force, global_part_vars.number_of_particles * sizeof(CUDA_particle_force)));
+        cuda_safe_mem(cudaMalloc((void**)&particle_data, global_part_vars.number_of_particles * sizeof(CUDA_particle_data)));
+        cuda_safe_mem(cudaMalloc((void**)&part, global_part_vars.number_of_particles * sizeof(CUDA_particle_seed)));
         
         /** values for the particle kernel */
         int threads_per_block_particles = 64;
@@ -145,18 +145,18 @@ extern "C" {
     }
   }
 
-  LB_particle_gpu* gpu_get_particle_pointer() {
+  CUDA_particle_data* gpu_get_particle_pointer() {
     return particle_data;
   }
   
-  GPU_global_part_vars* gpu_get_global_particle_vars_pointer() {
+  CUDA_global_part_vars* gpu_get_global_particle_vars_pointer() {
     return &global_part_vars;
   }
-  LB_particle_force_gpu* gpu_get_particle_force_pointer() {
+  CUDA_particle_force* gpu_get_particle_force_pointer() {
     return particle_force;
   }
 
-  LB_particle_seed_gpu* gpu_get_particle_seed_pointer() {
+  CUDA_particle_seed* gpu_get_particle_seed_pointer() {
     return part;
   }
 
@@ -164,10 +164,10 @@ extern "C" {
 
     if ( global_part_vars.communication_enabled == 1 ) {
       
-      mpi_get_particles_lb(host_data);
+      cuda_mpi_get_particles(particle_data_host);
 
       /** get espresso md particle values*/
-      cudaMemcpyAsync(particle_data, host_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu), cudaMemcpyHostToDevice, stream[0]);
+      cudaMemcpyAsync(particle_data, particle_data_host, global_part_vars.number_of_particles * sizeof(CUDA_particle_data), cudaMemcpyHostToDevice, stream[0]);
 
     }
   }
@@ -182,7 +182,7 @@ extern "C" {
     if ( global_part_vars.communication_enabled == 1 ) {
 
       /** Copy result from device memory to host memory*/
-      cudaMemcpy(host_forces, particle_force, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu), cudaMemcpyDeviceToHost);
+      cudaMemcpy(host_forces, particle_force, global_part_vars.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost);
 
 
       /** values for the particle kernel */
@@ -195,7 +195,7 @@ extern "C" {
       KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force));
     
       cudaThreadSynchronize();
-      mpi_send_forces_lb(host_forces);
+      cuda_mpi_send_forces(host_forces);
     }
   }
 

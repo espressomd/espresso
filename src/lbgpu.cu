@@ -755,7 +755,7 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
  * @param *rn_part		Pointer to randomnumber array of the particle
  * @param node_index		node index around (8) particle (Output)
 */
-__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
+__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
 	
   float mode[4];
   int my_left[3];
@@ -1175,7 +1175,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
  * @param *part				Pointer to the rn array of the particles (Input)
  * @param node_f			Pointer to local node force (Input)
 */
-__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, LB_node_force_gpu node_f, LB_particle_seed_gpu *part){
+__global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data, CUDA_particle_force *particle_force, LB_node_force_gpu node_f, CUDA_particle_seed *part){
 	
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int node_index[8];
@@ -1470,7 +1470,6 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
 
 /**setup and call particle reallocation from the host
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
- * @param **host_data	Pointer to host information data
 */
 void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu){
 
@@ -1566,7 +1565,6 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 }
 
 /**setup and call particle kernel from the host
- * @param **host_data		Pointer to the host particle positions and velocities
 */
 void lb_particle_GPU(){
 

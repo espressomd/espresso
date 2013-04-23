@@ -3,8 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-//#include <cuda.h>
-//#include <cuda_runtime.h>
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 
@@ -24,12 +23,14 @@ extern cudaStream_t stream[1];
 extern cudaError_t err;
 extern cudaError_t _err;
 
+//data which must be copied form the GPU
 typedef struct {
   /** force on the particle given to md part */
   float f[3];
 
-} LB_particle_force_gpu;
+} CUDA_particle_force;
 
+//data which must be copied to the GPU
 typedef struct {
   /** particle position given from md part*/
   float p[3];
@@ -43,15 +44,17 @@ typedef struct {
 #endif
   unsigned int fixed;
 
-} LB_particle_gpu;
+} CUDA_particle_data;
 
+
+//note seed gets its own struct since it doesn't get copied back and forth from the GPU
 typedef struct {
 
   unsigned int seed;
 
-} LB_particle_seed_gpu;
+} CUDA_particle_seed;
 
-extern LB_particle_gpu *host_data;
+extern CUDA_particle_data *particle_data_host;
 
 
 /** This structure contains global variables associated with all of the particles and not with one individual particle */
@@ -64,18 +67,18 @@ typedef struct {
   
   /** a boolean variable to indicate if particle info should be communicated between the cpu and gpu */
   unsigned int communication_enabled;
-} GPU_global_part_vars;
+} CUDA_global_part_vars;
 
 
 void copy_forces_from_GPU();
-GPU_global_part_vars* gpu_get_global_particle_vars_pointer();
-LB_particle_gpu* gpu_get_particle_pointer();
-LB_particle_force_gpu* gpu_get_particle_force_pointer();
-LB_particle_seed_gpu* gpu_get_particle_seed_pointer();
+CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
+CUDA_particle_data* gpu_get_particle_pointer();
+CUDA_particle_force* gpu_get_particle_force_pointer();
+CUDA_particle_seed* gpu_get_particle_seed_pointer();
 void gpu_init_particle_comm();
-void mpi_get_particles_lb(LB_particle_gpu *host_result);
+void cuda_mpi_get_particles(CUDA_particle_data *host_result);
 void copy_part_data_to_gpu();
-void mpi_send_forces_lb(LB_particle_force_gpu *host_forces);
+void cuda_mpi_send_forces(CUDA_particle_force *host_forces);
 
 /**cuda streams for parallel computing on cpu and gpu */
 //cudaStream_t stream[1];
