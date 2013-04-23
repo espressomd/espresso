@@ -36,8 +36,8 @@ part 1 pos 6 5 5 q -1 v 0 0 0
 # in real space:
 # inter coulomb 1.0 p3m gpu 3 32 5 0.001
 # in k-space:
-#puts [inter coulomb 1.0 p3m gpu tunev2 accuracy 0.001]
-inter coulomb 1.0 p3m gpu 3.0 32 5 1.0
+puts [inter coulomb 1.0 p3m gpu tunev2 accuracy 0.001]
+#inter coulomb 1.0 p3m gpu 3.0 32 5 1.0
 
 integrate 0
 puts "after integ 0 forces are:"
