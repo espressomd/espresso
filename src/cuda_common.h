@@ -68,6 +68,7 @@ typedef struct {
 
 
 void copy_forces_from_GPU();
+GPU_global_part_vars* gpu_get_global_particle_vars_pointer();
 LB_particle_gpu* gpu_get_particle_pointer();
 LB_particle_force_gpu* gpu_get_particle_force_pointer();
 LB_particle_seed_gpu* gpu_get_particle_seed_pointer();

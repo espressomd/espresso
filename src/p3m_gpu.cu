@@ -34,6 +34,7 @@ extern "C" {
 #include "p3m_gpu.h"
 #include "lbgpu.h"
 #include "config.h"
+#include "particle_data.h"
 
 //extern cudaStream_t stream[1];
 //extern cudaError_t _err;
@@ -144,15 +145,6 @@ __device__ double atomicAdd(double* address, double val)
 }
 
 
-#define KERNELCALL(_f, _a, _b, _params) \
-    _f<<<_a, _b, 0, stream[0]>>>_params; \
-    _err=cudaGetLastError(); \
-    if ( _err != cudaSuccess ) \
-    { \
-      printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
-      fprintf(stderr, "error calling %s with #thpb %d in %s:%u\n", #_f, _b, __FILE__, __LINE__); \
-      exit(EXIT_FAILURE); \
-    }
 
 
 __device__ unsigned int getThreadIndexP3M() { //rename is dumb but can't import same fnc from cuda_common
@@ -358,10 +350,9 @@ extern "C" {
    */
 
   void p3m_gpu_init(int cao, int mesh, double alpha, double box) {
-    LB_parameters_gpu* lb_parameters;
-    lb_get_lbpar_pointer( &lb_parameters );
-
-    p3m_gpu_data.npart = lb_parameters->number_of_particles;
+    gpu_init_particle_comm();
+ 
+    p3m_gpu_data.npart = n_total_particles;
     p3m_gpu_data.alpha = alpha;
     p3m_gpu_data.cao = cao;
     p3m_gpu_data.mesh = mesh;
@@ -385,9 +376,6 @@ extern "C" {
 
 void p3m_gpu_add_farfield_force() {
 
-  
-  LB_parameters_gpu* lb_parameters;
-  LB_parameters_gpu* lb_parameters_gpu;
   LB_particle_gpu* lb_particle_gpu;
   LB_particle_force_gpu* lb_particle_force_gpu;
   
@@ -396,12 +384,10 @@ void p3m_gpu_add_farfield_force() {
   int cao = p3m_gpu_data.cao;
   double box = p3m_gpu_data.box;
 
-  lb_get_lbpar_pointer( &lb_parameters );
-  lb_get_para_pointer( &lb_parameters_gpu );
   lb_particle_gpu = gpu_get_particle_pointer();
   lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
-  p3m_gpu_data.npart = lb_parameters->number_of_particles;
+  p3m_gpu_data.npart = n_total_particles;
 
   if(p3m_gpu_data.npart == 0)
     return;

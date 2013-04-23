@@ -148,7 +148,10 @@ extern "C" {
   LB_particle_gpu* gpu_get_particle_pointer() {
     return particle_data;
   }
-
+  
+  GPU_global_part_vars* gpu_get_global_particle_vars_pointer() {
+    return &global_part_vars;
+  }
   LB_particle_force_gpu* gpu_get_particle_force_pointer() {
     return particle_force;
   }

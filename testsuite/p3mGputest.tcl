@@ -26,7 +26,7 @@ puts "---------------------------------------------------------------"
 
 setmd box_l 10 10 10
 
-lbfluid gpu dens 1.0 visc 1.0 agrid 1 friction 0.00000000001 tau 0.01
+#lbfluid gpu dens 1.0 visc 1.0 agrid 1 friction 0.00000000001 tau 0.01
 setmd skin 0.5
 setmd time_step 0.01
 thermostat off
@@ -36,8 +36,8 @@ part 1 pos 6 5 5 q -1 v 0 0 0
 # in real space:
 # inter coulomb 1.0 p3m gpu 3 32 5 0.001
 # in k-space:
-puts [inter coulomb 1.0 p3m gpu tunev2 accuracy 0.001]
-#inter coulomb 1.0 p3m gpu 3.0 32 5 1.0
+#puts [inter coulomb 1.0 p3m gpu tunev2 accuracy 0.001]
+inter coulomb 1.0 p3m gpu 3.0 32 5 1.0
 
 integrate 0
 puts "after integ 0 forces are:"
