@@ -23,14 +23,14 @@ extern cudaStream_t stream[1];
 extern cudaError_t err;
 extern cudaError_t _err;
 
-//data which must be copied form the GPU
+/** data which must be copied from the GPU at each step run on the GPU */
 typedef struct {
   /** force on the particle given to md part */
   float f[3];
 
 } CUDA_particle_force;
 
-//data which must be copied to the GPU
+/** data structure which must be copied to the GPU at each step run on the GPU */
 typedef struct {
   /** particle position given from md part*/
   float p[3];
@@ -47,7 +47,7 @@ typedef struct {
 } CUDA_particle_data;
 
 
-//note seed gets its own struct since it doesn't get copied back and forth from the GPU
+/** Note the particle's seed gets its own struct since it doesn't get copied back and forth from the GPU */
 typedef struct {
 
   unsigned int seed;
