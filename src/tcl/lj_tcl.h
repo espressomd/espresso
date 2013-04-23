@@ -27,7 +27,11 @@
 
 int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j);
 
-/// parser for the forcecap
+/** parser for the forcecap  
+  @param interp tcl interpreter handle
+  @param argc number of arguments
+  @param argv arguments 
+*/
 
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv);
 

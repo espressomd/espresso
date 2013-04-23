@@ -41,6 +41,7 @@ source "tests_common.tcl"
 require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
 require_feature "LB"
+require_max_nodes_per_side 2
 
 puts "------------------------------------------------"
 puts "- Testcase object_in_fluid.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -108,7 +109,7 @@ if { [catch {
 	set cycle 0 
 	while { $cycle < 20 } {
 	    puts -nonewline "time step $cycle/20\r"; flush stdout
-	    if { $vmd == "y"} { imd positions};
+	    if { $vmd == "y"} { imd positions}
 	
 	
 	    # set the constant velocity
@@ -116,14 +117,14 @@ if { [catch {
 	    for { set i 0 } { $i < 1} { incr i } {
 		for { set j 0 } { $j < 20 } { incr j } {
 		    for { set k 0 } { $k < 20 } { incr k } {
-			lbnode $i $j $k set u 0.5 0.0 0.0;
+			lbnode $i $j $k set u 0.5 0.0 0.0
 		    }
 		}
 	    }
 
-	    integrate 1;
+	    integrate 1
 
-	    incr cycle;
+	    incr cycle
 	}
 	
 	# Here, you write new reference configuration in case you have chosen to generate new data

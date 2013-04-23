@@ -97,7 +97,7 @@ extern double my_right[3];
 
 /** Make sure that the node grid is set, eventually
     determine one automatically. */
-void setup_node_grid();
+void init_node_grid();
 
 /** return wether node grid was set. */
 int node_grid_is_set();

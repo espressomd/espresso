@@ -1038,7 +1038,7 @@ void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constrain
       c_dist_sqr += SQR(vec[i]);
     }else{
       vec[i] = 0.0;
-      c_dist += SQR(vec[i]);
+      c_dist_sqr += SQR(vec[i]);
     }
   }
   c_dist = sqrt(c_dist_sqr);
