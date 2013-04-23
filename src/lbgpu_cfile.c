@@ -51,7 +51,7 @@
 LB_parameters_gpu lbpar_gpu = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0 ,0.0, -1.0, 0, 0, 0, 0, 0, 0, 1, 0, {0.0, 0.0, 0.0}, 12345, 0};
 LB_values_gpu *host_values = NULL;
 LB_nodes_gpu *host_nodes = NULL;
-LB_particle_force_gpu *host_forces = NULL;
+
 
 
 /** Flag indicating momentum exchange between particles and fluid */
@@ -88,7 +88,6 @@ void lattice_boltzmann_update_gpu() {
   if (fluidstep>=factor) {
     fluidstep=0;
 
-    copy_part_data_to_gpu(); //TODO delete or move to sync with p3m?
     lb_integrate_GPU();
 
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
@@ -117,25 +116,7 @@ void lb_calc_particle_lattice_ia_gpu() {
   }
 }
 
-/**copy forces from gpu to cpu and call mpi routines to add forces to particles
-*/
-void lb_send_forces_gpu(){
 
-  if (transfer_momentum_gpu) {
-    if(this_node == 0){
-      printf ("%d particles...\n", lbpar_gpu.number_of_particles);
-      if (lbpar_gpu.number_of_particles) lb_copy_forces_GPU(host_forces);
-
-      LB_TRACE (fprintf(stderr,"lb_send_forces_gpu \n"));
-#if 0
-        for (i=0;i<n_total_particles;i++) {
-          fprintf(stderr, "%i particle forces , %f %f %f \n", i, host_forces[i].f[0], host_forces[i].f[1], host_forces[i].f[2]);
-        }
-#endif
-    }
-    
-  }
-}
 
 /** (re-) allocation of the memory need for the particles (cpu part)*/
 void lb_realloc_particles_gpu(){
@@ -146,9 +127,6 @@ void lb_realloc_particles_gpu(){
   /**-----------------------------------------------------*/
   /** allocating of the needed memory for several structs */
   /**-----------------------------------------------------*/
-  /**Allocate struct for particle forces */
-  size_t size_of_forces = lbpar_gpu.number_of_particles * sizeof(LB_particle_force_gpu);
-  host_forces = realloc(host_forces, size_of_forces);
 
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
@@ -175,7 +153,7 @@ void lb_release_gpu(){
 
   free(host_nodes);
   free(host_values);
-  free(host_forces);
+//  free(host_forces);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {

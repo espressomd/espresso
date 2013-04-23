@@ -69,6 +69,10 @@ void init_forces();
 void force_calc()
 {
 
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+  copy_part_data_to_gpu();
+#endif
+    
 #ifdef LB_GPU
   if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
 #endif
@@ -134,10 +138,10 @@ void force_calc()
     meta_perform();
 #endif
 
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+  copy_forces_from_GPU();
 #endif
-
+  
 /* this must be the last force to be calculated (Mehmet)*/
 #ifdef COMFIXED
   calc_comfixed();
@@ -175,8 +179,8 @@ void calc_long_range_forces()
       //TODO call calculation
       p3m_gpu_add_farfield_force();
   #ifdef NPT
-      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO make right
-      exit(1); //TODO CHECK IF BAROSTAT IS ACTUALLY ON
+      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
+      exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
   #endif
       break;
     case COULOMB_P3M:

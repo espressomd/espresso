@@ -101,7 +101,7 @@ typedef struct {
   unsigned int dim_z;
 
   unsigned int number_of_nodes;
-  unsigned int number_of_particles; //TODO this should be moved to CUDA common
+  unsigned int number_of_particles;
   /** Flag indicating whether fluctuations are present. */
   int fluct;
   /**to calc and print out phys values */
@@ -227,7 +227,7 @@ void lb_reinit_fluid_gpu();
 //void lb_reinit_forces();
 
 /** (Re-)initializes the particle array*/
-void lb_realloc_particles_gpu(); //TODO probably move to cuda_common.cu
+void lb_realloc_particles_gpu();
 void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
@@ -242,7 +242,6 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* 
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 
 void lb_calc_particle_lattice_ia_gpu();
-void lb_send_forces_gpu();
 
 void lb_calc_fluid_mass_GPU(double* mass);
 void lb_calc_fluid_momentum_GPU(double* host_mom);

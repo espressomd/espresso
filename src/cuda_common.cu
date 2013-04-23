@@ -40,7 +40,8 @@ extern "C" {
   static LB_particle_seed_gpu *part = NULL;
 
   LB_particle_gpu *host_data = NULL;
-  
+  LB_particle_force_gpu *host_forces = NULL;
+
   /**cuda streams for parallel computing on cpu and gpu */
   cudaStream_t stream[1];
 
@@ -110,6 +111,7 @@ extern "C" {
 
       cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_gpu, &global_part_vars, sizeof(GPU_global_part_vars)));
 
+      if ( host_forces )    cudaFreeHost(host_forces); //if the arrays exists free them to prevent memory leaks
       if ( host_data )      cudaFreeHost(host_data);
       if ( particle_force ) cudaFree(particle_force);
       if ( particle_data )  cudaFree(particle_data);
@@ -122,8 +124,10 @@ extern "C" {
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
         /**pinned memory mode - use special function to get OS-pinned memory*/
         cudaHostAlloc((void**)&host_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu), cudaHostAllocWriteCombined);
+        cudaHostAlloc((void**)&host_forces, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu), cudaHostAllocWriteCombined);
     #else
         cudaMallocHost((void**)&host_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu));
+        cudaMallocHost((void**)&host_forces, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu));
     #endif
 
         cuda_safe_mem(cudaMalloc((void**)&particle_force, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu)));
@@ -158,39 +162,27 @@ extern "C" {
     if ( global_part_vars.communication_enabled == 1 ) {
       
       mpi_get_particles_lb(host_data);
-      printf ("host_data part 0 pos x %E\n", host_data[0].p[0]); //TODO delete
+
       /** get espresso md particle values*/
       cudaMemcpyAsync(particle_data, host_data, global_part_vars.number_of_particles * sizeof(LB_particle_gpu), cudaMemcpyHostToDevice, stream[0]);
-      printf ("particle_data part %p\n", particle_data);
-      printf ("particle_data part 0 %p\n", &particle_data[0]);
-//      printf ("particle_data part 0 %p\n", particle_data->p);
-//      printf ("particle_data part 0 %E\n", particle_data->p[0]);
-      printf ("particle_data part 0 pos %p\n", &particle_data[0].p);
-      float tempToPrint[3];
-      cudaMemcpy(tempToPrint,particle_data[0].p,3*sizeof(float),cudaMemcpyDeviceToHost); //TODO DELETE
-      printf ("particle_data part 0 pos %f\n", tempToPrint[0]);
-      printf ("particle_data part 0 pos %p\n", &particle_data[0].p[1]);
-//      printf ("particle_data part 0 pos x %E\n", (particle_data[0]).p[0]);
-//      printf ("particle_data part 0 pos x %f\n", particle_data[0].p[0]);
+
     }
   }
+
 
 
   /** setup and call kernel to copy particle forces to host
    * @param *host_forces contains the particle force computed on the GPU
   */
-  void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces){
+  void copy_forces_from_GPU() {
 
     if ( global_part_vars.communication_enabled == 1 ) {
-printf("fuck host %E\n", host_forces[0].f[0]);      
+
       /** Copy result from device memory to host memory*/
       cudaMemcpy(host_forces, particle_force, global_part_vars.number_of_particles * sizeof(LB_particle_force_gpu), cudaMemcpyDeviceToHost);
 
-      float tempToPrint[3];
-      cudaMemcpy(tempToPrint,particle_force[0].f,3*sizeof(float),cudaMemcpyDeviceToHost); //TODO DELETE
-      printf ("SHIT particle_force part 0 pos %f\n", tempToPrint[0]);
 
-        /** values for the particle kernel */
+      /** values for the particle kernel */
       int threads_per_block_particles = 64;
       int blocks_per_grid_particles_y = 4;
       int blocks_per_grid_particles_x = (global_part_vars.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
@@ -200,10 +192,9 @@ printf("fuck host %E\n", host_forces[0].f[0]);
       KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force));
     
       cudaThreadSynchronize();
-      mpi_send_forces_lb(host_forces); // TODO this is probably in the wrong place... just a test currently
+      mpi_send_forces_lb(host_forces);
     }
   }
-
 
   
 }

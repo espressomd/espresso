@@ -66,9 +66,6 @@ static unsigned int intflag = 1;
 static LB_nodes_gpu *current_nodes = NULL;
 /**defining size values for allocating global memory */
 static size_t size_of_values;
-static size_t size_of_forces;
-static size_t size_of_positions;
-static size_t size_of_seed;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
@@ -816,8 +813,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-printf ("HERE WE ARE!!!\n"); //TODO delete
-printf ("pos %E %E %E !!\n", particle_data[0].p[0], particle_data[0].p[1], particle_data[0].p[2]); //TODO delete
+
 #ifdef LB_ELECTROHYDRODYNAMICS
   particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
   particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
@@ -847,7 +843,6 @@ printf ("pos %E %E %E !!\n", particle_data[0].p[0], particle_data[0].p[1], parti
   delta_j[1] = - particle_force[part_index].f[1]*para.time_step*para.tau/para.agrid;
   delta_j[2] = - particle_force[part_index].f[2]*para.time_step*para.tau/para.agrid;  	
 															  																	  
-printf ("pos %E %E %E !!\n", particle_force[0].f[0], particle_force[0].f[1], particle_force[0].f[2]); //TODO delete
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
@@ -1370,7 +1365,7 @@ __global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_
 
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
   if(cudaGetSymbolAddress((void**) pointeradress, para) != cudaSuccess) {
-    printf("oh noo\n"); //TODO error
+    printf("oh noo, trouble getting address\n"); //TODO give proper error message
     exit(1);
   }
 }
@@ -1397,9 +1392,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   }
   /** Allocate structs in device memory*/
   size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
-  size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
-  size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
-  size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
 
   cuda_safe_mem(cudaMalloc((void**)&device_values, size_of_values));
 
@@ -1577,7 +1569,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
  * @param **host_data		Pointer to the host particle positions and velocities
 */
 void lb_particle_GPU(){
-//  TODO CALL OUR NEW FUNCTION TO TRANSFER PART DATA BEFORE THIS HAPPENS
+
   /** call of the particle kernel */
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
