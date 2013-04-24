@@ -95,26 +95,7 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
-/** Calculate particle lattice interactions called from forces.c
-*/
-void lb_calc_particle_lattice_ia_gpu() {
 
-  if (transfer_momentum_gpu) {
-
-    if(this_node == 0){
-#if 0
-      for (i=0;i<n_total_particles;i++) {
-        fprintf(stderr, "%i particle posi: , %f %f %f\n", i, particle_data_host[i].p[0], particle_data_host[i].p[1], particle_data_host[i].p[2]);
-      }
-#endif
-
-      if(lbpar_gpu.number_of_particles) lb_particle_GPU();
-
-      LB_TRACE (fprintf(stderr,"lb_calc_particle_lattice_ia_gpu \n"));
-
-    }
-  }
-}
 
 
 

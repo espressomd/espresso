@@ -232,7 +232,6 @@ void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-void lb_particle_GPU();
 void lb_free_GPU();
 void lb_get_values_GPU(LB_values_gpu *host_values);
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);

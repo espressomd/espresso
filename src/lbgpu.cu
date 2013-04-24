@@ -1566,18 +1566,19 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
 
 /**setup and call particle kernel from the host
 */
-void lb_particle_GPU(){
+void lb_calc_particle_lattice_ia_gpu(){
+  if (lbpar_gpu.number_of_particles) {
+    /** call of the particle kernel */
+    /** values for the particle kernel */
+    int threads_per_block_particles = 64;
+    int blocks_per_grid_particles_y = 4;
+    int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
+    dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
-  /** call of the particle kernel */
-  /** values for the particle kernel */
-  int threads_per_block_particles = 64;
-  int blocks_per_grid_particles_y = 4;
-  int blocks_per_grid_particles_x = (lbpar_gpu.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-  dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
 
-
-  KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer()));
+    KERNELCALL(calc_fluid_particle_ia, dim_grid_particles, threads_per_block_particles, (*current_nodes, gpu_get_particle_pointer(), gpu_get_particle_force_pointer(), node_f, gpu_get_particle_seed_pointer()));
+  }
 }
 
 /** setup and call kernel for getting macroscopic fluid values of all nodes
