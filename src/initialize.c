@@ -64,6 +64,7 @@
 #include "ghmc.h"
 #include "domain_decomposition.h"
 #include "p3m_gpu.h"
+#include "cuda_common.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -71,6 +72,10 @@ static int reinit_electrostatics = 0;
 static int reinit_magnetostatics = 0;
 #ifdef LB_GPU
 static int lb_reinit_particles_gpu = 1;
+#endif
+
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+static int reinit_particle_comm_gpu = 1;
 #endif
 
 void on_program_start()
@@ -262,7 +267,13 @@ if(this_node == 0){
     }
   }
 }
-
+#if defined(LB_GPU) || defined (ELECTROSTATICS)
+  if (reinit_particle_comm_gpu){
+    gpu_init_particle_comm();
+    reinit_particle_comm_gpu = 0;
+  }
+#endif
+  
 #endif
 
 #ifdef METADYNAMICS
@@ -363,7 +374,9 @@ void on_particle_change()
 #ifdef LB_GPU
   lb_reinit_particles_gpu = 1;
 #endif
-
+#if defined(LB_GPU) || defined (ELECTROSTATICS)
+  reinit_particle_comm_gpu = 1;
+#endif
   invalidate_obs();
 
   /* the particle information is no longer valid */

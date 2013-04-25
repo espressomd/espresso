@@ -160,7 +160,6 @@ extern "C" {
   }
 
   void copy_part_data_to_gpu() {
-
     if ( global_part_vars_host.communication_enabled == 1 ) {
       
       cuda_mpi_get_particles(particle_data_host);

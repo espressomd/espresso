@@ -80,11 +80,6 @@ void cuda_mpi_get_particles(CUDA_particle_data *host_result);
 void copy_part_data_to_gpu();
 void cuda_mpi_send_forces(CUDA_particle_force *host_forces);
 
-/**cuda streams for parallel computing on cpu and gpu */
-//cudaStream_t stream[1];
-
-//cudaError_t err;
-//cudaError_t _err;
 
 /**erroroutput for memory allocation and memory copy 
  * @param err cuda error code
