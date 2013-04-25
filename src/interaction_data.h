@@ -66,6 +66,16 @@
 #define BONDED_IA_ANGLE_COSINE 12
 /** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSSQUARE 13
+/** Type of bonded interaction is a stretching force. */
+#define BONDED_IA_STRETCHING_FORCE 14
+/** Type of bonded interaction is a local area force. */
+#define BONDED_IA_AREA_FORCE_LOCAL 15 
+/** Type of bonded interaction is a bending force. */
+#define BONDED_IA_BENDING_FORCE 16 
+/** Type of bonded interaction is a bending force. */
+#define BONDED_IA_VOLUME_FORCE 17 
+/** Type of bonded interaction is a global area force. */
+#define BONDED_IA_AREA_FORCE_GLOBAL 18 
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -457,7 +467,7 @@ typedef struct {
   double TUNABLE_SLIP_vz;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   double REACTION_range;
 #endif
 
@@ -531,6 +541,32 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
+
+    /** Parameters for stretching_force */
+    struct {
+	  double r0;
+      double ks;
+    } stretching_force;
+    /** Parameters for area_force_local */
+    struct {
+	  double A0_l;
+      double ka_l;
+    } area_force_local;
+    /** Parameters for area_force_global */
+    struct {
+	  double A0_g;
+      double ka_g;
+    } area_force_global;
+    /** Parameters for bending_force */
+    struct {
+	  double phi0;
+      double kb;
+    } bending_force;
+    /** Parameters for volume_force */
+    struct {
+	  double V0;
+      double kv;
+    } volume_force;
 
     /** Parameters for harmonic bond Potential */
     struct {

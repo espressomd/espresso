@@ -53,9 +53,14 @@ static LB_node_force_gpu node_f;
 static LB_particle_seed_gpu *part = NULL;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
+
 #ifdef LB_BOUNDARIES_GPU
+static float* LB_boundary_force = NULL;
+static float* LB_boundary_velocity = NULL;
 /** pointer for bound index array*/
-static int *boundindex;
+static int *boundary_node_list;
+static int *boundary_index_list;
+static __device__ __constant__ int n_lb_boundaries_gpu = 0;
 static size_t size_of_boundindex;
 #endif
 /** pointers for additional cuda check flag*/
@@ -79,6 +84,8 @@ cudaStream_t stream[1];
 
 cudaError_t err;
 cudaError_t _err;
+int initflag = 0;
+int partinitflag = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device funktions called by kernel funktions */
@@ -440,36 +447,115 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b, float *mode, unsigned i
  * @param index			node index / thread index (Input)
  * @param n_b			Pointer to local node residing in array b (Input)
  * @param n_a			Pointer to local node residing in array a (Output) (temp stored in buffer a)
+ * @param LB_boundary_velocity 			The constant velocity at the boundary, set by the user (Input)
+ * @param LB_boundary_force 			The force on the boundary nodes (Output)
 */
-__device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index){
+__device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned int index, \
+    float* LB_boundary_velocity, float* LB_boundary_force){
     
   unsigned int xyz[3];
+  int c[3];
+  float v[3];
+  float shift, weight, pop_to_bounce_back;
+  float boundary_force[3] = {0,0,0};
+  size_t to_index, to_index_x, to_index_y, to_index_z;
+  int population, inverse;
+  int boundary_index;
 
-  if(n_b.boundary[index] == 1){
+
+  boundary_index=n_b.boundary[index];
+  if(boundary_index != 0){
+    
+    v[0]=LB_boundary_velocity[3*(boundary_index-1)+0];
+    v[1]=LB_boundary_velocity[3*(boundary_index-1)+1];
+    v[2]=LB_boundary_velocity[3*(boundary_index-1)+2];
+
     index_to_xyz(index, xyz);
+
     unsigned int x = xyz[0];
     unsigned int y = xyz[1];
     unsigned int z = xyz[2];
 
+/* CPU analog of shift:
+   lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l] */
+  
     /** store vd temporary in second lattice to avoid race conditions */
-    n_a.vd[1*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[2*para.number_of_nodes + index];
-    n_a.vd[2*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*z] = n_b.vd[1*para.number_of_nodes + index];
-    n_a.vd[3*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[4*para.number_of_nodes + index];
-    n_a.vd[4*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[3*para.number_of_nodes + index];
-    n_a.vd[5*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[6*para.number_of_nodes + index];
-    n_a.vd[6*para.number_of_nodes + x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[5*para.number_of_nodes + index];
-    n_a.vd[7*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[8*para.number_of_nodes + index];
-    n_a.vd[8*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[7*para.number_of_nodes + index];
-    n_a.vd[9*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[10*para.number_of_nodes + index];
-    n_a.vd[10*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*z] = n_b.vd[9*para.number_of_nodes + index];
-    n_a.vd[11*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[12*para.number_of_nodes + index];
-    n_a.vd[12*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[11*para.number_of_nodes + index]; 
-    n_a.vd[13*para.number_of_nodes + (x+1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[14*para.number_of_nodes + index]; 
-    n_a.vd[14*para.number_of_nodes + (para.dim_x+x-1)%para.dim_x + para.dim_x*y + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[13*para.number_of_nodes + index]; 
-    n_a.vd[15*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[16*para.number_of_nodes + index];
-    n_a.vd[16*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[15*para.number_of_nodes + index];
-    n_a.vd[17*para.number_of_nodes + x + para.dim_x*((y+1)%para.dim_y) + para.dim_x*para.dim_y*((para.dim_z+z-1)%para.dim_z)] = n_b.vd[18*para.number_of_nodes + index]; 
-    n_a.vd[18*para.number_of_nodes + x + para.dim_x*((para.dim_y+y-1)%para.dim_y) + para.dim_x*para.dim_y*((z+1)%para.dim_z)] = n_b.vd[17*para.number_of_nodes + index];
+#define BOUNCEBACK  \
+  shift = para.agrid*para.agrid*para.agrid*para.agrid*para.rho*2.*3.*weight*para.tau*(v[0]*c[0] + v[1]*c[1] + v[2]*c[2]); \
+  pop_to_bounce_back = n_b.vd[population*para.number_of_nodes + index ]; \
+  to_index_x = (x+c[0]+para.dim_x)%para.dim_x; \
+  to_index_y = (y+c[1]+para.dim_y)%para.dim_y; \
+  to_index_z = (z+c[2]+para.dim_z)%para.dim_z; \
+  to_index = to_index_x + para.dim_x*to_index_y + para.dim_x*para.dim_y*to_index_z; \
+  if (n_b.boundary[to_index] == 0) \
+  { \
+    boundary_force[0] += (2*pop_to_bounce_back+shift)*c[0]/para.tau/para.tau/para.agrid; \
+    boundary_force[1] += (2*pop_to_bounce_back+shift)*c[1]/para.tau/para.tau/para.agrid; \
+    boundary_force[2] += (2*pop_to_bounce_back+shift)*c[2]/para.tau/para.tau/para.agrid; \
+    n_b.vd[inverse*para.number_of_nodes + to_index ] = pop_to_bounce_back + shift; \
+  }
+
+// ***** SHOULDN'T THERE BE AN ELSE STATMENT IN "BOUNCEBACK"?
+// ***** THERE IS AN ODD FACTOR OF 2 THAT YOU INCUR IN THE FORCES FOR THE "lb_stokes_sphere_gpu.tcl" TEST CASE
+
+    // the resting population does nothing.
+    c[0]=1;c[1]=0;c[2]=0; weight=1./18.; population=2; inverse=1; 
+    BOUNCEBACK
+    
+    c[0]=-1;c[1]=0;c[2]=0; weight=1./18.; population=1; inverse=2; 
+    BOUNCEBACK
+    
+    c[0]=0;c[1]=1;c[2]=0;  weight=1./18.; population=4; inverse=3; 
+    BOUNCEBACK
+
+    c[0]=0;c[1]=-1;c[2]=0; weight=1./18.; population=3; inverse=4; 
+    BOUNCEBACK
+    
+    c[0]=0;c[1]=0;c[2]=1; weight=1./18.; population=6; inverse=5; 
+    BOUNCEBACK
+
+    c[0]=0;c[1]=0;c[2]=-1; weight=1./18.; population=5; inverse=6; 
+    BOUNCEBACK 
+    
+    c[0]=1;c[1]=1;c[2]=0; weight=1./36.; population=8; inverse=7; 
+    BOUNCEBACK
+    
+    c[0]=-1;c[1]=-1;c[2]=0; weight=1./36.; population=7; inverse=8; 
+    BOUNCEBACK
+    
+    c[0]=1;c[1]=-1;c[2]=0; weight=1./36.; population=10; inverse=9; 
+    BOUNCEBACK
+
+    c[0]=-1;c[1]=+1;c[2]=0; weight=1./36.; population=9; inverse=10; 
+    BOUNCEBACK
+    
+    c[0]=1;c[1]=0;c[2]=1; weight=1./36.; population=12; inverse=11; 
+    BOUNCEBACK
+    
+    c[0]=-1;c[1]=0;c[2]=-1; weight=1./36.; population=11; inverse=12; 
+    BOUNCEBACK
+
+    c[0]=1;c[1]=0;c[2]=-1; weight=1./36.; population=14; inverse=13; 
+    BOUNCEBACK
+    
+    c[0]=-1;c[1]=0;c[2]=1; weight=1./36.; population=13; inverse=14; 
+    BOUNCEBACK
+
+    c[0]=0;c[1]=1;c[2]=1; weight=1./36.; population=16; inverse=15; 
+    BOUNCEBACK
+    
+    c[0]=0;c[1]=-1;c[2]=-1; weight=1./36.; population=15; inverse=16; 
+    BOUNCEBACK
+    
+    c[0]=0;c[1]=1;c[2]=-1; weight=1./36.; population=18; inverse=17; 
+    BOUNCEBACK
+    
+    c[0]=0;c[1]=-1;c[2]=1; weight=1./36.; population=17; inverse=18; 
+    BOUNCEBACK  
+    
+    atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+0], boundary_force[0]);
+    atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+1], boundary_force[1]);
+    atomicadd(&LB_boundary_force[3*(n_b.boundary[index]-1)+2], boundary_force[2]);
   }
 }
 /**bounce back read kernel needed to avoid raceconditions
@@ -481,7 +567,7 @@ __device__ void bounce_back_write(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned i
 
   unsigned int xyz[3];
 
-  if(n_b.boundary[index] == 1){
+  if(n_b.boundary[index] != 0){
     index_to_xyz(index, xyz);
     unsigned int x = xyz[0];
     unsigned int y = xyz[1];
@@ -568,50 +654,74 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
  * @param n_a		Pointer to local node residing in array a for boundary flag(Input)
  * @param *d_v		Pointer to local device values (Input/Output)
  * @param singlenode	Flag, if there is only one node
+ * This function is a clone of lb_calc_local_fields and
+ * additionally performs unit conversions.
 */
 __device__ void calc_values(LB_nodes_gpu n_a, float *mode, LB_values_gpu *d_v, unsigned int index, unsigned int singlenode){
 
-  float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
+  float rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
 	
-  /**implemented due to the problem of division via zero*/
-  if(n_a.boundary[index] == 1){
-    Rho = 1.0f;
-    mode[1] = 0.f;
-    mode[2] = 0.f;
-    mode[3] = 0.f;
+  float *v, *pi;
+  if(singlenode == 1){ 
+    v=&(d_v[0].v[0]);
+    pi=&(d_v[0].pi[0]);
+    d_v[0].rho = rho;
+  } else {
+    v=&(d_v[index].v[0]);
+    pi=&(d_v[index].pi[0]);
+    d_v[index].rho = rho;
+  }
+  float j[3]; float pi_eq[6];
+  
+  j[0] = mode[1];
+  j[1] = mode[2];
+  j[2] = mode[3];
+
+// To Do: Here half the forces have to go in!
+//  j[0] += 0.5*lbfields[index].force[0];
+//  j[1] += 0.5*lbfields[index].force[1];
+//  j[2] += 0.5*lbfields[index].force[2];
+
+  v[0]=j[0]/rho;
+  v[1]=j[1]/rho;
+  v[2]=j[2]/rho;
+
+  /* equilibrium part of the stress modes */
+  pi_eq[0] = (j[0]*j[0]+j[1]*j[1]+j[2]*j[2])/ rho;
+  pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/ rho;
+  pi_eq[2] = (j[0]*j[0]+j[1]*j[1]+j[2]*j[2] - 3.0*j[2]*j[2])/ rho;
+  pi_eq[3] = j[0]*j[1]/ rho;
+  pi_eq[4] = j[0]*j[2]/ rho;
+  pi_eq[5] = j[1]*j[2]/ rho;
+
+  /* Now we must predict the outcome of the next collision */
+  /* We immediately average pre- and post-collision. */
+  mode[4] = pi_eq[0] + (0.5+0.5*para.gamma_bulk )*(mode[4] - pi_eq[0]);
+  mode[5] = pi_eq[1] + (0.5+0.5*para.gamma_shear)*(mode[5] - pi_eq[1]);
+  mode[6] = pi_eq[2] + (0.5+0.5*para.gamma_shear)*(mode[6] - pi_eq[2]);
+  mode[7] = pi_eq[3] + (0.5+0.5*para.gamma_shear)*(mode[7] - pi_eq[3]);
+  mode[8] = pi_eq[4] + (0.5+0.5*para.gamma_shear)*(mode[8] - pi_eq[4]);
+  mode[9] = pi_eq[5] + (0.5+0.5*para.gamma_shear)*(mode[9] - pi_eq[5]);
+
+  /* Now we have to transform to the "usual" stress tensor components */
+  /* We use eq. 116ff in Duenweg Ladd for that. */
+  pi[0]=(mode[0]+mode[4]+mode[5])/3.;
+  pi[2]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
+  pi[5]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
+  pi[1]=mode[7];
+  pi[3]=mode[8];
+  pi[4]=mode[9];
+
+  /* Finally some unit conversions */
+  rho*=1./para.agrid/para.agrid/para.agrid;
+  v[0]*=1./para.tau/para.agrid;
+  v[1]*=1./para.tau/para.agrid;
+  v[2]*=1./para.tau/para.agrid;
+
+  for (int i =0; i<6; i++) {
+    pi[i]*=1./para.tau/para.tau/para.agrid/para.agrid/para.agrid;
   }
 
-  if(singlenode == 1){
-    d_v[0].rho = Rho;
-    d_v[0].v[0] = mode[1]/Rho/para.agrid/para.tau;
-    d_v[0].v[1] = mode[2]/Rho/para.agrid/para.tau;
-    d_v[0].v[2] = mode[3]/Rho/para.agrid/para.tau;
-  }
-  else{
-    d_v[index].rho = Rho;
-    d_v[index].v[0] = mode[1]/Rho/para.agrid/para.tau;
-    d_v[index].v[1] = mode[2]/Rho/para.agrid/para.tau;
-    d_v[index].v[2] = mode[3]/Rho/para.agrid/para.tau;
-  }
-#if 0
-  if(singlenode == 1){
-    /** equilibrium part of the stress modes */
-    /**to print out the stress tensor entries, ensure that in lbgpu.h struct the values are available*/
-    d_v[0].pi[0] = ((mode[1]*mode[1]) + (mode[2]*mode[2]) + (mode[3]*mode[3]))/para.rho;
-    d_v[0].pi[1] = ((mode[1]*mode[1]) - (mode[2]*mode[2]))/para.rho;
-    d_v[0].pi[2] = ((mode[1]*mode[1]) + (mode[2]*mode[2])  + (mode[3]*mode[3])) - 3.0f*(mode[3]*mode[3]))/para.rho;
-    d_v[0].pi[3] = mode[1]*mode[2]/para.rho;
-    d_v[0].pi[4] = mode[1]*mode[3]/para.rho;
-    d_v[0].pi[5] = mode[2]*mode[3]/para.rho;
-  else{
-    d_v[index].pi[0] = ((mode[1]*mode[1]) + (mode[2]*mode[2]) + (mode[3]*mode[3]))/para.rho;
-    d_v[index].pi[1] = ((mode[1]*mode[1]) - (mode[2]*mode[2]))/para.rho;
-    d_v[index].pi[2] = ((mode[1]*mode[1]) + (mode[2]*mode[2])  + (mode[3]*mode[3])) - 3.0f*(mode[3]*mode[3]))/para.rho;
-    d_v[index].pi[3] = mode[1]*mode[2]/para.rho;
-    d_v[index].pi[4] = mode[1]*mode[3]/para.rho;
-    d_v[index].pi[5] = mode[2]*mode[3]/para.rho;
-  }
-#endif
 }
 /** 
  * @param node_index	node index around (8) particle (Input)
@@ -1006,7 +1116,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
-#ifdef EXTERNAL_FORCE
+#ifdef EXTERNAL_FORCES
     if(para.external_force){
       node_f.force[0*para.number_of_nodes + index] = para.ext_force[0]*powf(para.agrid,4)*para.tau*para.tau;
       node_f.force[1*para.number_of_nodes + index] = para.ext_force[1]*powf(para.agrid,4)*para.tau*para.tau;
@@ -1026,17 +1136,19 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
 }
 
 /**set the boundary flag for all boundary nodes
- * @param *boundindex	     	Pointer to the 1d index of the boundnode (Input)
+ * @param boundary_node_list    The indices of the boundary nodes
+ * @param boundary_index_list   The flag representing the corresponding boundary
  * @param number_of_boundnodes	The number of boundary nodes
  * @param n_a			Pointer to local node residing in array a (Input)
  * @param n_b			Pointer to local node residing in array b (Input)
 */
-__global__ void init_boundaries(int *boundindex, int number_of_boundnodes, LB_nodes_gpu n_a, LB_nodes_gpu n_b){
+__global__ void init_boundaries(int *boundary_node_list, int *boundary_index_list, int number_of_boundnodes, LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<number_of_boundnodes){
-    n_a.boundary[boundindex[index]] = n_b.boundary[boundindex[index]] = 1;
+    n_a.boundary[boundary_node_list[index]] = boundary_index_list[index];
+    n_b.boundary[boundary_node_list[index]] = boundary_index_list[index];
   }	
 }
 
@@ -1046,7 +1158,7 @@ __global__ void init_boundaries(int *boundindex, int number_of_boundnodes, LB_no
 */
 __global__ void reset_boundaries(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
+  size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     n_a.boundary[index] = n_b.boundary[index] = 0;
@@ -1121,13 +1233,15 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *partic
 /**Bounce back boundary read kernel
  * @param n_a					Pointer to local node residing in array a (Input)
  * @param n_b					Pointer to local node residing in array b (Input)
+ * @param LB_boundary_velocity 			The constant velocity at the boundary, set by the user (Input)
+ * @param LB_boundary_force 			The force on the boundary nodes (Output)
 */
-__global__ void bb_read(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
+__global__ void bb_read(LB_nodes_gpu n_a, LB_nodes_gpu n_b, float* LB_boundary_velocity, float* LB_boundary_force){
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
-    bounce_back_read(n_b, n_a, index);
+    bounce_back_read(n_b, n_a, index, LB_boundary_velocity, LB_boundary_force);
   }
 }
 
@@ -1155,7 +1269,7 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
-    calc_mode(mode, n_a, index);
+    calc_m_from_n(n_a, index, mode);
     calc_values(n_a, mode, d_v, index, singlenode);
   }
 }
@@ -1201,7 +1315,7 @@ __global__ void lb_print_node(int single_nodeindex, LB_values_gpu *d_p_v, LB_nod
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index == 0){
-    calc_mode(mode, n_a, single_nodeindex);
+    calc_m_from_n(n_a, single_nodeindex, mode);
     calc_values(n_a, mode, d_p_v, single_nodeindex, singlenode);
   }	
 }
@@ -1284,18 +1398,26 @@ __global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_
 */
 void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
     if( cudaSuccess != err) {                                             
-      fprintf(stderr, "Could not allocate gpu memory at %s:%u.\n", file, line);
+      fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
       printf("CUDA error: %s\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
+    } else {
+      _err=cudaGetLastError(); \
+      if (_err != cudaSuccess) {
+        fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
+        printf("CUDA error: %s\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+      }
     }
 }
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
+
 #define KERNELCALL(_f, _a, _b, _params) \
 _f<<<_a, _b, 0, stream[0]>>>_params; \
 _err=cudaGetLastError(); \
 if (_err!=cudaSuccess){ \
   printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
-  fprintf(stderr, "error calling %s with #thpb %d in %s:%u\n", #_f, _b, __FILE__, __LINE__); \
+  fprintf(stderr, "error calling %s with dim %d %d %d #thpb %d in %s:%u\n", #_f, _a.x, _a.y, _a.z, _b, __FILE__, __LINE__); \
   exit(EXIT_FAILURE); \
 }
 /*********************************************************/
@@ -1310,6 +1432,17 @@ if (_err!=cudaSuccess){ \
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
+  if(initflag){
+    cudaFree(device_values);
+    cudaFree(nodes_a.vd);
+    cudaFree(nodes_b.vd);
+    cudaFree(nodes_a.seed);
+    cudaFree(nodes_b.seed);
+    cudaFree(nodes_a.boundary);
+    cudaFree(nodes_b.boundary);
+    cudaFree(node_f.force);
+    cudaFree(gpu_check);
+  }
   /** Allocate structs in device memory*/
   size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
@@ -1338,6 +1471,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
   /**check flag if lb gpu init works*/
   cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
+  initflag = 1;
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
@@ -1396,13 +1530,16 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
 */
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data){
 
+  if(partinitflag){
+    cudaFreeHost(*host_data);
+    cudaFree(particle_force);
+    cudaFree(particle_data);
+    cudaFree(part);
+  }
   /** Allocate struct for particle positions */
   size_of_forces = lbpar_gpu->number_of_particles * sizeof(LB_particle_force_gpu);
   size_of_positions = lbpar_gpu->number_of_particles * sizeof(LB_particle_gpu);
   size_of_seed = lbpar_gpu->number_of_particles * sizeof(LB_particle_seed_gpu);
-
-  cudaFreeHost(*host_data);
-
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
   /**pinned memory mode - use special function to get OS-pinned memory*/
   cudaHostAlloc((void**)host_data, size_of_positions, cudaHostAllocWriteCombined);
@@ -1410,16 +1547,13 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   cudaMallocHost((void**)host_data, size_of_positions);
 #endif
 
-  cudaFree(particle_force);
-  cudaFree(particle_data);
-  cudaFree(part);
-
-  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
- 
   cuda_safe_mem(cudaMalloc((void**)&particle_force, size_of_forces));
   cuda_safe_mem(cudaMalloc((void**)&particle_data, size_of_positions));
   cuda_safe_mem(cudaMalloc((void**)&part, size_of_seed));
-
+  //copy parameters, especially number of parts to gpu mem
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  //mem init of particles ok
+  partinitflag  = 1;
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
   int blocks_per_grid_particles_y = 4;
@@ -1429,15 +1563,27 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));	
 }
 #ifdef LB_BOUNDARIES_GPU
-/**setup and call boundaries from the host
- * @param *host_boundindex		Pointer to the host bound index
+/** setup and call boundaries from the host
+ * @param host_n_lb_boundaries number of LB boundaries
  * @param number_of_boundnodes	number of boundnodes
+ * @param host_boundary_node_list    The indices of the boundary nodes
+ * @param host_boundary_index_list   The flag representing the corresponding boundary
+ * @param host_LB_Boundary_velocity 			The constant velocity at the boundary, set by the user (Input)
 */
-void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
+void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes, int *host_boundary_node_list, int* host_boundary_index_list, float* host_LB_Boundary_velocity){
+  int temp = host_n_lb_boundaries;
 
   size_of_boundindex = number_of_boundnodes*sizeof(int);
-  cuda_safe_mem(cudaMalloc((void**)&boundindex, size_of_boundindex));
-  cudaMemcpy(boundindex, host_boundindex, size_of_boundindex, cudaMemcpyHostToDevice);
+  cuda_safe_mem(cudaMalloc((void**)&boundary_node_list, size_of_boundindex));
+  cuda_safe_mem(cudaMalloc((void**)&boundary_index_list, size_of_boundindex));
+  cuda_safe_mem(cudaMemcpy(boundary_index_list, host_boundary_index_list, size_of_boundindex, cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpy(boundary_node_list, host_boundary_node_list, size_of_boundindex, cudaMemcpyHostToDevice));
+
+  cuda_safe_mem(cudaMalloc((void**)&LB_boundary_force   , 3*host_n_lb_boundaries*sizeof(float)));
+  cuda_safe_mem(cudaMalloc((void**)&LB_boundary_velocity, 3*host_n_lb_boundaries*sizeof(float)));
+  cuda_safe_mem(cudaMemcpy(LB_boundary_velocity, host_LB_Boundary_velocity, 3*n_lb_boundaries*sizeof(float), cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(n_lb_boundaries_gpu, &temp, sizeof(int)));
+
   
   /** values for the kernel call */
   int threads_per_block = 64;
@@ -1453,14 +1599,13 @@ void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex){
   }
   if(number_of_boundnodes == 0){
     fprintf(stderr, "WARNING: boundary cmd executed but no boundary node found!\n");
-  }
-  else{
+  } else{
     int threads_per_block_bound = 64;
     int blocks_per_grid_bound_y = 4;
     int blocks_per_grid_bound_x = (number_of_boundnodes + threads_per_block_bound * blocks_per_grid_bound_y - 1) /(threads_per_block_bound * blocks_per_grid_bound_y);
     dim3 dim_grid_bound = make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
-    KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundindex, number_of_boundnodes, nodes_a, nodes_b));
+    KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound, (boundary_node_list, boundary_index_list, number_of_boundnodes, nodes_a, nodes_b));
   }
 
   cudaThreadSynchronize();
@@ -1493,7 +1638,7 @@ void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_
   cuda_safe_mem(cudaMalloc((void**)&extern_nodeforces, size_of_extern_nodeforces));
   cudaMemcpy(extern_nodeforces, host_extern_nodeforces, size_of_extern_nodeforces, cudaMemcpyHostToDevice);
 
-  if(para.external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
+  if(lbpar_gpu->external_force == 0)cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu))); 
 
   int threads_per_block_exf = 64;
   int blocks_per_grid_exf_y = 4;
@@ -1566,7 +1711,7 @@ void lb_get_boundary_flags_GPU(unsigned int* host_bound_array){
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
+  int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block, (*current_nodes, device_bound_array));
@@ -1663,6 +1808,29 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
   host_temp[0] = (double)(host_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
 }
+/** setup and call kernel for getting macroscopic fluid values of all nodes
+ * @param *host_values struct to save the gpu values
+*/
+void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
+
+  cudaMemcpy(host_checkpoint_vd, current_nodes->vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_checkpoint_seed, current_nodes->seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_checkpoint_boundary, current_nodes->boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(host_checkpoint_force, node_f.force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyDeviceToHost);
+
+}
+/** setup and call kernel for setting macroscopic fluid values of all nodes
+ * @param *host_values struct to set stored values
+*/
+void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force){
+
+  cudaMemcpy(current_nodes->vd, host_checkpoint_vd, lbpar_gpu.number_of_nodes * 19 * sizeof(float), cudaMemcpyHostToDevice);
+  intflag = 1;
+  cudaMemcpy(current_nodes->seed, host_checkpoint_seed, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice);
+  cudaMemcpy(current_nodes->boundary, host_checkpoint_boundary, lbpar_gpu.number_of_nodes * sizeof(unsigned int), cudaMemcpyHostToDevice);
+  cudaMemcpy(node_f.force, host_checkpoint_force, lbpar_gpu.number_of_nodes * 3 * sizeof(float), cudaMemcpyHostToDevice);
+
+}
 
 /** setup and call kernel to get the boundary flag of a single node
  *  @param single_nodeindex number of the node to get the flag for
@@ -1713,21 +1881,28 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 }
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
-
+  
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
+#ifdef LB_BOUNDARIES_GPU
+  if (n_lb_boundaries > 0) 
+    cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
+#endif
+
   /**call of fluid step*/
   if (intflag == 1){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
     current_nodes = &nodes_b;
 #ifdef LB_BOUNDARIES_GPU		
-    if (n_lb_boundaries > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b));
-			
-    if (n_lb_boundaries > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
+
+    if (n_lb_boundaries > 0) {
+        KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_a, nodes_b, LB_boundary_velocity, LB_boundary_force));
+  //      KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_a, nodes_b));
+      }
 #endif
     intflag = 0;
   }
@@ -1735,12 +1910,25 @@ void lb_integrate_GPU(){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_b, nodes_a, device_values, node_f));
     current_nodes = &nodes_a;
 #ifdef LB_BOUNDARIES_GPU		
-    if (n_lb_boundaries > 0) KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a));
-			
-    if (n_lb_boundaries > 0) KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
+
+    if (n_lb_boundaries > 0) {
+      KERNELCALL(bb_read, dim_grid, threads_per_block, (nodes_b, nodes_a, LB_boundary_velocity, LB_boundary_force));
+ //     KERNELCALL(bb_write, dim_grid, threads_per_block, (nodes_b, nodes_a));
+    }
 #endif
     intflag = 1;
   }             
+}
+
+void lb_gpu_get_boundary_forces(double* forces) {
+#ifdef LB_BOUNDARIES_GPU
+  float* temp = (float*) malloc(3*n_lb_boundaries*sizeof(float));
+  cuda_safe_mem(cudaMemcpy(temp, LB_boundary_force, 3*n_lb_boundaries*sizeof(float), cudaMemcpyDeviceToHost));
+  for (int i =0; i<3*n_lb_boundaries; i++) {
+    forces[i]=(double)temp[i];
+  }
+  free(temp);
+#endif
 }
 
 /** free gpu memory kernel called from the host (not used anymore) */

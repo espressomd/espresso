@@ -40,7 +40,6 @@ index=totoc,                    % add the index to the TOC
 \usepackage{graphicx}           % handles graphics
 \usepackage{makeidx}            % creates the index
 \usepackage{color}              % use colors
-\usepackage{doc}
 \usepackage{amsmath}
 \usepackage{verbatim}           % required for \verbatim and \endverbatim
 \usepackage{fancyvrb}
@@ -50,13 +49,15 @@ index=totoc,                    % add the index to the TOC
 \usepackage{xspace}
 \usepackage{units}
 \usepackage[numbers]{natbib}
+%\usepackage{showframe}          % Turn this on when debugging the
+                                % margin etc.
 
 % For building the distribution docs, disable todo boxes.
 \ifdefined\todosoff
 \usepackage[disable]{todonotes}
 \message{ToDo-Notes turned OFF}
 \else
-\usepackage{todonotes}
+\usepackage[textsize=small]{todonotes}
 \message{ToDo-Notes turned ON}
 \fi
 
@@ -135,7 +136,7 @@ index=totoc,                    % add the index to the TOC
 }
 
 \newcommand{\citewbibkey}[1]{%
-  \cite{#1} (\BibTeX{}-key \texttt{#1} in file \texttt{doc/ug/citations.bib})}
+  \cite{#1} (\textsc{BibTeX}-key \texttt{#1} in file \texttt{doc/ug/citations.bib})}
 
 %%%%%%%%%%%%%% Syntax Description %%%%%%%%%%%%%%%
 
@@ -173,7 +174,7 @@ index=totoc,                    % add the index to the TOC
 \newcommand{\required}[2][]{%
   \ifthenelse{\equal{#1}{}}{#2}{%
     \mbox{\fmark{#1}\,\feature{#2}}%
-  4}
+  }
 }
 \newenvironment{features}{%
   \par\smallskip%
@@ -289,6 +290,7 @@ index=totoc,                    % add the index to the TOC
 \author{for version \esversion}
 \fi
 \date{\today}
+
 \maketitle
 
 \ifdefined\todosoff
@@ -315,6 +317,7 @@ index=totoc,                    % add the index to the TOC
 \include{io}
 \include{aux}
 \include{lb}
+\include{fsi}
 \include{mbtools}
 
 \include{internal}

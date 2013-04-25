@@ -461,7 +461,7 @@ void    add_mdlc_force_corrections(){
   double  *dip_DLC_f_x=NULL,*dip_DLC_f_y=NULL,*dip_DLC_f_z=NULL;
   double  *dip_DLC_t_x=NULL,*dip_DLC_t_y=NULL,*dip_DLC_t_z=NULL;
   double  dip_DLC_energy=0.0;
-  double  mz=0.0,mx=0.0,my=0.0,volume,correc,mtot=0.0;
+  double  mz=0.0,mx=0.0,my=0.0,volume,mtot=0.0;
 #if defined(ROTATION) && defined(DP3M)
   double dx,dy,dz,correps;
 #endif  
@@ -530,8 +530,6 @@ void    add_mdlc_force_corrections(){
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //	of the particles
 	 
-  correc= 4.*M_PI/volume;
-	 
   ip = 0;
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -545,6 +543,7 @@ void    add_mdlc_force_corrections(){
 	p[i].f.f[2] += coulomb.Dprefactor*dip_DLC_f_z[ip]; //SDC correction term is zero for the forces
    
 #if defined(ROTATION) && defined(DP3M)
+    double correc= 4.*M_PI/volume;
 	//in the Next lines: the second term (correc*...)is the SDC correction for the torques
 	if(dp3m.params.epsilon == P3M_EPSILON_METALLIC) {	
 

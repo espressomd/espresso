@@ -366,7 +366,7 @@ void initialize_ia_params(IA_parameters *params) {
   params->mol_cut_cutoff = 0.0;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   params->REACTION_range = 0.0;
 #endif
 }
@@ -553,6 +553,7 @@ static void recalc_global_maximal_nonbonded_cutoff()
       max_cut_global = dpd_tr_cut;
   }
 #endif
+
 }
 
 static void recalc_maximal_cutoff_nonbonded()
@@ -673,7 +674,7 @@ static void recalc_maximal_cutoff_nonbonded()
 	max_cut_current = data->TUNABLE_SLIP_r_cut;
 #endif
 
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
       if (max_cut_current < data->REACTION_range)
 	max_cut_current = data->REACTION_range;
 #endif
@@ -751,6 +752,16 @@ char *get_name_of_bonded_ia(int i) {
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
     return "VIRTUAL_BOND";
+  case BONDED_IA_STRETCHING_FORCE:
+    return "STRETCHING_FORCE";
+  case BONDED_IA_AREA_FORCE_LOCAL:
+    return "AREA_FORCE_LOCAL";
+  case BONDED_IA_AREA_FORCE_GLOBAL:
+    return "AREA_FORCE_GLOBAL";
+  case BONDED_IA_BENDING_FORCE:
+    return "BENDING_FORCE";
+  case BONDED_IA_VOLUME_FORCE:
+    return "VOLUME_FORCE";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);

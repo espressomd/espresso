@@ -88,7 +88,9 @@ void core()
 {
   if (!core_done && !regular_exit) {
     fprintf(stderr, "%d: forcing core dump on irregular exit (%d / %d) \n", this_node, core_done, regular_exit);
-    *(int *)0 = 0;
+    /* this produced a compiler warning and got thrown out by GCC: */
+    /* *(int *)0 = 0; */
+    abort();
     /* doesn't work on AMD64 */
     /* kill(getpid(), SIGSEGV); */
     core_done = 1;
@@ -108,7 +110,7 @@ void check_particle_consistency()
     cell = local_cells.cell[c];
     cell_part_cnt += cell->n;
     part = cell->part;
-    for(n=0; n<cell->n ; n++) {
+    for(int n=0; n<cell->n ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: check_particle_consistency: ERROR: Cell %d Part %d has corrupted id=%d\n",
 		this_node,c,n,cell->part[n].p.identity);
@@ -208,7 +210,7 @@ void check_particles()
     cell = local_cells.cell[c];
     cell_part_cnt += cell->n;
     part = cell->part;
-    for(n=0; n<cell->n ; n++) {
+    for(int n=0; n<cell->n ; n++) {
       if(part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
 	fprintf(stderr,"%d: check_particles: ERROR: Cell %d Part %d has corrupted id=%d\n",
 		this_node,c,n,cell->part[n].p.identity);

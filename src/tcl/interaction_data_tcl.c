@@ -84,6 +84,11 @@
 #include "overlap_tcl.h"
 #include "harmonic_tcl.h"
 #include "subt_lj_tcl.h"
+#include "tcl/fsi/area_force_local_tcl.h"
+#include "tcl/fsi/area_force_global_tcl.h"
+#include "tcl/fsi/volume_force_tcl.h"
+#include "tcl/fsi/stretching_force_tcl.h"
+#include "tcl/fsi/bending_force_tcl.h"
 
 ///
 int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
@@ -288,13 +293,27 @@ int tclprint_to_result_BondedIA(Tcl_Interp *interp, int i)
   switch (params->type) {
   case BONDED_IA_FENE:
     return tclprint_to_result_feneIA(interp, params);
+  case BONDED_IA_STRETCHING_FORCE:						
+    return tclprint_to_result_stretchingforceIA(interp, params);
+  case BONDED_IA_AREA_FORCE_LOCAL:					
+	return tclprint_to_result_areaforcelocalIA(interp, params);
+  case BONDED_IA_BENDING_FORCE:						
+	return tclprint_to_result_bendingforceIA(interp, params);
+#ifdef AREA_FORCE_GLOBAL
+  case BONDED_IA_AREA_FORCE_GLOBAL:						
+	return tclprint_to_result_areaforceglobalIA(interp, params);
+#endif
+#ifdef VOLUME_FORCE
+  case BONDED_IA_VOLUME_FORCE:						
+	return tclprint_to_result_volumeforceIA(interp, params);
+#endif
   case BONDED_IA_HARMONIC:
     return tclprint_to_result_harmonicIA(interp, params);
 #ifdef BOND_ANGLE_OLD
   case BONDED_IA_ANGLE_OLD:
     return tclprint_to_result_angleIA(interp, params);
 #endif
-#ifdef BOND_ANGLE_
+#ifdef BOND_ANGLE
   case BONDED_IA_ANGLE_HARMONIC:
     return tclprint_to_result_angle_harmonicIA(interp, params);
   case BONDED_IA_ANGLE_COSINE:
@@ -557,7 +576,9 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
       else
 	Tcl_AppendResult(interp, " {", (char *)NULL);
 
-      tclprint_to_result_BondedIA(interp, i);
+      if (tclprint_to_result_BondedIA(interp, i) == TCL_ERROR) {
+        return TCL_ERROR;
+      }
       Tcl_AppendResult(interp, "}", (char *)NULL);
     }
   }
@@ -570,7 +591,9 @@ int tclcommand_inter_print_all(Tcl_Interp *interp)
 	}
 	else
 	  Tcl_AppendResult(interp, " {", (char *)NULL);
-	tclprint_to_result_NonbondedIA(interp, i, j);
+	if (tclprint_to_result_NonbondedIA(interp, i, j) == TCL_ERROR) {
+          return TCL_ERROR;
+        }
 	Tcl_AppendResult(interp, "}", (char *)NULL);
       }
     }
@@ -669,12 +692,12 @@ int tclcommand_inter_print_non_bonded(Tcl_Interp * interp,
 /* TODO: This function is not used anywhere. To be removed?  */
 int tf_print(Tcl_Interp * interp, int part_type)
 {
-  TF_parameters *data;
+  //TF_parameters *data;
   Tcl_ResetResult(interp);
     
     make_particle_type_exist(part_type);
     
-    data = get_tf_param(part_type);
+    //data = get_tf_param(part_type);
     
     return tclprint_to_result_TF(interp, part_type);
 }
@@ -865,6 +888,15 @@ int tclcommand_inter_parse_bonded(Tcl_Interp *interp,
   if (ARG0_IS_S(name)) return parser(interp, bond_type, argc, argv);
   
   REGISTER_BONDED("fene", tclcommand_inter_parse_fene);
+  REGISTER_BONDED("stretching_force", tclcommand_inter_parse_stretching_force);
+  REGISTER_BONDED("area_force_local", tclcommand_inter_parse_area_force_local);
+  REGISTER_BONDED("bending_force", tclcommand_inter_parse_bending_force);
+#ifdef AREA_FORCE_GLOBAL
+  REGISTER_BONDED("area_force_global", tclcommand_inter_parse_area_force_global);
+#endif
+#ifdef VOLUME_FORCE
+  REGISTER_BONDED("volume_force", tclcommand_inter_parse_volume_force);
+#endif
   REGISTER_BONDED("harmonic", tclcommand_inter_parse_harmonic);
 #ifdef LENNARD_JONES  
   REGISTER_BONDED("subt_lj", tclcommand_inter_parse_subt_lj);

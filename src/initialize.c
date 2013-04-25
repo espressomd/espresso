@@ -99,7 +99,7 @@ void on_program_start()
   init_random();
   init_bit_random();
 
-  setup_node_grid();
+  init_node_grid();
   /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
@@ -133,8 +133,9 @@ void on_program_start()
   lb_pre_init();
 #endif
 
-#ifdef REACTIONS
-  reaction.back_rate=-1.0;
+#ifdef CATALYTIC_REACTIONS
+  reaction.eq_rate=0.0;
+  reaction.sing_mult=0;
 #endif
 
   /*
@@ -267,11 +268,18 @@ if(this_node == 0){
   meta_init();
 #endif
 
-#ifdef REACTIONS
-if(reaction.rate != 0.0) {
+#ifdef CATALYTIC_REACTIONS
+if(reaction.ct_rate != 0.0) {
+
+   if( dd.use_vList == 0 || cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{105 The CATALYTIC_REACTIONS feature requires verlet lists and domain decomposition} ");
+      check_runtime_errors();
+    }
+
   if(max_cut < reaction.range) {
     errtext = runtime_error(128);
-    ERROR_SPRINTF(errtext,"{105 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
+    ERROR_SPRINTF(errtext,"{106 Reaction range of %f exceeds maximum cutoff of %f} ", reaction.range, max_cut);
   }
 }
 #endif
@@ -443,6 +451,7 @@ void on_lbboundary_change()
     lb_init_boundaries();
   }
 #endif
+
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
@@ -647,8 +656,16 @@ void on_parameter_change(int field)
     }
 #endif
   case FIELD_LANGEVIN_GAMMA:
-  case FIELD_DPD_TGAMMA:
   case FIELD_DPD_GAMMA:
+  case FIELD_DPD_TGAMMA:
+    reinit_thermo = 1;
+    break;
+  case FIELD_DPD_RCUT:
+  case FIELD_DPD_TRCUT:
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    reinit_thermo = 1;
+    break;
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:

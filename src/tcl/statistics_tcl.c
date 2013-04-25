@@ -1129,7 +1129,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
   /* 'analyze find_principal_axis [<type0>]' */
   double MofImatrix[9],eva[3],eve[3];
   char buffer[4*TCL_DOUBLE_SPACE+20];
-  int p1,j;
+  int p1;
 
   /* parse arguments */
   if (argc != 1) {
@@ -1148,7 +1148,7 @@ static int tclcommand_analyze_parse_find_principal_axis(Tcl_Interp *interp, int 
 
   sprintf(buffer,"{eigenval eigenvector} ");
   Tcl_AppendResult(interp, buffer, (char *)NULL);
-  for (j= 0; j < 3; j++) {
+  for (int j= 0; j < 3; j++) {
     calc_eigenvector_3x3(MofImatrix,eva[j],eve);
     sprintf(buffer," { %f { %f %f %f } }",eva[j],eve[0],eve[1],eve[2]);
     Tcl_AppendResult(interp, buffer, (char *)NULL);

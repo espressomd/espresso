@@ -98,6 +98,26 @@ void force_calc()
     
   }
 
+#ifdef VOLUME_FORCE
+	double volume=0.;
+	
+	for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
+		calc_volume(&volume,i);
+		if (volume<1e-100) break;
+		add_volume_force(volume,i);	
+	}
+#endif	
+
+#ifdef AREA_FORCE_GLOBAL
+	double area=0.;
+
+	for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
+		calc_area_global(&area,i);
+		if (area<1e-100) break;
+		add_area_global_force(area,i);
+	}
+#endif	
+
   calc_long_range_forces();
 
 #ifdef LB
@@ -295,6 +315,14 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->r.quat[2]/= scale;
     part->r.quat[3]/= scale;
   }
+
+  #ifdef EXTERNAL_FORCES
+    if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
+      part->f.torque[0] += part->l.ext_torque[0];
+      part->f.torque[1] += part->l.ext_torque[1];
+      part->f.torque[2] += part->l.ext_torque[2];
+    }
+  #endif
 #endif
 
 #ifdef ADRESS
