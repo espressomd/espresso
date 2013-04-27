@@ -96,16 +96,16 @@ __global__ void reset_particle_force(CUDA_particle_force *particle_forces_device
 
 extern "C" {
 
-  /**setup and call particle reallocation from the host
-  */
-  void gpu_init_particle_comm() {
 
+  /** change number of particles to be communicated to the GPU
+  */
+  void gpu_change_number_of_part_to_comm() {
+  
     //we only run the function if there are new particles which have been created since the last call of this function
-    if ( global_part_vars_host.number_of_particles != n_total_particles ) {
+    if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled ) {
       
       global_part_vars_host.seed = (unsigned int)i_random(max_ran);
       global_part_vars_host.number_of_particles = n_total_particles;
-      global_part_vars_host.communication_enabled = 0; //assume no particles to begin with
 
       cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
@@ -117,7 +117,7 @@ extern "C" {
 
       if ( global_part_vars_host.number_of_particles ) {
 
-        global_part_vars_host.communication_enabled = 1;
+
         
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
         /**pinned memory mode - use special function to get OS-pinned memory*/
@@ -141,7 +141,14 @@ extern "C" {
         KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device, particle_seeds_device));
       }
     }
+  }
 
+  /** setup and call particle reallocation from the host
+  */
+  void gpu_init_particle_comm() {
+    global_part_vars_host.communication_enabled = 1;
+
+    gpu_change_number_of_part_to_comm();
   }
 
   CUDA_particle_data* gpu_get_particle_pointer() {
@@ -160,7 +167,8 @@ extern "C" {
   }
 
   void copy_part_data_to_gpu() {
-    if ( global_part_vars_host.communication_enabled == 1 ) {
+
+    if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
       
       cuda_mpi_get_particles(particle_data_host);
 
@@ -176,7 +184,7 @@ extern "C" {
   */
   void copy_forces_from_GPU() {
 
-    if ( global_part_vars_host.communication_enabled == 1 ) {
+    if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
 
       /** Copy result from device memory to host memory*/
       cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost);

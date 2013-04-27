@@ -23,6 +23,7 @@
 #ifdef P3M
 #include "p3m_tcl.h"
 #include "p3m.h"
+#include "cuda_init.h"
 
 int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
@@ -110,10 +111,16 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   }
 
   if (ARG0_IS_S("gpu")) {
-    coulomb.method = COULOMB_P3M_GPU;
-    
-    argc--;
-    argv++;
+    if (cuda_get_n_gpus()!=-1) {
+      coulomb.method = COULOMB_P3M_GPU;
+      
+      argc--;
+      argv++;
+    }
+    else {
+      Tcl_AppendResult(interp, "Unable to initialize CUDA as no sufficient GPU is available.", (char *) NULL);
+      return TCL_ERROR;
+    }
   }
 
   if (ARG0_IS_S("tune"))
