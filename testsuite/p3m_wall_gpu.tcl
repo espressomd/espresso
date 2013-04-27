@@ -34,7 +34,7 @@ thermostat off
 setmd time_step 0.01
 setmd skin 0.05
 
-set file "p3m_wall_system.data"
+set file "p3m_wall_system_gpu.data"
 set f [open $file "r"]
 
 while {![eof $f]} { blockfile $f read auto}

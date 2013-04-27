@@ -9,7 +9,7 @@ extern "C" {
 
 #include <stdio.h>
 #include "config.h" //this is required so that the ifdefs are actually defined
-
+#include "cuda_init.h"
 
 #ifndef CUDA_COMMON_H
 #define CUDA_COMMON_H

@@ -29,7 +29,6 @@
 #include "lb.h"
 #include "lbgpu.h"
 #include "parser.h"
-#include "cuda_init.h"
 
 #ifdef LB_GPU
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
@@ -157,10 +156,6 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
   	while (argc > 0) {
       if (ARG0_IS_S("gpu") || ARG0_IS_S("GPU")) {
 #ifdef LB_GPU
-      if (cuda_get_n_gpus==-1) {
-        Tcl_AppendResult(interp, "Unable to initialize CUDA as no sufficient GPU is available.", NULL);
-        return TCL_ERROR;
-      }
         lattice_switch = (lattice_switch &~ LATTICE_LB) | LATTICE_LB_GPU;
         argc--; argv++;
 #else
