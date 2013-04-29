@@ -435,8 +435,11 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   Tcl_AppendResult(interp, " omega ", (char *)NULL);
   tclcommand_part_print_omega(&part, buffer, interp);
 
-  Tcl_AppendResult(interp, " torque ", (char *)NULL);
+  Tcl_AppendResult(interp, " torque_lab", (char *)NULL);
   tclcommand_part_print_torque(&part, buffer, interp);
+
+  Tcl_AppendResult(interp, " torque_body", (char *)NULL);
+  tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
 
 #ifdef ROTATION_PER_PARTICLE
@@ -610,9 +613,9 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_quat(&part, buffer, interp);
     else if (ARG0_IS_S("omega"))
       tclcommand_part_print_omega(&part, buffer, interp);
-    else if (ARG0_IS_S("torque"))
+    else if (ARG0_IS_S("torque_lab"))
       tclcommand_part_print_torque(&part, buffer, interp);
-    else if (ARG0_IS_S("tbf"))
+    else if (ARG0_IS_S("torque_body"))
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
 #ifdef ROTATION_PER_PARTICLE
@@ -1264,7 +1267,7 @@ int tclcommand_part_parse_torque(Tcl_Interp *interp, int argc, char **argv,
   *change = 3;
 
   if (argc < 3) {
-    Tcl_AppendResult(interp, "torque requires 3 arguments", (char *) NULL);
+    Tcl_AppendResult(interp, "torque_body requires 3 arguments", (char *) NULL);
     return TCL_ERROR;
   }
   /* set torque */
@@ -1915,7 +1918,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     else if (ARG0_IS_S("omega"))
       err = tclcommand_part_parse_omega(interp, argc-1, argv+1, part_num, &change);
 
-    else if (ARG0_IS_S("torque"))
+    else if (ARG0_IS_S("torque_body"))
       err = tclcommand_part_parse_torque(interp, argc-1, argv+1, part_num, &change);
 
 #endif

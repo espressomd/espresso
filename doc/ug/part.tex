@@ -37,7 +37,7 @@
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
-  \require{2}{\opt{torque \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{torque_body \var{x} \var{y} \var{z}}}
   \require{2}{\opt{rinertia \var{x} \var{y} \var{z}}}
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
   \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
@@ -100,18 +100,13 @@ set first because of the spatial decomposition.
   particle.
 \item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational
   velocity of this particle in the particle's co-rotating frame.
-\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force
-  of this particle, in global frame.  When printing the values using
-  {\em part id_particle print}, there is an alternative named
-  \opt{tbf} which gives you the values of the torque in the body
-  frame. Be aware: the values obtained when printing using
-  \opt{torque} are computed in the frame laboratory and are the ones
-  one should usually look at. Nonetheless, in case you introduce
-  torques using \opt{torque} option, espresso will assume they are
-  given in the body-frame. Thus \opt{tbf} is useful to know which
-  should be the numerical values you should reintroduce in order to
-  have exactly the same conformation. Again, any torque set this way
-  is lost during the next integration step.
+\item[\opt{torque_body \var{x} \var{y} \var{z}}] Sets the rotational force
+  of this particle, in the co-rotating frame (body frame). When using this
+  command to print the particle torque, they are given in the body frame as well.
+  {\bf However}, there exists an alternative command to obtain the torque in the
+  laboratory frame, the one you are \emph{usually} interested in. This command
+  can only be used when printing and is invoked with \opt{torque_lab}. See
+  the section on printing below for more information.  
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
   elements of this particles rotational inertia tensor. These
   correspond with the inertial moments along the coordinate axes in
@@ -132,7 +127,7 @@ set first because of the spatial decomposition.
   \var{pid2} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
   interactions are calculated. Note that unlike bonds, exclusions are
-  stored with both partners.  Therefore this command adds the defined
+  stored with both partners. Therefore this command adds the defined
   exclusions to both partners.
 \item[\opt{exclude delete \var{pid2}\dots}] Searches for the
   given exclusion and deletes it. Again deletes the exclusion with
@@ -178,7 +173,7 @@ set first because of the spatial decomposition.
   \variant{1}
   part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
-      q \asep v \asep f \asep fix \asep ext_force \asep ext_torque \asep bond \asep
+      q \asep v \asep f \asep torque_body \asep torque_lab \asep fix \asep ext_force \asep ext_torque \asep bond \asep
       \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}
@@ -187,6 +182,14 @@ Variant \variant{1} will return a list of the specified properties of
 particle \var{pid}, or all properties, if no keyword is
 specified.  Variant \variant{2} will return a list of all properties
 of all particles.
+
+{\bf N.B.} There is a difference between the options \opt{torque_body} and 
+\opt{torque_lab}. The first prints the torque in the co-rotating frame, whereas
+the second gives the torque in the stationary frame, the body and laboratory 
+frames, respectively. One would always want to output the torque in 
+the laboratory frame, since it is the frame of interest. However for some tests
+involving reading and writing the torque may be desireable to know the torque in
+the body frame as well.
 
 \minisec{Example}
 \begin{code}

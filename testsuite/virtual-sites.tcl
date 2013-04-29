@@ -108,7 +108,7 @@ set f2 "4 5 6"
 part 1 ext 3 4 5
 part 2 ext 4 5 6
 integrate 0
-set t [part 0 print torque]
+set t [part 0 print torque_lab]
 set f [part 0 print f]
 if { [veclen [vecsub [vecadd $f1 $f2] $f]] >1E-4 } {
  error_exit "Error: Force on central particle should be [vecadd $f1 $f2] but is $f" 
