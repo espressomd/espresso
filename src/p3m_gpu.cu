@@ -45,30 +45,30 @@ extern "C" {
 #ifdef ELECTROSTATICS
 
 struct {
-  cufftDoubleComplex *charge_mesh;
-  cufftDoubleComplex *force_mesh;
-  double *G_hat, *G_hat_host;
+  CUFFT_TYPE_COMPLEX *charge_mesh;
+  CUFFT_TYPE_COMPLEX *force_mesh;
+  REAL_TYPE *G_hat, *G_hat_host;
   cufftHandle fft_plan;
   int cao, mesh;
-  double alpha;
+  REAL_TYPE alpha;
   int npart;
-  double box;
+  REAL_TYPE box;
 } p3m_gpu_data;
 
 
 #define SQR(A) ((A)*(A))
 
-void static Aliasing_sums_ik ( int cao, double box, double alpha, int mesh, int NX, int NY, int NZ,
-                        double *Zaehler, double *Nenner ) {
-    double S1,S2,S3;
-    double fak1,fak2,zwi;
+void static Aliasing_sums_ik ( int cao, REAL_TYPE box, REAL_TYPE alpha, int mesh, int NX, int NY, int NZ,
+                        REAL_TYPE *Zaehler, REAL_TYPE *Nenner ) {
+    REAL_TYPE S1,S2,S3;
+    REAL_TYPE fak1,fak2,zwi;
     int    MX,MY,MZ;
-    double NMX,NMY,NMZ;
-    double NM2;
-    double expo, TE;
-    double Leni = 1.0/box;
+    REAL_TYPE NMX,NMY,NMZ;
+    REAL_TYPE NM2;
+    REAL_TYPE expo, TE;
+    REAL_TYPE Leni = 1.0/box;
 
-    fak1 = 1.0/ ( double ) mesh;
+    fak1 = 1.0/ ( REAL_TYPE ) mesh;
     fak2 = SQR ( PI/ ( alpha ) );
 
     Zaehler[0] = Zaehler[1] = Zaehler[2] = *Nenner = 0.0;
@@ -98,14 +98,14 @@ void static Aliasing_sums_ik ( int cao, double box, double alpha, int mesh, int 
 }
 
 /* Calculate influence function */
-void static calculate_influence_function ( int cao, int mesh, double box, double alpha, double *G_hat ) {
+void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REAL_TYPE alpha, REAL_TYPE *G_hat ) {
 
   int    NX,NY,NZ;
-  double Dnx,Dny,Dnz;
-  double Zaehler[3]={0.0,0.0,0.0},Nenner=0.0;
-  double zwi;
+  REAL_TYPE Dnx,Dny,Dnz;
+  REAL_TYPE Zaehler[3]={0.0,0.0,0.0},Nenner=0.0;
+  REAL_TYPE zwi;
   int ind = 0;
-  double Leni = 1.0/box;
+  REAL_TYPE Leni = 1.0/box;
 
   for ( NX=0; NX<mesh; NX++ ) {
     for ( NY=0; NY<mesh; NY++ ) {
@@ -134,7 +134,7 @@ void static calculate_influence_function ( int cao, int mesh, double box, double
 
 
 
-__device__ double atomicAdd(double* address, double val)
+__device__ double atomicAdd (double* address, double val)
 {
     unsigned long long int* address_as_ull =
                               (unsigned long long int*)address;
@@ -148,21 +148,22 @@ __device__ double atomicAdd(double* address, double val)
     return __longlong_as_double(old);
 }
 
-/** atomic add function for sveral cuda architectures 
+/** atomic add function for several cuda architectures 
 */
-__device__ inline void atomicAddFloat(float* address, float value){
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
-  atomicAdd(address, value);
+//atomicAdd supports floats already, do nothing
 #elif __CUDA_ARCH__ >= 110
 #warning Using slower atomicAdd emulation
-// float-atomic-add from 
+__device__ inline void atomicAdd(float* address, float value){
+  // float-atomic-add from 
 // [url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
   float old = value;
   while ((old = atomicExch(address, atomicExch(address, 0.0f)+old))!=0.0f);
+}
 #else
 #error I need at least compute capability 1.1
 #endif
-}
+
 
 
 __device__ unsigned int getThreadIndexP3M() { //rename is dumb but can't import same fnc from cuda_common
@@ -190,7 +191,7 @@ __device__ unsigned int getThreadIndexP3M() { //rename is dumb but can't import 
 
 
 template<int dim>
-__global__ void apply_diff_op( cufftDoubleComplex *mesh, const int mesh_size, cufftDoubleComplex *force_mesh,  const double box ) {
+__global__ void apply_diff_op( CUFFT_TYPE_COMPLEX *mesh, const int mesh_size, CUFFT_TYPE_COMPLEX *force_mesh,  const REAL_TYPE box ) {
   int linear_index = mesh_size*mesh_size*blockIdx.x + mesh_size * blockIdx.y + threadIdx.x;
   int n;
 
@@ -223,7 +224,7 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
     return ind;	   
 }
 
-__device__ double caf(int i, double x, int cao_value) {
+__device__ REAL_TYPE caf(int i, REAL_TYPE x, int cao_value) {
   switch (cao_value) {
   case 1 : return 1.0;
   case 2 : {
@@ -292,19 +293,19 @@ __device__ double caf(int i, double x, int cao_value) {
   return 0.0;
 }
 
-__global__ void apply_influence_function( cufftDoubleComplex *mesh, int mesh_size, double *G_hat ) {
+__global__ void apply_influence_function( CUFFT_TYPE_COMPLEX *mesh, int mesh_size, REAL_TYPE *G_hat ) {
   int linear_index = mesh_size*mesh_size*blockIdx.x + mesh_size * blockIdx.y + threadIdx.x;
   mesh[linear_index].x *= G_hat[linear_index];
   mesh[linear_index].y *= G_hat[linear_index];
 }
 
 __global__ void assign_charges(const CUDA_particle_data * const pdata,
-cufftDoubleComplex *mesh, const int m_size, const int cao, const double pos_shift, const
-double hi) {
+CUFFT_TYPE_COMPLEX *mesh, const int m_size, const int cao, const REAL_TYPE pos_shift, const
+REAL_TYPE hi) {
       /** id of the particle **/
       int id = blockIdx.x;
       /** position relative to the closest gird point **/
-      double m_pos[3];
+      REAL_TYPE m_pos[3];
       /** index of the nearest mesh point **/
       int nmp_x, nmp_y, nmp_z;      
       
@@ -329,12 +330,12 @@ double hi) {
       atomicAdd( &(mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x), caf(threadIdx.x, m_pos[0], cao)*caf(threadIdx.y, m_pos[1], cao)*caf(threadIdx.z, m_pos[2], cao)*p.q);
 }
 
-__global__ void assign_forces(const CUDA_particle_data * const pdata, cufftDoubleComplex *mesh, const int m_size, const int cao, const double pos_shift, const
-			      double hi, CUDA_particle_force * lb_particle_force_gpu, double prefactor, int dim) {
+__global__ void assign_forces(const CUDA_particle_data * const pdata, CUFFT_TYPE_COMPLEX *mesh, const int m_size, const int cao, const REAL_TYPE pos_shift, const
+			      REAL_TYPE hi, CUDA_particle_force * lb_particle_force_gpu, REAL_TYPE prefactor, int dim) {
       /** id of the particle **/
       int id = blockIdx.x;
       /** position relative to the closest gird point **/
-      double m_pos[3];
+      REAL_TYPE m_pos[3];
       /** index of the nearest mesh point **/
       int nmp_x, nmp_y, nmp_z;      
 
@@ -356,7 +357,7 @@ __global__ void assign_forces(const CUDA_particle_data * const pdata, cufftDoubl
       nmp_y = wrap_index(nmp_y + threadIdx.y, m_size);
       nmp_z = wrap_index(nmp_z + threadIdx.z, m_size);
 
-      atomicAddFloat( &(lb_particle_force_gpu[id].f[dim]), (float)(-prefactor*mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x*caf(threadIdx.x, m_pos[0], cao)*caf(threadIdx.y, m_pos[1], cao)*caf(threadIdx.z, m_pos[2], cao)*p.q));
+      atomicAdd( &(lb_particle_force_gpu[id].f[dim]), (float)(-prefactor*mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x*caf(threadIdx.x, m_pos[0], cao)*caf(threadIdx.y, m_pos[1], cao)*caf(threadIdx.z, m_pos[2], cao)*p.q));
       
 }
 
@@ -364,10 +365,10 @@ extern "C" {
 
   /* Init the internal datastructures of the P3M GPU.
    * Mainly allocation on the device and influence function calculation.
-   * Be advised: this needs mesh^3*5*sizeof(double) of device memory. 
+   * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory. 
    */
 
-  void p3m_gpu_init(int cao, int mesh, double alpha, double box) {
+  void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box) {
     gpu_init_particle_comm();
  
     p3m_gpu_data.npart = n_total_particles;
@@ -377,19 +378,19 @@ extern "C" {
     p3m_gpu_data.box = box;
     int mesh3 = mesh*mesh*mesh;
 
-    cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(cufftDoubleComplex));
-    cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(cufftDoubleComplex));
-    cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(double));
+    cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+    cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+    cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
 
-    p3m_gpu_data.G_hat_host = (double *)malloc(mesh3*sizeof(double));
+    p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
 
     // Calculate influence function of host.
     calculate_influence_function(  cao, mesh,  box, alpha, p3m_gpu_data.G_hat_host);
 
     // Copy influence function to device.
-    cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
 
-    cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_Z2Z);
+    cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
   }
 
 void p3m_gpu_add_farfield_force() {
@@ -400,7 +401,7 @@ void p3m_gpu_add_farfield_force() {
   int mesh = p3m_gpu_data.mesh;
   int mesh3 = mesh*mesh*mesh;
   int cao = p3m_gpu_data.cao;
-  double box = p3m_gpu_data.box;
+  REAL_TYPE box = p3m_gpu_data.box;
 
   lb_particle_gpu = gpu_get_particle_pointer();
   lb_particle_force_gpu = gpu_get_particle_force_pointer();
@@ -410,7 +411,7 @@ void p3m_gpu_add_farfield_force() {
   if(p3m_gpu_data.npart == 0)
     return;
 
-  printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao);
+  //printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao); //TODO delete
 
   dim3 gridAssignment(p3m_gpu_data.npart,1,1);
   dim3 threadsAssignment(cao,cao,cao);
@@ -418,17 +419,17 @@ void p3m_gpu_add_farfield_force() {
   dim3 gridConv(mesh,mesh,1);
   dim3 threadsConv(mesh,1,1);
 
-  double pos_shift = (double)((cao-1)/2);
-  double hi = mesh/box;
-  double prefactor = 1.0/(box*box*box*2.0);
+  REAL_TYPE pos_shift = (REAL_TYPE)((cao-1)/2);
+  REAL_TYPE hi = mesh/box;
+  REAL_TYPE prefactor = 1.0/(box*box*box*2.0);
 
-  cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(cufftDoubleComplex));
+  cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX));
 
   KERNELCALL(assign_charges, gridAssignment, threadsAssignment, (lb_particle_gpu,p3m_gpu_data.charge_mesh,mesh,cao,pos_shift,hi));
 
   cudaThreadSynchronize();
 
-  if (cufftExecZ2Z(p3m_gpu_data.fft_plan, p3m_gpu_data.charge_mesh, p3m_gpu_data.charge_mesh, CUFFT_FORWARD) != CUFFT_SUCCESS){
+  if (CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.charge_mesh, p3m_gpu_data.charge_mesh, CUFFT_FORWARD) != CUFFT_SUCCESS){
     fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
     return;
   }
@@ -437,19 +438,19 @@ void p3m_gpu_add_farfield_force() {
 
   KERNELCALL(apply_diff_op<0>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
   
-  cufftExecZ2Z(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
 
   KERNELCALL(assign_forces, gridAssignment, threadsAssignment, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0));
 
   KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
-  cufftExecZ2Z(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
   
   KERNELCALL(assign_forces, gridAssignment, threadsAssignment, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1));
 
   KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
-  cufftExecZ2Z(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
   
   KERNELCALL(assign_forces, gridAssignment, threadsAssignment, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2));
 
