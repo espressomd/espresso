@@ -24,10 +24,11 @@
  */
 
 #include <stdio.h>
-#include <cuda.h>
 #include <stdlib.h>
-#include "cuda_common.h"
+#include <cuda.h>
+
 #include <cufft.h>
+#include "cuda_common.h"
 
 
 extern "C" {
@@ -39,6 +40,9 @@ extern "C" {
 //extern cudaStream_t stream[1];
 //extern cudaError_t _err;
 }
+
+
+#ifdef ELECTROSTATICS
 
 struct {
   cufftDoubleComplex *charge_mesh;
@@ -144,7 +148,21 @@ __device__ double atomicAdd(double* address, double val)
     return __longlong_as_double(old);
 }
 
-
+/** atomic add function for sveral cuda architectures 
+*/
+__device__ inline void atomicAddFloat(float* address, float value){
+#if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
+  atomicAdd(address, value);
+#elif __CUDA_ARCH__ >= 110
+#warning Using slower atomicAdd emulation
+// float-atomic-add from 
+// [url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
+  float old = value;
+  while ((old = atomicExch(address, atomicExch(address, 0.0f)+old))!=0.0f);
+#else
+#error I need at least compute capability 1.1
+#endif
+}
 
 
 __device__ unsigned int getThreadIndexP3M() { //rename is dumb but can't import same fnc from cuda_common
@@ -338,7 +356,7 @@ __global__ void assign_forces(const CUDA_particle_data * const pdata, cufftDoubl
       nmp_y = wrap_index(nmp_y + threadIdx.y, m_size);
       nmp_z = wrap_index(nmp_z + threadIdx.z, m_size);
 
-      atomicAdd( &(lb_particle_force_gpu[id].f[dim]), (float)(-prefactor*mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x*caf(threadIdx.x, m_pos[0], cao)*caf(threadIdx.y, m_pos[1], cao)*caf(threadIdx.z, m_pos[2], cao)*p.q));
+      atomicAddFloat( &(lb_particle_force_gpu[id].f[dim]), (float)(-prefactor*mesh[m_size*m_size*nmp_x +  m_size*nmp_y + nmp_z].x*caf(threadIdx.x, m_pos[0], cao)*caf(threadIdx.y, m_pos[1], cao)*caf(threadIdx.z, m_pos[2], cao)*p.q));
       
 }
 
@@ -440,3 +458,5 @@ void p3m_gpu_add_farfield_force() {
 }
 
 }
+
+#endif /* ELECTROSTATICS */

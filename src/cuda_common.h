@@ -9,7 +9,7 @@ extern "C" {
 
 #include <stdio.h>
 #include "config.h" //this is required so that the ifdefs are actually defined
-
+#include "cuda_init.h"
 
 #ifndef CUDA_COMMON_H
 #define CUDA_COMMON_H
@@ -75,6 +75,7 @@ CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
 CUDA_particle_data* gpu_get_particle_pointer();
 CUDA_particle_force* gpu_get_particle_force_pointer();
 CUDA_particle_seed* gpu_get_particle_seed_pointer();
+void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 void cuda_mpi_get_particles(CUDA_particle_data *host_result);
 void copy_part_data_to_gpu();

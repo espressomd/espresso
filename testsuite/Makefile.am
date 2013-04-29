@@ -75,6 +75,7 @@ tests = \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	p3m_wall.tcl \
+	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
 	tabulated.tcl \

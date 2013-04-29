@@ -267,14 +267,14 @@ if(this_node == 0){
     }
   }
 }
+#endif
 #if defined(LB_GPU) || defined (ELECTROSTATICS)
   if (reinit_particle_comm_gpu){
-    gpu_init_particle_comm();
+    gpu_change_number_of_part_to_comm();
     reinit_particle_comm_gpu = 0;
   }
 #endif
-  
-#endif
+
 
 #ifdef METADYNAMICS
   meta_init();
