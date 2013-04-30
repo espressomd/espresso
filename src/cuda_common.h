@@ -71,6 +71,7 @@ typedef struct {
 
 
 void copy_forces_from_GPU();
+CUDA_global_part_vars* gpu_get_global_particle_vars_pointer_host();
 CUDA_global_part_vars* gpu_get_global_particle_vars_pointer();
 CUDA_particle_data* gpu_get_particle_pointer();
 CUDA_particle_force* gpu_get_particle_force_pointer();

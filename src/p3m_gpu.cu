@@ -370,6 +370,7 @@ extern "C" {
 
   void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box) {
     gpu_init_particle_comm();
+    
  
     p3m_gpu_data.npart = n_total_particles;
     p3m_gpu_data.alpha = alpha;

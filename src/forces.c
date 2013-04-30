@@ -70,7 +70,13 @@ void force_calc()
 {
 
 #if defined(LB_GPU) || defined(ELECTROSTATICS)
+  mpi_bcast_cuda_global_part_vars(); //TODO MOVE TO WHERE IT SHOULD BE IN INIT
+
+  printf ("OFRCE a var is %d nod is %d \n", gpu_get_global_particle_vars_pointer_host()->communication_enabled, this_node);
+  printf( "node index is %d\n", this_node);
+    printf ("pre send1\n");
   copy_part_data_to_gpu();
+printf ("post send1\n");
 #endif
     
 #ifdef LB_GPU
@@ -141,7 +147,9 @@ void force_calc()
 #endif
 
 #if defined(LB_GPU) || defined(ELECTROSTATICS)
+printf ("pre send2\n");
   copy_forces_from_GPU();
+printf ("post send2\n");
 #endif
   
 /* this must be the last force to be calculated (Mehmet)*/

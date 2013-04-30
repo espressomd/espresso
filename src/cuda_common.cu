@@ -20,6 +20,7 @@
 
 #include "cuda_common.h" //I can't go in extern C
 
+
 #include "grid.h"
 extern "C" {
 
@@ -27,6 +28,8 @@ extern "C" {
 #include "random.h"
 #include "particle_data.h"
 #include "interaction_data.h"
+//#include "communication.h" TODO delete
+
   
   static int max_ran = 1000000;
   static CUDA_global_part_vars global_part_vars_host = {0,0,0};
@@ -153,12 +156,15 @@ extern "C" {
     global_part_vars_host.communication_enabled = 1;
 
     gpu_change_number_of_part_to_comm();
+//    mpi_bcast_cuda_global_part_vars();
   }
 
   CUDA_particle_data* gpu_get_particle_pointer() {
     return particle_data_device;
   }
-  
+  CUDA_global_part_vars* gpu_get_global_particle_vars_pointer_host() {
+    return &global_part_vars_host;
+  }  
   CUDA_global_part_vars* gpu_get_global_particle_vars_pointer() {
     return &global_part_vars_device;
   }
@@ -171,15 +177,17 @@ extern "C" {
   }
 
   void copy_part_data_to_gpu() {
-
+printf ("outside if %d enabled %d parts %d\n", this_node, global_part_vars_host.communication_enabled, global_part_vars_host.number_of_particles);
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
-      
+printf ("inside if %d\n", this_node);      
       cuda_mpi_get_particles(particle_data_host);
-
+printf ("cuda_mpi_get\n");
       /** get espresso md particle values*/
       cudaMemcpyAsync(particle_data_device, particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaMemcpyHostToDevice, stream[0]);
+printf ("cuda_async\n");
 
     }
+printf ("done if %d\n", this_node);
   }
 
 

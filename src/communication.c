@@ -62,6 +62,8 @@
 #include "mdlc_correction.h"
 #include "reaction.h"
 #include "galilei.h"
+#include "cuda_common.h"
+
 
 int this_node = -1;
 int n_nodes = -1;
@@ -115,6 +117,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
   CB(mpi_bcast_lb_params_slave) \
+  CB(mpi_bcast_cuda_global_part_vars_slave) \
   CB(mpi_send_dip_slave) \
   CB(mpi_send_dipm_slave) \
   CB(mpi_send_fluid_slave) \
@@ -2372,6 +2375,26 @@ void mpi_bcast_lb_params_slave(int node, int field) {
   on_lb_params_change(field);
 #endif
 }
+
+
+/******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
+
+void mpi_bcast_cuda_global_part_vars() {
+#ifdef CUDA
+  mpi_call(mpi_bcast_cuda_global_part_vars_slave, 1, 0); // third parameter is meaningless
+  mpi_bcast_cuda_global_part_vars_slave(-1,0);
+  printf ("BCAST a var is %d nod is %d \n", gpu_get_global_particle_vars_pointer()->communication_enabled, this_node);
+#endif
+}
+
+void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
+#ifdef CUDA
+  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+  printf ("a var is %d nod is %d \n", gpu_get_global_particle_vars_pointer_host()->communication_enabled, this_node);
+#endif
+}
+
+
 
 /******************* REQ_GET_ERRS ********************/
 
