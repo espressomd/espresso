@@ -522,19 +522,33 @@ int set_particle_mol_id(int part, int mid);
 */
 int set_particle_quat(int part, double quat[4]);
 
-/** Call only on the master node: set particle angular velocity.
+/** Call only on the master node: set particle angular velocity from lab frame.
     @param part the particle.
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega(int part, double omega[3]);
+int set_particle_omega_lab(int part, double omega[3]);
 
-/** Call only on the master node: set particle torque.
+/** Call only on the master node: set particle angular velocity in body frame.
+    @param part the particle.
+    @param omega its new angular velocity.
+    @return ES_OK if particle existed
+*/
+int set_particle_omega_body(int part, double omega[3]);
+
+/** Call only on the master node: set particle torque from lab frame.
     @param part the particle.
     @param torque its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque(int part, double torque[3]);
+int set_particle_torque_lab(int part, double torque[3]);
+
+/** Call only on the master node: set particle torque in body frame.
+    @param part the particle.
+    @param torque its new torque.
+    @return ES_OK if particle existed
+*/
+int set_particle_torque_body(int part, double torque[3]);
 #endif
 
 #ifdef DIPOLES

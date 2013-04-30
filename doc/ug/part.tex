@@ -36,8 +36,8 @@
   \opt{bond \var{bondid} \var{pid2} \dots}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
-  \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
-  \require{2}{\opt{torque_body \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{omega_body/lab \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{torque_body/lab \var{x} \var{y} \var{z}}}
   \require{2}{\opt{rinertia \var{x} \var{y} \var{z}}}
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
   \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
@@ -98,15 +98,27 @@ set first because of the spatial decomposition.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
   particle.
-\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational
-  velocity of this particle in the particle's co-rotating frame.
-\item[\opt{torque_body \var{x} \var{y} \var{z}}] Sets the rotational force
-  of this particle, in the co-rotating frame (body frame). When using this
-  command to print the particle torque, they are given in the body frame as well.
-  {\bf However}, there exists an alternative command to obtain the torque in the
-  laboratory frame, the one you are \emph{usually} interested in. This command
-  can only be used when printing and is invoked with \opt{torque_lab}. See
-  the section on printing below for more information.  
+\item[\opt{omega_body/lab \var{x} \var{y} \var{z}}] The command \opt{omega_body} 
+  sets the angular momentum of this particle in the particle's co-rotating frame 
+  (or body frame) and the command \opt{omega_lab} sets it for the particle in the fixed
+  frame (or laboratory frame). N.B. When the command \opt{omega} is given it is 
+  understood that the coordinates are set in the body frame, and printed in the
+  laboratory frame, to ensure backward compatibility with older \es{} versions.
+  Be very careful when invoking the \opt{omega} command, it should be avoided!
+  If you are setting the angular momentum of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before, otherwise the 
+  conversion from lab to body frame will not be handled properly.
+\item[\opt{torque_body/lab \var{x} \var{y} \var{z}}] The command \opt{torque_body} 
+  sets the torque of this particle in the particle's co-rotating frame 
+  (or body frame) and the command \opt{torque_lab} sets it for the particle in the fixed
+  frame (or laboratory frame). N.B. When the command \opt{torque} is given it is 
+  understood that the coordinates are set in the body frame, and printed in the
+  laboratory frame, to ensure backward compatibility with older \es{} versions.
+  Be very careful when invoking the \opt{torque} command, it should be avoided!
+  There is another command \opt{tbf} to print the torque in the body frame, also
+  see the comment for the print statements. If you are setting the torque of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before, otherwise the 
+  conversion from lab to body frame will not be handled properly.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
   elements of this particles rotational inertia tensor. These
   correspond with the inertial moments along the coordinate axes in
@@ -183,13 +195,20 @@ particle \var{pid}, or all properties, if no keyword is
 specified.  Variant \variant{2} will return a list of all properties
 of all particles.
 
-{\bf N.B.} There is a difference between the options \opt{torque_body} and 
-\opt{torque_lab}. The first prints the torque in the co-rotating frame, whereas
-the second gives the torque in the stationary frame, the body and laboratory 
-frames, respectively. One would always want to output the torque in 
+{\bf N.B.} There is a difference between the options \opt{*_body} and 
+\opt{*_lab}. The first prints the variable in the co-rotating frame, whereas
+the second gives the variable in the stationary frame, the body and laboratory 
+frames, respectively. One would typically want to output the variable in 
 the laboratory frame, since it is the frame of interest. However for some tests
-involving reading and writing the torque may be desireable to know the torque in
-the body frame as well.
+involving reading and writing the variable it may be desireable to know it in
+the body frame as well. Be careful with reading and writing, if 
+you write in the lab frame, then read in the lab frame. If you are setting the 
+variable in the lab frame, the orientation of the particle (\opt{quat}) must be set 
+before, otherwise the conversion from lab to body frame will not be handled properly.
+Also be careful about the order in which you write and read in data from a block\_file
+for instance if you output the variable in both frames! The old command \opt{tbf} 
+still works and its output can still be read using the command \opt{torque} or
+\opt{torque_body}. 
 
 \minisec{Example}
 \begin{code}

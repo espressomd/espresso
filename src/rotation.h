@@ -46,9 +46,20 @@ void convert_torques_propagate_omega();
     the integration loop */
 void convert_initial_torques();
 
-/** convert torques from the body-fixed frames to space-fixed coordinates */
+/** convert torques and angular velocities from the 
+    body-fixed frames to space-fixed coordinates */
 void convert_torques_body_to_space(Particle *p, double torque[3]);
+void convert_omega_body_to_space(Particle *p, double *omega);
 
+/** convert torques and angular velocities from the 
+    space-fixed frames to body-fixed coordinates */
+void convert_torques_space_to_body(Particle *p, double torque[3]);
+void convert_omega_space_to_body(Particle *p, double *omega);
+
+/** Here we use quaternions to calculate the rotation matrix which
+    will be used then to transform torques from the laboratory to
+    the body-fixed frames */  
+void define_rotation_matrix(Particle *p, double A[9]);
 
 MDINLINE void convert_quat_to_quatu(double quat[4], double quatu[3])
 {
@@ -65,7 +76,6 @@ void multiply_quaternions(double a[4], double b[4], double result[4]);
 /** Convert director to quaternions */
 int convert_quatu_to_quat(double d[3], double quat[4]);
 
-void convert_omega_body_to_space(Particle *p, double *omega);
 
 #ifdef DIPOLES
 

@@ -92,6 +92,10 @@ proc blockfile_read_auto_particles {channel read auto} {
 		  set omega $idx; incr idx 3 }
 	      "^to"     { if {![regexp "^$i" "torque_body"]} { error " $i is not a particle property" }
 		  set torque_body $idx; incr idx 3 }
+	      "^to"     { if {![regexp "^$i" "torque_lab"]} { error " $i is not a particle property" }
+		  set torque_lab $idx; incr idx 3 }
+	      "^to"     { if {![regexp "^$i" "torque"]} { error " $i is not a particle property" }
+		  set torque $idx; incr idx 3 }
 	      "^fix"    { if {![regexp "^$i" "fix"]} { error " $i is not a particle property" }
 		  set fix $idx; incr idx 3 }
 	      "^f"      { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
@@ -136,7 +140,13 @@ proc blockfile_read_auto_particles {channel read auto} {
   }
   if {[info exists torque_body]} { set cmd "$cmd \
            torque_body \[lindex \$line $torque_body\] \[lindex \$line [expr $torque_body + 1]\] \[lindex \$line [expr $torque_body + 2]\]"
-  }    
+  }   
+  if {[info exists torque_lab]} { set cmd "$cmd \
+           torque_lab \[lindex \$line $torque_lab\] \[lindex \$line [expr $torque_lab + 1]\] \[lindex \$line [expr $torque_lab + 2]\]"
+  }   
+  if {[info exists torque]} { set cmd "$cmd \
+           torque \[lindex \$line $torque\] \[lindex \$line [expr $torque + 1]\] \[lindex \$line [expr $torque + 2]\]"
+  }  
   if {[info exists fix]} { set cmd "$cmd \
            fix \[lindex \$line $fix\] \[lindex \$line [expr $fix + 1]\] \[lindex \$line [expr $fix + 2]\]"
   }
