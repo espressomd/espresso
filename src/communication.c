@@ -2383,14 +2383,12 @@ void mpi_bcast_cuda_global_part_vars() {
 #ifdef CUDA
   mpi_call(mpi_bcast_cuda_global_part_vars_slave, 1, 0); // third parameter is meaningless
   mpi_bcast_cuda_global_part_vars_slave(-1,0);
-  printf ("BCAST a var is %d nod is %d \n", gpu_get_global_particle_vars_pointer()->communication_enabled, this_node);
 #endif
 }
 
 void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-  printf ("a var is %d nod is %d \n", gpu_get_global_particle_vars_pointer_host()->communication_enabled, this_node);
 #endif
 }
 

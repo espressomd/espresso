@@ -1143,10 +1143,11 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
   float mode[19];
   LB_randomnr_gpu rng;
 
-  if(index<para.number_of_nodes){
+  if( index < para.number_of_nodes ){
     /** storing the seed into a register value*/
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
+    // TODO figure out why all of the functions are so slow
     calc_m_from_n(n_a, index, mode);
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f);

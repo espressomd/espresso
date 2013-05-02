@@ -372,26 +372,28 @@ extern "C" {
     gpu_init_particle_comm();
     
  
-    p3m_gpu_data.npart = n_total_particles;
-    p3m_gpu_data.alpha = alpha;
-    p3m_gpu_data.cao = cao;
-    p3m_gpu_data.mesh = mesh;
-    p3m_gpu_data.box = box;
-    int mesh3 = mesh*mesh*mesh;
+    if ( this_node == 0 ) {
+      p3m_gpu_data.npart = n_total_particles;
+      p3m_gpu_data.alpha = alpha;
+      p3m_gpu_data.cao = cao;
+      p3m_gpu_data.mesh = mesh;
+      p3m_gpu_data.box = box;
+      int mesh3 = mesh*mesh*mesh;
 
-    cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-    cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-    cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
+      cudaMalloc((void **)&(p3m_gpu_data.charge_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+      cudaMalloc((void **)&(p3m_gpu_data.force_mesh), mesh3*sizeof(CUFFT_TYPE_COMPLEX));
+      cudaMalloc((void **)&(p3m_gpu_data.G_hat), mesh3*sizeof(REAL_TYPE));
 
-    p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
+      p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
 
-    // Calculate influence function of host.
-    calculate_influence_function(  cao, mesh,  box, alpha, p3m_gpu_data.G_hat_host);
+      // Calculate influence function of host.
+      calculate_influence_function(  cao, mesh,  box, alpha, p3m_gpu_data.G_hat_host);
 
-    // Copy influence function to device.
-    cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
+      // Copy influence function to device.
+      cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);
 
-    cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
+      cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
+    }
   }
 
 void p3m_gpu_add_farfield_force() {

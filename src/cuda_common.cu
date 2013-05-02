@@ -105,7 +105,7 @@ extern "C" {
   void gpu_change_number_of_part_to_comm() {
   
     //we only run the function if there are new particles which have been created since the last call of this function
-    if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled ) {
+    if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 ) {
       
       global_part_vars_host.seed = (unsigned int)i_random(max_ran);
       global_part_vars_host.number_of_particles = n_total_particles;
@@ -143,7 +143,9 @@ extern "C" {
 
         KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device, particle_seeds_device));
       }
+     cuda_bcast_global_part_params();
     }
+//    cuda_bcast_global_part_params();
   }
 
   /** setup and call particle reallocation from the host
@@ -177,17 +179,14 @@ extern "C" {
   }
 
   void copy_part_data_to_gpu() {
-printf ("outside if %d enabled %d parts %d\n", this_node, global_part_vars_host.communication_enabled, global_part_vars_host.number_of_particles);
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
-printf ("inside if %d\n", this_node);      
+     
       cuda_mpi_get_particles(particle_data_host);
-printf ("cuda_mpi_get\n");
+
       /** get espresso md particle values*/
-      cudaMemcpyAsync(particle_data_device, particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaMemcpyHostToDevice, stream[0]);
-printf ("cuda_async\n");
+      if ( this_node == 0 ) cudaMemcpyAsync(particle_data_device, particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaMemcpyHostToDevice, stream[0]);
 
     }
-printf ("done if %d\n", this_node);
   }
 
 
@@ -199,7 +198,7 @@ printf ("done if %d\n", this_node);
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
 
       /** Copy result from device memory to host memory*/
-      cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost);
+      if ( this_node == 0 ) cuda_safe_mem (cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost));
 
 
       /** values for the particle kernel */
@@ -209,7 +208,7 @@ printf ("done if %d\n", this_node);
       dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
       /** reset part forces with zero*/
-      KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device));
+      if (this_node == 0 ) KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device));
     
       cudaThreadSynchronize();
       cuda_mpi_send_forces(particle_forces_host);
