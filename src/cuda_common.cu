@@ -157,10 +157,10 @@ extern "C" {
     }
     if (cuda_get_n_gpus()>1) {
       printf ("More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");
-      printf ("Note that the GPU to be used can be modified using cuda set device <int>\n");
+      printf ("Note that the GPU to be used can be modified using cuda setdevice <int>\n");
       if (cuda_check_gpu(0)!=ES_OK) {
         printf ("WARNING!  CUDA device 0 is not capable of running Espresso but is used by default.  Espresso has detected a CUDA capable card but it is not the one used by Espresso by default\n");
-        printf ("Please set the GPU to use with the cuda set device <int> command.\n");
+        printf ("Please set the GPU to use with the cuda setdevice <int> command.\n");
         printf ("A list of available GPUs can be accessed using cuda list.\n");
       }
     }
