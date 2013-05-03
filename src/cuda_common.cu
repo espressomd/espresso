@@ -145,7 +145,7 @@ extern "C" {
       }
      cuda_bcast_global_part_params();
     }
-//    cuda_bcast_global_part_params();
+
   }
 
   /** setup and call particle reallocation from the host
@@ -158,7 +158,7 @@ extern "C" {
     global_part_vars_host.communication_enabled = 1;
 
     gpu_change_number_of_part_to_comm();
-//    mpi_bcast_cuda_global_part_vars();
+
   }
 
   CUDA_particle_data* gpu_get_particle_pointer() {
@@ -198,19 +198,21 @@ extern "C" {
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
 
       /** Copy result from device memory to host memory*/
-      if ( this_node == 0 ) cuda_safe_mem (cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost));
+      if ( this_node == 0 ) {
+        cuda_safe_mem (cudaMemcpy(particle_forces_host, particle_forces_device, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_force), cudaMemcpyDeviceToHost));
 
 
-      /** values for the particle kernel */
-      int threads_per_block_particles = 64;
-      int blocks_per_grid_particles_y = 4;
-      int blocks_per_grid_particles_x = (global_part_vars_host.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
-      dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+        /** values for the particle kernel */
+        int threads_per_block_particles = 64;
+        int blocks_per_grid_particles_y = 4;
+        int blocks_per_grid_particles_x = (global_part_vars_host.number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
+        dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
-      /** reset part forces with zero*/
-      if (this_node == 0 ) KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device));
-    
-      cudaThreadSynchronize();
+        /** reset part forces with zero*/
+
+        KERNELCALL(reset_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device));
+        cudaThreadSynchronize();
+      }
       cuda_mpi_send_forces(particle_forces_host);
     }
   }

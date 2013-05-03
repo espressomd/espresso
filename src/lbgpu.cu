@@ -1775,6 +1775,7 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
 
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+  
 }
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
