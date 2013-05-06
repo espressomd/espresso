@@ -1306,7 +1306,6 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
           + n_a.vd[9*para.number_of_nodes + node_index] + n_a.vd[10*para.number_of_nodes + node_index] + n_a.vd[11*para.number_of_nodes + node_index] + n_a.vd[12*para.number_of_nodes + node_index]
           + n_a.vd[13*para.number_of_nodes + node_index] + n_a.vd[14*para.number_of_nodes + node_index] + n_a.vd[15*para.number_of_nodes + node_index] + n_a.vd[16*para.number_of_nodes + node_index]
           + n_a.vd[17*para.number_of_nodes + node_index] + n_a.vd[18*para.number_of_nodes + node_index];
-
   /** momentum modes */
   mode[1] = (n_a.vd[1*para.number_of_nodes + node_index] - n_a.vd[2*para.number_of_nodes + node_index]) + (n_a.vd[7*para.number_of_nodes + node_index] - n_a.vd[8*para.number_of_nodes + node_index])
           + (n_a.vd[9*para.number_of_nodes + node_index] - n_a.vd[10*para.number_of_nodes + node_index]) + (n_a.vd[11*para.number_of_nodes + node_index] - n_a.vd[12*para.number_of_nodes + node_index])
@@ -1365,12 +1364,14 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
 
   if(index<para.number_of_nodes){
     calc_mode(mode, n_a, index);
+#ifdef LB_BOUNDARIES_GPU
     if(n_a.boundary[index]){
       jsquared = 0.f;
-    }
-    else{
+    }  
+    else
+#endif
       jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
-    }
+    
     atomicadd(cpu_jsquared, jsquared);
   }
 }
@@ -2682,7 +2683,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
     relax_modes(mode, index, node_f,d_v);
 #endif
     /**lb_thermalize_modes */
-    if (para.fluct) thermalize_modes(mode, index, &rng);
+    if (para.fluct){thermalize_modes(mode, index, &rng);}
 #ifdef EXTERNAL_FORCES
     /**if external force is used apply node force */
 #ifndef SHANCHEN 
@@ -2785,7 +2786,8 @@ __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
 */
 #ifndef SHANCHEN
 __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
-
+  
+  float mode[19];
   unsigned int singlenode = 0;
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -2934,6 +2936,17 @@ __global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_
 /*********************************************************/
 
 
+void _smarruzzonamento(char *file, unsigned int line){
+       cudaThreadSynchronize(); 
+      _err=cudaGetLastError(); 
+      if (_err != cudaSuccess) {
+        fprintf(stderr, "Error found during synchronization. Possibly, however, from a failed operation before. %s:%u.\n", file, line);
+        printf("CUDA error: %s\n", cudaGetErrorString(_err));
+        exit(EXIT_FAILURE);
+      }
+}
+#define smarruzzonamento() _smarruzzonamento( __FILE__, __LINE__)
+
 /**erroroutput for memory allocation and memory copy 
  * @param err cuda error code
  * @param *file .cu file were the error took place
@@ -2945,10 +2958,10 @@ void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
       printf("CUDA error: %s\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
     } else {
-      _err=cudaGetLastError(); \
+      _err=cudaGetLastError(); 
       if (_err != cudaSuccess) {
-        fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
-        printf("CUDA error: %s\n", cudaGetErrorString(err));
+        fprintf(stderr, "Error found during memory operation. Possibly, however, from a failed operation before. %s:%u.\n", file, line);
+        printf("CUDA error: %s\n", cudaGetErrorString(_err));
         exit(EXIT_FAILURE);
       }
     }
@@ -2997,6 +3010,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 #ifndef SHANCHEN
   cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd, lbpar_gpu->number_of_nodes * 19 * sizeof(float)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd, lbpar_gpu->number_of_nodes * 19 * sizeof(float)));                                           
+  cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));
 #else // SHANCHEN
   cuda_safe_mem(cudaMalloc((void**)&nodes_a.vd, lbpar_gpu->number_of_nodes * 19 * SHANCHEN * sizeof(float)));
   cuda_safe_mem(cudaMalloc((void**)&nodes_b.vd, lbpar_gpu->number_of_nodes * 19 * SHANCHEN * sizeof(float)));   
@@ -3033,14 +3047,18 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   int blocks_per_grid_particles_y = 4;
   int blocks_per_grid_particles_x = (lbpar_gpu->number_of_particles + threads_per_block_particles * blocks_per_grid_particles_y - 1)/(threads_per_block_particles * blocks_per_grid_particles_y);
   dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-  //SAW FIXME KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
+        
+  KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
+  smarruzzonamento();
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));	
+  smarruzzonamento();
   /** init part forces with zero*/
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
+  smarruzzonamento();
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
+  smarruzzonamento();
   #ifdef SHANCHEN
   /* We must add compute values, shan-chen forces at this moment are zero as the densities are uniform*/
   KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_values,node_f));
@@ -3373,8 +3391,8 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
   KERNELCALL(temperature, dim_grid, threads_per_block,(*current_nodes, device_jsquared));
 
   cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
-
   host_temp[0] = (double)(host_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
+  printf("TEMP: %f %f \n",host_temp[0],host_jsquared);
 }
 
 #else // SHANCHEN

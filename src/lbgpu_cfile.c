@@ -241,7 +241,6 @@ void lb_reinit_parameters_gpu() {
   }
 
   if (temperature > 0.0) {  /* fluctuating hydrodynamics ? */
-
     lbpar_gpu.fluct = 1;
 	LB_TRACE (fprintf(stderr, "fluct on \n"));
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
