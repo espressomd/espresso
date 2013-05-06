@@ -488,7 +488,6 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
 
   float Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;
-
   /*
     if (Rho <0)
     printf("Rho too small! %f %f %f", Rho, mode[0], para.rho*para.agrid*para.agrid*para.agrid);
@@ -2683,6 +2682,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
     relax_modes(mode, index, node_f,d_v);
 #endif
     /**lb_thermalize_modes */
+printf("flag=%d\n",para.fluct); //TODO delete
     if (para.fluct){thermalize_modes(mode, index, &rng);}
 #ifdef EXTERNAL_FORCES
     /**if external force is used apply node force */
@@ -3555,6 +3555,7 @@ void lb_integrate_GPU(){
     cuda_safe_mem(cudaMemset	(	LB_boundary_force, 0, 3*n_lb_boundaries*sizeof(float)));
 #endif
 
+
   /**call of fluid step*/
   if (intflag == 1){
     KERNELCALL(integrate, dim_grid, threads_per_block, (nodes_a, nodes_b, device_values, node_f));
@@ -3580,6 +3581,7 @@ void lb_integrate_GPU(){
 #endif
     intflag = 1;
   }             
+  smarruzzonamento();  
 }
 
 void lb_gpu_get_boundary_forces(double* forces) {

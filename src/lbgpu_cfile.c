@@ -134,8 +134,10 @@ void lattice_boltzmann_update_gpu() {
 
 //  fluidstep += 1; old code. fluidstep is now incremented before, when the LB forces are evaluated 
 
+printf("HERE\n"); //TODO delete
   if (fluidstep>=factor) {
     fluidstep=0; 
+printf("THERE\n"); //TODO delete
 
     lb_integrate_GPU();
 
