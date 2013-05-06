@@ -171,6 +171,28 @@ set first because of the spatial decomposition.
   are meaningless. The default is 1.
 \end{arguments}
 
+\warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are deprecated 
+  and will be removed in some future version. They might still usable in your
+  case, but be aware that if you use newer features in your simulation, you might
+  not have all the functionality that you desire. When you read the confusing 
+  (original) text below on the use of the commands, you will understand why they 
+  have been replaced\newline
+
+  The commands \opt{omega} set the rotational velocity of a particle in that
+  particle's co-rotating frame. The \opt{torque} set the rotational force of 
+  a particle, in global frame. When printing the values using 
+  {\em part id_particle print}, there is an alternative named \opt{tbf} which 
+  gives you the values of the torque in the body frame. Be aware: the values 
+  obtained when printing using \opt{torque} are computed in the frame laboratory
+  and are the ones one should usually look at. Nonetheless, in case you introduce
+  torques using \opt{torque} option, \es will assume they are given in the
+  body-frame. Thus \opt{tbf} is useful to know which should be the numerical
+  values you should reintroduce in order to have exactly the same conformation.
+  \newline
+
+  That is, the text directly contradicts itself.
+}
+
 \subsection{Getting particle properties}
 
 \begin{essyntax}

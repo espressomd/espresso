@@ -627,9 +627,9 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_omega_lab_frame(&part, buffer, interp);
     else if (ARG0_IS_S_EXACT("omega_body"))
       tclcommand_part_print_omega_body_frame(&part, buffer, interp);
-    else if ( ARG0_IS_S_EXACT("torque_lab") )
+    else if ( ARG0_IS_S("torque") || ARG0_IS_S_EXACT("torque_lab") )
       tclcommand_part_print_torque_lab_frame(&part, buffer, interp);
-    else if ( ARG0_IS_S_EXACT("torque_body") )
+    else if ( ARG0_IS_S_EXACT("torque_body") || ARG0_IS_S("tbf") )
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
 #ifdef ROTATION_PER_PARTICLE
@@ -1992,7 +1992,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     }
 
     /* Unfortunately a somewhat complex routine is required to make it backwards compatible */
-    else if ( ARG0_IS_S("omega_body") || ARG0_IS_S("omega_lab") ) 
+    else if ( ARG0_IS_S("omega") || ARG0_IS_S("omega_body") || ARG0_IS_S("omega_lab") ) 
     {
       if (ARG0_IS_S_EXACT("omega_body"))
       {
@@ -2004,13 +2004,12 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       }
       else 
       {
-        Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
-        err = TCL_ERROR;
+        err = tclcommand_part_parse_omega_body(interp, argc-1, argv+1, part_num, &change);
       }
     }
 
     /* Unfortunately a somewhat complex routine is required to make it backwards compatible */
-    else if ( ARG0_IS_S("torque_body") || ARG0_IS_S("torque_lab") ) 
+    else if ( ARG0_IS_S("torque") || ARG0_IS_S("torque_body") || ARG0_IS_S("torque_lab") ) 
     {
       if (ARG0_IS_S_EXACT("torque_body"))
       {
@@ -2022,8 +2021,7 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
       }
       else 
       {
-        Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
-        err = TCL_ERROR;
+        err = tclcommand_part_parse_torque_body(interp, argc-1, argv+1, part_num, &change);
       }
     }
 

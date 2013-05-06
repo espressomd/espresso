@@ -92,17 +92,23 @@ proc blockfile_read_auto_particles {channel read auto} {
 		  set omega_lab $idx; incr idx 3 }
 	      "^omega_b"  { if {![regexp "^$i" "omega_body"]} { error " $i is not a particle property" }
 		  set omega_body $idx; incr idx 3 }
+	      "^omega"  { if {![regexp "^$i" "omega"]} { error " $i is not a particle property" }
+		  set omega $idx; incr idx 3 }
 	      "^torque_l" { if {![regexp "^$i" "torque_lab"]} { error " $i is not a particle property" }
 		  set torque_lab $idx; incr idx 3 }
 	      "^torque_b" { if {![regexp "^$i" "torque_body"]} { error " $i is not a particle property" }
 		  set torque_body $idx; incr idx 3 }
+	      "^torque" { if {![regexp "^$i" "torque"]} { error " $i is not a particle property" }
+		  set torque $idx; incr idx 3 }
+	      "^tbf" { if {![regexp "^$i" "tbf"]} { error " $i is not a particle property" }
+		  set tbf $idx; incr idx 3 }
 	      "^fix"      { if {![regexp "^$i" "fix"]} { error " $i is not a particle property" }
 		  set fix $idx; incr idx 3 }
 	      "^f"        { if {![regexp "^$i" "force"]} { error " $i is not a particle property" }
 		  set f $idx; incr idx 3 }
-	      "^e"        { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
+	      "^ext_f"    { if {![regexp "^$i" "ext_force"]} { error " $i is not a particle property" }
 		  set ext_force $idx; incr idx 3 }
-	      "^ext_to"   { if {![regexp "^$i" "ext_torque"]} { error " $i is not a particle property" }
+	      "^ext_t"    { if {![regexp "^$i" "ext_torque"]} { error " $i is not a particle property" }
 		  set ext_torque $idx; incr idx 3 }
 	      default { error "$i is not a particle property or it is not supported by the blockfile mechanism" }
 	  }
@@ -140,12 +146,21 @@ proc blockfile_read_auto_particles {channel read auto} {
   }
   if {[info exists omega_body]} { set cmd "$cmd \
            omega_body \[lindex \$line $omega_body\] \[lindex \$line [expr $omega_body + 1]\] \[lindex \$line [expr $omega_body + 2]\]"
+  } 
+  if {[info exists omega]} { set cmd "$cmd \
+           omega_body \[lindex \$line $omega\] \[lindex \$line [expr $omega + 1]\] \[lindex \$line [expr $omega + 2]\]"
   }   
   if {[info exists torque_lab]} { set cmd "$cmd \
            torque_lab \[lindex \$line $torque_lab\] \[lindex \$line [expr $torque_lab + 1]\] \[lindex \$line [expr $torque_lab + 2]\]"
   }  
   if {[info exists torque_body]} { set cmd "$cmd \
            torque_body \[lindex \$line $torque_body\] \[lindex \$line [expr $torque_body + 1]\] \[lindex \$line [expr $torque_body + 2]\]"
+  }  
+  if {[info exists torque]} { set cmd "$cmd \
+           torque_body \[lindex \$line $torque\] \[lindex \$line [expr $torque + 1]\] \[lindex \$line [expr $torque + 2]\]"
+  }  
+  if {[info exists tbf]} { set cmd "$cmd \
+           torque_body \[lindex \$line $tbf\] \[lindex \$line [expr $tbf + 1]\] \[lindex \$line [expr $tbf + 2]\]"
   }
   if {[info exists fix]} { set cmd "$cmd \
            fix \[lindex \$line $fix\] \[lindex \$line [expr $fix + 1]\] \[lindex \$line [expr $fix + 2]\]"
