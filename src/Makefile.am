@@ -389,6 +389,8 @@ CUDA_SOURCES = \
 	cuda_init.cu cuda_init.h \
 	lbgpu.cu lbgpu.h
 
+nodist_EXTRA_libEspresso_a_SOURCES = cuda_is_cpp.cxx
+
 if TCL
 
 CUDA_SOURCES += \

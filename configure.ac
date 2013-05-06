@@ -522,6 +522,7 @@ AS_IF([test x$with_cuda != xno],[
     CFLAGS=$save_CFLAGS
     
     AS_IF([test x$cuda_ok == xyes], [
+        AC_PROG_CXX
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         LIBS=$save_LIBS
