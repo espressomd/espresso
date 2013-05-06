@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -45,15 +45,15 @@ int tclcommand_inter_coulomb_parse_p3m_opt_params(Tcl_Interp * interp, int argc,
     distributed particles in a cubic box.
     For the real space error the estimate of Kolafa/Perram is used. 
 
-    Parameter range if not given explicit values: For \ref p3m_struct::r_cut_iL
+    Parameter range if not given explicit values: For \ref p3m_parameter_struct::r_cut_iL
     the function uses the values (\ref min_local_box_l -\ref #skin) /
     (n * \ref box_l), n being an integer (this implies the assumption that \ref
-    p3m_struct::r_cut_iL is the largest cutoff in the system!). For \ref
-    p3m_struct::mesh the function uses the two values which matches best the
+    p3m_parameter_struct::r_cut_iL is the largest cutoff in the system!). For \ref p3m_parameter_struct::mesh
+	the function uses the two values which matches best the
     equation: number of mesh point = number of charged particles. For
-    \ref p3m_struct::cao the function considers all possible values.
+    \ref p3m_parameter_struct::cao the function considers all possible values.
 
-    For each setting \ref p3m_struct::alpha_L is calculated assuming that the
+    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming that the
     error contributions of real and reciprocal space should be equal.
 
     After checking if the total error fulfils the accuracy goal the

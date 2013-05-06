@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -27,7 +27,12 @@
 
 int tclprint_to_result_ljIA(Tcl_Interp *interp, int i, int j);
 
-/// parser for the forcecap
+/** parser for the forcecap  
+  @param interp tcl interpreter handle
+  @param argc number of arguments
+  @param argv arguments 
+*/
+
 int tclcommand_inter_parse_ljforcecap(Tcl_Interp * interp, int argc, char ** argv);
 
 int tclcommand_inter_parse_lj(Tcl_Interp * interp,

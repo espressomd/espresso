@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -127,7 +127,7 @@ void lbnode_tcl_print_usage(Tcl_Interp *interp) {
 
 /** TCL Interface: The \ref lbfluid command. */
 #endif
-#ifdef LB
+#if defined (LB) || defined (LB_GPU)
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 #endif
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
@@ -624,7 +624,7 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
           return lb_lbfluid_load_checkpoint(argv[1], 1);
         }
       }  
-#ifdef LB
+#if defined(LB) || defined(LB_GPU)
 			else if (ARG0_IS_S("print_interpolated_velocity")) { //this has to come after print
 				return tclcommand_lbfluid_print_interpolated_velocity(interp, argc-1, argv+1);
 			}
@@ -735,6 +735,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
          }
          argc--; argv++;
        }
+#ifndef SHANCHEN
        else if (ARG0_IS_S("pi") || ARG0_IS_S("pressure")) {
          lb_lbnode_get_pi(coord, double_return);
          for (counter = 0; counter < 6; counter++) {
@@ -757,6 +758,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 				 Tcl_AppendResult(interp, integer_buffer, " ", (char *)NULL);
 	 	 		 argc--; argv++;
        }
+#endif // SHANCHEN
        else if (ARG0_IS_S("populations") || ARG0_IS_S("pop")) { 
          lb_lbnode_get_pop(coord, double_return);
          for (counter = 0; counter < 19; counter++) {
@@ -842,7 +844,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 }
 
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv) {
-#ifdef LB
+#if defined (LB) || defined (LB_GPU)
   double p[3], v[3];
   char buffer[3*TCL_DOUBLE_SPACE+3];
   if (argc!=3) {

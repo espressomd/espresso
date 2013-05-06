@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -222,10 +222,21 @@ int tclcommand_analyze_parse_bond_dist(Tcl_Interp *interp, int average, int argc
 {
   /* 'analyze { bond_dist | <bond_dist> } [index <index>] [<chain_start> <n_chains> <chain_length>]' */
   /***************************************************************************************************/
-  char buffer[TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE+2];
+  char buffer[100 + TCL_DOUBLE_SPACE + 3*TCL_INTEGER_SPACE];
   double *bdf; int ind_n=0, i;
 
-  if (argc >= 1 && !strncmp(argv[0], "index", strlen(argv[0]))) { ind_n = atoi(argv[1]); argc-=2; argv+=2; }
+  if (argc >= 2 && ARG_IS_S(0,"index") )
+  { 
+    if( !ARG_IS_I(1,ind_n) )
+    { 
+      sprintf(buffer, "\nWrong type for argument");
+      Tcl_AppendResult(interp, buffer, (char *)NULL);  
+      return (TCL_ERROR); 
+    }
+
+    argc-=2; 
+    argv+=2; 
+  }
   if (tclcommand_analyze_set_parse_chain_topology_check(interp, argc, argv) == TCL_ERROR) return TCL_ERROR;
   if ((argc != 0) && (argc != 3)) { Tcl_AppendResult(interp, "only chain structure info required", (char *)NULL); return TCL_ERROR; }
   if (ind_n < 0 || ind_n > chain_length-1) { 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -161,10 +161,6 @@ void integrate_ensemble_init()
 void integrate_vv(int n_steps)
 {
   int i;
-
-#ifdef REACTIONS
-  integrate_reaction();
-#endif
 
   /* Prepare the Integrator */
   on_integration_start();
@@ -337,6 +333,10 @@ void integrate_vv(int n_steps)
     init_forces_ghosts();
     distribute_mol_force();
     if (check_runtime_errors()) break;
+#endif
+
+#ifdef CATALYTIC_REACTIONS
+  integrate_reaction();
 #endif
 
     /* Communication step: ghost forces */

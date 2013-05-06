@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -61,9 +61,10 @@ double my_right[3]    = {1, 1, 1};
 
 /************************************************************/
 
-void setup_node_grid()
+void init_node_grid()
 {
-  mpi_bcast_parameter(FIELD_NODEGRID);
+  grid_changed_n_nodes();
+  cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
 int node_grid_is_set()

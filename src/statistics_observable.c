@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -36,6 +36,28 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
     A[3*i + 0] = partCfg[ids->e[i]].m.v[0]/time_step;
     A[3*i + 1] = partCfg[ids->e[i]].m.v[1]/time_step;
     A[3*i + 2] = partCfg[ids->e[i]].m.v[2]/time_step;
+  }
+  return 0;
+}
+
+int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n_A) {
+  unsigned int i;
+  IntList* ids;
+  sortPartCfg();
+  ids=(IntList*) idlist;
+  for ( i = 0; i<ids->n; i++ ) {
+    if (ids->e[i] >= n_total_particles)
+      return 1;
+
+    #ifdef ROTATION
+      A[3*i + 0] = partCfg[ids->e[i]].m.omega[0];
+      A[3*i + 1] = partCfg[ids->e[i]].m.omega[1];
+      A[3*i + 2] = partCfg[ids->e[i]].m.omega[2];
+    #else
+      A[3*i + 0] = 0.0;
+      A[3*i + 1] = 0.0;
+      A[3*i + 2] = 0.0;
+    #endif
   }
   return 0;
 }
@@ -360,7 +382,6 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
 }
 #endif
 
-
 #ifdef LB
 int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i, j, k;
@@ -449,6 +470,7 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
   return 0;
 }
 #endif
+
 void transform_to_cylinder_coordinates(double x, double y, double z_, double* r, double* phi, double* z) {
   *z =  z_;
   *r =  sqrt(x*x+y*y);

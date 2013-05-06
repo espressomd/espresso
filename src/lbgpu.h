@@ -1,5 +1,5 @@
 /* 
-   Copyright (C) 2010,2011,2012 The ESPResSo project
+   Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 
    This file is part of ESPResSo.
   
@@ -27,6 +27,7 @@
 #define LB_GPU_H
 
 #include "utils.h"
+#include "config.h"
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -159,8 +160,7 @@ typedef struct {
 
 
   /** stresstensor of the node */
-  /** use this value only (due to memory saving) if you want to print out the value (used in calc_values)*/
-  //float pi[6];
+  float pi[6];
 
 } LB_values_gpu;
 
@@ -298,7 +298,7 @@ void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **hos
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
 void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
-void lb_init_boundaries_GPU(int number_of_boundnodes, int *host_boundindex);
+void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);
 #endif
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 
@@ -318,6 +318,10 @@ void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_GPU(int ind[3], double f[3]);
+void lb_gpu_get_boundary_forces(double* forces);
+void lb_save_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force);
+void lb_load_checkpoint_GPU(float *host_checkpoint_vd, unsigned int *host_checkpoint_seed, unsigned int *host_checkpoint_boundary, float *host_checkpoint_force);
+
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %  Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -73,8 +73,19 @@ The details of the usage of \texttt{make} are described in section
 When these steps have successfully completed, \es can be started
 with the command (see section \vref{sec:run})
 \begin{code}
-Espresso \textit{file}
+Espresso \var{script}
 \end{code}
+where \var{script} is a Tcl script that tells \es what to do, and
+has to be written by the user. You can find some examples in the
+\texttt{samples} folder of the source code directory.
+If you want to run in parallel, you should have compiled \es to use
+MPI, and need to tell MPI to run \es in parallel. The actual
+invocation is implementation dependent, but in many cases, such as
+OpenMPI, you can use
+\begin{code}
+mpirun -n \var{n\_nodes} Espresso \var{script}
+\end{code}
+where \var{n\_nodes} is the number of prcessors to be used.
 
 \section{Running \es}
 
@@ -320,9 +331,9 @@ interpreted as an integer division, which results in 0 for $\text{cnt}>1$.
 \verb|argv| is a predefined variable: it contains all the command line
 parameters. Therefore this script should be called like
 \begin{code}
-Espresso \var{n_nodes} \var{script} [\var{config}... ]
+Espresso \var{script} [\var{config}... ]
 \end{code}
-where \var{n_nodes} is the number of CPUs \es should be running on.
+
 
 \begin{figure}[tb]
   \centering

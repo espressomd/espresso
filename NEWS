@@ -8,6 +8,8 @@ ESPResSo 3.2
 New user-visible features
 -------------------------
 
+* added the immersed boundary object-in-fluid code
+
 * The script tools/blockfile2vtf.tcl can be used to convert ESPResSo
   blockfiles into VTF files.
 
@@ -18,13 +20,26 @@ New user-visible features
 
   * GAUSSIAN: A Gaussian potential.
 
-* The feature REACTIONS and the command "reaction" model a simple
-  chemical reaction: when a particle of the reactant type comes into
-  the vincinity of a particle of the catalysator type, the reactant is
-  transformed into a particle of the product type.
+* The feature CATALYTIC_REACTIONS and the command "reaction" model a
+  simple chemical reaction: when a particle of the reactant type comes
+  into the vincinity of a particle of the catalysator type, the
+  reactant is transformed into a particle of the product type.
 
 * The feature GHMC implements a generalized hybrid Monte-Carlo
   thermostat.
+
+* The feature GRANDCANONICAL provided functions to simplify grandcanonical
+  simulations in espresso. To that end it provides functions to find and
+  delete random particles of a certain type.
+
+* Added new feature ROTATION_PER_PARTICLE that allows to choose
+  whether a particle has rotational degrees of freedom or not.
+
+* The functions for galilei transformations have been overhauled and
+  renamed. The old functions are deprecated.
+
+* DPD (as thermostat) now works without any other interaction, so a pure
+  DPD fluid is possible.
 
 User-visible changes
 --------------------
@@ -41,8 +56,16 @@ User-visible changes
   types. Instead, there is now a single global forcecap, plus it is
   possible to define individual forcecaps on a particle pair level.
 
+* By default, CUDA is now automatically detected and activated when it
+  is there and usable.
+
 ESPResSo 3.1.2
 ==============
+
+* Fixed bugs #38475, #37725, #36434.
+
+* Added workaround for bug in VTF reader plugin of VMD 1.9.1 that made
+  all particles look the same when ELECTROSTATICS is turned on.
 
 * Added Tcl-scripts of the tutorials to the distribution.
 
@@ -88,9 +111,11 @@ New user-visible features
 * The new feature COLLISION_DETECTION allows to dynamically add new
   bonds between colliding particles.
 
-* Added new constraint and LB boundary condition "rhomboid" that
-  allows to create arbitrary rhomboids. When combining several
-  rhomboids, almost any shape of a constraint is doable.
+* Added new feature LANGEVIN_PER_PARTICLE that allows to set the
+  Langevin parameters temperature and gamma per particle.
+
+
+* Added new constraint and LB boundary condition "rhomboid".
 
 * Lattice-Boltzmann:
 
@@ -342,7 +367,7 @@ Changes visible for developers
 For older changes to ESPResSo, see ./old/RELEASE_NOTES.
 
 ========================================================================
-Copyright (C) 2010,2011,2012 The ESPResSo project
+Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

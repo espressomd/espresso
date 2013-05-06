@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -1038,7 +1038,7 @@ void calculate_plane_dist(Particle *p1, double ppos[3], Particle *c_p, Constrain
       c_dist_sqr += SQR(vec[i]);
     }else{
       vec[i] = 0.0;
-      c_dist += SQR(vec[i]);
+      c_dist_sqr += SQR(vec[i]);
     }
   }
   c_dist = sqrt(c_dist_sqr);

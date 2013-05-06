@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -81,7 +81,7 @@ extern const Datafield fields[];
 /** index of \ref DomainDecomposition::cell_size in  \ref #fields */
 #define FIELD_CELLSIZE            2
 /** index of \ref dpd_gamma in  \ref #fields */
-#define FIELD_DPD_GAMMA          3
+#define FIELD_DPD_GAMMA           3
 /** index of \ref dpd_r_cut in  \ref #fields */
 #define FIELD_DPD_RCUT            4
 /** index of \ref langevin_gamma in  \ref #fields */
