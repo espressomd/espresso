@@ -60,8 +60,8 @@ if { [catch {
     part 1 dip 0 0 1 
     part 0  v  0 0 0
     part 1  v  0 0 0
-    part 0 torque 0 0 0
-    part 1 torque 0 0 0
+    part 0 torque_lab 0 0 0
+    part 1 torque_lab 0 0 0
 
     puts "Imposing magnetostatics (epsilon changed on purpose, disregard warning message about epsilon)"
 

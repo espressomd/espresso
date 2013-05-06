@@ -360,16 +360,7 @@ void convert_initial_torques()
   }
 }
 
-/** convert torques from the body-fixed frames to space-fixed coordinates */
-void convert_torques_body_to_space(Particle *p, double *torque)
-{
-  double A[9];
-  define_rotation_matrix(p, A);
-
-  torque[0] = A[0 + 3*0]*p->f.torque[0] + A[1 + 3*0]*p->f.torque[1] + A[2 + 3*0]*p->f.torque[2];
-  torque[1] = A[0 + 3*1]*p->f.torque[0] + A[1 + 3*1]*p->f.torque[1] + A[2 + 3*1]*p->f.torque[2];
-  torque[2] = A[0 + 3*2]*p->f.torque[0] + A[1 + 3*2]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
-}
+/** convert from the body-fixed frames to space-fixed coordinates */
 
 void convert_omega_body_to_space(Particle *p, double *omega)
 {
@@ -381,28 +372,15 @@ void convert_omega_body_to_space(Particle *p, double *omega)
   omega[2] = A[0 + 3*2]*p->m.omega[0] + A[1 + 3*2]*p->m.omega[1] + A[2 + 3*2]*p->m.omega[2];
 }
 
-/** convert torques from the space-fixed frames to body-fixed coordinates */
-
-void convert_torques_space_to_body(Particle *p, double *torque)
+void convert_torques_body_to_space(Particle *p, double *torque)
 {
   double A[9];
   define_rotation_matrix(p, A);
 
-  torque[0] = A[0 + 3*0]*p->f.torque[0] + A[0 + 3*1]*p->f.torque[1] + A[0 + 3*2]*p->f.torque[2];
-  torque[1] = A[1 + 3*0]*p->f.torque[0] + A[1 + 3*1]*p->f.torque[1] + A[1 + 3*2]*p->f.torque[2];
-  torque[2] = A[2 + 3*0]*p->f.torque[0] + A[2 + 3*1]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
+  torque[0] = A[0 + 3*0]*p->f.torque[0] + A[1 + 3*0]*p->f.torque[1] + A[2 + 3*0]*p->f.torque[2];
+  torque[1] = A[0 + 3*1]*p->f.torque[0] + A[1 + 3*1]*p->f.torque[1] + A[2 + 3*1]*p->f.torque[2];
+  torque[2] = A[0 + 3*2]*p->f.torque[0] + A[1 + 3*2]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
 }
-
-void convert_omega_space_to_body(Particle *p, double *omega)
-{
-  double A[9];
-  define_rotation_matrix(p, A);
-
-  omega[0] = A[0 + 3*0]*p->m.omega[0] + A[0 + 3*1]*p->m.omega[1] + A[0 + 3*2]*p->m.omega[2];
-  omega[1] = A[1 + 3*0]*p->m.omega[0] + A[1 + 3*1]*p->m.omega[1] + A[1 + 3*2]*p->m.omega[2];
-  omega[2] = A[2 + 3*0]*p->m.omega[0] + A[2 + 3*1]*p->m.omega[1] + A[2 + 3*2]*p->m.omega[2];
-}
-
 
 /** Multiply two quaternions */
 void multiply_quaternions(double a[4], double b[4], double result[4])

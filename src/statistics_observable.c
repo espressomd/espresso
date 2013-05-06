@@ -21,6 +21,7 @@
 #include "integrate.h"
 #include "lb.h"
 #include "pressure.h"
+#include "rotation.h"
 
 observable** observables = 0;
 int n_observables = 0; 
@@ -42,6 +43,8 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
 
 int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n_A) {
   unsigned int i;
+  double RMat[9];
+  double omega[3];
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
@@ -50,13 +53,22 @@ int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n
       return 1;
 
     #ifdef ROTATION
-      A[3*i + 0] = partCfg[ids->e[i]].m.omega[0];
-      A[3*i + 1] = partCfg[ids->e[i]].m.omega[1];
-      A[3*i + 2] = partCfg[ids->e[i]].m.omega[2];
+
+    define_rotation_matrix(&partCfg[ids->e[i]], RMat);
+    omega[0] = RMat[0 + 3*0]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*0]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*0]*partCfg[ids->e[i]].m.omega[2];
+    omega[1] = RMat[0 + 3*1]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*1]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*1]*partCfg[ids->e[i]].m.omega[2];
+    omega[2] = RMat[0 + 3*2]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*2]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*2]*partCfg[ids->e[i]].m.omega[2];
+
+    A[3*i + 0] = omega[0];
+    A[3*i + 1] = omega[1];
+    A[3*i + 2] = omega[2];
+
     #else
-      A[3*i + 0] = 0.0;
-      A[3*i + 1] = 0.0;
-      A[3*i + 2] = 0.0;
+
+    A[3*i + 0] = 0.0;
+    A[3*i + 1] = 0.0;
+    A[3*i + 2] = 0.0;
+
     #endif
   }
   return 0;

@@ -101,23 +101,14 @@ set first because of the spatial decomposition.
 \item[\opt{omega_body/lab \var{x} \var{y} \var{z}}] The command \opt{omega_body} 
   sets the angular momentum of this particle in the particle's co-rotating frame 
   (or body frame) and the command \opt{omega_lab} sets it for the particle in the fixed
-  frame (or laboratory frame). N.B. When the command \opt{omega} is given it is 
-  understood that the coordinates are set in the body frame, and printed in the
-  laboratory frame, to ensure backward compatibility with older \es{} versions.
-  Be very careful when invoking the \opt{omega} command, it should be avoided!
-  If you are setting the angular momentum of the particle in the lab frame, the
-  orientation of the particle (\opt{quat}) must be set before, otherwise the 
+  frame (or laboratory frame). If you set the angular momentum of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before invoking \opt{omega_lab}, otherwise the 
   conversion from lab to body frame will not be handled properly.
 \item[\opt{torque_body/lab \var{x} \var{y} \var{z}}] The command \opt{torque_body} 
   sets the torque of this particle in the particle's co-rotating frame 
   (or body frame) and the command \opt{torque_lab} sets it for the particle in the fixed
-  frame (or laboratory frame). N.B. When the command \opt{torque} is given it is 
-  understood that the coordinates are set in the body frame, and printed in the
-  laboratory frame, to ensure backward compatibility with older \es{} versions.
-  Be very careful when invoking the \opt{torque} command, it should be avoided!
-  There is another command \opt{tbf} to print the torque in the body frame, also
-  see the comment for the print statements. If you are setting the torque of the particle in the lab frame, the
-  orientation of the particle (\opt{quat}) must be set before, otherwise the 
+  frame (or laboratory frame). If you set the torque of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before invoking \opt{torque_lab}, otherwise the 
   conversion from lab to body frame will not be handled properly.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
   elements of this particles rotational inertia tensor. These
@@ -134,7 +125,8 @@ set first because of the spatial decomposition.
 \item[\opt{ext_force \var{x} \var{y} \var{z}}]
   An additional external force is applied to the particle.
 \item[\opt{ext_torque \var{x} \var{y} \var{z}}]
-  An additional external torque is applied to the particle.
+  An additional external torque is applied to the particle. This torque is specified
+  in the laboratory frame!
 \item[\opt{exclude \var{pid2}\dots+}] Restrictions:
   \var{pid2} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
@@ -206,9 +198,7 @@ you write in the lab frame, then read in the lab frame. If you are setting the
 variable in the lab frame, the orientation of the particle (\opt{quat}) must be set 
 before, otherwise the conversion from lab to body frame will not be handled properly.
 Also be careful about the order in which you write and read in data from a block\_file
-for instance if you output the variable in both frames! The old command \opt{tbf} 
-still works and its output can still be read using the command \opt{torque} or
-\opt{torque_body}. 
+for instance if you output the variable in both frames! 
 
 \minisec{Example}
 \begin{code}

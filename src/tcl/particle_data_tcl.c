@@ -64,6 +64,10 @@ void tclcommand_part_print_rotational_inertia(Particle *part, char *buffer, Tcl_
 #endif
 
 #ifdef ROTATION
+
+/* tclcommand_part_print_*_body_frame: function to have the possiblility of
+   printing the angular velocities and torques in the body frame" */ 
+
 void tclcommand_part_print_omega_body_frame(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   Tcl_PrintDouble(interp, part->m.omega[0], buffer);
@@ -84,19 +88,8 @@ void tclcommand_part_print_torque_body_frame(Particle *part, char *buffer, Tcl_I
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-void tclcommand_part_print_torque_lab_frame(Particle *part, char *buffer, Tcl_Interp *interp)
-{
-  double torque[3];
-//in Espresso torques are in body-fixed frames. We should convert they to the space-fixed coordinates.
-  convert_torques_body_to_space(part, torque);
-
-  Tcl_PrintDouble(interp, torque[0], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, torque[1], buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, torque[2], buffer);
-  Tcl_AppendResult(interp, buffer, (char *)NULL);
-}
+/* tclcommand_part_print_*_lab_frame: function to have the possiblility of
+   printing the angular velocities and torques in the laboratory frame" */ 
 
 void tclcommand_part_print_omega_lab_frame(Particle *part, char *buffer, Tcl_Interp *interp)
 {
@@ -112,11 +105,19 @@ void tclcommand_part_print_omega_lab_frame(Particle *part, char *buffer, Tcl_Int
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 
-/* tclcommand_part_print_torque_body_frame: function to have the possiblility of
-   printing also the torques in the body_frame to make compatible the
-   manual recovery of saved configurations with the use of the instruction  
-   part $i torque tx,ty,tz  to assign torques in the new run. The torques in
-   the body frame can be printed using "part $i print torquebf" */ 
+void tclcommand_part_print_torque_lab_frame(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  double torque[3];
+//in Espresso torques are in body-fixed frames. We should convert they to the space-fixed coordinates.
+  convert_torques_body_to_space(part, torque);
+
+  Tcl_PrintDouble(interp, torque[0], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, torque[1], buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  Tcl_PrintDouble(interp, torque[2], buffer);
+  Tcl_AppendResult(interp, buffer, (char *)NULL);
+}
 
 
 
@@ -376,22 +377,22 @@ void tclcommand_part_print_ext_force(Particle *part, char *buffer, Tcl_Interp *i
   }
 }
 
-  #ifdef ROTATION
-    void tclcommand_part_print_ext_torque(Particle *part, char *buffer, Tcl_Interp *interp)
-    {
-      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-        Tcl_PrintDouble(interp, part->l.ext_torque[0], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-        Tcl_PrintDouble(interp, part->l.ext_torque[1], buffer);
-        Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-        Tcl_PrintDouble(interp, part->l.ext_torque[2], buffer);
-        Tcl_AppendResult(interp, buffer, (char *)NULL);
-      }
-      else {
-        Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
-      }
-    }
-  #endif
+#ifdef ROTATION
+void tclcommand_part_print_ext_torque(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
+    Tcl_PrintDouble(interp, part->l.ext_torque[0], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->l.ext_torque[1], buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+    Tcl_PrintDouble(interp, part->l.ext_torque[2], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+  }
+  else {
+    Tcl_AppendResult(interp, "0.0 0.0 0.0 ", (char *)NULL);
+  }
+}
+#endif
 #endif
 
 /** append particle data in ASCII form to the Tcl result.
@@ -500,12 +501,12 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
 #endif
 
 #ifdef EXTERNAL_FORCES
-  #ifdef ROTATION
-    if (part.l.ext_flag & PARTICLE_EXT_TORQUE) {
-      Tcl_AppendResult(interp, " ext_torque ", (char *)NULL);
-      tclcommand_part_print_ext_torque(&part, buffer, interp);
-    }
-  #endif
+#ifdef ROTATION
+  if (part.l.ext_flag & PARTICLE_EXT_TORQUE) {
+    Tcl_AppendResult(interp, " ext_torque ", (char *)NULL);
+    tclcommand_part_print_ext_torque(&part, buffer, interp);
+  }
+#endif
 
   /* print external force information. */
   if (part.l.ext_flag & PARTICLE_EXT_FORCE) {
@@ -626,9 +627,9 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_omega_lab_frame(&part, buffer, interp);
     else if (ARG0_IS_S_EXACT("omega_body"))
       tclcommand_part_print_omega_body_frame(&part, buffer, interp);
-    else if ( ARG0_IS_S("torque") || ARG0_IS_S_EXACT("torque_lab"))
+    else if ( ARG0_IS_S_EXACT("torque_lab") )
       tclcommand_part_print_torque_lab_frame(&part, buffer, interp);
-    else if ( ARG0_IS_S_EXACT("torque_body") || ARG0_IS_S("tbf")) // tbf because of backward compatibility
+    else if ( ARG0_IS_S_EXACT("torque_body") )
       tclcommand_part_print_torque_body_frame(&part, buffer, interp);
 #endif
 #ifdef ROTATION_PER_PARTICLE
@@ -662,10 +663,10 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef EXTERNAL_FORCES
-  #ifdef ROTATION
-      else if (ARG0_IS_S("ext_torque"))
-        tclcommand_part_print_ext_torque(&part,buffer,interp);
-  #endif
+#ifdef ROTATION
+    else if (ARG0_IS_S("ext_torque"))
+      tclcommand_part_print_ext_torque(&part,buffer,interp);
+#endif
 
     else if (ARG0_IS_S("ext_force"))
       tclcommand_part_print_ext_force(&part,buffer,interp);
@@ -1367,42 +1368,42 @@ int tclcommand_part_parse_torque_lab(Tcl_Interp *interp, int argc, char **argv,
 #endif
 
 #ifdef EXTERNAL_FORCES
-  #ifdef ROTATION
-    int tclcommand_part_parse_ext_torque(Tcl_Interp *interp, int argc, char **argv,
-			     int part_num, int * change)
-    {
-      double ext_t[3];
-      int ext_flag;
+#ifdef ROTATION
+int tclcommand_part_parse_ext_torque(Tcl_Interp *interp, int argc, char **argv,
+    int part_num, int * change)
+{
+  double ext_t[3];
+  int ext_flag;
 
-      *change = 3;
+  *change = 3;
 
-      if (argc < 3) {
-        Tcl_AppendResult(interp, "ext_torque requires 3 arguments", (char *) NULL);
-        return TCL_ERROR;
-      }
-      /* set external torque */
-      if (! ARG_IS_D(0, ext_t[0]))
-        return TCL_ERROR;
+  if (argc < 3) {
+    Tcl_AppendResult(interp, "ext_torque requires 3 arguments", (char *) NULL);
+    return TCL_ERROR;
+  }
+  /* set external torque */
+  if (! ARG_IS_D(0, ext_t[0]))
+    return TCL_ERROR;
 
-      if (! ARG_IS_D(1, ext_t[1]))
-        return TCL_ERROR;
+  if (! ARG_IS_D(1, ext_t[1]))
+    return TCL_ERROR;
 
-      if (! ARG_IS_D(2, ext_t[2]))
-        return TCL_ERROR;
+  if (! ARG_IS_D(2, ext_t[2]))
+    return TCL_ERROR;
 
-      if (ext_t[0] == 0 && ext_t[1] == 0 && ext_t[2] == 0)
-        ext_flag = 0;
-      else
-        ext_flag = PARTICLE_EXT_TORQUE;
+  if (ext_t[0] == 0 && ext_t[1] == 0 && ext_t[2] == 0)
+    ext_flag = 0;
+  else
+    ext_flag = PARTICLE_EXT_TORQUE;
 
-      if (set_particle_ext_torque(part_num, ext_flag, ext_t) == TCL_ERROR) {
-        Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
-        return TCL_ERROR;
-      }
+  if (set_particle_ext_torque(part_num, ext_flag, ext_t) == TCL_ERROR) {
+    Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-      return TCL_OK;
-    }
-  #endif
+  return TCL_OK;
+}
+#endif
 
 int tclcommand_part_parse_ext_force(Tcl_Interp *interp, int argc, char **argv,
 			 int part_num, int * change)
@@ -1991,42 +1992,38 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
     }
 
     /* Unfortunately a somewhat complex routine is required to make it backwards compatible */
-    else if (ARG0_IS_S("omega") || ARG0_IS_S("omega_body") || ARG0_IS_S("omega_lab")) 
+    else if ( ARG0_IS_S("omega_body") || ARG0_IS_S("omega_lab") ) 
     {
-      if (ARG0_IS_S("omega"))
+      if (ARG0_IS_S_EXACT("omega_body"))
       {
         err = tclcommand_part_parse_omega_body(interp, argc-1, argv+1, part_num, &change);
       }
-      else
+      else if (ARG0_IS_S_EXACT("omega_lab"))
       {
-        if (ARG0_IS_S_EXACT("omega_body"))
-        {
-          err = tclcommand_part_parse_omega_body(interp, argc-1, argv+1, part_num, &change);
-        }
-        else if (ARG0_IS_S_EXACT("omega_lab"))
-        {
-          err = tclcommand_part_parse_omega_lab(interp, argc-1, argv+1, part_num, &change);
-        }
+        err = tclcommand_part_parse_omega_lab(interp, argc-1, argv+1, part_num, &change);
+      }
+      else 
+      {
+        Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
+        err = TCL_ERROR;
       }
     }
 
     /* Unfortunately a somewhat complex routine is required to make it backwards compatible */
-    else if (ARG0_IS_S("torque") || ARG0_IS_S("torque_body") || ARG0_IS_S("torque_lab")) 
+    else if ( ARG0_IS_S("torque_body") || ARG0_IS_S("torque_lab") ) 
     {
-      if (ARG0_IS_S("torque"))
+      if (ARG0_IS_S_EXACT("torque_body"))
       {
         err = tclcommand_part_parse_torque_body(interp, argc-1, argv+1, part_num, &change);
       }
-      else
+      else if (ARG0_IS_S_EXACT("torque_lab"))
       {
-        if (ARG0_IS_S_EXACT("torque_body"))
-        {
-          err = tclcommand_part_parse_torque_body(interp, argc-1, argv+1, part_num, &change);
-        }
-        else if (ARG0_IS_S_EXACT("torque_lab"))
-        {
-          err = tclcommand_part_parse_torque_lab(interp, argc-1, argv+1, part_num, &change);
-        }
+        err = tclcommand_part_parse_torque_lab(interp, argc-1, argv+1, part_num, &change);
+      }
+      else 
+      {
+        Tcl_AppendResult(interp, "unknown particle parameter \"", argv[0],"\"", (char *)NULL);
+        err = TCL_ERROR;
       }
     }
 
