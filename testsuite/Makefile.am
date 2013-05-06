@@ -71,6 +71,7 @@ tests = \
 	object_in_fluid.tcl \
 	observable.tcl \
 	p3m.tcl \
+	p3m_gpu.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
