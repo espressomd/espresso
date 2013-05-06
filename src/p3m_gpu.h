@@ -1,6 +1,7 @@
 #ifndef _P3M_GPU_H
 #define _P3M_GPU_H
 
+//NOTE :if one wants to use doubles it requires cuda compute capability 1.3
 #define _P3M_GPU_FLOAT
 //#define _P3M_GPU_REAL_DOUBLE
 
@@ -18,7 +19,7 @@
 #define CUFFT_PLAN_FLAG CUFFT_Z2Z
 #endif
 
-
 void p3m_gpu_init(int cao, int mesh, REAL_TYPE alpha, REAL_TYPE box);
 void p3m_gpu_add_farfield_force();
+
 #endif

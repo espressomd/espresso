@@ -132,8 +132,8 @@ void static calculate_influence_function ( int cao, int mesh, REAL_TYPE box, REA
   }
 }
 
-
-
+//NOTE :if one wants to use the function below it requires cuda compute capability 1.3
+#ifdef _P3M_GPU_REAL_DOUBLE
 __device__ double atomicAdd (double* address, double val)
 {
     unsigned long long int* address_as_ull =
@@ -147,9 +147,11 @@ __device__ double atomicAdd (double* address, double val)
     } while (assumed != old);
     return __longlong_as_double(old);
 }
+#endif
 
 /** atomic add function for several cuda architectures 
 */
+
 #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
 //atomicAdd supports floats already, do nothing
 #elif __CUDA_ARCH__ >= 110
@@ -414,6 +416,7 @@ void p3m_gpu_add_farfield_force() {
   if(p3m_gpu_data.npart == 0)
     return;
 
+  //printf("p3m params: mesh %d npart %d cao %d\n", mesh, p3m_gpu_data.npart, cao); //TODO delete
 
   dim3 gridAssignment(p3m_gpu_data.npart,1,1);
   dim3 threadsAssignment(cao,cao,cao);
