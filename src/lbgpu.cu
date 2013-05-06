@@ -1147,7 +1147,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
     /** storing the seed into a register value*/
     rng.seed = n_a.seed[index];
     /**calc_m_from_n*/
-    // TODO figure out why all of the functions are so slow
     calc_m_from_n(n_a, index, mode);
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f);
@@ -1366,7 +1365,7 @@ __global__ void lb_get_boundary_flag(int single_nodeindex, unsigned int *device_
 
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
   if(cudaGetSymbolAddress((void**) pointeradress, para) != cudaSuccess) {
-    printf("oh noo, trouble getting address\n"); //TODO give proper error message
+    printf("Trouble getting address of LB parameters.\n"); //TODO give proper error message
     exit(1);
   }
 }

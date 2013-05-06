@@ -28,7 +28,7 @@ extern "C" {
 #include "random.h"
 #include "particle_data.h"
 #include "interaction_data.h"
-//#include "communication.h" TODO delete
+
 
   
   static int max_ran = 1000000;
