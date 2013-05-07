@@ -2682,7 +2682,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_values_gpu *d_v
     relax_modes(mode, index, node_f,d_v);
 #endif
     /**lb_thermalize_modes */
-printf("flag=%d\n",para.fluct); //TODO delete
     if (para.fluct){thermalize_modes(mode, index, &rng);}
 #ifdef EXTERNAL_FORCES
     /**if external force is used apply node force */
@@ -3392,7 +3391,6 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
   cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float), cudaMemcpyDeviceToHost);
   host_temp[0] = (double)(host_jsquared*1./(3.f*lbpar_gpu.rho*lbpar_gpu.dim_x*lbpar_gpu.dim_y*lbpar_gpu.dim_z*lbpar_gpu.tau*lbpar_gpu.tau*lbpar_gpu.agrid));
-  printf("TEMP: %f %f \n",host_temp[0],host_jsquared);
 }
 
 #else // SHANCHEN

@@ -117,11 +117,8 @@ void lattice_boltzmann_calc_shanchen_gpu(void){
 
   int factor = (int)round(lbpar_gpu.tau/time_step);
 
-  fluidstep+=1;
-  if (fluidstep>=factor) { 
+  if (fluidstep+1 >= factor) 
      lb_calc_shanchen_GPU();
-  }
-
 }
 #endif //SHANCHEN
 
@@ -132,15 +129,12 @@ void lattice_boltzmann_update_gpu() {
 
   int factor = (int)round(lbpar_gpu.tau/time_step);
 
-//  fluidstep += 1; old code. fluidstep is now incremented before, when the LB forces are evaluated 
+  fluidstep += 1;
 
-printf("HERE\n"); //TODO delete
   if (fluidstep>=factor) {
+
     fluidstep=0; 
-printf("THERE\n"); //TODO delete
-
     lb_integrate_GPU();
-
     LB_TRACE (fprintf(stderr,"lb_integrate_GPU \n"));
 
   }
