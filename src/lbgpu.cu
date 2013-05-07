@@ -2748,7 +2748,7 @@ __global__ void calc_fluid_particle_ia(LB_nodes_gpu n_a, LB_particle_gpu *partic
   }
 }
 
-#ifdef LB_BOUNDARIES
+#ifdef LB_BOUNDARIES_GPU
 /**Bounce back boundary read kernel
  * @param n_a					Pointer to local node residing in array a (Input)
  * @param n_b					Pointer to local node residing in array b (Input)
