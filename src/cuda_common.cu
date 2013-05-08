@@ -110,16 +110,17 @@ extern "C" {
       global_part_vars_host.seed = (unsigned int)i_random(max_ran);
       global_part_vars_host.number_of_particles = n_total_particles;
 
-      cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
+      if (this_node == 0) {
+        cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
-      if ( particle_forces_host )    cudaFreeHost(particle_forces_host); //if the arrays exists free them to prevent memory leaks
-      if ( particle_data_host )      cudaFreeHost(particle_data_host);
-      if ( particle_forces_device )  cudaFree(particle_forces_device);
-      if ( particle_data_device )    cudaFree(particle_data_device);
-      if ( particle_seeds_device )   cudaFree(particle_seeds_device);
+        if ( particle_forces_host )    cudaFreeHost(particle_forces_host); //if the arrays exists free them to prevent memory leaks
+        if ( particle_data_host )      cudaFreeHost(particle_data_host);
+        if ( particle_forces_device )  cudaFree(particle_forces_device);
+        if ( particle_data_device )    cudaFree(particle_data_device);
+        if ( particle_seeds_device )   cudaFree(particle_seeds_device);
+      }
 
-      if ( global_part_vars_host.number_of_particles ) {
-
+      if ( global_part_vars_host.number_of_particles && this_node == 0 ) {
 
         
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
@@ -151,17 +152,19 @@ extern "C" {
   /** setup and call particle reallocation from the host
   */
   void gpu_init_particle_comm() {
-    if( cuda_get_n_gpus() == -1 ) {
-      fprintf(stderr, "Unable to initialize CUDA as no sufficient GPU is available.\n");
-      exit(0);
-    }
-    if (cuda_get_n_gpus()>1) {
-      printf ("More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");
-      printf ("Note that the GPU to be used can be modified using cuda setdevice <int>\n");
-      if (cuda_check_gpu(0)!=ES_OK) {
-        printf ("WARNING!  CUDA device 0 is not capable of running Espresso but is used by default.  Espresso has detected a CUDA capable card but it is not the one used by Espresso by default\n");
-        printf ("Please set the GPU to use with the cuda setdevice <int> command.\n");
-        printf ("A list of available GPUs can be accessed using cuda list.\n");
+    if ( this_node == 0 ) {
+      if( cuda_get_n_gpus() == -1 ) {
+        fprintf(stderr, "Unable to initialize CUDA as no sufficient GPU is available.\n");
+        exit(0);
+      }
+      if (cuda_get_n_gpus()>1) {
+        printf ("More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");
+        printf ("Note that the GPU to be used can be modified using cuda setdevice <int>\n");
+        if (cuda_check_gpu(0)!=ES_OK) {
+          printf ("WARNING!  CUDA device 0 is not capable of running Espresso but is used by default.  Espresso has detected a CUDA capable card but it is not the one used by Espresso by default\n");
+          printf ("Please set the GPU to use with the cuda setdevice <int> command.\n");
+          printf ("A list of available GPUs can be accessed using cuda list.\n");
+        }
       }
     }
     global_part_vars_host.communication_enabled = 1;

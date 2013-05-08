@@ -64,8 +64,9 @@ if { [catch {
 #    inter coulomb n_interpol 0
     invalidate_system
     integrate 0
-
-    # here you can create the necessary snapshot
+#after 99999
+    
+# here you can create the necessary snapshot
     if { 0 } {
 	inter coulomb 1.0 p3m tune accuracy 1e-4
 	integrate 0
