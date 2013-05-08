@@ -85,7 +85,7 @@ typedef struct {
 #endif
 
 #ifdef SHANCHEN
-  double solvation[2*SHANCHEN];
+  double solvation[2*LB_COMPONENTS];
 #endif
 
 #ifdef ROTATIONAL_INERTIA

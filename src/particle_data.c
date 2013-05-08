@@ -106,7 +106,7 @@ void init_particle(Particle *part)
 
 #ifdef SHANCHEN
   int ii;
-  for(ii=0;ii<2*SHANCHEN;ii++){ 
+  for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
     part->p.solvation[ii]=0;
   }
 #endif

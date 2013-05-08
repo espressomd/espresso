@@ -193,7 +193,7 @@ void tclcommand_part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp
 void tclcommand_part_print_solvation(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   int ii;
-  for(ii=0;ii<SHANCHEN;++ii){
+  for(ii=0;ii<LB_COMPONENTS;++ii){
      Tcl_PrintDouble(interp, part->p.solvation[ii], buffer);
      Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   }
@@ -772,16 +772,16 @@ int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
 		 int part_num, int * change)
 {
     /* For each fluid component we need 2 constants, one for particle-fluid and one for fluid-particl interaction */
-    double solvation[2*SHANCHEN];
+    double solvation[2*LB_COMPONENTS];
     int ii;
-    *change = 2*SHANCHEN;
-    if (argc < 2*SHANCHEN) {
-      Tcl_AppendResult(interp, "solvation requires \"", 2*SHANCHEN, "\"  arguments", (char *) NULL);
+    *change = 2*LB_COMPONENTS;
+    if (argc < 2*LB_COMPONENTS) {
+      Tcl_AppendResult(interp, "solvation requires \"", 2*LB_COMPONENTS, "\"  arguments", (char *) NULL);
       return TCL_ERROR;
     }
 
     /* set mass */
-    for(ii=0;ii<2*SHANCHEN;++ii){
+    for(ii=0;ii<2*LB_COMPONENTS;++ii){
        if (! ARG_IS_D(ii,solvation[ii]))
          return TCL_ERROR;
     }

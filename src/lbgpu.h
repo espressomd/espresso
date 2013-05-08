@@ -61,60 +61,28 @@
 /**-------------------------------------------------------------------------*/
 /** Data structure holding the parameters for the Lattice Boltzmann system for gpu. */
 typedef struct {
-#ifndef SHANCHEN
   /** number density (LJ units) */
-  float rho;
+  float rho[LB_COMPONENTS];
   /** mu (LJ units) */
-  float mu;
+  float mu[LB_COMPONENTS];
   /*viscosity (LJ) units */
-  float viscosity;
+  float viscosity[LB_COMPONENTS];
   /** relaxation rate of shear modes */
-  float gamma_shear;
+  float gamma_shear[LB_COMPONENTS];
   /** relaxation rate of bulk modes */
-  float gamma_bulk;
+  float gamma_bulk[LB_COMPONENTS];
   /**      */
-  float gamma_odd;
-  float gamma_even;
+  float gamma_odd[LB_COMPONENTS];
+  float gamma_even[LB_COMPONENTS];
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */
-  float friction;
+  float friction[LB_COMPONENTS];
   /** amplitude of the fluctuations in the viscous coupling */
-  float lb_coupl_pref;
-  float lb_coupl_pref2;
-  float bulk_viscosity;
-#else //SHANCHEN
-  /** number density (LJ units) */
-  float rho[SHANCHEN];
-  /** mobility. They are actually SHANCHEN-1 in number, we leave SHANCHEN here for practical reasons*/
-  float gamma_mobility[SHANCHEN];
-  float mobility[SHANCHEN];
-#if ( SHANCHEN == 1 )
-  float coupling[2];
-#else  // SHANCHEN == 1 
-  float coupling[SHANCHEN*SHANCHEN];
-#endif   // SHANCHEN == 1 
-  /** mu (LJ units) */
-  float mu[SHANCHEN];
-  /*viscosity (LJ) units */
-  float viscosity[SHANCHEN];
-  /** relaxation rate of shear modes */
-  float gamma_shear[SHANCHEN];
-  /** relaxation rate of bulk modes */
-  float gamma_bulk[SHANCHEN];
-  /**      */
-  float gamma_odd[SHANCHEN];
-  float gamma_even[SHANCHEN];
-  /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
-  float friction[SHANCHEN];
-  /** amplitude of the fluctuations in the viscous coupling */
-  float lb_coupl_pref[SHANCHEN];
-  float lb_coupl_pref2[SHANCHEN];
-  float bulk_viscosity[SHANCHEN];
+  float lb_coupl_pref[LB_COMPONENTS];
+  float lb_coupl_pref2[LB_COMPONENTS];
+  float bulk_viscosity[LB_COMPONENTS];
 
-#endif //SHANCHEN
   /** lattice spacing (LJ units) */
   float agrid;
 
@@ -144,25 +112,33 @@ typedef struct {
 
   unsigned int reinit;
 
+#ifdef SHANCHEN
+  /** mobility. They are actually LB_COMPONENTS-1 in number, we leave LB_COMPONENTS here for practical reasons*/
+  float gamma_mobility[LB_COMPONENTS];
+  float mobility[LB_COMPONENTS];
+  float coupling[LB_COMPONENTS*LB_COMPONENTS];
+#endif // SHANCHEN  
+
 } LB_parameters_gpu;
 
-/** Data structure holding the phys. values for the Lattice Boltzmann system. */
+/** Data structure holding the conserved quantities for the Lattice Boltzmann system. */
 typedef struct {
 
-#ifndef SHANCHEN
   /** density of the node */
-  float rho;
-#else // SHANCHEN
-  float rho[SHANCHEN];
-#endif // SHANCHEN
+  float rho[LB_COMPONENTS];
   /** veolcity of the node */
   float v[3];
 
+} LB_rho_v_gpu;
 
-  /** stresstensor of the node */
-  float pi[6];
-
-} LB_values_gpu;
+typedef struct { 
+  /** density of the node */
+  float rho[LB_COMPONENTS];
+  /** veolcity of the node */
+  float v[3];
+  /** pressure tensor */
+  float pi[6];  
+} LB_rho_v_pi_gpu;
 
 /** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
 typedef struct {
@@ -198,7 +174,7 @@ typedef struct {
   /** particle momentum struct velocity p.m->v*/
   float v[3];
 #ifdef SHANCHEN
-  float solvation[2*SHANCHEN];
+  float solvation[2*LB_COMPONENTS];
 #endif 
 #ifdef LB_ELECTROHYDRODYNAMICS
   float mu_E[3];
@@ -241,7 +217,7 @@ extern "C" {
 #endif
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
-extern LB_values_gpu *host_values;
+extern LB_rho_v_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
@@ -293,10 +269,10 @@ void lb_particle_GPU(LB_particle_gpu *host_data);
 void lb_calc_shanchen_GPU();
 #endif
 void lb_free_GPU();
-void lb_get_values_GPU(LB_values_gpu *host_values);
+void lb_get_values_GPU(LB_rho_v_gpu *host_values);
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
-void lb_print_node_GPU(int single_nodeindex, LB_values_gpu *host_print_values);
+void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
 void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);
 #endif

@@ -494,28 +494,21 @@ MDINLINE void lb_set_populations(index_t index, double* pop) {
 
 #if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
-#ifndef SHANCHEN
-int lb_lbfluid_set_density(double p_dens);
-int lb_lbfluid_set_visc(double p_visc);
-int lb_lbfluid_set_bulk_visc(double p_bulk_visc);
-int lb_lbfluid_set_gamma_odd(double p_gamma_odd);
-int lb_lbfluid_set_gamma_even(double p_gamma_even);
-int lb_lbfluid_set_friction(double p_friction);
-#else // SHANCHEN
-int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
-int lb_lbfluid_set_mobility(double * p_mobility);
 int lb_lbfluid_set_density(double * p_dens);
 int lb_lbfluid_set_visc(double * p_visc);
 int lb_lbfluid_set_bulk_visc(double * p_bulk_visc);
 int lb_lbfluid_set_gamma_odd(double * p_gamma_odd);
 int lb_lbfluid_set_gamma_even(double * p_gamma_even);
 int lb_lbfluid_set_friction(double * p_friction);
-#endif
 int lb_lbfluid_set_agrid(double p_agrid);
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
-
 int lb_lbfluid_set_tau(double p_tau);
+#ifdef SHANCHEN
+int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
+int lb_lbfluid_set_mobility(double * p_mobility);
+#endif 
 
+/* IO routines */
 int lb_lbfluid_print_vtk_boundary(char* filename);
 int lb_lbfluid_print_vtk_velocity(char* filename);
 #ifdef SHANCHEN
