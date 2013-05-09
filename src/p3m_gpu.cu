@@ -396,6 +396,7 @@ extern "C" {
 
       cufftPlan3d(&(p3m_gpu_data.fft_plan), mesh, mesh, mesh, CUFFT_PLAN_FLAG);
     }
+         printf ("Dev synx after p3m_init is %d\n",cudaDeviceSynchronize());
   }
 
 void p3m_gpu_add_farfield_force() {
@@ -412,7 +413,7 @@ void p3m_gpu_add_farfield_force() {
   lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
   p3m_gpu_data.npart = n_total_particles;
-
+         printf ("Dev start p3m %d\n",cudaDeviceSynchronize());
   if(p3m_gpu_data.npart == 0)
     return;
 
@@ -427,9 +428,9 @@ void p3m_gpu_add_farfield_force() {
   REAL_TYPE pos_shift = (REAL_TYPE)((cao-1)/2);
   REAL_TYPE hi = mesh/box;
   REAL_TYPE prefactor = 1.0/(box*box*box*2.0);
-
-  cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX));
-
+         printf ("Dev pre memp3m %d\n",cudaDeviceSynchronize());
+  cuda_safe_mem(cudaMemset( p3m_gpu_data.charge_mesh, 0, mesh3*sizeof(CUFFT_TYPE_COMPLEX)));
+         printf ("Dev after memp3m %d\n",cudaDeviceSynchronize());
   KERNELCALL(assign_charges, gridAssignment, threadsAssignment, (lb_particle_gpu,p3m_gpu_data.charge_mesh,mesh,cao,pos_shift,hi));
 
   cudaThreadSynchronize();
@@ -438,28 +439,42 @@ void p3m_gpu_add_farfield_force() {
     fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
     return;
   }
+         printf ("pre kern %d\n",cudaDeviceSynchronize());
 
   KERNELCALL( apply_influence_function, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.G_hat));
 
   KERNELCALL(apply_diff_op<0>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
   
-  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
-
+  if ( CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE) != CUFFT_SUCCESS ) {
+    fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
+    return;
+  }
   KERNELCALL(assign_forces, gridAssignment, threadsAssignment, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 0));
 
   KERNELCALL(apply_diff_op<1>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
-  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+         printf ("mid kern %d\n",cudaDeviceSynchronize());
+  if ( CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE) != CUFFT_SUCCESS ) {
+    fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
+    return;
+  }
   
+         printf ("mid kern1 %d\n",cudaDeviceSynchronize());
   KERNELCALL(assign_forces, gridAssignment, threadsAssignment, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 1));
 
+         //printf ("mid kern2 %d\n",cudaDeviceSynchronize());
   KERNELCALL(apply_diff_op<2>, gridConv, threadsConv, (p3m_gpu_data.charge_mesh, mesh, p3m_gpu_data.force_mesh, box));
 
-  CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE);
+        //printf ("mid kern3 %d\n",cudaDeviceSynchronize());
+  if ( CUFFT_FFT(p3m_gpu_data.fft_plan, p3m_gpu_data.force_mesh, p3m_gpu_data.force_mesh, CUFFT_INVERSE) != CUFFT_SUCCESS ) {
+    fprintf(stderr, "CUFFT error: ExecZ2Z Forward failed\n");
+    return;
+  }
   
+        // printf ("mid kern4 %d\n",cudaDeviceSynchronize());
   KERNELCALL(assign_forces, gridAssignment, threadsAssignment, (lb_particle_gpu, p3m_gpu_data.force_mesh, mesh, cao, pos_shift, hi, lb_particle_force_gpu, prefactor, 2));
 
-
+         printf ("Dev after p3m %d\n",cudaDeviceSynchronize());
   // KERNELCALL( add_p3m_farfield_force_gpu, dim_grid, threads_per_block, ( lb_parameters_gpu, lb_particle_gpu, lb_particle_force_gpu ) );
 }
 

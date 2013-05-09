@@ -121,7 +121,6 @@ extern "C" {
       }
 
       if ( global_part_vars_host.number_of_particles && this_node == 0 ) {
-
         
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
         /**pinned memory mode - use special function to get OS-pinned memory*/
@@ -146,6 +145,7 @@ extern "C" {
       }
      cuda_bcast_global_part_params();
     }
+     printf ("Dev synx after Allocs is %d\n",cudaDeviceSynchronize());
 
   }
 
@@ -199,6 +199,7 @@ extern "C" {
       if ( this_node == 0 ) cudaMemcpyAsync(particle_data_device, particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaMemcpyHostToDevice, stream[0]);
 
     }
+         printf ("Dev synx after copy to GPU is %d\n",cudaDeviceSynchronize());
   }
 
 
@@ -207,7 +208,9 @@ extern "C" {
   */
   void copy_forces_from_GPU() {
 
-    if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
+    if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {     
+
+      printf ("Dev synx is %d\n",cudaDeviceSynchronize());
 
       /** Copy result from device memory to host memory*/
       if ( this_node == 0 ) {
