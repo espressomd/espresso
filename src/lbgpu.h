@@ -217,7 +217,7 @@ extern "C" {
 #endif
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
-extern LB_rho_v_gpu *host_values;
+extern LB_rho_v_pi_gpu *host_values;
 extern int transfer_momentum_gpu;
 extern LB_extern_nodeforce_gpu *extern_nodeforces_gpu;
 extern int n_lb_boundaries;
@@ -269,7 +269,7 @@ void lb_particle_GPU(LB_particle_gpu *host_data);
 void lb_calc_shanchen_GPU();
 #endif
 void lb_free_GPU();
-void lb_get_values_GPU(LB_rho_v_gpu *host_values);
+void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
 void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
 void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
 void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values);

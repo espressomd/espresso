@@ -523,7 +523,6 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 	return 0;
 }
 
-#ifdef SHANCHEN
 int lb_lbfluid_print_vtk_density(char** filename) {
 int ii;
 for(ii=0;ii<LB_COMPONENTS;++ii){ 
@@ -535,8 +534,8 @@ for(ii=0;ii<LB_COMPONENTS;++ii){
 
   if (lattice_switch & LATTICE_LB_GPU) {
      int j;	
-     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_gpu);
-     host_values = (LB_rho_v_gpu*)malloc(size_of_values);
+     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
+     host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
      lb_get_values_GPU(host_values);
      fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", 
              lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, 
@@ -557,7 +556,6 @@ for(ii=0;ii<LB_COMPONENTS;++ii){
  } // for 
  return 0;
 }
-#endif // SHANCHEN
 
 int lb_lbfluid_print_vtk_velocity(char* filename) {
 
@@ -568,8 +566,8 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 
 	 if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_gpu);
-    host_values = (LB_rho_v_gpu*)malloc(size_of_values);
+    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
+    host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
 		  fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray floats 3\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
     int j;	
@@ -662,8 +660,8 @@ int lb_lbfluid_print_velocity(char* filename) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_gpu);
-    host_values = (LB_rho_v_gpu*)malloc(size_of_values);
+    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
+    host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
     lb_get_values_GPU(host_values);
     int xyz[3];
     int j;	
@@ -691,7 +689,9 @@ int lb_lbfluid_print_velocity(char* filename) {
     for(pos[2] = 0; pos[2] < gridsize[2]; pos[2]++)
       for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
         for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+#ifdef SHANCHEN
 exit(printf("TODO:adapt for SHANCHEN (%s:%d)\n",__FILE__,__LINE__));
+#endif
           lb_lbnode_get_u(pos, u);
           fprintf(fp, "%f %f %f %f %f %f\n", (pos[0]+0.5)*lblattice.agrid, (pos[1]+0.5)*lblattice.agrid, (pos[2]+0.5)*lblattice.agrid, u[0], u[1], u[2]);
         }
@@ -858,14 +858,13 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
-    LB_rho_v_pi_gpu *host_print_values;
+    static LB_rho_v_pi_gpu *host_print_values=NULL;
 
-    host_print_values = malloc(sizeof(LB_rho_v_gpu));	
+    if(host_print_values==NULL) host_print_values= malloc(sizeof(LB_rho_v_pi_gpu));
     lb_print_node_GPU(single_nodeindex, host_print_values);
     for(int ii=0;ii<LB_COMPONENTS;ii++) { 
        p_rho[ii] = (double)(host_print_values->rho[ii]);
     }
-    free (host_print_values);
 #endif // LB_GPU
   } else {
 #ifdef LB
@@ -889,16 +888,15 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
 int lb_lbnode_get_u(int* ind, double* p_u) {
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    LB_rho_v_pi_gpu *host_print_values;
-    host_print_values = malloc(sizeof(LB_rho_v_gpu));	
-    
+    static LB_rho_v_pi_gpu *host_print_values=NULL;
+    if(host_print_values==NULL) host_print_values= malloc(sizeof(LB_rho_v_pi_gpu));
+
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
      
     p_u[0] = (double)(host_print_values[0].v[0]);
     p_u[1] = (double)(host_print_values[0].v[1]);
     p_u[2] = (double)(host_print_values[0].v[2]);
-    free (host_print_values);
 #endif
   } else {  
 #ifdef LB
@@ -1016,15 +1014,14 @@ int lb_lbnode_get_pi_neq(int* ind, double* p_pi) {
 
   if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-    LB_rho_v_pi_gpu *host_print_values;
-    host_print_values = malloc(sizeof(LB_rho_v_pi_gpu));	
+    static LB_rho_v_pi_gpu *host_print_values=NULL;
+    if(host_print_values==NULL) host_print_values= malloc(sizeof(LB_rho_v_pi_gpu));	
     
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
     for (int i = 0; i<6; i++) {
       p_pi[i]=host_print_values->pi[i];
     }
-    free (host_print_values);
     return 0;
 #endif
   } else {  

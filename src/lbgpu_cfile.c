@@ -72,10 +72,8 @@ LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=
 #endif
 };
 
-/* this is the array normally used to store the first four modes.*/
-LB_rho_v_gpu *host_values = NULL;
-/* this is the extended one, when one needs also pi at every step, e.g. for moving boundaries.*/
-LB_rho_v_pi_gpu *host_values_extended = NULL;
+/** this is the array that stores the hydrodynamic fields for the output */
+LB_rho_v_pi_gpu *host_values = NULL;
 
 LB_nodes_gpu *host_nodes = NULL;
 LB_particle_force_gpu *host_forces = NULL;
@@ -214,10 +212,10 @@ void lb_reinit_fluid_gpu() {
 /*not needed in Espresso but still not deleted*/
 void lb_release_gpu(){
 
-  free(host_nodes);
-  free(host_values);
-  free(host_forces);
-  free(host_data);
+  if(host_nodes !=NULL) free(host_nodes);
+  if(host_values!=NULL) free(host_values);
+  if(host_forces!=NULL) free(host_forces);
+  if(host_data  !=NULL) free(host_data);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
