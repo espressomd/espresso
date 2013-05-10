@@ -42,7 +42,8 @@ function doc() {
 
 function dist() {
     start "DIST"
-    make dist dist-xz
+    make dist 
+    make dist-xz
     end "DIST"
 }
 
