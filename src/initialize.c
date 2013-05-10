@@ -222,11 +222,11 @@ void on_integration_start()
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar.rho <= 0.0) {
+    if (lbpar.rho[0] <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
     }
-    if (lbpar.viscosity <= 0.0) {
+    if (lbpar.viscosity[0] <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }

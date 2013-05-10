@@ -51,7 +51,7 @@ static void lb_check_halo_regions();
 int transfer_momentum = 0;
 
 /** Struct holding the Lattice Boltzmann parameters */
-LB_Parameters lbpar = { 0.0, 0.0, -1.0, -1.0, -1.0, 0.0, { 0.0, 0.0, 0.0},0.,0., 0 };
+LB_Parameters lbpar = { .rho={0.0}, .viscosity={0.0}, .bulk_viscosity={-1.0}, .agrid=-1.0, .tau=-1.0, .friction={0.0}, .ext_force={ 0.0, 0.0, 0.0},.rho_lb_units={0.},.gamma_odd={0.}, .gamma_even={0.} };
 
 
 /** The DnQm model to be used. */
@@ -194,7 +194,7 @@ int lb_lbfluid_set_density(double *p_dens) { //
 #endif
   } else {
 #ifdef LB
-    lbpar.rho = p_dens;
+    lbpar.rho[ii] = p_dens[ii];
     mpi_bcast_lb_params(LBPAR_DENSITY);
 #endif
     }
@@ -214,7 +214,7 @@ int lb_lbfluid_set_visc(double * p_visc){//
 #endif
   } else {
 #ifdef LB
-    lbpar.viscosity = p_visc;
+    lbpar.viscosity[ii] = p_visc[ii];
     mpi_bcast_lb_params(LBPAR_VISCOSITY);
 #endif
     }
@@ -234,7 +234,7 @@ int lb_lbfluid_set_bulk_visc(double *p_bulk_visc){ //
 #endif
   } else {
 #ifdef LB
-    lbpar.bulk_viscosity = p_bulk_visc;
+    lbpar.bulk_viscosity[ii] = p_bulk_visc[ii];
     mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif
     }
@@ -255,7 +255,7 @@ int lb_lbfluid_set_gamma_odd(double *p_gamma_odd){//
 #endif
   } else {
 #ifdef LB
-    lbpar.gamma_odd = gamma_odd = p_gamma_odd;
+    lbpar.gamma_odd[ii] = gamma_odd = p_gamma_odd[ii];
     mpi_bcast_lb_params(0);
 #endif
     }
@@ -276,7 +276,7 @@ int lb_lbfluid_set_gamma_even(double *p_gamma_even){//
 #endif
   } else {
 #ifdef LB
-    lbpar.gamma_even = gamma_even = p_gamma_even;
+    lbpar.gamma_even[ii] = gamma_even = p_gamma_even[ii];
     mpi_bcast_lb_params(0);
 #endif
     }
@@ -297,7 +297,7 @@ int lb_lbfluid_set_friction(double * p_friction){//
 #endif
   } else {
 #ifdef LB
-    lbpar.friction = p_friction;
+    lbpar.friction[ii] = p_friction[ii];
     mpi_bcast_lb_params(LBPAR_FRICTION);
 #endif
     }
@@ -391,7 +391,7 @@ int lb_lbfluid_get_density(double* p_dens){
 #endif
   } else {
 #ifdef LB
-    *p_dens = lbpar.rho;
+    *p_dens = lbpar.rho[0];
 #endif
     }
   return 0;
@@ -403,7 +403,7 @@ int lb_lbfluid_get_visc(double* p_visc){
 #endif
   } else {
 #ifdef LB
-    *p_visc = lbpar.viscosity;
+    *p_visc = lbpar.viscosity[0];
 #endif
   }
   return 0;
@@ -416,7 +416,7 @@ int lb_lbfluid_get_bulk_visc(double* p_bulk_visc){
 #endif
   } else {
 #ifdef LB
-    *p_bulk_visc = lbpar.bulk_viscosity;
+    *p_bulk_visc = lbpar.bulk_viscosity[0];
 #endif
   }
   return 0;
@@ -429,7 +429,7 @@ int lb_lbfluid_get_gamma_odd(double* p_gamma_odd){
 #endif
   } else {
 #ifdef LB
-    *p_gamma_odd = lbpar.gamma_odd;
+    *p_gamma_odd = lbpar.gamma_odd[0];
 #endif
   }  
 return 0;
@@ -442,7 +442,7 @@ int lb_lbfluid_get_gamma_even(double* p_gamma_even){
 #endif
   } else {
 #ifdef LB
-    *p_gamma_even = lbpar.gamma_even;
+    *p_gamma_even = lbpar.gamma_even[0];
 #endif
   }
   return 0;
@@ -531,8 +531,8 @@ for(ii=0;ii<LB_COMPONENTS;++ii){
 	 perror("lb_lbfluid_print_vtk_density");
 	 return 1;
   }
-
   if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
      int j;	
      size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
      host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
@@ -546,6 +546,7 @@ for(ii=0;ii<LB_COMPONENTS;++ii){
          fprintf(fp, "%f\n", host_values[j].rho[ii]);
      }
      free(host_values);
+#endif
   } else {
 #ifdef LB
     exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
@@ -1000,7 +1001,7 @@ int lb_lbnode_get_pi(int* ind, double* p_pi) {
 #endif
   } else {  
 #ifdef LB
-    p0 = lbpar.rho*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
+    p0 = lbpar.rho[0]*lbpar.agrid*lbpar.agrid/lbpar.tau/lbpar.tau/3.;
 #endif
   }
 
@@ -1609,20 +1610,20 @@ void lb_reinit_parameters() {
   agrid   = lbpar.agrid;
   tau     = lbpar.tau;
 
-  if (lbpar.viscosity > 0.0) {
+  if (lbpar.viscosity[0] > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    gamma_shear = 1. - 2./(6.*lbpar.viscosity*tau/(agrid*agrid)+1.);
+    gamma_shear = 1. - 2./(6.*lbpar.viscosity[0]*tau/(agrid*agrid)+1.);
   }
 
-  if (lbpar.bulk_viscosity > 0.0) {
+  if (lbpar.bulk_viscosity[0] > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
     // unit conversion: viscosity
-    gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity*tau/(agrid*agrid)+1.);
+    gamma_bulk = 1. - 2./(9.*lbpar.bulk_viscosity[0]*tau/(agrid*agrid)+1.);
   }
   
-  gamma_odd = lbpar.gamma_odd;
-  gamma_even = lbpar.gamma_even;
+  gamma_odd = lbpar.gamma_odd[0];
+  gamma_even = lbpar.gamma_even[0];
 
   double mu = 0.0;
 
@@ -1650,8 +1651,8 @@ void lb_reinit_parameters() {
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
      */
-    lb_coupl_pref = sqrt(12.*2.*lbpar.friction*temperature/time_step);
-    lb_coupl_pref2 = sqrt(2.*lbpar.friction*temperature/time_step);
+    lb_coupl_pref = sqrt(12.*2.*lbpar.friction[0]*temperature/time_step);
+    lb_coupl_pref2 = sqrt(2.*lbpar.friction[0]*temperature/time_step);
 
   } else {
     /* no fluctuations at zero temperature */
@@ -1700,7 +1701,7 @@ void lb_reinit_fluid() {
 
     /* default values for fields in lattice units */
     /* here the conversion to lb units is performed */
-    double rho = lbpar.rho*agrid*agrid*agrid;
+    double rho = lbpar.rho[0]*agrid*agrid*agrid;
     double v[3] = { 0.0, 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
@@ -1780,7 +1781,7 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
 
   const double rhoc_sq = rho*lbmodel.c_sound_sq;
   // unit conversion: mass density
-  const double avg_rho = lbpar.rho*agrid*agrid*agrid;
+  const double avg_rho = lbpar.rho[0]*agrid*agrid*agrid;
 
   double local_rho, local_j[3], local_pi[6], trace;
 
@@ -2045,7 +2046,7 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
   /* re-construct the real density 
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
+  rho = mode[0] + lbpar.rho[0]*agrid*agrid*agrid;
 
   j[0] = mode[1];
   j[1] = mode[2];
@@ -2098,7 +2099,7 @@ MDINLINE void lb_relax_modes(index_t index, double *mode) {
 MDINLINE void lb_thermalize_modes(index_t index, double *mode) {
     double fluct[6];
 #ifdef GAUSSRANDOM
-    double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho*agrid*agrid*agrid));
+    double rootrho_gauss = sqrt(fabs(mode[0]+lbpar.rho[0]*agrid*agrid*agrid));
 
     /* stress modes */
     mode[4] += (fluct[0] = rootrho_gauss*lb_phi[4]*gaussian_random());
@@ -2157,7 +2158,7 @@ MDINLINE void lb_apply_forces(index_t index, double* mode) {
   
   f = lbfields[index].force;
 
-  rho = mode[0] + lbpar.rho*agrid*agrid*agrid;
+  rho = mode[0] + lbpar.rho[0]*agrid*agrid*agrid;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   u[0] = (mode[1] + 0.5*f[0])/rho;
@@ -2574,13 +2575,13 @@ MDINLINE void lb_viscous_coupling(Particle *p, double force[3]) {
    * take care to rescale velocities with time_step and transform to MD units 
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 #ifdef LB_ELECTROHYDRODYNAMICS
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
+  force[0] = - lbpar.friction[0] * (p->m.v[0]/time_step - interpolated_u[0] - p->p.mu_E[0]);
+  force[1] = - lbpar.friction[0] * (p->m.v[1]/time_step - interpolated_u[1] - p->p.mu_E[1]);
+  force[2] = - lbpar.friction[0] * (p->m.v[2]/time_step - interpolated_u[2] - p->p.mu_E[2]);
 #else
-  force[0] = - lbpar.friction * (p->m.v[0]/time_step - interpolated_u[0]);
-  force[1] = - lbpar.friction * (p->m.v[1]/time_step - interpolated_u[1]);
-  force[2] = - lbpar.friction * (p->m.v[2]/time_step - interpolated_u[2]);
+  force[0] = - lbpar.friction[0] * (p->m.v[0]/time_step - interpolated_u[0]);
+  force[1] = - lbpar.friction[0] * (p->m.v[1]/time_step - interpolated_u[1]);
+  force[2] = - lbpar.friction[0] * (p->m.v[2]/time_step - interpolated_u[2]);
 #endif
 
 
@@ -2670,13 +2671,13 @@ int lb_lbfluid_get_interpolated_velocity(double* p, double* v) {
         
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho=lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
-          local_j[0] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[1] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
-          local_j[2] = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_rho=lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+          local_j[0] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[1] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
+          local_j[2] = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid*lb_boundaries[lbfields[index].boundary-1].velocity[0];
         } else {
           lb_calc_modes(index, modes);
-          local_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
+          local_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid + modes[0];
           local_j[0] = modes[1];
           local_j[1] = modes[2];
           local_j[2] = modes[3];
@@ -2884,7 +2885,7 @@ void lb_calc_average_rho() {
 
   /* calculate average density in MD units */
   // TODO!!!
-  lbpar.rho = sum_rho / (box_l[0]*box_l[1]*box_l[2]);
+  lbpar.rho[0] = sum_rho / (box_l[0]*box_l[1]*box_l[2]);
   
 }
 
