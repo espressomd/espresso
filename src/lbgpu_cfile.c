@@ -47,13 +47,13 @@
 #error The implementation only works for D3Q19 so far!
 #endif
 
-#if (LB_COMPONENTS== 1 ) 
+#if (LB_COMPONENTS==1) 
 #    define  SC0 {0.0}
 #    define  SC20 {0.0, 0.0}
 #    define  SC1 {1.0}
 #    define  SCM1 {-1.0}
 #endif 
-#if (LB_COMPONENTS== 2 ) 
+#if (LB_COMPONENTS==2) 
 #    define  SC0 { 0.0 , 0.0 } 
 #    define  SC20 {0.0, 0.0, 0.0, 0.0}
 #    define  SC1 { 1.0 , 1.0 } 
