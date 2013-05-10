@@ -806,7 +806,6 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode,  LB_rho_v
    	rho_tot+=d_v[index].rho[ii];
         d_p_v[print_index].rho[ii]=d_v[index].rho[ii]/para.agrid/para.agrid/para.agrid;
      } 
-   
      d_p_v[print_index].v[0]=d_v[index].v[0]/para.tau/para.agrid;
      d_p_v[print_index].v[1]=d_v[index].v[1]/para.tau/para.agrid;
      d_p_v[print_index].v[2]=d_v[index].v[2]/para.tau/para.agrid;
@@ -1942,10 +1941,13 @@ __global__ void lb_get_boundaries(LB_nodes_gpu n_a, unsigned int *device_bound_a
 __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_nodes_gpu n_a, LB_rho_v_gpu * d_v){
 	
   float mode[19*LB_COMPONENTS];
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
-  calc_m_from_n(n_a, single_nodeindex, mode);
-  /* the following actually copies rho and v from d_v, and calculates pi */
-  calc_values_in_MD_units(n_a,mode,  d_p_v, d_v, single_nodeindex,0);
+  if(index == 0){
+     calc_m_from_n(n_a, single_nodeindex, mode);
+     /* the following actually copies rho and v from d_v, and calculates pi */
+     calc_values_in_MD_units(n_a,mode,  d_p_v, d_v, single_nodeindex,0);
+  }
 }
 /**calculate momentum of the hole fluid kernel
  * @param node_f			node force struct (Input)
@@ -2089,14 +2091,14 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  //KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));	
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));	
   /** init part forces with zero*/
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
   #ifdef SHANCHEN
   // TODO FIXME: rewrite this !  check if this should be computed also for normal LB
   /* We must add compute values, shan-chen forces at this moment are zero as the densities are uniform*/
-  KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_rho_v,node_f));
+ // KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_rho_v,node_f));
   #endif
   intflag = 1;
   current_nodes = &nodes_a;
