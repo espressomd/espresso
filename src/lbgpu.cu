@@ -280,15 +280,12 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
  }
 }
 
-/**lb_relax_modes, means collision update of the modes
- * @param index		node index / thread index (Input)
- * @param mode		Pointer to the local register values mode (Input/Output)
- * @param node_f	Pointer to local node force (Input)
-*/
-__device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v){
+
+__device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v){
+
   float Rho_tot=0.f;
   float u_tot[3]={0.f,0.f,0.f};
-
+  
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
       /** re-construct the real density
@@ -315,7 +312,21 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
   d_v[index].v[0]=u_tot[0]; 
   d_v[index].v[1]=u_tot[1]; 
   d_v[index].v[2]=u_tot[2]; 
+}
 
+/**lb_relax_modes, means collision update of the modes
+ * @param index		node index / thread index (Input)
+ * @param mode		Pointer to the local register values mode (Input/Output)
+ * @param node_f	Pointer to local node force (Input)
+*/
+__device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v){
+  float u_tot[3]={0.f,0.f,0.f};
+
+  update_rho_v(mode, index, node_f, d_v);
+  u_tot[0]=d_v[index].v[0];  
+  u_tot[0]=d_v[index].v[1];  
+  u_tot[0]=d_v[index].v[2];  
+ 
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
       float Rho; float j[3]; float pi_eq[6];
@@ -1283,85 +1294,88 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
  * @param n_a		 Pointer to the lattice site (Input).
  * @param *gpu_check additional check if gpu kernel are executed(Input).
 */
-__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, int *gpu_check) {
-
+__global__ void calc_n_equilibrium(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v, LB_node_force_gpu node_f, int *gpu_check) {
+   /* TODO: this can handle only a uniform density, somehting similar, but local, 
+            has to be called every time the fields are set by the user ! */ 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if(index<para.number_of_nodes){
-  #pragma unroll
-  for(int ii=0;ii<LB_COMPONENTS;++ii) { 
-
-
-    /** default values for fields in lattice units */
-    gpu_check[0] = 1;
-
-    float Rho = para.rho[ii]*para.agrid*para.agrid*para.agrid;
-    float v[3] = { 0.0f, 0.0f, 0.0f };
-    float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
-
-    float rhoc_sq = Rho*c_sound_sq;
-    float avg_rho = para.rho[ii]*para.agrid*para.agrid*para.agrid;
-    float local_rho, local_j[3], *local_pi, trace;
-
-    local_rho  = Rho;
-
-    local_j[0] = Rho * v[0];
-    local_j[1] = Rho * v[1];
-    local_j[2] = Rho * v[2];
-
-    local_pi = pi;
-
-    /** reduce the pressure tensor to the part needed here. NOTE: this not true anymore for SHANCHEN if the densities are not uniform. FIXME*/
-    local_pi[0] -= rhoc_sq;
-    local_pi[2] -= rhoc_sq;
-    local_pi[5] -= rhoc_sq;
-
-    trace = local_pi[0] + local_pi[2] + local_pi[5];
-
-    float rho_times_coeff;
-    float tmp1,tmp2;
-
-    /** update the q=0 sublattice */
-    n_a.vd[(0 + ii*LBQ ) * para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
-
-    /** update the q=1 sublattice */
-    rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
-
-    n_a.vd[(1 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[(2 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
-    n_a.vd[(3 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[(4 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
-    n_a.vd[(5 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
-    n_a.vd[(6 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
-
-    /** update the q=2 sublattice */
-    rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
-
-    tmp1 = local_pi[0] + local_pi[2];
-    tmp2 = 2.0f*local_pi[1];
-    n_a.vd[(7 + ii*LBQ ) * para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[(8 + ii*LBQ ) * para.number_of_nodes + index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[(9 + ii*LBQ ) * para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[(10 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-
-    tmp1 = local_pi[0] + local_pi[5];
-    tmp2 = 2.0f*local_pi[3];
-
-    n_a.vd[(11 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[(12 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[(13 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[(14 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-
-    tmp1 = local_pi[2] + local_pi[5];
-    tmp2 = 2.0f*local_pi[4];
-
-    n_a.vd[(15 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[(16 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
-    n_a.vd[(17 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-    n_a.vd[(18 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
-
-    /**set different seed for randomgen on every node */
-    n_a.seed[index] = para.your_seed + index;
-  }
+       float mode[19*LB_COMPONENTS];
+       #pragma unroll
+       for(int ii=0;ii<LB_COMPONENTS;++ii) { 
+     
+         /** default values for fields in lattice units */
+         gpu_check[0] = 1;
+     
+         float Rho = para.rho[ii]*para.agrid*para.agrid*para.agrid;
+         float v[3] = { 0.0f, 0.0f, 0.0f };
+         float pi[6] = { Rho*c_sound_sq, 0.0f, Rho*c_sound_sq, 0.0f, 0.0f, Rho*c_sound_sq };
+     
+         float rhoc_sq = Rho*c_sound_sq;
+         float avg_rho = para.rho[ii]*para.agrid*para.agrid*para.agrid;
+         float local_rho, local_j[3], *local_pi, trace;
+     
+         local_rho  = Rho;
+     
+         local_j[0] = Rho * v[0];
+         local_j[1] = Rho * v[1];
+         local_j[2] = Rho * v[2];
+     
+         local_pi = pi;
+     
+         /** reduce the pressure tensor to the part needed here. NOTE: this not true anymore for SHANCHEN if the densities are not uniform. FIXME*/
+         local_pi[0] -= rhoc_sq;
+         local_pi[2] -= rhoc_sq;
+         local_pi[5] -= rhoc_sq;
+     
+         trace = local_pi[0] + local_pi[2] + local_pi[5];
+     
+         float rho_times_coeff;
+         float tmp1,tmp2;
+     
+         /** update the q=0 sublattice */
+         n_a.vd[(0 + ii*LBQ ) * para.number_of_nodes + index] = 1.f/3.f * (local_rho-avg_rho) - 1.f/2.f*trace;
+     
+         /** update the q=1 sublattice */
+         rho_times_coeff = 1.f/18.f * (local_rho-avg_rho);
+     
+         n_a.vd[(1 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+         n_a.vd[(2 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[0] + 1.f/4.f*local_pi[0] - 1.f/12.f*trace;
+         n_a.vd[(3 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+         n_a.vd[(4 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[1] + 1.f/4.f*local_pi[2] - 1.f/12.f*trace;
+         n_a.vd[(5 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+         n_a.vd[(6 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/6.f*local_j[2] + 1.f/4.f*local_pi[5] - 1.f/12.f*trace;
+     
+         /** update the q=2 sublattice */
+         rho_times_coeff = 1.f/36.f * (local_rho-avg_rho);
+     
+         tmp1 = local_pi[0] + local_pi[2];
+         tmp2 = 2.0f*local_pi[1];
+         n_a.vd[(7 + ii*LBQ ) * para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+         n_a.vd[(8 + ii*LBQ ) * para.number_of_nodes + index]  = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[1]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+         n_a.vd[(9 + ii*LBQ ) * para.number_of_nodes + index]  = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+         n_a.vd[(10 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[1]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+     
+         tmp1 = local_pi[0] + local_pi[5];
+         tmp2 = 2.0f*local_pi[3];
+     
+         n_a.vd[(11 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+         n_a.vd[(12 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+         n_a.vd[(13 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+         n_a.vd[(14 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[0]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+     
+         tmp1 = local_pi[2] + local_pi[5];
+         tmp2 = 2.0f*local_pi[4];
+     
+         n_a.vd[(15 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+         n_a.vd[(16 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]+local_j[2]) + 1.f/8.f*(tmp1+tmp2) - 1.f/24.f*trace;
+         n_a.vd[(17 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff + 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+         n_a.vd[(18 + ii*LBQ ) * para.number_of_nodes + index] = rho_times_coeff - 1.f/12.f*(local_j[1]-local_j[2]) + 1.f/8.f*(tmp1-tmp2) - 1.f/24.f*trace;
+     
+         /**set different seed for randomgen on every node */
+         n_a.seed[index] = para.your_seed + index;
+       }
+       calc_m_from_n(n_a,index,mode);
+       update_rho_v(mode,index,node_f,d_v);
   }
 }
 
@@ -2091,7 +2105,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));	
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, device_rho_v ,node_f, gpu_check));	
   /** init part forces with zero*/
   if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
@@ -2126,7 +2140,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu){
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
-  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
+  KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, device_rho_v, node_f, gpu_check));
 }
 
 /**setup and call particle reallocation from the host
