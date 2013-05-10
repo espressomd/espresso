@@ -38,8 +38,8 @@ set coupl 1.5
 set max   2.3 
 set min   0.06
 set avg   1.0
-set visc 1.0
-set mob 1e-3
+set visc 0.1
+set mob 1e-1
 
 if { [ catch {
 
@@ -54,7 +54,7 @@ for { set x  0  } { $x < $box_lx  } { incr x } {
     }
 }
 
-integrate 100
+integrate 1000
 set v {0 0 0}
 set vnorm {0 0 0}
 for {set z 0} { $z < $box_lz } {incr z }  { 
@@ -70,6 +70,8 @@ for {set z 0} { $z < $box_lz } {incr z }  {
 }
 set average_momentum_per_node [vecscale [expr 1./(32*32)] $v]
 set total_absolute_momentum_per_node  ""
+lbfluid print vtk density "relaxA.vtk" "relaxB.vtk"
+lbfluid print vtk velocity "relaxV.vtk" 
 foreach c [vecscale [expr 1./(32*32)]  $vnorm  ] { lappend total_absolute_momentum_per_node [expr sqrt($c)]}
 #puts "$average_momentum_per_node  $total_absolute_momentum_per_node"
 foreach c $average_momentum_per_node {
