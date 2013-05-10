@@ -280,7 +280,6 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode)
  }
 }
 
-
 __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu node_f, LB_rho_v_gpu *d_v){
 
   float Rho_tot=0.f;
@@ -1506,7 +1505,7 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
   if(index<para.number_of_nodes){
    #pragma unroll
    for(int ii=0;ii<LB_COMPONENTS;++ii){
-#ifdef EXTERNAL_FORCE
+#ifdef EXTERNAL_FORCES
     if(para.external_force){
       node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0]*powf(para.agrid,4)*para.tau*para.tau;
       node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1]*powf(para.agrid,4)*para.tau*para.tau;
@@ -2104,16 +2103,18 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
         
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, (nodes_a, nodes_b));
 
+  KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
+  /** init part forces with zero TODO check this: should be initialized with external value instead*/
+  if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
+
+  #ifdef SHANCHEN
+  // TODO FIXME: 
+  /* We must add shan-chen forces, which are zero only if the densities are uniform*/
+  #endif
+
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, device_rho_v ,node_f, gpu_check));	
-  /** init part forces with zero*/
-  if(lbpar_gpu->number_of_particles) KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_force, part));
-  KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
-  #ifdef SHANCHEN
-  // TODO FIXME: rewrite this !  check if this should be computed also for normal LB
-  /* We must add compute values, shan-chen forces at this moment are zero as the densities are uniform*/
- // KERNELCALL(values, dim_grid, threads_per_block, (nodes_a, device_rho_v,node_f));
-  #endif
+
   intflag = 1;
   current_nodes = &nodes_a;
   h_gpu_check[0] = 0;
