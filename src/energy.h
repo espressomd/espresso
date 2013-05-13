@@ -220,6 +220,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     /* real space coulomb */
     switch (coulomb.method) {
 #ifdef P3M
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;

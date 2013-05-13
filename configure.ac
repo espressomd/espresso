@@ -441,7 +441,7 @@ AS_IF([test x$with_cuda != xno],[
         LDFLAGS="$LDFLAGS -L$cuda_path/lib"
     ])
 
-    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
+    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include -I/usr/include/mpi"
     CFLAGS="$CFLAGS -I$cuda_path/include"
 
     # NVCC
@@ -474,6 +474,16 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ])
 
+    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
+        ])
+    ])
+
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
@@ -486,6 +496,9 @@ AS_IF([test x$with_cuda != xno],[
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
+    save_CC_pretest=$CC
+    save_CFLAGS_pretest=$CFLAGS
+    
     CC=$NVCC
     CFLAGS="$NVCCFLAGS"
     
@@ -518,8 +531,8 @@ AS_IF([test x$with_cuda != xno],[
         AC_MSG_RESULT([unknown (cross-compiling)])
     ])
     
-    CC=$save_CC
-    CFLAGS=$save_CFLAGS
+    CC=$save_CC_pretest
+    CFLAGS=$save_CFLAGS_pretest
     
     AS_IF([test x$cuda_ok == xyes], [
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
@@ -690,3 +703,4 @@ fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi
+

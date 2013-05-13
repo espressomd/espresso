@@ -332,6 +332,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
       }
       break;
     }
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M: {
   #ifdef NPT
       if (q1q2) {

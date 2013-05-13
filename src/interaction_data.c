@@ -504,6 +504,7 @@ static void recalc_global_maximal_nonbonded_cutoff()
     if (max_cut_global < elc_params.space_layer)
       max_cut_global = elc_params.space_layer;
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
     double r_cut = p3m.params.r_cut_iL* box_l[0];
@@ -892,6 +893,7 @@ int check_obs_calc_initialized()
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
 #ifdef P3M
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
   }
@@ -929,6 +931,7 @@ int coulomb_set_bjerrum(double bjerrum)
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       p3m_set_bjerrum();
       break;

@@ -36,6 +36,7 @@ libEspresso_a_SOURCES = \
 	comforce.h comforce.c \
 	config.h \
 	constraint.c constraint.h \
+	cuda_common_cfile.c \
 	debug.c debug.h \
 	domain_decomposition.c domain_decomposition.h \
 	energy.c energy.h \
@@ -392,7 +393,14 @@ SUFFIXES=.cu
 
 CUDA_SOURCES = \
 	cuda_init.cu cuda_init.h \
-	lbgpu.cu lbgpu.h
+	cuda_common.cu cuda_common.h \
+	lbgpu.cu lbgpu.h \
+	p3m_gpu.cu p3m_gpu.h
+	
+cuda_common.o: cuda_common.h
+cuda_init.o: cuda_init.h
+lbgpu.o: lbgpu.h
+p3m_gpu.o: p3m_gpu.h
 
 if TCL
 
