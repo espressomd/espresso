@@ -356,6 +356,10 @@ proc dielectric_cylinder { args } {
   set incr_length_x [ expr $axis_x * $length / $n_length]
   set incr_length_y [ expr $axis_y * $length / $n_length]
   set incr_length_z [ expr $axis_z * $length / $n_length]
+  
+  if { !$covers } { 
+    set n_length [ expr $n_length - 1 ]
+  }
   set start_x [ expr $center_x - $axis_x * $length/2. ]
   set start_y [ expr $center_y - $axis_y * $length/2. ]
   set start_z [ expr $center_z - $axis_z * $length/2. ]

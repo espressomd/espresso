@@ -195,7 +195,7 @@ int iccp3m_iteration() {
            /* recalculate the old charge density */
                       hold=part[i].p.q/iccp3m_cfg.areas[id];
           /* determine if it is higher than the previously highest charge density */            
-                      if(hold>fabs(hmax))hmax=fabs(hold); 
+                      if(fabs(hold)>hmax)hmax=fabs(hold); 
                       f1 =  (+del_eps*fdot/l_b);
 //                      double f2 = (1- 0.5*(iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.eout + iccp3m_cfg.ein[id] ))*(iccp3m_cfg.sigma[id]);
                       if (iccp3m_cfg.sigma!=0) {
@@ -203,7 +203,7 @@ int iccp3m_iteration() {
                       } 
 
                       hnew=(1.-iccp3m_cfg.relax)*hold + (iccp3m_cfg.relax)*(f1 + f2);
-                      difftemp=fabs( 2.*(hnew - hold)/(hold+hnew) ); /* relative variation: never use 
+                      difftemp=fabs( 1*(hnew - hold)/(hmax + fabs(hnew+hold)) ); /* relative variation: never use 
                                                                               an estimator which can be negative
                                                                               here */
                       if(difftemp > diff && part[i].p.q > 1e-5)
@@ -236,7 +236,7 @@ int iccp3m_iteration() {
   } /* iteration */
   //on_particle_change();
 
-  return iccp3m_cfg.citeration++;
+  return iccp3m_cfg.citeration;
 }
 
 void force_calc_iccp3m() {
