@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011 The ESPResSo project
+  Copyright (C) 2010,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
   
   This file is part of ESPResSo.
@@ -17,18 +17,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef STRETCHING_FORCE_TCL_H
-#define STRETCHING_FORCE_TCL_H
+
+/** \file volume_force.h
+ *  Routines to calculate the VOLUME_FORCE energy or/and and force 
+ *  for a particle triple (triangle from mesh). (Dupin2007)
+ *  \ref forces.c
+*/
+
+#include "volume_force.h"
+#include "communication.h"
+
+/** set parameters for the VOLUME_FORCE potential. 
+*/
+int volume_force_set_params(int bond_type, double V0, double kv)
+{
+  if(bond_type < 0)
+    return ES_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].p.volume_force.kv = kv;
+  bonded_ia_params[bond_type].p.volume_force.V0 = V0;
+
+  bonded_ia_params[bond_type].type = BONDED_IA_VOLUME_FORCE;
+  bonded_ia_params[bond_type].num = 2;				
+ 
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1); 
+
+  return ES_OK;
+}
 
 
-#include "../../tcl/parser.h"
-#include "interaction_data.h"
-
-/************************************************************/
-/// parse parameters for the stretching_force potential
-int tclcommand_inter_parse_stretching_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
-
-int tclprint_to_result_stretchingforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
-
-#endif
-//#endif
