@@ -43,8 +43,6 @@ int observable_particle_velocities(void* idlist, double* A, unsigned int n_A) {
 
 int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n_A) {
   unsigned int i;
-  double RMat[9];
-  double omega[3];
   IntList* ids;
   sortPartCfg();
   ids=(IntList*) idlist;
@@ -54,6 +52,8 @@ int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n
 
     #ifdef ROTATION
 
+    double RMat[9];
+    double omega[3];
     define_rotation_matrix(&partCfg[ids->e[i]], RMat);
     omega[0] = RMat[0 + 3*0]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*0]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*0]*partCfg[ids->e[i]].m.omega[2];
     omega[1] = RMat[0 + 3*1]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*1]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*1]*partCfg[ids->e[i]].m.omega[2];
