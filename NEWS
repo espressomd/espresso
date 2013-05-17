@@ -43,6 +43,9 @@ New user-visible features
 * DPD (as thermostat) now works without any other interaction, so a pure
   DPD fluid is possible.
 
+* Renamed torque to torque_{lab,body}, improved troque handling in blockfiles.
+  Clearer distinction between the reference frames for torque and angular momentum.
+
 User-visible changes
 --------------------
 
