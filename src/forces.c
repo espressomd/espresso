@@ -306,6 +306,14 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->f.torque[0] = 0;
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
+
+    #ifdef EXTERNAL_FORCES
+      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
+        part->f.torque[0] += part->l.ext_torque[0];
+        part->f.torque[1] += part->l.ext_torque[1];
+        part->f.torque[2] += part->l.ext_torque[2];
+      }
+    #endif
     
     /* and rescale quaternion, so it is exactly of unit length */	
     scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
@@ -315,14 +323,6 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->r.quat[2]/= scale;
     part->r.quat[3]/= scale;
   }
-
-  #ifdef EXTERNAL_FORCES
-    if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-      part->f.torque[0] += part->l.ext_torque[0];
-      part->f.torque[1] += part->l.ext_torque[1];
-      part->f.torque[2] += part->l.ext_torque[2];
-    }
-  #endif
 #endif
 
 #ifdef ADRESS
