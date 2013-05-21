@@ -123,6 +123,8 @@
   #define COULOMB_RF 9
   /** Coulomb method is Reaction-Field BUT as interactions */
   #define COULOMB_INTER_RF 10
+  /** Coulomb method is P3M with GPU based long range part calculation */
+  #define COULOMB_P3M_GPU 11
 #endif
 /*@}*/
 
