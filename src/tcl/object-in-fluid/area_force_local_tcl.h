@@ -1,6 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -17,19 +16,23 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BENDING_FORCE_TCL_H
-#define BENDING_FORCE_TCL_H
-/** \file bending_force.h Routines to calculate the bending_force energy or/and
- *  and force for a particle quadruple (two triangles that have 2 particles in common)
+#ifndef _OBJECT_IN_FLUID_AREA_FORCE_LOCAL_TCL_H
+#define _OBJECT_IN_FLUID_AREA_FORCE_LOCAL_TCL_H
+/** \file area_force_local.h
+ *  Routines to calculate the AREA_FORCE_LOCAL energy or/and and force 
+ *  for a particle triple (triangle from mesh). (Dupin2007)
+ *  \ref forces.c
 */
 
-#include "../../tcl/parser.h"
+#include "tcl/parser.h"
 #include "interaction_data.h"
 
+/************************************************************/
 
-/// parse parameters for the bending_force potential
-int tclcommand_inter_parse_bending_force(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+int tclprint_to_result_areaforcelocalIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
 
-int tclprint_to_result_bendingforceIA(Tcl_Interp *interp, Bonded_ia_parameters *params);
+/// parse parameters for the area_force_local potential
+int tclcommand_inter_parse_area_force_local(Tcl_Interp *interp, int bond_type, int argc, char **argv);
+
 
 #endif

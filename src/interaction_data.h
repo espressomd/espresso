@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IA_DATA_H
-#define IA_DATA_H
+#ifndef _INTERACTION_DATA_H
+#define _INTERACTION_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
 */

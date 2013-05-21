@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IA_DATA_TCL_H
-#define IA_DATA_TCL_H
+#ifndef _INTERACTION_DATA_TCL_H
+#define _INTERACTION_DATA_TCL_H
 #include "parser.h"
 #include "forcecap_tcl.h"
 

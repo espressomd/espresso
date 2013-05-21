@@ -84,11 +84,11 @@
 #include "overlap_tcl.h"
 #include "harmonic_tcl.h"
 #include "subt_lj_tcl.h"
-#include "tcl/fsi/area_force_local_tcl.h"
-#include "tcl/fsi/area_force_global_tcl.h"
-#include "tcl/fsi/volume_force_tcl.h"
-#include "tcl/fsi/stretching_force_tcl.h"
-#include "tcl/fsi/bending_force_tcl.h"
+#include "tcl/object-in-fluid/area_force_local_tcl.h"
+#include "tcl/object-in-fluid/area_force_global_tcl.h"
+#include "tcl/object-in-fluid/volume_force_tcl.h"
+#include "tcl/object-in-fluid/stretching_force_tcl.h"
+#include "tcl/object-in-fluid/bending_force_tcl.h"
 
 ///
 int tclprint_to_result_CoulombIA(Tcl_Interp *interp);

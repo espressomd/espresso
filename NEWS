@@ -8,7 +8,9 @@ ESPResSo 3.2
 New user-visible features
 -------------------------
 
-* added the immersed boundary object-in-fluid code
+* Added a new immersed boundaries code that allows to simulate
+  extended, flexible objects in conjunction with the LB code.  This is
+  described in the UG in the new chapter "Object-in-fluid".
 
 * The script tools/blockfile2vtf.tcl can be used to convert ESPResSo
   blockfiles into VTF files.
@@ -40,6 +42,9 @@ New user-visible features
 
 * DPD (as thermostat) now works without any other interaction, so a pure
   DPD fluid is possible.
+
+* Renamed torque to torque_{lab,body}, improved troque handling in blockfiles.
+  Clearer distinction between the reference frames for torque and angular momentum.
 
 User-visible changes
 --------------------
