@@ -112,6 +112,7 @@ int bcast_iccp3m_cfg(void){
     iccp3m_cfg.nvectorx   = (double*) realloc (iccp3m_cfg.nvectorx  ,(iccp3m_cfg.n_ic) * sizeof(double));
     iccp3m_cfg.nvectory   = (double*) realloc (iccp3m_cfg.nvectory  ,(iccp3m_cfg.n_ic) * sizeof(double));
     iccp3m_cfg.nvectorz   = (double*) realloc (iccp3m_cfg.nvectorz  ,(iccp3m_cfg.n_ic) * sizeof(double));
+    iccp3m_cfg.sigma      = (double*) realloc (iccp3m_cfg.sigma     ,(iccp3m_cfg.n_ic) * sizeof(double));
   }
 
   MPI_Bcast((int*)&iccp3m_cfg.num_iteration, 1, MPI_INT, 0, comm_cart); 
@@ -128,6 +129,7 @@ int bcast_iccp3m_cfg(void){
     MPI_Bcast((double*)&iccp3m_cfg.nvectorx[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectory[i], 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast((double*)&iccp3m_cfg.nvectorz[i], 1, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast((double*)&iccp3m_cfg.sigma[i], 1, MPI_DOUBLE, 0, comm_cart);
   }
   MPI_Bcast((double*)&iccp3m_cfg.extx, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast((double*)&iccp3m_cfg.exty, 1, MPI_DOUBLE, 0, comm_cart);
@@ -234,7 +236,7 @@ int iccp3m_iteration() {
          return iccp3m_cfg.citeration++;
 
   } /* iteration */
-  //on_particle_change();
+  on_particle_change();
 
   return iccp3m_cfg.citeration;
 }
