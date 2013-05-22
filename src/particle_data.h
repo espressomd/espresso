@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -52,6 +52,12 @@
 #define COORD_FIXED(coord) (2L << coord)
 /** \ref ParticleLocal::ext_flag "ext_flag" mask to check wether any of the coordinates is fixed. */
 #define COORDS_FIX_MASK     (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+
+#ifdef ROTATION
+/** \ref ParticleLocal::ext_flag "ext_flag" value for particle subject to an external torque. */
+#define PARTICLE_EXT_TORQUE 16
+#endif
+
 #endif
 
 
@@ -81,6 +87,12 @@ typedef struct {
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   double rinertia[3];
+#endif
+
+#ifdef ROTATION_PER_PARTICLE
+  // Determines, wether a particle's rotational degrees of freedom are
+  // integrated
+  int rotation;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -123,6 +135,10 @@ typedef struct {
 #ifdef LANGEVIN_PER_PARTICLE
   double T;
   double gamma;
+#endif
+
+#ifdef CATALYTIC_REACTIONS
+  int catalyzer_count;
 #endif
 } ParticleProperties;
 
@@ -192,11 +208,18 @@ typedef struct {
       <ul> <li> 0 no external influence
            <li> 1 apply external force \ref ParticleLocal::ext_force
            <li> 2,3,4 fix particle coordinate 0,1,2
+           <li> 5 apply external torque \ref ParticleLocal::ext_torque
       </ul>
   */
   int ext_flag;
   /** External force, apply if \ref ParticleLocal::ext_flag == 1. */
   double ext_force[3];
+
+  #ifdef ROTATION
+  /** External torque, apply if \ref ParticleLocal::ext_flag == 16. */
+  double ext_torque[3];
+  #endif
+
 #endif
 
 #ifdef GHOST_FLAG
@@ -451,6 +474,18 @@ int set_particle_mass(int part, double mass);
 int set_particle_rotational_inertia(int part, double rinertia[3]);
 #endif
 
+#ifdef ROTATION_PER_PARTICLE
+/** Call only on the master node: Specifies whether a particle's rotational
+    degrees of freedom are integrated or not. If set to zero, the content of
+    the torque and omega variables are meaningless
+    @param part the particle.
+    @param rot the degrees of freedom flag.
+    @return ES_OK if particle existed
+*/
+int set_particle_rotation(int part, int rot);
+#endif
+
+
 /** Call only on the master node: set particle charge.
     @param part the particle.
     @param q its new charge.
@@ -544,13 +579,22 @@ int set_particle_gamma(int part, double gamma);
 #endif
 
 #ifdef EXTERNAL_FORCES
-/** Call only on the master node: set particle external forced.
+  #ifdef ROTATION
+    /** Call only on the master node: set particle external torque.
+        @param part  the particle.
+        @param flag  new value for ext_flag.
+        @param torque new value for ext_torque.
+        @return ES_OK if particle existed
+    */
+    int set_particle_ext_torque(int part, int flag, double torque[3]);
+  #endif
+/** Call only on the master node: set particle external force.
     @param part  the particle.
     @param flag  new value for ext_flag.
     @param force new value for ext_force.
     @return ES_OK if particle existed
 */
-int set_particle_ext(int part, int flag, double force[3]);
+int set_particle_ext_force(int part, int flag, double force[3]);
 /** Call only on the master node: set coordinate axes for which the particles motion is fixed.
     @param part  the particle.
     @param flag new value for flagged coordinate axes to be fixed
@@ -717,5 +761,94 @@ void auto_exclusion(int distance);
 /* keep a unique list for particle i. Particle j is only added if it is not i
  and not already in the list. */
 void add_partner(IntList *il, int i, int j, int distance);
+
+#ifdef GRANDCANONICAL
+//value that is returned in the case there was no error, but the type was not yet indexed
+#define NOT_INDEXED -3
+//struct that associates the index used for the type_list and the real particle type
+typedef struct {
+	int max_entry;
+	int * type;
+} IndexOfType;
+
+//and the other way round
+typedef struct {
+	int max_entry;
+	int * index;
+} TypeOfIndex;
+
+TypeOfIndex Type; 
+//index.max_entry=0;
+//index->type = (int *) 0;
+
+IndexOfType Index; 
+//tindex.max_entry=0;
+//tindex->type = (int *) 0;
+
+
+typedef struct {
+	int max_entry;
+	int cur_size;
+	int *id_list;
+} TypeList;
+
+//undefined array size
+TypeList *type_array;
+int number_of_type_lists;
+
+// flag indicating init_gc was called 
+int GC_init;
+
+// flag that indicates that the function init_type_array was called already
+int Type_array_init;
+
+/** linked list for particles of a given type */
+//typedef struct {
+//	int identifier;
+//	struct type_list_item *next;
+//} type_list item;
+//
+//typedef struct {
+//	struct type_list_item *list;
+//	int type;
+//	int max;
+//} type_list
+
+/** vars and fields */
+
+int init_gc(void);
+
+/** init particle lists		*/
+int init_type_array(int type);
+
+/** resize the array for the list of ids for a certain type */
+int reallocate_type_array(int type);
+
+/** make more type_arrays available */
+int reallocate_global_type_list(int size);
+
+/** free particle lists		*/
+int free_particle_lists(void);
+
+//update particle list
+int update_particle_array(int type);
+
+/* find a particle of given type and return its id */
+int find_particle_type(int type, int *id);
+/** return an array with real particle id and the corresponding index of typelist */
+//static int *find_particle_type(int type);
+
+int find_particle_type_id(int type, int *id, int *in_id );
+
+/** delete one randomly chosen particle of given type 
+ * returns ES_OK if succesful or else ES_ERROR		*/
+int delete_particle_of_type(int type);
+
+int remove_id_type_array(int part_id, int type);
+int add_particle_to_list(int part_id, int type);
+// print out a list of currently indexed ids
+int gc_status(int type);
+int number_of_particles_with_type(int type, int *number);
+#endif
 
 #endif

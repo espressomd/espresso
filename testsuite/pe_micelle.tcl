@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -476,7 +476,7 @@ inter 1 4 lennard-jones 0.0 1.0 0.0 0.25 0 0
 
 
 #reset the forces and velovities for all the particles.
-stop_particles
+kill_particle_motion
 
 analyze set chains 0 $n_poly $p_length
 #puts "Interactions:\n [inter]"

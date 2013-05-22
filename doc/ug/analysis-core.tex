@@ -1,4 +1,4 @@
-% Copyright (C) 2012 The ESPResSo project
+% Copyright (C) 2012,2013 The ESPResSo project
 %  
 % This file is part of ESPResSo.
 %   
@@ -104,6 +104,11 @@ They are generic to all observables and are described after the list of observab
           Forces on the particles, in the format\\ 
           $f^x_1,\ f^y_1,\ f^z_1,\ f^x_2,\ f^y_2,\ f^z_2,\ 
           \dots\ f^x_n,\ f^y_n,\ f^z_n$. 
+          The particles are ordered ascending according to their ids.
+    \item \lit{particle_angular_momentum} \var{particle\_specifications}\\
+          Angular momenta (omega) of the particles, in the format\\ 
+          $\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
+          \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n$. 
           The particles are ordered ascending according to their ids.
     \item \lit{com_position} \var{particle\_specifications} \opt{blocked \var{size}}\\
           Position of the centre of mass. 

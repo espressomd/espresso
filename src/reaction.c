@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -26,119 +26,173 @@
 #include "reaction.h"
 #include "initialize.h"
 #include "forces.h"
+#include "errorhandling.h"
 
-
-#ifdef REACTIONS
-void setup_reaction() {
+#ifdef CATALYTIC_REACTIONS
+void local_setup_reaction() {
+  
+  /* Make available the various reaction parameters */
   MPI_Bcast(&reaction.reactant_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.product_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.catalyzer_type, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&reaction.range, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&reaction.rate, 1, MPI_DOUBLE, 0, comm_cart);
-  MPI_Bcast(&reaction.back_rate, 1, MPI_DOUBLE, 0, comm_cart);
-    
+  MPI_Bcast(&reaction.ct_rate, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&reaction.eq_rate, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&reaction.sing_mult, 1, MPI_INT, 0, comm_cart);
+
+  /* Create the various reaction related types (categories) */
   make_particle_type_exist(reaction.catalyzer_type);
   make_particle_type_exist(reaction.product_type);
   make_particle_type_exist(reaction.reactant_type);
 
+  /* Make ESPResSo aware that reactants and catalyst are interacting species */
   IA_parameters *data = get_ia_param_safe(reaction.reactant_type, reaction.catalyzer_type);
   
   if(!data) {    
 	  char *error_msg = runtime_error(128);
 	  ERROR_SPRINTF(error_msg, "{106 interaction parameters for reaction could not be set} ");
   }
-  
+
+  /* Used for the range of the verlet lists */
   data->REACTION_range = reaction.range;
 
-  /* broadcast interaction parameters */
+  /* Broadcast interaction parameters */
   mpi_bcast_ia_params(reaction.reactant_type, reaction.catalyzer_type);
 }
 
 void integrate_reaction() {
-  int c, np, n, i;
-  Particle * p1, *p2, **pairs;
-  Cell * cell;
-  double dist2, vec21[3], rand;
+  int c, np, n, i,
+      check_catalyzer;
+  Particle *p1, *p2, **pairs;
+  Cell *cell;
+  double dist2, vec21[3],
+         ct_ratexp, eq_ratexp,
+         rand, bernoulli;
 
-  if(reaction.rate > 0) {
-    int reactants = 0, products = 0;
-    int tot_reactants = 0, tot_products = 0;
-    double ratexp, back_ratexp;
+  if(reaction.ct_rate > 0.0) {
 
-    ratexp = exp(-time_step*reaction.rate);
+    /* Determine the reaction rate */
+    ct_ratexp = exp(-time_step*reaction.ct_rate);
     
     on_observable_calc();
 
     for (c = 0; c < local_cells.n; c++) {
-      /* Loop cell neighbors */
-      for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
-        pairs = dd.cell_inter[c].nList[n].vList.pair;
-        np = dd.cell_inter[c].nList[n].vList.n;
-        
-        /* verlet list loop */
-        for(i = 0; i < 2 * np; i += 2) {
-          p1 = pairs[i];   //pointer to particle 1
-          p2 = pairs[i+1]; //pointer to particle 2
-          
-          if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
-            get_mi_vector(vec21, p1->r.p, p2->r.p);
-            dist2 = sqrlen(vec21);
-            
-            if(dist2 < reaction.range * reaction.range) {
-           	  rand = d_random();
-           	  
-           		if(rand > ratexp) {
-           		  if(p1->p.type == reaction.reactant_type) {
-						      p1->p.type = reaction.product_type;
+
+      /* Take into account only those cell neighbourhoods for which
+         the central cell contains a catalyzer particle */
+
+      check_catalyzer = 0;
+
+      cell = local_cells.cell[c];
+      p1   = cell->part;
+      np  = cell->n;
+      
+      for(i = 0; i < np; i++) {
+        if(p1[i].p.type == reaction.catalyzer_type) {
+          check_catalyzer = 1;
+          break;
+        }
+      }	
+
+      /* If the central cell contains a catalyzer particle, ...*/
+      if ( check_catalyzer != 0 ) {
+
+        /* Loop cell neighbors */
+        for (n = 0; n < dd.cell_inter[c].n_neighbors; n++) {
+          pairs = dd.cell_inter[c].nList[n].vList.pair;
+          np = dd.cell_inter[c].nList[n].vList.n;
+
+          /* Verlet list loop */
+          for(i = 0; i < 2 * np; i += 2) {
+            p1 = pairs[i];   //pointer to particle 1
+            p2 = pairs[i+1]; //pointer to particle 2
+
+            if( (p1->p.type == reaction.reactant_type &&  p2->p.type == reaction.catalyzer_type) || (p2->p.type == reaction.reactant_type &&  p1->p.type == reaction.catalyzer_type) ) {
+              get_mi_vector(vec21, p1->r.p, p2->r.p);
+              dist2 = sqrlen(vec21);
+              
+              /* Count the number of times a reactant particle is
+                 checked against a catalyst */
+              if(dist2 < reaction.range * reaction.range) {
+
+                if(p1->p.type == reaction.reactant_type) {
+						       p1->p.catalyzer_count++;
 					      }
 					      else {
-						      p2->p.type = reaction.product_type;
+						       p2->p.catalyzer_count++;
 					      }
-              }
-           	}
-          }  
+             	}
+            }  
+          }
         }
       }
     }
 
-    if (reaction.back_rate < 0) { // we have to determine it dynamically 
-      /* we count now how many reactants and products are in the sim box */
-      for (c = 0; c < local_cells.n; c++) {
-        cell = local_cells.cell[c];
-        p1   = cell->part;
-        np  = cell->n;
+    /* Now carry out the reaction on the particles which are tagged */
+    for (c = 0; c < local_cells.n; c++) {
+      cell = local_cells.cell[c];
+      p1   = cell->part;
+      np  = cell->n;
         
-        for(i = 0; i < np; i++) {
-          if(p1[i].p.type == reaction.reactant_type)
-            reactants++;
-          else if(p1[i].p.type == reaction.product_type)
-            products++;
-        }	
-      }
-      
-      MPI_Allreduce(&reactants, &tot_reactants, 1, MPI_INT, MPI_SUM, comm_cart);
-      MPI_Allreduce(&products, &tot_products, 1, MPI_INT, MPI_SUM, comm_cart);
+      for(i = 0; i < np; i++) {
+        if(p1[i].p.type == reaction.reactant_type){
 
-      back_ratexp = ratexp * tot_reactants / tot_products ; //with this the asymptotic ratio reactant/product becomes 1/1 and the catalyzer volume only determines the time that it takes to reach this
+          if(p1[i].p.catalyzer_count > 0 ){
+
+            if( reaction.sing_mult == 0 ) 
+            {
+              rand = d_random();
+
+              bernoulli = pow(ct_ratexp, p1[i].p.catalyzer_count);
+
+              if(rand > bernoulli) {
+                p1[i].p.type = reaction.product_type; }
+            
+            }
+            else /* We only consider each reactant once */
+            {
+              rand = d_random();
+
+              if(rand > ct_ratexp) {
+                p1[i].p.type = reaction.product_type; }
+            }
+            
+            p1[i].p.catalyzer_count = 0;
+          }
+        }
+      }
     }
-    else { //use the back reaction rate supplied by the user
-  	  back_ratexp = exp(-time_step*reaction.back_rate);
-    }
-    
-    if(back_ratexp < 1 ) {
+
+    /* We only need to do something when the equilibrium 
+       reaction rate constant is nonzero */
+    if (reaction.eq_rate > 0.0) { 
+
+  	  eq_ratexp = exp(-time_step*reaction.eq_rate);
+
       for (c = 0; c < local_cells.n; c++) {
         cell = local_cells.cell[c];
         p1   = cell->part;
         np  = cell->n;
-        
+    
+        /* Convert products into reactants and vice versa
+           according to the specified rate constant */
         for(i = 0; i < np; i++) {
+
           if(p1[i].p.type == reaction.product_type) {
             rand = d_random();
             
-			      if(rand > back_ratexp) {
-			        p1[i].p.type=reaction.reactant_type;
-			      }
+  	        if(rand > eq_ratexp) {
+  	          p1[i].p.type=reaction.reactant_type;
+  	        }
           }
+          else if(p1[i].p.type == reaction.reactant_type) {
+            rand = d_random();
+            
+  	        if(rand > eq_ratexp) {
+  	          p1[i].p.type=reaction.product_type;
+  	        }
+          }
+
         }
       }
     }
@@ -146,4 +200,4 @@ void integrate_reaction() {
     on_particle_change();
   }
 }
-#endif /* ifdef REACTIONS */
+#endif

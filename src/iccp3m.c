@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -151,13 +151,13 @@ int iccp3m_iteration() {
    double f1, f2 = 0;
 
    iccp3m_sanity_check();
-
+   
    l_b = coulomb.bjerrum;
    if((iccp3m_cfg.eout <= 0)) {
-     	errtxt = runtime_error(128);
-	    ERROR_SPRINTF(errtxt, "ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n");
+     errtxt = runtime_error(128);
+     ERROR_SPRINTF(errtxt, "ICCP3M: nonpositive dielectric constant is not allowed. Put a decent tcl error here\n");
    }
-
+   
    
    iccp3m_cfg.citeration=0;
    for(j=0;j<iccp3m_cfg.num_iteration;j++) {
@@ -172,26 +172,26 @@ int iccp3m_iteration() {
                 id = part[i].p.identity - iccp3m_cfg.first_id;
                 if( id < iccp3m_cfg.n_ic && part[i].p.identity >= iccp3m_cfg.first_id ) {
            /* the dielectric-related prefactor: */                     
-                      del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
+           del_eps = (iccp3m_cfg.ein[id]-iccp3m_cfg.eout)/(iccp3m_cfg.ein[id] + iccp3m_cfg.eout)/6.283185307;
            /* calculate the electric field at the certain position */
-                      ex=part[i].f.f[0]/part[i].p.q;
-                      ey=part[i].f.f[1]/part[i].p.q;
-                      ez=part[i].f.f[2]/part[i].p.q;
-
-          /* let's add the contribution coming from the external field */
-                      ex += iccp3m_cfg.extx; 
-                      ey += iccp3m_cfg.exty; 
-                      ez += iccp3m_cfg.extz;
-                      
-                      if (ex == 0 && ey == 0 && ez == 0) {
-                        	errtxt = runtime_error(128);
-                        	ERROR_SPRINTF(errtxt, "ICCP3M found zero electric field on a charge. This must never happen");
-                      }
+           ex=part[i].f.f[0]/part[i].p.q;
+           ey=part[i].f.f[1]/part[i].p.q;
+           ez=part[i].f.f[2]/part[i].p.q;
+           
+           /* let's add the contribution coming from the external field */
+           ex += iccp3m_cfg.extx; 
+           ey += iccp3m_cfg.exty; 
+           ez += iccp3m_cfg.extz;
+           
+           if (ex == 0 && ey == 0 && ez == 0) {
+             errtxt = runtime_error(128);
+             ERROR_SPRINTF(errtxt, "ICCP3M found zero electric field on a charge. This must never happen");
+           }
            /* the dot product   */
-                      fdot = ex*iccp3m_cfg.nvectorx[id]+
-                             ey*iccp3m_cfg.nvectory[id]+
-                             ez*iccp3m_cfg.nvectorz[id];
-
+           fdot = ex*iccp3m_cfg.nvectorx[id]+
+             ey*iccp3m_cfg.nvectory[id]+
+             ez*iccp3m_cfg.nvectorz[id];
+           
            /* recalculate the old charge density */
                       hold=part[i].p.q/iccp3m_cfg.areas[id];
           /* determine if it is higher than the previously highest charge density */            

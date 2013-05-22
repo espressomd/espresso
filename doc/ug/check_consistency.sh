@@ -1,7 +1,7 @@
 #!/bin/bash
 # check documentation of configuration switches
 #
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010 Axel Arnold
 #
 # This file is part of ESPResSo.

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -408,6 +408,21 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
     else if(type == BONDED_IA_FENE) {
       i = i + 2;
     }
+    else if(type == BONDED_IA_STRETCHING_FORCE) {
+      i = i + 2;
+    }
+    else if(type == BONDED_IA_AREA_FORCE_LOCAL) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_AREA_FORCE_GLOBAL) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_BENDING_FORCE) {
+      i = i + 4;
+    }
+    else if(type == BONDED_IA_VOLUME_FORCE) {
+      i = i + 3;
+    }
     else if(type == BONDED_IA_HARMONIC) {
       i = i + 2;
     }
@@ -497,6 +512,7 @@ MDINLINE void add_kinetic_virials(Particle *p1,int v_comp)
     virials.data.e[0] += (SQR(p1->m.v[0] - p1->f.f[0]) + SQR(p1->m.v[1] - p1->f.f[1]) + SQR(p1->m.v[2] - p1->f.f[2]))*PMASS(*p1);
   else
     virials.data.e[0] += (SQR(p1->m.v[0]) + SQR(p1->m.v[1]) + SQR(p1->m.v[2]))*PMASS(*p1);
+
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step' each will be done later) */
   for(k=0;k<3;k++)

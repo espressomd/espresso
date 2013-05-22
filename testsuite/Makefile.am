@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 # Copyright (C) 2007,2008,2009,2010,2011 Olaf Lenz, Axel Arnold
 #
 # This file is part of ESPResSo.
@@ -48,11 +48,13 @@ tests = \
 	langevin.tcl \
 	layered.tcl \
 	lb.tcl \
+	lb_fluid_coupling.tcl \
+	lb_fluid_coupling_gpu.tcl \
+	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
-	lb_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
@@ -66,6 +68,7 @@ tests = \
 	npt.tcl \
 	nsquare.tcl \
 	nve_pe.tcl \
+	object_in_fluid.tcl \
 	observable.tcl \
 	p3m.tcl \
 	p3m_magnetostatics.tcl \
@@ -73,6 +76,7 @@ tests = \
 	p3m_simple_noncubic.tcl \
 	p3m_wall.tcl \
 	rotation.tcl \
+	rotation_per_particle.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
@@ -107,6 +111,8 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	thermostat.data thermostat_rot.data \
 	mass_system.data \
 	lb_system.data \
+        object_in_fluid_system.data.final object_in_fluid_system.data.init \
+        object_in_fluid_system.data.nodes object_in_fluid_system.data.triangles \
 	\
 	pe_micelle.tcl pe_micelle.data \
 	uwerr.tcl uwerr.data \

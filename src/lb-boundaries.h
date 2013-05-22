@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -88,11 +88,11 @@ extern LB_Boundary *lb_boundaries;
 void lb_init_boundaries();
 void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[3], int* no); 
 
+int lbboundary_get_force(int no, double* f); 
+
 #endif // (LB_BOUNDARIES) || (LB_BOUNDARIES_GPU)
 
 #ifdef LB_BOUNDARIES
-
-int lbboundary_get_force(int no, double* f); 
 
 void lb_init_boundaries();
 
@@ -149,7 +149,7 @@ MDINLINE void lb_bounce_back() {
           for (i=0; i<19; i++) {
             population_shift=0;
             for (l=0; l<3; l++) {
-              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq*lbmodel.w[i];
+              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
             }
             if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
                  y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&

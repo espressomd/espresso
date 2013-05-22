@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2012 The ESPResSo project
+  Copyright (C) 2010,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -213,7 +213,10 @@ void propagate_omega_quat_particle(Particle* p)
   double lambda;
 
   double Qd[4], Qdd[4], S[3], Wd[3];
-	  
+#ifdef ROTATION_PER_PARTICLE
+  if (!p->p.rotation) return;
+#endif
+
   define_Qdd(p, Qd, Qdd, S, Wd);
   
   lambda = 1 - S[0]*time_step_squared_half - sqrt(1 - time_step_squared*(S[0] + time_step*(S[1] + time_step_half/2.*(S[2]-S[0]*S[0]))));
@@ -252,6 +255,10 @@ void convert_torques_propagate_omega()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef ROTATION_PER_PARTICLE
+      if (!p[i].p.rotation)
+       continue;
+#endif
       double A[9];
       define_rotation_matrix(&p[i], A);
 
@@ -329,6 +336,10 @@ void convert_initial_torques()
     p  = cell->part;
     np = cell->n;
     for(i = 0; i < np; i++) {
+#ifdef ROTATION_PER_PARTICLE
+      if (!p[i].p.rotation)
+       continue;
+#endif
       double A[9];
       define_rotation_matrix(&p[i], A);
 

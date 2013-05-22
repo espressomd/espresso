@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group,
   
@@ -27,6 +27,7 @@
 #include "utils.h"
 #include "constraint.h"
 #include "lb-boundaries.h"
+#include "lbgpu.h"
 #include "lb.h"
 #include "interaction_data.h"
 #include "communication.h"
@@ -67,7 +68,7 @@ void lbboundary_mindist_position(double pos[3], double* mindist, double distvec[
         break;
     }
     
-    if (dist<*mindist) {
+    if (dist<*mindist || n == 0) {
       *no=n;
       *mindist=dist;
       distvec[0] = vec[0];
@@ -91,7 +92,7 @@ void lb_init_boundaries() {
     int *host_boundary_node_list= (int*)malloc(sizeof(int));
     int *host_boundary_index_list= (int*)malloc(sizeof(int));
     size_t size_of_index;
-    int boundary_number; // the number the boundary will actually belong to.
+    int boundary_number = -1; // the number the boundary will actually belong to.
 
     for(z=0; z<lbpar_gpu.dim_z; z++) {
       for(y=0; y<lbpar_gpu.dim_y; y++) {
@@ -135,14 +136,14 @@ void lb_init_boundaries() {
             }
           }
           
-        	if (dist <= 0 && n_lb_boundaries > 0) {
-         	  size_of_index = (number_of_boundnodes+1)*sizeof(int);
+          if (dist <= 0 && boundary_number >= 0 && n_lb_boundaries > 0) {
+            size_of_index = (number_of_boundnodes+1)*sizeof(int);
             host_boundary_node_list = realloc(host_boundary_node_list, size_of_index);
             host_boundary_index_list = realloc(host_boundary_index_list, size_of_index);
             host_boundary_node_list[number_of_boundnodes] = x + lbpar_gpu.dim_x*y + lbpar_gpu.dim_x*lbpar_gpu.dim_y*z;
-            host_boundary_index_list[number_of_boundnodes] = boundary_number; 
-            //printf("boundindex %i: \n", host_boundindex[number_of_boundnodes]);  
+            host_boundary_index_list[number_of_boundnodes] = boundary_number + 1; 
             number_of_boundnodes++;  
+            // printf("boundindex %i: \n", number_of_boundnodes);  
           }
         }
       }
@@ -150,13 +151,16 @@ void lb_init_boundaries() {
 
     /**call of cuda fkt*/
     float* boundary_velocity = malloc(3*n_lb_boundaries*sizeof(float));
+
     for (n=0; n<n_lb_boundaries; n++) {
       boundary_velocity[3*n+0]=lb_boundaries[n].velocity[0];
       boundary_velocity[3*n+1]=lb_boundaries[n].velocity[1];
       boundary_velocity[3*n+2]=lb_boundaries[n].velocity[2];
     }
+
     if (n_lb_boundaries)
       lb_init_boundaries_GPU(n_lb_boundaries, number_of_boundnodes, host_boundary_node_list, host_boundary_index_list, boundary_velocity);
+
     free(boundary_velocity);
     free(host_boundary_node_list);
     free(host_boundary_index_list);
@@ -214,13 +218,13 @@ void lb_init_boundaries() {
                 ERROR_SPRINTF(errtxt, "{109 lbboundary type %d not implemented in lb_init_boundaries()\n", lb_boundaries[n].type);
             }
             
-            if (dist_tmp<dist) {
+            if (dist_tmp<dist || n == 0) {
               dist = dist_tmp;
               the_boundary = n;
             }
           }       
           
-    	    if (dist <= 0 && n_lb_boundaries > 0) {
+    	    if (dist <= 0 && the_boundary >= 0 && n_lb_boundaries > 0) {
      	      lbfields[get_linear_index(x,y,z,lblattice.halo_grid)].boundary = the_boundary+1;
      	      //printf("boundindex %i: \n", get_linear_index(x,y,z,lblattice.halo_grid));   
           }
@@ -235,23 +239,33 @@ void lb_init_boundaries() {
 }
 
 int lbboundary_get_force(int no, double* f) {
-#ifdef LB_BOUNDARIES
+#if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
 
   double* forces=malloc(3*n_lb_boundaries*sizeof(double));
   
   if (lattice_switch & LATTICE_LB_GPU) {
-#ifdef LB_BOUNDARIES_GPU
+#if defined (LB_BOUNDARIES_GPU) && defined (LB_GPU)
     lb_gpu_get_boundary_forces(forces);
+
+// ***** I THINK BECAUSE OF THE WAY YOU DEFINE THE FORCES YOU WANT TO PRINT THE NEGATIVE
+
+    f[0]=-forces[3*no+0];
+    f[1]=-forces[3*no+1];
+    f[2]=-forces[3*no+2];
 #else 
     return ES_ERROR;
 #endif
   } else { 
+#if defined (LB_BOUNDARIES) && defined (LB)
     mpi_gather_stats(8, forces, NULL, NULL, NULL);
-  }
   
-  f[0]=forces[3*no+0]/lbpar.tau/lbpar.tau*lbpar.agrid;
-  f[1]=forces[3*no+1]/lbpar.tau/lbpar.tau*lbpar.agrid;
-  f[2]=forces[3*no+2]/lbpar.tau/lbpar.tau*lbpar.agrid;
+    f[0]=forces[3*no+0]*lbpar.agrid/lbpar.tau/lbpar.tau;
+    f[1]=forces[3*no+1]*lbpar.agrid/lbpar.tau/lbpar.tau;
+    f[2]=forces[3*no+2]*lbpar.agrid/lbpar.tau/lbpar.tau;
+#else 
+    return ES_ERROR;
+#endif
+  }
   
   free(forces);
 #endif

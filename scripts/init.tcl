@@ -1,4 +1,4 @@
-# Copyright (C) 2010,2011,2012 The ESPResSo project
+# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #  
@@ -52,12 +52,12 @@ if {!$quiet} {
     puts stderr "*                    ============                     *"
     puts stderr "*        A Parallel Molecular Dynamics Program        *"
     puts stderr "*                                                     *"
-    puts stderr "* (c) 2010,2011,2012                                  *"
-    puts stderr "* The ESPResSo project                                *"
+    puts stderr "* (c) 2010,2011,2012,2013                             *"
+    puts stderr "*     The ESPResSo project                            *"
     puts stderr "*                                                     *"
     puts stderr "* (c) 2002,2003,2004,2005,2006,2007,2008,2009,2010    *"
-    puts stderr "* Max-Planck-Institute for Polymer Research           *"
-    puts stderr "* Mainz, Germany                                      *"
+    puts stderr "*     Max-Planck-Institute for Polymer Research       *"
+    puts stderr "*     Mainz, Germany                                  *"
     puts stderr "*                                                     *"
     puts stderr "*******************************************************"
     puts stderr ""
@@ -106,3 +106,4 @@ source ABHmath.tcl
 source vtf.tcl
 source vtk.tcl
 source dielectrics.tcl
+source object_in_fluid.tcl

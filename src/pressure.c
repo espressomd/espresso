@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -114,6 +114,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
     nsq_calculate_virials(v_comp);
   }
   /* rescale kinetic energy (=ideal contribution) */
+#ifdef ROTATION_PER_PARTICLE
+    fprintf(stderr, "Switching rotation per particle (#define ROTATION_PER_PARTICLE) and pressure calculation are incompatible.\n");
+#endif
+  
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
 
   calc_long_range_virials();
@@ -123,8 +127,9 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
 
     
  /* stress tensor part */
- /* ROTATION option does not effect stress tensor calculations since rotational
-    energy is not included in the ideal term (unlike for the pressure) */
+ /* The ROTATION option does not effect stress tensor calculations
+    since rotational energy is not included in the ideal term (unlike
+    for the pressure) */
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
   

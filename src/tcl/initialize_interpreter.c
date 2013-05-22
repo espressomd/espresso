@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2012 The ESPResSo project
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -28,6 +28,7 @@
 #include "constraint_tcl.h"
 #include "domain_decomposition_tcl.h"
 #include "dpd_tcl.h"
+#include "galilei_tcl.h"
 #include "global_tcl.h"
 #include "grid_tcl.h"
 #include "iccp3m_tcl.h"
@@ -204,9 +205,14 @@ static void register_tcl_commands(Tcl_Interp* interp) {
 #ifdef COLLISION_DETECTION
   REGISTER_COMMAND("on_collision", tclcommand_on_collision);
 #endif
-#ifdef REACTIONS
+#ifdef CATALYTIC_REACTIONS
   REGISTER_COMMAND("reaction", tclcommand_reaction);
 #endif
+  REGISTER_COMMAND("kill_particle_motion", tclcommand_kill_particle_motion);
+  REGISTER_COMMAND("kill_particle_forces", tclcommand_kill_particle_forces);
+  REGISTER_COMMAND("system_CMS", tclcommand_system_CMS);
+  REGISTER_COMMAND("system_CMS_velocity", tclcommand_system_CMS_velocity);
+  REGISTER_COMMAND("galilei_transform", tclcommand_galilei_transform);
 }
 
 static void register_global_variables(Tcl_Interp *interp)

@@ -26,12 +26,14 @@ METADYNAMICS
 NEMD
 NPT 
 GHMC
-REACTIONS
+CATALYTIC_REACTIONS
+GRANDCANONICAL
 
 /* Rotation */
 ROTATION
 ROTATIONAL_INERTIA	implies ROTATION
 BOND_CONSTRAINT		requires not ROTATION
+ROTATION_PER_PARTICLE	implies ROTATION
 
 /* Adress */
 ADRESS			implies MOL_CUT, VIRTUAL_SITES_COM, TABULATED
@@ -97,13 +99,10 @@ HAT
 GAY_BERNE		implies ROTATION
 OVERLAPPED
 
-/* Bond angle */
-/* Note: Activate ONLY ONE bonded angle potential out of the following! */
-BOND_ANGLE_HARMONIC	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSINE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
-BOND_ANGLE_COSSQUARE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
-BOND_ANGLE_OLD		equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
-/* New implementation of the angle potentials that allows switching between them at runtime */
+/* Fluid-Structure Interactions (object in fluid) */
+AREA_FORCE_GLOBAL
+VOLUME_FORCE
+
 BOND_ANGLE		requires not BOND_ANGLE_OLD
 
 BOND_ANGLEDIST
@@ -111,6 +110,18 @@ BOND_ANGLEDIST_HARMONIC	implies BOND_ANGLEDIST, CONSTRAINTS
 
 BOND_ENDANGLEDIST
 BOND_ENDANGLEDIST_HARMONIC implies BOND_ENDANGLEDIST, CONSTRAINTS
+
+/* Obsolete features. To be removed. */
+/* Old Bond angle */
+/* Note: Activate ONLY ONE bonded angle potential out of the following! */
+BOND_ANGLE_HARMONIC	requires not BOND_ANGLE_COSINE and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSINE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSSQUARE
+BOND_ANGLE_COSSQUARE	requires not BOND_ANGLE_HARMONIC and not BOND_ANGLE_COSINE
+BOND_ANGLE_OLD		equals BOND_ANGLE_HARMONIC or BOND_ANGLE_COSINE or BOND_ANGLE_COSSQUARE
+BOND_ANGLE_HARMONIC	notest
+BOND_ANGLE_COSINE	notest
+BOND_ANGLE_COSSQUARE	notest
+BOND_ANGLE_OLD 		notest
 
 /* Strange features. Use only if you know what you are doing! */
 /* activate the old dihedral form */

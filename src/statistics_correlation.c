@@ -1,5 +1,5 @@
  /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -19,6 +19,7 @@
 #include "statistics_correlation.h"
 #include "particle_data.h"
 #include "integrate.h"
+#include <string.h>
 
 /* global variables */
 double_correlation* correlations=0;

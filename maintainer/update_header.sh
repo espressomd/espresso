@@ -1,4 +1,4 @@
-# Copyright (C) 2012 Olaf Lenz
+# Copyright (C) 2012,2013 Olaf Lenz
 #  
 # This file is part of ESPResSo.
 #  
@@ -47,7 +47,7 @@ echo "    \"$current_year\""
 tmpfile=`mktemp`
 for file in $noyear_files; do
     echo "    $file"
-    perl -pe "if (!\$done) { s/(Copyright\s+(?:\(C\)\s+)?\d+(?:\s*,\s*\d+)*)(\s+The ESPResSo project)/\1,2012\2/ and \$done=1; }" $file > $tmpfile
+    perl -pe "if (!\$done) { s/(Copyright\s+(?:\(C\)\s+)?\d+(?:\s*,\s*\d+)*)(\s+The ESPResSo project)/\1,$current_year\2/ and \$done=1; }" $file > $tmpfile
     cat $tmpfile > $file
 done
 

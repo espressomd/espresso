@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -421,32 +421,31 @@ used with great caution.
 
 \begin{essyntax}
   inter \var{type1} \var{type2}
-  hat \var{F_\text{max}} \var{r}
+  hat \var{F_\text{max}} \var{r_c}
   \begin{features}
     \required{HAT}
   \end{features}
 \end{essyntax}
 This defines a simple force ramp between particles of the types \var{type1} and
  \var{type2}. The maximal force \var{F_\text{max}} acts at zero distance and 
-zero force is applied at distances r and bigger. For distances smaller than 
-\var{r}, the force is given by
+zero force is applied at distances $r_c$ and bigger. For distances smaller than 
+\var{r_c}, the force is given by
 \begin{equation}
-  F(d)=F_{\text{max}} \cdot \left( 1 - \frac{d}{r} \right),
+  F(r)=F_{\text{max}} \cdot \left( 1 - \frac{r}{r_c} \right),
 \end{equation}
-for distances exceeding \var{r}, the force is zero.
+for distances exceeding \var{r_c}, the force is zero.
 
 The potential energy is given by
 \begin{equation}
-  V(d)=F_{\text{max}} \cdot (d-r) \cdot \left( \frac{d+r}{2r} - 1 \right),
+  V(r)=F_{\text{max}} \cdot (r-r_c) \cdot \left( \frac{r+r_c}{2r_c} - 1 \right),
 \end{equation}
-which is zero for distances bigger than \var{r} and continuous at distance 
-\var{r}.
+which is zero for distances bigger than \var{r_c} and continuous at distance 
+\var{r_c}.
 
 This is the standard conservative DPD potential and can be used in combination 
-with \lit{inter DPD} \ref{sec:DPDinter}. Also it is useful for live 
-demonstrations, where you might want to use a big time step to make it look 
-interesting on a weak machine but do not want it to crash and the physics don't 
-matter.
+with \lit{inter DPD} \ref{sec:DPDinter}. The potential is also useful for live 
+demonstrations, where a big time step may be employed to obtain quick results
+on a weak machine, for which the physics do not need to be entirely correct.  
 
 \subsection{Hertzian interaction}
 \index{Hertzian interaction|mainindex}
@@ -827,6 +826,221 @@ This creates a virtual bond type with identificator \var{bondid}, \ie
 a pair bond without associated potential or force. It can used to specify
 topologies and for some analysis that rely on bonds, or \eg for bonds that
 should be displayed in VMD.
+
+\section{Object-in-fluid interactions}
+\label{sec:inter-bonded-fsi}
+\index{bonded interactions fsi|mainindex}
+\index{interactions!bonded fsi|mainindex}
+
+\begin{citebox}
+  Please cite~\citewbibkey{cimrak} when using the interactions
+  in this section in order to simulate extended objects embedded in a
+  LB fluid.
+\end{citebox}
+
+The following interactions are implemented in order to mimic the mechanics of 
+elastic or rigid objects immersed in the LB fluid flow. Their mathematical formulations 
+have been taken from \cite{dupin07}. Details on how the bonds with fluid-structure-interactions 
+can be used and automated are described in section \ref{sec:fsi}.
+
+\subsection{Stretching force}
+\index{stretching force|mainindex}
+\index{interactions!stretching force|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  stretching_force
+  \var{L^0_{AB}} \var{k_s}
+\end{essyntax}
+This type of interaction is available for closed 3D immersed objects as well as 
+for 2D sheet flowing in the 3D flow. 
+
+For each edge of the mesh, \var{L_{AB}} is the current distance between point A 
+and point B. \var{L_{AB}^0} is the distance between these points in the relaxed 
+state, that is if the current edge has the length exactly \var{L_{AB}^0}, then 
+no forces are added. $\Delta \var{L_{AB}}$ is the deviation from the relaxed 
+state, that is $\Delta \var{L_{AB}} = \var{L_{AB}} - \var{L_{AB}^0}$. The 
+stretching force between A and B is computed using 
+\begin{equation}
+\var{F_s(A,B)} = \var{k_s}\kappa(\lambda_{AB})\frac{\Delta \var{L_{AB}}}
+{\var{L^0_{AB}}}\var{n_{AB}}.
+\end{equation}
+Here, \var{n_{AB}} is the unit vector pointing from \var{A} to \var{B}, \var{k_s} 
+is the stretching constant, $\lambda_{AB} = \var{L_{AB}}/\var{L_{AB}^0}$, and 
+$\kappa$ is a nonlinear function that resembles neo-Hookean behaviour
+\begin{equation}
+\kappa(\lambda_{AB}) = \frac{\lambda_{AB}^{0.5} + \lambda_{AB}^{-2.5}}
+{\lambda_{AB} + \lambda_{AB}^{-3}}.
+\end{equation}
+
+\begin{center}
+  \includegraphics[width=8cm]{figures/stretching.png}
+\end{center}
+The stretching force acts between two particles and is symmetric. Therefore if an interaction is defined by
+\begin{verbatim} 
+inter 1 stretching_force 2.0 4.0
+\end{verbatim}
+then the following two commands
+\begin{verbatim} 
+part 42 bond 1 43
+part 43 bond 1 42
+\end{verbatim}
+are equivalent.
+
+\subsection{Bending force}
+\index{bending force|mainindex}
+\index{interactions!bending force|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  bending_force
+  \var{\theta^0} \var{k_b}
+\end{essyntax}
+
+The tendency of an elastic object to maintain the resting shape is governed by 
+prescribing the prefered angles between the neighbouring triangles of the mesh. 
+This type of interaction is available for closed 3D immersed objects as well as 
+for 2D sheet flowing in the 3D flow.
+
+
+Denote by $\theta^0$ the angle between two triangles in the resting shape. For 
+closed immersed objects, you always have to set the inner angle. The deviation 
+of this angle $\Delta \theta = \theta - \theta^0$ is computed and defines two 
+bending forces for two triangles \var{A_1BC} and \var{A_2BC}
+\begin{equation}
+\var{F_{bi}(A_iBC)} = \var{k_b}\frac{\Delta \theta}{\theta^0} \var{n_{A_iBC}}
+\end{equation}
+Here, \var{n_{A_iBC}} is the unit normal vector to the triangle \var{A_iBC}. The 
+force \var{F_{bi}(A_iBC)} is assigned to the vertex not belonging to the common 
+edge. The opposite force divided by two is assigned to the two vertices lying on 
+the common edge. This procedure is done twice, for $\var{i}=1$ and for 
+$\var{i}=2$.
+
+\begin{center}
+  \includegraphics[width=8cm]{figures/bending.png}
+\end{center}
+
+Unlike the stretching force the bending force is strictly asymmetric. After 
+creating an interaction
+\begin{verbatim} 
+inter 33 bending_force 0.7 4.0
+\end{verbatim}
+it is important how the bond is created. Particles need to be mentioned in the 
+correct order. Command
+\begin{verbatim} 
+part 0 bond 33 1 2 3
+\end{verbatim}
+creates a bond related to the angle between the triangles 012 and 123. The particle 
+0 corresponds to point A1, particle 1 to C, particle 2 to B and particle 3 to A2. 
+There are two rules that need to be fulfilled:
+\begin{itemize}
+\item there has to be an edge between particles 1 and 2
+\item orientation of the triangle 012, that is the normal vector 
+defined as a vector product $01 \times 02$, must point to the inside of the immersed 
+object.
+\end{itemize}
+Notice that also concave objects can be defined. If $\theta_0$ is larger than $\pi$, 
+then the inner angle is concave.
+
+\subsection{Local area conservation}
+\index{local area conservation|mainindex}
+\index{interactions!local area conservation|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  area_force_local
+  \var{S^0_{ABC}} \var{k_{al}}
+\end{essyntax}
+This interaction conserves the area of the triangles in the triangulation. This 
+type of interaction is available for closed 3D immersed objects as well as for 2D 
+sheet flowing in the 3D flow.
+
+The deviation of the triangle surface \var{S_{ABC}} is computed from the triangle 
+surface in the resting shape $\Delta \var{S_{ABC}} = \var{S_{ABC}} - \var{S_{ABC}^0}$. 
+The area constraint assigns the following  shrinking/expanding force to every vertex 
+\begin{equation}
+ \var{F_{al}(A)} = -\var{k_{al}}\frac{\Delta \var{S_{ABC}}}{\var{S_{ABC}}}\var{w_{A}}
+\end{equation}
+where \var{k_{al}}  is the area constraint coefficient, and \var{w_{A}} is the unit 
+vector pointing from the centroid of triangle \var{ABC} to the vertex \var{A}. 
+Similarly the analogical forces are assigned to \var{B} and \var{C}. This interaction 
+is symmetric, therefore after defining the interaction
+\begin{verbatim} 
+inter 44 area_force_local 0.02 4.0
+\end{verbatim}
+the following commands are equivalent
+\begin{verbatim} 
+part 0 bond 44 1 2
+part 0 bond 44 2 1
+part 1 bond 44 0 2
+\end{verbatim}
+
+\subsection{Global area conservation}
+\index{global area conservation|mainindex}
+\index{interactions!global area conservation|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  area_force_global
+  \var{S^0} \var{k_{ag}}
+\end{essyntax}
+This type of interaction is available solely for closed 3D immersed objects.
+
+The conservation of local area is sometimes too restrictive. Denote by \var{S} the 
+current surface of the immersed object, by \var{S_0} the surface in the relaxed 
+state and define $\Delta \var{S} = \var{S} - \var{S_0}$. The global area conservation 
+force is defined as
+\begin{equation}
+\var{F_{ag}(A)} = - \var{k_{ag}}\frac{\Delta \var{S}}{\var{S}}\var{w_{A}}
+\end{equation}
+Here, the above mentioned force divided by 3 is added to all three particles.
+\begin{center}
+  \includegraphics[width=8cm]{figures/arealocal.png}
+\end{center}
+Again, this interaction is symmetric, as is the area\_{}force\_{}local.
+
+\subsection{Volume conservation}
+\index{volume conservation|mainindex}
+\index{interactions!volume conservation|mainindex}
+
+\begin{essyntax}
+  inter \var{bondid}
+  volume_force
+  \var{V^0} \var{k_v}
+\end{essyntax}
+This type of interaction is available solely for closed 3D immersed objects.
+
+The deviation of the objects volume \var{V} is computed from the volume in 
+the resting shape $\Delta \var{V} = \var{V} - \var{V^0}$. For each triangle the following 
+force is computed
+\begin{equation}
+\var{F_v(ABC)} = -\var{k_v}\frac{\Delta \var{V}}{\var{V^0}} \var{S_{ABC}}\ \var{n_{ABC}}
+\end{equation}
+where \var{S_{ABC}} is the area of triangle \var{ABC}, \var{n_{ABC}} is the normal unit 
+vector of plane \var{ABC}, and \var{k_v} is the volume constraint coefficient. The volume 
+of one immersed object is computed from
+\begin{equation}
+\var{V} = \sum_{\var{ABC}}\var{S_{ABC}}\ \var{n_{ABC}}\cdot \var{h_{ABC}}
+\end{equation}
+where the sum is computed over all triangles of the mesh and \var{h_{ABC}} is the normal 
+vector from the centroid of triangle \var{ABC} to any plane which does not cross the cell. 
+The force \var{F_v(ABC)} is equally distributed to all three vertices $\var{A},\var{B},
+\var{C}.$
+
+\begin{center}
+  \includegraphics[width=8cm]{figures/volume.png}
+\end{center}
+This interaction is again symmetric. After the definition of the interaction by 
+\begin{verbatim} 
+inter 22 volume_force 65.3 3.0
+\end{verbatim}
+the order of vertices is crucial. By the following command the bonds are defined
+\begin{verbatim} 
+part 0 bond 22 1 2
+\end{verbatim}
+Triangle 012 must have correct orientation, that is the normal vector defined by a 
+vector product $01\times02$. The orientation must point inside the immersed object.
+
 
 \section{Bond-angle interactions}
 \index{bond-angle interactions|mainindex}

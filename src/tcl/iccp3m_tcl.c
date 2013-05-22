@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -92,6 +92,14 @@ int tclcommand_iccp3m(ClientData data, Tcl_Interp *interp, int argc, char **argv
          if (argc>1 && ARG1_IS_D(iccp3m_cfg.eout)) {
            argc-=2;
            argv+=2;
+         } else {
+           Tcl_AppendResult(interp, "ICCP3M Usage: eps_out <eps_out>", (char *)NULL); 
+           return (TCL_ERROR);
+         }
+       } else if (ARG0_IS_S("ext_field")) {
+         if (argc>1 && ARG1_IS_D(iccp3m_cfg.extx) && ARG_IS_D(2,iccp3m_cfg.exty) && ARG_IS_D(3,iccp3m_cfg.extz)) {
+           argc-=4;
+           argv+=4;
          } else {
            Tcl_AppendResult(interp, "ICCP3M Usage: eps_out <eps_out>", (char *)NULL); 
            return (TCL_ERROR);

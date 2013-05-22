@@ -1,4 +1,4 @@
-% Copyright (C) 2010,2011,2012 The ESPResSo project
+% Copyright (C) 2010,2011,2012,2013 The ESPResSo project
 % Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
 %   Max-Planck-Institute for Polymer Research, Theory Group
 %  
@@ -34,8 +34,6 @@
   \opt{v \var{vx} \var{vy} \var{vz}}
   \opt{f \var{fx} \var{fy} \var{fz}}
   \opt{bond \var{bondid} \var{pid2} \dots}
-  \require{9}{\opt{temp \var{T}}}
-  \require{9}{\opt{gamma \var{g}}}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
   \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
@@ -43,6 +41,7 @@
   \require{2}{\opt{rinertia \var{x} \var{y} \var{z}}}
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
   \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
+  \require{2,3}{\opt{ext_torque \var{x} \var{y} \var{z}}}
   \require{4}{\opt{exclude \var{pid2}\dots}}
   \require{4}{\opt{exclude delete \var{pid2}\dots}}
   \require{5}{\opt{mass \var{mass}}}
@@ -51,6 +50,9 @@
   \require{7,8}{\opt{virtual \var{v}}}
   \require{8}{\opt{vs\_relative \var{pid} \par{distance}}}
   \require{8}{\opt{vs\_auto\_relate\_to \var{pid}}}
+  \require{9}{\opt{temp \var{T}}}
+  \require{9}{\opt{gamma \var{g}}}
+  \require{10}{\opt{rotation \var{rot}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -61,6 +63,7 @@
     \required[7]{VIRTUAL\_SITES\_COM}
     \required[8]{VIRTUAL\_SITES\_RELATIVE}
     \required[9]{LANGEVIN\_PER\_PARTICLE}
+    \required[10]{ROTATION\_PER\_PARTICLE}
   \end{features}
 \end{essyntax}
 
@@ -79,38 +82,52 @@ set first because of the spatial decomposition.
   (see section \vref{tcl:inter}) to define the parameters of the non
   bonded interactions between different kinds of particles.
 \item[\opt{v \var{vx} \var{vy} \var{vz}}] Sets the velocity of
-this particle to $(vx,vy,vz)$. The velocity remains variable and will be changed
-during integration.
+  this particle to $(vx,vy,vz)$. The velocity remains variable and will be changed
+  during integration.
 \item[\opt{f \var{fx} \var{fy} \var{fz}}] Set the force acting on this particle
-to $(fx,fy,fz)$. The force remains variable and will be changed during integration.
+  to $(fx,fy,fz)$. The force remains variable and will be changed during integration. 
+  However, whereas the velocity is modified with respect to the velocity you set
+  upon integration, the force it recomputed during the integration step and any 
+  force set in this way is lost during the integration step.
 \item[\opt{bond \var{bondid} \var{pid2}\dots}]
   Restrictions: \var{bondid} $\geq 0$; \var{pid2} must
   be an existing particle.  The \var{bondid} is used for
   the inter command to define bonded interactions.
 \item[bond delete] Will delete all bonds attached to this particle.
-\item[\opt{temp \var{T}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the temperature \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles of different temperatures. Caution: this has no influence on any other thermostat then the Langevin thermostat.
-\item[\opt{gamma \var{g}}] If used in combination with the Langevin thermostat (as documented in section \ref{sec:thermostat}), sets the frictional coefficient \var{T} individually for the particle with id \var{pid}. This allows to simulate systems containing particles with different diffusion constants. Caution: this has no influence on any other thermostat then the Langevin thermostat.
 \item[\opt{q \var{charge}}] Sets the charge of this particle to $q$.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
   particle.
-\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational velocity of this particle in the particle's co-rotating frame.
-\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force of this particle, in global frame.
-  When printing the values using {\em part id_particle print}, there is an alternative named
-  \opt{tbf} which gives you the values of the torque in the body frame.  Be aware: the values obtained when printing using \opt{torque}
-  are computed in the frame laboratory and are the ones one should usually look at. Nonetheless,  in case you 
-  introduce torques using \opt{torque} option, espresso will assume they are given in the body-frame. Thus \opt{tbf} is useful
-  to know which should be the numerical values you should reintroduce in order to have exactly the same conformation.
+\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational
+  velocity of this particle in the particle's co-rotating frame.
+\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force
+  of this particle, in global frame.  When printing the values using
+  {\em part id_particle print}, there is an alternative named
+  \opt{tbf} which gives you the values of the torque in the body
+  frame. Be aware: the values obtained when printing using
+  \opt{torque} are computed in the frame laboratory and are the ones
+  one should usually look at. Nonetheless, in case you introduce
+  torques using \opt{torque} option, espresso will assume they are
+  given in the body-frame. Thus \opt{tbf} is useful to know which
+  should be the numerical values you should reintroduce in order to
+  have exactly the same conformation. Again, any torque set this way
+  is lost during the next integration step.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
-    elements of this particles rotational inertia tensor. These correspond with the inertial moments along the coordinate axes in the particle's co-rotating coordinate system. When the particle's quaternions are set to 1 0 0 0, the co-rotating and the fixed (lab) frame are co-aligned.
+  elements of this particles rotational inertia tensor. These
+  correspond with the inertial moments along the coordinate axes in
+  the particle's co-rotating coordinate system. When the particle's
+  quaternions are set to 1 0 0 0, the co-rotating and the fixed (lab)
+  frame are co-aligned.
 \item[\opt{fix \var{x} \var{y} \var{z}}] Fixes the particle in space.
   By supplying a set of 3 integers as arguments it is possible to fix
   motion in \var{x}, \var{y}, or \var{z} coordinates independently. For
-  example \var{fix 0 0 1} will fix motion only in z. Note that
-  \var{fix} without arguments is equivalent to \var{fix 1 1 1}.
+  example \var{fix} 0 0 1 will fix motion only in z. Note that
+  \var{fix} without arguments is equivalent to \var{fix} 1 1 1.
+\item[\opt{unfix}] Release any external influence from the particle.
 \item[\opt{ext_force \var{x} \var{y} \var{z}}]
   An additional external force is applied to the particle.
-\item[\opt{unfix}] Release any external influence from the particle.
+\item[\opt{ext_torque \var{x} \var{y} \var{z}}]
+  An additional external torque is applied to the particle.
 \item[\opt{exclude \var{pid2}\dots+}] Restrictions:
   \var{pid2} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
@@ -120,11 +137,11 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
 \item[\opt{exclude delete \var{pid2}\dots}] Searches for the
   given exclusion and deletes it. Again deletes the exclusion with
   both partners.
-  \item[\opt{mass \var{mass}}] Sets the mass of this particle to $mass$. If not
+\item[\opt{mass \var{mass}}] Sets the mass of this particle to $mass$. If not
   set, all particles have a mass of 1 in reduced units.
-  \item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
-  \item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
-  dipol axis to $(dx,dy,dz)$.
+\item[\opt{dipm \var{moment}}] Sets the dipol moment of this particle to $moment$.
+\item[\opt{dip \var{dx} \var{dy} \var{dz}}] Sets the orientation of the
+  dipole axis to $(dx,dy,dz)$.
 \item[\opt{virtual \var{v}}] Declares the particles as virtual (1) or
   non-virtual (0, default). Please read chapter \ref{sec:virtual}
   before using virtual sites.
@@ -137,7 +154,23 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   implementation. \var{pid} denotes the id of the particle to which
   this virtual site is related and \var{distance} the distance between
   non-virtual and virtual particle.
-   \end{arguments}
+\item[\opt{temp \var{T}}] If used in combination with the Langevin
+  thermostat (as documented in section \ref{sec:thermostat}), sets the
+  temperature \var{T} individually for the particle with id
+  \var{pid}. This allows to simulate systems containing particles of
+  different temperatures. Caution: this has no influence on any other
+  thermostat then the Langevin thermostat.
+\item[\opt{gamma \var{g}}] If used in combination with the Langevin
+  thermostat (as documented in section \ref{sec:thermostat}), sets the
+  frictional coefficient \var{T} individually for the particle with id
+  \var{pid}. This allows to simulate systems containing particles with
+  different diffusion constants. Caution: this has no influence on any
+  other thermostat then the Langevin thermostat.
+\item[\opt{rotation \var{rot}}] Specifies whether a particle's
+  rotational degrees of freedom are integrated (value of 1) or not
+  (0). If set to zero, the content of the torque and omega variables
+  are meaningless. The default is 1.
+\end{arguments}
 
 \subsection{Getting particle properties}
 
@@ -145,7 +178,7 @@ to $(fx,fy,fz)$. The force remains variable and will be changed during integrati
   \variant{1}
   part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
-      q \asep v \asep f \asep fix \asep ext_force \asep bond \asep
+      q \asep v \asep f \asep fix \asep ext_force \asep ext_torque \asep bond \asep
       \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}
@@ -804,8 +837,8 @@ perform the following steps in that order
 \begin{enumerate}
 \item Create a particle of the desired type for each molecule. It
   should be placed at least roughly in the center of the molecule to
-  make sure, it's on the same node as teh other particles forming the
-  molecule, in a simulatino with more than one cpu.
+  make sure, it's on the same node as the other particles forming the
+  molecule, in a simulation with more than one cpu.
 \item Make it a virtual site using 
   \begin{essyntaxbox}
     part \var{pid} virtual 1
@@ -916,8 +949,30 @@ switches in \texttt{myconfig.h} (sec.\ref{sec:myconfig})
   thermostat does not act on non-virtual particles
 \end{itemize}
 
+\section{Grand canonical feature}
+For using ESPResSo conveniently for simulations in the grand canonical ensemble, or
+other purposes, when particles of certain types are created and deleted frequently.
 
+\begin{essyntax}
+part gc
+\alt{\var{type} \asep \alt{\alt{find \asep delete \asep
+status \asep number} \var{type}}}
+\begin{features}
+\required{GRANDCANONICAL}
+\end{features}
 
+\end{essyntax}
+By giving only a particle type as an argument, ESPResSo will initialize arrays on the
+c-level which will keep track of particles of the given type. When using the keyword
+\texttt{find} and a particle type, the command will return a randomly chosen particle
+id, for a particle of the given type. Similarly using the \texttt{delete} variant will
+delete a randomly chosen particle of the given type.  Notice however, that changing
+the type of an existing particle will not change the arrays. If the change is
+permanent, then re-initializing the arrays of the involved types will remove this
+inconsistency.
+The keyword \texttt{status} will return a list with all particles with the given type,
+similarly giving \texttt{number} as argument will return the number of particles
+which sharing the given type.
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "ug"

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010,2011,2012 The ESPResSo project
+  Copyright (C) 2010,2011,2012,2013 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
     Max-Planck-Institute for Polymer Research, Theory Group
   
@@ -18,12 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef ANGLE_TCL_H
-#define ANGLE_TCL_H
+#ifndef _ANGLE_HARMONIC_TCL_H
+#define _ANGLE_HARMONIC_TCL_H
 /** \file angle_harmonic_tcl.h
  * Tcl interface for \ref angle_harmonic.h
  */
 
+#include "config.h"
 #include "parser.h"
 #include "interaction_data.h"
 

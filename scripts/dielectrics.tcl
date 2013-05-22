@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The ESPResSo project
+# Copyright (C) 2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -493,6 +493,10 @@ proc sign x {
 }
 
 
+proc sqrt { a } {
+  return [ expr sqrt($a+1e-8) ]
+}
+
 proc dielectric_pore { args } { 
   set p_no [ setmd n_part ]
   global n_induced_charges icc_areas icc_normals icc_epsilons icc_sigmas
@@ -650,8 +654,8 @@ proc dielectric_pore { args } {
   set c1_r [ expr $r1 + $smoothing_radius ]
   set c2_r [ expr $r2 + $smoothing_radius ]
   set slope [ expr ($c2_r-$c1_r)/($c2_z-$c1_z) ]
-  set sina [ expr ($r2-$r1)/sqrt( pow(2*($length - $smoothing_radius),2) + pow($r1-$r2,2)) ]
-  set cosa [ expr sqrt(1-$sina*$sina) ]
+  set sina [ expr ($r2-$r1)/[ sqrt [ expr  pow(2*($length - $smoothing_radius),2) + pow($r1-$r2,2)] ] ]
+  set cosa [ sqrt [ expr (1-$sina*$sina) ] ]
   
 #  set z_left  [ expr $c1_z + [ sign $slope ] * sqrt($slope*$slope/(1+$slope*$slope))*$smoothing_radius]
 #  set z_right [ expr $c2_z + [ sign $slope ] * sqrt($slope*$slope/(1+$slope*$slope))*$smoothing_radius]
@@ -664,19 +668,19 @@ proc dielectric_pore { args } {
   set z [ expr - $length ]
   while { $z < $length } {
     if { $z < $z_left } {
-      set radius [ expr $c1_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ) ] 
+      set radius [ expr $c1_r - [ sqrt [ expr  $smoothing_radius*$smoothing_radius - ($z-$c1_z)*($z-$c1_z) ] ] ] 
       set delta_b [ expr 2*$pi*$pore_res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c1_z)/$smoothing_radius ]
-      set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
+      set sinbnew [ expr $sinb*cos($delta_b) + [ sqrt [ expr 1-$sinb*$sinb ] ]*sin($delta_b) ]
       set incr_z [ expr $c1_z + $smoothing_radius * $sinbnew - $z ]
-      set slope_norm [ expr tan(asin($sinb)) ]
+      set slope_norm [ expr tan(asin($sinb+1e-8)) ]
     } elseif  { $z > $z_right } {
-      set radius [ expr $c2_r - sqrt(  $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ) ] 
+      set radius [ expr $c2_r - [ sqrt [ expr $smoothing_radius*$smoothing_radius - ($z-$c2_z)*($z-$c2_z) ] ] ] 
       set delta_b [ expr 2*$pi*$pore_res/2/$pi/$smoothing_radius ]
       set sinb [ expr ($z - $c2_z)/$smoothing_radius ]
-      set sinbnew [ expr $sinb*cos($delta_b) + sqrt(1-$sinb*$sinb)*sin($delta_b) ]
+      set sinbnew [ expr $sinb*cos($delta_b) + [ sqrt [ expr 1-$sinb*$sinb ] ]*sin($delta_b) ]
       set incr_z [ expr $c2_z + $smoothing_radius * $sinbnew - $z ]
-      set slope_norm [ expr tan(asin($sinb)) ]
+      set slope_norm [ expr tan(asin($sinb+1e-8)) ]
       if { $incr_z <= 0 } { 
         set z 1000
         continue
