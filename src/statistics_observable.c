@@ -384,6 +384,31 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
 
 #ifdef LB
 int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+  if (n_nodes==1) {
+    return mpi_observable_lb_radial_velocity_profile_parallel(pdata_, A, n_A);
+  } else {
+    mpi_observable_lb_radial_velocity_profile();
+    MPI_Bcast(pdata_, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
+    double* data = malloc(n_A*sizeof(double));
+    mpi_observable_lb_radial_velocity_profile_parallel(pdata_, data, n_A);
+    MPI_Reduce(data, A, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+    free(data);
+    return ES_OK;
+  }
+}
+
+void mpi_observable_lb_radial_velocity_profile_slave_implementation() {
+  radial_profile_data pdata;
+  MPI_Bcast(&pdata, sizeof(radial_profile_data), MPI_BYTE, 0, comm_cart);
+  unsigned int n_A=3*pdata.rbins*pdata.phibins*pdata.zbins;
+  double* data = malloc(n_A*sizeof(double));
+  mpi_observable_lb_radial_velocity_profile_parallel(&pdata, data, n_A);
+  MPI_Reduce(data, 0, n_A, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  free(data);
+
+}
+
+int mpi_observable_lb_radial_velocity_profile_parallel(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i, j, k;
   unsigned int maxi, maxj, maxk;
   double roffset, phioffset, zoffset;
@@ -437,6 +462,11 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
         p[0]=r*cos(phi)+pdata->center[0];
         p[1]=r*sin(phi)+pdata->center[1];
         p[2]=z+pdata->center[2];
+        if (   p[0] < my_left[0] || p[0]>my_right[0] 
+            || p[1] < my_left[1] || p[1]>my_right[1] 
+            || p[2] < my_left[2] || p[2]>my_right[2] )
+          continue;
+
         if (lb_lbfluid_get_interpolated_velocity(p, v)!=0)
           return 1;
         linear_index = 0;

@@ -141,6 +141,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_galilei_transform_slave) \
   CB(mpi_setup_reaction_slave) \
   CB(mpi_send_rotation_slave) \
+  CB(mpi_observable_lb_radial_velocity_profile_slave) \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -993,6 +994,16 @@ void mpi_send_rotation_slave(int pnode, int part)
   on_particle_change();
 #endif
 }
+
+void mpi_observable_lb_radial_velocity_profile() 
+{
+  mpi_call(mpi_observable_lb_radial_velocity_profile_slave, 0, 0);
+}
+void mpi_observable_lb_radial_velocity_profile_slave(int pnode, int part)
+{
+  mpi_observable_lb_radial_velocity_profile_slave_implementation(); 
+}
+
 
 /********************* REQ_SET_BOND ********/
 
