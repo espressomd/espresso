@@ -593,6 +593,12 @@ proc dielectric_pore { args } {
       incr argno
       continue
     }
+    if { [ lindex $args $argno ] == "sigma" } {
+      incr argno
+      set sigma [ expr 1.0*[ lindex $args $argno ] ]
+      incr argno
+      continue
+    }
     error "did not understand arg [ lindex args $argno ]"
   }
   if { $pore_res == 0 } { 
