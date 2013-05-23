@@ -749,41 +749,24 @@ __device__ void calc_mode(float *mode, LB_nodes_gpu n_a, unsigned int node_index
           - (n_a.vd[13*para.number_of_nodes + node_index] - n_a.vd[14*para.number_of_nodes + node_index]) + (n_a.vd[15*para.number_of_nodes + node_index] - n_a.vd[16*para.number_of_nodes + node_index])
           - (n_a.vd[17*para.number_of_nodes + node_index] - n_a.vd[18*para.number_of_nodes + node_index]);
 }
-/*********************************************************/
-/** \name Coupling part */
-/*********************************************************/
-/**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
- * @param n_a			Pointer to local node residing in array a (Input)
- * @param *delta		Pointer for the weighting of particle position (Output)
- * @param *delta_j		Pointer for the weighting of particle momentum (Output)
- * @param *particle_data	Pointer to the particle position and velocity (Input)
- * @param *particle_force	Pointer to the particle force (Input)
- * @param part_index		particle id / thread id (Input)
- * @param *rn_part		Pointer to randomnumber array of the particle
- * @param node_index		node index around (8) particle (Output)
-*/
-__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
-	
-  float mode[4];
-  int my_left[3];
-  float interpolated_u1, interpolated_u2, interpolated_u3;
-  float Rho;
-  interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.f;
 
-  float temp_delta[6];
-  float temp_delta_half[6];
+
+__device__ void get_interpolated_velocity(LB_nodes_gpu n_a, float* r, float* u, float* delta_caller, unsigned int* node_index_caller) {
 
   /** see ahlrichs + duenweg page 8227 equ (10) and (11) */
+  float temp_delta[6];
+  float delta[8];
+  int my_left[3];
+  int node_index[8];
+  float mode[4];
+  float Rho;
+  u[0]=u[1]=u[2]=0;
   #pragma unroll
   for(int i=0; i<3; ++i){
-    float scaledpos = particle_data[part_index].p[i]/para.agrid - 0.5f;
+    float scaledpos = r[i]/para.agrid - 0.5f;
     my_left[i] = (int)(floorf(scaledpos));
-    //printf("scaledpos %f \t myleft: %d \n", scaledpos, my_left[i]);
     temp_delta[3+i] = scaledpos - my_left[i];
     temp_delta[i] = 1.f - temp_delta[3+i];
-    /**further value used for interpolation of fluid velocity at part pos near boundaries */
-    temp_delta_half[3+i] = (scaledpos - my_left[i])*2.f;
-    temp_delta_half[i] = 2.f - temp_delta_half[3+i];
   }
 
   delta[0] = temp_delta[0] * temp_delta[1] * temp_delta[2];
@@ -812,22 +795,55 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_g
   for(int i=0; i<8; ++i){
     calc_mode(mode, n_a, node_index[i]);
     Rho = mode[0] + para.rho*para.agrid*para.agrid*para.agrid;	
-    interpolated_u1 += delta[i]*mode[1]/(Rho);
-    interpolated_u2 += delta[i]*mode[2]/(Rho);
-    interpolated_u3 += delta[i]*mode[3]/(Rho);
+    u[0] += delta[i]*mode[1]/(Rho);
+    u[1] += delta[i]*mode[2]/(Rho);
+    u[2] += delta[i]*mode[3]/(Rho);
   }
+
+  #pragma unroll
+  for(int i=0; i<3; ++i){
+    u[i]*=para.agrid/para.tau;
+  }
+  if (delta_caller) {
+    #pragma unroll
+    for(int i=0; i<8; ++i) 
+      delta_caller[i] = delta[i];
+    #pragma unroll
+    for(int i=0; i<8; ++i) 
+      node_index_caller[i] = node_index[i];
+  }
+
+
+}
+/*********************************************************/
+/** \name Coupling part */
+/*********************************************************/
+/**(Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ * @param n_a			Pointer to local node residing in array a (Input)
+ * @param *delta		Pointer for the weighting of particle position (Output)
+ * @param *delta_j		Pointer for the weighting of particle momentum (Output)
+ * @param *particle_data	Pointer to the particle position and velocity (Input)
+ * @param *particle_force	Pointer to the particle force (Input)
+ * @param part_index		particle id / thread id (Input)
+ * @param *rn_part		Pointer to randomnumber array of the particle
+ * @param node_index		node index around (8) particle (Output)
+*/
+__device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, LB_particle_gpu *particle_data, LB_particle_force_gpu *particle_force, unsigned int part_index, LB_randomnr_gpu *rn_part, float *delta_j, unsigned int *node_index){
+	
+  float interpolated_u[3];
+
+  get_interpolated_velocity(n_a, particle_data[part_index].p, interpolated_u, delta, node_index);
 
   /** calculate viscous force
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 #ifdef LB_ELECTROHYDRODYNAMICS
-  particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0]);
-  particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1]);
-  particle_force[part_index].f[2] = - para.friction * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau - particle_data[part_index].mu_E[2]);
+  #pragma unroll
+  for(int i=0; i<3; ++i)
+    particle_force[part_index].f[i] = - para.friction * (particle_data[part_index].v[i]/para.time_step - interpolated_u[i] - particle_data[part_index].mu_E[i]);
 #else
-  particle_force[part_index].f[0] = - para.friction * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau);
-  particle_force[part_index].f[1] = - para.friction * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau);
-  particle_force[part_index].f[2] = - para.friction * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau);
+  for(int i=0; i<3; ++i)
+    particle_force[part_index].f[i] = - para.friction * (particle_data[part_index].v[i]/para.time_step - interpolated_u[i]);
 #endif
   /** add stochastik force of zero mean (Ahlrichs, Duennweg equ. 15)*/
 #ifdef GAUSSRANDOM
