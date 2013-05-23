@@ -159,11 +159,11 @@ void friction_thermo_lb_rotation(Particle *p)
   coupl_pref2 = lbpar_gpu.lb_coupl_pref2 ;
 #else  // SHANCHEN
   /* workaround: we just use the larger translational friction for the 
-     rotational degrees of freedom. */
+     rotational degrees of freedom. FIXME */
   friction = lbpar_gpu.friction[0];
   coupl_pref2 = lbpar_gpu.lb_coupl_pref2[0] ;
 
-  for (ii=1;ii<SHANCHEN;ii++) { 
+  for (ii=1;ii<LB_COMPONENTS;ii++) { 
 	if(lbpar_gpu.friction[ii] > friction ) { 
                 friction = lbpar_gpu.friction[ii];
   		coupl_pref2 = lbpar_gpu.lb_coupl_pref2[ii] ;
