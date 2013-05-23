@@ -384,6 +384,13 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
 
 #ifdef LB
 int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
+
+  if (lattice_switch & LATTICE_LB_GPU)
+    return statistics_observable_lbgpu_radial_velocity_profile((radial_profile_data*) pdata_, A, n_A);
+  
+  if (!(lattice_switch & LATTICE_LB))
+    return ES_ERROR;
+
   if (n_nodes==1) {
     return mpi_observable_lb_radial_velocity_profile_parallel(pdata_, A, n_A);
   } else {

@@ -127,6 +127,7 @@ typedef struct {
   int zbins;
 } radial_profile_data;
 
+void mpi_observable_lb_radial_velocity_profile_slave_implementation();
 
 
 #endif

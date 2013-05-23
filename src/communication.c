@@ -62,6 +62,7 @@
 #include "mdlc_correction.h"
 #include "reaction.h"
 #include "galilei.h"
+#include "statistics_observable.h"
 
 int this_node = -1;
 int n_nodes = -1;
