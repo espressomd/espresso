@@ -23,8 +23,10 @@ source "tests_common.tcl"
 
 require_feature "LENNARD_JONES"
 require_feature "ELECTROSTATICS"
+require_feature "CUDA"
 require_feature "FFTW"
 require_feature "ADRESS" off
+require_feature "NPT" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m.tcl running on [format %02d [setmd n_nodes]] nodes"
@@ -78,10 +80,9 @@ if { [catch {
     ############## end
 
     puts [analyze energy]
-    puts [analyze pressure]
 
     set cureng [lindex [analyze   energy coulomb] 0]
-    set curprs [lindex [analyze pressure coulomb] 0]
+    set curprs 0
 
 
 
