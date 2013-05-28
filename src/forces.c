@@ -50,6 +50,7 @@
 #include "virtual_sites.h"
 #include "constraint.h"
 #include "lbgpu.h"
+#include "p3m_gpu.h"
 #include "iccp3m.h"
 
 /************************************************************/
@@ -68,8 +69,16 @@ void init_forces();
 void force_calc()
 {
 
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+
+  copy_part_data_to_gpu();
+
+#endif
+    
 #ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
+  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
+  // this_node==0 makes sure it is the master node where the gpu exists
+  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && this_node==0 ) lb_calc_particle_lattice_ia_gpu();
 #endif
 
 #ifdef ELECTROSTATICS
@@ -129,14 +138,14 @@ void force_calc()
 #endif
 
 #ifdef METADYNAMICS
-    /* Metadynamics main function */
-    meta_perform();
+  /* Metadynamics main function */
+  meta_perform();
 #endif
 
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+  copy_forces_from_GPU();
 #endif
-
+  
 /* this must be the last force to be calculated (Mehmet)*/
 #ifdef COMFIXED
   calc_comfixed();
@@ -169,6 +178,13 @@ void calc_long_range_forces()
    
       ELC_add_force(); 
   
+      break;
+    case COULOMB_P3M_GPU:
+      if (this_node == 0) p3m_gpu_add_farfield_force();
+  #ifdef NPT
+      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
+      exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
+  #endif
       break;
     case COULOMB_P3M:
       p3m_charge_assign();
