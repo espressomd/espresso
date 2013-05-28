@@ -46,6 +46,8 @@ New user-visible features
 * Renamed torque to torque_{lab,body}, improved troque handling in blockfiles.
   Clearer distinction between the reference frames for torque and angular momentum.
 
+* Support of P3M on GPU.
+
 User-visible changes
 --------------------
 
