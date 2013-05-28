@@ -1,17 +1,18 @@
 #ifndef CUDA_COMMON_H
 #define CUDA_COMMON_H
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
+#include <stdio.h>
+#include "config.h" //this is required so that the ifdefs are actually defined
+
 #ifdef CUDA
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-
-#include <stdio.h>
-#include "config.h" //this is required so that the ifdefs are actually defined
 #include "cuda_init.h"
 
 /** Action number for \ref mpi_get_particles. */
@@ -104,8 +105,8 @@ if (_err!=cudaSuccess){ \
 
 #endif /* ifdef CUDA */
 
-#endif /* ifdef CUDA_COMMON_H */
-
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* ifdef CUDA_COMMON_H */
