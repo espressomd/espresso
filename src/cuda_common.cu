@@ -152,7 +152,7 @@ extern "C" {
   /** setup and call particle reallocation from the host
   */
   void gpu_init_particle_comm() {
-    if ( this_node == 0 ) {
+    if ( this_node == 0  && global_part_vars_host.communication_enabled == 0 ) {
       if( cuda_get_n_gpus() == -1 ) {
         fprintf(stderr, "Unable to initialize CUDA as no sufficient GPU is available.\n");
         exit(0);
