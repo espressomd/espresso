@@ -53,6 +53,25 @@ extern "C" {
   
 }
 
+void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
+  if( cudaSuccess != err) {                                             
+    fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
+    printf("CUDA error: %s\n", cudaGetErrorString(err));
+    if ( err == cudaErrorInvalidValue )
+      fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
+    exit(EXIT_FAILURE);
+  } else {
+    _err=cudaGetLastError();
+    if (_err != cudaSuccess) {
+      fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
+      printf("CUDA error: %s\n", cudaGetErrorString(err));
+      if ( _err == cudaErrorInvalidValue )
+	fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
+      exit(EXIT_FAILURE);
+    }
+  }
+}
+
 
 __device__ unsigned int getThreadIndex() {
 

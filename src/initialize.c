@@ -268,7 +268,7 @@ if(this_node == 0){
   }
 }
 #endif
-#if defined(LB_GPU) || defined (ELECTROSTATICS)
+#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
   if (reinit_particle_comm_gpu){
     gpu_change_number_of_part_to_comm();
     reinit_particle_comm_gpu = 0;
@@ -398,6 +398,7 @@ void on_coulomb_change()
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+#ifdef CUDA
   case COULOMB_P3M_GPU:
     if ( box_l[0] != box_l[1] && box_l[0] != box_l[2] && box_l[0]) {
       printf ("P3M on the GPU requires a cubic box!\n");
@@ -405,6 +406,7 @@ void on_coulomb_change()
     }
     p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
     // fall through
+#endif
   case COULOMB_P3M:
     p3m_init();
     break;

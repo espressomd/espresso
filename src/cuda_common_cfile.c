@@ -8,6 +8,7 @@
 #include "particle_data.h"
 #include "interaction_data.h"
 
+#ifdef CUDA
 
   static void cuda_mpi_get_particles_slave();
   static void cuda_mpi_send_forces_slave();
@@ -232,3 +233,5 @@
     } 
   }
   /*@}*/
+
+#endif /* ifdef CUDA */

@@ -22,8 +22,10 @@
 source "tests_common.tcl"
 
 require_feature "ELECTROSTATICS"
+require_feature "CUDA"
 require_feature "FFTW"
 require_feature "ADRESS" off
+require_feature "NPT" off
 
 puts "---------------------------------------------------------------"
 puts "- Testcase p3m_wall_gpu.tcl running on [format %02d [setmd n_nodes]] nodes:"

@@ -1,18 +1,19 @@
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef CUDA_COMMON_H
+#define CUDA_COMMON_H
 
 #include <cuda.h>
 #include <cuda_runtime.h>
 
 #include <stdio.h>
 #include "config.h" //this is required so that the ifdefs are actually defined
-#include "cuda_init.h"
 
-#ifndef CUDA_COMMON_H
-#define CUDA_COMMON_H
+#ifdef CUDA
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "cuda_init.h"
 
 /** Action number for \ref mpi_get_particles. */
 #define REQ_GETPARTS  16
@@ -89,41 +90,23 @@ void cuda_bcast_global_part_params();
  * @param line line of the file were the error took place
 */
 
-static void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line){
-    if( cudaSuccess != err) {                                             
-      fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(err));
-      if ( err == cudaErrorInvalidValue )
-        fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n", file, line);
-      exit(EXIT_FAILURE);
-    } else {
-      _err=cudaGetLastError();
-      if (_err != cudaSuccess) {
-        fprintf(stderr, "Error found during memory operation. Possibly however from an failed operation before. %s:%u.\n", file, line);
-        printf("CUDA error: %s\n", cudaGetErrorString(err));
-        if ( _err == cudaErrorInvalidValue )
-          fprintf(stderr, "You may have tried to allocate zero memory before %s:%u.\n", file, line);
-        exit(EXIT_FAILURE);
-      }
-    }
-}
+void _cuda_safe_mem(cudaError_t err, char *file, unsigned int line);
 
 #define cuda_safe_mem(a) _cuda_safe_mem((a), __FILE__, __LINE__)
-
 
 #define KERNELCALL(_f, _a, _b, _params) \
 _f<<<_a, _b, 0, stream[0]>>>_params; \
 _err=cudaGetLastError(); \
 if (_err!=cudaSuccess){ \
   printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
-  fprintf(stderr, "error calling %s with dim %d %d %d #thpb %d in %s:%u\n", #_f, _a.x, _a.y, _a.z, _b, __FILE__, __LINE__); \
+  fprintf(stderr, "error calling %s with dim %d %d %d in %s:%u\n", #_f, _a.x, _a.y, _a.z, __FILE__, __LINE__); \
   exit(EXIT_FAILURE); \
 }
 
-
-
-#endif /* ifdef CUDA_COMMON_H */
+#endif /* ifdef CUDA */
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* ifdef CUDA_COMMON_H */

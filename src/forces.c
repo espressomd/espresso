@@ -69,7 +69,7 @@ void init_forces();
 void force_calc()
 {
 
-#if defined(LB_GPU) || defined(ELECTROSTATICS)
+#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
 
   copy_part_data_to_gpu();
 
@@ -142,7 +142,7 @@ void force_calc()
   meta_perform();
 #endif
 
-#if defined(LB_GPU) || defined(ELECTROSTATICS)
+#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
   copy_forces_from_GPU();
 #endif
   
@@ -179,6 +179,7 @@ void calc_long_range_forces()
       ELC_add_force(); 
   
       break;
+#ifdef CUDA
     case COULOMB_P3M_GPU:
       if (this_node == 0) p3m_gpu_add_farfield_force();
   #ifdef NPT
@@ -186,6 +187,7 @@ void calc_long_range_forces()
       exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
   #endif
       break;
+#endif
     case COULOMB_P3M:
       p3m_charge_assign();
   #ifdef NPT
