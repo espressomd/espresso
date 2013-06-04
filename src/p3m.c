@@ -359,7 +359,7 @@ void   p3m_init() {
   }
 }
 
-void p3m_set_tune_params(double r_cut, int mesh, int cao,
+void p3m_set_tune_params(double r_cut, int mesh[3], int cao,
 			 double alpha, double accuracy, int n_interpol)
 {
   if (r_cut >= 0) {
@@ -367,9 +367,17 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
     p3m.params.r_cut_iL = r_cut*box_l_i[0];
   }
 
-  if (mesh >= 0)
-    p3m.params.mesh[2] = p3m.params.mesh[1] = p3m.params.mesh[0] = mesh;
-
+  if ( mesh[0] >= 0 && mesh[1] == -1 ) {
+    p3m.params.mesh[2] = p3m.params.mesh[1] = p3m.params.mesh[0] = mesh[0];
+  }
+  else {
+    if ( mesh[0] >= 0 && mesh[1] >= 0 ) {
+      p3m.params.mesh[0] = mesh[0];
+      p3m.params.mesh[1] = mesh[1];
+      p3m.params.mesh[2] = mesh[2];
+    }
+  }
+  
   if (cao >= 0)
     p3m.params.cao = cao;
 
@@ -1196,7 +1204,7 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
    double rs_err, ks_err;
    double alpha_L;
    P3M_TRACE(fprintf(stderr, "p3m_get_accuracy: mesh (%d, %d, %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
- 
+
    /* calc maximal real space error for setting */
    rs_err = p3m_real_space_error(coulomb.prefactor,r_cut_iL,p3m.sum_qpart,p3m.sum_q2,0);
  
