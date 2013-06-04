@@ -400,7 +400,7 @@ void on_coulomb_change()
     // fall through
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    if ( box_l[0] != box_l[1] && box_l[0] != box_l[2] && box_l[0]) {
+    if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
       printf ("P3M on the GPU requires a cubic box!\n");
       exit(1);
     }

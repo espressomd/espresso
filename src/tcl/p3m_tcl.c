@@ -24,11 +24,19 @@
 #include "p3m_tcl.h"
 #include "p3m.h"
 
+
+
 int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char ** argv, int adaptive)
 {
-  int mesh = -1, cao = -1, n_interpol = -1;
+  int cao = -1, n_interpol = -1;
   double r_cut = -1, accuracy = -1;
-
+  int mesh[3];
+  IntList il;
+  init_intlist(&il);
+  mesh[0] = -1;
+  mesh[1] = -1;
+  mesh[2] = -1;
+  
   while(argc > 0) {
     if(ARG0_IS_S("r_cut")) {
       if (! (argc > 1 && ARG1_IS_D(r_cut) && r_cut >= -1)) {
@@ -38,12 +46,26 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
       }
       
     } else if(ARG0_IS_S("mesh")) {
-      if(! (argc > 1 && ARG1_IS_I(mesh) && mesh >= -1)) {
-	Tcl_AppendResult(interp, "mesh expects an integer >= -1",
-			 (char *) NULL);
+      if ( ARG1_IS_I(mesh) ) {
+        if(! (argc > 1 && mesh[0] >= -1)) {
+  Tcl_AppendResult(interp, "mesh expects an integer >= -1",
+        (char *) NULL);
 	return TCL_ERROR;
+        } else {
+          mesh[1] = mesh[2] = mesh[0];
+        }
       }
-      
+      else {
+        if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) ) {
+          Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
+          return TCL_ERROR;
+        } else {
+        printf ("Please ignore the following \"expected integer but got\" warning message.\n");
+            mesh[0] = il.e[0];
+            mesh[1] = il.e[1];
+            mesh[2] = il.e[2];
+        }
+      }
     } else if(ARG0_IS_S("cao")) {
       if(! (argc > 1 && ARG1_IS_I(cao) && cao >= -1 && cao <= 7)) {
 	Tcl_AppendResult(interp, "cao expects an integer between -1 and 7",
@@ -132,10 +154,12 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   }
 
   if(! ARG_IS_I(1, mesh[0])) {
+
     if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) ) {
       Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
       return TCL_ERROR;
     } else {
+  printf ("Please ignore the following \"expected integer but got\" warning message.\n");
       mesh[0] = il.e[0];
       mesh[1] = il.e[1];
       mesh[2] = il.e[2];
@@ -307,7 +331,7 @@ int tclprint_to_result_p3m(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "p3m ", buffer, " ", (char *) NULL);
   }
   
-  sprintf(buffer,"%d",p3m.params.mesh[0]);
+  sprintf(buffer,"{ %d %d %d }", p3m.params.mesh[0], p3m.params.mesh[1], p3m.params.mesh[2]);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   sprintf(buffer,"%d",p3m.params.cao);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
