@@ -154,11 +154,8 @@ if { [catch {
 	setmd periodic 1 1 1
 	setmd box_l $box_l $box_l $box_l
 	inter coulomb 1.0 p3m 20.0 32 3 0.106218531447 7.62417115511e-05
-puts "fuck1 tcl\n"
 	inter coulomb epsilon metallic n_interpol 32768 mesh_off 0.5 0.5 0.5
-puts "fuck2 tcl\n"
 	inter coulomb elc 1e-4 [expr 0.2*[lindex [setmd box_l] 2]] dielectric 1.5 1.2 2.0
-puts "fuck3 tcl\n"
 	# to ensure force recalculation
 	invalidate_system
 	integrate 0
