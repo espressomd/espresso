@@ -676,6 +676,18 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if(argc < 1) {
+    	  Tcl_AppendResult(interp, "lbboundary pore outer_radius <rad> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      lbb->c.pore.outer_rad_right =  lbb->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
@@ -697,6 +709,20 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
 	      
       if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.rad_right)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.outer_rad_right)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 3; argv += 3;
