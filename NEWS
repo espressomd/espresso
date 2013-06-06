@@ -48,6 +48,9 @@ New user-visible features
 
 * Support of P3M on GPU.
 
+* Allow the p3m to dump the mesh in x, y, and z (before it only dumped the mesh in x). This allows for the dumping of the p3m in blockfile format in 
+the case of non-cubic boxes. It will also now be possible to tune setting a non-cubic mesh.
+
 User-visible changes
 --------------------
 
