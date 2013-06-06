@@ -395,18 +395,19 @@ void on_coulomb_change()
   case COULOMB_DH:
     break;    
 #ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_init();
-    // fall through
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    if ( box_l[0] != box_l[1] && box_l[0] != box_l[2] && box_l[0]) {
+    if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
       printf ("P3M on the GPU requires a cubic box!\n");
       exit(1);
     }
     p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
-    // fall through
+    p3m_init();
+    break;
 #endif
+  case COULOMB_ELC_P3M:
+    ELC_init();
+    // fall through
   case COULOMB_P3M:
     p3m_init();
     break;
