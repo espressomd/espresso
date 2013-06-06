@@ -154,10 +154,6 @@ void friction_thermo_lb_rotation(Particle *p)
   extern LB_parameters_gpu lbpar_gpu ;
   double friction,coupl_pref2;
   int j,ii;
-#ifndef SHANCHEN
-  friction = lbpar_gpu.friction; 
-  coupl_pref2 = lbpar_gpu.lb_coupl_pref2 ;
-#else  // SHANCHEN
   /* workaround: we just use the larger translational friction for the 
      rotational degrees of freedom. FIXME */
   friction = lbpar_gpu.friction[0];
@@ -203,7 +199,6 @@ void friction_thermo_lb_rotation(Particle *p)
  // not implemented for CPU LB
 #endif // LB_GPU
 
-#endif // ROTATION
 
 
 
