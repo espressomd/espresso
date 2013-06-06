@@ -60,7 +60,7 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
           Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
           return TCL_ERROR;
         } else {
-        printf ("Please ignore the following \"expected integer but got\" warning message.\n");
+        printf ("Please ignore the following \"expected integer but got\" warning message if you gave 3 mesh values.\n");
             mesh[0] = il.e[0];
             mesh[1] = il.e[1];
             mesh[2] = il.e[2];
@@ -159,7 +159,7 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
       Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
       return TCL_ERROR;
     } else {
-  printf ("Please ignore the following \"expected integer but got\" warning message.\n");
+  printf ("Please ignore the following \"expected integer but got\" warning message if you gave 3 mesh values.\n");
       mesh[0] = il.e[0];
       mesh[1] = il.e[1];
       mesh[2] = il.e[2];

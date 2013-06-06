@@ -415,8 +415,8 @@ int p3m_set_params(double r_cut, int *mesh, int cao,
   p3m.params.r_cut    = r_cut;
   p3m.params.r_cut_iL = r_cut*box_l_i[0];
   p3m.params.mesh[2]  = mesh[2];
-  p3m.params.mesh[1] = mesh[1];
-  p3m.params.mesh[0] = mesh[0];
+  p3m.params.mesh[1]  = mesh[1];
+  p3m.params.mesh[0]  = mesh[0];
   p3m.params.cao      = cao;
 
   if (alpha > 0) {
@@ -1555,15 +1555,24 @@ int p3m_adaptive_tune(char **log) {
 
   /* mesh loop */
   /* we're tuning the density of mesh points, which is the same in every direction. */
+  printf ("shit %E %E\n",mesh_density_min,mesh_density_max);
   for (mesh_density=mesh_density_min;mesh_density<=mesh_density_max;mesh_density+=0.1) {
     tmp_cao = cao;
 
     P3M_TRACE(fprintf(stderr, "%d: trying meshdensity %lf.\n", this_node, mesh_density));
+    printf ("fuck\n");
 
-    tmp_mesh[0] = (int)(box_l[0]*mesh_density);
-    tmp_mesh[1] = (int)(box_l[1]*mesh_density);
-    tmp_mesh[2] = (int)(box_l[2]*mesh_density);
-
+    if ( p3m.params.mesh[0] < 0 || p3m.params.mesh[1] < 0 || p3m.params.mesh[2] < 0 ) {
+      tmp_mesh[0] = (int)(box_l[0]*mesh_density);
+      tmp_mesh[1] = (int)(box_l[1]*mesh_density);
+      tmp_mesh[2] = (int)(box_l[2]*mesh_density);
+    }
+    else {
+      tmp_mesh[0] = p3m.params.mesh[0];
+      tmp_mesh[1] = p3m.params.mesh[1];
+      tmp_mesh[2] = p3m.params.mesh[2];
+    }
+    
     if(tmp_mesh[0] % 2)
       tmp_mesh[0]++;
     if(tmp_mesh[1] % 2) 
@@ -1576,7 +1585,7 @@ int p3m_adaptive_tune(char **log) {
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
 			  &tmp_alpha_L, &tmp_accuracy); 
     /* some error occured during the tuning force evaluation */
-    P3M_TRACE(fprintf(stderr,"delta_acceracy: %lf tune time: %lf\n", p3m.params.accuracy - tmp_accuracy,tmp_time));
+    P3M_TRACE(fprintf(stderr,"delta_accuracy: %lf tune time: %lf\n", p3m.params.accuracy - tmp_accuracy,tmp_time));
     //    if (tmp_time == -1) con;
     /* this mesh does not work at all */
     if (tmp_time < 0.0) continue;
