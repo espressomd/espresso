@@ -1555,12 +1555,10 @@ int p3m_adaptive_tune(char **log) {
 
   /* mesh loop */
   /* we're tuning the density of mesh points, which is the same in every direction. */
-  printf ("shit %E %E\n",mesh_density_min,mesh_density_max);
   for (mesh_density=mesh_density_min;mesh_density<=mesh_density_max;mesh_density+=0.1) {
     tmp_cao = cao;
 
     P3M_TRACE(fprintf(stderr, "%d: trying meshdensity %lf.\n", this_node, mesh_density));
-    printf ("fuck\n");
 
     if ( p3m.params.mesh[0] < 0 || p3m.params.mesh[1] < 0 || p3m.params.mesh[2] < 0 ) {
       tmp_mesh[0] = (int)(box_l[0]*mesh_density);
