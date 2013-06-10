@@ -118,7 +118,7 @@ of the options \lit{dens}, \lit{visc}, \lit{bulk_visc}, \lit{friction},
 they are set to the default values. The three elements of the
 coupling matrix can be supplied with the option \lit{sc_coupling},
 and the mobility coefficient can be
-specified with the option \lit{mobility}. Additional details are
+specified with the option \lit{mobility}. By default no copuling is activated, and the relaxation parameter associated to the mobility is zero, corresponding to an infinite value for \lit{mobility}. Additional details are
 given in \ref{sec:shanchen} and \ref{sec:scmd-coupling}.
 
 \begin{essyntax}
@@ -141,10 +141,11 @@ on both the computer being used as well as the compiler.  This is currently  onl
 
 \section{LB as a thermostat}
 \begin{essyntax}
-  thermostat \require{1 or 2}{lb} \var{T}
+  thermostat \require{1 or 2 or 3}{lb} \var{T}
   \begin{features}
   \required[1]{LB}
   \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
   \end{features}
 \end{essyntax}
 The LBM implementation in \es uses Ahlrichs and D\"unweg's point coupling method
@@ -200,11 +201,13 @@ is in general symmetric, so in the present implementation only three
 real values need to be specified with the option \lit{sc_coupling}.
 The \lit{lbfluid} command sets the density of the two components
 to the values specified by the option \lit{dens}, and these can be
-modified with the \lit{lbdnode} command.
+modified with the \lit{lbnode} command. Note that the number of
+active fluid components can be accessed through the global variable
+\lit{lb_components}.
 
 
-\section{Coupling particles to the Shan-Chen fluid\label{sec:scmd-coupling}}
-The coupling of particles to the Shan-Chen fluid has been conceived as an extension
+\section{Coupling particle dynamics to the Shan-Chen fluid\label{sec:scmd-coupling}}
+The coupling of particle dynamics to the Shan-Chen fluid has been conceived as an extension
 of the Ahlrichs and D\"unweg's point coupling, with the force acting on a particle given by
 \begin{equation}
   \vec{F} = -\frac{\sum_\zeta \gamma_\zeta \rho_\zeta(\vec{r})}{\sum_\zeta \rho_\zeta(\vec{r}_\zeta)} \left(\vec{v}-\vec{u}\right) + \vec{F}_R + \vec{F}^{ps},
@@ -230,7 +233,7 @@ lattice nodes is performed on the neighboring sites of $\vec{r}$ and the index $
 This force has the effect of raising or lowering (depending on the
 sign of the coupling constant $\lambda_\zeta$) the density in the
 eight nodes around a particle. 
-The particle property \lit{solvation} sets the coupling constants
+The particle property \lit{solvation} (Chap.~\ref{chap:part}) sets the coupling constants
 $\lambda_A$,$\kappa_A$,$\lambda_B$ and $\kappa_B$, where $A$ and
 $B$ denote the first and second fluid component, respectively.
 
@@ -240,7 +243,9 @@ $B$ denote the first and second fluid component, respectively.
 \begin{essyntax}
   lbnode \var{x} \var{y} \var{z} \alt{print \asep set} \var{args}
   \begin{features}
-  \required{LB}
+  \required[1]{LB}
+  \required[2]{LB_GPU}
+  \required[3]{SHANCHEN}
   \end{features}
 \end{essyntax}
 The \lit{lbnode} command allows to inspect (\lit{print}) and modify
@@ -249,7 +254,7 @@ direction starts with 0.  For both commands you have to specify what
 quantity should be printed
 or modified. Print allows the following arguments: \\
 \begin{tabular}{p{0.2\columnwidth}p{0.5\columnwidth}}
-  \lit{rho}\ & the density (one scalar$^1$ or two scalars$^2$). \\
+  \lit{rho}\ & the density (one scalar$^{1,2}$ or two scalars$^3$). \\
   \lit{u} & the fluid velocity (three floats: $u_x$, $u_y$, $u_z$) \\
   \lit{pi} & the fluid velocity (six floats: $\Pi_{xx}$, $\Pi_{xy}$, $\Pi_{yy}$, $\Pi_{xz}$,  $\Pi_{yz}$,  $\Pi_{zz}$) \\
   \lit{pi_neq} & the nonequilbrium part of the pressure tensor, components as above. \\
@@ -274,7 +279,7 @@ puts [ lbnode 0 0 0 set u 0.01 0. 0.]
 \section{Visualization}
 \label{ssec:LBvisualization}
 \begin{essyntax}
-  lbfluid print \opt{vtk} \var{property} \var{filename}
+  lbfluid print \opt{vtk} \var{property} \var{filename} [\var{filename}]
 \end{essyntax}
 The print parameter of the \lit{lbfluid} command is a feature to simplify visualization. It allows for the export of the whole fluid field data into a 
 file with name \var{filename} at once. Currently supported values for the 
@@ -282,6 +287,7 @@ parameter \var{property} are boundary and velocity when using \lit{LB} or \lit{L
 \lit{vtk} enables export in the vtk format which is readable by visualization software such as paraview\footnote{http://www.paraview.org/} or mayavi2\footnote{http://code.enthought.com/projects/mayavi/}. Otherwise gnuplot readable data will be 
 exported. If you plan to use paraview for visualization, note that also the 
 particle positions can be exportet in the VTK format \ref{sec:writevtk}.
+If the \lit{SHANCHEN} bicomponent fluid is used, two filenames have to be supplied when exporting the density field, to save both components.
 
 \section{Setting up boundary conditions}
 \begin{essyntax}
