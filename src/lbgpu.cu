@@ -299,7 +299,6 @@ __device__ void update_rho_v(float *mode, unsigned int index, LB_node_force_gpu 
       /** if forces are present, the momentum density is redefined to
       * inlcude one half-step of the force action.  See the
       * Chapman-Enskog expansion in [Ladd & Verberg]. */
-
       u_tot[0] += 0.5f*node_f.force[(0+ii*3)*para.number_of_nodes + index];
       u_tot[1] += 0.5f*node_f.force[(1+ii*3)*para.number_of_nodes + index];
       u_tot[2] += 0.5f*node_f.force[(2+ii*3)*para.number_of_nodes + index];
@@ -345,7 +344,6 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
  
       /** in Shan-Chen we have to relax the momentum modes as well using the mobility, but
           the total momentum is conserved */  
-      // TODO: implement for LB_COMPONENTS>2 and LB_COMPONENTS == 1 
 #ifdef SHANCHEN
       mode[1 + ii * LBQ] = j[0] + para.gamma_mobility[0]*(mode[1 + ii * LBQ] - j[0]);
       mode[2 + ii * LBQ] = j[1] + para.gamma_mobility[0]*(mode[2 + ii * LBQ] - j[1]);
@@ -382,7 +380,6 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 */
 __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gpu *rn){
   float Rho;
-
 #ifdef SHANCHEN
   random_wrapper(rn);
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
@@ -395,8 +392,8 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 #endif
   
   
-  for(int ii=0;ii<LB_COMPONENTS;++ii) {  // TODO: should components random part be correlated?
-      /* SAW: TODO NOTE this works only for 2 components */
+  for(int ii=0;ii<LB_COMPONENTS;++ii) {  
+      
       Rho = mode[0 + ii * LBQ] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
       /** momentum modes */
       random_wrapper(rn);
@@ -428,40 +425,6 @@ __device__ void thermalize_modes(float *mode, unsigned int index, LB_randomnr_gp
 }
 
 
-#ifndef SHANCHEN
-/*-------------------------------------------------------*/
-/**normalization of the modes need befor backtransformation into velocity space
- * @param mode		Pointer to the local register values mode (Input/Output)
-*/
-__device__ void normalize_modes(float* mode){
-
-  /** normalization factors enter in the back transformation */
-  mode[0] *= 1.f;
-  mode[1] *= 3.f;
-  mode[2] *= 3.f;
-  mode[3] *= 3.f;
-  mode[4] *= 3.f/2.f;
-  mode[5] *= 9.f/4.f;
-  mode[6] *= 3.f/4.f;
-  mode[7] *= 9.f;
-  mode[8] *= 9.f;
-  mode[9] *= 9.f;
-  mode[10] *= 3.f/2.f;
-  mode[11] *= 3.f/2.f;
-  mode[12] *= 3.f/2.f;
-  mode[13] *= 9.f/2.f;
-  mode[14] *= 9.f/2.f;
-  mode[15] *= 9.f/2.f;
-  mode[16] *= 1.f/2.f;
-  mode[17] *= 9.f/4.f;
-  mode[18] *= 3.f/4.f;
-
-}
-
-
-#else // SHANCHEN
-
-
 /*-------------------------------------------------------*/
 /**normalization of the modes need befor backtransformation into velocity space
  * @param mode		Pointer to the local register values mode (Input/Output)
@@ -470,32 +433,29 @@ __device__ void normalize_modes(float* mode){
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
 
-  /** normalization factors enter in the back transformation */
-  mode[0 + ii * LBQ] *= 1.f;
-  mode[1 + ii * LBQ] *= 3.f;
-  mode[2 + ii * LBQ] *= 3.f;
-  mode[3 + ii * LBQ] *= 3.f;
-  mode[4 + ii * LBQ] *= 3.f/2.f;
-  mode[5 + ii * LBQ] *= 9.f/4.f;
-  mode[6 + ii * LBQ] *= 3.f/4.f;
-  mode[7 + ii * LBQ] *= 9.f;
-  mode[8 + ii * LBQ] *= 9.f;
-  mode[9 + ii * LBQ] *= 9.f;
-  mode[10 + ii * LBQ] *= 3.f/2.f;
-  mode[11 + ii * LBQ] *= 3.f/2.f;
-  mode[12 + ii * LBQ] *= 3.f/2.f;
-  mode[13 + ii * LBQ] *= 9.f/2.f;
-  mode[14 + ii * LBQ] *= 9.f/2.f;
-  mode[15 + ii * LBQ] *= 9.f/2.f;
-  mode[16 + ii * LBQ] *= 1.f/2.f;
-  mode[17 + ii * LBQ] *= 9.f/4.f;
-  mode[18 + ii * LBQ] *= 3.f/4.f;
-
+      /** normalization factors enter in the back transformation */
+      mode[0 + ii * LBQ] *= 1.f;
+      mode[1 + ii * LBQ] *= 3.f;
+      mode[2 + ii * LBQ] *= 3.f;
+      mode[3 + ii * LBQ] *= 3.f;
+      mode[4 + ii * LBQ] *= 3.f/2.f;
+      mode[5 + ii * LBQ] *= 9.f/4.f;
+      mode[6 + ii * LBQ] *= 3.f/4.f;
+      mode[7 + ii * LBQ] *= 9.f;
+      mode[8 + ii * LBQ] *= 9.f;
+      mode[9 + ii * LBQ] *= 9.f;
+      mode[10 + ii * LBQ] *= 3.f/2.f;
+      mode[11 + ii * LBQ] *= 3.f/2.f;
+      mode[12 + ii * LBQ] *= 3.f/2.f;
+      mode[13 + ii * LBQ] *= 9.f/2.f;
+      mode[14 + ii * LBQ] *= 9.f/2.f;
+      mode[15 + ii * LBQ] *= 9.f/2.f;
+      mode[16 + ii * LBQ] *= 1.f/2.f;
+      mode[17 + ii * LBQ] *= 9.f/4.f;
+      mode[18 + ii * LBQ] *= 3.f/4.f;
+  }
 }
-}
 
-
-#endif 
 
 
 /*-------------------------------------------------------*/
@@ -733,7 +693,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
 
 
   #pragma unroll
-  for(int ii=0;ii<LB_COMPONENTS;++ii) {  //SAW TODO
+  for(int ii=0;ii<LB_COMPONENTS;++ii) {  
        C[0] += (1.f + para.gamma_bulk[ii])*u[0]*node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] + 
                 1.f/3.f*(para.gamma_bulk[ii]-para.gamma_shear[ii])*(u[0]*node_f.force[(0 + ii*3 ) * para.number_of_nodes + index] + 
                         u[1]*node_f.force[(1 + ii*3 ) * para.number_of_nodes + index] + 
@@ -755,7 +715,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
   }
 
   #pragma unroll
-  for(int ii=0;ii<LB_COMPONENTS;++ii) {  //SAW TODO
+  for(int ii=0;ii<LB_COMPONENTS;++ii) {  
       /** update momentum modes */
 #ifdef SHANCHEN
       float mobility_factor=1.f/2.f*(1.f+para.gamma_mobility[0]);
@@ -809,7 +769,6 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode,  LB_rho_v
   float pi[6]={0.f,0.f,0.f,0.f,0.f,0.f};
   float rho_tot=0.f;
 
-  /* FIXME: this has to be extended for Shan Chen, introducing the nonlocal term */
   if(n_a.boundary[index] != 1){
 
      for(int ii=0;ii<LB_COMPONENTS;ii++){
@@ -959,7 +918,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared) {
 
   if(index<para.number_of_nodes){
     if(!n_a.boundary[index]){
-     for(int ii=0;ii<LB_COMPONENTS;++ii) {  //SAW TODO: check that temperature is computed correctly in SC
+     for(int ii=0;ii<LB_COMPONENTS;++ii) {  
          calc_mode(mode, n_a, index,ii);
          jsquared = mode[1]*mode[1]+mode[2]*mode[2]+mode[3]*mode[3];
          atomicadd(cpu_jsquared, jsquared);
@@ -1063,12 +1022,11 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
 #else //SHANCHEN
  #pragma unroll
  for(int i=0; i<8; ++i){ 
-  interpolated_u1 += d_v[node_index[i]].v[0]/8.;  
-  interpolated_u2 += d_v[node_index[i]].v[1]/8.;
-  interpolated_u3 += d_v[node_index[i]].v[2]/8.;
+    interpolated_u1 += d_v[node_index[i]].v[0]/8.;  
+    interpolated_u2 += d_v[node_index[i]].v[1]/8.;
+    interpolated_u3 += d_v[node_index[i]].v[2]/8.;
  }
 #endif
-
 #ifdef SHANCHEN
  #pragma unroll
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
@@ -1077,15 +1035,13 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   interpolated_rho[ii]  = 0.f;
   gradrho1 = gradrho2 = gradrho3 = 0.f;
   
- // SAW TODO: introduce the density dependence in friction
- // SAW TODO: comment on the gradient calculation...
+ // TODO: should one introduce a density-dependent friction ?
   calc_mode(mode, n_a, node_index[0],ii);
   Rho = mode[0] + para.rho[ii]*para.agrid*para.agrid*para.agrid;
   interpolated_rho[ii] += delta[0] * Rho; 
   partgrad1[ii*8 + 0] += Rho * solvation2;
   partgrad2[ii*8 + 0] += Rho * solvation2;
   partgrad3[ii*8 + 0] += Rho * solvation2;
-  // SAW TODO check the weighted grad coefficients...
   gradrho1 -=(delta[0] + delta[1]) * Rho; 
   gradrho2 -=(delta[0] + delta[2]) * Rho; 
   gradrho3 -=(delta[0] + delta[4]) * Rho; 
@@ -1186,7 +1142,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
    * take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
  float rhotot=0;
- 
+
  #pragma unroll
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
 	rhotot+=interpolated_rho[ii];
@@ -1196,15 +1152,16 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  /* Viscous force */
 
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
+  viscforce[0+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
+  viscforce[1+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
+  viscforce[2+ii*3] -= interpolated_rho[ii]*para.friction[ii]*(particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau)/rhotot;
+
 #ifdef LB_ELECTROHYDRODYNAMICS
-  viscforce[0+ii*3] += - interpolated_rho[ii]*para.friction[ii] * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau - particle_data[part_index].mu_E[0])/rhotot;
-  viscforce[1+ii*3] += - interpolated_rho[ii]*para.friction[ii] * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau - particle_data[part_index].mu_E[1])/rhotot;
-  viscforce[2+ii*3] += - interpolated_rho[ii]*para.friction[ii] * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau - particle_data[part_index].mu_E[2])/rhotot;
-#else
-  viscforce[0+ii*3] += - interpolated_rho[ii]*para.friction[ii] * (particle_data[part_index].v[0]/para.time_step - interpolated_u1*para.agrid/para.tau)/rhotot;
-  viscforce[1+ii*3] += - interpolated_rho[ii]*para.friction[ii] * (particle_data[part_index].v[1]/para.time_step - interpolated_u2*para.agrid/para.tau)/rhotot;
-  viscforce[2+ii*3] += - interpolated_rho[ii]*para.friction[ii] * (particle_data[part_index].v[2]/para.time_step - interpolated_u3*para.agrid/para.tau)/rhotot;
+  viscforce[0+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[0]/rhotot;
+  viscforce[1+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[1]/rhotot;
+  viscforce[2+ii*3] += interpolated_rho[ii]*para.friction[ii] * particle_data[part_index].mu_E[2]/rhotot;
 #endif
+
   /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
 #ifdef GAUSSRANDOM
   gaussian_random(rn_part);
@@ -1222,14 +1179,19 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
   (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 
-
   particle_force[part_index].f[0] += viscforce[0+ii*3];
   particle_force[part_index].f[1] += viscforce[1+ii*3];
   particle_force[part_index].f[2] += viscforce[2+ii*3];
+  /* the average force from the particle to surrounding nodes is transmitted back to preserve momentum */
+  for(int node=0 ; node < 8 ; node++ ) { 
+     particle_force[part_index].f[0] -= partgrad1[node+ii*8]/8.;
+     particle_force[part_index].f[1] -= partgrad2[node+ii*8]/8.;
+     particle_force[part_index].f[2] -= partgrad3[node+ii*8]/8.;
+  }
   /* note that scforce is zero if SHANCHEN is not #defined */
-  delta_j[0+3*ii] -=  (scforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
-  delta_j[1+3*ii] -=  (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
-  delta_j[2+3*ii] -=  (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;  	
+  delta_j[0+3*ii] -= (scforce[0+ii*3]+viscforce[0+ii*3])*para.time_step*para.tau/para.agrid;
+  delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
+  delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;  	
  }
 }
 
@@ -1241,7 +1203,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  * @param node_f    		Pointer to the node force (Output).
 */
 __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1, float * partgrad2, float * partgrad3,  unsigned int *node_index, LB_node_force_gpu node_f){
-/* SAW TODO: should the drag depend on the density?? */
+/* TODO: should the drag depend on the density?? */
 /* NOTE: partgrad is not zero only if SHANCHEN is defined. It is initialized in calc_node_force. Alternatively one could 
          specialize this function to the single component LB */ 
  for(int ii=0; ii < LB_COMPONENTS; ++ii) { 
@@ -1568,7 +1530,6 @@ __device__ __inline__ float calc_massmode(LB_nodes_gpu n_a, int single_nodeindex
 }
 
 
-//SAW TODO: comment
 __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,int component_index, int x, int y, int z, float *p){ 
       float tmp_p[3]={0.f,0.f,0.f};
       float pseudo;
@@ -1662,7 +1623,7 @@ __device__ __inline__ void calc_shanchen_contribution(LB_nodes_gpu n_a,int compo
       p[2]=tmp_p[2];
 }
 
-/** function to calc shanchen forces // SAW TODO check docs here
+/** function to calc shanchen forces 
  * @param *mode			Pointer to the local register values mode (Output)
  * @param n_a			Pointer to local node residing in array a(Input)
  * @param node_f		Pointer to local node force (Input)
@@ -1673,7 +1634,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
 #endif
 #if ( LB_COMPONENTS == 1  ) 
   #warning shanchen forces not implemented 
-#else  // LB_COMPONENTS== 1 
+#else  
   
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   unsigned int xyz[3];
@@ -1694,7 +1655,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
        for(int jj=0;jj<LB_COMPONENTS;jj++){ 
              float tmpp[3]={0.f,0.f,0.f};
              calc_shanchen_contribution(n_a, jj, x,y,z, tmpp);
-// SAW: TODO  coupling HAS to be rescaled with agrid....
+// FIXME  coupling HAS to be rescaled with agrid....
              p[0] += - para.coupling[(LB_COMPONENTS)*ii+jj]  * pseudo  * tmpp[0];
              p[1] += - para.coupling[(LB_COMPONENTS)*ii+jj]  * pseudo  * tmpp[1];
              p[2] += - para.coupling[(LB_COMPONENTS)*ii+jj]  * pseudo  * tmpp[2];
@@ -1704,7 +1665,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
        node_f.force[(2+ii*3)*para.number_of_nodes + index]+=p[2];
      }
   }
-#endif // LB_COMPONENTS== 1   // SAW TODO: finish implementing
+#endif 
   return; 
 }
 
@@ -1962,27 +1923,28 @@ __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_n
      calc_values_in_MD_units(n_a,mode,  d_p_v, d_v, single_nodeindex,0);
   }
 }
-/**calculate momentum of the hole fluid kernel
- * @param node_f			node force struct (Input)
- * @param *sum				Pointer to result storage value (Output)
- * @param n_a				Pointer to local node residing in array a (Input)
-*/
-__global__ void momentum(LB_nodes_gpu n_a, float *sum, LB_node_force_gpu node_f) {
-  float mode[4];
+__global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, float *sum) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
-
   if(index<para.number_of_nodes){
-   for(int ii=0;ii<LB_COMPONENTS;++ii){
-    calc_mode(mode, n_a, index,ii);
-    if(n_a.boundary[index]){
-      mode[1] = mode[2] = mode[3] = 0.f;
+    float j[3]={0.f,0.f,0.f};
+    float rhotot=0.f;
+    for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+	rhotot += d_v[index].rho[ii];
     }
-    atomicadd(&(sum[0]), mode[1]+node_f.force[(0+ii*3)*para.number_of_nodes + index]); 
-    atomicadd(&(sum[1]), mode[2]+node_f.force[(1+ii*3)*para.number_of_nodes + index]);
-    atomicadd(&(sum[2]), mode[3]+node_f.force[(2+ii*3)*para.number_of_nodes + index]);
-   }
+    j[0] += rhotot*d_v[index].v[0]  ;
+    j[1] += rhotot*d_v[index].v[1]  ;
+    j[2] += rhotot*d_v[index].v[2]  ;
+#ifdef LB_BOUNDARIES_GPU
+    if(n_a.boundary[index]){
+	j[0]=j[1]=j[2]=0.0f;
+    }
+#endif
+    atomicadd(&(sum[0]), j[0]); 
+    atomicadd(&(sum[1]), j[1]); 
+    atomicadd(&(sum[2]), j[2]); 
   }
+
 }
 
 /**print single node boundary flag
@@ -2398,7 +2360,7 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, tot_momentum, node_f));
+  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, tot_momentum));
   
   cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
   
@@ -2438,7 +2400,6 @@ void lb_calc_fluid_temperature_GPU(double* host_temp){
 
 
 #ifdef SHANCHEN
-//SAW TODO: comment
 void lb_calc_shanchen_GPU(){
   /** values for the kernel call */
   int threads_per_block = 64;

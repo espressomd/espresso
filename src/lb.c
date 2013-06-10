@@ -41,7 +41,10 @@
 #include "lb-boundaries.h"
 #include "lb.h"
 
+int lb_components = LB_COMPONENTS; // global variable holding the number of fluid components (see global.c)
+
 #ifdef LB
+ 
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions();

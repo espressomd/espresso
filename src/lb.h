@@ -30,6 +30,8 @@
 #include "utils.h"
 #include "lattice.h"
 
+extern int lb_components ; // global variable holding the number of fluid components
+
 #ifdef LB
 
 /* For the D3Q19 model most functions have a separate implementation

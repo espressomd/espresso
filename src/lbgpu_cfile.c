@@ -68,7 +68,7 @@ LB_parameters_gpu lbpar_gpu = { .rho=SC0, .mu=SC0, .viscosity=SC0, .gamma_shear=
                                 .number_of_particles=0, .fluct=0, .calc_val=1, .external_force=0, .ext_force={0.0, 0.0, 0.0}, 
                                  .your_seed=12345, .reinit=0,
 #ifdef SHANCHEN
-                                .coupling=SC20, .gamma_mobility=SC0
+                                .coupling=SC20, .gamma_mobility=SC1
 #endif
 };
 
