@@ -28,6 +28,8 @@
 
 #include "utils.h"
 #include "config.h"
+#include "cuda_common.h"
+
 #ifdef LB_GPU
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -90,7 +92,7 @@ typedef struct {
    *  Note: Has to be larger than MD time step! */
   float tau;
 
-  /** MD tiemstep */
+  /** MD timestep */
   float time_step;
 
   unsigned int dim_x;
@@ -130,7 +132,9 @@ typedef struct {
   float v[3];
 
 } LB_rho_v_gpu;
-
+/* this structure is almost duplicated for memory efficiency. When the stress 
+   tensor element are needed at every timestep, this features should be explicitly
+   switched on */
 typedef struct { 
   /** density of the node */
   float rho[LB_COMPONENTS];
@@ -140,10 +144,10 @@ typedef struct {
   float pi[6];  
 } LB_rho_v_pi_gpu;
 
-/** Data structure holding the velocitydensities for the Lattice Boltzmann system. */
+/** Data structure holding the velocity densities for the Lattice Boltzmann system. */
 typedef struct {
 
-  /** velocitydensity of the node */
+  /** velocity density of the node */
   float *vd;
   /** seed for the random gen */
   unsigned int *seed;
@@ -151,7 +155,6 @@ typedef struct {
   unsigned int *boundary;
 
 } LB_nodes_gpu;
-
 
 /** Data structure for the randomnr and the seed. */
 typedef struct {
@@ -161,27 +164,6 @@ typedef struct {
   unsigned int seed;
 
 } LB_randomnr_gpu;
-
-typedef struct {
-  /** force on the particle given to md part */
-  float f[3];
-
-} LB_particle_force_gpu;
-
-typedef struct {
-  /** particle position given from md part*/
-  float p[3];
-  /** particle momentum struct velocity p.m->v*/
-  float v[3];
-#ifdef SHANCHEN
-  float solvation[2*LB_COMPONENTS];
-#endif 
-#ifdef LB_ELECTROHYDRODYNAMICS
-  float mu_E[3];
-#endif
-  unsigned int fixed;
-
-} LB_particle_gpu;
 
 typedef struct {
 
@@ -197,11 +179,6 @@ typedef struct {
 
 } LB_extern_nodeforce_gpu;
 
-typedef struct {
-
-  unsigned int seed;
-
-} LB_particle_seed_gpu;
 
 void on_lb_params_change_gpu(int field);
 
@@ -238,6 +215,9 @@ extern int n_lb_boundaries;
 extern "C" {
 #endif
 
+void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
+void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
+
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
@@ -261,17 +241,15 @@ void lb_reinit_fluid_gpu();
 
 /** (Re-)initializes the particle array*/
 void lb_realloc_particles_gpu();
+void lb_realloc_particle_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-void lb_particle_GPU(LB_particle_gpu *host_data);
 #ifdef SHANCHEN
 void lb_calc_shanchen_GPU();
 #endif
 void lb_free_GPU();
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
-void lb_realloc_particle_GPU(LB_parameters_gpu *lbpar_gpu, LB_particle_gpu **host_data);
-void lb_copy_forces_GPU(LB_particle_force_gpu *host_forces);
 void lb_print_node_GPU(int single_nodeindex, LB_rho_v_pi_gpu *host_print_values);
 #ifdef LB_BOUNDARIES_GPU
 void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* host_boundary_node_list, int* host_boundary_index_list, float* lb_bounday_velocity);
@@ -279,7 +257,6 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes, int* 
 void lb_init_extern_nodeforces_GPU(int n_extern_nodeforces, LB_extern_nodeforce_gpu *host_extern_nodeforces, LB_parameters_gpu *lbpar_gpu);
 
 void lb_calc_particle_lattice_ia_gpu();
-void lb_send_forces_gpu();
 
 void lb_calc_fluid_mass_GPU(double* mass);
 void lb_calc_fluid_momentum_GPU(double* host_mom);

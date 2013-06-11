@@ -84,11 +84,11 @@
 #include "overlap_tcl.h"
 #include "harmonic_tcl.h"
 #include "subt_lj_tcl.h"
-#include "tcl/fsi/area_force_local_tcl.h"
-#include "tcl/fsi/area_force_global_tcl.h"
-#include "tcl/fsi/volume_force_tcl.h"
-#include "tcl/fsi/stretching_force_tcl.h"
-#include "tcl/fsi/bending_force_tcl.h"
+#include "tcl/object-in-fluid/area_force_local_tcl.h"
+#include "tcl/object-in-fluid/area_force_global_tcl.h"
+#include "tcl/object-in-fluid/volume_force_tcl.h"
+#include "tcl/object-in-fluid/stretching_force_tcl.h"
+#include "tcl/object-in-fluid/bending_force_tcl.h"
 
 ///
 int tclprint_to_result_CoulombIA(Tcl_Interp *interp);
@@ -119,7 +119,12 @@ int tclcommand_inter_parse_coulomb(Tcl_Interp * interp, int argc, char ** argv)
     Tcl_ResetResult(interp);
     if (ARG0_IS_S("elc") && ((coulomb.method == COULOMB_P3M) || (coulomb.method == COULOMB_ELC_P3M)))
       return tclcommand_inter_coulomb_parse_elc_params(interp, argc - 1, argv + 1);
-    if (coulomb.method == COULOMB_P3M)
+    if (ARG0_IS_S("elc") && coulomb.method == COULOMB_P3M_GPU) {
+      Tcl_AppendResult(interp, "elc can not be used in conjunction with the gpu p3m",
+		       (char *) NULL);
+      return TCL_ERROR;
+    }
+    if (coulomb.method == COULOMB_P3M || coulomb.method == COULOMB_P3M_GPU)
       return tclcommand_inter_coulomb_parse_p3m_opt_params(interp, argc, argv);
     else {
       Tcl_AppendResult(interp, "expect: inter coulomb <bjerrum>",
@@ -512,6 +517,7 @@ int tclprint_to_result_CoulombIA(Tcl_Interp *interp)
     tclprint_to_result_p3m(interp);
     tclprint_to_result_ELC(interp);
     break;
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: tclprint_to_result_p3m(interp); break;
 #endif
   case COULOMB_DH: tclprint_to_result_dh(interp); break;

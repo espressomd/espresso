@@ -63,6 +63,8 @@
 #include "lb-boundaries.h"
 #include "ghmc.h"
 #include "domain_decomposition.h"
+#include "p3m_gpu.h"
+#include "cuda_common.h"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -70,6 +72,10 @@ static int reinit_electrostatics = 0;
 static int reinit_magnetostatics = 0;
 #ifdef LB_GPU
 static int lb_reinit_particles_gpu = 1;
+#endif
+
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+static int reinit_particle_comm_gpu = 1;
 #endif
 
 void on_program_start()
@@ -264,8 +270,14 @@ if(this_node == 0){
     }
   }
 }
-
 #endif
+#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
+  if (reinit_particle_comm_gpu){
+    gpu_change_number_of_part_to_comm();
+    reinit_particle_comm_gpu = 0;
+  }
+#endif
+
 
 #ifdef METADYNAMICS
   meta_init();
@@ -323,6 +335,7 @@ void on_observable_calc()
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       p3m_count_charged_particles();
       break;
@@ -364,7 +377,9 @@ void on_particle_change()
 #ifdef LB_GPU
   lb_reinit_particles_gpu = 1;
 #endif
-
+#if defined(LB_GPU) || defined (ELECTROSTATICS)
+  reinit_particle_comm_gpu = 1;
+#endif
   invalidate_obs();
 
   /* the particle information is no longer valid */
@@ -383,6 +398,16 @@ void on_coulomb_change()
   case COULOMB_DH:
     break;    
 #ifdef P3M
+#ifdef CUDA
+  case COULOMB_P3M_GPU:
+    if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
+      printf ("P3M on the GPU requires a cubic box!\n");
+      exit(1);
+    }
+    p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
+    p3m_init();
+    break;
+#endif
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -498,6 +523,7 @@ void on_boxl_change() {
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     break;
@@ -553,6 +579,7 @@ void on_cell_structure_change()
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_init();
     break;

@@ -226,7 +226,7 @@ int lb_lbfluid_set_visc(double * p_visc){//
 }
 int lb_lbfluid_set_bulk_visc(double *p_bulk_visc){ //
   
-  for(int ii=0;ii<LB_COMPONENTS;ii++){
+ for(int ii=0;ii<LB_COMPONENTS;ii++){
   if ( p_bulk_visc[ii] <= 0 ) {
     return -1;
   }
@@ -241,8 +241,8 @@ int lb_lbfluid_set_bulk_visc(double *p_bulk_visc){ //
     mpi_bcast_lb_params(LBPAR_BULKVISC);
 #endif
     }
-  }
-  return 0;
+ }
+ return 0;
 }
 
 int lb_lbfluid_set_gamma_odd(double *p_gamma_odd){//
@@ -2777,7 +2777,7 @@ void calc_particle_lattice_ia() {
 
       /* all fields have to be recalculated */
       for (i=0; i<lblattice.halo_grid_volume; ++i) {
-	lbfields[i].recalc_fields = 1;
+        lbfields[i].recalc_fields = 1;
       }
 
     }
@@ -2789,17 +2789,17 @@ void calc_particle_lattice_ia() {
       np = cell->n ;
       for (i=0;i<np;i++) {
 #ifdef GAUSSRANDOM
-	p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random();
-	p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random();
-	p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random();
+        p[i].lc.f_random[0] = lb_coupl_pref2*gaussian_random();
+        p[i].lc.f_random[1] = lb_coupl_pref2*gaussian_random();
+        p[i].lc.f_random[2] = lb_coupl_pref2*gaussian_random();
 #else
-	p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
-	p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
-	p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);
+        p[i].lc.f_random[0] = lb_coupl_pref*(d_random()-0.5);
+        p[i].lc.f_random[1] = lb_coupl_pref*(d_random()-0.5);
+        p[i].lc.f_random[2] = lb_coupl_pref*(d_random()-0.5);
 #endif
 
 #ifdef ADDITIONAL_CHECKS
-	rancounter += 3;
+        rancounter += 3;
 #endif
       }
     }
@@ -2815,14 +2815,14 @@ void calc_particle_lattice_ia() {
 
       for (i=0;i<np;i++) {
 
-	lb_viscous_coupling(&p[i],force);
+        lb_viscous_coupling(&p[i],force);
 
-	/* add force to the particle */
-	p[i].f.f[0] += force[0];
-	p[i].f.f[1] += force[1];
-	p[i].f.f[2] += force[2];
+        /* add force to the particle */
+        p[i].f.f[0] += force[0];
+        p[i].f.f[1] += force[1];
+        p[i].f.f[2] += force[2];
 
-	ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
+        ONEPART_TRACE(if(p->p.identity==check_id) fprintf(stderr,"%d: OPT: LB f = (%.6e,%.3e,%.3e)\n",this_node,p->f.f[0],p->f.f[1],p->f.f[2]));
   
       }
 
@@ -2873,11 +2873,11 @@ void lb_calc_average_rho() {
   for (z=1; z<=lblattice.grid[2]; z++) {
     for (y=1; y<=lblattice.grid[1]; y++) {
       for (x=1; x<=lblattice.grid[0]; x++) {
-	
-	lb_calc_local_rho(index, &rho);
-	local_rho += rho;
 
-	index++;
+        lb_calc_local_rho(index, &rho);
+        local_rho += rho;
+
+        index++;
       }
       index += 2;
     }

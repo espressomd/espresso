@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 The ESPResSo project
+# Copyright (C) 2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -101,6 +101,7 @@ if { $components == 1 }  {
 }
 # check for the right terminal velocity
 set difference [expr ($vsum/$count - $vel_works)/$vel_works]
+puts "The velocity is [expr $vsum/$count] compared to the reference $vel_works."
 if { $difference > 1e-3 } {
   error_exit "Particle terminal velocity is wrong: coupling might be broken."
 }

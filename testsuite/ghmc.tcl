@@ -50,7 +50,7 @@ proc read_data {file} {
 proc write_data {file} {
     set f [open $file "w"]
     blockfile $f write variable box_l
-    blockfile $f write particles {id pos v omega} 
+    blockfile $f write particles {id pos v omega_lab} 
     close $f
 }
 

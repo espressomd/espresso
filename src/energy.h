@@ -47,11 +47,11 @@
 #include "overlap.h"
 #include "gb.h"
 #include "fene.h"
-#include "fsi/stretching_force.h"
-#include "fsi/area_force_local.h"
-#include "fsi/area_force_global.h"
-#include "fsi/bending_force.h"
-#include "fsi/volume_force.h"
+#include "object-in-fluid/stretching_force.h"
+#include "object-in-fluid/area_force_local.h"
+#include "object-in-fluid/area_force_global.h"
+#include "object-in-fluid/bending_force.h"
+#include "object-in-fluid/volume_force.h"
 #include "harmonic.h"
 #include "subt_lj.h"
 #include "angle.h"
@@ -220,6 +220,7 @@ MDINLINE void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3]
     /* real space coulomb */
     switch (coulomb.method) {
 #ifdef P3M
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       ret = p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;

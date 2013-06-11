@@ -867,8 +867,42 @@ int set_particle_quat(int part, double quat[4])
   return ES_OK;
 }
 
-int set_particle_omega(int part, double omega[3])
+int set_particle_omega_lab(int part, double omega_lab[3])
 {
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+
+  /* Internal functions require the body coordinates
+     so we need to convert to these from the lab frame */
+
+  double A[9];
+  double omega[3];
+  Particle particle;
+
+  get_particle_data(part, &particle);
+  define_rotation_matrix(&particle, A);
+
+  omega[0] = A[0 + 3*0]*omega_lab[0] + A[0 + 3*1]*omega_lab[1] + A[0 + 3*2]*omega_lab[2];
+  omega[1] = A[1 + 3*0]*omega_lab[0] + A[1 + 3*1]*omega_lab[1] + A[1 + 3*2]*omega_lab[2];
+  omega[2] = A[2 + 3*0]*omega_lab[0] + A[2 + 3*1]*omega_lab[1] + A[2 + 3*2]*omega_lab[2];
+
+  mpi_send_omega(pnode, part, omega);
+  return ES_OK;
+}
+
+int set_particle_omega_body(int part, double omega[3])
+{
+  /* Nothing to be done but pass, since the coordinates
+     are already in the proper frame */
+
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -883,8 +917,42 @@ int set_particle_omega(int part, double omega[3])
   return ES_OK;
 }
 
-int set_particle_torque(int part, double torque[3])
+int set_particle_torque_lab(int part, double torque_lab[3])
 {
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+
+  /* Internal functions require the body coordinates
+     so we need to convert to these from the lab frame */
+
+  double A[9];
+  double torque[3];
+  Particle particle;
+
+  get_particle_data(part, &particle);
+  define_rotation_matrix(&particle, A);
+
+  torque[0] = A[0 + 3*0]*torque_lab[0] + A[0 + 3*1]*torque_lab[1] + A[0 + 3*2]*torque_lab[2];
+  torque[1] = A[1 + 3*0]*torque_lab[0] + A[1 + 3*1]*torque_lab[1] + A[1 + 3*2]*torque_lab[2];
+  torque[2] = A[2 + 3*0]*torque_lab[0] + A[2 + 3*1]*torque_lab[1] + A[2 + 3*2]*torque_lab[2];
+
+  mpi_send_torque(pnode, part, torque);
+  return ES_OK;
+}
+
+int set_particle_torque_body(int part, double torque[3])
+{
+  /* Nothing to be done but pass, since the coordinates
+     are already in the proper frame */
+
   int pnode;
   if (!particle_node)
     build_particle_node();

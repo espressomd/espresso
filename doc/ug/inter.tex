@@ -1220,7 +1220,7 @@ requires assigning charges to the particles.  This is done using the
 \index{interactions!P3M|mainindex}
 
 \begin{essyntax}
-  inter coulomb \var{l_B} p3m 
+  inter coulomb \var{l_B} p3m [gpu] 
   \var{r_\mathrm{cut}} \alt{\var{mesh} \asep \{\var{mesh_x} \var{mesh_y} \var{mesh_z}\}} \var{cao} \var{alpha}
   \begin{features}
     \required{ELECTROSTATICS}
@@ -1235,6 +1235,8 @@ This command activates the P3M method to compute the electrostatic
 interactions between charged particles.  The different parameters are
 described in more detail in \cite{deserno98a}.
 \begin{description}
+\item[\var{[gpu]}]
+The optional flag gpu causes the far field portion of p3m to be calculated on the GPU.  It should be noted that this does not always provide significant increase in performance.  Furthermore it computes the far field interactions with only single precision which limits the maximum precision.  Furthermore the algorithm does not work in combination with certain other methods implemented in ESPResSo and only for the case of cubic boxes.
 \item[\var{r_\mathrm{cut}}] The real space cutoff as a positive
   floating point number.
 \item[\var{mesh}] The number of mesh points, as a single positive
@@ -1252,10 +1254,11 @@ using P3M! If you are not sure, read the following references
 \cite{ewald21, hockney88, kolafa92, deserno98, deserno98a, deserno00,
   deserno00a, cerda08a}.
 
+
 \subsubsection{Tuning Coulomb P3M}
 \label{ssec:tunep3m}
 \begin{essyntax}
-  inter coulomb \var{l_B} p3m \alt{tune \asep tunev2}
+  inter coulomb \var{l_B} p3m \alt{tune \asep tunev2} [gpu]
   accuracy \var{accuracy}\\
   \opt{r_cut \var{r_\mathrm{cut}}}
   \opt{mesh \var{mesh}}

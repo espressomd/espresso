@@ -1,3 +1,9 @@
+# Copyright (C) 2013 Olaf Lenz
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
 if ((`ps -o nice= $$` < 5)); then 
     renice -n 5 $$
 fi
@@ -36,7 +42,8 @@ function doc() {
 
 function dist() {
     start "DIST"
-    make dist dist-xz
+    make dist 
+    make dist-xz
     end "DIST"
 }
 

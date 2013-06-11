@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IA_DATA_H
-#define IA_DATA_H
+#ifndef _INTERACTION_DATA_H
+#define _INTERACTION_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
 */
@@ -123,6 +123,8 @@
   #define COULOMB_RF 9
   /** Coulomb method is Reaction-Field BUT as interactions */
   #define COULOMB_INTER_RF 10
+  /** Coulomb method is P3M with GPU based long range part calculation */
+  #define COULOMB_P3M_GPU 11
 #endif
 /*@}*/
 
