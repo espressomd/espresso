@@ -1733,7 +1733,6 @@ void lb_reinit_fluid() {
 void lb_init() {
 
   LB_TRACE(printf("Begin initialzing fluid on CPU\n"));
-
   if (lb_sanity_checks()) return;
 
   /* initialize the local lattice domain */

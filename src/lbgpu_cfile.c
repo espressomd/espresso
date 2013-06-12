@@ -172,17 +172,18 @@ void lb_reinit_fluid_gpu() {
   only the fluid-related memory on the gpu.*/
 void lb_release_gpu(){
 
-  if(host_nodes !=NULL) free(host_nodes);
-  if(host_values!=NULL) free(host_values);
+  if(host_nodes !=NULL) { free(host_nodes); host_nodes=NULL ;} 
+  if(host_values!=NULL) { free(host_values); host_values=NULL;}
 //  if(host_forces!=NULL) free(host_forces);
 //  if(host_data  !=NULL) free(host_data);
 }
 /** (Re-)initializes the fluid. */
 void lb_reinit_parameters_gpu() {
   int ii;
+
+  lbpar_gpu.time_step = (float)time_step;
   for(ii=0;ii<LB_COMPONENTS;++ii){
     lbpar_gpu.mu[ii] = 0.0;
-    lbpar_gpu.time_step = (float)time_step;
   
     if (lbpar_gpu.viscosity[ii] > 0.0) {
       /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
@@ -232,11 +233,14 @@ void lb_reinit_parameters_gpu() {
  *  the Lattice Boltzmann system. All derived parameters
  *  and the fluid are reset to their default values. */
 void lb_init_gpu() {
+
   LB_TRACE(printf("Begin initialzing fluid on GPU\n"));
+
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
   lb_realloc_particles_gpu();
+
   lb_init_GPU(&lbpar_gpu);
 
   LB_TRACE(printf("Initialzing fluid on GPU successful\n"));

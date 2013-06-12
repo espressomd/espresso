@@ -66,10 +66,10 @@ static LB_rho_v_gpu *device_rho_v_pi= NULL;
 static LB_rho_v_pi_gpu *print_rho_v_pi= NULL;
 
 /** structs for velocity densities */
-static LB_nodes_gpu nodes_a;
-static LB_nodes_gpu nodes_b;
+static LB_nodes_gpu nodes_a = {.vd=NULL,.seed=NULL,.boundary=NULL};
+static LB_nodes_gpu nodes_b = {.vd=NULL,.seed=NULL,.boundary=NULL};;
 /** struct for node force */
-static LB_node_force_gpu node_f;
+static LB_node_force_gpu node_f = {.force=NULL} ;
 
 static LB_extern_nodeforce_gpu *extern_nodeforces = NULL;
 
@@ -94,8 +94,8 @@ static size_t size_of_rho_v_pi;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
+static __device__ __constant__ int para2;
 static __device__ __constant__ LB_parameters_gpu para;
-static __device__ __constant__ LB_parameters_gpu para2;
 static const float c_sound_sq = 1.f/3.f;
 
 /**cuda streams for parallel computing on cpu and gpu */
@@ -104,7 +104,6 @@ static const float c_sound_sq = 1.f/3.f;
 //extern cudaError_t err;
 //extern cudaError_t _err;
 
-int initflag = 0;
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device functions called by kernel functions */
@@ -1939,37 +1938,42 @@ void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
  * @param *lbpar_gpu	Pointer to parameters to setup the lb field
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
-#define alloc_and_check(var,size)\
-  if( (var) != NULL ) cudaFree((var));\
-  cuda_safe_mem(cudaMalloc((void**)&var, size));
+#define free_and_realloc(var,size)\
+  { if( (var) != NULL ) cudaFree((var)); cuda_safe_mem(cudaMalloc((void**)&var, size)); } 
 
   size_of_rho_v     = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
   size_of_rho_v_pi  = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
 
   /** Allocate structs in device memory*/
   if(extended_values_flag==0) { 
-              alloc_and_check(device_rho_v, size_of_rho_v);
+              free_and_realloc(device_rho_v, size_of_rho_v);
   } else { 
               /* see the notes to the stucture device_rho_v_pi above...*/
-              alloc_and_check(device_rho_v_pi, size_of_rho_v_pi);
+              free_and_realloc(device_rho_v_pi, size_of_rho_v_pi);
   }
 
 
   /* TODO: this is a almost a copy copy of  device_rho_v thik about eliminating it, and maybe pi can be added to device_rho_v in this case*/
-  alloc_and_check(print_rho_v_pi  , size_of_rho_v_pi);
-  alloc_and_check(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
-  alloc_and_check(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
-  alloc_and_check(node_f.force    , lbpar_gpu->number_of_nodes * 3  * LB_COMPONENTS * sizeof(float));
+  free_and_realloc(print_rho_v_pi  , size_of_rho_v_pi);
+  free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
+  free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
+  free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes * 3  * LB_COMPONENTS * sizeof(float));
 
-  alloc_and_check(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( int));
-  alloc_and_check(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( int));
-  alloc_and_check(nodes_b.seed    , lbpar_gpu->number_of_nodes * sizeof( int));
-  alloc_and_check(nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof( int));
+  free_and_realloc(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_and_realloc(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_and_realloc(nodes_b.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
+  free_and_realloc(nodes_b.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));
 
   gpu_init_particle_comm();
 
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
+
+  /**check flag if lb gpu init works*/
+  free_and_realloc(gpu_check, sizeof(int));
+  if(h_gpu_check!=NULL) free(h_gpu_check) ;  
+  h_gpu_check = (int*)malloc(sizeof(int));
+
   /** values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
@@ -1977,6 +1981,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   cudaStreamCreate(&stream[0]);
+
   /** values for the particle kernel */
   int threads_per_block_particles = 64;
   int blocks_per_grid_particles_y = 4;
@@ -2379,9 +2384,9 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float* host_velocity){
 */
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu){
   /**write parameters in const memory*/
-  cuda_safe_mem(cudaMemcpyToSymbol(para2, lbpar_gpu, sizeof(LB_parameters_gpu)));
-  exit(printf("here 2 \n"));
+  cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
 }
+
 /**integration kernel for the lb gpu fluid update called from host */
 void lb_integrate_GPU(){
   

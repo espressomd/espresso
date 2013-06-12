@@ -132,7 +132,7 @@ void on_program_start()
 
 #ifdef LB_GPU
   if(this_node == 0){
-    //lb_pre_init_gpu();
+ //   lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
