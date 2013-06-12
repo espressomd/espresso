@@ -2388,7 +2388,9 @@ void mpi_bcast_cuda_global_part_vars() {
 
 void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
 #ifdef CUDA
+printf ("%p is pointer node %d\n",gpu_get_global_particle_vars_pointer_host(), this_node);
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+  printf ("%p is pointerpost\n",gpu_get_global_particle_vars_pointer_host());
 #endif
 }
 

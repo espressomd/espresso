@@ -1406,6 +1406,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));
 //maybe coalesced alloc  
+  printf ("I am on node %d\n", this_node);
   gpu_init_particle_comm();
 
 	

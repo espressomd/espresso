@@ -14,7 +14,8 @@
   static void cuda_mpi_send_forces_slave();
 
   void cuda_bcast_global_part_params() {
-    mpi_bcast_cuda_global_part_vars();
+    //mpi_bcast_cuda_global_part_vars();
+    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
   }
   /*************** REQ_GETPARTS ************/
   void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)

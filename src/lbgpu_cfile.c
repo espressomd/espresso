@@ -22,7 +22,7 @@
  * C file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.h.
  */
-#include <mpi.h>
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -201,9 +201,6 @@ void lb_init_gpu() {
 
 /*@}*/
 
-/***********************************************************************/
-/** \name MPI stuff */
-/***********************************************************************/
 
 int lb_lbnode_set_extforce_GPU(int ind[3], double f[3])
 {

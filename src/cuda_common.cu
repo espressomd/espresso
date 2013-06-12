@@ -122,24 +122,22 @@ extern "C" {
   /** change number of particles to be communicated to the GPU
   */
   void gpu_change_number_of_part_to_comm() {
-  
+ printf( "into init %d realnumpart %d enabled %d\n", this_node, n_total_particles , global_part_vars_host.communication_enabled); 
     //we only run the function if there are new particles which have been created since the last call of this function
-    if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 ) {
+    if ( this_node == 0 && global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 ) {
       
       global_part_vars_host.seed = (unsigned int)i_random(max_ran);
       global_part_vars_host.number_of_particles = n_total_particles;
 
-      if (this_node == 0) {
-        cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
+      cuda_safe_mem(cudaMemcpyToSymbol(global_part_vars_device, &global_part_vars_host, sizeof(CUDA_global_part_vars)));
 
-        if ( particle_forces_host )    cudaFreeHost(particle_forces_host); //if the arrays exists free them to prevent memory leaks
-        if ( particle_data_host )      cudaFreeHost(particle_data_host);
-        if ( particle_forces_device )  cudaFree(particle_forces_device);
-        if ( particle_data_device )    cudaFree(particle_data_device);
-        if ( particle_seeds_device )   cudaFree(particle_seeds_device);
-      }
+      if ( particle_forces_host )    cudaFreeHost(particle_forces_host); //if the arrays exists free them to prevent memory leaks
+      if ( particle_data_host )      cudaFreeHost(particle_data_host);
+      if ( particle_forces_device )  cudaFree(particle_forces_device);
+      if ( particle_data_device )    cudaFree(particle_data_device);
+      if ( particle_seeds_device )   cudaFree(particle_seeds_device);
 
-      if ( global_part_vars_host.number_of_particles && this_node == 0 ) {
+      if ( global_part_vars_host.number_of_particles ) {
 
         
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
@@ -163,9 +161,9 @@ extern "C" {
 
         KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device, particle_seeds_device));
       }
-     cuda_bcast_global_part_params();
     }
-
+    cuda_bcast_global_part_params();
+printf( "out of init on node %d now %d particles\n", this_node, global_part_vars_host.number_of_particles);
   }
 
   /** setup and call particle reallocation from the host
@@ -187,7 +185,7 @@ extern "C" {
       }
     }
     global_part_vars_host.communication_enabled = 1;
-
+printf ("before call node %d\n", this_node);
     gpu_change_number_of_part_to_comm();
 
   }
@@ -210,6 +208,7 @@ extern "C" {
   }
 
   void copy_part_data_to_gpu() {
+printf (" copy parts to gpu %d enabled %d parts %d node\n", global_part_vars_host.communication_enabled,  global_part_vars_host.number_of_particles , this_node);
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
      
       cuda_mpi_get_particles(particle_data_host);
@@ -225,7 +224,7 @@ extern "C" {
   /** setup and call kernel to copy particle forces to host
   */
   void copy_forces_from_GPU() {
-
+printf (" copy force %d enabled %d parts %d node\n", global_part_vars_host.communication_enabled,  global_part_vars_host.number_of_particles , this_node);
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
 
       /** Copy result from device memory to host memory*/
