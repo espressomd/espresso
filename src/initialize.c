@@ -272,8 +272,9 @@ if(this_node == 0){
   if (reinit_particle_comm_gpu){
     gpu_change_number_of_part_to_comm();
     reinit_particle_comm_gpu = 0;
-    printf ("on part change worked\n");
+    printf ("%d: reinit on part change worked\n", this_node);
   }
+  cuda_comm_part_vars();
 #endif
 
 
