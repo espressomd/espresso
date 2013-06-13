@@ -162,6 +162,9 @@ void calc_long_range_virials()
   case COULOMB_ELC_P3M:
     fprintf(stderr, "WARNING: pressure calculated, but ELC pressure not implemented\n");
     break;
+  case COULOMB_P3M_GPU:
+    fprintf(stderr, "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
+    break;
   case COULOMB_P3M: {
     int k;
     p3m_charge_assign();
@@ -231,6 +234,7 @@ void init_virials(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE: n_coulomb = 0; break;
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:  n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
@@ -276,6 +280,7 @@ void init_p_tensor(Observable_stat *stat)
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE: n_coulomb = 0; break;
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:  n_coulomb = 2; break;
   default: n_coulomb  = 1;
   }
@@ -811,6 +816,9 @@ int get_nonbonded_interaction(Particle *p1, Particle *p2, double *force)
     if (coulomb.method != COULOMB_NONE) {
       switch (coulomb.method) {
 #ifdef P3M
+      case COULOMB_P3M_GPU:
+	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle GPU P3M electrostatics so it is left out\n");  
+	break;
       case COULOMB_P3M:
 	fprintf(stderr,"WARNING: Local stress tensor calculation cannot handle P3M electrostatics so it is left out\n");  
 	break;

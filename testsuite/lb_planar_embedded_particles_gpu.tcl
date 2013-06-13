@@ -15,12 +15,12 @@
 
 source "tests_common.tcl"
 
-require_feature "LB"
-require_feature "LB_BOUNDARIES"
+require_feature "LB_GPU"
+require_feature "LB_BOUNDARIES_GPU"
 require_feature "EXTERNAL_FORCES"
 
 puts "---------------------------------------------------------------"
-puts "- Testcase lb_planar.tcl running on [format %02d [setmd n_nodes]] nodes"
+puts "- Testcase lb_planar_gpu.tcl running on [format %02d [setmd n_nodes]] nodes"
 puts "---------------------------------------------------------------"
 
 # Here we test different features of the LB subsytem in a planar slit geometry.
@@ -31,16 +31,21 @@ puts "---------------------------------------------------------------"
 set l 12
 setmd box_l $l $l $l
 setmd time_step 0.01
-thermostat lb 0
 
-set agrid 1.00
+set agrid 0.75
 set visc 7.
 set rho 2.
 set tau 0.04
 
 setmd skin [ expr 0.4*$agrid ]
 
-lbfluid cpu agrid $agrid visc $visc dens $rho friction 1 tau $tau 
+lbfluid gpu agrid $agrid visc $visc dens $rho tau $tau
+lbfluid friction 1
+thermostat lb 0
+
+for {set i 0} {$i < 10} {incr i} {
+    part 0 pos $i 0 0
+}
 
 # Wall positions are set to $agrid and $l-$agrid, leaving one layer of boundary nodes 
 # on each side of the box
@@ -66,6 +71,7 @@ lbboundary wall normal [ lindex $normal2 0 ]  [ lindex $normal2 1 ]  [ lindex $n
 set dist [ expr $l - 2*$agrid ]
 
 integrate 2000
+
 set accuracy_u 0.
 set meanabs_u 0.
 set accuracy_p 0.
@@ -115,7 +121,7 @@ set fx [ expr $f_hydrostatic*[ lindex $normal1 0 ] ]
 set fy [ expr $f_hydrostatic*[ lindex $normal1 1 ] ]
 set fz [ expr $f_hydrostatic*[ lindex $normal1 2 ] ]
 
-lbfluid cpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force $fx $fy $fz
+lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force $fx $fy $fz
 integrate 1000
 
 # Equation of state: p = rho*c_2**2
@@ -166,7 +172,7 @@ set f_body 0.1
 set f_body_vec [ list 0 0 0 ]
 lset f_body_vec $couette_flow_direction $f_body
 
-lbfluid cpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force \
+lbfluid gpu agrid $agrid visc $visc dens $rho friction 1 tau $tau ext_force \
   [ lindex $f_body_vec 0 ] [ lindex $f_body_vec 1 ] [ lindex $f_body_vec 2 ]
 
 integrate 2000

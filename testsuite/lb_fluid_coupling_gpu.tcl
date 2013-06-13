@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 The ESPResSo project
+# Copyright (C) 2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -44,12 +44,12 @@ set fdragx [expr -$dragx/$box_vol]
 set fdragy [expr -$dragy/$box_vol]
 set fdragz [expr -$dragz/$box_vol]
 
+# set the particle
+part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] v 0.0 0.0 0.0 f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
+
 # set the lbfluid and thermostat
 lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
 thermostat lb 0.0
-
-# set the particle
-part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] v 0.0 0.0 0.0 f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
 
 # get over the initial acceleration
 integrate 200
@@ -70,6 +70,7 @@ for { set i 0 } { $i < 100 } { incr i } {
 # check for the right terminal velocity
 set vel_works 0.1100128183
 set difference [expr ($vsum/$count - $vel_works)/$vel_works]
+puts "The velocity is [expr $vsum/$count] compared to the reference $vel_works."
 if { $difference > 1e-3 } {
   error_exit "Particle terminal velocity is wrong: coupling might be broken."
 }

@@ -28,6 +28,7 @@ extern "C" {
 //#include "lb-boundaries.h" //TODO: needed to get rid of the code duplication below
 #include "config.h"
 #include "electrokinetics.h"
+#include "cuda_common.h"
 #include "lbgpu.h"
 #include "constraint.h"
 
@@ -80,37 +81,8 @@ extern int lattice_switch;
 #endif
   /* end of code duplication */
 
-
-  /* get rid of this code duplication by moving this from lbgpu.cu to lbgpu.h */
-  #define ek_safe_mem(a) _ek_safe_mem((a), __FILE__, __LINE__)
-  
-  #define KERNELCALL(_f, _a, _b, _params) \
-    _f<<<_a, _b, 0, stream[0]>>>_params; \
-    _err=cudaGetLastError(); \
-    if ( _err != cudaSuccess ) \
-    { \
-      printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
-      fprintf(stderr, "error calling %s with #thpb %d in %s:%u\n", #_f, _b, __FILE__, __LINE__); \
-      exit(EXIT_FAILURE); \
-    }
-
   extern cudaStream_t stream[1];
   extern cudaError_t _err;
-
-
-  void _ek_safe_mem( cudaError_t err,
-                      char *file,
-                      unsigned int line
-                   ) {
-                   
-      if( cudaSuccess != err) {                                             
-        fprintf(stderr, "Could not allocate gpu memory at %s:%u.\n", file, line);
-        printf("CUDA error: %s\n", cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-      }
-  }
-  /* end of code duplication */
-
 
   #define PI_FLOAT 3.14159265358979323846f
 
@@ -124,7 +96,7 @@ extern int lattice_switch;
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
   EK_parameters *ek_parameters_gpu_pointer;
   LB_parameters_gpu *ek_lbparameters_gpu;
-  LB_particle_gpu *particle_data_gpu;
+  CUDA_particle_data *particle_data_gpu;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -162,7 +134,7 @@ __device__ inline void atomicadd( float* address,
 }
 
 
-__device__ unsigned int getThreadIndex() {
+__device__ unsigned int ek_getThreadIndex() {
 
   return blockIdx.y * gridDim.x * blockDim.x +
          blockDim.x * blockIdx.x +
@@ -305,7 +277,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                                          LB_parameters_gpu *ek_lbparameters_gpu
                                        ) {
                                        
-  unsigned int index = getThreadIndex ();
+  unsigned int index = ek_getThreadIndex ();
   
   if(index < ek_parameters_gpu.number_of_nodes) {
   
@@ -870,7 +842,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
 __global__ void ek_propagate_densities( unsigned int species_index
                                       ) {
                                       
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
   
   if( index < ek_parameters_gpu.number_of_nodes ) {
   
@@ -1048,7 +1020,7 @@ __global__ void ek_apply_boundaries( unsigned int species_index,
                                      LB_node_force_gpu node_f
                                    ) {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
   unsigned int neighborindex[22];
   unsigned int coord[3];
 
@@ -1177,7 +1149,7 @@ __global__ void ek_apply_boundaries( unsigned int species_index,
 //TODO maybe make this obsolete by a multiplication in the advective fluxes, just as it's done for the diffusive ones
 __global__ void ek_clear_fluxes() {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
 
   if( index < ek_parameters_gpu.number_of_nodes ) {
   
@@ -1191,7 +1163,7 @@ __global__ void ek_clear_fluxes() {
 
 __global__ void ek_init_species_density_homogeneous() {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
 
   if(index < ek_parameters_gpu.number_of_nodes) {
   
@@ -1208,7 +1180,7 @@ __global__ void ek_init_species_density_homogeneous() {
 
 __global__ void ek_multiply_greensfcn() {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
   
   if( index < ek_parameters_gpu.dim_z *
               ek_parameters_gpu.dim_y *
@@ -1222,7 +1194,7 @@ __global__ void ek_multiply_greensfcn() {
 
 __global__ void ek_gather_species_charge_density() {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
 
   if( index < ek_parameters_gpu.number_of_nodes ) {
     ((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] = 0.0f;
@@ -1237,11 +1209,11 @@ __global__ void ek_gather_species_charge_density() {
 }
 
 
-__global__ void ek_gather_particle_charge_density( LB_particle_gpu * particle_data,
+__global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle_data,
                                                    LB_parameters_gpu * ek_lbparameters_gpu
                                                  ) {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
   unsigned int lowernode[3];
   float cellpos[3];
   float gridpos;
@@ -1340,7 +1312,7 @@ __global__ void ek_gather_particle_charge_density( LB_particle_gpu * particle_da
 
 __global__ void ek_create_greensfcn() {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
   unsigned int tmp;
   unsigned int coord[3];
   
@@ -1380,7 +1352,7 @@ __global__ void ek_create_greensfcn() {
 
 __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
 
   if( index < ek_parameters_gpu.number_of_nodes ) {
   
@@ -1398,7 +1370,7 @@ __global__ void ek_clear_boundary_densities( LB_nodes_gpu lbnode ) {
 //TODO delete
 __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 
-  unsigned int index = getThreadIndex();
+  unsigned int index = ek_getThreadIndex();
 
   if( index < ek_parameters_gpu.number_of_nodes ) {
   
@@ -1431,7 +1403,7 @@ void ek_integrate_electrostatics() {
       ( threads_per_block * blocks_per_grid_y );
     dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
     
-    lb_get_particle_pointer( &particle_data_gpu );
+    particle_data_gpu = gpu_get_particle_pointer();
     
     KERNELCALL( ek_gather_particle_charge_density,
                 dim_grid, threads_per_block,
@@ -1521,7 +1493,7 @@ void ek_init_species_density_wallcharge( float* wallcharge_species_density,
   
   if( wallcharge_species != -1 ) {
   
-    ek_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
+    cuda_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
                              ek_parameters.number_of_nodes * sizeof( float ),
                              cudaMemcpyHostToDevice                                             ) );
   }
@@ -1541,7 +1513,7 @@ void ek_init_species( int species ) {
     ek_parameters.species_index[ species ] = ek_parameters.number_of_species;
     ek_parameters.number_of_species++;
     
-    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.rho[ ek_parameters.species_index[ species ] ],
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.rho[ ek_parameters.species_index[ species ] ],
                              ek_parameters.number_of_nodes * sizeof( float )                        ) );
     
     ek_parameters.density[      ek_parameters.species_index[ species ] ] = 0.0;
@@ -1607,14 +1579,14 @@ int ek_init() {
     ek_parameters.time_step = lbpar_gpu.time_step;
     ek_parameters.number_of_nodes = ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
 
-    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.j,
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.j,
                              ek_parameters.number_of_nodes * 13 * sizeof( float ) ) );
-    ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
+    cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
     lb_get_para_pointer( &ek_lbparameters_gpu );
     lb_set_ek_pointer( ek_parameters_gpu_pointer );
     
-    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential,
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.charge_potential,
                              sizeof( cufftComplex ) *
                              ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
     
@@ -1625,7 +1597,7 @@ int ek_init() {
         return 1;
     }
     
-    ek_safe_mem( cudaMalloc( (void**) &ek_parameters.greensfcn,
+    cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.greensfcn,
                              sizeof( cufftReal ) * 
                 ek_parameters.dim_z * ek_parameters.dim_y * ( ek_parameters.dim_x / 2 + 1 ) ) );
     
@@ -1636,7 +1608,7 @@ int ek_init() {
         return 1;
     }
     
-    ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
+    cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
     blocks_per_grid_x =
       ( ek_parameters.dim_z * ek_parameters.dim_y * (ek_parameters.dim_x / 2 + 1) +
@@ -1694,7 +1666,7 @@ int ek_init() {
     initialized = true;
   }
   
-  ek_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
+  cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
   
 #ifdef EK_BOUNDARIES
   lb_init_boundaries();
