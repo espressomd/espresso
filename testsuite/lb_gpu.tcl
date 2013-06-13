@@ -114,7 +114,7 @@ thermostat off
 
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau
+lbfluid gpu agrid $agrid dens $dens visc $viscosity agrid $agrid tau $tau
 lbfluid friction $friction
 
 thermostat lb $temp

@@ -402,6 +402,8 @@ cuda_init.o: cuda_init.h
 lbgpu.o: lbgpu.h
 p3m_gpu.o: p3m_gpu.h
 
+nodist_EXTRA_libEspresso_a_SOURCES = cuda_is_cpp.cxx
+
 if TCL
 
 CUDA_SOURCES += \

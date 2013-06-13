@@ -369,6 +369,7 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef CATALYTIC_REACTIONS
   params->REACTION_range = 0.0;
 #endif
+
 }
 
 /** Copy interaction parameters. */

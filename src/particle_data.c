@@ -104,6 +104,13 @@ void init_particle(Particle *part)
   part->p.mass     = 1.0;
 #endif
 
+#ifdef SHANCHEN
+  int ii;
+  for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
+    part->p.solvation[ii]=0;
+  }
+#endif
+
 #ifdef ROTATIONAL_INERTIA
   part->p.rinertia[0] = 1.0;
   part->p.rinertia[1] = 1.0;
@@ -593,6 +600,25 @@ int set_particle_f(int part, double F[3])
   mpi_send_f(pnode, part, F);
   return ES_OK;
 }
+
+#ifdef SHANCHEN 
+int set_particle_solvation(int part, double * solvation)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_solvation(pnode, part, solvation);
+  return ES_OK;
+}
+#endif
+
 
 #ifdef MASS
 int set_particle_mass(int part, double mass)
