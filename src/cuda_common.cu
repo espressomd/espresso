@@ -122,9 +122,9 @@ extern "C" {
   /** change number of particles to be communicated to the GPU
   */
   void gpu_change_number_of_part_to_comm() {
- printf( "into init %d realnumpart %d enabled %d\n", this_node, n_total_particles , global_part_vars_host.communication_enabled); 
     //we only run the function if there are new particles which have been created since the last call of this function
-    if ( this_node == 0 && global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 ) {
+
+    if ( global_part_vars_host.number_of_particles != n_total_particles && global_part_vars_host.communication_enabled == 1 && this_node == 0) {
       
       global_part_vars_host.seed = (unsigned int)i_random(max_ran);
       global_part_vars_host.number_of_particles = n_total_particles;
@@ -137,9 +137,9 @@ extern "C" {
       if ( particle_data_device )    cudaFree(particle_data_device);
       if ( particle_seeds_device )   cudaFree(particle_seeds_device);
 
+
       if ( global_part_vars_host.number_of_particles ) {
 
-        
     #if !defined __CUDA_ARCH__ || __CUDA_ARCH__ >= 200
         /**pinned memory mode - use special function to get OS-pinned memory*/
         cudaHostAlloc((void**)&particle_data_host, global_part_vars_host.number_of_particles * sizeof(CUDA_particle_data), cudaHostAllocWriteCombined);
@@ -161,9 +161,10 @@ extern "C" {
 
         KERNELCALL(init_particle_force, dim_grid_particles, threads_per_block_particles, (particle_forces_device, particle_seeds_device));
       }
+
     }
     cuda_bcast_global_part_params();
-printf( "out of init on node %d now %d particles\n", this_node, global_part_vars_host.number_of_particles);
+
   }
 
   /** setup and call particle reallocation from the host
@@ -175,17 +176,17 @@ printf( "out of init on node %d now %d particles\n", this_node, global_part_vars
         exit(0);
       }
       if (cuda_get_n_gpus()>1) {
-        printf ("More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");
-        printf ("Note that the GPU to be used can be modified using cuda setdevice <int>\n");
+        fprintf (stderr, "More than one GPU detected, please note Espresso uses device 0 by default regardless of usage or capability\n");
+        fprintf (stderr, "Note that the GPU to be used can be modified using cuda setdevice <int>\n");
         if (cuda_check_gpu(0)!=ES_OK) {
-          printf ("WARNING!  CUDA device 0 is not capable of running Espresso but is used by default.  Espresso has detected a CUDA capable card but it is not the one used by Espresso by default\n");
-          printf ("Please set the GPU to use with the cuda setdevice <int> command.\n");
-          printf ("A list of available GPUs can be accessed using cuda list.\n");
+          fprintf (stderr, "WARNING!  CUDA device 0 is not capable of running Espresso but is used by default.  Espresso has detected a CUDA capable card but it is not the one used by Espresso by default\n");
+          fprintf (stderr, "Please set the GPU to use with the cuda setdevice <int> command.\n");
+          fprintf (stderr, "A list of available GPUs can be accessed using cuda list.\n");
         }
       }
     }
     global_part_vars_host.communication_enabled = 1;
-printf ("before call node %d\n", this_node);
+
     gpu_change_number_of_part_to_comm();
 
   }
@@ -208,7 +209,7 @@ printf ("before call node %d\n", this_node);
   }
 
   void copy_part_data_to_gpu() {
-printf (" copy parts to gpu %d enabled %d parts %d node\n", global_part_vars_host.communication_enabled,  global_part_vars_host.number_of_particles , this_node);
+
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
      
       cuda_mpi_get_particles(particle_data_host);
@@ -224,7 +225,7 @@ printf (" copy parts to gpu %d enabled %d parts %d node\n", global_part_vars_hos
   /** setup and call kernel to copy particle forces to host
   */
   void copy_forces_from_GPU() {
-printf (" copy force %d enabled %d parts %d node\n", global_part_vars_host.communication_enabled,  global_part_vars_host.number_of_particles , this_node);
+
     if ( global_part_vars_host.communication_enabled == 1 && global_part_vars_host.number_of_particles ) {
 
       /** Copy result from device memory to host memory*/
