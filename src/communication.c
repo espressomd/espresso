@@ -114,6 +114,7 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_update_mol_ids_slave) \
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
+  CB(mpi_send_solvation_slave) \
   CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
   CB(mpi_bcast_lb_params_slave) \
@@ -574,6 +575,39 @@ void mpi_send_mu_E_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
         MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_SOLV ********/
+void mpi_send_solvation(int pnode, int part, double* solvation)
+{
+#ifdef SHANCHEN
+  int ii;
+  mpi_call(mpi_send_solvation_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    for(ii=0;ii<2*LB_COMPONENTS;ii++)
+       p->p.solvation[ii]= solvation[ii];
+  }
+  else {
+    MPI_Send(&solvation, LB_COMPONENTS, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_solvation_slave(int pnode, int part)
+{
+#ifdef SHANCHEN
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(&p->p.solvation, 2*LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
   }
 
@@ -2362,14 +2396,16 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field) {
+void mpi_bcast_lb_params(int field)
+{
 #ifdef LB
   mpi_call(mpi_bcast_lb_params_slave, -1, field);
   mpi_bcast_lb_params_slave(-1, field);
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int node, int field) {
+void mpi_bcast_lb_params_slave(int node, int field)
+{
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
@@ -2386,7 +2422,8 @@ void mpi_bcast_cuda_global_part_vars() {
 #endif
 }
 
-void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
+void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy)
+{
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
 #endif

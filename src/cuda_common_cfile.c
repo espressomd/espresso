@@ -14,7 +14,9 @@
   static void cuda_mpi_send_forces_slave();
 
   void cuda_bcast_global_part_params() {
+    COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
     mpi_bcast_cuda_global_part_vars();
+    COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n", this_node));
   }
   /*************** REQ_GETPARTS ************/
   void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)
@@ -63,7 +65,14 @@
                 particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
                 particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
                 particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
-                
+             #ifdef SHANCHEN
+              // SAW TODO: does this really need to be copied every time?
+              int ii;
+              for(ii=0;ii<2*LB_COMPONENTS;ii++){
+                 particle_data_host[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
+              }
+#endif
+   
   #ifdef LB_ELECTROHYDRODYNAMICS
                 particle_data_host[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
                 particle_data_host[i+g].mu_E[1] = (float)part[i].p.mu_E[1];
@@ -130,6 +139,16 @@
           particle_data_host_sl[i+g].v[1] = (float)part[i].m.v[1];
           particle_data_host_sl[i+g].v[2] = (float)part[i].m.v[2];
           
+#ifdef SHANCHEN
+        // SAW TODO: does this really need to be copied every time?
+        int ii;
+        for(ii=0;ii<2*LB_COMPONENTS;ii++){
+           particle_data_host_sl[i+g].solvation[ii] = (float)part[i].p.solvation[ii];
+        }
+#endif
+
+
+
   #ifdef LB_ELECTROHYDRODYNAMICS
           particle_data_host_sl[i+g].mu_E[0] = (float)part[i].p.mu_E[0];
           particle_data_host_sl[i+g].mu_E[1] = (float)part[i].p.mu_E[1];

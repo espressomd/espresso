@@ -1,13 +1,15 @@
 #ifndef CUDA_COMMON_H
 #define CUDA_COMMON_H
 
-#include <cuda.h>
-#include <cuda_runtime.h>
+
 
 #include <stdio.h>
 #include "config.h" //this is required so that the ifdefs are actually defined
 
 #ifdef CUDA
+
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +39,10 @@ typedef struct {
   float p[3];
   /** particle momentum struct velocity p.m->v*/
   float v[3];
+
+#ifdef SHANCHEN
+  float solvation[2*LB_COMPONENTS];
+#endif 
 #ifdef LB_ELECTROHYDRODYNAMICS
   float mu_E[3];
 #endif

@@ -80,6 +80,7 @@ tests = \
 	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
+	sc_fluid_gpu.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
