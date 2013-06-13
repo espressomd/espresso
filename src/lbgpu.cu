@@ -94,7 +94,6 @@ static size_t size_of_rho_v_pi;
 static size_t size_of_extern_nodeforces;
 
 /**parameters residing in constant memory */
-static __device__ __constant__ int para2;
 static __device__ __constant__ LB_parameters_gpu para;
 static const float c_sound_sq = 1.f/3.f;
 
@@ -1881,18 +1880,19 @@ __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_n
      calc_values_in_MD_units(n_a,mode,  d_p_v, d_v, single_nodeindex,0);
   }
 }
-__global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, float *sum) {
+__global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu node_f, float *sum) {
 
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if(index<para.number_of_nodes){
     float j[3]={0.f,0.f,0.f};
     float rhotot=0.f;
+    float mode[4];
     for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
-	rhotot += d_v[index].rho[ii];
+        calc_mode(mode, n_a, index,ii);
+        j[0] += mode[1]+node_f.force[(0+ii*3)*para.number_of_nodes + index];
+        j[1] += mode[2]+node_f.force[(1+ii*3)*para.number_of_nodes + index];
+        j[2] += mode[3]+node_f.force[(2+ii*3)*para.number_of_nodes + index];
     }
-    j[0] += rhotot*d_v[index].v[0]  ;
-    j[1] += rhotot*d_v[index].v[1]  ;
-    j[2] += rhotot*d_v[index].v[2]  ;
 #ifdef LB_BOUNDARIES_GPU
     if(n_a.boundary[index]){
 	j[0]=j[1]=j[2]=0.0f;
@@ -2236,7 +2236,7 @@ void lb_calc_fluid_momentum_GPU(double* host_mom){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, tot_momentum));
+  KERNELCALL(momentum, dim_grid, threads_per_block,(*current_nodes, device_rho_v, node_f, tot_momentum));
   
   cudaMemcpy(host_momentum, tot_momentum, 3*sizeof(float), cudaMemcpyDeviceToHost);
   

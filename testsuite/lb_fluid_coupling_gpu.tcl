@@ -101,9 +101,12 @@ if { $components == 1 }  {
 }
 # check for the right terminal velocity
 set difference [expr ($vsum/$count - $vel_works)/$vel_works]
-puts "The velocity is [expr $vsum/$count] compared to the reference $vel_works."
+puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works : "
 if { $difference > 1e-3 } {
+  puts "FAILED"
   error_exit "Particle terminal velocity is wrong: coupling might be broken."
+} else { 
+  puts "OK"
 }
 
 exit 0

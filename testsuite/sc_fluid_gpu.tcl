@@ -70,8 +70,6 @@ for {set z 0} { $z < $box_lz } {incr z }  {
 }
 set average_momentum_per_node [vecscale [expr 1./(32*32)] $v]
 set total_absolute_momentum_per_node  ""
-lbfluid print vtk density "relaxA.vtk" "relaxB.vtk"
-lbfluid print vtk velocity "relaxV.vtk" 
 foreach c [vecscale [expr 1./(32*32)]  $vnorm  ] { lappend total_absolute_momentum_per_node [expr sqrt($c)]}
 #puts "$average_momentum_per_node  $total_absolute_momentum_per_node"
 foreach c $average_momentum_per_node {
@@ -80,8 +78,15 @@ foreach c $average_momentum_per_node {
       }
 }
 foreach c $total_absolute_momentum_per_node {
+      if { [expr abs($c) < 1e-20 ]  || [expr abs($c) > 1e-4 ]  } { 
+           lbfluid print vtk density "relaxA.vtk" "relaxB.vtk"
+           lbfluid print vtk velocity "relaxV.vtk" 
+      }
+      if { [expr abs($c) < 1e-20 ]  } { 
+	   error "average momentum per node too close to zero, this could mean that the coupling is off, check the relax*.vtk files"
+      }
       if { [expr abs($c) > 1e-4 ]  } { 
-            error "average total absolute momentum per node too large ([expr abs($c)])"
+            error "average total absolute momentum per node too large ([expr abs($c)]), check the relax*.vtk files"
       }
 }
 
