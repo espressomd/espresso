@@ -2362,14 +2362,16 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field) {
+void mpi_bcast_lb_params(int field)
+{
 #ifdef LB
   mpi_call(mpi_bcast_lb_params_slave, -1, field);
   mpi_bcast_lb_params_slave(-1, field);
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int node, int field) {
+void mpi_bcast_lb_params_slave(int node, int field)
+{
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
@@ -2381,19 +2383,15 @@ void mpi_bcast_lb_params_slave(int node, int field) {
 
 void mpi_bcast_cuda_global_part_vars() {
 #ifdef CUDA
-printf ("main call start node %d\n", this_node);
   mpi_call(mpi_bcast_cuda_global_part_vars_slave, 1, 0); // third parameter is meaningless
   mpi_bcast_cuda_global_part_vars_slave(-1,0);
-printf ("main call stop node %d\n", this_node);
 #endif
 }
 
-void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy) {
+void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy)
+{
 #ifdef CUDA
-printf ("%p is pointer node %d\n",gpu_get_global_particle_vars_pointer_host(), this_node);
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-printf ("node %d num parts %d\n",this_node, gpu_get_global_particle_vars_pointer_host()->number_of_particles);
-  printf ("%p is pointerpost\n",gpu_get_global_particle_vars_pointer_host());
 #endif
 }
 

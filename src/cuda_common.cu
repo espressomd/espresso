@@ -163,7 +163,6 @@ extern "C" {
       }
 
     }
-    cuda_bcast_global_part_params();
 
   }
 

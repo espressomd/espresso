@@ -389,7 +389,7 @@ extern "C" {
       p3m_gpu_data.G_hat_host = (REAL_TYPE *)malloc(mesh3*sizeof(REAL_TYPE));
 
       // Calculate influence function of host.
-      calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host) ;
+      calculate_influence_function( cao, mesh, box, alpha, p3m_gpu_data.G_hat_host);
 
       // Copy influence function to device.
       cudaMemcpy( p3m_gpu_data.G_hat, p3m_gpu_data.G_hat_host, mesh3*sizeof(REAL_TYPE), cudaMemcpyHostToDevice);

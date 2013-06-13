@@ -1435,7 +1435,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
   
   /** make sure particle data is communicated to the GPU */
-  printf ("I am on node %d callin gpu init second time\n", this_node);
   gpu_init_particle_comm();
   
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
