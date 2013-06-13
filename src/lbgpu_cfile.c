@@ -112,7 +112,7 @@ void lb_realloc_particles_gpu(){
   lbpar_gpu.your_seed = (unsigned int)i_random(max_ran);
 
   LB_TRACE (fprintf(stderr,"test your_seed %u \n", lbpar_gpu.your_seed));
-  gpu_init_particle_comm();
+
   lb_realloc_particle_GPU_leftovers(&lbpar_gpu);
 }
 /** (Re-)initializes the fluid according to the given value of rho. */
@@ -195,6 +195,9 @@ void lb_init_gpu() {
   lb_realloc_particles_gpu();
 	
   lb_init_GPU(&lbpar_gpu);
+  
+  gpu_init_particle_comm();
+  cuda_bcast_global_part_params();
 
   LB_TRACE(printf("Initialzing fluid on GPU successful\n"));
 }
