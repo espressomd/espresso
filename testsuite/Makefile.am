@@ -56,7 +56,6 @@ tests = \
 	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
-	sc_fluid_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
@@ -81,6 +80,7 @@ tests = \
 	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
+	sc_fluid_gpu.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
