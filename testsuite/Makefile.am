@@ -56,6 +56,7 @@ tests = \
 	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
+	sc_fluid_gpu.tcl \
 	lj.tcl \
 	lj-cos.tcl \
 	lj-generic.tcl \
