@@ -1885,7 +1885,6 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
   if(index<para.number_of_nodes){
     float j[3]={0.f,0.f,0.f};
-    float rhotot=0.f;
     float mode[4];
     for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
         calc_mode(mode, n_a, index,ii);
