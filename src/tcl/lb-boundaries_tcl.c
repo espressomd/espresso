@@ -182,14 +182,24 @@ int tclcommand_lbboundary_print_all(Tcl_Interp *interp)
 LB_Boundary *generate_lbboundary()
 {
   n_lb_boundaries++;
+  
   lb_boundaries = realloc(lb_boundaries,n_lb_boundaries*sizeof(LB_Boundary));
+  
   lb_boundaries[n_lb_boundaries-1].type = LB_BOUNDARY_BOUNCE_BACK;
+  
   lb_boundaries[n_lb_boundaries-1].velocity[0]=
   lb_boundaries[n_lb_boundaries-1].velocity[1]=
   lb_boundaries[n_lb_boundaries-1].velocity[2]=0;
+  
   lb_boundaries[n_lb_boundaries-1].force[0]=
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
+  
+#ifdef ELECTROKINETICS
+  
+  lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
+  
+#endif
   
   return &lb_boundaries[n_lb_boundaries-1];
 }

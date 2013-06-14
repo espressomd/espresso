@@ -69,17 +69,33 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     }
     
     int status = TCL_ERROR, c_num;
+    LB_Boundary *lbboundary_tmp;
     
-    if(ARG0_IS_S("wall"))
-      status = tclcommand_lbboundary_wall(generate_lbboundary(floatarg), interp, argc - 1, argv + 1);
-    else if(ARG0_IS_S("sphere"))
-      status = tclcommand_lbboundary_sphere(generate_lbboundary(floatarg), interp, argc - 1, argv + 1);
-    else if(ARG0_IS_S("cylinder"))
-      status = tclcommand_lbboundary_cylinder(generate_lbboundary(floatarg), interp, argc - 1, argv + 1);
-    else if(ARG0_IS_S("rhomboid"))
-      status = tclcommand_lbboundary_rhomboid(generate_lbboundary(floatarg), interp, argc - 1, argv + 1);
-    else if(ARG0_IS_S("pore"))
-      status = tclcommand_lbboundary_pore(generate_lbboundary(floatarg), interp, argc - 1, argv + 1);
+    if(ARG0_IS_S("wall")) {
+      lbboundary_tmp = generate_lbboundary();
+      status = tclcommand_lbboundary_wall(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
+    else if(ARG0_IS_S("sphere")) {
+      lbboundary_tmp = generate_lbboundary();
+      status = tclcommand_lbboundary_sphere(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
+    else if(ARG0_IS_S("cylinder")) {
+      lbboundary_tmp = generate_lbboundary();
+      status = tclcommand_lbboundary_cylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
+    else if(ARG0_IS_S("rhomboid")) {
+      lbboundary_tmp = generate_lbboundary();
+      status = tclcommand_lbboundary_rhomboid(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
+    else if(ARG0_IS_S("pore")) {
+      lbboundary_tmp = generate_lbboundary();
+      status = tclcommand_lbboundary_pore(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
     else if(ARG0_IS_S("delete")) {
       if(argc < 3) {
         /* delete all */

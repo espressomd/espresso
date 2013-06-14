@@ -512,7 +512,7 @@ int lb_lbfluid_print_boundary(char* filename) {
     lb_get_boundary_flags_GPU(bound_array);
 
     int xyz[3];
-    int j;	
+    int j;
     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
       xyz[0] = j%lbpar_gpu.dim_x;
       int k = j/lbpar_gpu.dim_x;
@@ -538,7 +538,7 @@ int lb_lbfluid_print_boundary(char* filename) {
       for(pos[1] = 0; pos[1] < gridsize[1]; pos[1]++)
         for(pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
           lb_lbnode_get_boundary(pos, &boundary);
-          boundary = boundary != 0 ? 1 : 0;
+          boundary = ( boundary != 0 ? 1 : 0 );
           fprintf(fp, "%f %f %f %d\n", (pos[0]+0.5)*lblattice.agrid, (pos[1]+0.5)*lblattice.agrid, (pos[2]+0.5)*lblattice.agrid, boundary);
         }
 #endif

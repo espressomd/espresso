@@ -1494,8 +1494,8 @@ void ek_init_species_density_wallcharge( float* wallcharge_species_density,
   if( wallcharge_species != -1 ) {
   
     cuda_safe_mem( cudaMemcpy( ek_parameters.rho[wallcharge_species], wallcharge_species_density,
-                             ek_parameters.number_of_nodes * sizeof( float ),
-                             cudaMemcpyHostToDevice                                             ) );
+                               ek_parameters.number_of_nodes * sizeof( float ),
+                               cudaMemcpyHostToDevice                                             ) );
   }
 }
 #endif
@@ -1514,7 +1514,7 @@ void ek_init_species( int species ) {
     ek_parameters.number_of_species++;
     
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.rho[ ek_parameters.species_index[ species ] ],
-                             ek_parameters.number_of_nodes * sizeof( float )                        ) );
+                               ek_parameters.number_of_nodes * sizeof( float )                        ) );
     
     ek_parameters.density[      ek_parameters.species_index[ species ] ] = 0.0;
     ek_parameters.D[            ek_parameters.species_index[ species ] ] = 0.0;
