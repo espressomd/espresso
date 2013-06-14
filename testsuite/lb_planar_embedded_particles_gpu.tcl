@@ -44,7 +44,7 @@ lbfluid friction 1
 thermostat lb 0
 
 for {set i 0} {$i < 10} {incr i} {
-    part 0 pos $i 0 0
+    part $i pos $i 0 0
 }
 
 # Wall positions are set to $agrid and $l-$agrid, leaving one layer of boundary nodes 
