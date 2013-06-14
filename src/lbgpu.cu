@@ -1246,7 +1246,7 @@ __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
  * @param n_a		Pointer to local node residing in array a (Input)
  * @param *d_v		Pointer to local device values (Input)
 */
-__global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
+__global__ void calculate_mesoscopic_values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
 
   float mode[19];
   unsigned int singlenode = 0;
@@ -1255,6 +1255,9 @@ __global__ void values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
   if(index<para.number_of_nodes){
     calc_m_from_n(n_a, index, mode);
     calc_values(n_a, mode, d_v, index, singlenode);
+    
+    if(n_a.boundary[index] != 0)
+      d_v[index].v[0] = d_v[index].v[1] = d_v[index].v[2] = 0.0f;
   }
 }
 
@@ -1616,7 +1619,7 @@ void lb_get_values_GPU(LB_values_gpu *host_values){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(values, dim_grid, threads_per_block, (*current_nodes, device_values));
+  KERNELCALL(calculate_mesoscopic_values, dim_grid, threads_per_block, (*current_nodes, device_values));
   cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
 
 }
