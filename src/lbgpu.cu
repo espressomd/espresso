@@ -1434,8 +1434,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
   
-  /** make sure particle data is communicated to the GPU */
-  gpu_init_particle_comm();
   
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
