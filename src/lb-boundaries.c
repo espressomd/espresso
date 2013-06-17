@@ -102,7 +102,7 @@ void lb_init_boundaries() {
     int node_charged;
     
     for(n = 0; n < n_lb_boundaries; n++) {
-printf("lb_boundaries[%d].charge_density = %f\n", n, lb_boundaries[n].charge_density); //TODO delete
+
       if(lb_boundaries[n].charge_density != 0.0) {
         charged_boundaries = 1;
         break;

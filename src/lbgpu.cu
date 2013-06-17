@@ -896,14 +896,14 @@ __device__ void calc_node_force(float *delta, float *delta_j, unsigned int *node
 }
 
 __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_parameters *ek_parameters_gpu) {
-//  mode[0] = 0.0;
+  mode[0] = 0.0;
 
-//  for(int i = 0; i < ek_parameters_gpu->number_of_species; i++) {
-//    mode[0] += ek_parameters_gpu->rho[i][index];
-//  }
-//  
-//  mode[0] /= powf(para.agrid, 3);
-//  mode[0] -= para.rho;
+  for(int i = 0; i < ek_parameters_gpu->number_of_species; i++) {
+    mode[0] += ek_parameters_gpu->rho[i][index];
+  }
+  
+  mode[0] /= powf(para.agrid, 3);
+  mode[0] -= para.rho;
 }
 /*********************************************************/
 /** \name System setup and Kernel functions */

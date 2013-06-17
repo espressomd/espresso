@@ -90,7 +90,10 @@ extern int lattice_switch;
                                      0,    0,    0,
                                   -1.0, -1.0,  0.0,
                                    0.0,  0.0, -1.0,
-                                  -1.0,    0
+                                  -1.0,    0,  {-1,-1,-1},
+                                  -1.0, -1.0, -1.0,
+                                  -1.0, -1.0, -1.0, 
+                                  -1.0
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
@@ -369,12 +372,12 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
            ek_parameters_gpu.valency[species_index] *
            ((cufftReal*) ek_parameters_gpu.charge_potential)[index]
          );
-    
+/*    TODO: Remove?
     float tune1 = 1.0f; //needs scaling when other fore directions are back on
     float tune2 = 0.5f;
     float tune3 = 0.5f;
     float wallcorrection = 0.0f; //might have to be different
-    
+*/    
     //face in x
     boltzmannfactor_neighbor =
       exp( 1.0f / ek_parameters_gpu.T *
@@ -1381,6 +1384,77 @@ __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
 }
 
 
+#ifdef EK_REACTION
+__global__ void ek_reaction( ) {
+  unsigned int index = ek_getThreadIndex();
+  unsigned int coord[3];
+
+  float* rho_reactant = &ek_parameters_gpu.rho[ek_parameters_gpu.reaction_species[0]][index];
+  float* rho_product0 = &ek_parameters_gpu.rho[ek_parameters_gpu.reaction_species[1]][index];
+  float* rho_product1 = &ek_parameters_gpu.rho[ek_parameters_gpu.reaction_species[2]][index];
+
+  float dt = ek_parameters_gpu.time_step;
+  float ct_rate = ek_parameters_gpu.reaction_ct_rate;
+  float fraction_0 = ek_parameters_gpu.reaction_fraction_0;
+  float fraction_1 = ek_parameters_gpu.reaction_fraction_1;
+
+  float rho_change = *rho_reactant * ( 1.0f - expf(-dt*ct_rate) );
+
+  rhoindex_linear2cartesian(index, coord);
+
+  if ( index < ek_parameters_gpu.number_of_nodes )
+  {
+    if ( ek_parameters_gpu.node_is_catalyst[index] == 1 )
+    {
+      *rho_reactant -= rho_change;
+      *rho_product0 += rho_change * fraction_0;
+      *rho_product1 += rho_change * fraction_1;
+    }
+    else if ( ek_parameters_gpu.node_is_catalyst[index] == 2 )
+    { 
+      *rho_reactant = ek_parameters_gpu.rho_reactant_reservoir;
+      *rho_product0 = ek_parameters_gpu.rho_product0_reservoir;
+      *rho_product1 = ek_parameters_gpu.rho_product1_reservoir; 
+    } 
+  }
+}
+
+
+__global__ void ek_reaction_tag( ) {
+  unsigned int index = ek_getThreadIndex();
+  unsigned int coord[3];
+
+  float react_rad = ek_parameters_gpu.reaction_radius;
+  float bound_rad = 4.1f;
+  float total_rad = bound_rad + react_rad;
+
+  rhoindex_linear2cartesian(index, coord);
+
+  if ( index < ek_parameters_gpu.number_of_nodes )
+  {
+    float node_radius2 = (coord[0] - ek_parameters_gpu.dim_x/2)*(coord[0] - ek_parameters_gpu.dim_x/2) +
+                         (coord[1] - ek_parameters_gpu.dim_y/2)*(coord[1] - ek_parameters_gpu.dim_y/2) +
+                         (coord[2] - ek_parameters_gpu.dim_z/2)*(coord[2] - ek_parameters_gpu.dim_z/2);
+
+    if ( node_radius2 <= total_rad*total_rad && node_radius2 > bound_rad*bound_rad && (coord[0] > ek_parameters_gpu.dim_x/2) )
+    {
+      ek_parameters_gpu.node_is_catalyst[index] = 1;
+    }
+    else if ( coord[0] == ek_parameters_gpu.dim_x - 1 || coord[0] == 0 ||
+              coord[1] == ek_parameters_gpu.dim_y - 1 || coord[1] == 0 ||
+              coord[2] == ek_parameters_gpu.dim_z - 1 || coord[2] == 0 )
+    {
+      ek_parameters_gpu.node_is_catalyst[index] = 2;
+    }
+    else
+    {
+      ek_parameters_gpu.node_is_catalyst[index] = 0;
+    }
+  }
+}
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1445,6 +1519,10 @@ void ek_integrate() {
     / (threads_per_block * blocks_per_grid_y );
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
+#ifdef EK_REACTION
+  KERNELCALL(ek_reaction, dim_grid, threads_per_block, ());
+#endif
+
   //TODO delete
   KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
   
@@ -1607,6 +1685,17 @@ int ek_init() {
         
         return 1;
     }
+
+    cudaMallocHost((void**) &ek_parameters.node_is_catalyst,
+                             sizeof( char ) * 
+                ek_parameters.dim_z*ek_parameters.dim_y*ek_parameters.dim_x );
+    
+    if(cudaGetLastError() != cudaSuccess) {
+
+        fprintf(stderr, "ERROR: Failed to allocate\n");
+
+        return 1;
+    }
     
     cuda_safe_mem( cudaMemcpyToSymbol( ek_parameters_gpu, &ek_parameters, sizeof( EK_parameters ) ) );
     
@@ -1677,6 +1766,12 @@ int ek_init() {
   dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
   
   KERNELCALL( ek_init_species_density_homogeneous, dim_grid, threads_per_block, () );
+#endif
+
+#ifdef EK_REACTION
+  blocks_per_grid_x = (ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) / (threads_per_block * blocks_per_grid_y);
+  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  KERNELCALL(ek_reaction_tag, dim_grid, threads_per_block, ());
 #endif
 
   ek_integrate_electrostatics();
@@ -1920,21 +2015,31 @@ void ek_print_parameters() {
 
   printf( "ek_parameters {\n" );
   
-  printf( "  float agrid = %f;\n",                    ek_parameters.agrid );
-  printf( "  float time_step = %f;\n",                ek_parameters.time_step );
-  printf( "  unsigned int dim_x = %d;\n",             ek_parameters.dim_x );
-  printf( "  unsigned int dim_y = %d;\n",             ek_parameters.dim_y );
-  printf( "  unsigned int dim_z = %d;\n",             ek_parameters.dim_z );
-  printf( "  unsigned int number_of_nodes = %d;\n",   ek_parameters.number_of_nodes );
-  printf( "  float viscosity = %f;\n",                ek_parameters.viscosity );
-  printf( "  float bulk_viscosity = %f;\n",           ek_parameters.bulk_viscosity );
-  printf( "  float gamma_odd = %f;\n",                ek_parameters.gamma_odd );
-  printf( "  float gamma_even = %f;\n",               ek_parameters.gamma_even );
-  printf( "  float friction = %f;\n",                 ek_parameters.friction );
-  printf( "  float T = %f;\n",                        ek_parameters.T );
-  printf( "  float bjerrumlength = %f;\n",            ek_parameters.bjerrumlength );
-  printf( "  unsigned int number_of_species = %d;\n", ek_parameters.number_of_species);  
-  printf( "  float* j = %p;\n",                       ek_parameters.j );
+  printf( "  float agrid = %f;\n",                      ek_parameters.agrid );
+  printf( "  float time_step = %f;\n",                  ek_parameters.time_step );
+  printf( "  unsigned int dim_x = %d;\n",               ek_parameters.dim_x );
+  printf( "  unsigned int dim_y = %d;\n",               ek_parameters.dim_y );
+  printf( "  unsigned int dim_z = %d;\n",               ek_parameters.dim_z );
+  printf( "  unsigned int number_of_nodes = %d;\n",     ek_parameters.number_of_nodes );
+  printf( "  float viscosity = %f;\n",                  ek_parameters.viscosity );
+  printf( "  float bulk_viscosity = %f;\n",             ek_parameters.bulk_viscosity );
+  printf( "  float gamma_odd = %f;\n",                  ek_parameters.gamma_odd );
+  printf( "  float gamma_even = %f;\n",                 ek_parameters.gamma_even );
+  printf( "  float friction = %f;\n",                   ek_parameters.friction );
+  printf( "  float T = %f;\n",                          ek_parameters.T );
+  printf( "  float bjerrumlength = %f;\n",              ek_parameters.bjerrumlength );
+  printf( "  unsigned int number_of_species = %d;\n",   ek_parameters.number_of_species); 
+  printf( "  int reaction_species[] = {%d, %d, %d};\n", ek_parameters.reaction_species[0], 
+                                                        ek_parameters.reaction_species[1], 
+                                                        ek_parameters.reaction_species[2] );
+  printf( "  float rho_reactant_reservoir = %f;\n",     ek_parameters.rho_reactant_reservoir);
+  printf( "  float rho_product0_reservoir = %f;\n",     ek_parameters.rho_product0_reservoir);
+  printf( "  float rho_product1_reservoir = %f;\n",     ek_parameters.rho_product1_reservoir);
+  printf( "  float reaction_ct_rate = %f;\n",           ek_parameters.reaction_ct_rate);
+  printf( "  float reaction_radius = %f;\n",            ek_parameters.reaction_radius); 
+  printf( "  float reaction_fraction_0 = %f;\n",        ek_parameters.reaction_fraction_0);
+  printf( "  float reaction_fraction_1 = %f;\n",        ek_parameters.reaction_fraction_0);
+  printf( "  float* j = %p;\n",                         ek_parameters.j );
   
   printf( "  float* rho[] = {%p, %p, %p, %p, %p, %p, %p, %p, %p, %p};\n",
           ek_parameters.rho[0], ek_parameters.rho[1], ek_parameters.rho[2],
@@ -2166,6 +2271,32 @@ int ek_set_ext_force( int species,
   
   return 0;
 }
+
+#ifdef EK_REACTION
+int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_radius, float reaction_fraction_0, float reaction_fraction_1 ) 
+{
+  if ( ek_parameters.species_index[reactant] == -1 ||
+       ek_parameters.species_index[product0] == -1 ||
+       ek_parameters.species_index[product1] == -1 ) 
+    return 1;
+
+  ek_parameters.reaction_species[0] = reactant;
+  ek_parameters.reaction_species[1] = product0;
+  ek_parameters.reaction_species[2] = product1;
+
+  ek_parameters.rho_reactant_reservoir = rho_reactant_reservoir;
+  ek_parameters.rho_product0_reservoir = rho_product0_reservoir;
+  ek_parameters.rho_product1_reservoir = rho_product1_reservoir;
+
+  ek_parameters.reaction_ct_rate = reaction_ct_rate;
+  ek_parameters.reaction_radius = reaction_radius; 
+
+  ek_parameters.reaction_fraction_0 = reaction_fraction_0;
+  ek_parameters.reaction_fraction_1 = reaction_fraction_1;  
+
+  return 0;
+}
+#endif
 
 #ifdef __cplusplus
 }

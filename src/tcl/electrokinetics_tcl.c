@@ -20,10 +20,28 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
   double vectarg[3];
   char int_buffer[TCL_INTEGER_SPACE];
 
+#ifdef EK_REACTION
+  int reactant,
+      product0,
+      product1;
+  double ct_rate,
+         rho_reactant_reservoir, 
+         rho_product0_reservoir, 
+         rho_product1_reservoir, 
+         radius,
+         fraction0,
+         fraction1;
+#endif
+
   if(argc < 2) {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [viscosity #float] [friction #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                [reaction [reactant_index #int] [product0_index #int] [product1_index #int] \
+                                              [reactant_resrv_density #float] [product0_resrv_density #float] \
+                                              [product1_resrv_density #float] [reaction_rate #float] \
+                                              [reaction_radius #float] [reaction_fraction_pr_0 #float] \
+                                              [reaction_fraction_pr_1 #float] \n", (char *)NULL);
     Tcl_AppendResult(interp, "                [print <density|velocity|potential|lbforce> vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float [wall ]\n", (char *)NULL); //TODO full description
     Tcl_AppendResult(interp, "                                               [sphere ]\n", (char *)NULL);
@@ -68,39 +86,39 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       }
     }
     
-    int status = TCL_ERROR, c_num;
+    int c_num;
     LB_Boundary *lbboundary_tmp;
     
     if(ARG0_IS_S("wall")) {
       lbboundary_tmp = generate_lbboundary();
-      status = tclcommand_lbboundary_wall(lbboundary_tmp, interp, argc - 1, argv + 1);
+      err = tclcommand_lbboundary_wall(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
     else if(ARG0_IS_S("sphere")) {
       lbboundary_tmp = generate_lbboundary();
-      status = tclcommand_lbboundary_sphere(lbboundary_tmp, interp, argc - 1, argv + 1);
+      err = tclcommand_lbboundary_sphere(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
     else if(ARG0_IS_S("cylinder")) {
       lbboundary_tmp = generate_lbboundary();
-      status = tclcommand_lbboundary_cylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
+      err = tclcommand_lbboundary_cylinder(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
     else if(ARG0_IS_S("rhomboid")) {
       lbboundary_tmp = generate_lbboundary();
-      status = tclcommand_lbboundary_rhomboid(lbboundary_tmp, interp, argc - 1, argv + 1);
+      err = tclcommand_lbboundary_rhomboid(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
     else if(ARG0_IS_S("pore")) {
       lbboundary_tmp = generate_lbboundary();
-      status = tclcommand_lbboundary_pore(lbboundary_tmp, interp, argc - 1, argv + 1);
+      err = tclcommand_lbboundary_pore(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
     else if(ARG0_IS_S("delete")) {
       if(argc < 3) {
         /* delete all */
         Tcl_AppendResult(interp, "Can only delete individual electrokinetics boundaries", (char *) NULL);
-        status = TCL_ERROR;
+        err = TCL_ERROR;
       }
       else {
         if(Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR)
@@ -497,6 +515,244 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             return TCL_ERROR;
           }
         }
+      }
+      else if(ARG0_IS_S("reaction")) {
+#ifndef EK_REACTION
+  Tcl_AppendResult(interp, "EK_REACTION needs to be compiled in to use electrokinetics reaction\n", (char *)NULL);
+  return TCL_ERROR;
+#else
+        argc--;
+        argv++;
+
+        if( argc < 16 ) 
+        {
+          Tcl_AppendResult(interp, "electrokinetics reaction requires 16 arguments: 8 quantifiers, 3 ints, and 7 floats\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else
+        {
+
+          int counter = 0;
+
+          while(argc > 0 && counter < 12 ) 
+          {
+            counter++;
+
+            if ( ARG_IS_S_EXACT(0,"reactant_index") ) 
+            {
+
+              if ( !ARG_IS_I(1, reactant) ) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics reactant_index requires one int as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( (reactant < 0 || reactant > MAX_NUMBER_OF_SPECIES) ) 
+              {
+                sprintf(int_buffer, "%d", MAX_NUMBER_OF_SPECIES);
+                Tcl_AppendResult(interp, "electrokinetics reactant_index #int requires a number between 0 and", int_buffer, "denoting the species\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if( ARG_IS_S_EXACT(0,"product0_index") )
+            {
+
+              if ( !ARG_IS_I(1, product0) ) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics product0_index requires one int as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( (product0 < 0 || product0 > MAX_NUMBER_OF_SPECIES) ) 
+              {
+                sprintf(int_buffer, "%d", MAX_NUMBER_OF_SPECIES);
+                Tcl_AppendResult(interp, "electrokinetics product0_index #int requires a number between 0 and", int_buffer, "denoting the species\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if ( ARG_IS_S_EXACT(0,"product1_index") ) 
+            {
+
+              if ( !ARG_IS_I(1, product1) ) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics product1_index requires one int as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( (product1 < 0 || product1 > MAX_NUMBER_OF_SPECIES) ) 
+              {
+                sprintf(int_buffer, "%d", MAX_NUMBER_OF_SPECIES);
+                Tcl_AppendResult(interp, "electrokinetics product1_index #int requires a number between 0 and", int_buffer, "denoting the species\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if ( ARG_IS_S_EXACT(0,"reactant_resrv_density") ) 
+            {
+
+              if ( !ARG_IS_D(1, rho_reactant_reservoir) ) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics reactant_resrv_density requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( rho_reactant_reservoir < 0 ) 
+              {
+                Tcl_AppendResult(interp, "the reactant reservoir density has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if (ARG_IS_S_EXACT(0,"product0_resrv_density")) 
+            {
+
+              if ( !ARG_IS_D(1, rho_product0_reservoir) ) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics product0_resrv_density requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( rho_product0_reservoir < 0 ) 
+              {
+                Tcl_AppendResult(interp, "the product0 reservoir density has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if ( ARG_IS_S_EXACT(0,"product1_resrv_density") ) 
+            {
+
+              if (!ARG_IS_D(1, rho_product1_reservoir)) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics product1_resrv_density requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( rho_product1_reservoir < 0 ) 
+              {
+                Tcl_AppendResult(interp, "the product1 reservoir density has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if ( ARG_IS_S_EXACT(0,"reaction_rate") ) 
+            {
+
+              if ( !ARG_IS_D(1, ct_rate) ) 
+              {
+                Tcl_AppendResult(interp, "electrokinetics reaction_rate requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( ct_rate < 0 ) 
+              {
+                Tcl_AppendResult(interp, "catalytic reaction rate has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if (ARG_IS_S_EXACT(0,"reaction_radius")) 
+            {
+
+              if ( !ARG_IS_D(1, radius) )
+              {
+                Tcl_AppendResult(interp, "electrokinetics reaction_radius requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( radius < 0 ) 
+              {
+                Tcl_AppendResult(interp, "the catalytic reaction radius has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if (ARG_IS_S_EXACT(0,"reaction_fraction_pr_0")) 
+            {
+
+              if ( !ARG_IS_D(1, fraction0) )
+              {
+                Tcl_AppendResult(interp, "electrokinetics reaction_fraction_pr_0 requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( fraction0 < 0 ) 
+              {
+                Tcl_AppendResult(interp, "the fraction has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+
+            else if (ARG_IS_S_EXACT(0,"reaction_fraction_pr_1")) 
+            {
+
+              if ( !ARG_IS_D(1, fraction1) )
+              {
+                Tcl_AppendResult(interp, "electrokinetics reaction_fraction_pr_1 requires one floating point number as argument\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              if ( fraction1 < 0 ) 
+              {
+                Tcl_AppendResult(interp, "the fraction has to be greater than zero\n", (char *)NULL);
+                return TCL_ERROR;
+              }
+
+              argc -= 2;
+              argv += 2;
+            }
+          }
+
+          if ( counter == 12 )
+          {
+            Tcl_AppendResult(interp, "unknown option given, please check for spelling errors\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+
+          if ( (reactant == product0) ||
+               (product0 == product1) ||
+               (product1 == reactant) ) 
+          {
+            Tcl_AppendResult(interp, "the reactant and product species need to be distinct\n", (char *)NULL);
+            return TCL_ERROR;
+          }          
+
+          if ( ek_set_reaction( reactant, product0, product1, rho_reactant_reservoir, rho_product0_reservoir, rho_product1_reservoir, ct_rate, radius, fraction0, fraction1 ) != 0 ) 
+          {
+            Tcl_AppendResult(interp, "species are not set before invoking electrokinetics reaction\n", (char *)NULL);
+            return TCL_ERROR;
+          }  
+        }     
+#endif 
       }
       else {
     	  Tcl_AppendResult(interp, "unknown feature \"", argv[0],"\" of electrokinetics\n", (char *)NULL);

@@ -91,6 +91,14 @@ typedef struct {
   float T;
   float bjerrumlength;
   unsigned int number_of_species;
+  int reaction_species[3];
+  float rho_reactant_reservoir;
+  float rho_product0_reservoir;
+  float rho_product1_reservoir;
+  float reaction_ct_rate;
+  float reaction_radius;
+  float reaction_fraction_0;
+  float reaction_fraction_1;
   cufftReal* greensfcn;
   cufftComplex* charge_potential;
   float* j;
@@ -101,6 +109,7 @@ typedef struct {
   float d[MAX_NUMBER_OF_SPECIES];
   float valency[MAX_NUMBER_OF_SPECIES];
   float ext_force[3][MAX_NUMBER_OF_SPECIES];
+  char* node_is_catalyst;
 } EK_parameters;
 
 extern EK_parameters ek_parameters;
@@ -131,6 +140,10 @@ int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
 #endif
 
+
+#ifdef EK_REACTION
+int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_radius, float reaction_fraction_0, float reaction_fraction_1 );
+#endif
 
 //#endif /* ELECTROKINETICS */
 
