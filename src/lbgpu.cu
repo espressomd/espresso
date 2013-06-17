@@ -313,8 +313,8 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 
   update_rho_v(mode, index, node_f, d_v);
   u_tot[0]=d_v[index].v[0];  
-  u_tot[0]=d_v[index].v[1];  
-  u_tot[0]=d_v[index].v[2];  
+  u_tot[1]=d_v[index].v[1];  
+  u_tot[2]=d_v[index].v[2];  
  
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 

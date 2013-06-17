@@ -868,7 +868,6 @@ int lb_lbnode_get_rho(int* ind, double* p_rho){
     lb_print_node_GPU(single_nodeindex, host_print_values);
     for(int ii=0;ii<LB_COMPONENTS;ii++) { 
        p_rho[ii] = (double)(host_print_values->rho[ii]);
-       printf("rho[%d]=%f (%d %d %d = %d)\n",ii,p_rho[ii],ind[0],ind[1],ind[2],single_nodeindex);
     }
 #endif // LB_GPU
   } else {
