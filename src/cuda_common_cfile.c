@@ -14,7 +14,9 @@
   static void cuda_mpi_send_forces_slave();
 
   void cuda_bcast_global_part_params() {
+    COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
     mpi_bcast_cuda_global_part_vars();
+    COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n", this_node));
   }
   /*************** REQ_GETPARTS ************/
   void cuda_mpi_get_particles(CUDA_particle_data *particle_data_host)

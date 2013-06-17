@@ -82,7 +82,7 @@ static const float c_sound_sq = 1.f/3.f;
 //extern cudaError_t err;
 //extern cudaError_t _err;
 
-int initflag = 0;
+
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device funktions called by kernel funktions */
@@ -1406,17 +1406,17 @@ void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
 */
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
-  if(initflag){
-    cudaFree(device_values);
-    cudaFree(nodes_a.vd);
-    cudaFree(nodes_b.vd);
-    cudaFree(nodes_a.seed);
-    cudaFree(nodes_b.seed);
-    cudaFree(nodes_a.boundary);
-    cudaFree(nodes_b.boundary);
-    cudaFree(node_f.force);
-    cudaFree(gpu_check);
-  }
+
+  if (device_values) cudaFree(device_values);
+  if (nodes_a.vd) cudaFree(nodes_a.vd);
+  if (nodes_b.vd) cudaFree(nodes_b.vd);
+  if (nodes_a.seed) cudaFree(nodes_a.seed);
+  if (nodes_b.seed) cudaFree(nodes_b.seed);
+  if (nodes_a.boundary) cudaFree(nodes_a.boundary);
+  if (nodes_b.boundary) cudaFree(nodes_b.boundary);
+  if (node_f.force) cudaFree(node_f.force);
+  if (gpu_check) cudaFree(gpu_check);
+
   /** Allocate structs in device memory*/
   size_of_values = lbpar_gpu->number_of_nodes * sizeof(LB_values_gpu);
 
@@ -1433,14 +1433,14 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
 
   cuda_safe_mem(cudaMalloc((void**)&node_f.force, lbpar_gpu->number_of_nodes * 3 * sizeof(float)));
 //maybe coalesced alloc  
-  gpu_init_particle_comm();
+
 
 	
   /**write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(para, lbpar_gpu, sizeof(LB_parameters_gpu)));
   /**check flag if lb gpu init works*/
   cuda_safe_mem(cudaMalloc((void**)&gpu_check, sizeof(int)));
-  initflag = 1;
+
   h_gpu_check = (int*)malloc(sizeof(int));
 
   /** values for the kernel call */
@@ -1461,8 +1461,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   /** calc of veloctiydensities from given parameters and initialize the Node_Force array with zero */
   KERNELCALL(calc_n_equilibrium, dim_grid, threads_per_block, (nodes_a, gpu_check));
   
-  /** make sure particle data is communicated to the GPU */
-  gpu_init_particle_comm();
   
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, (node_f));
 
