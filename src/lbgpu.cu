@@ -313,8 +313,8 @@ __device__ void relax_modes(float *mode, unsigned int index, LB_node_force_gpu n
 
   update_rho_v(mode, index, node_f, d_v);
   u_tot[0]=d_v[index].v[0];  
-  u_tot[0]=d_v[index].v[1];  
-  u_tot[0]=d_v[index].v[2];  
+  u_tot[1]=d_v[index].v[1];  
+  u_tot[2]=d_v[index].v[2];  
  
   #pragma unroll
   for(int ii=0;ii<LB_COMPONENTS;++ii) { 
@@ -941,8 +941,8 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  float temp_delta_half[6];
  float viscforce[3*LB_COMPONENTS];
  float scforce[3*LB_COMPONENTS];
+ float mode[19*LB_COMPONENTS];
 #ifdef SHANCHEN
- float mode[4];
  float gradrho1, gradrho2, gradrho3;
  float Rho;
 #endif 
@@ -1003,21 +1003,25 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
  particle_force[part_index].f[2] = 0.f;
 
  interpolated_u1 = interpolated_u2 = interpolated_u3 = 0.f;
-#ifndef SHANCHEN
-  #pragma unroll
-  for(int i=0; i<8; ++i){
-    interpolated_u1 += d_v[node_index[i]].v[0]*delta[i];
-    interpolated_u2 += d_v[node_index[i]].v[1]*delta[i];
-    interpolated_u3 += d_v[node_index[i]].v[2]*delta[i];
-  }
-#else //SHANCHEN
  #pragma unroll
- for(int i=0; i<8; ++i){ 
+ for(int i=0; i<8; ++i){
+    float totmass=0.f;
+    calc_m_from_n(n_a,node_index[i],mode);
+    #pragma unroll
+    for(int ii=0;ii<LB_COMPONENTS;ii++){
+	totmass+=mode[0]+para.rho[ii]*para.agrid*para.agrid*para.agrid;
+    } 
+#ifndef SHANCHEN
+    interpolated_u1 += (mode[1]/totmass)*delta[i];
+    interpolated_u2 += (mode[2]/totmass)*delta[i];
+    interpolated_u3 += (mode[3]/totmass)*delta[i];
+#else //SHANCHEN
     interpolated_u1 += d_v[node_index[i]].v[0]/8.;  
     interpolated_u2 += d_v[node_index[i]].v[1]/8.;
     interpolated_u3 += d_v[node_index[i]].v[2]/8.;
- }
 #endif
+ }
+
 #ifdef SHANCHEN
  #pragma unroll
  for(int ii=0; ii<LB_COMPONENTS; ++ii){ 
