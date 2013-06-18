@@ -123,7 +123,7 @@ if {$components==1} {
 if {$components==2} {
   lbfluid gpu agrid $agrid dens $dens $dens visc $viscosity $viscosity agrid $agrid tau $tau sc_coupling 0.0 0.0 0.0 
   lbfluid friction $friction $friction
-  #exit 0
+  exit 0
 }
 
 
