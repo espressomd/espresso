@@ -29,16 +29,11 @@
 
 #include <cufft.h>
 #include "cuda_common.h"
-
+#include "config.h"
 
 extern "C" {
 #include "p3m_gpu.h"
-#include "lbgpu.h"
-#include "config.h"
-#include "particle_data.h"
-
-//extern cudaStream_t stream[1];
-//extern cudaError_t _err;
+#include "utils.h"
 }
 
 
@@ -375,7 +370,7 @@ extern "C" {
     
  
     if ( this_node == 0 ) {
-      p3m_gpu_data.npart = n_total_particles;
+      p3m_gpu_data.npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
       p3m_gpu_data.alpha = alpha;
       p3m_gpu_data.cao = cao;
       p3m_gpu_data.mesh = mesh;
@@ -411,7 +406,7 @@ void p3m_gpu_add_farfield_force() {
   lb_particle_gpu = gpu_get_particle_pointer();
   lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
-  p3m_gpu_data.npart = n_total_particles;
+  p3m_gpu_data.npart = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   if(p3m_gpu_data.npart == 0)
     return;
