@@ -59,7 +59,7 @@ set couette_flow_direction 2
 set v_boundary [ list 0 0 0 ]
 lset v_boundary $couette_flow_direction $v_couette
 
-lbboundary wall normal [ lindex $normal1 0 ]  [ lindex $normal1 1 ]  [ lindex $normal1 2 ] dist $agrid
+lbboundary wall normal [ lindex $normal1 0 ]  [ lindex $normal1 1 ]  [ lindex $normal1 2 ] distance $agrid
 lbboundary wall normal [ lindex $normal2 0 ]  [ lindex $normal2 1 ]  [ lindex $normal2 2 ] dist [ expr -$l +$agrid ] \
   velocity [ lindex $v_boundary 0 ] [ lindex $v_boundary 1 ] [ lindex $v_boundary 2 ] 
 
