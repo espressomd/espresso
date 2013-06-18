@@ -1016,9 +1016,9 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
     interpolated_u2 += (mode[2]/totmass)*delta[i];
     interpolated_u3 += (mode[3]/totmass)*delta[i];
 #else //SHANCHEN
-    interpolated_u1 += (mode[1]/totmass)/8.;  
-    interpolated_u2 += (mode[2]/totmass)/8.;
-    interpolated_u3 += (mode[3]/totmass)/8.;
+    interpolated_u1 += d_v[node_index[i]].v[0]/8.;  
+    interpolated_u2 += d_v[node_index[i]].v[1]/8.;
+    interpolated_u3 += d_v[node_index[i]].v[2]/8.;
 #endif
  }
 
