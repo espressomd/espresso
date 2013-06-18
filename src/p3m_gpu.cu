@@ -31,15 +31,18 @@
 #include "cuda_common.h"
 #include "config.h"
 
+#ifdef __cplusplus
 extern "C" {
+#endif
 #include "p3m_gpu.h"
 #include "utils.h"
+#ifdef __cplusplus
 }
-
+#endif
 
 #ifdef ELECTROSTATICS
 
-struct {
+struct fuckCplusplus {
   CUFFT_TYPE_COMPLEX *charge_mesh;
   CUFFT_TYPE_COMPLEX *force_mesh;
   REAL_TYPE *G_hat, *G_hat_host;
