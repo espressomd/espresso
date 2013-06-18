@@ -150,10 +150,11 @@ void thermo_cool_down()
 */ 
 void friction_thermo_lb_rotation(Particle *p)
 {
+  double friction,coupl_pref2;
+  int j;
 #ifdef LB_GPU
   extern LB_parameters_gpu lbpar_gpu ;
-  double friction,coupl_pref2;
-  int j,ii;
+  int ii;
   /* workaround: we just use the larger translational friction for the 
      rotational degrees of freedom. FIXME */
   friction = lbpar_gpu.friction[0];
@@ -165,7 +166,7 @@ void friction_thermo_lb_rotation(Particle *p)
   		coupl_pref2 = lbpar_gpu.lb_coupl_pref2[ii] ;
          }
   } 
-#endif // SHANCHEN
+#endif // LB_GPU
 
 #ifdef VIRTUAL_SITES
  #ifndef VIRTUAL_SITES_THERMOSTAT

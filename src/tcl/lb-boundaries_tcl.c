@@ -217,7 +217,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   lbb->c.wal.d = 0;
   
   while(argc > 0) {
-    if(!strncmp(argv[0], "normal", strlen(argv[0]))) {
+    if(ARG_IS_S(0, "normal")) {
       if(argc < 4) {
 				Tcl_AppendResult(interp, "lbboundary wall normal <nx> <ny> <nz> expected", (char *) NULL);
 			  return (TCL_ERROR);
@@ -230,7 +230,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 4; argv += 4;
     }
-    else if(!strncmp(argv[0], "dist", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "distance")) {
       if (argc < 1) {
         Tcl_AppendResult(interp, "lbboundary wall dist <d> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -241,7 +241,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "type")) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary wall type <t> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -249,7 +249,7 @@ int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "velocity", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "velocity")) {
       if(argc < 4) {
 	      Tcl_AppendResult(interp, "lbboundary wall velocity <vx> <vy> <vz> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -304,7 +304,7 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
   lbb->c.sph.direction = -1;
 
   while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+    if(ARG_IS_S(0, "center")) {
       if(argc < 4) {
 	      Tcl_AppendResult(interp, "lbboundary sphere center <x> <y> <z> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -316,7 +316,7 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
 	      
         argc -= 4; argv += 4;
     }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "radius")) {
       if(argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary sphere radius <r> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -327,22 +327,22 @@ int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc,
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "direction")) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "-1/1 or inside/outside is expected", (char *) NULL);
 	      return (TCL_ERROR);
       }
       
-      if(!strncmp(argv[1], "inside", strlen(argv[1])))
+      if(ARG_IS_S(1, "inside"))
 	      lbb->c.sph.direction = -1;
-      else if(!strncmp(argv[1], "outside", strlen(argv[1])))
+      else if(ARG_IS_S(1, "outside"))
 	      lbb->c.sph.direction = 1;
       else if(Tcl_GetDouble(interp, argv[1], &(lbb->c.sph.direction)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "type")) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary sphere type <t> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -385,7 +385,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   lbb->c.cyl.direction = 0;
   
   while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+    if(ARG_IS_S(0, "center")) {
       if(argc < 4) {
 	      Tcl_AppendResult(interp, "lbboundary cylinder center <x> <y> <z> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -398,7 +398,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      
       argc -= 4; argv += 4;
     }
-    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "axis")) {
       if(argc < 4) {
 	      Tcl_AppendResult(interp, "lbboundary cylinder axis <rx> <ry> <rz> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -411,7 +411,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 
       argc -= 4; argv += 4;    
     }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "radius")) {
       if(argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary cylinder radius <rad> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -422,7 +422,7 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "length")) {
       if(argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary cylinder length <len> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -433,22 +433,22 @@ int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "direction")) {
       if(argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary cylinder direction <dir> expected", (char *) NULL);
 	      return (TCL_ERROR);
       }
       
-      if (!strncmp(argv[1], "inside", strlen(argv[1])))
+      if (ARG_IS_S(1, "inside"))
 	      lbb->c.cyl.direction = -1;
-      else if (!strncmp(argv[1], "outside", strlen(argv[1])))
+      else if (ARG_IS_S(1, "outside"))
 	      lbb->c.cyl.direction = 1;
       else if (Tcl_GetDouble(interp, argv[1], &(lbb->c.cyl.direction)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "type", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "type")) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary cylinder type <t> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -507,7 +507,7 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
   lbb->c.rhomboid.direction = 0;
   
   while (argc > 0) {
-    if(!strncmp(argv[0], "a", strlen(argv[0]))) {
+    if(ARG_IS_S(0, "a")) {
       if(argc < 4) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid a <ax> <ay> <az> expected", (char *) NULL);
 				return TCL_ERROR;
@@ -520,7 +520,7 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
 			argc -= 4; argv += 4;    
     }
-    else if(!strncmp(argv[0], "b", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "b")) {
       if(argc < 4) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid b <bx> <by> <bz> expected", (char *) NULL);
 				return TCL_ERROR;
@@ -533,7 +533,7 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
 			argc -= 4; argv += 4;    
     }
-    else if(!strncmp(argv[0], "c", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "c")) {
       if(argc < 4) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid c <cx> <cy> <cz> expected", (char *) NULL);
 				return TCL_ERROR;
@@ -546,7 +546,7 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
 			argc -= 4; argv += 4;    
     }
-    else if(!strncmp(argv[0], "corner", strlen(argv[0]))) { //this has to come after c
+    else if(ARG_IS_S(0, "corner")) { //this has to come after c
       if(argc < 4) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid corner <x> <y> <z> expected", (char *) NULL);
 				return TCL_ERROR;
@@ -559,15 +559,15 @@ int tclcommand_lbboundary_rhomboid(LB_Boundary *lbb, Tcl_Interp *interp, int arg
 				
       argc -= 4; argv += 4;
     }
-    else if(!strncmp(argv[0], "direction", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "direction")) {
       if (argc < 2) {
 				Tcl_AppendResult(interp, "lbboundary rhomboid direction {inside|outside} expected", (char *) NULL);
 				return (TCL_ERROR);
       }
       
-      if(!strncmp(argv[1], "inside", strlen(argv[1])))
+      if(ARG_IS_S(1, "inside"))
 				lbb->c.rhomboid.direction = -1;
-      else if(!strncmp(argv[1], "outside", strlen(argv[1])))
+      else if(ARG_IS_S(1, "outside"))
 				lbb->c.rhomboid.direction = 1;
       else if(Tcl_GetDouble(interp, argv[1], &(lbb->c.rhomboid.direction)) == TCL_ERROR)
 				return TCL_ERROR;
@@ -638,7 +638,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   lbb->c.pore.smoothing_radius = 1.;
   
   while (argc > 0) {
-    if(!strncmp(argv[0], "center", strlen(argv[0]))) {
+    if(ARG_IS_S(0, "center")) {
       if(argc < 4) {
 	      Tcl_AppendResult(interp, "lbboundary pore center <x> <y> <z> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -651,7 +651,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 4; argv += 4;
     }
-    else if(!strncmp(argv[0], "axis", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "axis")) {
       if(argc < 4) {
 	      Tcl_AppendResult(interp, "lbboundary pore axis <rx> <ry> <rz> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -664,7 +664,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 
       argc -= 4; argv += 4;    
     }
-    else if(!strncmp(argv[0], "radius", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "radius")) {
       if(argc < 1) {
     	  Tcl_AppendResult(interp, "lbboundary pore radius <rad> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -676,7 +676,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "smoothing_radius")) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -687,7 +687,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 2; argv += 2;
     }
-    else if(!strncmp(argv[0], "radii", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "radii")) {
       if(argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore radii <rad_left> <rad_right> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -701,7 +701,7 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      
       argc -= 3; argv += 3;
     }
-    else if(!strncmp(argv[0], "length", strlen(argv[0]))) {
+    else if(ARG_IS_S(0, "length")) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore length <len/2> expected", (char *) NULL);
 	      return (TCL_ERROR);
@@ -747,42 +747,42 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);
   
-  if(!strncmp(argv[1], "wall", strlen(argv[1]))) {
+  if(ARG_IS_S(1, "wall")) {
     status = tclcommand_lbboundary_wall(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(!strncmp(argv[1], "sphere", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "sphere")) {
     status = tclcommand_lbboundary_sphere(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(!strncmp(argv[1], "cylinder", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "cylinder")) {
     status = tclcommand_lbboundary_cylinder(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(!strncmp(argv[1], "rhomboid", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "rhomboid")) {
     status = tclcommand_lbboundary_rhomboid(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(!strncmp(argv[1], "pore", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "pore")) {
     status = tclcommand_lbboundary_pore(generate_lbboundary(),interp, argc - 2, argv + 2);
     if (lattice_switch & LATTICE_LB_GPU) {
         mpi_bcast_lbboundary(-3);
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "force")) {
     if(argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
       Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
       return (TCL_ERROR);
@@ -805,7 +805,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     }
 #endif
   }
-  else if(!strncmp(argv[1], "delete", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "delete")) {
     if(argc < 3) {
       /* delete all */
       if (lattice_switch & LATTICE_LB_GPU) {
