@@ -400,7 +400,7 @@ CUDA_SOURCES = \
 cuda_common.o: cuda_common.h config.h grid.h random.h particle_data.h interaction_data.h cuda_init.h
 cuda_init.o: cuda_init.h config.h utils.h
 lbgpu.o: lbgpu.h config.h utils.h cuda_common.h
-p3m_gpu.o: p3m_gpu.h config.h utils.h cuda_common.h
+p3m_gpu.o: p3m_gpu.h config.h utils.h cuda_common.h cuda_init.h
 
 nodist_EXTRA_libEspresso_a_SOURCES = cuda_is_cpp.cxx
 

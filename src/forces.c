@@ -78,7 +78,7 @@ void force_calc()
 #ifdef LB_GPU
 #ifdef SHANCHEN
    // SAW TODO check these switches
-  if (lattice_switch & LATTICE_LB_GPU && this_node==0 ) lattice_boltzmann_calc_shanchen_gpu();
+  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
 #endif // SHANCHEN
 
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0

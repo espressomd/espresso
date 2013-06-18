@@ -21,7 +21,7 @@
  *
  * Cuda (.cu) file for the Lattice Boltzmann implementation on GPUs.
  * Header file for \ref lbgpu.h.
- */
+ */ 
 
 #include <stdio.h>
 #include <stdlib.h>
