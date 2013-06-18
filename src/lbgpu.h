@@ -247,6 +247,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 #ifdef SHANCHEN
 void lb_calc_shanchen_GPU();
+void lattice_boltzmann_calc_shanchen_gpu();
 #endif
 void lb_free_GPU();
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
