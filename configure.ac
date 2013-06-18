@@ -424,6 +424,7 @@ AS_IF([test x$with_cuda = xguess || test x$with_cuda = xyes],[
 
 cuda_ok=no
 
+AC_PROG_CXX
 AS_IF([test x$with_cuda != xno],[
     cuda_ok=yes
     save_LIBS=$LIBS
@@ -535,7 +536,6 @@ AS_IF([test x$with_cuda != xno],[
     CFLAGS=$save_CFLAGS_pretest
     
     AS_IF([test x$cuda_ok == xyes], [
-        AC_PROG_CXX
         AC_DEFINE(CUDA,[],[Whether CUDA is available])
     ],[
         LIBS=$save_LIBS
