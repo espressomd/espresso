@@ -482,7 +482,6 @@ int mpi_sync_topo_part_info(void);
 void mpi_bcast_lb_params(int field);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA
- * @param field References the parameter field to be broadcasted. The references are defined in \ref cuda_common.h "cuda_common.h"
  */
 void mpi_bcast_cuda_global_part_vars();
 

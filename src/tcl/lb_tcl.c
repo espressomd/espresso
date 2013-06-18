@@ -124,12 +124,13 @@ void lbnode_tcl_print_usage(Tcl_Interp *interp) {
   Tcl_AppendResult(interp, "     or\n", (char *)NULL);
   Tcl_AppendResult(interp, "lbnode X Y Z set [ rho | u | populations ] #nofloats", (char *)NULL);
 }
-
-/** TCL Interface: The \ref lbfluid command. */
 #endif
+
 #if defined (LB) || defined (LB_GPU)
 int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc, char **argv);
 #endif
+
+/** TCL Interface: The \ref lbfluid command. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
 #if defined (LB) || defined (LB_GPU)
@@ -550,15 +551,16 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 #if defined (LB) || defined (LB_GPU)
    int coord[3];
    int counter;
-   int integer_return = 0;
 #ifndef SHANCHEN
+   int integer_return = 0;
    double double_return[19];
+   char integer_buffer[TCL_INTEGER_SPACE];
 #else // SHANCHEN
    double double_return[19*LB_COMPONENTS];
 #endif // SHANCHEN
 
    char double_buffer[TCL_DOUBLE_SPACE];
-   char integer_buffer[TCL_INTEGER_SPACE];
+
 
    for (counter = 0; counter < 19; counter++) 
      double_return[counter]=0;
