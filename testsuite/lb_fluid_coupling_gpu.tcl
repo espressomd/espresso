@@ -95,9 +95,9 @@ for { set i 0 } { $i < 100 } { incr i } {
 
 #note that the linear interpolation in SC is different from LB, hence the different terminal velocity
 if { $components == 1 }  { 
-   set vel_works 0.1243629276 
+   set vel_works 0.1100128137
 } else  { 
-   set vel_works 0.0900439240
+   set vel_works 0.09189507873
 }
 # check for the right terminal velocity
 set difference [expr ($vsum/$count - $vel_works)/$vel_works]
