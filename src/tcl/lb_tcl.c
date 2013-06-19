@@ -632,7 +632,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
          }
          argc--; argv++;
        }
-       else if (ARG0_I_S("boundary")) {
+       else if (ARG0_IS_S("boundary")) {
          char integer_buffer[TCL_INTEGER_SPACE];
          int integer_return = 0;
          lb_lbnode_get_boundary(coord, &integer_return);
