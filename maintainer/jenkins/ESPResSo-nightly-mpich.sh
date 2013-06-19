@@ -11,6 +11,7 @@ bootstrap
 start "CONFIGURE"
 ./configure \
     CC=/home/jenkins/mpich/bin/mpicc \
+    CXX=/home/jenkins/mpich/bin/mpic++ \
     MPIEXEC=/home/jenkins/mpich/bin/mpiexec \
     CPU_COUNT=4
 end "CONFIGURE"
