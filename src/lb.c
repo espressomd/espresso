@@ -1095,9 +1095,6 @@ int lb_lbnode_get_pop(int* ind, double* p_pop) {
 
 int lb_lbnode_set_rho(int* ind, double *p_rho){
   if (lattice_switch & LATTICE_LB_GPU) {
-#ifndef SHANCHEN
-    printf("Not implemented in the LB GPU code!\n");
-#else // SHANCHEN 
     float host_rho[LB_COMPONENTS];
     int single_nodeindex = ind[0] + ind[1]*lbpar_gpu.dim_x + ind[2]*lbpar_gpu.dim_x*lbpar_gpu.dim_y;
     int i;
@@ -1105,8 +1102,6 @@ int lb_lbnode_set_rho(int* ind, double *p_rho){
 	host_rho[i]=(float)p_rho[i];
     }
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
-#endif // SHANCHEN
-
   } else {
 #ifdef LB
     index_t index;

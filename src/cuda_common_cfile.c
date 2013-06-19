@@ -65,7 +65,7 @@
                 particle_data_host[i+g].v[0] = (float)part[i].m.v[0];
                 particle_data_host[i+g].v[1] = (float)part[i].m.v[1];
                 particle_data_host[i+g].v[2] = (float)part[i].m.v[2];
-             #ifdef SHANCHEN
+#ifdef SHANCHEN
               // SAW TODO: does this really need to be copied every time?
               int ii;
               for(ii=0;ii<2*LB_COMPONENTS;ii++){
