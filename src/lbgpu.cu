@@ -1664,6 +1664,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
   return; 
 }
 
+#endif //SHANCHEN
 
 /** kernel to set the local density
  *
@@ -1704,11 +1705,6 @@ __global__ void set_rho(LB_nodes_gpu n_a,  LB_rho_v_gpu *d_v, int single_nodeind
      }
   }
 }
-
-
-#endif //SHANCHEN
-
-
 
 /**set the boundary flag for all boundary nodes
  * @param boundary_node_list    The indices of the boundary nodes
@@ -2345,8 +2341,6 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
 
 }
 
-
-#ifdef SHANCHEN
 /** set the density at a single node
  *  @param single_nodeindex the node to set the velocity for 
  *  @param host_velocity the velocity to set
@@ -2364,7 +2358,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho){
   cudaFree(device_rho);
 
 }
-#endif // SHANCHEN
+
 /** set the net velocity at a single node
  *  @param single_nodeindex the node to set the velocity for 
  *  @param host_velocity the velocity to set
