@@ -497,6 +497,9 @@ int tclprint_to_result_NonbondedIA(Tcl_Interp *interp, int i, int j)
 #ifdef TUNABLE_SLIP
   if (data->TUNABLE_SLIP_r_cut > 0.0) tclprint_to_result_tunable_slipIA(interp,i,j);
 #endif
+#ifdef LB_GPU
+  if (data->affinity_on == 1 ) tclprint_to_result_affinityIA(interp,i,j);
+#endif
 
   return (TCL_OK);
 }
@@ -819,7 +822,13 @@ int tclcommand_inter_parse_non_bonded(Tcl_Interp * interp,
 #ifdef MOL_CUT
     REGISTER_NONBONDED("molcut", tclcommand_inter_parse_molcut);
 #endif
-    
+  
+#ifdef LB_GPU
+#ifdef SHANCHEN
+    REGISTER_NONBONDED("affinity",tclcommand_inter_parse_affinity);
+#endif 
+#endif
+ 
 #ifdef ADRESS
 #ifdef INTERFACE_CORRECTION
     REGISTER_NONBONDED("adress_tab_ic", tclcommand_inter_parse_adress_tab);

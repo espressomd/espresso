@@ -615,6 +615,7 @@ void mpi_send_solvation_slave(int pnode, int part)
 #endif
 }
 
+
 /********************* REQ_SET_M ********/
 void mpi_send_mass(int pnode, int part, double mass)
 {
@@ -2119,6 +2120,7 @@ void mpi_random_stat_slave(int pnode, int cnt) {
     init_random_stat(this_stat);
   }
 }
+
 
 /*************** REQ_BCAST_LJFORCECAP ************/
 /*************** REQ_BCAST_LJANGLEFORCECAP ************/

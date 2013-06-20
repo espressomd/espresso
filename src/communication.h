@@ -144,14 +144,13 @@ void mpi_send_v(int node, int part, double v[3]);
 */
 void mpi_send_f(int node, int part, double F[3]);
 
-/** Issue REQ_SET_SOLV: send particle solvation free energy 
-    Also calls \ref on_particle_change.
+/** issue req_set_solv: send particle solvation free energy 
+    also calls \ref on_particle_change.
     \param part the particle.
     \param node the node it is attached to.
     \param solvation its new solvation free energy.
 */
 void mpi_send_solvation(int node, int part, double *solvation);
-
 
 
 /** Issue REQ_SET_M: send particle mass.
