@@ -71,6 +71,15 @@ AX_PROG_CC_MPI([test x"$with_mpi" != xno],,[
   fi
 ])
 
+AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
+  if test xyes = x"$with_mpi"; then
+    AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
+  else
+    AC_MSG_WARN([No MPI c++ compiler found, will use fake implementation!])
+    use_mpi_fake="yes"
+  fi
+])
+
 # if requested, use the fake implementation
 AM_CONDITIONAL(MPI_FAKE, [test x"$use_mpi_fake" = xyes])
 MPI_FAKE=$use_mpi_fake

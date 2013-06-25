@@ -46,26 +46,21 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
       }
       
     } else if(ARG0_IS_S("mesh")) {
-      if ( ARG1_IS_I(mesh) ) {
-        if(! (argc > 1 && mesh[0] >= -1)) {
-  Tcl_AppendResult(interp, "mesh expects an integer >= -1",
-        (char *) NULL);
-	return TCL_ERROR;
-        } else {
-          mesh[1] = mesh[2] = mesh[0];
-        }
-      }
-      else {
+      if(! ARG_IS_I(1, mesh[0])) {
+        Tcl_ResetResult(interp);
         if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) ) {
-          Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
+          Tcl_AppendResult(interp, "integer or integer list of length 3 expected", (char *) NULL);
           return TCL_ERROR;
         } else {
-        printf ("Please ignore the following \"expected integer but got\" warning message.\n");
             mesh[0] = il.e[0];
             mesh[1] = il.e[1];
             mesh[2] = il.e[2];
         }
-      }
+      } else if(! (argc > 1 && mesh[0] >= -1)) {
+  Tcl_AppendResult(interp, "mesh expects an integer >= -1",
+          (char *) NULL);
+  return TCL_ERROR;
+        }
     } else if(ARG0_IS_S("cao")) {
       if(! (argc > 1 && ARG1_IS_I(cao) && cao >= -1 && cao <= 7)) {
 	Tcl_AppendResult(interp, "cao expects an integer between -1 and 7",
@@ -154,12 +149,11 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   }
 
   if(! ARG_IS_I(1, mesh[0])) {
-
+    Tcl_ResetResult(interp);
     if( ! ARG_IS_INTLIST(1, il) || !(il.n == 3) ) {
-      Tcl_AppendResult(interp, "integer or interger list of length 3 expected", (char *) NULL);
+      Tcl_AppendResult(interp, "integer or integer list of length 3 expected", (char *) NULL);
       return TCL_ERROR;
     } else {
-  printf ("Please ignore the following \"expected integer but got\" warning message.\n");
       mesh[0] = il.e[0];
       mesh[1] = il.e[1];
       mesh[2] = il.e[2];

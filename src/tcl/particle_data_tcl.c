@@ -197,6 +197,19 @@ void tclcommand_part_print_mu_E(Particle *part, char *buffer, Tcl_Interp *interp
 }
 #endif
 
+
+#ifdef SHANCHEN
+void tclcommand_part_print_solvation(Particle *part, char *buffer, Tcl_Interp *interp)
+{
+  int ii;
+  for(ii=0;ii<LB_COMPONENTS;++ii){
+     Tcl_PrintDouble(interp, part->p.solvation[ii], buffer);
+     Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
+  }
+}
+
+#endif 
+
 void tclcommand_part_print_f(Particle *part, char *buffer, Tcl_Interp *interp)
 {
   /* unscale forces ! */
@@ -500,6 +513,11 @@ int tclprint_to_result_Particle(Tcl_Interp *interp, int part_num)
   }
 #endif
 
+#ifdef SHANCHEN
+  Tcl_AppendResult(interp, " solvation ", (char *)NULL);
+  tclcommand_part_print_solvation(&part, buffer, interp);
+#endif
+
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
   if (part.l.ext_flag & PARTICLE_EXT_TORQUE) {
@@ -603,7 +621,11 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       Tcl_AppendResult(interp, buffer, (char *)NULL);
     }
 #endif
-
+#ifdef SHANCHEN
+    else if (ARG0_IS_S("solvation")) {
+      tclcommand_part_print_solvation(&part, buffer, interp);
+    }
+#endif
 #ifdef ELECTROSTATICS
     else if (ARG0_IS_S("q")) {
       Tcl_PrintDouble(interp, part.p.q, buffer);
@@ -760,6 +782,37 @@ int tclcommand_part_parse_pos(Tcl_Interp *interp, int argc, char **argv,
 
   return TCL_OK;
 }
+
+
+#ifdef SHANCHEN
+int tclcommand_part_parse_solvation(Tcl_Interp *interp, int argc, char **argv,
+		 int part_num, int * change)
+{
+    /* For each fluid component we need 2 constants, one for particle-fluid and one for fluid-particl interaction */
+    double solvation[2*LB_COMPONENTS];
+    int ii;
+    *change = 2*LB_COMPONENTS;
+    if (argc < 2*LB_COMPONENTS) {
+      Tcl_AppendResult(interp, "solvation requires \"", 2*LB_COMPONENTS, "\"  arguments", (char *) NULL);
+      return TCL_ERROR;
+    }
+
+    /* set mass */
+    for(ii=0;ii<2*LB_COMPONENTS;++ii){
+       if (! ARG_IS_D(ii,solvation[ii]))
+         return TCL_ERROR;
+    }
+
+    if (set_particle_solvation(part_num, solvation) == TCL_ERROR) {
+      Tcl_AppendResult(interp, "set particle position first", (char *)NULL);
+
+      return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+#endif
+
 
 #ifdef MASS
 int tclcommand_part_parse_mass(Tcl_Interp *interp, int argc, char **argv,
@@ -1965,6 +2018,10 @@ int tclcommand_part_parse_cmd(Tcl_Interp *interp, int argc, char **argv,
 #ifdef MASS
     else if (ARG0_IS_S("mass"))
       err = tclcommand_part_parse_mass(interp, argc-1, argv+1, part_num, &change);
+#endif
+#ifdef SHANCHEN 
+    else if (ARG0_IS_S("solvation"))
+      err = tclcommand_part_parse_solvation(interp, argc-1, argv+1, part_num, &change);
 #endif
     else if (ARG0_IS_S("q"))
       err = tclcommand_part_parse_q(interp, argc-1, argv+1, part_num, &change);
