@@ -1838,14 +1838,19 @@ __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
  * @param *p_v		Pointer to local print values (Output)
  * @param *d_v		Pointer to local device values (Input)
 */
-__global__ void get_values_in_MD_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,LB_rho_v_gpu *d_v){  
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
-  blockDim.x * blockIdx.x + threadIdx.x;
+__global__ void calculate_mesoscopic_values(LB_nodes_gpu n_a, LB_values_gpu *d_v){
+
+  float mode[19];
+  unsigned int singlenode = 0;
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
   if(index<para.number_of_nodes){
     float mode[19*LB_COMPONENTS];
     calc_m_from_n(n_a, index, mode);
-    calc_values_in_MD_units(n_a, mode,p_v, d_v,index,index);
+    calc_values(n_a, mode, d_v, index, singlenode);
+    
+    if(n_a.boundary[index] != 0)
+      d_v[index].v[0] = d_v[index].v[1] = d_v[index].v[2] = 0.0f;
   }
 }
 
@@ -2154,9 +2159,8 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(get_values_in_MD_units, dim_grid, threads_per_block, (nodes_a, print_rho_v_pi, device_rho_v ));
-  cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi, cudaMemcpyDeviceToHost);
-
+  KERNELCALL(calculate_mesoscopic_values, dim_grid, threads_per_block, (*current_nodes, device_values));
+  cudaMemcpy(host_values, device_values, size_of_values, cudaMemcpyDeviceToHost);
 }
 
 /** get all the boundary flags for all nodes
