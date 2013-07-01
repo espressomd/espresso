@@ -184,8 +184,6 @@ void distribute_mol_force()
          p_real->f.torque[j]+=tmp[j];
 //	 printf("%f ",tmp[j]);
 	 p_real->f.f[j]+=p[i].f.f[j];
-	 // Clear forces on virtual particle
-	 p[i].f.f[j]=0;
 
        }
       }
