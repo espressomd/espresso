@@ -36,13 +36,14 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
   if(argc < 2) {
     Tcl_AppendResult(interp, "Usage of \"electrokinetics\":", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [viscosity #float] [friction #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
-    Tcl_AppendResult(interp, "                [reaction [reactant_index #int] [product0_index #int] [product1_index #int] \
-                                              [reactant_resrv_density #float] [product0_resrv_density #float] \
-                                              [product1_resrv_density #float] [reaction_rate #float] \
-                                              [reaction_radius #float] [reaction_fraction_pr_0 #float] \
-                                              [reaction_fraction_pr_1 #float] \n", (char *)NULL);
-    Tcl_AppendResult(interp, "                [print <density|velocity|potential|lbforce> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                  [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                  [accelerated_frame <off|on> [boundary_mass #double]]", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|lbforce> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int] [product0_index #int] [product1_index #int] \
+                                                [reactant_resrv_density #float] [product0_resrv_density #float] \
+                                                [product1_resrv_density #float] [reaction_rate #float] \
+                                                [reaction_radius #float] [reaction_fraction_pr_0 #float] \
+                                                [reaction_fraction_pr_1 #float] \n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics boundary charge_density #float [wall ]\n", (char *)NULL); //TODO full description
     Tcl_AppendResult(interp, "                                               [sphere ]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [cylinder ]\n", (char *)NULL);
@@ -51,7 +52,6 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [T #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
-    
     return TCL_ERROR;
   }
   else if(ARG0_IS_S("boundary")) {
@@ -515,6 +515,32 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             return TCL_ERROR;
           }
         }
+      }
+      else if(ARG0_IS_S("accelerated_frame")) {
+        if( argc < 4 || ( !ARG_IS_S(1,"off") && !ARG_IS_S(1,"on") ) || !ARG_IS_S(2,"boundary_mass") || !ARG_IS_D(3,floatarg) ) {
+          Tcl_AppendResult(interp, "electrokinetics accelerated_frame requires <off|on> as argument, \
+                                    followed by the keyword boundary_mass and a float\n", (char *)NULL);
+          return TCL_ERROR;
+        }
+        else if( ARG_IS_S(1,"on") ) 
+        {
+          if ( floatarg > 0.0 ) 
+          {
+            ek_set_accelarated_frame( 1 , floatarg );
+          }
+          else
+          {
+            Tcl_AppendResult(interp, "electrokinetics accelerated_frame boundary_mass must be greater than zero\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else 
+        {
+          ek_set_accelarated_frame( 0 , -1.0 );
+        }
+
+        argc -= 4;
+        argv += 4;
       }
       else if(ARG0_IS_S("reaction")) {
 #ifndef EK_REACTION

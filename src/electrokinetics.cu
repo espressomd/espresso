@@ -90,16 +90,19 @@ extern int lattice_switch;
                                      0,    0,    0,
                                   -1.0, -1.0,  0.0,
                                    0.0,  0.0, -1.0,
-                                  -1.0,    0,  {-1,-1,-1},
+                                  -1.0,    0,    0,
+                                  -1.0, {-1,-1,-1},
                                   -1.0, -1.0, -1.0,
                                   -1.0, -1.0, -1.0, 
                                   -1.0
                                 };
                                 
   static __device__ __constant__ EK_parameters ek_parameters_gpu;
+  static __device__ float ek_accelerated_frame_boundary_force [3] = { 0.0f, 0.0f, 0.0f };
   EK_parameters *ek_parameters_gpu_pointer;
   LB_parameters_gpu *ek_lbparameters_gpu;
   CUDA_particle_data *particle_data_gpu;
+  float *ek_lb_boundary_force;
 
   cufftHandle plan_fft;
   cufftHandle plan_ifft;
@@ -281,7 +284,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
                                        ) {
                                        
   unsigned int index = ek_getThreadIndex ();
-  
+
   if(index < ek_parameters_gpu.number_of_nodes) {
   
     unsigned int coord[3];
@@ -419,17 +422,19 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              
     atomicadd( &node_f.force[index],
                 ek_parameters_gpu.rho[species_index][index] *
-                ( force / 2 +
-                  ek_parameters_gpu.ext_force[0][species_index] *
+                ( force / 2.0f +
+                  (   ek_parameters_gpu.ext_force[0][species_index]
+                    + ek_accelerated_frame_boundary_force[0] / 
+                      ek_parameters_gpu.accelerated_frame_boundary_mass ) *
                   powf(ek_parameters_gpu.agrid, 1) *
                   ek_parameters_gpu.time_step *
                   ek_parameters_gpu.time_step
                 )
               );
-              
+
     atomicadd( &node_f.force[neighborindex[EK_LINK_U00]],
                 ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_U00]] *
-                force / 2 );
+                force / 2.0f );
     
     //face in y
     boltzmannfactor_neighbor =
@@ -471,8 +476,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              
     atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index],
                ek_parameters_gpu.rho[species_index][index] *
-               ( force / 2 +
-                 ek_parameters_gpu.ext_force[1][species_index] *
+               ( force / 2.0f +
+                  (   ek_parameters_gpu.ext_force[1][species_index]
+                    + ek_accelerated_frame_boundary_force[1] / 
+                      ek_parameters_gpu.accelerated_frame_boundary_mass ) *
                  powf(ek_parameters_gpu.agrid, 1) *
                  ek_parameters_gpu.time_step *
                  ek_parameters_gpu.time_step
@@ -481,7 +488,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               
     atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]],
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_0U0]] *
-               force / 2 );
+               force / 2.0f );
                
     //face in z
     boltzmannfactor_neighbor =
@@ -525,8 +532,10 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
              
     atomicadd( &node_f.force[2 * ek_parameters_gpu.number_of_nodes + index],
                ek_parameters_gpu.rho[species_index][index] *
-               ( force / 2 +
-                 ek_parameters_gpu.ext_force[2][species_index] *
+               ( force / 2.0f +
+                  (   ek_parameters_gpu.ext_force[2][species_index]
+                    + ek_accelerated_frame_boundary_force[2] / 
+                      ek_parameters_gpu.accelerated_frame_boundary_mass ) *
                  powf(ek_parameters_gpu.agrid, 1) *
                  ek_parameters_gpu.time_step *
                  ek_parameters_gpu.time_step
@@ -535,7 +544,7 @@ __global__ void ek_calculate_quantities( unsigned int species_index,
               
     atomicadd( &node_f.force[2 * ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]],
                ek_parameters_gpu.rho[species_index][neighborindex[EK_LINK_00U]] *
-               force / 2 );
+               force / 2.0f );
     
     //edge in z
     boltzmannfactor_neighbor =
@@ -1454,6 +1463,24 @@ __global__ void ek_reaction_tag( ) {
 }
 #endif
 
+__global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_boundary_force ) {
+  
+  ek_accelerated_frame_boundary_force[0] = 0.0f;
+  ek_accelerated_frame_boundary_force[1] = 0.0f;
+  ek_accelerated_frame_boundary_force[2] = 0.0f;
+
+  if ( ek_parameters_gpu.accelerated_frame_enabled == 1 )
+  {
+    for ( int i = 0; i < n_lb_boundaries; i++)
+    {
+      ek_accelerated_frame_boundary_force[0] -=  ek_lb_boundary_force[3*i + 0];
+      ek_accelerated_frame_boundary_force[1] -=  ek_lb_boundary_force[3*i + 1];
+      ek_accelerated_frame_boundary_force[2] -=  ek_lb_boundary_force[3*i + 2];
+    }
+  }
+
+ // printf("\nforce %f %f %f\n", ek_accelerated_frame_boundary_force[0], ek_accelerated_frame_boundary_force[1], ek_accelerated_frame_boundary_force[2] );
+}
 
 #ifdef __cplusplus
 extern "C" {
@@ -1532,11 +1559,11 @@ void ek_integrate() {
   
     KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
     KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
-                ( i, *current_nodes, node_f, ek_lbparameters_gpu )    );
+                ( i, *current_nodes, node_f, ek_lbparameters_gpu ) );
               
 #ifdef EK_BOUNDARIES
     KERNELCALL( ek_apply_boundaries, dim_grid, threads_per_block,
-                ( i, *current_nodes, node_f )                     );
+                ( i, *current_nodes, node_f ) );
 #endif
 
     KERNELCALL( ek_propagate_densities, dim_grid, threads_per_block, ( i ) );
@@ -1549,6 +1576,11 @@ void ek_integrate() {
   /* Integrate Navier-Stokes */
   
   lb_integrate_GPU();
+
+  /* Calculate the total force on the boundaries for the accelerated
+     frame transformation */
+
+  ek_calculate_boundary_forces<<<1,1>>>( n_lb_boundaries, ek_lb_boundary_force );
   
   //TODO delete - needed for printfs
   cudaDeviceSynchronize();
@@ -1759,6 +1791,7 @@ int ek_init() {
   
 #ifdef EK_BOUNDARIES
   lb_init_boundaries();
+  lb_get_boundary_force_pointer( &ek_lb_boundary_force );
 #else
   blocks_per_grid_x =
     ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
@@ -2028,7 +2061,9 @@ void ek_print_parameters() {
   printf( "  float friction = %f;\n",                   ek_parameters.friction );
   printf( "  float T = %f;\n",                          ek_parameters.T );
   printf( "  float bjerrumlength = %f;\n",              ek_parameters.bjerrumlength );
-  printf( "  unsigned int number_of_species = %d;\n",   ek_parameters.number_of_species); 
+  printf( "  unsigned int number_of_species = %d;\n",   ek_parameters.number_of_species);
+  printf( "  unsigned int accelerated_frame_enabled = %d;\n", ek_parameters.accelerated_frame_enabled);
+  printf( "  float accelerated_frame_boundary_mass = %f;\n", ek_parameters.accelerated_frame_boundary_mass);
   printf( "  int reaction_species[] = {%d, %d, %d};\n", ek_parameters.reaction_species[0], 
                                                         ek_parameters.reaction_species[1], 
                                                         ek_parameters.reaction_species[2] );
@@ -2271,6 +2306,15 @@ int ek_set_ext_force( int species,
   
   return 0;
 }
+
+int ek_set_accelarated_frame( int enabled, double boundary_mass ) {
+
+  ek_parameters.accelerated_frame_enabled = enabled;
+  ek_parameters.accelerated_frame_boundary_mass = boundary_mass;
+
+  return 0;
+}
+
 
 #ifdef EK_REACTION
 int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_radius, float reaction_fraction_0, float reaction_fraction_1 ) 
