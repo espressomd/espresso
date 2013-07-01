@@ -184,6 +184,7 @@ proc add_oif_object { args } {
 	set filenamenodes ""
 	set filenametriangles ""
 	set ks 0.0
+	set kslin 0.0
 	set kb 0.0
 	set kal 0.0
 	set kag 0.0
@@ -240,6 +241,15 @@ proc add_oif_object { args } {
 					break
 				}
 				set ks [lindex $args $pos]
+				incr pos
+			}
+			"kslin" {  
+				incr pos
+				if { $pos >= $n_args } { 
+					puts "error"
+					break
+				}
+				set kslin [lindex $args $pos]
 				incr pos
 			}
 			"kb" {  
@@ -367,7 +377,7 @@ proc add_oif_object { args } {
 	}
 
 
-# checking wheter all mandatory arguments have been given
+# checking whether all mandatory arguments have been given
 	set mandatory 1
 	if { $origin_X == 0 &&  $origin_Y == 0 &&  $origin_Z == 0 } { set mandatory 0 }
 	if { $filenamenodes == "" } { set mandatory 0 }
@@ -376,19 +386,21 @@ proc add_oif_object { args } {
 	if { $part_mol == "-1" } { set mandatory 0 }
 	
 	if { $mandatory == 0 } { 
-		puts "Something went wrong with mandatory arguments for bond_generator" 
+		puts "Something went wrong with some mandatory arguments for bond_generator" 
 		return
 	}
 
 	if {$check_output == 1} {
 		set createPart TMP/noGcreatePart;
 		set bondS TMP/noGbondsStretching
+		set bondSLIN TMP/noGbondsStretchlin
 		set bondB TMP/noGbondsBending
 		set bondAlocal TMP/noGbondsAreaLocal
 		set bondAglobal TMP/noGbondsAreaGlobal
 		set bondV TMP/noGbondsVolume
 		set bondVA TMP/noGbondsVolumeAreaGlobal
 		set partS TMP/noGpartStretching
+		set partSLIN TMP/noGpartStretchlin
 		set partB TMP/noGpartBending
 		set partAlocal TMP/noGpartAreaLocal
 		set partAglobal TMP/noGpartAreaGlobal
@@ -455,6 +467,15 @@ proc add_oif_object { args } {
 	# all triangles should have correct orientation 
 	# TO BE IMPLEMENTED
 
+	# stretching of the object-in-fluid:
+	for {set i 0} {$i < $mesh_nnodes} {incr i} {
+		set mesh_nodes($i,0) [expr $mesh_nodes($i,0)*$stretch_X]
+		set mesh_nodes($i,1) [expr $mesh_nodes($i,1)*$stretch_Y]
+		set mesh_nodes($i,2) [expr $mesh_nodes($i,2)*$stretch_Z]
+	}
+
+
+
 # some variables for rotation
 	set ca [expr cos($rotate_X)];
 	set sa [expr sin($rotate_X)];
@@ -473,21 +494,48 @@ proc add_oif_object { args } {
 	set rotation(2,2) [expr $ca * $cb  ]
 	
 	# rotation of nodes:
-	for {set i 0} {$i < $mesh_nnodes} {incr i} {
-		set xx [discard_epsilon [expr $rotation(0,0)*$mesh_nodes($i,0) + $rotation(0,1)*$mesh_nodes($i,1) + $rotation(0,2)*$mesh_nodes($i,2)]]
-		set yy [discard_epsilon [expr $rotation(1,0)*$mesh_nodes($i,0) + $rotation(1,1)*$mesh_nodes($i,1) + $rotation(1,2)*$mesh_nodes($i,2)]]
-		set zz [discard_epsilon [expr $rotation(2,0)*$mesh_nodes($i,0) + $rotation(2,1)*$mesh_nodes($i,1) + $rotation(2,2)*$mesh_nodes($i,2)]]
+	#for {set i 0} {$i < $mesh_nnodes} {incr i} {
+		#set xx [discard_epsilon [expr $rotation(0,0)*$mesh_nodes($i,0) + $rotation(0,1)*$mesh_nodes($i,1) + $rotation(0,2)*$mesh_nodes($i,2)]]
+		#set yy [discard_epsilon [expr $rotation(1,0)*$mesh_nodes($i,0) + $rotation(1,1)*$mesh_nodes($i,1) + $rotation(1,2)*$mesh_nodes($i,2)]]
+		#set zz [discard_epsilon [expr $rotation(2,0)*$mesh_nodes($i,0) + $rotation(2,1)*$mesh_nodes($i,1) + $rotation(2,2)*$mesh_nodes($i,2)]]
 
-		set mesh_nodes($i,0) $xx;
+		#set mesh_nodes($i,0) $xx;
+		#set mesh_nodes($i,1) $yy;
+		#set mesh_nodes($i,2) $zz;
+	#}
+
+	# rotation of nodes around X axis in YZ plane:
+	for {set i 0} {$i < $mesh_nnodes} {incr i} {
+		set yy [discard_epsilon [expr $ca*$mesh_nodes($i,1) - $sa*$mesh_nodes($i,2)]]
+		set zz [discard_epsilon [expr $sa*$mesh_nodes($i,1) + $ca*$mesh_nodes($i,2)]]
+
 		set mesh_nodes($i,1) $yy;
 		set mesh_nodes($i,2) $zz;
 	}
 
-	# stretching of the object-in-fluid:
+	# rotation of nodes around Y in ZX plane:
 	for {set i 0} {$i < $mesh_nnodes} {incr i} {
-		set mesh_nodes($i,0) [expr $mesh_nodes($i,0)*$stretch_X + $origin_X]
-		set mesh_nodes($i,1) [expr $mesh_nodes($i,1)*$stretch_Y + $origin_Y]
-		set mesh_nodes($i,2) [expr $mesh_nodes($i,2)*$stretch_Z + $origin_Z]
+		set zz [discard_epsilon [expr $cb*$mesh_nodes($i,2) - $sb*$mesh_nodes($i,0)]]
+		set xx [discard_epsilon [expr $sb*$mesh_nodes($i,2) + $cb*$mesh_nodes($i,0)]]
+
+		set mesh_nodes($i,2) $zz;
+		set mesh_nodes($i,0) $xx;
+	}
+
+	# rotation of nodes around Z in XY plane:
+	for {set i 0} {$i < $mesh_nnodes} {incr i} {
+		set xx [discard_epsilon [expr $cc*$mesh_nodes($i,0) - $sc*$mesh_nodes($i,1)]]
+		set yy [discard_epsilon [expr $sc*$mesh_nodes($i,0) + $cc*$mesh_nodes($i,1)]]
+
+		set mesh_nodes($i,0) $xx;
+		set mesh_nodes($i,1) $yy;
+	}
+
+	# setting the origin of the object-in-fluid:
+	for {set i 0} {$i < $mesh_nnodes} {incr i} {
+		set mesh_nodes($i,0) [expr $mesh_nodes($i,0) + $origin_X]
+		set mesh_nodes($i,1) [expr $mesh_nodes($i,1) + $origin_Y]
+		set mesh_nodes($i,2) [expr $mesh_nodes($i,2) + $origin_Z]
 	}
 
 # Creating the list of edges	
@@ -561,6 +609,44 @@ proc add_oif_object { args } {
 		}  
 	set oif_firstPartId [expr $oif_firstPartId + $mesh_nnodes]
 	if {$check_output == 1} { close $f }
+
+# generation of stretchlin force bonds
+	# adapted by Cimo
+	if { $kslin != 0.0} {
+		if {$check_output == 1} { 
+			set fbond [open $bondSLIN "w"]
+			set fpart [open $partSLIN "w"]
+		}
+
+		puts "generating stretchlin force bonds"
+		set firstID_StrBond $oif_firstBondId
+		# Stretchlin is coupled to the edges   
+		set n_StrBond $mesh_nedges 
+		set oif_firstBondId [expr $oif_firstBondId+$n_StrBond]
+	
+		set dist 0
+		for {set i 0} {$i < $n_StrBond} {incr i} {
+		    for {set k 0} {$k < 3} {incr k} {		
+			set p1($k) [expr $mesh_nodes($mesh_edges($i,0),$k)]
+			set p2($k) [expr $mesh_nodes($mesh_edges($i,1),$k)]
+			}
+		    # We need to compute the distance btw the vertices
+		    set dist [expr sqrt(($p1(0)-$p2(0))*($p1(0)-$p2(0)) + ($p1(1)-$p2(1))*($p1(1)-$p2(1)) + ($p1(2)-$p2(2))*($p1(2)-$p2(2)))] 
+		    set firstPartId [expr $oif_firstPartId - $mesh_nnodes]
+		    inter [expr $firstID_StrBond + $i] stretchlin_force [format %e $dist] [format %e $kslin]
+		    #inter [expr $firstID_StrBond + $i] stretching_force [expr $dist] [expr $ks]
+		    part [expr $mesh_edges($i,0)+$firstPartId] bond [expr $firstID_StrBond + $i] [expr $mesh_edges($i,1) + $firstPartId]
+		    if {$check_output == 1} { 
+				puts $fbond [format "inter [expr $firstID_StrBond + $i] stretchlin_force %e %e" [expr $dist] [expr $kslin]]
+				puts $fpart "part [expr $mesh_edges($i,0)+$firstPartId] bond [expr $firstID_StrBond + $i] [expr $mesh_edges($i,1) + $firstPartId]"
+			}
+		}
+		if {$check_output == 1} { 
+			close $fpart
+			close $fbond
+		}
+		
+	}
 
 		
 # generation of stretching force bonds
