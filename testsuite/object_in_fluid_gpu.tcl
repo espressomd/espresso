@@ -93,7 +93,7 @@ if { [catch {
 	    invalidate_system
 	}
 	
-	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
+	lbfluid gpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           
 	if { $vmd == "y" } {
 	    prepare_vmd_connection simEspresso 3000 1 
