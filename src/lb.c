@@ -1151,9 +1151,6 @@ int lb_lbnode_set_u(int* ind, double* u){
     j[0] = rho*u[0]*tau*agrid;
     j[1] = rho*u[1]*tau*agrid;
     j[2] = rho*u[2]*tau*agrid;
-    j[0] = u[0]*tau*agrid;
-    j[1] = u[1]*tau*agrid;
-    j[2] = u[2]*tau*agrid;
     mpi_send_fluid(node,index,rho,j,pi) ;
 #endif
     }
@@ -1704,14 +1701,14 @@ void lb_reinit_fluid() {
     /* default values for fields in lattice units */
     /* here the conversion to lb units is performed */
     double rho = lbpar.rho[0]*agrid*agrid*agrid;
-    double v[3] = { 0.0, 0., 0. };
+    double j[3] = { 0., 0., 0. };
     double pi[6] = { rho*lbmodel.c_sound_sq, 0., rho*lbmodel.c_sound_sq, 0., 0., rho*lbmodel.c_sound_sq };
 
     LB_TRACE(fprintf(stderr, "Initialising the fluid with equilibrium populations\n"););
 
     for (index=0; index<lblattice.halo_grid_volume; index++) {
 
-      lb_calc_n_equilibrium(index,rho,v,pi);
+      lb_calc_n_equilibrium(index,rho,j,pi);
 
       lbfields[index].recalc_fields = 1;
 #ifdef LB_BOUNDARIES
@@ -1778,7 +1775,7 @@ void lb_release() {
 /***********************************************************************/
 /*@{*/
 
-void lb_calc_n_equilibrium(const index_t index, const double rho, const double *v, double *pi) {
+void lb_calc_n_equilibrium(const index_t index, const double rho, const double *j, double *pi) {
 
   const double rhoc_sq = rho*lbmodel.c_sound_sq;
   // unit conversion: mass density
@@ -1790,9 +1787,9 @@ void lb_calc_n_equilibrium(const index_t index, const double rho, const double *
 
   local_rho  = rho;
 
-  local_j[0] = rho * v[0];
-  local_j[1] = rho * v[1];
-  local_j[2] = rho * v[2];
+  local_j[0] = j[0];
+  local_j[1] = j[1];
+  local_j[2] = j[2];
 
   for (i=0; i<6; i++) 
     local_pi[i] = pi[i];

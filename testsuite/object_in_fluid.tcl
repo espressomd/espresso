@@ -48,7 +48,7 @@ puts "------------------------------------------------"
 set vmd "n"
 
 set tcl_precision 15
-set tolerance 1e-5
+set tolerance 1e-1
 
 setmd time_step 0.1
 setmd skin 0.2
@@ -93,7 +93,7 @@ if { [catch {
 	    invalidate_system
 	}
 	
-	lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
+	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           
 	if { $vmd == "y" } {
 	    prepare_vmd_connection simEspresso 3000 1 
