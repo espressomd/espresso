@@ -38,11 +38,11 @@ source "tests_common.tcl"
 
 require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
-require_feature "LB"
+require_feature "LB_GPU"
 require_max_nodes_per_side 2
 
 puts "------------------------------------------------"
-puts "- Testcase object_in_fluid.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase object_in_fluid_gpu.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 
 set vmd "n"
