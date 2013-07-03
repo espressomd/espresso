@@ -185,6 +185,8 @@
 #define CONSTRAINT_PLANE 9
 /** Constraint for tunable-lsip boundary conditions */
 #define CONSTRAINT_RHOMBOID 10
+/** Constraint for a stomatocyte boundary */
+#define CONSTRAINT_STOMATOCYTE 11
 /*@}*/
 
 /* Data Types */
@@ -816,6 +818,38 @@ typedef struct {
   int penetrable; 
 } Constraint_maze;
 
+/** Parameters for a STOMATOCYTE constraint. */
+typedef struct {
+
+  /** Stomatocyte position. */
+
+  double position_x;
+  double position_y;
+  double position_z;
+
+  /** Stomatocyte position. */
+
+  double orientation_x;
+  double orientation_y;
+  double orientation_z;
+
+  /** Stomatocyte dimensions. */
+
+  double outer_radius;
+  double inner_radius;
+  double layer_width;
+
+  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+
+  double direction;
+
+  /** whether the constraint is penetrable 1 or not 0*/
+
+  int penetrable; 
+  int reflecting;
+
+} Constraint_stomatocyte;
+
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
 typedef struct{
@@ -844,6 +878,7 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    Constraint_stomatocyte stomatocyte;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER

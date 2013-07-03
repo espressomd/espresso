@@ -168,6 +168,35 @@ static int tclprint_to_result_Constraint(Tcl_Interp *interp, int i)
     sprintf(buffer, "%d", con->part_rep.p.type);
     Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
     break;
+  case CONSTRAINT_STOMATOCYTE:
+
+    Tcl_PrintDouble(interp, con->c.stomatocyte.position_x, buffer);
+    Tcl_AppendResult(interp, "stomatocyte center ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.position_y, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.position_z, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.orientation_x, buffer);
+    Tcl_AppendResult(interp, " orientation ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.orientation_y, buffer);
+    Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.orientation_z, buffer);
+    Tcl_AppendResult(interp, buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.outer_radius, buffer);
+    Tcl_AppendResult(interp, " outer radius ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.inner_radius, buffer);
+    Tcl_AppendResult(interp, " inner radius ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.layer_width, buffer);
+    Tcl_AppendResult(interp, " layer width ", buffer, " ", (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.direction, buffer);
+    Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->part_rep.p.type);
+    Tcl_AppendResult(interp, " type ", buffer, (char *) NULL);
+    sprintf(buffer, "%d", con->c.stomatocyte.penetrable);
+    Tcl_AppendResult(interp, " penetrable ", buffer, (char *) NULL);
+    Tcl_PrintDouble(interp, con->c.stomatocyte.reflecting, buffer);
+    Tcl_AppendResult(interp, " reflecting ", buffer, (char *) NULL);
+    break;
 //ER
   case CONSTRAINT_EXT_MAGN_FIELD:
     Tcl_PrintDouble(interp, con->c.emfield.ext_magn_field[0], buffer);
@@ -897,6 +926,189 @@ static int tclcommand_constraint_parse_plate(Constraint *con, Tcl_Interp *interp
   return (TCL_OK);
 }
 
+static int tclcommand_constraint_parse_stomatocyte(Constraint *con, Tcl_Interp *interp,
+		      int argc, char **argv)
+{
+  /* DON'T PLAY WITH THIS CONSTRAINT UNLESS
+     YOU KNOW WHAT IT IS THAT YOU ARE DOING */
+
+  con->type = CONSTRAINT_STOMATOCYTE;
+
+  /* invalid entries to start of */
+
+  con->c.stomatocyte.position_x = -M_PI;
+  con->c.stomatocyte.position_y = -M_PI;
+  con->c.stomatocyte.position_z = -M_PI;
+  con->c.stomatocyte.orientation_x = -M_PI;
+  con->c.stomatocyte.orientation_y = -M_PI;
+  con->c.stomatocyte.orientation_z = -M_PI;
+  con->c.stomatocyte.outer_radius = -1.0;
+  con->c.stomatocyte.inner_radius = -1.0;
+  con->c.stomatocyte.layer_width = -1.0;
+  con->c.stomatocyte.direction = 0;
+  con->c.stomatocyte.penetrable = 0;
+  con->c.stomatocyte.reflecting = 0;
+  con->part_rep.p.type = -1;
+
+  /* read the data */
+
+  while ( argc > 0 )
+  {
+    if ( ARG_IS_S( 0, "center" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte center <x> <y> <z> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.stomatocyte.position_x ) ||
+	         !ARG_IS_D( 2, con->c.stomatocyte.position_y ) ||
+	         !ARG_IS_D( 3, con->c.stomatocyte.position_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "orientation" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte orientation <ox> <oy> <oz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.stomatocyte.orientation_x ) ||
+	         !ARG_IS_D( 2, con->c.stomatocyte.orientation_y ) ||
+	         !ARG_IS_D( 3, con->c.stomatocyte.orientation_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "outer_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte outer_radius <Ro> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D(1, con->c.stomatocyte.outer_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "inner_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte inner_radius <Ri> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.stomatocyte.inner_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "layer_width" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte layer_width <w> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, con->c.stomatocyte.layer_width ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "direction" ) ) 
+    {
+      if ( argc < 2 ) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte direction {-1|1} or {inside|outside} is expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( ARG_IS_S( 1, "inside" ) )
+	      con->c.stomatocyte.direction = -1;
+      else if ( ARG_IS_S( 1, "outside" ) )
+	      con->c.stomatocyte.direction = 1;
+      else if ( !ARG_IS_D( 1, con->c.stomatocyte.direction ) )
+	      return (TCL_ERROR); 
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "type" ) ) 
+    {
+      if ( argc < 2 )
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte type <t> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_I( 1, con->part_rep.p.type ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "penetrable" ) ) 
+    {
+      if ( argc < 2 ) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte penetrable {0|1} expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_I( 1, con->c.stomatocyte.penetrable ) ) 
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "reflecting" ) ) 
+    {
+      if (argc < 1) 
+      {
+	      Tcl_AppendResult(interp, "constraint stomatocyte reflecting {0|1} expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_I( 1, con->c.stomatocyte.reflecting ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if ( con->c.stomatocyte.outer_radius < 0.0 || 
+       con->c.stomatocyte.inner_radius < 0.0 || 
+       con->c.stomatocyte.layer_width < 0.0 ) 
+  {
+    Tcl_AppendResult(interp, "stomatocyte radii and width have to be greater than zero",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  if ( con->c.stomatocyte.outer_radius < con->c.stomatocyte.inner_radius || 
+       con->c.stomatocyte.inner_radius < con->c.stomatocyte.layer_width ||
+       con->c.stomatocyte.outer_radius < con->c.stomatocyte.layer_width ) 
+  {
+    Tcl_AppendResult(interp, "stomatocyte requires layer_width < inner_radius < outer_radius",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  make_particle_type_exist(con->part_rep.p.type);
+
+  return (TCL_OK);
+}
 
 static int tclcommand_constraint_parse_maze(Constraint *con, Tcl_Interp *interp,
 		      int argc, char **argv)
@@ -1099,6 +1311,12 @@ static int tclcommand_constraint_mindist_position(Tcl_Interp *interp, int argc, 
           else
             dist=1e100;
           break;
+        case CONSTRAINT_STOMATOCYTE:
+          if ( !constraints[n].c.stomatocyte.penetrable )
+	          calculate_stomatocyte_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.stomatocyte, &dist, vec); 
+          else
+            dist=1e100;
+          break;
         case CONSTRAINT_PORE: 
 	        calculate_pore_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.pore, &dist, vec); 
           break;
@@ -1166,6 +1384,12 @@ int tclcommand_constraint_mindist_position_vec(Tcl_Interp *interp, int argc, cha
         case CONSTRAINT_MAZE: 
           if ( !constraints[n].c.maze.penetrable )
 	          calculate_maze_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.maze, &dist, vec); 
+          else
+            dist=1e100;
+          break;
+        case CONSTRAINT_STOMATOCYTE:
+          if ( !constraints[n].c.stomatocyte.penetrable )
+	          calculate_stomatocyte_dist(p1, pos, &constraints[n].part_rep, &constraints[n].c.stomatocyte, &dist, vec); 
           else
             dist=1e100;
           break;
@@ -1244,6 +1468,10 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
     status = tclcommand_constraint_parse_pore(generate_constraint(),interp, argc - 2, argv + 2);
     mpi_bcast_constraint(-1);
   }
+  else if(!strncmp(argv[1], "stomatocyte", strlen(argv[1]))) {
+    status = tclcommand_constraint_parse_stomatocyte(generate_constraint(),interp, argc - 2, argv + 2);
+    mpi_bcast_constraint(-1);
+  }
   //ER
   else if(!strncmp(argv[1], "ext_magn_field", strlen(argv[1]))) {
     status = tclcommand_constraint_parse_ext_magn_field(generate_constraint(),interp, argc - 2, argv + 2);
@@ -1289,7 +1517,7 @@ int tclcommand_constraint(ClientData _data, Tcl_Interp *interp,
   }
   else {
   //ER "ext_magn_field" was put in the next line //end ER
-    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze pore ext_magn_field or constraint delete {c} to delete constraint(s)",(char *) NULL);
+    Tcl_AppendResult(interp, "possible constraints: wall sphere cylinder maze pore stomatocyte ext_magn_field or constraint delete {c} to delete constraint(s)",(char *) NULL);
     return (TCL_ERROR);
   }
 
