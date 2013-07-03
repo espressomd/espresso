@@ -397,10 +397,10 @@ CUDA_SOURCES = \
 	lbgpu.cu lbgpu.h \
 	p3m_gpu.cu p3m_gpu.h
 
-cuda_common.o: cuda_common.h
-cuda_init.o: cuda_init.h
-lbgpu.o: lbgpu.h
-p3m_gpu.o: p3m_gpu.h
+cuda_common.o: cuda_common.h myconfig-final.h
+cuda_init.o: cuda_init.h myconfig-final.h
+lbgpu.o: lbgpu.h myconfig-final.h
+p3m_gpu.o: p3m_gpu.h myconfig-final.h
 
 if TCL
 

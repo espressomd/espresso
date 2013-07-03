@@ -120,7 +120,10 @@ extern "C" {
 
 
   /** change number of particles to be communicated to the GPU
-  */
+   *  Note that in addition to calling this function the parameters must be broadcast with either:
+   * 1) cuda_bcast_global_part_params(); (when just being executed on the master node) or
+   * 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on all nodes)
+   */
   void gpu_change_number_of_part_to_comm() {
     //we only run the function if there are new particles which have been created since the last call of this function
 
@@ -167,7 +170,10 @@ extern "C" {
   }
 
   /** setup and call particle reallocation from the host
-  */
+   *  Note that in addition to calling this function the parameters must be broadcast with either:
+   * 1) cuda_bcast_global_part_params(); (when just being executed on the master node) or
+   * 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on all nodes)
+   */
   void gpu_init_particle_comm() {
     if ( this_node == 0  && global_part_vars_host.communication_enabled == 0 ) {
       if( cuda_get_n_gpus() == -1 ) {
