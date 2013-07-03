@@ -55,6 +55,8 @@
 #define LB_BOUNDARY_POR 4
 /** rhomboid shaped constraint applied */
 #define LB_BOUNDARY_RHOMBOID 5
+/** stomatocyte shaped constraint applied */
+#define LB_BOUNDARY_STOMATOCYTE 6
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -71,6 +73,7 @@ typedef struct {
     Constraint_cylinder cyl;
     Constraint_rhomboid rhomboid;
     Constraint_pore pore;
+    Constraint_stomatocyte stomatocyte;
   } c;
   double force[3];
   double velocity[3];
