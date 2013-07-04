@@ -1174,7 +1174,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   random_01(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
   viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
-  random_01(+ii*3rn_part);
+  random_01(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
 #endif	  
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
