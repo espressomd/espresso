@@ -258,7 +258,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(argc != 3 || !ARG1_IS_S("vtk") || (!ARG0_IS_S("velocity") && !ARG0_IS_S("density") && !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") && !ARG0_IS_S("lbforce"))) {
+        if(argc != 3 || !ARG1_IS_S("vtk") || (!ARG0_IS_S("velocity") && !ARG0_IS_S("density") && !ARG0_IS_S("boundary") && !ARG0_IS_S("potential") && !ARG0_IS_S("pressure") && !ARG0_IS_S("lbforce"))) {
           Tcl_AppendResult(interp, "Wrong usage of electrokinetics print <velocity|density|potential> vtk #string\n", (char *)NULL);
           return TCL_ERROR;
         }
@@ -327,6 +327,26 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
             Tcl_AppendResult(interp, "Unknown error in electrokinetics print lbforce vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
+        }
+        else if(ARG0_IS_S("pressure")) {
+#ifndef EK_REACTION
+          Tcl_AppendResult(interp, "Feature EK_REACTION required", (char *) NULL);
+          return (TCL_ERROR);
+#else
+          if(ek_print_vtk_pressure(argv[2]) == 0) {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+          else {
+            Tcl_AppendResult(interp, "Unknown error in electrokinetics print pressure vtk #string\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+#endif /* EK_PRESSURE */
         }
         else if(ARG0_IS_S("lbforce")) {
           if(ek_print_vtk_lbforce(argv[2]) == 0) {
@@ -526,7 +546,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         {
           if ( floatarg > 0.0 ) 
           {
-            ek_set_accelarated_frame( 1 , floatarg );
+            ek_set_accelerated_frame( 1 , floatarg );
           }
           else
           {
@@ -536,7 +556,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         }
         else 
         {
-          ek_set_accelarated_frame( 0 , -1.0 );
+          ek_set_accelerated_frame( 0 , -1.0 );
         }
 
         argc -= 4;
