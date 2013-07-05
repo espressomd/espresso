@@ -38,11 +38,11 @@ source "tests_common.tcl"
 
 require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
-require_feature "LB"
+require_feature "LB_GPU"
 require_max_nodes_per_side 2
 
 puts "------------------------------------------------"
-puts "- Testcase object_in_fluid.tcl running on [format %02d [setmd n_nodes]] nodes: -"
+puts "- Testcase object_in_fluid_gpu.tcl running on [format %02d [setmd n_nodes]] nodes: -"
 puts "------------------------------------------------"
 
 set vmd "n"
@@ -93,7 +93,7 @@ if { [catch {
 	    invalidate_system
 	}
 	
-	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
+	lbfluid gpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           
 	if { $vmd == "y" } {
 	    prepare_vmd_connection simEspresso 3000 1 
