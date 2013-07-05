@@ -25,6 +25,7 @@ MYCONFIGS = \
 	myconfig-restcompile2.h \
 	myconfig-LB.h \
 	myconfig-LBGPU.h \
+	myconfig-LBGPU-SHANCHEN.h \
 	myconfig-tunableslip.h \
         myconfig-adress.h
 

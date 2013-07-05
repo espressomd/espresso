@@ -30,6 +30,8 @@
 #include "utils.h"
 #include "lattice.h"
 
+extern int lb_components ; // global variable holding the number of fluid components
+
 #ifdef LB
 
 /* For the D3Q19 model most functions have a separate implementation
@@ -132,13 +134,13 @@ typedef struct {
 typedef struct {
 
   /** number density (LJ units) */
-  double rho;
+  double rho[LB_COMPONENTS];
 
   /** kinematic viscosity (LJ units) */
-  double viscosity;
+  double viscosity[LB_COMPONENTS];
 
   /** bulk viscosity (LJ units) */
-  double bulk_viscosity;
+  double bulk_viscosity[LB_COMPONENTS];
 
   /** lattice spacing (LJ units) */
   double agrid;
@@ -150,13 +152,13 @@ typedef struct {
   /** friction coefficient for viscous coupling (LJ units)
    * Note that the friction coefficient is quite high and may
    * lead to numerical artifacts with low order integrators */
-  double friction;
+  double friction[LB_COMPONENTS];
 
   /** external force applied to the fluid at each lattice site (MD units) */
   double ext_force[3]; /* Open question: Do we want a local force or global force? */
-  double rho_lb_units;
-  double gamma_odd;
-  double gamma_even;
+  double rho_lb_units[LB_COMPONENTS];
+  double gamma_odd[LB_COMPONENTS];
+  double gamma_even[LB_COMPONENTS];
 
   int resend_halo;
           
@@ -300,7 +302,7 @@ MDINLINE void lb_calc_local_rho(index_t index, double *rho) {
     return;
   }
 
-  double avg_rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+  double avg_rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
   *rho =   avg_rho
          + lbfluid[0][0][index]
@@ -401,7 +403,7 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
 
 #ifdef LB_BOUNDARIES
   if ( lbfields[index].boundary ) {
-    *rho = lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+    *rho = lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
     j[0] = 0.; j[1] = 0.;  j[2] = 0.;
     if (pi) {pi[0] = 0.; pi[1] = 0.; pi[2] = 0.; pi[3] = 0.; pi[4] = 0.; pi[5] = 0.;}
     return;
@@ -411,7 +413,7 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
   double pi_eq[6];
   lb_calc_modes(index, mode);
 
-  *rho = mode[0] + lbpar.rho*lbpar.agrid*lbpar.agrid*lbpar.agrid;
+  *rho = mode[0] + lbpar.rho[0]*lbpar.agrid*lbpar.agrid*lbpar.agrid;
 
   j[0] = mode[1];
   j[1] = mode[2];
@@ -478,14 +480,14 @@ MDINLINE void lb_local_fields_get_boundary_flag(index_t index, int *boundary) {
 MDINLINE void lb_get_populations(index_t index, double* pop) {
   int i=0;
   for (i=0; i<19; i++) {
-    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho;
+    pop[i]=lbfluid[0][i][index]+lbmodel.coeff[i][0]*lbpar.rho[0];
   }
 }
 
 MDINLINE void lb_set_populations(index_t index, double* pop) {
   int i=0;
   for (i=0; i<19; i++) {
-    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho;
+    lbfluid[0][i][index]=pop[i]-lbmodel.coeff[i][0]*lbpar.rho[0];
   }
 }
 #endif
@@ -494,28 +496,24 @@ MDINLINE void lb_set_populations(index_t index, double* pop) {
 
 #if defined (LB) || defined (LB_GPU)
 /* A C level interface to the LB fluid */ 
-int lb_lbfluid_set_density(double p_dens);
+int lb_lbfluid_set_density(double * p_dens);
+int lb_lbfluid_set_visc(double * p_visc);
+int lb_lbfluid_set_bulk_visc(double * p_bulk_visc);
+int lb_lbfluid_set_gamma_odd(double * p_gamma_odd);
+int lb_lbfluid_set_gamma_even(double * p_gamma_even);
+int lb_lbfluid_set_friction(double * p_friction);
 int lb_lbfluid_set_agrid(double p_agrid);
-int lb_lbfluid_set_visc(double p_visc);
-int lb_lbfluid_set_tau(double p_tau);
-int lb_lbfluid_set_bulk_visc(double p_bulk_visc);
-int lb_lbfluid_set_gamma_odd(double p_gamma_odd);
-int lb_lbfluid_set_gamma_even(double p_gamma_even);
 int lb_lbfluid_set_ext_force(double p_fx, double p_fy, double p_fz);
-int lb_lbfluid_set_friction(double p_friction);
+int lb_lbfluid_set_tau(double p_tau);
+#ifdef SHANCHEN
+int lb_lbfluid_set_shanchen_coupling(double * p_coupling);
+int lb_lbfluid_set_mobility(double * p_mobility);
+#endif 
 
-int lb_lbfluid_get_density(double* p_dens);
-int lb_lbfluid_get_agrid(double* p_agrid);
-int lb_lbfluid_get_visc(double* p_visc);
-int lb_lbfluid_get_bulk_visc(double* p_bulk_visc);
-int lb_lbfluid_get_tau(double* p_tau);
-int lb_lbfluid_get_gamma_odd(double* p_gamma_odd);
-int lb_lbfluid_get_gamma_even(double* p_gamma_even);
-int lb_lbfluid_get_ext_force(double* p_fx, double* p_fy, double* p_fz);
-int lb_lbfluid_get_friction(double* p_friction);
-
+/* IO routines */
 int lb_lbfluid_print_vtk_boundary(char* filename);
 int lb_lbfluid_print_vtk_velocity(char* filename);
+int lb_lbfluid_print_vtk_density(char** filename);
 int lb_lbfluid_print_boundary(char* filename);
 int lb_lbfluid_print_velocity(char* filename);
 
@@ -529,7 +527,7 @@ int lb_lbnode_get_pi_neq(int* ind, double* pi_neq);
 int lb_lbnode_get_boundary(int* ind, int* p_boundary);
 int lb_lbnode_get_pop(int* ind, double* pop);
 
-int lb_lbnode_set_rho(int* ind, double rho);
+int lb_lbnode_set_rho(int* ind, double *rho);
 int lb_lbnode_set_u(int* ind, double* u);
 int lb_lbnode_set_pi(int* ind, double* pi);
 int lb_lbnode_set_pi_neq(int* ind, double* pi_neq);

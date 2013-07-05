@@ -78,6 +78,7 @@ set:
   Langevin thermostat.
 \item[integ_switch] (int, \ro) Internal switch which integrator to
   use.
+\item[lb_components] (int, \ro) Number of fluid components.
 \item[local_box_l] (int[3], \ro) Local simulation box length of the
   nodes.
 \item[max_cut] (double, \ro) Maximal cutoff of real space
@@ -186,7 +187,7 @@ Variant \variant{3} sets up one of the thermostats described below.
 The Langevin thermostat consists of a friction and noise term coupled
 via the fluctuation-dissipation theorem. The friction term is a
 function of the particle velocities. For a more detailed explanation,
-refer to \cite{berendsen84a, grest86a}.
+refer to \cite{grest86a}.
 
 If the feature \feature{ROTATION} is compiled in, the rotational
 degrees of freedom are also coupled to the thermostat.

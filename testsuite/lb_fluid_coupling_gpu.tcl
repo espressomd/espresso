@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 The ESPResSo project
+# Copyright (C) 2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -44,12 +44,38 @@ set fdragx [expr -$dragx/$box_vol]
 set fdragy [expr -$dragy/$box_vol]
 set fdragz [expr -$dragz/$box_vol]
 
-# set the lbfluid and thermostat
-lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
-thermostat lb 0.0
+set components [setmd lb_components]
 
-# set the particle
+
+
+## let's first check momentum conservation
+
+if { $components == 1 }  { 
+  lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep  friction 0.1 
+} else  { if { $components ==2 } { 
+  lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep friction 0.1 0.1 sc_coupling 0.0 0.0 0.0  
+} else {
+     error_exit "number of components ($components) not supported"
+  }
+}
+part 0 pos [expr 0.5] [expr 0.5 ] [expr 0.5 ] v 1.0 0.0 0.0 
+thermostat lb 0.0
+set initial [expr [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ] 
+integrate 500
+set delta [expr $initial - ( [lindex [analyze momentum] 0 ] +  [ lindex [analyze fluid momentum] 0 ] ) ] 
+if { $delta > 1e-4 } {
+
+     error_exit "linear momentum not conserved"
+}
+
+
+if { $components == 1 }  { 
+lbfluid gpu agrid 1 dens 1.0 visc 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0
+} else {
+lbfluid gpu agrid 1 dens 0.5 0.5 visc 3.0 3.0 tau $tstep ext_force $fdragx $fdragy $fdragz friction 10.0 10.0
+}
 part 0 pos [expr 0.5*$length] [expr 0.5*$length] [expr 0.5*$length] v 0.0 0.0 0.0 f 0.0 0.0 0.0 ext_force $dragx $dragy $dragz 
+
 
 # get over the initial acceleration
 integrate 200
@@ -67,11 +93,20 @@ for { set i 0 } { $i < 100 } { incr i } {
   incr count
 }
 
+#note that the linear interpolation in SC is different from LB, hence the different terminal velocity
+if { $components == 1 }  { 
+   set vel_works 0.1100128137
+} else  { 
+   set vel_works 0.0900439240
+}
 # check for the right terminal velocity
-set vel_works 0.1100128183
 set difference [expr ($vsum/$count - $vel_works)/$vel_works]
+puts -nonewline  "The velocity is [expr $vsum/$count] compared to the reference $vel_works : "
 if { $difference > 1e-3 } {
+  puts "FAILED"
   error_exit "Particle terminal velocity is wrong: coupling might be broken."
+} else { 
+  puts "OK"
 }
 
 exit 0

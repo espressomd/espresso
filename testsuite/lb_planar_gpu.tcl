@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 The ESPResSo project
+# Copyright (C) 2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -102,8 +102,8 @@ set couette_u_accuracy [ expr $accuracy_u / $meanabs_u ]
 set couette_p_accuracy  [ expr $accuracy_p / $meanabs_p ]
 
 puts "Couette flow result:"
-puts "flow accuary $couette_u_accuracy"
-puts "pressure accuary $couette_p_accuracy"
+puts "flow accuracy $couette_u_accuracy"
+puts "pressure accuracy $couette_p_accuracy"
 puts "----------"
 
 # Now we add a force density in normal direction, and compress the flow.
@@ -151,7 +151,7 @@ for { set i 2 } { $i < int(floor($l/$agrid))-2 } { incr i } {
 }
 set hydrostatic_p_accuracy  [ expr $accuracy_p / $meanabs_p ]
 puts "Hydrostatic test result:"
-puts "pressure accuary $hydrostatic_p_accuracy"
+puts "pressure accuracy $hydrostatic_p_accuracy"
 puts "-------------"
 
 # Now we add a force density in the direction of the Couette flow
@@ -204,8 +204,8 @@ set poisseuille_u_accuracy [ expr $accuracy_u / $meanabs_u ]
 set poisseuille_p_accuracy [ expr $accuracy_p / $meanabs_p ]
 
 puts "Poisseuille flow result:"
-puts "flow accuary $poisseuille_u_accuracy"
-puts "pressure accuary $poisseuille_p_accuracy"
+puts "flow accuracy $poisseuille_u_accuracy"
+puts "pressure accuracy $poisseuille_p_accuracy"
 puts "----------"
 
 if { $couette_u_accuracy > 1e-5 } {

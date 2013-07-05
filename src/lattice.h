@@ -46,11 +46,6 @@ extern int lattice_switch;
 
 #ifdef LATTICE
 
-/** Lattice Boltzmann */
-//#define LATTICE_LB   1
-
-/** Lattice Boltzmann */
-//#define LATTICE_LB_GPU   2
 
 /** Switch determining the type of lattice dynamics. A value of zero
  *  means that there is no lattice dynamics. Different types can be

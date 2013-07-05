@@ -53,6 +53,7 @@ tests = \
 	lb_gpu.tcl \
 	lb_planar.tcl \
 	lb_planar_gpu.tcl \
+	lb_planar_embedded_particles_gpu.tcl \
 	lb_stokes_sphere.tcl \
 	lb_stokes_sphere_gpu.tcl \
 	lj.tcl \
@@ -69,14 +70,18 @@ tests = \
 	nsquare.tcl \
 	nve_pe.tcl \
 	object_in_fluid.tcl \
+	object_in_fluid_gpu.tcl \
 	observable.tcl \
 	p3m.tcl \
+	p3m_gpu.tcl \
 	p3m_magnetostatics.tcl \
 	p3m_magnetostatics2.tcl \
 	p3m_simple_noncubic.tcl \
 	p3m_wall.tcl \
+	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
+	sc_fluid_gpu.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl
@@ -111,8 +116,10 @@ EXTRA_DIST = $(tests) $(deactivated_tests) \
 	thermostat.data thermostat_rot.data \
 	mass_system.data \
 	lb_system.data \
-        object_in_fluid_system.data.final object_in_fluid_system.data.init \
-        object_in_fluid_system.data.nodes object_in_fluid_system.data.triangles \
+	object_in_fluid_system-final.data \
+	object_in_fluid_system-init.data \
+        object_in_fluid_system-nodes.data \
+	object_in_fluid_system-triangles.data \
 	\
 	pe_micelle.tcl pe_micelle.data \
 	uwerr.tcl uwerr.data \

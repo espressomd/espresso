@@ -55,6 +55,8 @@
 #define LB_BOUNDARY_POR 4
 /** rhomboid shaped constraint applied */
 #define LB_BOUNDARY_RHOMBOID 5
+/** stomatocyte shaped constraint applied */
+#define LB_BOUNDARY_STOMATOCYTE 6
 
 // If we have several possible types of boundary treatment
 #define LB_BOUNDARY_BOUNCE_BACK 1
@@ -71,6 +73,7 @@ typedef struct {
     Constraint_cylinder cyl;
     Constraint_rhomboid rhomboid;
     Constraint_pore pore;
+    Constraint_stomatocyte stomatocyte;
   } c;
   double force[3];
   double velocity[3];
@@ -149,7 +152,7 @@ MDINLINE void lb_bounce_back() {
           for (i=0; i<19; i++) {
             population_shift=0;
             for (l=0; l<3; l++) {
-              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
+              population_shift-=lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.agrid*lbpar.rho[0]*2*lbmodel.c[i][l]*lbmodel.w[i]*lb_boundaries[lbfields[k].boundary-1].velocity[l]/lbmodel.c_sound_sq;
             }
             if ( x-lbmodel.c[i][0] > 0 && x -lbmodel.c[i][0] < lblattice.grid[0]+1 && 
                  y-lbmodel.c[i][1] > 0 && y -lbmodel.c[i][1] < lblattice.grid[1]+1 &&
