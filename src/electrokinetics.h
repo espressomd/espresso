@@ -118,6 +118,7 @@ void ek_integrate();
 void ek_print_parameters();
 void ek_print_lbpar();
 int ek_print_vtk_density(int species, char* filename);
+int ek_print_vtk_flux(int species, char* filename);
 int ek_print_vtk_potential(char* filename);
 int ek_print_vtk_lbforce(char* filename);
 int ek_lb_print_vtk_density(char* filename);
