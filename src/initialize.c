@@ -132,7 +132,7 @@ void on_program_start()
 
 #ifdef LB_GPU
   if(this_node == 0){
-    //lb_pre_init_gpu();
+ //   lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
@@ -189,28 +189,30 @@ void on_integration_start()
 #ifdef ELECTROSTATICS
 
     switch(coulomb.method) {
-    case COULOMB_NONE:  break;
+      case COULOMB_NONE:  break;
+      case COULOMB_DH:    break;
+      case COULOMB_RF:    break;
 #ifdef P3M
-    case COULOMB_P3M:   break;
+      case COULOMB_P3M:   break;
 #endif /*P3M*/
-    default: {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt only works with P3M} ");
-    }
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
+      }
     }
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
 
     switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE: break;
+      case DIPOLAR_NONE: break;
 #ifdef DP3M
-    case DIPOLAR_P3M: break;
-#endif
-    default: {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
-    }
+      case DIPOLAR_P3M: break;
+#endif /* DP3M */
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+      }
     }
 #endif  /* ifdef DIPOLES */
   }
@@ -228,11 +230,11 @@ void on_integration_start()
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar.rho <= 0.0) {
+    if (lbpar.rho[0] <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
     }
-    if (lbpar.viscosity <= 0.0) {
+    if (lbpar.viscosity[0] <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
@@ -243,30 +245,33 @@ void on_integration_start()
   }
 #endif
 #ifdef LB_GPU
-  if(this_node == 0){
-    if(lattice_switch & LATTICE_LB_GPU) {
-      if (lbpar_gpu.agrid < 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
-      }
-      if (lbpar_gpu.tau < 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
-      }
-      if (lbpar_gpu.rho < 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
-      }
-      if (lbpar_gpu.viscosity < 0.0) {
-        errtext = runtime_error(128);
-        ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-      }
-      if (lb_reinit_particles_gpu) {
-        lb_realloc_particles_gpu();
-        lb_reinit_particles_gpu = 0;
-      }
+if(this_node == 0){
+  if(lattice_switch & LATTICE_LB_GPU) {
+    if (lbpar_gpu.agrid < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{098 Lattice Boltzmann agrid not set} ");
+    }
+    if (lbpar_gpu.tau < 0.0) {
+      errtext = runtime_error(128);
+      ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
+    }
+    for(int i=0;i<LB_COMPONENTS;i++){
+       if (lbpar_gpu.rho[0] < 0.0) {
+         errtext = runtime_error(128);
+         ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+       }
+       if (lbpar_gpu.viscosity[0] < 0.0) {
+         errtext = runtime_error(128);
+         ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+       }
+    }
+
+    if (lb_reinit_particles_gpu) {
+      lb_realloc_particles_gpu();
+      lb_reinit_particles_gpu = 0;
     }
   }
+}
 #endif
 #if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
   if (reinit_particle_comm_gpu){
@@ -729,7 +734,6 @@ void on_lb_params_change(int field) {
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid();
   }
-
   lb_reinit_parameters();
 
 }

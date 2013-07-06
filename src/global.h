@@ -176,6 +176,8 @@ extern const Datafield fields[];
 #define FIELD_GHMC_FLIP           49
 /** index of \ref ghmc_phi in \ref #fields */
 #define FIELD_GHMC_SCALE          50 
+/** index of \ref lb_components in \ref #fields */
+#define FIELD_LB_COMPONENTS       51 
 /*@}*/
 
 #endif

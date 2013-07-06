@@ -70,6 +70,7 @@ tests = \
 	nsquare.tcl \
 	nve_pe.tcl \
 	object_in_fluid.tcl \
+	object_in_fluid_gpu.tcl \
 	observable.tcl \
 	p3m.tcl \
 	p3m_gpu.tcl \
@@ -80,6 +81,7 @@ tests = \
 	p3m_wall_gpu.tcl \
 	rotation.tcl \
 	rotation_per_particle.tcl \
+	sc_fluid_gpu.tcl \
 	tabulated.tcl \
         tunable_slip.tcl \
 	virtual-sites.tcl

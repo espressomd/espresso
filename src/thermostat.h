@@ -235,4 +235,6 @@ MDINLINE void friction_thermo_langevin_rotation(Particle *p)
 }
 #endif
 
+
 #endif
+

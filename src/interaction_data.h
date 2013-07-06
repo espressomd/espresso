@@ -519,7 +519,6 @@ typedef struct {
   int    Dmethod;
  #endif
 
-
 } Coulomb_parameters;
 
 /*@}*/

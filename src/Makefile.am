@@ -274,7 +274,7 @@ if TCL
 # The ".install" suffix is removed upon installation.
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
-Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c
+Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c 
 Espresso_LDADD = libEspresso.a
 
 bin_PROGRAMS = Espresso.install
@@ -398,15 +398,17 @@ CUDA_SOURCES = \
 	electrokinetics.cu electrokinetics.h \
 	lbgpu.cu lbgpu.h \
 	p3m_gpu.cu p3m_gpu.h
-	
-cuda_common.o: cuda_common.h
-cuda_init.o: cuda_init.h
-electrokinetics.o: electrokinetics.h
-lbgpu.o: lbgpu.h
-p3m_gpu.o: p3m_gpu.h
+
+cuda_common.o: cuda_common.h myconfig-final.h
+cuda_init.o: cuda_init.h myconfig-final.h
+electrokinetics.o: electrokinetics.h myconfig-final.h
+lbgpu.o: lbgpu.h myconfig-final.h
+p3m_gpu.o: p3m_gpu.h myconfig-final.h
 
 if TCL
 
+Espresso_SOURCES += cuda_is_cpp.cpp
+Espresso_install_SOURCES += cuda_is_cpp.cpp
 CUDA_SOURCES += \
 	tcl/cuda_init_tcl.c
 

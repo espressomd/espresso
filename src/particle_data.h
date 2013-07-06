@@ -84,6 +84,10 @@ typedef struct {
   double mass;
 #endif
 
+#ifdef SHANCHEN
+  double solvation[2*LB_COMPONENTS];
+#endif
+
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   double rinertia[3];
@@ -464,6 +468,14 @@ int set_particle_f(int part, double F[3]);
     @return ES_OK if particle existed
 */
 int set_particle_mass(int part, double mass);
+
+/** Call only on the master node: set particle solvation free energy.
+    @param part the particle.
+    @param solvation its new solvation free energy.
+    @return ES_OK if particle existed
+*/
+int set_particle_solvation(int part, double* solvation);
+
 
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.

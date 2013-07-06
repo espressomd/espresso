@@ -210,7 +210,7 @@ __device__ void ek_displacement( float * dx,
                                   LB_parameters_gpu * ek_lbparameters_gpu
                                ) {
                                  
-  float rho = ek_lbparameters_gpu->rho *
+  float rho = ek_lbparameters_gpu->rho[0] *
               ek_lbparameters_gpu->agrid *
               ek_lbparameters_gpu->agrid *
               ek_lbparameters_gpu->agrid;
@@ -1639,11 +1639,11 @@ int ek_init() {
       
     lattice_switch = LATTICE_LB_GPU;
     lbpar_gpu.agrid = ek_parameters.agrid;
-    lbpar_gpu.viscosity = ek_parameters.viscosity;
-    lbpar_gpu.bulk_viscosity = ek_parameters.bulk_viscosity;
-    lbpar_gpu.friction = ek_parameters.friction;
+    lbpar_gpu.viscosity[0] = ek_parameters.viscosity;
+    lbpar_gpu.bulk_viscosity[0] = ek_parameters.bulk_viscosity;
+    lbpar_gpu.friction[0] = ek_parameters.friction;
     
-    lbpar_gpu.rho = 1.0;
+    lbpar_gpu.rho[0] = 1.0;
     lbpar_gpu.external_force = 0;
     lbpar_gpu.ext_force[0] = 0.0;
     lbpar_gpu.ext_force[1] = 0.0;
@@ -1783,6 +1783,7 @@ int ek_init() {
 
 
 int ek_lb_print_vtk_velocity( char* filename ) {
+
   FILE* fp = fopen( filename, "w" );
 	
   if( fp == NULL ) {
@@ -1790,8 +1791,8 @@ int ek_lb_print_vtk_velocity( char* filename ) {
   	return 1;
 	}
   
-  LB_values_gpu *host_values = (LB_values_gpu*) malloc( lbpar_gpu.number_of_nodes *
-                                                        sizeof( LB_values_gpu )     );
+  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+                                                        sizeof( LB_rho_v_pi_gpu ) );
   lb_get_values_GPU( host_values );
   
   fprintf( fp, "\
@@ -1834,8 +1835,8 @@ int ek_lb_print_vtk_density( char* filename ) {
   	return 1;
 	}
   
-  LB_values_gpu *host_values = (LB_values_gpu*) malloc( lbpar_gpu.number_of_nodes *
-                                                        sizeof( LB_values_gpu )     );
+  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu*) malloc( lbpar_gpu.number_of_nodes *
+                                                        sizeof( LB_rho_v_pi_gpu ) );
   lb_get_values_GPU( host_values );
   
   fprintf( fp, "\
@@ -2105,20 +2106,20 @@ void ek_print_lbpar() {
 
   printf("lbpar_gpu {\n");
   
-  printf("    float rho = %f;\n",                        lbpar_gpu.rho );
-  printf("    float mu = %f;\n",                         lbpar_gpu.mu );
-  printf("    float viscosity = %f;\n",                  lbpar_gpu.viscosity );
-  printf("    float gamma_shear = %f;\n",                lbpar_gpu.gamma_shear );
-  printf("    float gamma_bulk = %f;\n",                 lbpar_gpu.gamma_bulk );
-  printf("    float gamma_odd = %f;\n",                  lbpar_gpu.gamma_odd );
-  printf("    float gamma_even = %f;\n",                 lbpar_gpu.gamma_even );
+  printf("    float rho = %f;\n",                        lbpar_gpu.rho[0] );
+  printf("    float mu = %f;\n",                         lbpar_gpu.mu[0] );
+  printf("    float viscosity = %f;\n",                  lbpar_gpu.viscosity[0] );
+  printf("    float gamma_shear = %f;\n",                lbpar_gpu.gamma_shear[0] );
+  printf("    float gamma_bulk = %f;\n",                 lbpar_gpu.gamma_bulk[0] );
+  printf("    float gamma_odd = %f;\n",                  lbpar_gpu.gamma_odd[0] );
+  printf("    float gamma_even = %f;\n",                 lbpar_gpu.gamma_even[0] );
   printf("    float agrid = %f;\n",                      lbpar_gpu.agrid );
   printf("    float tau = %f;\n",                        lbpar_gpu.tau );
-  printf("    float friction = %f;\n",                   lbpar_gpu.friction );
+  printf("    float friction = %f;\n",                   lbpar_gpu.friction[0] );
   printf("    float time_step = %f;\n",                  lbpar_gpu.time_step );
-  printf("    float lb_coupl_pref = %f;\n",              lbpar_gpu.lb_coupl_pref );
-  printf("    float lb_coupl_pref2 = %f;\n",             lbpar_gpu.lb_coupl_pref2 );
-  printf("    float bulk_viscosity = %f;\n",             lbpar_gpu.bulk_viscosity );
+  printf("    float lb_coupl_pref = %f;\n",              lbpar_gpu.lb_coupl_pref[0] );
+  printf("    float lb_coupl_pref2 = %f;\n",             lbpar_gpu.lb_coupl_pref2[0] );
+  printf("    float bulk_viscosity = %f;\n",             lbpar_gpu.bulk_viscosity[0] );
   printf("    unsigned int dim_x = %d;\n",               lbpar_gpu.dim_x );
   printf("    unsigned int dim_y = %d;\n",               lbpar_gpu.dim_y );
   printf("    unsigned int dim_z = %d;\n",               lbpar_gpu.dim_z );
@@ -2216,11 +2217,11 @@ int ek_set_density( int species, double density ) {
   ek_init_species( species );
   ek_parameters.density[ ek_parameters.species_index[ species ] ] = density;
   
-  lbpar_gpu.rho = 0.0;
+  lbpar_gpu.rho[0] = 0.0;
   
   for( int i = 0; i < MAX_NUMBER_OF_SPECIES; i++ ) {
   
-    lbpar_gpu.rho += ek_parameters.density[i];
+    lbpar_gpu.rho[0] += ek_parameters.density[i];
   }
   
   lb_reinit_parameters_gpu();

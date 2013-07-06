@@ -53,6 +53,7 @@
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
   \require{10}{\opt{rotation \var{rot}}}
+  \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -64,6 +65,7 @@
     \required[8]{VIRTUAL\_SITES\_RELATIVE}
     \required[9]{LANGEVIN\_PER\_PARTICLE}
     \required[10]{ROTATION\_PER\_PARTICLE}
+    \required[11]{SHANCHEN}
   \end{features}
 \end{essyntax}
 
@@ -169,6 +171,7 @@ set first because of the spatial decomposition.
   rotational degrees of freedom are integrated (value of 1) or not
   (0). If set to zero, the content of the torque and omega variables
   are meaningless. The default is 1.
+\item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the four solvation coupling constant for the two components of a Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
 \end{arguments}
 
 \warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are deprecated 
