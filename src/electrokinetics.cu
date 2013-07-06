@@ -1919,6 +1919,276 @@ LOOKUP_TABLE default\n",
 }
 
 
+void rhoindex_linear2cartesian_host( unsigned int index,
+                                     unsigned int * coord
+                                   ) {
+
+  coord[0]  = index % ek_parameters.dim_x;
+  index    /= ek_parameters.dim_x;
+  coord[1]  = index % ek_parameters.dim_y;
+  coord[2]  = index / ek_parameters.dim_y;
+}
+
+unsigned int jindex_cartesian2linear_host( unsigned int x,
+                                           unsigned int y,
+                                           unsigned int z,
+                                           unsigned int c
+                                         ) {
+                                    
+  x = ( x + ek_parameters.dim_x ) % ek_parameters.dim_x; //this does not happen in the GPU version of this function
+  y = ( y + ek_parameters.dim_y ) % ek_parameters.dim_y;
+  z = ( z + ek_parameters.dim_z ) % ek_parameters.dim_z;
+  
+  return c * ek_parameters.number_of_nodes + 
+         z * ek_parameters.dim_y * ek_parameters.dim_x +
+         y * ek_parameters.dim_x +
+         x;
+}
+
+unsigned int jindex_getByRhoLinear_host( unsigned int rho_index,
+                                         unsigned int c
+                                       ) {
+                                               
+  return c * ek_parameters.number_of_nodes +
+         rho_index;
+}
+
+unsigned int rhoindex_cartesian2linear_host( unsigned int x,
+                                             unsigned int y,
+                                             unsigned int z
+                                           ) {
+
+  return z * ek_parameters.dim_y * ek_parameters.dim_x +
+         y * ek_parameters.dim_x +
+         x;
+}
+
+int ek_print_vtk_flux( int species, char* filename ) {
+
+  FILE* fp = fopen( filename, "w" );
+  float flux_local_cartesian[3]; //temporary variable for converting fluxes into cartesian coordinates for output
+  unsigned int neighborindex[13];
+  unsigned int coord[3];
+	
+  if( fp == NULL )
+  	return 1;
+  	
+  float* fluxes = (float*) malloc( ek_parameters.number_of_nodes *
+                                      13*sizeof( float )                 );
+  
+  if( ek_parameters.species_index[ species ] != -1 ) {
+  
+    cudaMemcpy( fluxes, ek_parameters.j,
+                ek_parameters.number_of_nodes * 13*sizeof( float ),
+                cudaMemcpyDeviceToHost );
+  }
+  else
+    return 1;
+  
+  fprintf( fp, "\
+# vtk DataFile Version 2.0\n\
+flux_%d\n\
+ASCII\n\
+\n\
+DATASET STRUCTURED_POINTS\n\
+DIMENSIONS %u %u %u\n\
+ORIGIN %f %f %f\n\
+SPACING %f %f %f\n\
+\n\
+POINT_DATA %u\n\
+SCALARS flux_%d float 3\n\
+LOOKUP_TABLE default\n",
+           species,
+           ek_parameters.dim_x, ek_parameters.dim_y, ek_parameters.dim_z,
+           ek_parameters.agrid / 2, ek_parameters.agrid / 2, ek_parameters.agrid / 2,
+           ek_parameters.agrid, ek_parameters.agrid, ek_parameters.agrid,
+           ek_parameters.number_of_nodes,
+           species                                                                    );
+
+  for( int i = 0; i < ek_parameters.number_of_nodes; i++ ) {
+    
+    rhoindex_linear2cartesian_host(i, coord);
+    
+    /* Indices of the neighbors storing the other half
+       of the fluxes associated with this link */
+    neighborindex[EK_LINK_D00-13] =
+      rhoindex_cartesian2linear_host(
+        (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+        coord[1],
+        coord[2]
+      );
+      
+    neighborindex[EK_LINK_0D0-13] =
+      rhoindex_cartesian2linear_host(
+        coord[0],
+        (coord[1] - 1 + ek_parameters.dim_y) % ek_parameters.dim_y,
+        coord[2]
+      );
+      
+    neighborindex[EK_LINK_00D-13] =
+      rhoindex_cartesian2linear_host(
+        coord[0],
+        coord[1],
+        (coord[2] - 1 + ek_parameters.dim_z) % ek_parameters.dim_z
+      );
+      
+    neighborindex[EK_LINK_DD0-13] =
+      rhoindex_cartesian2linear_host(
+        (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+        (coord[1] - 1 + ek_parameters.dim_y) % ek_parameters.dim_y,
+        coord[2]
+      );
+      
+    neighborindex[EK_LINK_DU0-13] =
+      rhoindex_cartesian2linear_host(
+        (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+        (coord[1] + 1                          ) % ek_parameters.dim_y,
+        coord[2]
+      );
+      
+    neighborindex[EK_LINK_D0D-13] =
+      rhoindex_cartesian2linear_host(
+        (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+        coord[1],
+        (coord[2] - 1 + ek_parameters.dim_z) % ek_parameters.dim_z
+      );
+      
+    neighborindex[EK_LINK_D0U-13] =
+      rhoindex_cartesian2linear_host(
+        (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+        coord[1],
+        (coord[2] + 1                          ) % ek_parameters.dim_z
+      );
+      
+    neighborindex[EK_LINK_0DD-13] =
+      rhoindex_cartesian2linear_host(
+        coord[0],
+        (coord[1] - 1 + ek_parameters.dim_y) % ek_parameters.dim_y,
+        (coord[2] - 1 + ek_parameters.dim_z) % ek_parameters.dim_z
+      );
+      
+    neighborindex[EK_LINK_0DU-13] =
+      rhoindex_cartesian2linear_host(
+       coord[0],
+       (coord[1] - 1 + ek_parameters.dim_y) % ek_parameters.dim_y,
+       (coord[2] + 1                          ) % ek_parameters.dim_z
+     );
+      
+    
+    neighborindex[EK_LINK_DDD-13] =
+      rhoindex_cartesian2linear_host(
+       (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+       (coord[1] - 1 + ek_parameters.dim_y) % ek_parameters.dim_y,
+       (coord[2] - 1 + ek_parameters.dim_z) % ek_parameters.dim_z
+     );
+      
+    neighborindex[EK_LINK_DDU-13] =
+      rhoindex_cartesian2linear_host(
+       (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+       (coord[1] - 1 + ek_parameters.dim_y) % ek_parameters.dim_y,
+       (coord[2] + 1                          ) % ek_parameters.dim_z
+     );
+      
+    neighborindex[EK_LINK_DUD-13] = 
+      rhoindex_cartesian2linear_host(
+       (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+       (coord[1] + 1                          ) % ek_parameters.dim_y,
+       (coord[2] - 1 + ek_parameters.dim_z) % ek_parameters.dim_z
+     );
+      
+    neighborindex[EK_LINK_DUU-13] =
+      rhoindex_cartesian2linear_host(
+       (coord[0] - 1 + ek_parameters.dim_x) % ek_parameters.dim_x,
+       (coord[1] + 1                          ) % ek_parameters.dim_y,
+       (coord[2] + 1                          ) % ek_parameters.dim_z
+     );
+     
+     
+    flux_local_cartesian[0]  = 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U00) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UU0) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UD0) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0U) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0D) ];
+
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUU) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUD) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDU) ];
+    flux_local_cartesian[0] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDD) ];
+
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2], neighborindex[EK_LINK_D00-13]) ];
+
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2], neighborindex[EK_LINK_DD0-13]) ];
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2], neighborindex[EK_LINK_DU0-13]) ];
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]-1, neighborindex[EK_LINK_D0D-13]) ];
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]+1, neighborindex[EK_LINK_D0U-13]) ];
+
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]-1, neighborindex[EK_LINK_DDD-13]) ];
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]+1, neighborindex[EK_LINK_DDU-13]) ];
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, neighborindex[EK_LINK_DUD-13]) ];
+    flux_local_cartesian[0] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, neighborindex[EK_LINK_DUU-13]) ];
+
+
+    flux_local_cartesian[1]  = 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0U0) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UU0) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UD0) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UU) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UD) ];
+
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUU) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUD) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDU) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDD) ];
+
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2], neighborindex[EK_LINK_0D0-13]) ];
+
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2], neighborindex[EK_LINK_DD0-13]) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2], neighborindex[EK_LINK_DU0-13]) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]-1, neighborindex[EK_LINK_0DD-13]) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]+1, neighborindex[EK_LINK_0DU-13]) ];
+
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]-1, neighborindex[EK_LINK_DDD-13]) ];
+    flux_local_cartesian[1] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]+1, neighborindex[EK_LINK_DDU-13]) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, neighborindex[EK_LINK_DUD-13]) ];
+    flux_local_cartesian[1] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, neighborindex[EK_LINK_DUU-13]) ];
+
+
+    flux_local_cartesian[2]  = 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_00U) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0U) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_U0D) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UU) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_0UD) ];
+
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUU) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UUD) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDU) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_getByRhoLinear_host(i, EK_LINK_UDD) ];
+
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1], coord[2]-1, neighborindex[EK_LINK_00D-13]) ];
+
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]-1, neighborindex[EK_LINK_D0D-13]) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1], coord[2]+1, neighborindex[EK_LINK_D0U-13]) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]-1, neighborindex[EK_LINK_0DD-13]) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0], coord[1]-1, coord[2]+1, neighborindex[EK_LINK_0DU-13]) ];
+
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]-1, neighborindex[EK_LINK_DDD-13]) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]-1, coord[2]+1, neighborindex[EK_LINK_DDU-13]) ];
+    flux_local_cartesian[2] -= 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]-1, neighborindex[EK_LINK_DUD-13]) ];
+    flux_local_cartesian[2] += 0.5*fluxes[ jindex_cartesian2linear_host(coord[0]-1, coord[1]+1, coord[2]+1, neighborindex[EK_LINK_DUU-13]) ];
+
+
+    fprintf( fp, "%f %f %f\n", flux_local_cartesian[0], flux_local_cartesian[1], flux_local_cartesian[2]);
+  }
+  
+  free( fluxes );
+  fclose( fp );
+  
+	return 0;
+}
+
+
 int ek_print_vtk_potential( char* filename ) {
 
   FILE* fp = fopen( filename, "w" );
