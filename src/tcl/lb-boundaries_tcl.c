@@ -232,7 +232,7 @@ LB_Boundary *generate_lbboundary()
   lb_boundaries[n_lb_boundaries-1].force[1]=
   lb_boundaries[n_lb_boundaries-1].force[2]=0;
   
-#ifdef ELECTROKINETICS
+#ifdef EK_BOUNDARIES
   
   lb_boundaries[n_lb_boundaries-1].charge_density = 0.0;
   
