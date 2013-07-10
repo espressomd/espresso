@@ -52,6 +52,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [T #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
     
     return TCL_ERROR;
   }
@@ -229,8 +230,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(argc != 3 || !ARG1_IS_S("vtk") || !ARG0_IS_S("density")) {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int print density vtk #string\n", (char *)NULL);
+        if(argc != 3 || !ARG1_IS_S("vtk") || ( !ARG0_IS_S("density") && !ARG0_IS_S("flux") ) ) {
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int print <density|flux> vtk #string\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -246,6 +247,21 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
           else {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics #int print density vtk #string\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("flux")) {
+          if(ek_print_vtk_flux(species, argv[2]) == 0) {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+          else {
+            Tcl_AppendResult(interp, "Unknown error in electrokinetics #int print flux vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
         }

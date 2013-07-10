@@ -367,7 +367,8 @@ void integrate_vv(int n_steps)
 #ifdef LB_GPU
     if(this_node == 0){
 #ifdef ELECTROKINETICS
-      ek_integrate();
+      if (lattice_switch & LATTICE_LB_GPU)
+        ek_integrate();
 #else
       if (lattice_switch & LATTICE_LB_GPU)
         lattice_boltzmann_update_gpu();

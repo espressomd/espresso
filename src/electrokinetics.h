@@ -23,7 +23,6 @@
 #include <cufft.h>
 #include "config.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
