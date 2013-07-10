@@ -63,22 +63,21 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
         }
     } else if(ARG0_IS_S("cao")) {
       if(! (argc > 1 && ARG1_IS_I(cao) && cao >= -1 && cao <= 7)) {
-	Tcl_AppendResult(interp, "cao expects an integer between -1 and 7",
-			 (char *) NULL);
-	return TCL_ERROR;
+        Tcl_AppendResult(interp, "cao expects an integer between -1 and 7",
+              (char *) NULL);
+        return TCL_ERROR;
       } 
-
     } else if(ARG0_IS_S("accuracy")) {
       if(! (argc > 1 && ARG1_IS_D(accuracy) && accuracy > 0)) {
-	Tcl_AppendResult(interp, "accuracy expects a positive double",
-			 (char *) NULL);
-	return TCL_ERROR;
+        Tcl_AppendResult(interp, "accuracy expects a positive double",
+              (char *) NULL);
+        return TCL_ERROR;
       }
 
     } else if (ARG0_IS_S("n_interpol")) {
       if (! (argc > 1 && ARG1_IS_I(n_interpol) && n_interpol >= 0)) {
-	Tcl_AppendResult(interp, "n_interpol expects an nonnegative integer", (char *) NULL);
-	return TCL_ERROR;
+        Tcl_AppendResult(interp, "n_interpol expects an nonnegative integer", (char *) NULL);
+        return TCL_ERROR;
       }
     }
     /* unknown parameter. Probably one of the optionals */
@@ -86,6 +85,14 @@ int tclcommand_inter_coulomb_parse_p3m_tune(Tcl_Interp * interp, int argc, char 
     
     argc -= 2;
     argv += 2;
+  }
+  
+  
+  if ( (mesh[0]%2 != 0 && mesh[0] != -1) || (mesh[1]%2 != 0 && mesh[1] != -1) || (mesh[2]%2 != 0 && mesh[2] != -1) ) {
+        printf ("y cond me %d %d %d\n", mesh[1], mesh[1]%2 != 0, mesh[1] != -1);
+ // if ( ( mesh[0]%2 != 0) && (mesh[0] != -1) ) {
+    Tcl_AppendResult(interp, "P3M requires an even number of mesh points in all directions", (char *) NULL);
+    return TCL_ERROR;
   }
   p3m_set_tune_params(r_cut, mesh, cao, -1.0, accuracy, n_interpol);
 
@@ -161,7 +168,11 @@ int tclcommand_inter_coulomb_parse_p3m(Tcl_Interp * interp, int argc, char ** ar
   } else {
     mesh[1] = mesh[2] = mesh[0];
   }
-
+  if ( mesh[0]%2 != 0 || mesh[1]%2 != 0 || mesh[2]%2 != 0 ) {
+    Tcl_AppendResult(interp, "P3M requires an even number of mesh points in all directions", (char *) NULL);
+    return TCL_ERROR;
+  }
+  
   if(! ARG_IS_I(2, cao)) {
     Tcl_AppendResult(interp, "integer expected", (char *) NULL);
     return TCL_ERROR;
