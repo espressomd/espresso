@@ -367,16 +367,18 @@ void integrate_vv(int n_steps)
 #ifdef LB_GPU
     if(this_node == 0){
 #ifdef ELECTROKINETICS
-      if (ek_initialized)
+      if (ek_initialized) {
         ek_integrate();
-      else if (lattice_switch & LATTICE_LB_GPU)
-        lattice_boltzmann_update_gpu();
-#else
-      if (lattice_switch & LATTICE_LB_GPU)
-        lattice_boltzmann_update_gpu();
+      }
+      else {
+#endif
+        if (lattice_switch & LATTICE_LB_GPU)
+          lattice_boltzmann_update_gpu();
+#ifdef ELECTROKINETICS
+      }
 #endif
     }
-#endif
+#endif //LB_GPU
 
 #ifdef BOND_CONSTRAINT
     ghost_communicator(&cell_structure.update_ghost_pos_comm);

@@ -1782,7 +1782,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     calc_m_from_n(n_a, index, mode);
 #ifdef ELECTROKINETICS
     /**calculate density from individual species' densities*/
-//    calc_m0_from_species(index, mode, ek_parameters_gpu);
+//    if (ek_initialized) calc_m0_from_species(index, mode, ek_parameters_gpu);
 #endif
     /**lb_relax_modes*/
     relax_modes(mode, index, node_f,d_v);
