@@ -112,6 +112,7 @@ typedef struct {
 } EK_parameters;
 
 extern EK_parameters ek_parameters;
+extern int ek_initialized;
 
 void ek_integrate();
 void ek_print_parameters();

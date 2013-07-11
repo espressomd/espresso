@@ -47,7 +47,8 @@ extern "C" {
            
 #define LATTICE_LB_GPU   2
 extern int lattice_switch;
-           
+int ek_initialized = 0;
+     
 #ifdef EK_BOUNDARIES
 
   typedef struct {
@@ -1307,7 +1308,7 @@ __global__ void ek_gather_particle_charge_density( CUDA_particle_data * particle
     );
     
     //((cufftReal*) ek_parameters_gpu.charge_potential)[ index ] = 0.0f;
-    printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d %d\n  cellpos %f %f %f\n\n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2], cellpos[0], cellpos[1], cellpos[2]); //TODO delete
+    //printf("particle %d (%d):\n  charge %f\n  pos %f %f %f\n  lowernode %d %d %d\n  cellpos %f %f %f\n\n", index, ek_lbparameters_gpu->number_of_particles, particle_data[index].q, particle_data[index].p[0], particle_data[index].p[1], particle_data[index].p[2], lowernode[0], lowernode[1], lowernode[2], cellpos[0], cellpos[1], cellpos[2]); //TODO delete
   }
 }
 
@@ -1637,6 +1638,7 @@ int ek_init() {
     }
       
     lattice_switch = LATTICE_LB_GPU;
+    ek_initialized = 1;
     lbpar_gpu.agrid = ek_parameters.agrid;
     lbpar_gpu.viscosity[0] = ek_parameters.viscosity;
     lbpar_gpu.bulk_viscosity[0] = ek_parameters.bulk_viscosity;
