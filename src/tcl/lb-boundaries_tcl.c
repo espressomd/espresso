@@ -33,6 +33,15 @@
 
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 
+// TCL Parser functions
+int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_wall(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_sphere(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_cylinder(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv);
+int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i);
+
 int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 {
   LB_Boundary *lbb = &lb_boundaries[i];
@@ -153,6 +162,34 @@ int tclcommand_printLbBoundaryToResult(Tcl_Interp *interp, int i)
 		  Tcl_AppendResult(interp, " length ", buffer, (char *) NULL);
 		  
 		  break;
+
+    case LB_BOUNDARY_STOMATOCYTE:
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.position_x, buffer);
+      Tcl_AppendResult(interp, "stomatocyte center ", buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.position_y, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.position_z, buffer);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.orientation_x, buffer);
+      Tcl_AppendResult(interp, " orientation ", buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.orientation_y, buffer);
+      Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.orientation_z, buffer);
+      Tcl_AppendResult(interp, buffer, (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.outer_radius, buffer);
+      Tcl_AppendResult(interp, " outer radius ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.inner_radius, buffer);
+      Tcl_AppendResult(interp, " inner radius ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.layer_width, buffer);
+      Tcl_AppendResult(interp, " layer width ", buffer, " ", (char *) NULL);
+
+      Tcl_PrintDouble(interp, lbb->c.stomatocyte.direction, buffer);
+      Tcl_AppendResult(interp, " direction ", buffer, (char *) NULL);
+      break;
 
 		default:
 		  sprintf(buffer, "%d", lbb->type);
@@ -678,6 +715,18 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
       lbb->c.pore.rad_right =  lbb->c.pore.rad_left; 
       argc -= 2; argv += 2;
     }
+    else if(!strncmp(argv[0], "outer_radius", strlen(argv[0]))) {
+      if(argc < 1) {
+    	  Tcl_AppendResult(interp, "lbboundary pore outer_radius <rad> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if(Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      lbb->c.pore.outer_rad_right =  lbb->c.pore.outer_rad_left; 
+      argc -= 2; argv += 2;
+    }
     else if(!strncmp(argv[0], "smoothing_radius", strlen(argv[0]))) {
       if (argc < 1) {
 	      Tcl_AppendResult(interp, "lbboundary pore smoothing_radius <smoothing_radius> expected", (char *) NULL);
@@ -699,6 +748,20 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
 	      return (TCL_ERROR);
 	      
       if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.rad_right)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      argc -= 3; argv += 3;
+    }
+    else if(!strncmp(argv[0], "outer_radii", strlen(argv[0]))) {
+      if(argc < 1) {
+	      Tcl_AppendResult(interp, "lbboundary pore outer_radii <rad_left> <rad_right> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+      
+      if (Tcl_GetDouble(interp, argv[1], &(lbb->c.pore.outer_rad_left)) == TCL_ERROR)
+	      return (TCL_ERROR);
+	      
+      if (Tcl_GetDouble(interp, argv[2], &(lbb->c.pore.outer_rad_right)) == TCL_ERROR)
 	      return (TCL_ERROR);
 	      
       argc -= 3; argv += 3;
@@ -738,6 +801,143 @@ int tclcommand_lbboundary_pore(LB_Boundary *lbb, Tcl_Interp *interp, int argc, c
   return (TCL_OK);
 }
 
+int tclcommand_lbboundary_stomatocyte(LB_Boundary *lbb, Tcl_Interp *interp, int argc, char **argv)
+{
+  /* DON'T PLAY WITH THIS CONSTRAINT UNLESS
+     YOU KNOW WHAT IT IS THAT YOU ARE DOING */
+
+  lbb->type = LB_BOUNDARY_STOMATOCYTE;
+
+  /* invalid entries to start of */
+
+  lbb->c.stomatocyte.position_x = -M_PI;
+  lbb->c.stomatocyte.position_y = -M_PI;
+  lbb->c.stomatocyte.position_z = -M_PI;
+  lbb->c.stomatocyte.orientation_x = -M_PI;
+  lbb->c.stomatocyte.orientation_y = -M_PI;
+  lbb->c.stomatocyte.orientation_z = -M_PI;
+  lbb->c.stomatocyte.outer_radius = -1.0;
+  lbb->c.stomatocyte.inner_radius = -1.0;
+  lbb->c.stomatocyte.layer_width = -1.0;
+  lbb->c.stomatocyte.direction = 0;
+
+  /* read the data */
+
+  while ( argc > 0 )
+  {
+    if ( ARG_IS_S( 0, "center" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary stomatocyte center <x> <y> <z> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.position_x ) ||
+	         !ARG_IS_D( 2, lbb->c.stomatocyte.position_y ) ||
+	         !ARG_IS_D( 3, lbb->c.stomatocyte.position_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "orientation" ) ) 
+    {
+      if(argc < 4) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary stomatocyte orientation <ox> <oy> <oz> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.orientation_x ) ||
+	         !ARG_IS_D( 2, lbb->c.stomatocyte.orientation_y ) ||
+	         !ARG_IS_D( 3, lbb->c.stomatocyte.orientation_z ) )
+      {
+	      return (TCL_ERROR);
+      }
+
+      argc -= 4; argv += 4;
+    }
+    else if ( ARG_IS_S( 0, "outer_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary stomatocyte outer_radius <Ro> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D(1, lbb->c.stomatocyte.outer_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "inner_radius" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary stomatocyte inner_radius <Ri> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.inner_radius ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "layer_width" ) ) 
+    {
+      if(argc < 2) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary stomatocyte layer_width <w> expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( !ARG_IS_D( 1, lbb->c.stomatocyte.layer_width ) )
+	      return (TCL_ERROR);
+
+      argc -= 2; argv += 2;
+    }
+    else if ( ARG_IS_S( 0, "direction" ) ) 
+    {
+      if ( argc < 2 ) 
+      {
+	      Tcl_AppendResult(interp, "lbboundary stomatocyte direction {-1|1} or {inside|outside} is expected", (char *) NULL);
+	      return (TCL_ERROR);
+      }
+
+      if ( ARG_IS_S( 1, "inside" ) )
+	      lbb->c.stomatocyte.direction = -1;
+      else if ( ARG_IS_S( 1, "outside" ) )
+	      lbb->c.stomatocyte.direction = 1;
+      else if ( !ARG_IS_D( 1, lbb->c.stomatocyte.direction ) )
+	      return (TCL_ERROR); 
+      argc -= 2; argv += 2;
+    }
+    else
+      break;
+  }
+
+  if ( lbb->c.stomatocyte.outer_radius < 0.0 || 
+       lbb->c.stomatocyte.inner_radius < 0.0 || 
+       lbb->c.stomatocyte.layer_width < 0.0 ) 
+  {
+    Tcl_AppendResult(interp, "stomatocyte radii and width have to be greater than zero",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  if ( lbb->c.stomatocyte.outer_radius < lbb->c.stomatocyte.inner_radius || 
+       lbb->c.stomatocyte.inner_radius < lbb->c.stomatocyte.layer_width ||
+       lbb->c.stomatocyte.outer_radius < lbb->c.stomatocyte.layer_width ) 
+  {
+    Tcl_AppendResult(interp, "stomatocyte requires layer_width < inner_radius < outer_radius",
+		     (char *) NULL);
+    return (TCL_ERROR);    
+  }
+
+  return (TCL_OK);
+}
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
@@ -784,7 +984,14 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     } else 
         mpi_bcast_lbboundary(-1);
   }
-  else if(!strncmp(argv[1], "force", strlen(argv[1]))) {
+  else if(ARG_IS_S(1, "stomatocyte")) {
+    status = tclcommand_lbboundary_stomatocyte(generate_lbboundary(),interp, argc - 2, argv + 2);
+    if (lattice_switch & LATTICE_LB_GPU) {
+        mpi_bcast_lbboundary(-3);
+    } else 
+        mpi_bcast_lbboundary(-1);
+  }
+  else if(ARG_IS_S(1, "force")) {
     if(argc != 3 || Tcl_GetInt(interp, argv[2], &(c_num)) == TCL_ERROR) {
       Tcl_AppendResult(interp, "Usage: lbboundary force $n",(char *) NULL);
       return (TCL_ERROR);
@@ -835,7 +1042,7 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
     status = TCL_OK;
   }
   else {
-    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, delete {c} to delete lbboundary",(char *) NULL);
+    Tcl_AppendResult(interp, "possible lbboundary parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, delete {c} to delete lbboundary",(char *) NULL);
     return (TCL_ERROR);
   }
 

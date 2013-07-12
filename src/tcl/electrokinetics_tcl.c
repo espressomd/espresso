@@ -49,9 +49,11 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "                                               [cylinder ]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [rhomboid ]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                                               [pore ]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                                               [stomatocyte ]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics #int [density #float] [D #float] [T #float] [valency #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [ext_force #float #float #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                     [print density vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "                     [print flux vtk #string]\n", (char *)NULL);
     return TCL_ERROR;
   }
   else if(ARG0_IS_S("boundary")) {
@@ -114,6 +116,11 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       err = tclcommand_lbboundary_pore(lbboundary_tmp, interp, argc - 1, argv + 1);
       lbboundary_tmp->charge_density = floatarg;
     }
+    else if(ARG0_IS_S("stomatocyte")) {
+      lbboundary_tmp = generate_lbboundary();
+      err = tclcommand_lbboundary_stomatocyte(lbboundary_tmp, interp, argc - 1, argv + 1);
+      lbboundary_tmp->charge_density = floatarg;
+    }
     else if(ARG0_IS_S("delete")) {
       if(argc < 3) {
         /* delete all */
@@ -131,7 +138,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
       }
     }
     else {
-      Tcl_AppendResult(interp, "possible electrokinetics boundary charge_density #float parameters: wall, sphere, cylinder, rhomboid, pore, delete {c} to delete a boundary", (char *) NULL);
+      Tcl_AppendResult(interp, "possible electrokinetics boundary charge_density #float parameters: wall, sphere, cylinder, rhomboid, pore, stomatocyte, delete {c} to delete a boundary", (char *) NULL);
       return (TCL_ERROR);
     }
         
@@ -223,8 +230,8 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
         argc--;
         argv++;
         
-        if(argc != 3 || !ARG1_IS_S("vtk") || !ARG0_IS_S("density")) {
-          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int print density vtk #string\n", (char *)NULL);
+        if(argc != 3 || !ARG1_IS_S("vtk") || ( !ARG0_IS_S("density") && !ARG0_IS_S("flux") ) ) {
+          Tcl_AppendResult(interp, "Wrong usage of electrokinetics #int print <density|flux> vtk #string\n", (char *)NULL);
           return TCL_ERROR;
         }
         
@@ -240,6 +247,21 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
           }
           else {
             Tcl_AppendResult(interp, "Unknown error in electrokinetics #int print density vtk #string\n", (char *)NULL);
+            return TCL_ERROR;
+          }
+        }
+        else if(ARG0_IS_S("flux")) {
+          if(ek_print_vtk_flux(species, argv[2]) == 0) {
+            argc -= 3;
+            argv += 3;
+
+            if((err = gather_runtime_errors(interp, err)) != TCL_OK)
+              return TCL_ERROR;
+            else
+              return TCL_OK;
+          }
+          else {
+            Tcl_AppendResult(interp, "Unknown error in electrokinetics #int print flux vtk #string\n", (char *)NULL);
             return TCL_ERROR;
           }
         }
