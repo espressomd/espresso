@@ -132,12 +132,14 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
 /** TCL Interface: The \ref lbfluid command. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
+#ifdef ELECTROKINETICS
 if ( ek_initialized ) {
   Tcl_AppendResult(interp, "ERROR: Electrokinetics automatically intializes the LB on the GPU and can therefore not be used in conjunction with LB.\n");
   Tcl_AppendResult(interp, "ERROR: Please run either electrokinetics or LB.\n");
   
   return TCL_ERROR;
 }
+#endif
 
 #if defined (LB) || defined (LB_GPU)
   argc--; argv++;

@@ -1521,7 +1521,12 @@ int p3m_adaptive_tune(char **log) {
   } else if ( p3m.params.mesh[1] == -1 && p3m.params.mesh[2] == -1) {
     mesh_density = mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
     p3m.params.mesh[1] = mesh_density*box_l[1]+0.5;
-    p3m.params.mesh[2] = mesh_density*box_l[2]+0.5;    
+    p3m.params.mesh[2] = mesh_density*box_l[2]+0.5;
+    if ( p3m.params.mesh[1]%2 == 1 ) p3m.params.mesh[1]++; //Make sure that the mesh is even in all directions
+    if ( p3m.params.mesh[2]%2 == 1 ) p3m.params.mesh[2]++;
+    
+    sprintf(b, "fixed mesh %d %d %d\n", p3m.params.mesh[0], p3m.params.mesh[1], p3m.params.mesh[2]);
+    *log = strcat_alloc(*log, b);
   } else {
     mesh_density = mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
 
@@ -1574,7 +1579,7 @@ int p3m_adaptive_tune(char **log) {
       tmp_mesh[2] = p3m.params.mesh[2];
     }
     
-    if(tmp_mesh[0] % 2)
+    if(tmp_mesh[0] % 2) //Make sure that the mesh is even in all directions
       tmp_mesh[0]++;
     if(tmp_mesh[1] % 2) 
       tmp_mesh[1]++;
