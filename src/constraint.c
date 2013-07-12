@@ -1035,21 +1035,6 @@ void calculate_pore_dist(Particle *p1, double ppos[3], Particle *c_p, Constraint
 
 
   if ( p2_z>=c1_z && p2_z<=c2_z && dist_vector_r_o <= 0 && !full_pore) {
- //   if ( dist_vector_r <= 0  ) {
- //     if (z<0) {
- //       dist_vector_z=-z - c->length;
- //       dist_vector_r=0;
- //       *dist = -z - c->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - dist_vector_z*e_z[i];
- //       return;
- //     } else {
- //       dist_vector_z=-z + c->length;
- //       dist_vector_r=0;
- //       *dist = +z - c->length;
- //       for (i=0; i<3; i++) vec[i]=-dist_vector_r*e_r[i] - 2ist_vector_z*e_z[i];
- //       return;
- //     }
- //   }
     temp=sqrt( dist_vector_r_o*dist_vector_r_o + dist_vector_z_o*dist_vector_z_o );
     *dist=temp-c->smoothing_radius;
     dist_vector_r_o-=dist_vector_r_o/temp*c->smoothing_radius;

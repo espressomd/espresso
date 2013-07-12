@@ -945,6 +945,11 @@ int tclcommand_lbboundary(ClientData data, Tcl_Interp *interp, int argc, char **
 {
 #if defined (LB_BOUNDARIES) || defined (LB_BOUNDARIES_GPU)
   int status = TCL_ERROR, c_num;
+  
+  if ( lattice_switch == LATTICE_OFF ) {
+    fprintf (stderr ,"WARNING: Specifying boundaries before using lbfluid assumes a CPU implementation of the LB.\n");
+    fprintf (stderr ,"WARNING: This will lead to unexpected behavior if a GPU LB fluid is later used since the boundaries wont exist.\n");
+  }
 
   if (argc < 2)
     return tclcommand_lbboundary_print_all(interp);

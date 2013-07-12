@@ -29,6 +29,7 @@
 #include "lb.h"
 #include "lbgpu.h"
 #include "parser.h"
+#include "electrokinetics.h"
 
 #ifdef LB_GPU
 static int lbnode_parse_set(Tcl_Interp *interp, int argc, char **argv, int *ind) {
@@ -131,9 +132,16 @@ int tclcommand_lbfluid_print_interpolated_velocity(Tcl_Interp *interp, int argc,
 /** TCL Interface: The \ref lbfluid command. */
 int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **argv) {
 
+if ( ek_initialized ) {
+  Tcl_AppendResult(interp, "ERROR: Electrokinetics automatically intializes the LB on the GPU and can therefore not be used in conjunction with LB.\n");
+  Tcl_AppendResult(interp, "ERROR: Please run either electrokinetics or LB.\n");
+  
+  return TCL_ERROR;
+}
+
 #if defined (LB) || defined (LB_GPU)
   argc--; argv++;
-
+  
 /**if we have LB the LB cpu is set by default */
 #ifdef LB
   if(!(lattice_switch & LATTICE_LB_GPU)) lattice_switch = lattice_switch | LATTICE_LB;

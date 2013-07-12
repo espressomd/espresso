@@ -35,4 +35,6 @@ int tclcommand_lbnode_extforce_gpu(ClientData data, Tcl_Interp *interp, int argc
 /** lb boundary command. From \ref lb-boundaries_tcl.c */
 extern int tclcommand_lbboundary(ClientData _data, Tcl_Interp *interp, int argc, char **argv);
 
+extern int ek_initialized;
+
 #endif /* LB_TCL_H */
