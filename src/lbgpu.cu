@@ -1248,7 +1248,7 @@ __device__ void calc_node_force(float *delta, float *delta_j, float * partgrad1,
  }
 }
 
-
+#ifdef ELECTROKINETICS
 __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_parameters *ek_parameters_gpu) {
   mode[0] = 0.0;
 
@@ -1259,6 +1259,7 @@ __device__ void calc_m0_from_species(unsigned int index, float* mode, EK_paramet
   mode[0] /= powf(para.agrid, 3);
   mode[0] -= para.rho[0];
 }
+#endif
 
 /*********************************************************/
 /** \name System setup and Kernel functions */
@@ -1959,9 +1960,11 @@ void lb_get_para_pointer(LB_parameters_gpu** pointeradress) {
   }
 }
 
+#ifdef ELECTROKINETICS
 void lb_set_ek_pointer(EK_parameters* pointeradress) {
   ek_parameters_gpu = pointeradress;
 }
+#endif
 
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
   *pointeradress = &lbpar_gpu;

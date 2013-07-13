@@ -20,16 +20,62 @@
 #ifndef ELECTROKINETICS_H
 #define ELECTROKINETICS_H
 
-#include <cufft.h>
 #include "config.h"
+
+//note that we need to declare the ek_parameters struct and instantiate it for LB_GPU
+//to compile when electrokinetics is not compiled in. This seemed more elegant than
+//ifdeffing multiple versions of the kernel integrate.
+#ifdef CUDA
+#include <cufft.h>
+
+#define MAX_NUMBER_OF_SPECIES 10
+
+/* Data structure holding parameters and memory pointers for the link flux system. */
+
+typedef struct {
+  float agrid;
+  float time_step; //MD time step
+  unsigned int dim_x;
+  unsigned int dim_y;
+  unsigned int dim_z;
+  unsigned int number_of_nodes;
+  float viscosity;
+  float bulk_viscosity;
+  float gamma_odd;
+  float gamma_even;
+  float friction;
+  float T;
+  float bjerrumlength;
+  unsigned int number_of_species;
+  int reaction_species[3];
+  float rho_reactant_reservoir;
+  float rho_product0_reservoir;
+  float rho_product1_reservoir;
+  float reaction_ct_rate;
+  float reaction_radius;
+  float reaction_fraction_0;
+  float reaction_fraction_1;
+  cufftReal* greensfcn;
+  cufftComplex* charge_potential;
+  float* j;
+  float* rho[MAX_NUMBER_OF_SPECIES];
+  int species_index[MAX_NUMBER_OF_SPECIES];
+  float density[MAX_NUMBER_OF_SPECIES];
+  float D[MAX_NUMBER_OF_SPECIES];
+  float d[MAX_NUMBER_OF_SPECIES];
+  float valency[MAX_NUMBER_OF_SPECIES];
+  float ext_force[3][MAX_NUMBER_OF_SPECIES];
+  char* node_is_catalyst;
+} EK_parameters;
+#endif
+
+#ifdef ELECTROKINETICS
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //#ifdef ELECTROKINETICS
-
-#define MAX_NUMBER_OF_SPECIES 10
 
 //TODO update
 
@@ -73,44 +119,6 @@ extern "C" {
 #define EK_LINK_DUD 24
 #define EK_LINK_DUU 25
 
-/* Data structure holding parameters and memory pointers for the link flux system. */
-
-typedef struct {
-  float agrid;
-  float time_step; //MD time step
-  unsigned int dim_x;
-  unsigned int dim_y;
-  unsigned int dim_z;
-  unsigned int number_of_nodes;
-  float viscosity;
-  float bulk_viscosity;
-  float gamma_odd;
-  float gamma_even;
-  float friction;
-  float T;
-  float bjerrumlength;
-  unsigned int number_of_species;
-  int reaction_species[3];
-  float rho_reactant_reservoir;
-  float rho_product0_reservoir;
-  float rho_product1_reservoir;
-  float reaction_ct_rate;
-  float reaction_radius;
-  float reaction_fraction_0;
-  float reaction_fraction_1;
-  cufftReal* greensfcn;
-  cufftComplex* charge_potential;
-  float* j;
-  float* rho[MAX_NUMBER_OF_SPECIES];
-  int species_index[MAX_NUMBER_OF_SPECIES];
-  float density[MAX_NUMBER_OF_SPECIES];
-  float D[MAX_NUMBER_OF_SPECIES];
-  float d[MAX_NUMBER_OF_SPECIES];
-  float valency[MAX_NUMBER_OF_SPECIES];
-  float ext_force[3][MAX_NUMBER_OF_SPECIES];
-  char* node_is_catalyst;
-} EK_parameters;
-
 extern EK_parameters ek_parameters;
 extern int ek_initialized;
 
@@ -150,6 +158,8 @@ int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* ELECTROKINETICS_H */

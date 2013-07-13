@@ -222,8 +222,9 @@ extern "C" {
 
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
+#ifdef ELECTROKINETICS
 void lb_set_ek_pointer(EK_parameters* pointeradress);
-
+#endif
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
