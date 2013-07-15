@@ -269,10 +269,94 @@ __device__ void ek_displacement( float * dx,
 }
 
 #ifdef EK_REACTION
-__global__ void ek_pressure( LB_nodes_gpu n,
+__global__ void ek_pressure( LB_nodes_gpu n_a,
                              LB_parameters_gpu * ek_lbparameters_gpu
                            )
 {
+  LB_rho_v_gpu * d_v; //pass device_rho_v for this
+  LB_rho_v_pi_gpu *d_p_v; //pass print_rho_v_pi for this
+  
+  unsigned int index = ek_getThreadIndex ();
+
+  if( index < ek_parameters_gpu.number_of_nodes )
+  {
+    float j[3]; 
+    float pi_eq[6]; 
+    float pi[6] = {0.f,0.f,0.f,0.f,0.f,0.f};
+    float rho_tot = 0.f;
+    
+    float mode[19*LB_COMPONENTS];
+    calc_m_from_n(n_a, index, mode);
+
+    if(n_a.boundary[index] == 0) {
+
+      for(int ii= 0; ii < LB_COMPONENTS; ii++) {
+     	  rho_tot += d_v[index].rho[ii];
+        d_p_v[index].rho[ii] = d_v[index].rho[ii] / ek_lbparameters_gpu->agrid / ek_lbparameters_gpu->agrid / ek_lbparameters_gpu->agrid;
+      }
+        
+      d_p_v[index].v[0] = d_v[index].v[0] / ek_lbparameters_gpu->tau / ek_lbparameters_gpu->agrid;
+      d_p_v[index].v[1] = d_v[index].v[1] / ek_lbparameters_gpu->tau / ek_lbparameters_gpu->agrid;
+      d_p_v[index].v[2] = d_v[index].v[2] / ek_lbparameters_gpu->tau / ek_lbparameters_gpu->agrid;
+
+      /* stress calculation */ 
+      for(int ii = 0; ii < LB_COMPONENTS; ii++) {
+        float Rho = d_v[index].rho[ii];
+        
+        /* note that d_v[index].v[] already includes the 1/2 f term, accounting for the pre- and post-collisional average */
+        j[0] = Rho * d_v[index].v[0];
+        j[1] = Rho * d_v[index].v[1];
+        j[2] = Rho * d_v[index].v[2];
+        
+        /* equilibrium part of the stress modes */
+        pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
+        pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
+        pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0f*j[2]*j[2] ) / Rho;
+        pi_eq[3] = j[0]*j[1] / Rho;
+        pi_eq[4] = j[0]*j[2] / Rho;
+        pi_eq[5] = j[1]*j[2] / Rho;
+       
+        /* Now we must predict the outcome of the next collision */
+        /* We immediately average pre- and post-collision.  */
+        /* TODO: need a reference for this.   */
+        mode[4 + ii * LBQ ] = pi_eq[0] + (0.5f + 0.5f * ek_lbparameters_gpu->gamma_bulk[ii] ) * (mode[4 + ii * LBQ] - pi_eq[0]);
+        mode[5 + ii * LBQ ] = pi_eq[1] + (0.5f + 0.5f * ek_lbparameters_gpu->gamma_shear[ii]) * (mode[5 + ii * LBQ] - pi_eq[1]);
+        mode[6 + ii * LBQ ] = pi_eq[2] + (0.5f + 0.5f * ek_lbparameters_gpu->gamma_shear[ii]) * (mode[6 + ii * LBQ] - pi_eq[2]);
+        mode[7 + ii * LBQ ] = pi_eq[3] + (0.5f + 0.5f * ek_lbparameters_gpu->gamma_shear[ii]) * (mode[7 + ii * LBQ] - pi_eq[3]);
+        mode[8 + ii * LBQ ] = pi_eq[4] + (0.5f + 0.5f * ek_lbparameters_gpu->gamma_shear[ii]) * (mode[8 + ii * LBQ] - pi_eq[4]);
+        mode[9 + ii * LBQ ] = pi_eq[5] + (0.5f + 0.5f * ek_lbparameters_gpu->gamma_shear[ii]) * (mode[9 + ii * LBQ] - pi_eq[5]);
+       
+        /* Now we have to transform to the "usual" stress tensor components */
+        /* We use eq. 116ff in Duenweg Ladd for that. */
+        pi[0] += ( mode[0 + ii * LBQ] + mode[4 + ii * LBQ] + mode[5 + ii * LBQ] ) / 3.0f;
+        pi[2] += ( 2.0f*mode[0 + ii * LBQ] + 2.0f*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3.0f*mode[6 + ii * LBQ] ) / 6.0f;
+        pi[5] += ( 2.0f*mode[0 + ii * LBQ] + 2.0f*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3.0f*mode[6 + ii * LBQ] ) / 6.0f;
+        pi[1] += mode[7 + ii * LBQ];
+        pi[3] += mode[8 + ii * LBQ];
+        pi[4] += mode[9 + ii * LBQ];
+      }
+       
+      for(int i = 0; i < 6; i++) {
+        d_p_v[index].pi[i] = pi[i] / ek_lbparameters_gpu->tau / ek_lbparameters_gpu->tau / ek_lbparameters_gpu->agrid / ek_lbparameters_gpu->agrid / ek_lbparameters_gpu->agrid;
+      }
+    }
+    else {
+      for(int ii = 0; ii < LB_COMPONENTS; ii++)
+	      d_p_v[index].rho[ii] = 0.0f;
+       
+      for(int i = 0; i < 3; i++)
+       	d_p_v[index].v[i] = 0.0f;
+       	
+      for(int i = 0; i < 6; i++)
+       	d_p_v[index].pi[i] = 0.0f;
+    }
+    
+    ek_parameters_gpu.pressure[ index ] = -pi[0] - pi[1] - pi[2];
+
+    for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
+      ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
+  }
+
 //TODO put on Marcello's version
   /*unsigned int index = ek_getThreadIndex ();
 

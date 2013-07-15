@@ -52,11 +52,11 @@ int extended_values_flag=0; /* TODO: this has to be set to one by
 static LB_rho_v_gpu *device_rho_v= NULL;
 
 /** device_rho_v_pi: extended struct for hydrodynamic fields: this is the interface
-    to tcl, and stores values in MD units. It should not used
+    to tcl, and stores values in MD units. It should not be used
     as an input for any LB calculations. TODO: This structure is not yet 
     used, and it is here to allow access to the stress tensor at any
     timestep, e.g. for future implementations of moving boundary codes */
-static LB_rho_v_gpu *device_rho_v_pi= NULL;
+static LB_rho_v_pi_gpu *device_rho_v_pi= NULL;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
     to tcl, and stores values in MD units. It should not used
@@ -1791,7 +1791,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
     /**if external force is used apply node force */
     apply_forces(index, mode, node_f,d_v);
 #else
-    /**if partcles are used apply node forces*/
+    /**if particles are used apply node forces*/
     if (para.number_of_particles) apply_forces(index, mode, node_f,d_v); 
 #endif
     /**lb_calc_n_from_modes_push*/
@@ -1995,7 +1995,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu){
   free_and_realloc(print_rho_v_pi  , size_of_rho_v_pi);
   free_and_realloc(nodes_a.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));
   free_and_realloc(nodes_b.vd      , lbpar_gpu->number_of_nodes * 19 * LB_COMPONENTS * sizeof(float));   
-  free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes * 3  * LB_COMPONENTS * sizeof(float));
+  free_and_realloc(node_f.force    , lbpar_gpu->number_of_nodes *  3 * LB_COMPONENTS * sizeof(float));
 
   free_and_realloc(nodes_a.seed    , lbpar_gpu->number_of_nodes * sizeof( unsigned int));
   free_and_realloc(nodes_a.boundary, lbpar_gpu->number_of_nodes * sizeof( unsigned int));

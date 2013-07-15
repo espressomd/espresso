@@ -615,10 +615,13 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 #endif
   }
 
-
-   argc-=3; argv+=3;
+   argc-=3;
+   argv+=3;
+   
    if (ARG0_IS_S("print")) {
-     argc--; argv++;
+     argc--;
+     argv++;
+     
      while (argc > 0) {
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          lb_lbnode_get_rho(coord, double_return);
