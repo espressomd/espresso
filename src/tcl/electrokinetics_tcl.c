@@ -38,7 +38,7 @@ int tclcommand_electrokinetics(ClientData data, Tcl_Interp *interp, int argc, ch
     Tcl_AppendResult(interp, "electrokinetics [agrid #float] [viscosity #float] [friction #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  [bulk_viscosity #float] [gamma_even #float] [gamma_odd #float]\n", (char *)NULL);
     Tcl_AppendResult(interp, "                  [accelerated_frame <off|on> [boundary_mass #double]]", (char *)NULL);
-    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|lbforce> vtk #string]\n", (char *)NULL);
+    Tcl_AppendResult(interp, "electrokinetics print <density|velocity|potential|pressure|lbforce> vtk #string]\n", (char *)NULL);
     Tcl_AppendResult(interp, "electrokinetics reaction [reactant_index #int] [product0_index #int] [product1_index #int] \
                                                 [reactant_resrv_density #float] [product0_resrv_density #float] \
                                                 [product1_resrv_density #float] [reaction_rate #float] \
