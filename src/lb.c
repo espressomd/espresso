@@ -499,6 +499,38 @@ int lb_lbfluid_print_vtk_velocity(char* filename) {
 	return 0;
 }
 
+int lb_lbfluid_print_vtk_density(char* filename) {
+
+  FILE* fp = fopen(filename, "w");
+
+	 if(fp == NULL)
+		 return 1;
+
+	 if (lattice_switch & LATTICE_LB_GPU) {
+#ifdef LB_GPU
+    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_values_gpu);
+    host_values = (LB_values_gpu*)malloc(size_of_values);
+    lb_get_values_GPU(host_values);
+		  fprintf(fp, "# vtk DataFile Version 2.0\nlbdensity_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS lb_density float 1\nLOOKUP_TABLE default\n", lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+    int j;	
+    for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
+      /** print of the calculated phys values */
+      fprintf(fp, "%f\n", host_values[j].rho);
+    }
+    free(host_values);
+#endif
+  } else {
+#ifdef LB
+  // TODO Implement this for the LB
+    char* errtext = runtime_error(666);
+    ERROR_SPRINTF(errtext, "lbfluid print vtk density NOT implemented for pure LB");  
+#endif     
+  }
+  fclose(fp);	
+			
+	return 0;
+}
+
 int lb_lbfluid_print_boundary(char* filename) {
 	  FILE* fp = fopen(filename, "w");
 	

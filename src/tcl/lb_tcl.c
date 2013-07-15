@@ -342,6 +342,12 @@ int tclcommand_lbfluid(ClientData data, Tcl_Interp *interp, int argc, char **arg
 				        return TCL_ERROR;
 				      }
 				    }
+				    else if (ARG1_IS_S("density")) {
+				      if ( lb_lbfluid_print_vtk_density(argv[2]) != 0 ) {
+					      Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk density", (char *)NULL);
+				        return TCL_ERROR;
+				      }
+				    }
 				    else {
 				    	return TCL_ERROR;
 				    }

@@ -516,6 +516,7 @@ int lb_lbfluid_get_friction(double* p_friction);
 
 int lb_lbfluid_print_vtk_boundary(char* filename);
 int lb_lbfluid_print_vtk_velocity(char* filename);
+int lb_lbfluid_print_vtk_density(char* filename);
 int lb_lbfluid_print_boundary(char* filename);
 int lb_lbfluid_print_velocity(char* filename);
 
