@@ -90,6 +90,8 @@ typedef struct {
   float T;
   float bjerrumlength;
   unsigned int number_of_species;
+  unsigned int accelerated_frame_enabled;
+  float accelerated_frame_boundary_mass;
   int reaction_species[3];
   float rho_reactant_reservoir;
   float rho_product0_reservoir;
@@ -109,6 +111,9 @@ typedef struct {
   float valency[MAX_NUMBER_OF_SPECIES];
   float ext_force[3][MAX_NUMBER_OF_SPECIES];
   char* node_is_catalyst;
+#ifdef EK_REACTION
+  float* pressure;
+#endif
 } EK_parameters;
 
 extern EK_parameters ek_parameters;
@@ -136,6 +141,7 @@ int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);
 int ek_set_ext_force(int species, double ext_force_x, double ext_force_y, double ext_force_z);
+int ek_set_accelerated_frame( int enabled, double boundary_mass );
 
 #ifdef EK_BOUNDARIES
 void ek_init_species_density_wallcharge(float* wallcharge_species_density, int wallcharge_species);
@@ -144,6 +150,7 @@ void ek_init_species_density_wallcharge(float* wallcharge_species_density, int w
 
 #ifdef EK_REACTION
 int ek_set_reaction(int reactant, int product0, int product1, float rho_reactant_reservoir, float rho_product0_reservoir, float rho_product1_reservoir, float reaction_ct_rate, float reaction_radius, float reaction_fraction_0, float reaction_fraction_1 );
+int ek_print_vtk_pressure(char* filename);
 #endif
 
 //#endif /* ELECTROKINETICS */

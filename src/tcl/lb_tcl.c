@@ -428,10 +428,10 @@ if ( ek_initialized ) {
 	        Tcl_AppendResult(interp, "Unknown Error setting ext_force", (char *)NULL);
           return TCL_ERROR;
         }
-      #else
+#else
         Tcl_AppendResult(interp, "External Forces not compiled in!", (char *)NULL);
          return TCL_ERROR;
-      #endif
+#endif
       }
       else if (ARG0_IS_S("print")) {
         if ( argc < 3 || (ARG1_IS_S("vtk") && argc < 4) ) {
@@ -439,58 +439,69 @@ if ( ek_initialized ) {
           return TCL_ERROR;
         }
         else {
-          argc--; argv++;
+          argc--;
+          argv++;
+          
           if (ARG0_IS_S("vtk")) {
           	if (ARG1_IS_S("boundary")) {
-                        if ( lb_lbfluid_print_vtk_boundary(argv[2]) != 0 ) {
-                           Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
-                           return TCL_ERROR;
-                        }
-                        argc-=3; argv+=3;
-		}
-                else if (ARG1_IS_S("velocity")) {
-		        if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) {
-                              Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
-                              return TCL_ERROR;
-                        }
-                        argc-=3; argv+=3;
-		}
-                else if (ARG1_IS_S("density")) {
-                        argc-=2; argv+=2;
-                        if ( argc < LB_COMPONENTS ) {
-	                         Tcl_AppendResult(interp, "lbfluid print vtk density requires\"", LB_COMPONENTS,"\" arguments.", 
-                                                           (char *)NULL);
-                                 return TCL_ERROR;
-                        }
+              if ( lb_lbfluid_print_vtk_boundary(argv[2]) != 0 ) {
+                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk boundary", (char *)NULL);
+                return TCL_ERROR;
+              }
+              
+              argc -= 3;
+              argv += 3;
+            }
+            else if (ARG1_IS_S("velocity")) {
+	            if ( lb_lbfluid_print_vtk_velocity(argv[2]) != 0 ) {
+                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk velocity", (char *)NULL);
+                return TCL_ERROR;
+              }
+              
+              argc -= 3;
+              argv += 3;
+	          }
+            else if (ARG1_IS_S("density")) {
+              argc -= 2;
+              argv += 2;
+             
+              if ( argc < LB_COMPONENTS ) {
+                Tcl_AppendResult(interp, "lbfluid print vtk density requires\"", LB_COMPONENTS,"\" arguments.", (char *)NULL);
+                return TCL_ERROR;
+              }
 
-		        if ( lb_lbfluid_print_vtk_density(argv) != 0 ) {
-                              Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk density", (char *)NULL);
-                              return TCL_ERROR;
-                        }
-                        argc-=LB_COMPONENTS; argv+=LB_COMPONENTS;
-		}
-	        else {
-                        return TCL_ERROR;
-		}
-	  }
-	  else { // SAW TODO : finish implementing for SHANCHEN
-		      	if (ARG0_IS_S("boundary")) {
-			   	  	if ( lb_lbfluid_print_boundary(argv[1]) != 0 ) {
-				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
-			      	  return TCL_ERROR;
-			      	}
-			    	}
-			    	else if (ARG0_IS_S("velocity")) {
-			      	if ( lb_lbfluid_print_velocity(argv[1]) != 0 ) {
-				    	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
-			      	  return TCL_ERROR;
-			      	}
+	            if ( lb_lbfluid_print_vtk_density(argv) != 0 ) {
+                Tcl_AppendResult(interp, "Unknown Error at lbfluid print vtk density", (char *)NULL);
+                return TCL_ERROR;
+              }
+              
+              argc -= LB_COMPONENTS;
+              argv += LB_COMPONENTS;
+	          }
+            else {
+              return TCL_ERROR;
+	          }
+	        }
+	        else { // SAW TODO : finish implementing for SHANCHEN
+	        	if (ARG0_IS_S("boundary")) {
+		     	  	if ( lb_lbfluid_print_boundary(argv[1]) != 0 ) {
+			      	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print boundary", (char *)NULL);
+		        	  return TCL_ERROR;
+		        	}
+		      	}
+		      	else if (ARG0_IS_S("velocity")) {
+		        	if ( lb_lbfluid_print_velocity(argv[1]) != 0 ) {
+			      	  Tcl_AppendResult(interp, "Unknown Error at lbfluid print velocity", (char *)NULL);
+		        	  return TCL_ERROR;
+		        	}
+		        }
+			      else {
+			      	return TCL_ERROR;
 			      }
-				    else {
-				    	return TCL_ERROR;
-				    }
-			      argc-=2; argv+=2;
-		      }
+			      
+		        argc -= 2;
+		        argv += 2;
+	        }
         }
       }
       else if (ARG0_IS_S("save_ascii_checkpoint")) { 

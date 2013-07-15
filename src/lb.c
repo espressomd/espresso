@@ -527,38 +527,46 @@ int lb_lbfluid_print_vtk_boundary(char* filename) {
 }
 
 int lb_lbfluid_print_vtk_density(char** filename) {
-int ii;
-for(ii=0;ii<LB_COMPONENTS;++ii){ 
-  FILE* fp = fopen(filename[ii], "w");
-  if(fp == NULL){
-	 perror("lb_lbfluid_print_vtk_density");
-	 return 1;
-  }
-  if (lattice_switch & LATTICE_LB_GPU) {
+  int ii;
+  
+  for(ii=0;ii<LB_COMPONENTS;++ii) {
+    FILE* fp = fopen(filename[ii], "w");
+    
+    if(fp == NULL) {
+      perror("lb_lbfluid_print_vtk_density");
+      return 1;
+    }
+    
+    if (lattice_switch & LATTICE_LB_GPU) {
 #ifdef LB_GPU
-     int j;	
-     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-     host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
-     lb_get_values_GPU(host_values);
-     fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", 
-             lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, 
-             lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, 
-             lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
-     for(j=0; j<lbpar_gpu.number_of_nodes; ++j){
-         /** print the calculated phys values */
-         fprintf(fp, "%f\n", host_values[j].rho[ii]);
-     }
-     free(host_values);
+      int j;	
+      size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
+      host_values = (LB_rho_v_pi_gpu*)malloc(size_of_values);
+      lb_get_values_GPU(host_values);
+      
+      fprintf(fp, "# vtk DataFile Version 2.0\nlbfluid_gpu\nASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\nORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %u\nSCALARS OutArray  floats 1\nLOOKUP_TABLE default\n", 
+        lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z, 
+        lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, lbpar_gpu.agrid*0.5, 
+        lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.number_of_nodes);
+        
+      for(j=0; j<lbpar_gpu.number_of_nodes; ++j) {
+        /** print the calculated phys values */
+        fprintf(fp, "%f\n", host_values[j].rho[ii]);
+      }
+      
+      free(host_values);
 #endif
-  } else {
+    }
+    else {
 #ifdef LB
-    exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
+      exit(printf("Not implemented yet (%s:%d) ",__FILE__,__LINE__));
 #endif // LB
+    }
+    
+    fclose(fp);
   }
-  fclose(fp);	
-			
- } // for 
- return 0;
+  
+  return 0;
 }
 
 int lb_lbfluid_print_vtk_velocity(char* filename) {
