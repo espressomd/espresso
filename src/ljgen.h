@@ -41,7 +41,11 @@ int ljgen_set_params(int part_type_a, int part_type_b,
 		     double eps, double sig, double cut,
 		     double shift, double offset,
 		     int a1, int a2, double b1, double b2,
-		     double cap_radius);
+		     double cap_radius
+#ifdef LJGEN_SOFTCORE
+         , double lambda, double softrad
+#endif
+         );
 
 /** Calculate lennard Jones force between particle p1 and p2 */
 MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia_params,
@@ -51,11 +55,22 @@ MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
     int j;
     double r_off, frac, fac=0.0;
     r_off = dist - ia_params->LJGEN_offset;
+#ifdef LJGEN_SOFTCORE
+    r_off *= r_off;
+    r_off += pow(ia_params->LJGEN_sig,2) * (1.0-ia_params->LJGEN_lambda)
+             * ia_params->LJGEN_softrad;
+    /* Taking a square root is not optimal, but we can't prevent the user from
+       using an odd m, n coefficient. */
+    r_off  = sqrt(r_off);
+#endif
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJGEN_capradius) {
       frac = ia_params->LJGEN_sig/r_off;
       fac   = ia_params->LJGEN_eps 
-	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+#ifdef LJGEN_SOFTCORE
+        * ia_params->LJGEN_lambda
+#endif
+	      * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
 	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ (r_off * dist);
       for(j=0;j<3;j++)
@@ -83,7 +98,10 @@ MDINLINE void add_ljgen_pair_force(Particle *p1, Particle *p2, IA_parameters *ia
       
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
       fac   = ia_params->LJGEN_eps 
-	* (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
+#ifdef LJGEN_SOFTCORE
+        * ia_params->LJGEN_lambda
+#endif
+        * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 * pow(frac, ia_params->LJGEN_a1) 
 	   - ia_params->LJGEN_b2 * ia_params->LJGEN_a2 * pow(frac, ia_params->LJGEN_a2))
 	/ ia_params->LJGEN_capradius;
       
@@ -106,19 +124,33 @@ MDINLINE double ljgen_pair_energy(Particle *p1, Particle *p2, IA_parameters *ia_
 
   if (CUTOFF_CHECK(dist < ia_params->LJGEN_cut+ia_params->LJGEN_offset)) {
     r_off = dist - ia_params->LJGEN_offset;
+#ifdef LJGEN_SOFTCORE
+    r_off *= r_off;
+    r_off += pow(ia_params->LJGEN_sig,2) * (1.0-ia_params->LJGEN_lambda)
+             * ia_params->LJGEN_softrad;
+    /* Taking a square root is not optimal, but we can't prevent the user from
+       using an odd m, n coefficient. */
+    r_off  = sqrt(r_off);
+#endif
     /* normal case: resulting force/energy smaller than capping. */
     if(r_off > ia_params->LJGEN_capradius) {
       frac = ia_params->LJGEN_sig/r_off;
-      return ia_params->LJGEN_eps*(
-	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+      return ia_params->LJGEN_eps
+#ifdef LJGEN_SOFTCORE
+        * ia_params->LJGEN_lambda
+#endif
+        *(ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
 	      - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }
     /* capped part of lj potential. */
     else if(dist > 0.0) {
       frac = ia_params->LJGEN_sig/ia_params->LJGEN_capradius;
-      return ia_params->LJGEN_eps*(
-	      ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
+      return ia_params->LJGEN_eps
+#ifdef LJGEN_SOFTCORE
+        * ia_params->LJGEN_lambda
+#endif
+        *( ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) 
 	      - ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2)
 				    + ia_params->LJGEN_shift);
     }

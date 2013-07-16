@@ -61,7 +61,13 @@ int tclprint_to_result_ljgenIA(Tcl_Interp *interp, int i, int j)
   Tcl_PrintDouble(interp, data->LJGEN_b2, buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
   Tcl_PrintDouble(interp, data->LJGEN_capradius, buffer);
-  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);  
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+#ifdef LJGEN_SOFTCORE
+  Tcl_PrintDouble(interp, data->LJGEN_lambda, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+  Tcl_PrintDouble(interp, data->LJGEN_softrad, buffer);
+  Tcl_AppendResult(interp, buffer, " ", (char *) NULL);
+#endif
  
   return TCL_OK;
 }
@@ -73,12 +79,20 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
 {
   /* parameters needed for LJGEN */
   double eps, sig, cut, shift, offset, cap_radius, b1, b2;
+#ifdef LJGEN_SOFTCORE
+  double lambda, softrad;
+#endif
   int change, a1, a2;
 
   /* get lennard-jones interaction type */
   if (argc < 10) {
     Tcl_AppendResult(interp, "lj-gen needs 9 parameters: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>",
+		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2> "
+         "[<lj_cap> "
+#ifdef LJGEN_SOFTCORE
+         "[<lambda> <softrad>]"
+#endif
+         "]",
 		     (char *) NULL);
     return 0;
   }
@@ -94,7 +108,12 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
       (! ARG_IS_D(8, b1))     ||
       (! ARG_IS_D(9, b2))) {
     Tcl_AppendResult(interp, "lj-gen needs 7 DOUBLE and 2 INT parameers: "
-		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2>",
+		     "<lj_eps> <lj_sig> <lj_cut> <lj_shift> <lj_offset> <a1> <a2> <b1> <b2> "
+         "[<lj_cap> "
+#ifdef LJGEN_SOFTCORE
+          "[<lambda> <softrad>]"
+#endif
+          "]",
 		     (char *) NULL);
     return ES_ERROR;
   }
@@ -104,11 +123,25 @@ int tclcommand_inter_parse_ljgen(Tcl_Interp * interp,
   /* check wether there is an additional double, cap radius, and parse in */
   if (argc >= 11 && ARG_IS_D(10, cap_radius))
     change++;
+#ifdef LJGEN_SOFTCORE
+  lambda = 1.0;
+  softrad = 1.0;
+  if (argc >= 12 && ARG_IS_D(11, lambda))
+    change++;
+  else
+    Tcl_ResetResult(interp);
+  if (argc >= 13 && ARG_IS_D(12, softrad))
+    change++;
+#endif
   else
     Tcl_ResetResult(interp);
   if (ljgen_set_params(part_type_a, part_type_b,
 		       eps, sig, cut, shift, offset, a1, a2, b1, b2,
-		       cap_radius) == ES_ERROR) {
+		       cap_radius
+#ifdef LJGEN_SOFTCORE
+           , lambda, softrad
+#endif
+           ) == ES_ERROR) {
     Tcl_AppendResult(interp, "particle types must be non-negative", (char *) NULL);
     return 0;
   }
