@@ -200,9 +200,9 @@ __device__ void index_to_xyz(unsigned int index, unsigned int *xyz){
   xyz[2] = index;
 }
 
-/**calculation of the modes from the velocitydensities (space-transform.)
- * @param n_a		Pointer to local node residing in array a (Input)
- * @param index		node index / thread index (Input)
+/**calculation of the modes from the velocity densities (space-transform.)
+ * @param n_a		  Pointer to local node residing in array a (Input)
+ * @param index		Node index / thread index (Input)
  * @param mode		Pointer to the local register values mode (Output)
 */
 __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index, float *mode){
@@ -1968,6 +1968,14 @@ void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress) {
 
 void lb_get_boundary_force_pointer(float** pointeradress) {
   *pointeradress = lb_boundary_force;
+}
+
+void lb_get_device_values_pointer(float** pointeradress) {
+  *pointeradress = d_v;
+}
+
+void lb_get_device_values_print_pointer(float** pointeradress) {
+  *pointeradress = d_v_p;
 }
 
 /**initialization for the lb gpu fluid called from host

@@ -37,8 +37,8 @@ extern "C" {
    is the number of the link in direction (x, y, z), where x, y and z can be 0, 
    U or D representing 0 and one agrid in direction of or against the x, y or z 
    axis. The numbering differs from the one used in the LB since the LB 
-   velocities are directed but the links are not. The first 9 links represent 
-   the odd LB velocities and the last nine represent the even LB velocities 
+   velocities are directed but the links are not. Links 0 - 8 represent 
+   the odd LB velocities and numbers 13 - 21 represent the even LB velocities 
    (without the 0). In between there are the links connecting the corners, which
    represent the 3rd shell not used in the LB but in the advection. The 
    following 13 constants are only defined for the sake of completeness.*/
