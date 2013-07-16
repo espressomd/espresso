@@ -20,58 +20,16 @@
 #ifndef ELECTROKINETICS_H
 #define ELECTROKINETICS_H
 
-#include <cufft.h>
 #include "config.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//note that we need to declare the ek_parameters struct and instantiate it for LB_GPU
+//to compile when electrokinetics is not compiled in. This seemed more elegant than
+//ifdeffing multiple versions of the kernel integrate.
+#ifdef CUDA
 
-//#ifdef ELECTROKINETICS
+#include <cufft.h>
 
 #define MAX_NUMBER_OF_SPECIES 10
-
-//TODO update
-
-/* Constants enumerating the links of a node in the link flux system EK_LINK_xyz
-   is the number of the link in direction (x, y, z), where x, y and z can be 0, 
-   U or D representing 0 and one agrid in direction of or against the x, y or z 
-   axis. The numbering differs from the one used in the LB since the LB 
-   velocities are directed but the links are not. Links 0 - 8 represent 
-   the odd LB velocities and numbers 13 - 21 represent the even LB velocities 
-   (without the 0). In between there are the links connecting the corners, which
-   represent the 3rd shell not used in the LB but in the advection. The 
-   following 13 constants are only defined for the sake of completeness.*/
-   
-#define EK_LINK_U00 0
-#define EK_LINK_0U0 1
-#define EK_LINK_00U 2
-#define EK_LINK_UU0 3
-#define EK_LINK_UD0 4
-#define EK_LINK_U0U 5
-#define EK_LINK_U0D 6
-#define EK_LINK_0UU 7
-#define EK_LINK_0UD 8
-
-#define EK_LINK_UUU 9
-#define EK_LINK_UUD 10
-#define EK_LINK_UDU 11
-#define EK_LINK_UDD 12
-
-#define EK_LINK_D00 13
-#define EK_LINK_0D0 14
-#define EK_LINK_00D 15
-#define EK_LINK_DD0 16
-#define EK_LINK_DU0 17
-#define EK_LINK_D0D 18
-#define EK_LINK_D0U 19
-#define EK_LINK_0DD 20
-#define EK_LINK_0DU 21
-
-#define EK_LINK_DDD 22
-#define EK_LINK_DDU 23
-#define EK_LINK_DUD 24
-#define EK_LINK_DUU 25
 
 /* Data structure holding parameters and memory pointers for the link flux system. */
 
@@ -116,6 +74,57 @@ typedef struct {
 #endif
 } EK_parameters;
 
+#endif
+
+#ifdef ELECTROKINETICS
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//#ifdef ELECTROKINETICS
+
+/* Constants enumerating the links of a node in the link flux system EK_LINK_xyz
+   is the number of the link in direction (x, y, z), where x, y and z can be 0, 
+   U or D representing 0 and one agrid in direction of or against the x, y or z 
+   axis. The numbering differs from the one used in the LB since the LB 
+   velocities are directed but the links are not. Links 0 - 8 represent 
+   the odd LB velocities and numbers 13 - 21 represent the even LB velocities 
+   (without the 0). In between there are the links connecting the corners, which
+   represent the 3rd shell not used in the LB but in the advection. The 
+   following 13 constants are only defined for the sake of completeness.*/
+   
+#define EK_LINK_U00 0
+#define EK_LINK_0U0 1
+#define EK_LINK_00U 2
+#define EK_LINK_UU0 3
+#define EK_LINK_UD0 4
+#define EK_LINK_U0U 5
+#define EK_LINK_U0D 6
+#define EK_LINK_0UU 7
+#define EK_LINK_0UD 8
+
+#define EK_LINK_UUU 9
+#define EK_LINK_UUD 10
+#define EK_LINK_UDU 11
+#define EK_LINK_UDD 12
+
+#define EK_LINK_D00 13
+#define EK_LINK_0D0 14
+#define EK_LINK_00D 15
+#define EK_LINK_DD0 16
+#define EK_LINK_DU0 17
+#define EK_LINK_D0D 18
+#define EK_LINK_D0U 19
+#define EK_LINK_0DD 20
+#define EK_LINK_0DU 21
+
+#define EK_LINK_DDD 22
+#define EK_LINK_DDU 23
+#define EK_LINK_DUD 24
+#define EK_LINK_DUU 25
+
+
 extern EK_parameters ek_parameters;
 extern int ek_initialized;
 
@@ -157,6 +166,8 @@ int ek_print_vtk_pressure(char* filename);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* ELECTROKINETICS_H */

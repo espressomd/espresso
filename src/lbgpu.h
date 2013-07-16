@@ -225,8 +225,9 @@ void lb_get_device_values_print_pointer(LB_rho_v_pi_gpu** pointeradress);
 void lb_get_boundary_force_pointer(float** pointeradress);
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);
+#ifdef ELECTROKINETICS
 void lb_set_ek_pointer(EK_parameters* pointeradress);
-
+#endif
 void lattice_boltzmann_update_gpu();
 
 /** (Pre-)initializes data structures. */
