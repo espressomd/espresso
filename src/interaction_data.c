@@ -187,6 +187,10 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
     params->LJGEN_b2 = 0.0;
+#ifdef LJGEN_SOFTCORE
+    params->LJGEN_lambda  = 1.0;
+    params->LJGEN_softrad = 0.0;
+#endif
   params->LJGEN_cut = INACTIVE_CUTOFF;
 #endif
 

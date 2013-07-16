@@ -236,6 +236,10 @@ typedef struct {
   int LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
+#ifdef LJGEN_SOFTCORE
+  double LJGEN_lambda;
+  double LJGEN_softrad;
+#endif
   /*@}*/
 #endif
 
