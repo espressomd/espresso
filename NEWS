@@ -53,6 +53,8 @@ the case of non-cubic boxes. It will also now be possible to tune setting a non-
 
 * Stomatocyte lb-boundary and constraint implemented.
 
+* Generic LJ can now turned into an soft potential.
+
 User-visible changes
 --------------------
 
