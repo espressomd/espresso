@@ -1970,12 +1970,12 @@ void lb_get_boundary_force_pointer(float** pointeradress) {
   *pointeradress = lb_boundary_force;
 }
 
-void lb_get_device_values_pointer(float** pointeradress) {
-  *pointeradress = d_v;
+void lb_get_device_values_pointer(LB_rho_v_pi_gpu** pointeradress) {
+  *pointeradress = device_rho_v_pi;
 }
 
-void lb_get_device_values_print_pointer(float** pointeradress) {
-  *pointeradress = d_v_p;
+void lb_get_device_values_print_pointer(LB_rho_v_pi_gpu** pointeradress) {
+  *pointeradress = print_rho_v_pi;
 }
 
 /**initialization for the lb gpu fluid called from host

@@ -220,8 +220,8 @@ extern LB_node_force_gpu node_f;
 extern "C" {
 #endif
 
-void lb_get_device_values_pointer(float** pointeradress);
-void lb_get_device_values_print_pointer(float** pointeradress);
+void lb_get_device_values_pointer(LB_rho_v_pi_gpu** pointeradress);
+void lb_get_device_values_print_pointer(LB_rho_v_pi_gpu** pointeradress);
 void lb_get_boundary_force_pointer(float** pointeradress);
 void lb_get_lbpar_pointer(LB_parameters_gpu** pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu** pointeradress);

@@ -114,6 +114,11 @@ int ek_initialized = 0;
   extern LB_parameters_gpu lbpar_gpu;
   extern LB_node_force_gpu node_f;
   extern LB_nodes_gpu *current_nodes;
+  
+#ifdef EK_REACTION
+  LB_rho_v_pi_gpu *ek_lb_device_values;
+  LB_rho_v_pi_gpu *ek_lb_device_values_print;
+#endif
 
 #ifdef __cplusplus
 }
@@ -518,7 +523,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
 
 __global__ void ek_pressure( LB_nodes_gpu n_a,
                              LB_parameters_gpu *ek_lbparameters_gpu,
-                             LB_rho_v_gpu *d_v,
+                             LB_rho_v_pi_gpu *d_v,
                              LB_rho_v_pi_gpu *d_p_v
                            )
 {
@@ -624,8 +629,8 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
                                           - d_p_v[index].pi[1]
                                           - d_p_v[index].pi[2];
 
-    for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
-      ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
+    //for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
+      //ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
   }
 
 
@@ -1978,7 +1983,7 @@ void ek_integrate() {
 #ifdef EK_REACTION
   KERNELCALL(ek_reaction, dim_grid, threads_per_block, ());
 
-  KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu ) );
+  KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu, ek_lb_device_values, ek_lb_device_values_print ) );
 #endif
 
   //TODO delete
@@ -2136,6 +2141,7 @@ int ek_init() {
 #ifdef EK_REACTION
     cuda_safe_mem( cudaMalloc( (void**) &ek_parameters.pressure,
                              ek_parameters.number_of_nodes * sizeof( float ) ) );
+                             
     lb_get_device_values_pointer( &ek_lb_device_values );
     lb_get_device_values_print_pointer( &ek_lb_device_values_print );
 #endif
