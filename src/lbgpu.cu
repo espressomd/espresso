@@ -565,7 +565,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     c[0]=-1;c[1]=0;c[2]=0; weight=1./18.; population=1; inverse=2; 
     BOUNCEBACK
     
-    c[0]=0;c[1]=1;c[2]=0;  weight=1./18.; population=4; inverse=3; 
+    c[0]=0;c[1]=1;c[2]=0; weight=1./18.; population=4; inverse=3; 
     BOUNCEBACK
 
     c[0]=0;c[1]=-1;c[2]=0; weight=1./18.; population=3; inverse=4; 
@@ -586,7 +586,7 @@ __device__ void bounce_back_read(LB_nodes_gpu n_b, LB_nodes_gpu n_a, unsigned in
     c[0]=1;c[1]=-1;c[2]=0; weight=1./36.; population=10; inverse=9; 
     BOUNCEBACK
 
-    c[0]=-1;c[1]=+1;c[2]=0; weight=1./36.; population=9; inverse=10; 
+    c[0]=-1;c[1]=1;c[2]=0; weight=1./36.; population=9; inverse=10; 
     BOUNCEBACK
     
     c[0]=1;c[1]=0;c[2]=1; weight=1./36.; population=12; inverse=11; 

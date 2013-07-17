@@ -2343,7 +2343,7 @@ LOOKUP_TABLE default\n",
 
   for( int i = 0; i < lbpar_gpu.number_of_nodes; i++ ) {
   
-    fprintf( fp, "%f ", host_values[ i ].rho );
+    fprintf( fp, "%f ", host_values[ i ].rho[ 0 ] );
   }
   
   free( host_values );	
