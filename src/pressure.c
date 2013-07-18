@@ -122,7 +122,11 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
 
   calc_long_range_virials();
+
+#ifdef VIRTUAL_SITES_RELATIVE  
   vs_relative_pressure_and_stress_tensor(virials.vs_relative,p_tensor.vs_relative);
+#endif
+
 
   for (n = 1; n < virials.data.n; n++)
     virials.data.e[n] /= 3.0*volume;
