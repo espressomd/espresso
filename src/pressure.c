@@ -28,11 +28,12 @@
 #include "domain_decomposition.h"
 #include "nsquare.h"
 #include "layered.h"
+#include "virtual_sites_relative.h" 
 
-Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0};
-Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0};
-Observable_stat p_tensor = {0, {NULL,0,0},0,0,0,0};
-Observable_stat total_p_tensor = {0, {NULL,0,0},0,0,0,0};
+Observable_stat virials  = {0, {NULL,0,0}, 0,0,0,0,0};
+Observable_stat total_pressure = {0, {NULL,0,0}, 0,0,0,0,0};
+Observable_stat p_tensor = {0, {NULL,0,0},0,0,0,0,0};
+Observable_stat total_p_tensor = {0, {NULL,0,0},0,0,0,0,0};
 
 /* Observables used in the calculation of intra- and inter- molecular
    non-bonded contributions to pressure and to stress tensor */
@@ -121,15 +122,12 @@ void pressure_calc(double *result, double *result_t, double *result_nb, double *
   virials.data.e[0] /= (3.0*volume*time_step*time_step);
 
   calc_long_range_virials();
+  vs_relative_pressure_and_stress_tensor(virials.vs_relative,p_tensor.vs_relative);
 
   for (n = 1; n < virials.data.n; n++)
     virials.data.e[n] /= 3.0*volume;
 
     
- /* stress tensor part */
- /* The ROTATION option does not effect stress tensor calculations
-    since rotational energy is not included in the ideal term (unlike
-    for the pressure) */
   for(i=0; i<9; i++)
     p_tensor.data.e[i] /= (volume*time_step*time_step);
   
@@ -224,13 +222,17 @@ void calc_long_range_virials()
 /************************************************************/
 void init_virials(Observable_stat *stat)
 {
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar;
+    // Determine number of contribution for different interaction types
+    // bonded, nonbonded, coulomb, dipolar, rigid bodies
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vsr;
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb    = 0;
   n_dipolar    = 0;
+  n_vsr=0;
+
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE: n_coulomb = 0; break;
@@ -247,10 +249,14 @@ void init_virials(Observable_stat *stat)
   case DIPOLAR_P3M:   n_dipolar = 2; break;
   }
 #endif
+#ifdef VIRTUAL_SITES_RELATIVE
+  // rigid bodies 
+  n_vsr=1;
+#endif
 
 
-  
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 1);
+  // Allocate memory for the data
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vsr, 1);
   stat->init_status = 0;
 }
 
@@ -269,13 +275,17 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb)
 /***************************/
 void init_p_tensor(Observable_stat *stat)
 {
-    int n_pre, n_non_bonded, n_coulomb, n_dipolar;
+    // Determine number of contribution for different interaction types
+    // bonded, nonbonded, coulomb, dipolar, rigid bodies
+    int n_pre, n_non_bonded, n_coulomb, n_dipolar,n_vsr;
+
 
   n_pre        = 1;
   n_non_bonded = (n_particle_types*(n_particle_types+1))/2;
 
   n_coulomb = 0;
   n_dipolar = 0;
+  n_vsr=0;
 
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
@@ -294,8 +304,12 @@ void init_p_tensor(Observable_stat *stat)
   case DIPOLAR_P3M:  n_dipolar = 2; break;
   }
 #endif
+#ifdef VIRTUAL_SITES_RELATIVE
+  // rigid bodies 
+  n_vsr=1;
+#endif
 
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 9);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, n_vsr, 9);
   stat->init_status = 0;
 }
 

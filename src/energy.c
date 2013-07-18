@@ -196,7 +196,7 @@ void init_energies(Observable_stat *stat)
 
 #endif
   
-  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 1);
+  obsstat_realloc_and_clear(stat, n_pre, n_bonded_ia, n_non_bonded, n_coulomb, n_dipolar, 0, 1);
   stat->init_status = 0;
 }
 
