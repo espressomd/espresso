@@ -758,7 +758,7 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
  * @param d_v           Pointer to local device values (Input)
  * @param index		node index / thread index (Input)
 */
-__device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode,  LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu * d_v, unsigned int index, unsigned int print_index) {
+__device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode, LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu *d_v, unsigned int index, unsigned int print_index) {
   
   float j[3]; 
   float pi_eq[6] ; 
@@ -787,7 +787,7 @@ __device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode,  LB_rho_v
       
       /* equilibrium part of the stress modes */
       pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
-      pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] )/ Rho;
+      pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
       pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
       pi_eq[3] = j[0]*j[1] / Rho;
       pi_eq[4] = j[0]*j[2] / Rho;
@@ -1973,8 +1973,8 @@ void lb_get_boundary_force_pointer(float** pointeradress) {
   *pointeradress = lb_boundary_force;
 }
 
-void lb_get_device_values_pointer(LB_rho_v_pi_gpu** pointeradress) {
-  *pointeradress = device_rho_v_pi;
+void lb_get_device_values_pointer(LB_rho_v_gpu** pointeradress) {
+  *pointeradress = device_rho_v;
 }
 
 void lb_get_device_values_print_pointer(LB_rho_v_pi_gpu** pointeradress) {

@@ -116,7 +116,7 @@ int ek_initialized = 0;
   extern LB_nodes_gpu *current_nodes;
   
 #ifdef EK_REACTION
-  LB_rho_v_pi_gpu *ek_lb_device_values;
+  LB_rho_v_gpu *ek_lb_device_values;
   LB_rho_v_pi_gpu *ek_lb_device_values_print;
 #endif
 
@@ -284,6 +284,18 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
   #pragma unroll
   for( int ii = 0; ii < LB_COMPONENTS; ii++ )
   {
+    // The following convention is used:
+    // The \hat{c}_i form B. Duenweg's paper are given by:
+
+    // c0 = {0, 0, 0}, c1 = {1, 0, 0}, c2 = {-1, 0, 0}, c3 = {0, 1, 0},
+    // c4 = {0, -1, 0}, c5 = {0, 0, 1}, c6 = {0, 0, -1}, c7 = {1, 1, 0},
+    // c8 = {-1, -1, 0}, c9 = {1, -1, 0}, c10 = {-1, 1, 0}, c11 = {1, 0, 1},
+    // c12 = {-1, 0, -1}, c13 = {1, 0, -1}, c14 = {-1, 0, 1}, c15 = {0, 1,  1},
+    // c16 = {0, -1, -1}, c17 = {0, 1, -1}, c18 = {0, -1, 1}
+
+    // If we assume that the e_ki are as in Tabel 1 from B. Duenweg
+    // then we find the following correspondence between modes
+    // as indicated between parentheses in the following    
 
     // mass mode
 
@@ -305,7 +317,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                          + n_a.vd[ (15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                          + n_a.vd[ (16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                          + n_a.vd[ (17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                         + n_a.vd[ (18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ];
+                         + n_a.vd[ (18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]; // (m0)
 
     // momentum modes
 
@@ -318,7 +330,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                          + (   n_a.vd[ ( 11 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              - n_a.vd[ ( 12 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          + (   n_a.vd[ ( 13 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             - n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             - n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m1)
 
     mode[2 + ii * LBQ] =   (   n_a.vd[ (  3 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              - n_a.vd[ (  4 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -329,7 +341,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                          + (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              - n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          + (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m2)
 
     mode[3 + ii * LBQ] =   (   n_a.vd[ (  5 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              - n_a.vd[ (  6 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -340,7 +352,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                          + (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              - n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          - (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m3)
 
     // stress modes
 
@@ -356,7 +368,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                          + n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                          + n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                          + n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                         + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ];
+                         + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]; // (m4)
 
     mode[5 + ii * LBQ] =   (   n_a.vd[ (  1 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              + n_a.vd[ (  2 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -369,7 +381,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                          - (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              + n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          - (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (??)
 
     mode[6 + ii * LBQ] =   (   n_a.vd[ (  1 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              + n_a.vd[ (  2 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -388,22 +400,22 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                                   - (   n_a.vd [(  7 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                       + n_a.vd[ (  8 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                                   - (   n_a.vd [(  9 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                                      + n_a.vd[ ( 10 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ) );
+                                      + n_a.vd[ ( 10 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ) ); // (??)
 
     mode[7 + ii * LBQ] =   (   n_a.vd[ ( 7 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] 
                              + n_a.vd[ (  8 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          - (   n_a.vd[ ( 9 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             + n_a.vd[ ( 10 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             + n_a.vd[ ( 10 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m7)
 
     mode[8 + ii * LBQ] =   (   n_a.vd[ ( 11 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              + n_a.vd[ ( 12 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          - (   n_a.vd[ ( 13 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             + n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             + n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m9)
 
     mode[9 + ii * LBQ] =   (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                              + n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                          - (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                             + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                             + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m8)
 
     // kinetic modes
 
@@ -416,7 +428,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                                + (   n_a.vd[ ( 11 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    - n_a.vd[ ( 12 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                                + (   n_a.vd[ ( 13 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                                   - n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                                   - n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m10)
 
     mode[11 + ii * LBQ] = - 2.0f*(   n_a.vd[ (  3 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    - n_a.vd[ (  4 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -427,7 +439,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                                + (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    - n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                                + (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                                   - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                                   - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m11)
 
     mode[12 + ii * LBQ] = - 2.0f*(   n_a.vd[ (  5 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    - n_a.vd[ (  6 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -438,7 +450,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                                + (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    - n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                                - (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                                   - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                                   - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m12)
 
     mode[13 + ii * LBQ] =   (   n_a.vd[ (  7 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               - n_a.vd[ (  8 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -447,7 +459,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                           - (   n_a.vd[ ( 11 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               - n_a.vd[ ( 12 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                           - (   n_a.vd[ ( 13 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                              - n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                              - n_a.vd[ ( 14 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m13)
 
     mode[14 + ii * LBQ] =   (   n_a.vd[ (  7 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               - n_a.vd[ (  8 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -456,7 +468,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                           - (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               - n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                           - (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                              - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                              - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (-m14)
 
     mode[15 + ii * LBQ] =   (   n_a.vd[ ( 11 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               - n_a.vd[ ( 12 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -465,7 +477,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                           - (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               - n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                           + (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                              - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                              - n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m15)
 
     mode[16 + ii * LBQ] =   n_a.vd[ (  0 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                           + n_a.vd[ (  7 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
@@ -485,7 +497,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                                    + n_a.vd[ ( 3 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    + n_a.vd[ ( 4 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    + n_a.vd[ ( 5 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                                   + n_a.vd[ ( 6 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                                   + n_a.vd[ ( 6 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (m16)
 
     mode[17 + ii * LBQ] = - (   n_a.vd[ (  1 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               + n_a.vd[ (  2 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -498,7 +510,7 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                           - (   n_a.vd[ ( 15 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               + n_a.vd[ ( 16 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
                           - (   n_a.vd[ ( 17 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                              + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                              + n_a.vd[ ( 18 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (??)
 
     mode[18 + ii * LBQ] = - (   n_a.vd[ (  1 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                               + n_a.vd[ (  2 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] )
@@ -517,13 +529,13 @@ __device__ void ek_calc_m_from_n( LB_nodes_gpu n_a,
                                    + n_a.vd[ (  7 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    + n_a.vd[ (  8 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
                                    + n_a.vd[ (  9 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ]
-                                   + n_a.vd[ ( 10 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] );
+                                   + n_a.vd[ ( 10 + ii*LBQ ) * ek_lbparameters_gpu->number_of_nodes + index ] ); // (??)
   }
 }
 
 __global__ void ek_pressure( LB_nodes_gpu n_a,
                              LB_parameters_gpu *ek_lbparameters_gpu,
-                             LB_rho_v_pi_gpu *d_v,
+                             LB_rho_v_gpu *d_v,
                              LB_rho_v_pi_gpu *d_p_v
                            )
 {
@@ -625,12 +637,12 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
     
     // TODO check physics
 
-    ek_parameters_gpu.pressure[ index ] = - d_p_v[index].pi[0]
+    //ek_parameters_gpu.pressure[ index ] = - d_p_v[index].pi[0]
                                           - d_p_v[index].pi[1]
                                           - d_p_v[index].pi[2];
 
-    //for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
-      //ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
+    for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
+      ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
   }
 
 
