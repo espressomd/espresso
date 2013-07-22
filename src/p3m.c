@@ -359,7 +359,7 @@ void   p3m_init() {
   }
 }
 
-void p3m_set_tune_params(double r_cut, int mesh, int cao,
+void p3m_set_tune_params(double r_cut, int mesh[3], int cao,
 			 double alpha, double accuracy, int n_interpol)
 {
   if (r_cut >= 0) {
@@ -367,9 +367,14 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
     p3m.params.r_cut_iL = r_cut*box_l_i[0];
   }
 
-  if (mesh >= 0)
-    p3m.params.mesh[2] = p3m.params.mesh[1] = p3m.params.mesh[0] = mesh;
 
+  if ( mesh[0] >= 0 ) {
+    p3m.params.mesh[0] = mesh[0];
+    p3m.params.mesh[1] = mesh[1];
+    p3m.params.mesh[2] = mesh[2];
+  }
+
+  
   if (cao >= 0)
     p3m.params.cao = cao;
 
@@ -392,7 +397,7 @@ void p3m_set_tune_params(double r_cut, int mesh, int cao,
 int p3m_set_params(double r_cut, int *mesh, int cao,
 		   double alpha, double accuracy)
 {
-  if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M)
+  if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M && coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
     
   if(r_cut < 0)
@@ -407,8 +412,8 @@ int p3m_set_params(double r_cut, int *mesh, int cao,
   p3m.params.r_cut    = r_cut;
   p3m.params.r_cut_iL = r_cut*box_l_i[0];
   p3m.params.mesh[2]  = mesh[2];
-  p3m.params.mesh[1] = mesh[1];
-  p3m.params.mesh[0] = mesh[0];
+  p3m.params.mesh[1]  = mesh[1];
+  p3m.params.mesh[0]  = mesh[0];
   p3m.params.cao      = cao;
 
   if (alpha > 0) {
@@ -1196,7 +1201,7 @@ static double p3m_get_accuracy(int mesh[3], int cao, double r_cut_iL, double *_a
    double rs_err, ks_err;
    double alpha_L;
    P3M_TRACE(fprintf(stderr, "p3m_get_accuracy: mesh (%d, %d, %d), cao %d, r_cut %f ", mesh[0], mesh[1], mesh[2], cao, r_cut_iL));
- 
+
    /* calc maximal real space error for setting */
    rs_err = p3m_real_space_error(coulomb.prefactor,r_cut_iL,p3m.sum_qpart,p3m.sum_q2,0);
  
@@ -1229,8 +1234,9 @@ static double p3m_mcr_time(int mesh[3], int cao, double r_cut_iL, double alpha_L
   double int_time;
 
   /* broadcast p3m parameters for test run */
-  if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M)
+  if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M && coulomb.method != COULOMB_P3M_GPU)
     coulomb.method = COULOMB_P3M;
+    
   p3m.params.r_cut_iL = r_cut_iL;
   p3m.params.mesh[0] = mesh[0];
   p3m.params.mesh[1] = mesh[1];
@@ -1470,6 +1476,7 @@ int p3m_adaptive_tune(char **log) {
   double                            time_best=1e20, tmp_time;
   double mesh_density = 0.0, mesh_density_min, mesh_density_max;
   char b[3*ES_INTEGER_SPACE + 3*ES_DOUBLE_SPACE + 128];
+  int tune_mesh = 0; //boolean to indicate if mesh should be tuned
 
   if (skin == -1) {
     *log = strcat_alloc(*log, "p3m cannot be tuned, since the skin is not yet set");
@@ -1503,6 +1510,7 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.mesh[0] == 0 || p3m.params.mesh[1] == 0 || p3m.params.mesh[2] == 0) {
     mesh_density_min = pow(p3m.sum_qpart / (box_l[0] * box_l[1] * box_l[2]) , 1.0/3.0);
     mesh_density_max = 256 / pow(box_l[0] * box_l[1] * box_l[2], 1.0/3.0);
+    tune_mesh = 1;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
        meshes have to be tested */
@@ -1510,6 +1518,10 @@ int p3m_adaptive_tune(char **log) {
 
     P3M_TRACE(fprintf(stderr, "%d: starting with meshdensity %lf, using at most %lf.\n", this_node, mesh_density_min, mesh_density_max));
 
+  } else if ( p3m.params.mesh[1] == -1 && p3m.params.mesh[2] == -1) {
+    mesh_density = mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
+    p3m.params.mesh[1] = mesh_density*box_l[1]+0.5;
+    p3m.params.mesh[2] = mesh_density*box_l[2]+0.5;    
   } else {
     mesh_density = mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_l[0];
 
@@ -1551,10 +1563,17 @@ int p3m_adaptive_tune(char **log) {
 
     P3M_TRACE(fprintf(stderr, "%d: trying meshdensity %lf.\n", this_node, mesh_density));
 
-    tmp_mesh[0] = (int)(box_l[0]*mesh_density);
-    tmp_mesh[1] = (int)(box_l[1]*mesh_density);
-    tmp_mesh[2] = (int)(box_l[2]*mesh_density);
-
+    if ( tune_mesh ) {
+      tmp_mesh[0] = (int)(box_l[0]*mesh_density+0.5);
+      tmp_mesh[1] = (int)(box_l[1]*mesh_density+0.5);
+      tmp_mesh[2] = (int)(box_l[2]*mesh_density+0.5);
+    }
+    else {
+      tmp_mesh[0] = p3m.params.mesh[0];
+      tmp_mesh[1] = p3m.params.mesh[1];
+      tmp_mesh[2] = p3m.params.mesh[2];
+    }
+    
     if(tmp_mesh[0] % 2)
       tmp_mesh[0]++;
     if(tmp_mesh[1] % 2) 
@@ -1567,7 +1586,7 @@ int p3m_adaptive_tune(char **log) {
 			  r_cut_iL_min, r_cut_iL_max, &tmp_r_cut_iL,
 			  &tmp_alpha_L, &tmp_accuracy); 
     /* some error occured during the tuning force evaluation */
-    P3M_TRACE(fprintf(stderr,"delta_acceracy: %lf tune time: %lf\n", p3m.params.accuracy - tmp_accuracy,tmp_time));
+    P3M_TRACE(fprintf(stderr,"delta_accuracy: %lf tune time: %lf\n", p3m.params.accuracy - tmp_accuracy,tmp_time));
     //    if (tmp_time == -1) con;
     /* this mesh does not work at all */
     if (tmp_time < 0.0) continue;

@@ -187,6 +187,10 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
     params->LJGEN_b2 = 0.0;
+#ifdef LJGEN_SOFTCORE
+    params->LJGEN_lambda  = 1.0;
+    params->LJGEN_softrad = 0.0;
+#endif
   params->LJGEN_cut = INACTIVE_CUTOFF;
 #endif
 
@@ -369,6 +373,7 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef CATALYTIC_REACTIONS
   params->REACTION_range = 0.0;
 #endif
+
 }
 
 /** Copy interaction parameters. */
@@ -504,6 +509,7 @@ static void recalc_global_maximal_nonbonded_cutoff()
     if (max_cut_global < elc_params.space_layer)
       max_cut_global = elc_params.space_layer;
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
     double r_cut = p3m.params.r_cut_iL* box_l[0];
@@ -892,6 +898,7 @@ int check_obs_calc_initialized()
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
 #ifdef P3M
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
   }
@@ -929,6 +936,7 @@ int coulomb_set_bjerrum(double bjerrum)
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       p3m_set_bjerrum();
       break;

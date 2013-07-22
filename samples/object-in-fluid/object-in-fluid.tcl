@@ -1,3 +1,20 @@
+# Copyright (C) 2012,2013 The ESPResSo project
+#  
+# This file is part of ESPResSo.
+#  
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#  
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#  
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+#
 # general parameters
 ############################################################################
 
@@ -34,12 +51,12 @@ init_objects_in_fluid
 
 # adding one object in fluid - oif. Some parameters are self-explanatory, some not:
 ############################################################################
-add_oif_object origin 10 10 10 nodesfile $fileNodes trianglesfile $fileTriangles stretch 1.0 1.0 1.0 ks 0.05 kb 0.01 kal 0.01 kag 0.01 kv 10.0 type 0 mol 0 rotate 0.0 0.0 0.0
+add_oif_object origin 10 10 10 nodesfile $fileNodes trianglesfile $fileTriangles stretch 1.0 1.0 1.0 ks 0.05 kb 0.01 kal 0.01 kag 0.01 kv 10.0 type 0 mol 0 rotate 0.0 0.0 0.0 mass 1.3
 
 
 # origin 			sets the coordinates of the center of the object
 # stretch 			the immersed object will be scaled 
-# 					by these factors in correspomding directions
+# 					by these factors in the corresponding directions
 # nodesfile 		meshfile for vertices
 # trianglesfile 	meshfile for triangles
 #

@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IA_DATA_H
-#define IA_DATA_H
+#ifndef _INTERACTION_DATA_H
+#define _INTERACTION_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
 */
@@ -123,6 +123,8 @@
   #define COULOMB_RF 9
   /** Coulomb method is Reaction-Field BUT as interactions */
   #define COULOMB_INTER_RF 10
+  /** Coulomb method is P3M with GPU based long range part calculation */
+  #define COULOMB_P3M_GPU 11
 #endif
 /*@}*/
 
@@ -183,6 +185,8 @@
 #define CONSTRAINT_PLANE 9
 /** Constraint for tunable-lsip boundary conditions */
 #define CONSTRAINT_RHOMBOID 10
+/** Constraint for a stomatocyte boundary */
+#define CONSTRAINT_STOMATOCYTE 11
 /*@}*/
 
 /* Data Types */
@@ -232,6 +236,10 @@ typedef struct {
   int LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
+#ifdef LJGEN_SOFTCORE
+  double LJGEN_lambda;
+  double LJGEN_softrad;
+#endif
   /*@}*/
 #endif
 
@@ -514,7 +522,6 @@ typedef struct {
   double Dprefactor;
   int    Dmethod;
  #endif
-
 
 } Coulomb_parameters;
 
@@ -815,6 +822,38 @@ typedef struct {
   int penetrable; 
 } Constraint_maze;
 
+/** Parameters for a STOMATOCYTE constraint. */
+typedef struct {
+
+  /** Stomatocyte position. */
+
+  double position_x;
+  double position_y;
+  double position_z;
+
+  /** Stomatocyte position. */
+
+  double orientation_x;
+  double orientation_y;
+  double orientation_z;
+
+  /** Stomatocyte dimensions. */
+
+  double outer_radius;
+  double inner_radius;
+  double layer_width;
+
+  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+
+  double direction;
+
+  /** whether the constraint is penetrable 1 or not 0*/
+
+  int penetrable; 
+  int reflecting;
+
+} Constraint_stomatocyte;
+
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
 typedef struct{
@@ -843,6 +882,7 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    Constraint_stomatocyte stomatocyte;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER
