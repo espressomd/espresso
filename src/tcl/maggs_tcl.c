@@ -155,7 +155,7 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
                 return TCL_ERROR;
             }
         }
-    } else finite_epsilon_flag=0;
+    } else finite_epsilon_flag=1;
 
   coulomb.method = COULOMB_MAGGS;
 	
