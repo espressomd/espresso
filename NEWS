@@ -55,6 +55,8 @@ the case of non-cubic boxes. It will also now be possible to tune setting a non-
 
 * Generic LJ can now turned into an soft potential.
 
+* Maggs electrostatics can now handel a spacialy varying epsilon.
+
 User-visible changes
 --------------------
 
