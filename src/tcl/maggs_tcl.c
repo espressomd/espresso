@@ -53,6 +53,61 @@
 
 #ifdef ELECTROSTATICS
 
+int tclcommand_localeps(Tcl_Interp* interp, int argc, char** argv)
+{
+    int mesh = maggs_get_mesh_1D();
+    int node_x, node_y, node_z, direction;
+    double relative_epsilon;
+	
+    /* number of arguments has to be 8 */
+    if(argc != 9) {
+        Tcl_AppendResult(interp, "Wrong number of paramters. Usage: \n", (char *) NULL);
+        Tcl_AppendResult(interp, "inter coulomb <bjerrum> memd localeps node <x> <y> <z> dir <X/Y/Z> eps <epsilon>", (char *) NULL);
+        return TCL_ERROR;
+    }
+	
+    /* first argument should be "node" */
+    if(! ARG_IS_S(1, "node")) return TCL_ERROR;
+    
+    /* arguments 2-4 should be integers */
+    if(! ARG_IS_I(2, node_x)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR; }
+    if(! ARG_IS_I(3, node_y)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR; }
+    if(! ARG_IS_I(4, node_z)) {
+        Tcl_AppendResult(interp, "integer expected", (char *) NULL);
+        return TCL_ERROR; }
+    /* check if mesh position is in range */
+    if ( (node_x < 0) || (node_y < 0) || (node_z < 0) || (node_x > mesh) || (node_y > mesh) || (node_z > mesh) ) {
+        char* buffer;
+        sprintf(buffer, "%d", mesh);
+        Tcl_AppendResult(interp, "epsilon position out of mesh range. Mesh in each dimension is ", buffer, ".", (char *) NULL);
+        return TCL_ERROR;
+    }
+    
+    /* parse fifth and sixth argument (e.g. dir X) */
+    if(! ARG_IS_S(5, "dir")) return TCL_ERROR;
+    if ( (! ARG_IS_S(6, "X")) && (! ARG_IS_S(6, "Y")) && (! ARG_IS_S(6, "Z")) ) {
+        Tcl_AppendResult(interp, "Parameter dir should be 'X', 'Y' or 'Z'.", (char *) NULL);
+        return TCL_ERROR; }
+    if(ARG_IS_S(6, "X")) direction = 0;
+    if(ARG_IS_S(6, "Y")) direction = 1;
+    if(ARG_IS_S(6, "Z")) direction = 2;
+    
+    /* parse seventh and eight argument (e.g. eps 0.5) */
+    if(! ARG_IS_S(7, "eps")) return TCL_ERROR;
+    if ( (! ARG_IS_D(8, relative_epsilon)) || (relative_epsilon < 0.0) ) {
+        Tcl_AppendResult(interp, "eps expects a positive double", (char *) NULL);
+        return TCL_ERROR; }
+    
+    double eps_before = maggs_set_permittivity(node_x, node_y, node_z, direction, relative_epsilon);
+    
+    if (eps_before == 1.0) return TCL_OK;
+    else return TCL_OK;
+}
+
 /** parse TCL command.
     number of parameters is checked and maggs_set_parameters function is called.
     @return zero if successful
@@ -67,8 +122,12 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
     double epsilon = 1.0;
     int finite_epsilon_flag = 1;
 	
+    /* if the command is localeps, call function */
+    if ( (argc > 0) && (ARG_IS_S(0, "localeps")) )
+        return tclcommand_localeps(interp, argc, argv);
+    
     if(argc < 2) {
-        Tcl_AppendResult(interp, "Not enough parameters: inter coulomb memd <f_mass> <mesh>", (char *) NULL);
+        Tcl_AppendResult(interp, "Not enough parameters: inter coulomb <bjerrum> memd <f_mass> <mesh>", (char *) NULL);
         return TCL_ERROR;
     }
 	
@@ -96,7 +155,7 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
                 return TCL_ERROR;
             }
         }
-    } else finite_epsilon_flag=0;
+    } else finite_epsilon_flag=1;
 
   coulomb.method = COULOMB_MAGGS;
 	
@@ -115,6 +174,7 @@ int tclcommand_inter_coulomb_parse_maggs(Tcl_Interp * interp, int argc, char ** 
   Tcl_AppendResult(interp, "unknown error", (char *) NULL);
   return TCL_ERROR;
 }
+
 
 int tclprint_to_result_Maggs(Tcl_Interp *interp)
 {

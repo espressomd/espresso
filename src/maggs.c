@@ -353,7 +353,7 @@ double maggs_calc_curl(int mue, int nue, double* field, int* Neighbor, int index
 	
   result = field[index+mue] + field[3*Neighbor[OPP_DIR(mue)]+nue] -
     field[3*Neighbor[OPP_DIR(nue)]+mue] - field[index+nue];
-	
+
   return result;
 }
 
@@ -447,7 +447,7 @@ int maggs_sanity_checks()
     ret = -1;
   }
   /** check if speed of light parameter makes sense */
-  else if (maggs.f_mass < 2. * time_step * time_step * maggs.a * maggs.a) {
+  else if (maggs.f_mass < ( 2. * time_step * time_step / maggs.a / maggs.a ) ) {
     errtxt = runtime_error(128);
     ERROR_SPRINTF(errtxt, "{307 MEMD: Speed of light is set too high. Increase f_mass.} ");
     ret = -1;      
@@ -683,7 +683,7 @@ void maggs_setup_local_lattice()
 
     lattice[linearindex].charge = 0.;
 		
-    /* Here, we need a function to set PERMITTIVITY!!!!! */
+    /* set relative permittivity to 1 for all sites (default) */
     FOR3D(i) lattice[linearindex].permittivity[i] = 1.;
   }
 	
@@ -772,6 +772,31 @@ void maggs_prepare_surface_planes(int dim, MPI_Datatype *xy, MPI_Datatype *xz, M
   MPI_Type_commit(xz);
 }
 
+/** get lattice size in one dimension
+ @return mesh in 1D
+ */
+int maggs_get_mesh_1D()
+{
+    return maggs.mesh;
+}
+
+/** set permittivity for single lattice links
+ @param node_x              index of the node in x direction
+ @param node_y              index of the node in y direction
+ @param node_z              index of the node in z direction
+ @param direction           direction in which the link points from the node. 0 is for x, 1 is for y, 2 is for z
+ @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
+ */
+double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon)
+{
+    int node_index = maggs_get_linear_index(node_x, node_y, node_z, lparams.dim);
+    /* save and return old epsilon for information purposes */
+    double epsilon_before = lattice[node_index].permittivity[direction];
+    /* set relative epsilon */
+    lattice[node_index].permittivity[direction] = relative_epsilon;
+
+    return epsilon_before;
+}
 
 
 
@@ -840,6 +865,19 @@ void maggs_exchange_surface_patch(double *field, int dim, int e_equil)
       case 0 :
       case 1 :
 	if(e_equil || dim == 1) {
+/* MPI_Sendrecv( sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, status )
+ 
+ if (rank%2) {
+ MPI_Send(&data, 1, MPI_INT, next, 42, comm);
+ MPI_Recv(&data, 1, MPI_INT, prev, 42, comm, 0);
+ } else {
+ MPI_Recv(&data, 1, MPI_INT, prev, 42, comm, 0);
+ MPI_Send(&data, 1, MPI_INT, next, 42, comm);
+ }
+ 
+ MPI_Sendrecv(&send_data, 1, MPI_FLOAT, next, 42, &recv_data, 1, MPI_FLOAT, prev, 42, comm, 0);
+ MPI_Sendrecv_replace(&data, 1, MPI_FLOAT, next, 42, prev, 42, comm, 0);
+ */
 	  MPI_Irecv (&field[doffset],1,yzPlane,node_neighbors[s_dir],REQ_MAGGS_SPREAD,comm_cart,&request[0]);
 	  MPI_Isend(&field[offset],1,yzPlane,node_neighbors[r_dir],REQ_MAGGS_SPREAD,comm_cart,&request[1]);
 	}
@@ -1118,7 +1156,7 @@ void maggs_update_charge_gradients(double *grad)
 
 /** Calculate the self energy coefficients for the system, if
     corrected with Lattice Green's function. */
-void calc_self_energy_coeffs()
+void maggs_calc_self_energy_coeffs()
 {
   double factor, prefac;
   int px = 0;
@@ -1972,15 +2010,15 @@ void maggs_add_transverse_field(double dt)
 
 
 /** interpolation function, solely for new self force correction. */
-void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
+void maggs_interpolate_part_charge_from_grad(double *rel, double *grad, double *rho)
 {
   int i, k, l, m, index;
   int grad_ind;
 
   int help_index[3];
-  double help_x;
+  double help[3];
 
-  help_x = 1. - rel_x;     /* relative pos. w.r.t. first */  
+  FOR3D(i) help[i] = 1. - rel[i];     /* relative pos. w.r.t. first */  
 
   help_index[0] = 4;
   help_index[1] = 2; 
@@ -1994,9 +2032,9 @@ void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
     for(l=0;l<2;l++){  /* jumps from y- to y+ */
       for(m=0;m<2;m++){ /* jumps from z- to z+ */
 	// without q!!!
-	if(k==0) rho[index] += - help_x * grad[grad_ind];
+	if(k==0) rho[index] += - help[0] * grad[grad_ind];
 	else {
-	  rho[index] += - rel_x * grad[grad_ind%4];
+	  rho[index] += - rel[0] * grad[grad_ind%4];
 	}
 
 	grad_ind ++;
@@ -2009,65 +2047,57 @@ void interpolate_part_charge_from_grad(double rel_x, double *grad, double *rho)
     index+=help_index[0];
     help_index[0]=-help_index[0];
   }
+  //  for(i=0;i<8;i++) printf("rho: %f\n", rho[i]);
 }
 
 /** new self force correction with lattice Green's function.
     @param p Particle pointer
 */
-void calc_part_self_force(Particle *p)
+void maggs_calc_interpolated_self_force(Particle *p)
 {
-  int i, j, k, ip=0;
-  double self, temp;
-  static int help_index[SPACE_DIM];
+  int ix,iy,iz,k,index,globalindex;
+  int xmax=2, ymax=2, zmax=2;
+  double self_force[SPACE_DIM];
+  double position[SPACE_DIM];
+  double relative_position[SPACE_DIM];
+  int left_down_position[SPACE_DIM];
 
-  int dir1, dir2, d, grad_ind;
-  int l, m, index, temp_ind;
-  double grad[24];
-  double grad2[24];
-  double rho[8];
+  double local_rho[8];
+  double local_permittivity[12];
+  double local_D_field[12];
   double *force = p->f.f;
-  double rel = 0.;
 
-  help_index[0] = 12;
-  help_index[1] = 6;
-  help_index[2] = 3; 
+  /* calculate position in cell, normalized to lattice size: */
+  FOR3D(k) {
+    position[k]           = (p->r.p[k] - lparams.left_down_position[k]) * maggs.inva;
+    left_down_position[k] = floor(position[k]);
+    relative_position[k]  = position[k] - left_down_position[k];
+    self_force[k] = 0.0;
+    local_D_field[k] = 0.0;
+  }
 
-  maggs_calc_charge_gradients(&rel, p->p.q, &grad[ip]);
-  interpolate_part_charge_from_grad(rel, grad, rho);
-  index = 0;
-  grad_ind = 0;
-  FOR3D(d) {
-    maggs_calc_directions(d, &dir1, &dir2);
-    for(l=0;l<2;l++){  /* jumps from dir2- to dir2+ */
-      for(m=0;m<2;m++){ /* jumps from dir1- to dir1+ */          
+  /* Copy permittivity values to the mini-lattice: */
 
-	temp_ind = index + d;
-	grad2[temp_ind] = grad[grad_ind];
-	grad2[temp_ind + help_index[d]] = -grad[grad_ind];
-
-	grad_ind++;
-	index+=help_index[dir1];
-	help_index[dir1]=-help_index[dir1];
+  for (iz=0;iz<zmax;iz++) {
+    for (iy=0;iy<ymax;iy++) {
+      for (ix=0;ix<xmax;ix++) {
+	index = (iz + zmax*(iy + ymax*ix));
+	globalindex = maggs_get_linear_index((left_down_position[0]+ix),
+					     (left_down_position[1]+iy),
+					     (left_down_position[2]+iz), lparams.dim);
+	local_permittivity[index] = lattice[globalindex].permittivity[0];
+	local_rho[index] = 0.0;
       }
-      index+=help_index[dir2];
-      help_index[dir2]=-help_index[dir2];
-
     }
   }
 
+
   FOR3D(k) {
-    self = 0.; 
-    for(i=0;i<8;i++) {
+    self_force[k] = 0.0;
+  }
 
-      temp = rho[i]*grad2[i*SPACE_DIM + k];
-      self += maggs.alpha[i][i] * temp;
-
-      for(j=i+1;j<8;j++) {
-	temp = rho[i]*grad2[j*SPACE_DIM + k] + rho[j]*grad2[i*SPACE_DIM + k];
-	self += maggs.alpha[i][j] * temp;
-      }
-    }
-    force[k] += 2. * self; 
+  FOR3D(k) {
+    force[k] += self_force[k];
   }
 }
 
@@ -2241,7 +2271,9 @@ void maggs_calc_forces()
 	index = maggs_get_linear_index(first[0],first[1],first[2],lparams.dim);
 	maggs_calc_part_link_forces(&p[i], index, &grad[ip]);
 	maggs_calc_self_influence(&p[i]);
-
+	//      	printf("before: %f\n", p->f.f[0]);
+	//	maggs_calc_interpolated_self_force(&p[i]);
+	//	printf("after: %f\n", p->f.f[0]);
 	ip+=12;
       }
     }
@@ -2334,6 +2366,7 @@ void maggs_init()
     /* enforce electric field onto the Born-Oppenheimer surface */
     maggs_calc_init_e_field();
     //    if(!this_node) fprintf(stderr, "%d: Electric field is initialized\n", this_node);
+    maggs_calc_self_energy_coeffs();
 }
 
 /** Frees the dynamically allocated memory
