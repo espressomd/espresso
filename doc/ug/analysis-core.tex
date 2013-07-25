@@ -449,8 +449,9 @@ Variant \variant{1} is the recommended way of updating the correlations.
 By specifying \lit{start} or \lit{stop} it starts or stops automatically
 updating the correlation estimates. The automatic updates are done
 within the integration loop without further user intervention.
-The update frequency is adjusted based based on the value of \var{dt} 
-provided when defining the correlation.  
+The update frequency is adjusted based on the value of \var{dt} 
+provided when defining the correlation. Note that autoupdate has to be 
+started \underline{after} setting the sim-time (e.g. after \var{setmd time 0}).
 
 Variant \variant{2} is an explicit call for an instantaneous 
 update of the correlation estimates, using the current system
