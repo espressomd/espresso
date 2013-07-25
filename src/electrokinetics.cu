@@ -651,7 +651,18 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
         j[1] = Rho * d_v[index].v[1];
         j[2] = Rho * d_v[index].v[2];
         
-        // equilibrium part of the stress modes
+        // equilibrium part of the stress modes, which comes from 
+        // the equality between modes and stress tensor components
+
+        /* m4 = trace(pi) - rho
+           m5 = pi_xx - pi_yy
+           m6 = trace(pi) - 3 pi_zz
+           m7 = pi_xy
+           m8 = pi_xz
+           m9 = pi_yz */
+
+        // and pluggin in the Euler stress:
+        // pi_eq = rho*c_s^2 + (j \otimes j)/rho
 
         pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho; // j.j
         pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho; // j_x*j_x - j_y*j_y
@@ -675,22 +686,6 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
                                            * ( mode[ 8 + ii * LBQ ] - pi_eq[4] );
         mode[ 9 + ii * LBQ ] = pi_eq[5] + ( 0.5f + 0.5f * ek_lbparameters_gpu->gamma_shear[ii] )
                                            * ( mode[ 9 + ii * LBQ ] - pi_eq[5] );
-/*
-        // TODO remove, this expression is (more than likely) incorrect
-        //              moreover, the original contained a sign mistake
-        
-        // Now we have to transform to the "usual" stress tensor components
-        // We use eq. 116ff in Duenweg Ladd for that.
-
-        pi[0] += ( mode[0 + ii * LBQ] + mode[4 + ii * LBQ] + mode[5 + ii * LBQ] ) / 3.0f;
-        pi[2] += (   2.0f*mode[0 + ii * LBQ] + 2.0f*mode[4 + ii * LBQ]
-                   - 1.0f*mode[5 + ii * LBQ] + 3.0f*mode[6 + ii * LBQ] ) / 6.0f;
-        pi[5] += (   2.0f*mode[0 + ii * LBQ] + 2.0f*mode[4 + ii * LBQ]
-                   - 1.0f*mode[5 + ii * LBQ] - 3.0f*mode[6 + ii * LBQ] ) / 6.0f; // This one or the one above had a minus mistake
-        pi[1] += mode[7 + ii * LBQ];
-        pi[3] += mode[8 + ii * LBQ];
-        pi[4] += mode[9 + ii * LBQ];
-*/
 
         // Transform the stress tensor components according to the modes that
         // correspond to those used by U. Schiller. In terms of populations this
@@ -700,13 +695,13 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
 
         pi[0] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
                    + mode[6 + ii * LBQ] + 3.0f*mode[5 + ii * LBQ] )/6.0f; // xx
-        pi[1] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
+        pi[2] += (   2.0f*(mode[0 + ii * LBQ] + mode[4 + ii * LBQ])
                    + mode[6 + ii * LBQ] - 3.0f*mode[5 + ii * LBQ] )/6.0f; // yy
-        pi[2] += (   mode[0 + ii * LBQ] + mode[4 + ii * LBQ]
-                   - mode[6 + ii * LBQ])/3.0f; // zz
-        pi[3] += mode[7 + ii * LBQ]; // xy
+        pi[5] += (   mode[0 + ii * LBQ] + mode[4 + ii * LBQ]
+                   - mode[6 + ii * LBQ] )/3.0f; // zz
+        pi[1] += mode[7 + ii * LBQ]; // xy
         pi[4] += mode[9 + ii * LBQ]; // yz
-        pi[5] += mode[8 + ii * LBQ]; // zx
+        pi[3] += mode[8 + ii * LBQ]; // zx
 
       }
        
@@ -733,89 +728,16 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
     
     // TODO check physics
 
-    ek_parameters_gpu.pressure[ index ] = - d_p_v[index].pi[0]
-                                          - d_p_v[index].pi[1]
-                                          - d_p_v[index].pi[2];
+    ek_parameters_gpu.pressure[ index ] =   d_p_v[index].pi[0]
+                                          + d_p_v[index].pi[2]
+                                          + d_p_v[index].pi[5];
 
+    ek_parameters_gpu.pressure[ index ] /= 3.0f;
+/*
     for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
       ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
+*/
   }
-
-
-
-
-//TODO REMOVE
-  /*unsigned int index = ek_getThreadIndex ();
-
-  if(index < ek_parameters_gpu.number_of_nodes)
-  {                            
-    float rho = ek_lbparameters_gpu->rho *
-                ek_lbparameters_gpu->agrid *
-                ek_lbparameters_gpu->agrid *
-                ek_lbparameters_gpu->agrid;
-
-    float mode [19];
-
-    for ( int i = 0; i < 19; i++ )
-      mode[i] = n.vd[  i * ek_lbparameters_gpu->number_of_nodes + index ];
-    
-    rho +=    mode[  0 ] +
-              mode[  1 ] +
-              mode[  2 ] +
-              mode[  3 ] +
-              mode[  4 ] +
-              mode[  5 ] +
-              mode[  6 ] +
-              mode[  7 ] +
-              mode[  8 ] +
-              mode[  9 ] +
-              mode[ 10 ] +
-              mode[ 11 ] +
-              mode[ 12 ] +
-              mode[ 13 ] +
-              mode[ 14 ] +
-              mode[ 15 ] +
-              mode[ 16 ] +
-              mode[ 17 ] +
-              mode[ 18 ];
-
-    // Calculate the pressure contribution
-
-    float j [3];
-    float pi_eq [3];
-    float pi [3];
-
-    // Rename modes for convenience
-
-    j[0] = mode[1];
-    j[1] = mode[2];
-    j[2] = mode[3];
-
-    // equilibrium part of the stress modes 
-
-    pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / rho;
-    pi_eq[1] = ( ( j[0]*j[0] ) - ( j[1]*j[1] ) ) / rho;
-    pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0f*j[2]*j[2] ) / rho;
-
-    // Now we must predict the outcome of the next collision 
-    // We immediately average pre- and post-collision
-
-    mode[4] = pi_eq[0] + ( 0.5f + 0.5f*ek_lbparameters_gpu->gamma_bulk )*( mode[4] - pi_eq[0] );
-    mode[5] = pi_eq[1] + ( 0.5f + 0.5f*ek_lbparameters_gpu->gamma_shear )*( mode[5] - pi_eq[1] );
-    mode[6] = pi_eq[2] + ( 0.5f + 0.5f*ek_lbparameters_gpu->gamma_shear )*( mode[6] - pi_eq[2] );
-
-    // Now we have to transform to the "usual" stress tensor components
-    // We use eq. 116ff in Duenweg Ladd for that
-
-    pi[0] = ( mode[0] + mode[4] + mode[5] )/3.0f;
-    pi[1] = ( 2.0f*mode[0] + 2.0f*mode[4] - mode[5] + 3.0f*mode[6] )/6.0f;
-    pi[2] = ( 2.0f*mode[0] + 2.0f*mode[4] - mode[5] + 3.0f*mode[6] )/6.0f;
-
-    ek_parameters_gpu.pressure[ index ] = -pi[0] - pi[1] - pi[2];
-
-    for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
-      ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
-  }*/
 }
 #endif
 
