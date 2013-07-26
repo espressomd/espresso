@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 The ESPResSo project
+# Copyright (C) 2011,2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -33,7 +33,7 @@ setmd box_l $l $l $l
 setmd time_step 0.01
 thermostat lb 0
 
-set agrid 0.75
+set agrid 1.00
 set visc 7.
 set rho 2.
 set tau 0.04
@@ -59,7 +59,7 @@ set couette_flow_direction 2
 set v_boundary [ list 0 0 0 ]
 lset v_boundary $couette_flow_direction $v_couette
 
-lbboundary wall normal [ lindex $normal1 0 ]  [ lindex $normal1 1 ]  [ lindex $normal1 2 ]  dist $agrid
+lbboundary wall normal [ lindex $normal1 0 ]  [ lindex $normal1 1 ]  [ lindex $normal1 2 ] dist $agrid
 lbboundary wall normal [ lindex $normal2 0 ]  [ lindex $normal2 1 ]  [ lindex $normal2 2 ] dist [ expr -$l +$agrid ] \
   velocity [ lindex $v_boundary 0 ] [ lindex $v_boundary 1 ] [ lindex $v_boundary 2 ] 
 
@@ -224,3 +224,4 @@ if { $poisseuille_p_accuracy > 1e-2 } {
   error_exit "Poisseuille pressure accuracy not achieved"
 }
 
+exit 0

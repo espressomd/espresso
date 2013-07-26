@@ -79,10 +79,10 @@ void meta_init(){
    /* Initialize arrays if they're empty. These get freed upon calling the Tcl
     * parser */
    if (meta_acc_force == NULL || meta_acc_fprofile == NULL) {
-      meta_acc_force       = calloc(meta_xi_num_bins * sizeof *meta_acc_force, sizeof *meta_acc_force);
-      meta_acc_fprofile    = calloc(meta_xi_num_bins * sizeof *meta_acc_fprofile, sizeof *meta_acc_fprofile);
-      meta_cur_xi          = calloc(3 * sizeof *meta_cur_xi, sizeof *meta_cur_xi);
-      meta_apply_direction = calloc(3 * sizeof *meta_apply_direction, sizeof *meta_apply_direction);   
+      meta_acc_force       = (double *) calloc(meta_xi_num_bins * sizeof *meta_acc_force, sizeof *meta_acc_force);
+      meta_acc_fprofile    = (double *) calloc(meta_xi_num_bins * sizeof *meta_acc_fprofile, sizeof *meta_acc_fprofile);
+      meta_cur_xi          = (double *) calloc(3 * sizeof *meta_cur_xi, sizeof *meta_cur_xi);
+      meta_apply_direction = (double *) calloc(3 * sizeof *meta_apply_direction, sizeof *meta_apply_direction);   
    }
    
    /* Check that the simulation uses onle a single processor. Otherwise exit. 

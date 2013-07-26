@@ -64,9 +64,6 @@ static double I[3] = { 1, 1, 1};
 /************************************************************/
 /*@{*/
 
-/** define rotation matrix A for a given particle */
-static void define_rotation_matrix(Particle *p, double A[9]);
-
 /** define first and second time derivatives of a quaternion, as well
     as the angular acceleration. */
 static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3], double Wd[3]);
@@ -134,10 +131,9 @@ void define_rotation_matrix(Particle *p, double A[9])
   double q3q3 =p->r.quat[3];
   q3q3 *=q3q3;
 
-  A[0 + 3*0] = q0q0 + q1q1 -q2q2 - q3q3;
-  A[1 + 3*1] = q0q0 - q1q1 +
-               q2q2 - q3q3 ;
-  A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3 ;
+  A[0 + 3*0] = q0q0 + q1q1 - q2q2 - q3q3;
+  A[1 + 3*1] = q0q0 - q1q1 + q2q2 - q3q3;
+  A[2 + 3*2] = q0q0 - q1q1 - q2q2 + q3q3;
 
   A[0 + 3*1] = 2*(p->r.quat[1]*p->r.quat[2] + p->r.quat[0]*p->r.quat[3]);
   A[0 + 3*2] = 2*(p->r.quat[1]*p->r.quat[3] - p->r.quat[0]*p->r.quat[2]);
@@ -364,17 +360,7 @@ void convert_initial_torques()
   }
 }
 
-/** convert torques from the body-fixed frames to space-fixed coordinates */
-void convert_torques_body_to_space(Particle *p, double *torque)
-{
-  double A[9];
-  define_rotation_matrix(p, A);
-
-  torque[0] = A[0 + 3*0]*p->f.torque[0] + A[1 + 3*0]*p->f.torque[1] + A[2 + 3*0]*p->f.torque[2];
-  torque[1] = A[0 + 3*1]*p->f.torque[0] + A[1 + 3*1]*p->f.torque[1] + A[2 + 3*1]*p->f.torque[2];
-  torque[2] = A[0 + 3*2]*p->f.torque[0] + A[1 + 3*2]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
-
-}
+/** convert from the body-fixed frames to space-fixed coordinates */
 
 void convert_omega_body_to_space(Particle *p, double *omega)
 {
@@ -384,9 +370,17 @@ void convert_omega_body_to_space(Particle *p, double *omega)
   omega[0] = A[0 + 3*0]*p->m.omega[0] + A[1 + 3*0]*p->m.omega[1] + A[2 + 3*0]*p->m.omega[2];
   omega[1] = A[0 + 3*1]*p->m.omega[0] + A[1 + 3*1]*p->m.omega[1] + A[2 + 3*1]*p->m.omega[2];
   omega[2] = A[0 + 3*2]*p->m.omega[0] + A[1 + 3*2]*p->m.omega[1] + A[2 + 3*2]*p->m.omega[2];
-
 }
 
+void convert_torques_body_to_space(Particle *p, double *torque)
+{
+  double A[9];
+  define_rotation_matrix(p, A);
+
+  torque[0] = A[0 + 3*0]*p->f.torque[0] + A[1 + 3*0]*p->f.torque[1] + A[2 + 3*0]*p->f.torque[2];
+  torque[1] = A[0 + 3*1]*p->f.torque[0] + A[1 + 3*1]*p->f.torque[1] + A[2 + 3*1]*p->f.torque[2];
+  torque[2] = A[0 + 3*2]*p->f.torque[0] + A[1 + 3*2]*p->f.torque[1] + A[2 + 3*2]*p->f.torque[2];
+}
 
 /** Multiply two quaternions */
 void multiply_quaternions(double a[4], double b[4], double result[4])

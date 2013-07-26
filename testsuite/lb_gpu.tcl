@@ -33,7 +33,7 @@ require_feature "LENNARD_JONES"
 require_feature "ADRESS" off
 
 puts "----------------------------------------"
-puts "- Testcase lbgpu.tcl running on [format %02d [setmd n_nodes]] nodes  -"
+puts "- Testcase lb_gpu.tcl running on [format %02d [setmd n_nodes]] nodes  -"
 puts "----------------------------------------"
 
 #############################################################
@@ -114,8 +114,19 @@ thermostat off
 
 # Fluid
 #############################################################
-lbfluid gpu dens $dens visc $viscosity agrid $agrid tau $tau
-lbfluid friction $friction
+
+set components [setmd lb_components]
+if {$components==1} {
+  lbfluid gpu agrid $agrid dens $dens visc $viscosity agrid $agrid tau $tau
+  lbfluid friction $friction
+}
+if {$components==2} {
+  lbfluid gpu agrid $agrid dens $dens $dens visc $viscosity $viscosity agrid $agrid tau $tau sc_coupling 0.0 0.0 0.0 
+  lbfluid friction $friction $friction
+  exit 0
+}
+
+
 
 thermostat lb $temp
 

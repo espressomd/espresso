@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef IA_DATA_H
-#define IA_DATA_H
+#ifndef _INTERACTION_DATA_H
+#define _INTERACTION_DATA_H
 /** \file interaction_data.h
     Various procedures concerning interactions between particles.
 */
@@ -66,6 +66,16 @@
 #define BONDED_IA_ANGLE_COSINE 12
 /** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSSQUARE 13
+/** Type of bonded interaction is a stretching force. */
+#define BONDED_IA_STRETCHING_FORCE 14
+/** Type of bonded interaction is a local area force. */
+#define BONDED_IA_AREA_FORCE_LOCAL 15 
+/** Type of bonded interaction is a bending force. */
+#define BONDED_IA_BENDING_FORCE 16 
+/** Type of bonded interaction is a bending force. */
+#define BONDED_IA_VOLUME_FORCE 17 
+/** Type of bonded interaction is a global area force. */
+#define BONDED_IA_AREA_FORCE_GLOBAL 18 
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -113,6 +123,8 @@
   #define COULOMB_RF 9
   /** Coulomb method is Reaction-Field BUT as interactions */
   #define COULOMB_INTER_RF 10
+  /** Coulomb method is P3M with GPU based long range part calculation */
+  #define COULOMB_P3M_GPU 11
 #endif
 /*@}*/
 
@@ -173,6 +185,8 @@
 #define CONSTRAINT_PLANE 9
 /** Constraint for tunable-lsip boundary conditions */
 #define CONSTRAINT_RHOMBOID 10
+/** Constraint for a stomatocyte boundary */
+#define CONSTRAINT_STOMATOCYTE 11
 /*@}*/
 
 /* Data Types */
@@ -222,6 +236,10 @@ typedef struct {
   int LJGEN_a2;
   double LJGEN_b1;
   double LJGEN_b2;
+#ifdef LJGEN_SOFTCORE
+  double LJGEN_lambda;
+  double LJGEN_softrad;
+#endif
   /*@}*/
 #endif
 
@@ -505,7 +523,6 @@ typedef struct {
   int    Dmethod;
  #endif
 
-
 } Coulomb_parameters;
 
 /*@}*/
@@ -531,6 +548,32 @@ typedef struct {
       double drmax2;
       double drmax2i;
     } fene;
+
+    /** Parameters for stretching_force */
+    struct {
+	  double r0;
+      double ks;
+    } stretching_force;
+    /** Parameters for area_force_local */
+    struct {
+	  double A0_l;
+      double ka_l;
+    } area_force_local;
+    /** Parameters for area_force_global */
+    struct {
+	  double A0_g;
+      double ka_g;
+    } area_force_global;
+    /** Parameters for bending_force */
+    struct {
+	  double phi0;
+      double kb;
+    } bending_force;
+    /** Parameters for volume_force */
+    struct {
+	  double V0;
+      double kv;
+    } volume_force;
 
     /** Parameters for harmonic bond Potential */
     struct {
@@ -779,6 +822,38 @@ typedef struct {
   int penetrable; 
 } Constraint_maze;
 
+/** Parameters for a STOMATOCYTE constraint. */
+typedef struct {
+
+  /** Stomatocyte position. */
+
+  double position_x;
+  double position_y;
+  double position_z;
+
+  /** Stomatocyte position. */
+
+  double orientation_x;
+  double orientation_y;
+  double orientation_z;
+
+  /** Stomatocyte dimensions. */
+
+  double outer_radius;
+  double inner_radius;
+  double layer_width;
+
+  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+
+  double direction;
+
+  /** whether the constraint is penetrable 1 or not 0*/
+
+  int penetrable; 
+  int reflecting;
+
+} Constraint_stomatocyte;
+
 //ER
 /** Parameters for a EXTERNAL MAGNETIC FIELD constraint */
 typedef struct{
@@ -807,6 +882,7 @@ typedef struct {
     Constraint_plate plate;
     Constraint_maze maze;
     Constraint_pore pore;
+    Constraint_stomatocyte stomatocyte;
     //ER
     Constraint_ext_magn_field emfield;
     //end ER

@@ -172,6 +172,7 @@ int tclcommand_imd_parse_pos(Tcl_Interp *interp, int argc, char **argv)
 {
   enum flag {NONE, UNFOLDED, FOLD_CHAINS};
   double shift[3] = {0.0,0.0,0.0};
+  //double part_selected=n_total_particles;
 
   float *coord;
   int flag = NONE;

@@ -98,6 +98,8 @@ struct MDHeader {
  #define MY    13
  /** Row contains the z component of the magnetic moment. */
  #define MZ    14
+/** Row contains the solvation free energies (SHANCHEN) */
+#define SOLVATION 15
 
 /*@}*/
 

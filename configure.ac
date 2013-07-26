@@ -74,6 +74,14 @@ AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
 
 # we use C++ as main code language
 AC_LANG([C++])
+AX_PROG_CXX_MPI([test x"$with_mpi" != xno],,[
+  if test xyes = x"$with_mpi"; then
+    AC_MSG_FAILURE([MPI compiler requested, but couldn't compile with MPI.])
+  else
+    AC_MSG_WARN([No MPI c++ compiler found, will use fake implementation!])
+    use_mpi_fake="yes"
+  fi
+])
 
 # if requested, use the fake implementation
 AM_CONDITIONAL(MPI_FAKE, [test x"$use_mpi_fake" = xyes])
@@ -442,7 +450,7 @@ AS_IF([test x$with_cuda != xno],[
         LDFLAGS="$LDFLAGS -L$cuda_path/lib"
     ])
 
-    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
+    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include -I/usr/include/mpi"
     CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
 
     # NVCC
@@ -475,6 +483,16 @@ AS_IF([test x$with_cuda != xno],[
         ])
     ])
 
+    AC_CHECK_LIB(stdc++, main, [LIBS="$LIBS -lstdc++"], [
+        cuda_ok=no
+        
+        AS_IF([test x$with_cuda = xyes],[
+            AC_MSG_FAILURE([could not find C++ standard library (stdc++), specify location using LDFLAGS])
+        ],[
+            AC_MSG_WARN([could not find C++ standard library (stdc++). Some features will not be available!])
+        ])
+    ])
+
     # NVCC compile check
     AC_MSG_CHECKING([whether CUDA compiles])
     
@@ -487,8 +505,11 @@ AS_IF([test x$with_cuda != xno],[
     # use nvcc
     
     # autoconf currently doesn't allow to define new languages like cuda, this is a workaround
+    save_CXX=$CXX
+    save_CXXFLAGS=$CXXFLAGS
+    
     CXX=$NVCC
-    CXXFLAGS="$NVCCFLAGS"
+    CXXFLAGS="$NVCCFLAGS -x cu"
     
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <cuda.h>],[cudaGetDevice(0);])], [
         AC_MSG_RESULT(yes)
@@ -691,3 +712,4 @@ fi
 if test .$doxygen = .no; then
    echo "To be able to build the developer's guide, add doxygen to your PATH."
 fi
+
