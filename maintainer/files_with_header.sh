@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 #
 git ls-files --exclude-standard |
-egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|svg|ico)$' |
+egrep -v '\.(gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|svg|ico|eps)$' |
 egrep -v '^testsuite/configs/|^old/' |
 egrep -v '(ChangeLog|AUTHORS|COPYING|bootstrap\.sh)' |
 egrep -v '(\.gitignore|pkgIndex\.tcl)' |

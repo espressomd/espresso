@@ -36,10 +36,11 @@ libEspresso_a_SOURCES = \
 	comforce.hpp comforce.cpp \
 	config.hpp \
 	constraint.cpp constraint.hpp \
+	cuda_common_cfile.cpp \
 	debug.cpp debug.hpp \
 	domain_decomposition.cpp domain_decomposition.hpp \
 	energy.cpp energy.hpp \
-	errorhandling.cpp errorhandling.hpp \
+	errorhandling.cpp	errorhandling.hpp \
 	fft.cpp fft.hpp \
 	fft-common.cpp fft-common.hpp \
 	fft-dipolar.cpp fft-dipolar.hpp \
@@ -68,7 +69,7 @@ libEspresso_a_SOURCES = \
 	nemd.cpp nemd.hpp \
 	npt.hpp \
 	nsquare.cpp nsquare.hpp \
-	particle_data.cpp particle_data.hpp \
+	particle_data.cpp	particle_data.hpp \
 	polymer.cpp polymer.hpp \
 	polynom.hpp \
 	pressure.cpp pressure.hpp \
@@ -115,7 +116,7 @@ libEspresso_a_SOURCES += \
 	soft_sphere.cpp soft_sphere.hpp \
 	steppot.cpp steppot.hpp \
 	tab.cpp tab.hpp \
-	tunable_slip.cpp tunable_slip.hpp
+	tunable_slip.cpp tunable_slip.hpp 
 
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
@@ -129,7 +130,12 @@ libEspresso_a_SOURCES += \
 	fene.cpp fene.hpp \
 	harmonic.cpp harmonic.hpp \
 	overlap.cpp overlap.hpp \
-	subt_lj.cpp subt_lj.hpp
+	subt_lj.cpp subt_lj.hpp \
+	object-in-fluid/area_force_local.cpp object-in-fluid/area_force_local.hpp \
+	object-in-fluid/area_force_global.cpp object-in-fluid/area_force_global.hpp \
+	object-in-fluid/bending_force.cpp object-in-fluid/bending_force.hpp \
+	object-in-fluid/stretching_force.cpp object-in-fluid/stretching_force.hpp \
+	object-in-fluid/volume_force.cpp object-in-fluid/volume_force.hpp
 
 # Coulomb methods
 libEspresso_a_SOURCES += \
@@ -229,7 +235,17 @@ libEspresso_a_SOURCES += \
 	tcl/fene_tcl.cpp tcl/fene_tcl.hpp \
 	tcl/harmonic_tcl.cpp tcl/harmonic_tcl.hpp \
 	tcl/overlap_tcl.cpp tcl/overlap_tcl.hpp \
-	tcl/subt_lj_tcl.cpp tcl/subt_lj_tcl.hpp
+	tcl/subt_lj_tcl.cpp tcl/subt_lj_tcl.hpp \
+	tcl/object-in-fluid/area_force_local_tcl.cpp \
+	tcl/object-in-fluid/area_force_local_tcl.hpp \
+	tcl/object-in-fluid/area_force_global_tcl.cpp \
+	tcl/object-in-fluid/area_force_global_tcl.hpp \
+	tcl/object-in-fluid/bending_force_tcl.cpp \
+	tcl/object-in-fluid/bending_force_tcl.hpp \
+	tcl/object-in-fluid/stretching_force_tcl.cpp \
+	tcl/object-in-fluid/stretching_force_tcl.hpp \
+	tcl/object-in-fluid/volume_force_tcl.cpp \
+	tcl/object-in-fluid/volume_force_tcl.hpp
 
 # Coulomb methods
 libEspresso_a_SOURCES += \
@@ -377,10 +393,19 @@ SUFFIXES=.cu
 
 CUDA_SOURCES = \
 	cuda_init.cu cuda_init.hpp \
-	lbgpu.cu lbgpu.hpp
+	cuda_common.cu cuda_common.hpp \
+	lbgpu.cu lbgpu.hpp \
+	p3m_gpu.cu p3m_gpu.hpp
+
+cuda_common.o: cuda_common.hpp myconfig-final.hpp
+cuda_init.o: cuda_init.hpp myconfig-final.hpp
+lbgpu.o: lbgpu.hpp myconfig-final.hpp
+p3m_gpu.o: p3m_gpu.hpp myconfig-final.hpp
 
 if TCL
 
+Espresso_SOURCES += cuda_is_cpp.cpp
+Espresso_install_SOURCES += cuda_is_cpp.cpp
 CUDA_SOURCES += \
 	tcl/cuda_init_tcl.cpp
 

@@ -86,6 +86,9 @@ void calc_long_range_energies()
   /* calculate k-space part of electrostatic interaction. */
   switch (coulomb.method) {
 #ifdef P3M
+  case COULOMB_P3M_GPU:
+    printf("long range energy calculation not implemented for GPU P3M\n"); //TODO make right
+    break;
   case COULOMB_P3M:
     p3m_charge_assign(); 
     energy.coulomb[1] = p3m_calc_kspace_forces(0,1);
@@ -170,6 +173,7 @@ void init_energies(Observable_stat *stat)
   case COULOMB_NONE:  n_coulomb = 0; break;
 #ifdef P3M
   case COULOMB_ELC_P3M: n_coulomb = 3; break;
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:   n_coulomb = 2; break;
 #endif
   default: n_coulomb  = 1;

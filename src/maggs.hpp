@@ -103,6 +103,20 @@ void maggs_init(); /** called from: initialize.c */
  */
 int maggs_set_parameters(double bjerrum, double f_mass, int mesh, int finite_epsilon_flag, double epsilon_infty);
 
+/** get lattice size in one dimension
+ @return mesh in 1D
+ */
+int maggs_get_mesh_1D();
+
+/** set permittivity for single lattice links
+ @param node_x              index of the node in x direction
+ @param node_y              index of the node in y direction
+ @param node_z              index of the node in z direction
+ @param direction           direction in which the link points from the node. 0 is for x, 1 is for y, 2 is for z
+ @param relative_epsilon    permittivity to set, relative to the background permittivity set by the bjerrum length
+ */
+double maggs_set_permittivity(int node_x, int node_y, int node_z, int direction, double relative_epsilon);
+
 /** Propagate the B-field in the system.
     Called TWICE from \ref integrate.c with timestep dt/2 to ensure time-reversibility of the integrator.
     @param dt Timestep for which to propagate the field.

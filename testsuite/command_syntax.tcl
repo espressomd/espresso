@@ -32,4 +32,8 @@ if { [has_feature "LENNARD_JONES"] && [has_feature "LJCOS"]} {
    inter 0 0 lennard-jones 1.0 1.0 1.12246 auto 0 0 0 lj-cos 1.0 1.0 2.0 0.0
 }
 
+if { [has_feature "DPD"] } {
+    thermostat dpd 1.0 1.0 1.0
+}
+
 exit 0

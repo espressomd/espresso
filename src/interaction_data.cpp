@@ -187,6 +187,10 @@ void initialize_ia_params(IA_parameters *params) {
     params->LJGEN_a2 = 
     params->LJGEN_b1 =
     params->LJGEN_b2 = 0.0;
+#ifdef LJGEN_SOFTCORE
+    params->LJGEN_lambda  = 1.0;
+    params->LJGEN_softrad = 0.0;
+#endif
   params->LJGEN_cut = INACTIVE_CUTOFF;
 #endif
 
@@ -369,6 +373,7 @@ void initialize_ia_params(IA_parameters *params) {
 #ifdef CATALYTIC_REACTIONS
   params->REACTION_range = 0.0;
 #endif
+
 }
 
 /** Copy interaction parameters. */
@@ -504,6 +509,7 @@ static void recalc_global_maximal_nonbonded_cutoff()
     if (max_cut_global < elc_params.space_layer)
       max_cut_global = elc_params.space_layer;
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
     double r_cut = p3m.params.r_cut_iL* box_l[0];
@@ -752,6 +758,16 @@ const char *get_name_of_bonded_ia(int i) {
     return "RIGID_BOND";
   case BONDED_IA_VIRTUAL_BOND:
     return "VIRTUAL_BOND";
+  case BONDED_IA_STRETCHING_FORCE:
+    return "STRETCHING_FORCE";
+  case BONDED_IA_AREA_FORCE_LOCAL:
+    return "AREA_FORCE_LOCAL";
+  case BONDED_IA_AREA_FORCE_GLOBAL:
+    return "AREA_FORCE_GLOBAL";
+  case BONDED_IA_BENDING_FORCE:
+    return "BENDING_FORCE";
+  case BONDED_IA_VOLUME_FORCE:
+    return "VOLUME_FORCE";
   default:
     fprintf(stderr, "%d: INTERNAL ERROR: name of unknown interaction %d requested\n",
 	    this_node, i);
@@ -882,6 +898,7 @@ int check_obs_calc_initialized()
   case COULOMB_MMM2D: if (MMM2D_sanity_checks()) state = 0; break;
 #ifdef P3M
   case COULOMB_ELC_P3M: if (ELC_sanity_checks()) state = 0; // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M: if (p3m_sanity_checks()) state = 0; break;
 #endif
   }
@@ -919,6 +936,7 @@ int coulomb_set_bjerrum(double bjerrum)
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       p3m_set_bjerrum();
       break;

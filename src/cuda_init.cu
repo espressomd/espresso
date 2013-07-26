@@ -18,8 +18,8 @@
 */
 
 
-#include "utils.h"
-#include "cuda_init.h"
+#include "utils.hpp"
+#include "cuda_init.hpp"
 
 
 #ifdef CUDA

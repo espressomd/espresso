@@ -107,6 +107,7 @@ MDINLINE void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3
   if (coulomb.method != COULOMB_NONE) {
     switch (coulomb.method) {
 #ifdef P3M
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       virials.coulomb[0] += p3m_pair_energy(p1->p.q*p2->p.q,d,dist2,dist);
       break;
@@ -408,6 +409,21 @@ MDINLINE void add_three_body_bonded_stress(Particle *p1) {
     // skip over non-angular interactions
     else if(type == BONDED_IA_FENE) {
       i = i + 2;
+    }
+    else if(type == BONDED_IA_STRETCHING_FORCE) {
+      i = i + 2;
+    }
+    else if(type == BONDED_IA_AREA_FORCE_LOCAL) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_AREA_FORCE_GLOBAL) {
+      i = i + 3;
+    }
+    else if(type == BONDED_IA_BENDING_FORCE) {
+      i = i + 4;
+    }
+    else if(type == BONDED_IA_VOLUME_FORCE) {
+      i = i + 3;
     }
     else if(type == BONDED_IA_HARMONIC) {
       i = i + 2;

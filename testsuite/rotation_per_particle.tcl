@@ -50,11 +50,11 @@ if {[veclen [vecsub $quat $zero]] < $epsilon} {
 
 # Check that the rotational properties don't change any more, when rotation is off
 set quat [part 0 print quat]
-set omega [part 0 print omega]
+set omega [part 0 print omega_lab]
 part 0 rotation 0
 integrate 1000
 set quatN [part 0 print quat]
-set omegaN [part 0 print omega]
+set omegaN [part 0 print omega_lab]
 
 if {[veclen [vecsub $quat $quatN]] >$epsilon} {
  error "Quaternions changed even when rotation is off"
@@ -63,3 +63,5 @@ if {[veclen [vecsub $quat $quatN]] >$epsilon} {
 if {[veclen [vecsub $omega $omegaN]] > $epsilon} {
  error "omegaernions changed even when rotation is off"
 }
+
+exit 0

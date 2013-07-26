@@ -631,8 +631,8 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
     }
     else if (ARG0_IS_S("total")) {
       for(j=0; j<9; j++) {
-        tvalue[j] = p_tensor.data.e[j];
-        for (i = 1; i < p_tensor.data.n/9; i++) tvalue[j] += total_p_tensor.data.e[9*i + j];
+        tvalue[j] = total_p_tensor.data.e[j];
+        for (i = 1; i < total_p_tensor.data.n/9; i++) tvalue[j] += total_p_tensor.data.e[9*i + j];
      }
     }
     else {
