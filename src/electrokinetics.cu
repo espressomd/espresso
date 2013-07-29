@@ -1957,7 +1957,9 @@ __global__ void ek_calculate_boundary_forces( int n_lb_boundaries, float* ek_lb_
     }
   }
 
- // printf("\nforce %f %f %f\n", ek_accelerated_frame_boundary_force[0], ek_accelerated_frame_boundary_force[1], ek_accelerated_frame_boundary_force[2] ); \\ TODO remove
+/*  printf("\nforce %f %f %f boundary %f %f %f\n",
+         ek_accelerated_frame_boundary_force[0], ek_accelerated_frame_boundary_force[1], ek_accelerated_frame_boundary_force[2],
+         ek_lb_boundary_force[0], ek_lb_boundary_force[1], ek_lb_boundary_force[2] ); // TODO remove */
 }
 
 #ifdef __cplusplus
