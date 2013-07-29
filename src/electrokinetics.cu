@@ -662,14 +662,25 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
            m9 = pi_yz */
 
         // and pluggin in the Euler stress:
-        // pi_eq = rho*c_s^2 + (j \otimes j)/rho
+        // pi_eq = rho_0*c_s^2*I3 + (j \otimes j)/rho
+        // with I3 the 3D identity matrix and
+        // rho = \trace(rho_0*c_s^2*I3), which yields
 
-        pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho; // j.j
-        pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho; // j_x*j_x - j_y*j_y
-        pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] - 2.0f*j[2]*j[2] ) / Rho; // j.j - 3*j_z*j_z
-        pi_eq[3] = j[0]*j[1] / Rho; // j_x*j_y
-        pi_eq[4] = j[0]*j[2] / Rho; // j_x*j_z
-        pi_eq[5] = j[1]*j[2] / Rho; // j_y*j_z
+        /* pi_eq0 = j.j
+           pi_eq1 = j_x*j_x - j_y*j_y
+           pi_eq1 = j.j - 3*j_z*j_z
+           pi_eq1 = j_x*j_y
+           pi_eq1 = j_x*j_z
+           pi_eq1 = j_y*j_z */
+
+        // where the / Rho term has been dropped. 
+
+        pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
+        pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] ) / Rho;
+        pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] - 2.0f*j[2]*j[2] ) / Rho;
+        pi_eq[3] = j[0]*j[1] / Rho;
+        pi_eq[4] = j[0]*j[2] / Rho;
+        pi_eq[5] = j[1]*j[2] / Rho; 
        
         // Now we must predict the outcome of the next collision
         // We immediately average pre- and post-collision.
@@ -725,18 +736,21 @@ __global__ void ek_pressure( LB_nodes_gpu n_a,
       for(int i = 0; i < 6; i++)
        	d_p_v[index].pi[i] = 0.0f;
     }
-    
-    // TODO check physics
 
-    ek_parameters_gpu.pressure[ index ] =   d_p_v[index].pi[0]
-                                          + d_p_v[index].pi[2]
-                                          + d_p_v[index].pi[5];
+    // Subtract the LB part of the pressure, 
+    // since that is applied in the LBGPU already
+
+    ek_parameters_gpu.pressure[ index ] = - d_p_v[index].pi[0]
+                                          - d_p_v[index].pi[2]
+                                          - d_p_v[index].pi[5];
 
     ek_parameters_gpu.pressure[ index ] /= 3.0f;
-/*
+
+    // Calculate the ideal-gas contribution f
+    // TODO check small deviations 1/2 time step CHECK WITH GEORG
+
     for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
       ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] * ek_parameters_gpu.T;
-*/
   }
 }
 #endif
@@ -2146,7 +2160,7 @@ int ek_init() {
     lbpar_gpu.viscosity[0] = ek_parameters.viscosity;
     lbpar_gpu.bulk_viscosity[0] = ek_parameters.bulk_viscosity;
     lbpar_gpu.friction[0] = ek_parameters.friction;
-    
+
     lbpar_gpu.rho[0] = 1.0;
     lbpar_gpu.external_force = 0;
     lbpar_gpu.ext_force[0] = 0.0;
@@ -2971,6 +2985,7 @@ int ek_set_gamma_even( double gamma_even ) {
 int ek_set_density( int species, double density ) {
 
   ek_init_species( species );
+
   ek_parameters.density[ ek_parameters.species_index[ species ] ] = density;
   
   lbpar_gpu.rho[0] = 0.0;
@@ -2979,7 +2994,14 @@ int ek_set_density( int species, double density ) {
   
     lbpar_gpu.rho[0] += ek_parameters.density[i];
   }
-  
+
+// TODO : CHECK WITH GEORG! POSSIBLY REMOVE
+/*
+  ek_parameters.density[ ek_parameters.species_index[ species ] ] /= ( ek_parameters.agrid *
+                                                                       ek_parameters.agrid *
+                                                                       ek_parameters.agrid );
+*/
+
   lb_reinit_parameters_gpu();
   
   return 0;
