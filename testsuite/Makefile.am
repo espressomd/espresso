@@ -70,6 +70,7 @@ tests = \
 	nsquare.tcl \
 	nve_pe.tcl \
 	object_in_fluid.tcl \
+	object_in_fluid_gpu.tcl \
 	observable.tcl \
 	p3m.tcl \
 	p3m_gpu.tcl \

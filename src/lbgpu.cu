@@ -753,68 +753,74 @@ __device__ void apply_forces(unsigned int index, float *mode, LB_node_force_gpu 
  * @param d_v           Pointer to local device values (Input)
  * @param index		node index / thread index (Input)
 */
-__device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode,  LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu * d_v, unsigned int index, unsigned int print_index){
+__device__ void calc_values_in_MD_units(LB_nodes_gpu n_a, float *mode,  LB_rho_v_pi_gpu *d_p_v, LB_rho_v_gpu * d_v, unsigned int index, unsigned int print_index) {
   
   float j[3]; 
   float pi_eq[6] ; 
   float pi[6]={0.f,0.f,0.f,0.f,0.f,0.f};
   float rho_tot=0.f;
 
-  if(n_a.boundary[index] != 1){
+  if(n_a.boundary[index] == 0) {
 
-     for(int ii=0;ii<LB_COMPONENTS;ii++){
-   	rho_tot+=d_v[index].rho[ii];
-        d_p_v[print_index].rho[ii]=d_v[index].rho[ii]/para.agrid/para.agrid/para.agrid;
-     } 
-     d_p_v[print_index].v[0]=d_v[index].v[0]/para.tau/para.agrid;
-     d_p_v[print_index].v[1]=d_v[index].v[1]/para.tau/para.agrid;
-     d_p_v[print_index].v[2]=d_v[index].v[2]/para.tau/para.agrid;
+    for(int ii= 0; ii < LB_COMPONENTS; ii++) {
+   	  rho_tot += d_v[index].rho[ii];
+      d_p_v[print_index].rho[ii] = d_v[index].rho[ii] / para.agrid / para.agrid / para.agrid;
+    }
+      
+    d_p_v[print_index].v[0] = d_v[index].v[0] / para.tau / para.agrid;
+    d_p_v[print_index].v[1] = d_v[index].v[1] / para.tau / para.agrid;
+    d_p_v[print_index].v[2] = d_v[index].v[2] / para.tau / para.agrid;
 
-     /* stress calculation */ 
-     for(int ii=0;ii<LB_COMPONENTS;ii++){
-         float Rho = d_v[index].rho[ii];
-         /* note that d_v[index].v[] already includes the 1/2 f term, accounting for the pre- and post-collisional average */
-         j[0] = Rho * d_v[index].v[0];
-         j[1] = Rho * d_v[index].v[1];
-         j[2] = Rho * d_v[index].v[2];
-         /* equilibrium part of the stress modes */
-         pi_eq[0] = (j[0]*j[0]+j[1]*j[1]+j[2]*j[2])/ Rho;
-         pi_eq[1] = ((j[0]*j[0])-(j[1]*j[1]))/ Rho;
-         pi_eq[2] = (j[0]*j[0]+j[1]*j[1]+j[2]*j[2] - 3.0*j[2]*j[2])/ Rho;
-         pi_eq[3] = j[0]*j[1]/ Rho;
-         pi_eq[4] = j[0]*j[2]/ Rho;
-         pi_eq[5] = j[1]*j[2]/ Rho;
-       
-         /* Now we must predict the outcome of the next collision */
-         /* We immediately average pre- and post-collision.  */
-         /* TODO: need a reference for this.   */
-         mode[4 + ii * LBQ ] = pi_eq[0] + (0.5+0.5*para.gamma_bulk[ii] )*(mode[4 + ii * LBQ ] - pi_eq[0]);
-         mode[5 + ii * LBQ ] = pi_eq[1] + (0.5+0.5*para.gamma_shear[ii])*(mode[5 + ii * LBQ ] - pi_eq[1]);
-         mode[6 + ii * LBQ ] = pi_eq[2] + (0.5+0.5*para.gamma_shear[ii])*(mode[6 + ii * LBQ ] - pi_eq[2]);
-         mode[7 + ii * LBQ ] = pi_eq[3] + (0.5+0.5*para.gamma_shear[ii])*(mode[7 + ii * LBQ ] - pi_eq[3]);
-         mode[8 + ii * LBQ ] = pi_eq[4] + (0.5+0.5*para.gamma_shear[ii])*(mode[8 + ii * LBQ ] - pi_eq[4]);
-         mode[9 + ii * LBQ ] = pi_eq[5] + (0.5+0.5*para.gamma_shear[ii])*(mode[9 + ii * LBQ ] - pi_eq[5]);
-       
-         /* Now we have to transform to the "usual" stress tensor components */
-         /* We use eq. 116ff in Duenweg Ladd for that. */
-         pi[0]+=(mode[0 + ii * LBQ ]+mode[4 + ii * LBQ ]+mode[5 + ii * LBQ])/3.;
-         pi[2]+=(2*mode[0 + ii * LBQ ]+2*mode[4 + ii * LBQ ]-mode[5 + ii * LBQ ]+3*mode[6 + ii * LBQ ])/6.;
-         pi[5]+=(2*mode[0 + ii * LBQ ]+2*mode[4 + ii * LBQ ]-mode[5 + ii * LBQ ]+3*mode[6 + ii * LBQ ])/6.;
-         pi[1]+=mode[7 + ii * LBQ ];
-         pi[3]+=mode[8 + ii * LBQ ];
-         pi[4]+=mode[9 + ii * LBQ ];
-     }    
-     for (int i=0; i<6; i++) {
-           d_p_v[print_index].pi[i]=pi[i]/para.tau/para.tau/para.agrid/para.agrid/para.agrid;
-     }
-  } else { 
-     for(int ii=0;ii<LB_COMPONENTS;ii++)
-	  d_p_v[print_index].rho[ii]=0.0f;
+    /* stress calculation */ 
+    for(int ii = 0; ii < LB_COMPONENTS; ii++) {
+      float Rho = d_v[index].rho[ii];
+      
+      /* note that d_v[index].v[] already includes the 1/2 f term, accounting for the pre- and post-collisional average */
+      j[0] = Rho * d_v[index].v[0];
+      j[1] = Rho * d_v[index].v[1];
+      j[2] = Rho * d_v[index].v[2];
+      
+      /* equilibrium part of the stress modes */
+      pi_eq[0] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] ) / Rho;
+      pi_eq[1] = ( j[0]*j[0] - j[1]*j[1] )/ Rho;
+      pi_eq[2] = ( j[0]*j[0] + j[1]*j[1] + j[2]*j[2] - 3.0*j[2]*j[2] ) / Rho;
+      pi_eq[3] = j[0]*j[1] / Rho;
+      pi_eq[4] = j[0]*j[2] / Rho;
+      pi_eq[5] = j[1]*j[2] / Rho;
      
-     for(int i=0;i<3;i++)
-     	d_p_v[print_index].v[i]=0.0f;
-     for(int i=0;i<6;i++)
-     	d_p_v[print_index].pi[i]=0.0f;
+      /* Now we must predict the outcome of the next collision */
+      /* We immediately average pre- and post-collision.  */
+      /* TODO: need a reference for this.   */
+      mode[4 + ii * LBQ ] = pi_eq[0] + (0.5 + 0.5*para.gamma_bulk[ii] ) * (mode[4 + ii * LBQ] - pi_eq[0]);
+      mode[5 + ii * LBQ ] = pi_eq[1] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[5 + ii * LBQ] - pi_eq[1]);
+      mode[6 + ii * LBQ ] = pi_eq[2] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[6 + ii * LBQ] - pi_eq[2]);
+      mode[7 + ii * LBQ ] = pi_eq[3] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[7 + ii * LBQ] - pi_eq[3]);
+      mode[8 + ii * LBQ ] = pi_eq[4] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[8 + ii * LBQ] - pi_eq[4]);
+      mode[9 + ii * LBQ ] = pi_eq[5] + (0.5 + 0.5*para.gamma_shear[ii]) * (mode[9 + ii * LBQ] - pi_eq[5]);
+     
+      /* Now we have to transform to the "usual" stress tensor components */
+      /* We use eq. 116ff in Duenweg Ladd for that. */
+      pi[0] += ( mode[0 + ii * LBQ] + mode[4 + ii * LBQ] + mode[5 + ii * LBQ] ) / 3.0;
+      pi[2] += ( 2*mode[0 + ii * LBQ] + 2*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3*mode[6 + ii * LBQ] ) / 6.;
+      pi[5] += ( 2*mode[0 + ii * LBQ] + 2*mode[4 + ii * LBQ] - mode[5 + ii * LBQ] + 3*mode[6 + ii * LBQ ]) / 6.;
+      pi[1] += mode[7 + ii * LBQ];
+      pi[3] += mode[8 + ii * LBQ];
+      pi[4] += mode[9 + ii * LBQ];
+    }
+     
+    for(int i = 0; i < 6; i++) {
+      d_p_v[print_index].pi[i] = pi[i]  /para.tau / para.tau / para.agrid / para.agrid / para.agrid;
+    }
+  }
+  else {
+    for(int ii = 0; ii < LB_COMPONENTS; ii++)
+	    d_p_v[print_index].rho[ii] = 0.0f;
+     
+    for(int i = 0; i < 3; i++)
+     	d_p_v[print_index].v[i] = 0.0f;
+     	
+    for(int i = 0; i < 6; i++)
+     	d_p_v[print_index].pi[i] = 0.0f;
   }
 }
 
@@ -1168,7 +1174,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   random_01(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
   viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
-  random_01(+ii*3rn_part);
+  random_01(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
 #endif	  
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
@@ -1464,9 +1470,9 @@ __global__ void reinit_node_force(LB_node_force_gpu node_f){
    for(int ii=0;ii<LB_COMPONENTS;++ii){
 #ifdef EXTERNAL_FORCES
     if(para.external_force){
-      node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0]*powf(para.agrid,4)*para.tau*para.tau;
-      node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1]*powf(para.agrid,4)*para.tau*para.tau;
-      node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2]*powf(para.agrid,4)*para.tau*para.tau;
+      node_f.force[(0+ii*3)*para.number_of_nodes + index] = para.ext_force[0]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[(1+ii*3)*para.number_of_nodes + index] = para.ext_force[1]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
+      node_f.force[(2+ii*3)*para.number_of_nodes + index] = para.ext_force[2]*para.agrid*para.agrid*para.agrid*para.agrid*para.tau*para.tau;
     }
     else{
       node_f.force[(0+ii*3)*para.number_of_nodes + index] = 0.0f;
@@ -1664,6 +1670,7 @@ __global__ void lb_shanchen_GPU(LB_nodes_gpu n_a,LB_node_force_gpu node_f){
   return; 
 }
 
+#endif //SHANCHEN
 
 /** kernel to set the local density
  *
@@ -1704,11 +1711,6 @@ __global__ void set_rho(LB_nodes_gpu n_a,  LB_rho_v_gpu *d_v, int single_nodeind
      }
   }
 }
-
-
-#endif //SHANCHEN
-
-
 
 /**set the boundary flag for all boundary nodes
  * @param boundary_node_list    The indices of the boundary nodes
@@ -1835,21 +1837,20 @@ __global__ void bb_write(LB_nodes_gpu n_a, LB_nodes_gpu n_b){
   }
 }
 
-#endif 
+#endif
 
 /** get physical values of the nodes (density, velocity, ...)
  * @param n_a		Pointer to local node residing in array a (Input)
  * @param *p_v		Pointer to local print values (Output)
  * @param *d_v		Pointer to local device values (Input)
 */
-__global__ void get_values_in_MD_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,LB_rho_v_gpu *d_v){  
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
-  blockDim.x * blockIdx.x + threadIdx.x;
+__global__ void get_mesoscopic_values_in_MD_units(LB_nodes_gpu n_a, LB_rho_v_pi_gpu *p_v,LB_rho_v_gpu *d_v) {
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
-  if(index<para.number_of_nodes){
+  if(index < para.number_of_nodes) {
     float mode[19*LB_COMPONENTS];
     calc_m_from_n(n_a, index, mode);
-    calc_values_in_MD_units(n_a, mode,p_v, d_v,index,index);
+    calc_values_in_MD_units(n_a, mode, p_v, d_v, index, index);
   }
 }
 
@@ -1878,10 +1879,11 @@ __global__ void lb_print_node(int single_nodeindex, LB_rho_v_pi_gpu *d_p_v, LB_n
   float mode[19*LB_COMPONENTS];
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x + threadIdx.x;
 
-  if(index == 0){
+  if(index == 0) {
      calc_m_from_n(n_a, single_nodeindex, mode);
+     
      /* the following actually copies rho and v from d_v, and calculates pi */
-     calc_values_in_MD_units(n_a,mode,  d_p_v, d_v, single_nodeindex,0);
+     calc_values_in_MD_units(n_a, mode, d_p_v, d_v, single_nodeindex, 0);
   }
 }
 __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu * d_v, LB_node_force_gpu node_f, float *sum) {
@@ -2158,7 +2160,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values){
   int blocks_per_grid_x = (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /(threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-  KERNELCALL(get_values_in_MD_units, dim_grid, threads_per_block, (nodes_a, print_rho_v_pi, device_rho_v ));
+  KERNELCALL(get_mesoscopic_values_in_MD_units, dim_grid, threads_per_block, (nodes_a, print_rho_v_pi, device_rho_v ));
   cudaMemcpy(host_values, print_rho_v_pi, size_of_rho_v_pi, cudaMemcpyDeviceToHost);
 
 }
@@ -2345,8 +2347,6 @@ void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int* host_flag){
 
 }
 
-
-#ifdef SHANCHEN
 /** set the density at a single node
  *  @param single_nodeindex the node to set the velocity for 
  *  @param host_velocity the velocity to set
@@ -2364,7 +2364,7 @@ void lb_set_node_rho_GPU(int single_nodeindex, float* host_rho){
   cudaFree(device_rho);
 
 }
-#endif // SHANCHEN
+
 /** set the net velocity at a single node
  *  @param single_nodeindex the node to set the velocity for 
  *  @param host_velocity the velocity to set

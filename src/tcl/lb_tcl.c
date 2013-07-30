@@ -108,9 +108,7 @@ void lbfluid_tcl_print_usage(Tcl_Interp *interp) {
   Tcl_AppendResult(interp, "Usage of \"lbfluid\":\n", (char *)NULL);
   Tcl_AppendResult(interp, "lbfluid [ agrid #float ] [ dens #float ] [ visc #float ] [ tau #tau ]\n", (char *)NULL);
 #ifdef SHANCHEN
-#if ( LB_COMPONENTS > 1 )
   Tcl_AppendResult(interp, "        [ mobility #float ]\n", (char *)NULL);
-#endif 
 #endif 
   Tcl_AppendResult(interp, "        [ bulk_visc #float ] [ friction #float ] [ gamma_even #float ] [ gamma_odd #float ]\n", (char *)NULL);
   Tcl_AppendResult(interp, "        [ ext_force #float #float #float ]\n", (char *)NULL);
@@ -551,16 +549,8 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
 #if defined (LB) || defined (LB_GPU)
    int coord[3];
    int counter;
-#ifndef SHANCHEN
-   int integer_return = 0;
-   double double_return[19];
-   char integer_buffer[TCL_INTEGER_SPACE];
-#else // SHANCHEN
    double double_return[19*LB_COMPONENTS];
-#endif // SHANCHEN
-
    char double_buffer[TCL_DOUBLE_SPACE];
-
 
    for (counter = 0; counter < 19; counter++) 
      double_return[counter]=0;
@@ -611,11 +601,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
      while (argc > 0) {
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          lb_lbnode_get_rho(coord, double_return);
-#ifndef SHANCHEN
-         for (counter = 0; counter < 1; counter++) {
-#else //SHANCHEN
          for (counter = 0; counter < LB_COMPONENTS; counter++) {
-#endif 
            Tcl_PrintDouble(interp, double_return[counter], double_buffer);
            Tcl_AppendResult(interp, double_buffer, " ", (char *)NULL);
          }
@@ -647,6 +633,8 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
          argc--; argv++;
        }
        else if (ARG0_IS_S("boundary")) {
+         char integer_buffer[TCL_INTEGER_SPACE];
+         int integer_return = 0;
          lb_lbnode_get_boundary(coord, &integer_return);
          sprintf(integer_buffer, "%d", integer_return);
 				 Tcl_AppendResult(interp, integer_buffer, " ", (char *)NULL);
@@ -672,11 +660,7 @@ int tclcommand_lbnode(ClientData data, Tcl_Interp *interp, int argc, char **argv
        argc--; argv++;
        if (ARG0_IS_S("rho") || ARG0_IS_S("density")) {
          argc--; argv++;
-#ifndef SHANCHEN
-         for (counter = 0; counter < 1; counter++) {
-#else 
          for (counter = 0; counter < LB_COMPONENTS; counter++) {
-#endif
            if (!ARG0_IS_D(double_return[counter])) {
              Tcl_AppendResult(interp, "recieved not a double but \"", argv[0], "\" requested", (char *)NULL);
              return TCL_ERROR;

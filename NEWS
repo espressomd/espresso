@@ -51,6 +51,12 @@ New user-visible features
 * Allow the p3m to dump the mesh in x, y, and z (before it only dumped the mesh in x). This allows for the dumping of the p3m in blockfile format in 
 the case of non-cubic boxes. It will also now be possible to tune setting a non-cubic mesh.
 
+* Stomatocyte lb-boundary and constraint implemented.
+
+* Generic LJ can now turned into an soft potential.
+
+* Maggs electrostatics can now handel a spacialy varying epsilon.
+
 User-visible changes
 --------------------
 

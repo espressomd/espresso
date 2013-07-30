@@ -42,7 +42,7 @@ extern "C" {
 
 #ifdef ELECTROSTATICS
 
-struct fuckCplusplus {
+struct dummytypename {
   CUFFT_TYPE_COMPLEX *charge_mesh;
   CUFFT_TYPE_COMPLEX *force_mesh;
   REAL_TYPE *G_hat, *G_hat_host;
