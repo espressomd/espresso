@@ -12,6 +12,7 @@ chmod -R u+w espresso-* || /bin/true
 git clean -fd
 
 bootstrap
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64
 
 start "CONFIGURE"
 ./configure
