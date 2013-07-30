@@ -109,7 +109,7 @@ void lb_calc_fluid_temp(double *result) {
     }
   }
 
-  temp *= 1./(3.*lbpar.rho*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
+  temp *= 1./(3.*lbpar.rho[0]*lblattice.grid_volume*lbpar.tau*lbpar.tau*lblattice.agrid)/n_nodes;
 
   MPI_Reduce(&temp, result, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }

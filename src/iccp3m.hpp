@@ -163,6 +163,7 @@ MDINLINE void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   case COULOMB_ELC_P3M:
     if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force); 
     break;
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     if (q1q2) p3m_add_pair_force(q1q2,d,dist2,dist,force);
     break;

@@ -105,7 +105,7 @@ if { [catch {
 	set error_force [veclen $diff_force]
 	set rms_force [expr $rms_force + pow($error_force, 2)]
 
-	set diff_torque [vecsub [part $i print torque] [lrange $line 4 6]]
+	set diff_torque [vecsub [part $i print torque_lab] [lrange $line 4 6]]
 	set error_torque [veclen $diff_torque]
 	set rms_torque [expr $rms_torque + pow($error_torque, 2)]
     }

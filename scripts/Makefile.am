@@ -34,7 +34,8 @@ ESSCRIPTS = \
 	polymer.tcl \
 	statistics.tcl \
 	vtf.tcl \
-	vtk.tcl
+	vtk.tcl \
+	object_in_fluid.tcl
 
 EXTRA_DIST=$(ESSCRIPTS)
 

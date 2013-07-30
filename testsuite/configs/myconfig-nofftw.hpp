@@ -1,9 +1,9 @@
 /* maximal set of features without FFTW library */
 #define PARTIAL_PERIODIC
 #define ELECTROSTATICS
-#define ROTATION
-#define ROTATIONAL_INTERIA
 #define DIPOLES
+#define ROTATION
+#define ROTATIONAL_INERTIA
 #define EXTERNAL_FORCES
 #define CONSTRAINTS
 #define MASS

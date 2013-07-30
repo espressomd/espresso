@@ -56,6 +56,12 @@
 /************************************************
  * variables
  ************************************************/
+TypeOfIndex Type; 
+IndexOfType Index; 
+TypeList *type_array;
+int number_of_type_lists;
+int GC_init;
+int Type_array_init;
 
 int max_seen_particle = -1;
 int n_total_particles = 0;
@@ -102,6 +108,13 @@ void init_particle(Particle *part)
 
 #ifdef MASS
   part->p.mass     = 1.0;
+#endif
+
+#ifdef SHANCHEN
+  int ii;
+  for(ii=0;ii<2*LB_COMPONENTS;ii++){ 
+    part->p.solvation[ii]=0;
+  }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
@@ -593,6 +606,25 @@ int set_particle_f(int part, double F[3])
   return ES_OK;
 }
 
+#ifdef SHANCHEN 
+int set_particle_solvation(int part, double * solvation)
+{
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+  mpi_send_solvation(pnode, part, solvation);
+  return ES_OK;
+}
+#endif
+
+
 #ifdef MASS
 int set_particle_mass(int part, double mass)
 {
@@ -840,8 +872,42 @@ int set_particle_quat(int part, double quat[4])
   return ES_OK;
 }
 
-int set_particle_omega(int part, double omega[3])
+int set_particle_omega_lab(int part, double omega_lab[3])
 {
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+
+  /* Internal functions require the body coordinates
+     so we need to convert to these from the lab frame */
+
+  double A[9];
+  double omega[3];
+  Particle particle;
+
+  get_particle_data(part, &particle);
+  define_rotation_matrix(&particle, A);
+
+  omega[0] = A[0 + 3*0]*omega_lab[0] + A[0 + 3*1]*omega_lab[1] + A[0 + 3*2]*omega_lab[2];
+  omega[1] = A[1 + 3*0]*omega_lab[0] + A[1 + 3*1]*omega_lab[1] + A[1 + 3*2]*omega_lab[2];
+  omega[2] = A[2 + 3*0]*omega_lab[0] + A[2 + 3*1]*omega_lab[1] + A[2 + 3*2]*omega_lab[2];
+
+  mpi_send_omega(pnode, part, omega);
+  return ES_OK;
+}
+
+int set_particle_omega_body(int part, double omega[3])
+{
+  /* Nothing to be done but pass, since the coordinates
+     are already in the proper frame */
+
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -856,8 +922,42 @@ int set_particle_omega(int part, double omega[3])
   return ES_OK;
 }
 
-int set_particle_torque(int part, double torque[3])
+int set_particle_torque_lab(int part, double torque_lab[3])
 {
+  int pnode;
+  if (!particle_node)
+    build_particle_node();
+
+  if (part < 0 || part > max_seen_particle)
+    return ES_ERROR;
+  pnode = particle_node[part];
+
+  if (pnode == -1)
+    return ES_ERROR;
+
+  /* Internal functions require the body coordinates
+     so we need to convert to these from the lab frame */
+
+  double A[9];
+  double torque[3];
+  Particle particle;
+
+  get_particle_data(part, &particle);
+  define_rotation_matrix(&particle, A);
+
+  torque[0] = A[0 + 3*0]*torque_lab[0] + A[0 + 3*1]*torque_lab[1] + A[0 + 3*2]*torque_lab[2];
+  torque[1] = A[1 + 3*0]*torque_lab[0] + A[1 + 3*1]*torque_lab[1] + A[1 + 3*2]*torque_lab[2];
+  torque[2] = A[2 + 3*0]*torque_lab[0] + A[2 + 3*1]*torque_lab[1] + A[2 + 3*2]*torque_lab[2];
+
+  mpi_send_torque(pnode, part, torque);
+  return ES_OK;
+}
+
+int set_particle_torque_body(int part, double torque[3])
+{
+  /* Nothing to be done but pass, since the coordinates
+     are already in the proper frame */
+
   int pnode;
   if (!particle_node)
     build_particle_node();
@@ -968,7 +1068,7 @@ int set_particle_fix(int part,  int flag)
 
 #endif
 
-int change_particle_bond(int part, int *bond, int deleteIt)
+int change_particle_bond(int part, int *bond, int _delete)
 {
   int pnode;
   if (!particle_node)
@@ -980,8 +1080,8 @@ int change_particle_bond(int part, int *bond, int deleteIt)
 
   if (pnode == -1)
     return ES_ERROR;
-  if(deleteIt != 0 || bond == NULL)
-    deleteIt = 1;
+  if(_delete != 0 || bond == NULL)
+    _delete = 1;
 
   if (bond != NULL) {
     if (bond[0] < 0 || bond[0] >= n_bonded_ia) {
@@ -990,7 +1090,7 @@ int change_particle_bond(int part, int *bond, int deleteIt)
       return ES_ERROR;
     }
   }
-  return mpi_send_bond(pnode, part, bond, deleteIt);
+  return mpi_send_bond(pnode, part, bond, _delete);
 }
 
 void remove_all_particles()
@@ -1073,7 +1173,7 @@ void local_remove_particle(int part)
   pl->n--;
 }
 
-void local_place_particle(int part, double p[3], int createNew)
+void local_place_particle(int part, double p[3], int _new)
 {
   Cell *cell;
   double pp[3];
@@ -1088,7 +1188,7 @@ void local_place_particle(int part, double p[3], int createNew)
   pp[2] = p[2];
   fold_position(pp, i);
   
-  if (createNew) {
+  if (_new) {
     /* allocate particle anew */
     cell = cell_structure.position_to_cell(pp);
     if (!cell) {
@@ -1174,7 +1274,7 @@ void added_particle(int part)
   }
 }
 
-int local_change_bond(int part, int *bond, int deleteIt)
+int local_change_bond(int part, int *bond, int _delete)
 {
   IntList *bl;
   Particle *p;
@@ -1182,7 +1282,7 @@ int local_change_bond(int part, int *bond, int deleteIt)
   int i;
 
   p = local_particles[part];
-  if (deleteIt)
+  if (_delete)
     return try_delete_bond(p, bond);
 
   bond_size = bonded_ia_params[bond[0]].num + 1;
@@ -1264,7 +1364,7 @@ void remove_all_bonds_to(int identity)
 }
 
 #ifdef EXCLUSIONS
-void local_change_exclusion(int part1, int part2, int deleteIt)
+void local_change_exclusion(int part1, int part2, int _delete)
 {
   Cell *cell;
   int p, np, c;
@@ -1285,7 +1385,7 @@ void local_change_exclusion(int part1, int part2, int deleteIt)
   /* part1, if here */
   part = local_particles[part1];
   if (part) {
-    if (deleteIt)
+    if (_delete)
       try_delete_exclusion(part, part2);
     else
       try_add_exclusion(part, part2);
@@ -1294,7 +1394,7 @@ void local_change_exclusion(int part1, int part2, int deleteIt)
   /* part2, if here */
   part = local_particles[part2];
   if (part) {
-    if (deleteIt)
+    if (_delete)
       try_delete_exclusion(part, part1);
     else
       try_add_exclusion(part, part1);
@@ -1452,7 +1552,7 @@ void add_partner(IntList *il, int i, int j, int distance)
 
 #ifdef EXCLUSIONS
 
-int change_exclusion(int part1, int part2, int deleteIt)
+int change_exclusion(int part1, int part2, int _delete)
 {
   if (!particle_node)
     build_particle_node();
@@ -1464,7 +1564,7 @@ int change_exclusion(int part1, int part2, int deleteIt)
       particle_node[part2] == -1)
     return ES_ERROR;
 
-  mpi_send_exclusion(part1, part2, deleteIt);
+  mpi_send_exclusion(part1, part2, _delete);
   return ES_OK;
 }
 
@@ -1821,7 +1921,7 @@ int add_particle_to_list(int part_id, int type){
 //	int type = cur_par->p.type;
 	int l_err=1;
 	int already_in = 0;
-	int already_in_other_list = 0;
+//	int already_in_other_list = 0;
 	// type i not indexed, so no list for this particle exists
 	for (int i = 0; i<Type.max_entry; i++){
 		if ( Type.index[i] == type ){

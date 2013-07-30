@@ -105,8 +105,7 @@ int tclcommand_inter_coulomb_parse_elc_params(Tcl_Interp * interp, int argc, cha
       }
     }
   }
-  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, top, mid, bot),
-	      "choose a 3d electrostatics method prior to ELC");
+  CHECK_VALUE(ELC_set_params(pwerror, gap_size, far_cut, neutralize, top, mid, bot), "choose a 3d electrostatics method prior to ELC");
 }
 
 #endif

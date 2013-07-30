@@ -21,6 +21,7 @@
 #include "integrate.hpp"
 #include "lb.hpp"
 #include "pressure.hpp"
+#include "rotation.hpp"
 
 observable** observables = 0;
 int n_observables = 0; 
@@ -48,13 +49,24 @@ int observable_particle_angular_momentum(void* idlist, double* A, unsigned int n
       return 1;
 
     #ifdef ROTATION
-      A[3*i + 0] = partCfg[ids->e[i]].m.omega[0];
-      A[3*i + 1] = partCfg[ids->e[i]].m.omega[1];
-      A[3*i + 2] = partCfg[ids->e[i]].m.omega[2];
+
+    double RMat[9];
+    double omega[3];
+    define_rotation_matrix(&partCfg[ids->e[i]], RMat);
+    omega[0] = RMat[0 + 3*0]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*0]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*0]*partCfg[ids->e[i]].m.omega[2];
+    omega[1] = RMat[0 + 3*1]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*1]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*1]*partCfg[ids->e[i]].m.omega[2];
+    omega[2] = RMat[0 + 3*2]*partCfg[ids->e[i]].m.omega[0] + RMat[1 + 3*2]*partCfg[ids->e[i]].m.omega[1] + RMat[2 + 3*2]*partCfg[ids->e[i]].m.omega[2];
+
+    A[3*i + 0] = omega[0];
+    A[3*i + 1] = omega[1];
+    A[3*i + 2] = omega[2];
+
     #else
-      A[3*i + 0] = 0.0;
-      A[3*i + 1] = 0.0;
-      A[3*i + 2] = 0.0;
+
+    A[3*i + 0] = 0.0;
+    A[3*i + 1] = 0.0;
+    A[3*i + 2] = 0.0;
+
     #endif
   }
   return 0;
@@ -373,7 +385,6 @@ int observable_lb_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
 }
 #endif
 
-
 #ifdef LB
 int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int n_A) {
   unsigned int i, j, k;
@@ -462,6 +473,7 @@ int observable_lb_radial_velocity_profile(void* pdata_, double* A, unsigned int 
   return 0;
 }
 #endif
+
 void transform_to_cylinder_coordinates(double x, double y, double z_, double* r, double* phi, double* z) {
   *z =  z_;
   *r =  sqrt(x*x+y*y);

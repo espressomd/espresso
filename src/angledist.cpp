@@ -153,7 +153,7 @@ int calc_angledist_force(Particle *p_mid, Particle *p_left,
                                   Bonded_ia_parameters *iaparams,
 				  double force1[3], double force2[3])
 {
-  double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist2, fac=0.0, f1=0.0, f2=0.0, phi0;
+  double cosine=0.0, vec1[3], vec2[3], d1i=0.0, d2i=0.0, dist2, fac=0.0, f1=0.0, f2=0.0;
   int j;
 
   /* vector from p_left to p_mid */
@@ -169,13 +169,14 @@ int calc_angledist_force(Particle *p_mid, Particle *p_left,
   /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
   fac    = iaparams->p.angledist.bend;
-  /* NOTE: The angledist is ONLY implemented for the HARMONIC case */
-  phi0 = calc_angledist_param(p_mid, p_left, p_right, iaparams);
 
 #ifdef BOND_ANGLEDIST_HARMONIC
   {
     double phi,sinphi;
-    if ( cosine >  TINY_COS_VALUE) cosine =  TINY_COS_VALUE;
+    /* NOTE: The angledist is ONLY implemented for the HARMONIC case */
+    double phi0 = calc_angledist_param(p_mid, p_left, p_right, iaparams);
+
+      if ( cosine >  TINY_COS_VALUE) cosine =  TINY_COS_VALUE;
     if ( cosine < -TINY_COS_VALUE) cosine = -TINY_COS_VALUE;
     phi =  acos(-cosine);
     sinphi = sin(phi);
@@ -207,10 +208,8 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
 {
   int j;
   double cosine=0.0, d1i, d2i, dist1, dist2;
-  double phi0;
   double vec1[3], vec2[3];
 
-  phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
   //  if (phi0 < PI) {
   //    fprintf(stdout,"\nIn angledist_energy:  z_p_mid=%f, phi0=%f\n",p_mid->r.p[2],phi0*180.0/PI);
   //  }
@@ -229,11 +228,11 @@ int angledist_energy(Particle *p_mid, Particle *p_left, Particle *p_right,
   cosine = scalar(vec1, vec2);
   if ( cosine >  TINY_COS_VALUE)  cosine = TINY_COS_VALUE;
   if ( cosine < -TINY_COS_VALUE)  cosine = -TINY_COS_VALUE;
-  phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
 
 #ifdef BOND_ANGLEDIST_HARMONIC
   {
     double phi;
+    double phi0=calc_angledist_param(p_mid, p_left, p_right, iaparams);
     phi =  acos(-cosine);
     *_energy = 0.5*iaparams->p.angledist.bend*SQR(phi - phi0);
     //    fprintf(stdout,"\n energy:  z_pmid=%f  bend=%f  phi0=%f  phi=%f energy=%f",p_mid->r.p[2],iaparams->p.angledist.bend,phi0*180.0/PI,phi*180.0/PI,0.5*iaparams->p.angledist.bend*SQR(phi - phi0));

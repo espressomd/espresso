@@ -63,6 +63,8 @@
 #include "lb-boundaries.hpp"
 #include "ghmc.hpp"
 #include "domain_decomposition.hpp"
+#include "p3m_gpu.hpp"
+#include "cuda_common.hpp"
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -72,7 +74,12 @@ static int reinit_magnetostatics = 0;
 static int lb_reinit_particles_gpu = 1;
 #endif
 
-void on_program_start() {
+#if defined(LB_GPU) || defined(ELECTROSTATICS)
+static int reinit_particle_comm_gpu = 1;
+#endif
+
+void on_program_start()
+{
   EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
   /* tell Electric fence that we do realloc(0) on purpose. */
@@ -98,7 +105,7 @@ void on_program_start() {
   init_random();
   init_bit_random();
 
-  setup_node_grid();
+  init_node_grid();
   /* calculate initial minimimal number of cells (see tclcallback_min_num_cells) */
   min_num_cells = calc_processor_min_num_cells();
 
@@ -125,7 +132,7 @@ void on_program_start() {
 
 #ifdef LB_GPU
   if(this_node == 0){
-    //lb_pre_init_gpu();
+ //   lb_pre_init_gpu();
   }
 #endif
 #ifdef LB
@@ -182,28 +189,30 @@ void on_integration_start()
 #ifdef ELECTROSTATICS
 
     switch(coulomb.method) {
-    case COULOMB_NONE:  break;
+      case COULOMB_NONE:  break;
+      case COULOMB_DH:    break;
+      case COULOMB_RF:    break;
 #ifdef P3M
-    case COULOMB_P3M:   break;
+      case COULOMB_P3M:   break;
 #endif /*P3M*/
-    default: {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{014 npt only works with P3M} ");
-    }
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"{014 npt only works with P3M, Debye-Huckel or reaction field} ");
+      }
     }
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
 
     switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE: break;
+      case DIPOLAR_NONE: break;
 #ifdef DP3M
-    case DIPOLAR_P3M: break;
-#endif
-    default: {
-      char *errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
-    }
+      case DIPOLAR_P3M: break;
+#endif /* DP3M */
+      default: {
+        char *errtext = runtime_error(128);
+        ERROR_SPRINTF(errtext,"NpT does not work with your dipolar method, please use P3M.");
+      }
     }
 #endif  /* ifdef DIPOLES */
   }
@@ -221,11 +230,11 @@ void on_integration_start()
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar.rho <= 0.0) {
+    if (lbpar.rho[0] <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
     }
-    if (lbpar.viscosity <= 0.0) {
+    if (lbpar.viscosity[0] <= 0.0) {
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
     }
@@ -246,22 +255,32 @@ if(this_node == 0){
       errtext = runtime_error(128);
       ERROR_SPRINTF(errtext,"{099 Lattice Boltzmann time step not set} ");
     }
-    if (lbpar_gpu.rho < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+    for(int i=0;i<LB_COMPONENTS;i++){
+       if (lbpar_gpu.rho[0] < 0.0) {
+         errtext = runtime_error(128);
+         ERROR_SPRINTF(errtext,"{100 Lattice Boltzmann fluid density not set} ");
+       }
+       if (lbpar_gpu.viscosity[0] < 0.0) {
+         errtext = runtime_error(128);
+         ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
+       }
     }
-    if (lbpar_gpu.viscosity < 0.0) {
-      errtext = runtime_error(128);
-      ERROR_SPRINTF(errtext,"{101 Lattice Boltzmann fluid viscosity not set} ");
-    }
+
     if (lb_reinit_particles_gpu) {
-	lb_realloc_particles_gpu();
-	lb_reinit_particles_gpu = 0;
+      lb_realloc_particles_gpu();
+      lb_reinit_particles_gpu = 0;
     }
   }
 }
-
 #endif
+#if defined(LB_GPU) || (defined (ELECTROSTATICS) && defined (CUDA))
+  if (reinit_particle_comm_gpu){
+    gpu_change_number_of_part_to_comm();
+    reinit_particle_comm_gpu = 0;
+  }
+  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+#endif
+
 
 #ifdef METADYNAMICS
   meta_init();
@@ -319,6 +338,7 @@ void on_observable_calc()
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_ELC_P3M:
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M:
       p3m_count_charged_particles();
       break;
@@ -360,7 +380,9 @@ void on_particle_change()
 #ifdef LB_GPU
   lb_reinit_particles_gpu = 1;
 #endif
-
+#if defined(LB_GPU) || defined (ELECTROSTATICS)
+  reinit_particle_comm_gpu = 1;
+#endif
   invalidate_obs();
 
   /* the particle information is no longer valid */
@@ -379,6 +401,17 @@ void on_coulomb_change()
   case COULOMB_DH:
     break;    
 #ifdef P3M
+#ifdef CUDA
+  case COULOMB_P3M_GPU:
+    if ( box_l[0] != box_l[1] || box_l[0] != box_l[2] ) {
+      fprintf (stderr, "P3M on the GPU requires a cubic box!\n");
+      exit(1);
+    }
+    p3m_gpu_init(p3m.params.cao, p3m.params.mesh[0], p3m.params.alpha, box_l[0]);
+    MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+    p3m_init();
+    break;
+#endif
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
@@ -450,6 +483,7 @@ void on_lbboundary_change()
     lb_init_boundaries();
   }
 #endif
+
 #ifdef LB_BOUNDARIES_GPU
   if(this_node == 0){
     if(lattice_switch & LATTICE_LB_GPU) {
@@ -493,6 +527,7 @@ void on_boxl_change() {
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_scaleby_box_l();
     break;
@@ -548,6 +583,7 @@ void on_cell_structure_change()
   case COULOMB_ELC_P3M:
     ELC_init();
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     p3m_init();
     break;
@@ -654,8 +690,16 @@ void on_parameter_change(int field)
     }
 #endif
   case FIELD_LANGEVIN_GAMMA:
-  case FIELD_DPD_TGAMMA:
   case FIELD_DPD_GAMMA:
+  case FIELD_DPD_TGAMMA:
+    reinit_thermo = 1;
+    break;
+  case FIELD_DPD_RCUT:
+  case FIELD_DPD_TRCUT:
+    recalc_maximal_cutoff();
+    cells_on_geometry_change(0);
+    reinit_thermo = 1;
+    break;
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
@@ -690,7 +734,6 @@ void on_lb_params_change(int field) {
   if (field == LBPAR_DENSITY) {
     lb_reinit_fluid();
   }
-
   lb_reinit_parameters();
 
 }

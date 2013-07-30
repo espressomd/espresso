@@ -57,6 +57,11 @@
 #include "ljangle.hpp"
 #include "gb.hpp"
 #include "fene.hpp"
+#include "object-in-fluid/stretching_force.hpp"
+#include "object-in-fluid/area_force_local.hpp"
+#include "object-in-fluid/area_force_global.hpp"
+#include "object-in-fluid/bending_force.hpp"
+#include "object-in-fluid/volume_force.hpp"
 #include "harmonic.hpp"
 #include "subt_lj.hpp"
 #include "angle.hpp"
@@ -327,6 +332,7 @@ MDINLINE void add_non_bonded_pair_force(Particle *p1, Particle *p2,
       }
       break;
     }
+    case COULOMB_P3M_GPU:
     case COULOMB_P3M: {
   #ifdef NPT
       if (q1q2) {
@@ -475,6 +481,25 @@ MDINLINE void add_bonded_force(Particle *p1)
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
+    case BONDED_IA_STRETCHING_FORCE:
+      bond_broken = calc_stretching_force_pair_force(p1, p2, iaparams, dx, force);
+      break;
+    case BONDED_IA_AREA_FORCE_LOCAL:
+      bond_broken = calc_area_force_local(p1, p2, p3, iaparams, force, force2, force3);
+      break;
+#ifdef AREA_FORCE_GLOBAL
+    case BONDED_IA_AREA_FORCE_GLOBAL:
+      bond_broken = 0;
+      break;
+#endif
+    case BONDED_IA_BENDING_FORCE:
+      bond_broken = calc_bending_force(p1, p2, p3, p4, iaparams, force, force2);
+      break;
+#ifdef VOLUME_FORCE
+    case BONDED_IA_VOLUME_FORCE:
+      bond_broken = 0;
+      break;
+#endif
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
@@ -627,9 +652,25 @@ MDINLINE void add_bonded_force(Particle *p1)
 	p2->f.f[j] += force_weight*force2[j];
 	p3->f.f[j] -= force_weight*(force[j] + force2[j]);
 #else
-	p1->f.f[j] += force[j];
-	p2->f.f[j] += force2[j];
-	p3->f.f[j] -= (force[j] + force2[j]);
+switch (type) {
+	case BONDED_IA_AREA_FORCE_LOCAL:
+		p1->f.f[j] += force[j];
+		p2->f.f[j] += force2[j];
+		p3->f.f[j] += force3[j];
+		break;
+#ifdef AREA_FORCE_GLOBAL
+	case BONDED_IA_AREA_FORCE_GLOBAL:
+		break;
+#endif
+#ifdef VOLUME_FORCE
+	case BONDED_IA_VOLUME_FORCE:
+		break;
+#endif
+	default:
+		p1->f.f[j] += force[j];
+		p2->f.f[j] += force2[j];
+		p3->f.f[j] -= (force[j] + force2[j]);
+	}
 #endif
       }
       break;
@@ -650,10 +691,21 @@ MDINLINE void add_bonded_force(Particle *p1)
 	p3->f.f[j] += force_weight*force3[j];
 	p4->f.f[j] -= force_weight*(force[j] + force2[j] + force3[j]);
 #else
-	p1->f.f[j] += force[j];
-	p2->f.f[j] += force2[j];
-	p3->f.f[j] += force3[j];
-	p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+	
+	switch (type) {
+	case BONDED_IA_BENDING_FORCE:
+		p1->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
+		p2->f.f[j] += force[j];
+		p3->f.f[j] -= (force[j]*0.5+force2[j]*0.5);
+		p4->f.f[j] += force2[j];
+		break;
+	default:
+		p1->f.f[j] += force[j];
+		p2->f.f[j] += force2[j];
+		p3->f.f[j] += force3[j];
+		p4->f.f[j] -= (force[j] + force2[j] + force3[j]);
+	}
+	
 #endif
       }
       break;

@@ -81,7 +81,7 @@ extern const Datafield fields[];
 /** index of \ref DomainDecomposition::cell_size in  \ref #fields */
 #define FIELD_CELLSIZE            2
 /** index of \ref dpd_gamma in  \ref #fields */
-#define FIELD_DPD_GAMMA          3
+#define FIELD_DPD_GAMMA           3
 /** index of \ref dpd_r_cut in  \ref #fields */
 #define FIELD_DPD_RCUT            4
 /** index of \ref langevin_gamma in  \ref #fields */
@@ -176,6 +176,8 @@ extern const Datafield fields[];
 #define FIELD_GHMC_FLIP           49
 /** index of \ref ghmc_phi in \ref #fields */
 #define FIELD_GHMC_SCALE          50 
+/** index of \ref lb_components in \ref #fields */
+#define FIELD_LB_COMPONENTS       51 
 /*@}*/
 
 #endif

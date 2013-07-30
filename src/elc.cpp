@@ -1301,9 +1301,17 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   }
   
   ELC_setup_constants();
+  
+  char *errtxt;
 
   switch (coulomb.method) {
+  case COULOMB_P3M_GPU:
+    errtxt = runtime_error(128);
+    ERROR_SPRINTF(errtxt, "{009 ELC tuning failed, ELC is not set up to work with the GPU P3M} ");
+    return ES_ERROR;
+  
   case COULOMB_ELC_P3M:
+    
   case COULOMB_P3M:
     p3m.params.epsilon = P3M_EPSILON_METALLIC;
     coulomb.method = COULOMB_ELC_P3M;
@@ -1320,7 +1328,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut, int neutr
   else {
     elc_params.far_calculated = 1;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
-      char *errtxt = runtime_error(128);
+      errtxt = runtime_error(128);
       ERROR_SPRINTF(errtxt, "{009 ELC tuning failed, gap size too small} ");
     }
   }
