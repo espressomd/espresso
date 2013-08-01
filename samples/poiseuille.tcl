@@ -1,13 +1,16 @@
 setmd box_l 32 32 32
 set dt 0.01
 setmd time_step $dt
+
+#note that the skin below does nothing as there are no particles and hence no Verlet lists which require a skin
+#the variable must be set however as otherwise Espresso throws an error
 setmd skin 0.3
 
+#The command below create two plane walls effectively at y=1 and y=31.
+#This will result in boundary nodes at y=0.5 and y=30.5.
 lbboundary wall dist 1.0 normal 0.0 1.0 0.0
 lbboundary wall dist -31.0 normal 0.0 -1.0 0.0
 
-#should give two plane walls effectively at y=1 and y=31.
-#This will result in boundary nodes at y=0.5 and y=30.5.
 
 # set the fluid  
 #note that the time step only needs to be larger than the md time step 
@@ -20,5 +23,6 @@ thermostat lb 0.0
 lbfluid print vtk boundary lb_fluid_boundary.vtk
 for {set i 0} {$i<100} {incr i} {
  lbfluid print vtk velocity lb_fluid_vel_frame_$i.vtk
+ #note that the number passed to integrate is the number of MD time steps to integrate, though in this case it is the same as the number of LB time steps
  integrate 100
 }
