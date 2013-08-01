@@ -7,7 +7,7 @@ setmd time_step $dt
 setmd skin 0.3
 
 #The command below create two plane walls effectively at y=1 and y=31.
-#This will result in boundary nodes at y=0.5 and y=30.5.
+#This will result in boundary nodes at y=0.5 and y=31.5.
 lbboundary wall dist 1.0 normal 0.0 1.0 0.0
 lbboundary wall dist -31.0 normal 0.0 -1.0 0.0
 
