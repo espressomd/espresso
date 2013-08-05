@@ -1112,7 +1112,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   gradrho2 +=(delta[7] + delta[5]) * Rho; 
   gradrho3 +=(delta[7] + delta[3]) * Rho; 
 
-  /* normalize the gradient to md units TODO: is that correct?*/
+  /* normalize the gradient to md units*/
   gradrho1 *= para.agrid; 
   gradrho2 *= para.agrid; 
   gradrho3 *= para.agrid; 
@@ -1170,7 +1170,7 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   random_01(rn_part);
   viscforce[0+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
   viscforce[1+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[1]-0.5f);
-  random_01(+ii*3rn_part);
+  random_01(rn_part);
   viscforce[2+ii*3] += para.lb_coupl_pref[ii]*(rn_part->randomnr[0]-0.5f);
 #endif	  
   /** delta_j for transform momentum transfer to lattice units which is done in calc_node_force
@@ -1190,6 +1190,14 @@ __device__ void calc_viscous_force(LB_nodes_gpu n_a, float *delta, float * partg
   delta_j[1+3*ii] -= (scforce[1+ii*3]+viscforce[1+ii*3])*para.time_step*para.tau/para.agrid;
   delta_j[2+3*ii] -= (scforce[2+ii*3]+viscforce[2+ii*3])*para.time_step*para.tau/para.agrid;  	
  }
+ for(int node=0 ; node < 8 ; node++ ) { 
+    for(int ii=0 ; ii < LB_COMPONENTS ; ii++ ) { 
+		partgrad1[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+		partgrad2[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+		partgrad3[node+ii*8]*=(para.time_step*para.tau/para.agrid);
+    }
+ }
+ 
 }
 
 /**calcutlation of the node force caused by the particles, with atomicadd due to avoiding race conditions 
