@@ -66,7 +66,7 @@
 #define BONDED_IA_ANGLE_COSINE 12
 /** Type of bonded interaction is a bond angle cosine potential. */ 
 #define BONDED_IA_ANGLE_COSSQUARE 13
-/** Type of bonded interaction is a stretching force. */
+/** Type of bonded interaction is a hyperelastic stretching force. */
 #define BONDED_IA_STRETCHING_FORCE 14
 /** Type of bonded interaction is a local area force. */
 #define BONDED_IA_AREA_FORCE_LOCAL 15 
@@ -76,6 +76,8 @@
 #define BONDED_IA_VOLUME_FORCE 17 
 /** Type of bonded interaction is a global area force. */
 #define BONDED_IA_AREA_FORCE_GLOBAL 18 
+/** Type of bonded interaction is a linear stretching force. */
+#define BONDED_IA_STRETCHLIN_FORCE 19 
 
 /** Specify tabulated bonded interactions  */
 #define TAB_UNKNOWN          0
@@ -542,11 +544,16 @@ typedef struct {
       double drmax2i;
     } fene;
 
-    /** Parameters for stretching_force */
+    /** Parameters for hyperelastic stretching_force */
     struct {
 	  double r0;
       double ks;
     } stretching_force;
+    /** Parameters for linear stretching_force */
+    struct {
+	  double r0;
+      double kslin;
+    } stretchlin_force;
     /** Parameters for area_force_local */
     struct {
 	  double A0_l;

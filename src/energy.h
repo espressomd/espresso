@@ -48,6 +48,7 @@
 #include "gb.h"
 #include "fene.h"
 #include "fsi/stretching_force.h"
+#include "fsi/stretchlin_force.h"
 #include "fsi/area_force_local.h"
 #include "fsi/area_force_global.h"
 #include "fsi/bending_force.h"
