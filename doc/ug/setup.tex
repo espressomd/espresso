@@ -160,7 +160,14 @@ thermostat).
 
 You may combine different thermostats at your own risk by turning them
 on one by one. Note that there is only one temperature for all
-thermostats.
+thermostats, although for some thermostats like the Langevin thermostat,
+particles can be assigned individual temperatures.
+
+Since \es{} does not enforce a particular unit system, it cannot know
+about the current value of the Boltzmann constant. Therefore, when
+specifying the temperature of a thermostat, you actually do not define
+the temperature, but the value of the thermal energy $k_B T$ in the
+current unit system (see the discussion on units, Section~\ref{sec:units}).
 
 \begin{essyntax}
   \variant{1} thermostat
