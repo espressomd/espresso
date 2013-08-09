@@ -1,6 +1,4 @@
-# Copyright (C) 2010,2011,2012,2013 The ESPResSo project
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 
-#   Max-Planck-Institute for Polymer Research, Theory Group
+# Copyright (C) 2012,2013 The ESPResSo project
 #  
 # This file is part of ESPResSo.
 #  
@@ -41,6 +39,7 @@ source "tests_common.tcl"
 require_feature "AREA_FORCE_GLOBAL"
 require_feature "VOLUME_FORCE"
 require_feature "LB"
+require_max_nodes_per_side 2
 
 puts "------------------------------------------------"
 puts "- Testcase object_in_fluid.tcl running on [format %02d [setmd n_nodes]] nodes: -"
@@ -83,18 +82,18 @@ if { [catch {
 	
 	set generate_new_data 0
 	if { $generate_new_data == 1} {
-	    set fileNodes "object_in_fluid_system.data.nodes"
-	    set fileTriangles "object_in_fluid_system.data.triangles"
+	    set fileNodes "object_in_fluid_system-nodes.data"
+	    set fileTriangles "object_in_fluid_system-triangles.data"
 	    setmd box_l 100 20 20
 	    init_objects_in_fluid	
 	    add_oif_object origin 10.1 10.1 10.1 nodesfile $fileNodes trianglesfile $fileTriangles ks 0.2 kb 0.4 kal 0.2 kag 0.7 kv 1.0 type 0 mol 0
-	    write_data_init "object_in_fluid_system.data.init"
+	    write_data_init "object_in_fluid_system-init.data"
 	} else {
-	    read_data "object_in_fluid_system.data.init"
+	    read_data "object_in_fluid_system-init.data"
 	    invalidate_system
 	}
 	
-	lbfluid grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
+	lbfluid cpu grid 1 dens 1.0 visc 1.5 tau 0.1 friction 0.5
 		                           
 	if { $vmd == "y" } {
 	    prepare_vmd_connection simEspresso 3000 1 
@@ -108,7 +107,7 @@ if { [catch {
 	set cycle 0 
 	while { $cycle < 20 } {
 	    puts -nonewline "time step $cycle/20\r"; flush stdout
-	    if { $vmd == "y"} { imd positions};
+	    if { $vmd == "y"} { imd positions}
 	
 	
 	    # set the constant velocity
@@ -116,20 +115,20 @@ if { [catch {
 	    for { set i 0 } { $i < 1} { incr i } {
 		for { set j 0 } { $j < 20 } { incr j } {
 		    for { set k 0 } { $k < 20 } { incr k } {
-			lbnode $i $j $k set u 0.5 0.0 0.0;
+			lbnode $i $j $k set u 0.5 0.0 0.0
 		    }
 		}
 	    }
 
-	    integrate 1;
+	    integrate 1
 
-	    incr cycle;
+	    incr cycle
 	}
 	
 	# Here, you write new reference configuration in case you have chosen to generate new data
 	#
 	if { $generate_new_data == 1} {
-	    write_data_final "object_in_fluid_system.data.final"
+	    write_data_final "object_in_fluid_system-final.data"
 	    exit
 	}
 	
@@ -141,7 +140,7 @@ if { [catch {
 	}
 	
 	# load reference configuration
-	read_data "object_in_fluid_system.data.final"
+	read_data "object_in_fluid_system-final.data"
 	
 	set diffPOS 0.0
 	set diffVEL 0.0

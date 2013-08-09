@@ -41,7 +41,11 @@ int ljgen_set_params(int part_type_a, int part_type_b,
 			       double eps, double sig, double cut,
 			       double shift, double offset,
 			       int a1, int a2, double b1, double b2,
-			       double cap_radius)
+			       double cap_radius
+#ifdef LJGEN_SOFTCORE
+             , double lambda, double softrad
+#endif
+             )
 {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
@@ -56,9 +60,14 @@ int ljgen_set_params(int part_type_a, int part_type_b,
   data->LJGEN_a2     = a2;
   data->LJGEN_b1     = b1;
   data->LJGEN_b2     = b2;
-  if (cap_radius > 0) {
+  if (cap_radius > 0) 
     data->LJGEN_capradius = cap_radius;
-  }
+#ifdef LJGEN_SOFTCORE
+  if (lambda >= 0.0 && lambda <= 1.0)
+    data->LJGEN_lambda  = lambda;
+  if (softrad >=0.0)
+    data->LJGEN_softrad = softrad;  
+#endif
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -90,6 +99,9 @@ void calc_ljgen_cap_radii()
     while(step != 0) {
       frac = params->LJGEN_sig/rad;
       force =  params->LJGEN_eps 
+#ifdef LJGEN_SOFTCORE
+        * params->LJGEN_lambda
+#endif
         * (params->LJGEN_b1 * params->LJGEN_a1 * pow(frac, params->LJGEN_a1) 
            - params->LJGEN_b2 * params->LJGEN_a2 * pow(frac, params->LJGEN_a2))/rad;
       if((step < 0 && force_cap < force) || (step > 0 && force_cap > force)) {

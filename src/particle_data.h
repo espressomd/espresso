@@ -84,6 +84,10 @@ typedef struct {
   double mass;
 #endif
 
+#ifdef SHANCHEN
+  double solvation[2*LB_COMPONENTS];
+#endif
+
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   double rinertia[3];
@@ -465,6 +469,14 @@ int set_particle_f(int part, double F[3]);
 */
 int set_particle_mass(int part, double mass);
 
+/** Call only on the master node: set particle solvation free energy.
+    @param part the particle.
+    @param solvation its new solvation free energy.
+    @return ES_OK if particle existed
+*/
+int set_particle_solvation(int part, double* solvation);
+
+
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.
     @param part the particle.
@@ -522,19 +534,33 @@ int set_particle_mol_id(int part, int mid);
 */
 int set_particle_quat(int part, double quat[4]);
 
-/** Call only on the master node: set particle angular velocity.
+/** Call only on the master node: set particle angular velocity from lab frame.
     @param part the particle.
     @param omega its new angular velocity.
     @return ES_OK if particle existed
 */
-int set_particle_omega(int part, double omega[3]);
+int set_particle_omega_lab(int part, double omega[3]);
 
-/** Call only on the master node: set particle torque.
+/** Call only on the master node: set particle angular velocity in body frame.
+    @param part the particle.
+    @param omega its new angular velocity.
+    @return ES_OK if particle existed
+*/
+int set_particle_omega_body(int part, double omega[3]);
+
+/** Call only on the master node: set particle torque from lab frame.
     @param part the particle.
     @param torque its new torque.
     @return ES_OK if particle existed
 */
-int set_particle_torque(int part, double torque[3]);
+int set_particle_torque_lab(int part, double torque[3]);
+
+/** Call only on the master node: set particle torque in body frame.
+    @param part the particle.
+    @param torque its new torque.
+    @return ES_OK if particle existed
+*/
+int set_particle_torque_body(int part, double torque[3]);
 #endif
 
 #ifdef DIPOLES
@@ -583,7 +609,7 @@ int set_particle_gamma(int part, double gamma);
     /** Call only on the master node: set particle external torque.
         @param part  the particle.
         @param flag  new value for ext_flag.
-        @param force new value for ext_torque.
+        @param torque new value for ext_torque.
         @return ES_OK if particle existed
     */
     int set_particle_ext_torque(int part, int flag, double torque[3]);
@@ -607,21 +633,21 @@ int set_particle_fix(int part,  int flag);
     @param part     identity of principal atom of the bond.
     @param bond     field containing the bond type number and the
     identity of all bond partners (secundary atoms of the bond). If NULL, delete all bonds.
-    @param delete   if true, do not add the bond, rather delete it if found
+    @param _delete   if true, do not add the bond, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success
     (e. g. particle or bond to delete does not exist)
 */
-int change_particle_bond(int part, int *bond, int delete);
+int change_particle_bond(int part, int *bond, int _delete);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
     @param part     identity of particle for which the exclusion is set.
     @param part2    identity of particle for which the exclusion is set. If -1, delete all exclusions.
-    @param delete   if true, do not add the exclusion, rather delete it if found
+    @param _delete   if true, do not add the exclusion, rather delete it if found
     @return ES_OK on success or ES_ERROR if no success
     (e. g. particles do not exist / did not have exclusion set)
 */
-int change_exclusion(int part, int part2, int delete);
+int change_exclusion(int part, int part2, int _delete);
 
 /** remove all exclusions. */
 void remove_all_exclusions();
@@ -673,9 +699,9 @@ int sortPartCfg();
     be on the local node!
     @param part the identity of the particle to move
     @param p    its new position
-    @param new  if true, the particle is allocated, else has to exists already
+    @param _new  if true, the particle is allocated, else has to exists already
 */
-void local_place_particle(int part, double p[3], int new);
+void local_place_particle(int part, double p[3], int _new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
     Called if on a different node a new particle was added.
@@ -687,18 +713,18 @@ void added_particle(int part);
     Modify a bond.
     @param part the identity of the particle to change
     @param bond the bond to do
-    @param delete if true, delete the bond instead of add
+    @param _delete if true, delete the bond instead of add
     @return ES_OK for add or successful delete, ES_ERROR else
 */
-int local_change_bond(int part, int *bond, int delete);
+int local_change_bond(int part, int *bond, int _delete);
 
 /** Used for example by \ref mpi_send_exclusion.
     Locally add a exclusion to a particle.
     @param part1 the identity of the first exclusion partner
     @param part2 the identity of the second exclusion partner
-    @param delete if true, delete the exclusion instead of add
+    @param _delete if true, delete the exclusion instead of add
 */
-void local_change_exclusion(int part1, int part2, int delete);
+void local_change_exclusion(int part1, int part2, int _delete);
 
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
     Remove a particle on this node.

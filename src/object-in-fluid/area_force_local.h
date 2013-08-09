@@ -1,6 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -17,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef AREA_FORCE_LOCAL_H
-#define AREA_FORCE_LOCAL_H
+#ifndef _OBJECT_IN_FLUID_AREA_FORCE_LOCAL_H
+#define _OBJECT_IN_FLUID_AREA_FORCE_LOCAL_H
 /** \file area_force_local.h
  *  Routines to calculate the AREA_FORCE_LOCAL energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
@@ -37,9 +36,9 @@
 int area_force_local_set_params(int bond_type, double A0_l, double ka_l);
 
 /** Computes the local area force (Dupin2007 eqn. 15) and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p1,p2,p3     Pointers to triangle particles.
-    @param iaparams  elastic area modulus ka, initial area A0 (see \ref #inter).
+    @param iaparams  elastic area modulus ka, initial area A0 (see \ref tclcommand_inter).
     @param force1 returns force of particle 1
     @param force2 returns force of particle 2
     @param force3 returns force of particle 3

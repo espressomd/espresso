@@ -62,6 +62,8 @@
 #include "mdlc_correction.h"
 #include "reaction.h"
 #include "galilei.h"
+#include "cuda_common.h"
+
 
 int this_node = -1;
 int n_nodes = -1;
@@ -99,8 +101,6 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_random_seed_slave) \
   CB(mpi_random_stat_slave) \
   CB(mpi_cap_forces_slave) \
-/*  CB(mpi_lj_cap_forces_slave) */ \
-/*  CB(mpi_tab_cap_forces_slave) */ \
   CB(mpi_bit_random_seed_slave) \
   CB(mpi_bit_random_stat_slave) \
   CB(mpi_get_constraint_force_slave) \
@@ -114,17 +114,16 @@ typedef void (SlaveCallback)(int node, int param);
   CB(mpi_update_mol_ids_slave) \
   CB(mpi_sync_topo_part_info_slave) \
   CB(mpi_send_mass_slave) \
-/*  CB(mpi_buck_cap_forces_slave) */\
+  CB(mpi_send_solvation_slave) \
   CB(mpi_gather_runtime_errors_slave) \
   CB(mpi_send_exclusion_slave) \
-/*  CB(mpi_morse_cap_forces_slave) */ \
   CB(mpi_bcast_lb_params_slave) \
+  CB(mpi_bcast_cuda_global_part_vars_slave) \
   CB(mpi_send_dip_slave) \
   CB(mpi_send_dipm_slave) \
   CB(mpi_send_fluid_slave) \
   CB(mpi_recv_fluid_slave) \
   CB(mpi_local_stress_tensor_slave) \
-/*  CB(mpi_ljangle_cap_forces_slave)*/ \
   CB(mpi_send_virtual_slave) \
   CB(mpi_bcast_tf_params_slave) \
   CB(mpi_iccp3m_iteration_slave) \
@@ -231,12 +230,13 @@ static void mpi_call(SlaveCallback cb, int node, int param) {
   request[1] = node;
   request[2] = param;
 
-  COMM_TRACE(fprintf(stderr, "0: issuing %s %d %d\n",
-		     names[reqcode], node, param));
+  COMM_TRACE(fprintf(stderr, "%d: issuing %s %d %d\n",
+		     this_node, names[reqcode], node, param));
 #ifdef ASYNC_BARRIER
   MPI_Barrier(comm_cart);
 #endif
   MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
+  COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
 }
 
 /**************** REQ_TERM ************/
@@ -575,6 +575,39 @@ void mpi_send_mu_E_slave(int pnode, int part)
   if (pnode == this_node) {
     Particle *p = local_particles[part];
         MPI_Recv(&p->p.mu_E, 3, MPI_DOUBLE, 0, SOME_TAG,
+	     comm_cart, MPI_STATUS_IGNORE);
+  }
+
+  on_particle_change();
+#endif
+}
+
+/********************* REQ_SET_SOLV ********/
+void mpi_send_solvation(int pnode, int part, double* solvation)
+{
+#ifdef SHANCHEN
+  int ii;
+  mpi_call(mpi_send_solvation_slave, pnode, part);
+
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+    for(ii=0;ii<2*LB_COMPONENTS;ii++)
+       p->p.solvation[ii]= solvation[ii];
+  }
+  else {
+    MPI_Send(&solvation, LB_COMPONENTS, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
+
+  on_particle_change();
+#endif
+}
+
+void mpi_send_solvation_slave(int pnode, int part)
+{
+#ifdef SHANCHEN
+  if (pnode == this_node) {
+    Particle *p = local_particles[part];
+        MPI_Recv(&p->p.solvation, 2*LB_COMPONENTS, MPI_DOUBLE, 0, SOME_TAG,
 	     comm_cart, MPI_STATUS_IGNORE);
   }
 
@@ -1764,6 +1797,7 @@ void mpi_bcast_coulomb_params_slave(int node, int parm)
   case COULOMB_ELC_P3M:
     MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, comm_cart);
     // fall through
+  case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     MPI_Bcast(&p3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0, comm_cart);
     break;
@@ -2362,19 +2396,40 @@ void mpi_sync_topo_part_info_slave(int node,int parm ) {
 
 /******************* REQ_BCAST_LBPAR ********************/
 
-void mpi_bcast_lb_params(int field) {
+void mpi_bcast_lb_params(int field)
+{
 #ifdef LB
   mpi_call(mpi_bcast_lb_params_slave, -1, field);
   mpi_bcast_lb_params_slave(-1, field);
 #endif
 }
 
-void mpi_bcast_lb_params_slave(int node, int field) {
+void mpi_bcast_lb_params_slave(int node, int field)
+{
 #ifdef LB
   MPI_Bcast(&lbpar, sizeof(LB_Parameters), MPI_BYTE, 0, comm_cart);
   on_lb_params_change(field);
 #endif
 }
+
+
+/******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
+
+void mpi_bcast_cuda_global_part_vars() {
+#ifdef CUDA
+  mpi_call(mpi_bcast_cuda_global_part_vars_slave, 1, 0); // third parameter is meaningless
+  mpi_bcast_cuda_global_part_vars_slave(-1,0);
+#endif
+}
+
+void mpi_bcast_cuda_global_part_vars_slave(int node, int dummy)
+{
+#ifdef CUDA
+  MPI_Bcast(gpu_get_global_particle_vars_pointer_host(), sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
+#endif
+}
+
+
 
 /******************* REQ_GET_ERRS ********************/
 
@@ -2886,8 +2941,8 @@ void mpi_loop()
     MPI_Barrier(comm_cart);
 #endif
     MPI_Bcast(request, 3, MPI_INT, 0, comm_cart);
-    COMM_TRACE(fprintf(stderr, "%d: processing %s %d...\n", this_node,
-		       names[request[0]], request[1]));
+    COMM_TRACE(fprintf(stderr, "%d: processing %s %d %d...\n", this_node,
+		       names[request[0]], request[1], request[2]));
     if ((request[0] < 0) || (request[0] >= N_CALLBACKS)) {
       fprintf(stderr, "%d: INTERNAL ERROR: unknown request %d\n", this_node, request[0]);
       errexit();

@@ -115,7 +115,7 @@ the Tcl variable \lit{blockfile_variable_blacklist} are ignored.
   \variant{1} blockfile \var{channel} write tclvariable \{
   \var{varname1} \var{varname2} \dots \}
   \variant{2} blockfile \var{channel} write tclvariable all
-  \variant{2} blockfile \var{channel} write tclvariable reallyall
+  \variant{3} blockfile \var{channel} write tclvariable reallyall
 \end{essyntax}
 
 These commands will write Tcl global variables to \var{channel}.
@@ -631,8 +631,12 @@ the VMD Quick Help.
 \newescommand[prepare-vmd-connection]{prepare_vmd_connection}
 
 \begin{essyntax}
-prepare_vmd_connection 
-\opt{\var{filename} \opt{\var{wait} \opt{\var{start}}} \opt{\var{constraints}}}
+\variant{1} prepare_vmd_connection 
+\var{filename} \opt{start} \opt{wait \var{wait}} \opt{localhost}
+\opt{constraints}
+...
+\variant{2} prepare_vmd_connection 
+\opt{\var{filename} \opt{\var{wait} \opt{\var{start} \opt{\var{constraints}}}}}
 \end{essyntax}
 
 To reduce the effort involved in setting up the IMD connection,
@@ -644,24 +648,38 @@ coloring the molecules, bonds and counterions appropriately, rotating
 your viewpoint, and connecting your system to the visualization
 server.
 
-If \var{constraints} is not 0, then the command will create graphics
-primitives in VMD that represent some of the spatial constraints
-(sphere, rhomboid and cylinder at present).
+If the option \opt{constraints} is given, then the command will create
+graphics primitives in VMD that represent some of the spatial
+constraints (sphere, rhomboid and cylinder at present).
 
-When \var{wait} is provided, \es will wait for \var{wait} seconds for
-VMD to connect, and only continue after this time has passed or VMD
-has connected. If \var{start} is 1 (the default), it will
-automatically try to start VMD and connect to the \es simulation,
-otherwise it writes a corresponding script to the file
-\lit{\var{filename}.vmd_start.script}, that can be executed via VMD,
-either from the command line
+If \opt{start} is given, the command will automatically try to start VMD and connect it to the \es{} simulation.  Otherwise it only writes the VMD
+setup script \lit{\var{filename}.vmd_start.script}. You can use this script later to connect to the \es{} simulation by running either
 \begin{code}
   vmd -e vmd_start.script
 \end{code}
-or from the Tcl console of VMD with the command
+or by running
 \begin{code}
-  play "vmd\_start.script"
+  source "vmd\_start.script"
 \end{code}
+at VMD's Tcl console. If you choose to not start VMD automatically,
+\lit{prepare_vmd_connection} puts the hostname into the VMD script, so
+that you can start it from any computer. However, some more recent Linux
+distributions block any incoming transfer even from the computer itself,
+if it does not come from localhost. If you encounter problems to connect
+to VMD on the very same computer, try the \opt{localhost} option, which
+will enforce to use the hostname \lit{localhost}. Note that the \opt{start} option implies the \opt{localhost} option, since VMD is
+necessarily started from the same computer.
+
+If the option \opt{wait} is provided, then the command waits for at most
+\var{wait} seconds for VMD to connect. Since VMD usually takes a while
+to start, it is usually a good idea to combine the \opt{start} option with a waiting time of 100, so a bit less than a minute.
+
+All remaining parameters are passed to the \lit{writevsf} that is used
+to setup the system, so that you can specify the sizes of particles etc.
+
+\lit{prepare_vmd_connection} also supports an older, deprecated syntax (variant 2) with limited functionality. This syntax uses fixed position
+parameters and boolean values for \opt{start} and \opt{constraints}, as
+described above.
 
 \section{Errorhandling}
 Errors in the parameters are detected as early as possible, and

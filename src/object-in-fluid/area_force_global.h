@@ -1,6 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -17,10 +16,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef VOLUME_FORCE_H
-#define VOLUME_FORCE_H
-/** \file volume_force.h
- *  Routines to calculate the VOLUME_FORCE energy or/and and force 
+#ifndef _OBJECT_IN_FLUID_AREA_FORCE_GLOBAL_H
+#define _OBJECT_IN_FLUID_AREA_FORCE_GLOBAL_H
+/** \file area_force_global.h
+ *  Routines to calculate the AREA_FORCE_GLOBAL energy or/and and force 
  *  for a particle triple (triangle from mesh). (Dupin2007)
  *  \ref forces.c
 */
@@ -32,69 +31,69 @@
 #include "lb.h"
 #include "grid.h"
 
-
-/** set parameters for the VOLUME_FORCE potential. 
+/** set parameters for the AREA_FORCE_GLOBAL potential. 
 */
-int volume_force_set_params(int bond_type, double V0, double kv);
-
+int area_force_global_set_params(int bond_type, double A0_g, double ka_g);
 
 /************************************************************/
 
 /** called in force_calc() from within forces.c
- *  calculates the volume for a cell before the forces are handled
- *  sums up parts for volume with mpi_reduce from Dupin2007 (Equ. 13)
- *  sends volume via mpi_send to nodes
+ *  calculates the global area for a cell before the forces are handled
+ *  sums up parts for area with mpi_reduce from local triangles
+ *  synchronization with allreduce
  *
  *  !!! loop over particles from domain_decomposition !!!
  */  
 
-MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-same approach
-	double partVol=0.,A,norm[3],dn,hz;
-	
+MDINLINE void calc_area_global(double *area, int molType){ //first-fold-then-the-same approach
+	double partArea=0.,norm[3];
+
 	/** loop over particles */
 	int c, np, i ,j;
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
 	int img[3];
-	
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners, id;
+	int type_num, type, n_partners,id;
 	char *errtxt;
 
-	//int test=0;
-	//printf("rank%d, molType2: %d\n", rank,molType);
+	int test=0;
+
 	/* Loop local cells */
 	for (c = 0; c < local_cells.n; c++) {
 		cell = local_cells.cell[c];
 		p   = cell->part;
 		np  = cell->n;
+		
 		/* Loop cell particles */
 		for(i=0; i < np; i++) {				
 			j = 0;
-			p1 = &p[i];
-			//printf("rank%d, i=%d neigh=%d\n", rank, i, p1->bl.n);
+			p1=&p[i];
 			while(j<p1->bl.n){
 				/* bond type */
-				type_num = p1->bl.e[j++];				//bond_number
-				iaparams = &bonded_ia_params[type_num];
-				type = iaparams->type;		  					//type of interaction 14...volume_force
-				n_partners = iaparams->num;  					//bonded_neigbours
-				id=p1->p.mol_id;						//mol_id of blood cell
-				if(type == BONDED_IA_VOLUME_FORCE && id == molType){ // BONDED_IA_VOLUME_FORCE with correct molType   !!!!!!!!!!!!! needs area force local !!!!!!!!!!!!!!!!!!
+				type_num = p1->bl.e[j++];
+				iaparams = &bonded_ia_params[type_num];			
+				type = iaparams->type;
+				n_partners = iaparams->num;
+				id=p1->p.mol_id;
+				//printf("neigh=%d, type=%d type_num=%d\n", p1->bl.n-1, type, type_num);
+				if(type == BONDED_IA_AREA_FORCE_GLOBAL && id == molType){ // BONDED_IA_AREA_FORCE_GLOBAL with correct molType  
+					test++;
+					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
 					if (!p2) {
-						printf("broken: particles sum %d, id %d, partn %d, bond %d\n", np,id,n_partners,type_num); 
 						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume calc 078 bond broken between particles %d and %d (particles not stored on the same node - volume_force1)} ",
-						  p1->p.identity, p1->bl.e[j-1]);
+						ERROR_SPRINTF(errtxt,"{area calc 078 bond broken between particles %d and %d (particles not stored on the same node - area_force_global1); n %d max %d} ",
+						  p1->p.identity, p1->bl.e[j-1],p1->bl.n,p1->bl.max);
 						return;
 					}
 					/* fetch particle 3 */
+					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
 					if (!p3) {
 						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume calc 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
+						ERROR_SPRINTF(errtxt,"{area calc 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
 							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
 						return;
 					}
@@ -110,11 +109,10 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 					memcpy(img, p3->l.i, 3*sizeof(int));
 					fold_position(p33, img);
 				
+					
 					get_n_triangle(p11,p22,p33,norm);
-					dn=normr(norm);
-					A=area_triangle(p11,p22,p33);
-					hz=1.0/3.0 *(p11[2]+p22[2]+p33[2]);
-					partVol += A * -1*norm[2]/dn * hz;	
+					//dn=normr(norm);
+					partArea += area_triangle(p11,p22,p33);
 				}
 				else{
 					j+=n_partners;
@@ -122,23 +120,24 @@ MDINLINE void calc_volume(double *volume, int molType){ //first-fold-then-the-sa
 			}
 		}
     }
-	MPI_Allreduce(&partVol, volume, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+	MPI_Allreduce(&partArea, area, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 }
 
-MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-the-same approach
-	double A,norm[3],dn; //partVol=0.
 
-	double vv, force[3];
+MDINLINE void add_area_global_force(double area, int molType){  //first-fold-then-the-same approach
+	double aa, force1[3], force2[3], force3[3], rh[3], hn, h[3];
 	int k;
-	int img[3];
 	
 	/** loop over particles */
 	int c, np, i ,j;
 	Cell *cell;
 	Particle *p, *p1, *p2, *p3;
 	double p11[3],p22[3],p33[3];
+	int img[3];
+
 	Bonded_ia_parameters *iaparams;
-	int type_num, type, n_partners, id;
+	int type_num, type, n_partners,id;
 	char *errtxt;
 
 	int test=0;
@@ -161,21 +160,24 @@ MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-t
 				type = iaparams->type;
 				n_partners = iaparams->num;
 				id=p1->p.mol_id;
-				if(type == BONDED_IA_VOLUME_FORCE && id == molType){ // BONDED_IA_VOLUME_FORCE with correct molType
+				//printf("neigh=%d, type=%d type_num=%d\n", p1->bl.n-1, type, type_num);
+				//printf("id %d molType %d\n", id, molType); 
+				if(type == BONDED_IA_AREA_FORCE_GLOBAL && id == molType){ // BONDED_IA_VOLUME_FORCE with correct molType
 					test++;
 					/* fetch particle 2 */
 					p2 = local_particles[p1->bl.e[j++]];
 					if (!p2) {
 						errtxt = runtime_error(128 + 2*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume add 078 bond broken between particles %d and %d (particles not stored on the same node - volume_force2)} ",
-						  p1->p.identity, p1->bl.e[j-1]);
+						ERROR_SPRINTF(errtxt,"add area {078 bond broken between particles %d and %d (particles not stored on the same node - area_force_global2)}; n %d max %d ",
+						  p1->p.identity, p1->bl.e[j-1],p1->bl.n,p1->bl.max);
 						return;
 					}
 					/* fetch particle 3 */
+					//if(n_partners>2){
 					p3 = local_particles[p1->bl.e[j++]];
 					if (!p3) {
 						errtxt = runtime_error(128 + 3*ES_INTEGER_SPACE);
-						ERROR_SPRINTF(errtxt,"{volume add 079 bond broken between particles %d, %d and %d (particles not stored on the same node); n %d max %d} ",
+						ERROR_SPRINTF(errtxt,"add area {079 bond broken between particles %d, %d and %d (particles not stored on the same node)}; n %d max %d ",
 							p1->p.identity, p1->bl.e[j-2], p1->bl.e[j-1],p1->bl.n,p1->bl.max);
 						return;
 					}
@@ -191,21 +193,40 @@ MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-t
 					memcpy(img, p3->l.i, 3*sizeof(int));
 					fold_position(p33, img);
 				
+	
+					
+					for(k=0;k<3;k++){
+						h[k]=1.0/3.0 *(p11[k]+p22[k]+p33[k]);
+					}
+					
+					aa=( area - iaparams->p.area_force_global.A0_g) / iaparams->p.area_force_global.A0_g;
 
-					
-					get_n_triangle(p11,p22,p33,norm);
-					dn=normr(norm);
-					A=area_triangle(p11,p22,p33);
-					{
-				}
-					vv=(volume - iaparams->p.volume_force.V0)/iaparams->p.volume_force.V0;
-					
+					//aminusb(3,h,p11,rh);				// area_forces for each triangle node
+					vecsub(h,p11,rh);				// area_forces for each triangle node
+					hn=normr(rh);
 					for(k=0;k<3;k++) {
-						force[k]=iaparams->p.volume_force.kv * vv * A * norm[k]/dn * 1.0 / 3.0;
-						//printf("%e ",force[k]);
-						p1->f.f[k] += force[k]; 
-						p2->f.f[k] +=  force[k];
-						p3->f.f[k] +=  force[k];
+						force1[k] =  iaparams->p.area_force_global.ka_g * aa * rh[k]/hn;
+						//(&part1)->f.f[k]+=force[k];
+					}
+					//aminusb(3,h,p22,rh);				// area_forces for each triangle node
+					vecsub(h,p22,rh);				// area_forces for each triangle node
+					hn=normr(rh);
+					for(k=0;k<3;k++) {
+						force2[k] =  iaparams->p.area_force_global.ka_g * aa * rh[k]/hn;
+						//(&part2)->f.f[k]+=force[k];
+					}
+					//aminusb(3,h,p33,rh);				// area_forces for each triangle node
+					vecsub(h,p33,rh);				// area_forces for each triangle node
+					hn=normr(rh);
+					for(k=0;k<3;k++) {
+						force3[k] =  iaparams->p.area_force_global.ka_g * aa * rh[k]/hn;
+						//(&part3)->f.f[k]+=force[k];
+					}
+	
+					for(k=0;k<3;k++) {
+						p1->f.f[k] += force1[k]; 
+						p2->f.f[k] +=  force2[k];
+						p3->f.f[k] +=  force3[k];
 					}
 
 				}
@@ -218,5 +239,4 @@ MDINLINE void add_volume_force(double volume, int molType){  //first-fold-then-t
 	
 }
 
-
-#endif
+#endif 

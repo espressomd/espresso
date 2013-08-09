@@ -17,26 +17,26 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef STRETCHING_FORCE_H
-#define STRETCHING_FORCE_H
+#ifndef _OBJECT_IN_FLUID_STRETCHLIN_FORCE_H
+#define _OBJECT_IN_FLUID_STRETCHLIN_FORCE_H
 
 #include "utils.h"
 #include "interaction_data.h"
 #include "particle_data.h"
 
-/** \file stretching_force.h
- *  Routines to calculate the STRETCHING_FORCE Energy or/and STRETCHING_FORCE force 
+/** \file stretchlin_force.h
+ *  Routines to calculate the STRETCHLIN_FORCE Energy or/and STRETCHLIN_FORCE force 
  *  for a particle pair. (Dupin2007)
  *  \ref forces.c
 */
 
 /************************************************************/
 
-/// set the parameters for the stretching_force potential
-int stretching_force_set_params(int bond_type, double r0, double ks);
+/// set the parameters for the stretchlin_force potential
+int stretchlin_force_set_params(int bond_type, double r0, double kslin);
 
 
-/** Computes the STRETCHING_FORCE pair force and adds this
+/** Computes the STRETCHLIN_FORCE pair force and adds this
     force to the particle forces (see \ref #inter). 
     @param p1        Pointer to first particle.
     @param p2        Pointer to second particle.
@@ -45,26 +45,19 @@ int stretching_force_set_params(int bond_type, double r0, double ks);
     @param force     returns force of particle 1
     @return true if the bond is broken
 */
-MDINLINE double KS(double lambda){ // Defined by (19) from Dupin2007
-	double res;
-	res = (pow(lambda,0.5) + pow(lambda,-2.5))/(lambda + pow(lambda,-3.));
-	return res;
-}
 
-
-MDINLINE int calc_stretching_force_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
+MDINLINE int calc_stretchlin_force_pair_force(Particle *p1, Particle *p2, Bonded_ia_parameters *iaparams, double dx[3], double force[3])
 {
   int i;
   double fac, dr, len2, len;
-  double lambda;
 
   len2 = sqrlen(dx);
 
   len = sqrt(len2);
-  dr = len - iaparams->p.stretching_force.r0;
+  dr = len - iaparams->p.stretchlin_force.r0;
 
-  lambda = 1.0*len/iaparams->p.stretching_force.r0;
-  fac = -iaparams->p.stretching_force.ks * KS(lambda) * dr / iaparams->p.stretching_force.r0;
+//  lambda = 1.0*len/iaparams->p.stretchlin_force.r0;
+  fac = -iaparams->p.stretchlin_force.kslin * dr / iaparams->p.stretchlin_force.r0;
   
   for(i=0;i<3;i++)
     force[i] = fac*dx[i]/len;

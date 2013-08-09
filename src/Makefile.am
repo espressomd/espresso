@@ -36,6 +36,7 @@ libEspresso_a_SOURCES = \
 	comforce.h comforce.c \
 	config.h \
 	constraint.c constraint.h \
+	cuda_common_cfile.c \
 	debug.c debug.h \
 	domain_decomposition.c domain_decomposition.h \
 	energy.c energy.h \
@@ -116,7 +117,7 @@ libEspresso_a_SOURCES += \
 	steppot.c steppot.h \
 	tab.c tab.h \
 	tunable_slip.c tunable_slip.h 
-	
+
 # bonded potentials and forces
 libEspresso_a_SOURCES += \
 	angle.c angle.h \
@@ -130,13 +131,13 @@ libEspresso_a_SOURCES += \
 	harmonic.c harmonic.h \
 	overlap.c overlap.h \
 	subt_lj.c subt_lj.h \
-	fsi/area_force_local.c fsi/area_force_local.h \
-	fsi/area_force_global.c fsi/area_force_global.h \
-	fsi/bending_force.c fsi/bending_force.h \
-	fsi/stretching_force.c fsi/stretching_force.h \
-	fsi/stretchlin_force.c fsi/stretchlin_force.h \
-	fsi/volume_force.c fsi/volume_force.h
-	
+	object-in-fluid/area_force_local.c object-in-fluid/area_force_local.h \
+	object-in-fluid/area_force_global.c object-in-fluid/area_force_global.h \
+	object-in-fluid/bending_force.c object-in-fluid/bending_force.h \
+	object-in-fluid/stretching_force.c object-in-fluid/stretching_force.h \
+	object-in-fluid/stretchlin_force.c object-in-fluid/stretchlin_force.h \
+	object-in-fluid/volume_force.c object-in-fluid/volume_force.h
+
 # Coulomb methods
 libEspresso_a_SOURCES += \
 	debye_hueckel.c debye_hueckel.h \
@@ -236,12 +237,18 @@ libEspresso_a_SOURCES += \
 	tcl/harmonic_tcl.c tcl/harmonic_tcl.h \
 	tcl/overlap_tcl.c tcl/overlap_tcl.h \
 	tcl/subt_lj_tcl.c tcl/subt_lj_tcl.h \
-	tcl/fsi/area_force_local_tcl.c tcl/fsi/area_force_local_tcl.h \
-	tcl/fsi/area_force_global_tcl.c tcl/fsi/area_force_global_tcl.h \
-	tcl/fsi/bending_force_tcl.c tcl/fsi/bending_force_tcl.h \
-	tcl/fsi/stretching_force_tcl.c tcl/fsi/stretching_force_tcl.h \
-	tcl/fsi/stretchlin_force_tcl.c tcl/fsi/stretchlin_force_tcl.h \
-	tcl/fsi/volume_force_tcl.c tcl/fsi/volume_force_tcl.h
+	tcl/object-in-fluid/area_force_local_tcl.c \
+	tcl/object-in-fluid/area_force_local_tcl.h \
+	tcl/object-in-fluid/area_force_global_tcl.c \
+	tcl/object-in-fluid/area_force_global_tcl.h \
+	tcl/object-in-fluid/bending_force_tcl.c \
+	tcl/object-in-fluid/bending_force_tcl.h \
+	tcl/object-in-fluid/stretching_force_tcl.c \
+	tcl/object-in-fluid/stretching_force_tcl.h \
+	tcl/object-in-fluid/stretchlin_force_tcl.c \
+	tcl/object-in-fluid/stretchlin_force_tcl.h \
+	tcl/object-in-fluid/volume_force_tcl.c \
+	tcl/object-in-fluid/volume_force_tcl.h
 
 # Coulomb methods
 libEspresso_a_SOURCES += \
@@ -269,7 +276,7 @@ if TCL
 # The ".install" suffix is removed upon installation.
 noinst_PROGRAMS = Espresso
 Espresso_CPPFLAGS = -D ESPRESSO_SCRIPTS_DEFAULT=\"$(buildscriptsdir)\"
-Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c
+Espresso_SOURCES = tcl/scriptsdir.c tcl/main.c 
 Espresso_LDADD = libEspresso.a
 
 bin_PROGRAMS = Espresso.install
@@ -389,10 +396,19 @@ SUFFIXES=.cu
 
 CUDA_SOURCES = \
 	cuda_init.cu cuda_init.h \
-	lbgpu.cu lbgpu.h
+	cuda_common.cu cuda_common.h \
+	lbgpu.cu lbgpu.h \
+	p3m_gpu.cu p3m_gpu.h
+
+cuda_common.o: cuda_common.h myconfig-final.h
+cuda_init.o: cuda_init.h myconfig-final.h
+lbgpu.o: lbgpu.h myconfig-final.h
+p3m_gpu.o: p3m_gpu.h myconfig-final.h
 
 if TCL
 
+Espresso_SOURCES += cuda_is_cpp.cpp
+Espresso_install_SOURCES += cuda_is_cpp.cpp
 CUDA_SOURCES += \
 	tcl/cuda_init_tcl.c
 

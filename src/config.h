@@ -129,6 +129,16 @@ extern const char* ESPRESSO_VERSION;
 #define MAX_OBJECTS_IN_FLUID 10000
 #endif
 
+/** number of fluid components for lattice boltzmann  */
+#ifndef LB_COMPONENTS
+#ifdef SHANCHEN
+#define LB_COMPONENTS 2
+#else 
+#define LB_COMPONENTS 1
+#endif
+#endif
+
+
 /* Mathematical constants, from gcc's math.h */
 #ifndef M_PI
 #define M_E		2.7182818284590452353602874713526625L  /* e */

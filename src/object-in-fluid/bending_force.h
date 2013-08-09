@@ -1,6 +1,5 @@
 /*
-  Copyright (C) 2010 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer Research, Theory Group, PO Box 3148, 55021 Mainz, Germany
+  Copyright (C) 2012,2013 The ESPResSo project
   
   This file is part of ESPResSo.
   
@@ -17,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef BENDING_FORCE_H
-#define BENDING_FORCE_H
+#ifndef _OBJECT_IN_FLUID_BENDING_FORCE_H
+#define _OBJECT_IN_FLUID_BENDING_FORCE_H
 /** \file bending_force.h Routines to calculate the bending_force energy or/and
  *  and force for a particle quadruple (two triangles that have 2 particles in common)
 */
@@ -32,11 +31,11 @@
 int bending_force_set_params(int bond_type, double phi0, double kb);
 
 /** Computes the bending force (Dupin2007 eqn. 20 and 21) and adds this
-    force to the particle forces (see \ref #inter). 
+    force to the particle forces (see \ref tclcommand_inter). 
     @param p1,p2,p3     Pointers to particles of triangle 1.
     @param p2,p3,p4     Pointers to particles of triangle 2.
     (triangles have particles p2 and p3 in common)
-    @param iaparams  bending stiffness kb, initial rest angle phi0 (see \ref #inter).
+    @param iaparams  bending stiffness kb, initial rest angle phi0 (see \ref tclcommand_inter).
     @param force1 returns force on particles of triangle 1
     @param force2 returns force on particles of triangle 2
     (p1 += force1; p2 += 0.5*force1+0.5*force2; p3 += 0.5*force1+0.5*force2; p4 += force2;

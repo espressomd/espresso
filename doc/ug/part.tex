@@ -36,8 +36,8 @@
   \opt{bond \var{bondid} \var{pid2} \dots}
   \require{1}{\opt{q \var{charge}}}
   \require{2}{\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}}
-  \require{2}{\opt{omega \var{x} \var{y} \var{z}}}
-  \require{2}{\opt{torque \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{omega_body/lab \var{x} \var{y} \var{z}}}
+  \require{2}{\opt{torque_body/lab \var{x} \var{y} \var{z}}}
   \require{2}{\opt{rinertia \var{x} \var{y} \var{z}}}
   \require{3}{\opt{\opt{un}fix \var{x} \var{y} \var{z}}}
   \require{3}{\opt{ext_force \var{x} \var{y} \var{z}}}
@@ -53,6 +53,7 @@
   \require{9}{\opt{temp \var{T}}}
   \require{9}{\opt{gamma \var{g}}}
   \require{10}{\opt{rotation \var{rot}}}
+  \require{11}{\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}}
   \begin{features}
     \required[1]{ELECTROSTATICS} 
     \required[2]{ROTATION}
@@ -64,6 +65,7 @@
     \required[8]{VIRTUAL\_SITES\_RELATIVE}
     \required[9]{LANGEVIN\_PER\_PARTICLE}
     \required[10]{ROTATION\_PER\_PARTICLE}
+    \required[11]{SHANCHEN}
   \end{features}
 \end{essyntax}
 
@@ -98,20 +100,18 @@ set first because of the spatial decomposition.
 \item[\opt{quat \var{q1} \var{q2} \var{q3} \var{q4}}] Sets the
   quaternion representation of the rotational position of this
   particle.
-\item[\opt{omega \var{x} \var{y} \var{z}}] Sets the rotational
-  velocity of this particle in the particle's co-rotating frame.
-\item[\opt{torque \var{x} \var{y} \var{z}}] Sets the rotational force
-  of this particle, in global frame.  When printing the values using
-  {\em part id_particle print}, there is an alternative named
-  \opt{tbf} which gives you the values of the torque in the body
-  frame. Be aware: the values obtained when printing using
-  \opt{torque} are computed in the frame laboratory and are the ones
-  one should usually look at. Nonetheless, in case you introduce
-  torques using \opt{torque} option, espresso will assume they are
-  given in the body-frame. Thus \opt{tbf} is useful to know which
-  should be the numerical values you should reintroduce in order to
-  have exactly the same conformation. Again, any torque set this way
-  is lost during the next integration step.
+\item[\opt{omega_body/lab \var{x} \var{y} \var{z}}] The command \opt{omega_body} 
+  sets the angular momentum of this particle in the particle's co-rotating frame 
+  (or body frame) and the command \opt{omega_lab} sets it for the particle in the fixed
+  frame (or laboratory frame). If you set the angular momentum of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before invoking \opt{omega_lab}, otherwise the 
+  conversion from lab to body frame will not be handled properly.
+\item[\opt{torque_body/lab \var{x} \var{y} \var{z}}] The command \opt{torque_body} 
+  sets the torque of this particle in the particle's co-rotating frame 
+  (or body frame) and the command \opt{torque_lab} sets it for the particle in the fixed
+  frame (or laboratory frame). If you set the torque of the particle in the lab frame, the
+  orientation of the particle (\opt{quat}) must be set before invoking \opt{torque_lab}, otherwise the 
+  conversion from lab to body frame will not be handled properly.
 \item[\opt{rinertia \var{x} \var{y} \var{z}}] Sets the diagonal
   elements of this particles rotational inertia tensor. These
   correspond with the inertial moments along the coordinate axes in
@@ -127,12 +127,13 @@ set first because of the spatial decomposition.
 \item[\opt{ext_force \var{x} \var{y} \var{z}}]
   An additional external force is applied to the particle.
 \item[\opt{ext_torque \var{x} \var{y} \var{z}}]
-  An additional external torque is applied to the particle.
+  An additional external torque is applied to the particle. This torque is specified
+  in the laboratory frame!
 \item[\opt{exclude \var{pid2}\dots+}] Restrictions:
   \var{pid2} must be an existing particle.  Between the
   current particle an the exclusion partner(s), no nonbonded
   interactions are calculated. Note that unlike bonds, exclusions are
-  stored with both partners.  Therefore this command adds the defined
+  stored with both partners. Therefore this command adds the defined
   exclusions to both partners.
 \item[\opt{exclude delete \var{pid2}\dots}] Searches for the
   given exclusion and deletes it. Again deletes the exclusion with
@@ -170,7 +171,30 @@ set first because of the spatial decomposition.
   rotational degrees of freedom are integrated (value of 1) or not
   (0). If set to zero, the content of the torque and omega variables
   are meaningless. The default is 1.
+\item[\opt{solvation \var{lA} \var{kA} \var{lB} \var{kB}}] Sets the four solvation coupling constant for the two components of a Shan-Chen fluid, as documented in Section \ref{sec:scmd-coupling}.
 \end{arguments}
+
+\warning{The options \opt{omega}, \opt{torque}, and \opt{tbf} are deprecated 
+  and will be removed in some future version. They might still usable in your
+  case, but be aware that if you use newer features in your simulation, you might
+  not have all the functionality that you desire. When you read the confusing 
+  (original) text below on the use of the commands, you will understand why they 
+  have been replaced\newline
+
+  The commands \opt{omega} set the rotational velocity of a particle in that
+  particle's co-rotating frame. The \opt{torque} set the rotational force of 
+  a particle, in global frame. When printing the values using 
+  {\em part id_particle print}, there is an alternative named \opt{tbf} which 
+  gives you the values of the torque in the body frame. Be aware: the values 
+  obtained when printing using \opt{torque} are computed in the frame laboratory
+  and are the ones one should usually look at. Nonetheless, in case you introduce
+  torques using \opt{torque} option, \es will assume they are given in the
+  body-frame. Thus \opt{tbf} is useful to know which should be the numerical
+  values you should reintroduce in order to have exactly the same conformation.
+  \newline
+
+  That is, the text directly contradicts itself.
+}
 
 \subsection{Getting particle properties}
 
@@ -178,7 +202,7 @@ set first because of the spatial decomposition.
   \variant{1}
   part \var{pid} print
   \optlong{\alt{id \asep pos \asep type \asep folded_position \asep type \asep
-      q \asep v \asep f \asep fix \asep ext_force \asep ext_torque \asep bond \asep
+      q \asep v \asep f \asep torque_body \asep torque_lab \asep fix \asep ext_force \asep ext_torque \asep bond \asep
       \mbox{connections \opt{\var{range}}}}}\dots
   \variant{2} part
 \end{essyntax}
@@ -187,6 +211,19 @@ Variant \variant{1} will return a list of the specified properties of
 particle \var{pid}, or all properties, if no keyword is
 specified.  Variant \variant{2} will return a list of all properties
 of all particles.
+
+{\bf N.B.} There is a difference between the options \opt{*_body} and 
+\opt{*_lab}. The first prints the variable in the co-rotating frame, whereas
+the second gives the variable in the stationary frame, the body and laboratory 
+frames, respectively. One would typically want to output the variable in 
+the laboratory frame, since it is the frame of interest. However for some tests
+involving reading and writing the variable it may be desireable to know it in
+the body frame as well. Be careful with reading and writing, if 
+you write in the lab frame, then read in the lab frame. If you are setting the 
+variable in the lab frame, the orientation of the particle (\opt{quat}) must be set 
+before, otherwise the conversion from lab to body frame will not be handled properly.
+Also be careful about the order in which you write and read in data from a block\_file
+for instance if you output the variable in both frames! 
 
 \minisec{Example}
 \begin{code}
@@ -638,29 +675,34 @@ All these examples do the same - making exact copies of particles 1 through 4.
   axis \var{n_x} \var{n_y} \var{n_z} 
   radius \var{rad} length \var{length} 
   type \var{id} 
+
+  \variant{7}
+  constraint stomatocyte center \var{x} \var{y} \var{z} orientation \var{ox} \var{oy} \var{oz}
+  outer_radius \var{Ro} inner_radius \var{Ri} layer_width \var{w} direction \var{direction} 
+  type \var{id} \opt{penetrable \var{flag}} \opt{reflecting \var{flag}}
   
   \require{1}{%
-    \variant{7}
+    \variant{8}
     constraint rod center \var{c_x} \var{c_y} 
     lambda \var{lambda}
   } 
   
   \require{1}{%
-    \variant{8}
+    \variant{9}
     constraint plate height \var{h}
     sigma \var{sigma} 
   }
   
   \require{2,3}{%
-    \variant{9}
+    \variant{10}
     constraint ext_magn_field \var{f_x} \var{f_y} \var{f_z} 
   }
   
-  \variant{10} 
+  \variant{11} 
   constraint plane cell \var{x} \var{y} \var{z} 
   type \var{id}
 
-  \variant{11}
+  \variant{12}
   constraint mindist_position \var{x} \var{y} \var{z} 
 
   \begin{features}
@@ -672,7 +714,7 @@ All these examples do the same - making exact copies of particles 1 through 4.
 \end{essyntax}
 
 The \codebox{constraint} command offers a variety of surfaces that can be
-defined to interact with desired particles. Variants \variant{1} to \variant{6}
+defined to interact with desired particles. Variants \variant{1} to \variant{7}
 create interactions via a non-bonded interaction potential, where the distance
 between the two particles is replaced by the
 distance of the center of the particle to the surface. The constraints are
@@ -680,11 +722,11 @@ identified like a particle via its type for the non-bonded interaction.
 After a type is defined for each constraint one has
 to define
 the interaction of all different particle types with the constraint using
-the \codebox{inter} command. In variants \variant{1} to \variant{5}, constraints
+the \codebox{inter} command. In variants \variant{1} to \variant{7}, constraints
  are able to be penetrated if \var{flag} is set to 1. Otherwise, when the
  penetrable option is ignored or \var{flag} is set to 0, the constraint
  cannot be violated, i.e. no particle can go through the constraint surface.
- In variants \variant{1} to \variant{4} it is also possible to specify a flag 
+ In variants \variant{1} to \variant{4} and \variant{7} it is also possible to specify a flag 
  indicating if the constraints should be reflecting. The flags can equal 1 or 2.
  The flag 1 corresponds to a reflection process where the normal component of the 
  velocity is reflected and the tangential component remains unchanged. If the
@@ -694,19 +736,19 @@ the \codebox{inter} command. In variants \variant{1} to \variant{5}, constraints
  a particular particle and the constraint! This will usually be a lennard-jones
  interaction with $\epsilon=0$, but finite interaction range.
 
-Variants \variant{7} and \variant{8} create interactions based on electrostatic
+Variants \variant{8} and \variant{9} create interactions based on electrostatic
 interactions. The corresponding force acts in direction of the normal vector of the
 surface and applies to all charged particles.
 
-Variant \variant{9} does not define a surface but is based on magnetic
+Variant \variant{10} does not define a surface but is based on magnetic
 dipolar interaction with an external magnetic field. It applies to all particles
 with a dipol moment.
 
-Variant \variant{10} is essential for the use of tunable-slip boundary
+Variant \variant{11} is essential for the use of tunable-slip boundary
 interactions for microchannel flows like the Plane Poiseuille or Plane Couette
 Flow.
 
-Variant \variant{11} calculates the smallest distance to all non-penetrable
+Variant \variant{12} calculates the smallest distance to all non-penetrable
 constraints, that can be repulsive (wall, cylinder, sphere, rhomboid, maze, pore).
 Negative distances mean that the position is ``within'' the area that
 particles should not access. Helpful to find initial configurations.) 
@@ -757,20 +799,33 @@ can be replaced by the argument \codebox{ radii \var{rad1} \var{rad2}}
 to obtain a pore with a conical shape and corresponding opening radii.
 The first radius is in the direction opposite to the axis vector.
 
-Variant \variant{7} specifies an electrostatic interaction between the
+Variant \variant{7} creates a stomatocyte shaped boundary. This command
+should be used with care. The position can be any point in the simulation
+box, and the orientation of the (cylindrically symmetric) stomatocyte is
+given by a vector, which points in the direction of the symmetry axis, it
+does not need to be normalized. The parameters: outer_radius \var{Ro},
+inner_radius \var{Ri}, and layer_width \var{w}, specify the shape of the
+stomatocyte. Here inappropriate choices of these parameters can yield 
+undersired results. The width is used as a scaling parameter. That is,
+a stomatocyte given by \var{Ro}:\var{Ri}:\var{w} = 7:3:1 is half the size
+of the stomatocyte given by 7:3:2. Not all choices of the parameters give
+reasonable values for the shape of the stomatocyte, but the combination
+7:3:1 is a good point to start from when trying to modify the shape. 
+
+Variant \variant{8} specifies an electrostatic interaction between the
 charged particles in the system to an infinitely long rod with a line
 charge of \var{lambda} which is alinge along the z-axis and centered
 at \var{c_x} and \var{c_y}.
 
-Variant \variant{8} specifies the electrostatic interactinos between
+Variant \variant{9} specifies the electrostatic interactinos between
 the charged particles in the system and an inifinitely large plate in
 the x-y-plane at height \var{h}. The plate carries a charge density of
 \var{sigma}.
   
-Variant \variant{9} specifies the dipolar coupling of particles with a
+Variant \variant{10} specifies the dipolar coupling of particles with a
 dipolar moment to an external field \var{f_x} \var{f_y} \var{f_z}.
 
-Variant \variant{10} creates an infinite plane at a fixed position. For
+Variant \variant{11} creates an infinite plane at a fixed position. For
 non-initializing a direction of the constraint values of the positions
 have to be negative. For the tunable-slip boundary interactions you
 have to set \emph{two} constraints.

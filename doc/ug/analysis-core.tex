@@ -109,7 +109,8 @@ They are generic to all observables and are described after the list of observab
           Angular momenta (omega) of the particles, in the format\\ 
           $\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2,\ 
           \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n$. 
-          The particles are ordered ascending according to their ids.
+          The particles are ordered ascending according to their ids and the 
+          angular velocity/momentum is specified in the laboratory frame.
     \item \lit{com_position} \var{particle\_specifications} \opt{blocked \var{size}}\\
           Position of the centre of mass. 
           If \lit{blocked \var{size}} is specified,
@@ -454,8 +455,9 @@ Variant \variant{1} is the recommended way of updating the correlations.
 By specifying \lit{start} or \lit{stop} it starts or stops automatically
 updating the correlation estimates. The automatic updates are done
 within the integration loop without further user intervention.
-The update frequency is adjusted based based on the value of \var{dt} 
-provided when defining the correlation.  
+The update frequency is adjusted based on the value of \var{dt} 
+provided when defining the correlation. Note that autoupdate has to be 
+started \underline{after} setting the sim-time (e.g. after \var{setmd time 0}).
 
 Variant \variant{2} is an explicit call for an instantaneous 
 update of the correlation estimates, using the current system

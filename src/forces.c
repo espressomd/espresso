@@ -50,6 +50,7 @@
 #include "virtual_sites.h"
 #include "constraint.h"
 #include "lbgpu.h"
+#include "p3m_gpu.h"
 #include "iccp3m.h"
 
 /************************************************************/
@@ -68,9 +69,21 @@ void init_forces();
 void force_calc()
 {
 
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_calc_particle_lattice_ia_gpu();
+#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
+
+  copy_part_data_to_gpu();
+
 #endif
+    
+#ifdef LB_GPU
+#ifdef SHANCHEN
+  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
+#endif // SHANCHEN
+
+  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
+  // this_node==0 makes sure it is the master node where the gpu exists
+  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && this_node==0 ) lb_calc_particle_lattice_ia_gpu();
+#endif // LB_GPU
 
 #ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)
@@ -129,14 +142,14 @@ void force_calc()
 #endif
 
 #ifdef METADYNAMICS
-    /* Metadynamics main function */
-    meta_perform();
+  /* Metadynamics main function */
+  meta_perform();
 #endif
 
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU) lb_send_forces_gpu();
+#if defined(LB_GPU) || (defined(ELECTROSTATICS) && defined(CUDA))
+  copy_forces_from_GPU();
 #endif
-
+  
 /* this must be the last force to be calculated (Mehmet)*/
 #ifdef COMFIXED
   calc_comfixed();
@@ -170,6 +183,15 @@ void calc_long_range_forces()
       ELC_add_force(); 
   
       break;
+#ifdef CUDA
+    case COULOMB_P3M_GPU:
+      if (this_node == 0) p3m_gpu_add_farfield_force();
+  #ifdef NPT
+      printf("NPT can not be used in conjunction with the GPU P3M\n"); //TODO fix this?
+      exit(1); //TODO ALTERNATIVELY CHECK IF BAROSTAT IS ACTUALLY ON
+  #endif
+      break;
+#endif
     case COULOMB_P3M:
       p3m_charge_assign();
   #ifdef NPT
@@ -306,6 +328,14 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->f.torque[0] = 0;
     part->f.torque[1] = 0;
     part->f.torque[2] = 0;
+
+    #ifdef EXTERNAL_FORCES
+      if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
+        part->f.torque[0] += part->l.ext_torque[0];
+        part->f.torque[1] += part->l.ext_torque[1];
+        part->f.torque[2] += part->l.ext_torque[2];
+      }
+    #endif
     
     /* and rescale quaternion, so it is exactly of unit length */	
     scale = sqrt( SQR(part->r.quat[0]) + SQR(part->r.quat[1]) +
@@ -315,14 +345,6 @@ MDINLINE void init_local_particle_force(Particle *part)
     part->r.quat[2]/= scale;
     part->r.quat[3]/= scale;
   }
-
-  #ifdef EXTERNAL_FORCES
-    if(part->l.ext_flag & PARTICLE_EXT_TORQUE) {
-      part->f.torque[0] += part->l.ext_torque[0];
-      part->f.torque[1] += part->l.ext_torque[1];
-      part->f.torque[2] += part->l.ext_torque[2];
-    }
-  #endif
 #endif
 
 #ifdef ADRESS
