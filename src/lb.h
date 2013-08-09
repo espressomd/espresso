@@ -447,15 +447,18 @@ MDINLINE void lb_calc_local_fields(index_t index, double *rho, double *j, double
   mode[8] = pi_eq[4] + (0.5+0.5*gamma_shear)*(mode[8] - pi_eq[4]);
   mode[9] = pi_eq[5] + (0.5+0.5*gamma_shear)*(mode[9] - pi_eq[5]);
 
-  /* Now we have to transform to the "usual" stress tensor components */
-  /* We use eq. 116ff in Duenweg Ladd for that. */
-  pi[0]=(mode[0]+mode[4]+mode[5])/3.;
-  pi[2]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
-  pi[5]=(2*mode[0]+2*mode[4]-mode[5]+3*mode[6])/6.;
-  pi[1]=mode[7];
-  pi[3]=mode[8];
-  pi[4]=mode[9];
+  // Transform the stress tensor components according to the modes that
+  // correspond to those used by U. Schiller. In terms of populations this
+  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
+  // Duenweg and Ladd paper, when these are written out in populations.
+  // But to ensure this, the expression in Schiller's modes has to be different!
 
+  pi[0] += ( 2.0*(mode[0] + mode[4]) + mode[6] + 3.0*mode[5] )/6.0; // xx
+  pi[2] += ( 2.0*(mode[0] + mode[4]) + mode[6] - 3.0*mode[5] )/6.0; // yy
+  pi[5] += ( mode[0] + mode[4] - mode[6] )/3.0; // zz
+  pi[1] += mode[7]; // xy
+  pi[4] += mode[9]; // yz
+  pi[3] += mode[8]; // zx
 }
 
 #ifdef LB_BOUNDARIES
