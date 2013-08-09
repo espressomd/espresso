@@ -134,6 +134,7 @@ libEspresso_a_SOURCES += \
 	fsi/area_force_global.c fsi/area_force_global.h \
 	fsi/bending_force.c fsi/bending_force.h \
 	fsi/stretching_force.c fsi/stretching_force.h \
+	fsi/stretchlin_force.c fsi/stretchlin_force.h \
 	fsi/volume_force.c fsi/volume_force.h
 	
 # Coulomb methods
@@ -239,6 +240,7 @@ libEspresso_a_SOURCES += \
 	tcl/fsi/area_force_global_tcl.c tcl/fsi/area_force_global_tcl.h \
 	tcl/fsi/bending_force_tcl.c tcl/fsi/bending_force_tcl.h \
 	tcl/fsi/stretching_force_tcl.c tcl/fsi/stretching_force_tcl.h \
+	tcl/fsi/stretchlin_force_tcl.c tcl/fsi/stretchlin_force_tcl.h \
 	tcl/fsi/volume_force_tcl.c tcl/fsi/volume_force_tcl.h
 
 # Coulomb methods
