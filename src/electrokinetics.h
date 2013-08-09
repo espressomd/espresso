@@ -61,6 +61,7 @@ typedef struct {
   cufftReal* greensfcn;
   cufftComplex* charge_potential;
   float* j;
+  float* lb_force_previous;
   float* rho[MAX_NUMBER_OF_SPECIES];
   int species_index[MAX_NUMBER_OF_SPECIES];
   float density[MAX_NUMBER_OF_SPECIES];
