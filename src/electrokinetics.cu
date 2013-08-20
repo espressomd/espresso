@@ -50,6 +50,14 @@ extern "C" {
 #define LATTICE_LB_GPU   2
 extern int lattice_switch;
 int ek_initialized = 0;
+
+// Used to limit register use for the pressure calculation
+#define EK_LINK_U00_pressure 0
+#define EK_LINK_0U0_pressure 1
+#define EK_LINK_00U_pressure 2
+#define EK_LINK_D00_pressure 3
+#define EK_LINK_0D0_pressure 4
+#define EK_LINK_00D_pressure 5
      
 #ifdef EK_BOUNDARIES
 
@@ -334,56 +342,54 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                                                  ) 
 {
   unsigned int coord[3];
-  unsigned int neighborindex[18];
+  unsigned int neighborindex[6];
   unsigned int index = ek_getThreadIndex ();
 
   if(index < ek_parameters_gpu.number_of_nodes)
   {
-    float pressure_gradient_D0,
-          pressure_gradient_0U,
-          pressure_gradient;
+    float pressure_gradient;
     
     rhoindex_linear2cartesian( index, coord );
 
     // Calculate the indices of the neighbours to which
     // the force is to be applied
        
-    neighborindex[EK_LINK_U00] =
+    neighborindex[EK_LINK_U00_pressure] =
       rhoindex_cartesian2linear(
         (coord[0] + 1) % ek_parameters_gpu.dim_x,
          coord[1],
          coord[2]
       );
       
-    neighborindex[EK_LINK_0U0] =
+    neighborindex[EK_LINK_0U0_pressure] =
       rhoindex_cartesian2linear(
          coord[0],
         (coord[1] + 1) % ek_parameters_gpu.dim_y,
          coord[2]
       );
       
-    neighborindex[EK_LINK_00U] =
+    neighborindex[EK_LINK_00U_pressure] =
       rhoindex_cartesian2linear(
          coord[0],
          coord[1],
         (coord[2] + 1) % ek_parameters_gpu.dim_z
       );
 
-    neighborindex[EK_LINK_D00] =
+    neighborindex[EK_LINK_D00_pressure] =
       rhoindex_cartesian2linear(
         (coord[0] - 1 + ek_parameters_gpu.dim_x) % ek_parameters_gpu.dim_x,
          coord[1],
          coord[2]
       );
       
-    neighborindex[EK_LINK_0D0] =
+    neighborindex[EK_LINK_0D0_pressure] =
       rhoindex_cartesian2linear(
          coord[0],
         (coord[1] - 1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y,
          coord[2]
       );
       
-    neighborindex[EK_LINK_00D] =
+    neighborindex[EK_LINK_00D_pressure] =
       rhoindex_cartesian2linear(
          coord[0],
          coord[1],
@@ -392,105 +398,54 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
 
     // Force in x direction (multiplicative factor
     // comes from converting MD force into LB force)
-/*
-    pressure_gradient_0U = (   ek_parameters_gpu.pressure[ index ]
-                             - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00] ] )*
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_U00] ] );
 
-    pressure_gradient_D0 = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_D00] ]
-                             - ek_parameters_gpu.pressure[ index ] )*
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_D00] ] );
-
-    pressure_gradient = pressure_gradient_0U + pressure_gradient_D0;
-
-    pressure_gradient /= (
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_U00] ] ) *
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_D00] ] )
-                           + 1
-                         ) * ek_parameters_gpu.agrid;
-*/
-    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_D00] ]
-                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00] ] )/
+    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_D00_pressure] ]
+                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid);
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
-    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_U00] ]
-                             + lb_node.boundary[index]
-                             + lb_node.boundary[ neighborindex[EK_LINK_D00] ] ) == 0 );
+    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_U00_pressure] ]
+                             + lb_node.boundary[ index ]
+                             + lb_node.boundary[ neighborindex[EK_LINK_D00_pressure] ] ) == 0 );
 
     atomicadd( &node_f.force[index], pressure_gradient );
     
     // Force in y direction
-/*
-    pressure_gradient_0U = (   ek_parameters_gpu.pressure[ index ]
-                             - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0] ] )*
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0U0] ] );
 
-    pressure_gradient_D0 = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0D0] ]
-                             - ek_parameters_gpu.pressure[ index ] )*
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0D0] ] );
-
-    pressure_gradient = pressure_gradient_0U + pressure_gradient_D0;
-
-    pressure_gradient /= (
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0U0] ] ) *
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0D0] ] )
-                           + 1
-                         ) * ek_parameters_gpu.agrid;
-*/
-
-    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0D0] ]
-                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0] ] )/
+    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0D0_pressure] ]
+                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid);
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
-    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_0U0] ]
-                             + lb_node.boundary[index]
-                             + lb_node.boundary[ neighborindex[EK_LINK_0D0] ] ) == 0 );
+    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_0U0_pressure] ]
+                             + lb_node.boundary[ index ]
+                             + lb_node.boundary[ neighborindex[EK_LINK_0D0_pressure] ] ) == 0 );
 
     atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], pressure_gradient );
               
     // Force in z direction
-/*
-    pressure_gradient_0U = (   ek_parameters_gpu.pressure[ index ]
-                             - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U] ] )*
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00U] ] );
 
-    pressure_gradient_D0 = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00D] ]
-                             - ek_parameters_gpu.pressure[ index ] )*
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00D] ] );
-
-    pressure_gradient = pressure_gradient_0U + pressure_gradient_D0;
-
-    pressure_gradient /= (
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00U] ] ) *
-                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00D] ] )
-                           + 1
-                         ) * ek_parameters_gpu.agrid;
-*/
-
-    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00D] ]
-                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U] ] )/
+    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00D_pressure] ]
+                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U_pressure] ] )/
                         ( 2.0f * ek_parameters_gpu.agrid);
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
-    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_00U] ]
-                             + lb_node.boundary[index]
-                             + lb_node.boundary[ neighborindex[EK_LINK_00D] ] ) == 0 );
+    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_00U_pressure] ]
+                             + lb_node.boundary[ index ]
+                             + lb_node.boundary[ neighborindex[EK_LINK_00D_pressure] ] ) == 0 );
 
     atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], pressure_gradient );
   }
 }
-
 #endif
 
 __global__ void ek_calculate_quantities( unsigned int species_index,
