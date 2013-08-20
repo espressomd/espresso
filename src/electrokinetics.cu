@@ -306,19 +306,24 @@ __global__ void ek_pressure(
                                              powf(ek_parameters_gpu.agrid, 3)
                                            );
 
-
     // Add the ideal-gas contribution f from the EK
     // species, which is given by n_i * k. In MD units
-    // the proper expression is n_i * T / ag^3, where 
-    // the 1/ag^3 factor comes from converting the
-    // internal EK particle number back to a density
+    // the proper expression is n_i * T / ag^2, where 
+    // there is a 1/ag^3 factor coming from converting the
+    // internal EK particle number back to a density,
+    // and an ag factor that is required to get the 
+    // proper pressure difference
 
     for ( int i = 0; i < ek_parameters_gpu.number_of_species; i++ )
     {
       ek_parameters_gpu.pressure[ index ] += ek_parameters_gpu.rho[ i ][ index ] *
                                              ek_parameters_gpu.T /
-                                             powf(ek_parameters_gpu.agrid, 3);
+                                             powf(ek_parameters_gpu.agrid, 2);
     }
+
+    // Set pressure to zero inside boundary
+
+    ek_parameters_gpu.pressure[ index ] *= (n_a.boundary[index] == 0);
   }
 }
 
@@ -329,12 +334,14 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
                                                  ) 
 {
   unsigned int coord[3];
-  unsigned int neighborindex[9];
+  unsigned int neighborindex[18];
   unsigned int index = ek_getThreadIndex ();
 
   if(index < ek_parameters_gpu.number_of_nodes)
   {
-    float pressure_gradient;
+    float pressure_gradient_D0,
+          pressure_gradient_0U,
+          pressure_gradient;
     
     rhoindex_linear2cartesian( index, coord );
 
@@ -362,56 +369,128 @@ __global__ void ek_add_ideal_pressure_to_lb_force(
         (coord[2] + 1) % ek_parameters_gpu.dim_z
       );
 
+    neighborindex[EK_LINK_D00] =
+      rhoindex_cartesian2linear(
+        (coord[0] - 1 + ek_parameters_gpu.dim_x) % ek_parameters_gpu.dim_x,
+         coord[1],
+         coord[2]
+      );
+      
+    neighborindex[EK_LINK_0D0] =
+      rhoindex_cartesian2linear(
+         coord[0],
+        (coord[1] - 1 + ek_parameters_gpu.dim_y) % ek_parameters_gpu.dim_y,
+         coord[2]
+      );
+      
+    neighborindex[EK_LINK_00D] =
+      rhoindex_cartesian2linear(
+         coord[0],
+         coord[1],
+        (coord[2] - 1 + ek_parameters_gpu.dim_z) % ek_parameters_gpu.dim_z
+      );
+
     // Force in x direction (multiplicative factor
     // comes from converting MD force into LB force)
+/*
+    pressure_gradient_0U = (   ek_parameters_gpu.pressure[ index ]
+                             - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00] ] )*
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_U00] ] );
 
-    pressure_gradient = (   ek_parameters_gpu.pressure[ index ]
-                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00] ] ) /
-                        ek_parameters_gpu.agrid;
+    pressure_gradient_D0 = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_D00] ]
+                             - ek_parameters_gpu.pressure[ index ] )*
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_D00] ] );
+
+    pressure_gradient = pressure_gradient_0U + pressure_gradient_D0;
+
+    pressure_gradient /= (
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_U00] ] ) *
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_D00] ] )
+                           + 1
+                         ) * ek_parameters_gpu.agrid;
+*/
+    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_D00] ]
+                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_U00] ] )/
+                        ( 2.0f * ek_parameters_gpu.agrid);
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
-    atomicadd( &node_f.force[index],
-                pressure_gradient / 2.0f );
+    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_U00] ]
+                             + lb_node.boundary[index]
+                             + lb_node.boundary[ neighborindex[EK_LINK_D00] ] ) == 0 );
 
-    atomicadd( &node_f.force[neighborindex[EK_LINK_U00]],
-                pressure_gradient / 2.0f );
+    atomicadd( &node_f.force[index], pressure_gradient );
     
     // Force in y direction
+/*
+    pressure_gradient_0U = (   ek_parameters_gpu.pressure[ index ]
+                             - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0] ] )*
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0U0] ] );
 
-    pressure_gradient = (   ek_parameters_gpu.pressure[ index ]
-                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0] ] ) /
-                        ek_parameters_gpu.agrid;
+    pressure_gradient_D0 = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0D0] ]
+                             - ek_parameters_gpu.pressure[ index ] )*
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0D0] ] );
+
+    pressure_gradient = pressure_gradient_0U + pressure_gradient_D0;
+
+    pressure_gradient /= (
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0U0] ] ) *
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_0D0] ] )
+                           + 1
+                         ) * ek_parameters_gpu.agrid;
+*/
+
+    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0D0] ]
+                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_0U0] ] )/
+                        ( 2.0f * ek_parameters_gpu.agrid);
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
-    atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index],
-                pressure_gradient / 2.0f );
+    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_0U0] ]
+                             + lb_node.boundary[index]
+                             + lb_node.boundary[ neighborindex[EK_LINK_0D0] ] ) == 0 );
 
-    atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_0U0]],
-                pressure_gradient / 2.0f );
+    atomicadd( &node_f.force[ek_parameters_gpu.number_of_nodes + index], pressure_gradient );
               
     // Force in z direction
+/*
+    pressure_gradient_0U = (   ek_parameters_gpu.pressure[ index ]
+                             - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U] ] )*
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00U] ] );
 
-    pressure_gradient = (   ek_parameters_gpu.pressure[ index ]
-                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U] ] ) /
-                        ek_parameters_gpu.agrid;
+    pressure_gradient_D0 = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00D] ]
+                             - ek_parameters_gpu.pressure[ index ] )*
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00D] ] );
+
+    pressure_gradient = pressure_gradient_0U + pressure_gradient_D0;
+
+    pressure_gradient /= (
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00U] ] ) *
+                           ( 1 - lb_node.boundary[ neighborindex[EK_LINK_00D] ] )
+                           + 1
+                         ) * ek_parameters_gpu.agrid;
+*/
+
+    pressure_gradient = (   ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00D] ]
+                          - ek_parameters_gpu.pressure[ neighborindex[EK_LINK_00U] ] )/
+                        ( 2.0f * ek_parameters_gpu.agrid);
 
     pressure_gradient *= powf(ek_parameters_gpu.agrid, 4) *
                          ek_parameters_gpu.time_step *
                          ek_parameters_gpu.time_step;
 
-    atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index],
-                pressure_gradient / 2.0f );
+    pressure_gradient *= ( (   lb_node.boundary[ neighborindex[EK_LINK_00U] ]
+                             + lb_node.boundary[index]
+                             + lb_node.boundary[ neighborindex[EK_LINK_00D] ] ) == 0 );
 
-    atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + neighborindex[EK_LINK_00U]],
-                pressure_gradient / 2.0f );
+    atomicadd( &node_f.force[2*ek_parameters_gpu.number_of_nodes + index], pressure_gradient );
   }
 }
+
 #endif
 
 __global__ void ek_calculate_quantities( unsigned int species_index,
@@ -1256,8 +1335,11 @@ __global__ void ek_init_species_density_homogeneous() {
 /*
 if ( i == 1 ) // TODO remove : USED FOR PRESSURE TESTS
 {
+
   unsigned int coord[3];    
   rhoindex_linear2cartesian( index, coord );
+
+  ek_parameters_gpu.rho[ i ][ index ] *= (48.f/43.f)*(1.0f - static_cast<float>(coord[2]+1)/48.f);
 
   ek_parameters_gpu.rho[ i ][ index ] *= (24.f/21.f)*(1.0f - static_cast<float>(coord[2]+1)/24.f);
 
@@ -1275,6 +1357,7 @@ if ( i == 1 ) // TODO remove : USED FOR PRESSURE TESTS
                                          ek_parameters_gpu.agrid *
                                          sin( 2.0f*M_PI*( (static_cast<float>(coord[2])+0.5)/
                                          (12.0f / ek_parameters_gpu.agrid) ) );
+
 } // TODO remove
 */
     }
@@ -1479,9 +1562,12 @@ __global__ void ek_clear_node_force( LB_node_force_gpu node_f ) {
   if( index < ek_parameters_gpu.number_of_nodes ) {
 
 #ifdef EK_REACTION
-    ek_parameters_gpu.lb_force_previous[index] = node_f.force[ index ];
-    ek_parameters_gpu.lb_force_previous[ ek_parameters_gpu.number_of_nodes + index] = node_f.force[ ek_parameters_gpu.number_of_nodes + index ];
-    ek_parameters_gpu.lb_force_previous[ 2 * ek_parameters_gpu.number_of_nodes + index] = node_f.force[ 2 * ek_parameters_gpu.number_of_nodes + index ];
+    ek_parameters_gpu.lb_force_previous[ index ] = 
+                           node_f.force[ index ];
+    ek_parameters_gpu.lb_force_previous[ ek_parameters_gpu.number_of_nodes + index ] =
+                           node_f.force[ ek_parameters_gpu.number_of_nodes + index ];
+    ek_parameters_gpu.lb_force_previous[ 2 * ek_parameters_gpu.number_of_nodes + index ] = 
+                           node_f.force[ 2 * ek_parameters_gpu.number_of_nodes + index ];
 #endif
 
     node_f.force[ index ]                                         = 0.0f;
@@ -1645,18 +1731,31 @@ void ek_integrate() {
     ( ek_parameters.number_of_nodes + threads_per_block * blocks_per_grid_y - 1 )
     / (threads_per_block * blocks_per_grid_y );
   dim3 dim_grid = make_uint3( blocks_per_grid_x, blocks_per_grid_y, 1 );
-  
+
 #ifdef EK_REACTION
+  /* Performs the catalytic reaction and sets the reservoir densities at 
+     the boundary of the simulation box */
+
   KERNELCALL( ek_reaction, dim_grid, threads_per_block, ());
 
-  KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, ek_lbparameters_gpu, ek_lb_device_values ) );
+  /* Determines the excess pressure that follows from the creation of 
+     species by the reaction */
+
+  KERNELCALL( ek_pressure, dim_grid, threads_per_block, ( *current_nodes, 
+                                                          ek_lbparameters_gpu, 
+                                                          ek_lb_device_values ) );
 #endif
+
+  /* Clears the force on the nodes and must be called before fluxes are calculated,
+     since in the reaction set up the previous-step LB force is added to the flux
+     (in ek_calculate_quanties / ek_displacement), which is copied in this routine */
 
   KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, ( node_f ) );
   
   /* Integrate diffusion-advection */
   
-  for( int i = 0; i < ek_parameters.number_of_species; i++ ) {
+  for( int i = 0; i < ek_parameters.number_of_species; i++ )
+  {
   
     KERNELCALL( ek_clear_fluxes, dim_grid, threads_per_block, () );
     KERNELCALL( ek_calculate_quantities, dim_grid, threads_per_block,
@@ -1671,7 +1770,8 @@ void ek_integrate() {
   }
 
 #ifdef EK_REACTION
-  /* Add pressure force to LB must be done outside of loop */  
+  /* Add pressure force to LB must be done outside of loop, otherwise
+     the force gets added several times */
 
   KERNELCALL( ek_add_ideal_pressure_to_lb_force, dim_grid, threads_per_block,
                 ( *current_nodes, node_f, ek_lbparameters_gpu ) );
