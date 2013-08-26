@@ -558,6 +558,7 @@ proc add_oif_object { args } {
 
 # Creating the list of edges	
 	set mesh_nedges 0
+	set mesh_nedges_bending 0
 	
 	for {set i 0} {$i < $mesh_ntriangles} {incr i} {
 	    # Take a triangle and copy the nodes of the triangle to pa,pb,pc (point A, point B, point C)
@@ -567,9 +568,19 @@ proc add_oif_object { args } {
 	    set is 0	
 
 	    for {set j 0} {$j < $mesh_nedges} {incr j} {
-		# Check if the edge AB or BA is in the current list of edges
-		if {$mesh_edges($j,0) == $pa && $mesh_edges($j,1) == $pb} { set is 1}
-		if {$mesh_edges($j,1) == $pa && $mesh_edges($j,0) == $pb} { set is 1}   
+			# Check if the edge AB or BA is in the current list of edges
+			if {$mesh_edges($j,0) == $pa && $mesh_edges($j,1) == $pb} { 
+				set is 1
+				set mesh_edges_bending($mesh_nedges_bending,0) $pa
+				set mesh_edges_bending($mesh_nedges_bending,1) $pb
+				incr mesh_nedges_bending
+			}
+			if {$mesh_edges($j,1) == $pa && $mesh_edges($j,0) == $pb} { 
+				set is 1
+				set mesh_edges_bending($mesh_nedges_bending,0) $pa
+				set mesh_edges_bending($mesh_nedges_bending,1) $pb
+				incr mesh_nedges_bending
+			}   
 		}
 
 	    if { $is == 0} {  
@@ -583,8 +594,18 @@ proc add_oif_object { args } {
 
 	    for {set j 0} {$j < $mesh_nedges} {incr j} {
 		# Check if the edge BC or CB is in the current list of edges
-		if {$mesh_edges($j,0) == $pb && $mesh_edges($j,1) == $pc} { set is 1}
-		if {$mesh_edges($j,1) == $pb && $mesh_edges($j,0) == $pc} { set is 1}  
+			if {$mesh_edges($j,0) == $pb && $mesh_edges($j,1) == $pc} { 
+				set is 1
+				set mesh_edges_bending($mesh_nedges_bending,0) $pb
+				set mesh_edges_bending($mesh_nedges_bending,1) $pc
+				incr mesh_nedges_bending
+			}
+			if {$mesh_edges($j,1) == $pb && $mesh_edges($j,0) == $pc} { 
+				set is 1
+				set mesh_edges_bending($mesh_nedges_bending,0) $pb
+				set mesh_edges_bending($mesh_nedges_bending,1) $pc
+				incr mesh_nedges_bending
+			}  
 		}
 
 	    if {$is == 0} {  
@@ -597,9 +618,19 @@ proc add_oif_object { args } {
 	    set is 0
 
 	    for {set j 0} {$j < $mesh_nedges} {incr j} {
-		# Check if the edge AC or CA is in the current list of edges
-		if {$mesh_edges($j,0) == $pa && $mesh_edges($j,1) == $pc} { set is 1}
-		if {$mesh_edges($j,1) == $pa && $mesh_edges($j,0) == $pc} { set is 1}
+			# Check if the edge AC or CA is in the current list of edges
+			if {$mesh_edges($j,0) == $pa && $mesh_edges($j,1) == $pc} { 
+				set is 1
+				set mesh_edges_bending($mesh_nedges_bending,0) $pa
+				set mesh_edges_bending($mesh_nedges_bending,1) $pc
+				incr mesh_nedges_bending
+			}
+			if {$mesh_edges($j,1) == $pa && $mesh_edges($j,0) == $pc} { 
+				set is 1
+				set mesh_edges_bending($mesh_nedges_bending,0) $pa
+				set mesh_edges_bending($mesh_nedges_bending,1) $pc
+				incr mesh_nedges_bending
+			}
 		}
 
 	    if {$is == 0} {     
@@ -609,6 +640,10 @@ proc add_oif_object { args } {
 		incr mesh_nedges
 		}
 	}    
+
+puts "mesh_nedges = $mesh_nedges"
+puts "mesh_nedges_bending = $mesh_nedges_bending"
+
 	
 #
 #
@@ -714,16 +749,16 @@ proc add_oif_object { args } {
 		}
 		puts "generating bending force bonds"
 		set firstID_BenBond $oif_firstBondId
-		set n_BenBond $mesh_nedges
+		set n_BenBond $mesh_nedges_bending
 			# Bending is coupled to the angles between triangles sharing the same edge
 	    set oif_firstBondId [expr $oif_firstBondId + $n_BenBond]
 	
 		set phi 0.0
 		for { set i 0} { $i < $n_BenBond} {incr i} { 
 				#Run over all edges
-			set p2id $mesh_edges($i,0)
+			set p2id $mesh_edges_bending($i,0)
 				#Put IDs of points to p2id,p3id
-			set p3id $mesh_edges($i,1) 
+			set p3id $mesh_edges_bending($i,1) 
 			for { set k 0} {$k < 3} {incr k} {	
 				#Put coordinates of the edges's points
 				set p2($k) $mesh_nodes($p2id,$k)
