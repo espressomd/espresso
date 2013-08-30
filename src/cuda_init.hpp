@@ -16,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 */
-#ifndef CUDA_INIT_H
-#define CUDA_INIT_H
+#ifndef _CUDA_INIT_H
+#define _CUDA_INIT_H
 
 #include "config.hpp"
 

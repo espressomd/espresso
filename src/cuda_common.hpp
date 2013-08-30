@@ -1,7 +1,23 @@
-#ifndef CUDA_COMMON_H
-#define CUDA_COMMON_H
-
-
+/*
+  Copyright (C) 2013 The ESPResSo project
+  
+  This file is part of ESPResSo.
+  
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+*/
+#ifndef _CUDA_COMMON_H
+#define _CUDA_COMMON_H
 
 #include <cstdio>
 #include "config.hpp" //this is required so that the ifdefs are actually defined
@@ -12,9 +28,7 @@
 #include <cuda_runtime.h>
 #include "cuda_init.hpp"
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 /** Action number for \ref mpi_get_particles. */
 #define REQ_GETPARTS  16
@@ -106,12 +120,8 @@ if (_err!=cudaSuccess){ \
   printf("CUDA error: %s\n", cudaGetErrorString(_err)); \
   fprintf(stderr, "error calling %s with dim %d %d %d in %s:%u\n", #_f, _a.x, _a.y, _a.z, __FILE__, __LINE__); \
   exit(EXIT_FAILURE); \
+ }
 }
-
 #endif /* ifdef CUDA */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* ifdef CUDA_COMMON_H */

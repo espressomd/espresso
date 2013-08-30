@@ -56,12 +56,14 @@
 /************************************************
  * variables
  ************************************************/
+#ifdef GRANDCANONICAL
 TypeOfIndex Type; 
 IndexOfType Index; 
 TypeList *type_array;
 int number_of_type_lists;
 int GC_init;
 int Type_array_init;
+#endif
 
 int max_seen_particle = -1;
 int n_total_particles = 0;
