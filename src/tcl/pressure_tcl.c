@@ -181,7 +181,7 @@ static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
 	Tcl_AppendResult(interp, " ", buffer, (char *)NULL);
       }
     }
-    Tcl_AppendResult(interp, " }", (char *)NULL);
+    Tcl_AppendResult(interp, " } ", (char *)NULL);
   }
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
