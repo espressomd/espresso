@@ -418,7 +418,16 @@ AS_IF([test x$with_cuda != xno],[
         LDFLAGS="$LDFLAGS -L$cuda_path/lib"
     ])
 
-    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include -I/usr/include/mpi"
+    NVCCFLAGS="$NVCCFLAGS -I$cuda_path/include"
+    AS_IF([test x"$use_mpi_fake" = xyes], [
+        NVCCFLAGS="$NVCCFLAGS -I./mpifake"
+    ],[
+        NVCCFLAGS="$NVCCFLAGS -I/usr/include/mpi"
+    ])
+    case $target in
+        x86_64-apple-darwin*)
+                NVCCFLAGS="$NVCCFLAGS -m64";;
+    esac
     CXXFLAGS="$CXXFLAGS -I$cuda_path/include"
 
     # NVCC
