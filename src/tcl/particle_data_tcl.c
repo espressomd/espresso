@@ -140,7 +140,7 @@ void tclcommand_part_print_quatu(Particle *part, char *buffer, Tcl_Interp *inter
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
   Tcl_PrintDouble(interp, part->r.quatu[1], buffer);
   Tcl_AppendResult(interp, buffer, " ", (char *)NULL);
-  Tcl_PrintDouble(interp, part->r.quat[2], buffer);
+  Tcl_PrintDouble(interp, part->r.quatu[2], buffer);
   Tcl_AppendResult(interp, buffer, (char *)NULL);
 }
 #endif
@@ -641,9 +641,9 @@ int tclcommand_part_parse_print(Tcl_Interp *interp, int argc, char **argv,
       tclcommand_part_print_v(&part, buffer, interp);
 
 #ifdef ROTATION
+   else if (ARG_IS_S_EXACT(0,"quatu"))
+      tclcommand_part_print_quatu(&part, buffer, interp);
     else if (ARG0_IS_S("quat"))
-      tclcommand_part_print_quat(&part, buffer, interp);
-   else if (ARG0_IS_S("quatu"))
       tclcommand_part_print_quat(&part, buffer, interp);
     else if (ARG0_IS_S("omega") || ARG0_IS_S_EXACT("omega_lab"))
       tclcommand_part_print_omega_lab_frame(&part, buffer, interp);

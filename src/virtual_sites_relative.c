@@ -184,8 +184,6 @@ void distribute_mol_force()
          p_real->f.torque[j]+=tmp[j];
 //	 printf("%f ",tmp[j]);
 	 p_real->f.f[j]+=p[i].f.f[j];
-	 // Clear forces on virtual particle
-	 p[i].f.f[j]=0;
 
        }
       }
@@ -291,6 +289,53 @@ int vs_relate_to(int part_num, int relate_to)
    }
    
    return ES_OK;
+}
+
+
+// Rigid body conribution to scalar pressure and stress tensor
+void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor)
+{
+  // Division by 3 volume is somewhere else. (pressure.c after all presure calculations)
+
+
+  // Iterate over all the particles in the local cells
+  Particle *p;
+  int i, np, c;
+  Cell *cell;
+  for (c = 0; c < local_cells.n; c++) {
+    cell = local_cells.cell[c];
+    p  = cell->part;
+    np = cell->n;
+    for(i = 0; i < np; i++) {
+      // We only care about virtual particles
+      if (!ifParticleIsVirtual(&p[i]))
+        continue;
+
+      update_mol_pos_particle(&p[i]);
+
+      // First obtain the real particle responsible for this virtual particle:
+      Particle *p_real = vs_relative_get_real_particle(&p[i]);
+
+      // Get distance vector pointing from real to virtual particle, respecting periodic boundary i
+      // conditions
+      double d[3];
+      get_mi_vector(d,p_real->r.p,p[i].r.p);
+
+      // Stress tensor conribution
+      for (int k =0; k<3;k++)
+       for (int l =0;l<3;l++)
+        stress_tensor[k*3+l] +=p[i].f.f[k] *d[l];
+      
+      // Pressure = 1/3 trace of stress tensor
+      // but the 1/3 is applied somewhere else.
+      *pressure +=(p[i].f.f[0] *d[0] +p[i].f.f[1] *d[1] +p[i].f.f[2] *d[2]);
+
+    }
+  }
+ *pressure/=0.5*time_step*time_step;
+ for (i=0;i<9;i++)
+  stress_tensor[i]/=0.5*time_step*time_step;
+
 }
 
 #endif

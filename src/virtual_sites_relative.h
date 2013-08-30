@@ -41,6 +41,9 @@ int vs_relate_to(int part_num, int relate_to);
 
 int set_particle_vs_relative(int part, int vs_relative_to, double vs_distance);
 
+// Rigid body conribution to scalar pressure and stress tensor
+void vs_relative_pressure_and_stress_tensor(double* pressure, double* stress_tensor);
+
 #endif
 
 #endif
