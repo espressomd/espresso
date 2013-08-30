@@ -184,6 +184,13 @@ static void tclcommand_analyze_print_pressure_all(Tcl_Interp *interp)
     Tcl_AppendResult(interp, " }", (char *)NULL);
   }
 #endif
+#ifdef VIRTUAL_SITES_RELATIVE
+    buffer[0]=NULL;
+    Tcl_AppendResult(interp, "{ vs_relative ", buffer, (char *)NULL);
+    Tcl_PrintDouble(interp, total_pressure.vs_relative[0], buffer);
+    Tcl_AppendResult(interp, buffer, (char *)NULL);
+    Tcl_AppendResult(interp, " }", (char *)NULL);
+#endif
 }
 
 /************************************************************/
@@ -330,6 +337,11 @@ int tclcommand_analyze_parse_and_print_pressure(Tcl_Interp *interp, int v_comp, 
       Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
+#ifdef VIRTUAL_SITES_RELATIVE
+    else if (ARG0_IS_S("vs_relative")) {
+      value =total_pressure.vs_relative[0];
+    }
+#endif
     else if (ARG0_IS_S("total")) {
       value = total_pressure.data.e[0];
       for (i = 1; i < total_pressure.data.n; i++) {
@@ -485,6 +497,17 @@ static void tclcommand_analyze_print_stress_tensor_all(Tcl_Interp *interp)
   }  
 #endif
 
+#ifdef VIRTUAL_SITES_RELATIVE
+    buffer[0] =NULL;
+    Tcl_AppendResult(interp, "{ vs_relative ", buffer, (char *)NULL);
+    for (j=0;j<9;j++) {
+      sprintf(buffer, "%g", total_p_tensor.vs_relative[j]);
+      Tcl_AppendResult(interp, buffer, (char *)NULL);
+      Tcl_AppendResult(interp, " ", (char *)NULL);
+    }
+    Tcl_AppendResult(interp, " }", (char *)NULL);
+#endif
+
   
 }
 
@@ -629,6 +652,11 @@ int tclcommand_analyze_parse_and_print_stress_tensor(Tcl_Interp *interp, int v_c
       Tcl_AppendResult(interp, "DIPOLES not compiled (see config.h)\n", (char *)NULL);
 #endif
     }
+#ifdef VIRTUAL_SITES_RELATIVE
+    else if (ARG0_IS_S("VS_RELATIVE")) {
+      for(j=0; j<9; j++) tvalue[j] = total_p_tensor.vs_relative[j];
+    }
+#endif
     else if (ARG0_IS_S("total")) {
       for(j=0; j<9; j++) {
         tvalue[j] = total_p_tensor.data.e[j];

@@ -1335,20 +1335,31 @@ void analyze_activate(int ind) {
  ****************************************************************************************/
 
 void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded, int n_non_bonded,
-			       int n_coulomb, int n_dipolar, int c_size)
+			       int n_coulomb, int n_dipolar, int n_vsr, int c_size)
 {
-  int i, total = c_size*(n_pre + n_bonded_ia + n_non_bonded + n_coulomb + n_dipolar);
+  
+  int i;
+  // Number of doubles to store pressure in
+  int total = c_size*(n_pre + n_bonded_ia + n_non_bonded + n_coulomb + n_dipolar + n_vsr);
 
+  // Allocate mem for the double list
   realloc_doublelist(&(stat->data), stat->data.n = total);
+  // Number of doubles per interaction (pressure=1, stress tensor=9,...)
   stat->chunk_size = c_size;
+  
+  // Number of chunks for different interaction types
   stat->n_coulomb    = n_coulomb;
   stat->n_dipolar    = n_dipolar;
   stat->n_non_bonded = n_non_bonded;
+  stat->n_vs_relative = n_vsr; // virtual sites relative (rigid bodies)
+  // Pointers to the start of different contributions
   stat->bonded     = stat->data.e + c_size*n_pre;
   stat->non_bonded = stat->bonded + c_size*n_bonded_ia;
   stat->coulomb    = stat->non_bonded + c_size*n_non_bonded;
   stat->dipolar    = stat->coulomb    + c_size*n_coulomb;
+  stat->vs_relative    = stat->dipolar    + c_size*n_dipolar;
 
+  // Set all obseravables to zero
   for(i = 0; i < total; i++)
     stat->data.e[i] = 0.0;
 }
